@@ -10,6 +10,7 @@ import {
   Video,
   Clock,
   Settings,
+  Image,
 } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 import SidebarCategory from './SidebarCategory';
@@ -22,6 +23,7 @@ export default function AppSidebar() {
   const pathname = usePathname();
 
   const appRoutes = [
+    // Trang chủ
     {
       category: 'Trang chủ',
       items: [
@@ -37,41 +39,65 @@ export default function AppSidebar() {
         },
       ],
     },
+    // Camera
     {
       category: 'Camera',
       items: [
         {
-          path: '/app/live',
-          label: 'Giám sát trực tiếp',
-          icon: <Monitor size={16} />,
+          path: '/app/camera',
+          label: 'Danh sách camera',
+          icon: <Camera size={16} />,
         },
+        {
+          path: '/app/camera/map',
+          label: 'Bản đồ camera',
+          icon: <Map size={16} />,
+        },
+      ],
+    },
+    // Giám sát
+    {
+      category: 'Giám sát',
+      items: [
         {
           path: '/app/monitor',
           label: 'Màn hình giám sát',
           icon: <Camera size={16} />,
         },
         {
-          path: '/app/timeline',
+          path: '/app/monitor/live',
+          label: 'Giám sát trực tiếp',
+          icon: <Monitor size={16} />,
+        },
+        {
+          path: '/app/monitor/timeline',
           label: 'Dòng thời gian',
           icon: <Clock size={16} />,
         },
         {
-          path: '/app/map',
-          label: 'Bản đồ camera',
-          icon: <Map size={16} />,
-        },
-        {
-          path: '/app/videos',
-          label: 'Danh sách videos',
-          icon: <Video size={16} />,
-        },
-        {
-          path: '/app/tracking',
+          path: '/app/monitor/tracking',
           label: 'Truy vết đối tượng',
           icon: <User size={16} />,
         },
       ],
     },
+    // Video & Hình ảnh
+    {
+      category: 'Video & Hình ảnh',
+      items: [
+        {
+          path: '/app/videos',
+          label: 'Danh sách video',
+          icon: <Video size={16} />,
+        },
+        {
+          path: '/app/images',
+          label: 'Danh sách hình ảnh',
+          icon: <Image size={16} />,
+        },
+      ],
+    },
+    // Cài đặt
     {
       category: 'Cài đặt',
       items: [
