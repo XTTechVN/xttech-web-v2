@@ -1,16 +1,40 @@
 'use client';
 
-import { useState } from 'react';
-import CameraGrid, { GridMode } from './_components/CameraGrid';
-import ViewSetting from './_components/ViewSetting';
+// components
+import MonitorGrid from './_components/MonitorGrid';
+import MonitorSetting from './_components/MonitorSetting';
+import Heading from '@/components/ui/Heading';
+import SubHeading from '@/components/ui/SubHeading';
+
+// hooks
+import { useLiveStore } from '@/stores/useLiveStore';
+
+// types
+import { VIEW_MODES_CONFIG } from '@/types/shared/view';
 
 export default function LivePage() {
-  const [activeMode, setActiveMode] = useState<GridMode>('3x3');
+  const { viewMode, portView, setViewMode, setPortView } = useLiveStore(); // Lấy view mode từ store
+
+  const total = VIEW_MODES_CONFIG[viewMode].total; // Tổng số camera
 
   return (
-    <div className={`p-4 flex gap-4`}>
-      <CameraGrid activeMode={activeMode} />
-      <ViewSetting activeMode={activeMode} onModeChange={setActiveMode} />
+    <div className="p-4">
+      <Heading>Giám sát trực tiếp</Heading>
+      <SubHeading>Stream video trực tiếp từ các camera</SubHeading>
+
+      <div className="grid grid-cols-5 gap-4">
+        <div className="mt-4 col-span-4">
+          <MonitorGrid
+            viewMode={viewMode}
+            total={total}
+            portView={portView}
+            setPortView={setPortView}
+          />
+        </div>
+        <div className="mt-4 col-span-1">
+          <MonitorSetting setViewMode={setViewMode} setPortView={setPortView} />
+        </div>
+      </div>
     </div>
   );
 }
