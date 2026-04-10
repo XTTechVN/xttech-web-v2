@@ -20,7 +20,9 @@ export default function Home() {
             <span className="text-white">Camera Vision AI</span>
           </div>
           {user && (
-            <div className="text-sm font-medium text-slate-300">Chào mừng trở lại {user.name}</div>
+            <div className="text-sm font-medium text-slate-300">
+              Chào mừng trở lại {user.fullName}
+            </div>
           )}
           {!user && (
             <button
