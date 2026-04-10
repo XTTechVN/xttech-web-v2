@@ -1,27 +1,56 @@
 'use client';
-import { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
-import { Camera, Shield, ArrowRight, Lock, User as UserIcon } from 'lucide-react';
+import { ArrowRight, Loader2, Lock, User as UserIcon } from 'lucide-react';
 import useUserStore from '@/stores/useUserStore';
+import { useForm } from 'react-hook-form';
+import api from '@/utils/api';
+import { AxiosResponse } from 'axios';
+import { User } from '@/types/shared/user';
+import toast from 'react-hot-toast';
+
+type SignInInputs = {
+  username: string;
+  password: string;
+};
 
 export default function SignInPage() {
   const router = useRouter();
-  const { setUser } = useUserStore();
 
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('password');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignInInputs>({
+    defaultValues: {
+      username: 'admin',
+      password: '123456',
+    },
+  });
 
-  const handleSignIn = (e: React.FormEvent) => {
-    e.preventDefault();
-    setUser({
-      id: '1',
-      name: 'Quản trị viên',
-      email: 'admin@system.com',
-      avatar: '',
-      role: 'admin',
-      permissions: ['all'],
-    });
-    router.push('/');
+  const onSubmit = async (data: SignInInputs) => {
+    try {
+      // 1. Call API đăng nhập
+      const response: AxiosResponse<User> = await api.post('/api/v1/auth/signin', data);
+
+      // 2. Lưu thông tin user vào store
+      useUserStore.getState().setUser(response.data);
+
+      // 3. Chuyển hướng sang trang /app
+      router.push('/app');
+
+      // 4. Hiển thị toast thông báo
+      setTimeout(() => {
+        toast.success('Đăng nhập thành công');
+      }, 500);
+    } catch (error: any) {
+      // 1. Hiển thị toast thông báo lỗi
+      toast.error(
+        error.response.data.detail == 'Incorrect username or password'
+          ? 'Sai tài khoản hoặc mật khẩu'
+          : error.response.data.detail,
+      );
+    }
   };
 
   return (
@@ -38,7 +67,7 @@ export default function SignInPage() {
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleSignIn} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
               <label
                 className="block text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2"
@@ -53,12 +82,16 @@ export default function SignInPage() {
                 <input
                   id="username"
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-slate-200 text-slate-900 bg-slate-50 focus:ring-2 focus:ring-blue-dark focus:border-transparent outline-none transition-all"
+                  {...register('username', { required: 'Vui lòng nhập tài khoản' })}
+                  className={`block w-full pl-10 pr-4 py-3 border ${
+                    errors.username ? 'border-red-500' : 'border-slate-200'
+                  } text-slate-900 bg-slate-50 focus:ring-2 focus:ring-blue-dark focus:border-transparent outline-none transition-all`}
                   placeholder="Nhập tên đăng nhập"
                 />
               </div>
+              {errors.username && (
+                <p className="mt-1 text-xs text-red-500">{errors.username.message}</p>
+              )}
             </div>
 
             <div>
@@ -75,20 +108,29 @@ export default function SignInPage() {
                 <input
                   id="password"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-slate-200 text-slate-900 bg-slate-50 focus:ring-2 focus:ring-blue-dark focus:border-transparent outline-none transition-all"
+                  {...register('password', { required: 'Vui lòng nhập mật khẩu' })}
+                  className={`block w-full pl-10 pr-4 py-3 border ${
+                    errors.password ? 'border-red-500' : 'border-slate-200'
+                  } text-slate-900 bg-slate-50 focus:ring-2 focus:ring-blue-dark focus:border-transparent outline-none transition-all`}
                   placeholder="Nhập mật khẩu"
                 />
               </div>
+              {errors.password && (
+                <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
+              )}
             </div>
 
             <button
               type="submit"
+              disabled={isSubmitting}
               className="w-full flex items-center justify-center gap-2 bg-blue-dark hover:bg-[#1a4470] text-white py-3 transition-colors font-semibold shadow-md mt-6"
             >
-              Đăng nhập
-              <ArrowRight className="w-5 h-5" />
+              {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
+              {isSubmitting ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <ArrowRight className="w-5 h-5" />
+              )}
             </button>
           </form>
         </div>

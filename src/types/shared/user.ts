@@ -1,8 +1,10 @@
 export type User = {
-  id: string;
-  name: string;
   email: string;
+  username: string;
+  fullName: string;
+  phone: string;
   avatar: string;
-  role: string;
-  permissions: string[];
+  id: string;
+  createdAt: string;
+  updatedAt: string;
 };

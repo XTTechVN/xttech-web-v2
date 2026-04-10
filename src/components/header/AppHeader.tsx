@@ -33,7 +33,7 @@ export default function AppHeader() {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
-        <span className="text-sm">Xin chào, {user?.name}</span>
+        <span className="text-sm">Xin chào, {user?.fullName}</span>
 
         <button
           onClick={toggle}
