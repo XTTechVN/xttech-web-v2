@@ -88,8 +88,9 @@ export default function CameraPage() {
           setIsModalConfirmOpen(true);
         }}
         onEdit={(cam: Camera) => {
-          setIsEdit(true);
           setDefaultValues(cam);
+          setSelectedCameraId(cam.id);
+          setIsEdit(true);
         }}
         onView={(cam: Camera) => {
           featureNotImplemented();
