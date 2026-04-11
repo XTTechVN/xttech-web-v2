@@ -36,26 +36,32 @@ export default function AlertTable({
 
   const columns = [
     {
-      key: 'name',
-      label: 'Sự kiện',
-      width: '30%',
+      key: 'id',
+      label: 'ID',
+      width: '10%',
     },
     {
-      key: 'camera_name',
+      key: 'name',
       label: 'Camera',
+      width: '10%',
+    },
+    {
+      key: 'description',
+      label: 'Mô tả',
       width: '20%',
-      render: (item: Alert) => item.camera_name || item.camera_id,
+    },
+    {
+      key: 'aiProcessedLevel',
+      label: 'Tầng AI',
+      width: '10%',
+      render: (item: Alert) => item.aiProcessedLevel,
     },
     {
       key: 'created_at',
       label: 'Thời gian',
       width: '20%',
       render: (item: Alert) =>
-        item.created_at ? dayjs(item.created_at).format('DD/MM/YYYY HH:mm:ss') : '-',
-    },
-    {
-      key: 'description',
-      label: 'Mô tả',
+        item.createdAt ? dayjs(item.createdAt).format('DD/MM/YYYY HH:mm:ss') : '-',
     },
     {
       key: 'actions',
@@ -88,12 +94,12 @@ export default function AlertTable({
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span className="font-semibold text-gray-700 w-24">Camera:</span>
-            <span>{item.camera_name || item.camera_id}</span>
+            <span>{item.cameraId}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span className="font-semibold text-gray-700 w-24">Thời gian:</span>
             <span>
-              {item.created_at ? dayjs(item.created_at).format('DD/MM/YYYY HH:mm:ss') : '-'}
+              {item.createdAt ? dayjs(item.createdAt).format('DD/MM/YYYY HH:mm:ss') : '-'}
             </span>
           </div>
           {item.description && (
