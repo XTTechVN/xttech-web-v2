@@ -3,6 +3,8 @@ export type Camera = {
   rtspUrl: string;
   address: string;
   workerIp: string;
+  lat: number;
+  lng: number;
   id: string;
   createdAt: string;
   updatedAt: string;

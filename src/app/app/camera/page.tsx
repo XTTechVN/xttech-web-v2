@@ -6,7 +6,7 @@ import ModalWrapper from '@/components/modal/ModalWrapper';
 import CameraHeading from './_components/CameraHeading';
 import CameraTable from './_components/CameraTable';
 import CameraToolbar from './_components/CameraToolbar';
-import CameraAddModal from './_components/CameraAddModal';
+import CameraAddModal, { CameraFormModalData } from './_components/CameraAddModal';
 import CameraEditModal from './_components/CameraEditModal';
 
 // Hooks
@@ -20,7 +20,6 @@ import { featureNotImplemented } from '@/utils/toast';
 
 // Types
 import { Camera } from '@/types/shared/camera';
-import { CameraFormModalData } from './_components/CameraAddModal';
 
 export default function CameraPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -79,7 +78,10 @@ export default function CameraPage() {
       <CameraHeading />
 
       {/* Toolbar */}
-      <CameraToolbar onAdd={() => setIsModalOpen(true)} onExport={featureNotImplemented} />
+      <CameraToolbar 
+        onAdd={() => setIsModalOpen(true)} 
+        onExport={featureNotImplemented} 
+      />
 
       {/* Table */}
       <CameraTable
