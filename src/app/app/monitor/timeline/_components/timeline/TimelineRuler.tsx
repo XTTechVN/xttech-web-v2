@@ -1,7 +1,7 @@
 'use client';
 
 // Hooks
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 // Utils
 import api from '@/utils/api';
@@ -10,8 +10,7 @@ import dayjs from 'dayjs';
 import { Alert } from '@/types/shared/alert';
 import { Camera } from '@/types/shared/camera';
 
-const HOUR_WIDTH = 80;
-const TOTAL_WIDTH = 24 * HOUR_WIDTH;
+
 
 interface TimelineRulerProps {
   camera: Camera | null;
@@ -20,12 +19,33 @@ interface TimelineRulerProps {
 }
 
 export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineRulerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hourWidth, setHourWidth] = useState(80);
+  const totalWidth = 24 * hourWidth;
   const [now, setNow] = useState(dayjs());
 
   // Cập nhật lại thời gian hiện tại mỗi giây
   useEffect(() => {
     const timer = setInterval(() => setNow(dayjs()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  // Lắng nghe sự kiện ctrl + wheel để zoom
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const zoomFactor = 0.5;
+        const delta = -e.deltaY * zoomFactor;
+        setHourWidth((prev) => Math.min(Math.max(prev + delta, 40), 1000));
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
   // Call API get events
@@ -46,7 +66,7 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
 
   // Tính toán vị trí của con trỏ thời gian hiện tại
   const currentTimeInSeconds = now.hour() * 3600 + now.minute() * 60 + now.second();
-  const pointerPosition = (currentTimeInSeconds / 86400) * TOTAL_WIDTH;
+  const pointerPosition = (currentTimeInSeconds / 86400) * totalWidth;
 
   return (
     <div className="bg-white border-t border-gray-200 h-32 relative overflow-hidden flex flex-col pt-2 shadow-sm">
@@ -57,12 +77,12 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
       </div>
 
       {/* Timeline Container */}
-      <div className="flex-1 relative overflow-x-auto no-scrollbar px-10 pt-8">
-        <div className="relative h-full" style={{ width: `${TOTAL_WIDTH}px` }}>
+      <div ref={containerRef} className="flex-1 relative overflow-x-auto no-scrollbar px-10 pt-8">
+        <div className="relative h-full" style={{ width: `${totalWidth}px` }}>
           {/* Hour Grid Lines (Ticks) */}
           <div className="absolute inset-x-0 bottom-6 h-6 border-b border-gray-100">
             {hours.map((hour, i) => {
-              const x = i * HOUR_WIDTH;
+              const x = i * hourWidth;
               return (
                 <div
                   key={i}
@@ -75,9 +95,18 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
                   {/* Minute Markers (only between hours) */}
                   {i < 24 && (
                     <>
-                      <div className="absolute bottom-0 left-[20px] h-1 w-px bg-gray-100" />
-                      <div className="absolute bottom-0 left-[40px] h-2 w-px bg-gray-200" />
-                      <div className="absolute bottom-0 left-[60px] h-1 w-px bg-gray-100" />
+                      <div
+                        className="absolute bottom-0 h-1 w-px bg-gray-100"
+                        style={{ left: `${hourWidth * 0.25}px` }}
+                      />
+                      <div
+                        className="absolute bottom-0 h-2 w-px bg-gray-200"
+                        style={{ left: `${hourWidth * 0.5}px` }}
+                      />
+                      <div
+                        className="absolute bottom-0 h-1 w-px bg-gray-100"
+                        style={{ left: `${hourWidth * 0.75}px` }}
+                      />
                     </>
                   )}
 
@@ -96,7 +125,7 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
               const eventTime = dayjs(event.createdAt);
               const eventSeconds =
                 eventTime.hour() * 3600 + eventTime.minute() * 60 + eventTime.second();
-              const position = (eventSeconds / 86400) * TOTAL_WIDTH;
+              const position = (eventSeconds / 86400) * totalWidth;
 
               return (
                 <div
