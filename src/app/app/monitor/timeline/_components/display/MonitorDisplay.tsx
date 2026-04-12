@@ -4,13 +4,14 @@ import { Camera, Maximize2 } from 'lucide-react';
 
 interface MonitorDisplayProps {
   filename?: string;
+  onDetail?: () => void;
 }
 
-export default function MonitorDisplay({ filename }: MonitorDisplayProps) {
+export default function MonitorDisplay({ filename, onDetail }: MonitorDisplayProps) {
   return (
-    <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg overflow-hidden relative group">
+    <div className="flex-1 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden relative group">
       {/* Video Area */}
-      <div className="w-full h-full flex items-center justify-center bg-gray-200/50">
+      <div className="w-full h-full flex items-center justify-center bg-gray-100">
         {filename ? (
           <video
             src={`http://157.66.100.182:9000/ai-data/video/${filename}.mp4`}
@@ -41,9 +42,12 @@ export default function MonitorDisplay({ filename }: MonitorDisplayProps) {
       </button> */}
 
       {/* Playback Time Overlay */}
-      {/* <div className="absolute top-4 right-4 bg-gray-900/40 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-mono text-white tracking-widest z-10">
-        00:00:23 / 01:24:55
-      </div> */}
+      <div
+        onClick={onDetail}
+        className="absolute top-4 right-4 bg-gray-900/40 backdrop-blur-sm px-2 py-1 rounded text-[10px] text-white tracking-widest z-10 cursor-pointer"
+      >
+        Xem chi tiết AI
+      </div>
     </div>
   );
 }

@@ -15,7 +15,7 @@ import { Camera } from '@/types/shared/camera';
 interface TimelineRulerProps {
   camera: Camera | null;
   date: Date;
-  onSelectEvent: (filename: string) => void;
+  onSelectEvent: (event: Alert) => void;
 }
 
 export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineRulerProps) {
@@ -133,7 +133,7 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
                   className="absolute top-[-20px] flex flex-col items-center group cursor-pointer z-20"
                   style={{ left: `${position}px` }}
                   onClick={() => {
-                    onSelectEvent(event.id);
+                    onSelectEvent(event);
                   }}
                 >
                   {/* Event Tooltip/Name */}
