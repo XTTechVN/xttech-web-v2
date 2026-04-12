@@ -10,8 +10,6 @@ import dayjs from 'dayjs';
 import { Alert } from '@/types/shared/alert';
 import { Camera } from '@/types/shared/camera';
 
-
-
 interface TimelineRulerProps {
   camera: Camera | null;
   date: Date;
@@ -130,7 +128,7 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
               return (
                 <div
                   key={event.id}
-                  className="absolute top-[-20px] flex flex-col items-center group cursor-pointer z-20"
+                  className="absolute top-[-20px] flex flex-col items-start group cursor-pointer z-20"
                   style={{ left: `${position}px` }}
                   onClick={() => {
                     onSelectEvent(event);
@@ -150,7 +148,7 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
                     className="aspect-video w-16"
                     alt=""
                   />
-                  <div className="w-px h-14 bg-blue-400 opacity-20 group-hover:opacity-40 transition-opacity mt-0.5" />
+                  <div className="w-px h-14 bg-blue-400 opacity-20 group-hover:opacity-40 transition-opacity" />
                 </div>
               );
             })}
