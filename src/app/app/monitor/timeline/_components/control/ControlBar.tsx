@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,51 +8,39 @@ import {
   RotateCcw,
   FastForward,
   Download,
-  Camera,
   Maximize,
   EyeOff,
   RefreshCcw,
   Calendar,
   Video,
-  Search,
 } from 'lucide-react';
+
+// Components
+import { IconButton } from './IconButton';
+import { ControlGroup } from './ControlGroup';
+import { DatePicker } from 'antd';
+
+// Utils
 import { cn } from '@/utils/cn';
 
-interface ControlGroupProps {
-  children: React.ReactNode;
-  className?: string;
+// Types
+import { Camera as CameraType } from '@/types/shared/camera';
+import dayjs from 'dayjs';
+
+interface ControlBarProps {
+  cameras: CameraType[];
+  selectedCamera: CameraType | null;
+
+  onSelectDate: (date: Date) => void;
+  onSelectCam: (cam: CameraType) => void;
 }
 
-const ControlGroup = ({ children, className }: ControlGroupProps) => (
-  <div className={cn('flex items-center bg-gray-100 rounded p-1', className)}>{children}</div>
-);
-
-const IconButton = ({
-  icon: Icon,
-  active = false,
-  danger = false,
-  className,
-}: {
-  icon: any;
-  active?: boolean;
-  danger?: boolean;
-  className?: string;
-}) => (
-  <button
-    className={cn(
-      'p-1.5 rounded transition-all flex items-center justify-center',
-      active
-        ? 'bg-white text-primary shadow-sm'
-        : 'text-gray-500 hover:bg-white/50 hover:text-gray-700',
-      danger && 'hover:text-red-500',
-      className,
-    )}
-  >
-    <Icon size={14} />
-  </button>
-);
-
-export default function ControllBtn() {
+export default function ControlBar({
+  cameras,
+  onSelectCam,
+  selectedCamera,
+  onSelectDate,
+}: ControlBarProps) {
   return (
     <div className="bg-white border-y border-gray-200 py-2 px-4 flex items-center gap-3 overflow-x-auto no-scrollbar shadow-sm">
       {/* Playback Controls */}
@@ -98,23 +85,6 @@ export default function ControllBtn() {
         ))}
       </ControlGroup>
 
-      {/* Search Display */}
-      <div className="flex-1 flex items-center bg-gray-100 rounded px-3 py-1.5 gap-2 max-w-xs">
-        <Search size={14} className="text-gray-400" />
-        <input
-          type="text"
-          placeholder="Tìm kiếm Object Tag"
-          className="bg-transparent border-none text-[11px] placeholder:text-gray-400 focus:outline-none w-full"
-        />
-      </div>
-
-      {/* Status Badges */}
-      <div className="flex items-center gap-2">
-        <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded border border-blue-100 whitespace-nowrap">
-          Local (Cục bộ)
-        </span>
-      </div>
-
       {/* Action Icons */}
       <ControlGroup>
         <IconButton icon={Maximize} />
@@ -127,16 +97,38 @@ export default function ControllBtn() {
         <IconButton icon={Video} className="text-blue-500" />
       </ControlGroup>
 
+      {/* Date */}
+      <ControlGroup className="pr-2">
+        <DatePicker
+          placeholder="Chọn ngày"
+          size="small"
+          defaultValue={dayjs(new Date())}
+          disabledDate={(current) => current.isAfter(dayjs())}
+          onChange={(date) => {
+            console.log(date?.toDate());
+            onSelectDate(date?.toDate() || new Date());
+          }}
+        />
+      </ControlGroup>
+
       {/* Screen Select */}
       <ControlGroup className="pr-2">
         <select
+          value={selectedCamera?.id || ''}
+          onChange={(e) => {
+            const cam = cameras.find((c) => c.id === e.target.value);
+            if (cam) onSelectCam(cam);
+          }}
           className="bg-transparent border-none text-[10px] font-bold text-gray-600 focus:outline-none cursor-pointer pl-2 pr-1 h-6"
-          defaultValue="screen1"
         >
-          <option value="screen1">Màn hình 1</option>
-          <option value="screen2">Màn hình 2</option>
-          <option value="screen3">Màn hình 3</option>
-          <option value="screen4">Màn hình 4</option>
+          <option value="" disabled>
+            Chọn Camera
+          </option>
+          {cameras?.map((camera: CameraType) => (
+            <option key={camera.id} value={camera.id}>
+              {camera.name}
+            </option>
+          ))}
         </select>
       </ControlGroup>
     </div>
