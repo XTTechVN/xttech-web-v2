@@ -51,7 +51,9 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
     queryKey: ['events', camera?.id, date],
     queryFn: () =>
       api
-        .get(`/api/v1/cameras/${camera?.id}/events?date=${dayjs(date).format('YYYY-MM-DD')}`)
+        .get(
+          `/api/v1/cameras/${camera?.id}/events?limit=9999&date=${dayjs(date).format('YYYY-MM-DD')}`,
+        )
         .then((res) => res.data),
     enabled: !!camera?.id,
   });
