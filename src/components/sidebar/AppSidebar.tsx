@@ -74,26 +74,16 @@ export default function AppSidebar() {
           label: 'Dòng thời gian',
           icon: <Clock size={16} />,
         },
-        {
-          path: '/app/monitor/tracking',
-          label: 'Truy vết đối tượng',
-          icon: <User size={16} />,
-        },
       ],
     },
-    // Video & Hình ảnh
+    // Truy vết
     {
-      category: 'Video & Hình ảnh',
+      category: 'Truy vết',
       items: [
         {
-          path: '/app/videos',
-          label: 'Danh sách video',
-          icon: <Video size={16} />,
-        },
-        {
-          path: '/app/images',
-          label: 'Danh sách hình ảnh',
-          icon: <Image size={16} />,
+          path: '/app/tracking',
+          label: 'Truy vết đối tượng',
+          icon: <User size={16} />,
         },
       ],
     },
