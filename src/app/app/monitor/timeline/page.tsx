@@ -75,7 +75,9 @@ export default function Page() {
       <AnimatePresence>
         <ModalWrapper
           isOpen={openDetectedObject !== null}
-          onClose={() => setOpenDetectedObject(null)}
+          onClose={() => {
+            setOpenDetectedObject(null);
+          }}
         >
           <DetectedObjectModal
             event={selectedEvent || null}
