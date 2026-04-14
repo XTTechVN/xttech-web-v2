@@ -1,15 +1,23 @@
 'use client';
 
-import { MonitorDisplay, ControlBar, TimelineRuler, EventDetail } from './_components';
+import {
+  MonitorDisplay,
+  ControlBar,
+  TimelineRuler,
+  DetectedObject,
+  DetectedObjectModal,
+} from './_components';
+import ModalWrapper from '@/components/modal/ModalWrapper';
 
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import api from '@/utils/api';
-
-import { ResponsePagination } from '@/types/shared/reponse';
-import { Camera } from '@/types/shared/camera';
-import { Alert } from '@/types/shared/alert';
+import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence } from 'motion/react';
+
+import api from '@/utils/api';
+import { Alert } from '@/types/shared/alert';
+import { Camera } from '@/types/shared/camera';
+import { ResponsePagination } from '@/types/shared/reponse';
+import { DetectedObject as DetectedObjectProps } from './_components/display/DetectedObject';
 
 export default function Page() {
   // State
@@ -17,6 +25,7 @@ export default function Page() {
   const [selectedCam, setSelectedCamera] = useState<Camera | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Alert | null>(null);
   const [openDetail, setOpenDetail] = useState<boolean>(true);
+  const [openDetectedObject, setOpenDetectedObject] = useState<DetectedObjectProps | null>(null);
 
   // Query Call API
   const {
@@ -42,10 +51,11 @@ export default function Page() {
         />
         <AnimatePresence>
           {openDetail && (
-            <EventDetail
+            <DetectedObject
               event={selectedEvent}
               isOpen={openDetail}
               onClose={() => setOpenDetail(false)}
+              onClick={(item: DetectedObjectProps) => setOpenDetectedObject(item)}
             />
           )}
         </AnimatePresence>
@@ -61,6 +71,18 @@ export default function Page() {
         onSelectDate={(date: Date) => setDate(date)}
         onSelectCam={(cam: Camera) => setSelectedCamera(cam)}
       />
+
+      <AnimatePresence>
+        <ModalWrapper
+          isOpen={openDetectedObject !== null}
+          onClose={() => setOpenDetectedObject(null)}
+        >
+          <DetectedObjectModal
+            event={selectedEvent || null}
+            detectedObject={openDetectedObject || null}
+          />
+        </ModalWrapper>
+      </AnimatePresence>
     </div>
   );
 }

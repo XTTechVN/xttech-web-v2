@@ -4,11 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/utils/api';
 import { Alert } from '@/types/shared/alert';
 import { motion } from 'motion/react';
-import { X, Activity, Info, Tag } from 'lucide-react';
+import { X, Info, Tag } from 'lucide-react';
 import dayjs from 'dayjs';
 import Search from '@/components/ui/Search';
 
-interface DetectedObject {
+export interface DetectedObject {
   id: string;
   videoId: string;
   label: string;
@@ -19,13 +19,14 @@ interface DetectedObject {
   createdAt: string;
 }
 
-interface EventDetailProps {
+interface DetectedObjectProps {
   event: Alert | null;
   isOpen: boolean;
   onClose: () => void;
+  onClick: (event: DetectedObject) => void;
 }
 
-export default function EventDetail({ event, isOpen, onClose }: EventDetailProps) {
+export default function DetectedObject({ event, isOpen, onClose, onClick }: DetectedObjectProps) {
   // Fetch detected objects
   const { data: detections, isLoading } = useQuery({
     queryKey: ['detected-objects', event?.videoId],
@@ -35,6 +36,8 @@ export default function EventDetail({ event, isOpen, onClose }: EventDetailProps
         .then((res) => res.data),
     enabled: !!event?.videoId && isOpen,
   });
+
+  console.log(event)
 
   if (!isOpen) return null;
 
@@ -56,22 +59,34 @@ export default function EventDetail({ event, isOpen, onClose }: EventDetailProps
           detections.items.map((item: DetectedObject) => (
             <div
               key={item.id}
-              className="group relative p-3 rounded-xl border border-gray-100 bg-white hover:border-primary/30 hover:shadow-md transition-all duration-300 overflow-hidden"
+              onClick={() => onClick(item)}
+              className="group cursor-pointer relative p-3 rounded-xl border border-gray-100 bg-white hover:border-primary/30 hover:shadow-md transition-all duration-300 overflow-hidden"
             >
               {/* Background Accent */}
               <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-full -mr-4 -mt-4 opacity-0 group-hover:opacity-100 transition-opacity" />
 
               <div className="relative space-y-2.5">
                 {/* Label & Confidence */}
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-xs font-bold text-gray-800 uppercase tracking-tight">
-                      {item.label}
-                    </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {/* Label */}
+                    <div className="flex items-center gap-1.5">
+                      <Tag className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-xs font-bold text-gray-800 uppercase tracking-tight">
+                        {item.label}
+                      </span>
+                    </div>
+                    {/* Confidence */}
+                    <div className="px-1.5 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-md border border-green-100">
+                      {item.confidenceScore}%
+                    </div>
                   </div>
-                  <div className="px-1.5 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-md border border-green-100">
-                    {item.confidenceScore}%
+                  {/* License Plate Image */}
+                  <div
+                    style={{
+                      backgroundImage: `url(http://157.66.100.182:9000/ai-data/detection_results/${event?.id}/license_plates/${item.id}.jpg)`
+                    }}
+                    className="w-10 h-10 rounded-md bg-cover bg-center justify-end items-end">
                   </div>
                 </div>
 
