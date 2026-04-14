@@ -60,11 +60,6 @@ export default function AppSidebar() {
       category: 'Giám sát',
       items: [
         {
-          path: '/app/monitor',
-          label: 'Màn hình giám sát',
-          icon: <Camera size={16} />,
-        },
-        {
           path: '/app/monitor/live',
           label: 'Giám sát trực tiếp',
           icon: <Monitor size={16} />,
