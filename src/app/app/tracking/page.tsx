@@ -6,29 +6,37 @@ import Search from '@/components/ui/Search';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import MapContainer from './_components/MapContainer';
+import { DatePicker } from 'antd';
 
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import api from '@/utils/api';
+import queryClient from '@/utils/query';
+
+// Type
+import type { Dayjs } from 'dayjs';
 
 export default function TrackingPage() {
   const [label, setLabel] = useState('');
   const [detectionResult, setDetectionResult] = useState('');
-  const [startDate, setStartDate] = useState('2026-04-15T00:00:00.000000Z');
-  const [endDate, setEndDate] = useState('2026-04-15T23:59:59.999999Z');
+  const [date, setDate] = useState<Dayjs | null>(null);
 
   const { data } = useQuery({
-    queryKey: ['tracking', label, detectionResult, startDate, endDate],
+    queryKey: ['tracking', label, detectionResult, date],
     queryFn: () => api.get('/api/v1/detected-objects/tracing', {
       params: {
         label,
         detectionResult: detectionResult,
-        startDate: startDate,
-        endDate: endDate,
+        startDate: date?.toISOString(), // format iso 8601
+        endDate: date?.endOf('day').toISOString(), // format iso 8601, end of date
       },
     }),
-    enabled: !!detectionResult && !!label,
+    enabled: !!detectionResult && !!label && !!date,
   });
+
+  const onSearch = () => {
+    queryClient.invalidateQueries({ queryKey: ['tracking', label, detectionResult] });
+  };
 
   return (
     <div className="space-y-4 p-4">
@@ -48,7 +56,12 @@ export default function TrackingPage() {
           ]}
           onChange={(value) => setLabel(value as string)}
         />
-        <Button size="sm">Tìm kiếm</Button>
+        <DatePicker
+          placeholder="Chọn ngày"
+          className='h-9'
+          onChange={(value) => setDate(value)}
+        />
+        <Button size="sm" onClick={onSearch}>Tìm kiếm</Button>
       </div>
 
       {data && data.data.items.length > 0 && (
