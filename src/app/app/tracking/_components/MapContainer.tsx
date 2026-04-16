@@ -1,13 +1,44 @@
-export default function MapContainer() {
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+import { motion } from 'framer-motion';
+
+// Sửa lỗi icon marker bị lỗi khi dùng với Webpack/Next.js
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+const DefaultIcon = L.icon({
+  iconUrl: (markerIcon as any).src || markerIcon,
+  iconRetinaUrl: (markerIcon2x as any).src || markerIcon2x,
+  shadowUrl: (markerShadow as any).src || markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
+export default function Map({ routeCoordinates, center }: { routeCoordinates: [number, number][], center: [number, number] }) {
   return (
-    <div className="w-full h-full">
-      <iframe
-        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14902.5866164293!2d106.613901!3d20.8072865!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x314a7735d162afdb%3A0x70df39254ee1c357!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBI4bqjaSBQaMOYbmc!5e0!3m2!1svi!2svn!4v1711900000000!5m2!1svi!2svn"
-        className="w-full h-full border-none"
-        allowFullScreen={false}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
+    <MapContainer center={center} zoom={13} style={{ height: '100%', width: '100%' }}>
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
-    </div>
+
+      {routeCoordinates && routeCoordinates.map((position, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, }}
+          transition={{ duration: 0.5, delay: index * 0.1 }}
+        >
+          <Marker position={position} icon={DefaultIcon} />
+        </motion.div>
+      ))}
+    </MapContainer>
   );
 }
