@@ -69,6 +69,28 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
     }
   }, [events]);
 
+  // Tự động scroll đến vị trí thời gian hiện tại khi load trang
+  useEffect(() => {
+    if (containerRef.current) {
+      const container = containerRef.current;
+      // Đợi một chút để đảm bảo layout và width đã được tính toán chính xác
+      const timer = setTimeout(() => {
+        const containerWidth = container.clientWidth;
+        // pointerPosition là vị trí của kim thời gian so với vạch 00:00
+        // 40 là giá trị px-10 (padding-left) của container
+        const scrollAmount = pointerPosition + 40 - containerWidth / 2;
+
+        container.scrollTo({
+          left: scrollAmount,
+          behavior: 'smooth',
+        });
+      }, 600);
+
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Tạo mốc giờ
   const hours = Array.from({ length: 25 }, (_, i) => {
     const h = i < 10 ? `0${i}:00` : `${i}:00`;
