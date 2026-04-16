@@ -5,6 +5,7 @@ import Table from '@/components/table/Table';
 import TableAction from '@/components/table/TableAction';
 import TablePagination from '@/components/table/TablePagination';
 import TableLoading from '@/components/table/TableLoading';
+import { BiCheckCircle, BiXCircle } from "react-icons/bi";
 
 // Hooks
 import { useQuery } from '@tanstack/react-query';
@@ -39,10 +40,15 @@ export default function CameraTable({
     {
       key: 'name',
       label: 'Tên camera',
+      width: '15%',
     },
     {
       key: 'rtspUrl',
       label: 'URL RTSP',
+      width: '30%',
+      render: (item: Camera) => (
+        <span className="truncate">{item.rtspUrl.substring(0, 35)}</span>
+      ),
     },
     {
       key: 'address',
@@ -51,6 +57,16 @@ export default function CameraTable({
     {
       key: 'workerIp',
       label: 'IP Worker',
+    },
+    {
+      key: 'isActive',
+      label: 'Trạng thái',
+      width: '10%',
+      render: (item: Camera) => (
+        <span className={`badge ${item.isActive ? 'badge-success' : 'badge-error'}`}>
+          {item.isActive ? <BiCheckCircle size={20} color='green' /> : <BiXCircle size={20} color='red' />}
+        </span>
+      ),
     },
     {
       key: 'actions',

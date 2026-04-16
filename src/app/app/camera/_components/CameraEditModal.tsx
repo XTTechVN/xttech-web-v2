@@ -11,6 +11,7 @@ import { MapPin, Save, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import MapSelect from '@/components/map/MapSelect';
+import { Switch } from 'antd';
 
 export interface CameraFormModalData {
   name: string;
@@ -19,6 +20,7 @@ export interface CameraFormModalData {
   workerIp: string;
   lat: number;
   lng: number;
+  isActive: boolean;
 }
 
 export default function CameraEditModal({
@@ -38,6 +40,7 @@ export default function CameraEditModal({
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<CameraFormModalData>({
     defaultValues: {
@@ -47,6 +50,7 @@ export default function CameraEditModal({
       workerIp: defaultValues?.workerIp || '',
       lat: defaultValues?.lat || 21.0285,
       lng: defaultValues?.lng || 105.8342,
+      isActive: defaultValues?.isActive || false,
     },
   });
 
@@ -68,6 +72,7 @@ export default function CameraEditModal({
       setValue('workerIp', defaultValues.workerIp);
       setValue('lat', defaultValues.lat);
       setValue('lng', defaultValues.lng);
+      setValue('isActive', defaultValues.isActive);
     }
   }, [defaultValues, setValue]);
 
@@ -87,6 +92,7 @@ export default function CameraEditModal({
           </Button>
         </div>
 
+        {/* Form Body */}
         <div className="flex-1 overflow-y-auto">
           <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
             {/* Name and Worker IP */}
@@ -160,6 +166,17 @@ export default function CameraEditModal({
                 placeholder="rtsp://[IP_ADDRESS]/live/0/0"
                 {...register('rtspUrl', { required: 'URL RTSP là bắt buộc' })}
                 error={errors.rtspUrl?.message as string}
+              />
+            </div>
+
+            {/* Active */}
+            <div className="flex items-center gap-2">
+              <Label>Trạng thái</Label>
+              <Switch
+                checked={watch('isActive')}
+                onChange={(checked) => {
+                  setValue('isActive', checked);
+                }}
               />
             </div>
 

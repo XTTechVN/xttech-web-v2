@@ -20,6 +20,7 @@ export interface CameraFormModalData {
   workerIp: string;
   lat: number;
   lng: number;
+  isActive: boolean;
 }
 
 export default function CameraAddModal({

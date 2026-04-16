@@ -6,6 +6,7 @@ export type Camera = {
   lat: number;
   lng: number;
   id: string;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 };
