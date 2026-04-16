@@ -61,11 +61,10 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
-  // Chọn event mới nhất
+  // Chọn event mới nhất theo sort created at, index là 0
   useEffect(() => {
     if (events) {
-      const lastIndex = events?.items?.length - 1;
-      onSelectEvent(events?.items?.[lastIndex]);
+      onSelectEvent(events?.items?.[0]);
     }
   }, [events]);
 
