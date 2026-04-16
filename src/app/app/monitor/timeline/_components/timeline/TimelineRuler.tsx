@@ -22,6 +22,21 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
   const totalWidth = 24 * hourWidth;
   const [now, setNow] = useState(dayjs());
 
+  // Call API get events
+  const { data: events } = useQuery({
+    queryKey: ['events', camera?.id, date],
+    queryFn: () => {
+      const start_date = dayjs(date).startOf('day').toISOString();
+      const end_date = dayjs(date).endOf('day').toISOString();
+      return api
+        .get(
+          `/api/v1/cameras/${camera?.id}/events?limit=9999&startDate=${start_date}&endDate=${end_date}`,
+        )
+        .then((res) => res.data);
+    },
+    enabled: !!camera?.id,
+  });
+
   // Cập nhật lại thời gian hiện tại mỗi giây
   useEffect(() => {
     const timer = setInterval(() => setNow(dayjs()), 1000);
@@ -46,17 +61,13 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
-  // Call API get events
-  const { data: events } = useQuery({
-    queryKey: ['events', camera?.id, date],
-    queryFn: () =>
-      api
-        .get(
-          `/api/v1/cameras/${camera?.id}/events?limit=9999&date=${dayjs(date).format('YYYY-MM-DD')}`,
-        )
-        .then((res) => res.data),
-    enabled: !!camera?.id,
-  });
+  // Chọn event mới nhất
+  useEffect(() => {
+    if (events) {
+      const lastIndex = events?.items?.length - 1;
+      onSelectEvent(events?.items?.[lastIndex]);
+    }
+  }, [events]);
 
   // Tạo mốc giờ
   const hours = Array.from({ length: 25 }, (_, i) => {

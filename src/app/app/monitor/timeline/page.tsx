@@ -9,7 +9,7 @@ import {
 } from './_components';
 import ModalWrapper from '@/components/modal/ModalWrapper';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence } from 'motion/react';
 
@@ -36,6 +36,12 @@ export default function Page() {
     queryKey: ['cameras'],
     queryFn: () => api.get('/api/v1/cameras').then((res) => res.data),
   });
+
+  useEffect(() => {
+    if (cameras) {
+      setSelectedCamera(cameras?.items?.[0]);
+    }
+  }, [cameras]);
 
   // Handle Loading and Error
   if (isLoading) return null;
