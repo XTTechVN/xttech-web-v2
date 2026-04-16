@@ -32,7 +32,7 @@ export default function DetectedObject({ event, isOpen, onClose, onClick }: Dete
     queryKey: ['detected-objects', event?.videoId],
     queryFn: () =>
       api
-        .get(`/api/v1/detected-objects?offset=0&limit=100&video_id=${event?.videoId}`)
+        .get(`/api/v1/detected-objects?offset=0&limit=100&videoId=${event?.videoId}`)
         .then((res) => res.data),
     enabled: !!event?.videoId && isOpen,
   });
