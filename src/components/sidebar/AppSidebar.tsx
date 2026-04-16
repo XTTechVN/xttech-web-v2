@@ -82,6 +82,17 @@ export default function AppSidebar() {
         },
       ],
     },
+    // Máy chủ AI
+    {
+      category: 'Máy chủ AI',
+      items: [
+        {
+          path: '/app/workers',
+          label: 'Danh sách máy chủ',
+          icon: <User size={16} />,
+        },
+      ],
+    },
     // Cài đặt
     {
       category: 'Cài đặt',
