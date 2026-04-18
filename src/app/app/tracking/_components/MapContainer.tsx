@@ -1,10 +1,18 @@
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/utils/api';
+import dayjs from 'dayjs';
+
+import Heading from '@/components/ui/Heading';
+import SubHeading from '@/components/ui/SubHeading';
+import TimePicker from './TimePicker';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-import { motion } from 'framer-motion';
-
-// Sửa lỗi icon marker bị lỗi khi dùng với Webpack/Next.js
+// Import marker icon
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -21,24 +29,148 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-export default function Map({ routeCoordinates, center }: { routeCoordinates: [number, number][], center: [number, number] }) {
-  return (
-    <MapContainer center={center} zoom={13} style={{ height: '100%', width: '100%' }}>
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
+// Component giúp set center map theo dữ liệu
+function ChangeView({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.setView(center, map.getZoom());
+    }
+  }, [center, map]);
+  return null;
+}
 
-      {routeCoordinates && routeCoordinates.map((position, index) => (
-        <motion.div
-          key={index}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, }}
-          transition={{ duration: 0.5, delay: index * 0.1 }}
-        >
-          <Marker position={position} icon={DefaultIcon} />
-        </motion.div>
-      ))}
-    </MapContainer>
+export default function Map({
+  tracingLabel,
+  tracingDetectionResult,
+}: {
+  tracingLabel: string;
+  tracingDetectionResult: string;
+}) {
+  const [routeCoordinates, setRouteCoordinates] = useState<any>([]);
+  const [center, setCenter] = useState<[number, number] | undefined>(undefined);
+
+  // Ngày mặc định là ngày hôm nay
+  const [date, setDate] = useState<dayjs.Dayjs>(dayjs());
+
+  // Thời gian mặc định là 8h sáng theo giờ local
+  const [time, setTime] = useState<number>(8 * 60 * 60);
+
+  // Fetch data
+  const { data, isLoading } = useQuery({
+    queryKey: ['detection-result', tracingLabel, tracingDetectionResult, date, time],
+    queryFn: async () => {
+      // 1. Chuyển ngày và giờ sang giờ UTC
+      const startDate = dayjs(date).startOf('day').add(time, 'second').toISOString();
+
+      // 1.1 Giờ lấy theo "time" + 1 giờ, vì chúng ta sẽ truy vết trong khoảng 1 giờ
+      const endDate = dayjs(date)
+        .startOf('day')
+        .add(time + 60 * 60, 'second')
+        .toISOString();
+
+      console.log(startDate, endDate);
+      // 2. call API tracing
+      const res = await api.get(
+        `/api/v1/detected-objects/tracing?label=${tracingLabel}&detectionResult=${tracingDetectionResult}&startDate=${startDate}&endDate=${endDate}`,
+      );
+      return res.data.items;
+    },
+    enabled: !!tracingLabel && !!tracingDetectionResult && !!date && !!time,
+  });
+
+  // Lọc dữ liệu set state
+  useEffect(() => {
+    if (data && data.length > 0) {
+      const coords = data.map((item: any) => ({
+        id: item.id || Math.random().toString(), // Use item.id if available
+        lat: item.event.camera.lat,
+        lng: item.event.camera.lng,
+      }));
+      const firstCenter: [number, number] = [coords[0].lat, coords[0].lng];
+      setRouteCoordinates(coords);
+      setCenter(firstCenter);
+    } else {
+      setRouteCoordinates([]);
+      setCenter([21.0278, 105.8526]);
+    }
+  }, [data]);
+
+  // hiển thị thông báo nếu đang loading hoặc chưa có dữ liệu
+  if (isLoading || !center) {
+    return (
+      <div className="h-[80vh] w-[80vw] p-6 bg-white rounded-lg shadow-md space-y-4">
+        {/* Heading */}
+        <div>
+          <Heading>Truy vết đối tượng</Heading>
+          <SubHeading>Vui lòng chọn ngày giờ để truy vết đối tượng</SubHeading>
+          <SubHeading>
+            Hệ thống chỉ hiển thị vị trí của đối tượng trong khoảng 1 giờ kể từ thời điểm chọn.
+          </SubHeading>
+        </div>
+
+        {/* TimePicker */}
+        <div>
+          <TimePicker date={date} setDate={setDate} time={time} setTime={setTime} />
+        </div>
+
+        {/* Loading */}
+        <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-500 rounded-lg border-2 border-dashed border-gray-300">
+          <div className="text-center">
+            <p className="animate-pulse">Đang tải dữ liệu vị trí...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[80vh] w-[80vw] p-6 bg-white rounded-lg shadow-md space-y-4">
+      {/* Heading */}
+      <div>
+        <Heading>Truy vết đối tượng</Heading>
+        <SubHeading>Vui lòng chọn ngày giờ để truy vết đối tượng</SubHeading>
+        <SubHeading>
+          Hệ thống chỉ hiển thị vị trí của đối tượng trong khoảng 1 giờ kể từ thời điểm chọn.
+        </SubHeading>
+      </div>
+
+      {/* TimePicker */}
+      <div className="flex items-center justify-between gap-4 ">
+        <div className="flex flex-col items-start text-sm">
+          <p>
+            Nhãn: <span className="font-semibold">{tracingLabel}</span>
+          </p>
+          <p>
+            Kết quả: <span className="font-semibold">{tracingDetectionResult}</span>
+          </p>
+        </div>
+
+        <TimePicker date={date} setDate={setDate} time={time} setTime={setTime} />
+      </div>
+
+      {/* Map */}
+      <MapContainer
+        center={center}
+        zoom={13}
+        style={{ height: '80%', width: '100%', borderRadius: '8px' }}
+      >
+        <ChangeView center={center} />
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+
+        {/* Render Marker */}
+        {routeCoordinates &&
+          routeCoordinates.map((pos: any) => (
+            <Marker
+              key={`${pos.id}-${pos.lat}-${pos.lng}`}
+              position={[pos.lat, pos.lng]}
+              icon={DefaultIcon}
+            />
+          ))}
+      </MapContainer>
+    </div>
   );
 }

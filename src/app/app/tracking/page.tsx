@@ -2,41 +2,20 @@
 
 import Heading from '@/components/ui/Heading';
 import SubHeading from '@/components/ui/SubHeading';
-import Search from '@/components/ui/Search';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
+import ModalWrapper from '@/components/modal/ModalWrapper';
+
+import Toolbar from './_components/Toolbar';
 import MapContainer from './_components/MapContainer';
-import { DatePicker } from 'antd';
+import DetectionResultTable from './_components/DetectionResultTable';
 
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import api from '@/utils/api';
-import queryClient from '@/utils/query';
-
-// Type
-import type { Dayjs } from 'dayjs';
 
 export default function TrackingPage() {
   const [label, setLabel] = useState('');
-  const [detectionResult, setDetectionResult] = useState('');
-  const [date, setDate] = useState<Dayjs | null>(null);
+  const [openModal, setOpenModal] = useState(false)
+  const [tracingLabel, setTracingLabel] = useState('');
+  const [tracingDetectionResult, setTracingDetectionResult] = useState('');
 
-  const { data } = useQuery({
-    queryKey: ['tracking', label, detectionResult, date],
-    queryFn: () => api.get('/api/v1/detected-objects/tracing', {
-      params: {
-        label,
-        detectionResult: detectionResult,
-        startDate: date?.toISOString(), // format iso 8601
-        endDate: date?.endOf('day').toISOString(), // format iso 8601, end of date
-      },
-    }),
-    enabled: !!detectionResult && !!label && !!date,
-  });
-
-  const onSearch = () => {
-    queryClient.invalidateQueries({ queryKey: ['tracking', label, detectionResult] });
-  };
 
   return (
     <div className="space-y-4 p-4">
@@ -45,33 +24,27 @@ export default function TrackingPage() {
         <SubHeading>Theo dõi và truy vết các đối tượng trong hệ thống</SubHeading>
       </div>
 
-      <div className="flex items-center gap-4">
-        <Search size="sm" placeholder="Nhập biển số xe" className="w-96" onChange={(value) => setDetectionResult(value as string)} />
-        <Select
-          size="sm"
-          placeholder="Chọn loại đối tượng"
-          options={[
-            { label: 'Tất cả', value: 'all' },
-            { label: 'Biển số xe', value: 'plate' },
-          ]}
-          onChange={(value) => setLabel(value as string)}
-        />
-        <DatePicker
-          placeholder="Chọn ngày"
-          className='h-9'
-          onChange={(value) => setDate(value)}
-        />
-        <Button size="sm" onClick={onSearch}>Tìm kiếm</Button>
-      </div>
+      <Toolbar label={label} setLabel={setLabel} />
 
-      {data && data.data.items.length > 0 && (
+      <DetectionResultTable label={label} onTrace={(item: any) => {
+        setOpenModal(true)
+        setTracingLabel(item.label)
+        setTracingDetectionResult(item.detectionResult)
+      }} />
+
+      {/* {tracingLabel && tracingDetectionResult && (
         <div className="h-[600px] w-full">
-          <MapContainer
-            routeCoordinates={data?.data.items.map((item: any) => [item.event.camera.lat, item.event.camera.lng])}
-            center={[data?.data.items[0].event.camera.lat, data?.data.items[0].event.camera.lng]}
-          />
+          <MapContainer tracingLabel={tracingLabel} tracingDetectionResult={tracingDetectionResult} />
         </div>
-      )}
+      )} */}
+
+      {/* Modal */}
+      <ModalWrapper
+        isOpen={openModal}
+        onClose={() => setOpenModal(false)}
+      >
+        <MapContainer tracingLabel={tracingLabel} tracingDetectionResult={tracingDetectionResult} />
+      </ModalWrapper>
     </div>
   );
 }
