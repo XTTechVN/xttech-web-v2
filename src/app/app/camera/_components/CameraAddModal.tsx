@@ -6,18 +6,31 @@ import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
 import Loading from '@/components/ui/icons/Loading';
 import SubHeading from '@/components/ui/SubHeading';
-import { useState } from 'react';
+import MapSelect from '@/components/map/MapSelect';
+import Select from '@/components/ui/Select';
 import { MapPin, PlusIcon, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { useForm } from 'react-hook-form';
-import MapSelect from '@/components/map/MapSelect';
+import { useForm, Controller } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import api from '@/utils/api';
+
+export interface WorkerData {
+  name: string;
+  ip: string;
+  port: number;
+  isActive: boolean;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface CameraFormModalData {
   name: string;
   rtspUrl: string;
   address: string;
-  workerIp: string;
+  workerId: string;
   lat: number;
   lng: number;
   isActive: boolean;
@@ -32,32 +45,68 @@ export default function CameraAddModal({
   onClose: () => void;
   onAdd: (value: CameraFormModalData) => void;
 }) {
+  // State
+  let workerOptions: { value: string; label: string }[] = [];
   const [isMapOpen, setIsMapOpen] = useState(false);
 
+  // Fetch worker data from API
+  const { data: workers, isLoading: isLoadingWorkers, isError } = useQuery<WorkerData[]>({
+    queryKey: ['workers'],
+    queryFn: () => api.get('/api/v1/workers?limit=100&offset=0').then((res: any) => res.data.items),
+  });
+
+  if (workers) {
+    workerOptions = workers.map((worker) => ({
+      value: worker.id as string,
+      label: worker.name as string,
+    }));
+  }
+
+  // Set up form with react-hook-form and zod
   const {
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors },
   } = useForm<CameraFormModalData>({
     defaultValues: {
       name: '',
       rtspUrl: '',
       address: '',
-      workerIp: '',
+      workerId: '',
       lat: 21.0285,
       lng: 105.8342,
+      isActive: false,
     },
   });
 
+  // Submit form
   const onSubmit = (data: CameraFormModalData) => {
     onAdd(data);
   };
 
+  // Handle map select
   const handleMapSelect = (position: { lat: number; lng: number }) => {
     setValue('lat', position.lat);
     setValue('lng', position.lng);
   };
+
+  useEffect(() => {
+    if (workers) {
+      setValue('workerId', workers[0].id);
+    }
+  }, [workers, setValue]);
+
+  // handle error
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center">
+        <Heading>Đã có lỗi xảy ra khi tải danh sách worker</Heading>
+        <SubHeading>Vui lòng thử lại sau</SubHeading>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-start gap-4">
@@ -90,11 +139,25 @@ export default function CameraAddModal({
 
               <div className="flex flex-col gap-2">
                 <Label>Worker IP</Label>
-                <Input
-                  placeholder="192.168.1.x"
-                  {...register('workerIp', { required: 'Worker IP là bắt buộc' })}
-                  error={errors.workerIp?.message as string}
-                />
+                  <Controller
+                    name="workerId"
+                    control={control}
+                    rules={{ required: 'Worker IP là bắt buộc' }}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onChange={field.onChange}
+                        ref={field.ref}
+                        options={workers?.map((worker) => ({
+                          value: worker.id as string,
+                          label: worker.name as string,
+                        })) || []}
+                        placeholder="Chọn worker"
+                        error={errors.workerId?.message}
+                        className="w-full h-full"
+                      />
+                    )}
+                  />
               </div>
             </div>
 

@@ -153,7 +153,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select(
 ) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [internalLabel, setInternalLabel] = useState<string | number | boolean>(value || '');
+  const [internalLabel, setInternalLabel] = useState<string | number | boolean>('');
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 

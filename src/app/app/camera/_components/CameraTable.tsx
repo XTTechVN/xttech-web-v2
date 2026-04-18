@@ -55,8 +55,11 @@ export default function CameraTable({
       label: 'Địa chỉ',
     },
     {
-      key: 'workerIp',
-      label: 'IP Worker',
+      key: 'workerName',
+      label: 'Worker',
+      render: (item: any) => (
+        <span>{item.worker.name}</span>
+      ),
     },
     {
       key: 'isActive',
@@ -100,7 +103,7 @@ export default function CameraTable({
           </div>
           <div className="flex items-center gap-2">
             <p className="font-semibold">IP Worker:</p>
-            <p>{item.workerIp}</p>
+            <p>{item.worker?.ip}</p>
           </div>
           <div className="flex items-center gap-2">
             <p className="font-semibold">Hành động:</p>

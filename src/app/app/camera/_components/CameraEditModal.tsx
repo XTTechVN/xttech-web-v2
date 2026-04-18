@@ -6,18 +6,31 @@ import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
 import Loading from '@/components/ui/icons/Loading';
 import SubHeading from '@/components/ui/SubHeading';
+import Select from '@/components/ui/Select';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Save, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/utils/api';
 import MapSelect from '@/components/map/MapSelect';
 import { Switch } from 'antd';
+
+export interface WorkerData {
+  name: string;
+  ip: string;
+  port: number;
+  isActive: boolean;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface CameraFormModalData {
   name: string;
   rtspUrl: string;
   address: string;
-  workerIp: string;
+  workerId: string;
   lat: number;
   lng: number;
   isActive: boolean;
@@ -30,24 +43,30 @@ export default function CameraEditModal({
   onEdit,
 }: {
   isLoading: boolean;
-  defaultValues?: CameraFormModalData;
+  defaultValues?: any;
   onClose: () => void;
   onEdit: (value: CameraFormModalData) => void;
 }) {
   const [isMapOpen, setIsMapOpen] = useState(false);
 
+  // Fetch worker data from API
+  const { data: workers, isLoading: isLoadingWorkers, isError } = useQuery<WorkerData[]>({
+    queryKey: ['workers'],
+    queryFn: () => api.get('/api/v1/workers?limit=100&offset=0').then((res: any) => res.data.items),
+  });
+
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<CameraFormModalData>({
     defaultValues: {
       name: defaultValues?.name || '',
       rtspUrl: defaultValues?.rtspUrl || '',
       address: defaultValues?.address || '',
-      workerIp: defaultValues?.workerIp || '',
+      workerId: defaultValues?.workerId || '',
       lat: defaultValues?.lat || 21.0285,
       lng: defaultValues?.lng || 105.8342,
       isActive: defaultValues?.isActive || false,
@@ -69,12 +88,25 @@ export default function CameraEditModal({
       setValue('name', defaultValues.name);
       setValue('rtspUrl', defaultValues.rtspUrl);
       setValue('address', defaultValues.address);
-      setValue('workerIp', defaultValues.workerIp);
+      setValue('workerId', defaultValues.workerId);
       setValue('lat', defaultValues.lat);
       setValue('lng', defaultValues.lng);
       setValue('isActive', defaultValues.isActive);
     }
   }, [defaultValues, setValue]);
+
+  // handle error
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center p-6">
+        <div className="text-center">
+          <Heading>Đã có lỗi xảy ra khi tải danh sách worker</Heading>
+          <SubHeading>Vui lòng thử lại sau</SubHeading>
+          <Button onClick={onClose} className="mt-4">Đóng</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-start gap-4">
@@ -95,7 +127,7 @@ export default function CameraEditModal({
         {/* Form Body */}
         <div className="flex-1 overflow-y-auto">
           <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-            {/* Name and Worker IP */}
+            {/* Name and Worker ID */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label>Tên thiết bị</Label>
@@ -107,12 +139,30 @@ export default function CameraEditModal({
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label>Worker IP</Label>
-                <Input
-                  placeholder="192.168.1.x"
-                  {...register('workerIp', { required: 'Worker IP là bắt buộc' })}
-                  error={errors.workerIp?.message as string}
-                />
+                <Label>Worker</Label>
+                {isLoadingWorkers ? (
+                  <Loading />
+                ) : (
+                  <Controller
+                    name="workerId"
+                    control={control}
+                    rules={{ required: 'Worker là bắt buộc' }}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onChange={field.onChange}
+                        ref={field.ref}
+                        options={workers?.map((worker) => ({
+                          value: worker.id as string,
+                          label: worker.name as string,
+                        })) || []}
+                        placeholder="Chọn worker"
+                        error={errors.workerId?.message}
+                        className="w-full h-full"
+                      />
+                    )}
+                  />
+                )}
               </div>
             </div>
 
@@ -172,11 +222,15 @@ export default function CameraEditModal({
             {/* Active */}
             <div className="flex items-center gap-2">
               <Label>Trạng thái</Label>
-              <Switch
-                checked={watch('isActive')}
-                onChange={(checked) => {
-                  setValue('isActive', checked);
-                }}
+              <Controller
+                name="isActive"
+                control={control}
+                render={({ field }) => (
+                  <Switch
+                    checked={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
               />
             </div>
 
@@ -210,7 +264,7 @@ export default function CameraEditModal({
               <MapSelect
                 onSelect={handleMapSelect}
                 defaultPosition={
-                  defaultValues ? { lat: defaultValues.lat, lng: defaultValues.lng } : undefined
+                  defaultValues ? { lat: defaultValues.lat, lng: defaultValues.lng } : { lat: 21.0285, lng: 105.8342 }
                 }
               />
             </div>
