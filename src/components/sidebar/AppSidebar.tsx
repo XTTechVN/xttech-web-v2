@@ -76,7 +76,7 @@ export default function AppSidebar() {
       category: 'Truy vết',
       items: [
         {
-          path: '/app/tracking',
+          path: '/app/tracing',
           label: 'Truy vết đối tượng',
           icon: <User size={16} />,
         },

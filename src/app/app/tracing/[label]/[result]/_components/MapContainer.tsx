@@ -16,6 +16,7 @@ import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import MediaViewer from './MediaViewer';
 
 const DefaultIcon = L.icon({
   iconUrl: (markerIcon as any).src || markerIcon,
@@ -47,14 +48,11 @@ export default function Map({
   tracingLabel: string;
   tracingDetectionResult: string;
 }) {
-  const [routeCoordinates, setRouteCoordinates] = useState<any>([]);
-  const [center, setCenter] = useState<[number, number] | undefined>(undefined);
-
-  // Ngày mặc định là ngày hôm nay
-  const [date, setDate] = useState<dayjs.Dayjs>(dayjs());
-
-  // Thời gian mặc định là 8h sáng theo giờ local
-  const [time, setTime] = useState<number>(8 * 60 * 60);
+  const [routeCoordinates, setRouteCoordinates] = useState<any>([]); // Toàn bộ tọa độ đi qua
+  const [center, setCenter] = useState<[number, number] | undefined>(undefined); // Center map
+  const [date, setDate] = useState<dayjs.Dayjs>(dayjs()); // Ngày mặc định là ngày hôm nay
+  const [time, setTime] = useState<number>(8 * 60 * 60); // Thời gian mặc định là 8h sáng theo giờ local
+  const [selectedId, setSelectedId] = useState<any>(null);
 
   // Fetch data
   const { data, isLoading } = useQuery({
@@ -99,16 +97,7 @@ export default function Map({
   // hiển thị thông báo nếu đang loading hoặc chưa có dữ liệu
   if (isLoading || !center) {
     return (
-      <div className="h-[80vh] w-[80vw] p-6 bg-white rounded-lg shadow-md space-y-4">
-        {/* Heading */}
-        <div>
-          <Heading>Truy vết đối tượng</Heading>
-          <SubHeading>Vui lòng chọn ngày giờ để truy vết đối tượng</SubHeading>
-          <SubHeading>
-            Hệ thống chỉ hiển thị vị trí của đối tượng trong khoảng 1 giờ kể từ thời điểm chọn.
-          </SubHeading>
-        </div>
-
+      <div className="h-[70vh] w-[90vw] p-6 bg-white rounded-lg shadow-md space-y-4">
         {/* TimePicker */}
         <div>
           <TimePicker date={date} setDate={setDate} time={time} setTime={setTime} />
@@ -125,35 +114,18 @@ export default function Map({
   }
 
   return (
-    <div className="h-[80vh] w-[80vw] p-6 bg-white rounded-lg shadow-md space-y-4">
-      {/* Heading */}
-      <div>
-        <Heading>Truy vết đối tượng</Heading>
-        <SubHeading>Vui lòng chọn ngày giờ để truy vết đối tượng</SubHeading>
-        <SubHeading>
-          Hệ thống chỉ hiển thị vị trí của đối tượng trong khoảng 1 giờ kể từ thời điểm chọn.
-        </SubHeading>
-      </div>
-
+    <div className="space-y-4">
       {/* TimePicker */}
       <div className="flex items-center justify-between gap-4 ">
-        <div className="flex flex-col items-start text-sm">
-          <p>
-            Nhãn: <span className="font-semibold">{tracingLabel}</span>
-          </p>
-          <p>
-            Kết quả: <span className="font-semibold">{tracingDetectionResult}</span>
-          </p>
-        </div>
-
         <TimePicker date={date} setDate={setDate} time={time} setTime={setTime} />
       </div>
 
       {/* Map */}
       <MapContainer
+        className="col-span-7"
         center={center}
         zoom={13}
-        style={{ height: '80%', width: '100%', borderRadius: '8px' }}
+        style={{ height: '600px', width: '100%', borderRadius: '8px' }}
       >
         <ChangeView center={center} />
         <TileLayer
@@ -165,12 +137,20 @@ export default function Map({
         {routeCoordinates &&
           routeCoordinates.map((pos: any) => (
             <Marker
+              eventHandlers={{
+                click: () => {
+                  setSelectedId(pos.id);
+                },
+              }}
               key={`${pos.id}-${pos.lat}-${pos.lng}`}
               position={[pos.lat, pos.lng]}
               icon={DefaultIcon}
             />
           ))}
       </MapContainer>
+
+      {/* MediaViewer */}
+      <MediaViewer selectedId={selectedId} data={data} />
     </div>
   );
 }
