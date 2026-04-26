@@ -8,13 +8,14 @@ import Loading from '@/components/ui/icons/Loading';
 import SubHeading from '@/components/ui/SubHeading';
 import MapSelect from '@/components/map/MapSelect';
 import Select from '@/components/ui/Select';
-import { MapPin, PlusIcon, X } from 'lucide-react';
+import { InfoIcon, MapPin, PlusIcon, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { useForm, Controller } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import api from '@/utils/api';
+import toast from 'react-hot-toast';
 
 export interface WorkerData {
   name: string;
@@ -50,7 +51,11 @@ export default function CameraAddModal({
   const [isMapOpen, setIsMapOpen] = useState(false);
 
   // Fetch worker data from API
-  const { data: workers, isLoading: isLoadingWorkers, isError } = useQuery<WorkerData[]>({
+  const {
+    data: workers,
+    isLoading: isLoadingWorkers,
+    isError,
+  } = useQuery<WorkerData[]>({
     queryKey: ['workers'],
     queryFn: () => api.get('/api/v1/workers?limit=100&offset=0').then((res: any) => res.data.items),
   });
@@ -93,10 +98,19 @@ export default function CameraAddModal({
   };
 
   useEffect(() => {
-    if (workers) {
-      setValue('workerId', workers[0].id);
+    if (isLoadingWorkers) return;
+    if (isError) return;
+
+    if (!workers || workers.length === 0) {
+      toast.error('Không tìm thấy máy chủ AI', {
+        icon: <InfoIcon size={16} />,
+      });
+      onClose();
+      return;
     }
-  }, [workers, setValue]);
+
+    setValue('workerId', workers[0].id as string);
+  }, [workers, setValue, isLoadingWorkers, isError]);
 
   // handle error
   if (isError) {
@@ -139,25 +153,27 @@ export default function CameraAddModal({
 
               <div className="flex flex-col gap-2">
                 <Label>Worker IP</Label>
-                  <Controller
-                    name="workerId"
-                    control={control}
-                    rules={{ required: 'Worker IP là bắt buộc' }}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onChange={field.onChange}
-                        ref={field.ref}
-                        options={workers?.map((worker) => ({
+                <Controller
+                  name="workerId"
+                  control={control}
+                  rules={{ required: 'Worker IP là bắt buộc' }}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onChange={field.onChange}
+                      ref={field.ref}
+                      options={
+                        workers?.map((worker) => ({
                           value: worker.id as string,
                           label: worker.name as string,
-                        })) || []}
-                        placeholder="Chọn worker"
-                        error={errors.workerId?.message}
-                        className="w-full h-full"
-                      />
-                    )}
-                  />
+                        })) || []
+                      }
+                      placeholder="Chọn worker"
+                      error={errors.workerId?.message}
+                      className="w-full h-full"
+                    />
+                  )}
+                />
               </div>
             </div>
 
