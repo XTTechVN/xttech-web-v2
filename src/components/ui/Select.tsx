@@ -356,7 +356,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select(
       {isOpen && (
         <div
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-white rounded-lg shadow-lg border border-[#E5E7EB] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
+          className="absolute left-0 right-0 top-[calc(100%+4px)] z-1000 bg-white rounded-lg shadow-lg border border-[#E5E7EB] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
         >
           <div className="max-h-[200px] overflow-y-auto scrollbar-hide">
             {filteredOptions.length === 0 ? (
