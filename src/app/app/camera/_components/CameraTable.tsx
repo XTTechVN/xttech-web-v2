@@ -5,7 +5,7 @@ import Table from '@/components/table/Table';
 import TableAction from '@/components/table/TableAction';
 import TablePagination from '@/components/table/TablePagination';
 import TableLoading from '@/components/table/TableLoading';
-import { BiCheckCircle, BiXCircle } from "react-icons/bi";
+import { BiCheckCircle, BiXCircle } from 'react-icons/bi';
 
 // Hooks
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +17,17 @@ import api from '@/utils/api';
 // Types
 import { Camera } from '@/types/shared/camera';
 import { ResponsePagination } from '@/types/shared/reponse';
+
+const mappingStatus = {
+  stopped: 'Đã dừng',
+  recording_continuous: 'Ghi hình liên tục',
+  recording_event: 'Ghi hình sự kiện',
+};
+
+const mappingRtspType = {
+  pull: 'Pull',
+  push: 'Push',
+};
 
 export default function CameraTable({
   onDelete,
@@ -45,10 +56,14 @@ export default function CameraTable({
     {
       key: 'rtspUrl',
       label: 'URL RTSP',
-      width: '30%',
-      render: (item: Camera) => (
-        <span className="truncate">{item.rtspUrl.substring(0, 35)}</span>
-      ),
+      width: '20%',
+      render: (item: Camera) => <span className="truncate">{item.rtspUrl.substring(0, 35)}</span>,
+    },
+    {
+      key: 'rtspType',
+      label: 'Loại RTSP',
+      width: '8%',
+      render: (item: Camera) => <span className="truncate">{item.rtspType}</span>,
     },
     {
       key: 'address',
@@ -57,17 +72,18 @@ export default function CameraTable({
     {
       key: 'workerName',
       label: 'Worker',
-      render: (item: any) => (
-        <span>{item.worker.name}</span>
-      ),
+      width: '10%',
+      render: (item: any) => <span>{item.worker.name}</span>,
     },
     {
-      key: 'isActive',
+      key: 'status',
       label: 'Trạng thái',
       width: '10%',
       render: (item: Camera) => (
-        <span className={`badge ${item.isActive ? 'badge-success' : 'badge-error'}`}>
-          {item.isActive ? <BiCheckCircle size={20} color='green' /> : <BiXCircle size={20} color='red' />}
+        <span
+          className={`badge ${mappingStatus[item.status as keyof typeof mappingStatus] ? 'badge-success' : 'badge-error'}`}
+        >
+          {mappingStatus[item.status as keyof typeof mappingStatus]}
         </span>
       ),
     },

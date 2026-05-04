@@ -1,5 +1,6 @@
 'use client';
 
+// Components
 import Label from '@/components/ui/Label';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -7,34 +8,22 @@ import Heading from '@/components/ui/Heading';
 import Loading from '@/components/ui/icons/Loading';
 import SubHeading from '@/components/ui/SubHeading';
 import Select from '@/components/ui/Select';
-import { motion, AnimatePresence } from 'framer-motion';
+import MapSelect from '@/components/map/MapSelect';
 import { MapPin, Save, X } from 'lucide-react';
+import { Radio } from 'antd';
+
+// Libraries
+import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { useQuery } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Utils
 import api from '@/utils/api';
-import MapSelect from '@/components/map/MapSelect';
-import { Switch } from 'antd';
 
-export interface WorkerData {
-  name: string;
-  ip: string;
-  port: number;
-  isActive: boolean;
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CameraFormModalData {
-  name: string;
-  rtspUrl: string;
-  address: string;
-  workerId: string;
-  lat: number;
-  lng: number;
-  isActive: boolean;
-}
+// Types
+import { CameraEditFormData } from '@/types/shared/camera';
+import { Worker } from '@/types/shared/worker';
 
 export default function CameraEditModal({
   isLoading,
@@ -45,12 +34,16 @@ export default function CameraEditModal({
   isLoading: boolean;
   defaultValues?: any;
   onClose: () => void;
-  onEdit: (value: CameraFormModalData) => void;
+  onEdit: (value: CameraEditFormData) => void;
 }) {
   const [isMapOpen, setIsMapOpen] = useState(false);
 
   // Fetch worker data from API
-  const { data: workers, isLoading: isLoadingWorkers, isError } = useQuery<WorkerData[]>({
+  const {
+    data: workers,
+    isLoading: isLoadingWorkers,
+    isError,
+  } = useQuery<Worker[]>({
     queryKey: ['workers'],
     queryFn: () => api.get('/api/v1/workers?limit=100&offset=0').then((res: any) => res.data.items),
   });
@@ -61,7 +54,7 @@ export default function CameraEditModal({
     setValue,
     control,
     formState: { errors },
-  } = useForm<CameraFormModalData>({
+  } = useForm<CameraEditFormData>({
     defaultValues: {
       name: defaultValues?.name || '',
       rtspUrl: defaultValues?.rtspUrl || '',
@@ -69,11 +62,12 @@ export default function CameraEditModal({
       workerId: defaultValues?.workerId || '',
       lat: defaultValues?.lat || 21.0285,
       lng: defaultValues?.lng || 105.8342,
-      isActive: defaultValues?.isActive || false,
+      status: defaultValues?.status || 'stopped',
+      rtspType: defaultValues?.rtspType || 'rtsp',
     },
   });
 
-  const onSubmit = (data: CameraFormModalData) => {
+  const onSubmit = (data: CameraEditFormData) => {
     onEdit(data);
   };
 
@@ -91,7 +85,7 @@ export default function CameraEditModal({
       setValue('workerId', defaultValues.workerId);
       setValue('lat', defaultValues.lat);
       setValue('lng', defaultValues.lng);
-      setValue('isActive', defaultValues.isActive);
+      setValue('status', defaultValues.status);
     }
   }, [defaultValues, setValue]);
 
@@ -102,7 +96,9 @@ export default function CameraEditModal({
         <div className="text-center">
           <Heading>Đã có lỗi xảy ra khi tải danh sách worker</Heading>
           <SubHeading>Vui lòng thử lại sau</SubHeading>
-          <Button onClick={onClose} className="mt-4">Đóng</Button>
+          <Button onClick={onClose} className="mt-4">
+            Đóng
+          </Button>
         </div>
       </div>
     );
@@ -152,10 +148,12 @@ export default function CameraEditModal({
                         value={field.value}
                         onChange={field.onChange}
                         ref={field.ref}
-                        options={workers?.map((worker) => ({
-                          value: worker.id as string,
-                          label: worker.name as string,
-                        })) || []}
+                        options={
+                          workers?.map((worker) => ({
+                            value: worker.id as string,
+                            label: worker.name as string,
+                          })) || []
+                        }
                         placeholder="Chọn worker"
                         error={errors.workerId?.message}
                         className="w-full h-full"
@@ -219,17 +217,33 @@ export default function CameraEditModal({
               />
             </div>
 
-            {/* Active */}
-            <div className="flex items-center gap-2">
-              <Label>Trạng thái</Label>
+            {/* RTSP Type */}
+            <div className="flex flex-col items-start gap-2">
+              <Label>Loại RTSP</Label>
               <Controller
-                name="isActive"
+                name="rtspType"
                 control={control}
                 render={({ field }) => (
-                  <Switch
-                    checked={field.value}
-                    onChange={field.onChange}
-                  />
+                  <Radio.Group onChange={field.onChange} value={field.value}>
+                    <Radio value="pull">Pull</Radio>
+                    <Radio value="push">Push</Radio>
+                  </Radio.Group>
+                )}
+              />
+            </div>
+
+            {/* Status */}
+            <div className="flex flex-col items-start gap-2">
+              <Label>Trạng thái</Label>
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <Radio.Group onChange={field.onChange} value={field.value}>
+                    <Radio value="stopped">Dừng ghi</Radio>
+                    <Radio value="recording_continuous">Ghi hình liên tục</Radio>
+                    <Radio value="recording_event">Ghi hình sự kiện</Radio>
+                  </Radio.Group>
                 )}
               />
             </div>
@@ -264,7 +278,9 @@ export default function CameraEditModal({
               <MapSelect
                 onSelect={handleMapSelect}
                 defaultPosition={
-                  defaultValues ? { lat: defaultValues.lat, lng: defaultValues.lng } : { lat: 21.0285, lng: 105.8342 }
+                  defaultValues
+                    ? { lat: defaultValues.lat, lng: defaultValues.lng }
+                    : { lat: 21.0285, lng: 105.8342 }
                 }
               />
             </div>

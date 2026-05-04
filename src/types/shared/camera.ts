@@ -1,12 +1,13 @@
 export type Camera = {
+  status: 'stopped' | 'recording_continuous' | 'recording_event';
   name: string;
   rtspUrl: string;
+  rtspType: string;
   address: string;
   workerId: string;
   lat: number;
   lng: number;
   id: string;
-  isActive: boolean;
   createdAt: string;
   updatedAt: string;
   worker?: {
@@ -17,3 +18,24 @@ export type Camera = {
     id: string;
   };
 };
+
+export interface CameraAddFormData {
+  name: string;
+  rtspUrl: string;
+  address: string;
+  workerId: string;
+  lat: number;
+  lng: number;
+  status: 'stopped' | 'recording_continuous' | 'recording_event';
+}
+
+export interface CameraEditFormData {
+  name: string;
+  rtspUrl: string;
+  address: string;
+  workerId: string;
+  lat: number;
+  lng: number;
+  status: 'stopped' | 'recording_continuous' | 'recording_event';
+  rtspType: 'pull' | 'push';
+}

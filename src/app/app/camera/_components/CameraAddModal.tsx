@@ -17,25 +17,8 @@ import { useState, useEffect } from 'react';
 import api from '@/utils/api';
 import toast from 'react-hot-toast';
 
-export interface WorkerData {
-  name: string;
-  ip: string;
-  port: number;
-  isActive: boolean;
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CameraFormModalData {
-  name: string;
-  rtspUrl: string;
-  address: string;
-  workerId: string;
-  lat: number;
-  lng: number;
-  isActive: boolean;
-}
+import { CameraAddFormData } from '@/types/shared/camera';
+import { Worker } from '@/types/shared/worker';
 
 export default function CameraAddModal({
   isLoading,
@@ -44,7 +27,7 @@ export default function CameraAddModal({
 }: {
   isLoading: boolean;
   onClose: () => void;
-  onAdd: (value: CameraFormModalData) => void;
+  onAdd: (value: CameraAddFormData) => void;
 }) {
   // State
   let workerOptions: { value: string; label: string }[] = [];
@@ -55,7 +38,7 @@ export default function CameraAddModal({
     data: workers,
     isLoading: isLoadingWorkers,
     isError,
-  } = useQuery<WorkerData[]>({
+  } = useQuery<Worker[]>({
     queryKey: ['workers'],
     queryFn: () => api.get('/api/v1/workers?limit=100&offset=0').then((res: any) => res.data.items),
   });
@@ -74,7 +57,7 @@ export default function CameraAddModal({
     setValue,
     control,
     formState: { errors },
-  } = useForm<CameraFormModalData>({
+  } = useForm<CameraAddFormData>({
     defaultValues: {
       name: '',
       rtspUrl: '',
@@ -82,12 +65,12 @@ export default function CameraAddModal({
       workerId: '',
       lat: 21.0285,
       lng: 105.8342,
-      isActive: false,
+      status: 'stopped',
     },
   });
 
   // Submit form
-  const onSubmit = (data: CameraFormModalData) => {
+  const onSubmit = (data: CameraAddFormData) => {
     onAdd(data);
   };
 
@@ -127,13 +110,20 @@ export default function CameraAddModal({
       {/* Main Modal */}
       <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full max-w-xl h-fit max-h-[90vh] transition-all duration-300">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 pb-2">
+        <div className="flex items-start justify-between p-6 pb-2">
           <div className="flex flex-col gap-1">
             <Heading>Thêm camera</Heading>
-            <SubHeading>Thêm camera vào hệ thống</SubHeading>
+            <SubHeading>
+              Sau khi thêm camera, vui lòng cấu hình các thông tin chi tiết khác trong action edit
+            </SubHeading>
           </div>
 
-          <Button type="button" variant="ghost" onClick={onClose} className="rounded-full">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+            className="rounded-full hover:bg-transparent"
+          >
             <X size={20} />
           </Button>
         </div>

@@ -6,7 +6,7 @@ import ModalWrapper from '@/components/modal/ModalWrapper';
 import CameraHeading from './_components/CameraHeading';
 import CameraTable from './_components/CameraTable';
 import CameraToolbar from './_components/CameraToolbar';
-import CameraAddModal, { CameraFormModalData } from './_components/CameraAddModal';
+import CameraAddModal from './_components/CameraAddModal';
 import CameraEditModal from './_components/CameraEditModal';
 
 // Hooks
@@ -19,7 +19,7 @@ import toast from 'react-hot-toast';
 import { featureNotImplemented } from '@/utils/toast';
 
 // Types
-import { Camera } from '@/types/shared/camera';
+import { Camera, CameraAddFormData, CameraEditFormData } from '@/types/shared/camera';
 
 export default function CameraPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,9 +28,11 @@ export default function CameraPage() {
   const [isEdit, setIsEdit] = useState(false);
 
   const [selectedCameraId, setSelectedCameraId] = useState<string>('');
-  const [defaultValues, setDefaultValues] = useState<CameraFormModalData | undefined>(undefined);
+  const [defaultValues, setDefaultValues] = useState<
+    CameraAddFormData | CameraEditFormData | undefined
+  >(undefined);
 
-  const handleAddCamera = async (data: CameraFormModalData) => {
+  const handleAddCamera = async (data: CameraAddFormData) => {
     setIsLoading(true);
     try {
       await api.post('/api/v1/cameras', data);
@@ -58,7 +60,7 @@ export default function CameraPage() {
     }
   };
 
-  const handleEditCamera = async (data: CameraFormModalData) => {
+  const handleEditCamera = async (data: CameraEditFormData) => {
     setIsLoading(true);
     try {
       await api.patch(`/api/v1/cameras/${selectedCameraId}`, data);
@@ -78,10 +80,7 @@ export default function CameraPage() {
       <CameraHeading />
 
       {/* Toolbar */}
-      <CameraToolbar 
-        onAdd={() => setIsModalOpen(true)} 
-        onExport={featureNotImplemented} 
-      />
+      <CameraToolbar onAdd={() => setIsModalOpen(true)} onExport={featureNotImplemented} />
 
       {/* Table */}
       <CameraTable
