@@ -44,12 +44,23 @@ export default function SignInPage() {
         toast.success('Đăng nhập thành công');
       }, 500);
     } catch (error: any) {
-      // 1. Hiển thị toast thông báo lỗi
-      toast.error(
-        error.response.data.detail == 'Incorrect username or password'
-          ? 'Sai tài khoản hoặc mật khẩu'
-          : error.response.data.detail,
-      );
+      // 1. Lấy detail từ response (có fallback)
+      const detail = error.response?.data?.detail;
+
+      // 2. Hiển thị toast thông báo lỗi an toàn
+      if (typeof detail === 'string') {
+        toast.error(
+          detail === 'Incorrect username or password'
+            ? 'Sai tài khoản hoặc mật khẩu'
+            : detail,
+        );
+      } else if (Array.isArray(detail)) {
+        // Trường hợp lỗi validation của FastAPI (Pydantic trả về mảng objects có key 'msg')
+        const firstErrorMsg = detail[0]?.msg;
+        toast.error(firstErrorMsg ? `Lỗi dữ liệu: ${firstErrorMsg}` : 'Dữ liệu không hợp lệ');
+      } else {
+        toast.error('Có lỗi xảy ra, vui lòng thử lại');
+      }
     }
   };
 
