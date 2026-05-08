@@ -5,7 +5,6 @@ import Table from '@/components/table/Table';
 import TableAction from '@/components/table/TableAction';
 import TablePagination from '@/components/table/TablePagination';
 import TableLoading from '@/components/table/TableLoading';
-import { BiCheckCircle, BiXCircle } from 'react-icons/bi';
 
 // Hooks
 import { useQuery } from '@tanstack/react-query';

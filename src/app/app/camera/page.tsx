@@ -12,6 +12,7 @@ import CameraEditModal from './_components/CameraEditModal';
 // Hooks
 import { useState } from 'react';
 import queryClient from '@/utils/query';
+import { useRouter } from 'next/navigation';
 
 // Utils
 import api from '@/utils/api';
@@ -26,11 +27,12 @@ export default function CameraPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalConfirmOpen, setIsModalConfirmOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-
   const [selectedCameraId, setSelectedCameraId] = useState<string>('');
   const [defaultValues, setDefaultValues] = useState<
     CameraAddFormData | CameraEditFormData | undefined
   >(undefined);
+
+  const router = useRouter();
 
   const handleAddCamera = async (data: CameraAddFormData) => {
     setIsLoading(true);
@@ -94,7 +96,7 @@ export default function CameraPage() {
           setIsEdit(true);
         }}
         onView={(cam: Camera) => {
-          featureNotImplemented();
+          router.push(`/app/camera/${cam.id}/stream`);
         }}
       />
 

@@ -114,7 +114,7 @@ export default function CameraAddModal({
           <div className="flex flex-col gap-1">
             <Heading>Thêm camera</Heading>
             <SubHeading>
-              Sau khi thêm camera, vui lòng cấu hình các thông tin chi tiết khác trong action edit
+              Sau khi thêm camera, vui lòng cấu hình các thông tin chi tiết khác tại nút "cấu hình"
             </SubHeading>
           </div>
 

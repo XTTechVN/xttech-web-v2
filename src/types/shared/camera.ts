@@ -38,4 +38,6 @@ export interface CameraEditFormData {
   lng: number;
   status: 'stopped' | 'recording_continuous' | 'recording_event';
   rtspType: 'pull' | 'push';
+  onvif: boolean;
+  port: number;
 }

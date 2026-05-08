@@ -15,15 +15,15 @@ export default function MonitorSetting({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 bg-primary">
-        <p className="text-white text-base font-medium">Cài đặt chế độ xem</p>
+      <div className="p-3 bg-primary">
+        <p className="text-white text-sm font-medium">Cài đặt hiển thị</p>
       </div>
 
       {/* Content */}
-      <div className="p-4 bg-gray-100 flex-1">
+      <div className="p-3 bg-gray-100 flex-1">
         <div className="grid grid-cols-2 gap-2">
           <button
-            className={`bg-primary text-white p-2 rounded ${viewMode === '1x1' ? 'bg-primary/50' : ''}`}
+            className={`bg-primary text-white text-sm p-2 rounded ${viewMode === '1x1' ? 'bg-primary/50' : ''}`}
             onClick={() => {
               setViewMode('1x1');
               setPortView(null);
@@ -32,7 +32,7 @@ export default function MonitorSetting({
             1x1
           </button>
           <button
-            className={`bg-primary text-white p-2 rounded ${viewMode === '2x2' ? 'bg-primary/50' : ''}`}
+            className={`bg-primary text-white text-sm p-2 rounded ${viewMode === '2x2' ? 'bg-primary/50' : ''}`}
             onClick={() => {
               setViewMode('2x2');
               setPortView(null);
@@ -41,7 +41,7 @@ export default function MonitorSetting({
             2x2
           </button>
           <button
-            className={`bg-primary text-white p-2 rounded ${viewMode === '3x3' ? 'bg-primary/50' : ''}`}
+            className={`bg-primary text-white text-sm p-2 rounded ${viewMode === '3x3' ? 'bg-primary/50' : ''}`}
             onClick={() => {
               setViewMode('3x3');
               setPortView(null);
@@ -50,7 +50,7 @@ export default function MonitorSetting({
             3x3
           </button>
           <button
-            className={`bg-primary text-white p-2 rounded ${viewMode === '4x4' ? 'bg-primary/50' : ''}`}
+            className={`bg-primary text-white text-sm p-2 rounded ${viewMode === '4x4' ? 'bg-primary/50' : ''}`}
             onClick={() => {
               setViewMode('4x4');
               setPortView(null);
