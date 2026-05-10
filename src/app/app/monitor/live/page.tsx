@@ -1,32 +1,36 @@
 'use client';
 
 // components
-import HeaderToolbar from './_components/HeaderToolbar';
+import HeaderToolbar from './_components/MonitorToolbar';
 import MonitorList from './_components/MonitorList';
 import MonitorSetting from './_components/MonitorSetting';
 import MonitorGrid from './_components/MonitorGrid';
 import ModalWrapper from '@/components/modal/ModalWrapper';
 import ModalConfirm from '@/components/modal/ModalConfirm';
-import InsertCameraModal from './_components/InsertCameraModal';
+import InsertCameraModal from './_components/modal/AddCamera';
 
 // hooks
 import { useQuery } from '@tanstack/react-query';
 import useUserStore from '@/stores/useUserStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
 import api from '@/utils/api';
 
-// types
-import { GridCell, Monitor } from '@/types/shared/monitor';
+import useMonitorStore from '@/stores/useMonitorStore';
 
 export default function LivePage() {
   const { user } = useUserStore();
-  const [selectedMonitor, setSelectedMonitor] = useState<Monitor | null>(null);
-  const [isShowConfirmRemoveCamera, setIsShowConfirmRemoveCamera] = useState(false);
-  const [isShowSetting, setIsShowSetting] = useState(false);
-  const [isShowList, setIsShowList] = useState(true);
-  const [isAddCamera, setIsAddCamera] = useState(false);
-  const [gridKey, setGridKey] = useState('');
+  const {
+    monitor,
+    setMonitor,
+    isAdding,
+    setIsAdding,
+    isRemoving,
+    setIsRemoving,
+    isShowSetting,
+    isShowList,
+    gridKey,
+    setGridKey,
+  } = useMonitorStore();
 
   const {
     data: monitors,
@@ -42,38 +46,26 @@ export default function LivePage() {
     refetchOnWindowFocus: false,
   });
 
-  // Xử lý chọn màn hình
-  const handleSelectMonitor = (monitor: Monitor) => {
-    setSelectedMonitor(monitor);
-    setIsShowList(false);
-    setIsShowSetting(true);
-  };
-
-  // Xử lý flow chọn camera để gán vào cell
-  const handleAddCamera = (cell: GridCell, gridKey: string) => {
-    setIsAddCamera(true);
-    setGridKey(gridKey);
-  };
-
-  const handleRemoveCamera = async (cell: GridCell, gridKey: string) => {
+  const handleRemoveCamera = async () => {
+    if (!monitor || !gridKey) return;
     try {
-      const res = await api.patch(`/api/v1/monitors/${selectedMonitor?.id}`, {
+      const res = await api.patch(`/api/v1/monitors/${monitor.id}`, {
         grid: {
-          ...selectedMonitor?.grid,
+          ...monitor.grid,
           [gridKey]: {
-            ...selectedMonitor?.grid[gridKey],
+            ...monitor.grid[gridKey],
             cameraId: null,
             workerIp: null,
             workerPort: null,
           },
         },
       });
-      setSelectedMonitor(res.data);
+      setMonitor(res.data);
     } catch (error) {
       console.error(error);
     } finally {
-      setIsShowConfirmRemoveCamera(false);
-      setGridKey('');
+      setIsRemoving(false);
+      setGridKey(null);
     }
   };
 
@@ -85,33 +77,12 @@ export default function LivePage() {
   return (
     <div className="p-4 space-y-4 h-full">
       {/* Header */}
-      <HeaderToolbar
-        userId={user.id}
-        onShowList={() => {
-          setIsShowList(true);
-          setIsShowSetting(false);
-        }}
-        onShowSetting={() => {
-          setIsShowList(false);
-          setIsShowSetting(true);
-        }}
-      />
+      <HeaderToolbar userId={user.id} />
 
       {/* Body */}
       <div className="flex gap-2 h-full">
         {/* Monitor Grid */}
-        <div className="flex-1">
-          {selectedMonitor && (
-            <MonitorGrid
-              grid={selectedMonitor.grid}
-              onAddCamera={handleAddCamera}
-              onRemoveCamera={(cell: GridCell, gridKey: string) => {
-                setIsShowConfirmRemoveCamera(true);
-                setGridKey(gridKey);
-              }}
-            />
-          )}
-        </div>
+        <div className="flex-1">{monitor && <MonitorGrid />}</div>
 
         {/* Sidebar control */}
         <AnimatePresence>
@@ -123,41 +94,27 @@ export default function LivePage() {
             className="w-full md:w-[20%] h-full"
           >
             <div>
-              {isShowList && (
-                <MonitorList monitors={monitors} onSelectMonitor={handleSelectMonitor} />
-              )}
-              {isShowSetting && (
-                <MonitorSetting setViewMode={(viewMode) => {}} setPortView={(portView) => {}} />
-              )}
+              {isShowList && <MonitorList monitors={monitors} />}
+              {isShowSetting && <MonitorSetting setViewMode={() => {}} setPortView={() => {}} />}
             </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Modal insert camera */}
-      <ModalWrapper isOpen={isAddCamera} onClose={() => setIsAddCamera(false)}>
-        {selectedMonitor && (
-          <InsertCameraModal
-            gridKey={gridKey}
-            monitor={selectedMonitor}
-            onClose={() => setIsAddCamera(false)}
-            setSelectedMonitor={setSelectedMonitor}
-          />
-        )}
+      <ModalWrapper isOpen={isAdding} onClose={() => setIsAdding(false)}>
+        {monitor && <InsertCameraModal />}
       </ModalWrapper>
 
       {/* Modal confirm remove camera */}
-      <ModalWrapper
-        isOpen={isShowConfirmRemoveCamera}
-        onClose={() => setIsShowConfirmRemoveCamera(false)}
-      >
-        {selectedMonitor && (
+      <ModalWrapper isOpen={isRemoving} onClose={() => setIsRemoving(false)}>
+        {monitor && (
           <ModalConfirm
             title="Xác nhận xóa camera"
-            description={`Bạn có chắc chắn muốn xóa camera "${gridKey}" ra khỏi monitor "${selectedMonitor.name}"?`}
+            description={`Bạn có chắc chắn muốn xóa camera "${gridKey}" ra khỏi monitor "${monitor.name}"?`}
             isLoading={false}
-            onConfirm={() => handleRemoveCamera(selectedMonitor?.grid[gridKey]!, gridKey)}
-            onCancel={() => setIsShowConfirmRemoveCamera(false)}
+            onConfirm={handleRemoveCamera}
+            onCancel={() => setIsRemoving(false)}
           />
         )}
       </ModalWrapper>

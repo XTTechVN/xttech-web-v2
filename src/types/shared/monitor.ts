@@ -12,3 +12,5 @@ export interface Monitor {
   createdAt: string;
   updatedAt: string;
 }
+
+export enum GridMode {}

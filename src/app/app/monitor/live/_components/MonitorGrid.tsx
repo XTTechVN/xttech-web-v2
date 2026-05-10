@@ -5,6 +5,8 @@ import { GridCell } from '@/types/shared/monitor';
 import { getGrid } from '@/utils/grid';
 import { Plus } from 'lucide-react';
 
+import useMonitorStore from '@/stores/useMonitorStore';
+
 // Config để lấy class grid
 const gridClass: Record<string, string> = {
   '1x1': 'grid-cols-1 grid-rows-1',
@@ -13,15 +15,12 @@ const gridClass: Record<string, string> = {
   '4x4': 'grid-cols-4 grid-rows-4',
 };
 
-export default function MonitorGrid({
-  grid,
-  onAddCamera,
-  onRemoveCamera,
-}: {
-  grid: Record<string, GridCell>;
-  onAddCamera: (cell: GridCell, gridKey: string) => void;
-  onRemoveCamera: (cell: GridCell, gridKey: string) => void;
-}) {
+export default function MonitorGrid() {
+  const { monitor } = useMonitorStore();
+
+  if (!monitor) return null;
+
+  const grid = monitor.grid;
   const gridKeys = Object.keys(grid);
   const gridValues = Object.values(grid);
 
@@ -33,35 +32,20 @@ export default function MonitorGrid({
       {/* Camera grid */}
       <div className={`grid ${gridClass[viewMode]} flex-1 bg-[#2a2a2a]`}>
         {gridValues.map((cell, index) => (
-          <MonitorCell
-            key={gridKeys[index]}
-            cell={cell}
-            gridKey={gridKeys[index]}
-            onAddCamera={onAddCamera}
-            onRemoveCamera={onRemoveCamera}
-          />
+          <MonitorCell key={gridKeys[index]} cell={cell} gridKey={gridKeys[index]} />
         ))}
       </div>
     </div>
   );
 }
 
-function MonitorCell({
-  cell,
-  gridKey,
-  onAddCamera,
-  onRemoveCamera,
-}: {
-  cell: GridCell;
-  gridKey: string;
-  onAddCamera: (cell: GridCell, gridKey: string) => void;
-  onRemoveCamera: (cell: GridCell, gridKey: string) => void;
-}) {
+function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
+  const { setIsAdding, setIsRemoving, setGridKey } = useMonitorStore();
   const [imageSrc, setImageSrc] = useState('');
 
   useEffect(() => {
     if (!cell.workerIp || !cell.workerPort || !cell.cameraId) return;
-    const ws = new WebSocket(`ws://${cell.workerIp}:${cell.workerPort}/live/${cell.cameraId}`);
+    const ws = new WebSocket(`ws://${cell.workerIp}:${cell.workerPort}/${cell.cameraId}`);
 
     ws.onmessage = (event) => {
       setImageSrc(URL.createObjectURL(event.data));
@@ -74,11 +58,13 @@ function MonitorCell({
     return (
       <div
         onClick={() => {
-          onAddCamera(cell, gridKey);
+          setGridKey(gridKey);
+          setIsAdding(true);
         }}
         onContextMenu={(e) => {
           e.preventDefault();
-          onRemoveCamera(cell, gridKey);
+          setGridKey(gridKey);
+          setIsRemoving(true);
         }}
         className="relative flex flex-col bg-white border border-[#a2a2a2] overflow-hidden aspect-video"
       >
@@ -100,7 +86,8 @@ function MonitorCell({
       }}
       onContextMenu={(e) => {
         e.preventDefault();
-        onRemoveCamera(cell, gridKey);
+        setGridKey(gridKey);
+        setIsRemoving(true);
       }}
       className="relative flex flex-col bg-white border border-[#a2a2a2] overflow-hidden aspect-video"
     >

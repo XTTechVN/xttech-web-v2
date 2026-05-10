@@ -9,20 +9,14 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/utils/api';
 
 import { Camera } from '@/types/shared/camera';
-import { Monitor } from '@/types/shared/monitor';
 
-export default function InsertCameraModal({
-  onClose,
-  gridKey,
-  monitor,
-  setSelectedMonitor,
-}: {
-  onClose: () => void;
-  gridKey: string;
-  monitor: Monitor;
-  setSelectedMonitor: (monitor: Monitor) => void;
-}) {
-  // Fetch worker data from API
+import useMonitorStore from '@/stores/useMonitorStore';
+
+export default function InsertCameraModal() {
+  const { monitor, gridKey, setIsAdding, updateMonitorGrid } = useMonitorStore();
+
+  if (!monitor || !gridKey) return null;
+
   const {
     data: cameras,
     isLoading: isLoadingCameras,
@@ -31,32 +25,6 @@ export default function InsertCameraModal({
     queryKey: ['cameras-insert'],
     queryFn: () => api.get('/api/v1/cameras?limit=100&offset=0').then((res: any) => res.data.items),
   });
-
-  const handleInsertCamera = async (camera: Camera, gridKey: string, monitor: Monitor) => {
-    try {
-      const res = await api.patch(`/api/v1/monitors/${monitor.id}`, {
-        grid: {
-          ...monitor.grid,
-          [gridKey]: {
-            ...monitor.grid[gridKey],
-            cameraId: camera.id,
-            workerIp: camera.worker?.ip,
-            workerPort: camera.worker?.port,
-          },
-        },
-      });
-
-      setSelectedMonitor(res.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      onClose();
-    }
-  };
-
-  if (isLoadingCameras) {
-    return <div>Đang tải danh sách camera...</div>;
-  }
 
   // handle error
   if (isError) {
@@ -84,7 +52,7 @@ export default function InsertCameraModal({
           <Button
             type="button"
             variant="ghost"
-            onClick={onClose}
+            onClick={() => setIsAdding(false)}
             className="rounded-full hover:bg-transparent"
           >
             <X size={20} />
@@ -106,7 +74,11 @@ export default function InsertCameraModal({
                   <button
                     type="button"
                     onClick={() => {
-                      handleInsertCamera(camera, gridKey, monitor);
+                      updateMonitorGrid(monitor, gridKey, {
+                        cameraId: camera.id,
+                        workerIp: camera.worker?.ip || null,
+                        workerPort: camera.worker?.port || null,
+                      });
                     }}
                     className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm cursor-pointer"
                   >

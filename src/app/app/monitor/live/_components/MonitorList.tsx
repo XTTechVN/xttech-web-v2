@@ -1,29 +1,25 @@
 import { Monitor } from '@/types/shared/monitor';
 
-export function MonitorItem({
-  monitor,
-  onSelectMonitor,
-}: {
-  monitor: Monitor;
-  onSelectMonitor: (monitor: Monitor) => void;
-}) {
+import useMonitorStore from '@/stores/useMonitorStore';
+
+export function MonitorItem({ monitor }: { monitor: Monitor }) {
+  const { setMonitor, setIsShowList, setIsShowSetting } = useMonitorStore();
+
   return (
     <div
       className="bg-white px-4 py-2 rounded-md text-sm font-semibold text-primary w-full text-center mb-4 cursor-pointer transition-all duration-200"
-      onClick={() => onSelectMonitor(monitor)}
+      onClick={() => {
+        setMonitor(monitor);
+        setIsShowList(false);
+        setIsShowSetting(true);
+      }}
     >
       {monitor.name}
     </div>
   );
 }
 
-export default function MonitorList({
-  monitors,
-  onSelectMonitor,
-}: {
-  monitors: Monitor[];
-  onSelectMonitor: (monitor: Monitor) => void;
-}) {
+export default function MonitorList({ monitors }: { monitors: Monitor[] }) {
   return (
     <div className="bg-gray-50 rounded-lg min-h-[80vh] overflow-hidden">
       <div className="p-4 bg-primary">
@@ -41,7 +37,7 @@ export default function MonitorList({
           </div>
         ) : (
           monitors.map((monitor) => (
-            <MonitorItem key={monitor.id} monitor={monitor} onSelectMonitor={onSelectMonitor} />
+            <MonitorItem key={monitor.id} monitor={monitor} />
           ))
         )}
       </div>
