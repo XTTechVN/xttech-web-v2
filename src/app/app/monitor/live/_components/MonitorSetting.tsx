@@ -13,9 +13,9 @@ export default function MonitorSetting({
   const { viewMode } = useLiveStore();
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="bg-gray-50 rounded-lg min-h-[80vh] overflow-hidden">
       {/* Header */}
-      <div className="p-3 bg-primary">
+      <div className="p-4 bg-primary">
         <p className="text-white text-sm font-medium">Cài đặt hiển thị</p>
       </div>
 

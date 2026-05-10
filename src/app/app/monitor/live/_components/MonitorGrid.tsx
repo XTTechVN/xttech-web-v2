@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAIServerStore } from '@/stores/useAIServerStore';
-import { ViewMode } from '@/types/shared/view';
+import { GridCell } from '@/types/shared/monitor';
+import { getGrid } from '@/utils/grid';
+import { Plus } from 'lucide-react';
 
 // Config để lấy class grid
 const gridClass: Record<string, string> = {
@@ -13,44 +14,31 @@ const gridClass: Record<string, string> = {
 };
 
 export default function MonitorGrid({
-  viewMode,
-  total,
-  portView,
-  setPortView,
+  grid,
+  onAddCamera,
 }: {
-  viewMode: ViewMode;
-  total: number;
-  portView: number | null;
-  setPortView: (portView: number | null) => void;
+  grid: Record<string, GridCell>;
+  onAddCamera: (cell: GridCell, gridKey: string) => void;
 }) {
-  // Tạo danh sách camera
-  const cameras = Array.from({ length: total }, (_, i) => ({
-    id: i + 1,
-    label: `Camera ${i + 1}`,
-    port: 9901 + i,
-  }));
+  const gridKeys = Object.keys(grid);
+  const gridValues = Object.values(grid);
 
-  // Nếu có portView thì hiển thị 1 camera tràn viền
-  if (portView !== null) {
-    const camera = cameras.find((camera) => camera.port === portView);
+  const viewMode = getGrid(gridValues.length);
 
-    return (
-      <div className="flex flex-col w-full bg-[#111] text-white">
-        {/* Camera grid */}
-        <div className={``}>
-          <MonitorCell camera={camera} setPortView={setPortView} />
-        </div>
-      </div>
-    );
-  }
+  console.log(grid);
 
   // Render grid các màn hình
   return (
     <div className="flex flex-col w-full bg-[#111] text-white">
       {/* Camera grid */}
       <div className={`grid ${gridClass[viewMode]} flex-1 bg-[#2a2a2a]`}>
-        {cameras.map((camera) => (
-          <MonitorCell key={camera.id} camera={camera} setPortView={setPortView} />
+        {gridValues.map((cell, index) => (
+          <MonitorCell
+            key={gridKeys[index]}
+            cell={cell}
+            gridKey={gridKeys[index]}
+            onAddCamera={onAddCamera}
+          />
         ))}
       </div>
     </div>
@@ -58,38 +46,61 @@ export default function MonitorGrid({
 }
 
 function MonitorCell({
-  camera,
-  setPortView,
+  cell,
+  gridKey,
+  onAddCamera,
 }: {
-  camera: any;
-  setPortView: (portView: number) => void;
+  cell: GridCell;
+  gridKey: string;
+  onAddCamera: (cell: GridCell, gridKey: string) => void;
 }) {
   const [imageSrc, setImageSrc] = useState('');
-  const { serverIp } = useAIServerStore();
 
   useEffect(() => {
-    const ws = new WebSocket(`${serverIp}:${camera.port}`);
+    if (!cell.workerIp || !cell.workerPort || !cell.cameraId) return;
+    const ws = new WebSocket(`ws://${cell.workerIp}:${cell.workerPort}/live/${cell.cameraId}`);
 
     ws.onmessage = (event) => {
       setImageSrc(URL.createObjectURL(event.data));
     };
 
     return () => ws.close();
-  }, [camera.port]);
+  }, [cell]);
+
+  if (!cell.cameraId && !cell.workerIp && !cell.workerPort)
+    return (
+      <div
+        onClick={() => {
+          onAddCamera(cell, gridKey);
+        }}
+        className="relative flex flex-col bg-white border border-[#a2a2a2] overflow-hidden aspect-video"
+      >
+        {/* 1. Nếu không có cameraId, workerIp, workerPort thì hiển thị khung cho phép chọn add cam vào cell đó. */}
+        {/* 2. Icon upload ở giữa cell */}
+        {!cell.cameraId && !cell.workerIp && !cell.workerPort && (
+          <div className="absolute inset-0 gap-2 cursor-pointer flex flex-col items-center justify-center z-10 text-xs font-medium select-none">
+            <Plus size={40} color="#444" />
+            <p className="text-[#444]">Thêm camera vào cell này</p>
+          </div>
+        )}
+      </div>
+    );
 
   return (
     <div
+      onClick={() => {
+        console.log(cell);
+      }}
       className="relative flex flex-col bg-white border border-[#a2a2a2] overflow-hidden aspect-video"
-      onClick={() => setPortView(camera.port)}
     >
       {/* Camera label */}
       <div className="absolute top-2 left-2 z-10 text-xs text-white/70 font-medium select-none">
-        {camera.label} - Port {camera.port}
+        {cell.cameraId || 'No Camera'}
       </div>
 
       {/* Stream placeholder */}
       <div className="flex-1 flex items-center justify-center text-[#444] text-sm">
-        <img src={imageSrc == '' ? undefined : imageSrc} alt={camera.label} />
+        <img src={imageSrc == '' ? undefined : imageSrc} alt={cell.cameraId || 'No signal'} />
       </div>
     </div>
   );
