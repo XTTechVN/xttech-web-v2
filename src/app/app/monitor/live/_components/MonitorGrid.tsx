@@ -16,16 +16,16 @@ const gridClass: Record<string, string> = {
 export default function MonitorGrid({
   grid,
   onAddCamera,
+  onRemoveCamera,
 }: {
   grid: Record<string, GridCell>;
   onAddCamera: (cell: GridCell, gridKey: string) => void;
+  onRemoveCamera: (cell: GridCell, gridKey: string) => void;
 }) {
   const gridKeys = Object.keys(grid);
   const gridValues = Object.values(grid);
 
   const viewMode = getGrid(gridValues.length);
-
-  console.log(grid);
 
   // Render grid các màn hình
   return (
@@ -38,6 +38,7 @@ export default function MonitorGrid({
             cell={cell}
             gridKey={gridKeys[index]}
             onAddCamera={onAddCamera}
+            onRemoveCamera={onRemoveCamera}
           />
         ))}
       </div>
@@ -49,10 +50,12 @@ function MonitorCell({
   cell,
   gridKey,
   onAddCamera,
+  onRemoveCamera,
 }: {
   cell: GridCell;
   gridKey: string;
   onAddCamera: (cell: GridCell, gridKey: string) => void;
+  onRemoveCamera: (cell: GridCell, gridKey: string) => void;
 }) {
   const [imageSrc, setImageSrc] = useState('');
 
@@ -73,6 +76,10 @@ function MonitorCell({
         onClick={() => {
           onAddCamera(cell, gridKey);
         }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          onRemoveCamera(cell, gridKey);
+        }}
         className="relative flex flex-col bg-white border border-[#a2a2a2] overflow-hidden aspect-video"
       >
         {/* 1. Nếu không có cameraId, workerIp, workerPort thì hiển thị khung cho phép chọn add cam vào cell đó. */}
@@ -90,6 +97,10 @@ function MonitorCell({
     <div
       onClick={() => {
         console.log(cell);
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onRemoveCamera(cell, gridKey);
       }}
       className="relative flex flex-col bg-white border border-[#a2a2a2] overflow-hidden aspect-video"
     >

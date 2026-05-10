@@ -15,10 +15,12 @@ export default function InsertCameraModal({
   onClose,
   gridKey,
   monitor,
+  setSelectedMonitor,
 }: {
   onClose: () => void;
   gridKey: string;
   monitor: Monitor;
+  setSelectedMonitor: (monitor: Monitor) => void;
 }) {
   // Fetch worker data from API
   const {
@@ -26,7 +28,7 @@ export default function InsertCameraModal({
     isLoading: isLoadingCameras,
     isError,
   } = useQuery<Camera[]>({
-    queryKey: ['cameras'],
+    queryKey: ['cameras-insert'],
     queryFn: () => api.get('/api/v1/cameras?limit=100&offset=0').then((res: any) => res.data.items),
   });
 
@@ -43,12 +45,18 @@ export default function InsertCameraModal({
           },
         },
       });
+
+      setSelectedMonitor(res.data);
     } catch (error) {
       console.error(error);
     } finally {
       onClose();
     }
   };
+
+  if (isLoadingCameras) {
+    return <div>Đang tải danh sách camera...</div>;
+  }
 
   // handle error
   if (isError) {
@@ -91,19 +99,19 @@ export default function InsertCameraModal({
             <div className="grid grid-cols-1 gap-2">
               {cameras?.map((camera) => (
                 <div key={camera.id} className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{camera.name}</p>
-                    <p className="text-xs text-gray-500">{camera.rtspUrl}</p>
+                  <div className="flex flex-col w-full">
+                    <p className="text-sm font-medium truncate max-w-xs">{camera.name}</p>
+                    <p className="text-xs text-gray-500 truncate max-w-xs">{camera.rtspUrl}</p>
                   </div>
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
                     onClick={() => {
                       handleInsertCamera(camera, gridKey, monitor);
                     }}
+                    className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm cursor-pointer"
                   >
                     Chọn
-                  </Button>
+                  </button>
                 </div>
               ))}
             </div>

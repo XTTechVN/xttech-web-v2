@@ -6,6 +6,7 @@ import MonitorList from './_components/MonitorList';
 import MonitorSetting from './_components/MonitorSetting';
 import MonitorGrid from './_components/MonitorGrid';
 import ModalWrapper from '@/components/modal/ModalWrapper';
+import ModalConfirm from '@/components/modal/ModalConfirm';
 import InsertCameraModal from './_components/InsertCameraModal';
 
 // hooks
@@ -21,6 +22,7 @@ import { GridCell, Monitor } from '@/types/shared/monitor';
 export default function LivePage() {
   const { user } = useUserStore();
   const [selectedMonitor, setSelectedMonitor] = useState<Monitor | null>(null);
+  const [isShowConfirmRemoveCamera, setIsShowConfirmRemoveCamera] = useState(false);
   const [isShowSetting, setIsShowSetting] = useState(false);
   const [isShowList, setIsShowList] = useState(true);
   const [isAddCamera, setIsAddCamera] = useState(false);
@@ -53,6 +55,28 @@ export default function LivePage() {
     setGridKey(gridKey);
   };
 
+  const handleRemoveCamera = async (cell: GridCell, gridKey: string) => {
+    try {
+      const res = await api.patch(`/api/v1/monitors/${selectedMonitor?.id}`, {
+        grid: {
+          ...selectedMonitor?.grid,
+          [gridKey]: {
+            ...selectedMonitor?.grid[gridKey],
+            cameraId: null,
+            workerIp: null,
+            workerPort: null,
+          },
+        },
+      });
+      setSelectedMonitor(res.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsShowConfirmRemoveCamera(false);
+      setGridKey('');
+    }
+  };
+
   // Xử lý trạng thái loading, error, và user
   if (isLoading) return <div>Đang tải danh sách màn hình...</div>;
   if (isError) return <div>Không tải được danh sách màn hình</div>;
@@ -78,7 +102,14 @@ export default function LivePage() {
         {/* Monitor Grid */}
         <div className="flex-1">
           {selectedMonitor && (
-            <MonitorGrid grid={selectedMonitor.grid} onAddCamera={handleAddCamera} />
+            <MonitorGrid
+              grid={selectedMonitor.grid}
+              onAddCamera={handleAddCamera}
+              onRemoveCamera={(cell: GridCell, gridKey: string) => {
+                setIsShowConfirmRemoveCamera(true);
+                setGridKey(gridKey);
+              }}
+            />
           )}
         </div>
 
@@ -110,6 +141,23 @@ export default function LivePage() {
             gridKey={gridKey}
             monitor={selectedMonitor}
             onClose={() => setIsAddCamera(false)}
+            setSelectedMonitor={setSelectedMonitor}
+          />
+        )}
+      </ModalWrapper>
+
+      {/* Modal confirm remove camera */}
+      <ModalWrapper
+        isOpen={isShowConfirmRemoveCamera}
+        onClose={() => setIsShowConfirmRemoveCamera(false)}
+      >
+        {selectedMonitor && (
+          <ModalConfirm
+            title="Xác nhận xóa camera"
+            description={`Bạn có chắc chắn muốn xóa camera "${gridKey}" ra khỏi monitor "${selectedMonitor.name}"?`}
+            isLoading={false}
+            onConfirm={() => handleRemoveCamera(selectedMonitor?.grid[gridKey]!, gridKey)}
+            onCancel={() => setIsShowConfirmRemoveCamera(false)}
           />
         )}
       </ModalWrapper>
