@@ -18,6 +18,7 @@ COPY . .
 
 # Chạy lệnh build của Next.js
 # Lệnh này sẽ tạo ra thư mục .next/
+ENV NODE_OPTIONS="--max-old-space-size=3000"
 RUN npm run build
 
 # Giai đoạn 2: Tạo image production cuối cùng
