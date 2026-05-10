@@ -4,18 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 // @ts-ignore
 import JSMpeg from '@cycjimmy/jsmpeg-player';
 import { GridCell } from '@/types/shared/monitor';
-import { getGrid } from '@/utils/grid';
+import { getGrid, getGridClass } from '@/utils/grid';
 import { Plus } from 'lucide-react';
 
 import useMonitorStore from '@/stores/useMonitorStore';
-
-// Config để lấy class grid
-const gridClass: Record<string, string> = {
-  '1x1': 'grid-cols-1 grid-rows-1',
-  '2x2': 'grid-cols-2 grid-rows-2',
-  '3x3': 'grid-cols-3 grid-rows-3',
-  '4x4': 'grid-cols-4 grid-rows-4',
-};
 
 export default function MonitorGrid() {
   const { monitor } = useMonitorStore();
@@ -26,13 +18,13 @@ export default function MonitorGrid() {
   const gridKeys = Object.keys(grid);
   const gridValues = Object.values(grid);
 
-  const viewMode = getGrid(gridValues.length);
+  const gridClass = getGridClass(gridValues.length);
 
   // Render grid các màn hình
   return (
     <div className="flex flex-col w-full bg-[#111] text-white">
       {/* Camera grid */}
-      <div className={`grid ${gridClass[viewMode]} flex-1 bg-[#2a2a2a]`}>
+      <div className={`grid ${gridClass} flex-1 bg-[#2a2a2a]`}>
         {gridValues.map((cell, index) => (
           <MonitorCell key={gridKeys[index]} cell={cell} gridKey={gridKeys[index]} />
         ))}

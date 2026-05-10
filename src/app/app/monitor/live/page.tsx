@@ -21,7 +21,6 @@ export default function LivePage() {
   const { user } = useUserStore();
   const {
     monitor,
-    setMonitor,
     isAdding,
     setIsAdding,
     isRemoving,
@@ -29,7 +28,7 @@ export default function LivePage() {
     isShowSetting,
     isShowList,
     gridKey,
-    setGridKey,
+    removeMonitorGrid,
   } = useMonitorStore();
 
   const {
@@ -45,29 +44,6 @@ export default function LivePage() {
     enabled: !!user?.id,
     refetchOnWindowFocus: false,
   });
-
-  const handleRemoveCamera = async () => {
-    if (!monitor || !gridKey) return;
-    try {
-      const res = await api.patch(`/api/v1/monitors/${monitor.id}`, {
-        grid: {
-          ...monitor.grid,
-          [gridKey]: {
-            ...monitor.grid[gridKey],
-            cameraId: null,
-            workerIp: null,
-            workerPort: null,
-          },
-        },
-      });
-      setMonitor(res.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsRemoving(false);
-      setGridKey(null);
-    }
-  };
 
   // Xử lý trạng thái loading, error, và user
   if (isLoading) return <div>Đang tải danh sách màn hình...</div>;
@@ -95,7 +71,7 @@ export default function LivePage() {
           >
             <div>
               {isShowList && <MonitorList monitors={monitors} />}
-              {isShowSetting && <MonitorSetting setViewMode={() => {}} setPortView={() => {}} />}
+              {isShowSetting && <MonitorSetting />}
             </div>
           </motion.div>
         </AnimatePresence>
@@ -113,7 +89,7 @@ export default function LivePage() {
             title="Xác nhận xóa camera"
             description={`Bạn có chắc chắn muốn xóa camera "${gridKey}" ra khỏi monitor "${monitor.name}"?`}
             isLoading={false}
-            onConfirm={handleRemoveCamera}
+            onConfirm={() => removeMonitorGrid(monitor, gridKey!)}
             onCancel={() => setIsRemoving(false)}
           />
         )}

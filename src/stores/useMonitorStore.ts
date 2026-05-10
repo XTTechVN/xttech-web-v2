@@ -3,39 +3,42 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { GridCell, Monitor } from '@/types/shared/monitor';
 import queryClient from '@/utils/query';
 import api from '@/utils/api';
+import toast from 'react-hot-toast';
 
 interface MonitorState {
   // Data States
-  monitor: Monitor | null;
-  gridKey: string | null;
+  monitor: Monitor | null; // Lưu trữ monitor được chọn hiện tại
+  gridKey: string | null; // Lưu trữ key của grid được chọn hiện tại (cho phép lấy thông tin chi tiết của grid)
 
   // Modal States
-  isAdding: boolean;
-  isRemoving: boolean;
-  isLoading: boolean;
+  isAdding: boolean; // Lưu trữ trạng thái của modal thêm camera vào grid
+  isRemoving: boolean; // Lưu trữ trạng thái của modal xóa camera khỏi grid
+  isLoading: boolean; // Lưu trữ trạng thái loading của monitor
 
   // UI Sidebar States
-  isShowSetting: boolean;
-  isShowList: boolean;
+  isShowSetting: boolean; // Lưu trữ trạng thái của sidebar setting
+  isShowList: boolean; // Lưu trữ trạng thái của sidebar list
 
-  hasHydrated: boolean;
+  hasHydrated: boolean; // Lưu trữ trạng thái đã hydrate của monitor
 
   // Actions
-  setMonitor: (monitor: Monitor | null) => void;
-  setGridKey: (gridKey: string | null) => void;
+  setMonitor: (monitor: Monitor | null) => void; // Hàm set monitor
+  setGridKey: (gridKey: string | null) => void; // Hàm set gridKey
 
-  setIsAdding: (isAdding: boolean) => void;
-  setIsRemoving: (isRemoving: boolean) => void;
-  setIsLoading: (isLoading: boolean) => void;
+  setIsAdding: (isAdding: boolean) => void; // Hàm set isAdding
+  setIsRemoving: (isRemoving: boolean) => void; // Hàm set isRemoving
+  setIsLoading: (isLoading: boolean) => void; // Hàm set isLoading
 
-  setIsShowSetting: (isShow: boolean) => void;
-  setIsShowList: (isShow: boolean) => void;
+  setIsShowSetting: (isShow: boolean) => void; // Hàm set isShowSetting
+  setIsShowList: (isShow: boolean) => void; // Hàm set isShowList
 
-  setHasHydrated: (hasHydrated: boolean) => void;
+  setHasHydrated: (hasHydrated: boolean) => void; // Hàm set hasHydrated
 
-  createNewMonitor: (gridSize: number, userId: string) => Promise<void>;
-
-  updateMonitorGrid: (monitor: Monitor, gridKey: string, gridValue: GridCell) => Promise<void>;
+  createNewMonitor: (gridSize: number, userId: string) => Promise<void>; // Hàm tạo một monitor mới với kích thước gridSize
+  updateMonitorGrid: (monitor: Monitor, gridKey: string, gridValue: GridCell) => Promise<void>; // Hàm set một ô trong monitor grid thành một ô chứa thông tin camera (live stream)
+  removeMonitorGrid: (monitor: Monitor, gridKey: string) => Promise<void>; // Hàm set một ô trống trong monitor grid thành ô trống
+  increaseMonitorGridSize: (monitor: Monitor) => Promise<void>; // Hàm này cho phép tăng kích thước monitor grid (+1)
+  decreaseMonitorGridSize: (monitor: Monitor) => Promise<void>; // Hàm này cho phép giảm kích thước monitor grid (-1)
 }
 
 const useMonitorStore = create<MonitorState>()(
@@ -66,6 +69,8 @@ const useMonitorStore = create<MonitorState>()(
       setHasHydrated: (hasHydrated) => set({ hasHydrated }),
 
       createNewMonitor: async (gridSize: number, userId: string) => {
+        // Hàm tạo một monitor mới với kích thước gridSize
+        // Tất cả các ô trong grid đều trống (null)
         try {
           set({ isLoading: true });
 
@@ -94,6 +99,7 @@ const useMonitorStore = create<MonitorState>()(
         }
       },
       updateMonitorGrid: async (monitor: Monitor, gridKey: string, gridValue: GridCell) => {
+        // Hàm set một ô trong monitor grid thành một ô chứa thông tin camera (live stream)
         try {
           const res = await api.patch(`/api/v1/monitors/${monitor.id}`, {
             grid: {
@@ -105,6 +111,83 @@ const useMonitorStore = create<MonitorState>()(
           set({ monitor: res.data });
         } catch (error) {
           console.error(error);
+        } finally {
+          set({ isAdding: false });
+          queryClient.invalidateQueries({ queryKey: ['monitors'] });
+        }
+      },
+      removeMonitorGrid: async (monitor: Monitor, gridKey: string) => {
+        // Hàm set một ô trống trong monitor grid thành ô trống
+        try {
+          const res = await api.patch(`/api/v1/monitors/${monitor.id}`, {
+            grid: {
+              ...monitor.grid,
+              [gridKey]: {
+                cameraId: null,
+                workerIp: null,
+                workerPort: null,
+              },
+            },
+          });
+
+          set({ monitor: res.data });
+        } catch (error) {
+          console.error(error);
+        } finally {
+          set({ isRemoving: false });
+          queryClient.invalidateQueries({ queryKey: ['monitors'] });
+        }
+      },
+      increaseMonitorGridSize: async (monitor: Monitor) => {
+        // Hàm này cho phép tăng kích thước monitor grid
+        // Nó sẽ thêm một grid mới vào cuối
+        try {
+          const gridSize = Object.keys(monitor.grid).length;
+          const newKey = (gridSize + 1).toString();
+
+          const res = await api.patch(`/api/v1/monitors/${monitor.id}`, {
+            grid: {
+              ...monitor.grid,
+              [newKey]: {
+                cameraId: null,
+                workerIp: null,
+                workerPort: null,
+              },
+            },
+          });
+
+          set({ monitor: res.data });
+          toast.success('Thêm thành công');
+        } catch (error) {
+          console.error(error);
+          toast.error('Thêm thất bại');
+        } finally {
+          set({ isAdding: false });
+          queryClient.invalidateQueries({ queryKey: ['monitors'] });
+        }
+      },
+      decreaseMonitorGridSize: async (monitor: Monitor) => {
+        // Hàm này cho phép giảm kích thước monitor grid
+        // Nó sẽ xóa grid cuối cùng
+        try {
+          const gridSize = Object.keys(monitor.grid).length;
+
+          if (gridSize <= 1) {
+            toast.error('Không thể giảm kích thước monitor grid nhỏ hơn 1');
+            return;
+          }
+
+          const res = await api.patch(`/api/v1/monitors/${monitor.id}`, {
+            grid: {
+              ...Object.fromEntries(Object.entries(monitor.grid).slice(0, gridSize - 1)),
+            },
+          });
+
+          set({ monitor: res.data });
+          toast.success('Xóa thành công');
+        } catch (error) {
+          console.error(error);
+          toast.error('Xóa thất bại');
         } finally {
           set({ isAdding: false });
           queryClient.invalidateQueries({ queryKey: ['monitors'] });
