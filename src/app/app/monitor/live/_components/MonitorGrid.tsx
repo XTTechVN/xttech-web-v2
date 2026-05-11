@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 // @ts-ignore
 import JSMpeg from '@cycjimmy/jsmpeg-player';
 import { GridCell } from '@/types/shared/monitor';
-import { getGrid, getGridClass } from '@/utils/grid';
+import { getGridClass } from '@/utils/grid';
 import { Plus } from 'lucide-react';
 
 import useMonitorStore from '@/stores/useMonitorStore';
+import { useRouter } from 'next/navigation';
 
 export default function MonitorGrid() {
+  const router = useRouter();
   const { monitor } = useMonitorStore();
 
   if (!monitor) return null;
@@ -36,6 +38,7 @@ export default function MonitorGrid() {
 function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
   const { setIsAdding, setIsRemoving, setGridKey } = useMonitorStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const router = useRouter();
 
   const [status, setStatus] = useState<'connecting' | 'playing' | 'error'>('connecting');
   const lastTimeRef = useRef<number>(-1);
@@ -126,7 +129,13 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
       className="relative flex flex-col bg-white border border-[#a2a2a2] overflow-hidden aspect-video group"
     >
       {/* Stream placeholder */}
-      <div className="flex-1 flex items-center justify-center bg-black relative">
+      {/* Khi click vào video thì chuyển hướng sang trang stream của ID này -> trang điều khiển cam */}
+      <div
+        onClick={() => {
+          router.push(`/app/camera/${cell.cameraId}/stream`);
+        }}
+        className="flex-1 flex items-center justify-center bg-black relative cursor-pointer"
+      >
         <canvas
           ref={canvasRef}
           className={`w-full h-full object-contain transition-opacity duration-300 ${status === 'playing' ? 'opacity-100' : 'opacity-0'}`}
@@ -147,9 +156,9 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
       </div>
 
       {/* Hiển thị ID camera khi hover vào góc */}
-      {/* <div className="absolute top-2 left-2 z-20 text-xs text-white/70 font-medium select-none bg-black/40 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-2 left-2 z-20 text-xs text-white/70 font-medium select-none bg-black/40 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
         {cell.cameraId}
-      </div> */}
+      </div>
     </div>
   );
 }
