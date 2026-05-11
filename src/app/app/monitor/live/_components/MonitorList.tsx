@@ -7,7 +7,7 @@ export function MonitorItem({ monitor }: { monitor: Monitor }) {
 
   return (
     <div
-      className="bg-white px-4 py-2 rounded-md text-sm font-semibold text-primary w-full text-center mb-4 cursor-pointer transition-all duration-200"
+      className="bg-white px-4 py-2 rounded-md text-sm font-semibold text-primary w-full text-center cursor-pointer transition-all duration-200"
       onClick={() => {
         setMonitor(monitor);
         setIsShowList(false);
@@ -21,7 +21,7 @@ export function MonitorItem({ monitor }: { monitor: Monitor }) {
 
 export default function MonitorList({ monitors }: { monitors: Monitor[] }) {
   return (
-    <div className="bg-gray-50 rounded-lg min-h-[80vh] overflow-hidden">
+    <div className="bg-gray-100 rounded-lg h-full overflow-hidden">
       <div className="p-4 bg-primary">
         <h2 className="font-semibold text-sm text-white">Danh sách màn hình</h2>
       </div>
@@ -36,9 +36,11 @@ export default function MonitorList({ monitors }: { monitors: Monitor[] }) {
             </p>
           </div>
         ) : (
-          monitors.map((monitor) => (
-            <MonitorItem key={monitor.id} monitor={monitor} />
-          ))
+          <div className="grid grid-cols-2 gap-2">
+            {monitors.map((monitor) => (
+              <MonitorItem key={monitor.id} monitor={monitor} />
+            ))}
+          </div>
         )}
       </div>
     </div>

@@ -1,7 +1,7 @@
 export const getGrid = (total: number) => {
   if (total <= 1) return '1x1';
   if (total <= 2) return '1x2';
-  if (total <= 3) return '1x3';
+  if (total <= 3) return '2x2';
   if (total <= 4) return '2x2';
   if (total <= 6) return '2x3';
   if (total <= 9) return '3x3';

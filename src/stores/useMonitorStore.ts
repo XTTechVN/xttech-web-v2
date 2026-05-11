@@ -13,6 +13,7 @@ interface MonitorState {
   // Modal States
   isAdding: boolean; // Lưu trữ trạng thái của modal thêm camera vào grid
   isRemoving: boolean; // Lưu trữ trạng thái của modal xóa camera khỏi grid
+  isUpdating: boolean; // Lưu trữ trạng thái của modal update tên monitor
   isLoading: boolean; // Lưu trữ trạng thái loading của monitor
 
   // UI Sidebar States
@@ -34,7 +35,12 @@ interface MonitorState {
 
   setHasHydrated: (hasHydrated: boolean) => void; // Hàm set hasHydrated
 
+  // Monitor actions
+  getMonitorGridSize: () => number; // Hàm get kích thước monitor grid
   createNewMonitor: (gridSize: number, userId: string) => Promise<void>; // Hàm tạo một monitor mới với kích thước gridSize
+  updateMonitor: (monitor: Monitor) => Promise<void>; // Hàm update một monitor
+
+  // Grid actions
   updateMonitorGrid: (monitor: Monitor, gridKey: string, gridValue: GridCell) => Promise<void>; // Hàm set một ô trong monitor grid thành một ô chứa thông tin camera (live stream)
   removeMonitorGrid: (monitor: Monitor, gridKey: string) => Promise<void>; // Hàm set một ô trống trong monitor grid thành ô trống
   increaseMonitorGridSize: (monitor: Monitor) => Promise<void>; // Hàm này cho phép tăng kích thước monitor grid (+1)
@@ -43,12 +49,13 @@ interface MonitorState {
 
 const useMonitorStore = create<MonitorState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       monitor: null,
       gridKey: null,
 
       isAdding: false,
       isRemoving: false,
+      isUpdating: false,
       isLoading: false,
 
       isShowSetting: false,
@@ -68,6 +75,15 @@ const useMonitorStore = create<MonitorState>()(
 
       setHasHydrated: (hasHydrated) => set({ hasHydrated }),
 
+      getMonitorGridSize: () => {
+        const monitor = get().monitor;
+
+        if (!monitor) return 0;
+
+        const values = Object.values(monitor.grid);
+
+        return values.length;
+      },
       createNewMonitor: async (gridSize: number, userId: string) => {
         // Hàm tạo một monitor mới với kích thước gridSize
         // Tất cả các ô trong grid đều trống (null)
@@ -98,6 +114,23 @@ const useMonitorStore = create<MonitorState>()(
           queryClient.invalidateQueries({ queryKey: ['monitors'] });
         }
       },
+      updateMonitor: async (monitor: Monitor) => {
+        // Hàm update một monitor
+        try {
+          set({ isUpdating: true });
+
+          const res = await api.patch(`/api/v1/monitors/${monitor.id}`, monitor);
+
+          set({ monitor: res.data });
+          toast.success('Cập nhật tên monitor thành công');
+        } catch (error) {
+          toast.error('Cập nhật tên monitor thất bại');
+        } finally {
+          set({ isUpdating: false });
+          queryClient.invalidateQueries({ queryKey: ['monitors'] });
+        }
+      },
+
       updateMonitorGrid: async (monitor: Monitor, gridKey: string, gridValue: GridCell) => {
         // Hàm set một ô trong monitor grid thành một ô chứa thông tin camera (live stream)
         try {
