@@ -1,6 +1,9 @@
 'use client';
 
-import { Plus, Minus, Save, Loader2 } from 'lucide-react';
+import { Plus, Minus, Save, Loader2, Trash } from 'lucide-react';
+
+import ModalConfirm from '@/components/modal/ModalConfirm';
+import ModalWrapper from '@/components/modal/ModalWrapper';
 
 import { getGrid } from '@/utils/grid';
 import { useState } from 'react';
@@ -19,10 +22,12 @@ export default function MonitorSetting() {
     increaseMonitorGridSize,
     decreaseMonitorGridSize,
     updateMonitor,
+    deleteMonitor,
   } = useMonitorStore();
 
   const [name, setName] = useState(monitor?.name);
   const monitorGridSize = getGrid(getMonitorGridSize()); // trả về kích thước grid (ví dụ: 2x2, 3x3)
+  const [isShowRemoveMonitor, setIsShowRemoveMonitor] = useState(false);
 
   const handleUpdateMonitorName = () => {
     if (!monitor) return;
@@ -38,7 +43,7 @@ export default function MonitorSetting() {
       </div>
 
       {/* Monitor info */}
-      <div className="px-4 py-3">
+      <div className="px-4 py-3 text-black">
         {/* Tiêu đề */}
         <p className={`${titleClass} mb-2`}>Thông tin chung</p>
 
@@ -72,14 +77,14 @@ export default function MonitorSetting() {
       </div>
 
       {/* Monitor actions */}
-      <div className="px-4 py-3">
+      <div className="px-4 py-3 text-black">
         {/* Tiêu đề */}
         <p className={`${titleClass} mb-2`}>Thao tác</p>
 
         <div className="px-2 space-y-2">
           {/* Tăng kích thước (1 ô) */}
           <div className="flex items-center gap-2 justify-between">
-            <p className={`${labelClass} shrink-0`}>Tăng kích thước (1 ô):</p>
+            <p className={`${labelClass} shrink-0`}>Tăng kích thước (1 ô)</p>
             <button
               className={buttonClass}
               onClick={() => monitor && increaseMonitorGridSize(monitor)}
@@ -90,7 +95,7 @@ export default function MonitorSetting() {
 
           {/* Giảm kích thước (1 ô) */}
           <div className="flex items-center gap-2 justify-between">
-            <p className={`${labelClass} shrink-0`}>Giảm kích thước (1 ô):</p>
+            <p className={`${labelClass} shrink-0`}>Giảm kích thước (1 ô)</p>
             <button
               className={buttonClass}
               onClick={() => monitor && decreaseMonitorGridSize(monitor)}
@@ -98,8 +103,30 @@ export default function MonitorSetting() {
               <Minus size={20} />
             </button>
           </div>
+
+          {/* Xóa màn hình */}
+          <div className="flex items-center gap-2 justify-between">
+            <p className={`${labelClass} shrink-0`}>Xóa màn hình</p>
+            <button className={buttonClass} onClick={() => monitor && setIsShowRemoveMonitor(true)}>
+              <Trash size={20} />
+            </button>
+          </div>
         </div>
       </div>
+
+      <ModalWrapper isOpen={isShowRemoveMonitor} onClose={() => setIsShowRemoveMonitor(false)}>
+        <ModalConfirm
+          title="Xóa màn hình"
+          description={`Bạn có chắc chắn muốn xóa màn hình ${monitor?.name}?`}
+          isLoading={isUpdating}
+          onConfirm={async () => {
+            if (!monitor) return;
+            await deleteMonitor(monitor.id);
+            setIsShowRemoveMonitor(false);
+          }}
+          onCancel={() => setIsShowRemoveMonitor(false)}
+        />
+      </ModalWrapper>
     </div>
   );
 }

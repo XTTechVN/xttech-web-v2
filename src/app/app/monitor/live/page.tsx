@@ -38,7 +38,7 @@ export default function LivePage() {
   } = useQuery({
     queryKey: ['monitors'],
     queryFn: async () => {
-      const res = await api.get(`/api/v1/monitors?userId=${user?.id}`);
+      const res = await api.get(`/api/v1/monitors?userId=${user?.id}&limit=100&offset=0`);
       return res.data.items;
     },
     enabled: !!user?.id,

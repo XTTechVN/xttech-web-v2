@@ -39,6 +39,7 @@ interface MonitorState {
   getMonitorGridSize: () => number; // Hàm get kích thước monitor grid
   createNewMonitor: (gridSize: number, userId: string) => Promise<void>; // Hàm tạo một monitor mới với kích thước gridSize
   updateMonitor: (monitor: Monitor) => Promise<void>; // Hàm update một monitor
+  deleteMonitor: (monitorId: string) => Promise<void>; // Hàm xóa một monitor
 
   // Grid actions
   updateMonitorGrid: (monitor: Monitor, gridKey: string, gridValue: GridCell) => Promise<void>; // Hàm set một ô trong monitor grid thành một ô chứa thông tin camera (live stream)
@@ -127,6 +128,21 @@ const useMonitorStore = create<MonitorState>()(
           toast.error('Cập nhật tên monitor thất bại');
         } finally {
           set({ isUpdating: false });
+          queryClient.invalidateQueries({ queryKey: ['monitors'] });
+        }
+      },
+      deleteMonitor: async (monitorId: string) => {
+        // Hàm xóa một monitor
+        try {
+          await api.delete(`/api/v1/monitors/${monitorId}`);
+          set({ monitor: null });
+          set({ gridKey: null });
+          set({ isShowSetting: false });
+          set({ isShowList: true });
+          toast.success('Xóa monitor thành công');
+        } catch (error) {
+          toast.error('Xóa monitor thất bại');
+        } finally {
           queryClient.invalidateQueries({ queryKey: ['monitors'] });
         }
       },
