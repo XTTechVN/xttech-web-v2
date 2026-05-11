@@ -20,8 +20,8 @@ const lexend = Lexend({
 });
 
 export const metadata: Metadata = {
-  title: 'Camera Vision',
-  description: 'Camera Vision',
+  title: 'Vifence AI - Giám sát camera thông minh',
+  description: 'Vifence AI - Giám sát camera thông minh',
 };
 
 export default function RootLayout({
