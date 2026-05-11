@@ -18,7 +18,7 @@ export default function Ptz({ camera }: Props) {
       toast.error('Camera này không hỗ trợ PTZ');
       return;
     }
-    
+
     if (!camera.rtspUrl) {
       toast.error('Camera chưa được cấu hình RTSP URL');
       return;
@@ -27,13 +27,14 @@ export default function Ptz({ camera }: Props) {
     try {
       setIsMoving(true);
       const loadingToast = toast.loading(`Đang xoay camera (${action})...`);
-      
+
       const res = await controlPtz(camera.rtspUrl, action);
-      
+
       if (res.success) {
         toast.success(`Đã xoay camera thành công`, { id: loadingToast });
       } else {
         toast.error(`Lỗi: ${res.error}`, { id: loadingToast });
+        console.log('Error:', res);
       }
     } catch (error) {
       toast.error('Có lỗi xảy ra khi gọi lệnh PTZ');
