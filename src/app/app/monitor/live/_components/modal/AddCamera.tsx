@@ -44,9 +44,7 @@ export default function InsertCameraModal() {
         <div className="flex items-start justify-between p-6 pb-2">
           <div className="flex flex-col gap-1">
             <Heading>Thêm camera</Heading>
-            <SubHeading>
-              Sau khi thêm camera, vui lòng cấu hình các thông tin chi tiết khác tại nút "cấu hình"
-            </SubHeading>
+            <SubHeading>Chọn camera mà bạn muốn thêm vào ô trống trên màn hình</SubHeading>
           </div>
 
           <Button
@@ -60,7 +58,7 @@ export default function InsertCameraModal() {
         </div>
 
         {/* List cameras */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6 max-h-[calc(100vh-200px)]">
+        <div className="flex-1 overflow-y-auto px-6 pb-6 max-h-[calc(100vh-200px)] mt-4">
           {isLoadingCameras ? (
             <div>Đang tải danh sách camera...</div>
           ) : (
