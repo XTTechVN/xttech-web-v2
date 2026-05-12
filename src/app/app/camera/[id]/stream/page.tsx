@@ -6,6 +6,7 @@ import api from '@/utils/api';
 
 import Heading from '@/components/ui/Heading';
 import SubHeading from '@/components/ui/SubHeading';
+import Back from '@/components/ui/Back';
 
 // types
 import { Camera } from '@/types/shared/camera';
@@ -71,6 +72,7 @@ export default function CameraStreamPage() {
         <div className="flex flex-col space-y-4">
           {/* Tiêu đề trang */}
           <div>
+            <Back />
             <Heading>
               Camera <span className="text-primary">LIVE</span>
             </Heading>
