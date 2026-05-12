@@ -131,7 +131,7 @@ export default function AppSidebar() {
       </div>
 
       <p className="mt-auto text-xs text-gray-500 font-semibold text-center">
-        Camera AI v{APP_VERSION}
+        Vifence AI v{APP_VERSION}
       </p>
     </div>
   );
