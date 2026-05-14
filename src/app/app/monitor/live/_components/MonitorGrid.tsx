@@ -161,7 +161,7 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
 
       {/* Hiển thị Tên camera bên góc trên bên trái */}
       <div className="absolute top-2 left-2 z-20 text-xs text-primary px-2 py-1 font-semibold rounded-md bg-white shadow select-none">
-        {cell.cameraName}
+        {cell.cameraName || 'Chưa có tên, vui lòng đặt lại'}
       </div>
     </div>
   );
