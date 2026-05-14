@@ -65,7 +65,6 @@ export default function CameraAddModal({
       workerId: '',
       lat: 21.0285,
       lng: 105.8342,
-      status: 'stopped',
     },
   });
 

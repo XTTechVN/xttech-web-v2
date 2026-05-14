@@ -1,5 +1,5 @@
 export type Camera = {
-  status: 'stopped' | 'recording_continuous' | 'recording_event';
+  status: 'stopped' | 'streaming' | 'recording_continuous' | 'recording_event';
   name: string;
   rtspUrl: string;
   rtspType: string;
@@ -27,7 +27,6 @@ export interface CameraAddFormData {
   workerId: string;
   lat: number;
   lng: number;
-  status: 'stopped' | 'recording_continuous' | 'recording_event';
 }
 
 export interface CameraEditFormData {
@@ -37,7 +36,7 @@ export interface CameraEditFormData {
   workerId: string;
   lat: number;
   lng: number;
-  status: 'stopped' | 'recording_continuous' | 'recording_event';
+  status: 'stopped' | 'streaming' | 'recording_continuous' | 'recording_event';
   rtspType: 'pull' | 'push';
   onvif: boolean;
   port: number;

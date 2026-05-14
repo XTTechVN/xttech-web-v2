@@ -19,6 +19,7 @@ import { ResponsePagination } from '@/types/shared/reponse';
 
 const mappingStatus = {
   stopped: 'Đã dừng',
+  streaming: 'Phát trực tiếp',
   recording_continuous: 'Ghi hình liên tục',
   recording_event: 'Ghi hình sự kiện',
 };

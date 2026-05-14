@@ -141,6 +141,7 @@ export default function CameraEditModal({
         {/* Form Body */}
         <div className="flex-1 overflow-y-auto">
           <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+            {/* Basic Config */}
             {!detailConfig && (
               <>
                 {/* Name and Worker ID */}
@@ -239,6 +240,7 @@ export default function CameraEditModal({
               </>
             )}
 
+            {/* Detail Config */}
             {detailConfig && (
               <>
                 {/* RTSP Type */}
@@ -265,6 +267,7 @@ export default function CameraEditModal({
                     render={({ field }) => (
                       <Radio.Group onChange={field.onChange} value={field.value}>
                         <Radio value="stopped">Dừng ghi</Radio>
+                        <Radio value="streaming">Phát trực tiếp</Radio>
                         <Radio value="recording_continuous">Ghi hình liên tục</Radio>
                         <Radio value="recording_event">Ghi hình sự kiện</Radio>
                       </Radio.Group>
