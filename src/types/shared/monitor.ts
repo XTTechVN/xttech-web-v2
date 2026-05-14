@@ -1,5 +1,6 @@
 export interface GridCell {
   cameraId: string | null;
+  cameraName: string | null;
   workerIp: string | null;
   workerPort: number | null;
 }

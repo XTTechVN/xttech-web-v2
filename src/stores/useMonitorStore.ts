@@ -96,6 +96,7 @@ const useMonitorStore = create<MonitorState>()(
           for (let i = 1; i <= gridSize; i++) {
             grid[i.toString()] = {
               cameraId: null,
+              cameraName: null,
               workerIp: null,
               workerPort: null,
             };

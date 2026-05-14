@@ -44,6 +44,7 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
   const lastTimeRef = useRef<number>(-1);
   const stallTimerRef = useRef<number>(0);
 
+  // Xử lý hiển thị stream khi có workerIp, workerPort, cameraId
   useEffect(() => {
     if (!cell.workerIp || !cell.workerPort || !cell.cameraId) return;
 
@@ -91,6 +92,9 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
     };
   }, [cell]);
 
+  // Xử lý hiển thị cell khi không có workerIp, workerPort, cameraId
+  // 1. Click vào cell để thêm camera vào cell đó (chuyển sang trang chọn camera)
+  // 2. Right click vào cell để xóa camera khỏi cell đó (chuyển sang trang xóa camera)
   if (!cell.cameraId && !cell.workerIp && !cell.workerPort)
     return (
       <div
@@ -138,7 +142,7 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
       >
         <canvas
           ref={canvasRef}
-          className={`w-full h-full object-contain transition-opacity duration-300 ${status === 'playing' ? 'opacity-100' : 'opacity-0'}`}
+          className={`w-full h-full object-fill transition-opacity duration-300 ${status === 'playing' ? 'opacity-100' : 'opacity-0'}`}
         />
 
         {/* Lớp phủ trạng thái (Loading / Error) */}
@@ -155,9 +159,9 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
         )}
       </div>
 
-      {/* Hiển thị ID camera khi hover vào góc */}
-      <div className="absolute top-2 left-2 z-20 text-xs text-white/70 font-medium select-none bg-black/40 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-        {cell.cameraId}
+      {/* Hiển thị Tên camera bên góc trên bên trái */}
+      <div className="absolute top-2 left-2 z-20 text-xs text-primary px-2 py-1 font-semibold rounded-md bg-white shadow select-none">
+        {cell.cameraName}
       </div>
     </div>
   );
