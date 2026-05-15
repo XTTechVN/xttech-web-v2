@@ -13,8 +13,8 @@ export default function HeaderToolbar({ userId }: { userId: string }) {
   return (
     <div className="flex items-center justify-between">
       <div className="">
-        <Heading>Giám sát trực tiếp</Heading>
-        <SubHeading>Stream video trực tiếp từ các camera</SubHeading>
+        <Heading>Live</Heading>
+        <SubHeading>Video trực tiếp từ các camera</SubHeading>
       </div>
 
       <div className="flex items-center gap-2 w-full md:w-fit">

@@ -61,12 +61,12 @@ export default function AppSidebar() {
       items: [
         {
           path: '/app/monitor/live',
-          label: 'Giám sát trực tiếp',
+          label: 'Live',
           icon: <Monitor size={16} />,
         },
         {
           path: '/app/monitor/timeline',
-          label: 'Dòng thời gian',
+          label: 'Smart Playback',
           icon: <Clock size={16} />,
         },
       ],

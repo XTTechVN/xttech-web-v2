@@ -23,7 +23,7 @@ export default function MonitorDisplay({ filename, onDetail }: MonitorDisplayPro
         ) : (
           <div className="flex flex-col items-center gap-4 text-gray-400">
             <Camera size={64} className="animate-pulse" />
-            <span className="text-xs font-medium uppercase tracking-widest">No Signal</span>
+            <span className="text-xs font-medium uppercase tracking-widest">Chưa có video</span>
           </div>
         )}
       </div>
