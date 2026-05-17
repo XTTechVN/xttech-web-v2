@@ -39,7 +39,7 @@ export interface InputProps extends Omit<React.ComponentPropsWithoutRef<'input'>
 
 /** Base input styles - using semantic colors */
 const inputBaseClasses =
-  'w-full border border-gray-300 rounded-lg bg-bg-primary text-text-primary placeholder:text-gray-500 transition-all duration-200 outline-none';
+  'w-full border border-gray-300 rounded-lg bg-bg-primary text-text-primary placeholder:text-gray-400 transition-all duration-200 outline-none';
 
 // ============================================================================
 // COMPONENT

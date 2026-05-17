@@ -11,6 +11,11 @@ export type Camera = {
   createdAt: string;
   updatedAt: string;
   onvif: boolean;
+  ptz?: boolean;
+  onvifIp?: string;
+  onvifPort?: number;
+  onvifUsername?: string;
+  onvifPassword?: string;
   worker?: {
     name: string;
     ip: string;
@@ -40,4 +45,9 @@ export interface CameraEditFormData {
   rtspType: 'pull' | 'push';
   onvif: boolean;
   port: number;
+  ptz?: boolean;
+  onvifIp?: string;
+  onvifPort?: number;
+  onvifUsername?: string;
+  onvifPassword?: string;
 }

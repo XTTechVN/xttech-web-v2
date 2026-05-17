@@ -54,6 +54,7 @@ export default function CameraEditModal({
     handleSubmit,
     setValue,
     control,
+    watch,
     formState: { errors },
   } = useForm<CameraEditFormData>({
     defaultValues: {
@@ -64,9 +65,14 @@ export default function CameraEditModal({
       lat: defaultValues?.lat || 21.0285,
       lng: defaultValues?.lng || 105.8342,
       status: defaultValues?.status || 'stopped',
-      rtspType: defaultValues?.rtspType || 'rtsp',
-      onvif: defaultValues?.onvif || false,
+      rtspType: defaultValues?.rtspType || 'pull',
+      onvif: defaultValues?.onvif ?? defaultValues?.ptz ?? false,
+      ptz: defaultValues?.ptz ?? defaultValues?.onvif ?? false,
       port: defaultValues?.port || 9900,
+      onvifIp: defaultValues?.onvifIp || '',
+      onvifPort: defaultValues?.onvifPort || 80,
+      onvifUsername: defaultValues?.onvifUsername || '',
+      onvifPassword: defaultValues?.onvifPassword || '',
     },
   });
 
@@ -89,6 +95,14 @@ export default function CameraEditModal({
       setValue('lat', defaultValues.lat);
       setValue('lng', defaultValues.lng);
       setValue('status', defaultValues.status);
+      setValue('rtspType', defaultValues.rtspType);
+      setValue('onvif', defaultValues.onvif ?? defaultValues.ptz ?? false);
+      setValue('ptz', defaultValues.ptz ?? defaultValues.onvif ?? false);
+      setValue('port', defaultValues.port);
+      setValue('onvifIp', defaultValues.onvifIp);
+      setValue('onvifPort', defaultValues.onvifPort);
+      setValue('onvifUsername', defaultValues.onvifUsername);
+      setValue('onvifPassword', defaultValues.onvifPassword);
     }
   }, [defaultValues, setValue]);
 
@@ -123,7 +137,7 @@ export default function CameraEditModal({
           </Button>
         </div>
 
-        <div className="px-6 mt-2 flex items-center justify-start gap-4">
+        <div className="px-6 mt-2 flex items-center justify-start gap-4 text-text-secondary">
           <div
             className={` ${!detailConfig ? 'border-b-2 border-primary' : ''} cursor-pointer text-sm`}
             onClick={() => setDetailConfig(false)}
@@ -275,20 +289,66 @@ export default function CameraEditModal({
                   />
                 </div>
 
-                {/* Onvif */}
+                {/* Onvif / PTZ */}
                 <div className="flex flex-col items-start gap-2">
-                  <Label>Onvif (cho phép điều khiển từ xa)</Label>
+                  <Label>Onvif / PTZ (cho phép điều khiển từ xa)</Label>
                   <Controller
                     name="onvif"
                     control={control}
                     render={({ field }) => (
-                      <Radio.Group onChange={field.onChange} value={field.value}>
+                      <Radio.Group
+                        onChange={(e) => {
+                          field.onChange(e);
+                          setValue('ptz', e.target.value);
+                        }}
+                        value={field.value}
+                      >
                         <Radio value={true}>Cho phép</Radio>
                         <Radio value={false}>Không cho phép</Radio>
                       </Radio.Group>
                     )}
                   />
                 </div>
+
+                {/* ONVIF Credentials - Only show if onvif is true */}
+                {watch('onvif') && (
+                  <div className="grid grid-cols-2 gap-4 border-t pt-4 mt-2">
+                    <div className="flex flex-col gap-2">
+                      <Label>IP / Domain ONVIF</Label>
+                      <Input
+                        placeholder="VD: 192.168.1.100"
+                        {...register('onvifIp')}
+                        error={errors.onvifIp?.message as string}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label>Port ONVIF</Label>
+                      <Input
+                        type="number"
+                        placeholder="VD: 8080"
+                        {...register('onvifPort', { valueAsNumber: true })}
+                        error={errors.onvifPort?.message as string}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label>Tài khoản ONVIF</Label>
+                      <Input
+                        placeholder="admin"
+                        {...register('onvifUsername')}
+                        error={errors.onvifUsername?.message as string}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label>Mật khẩu ONVIF</Label>
+                      <Input
+                        type="password"
+                        placeholder="********"
+                        {...register('onvifPassword')}
+                        error={errors.onvifPassword?.message as string}
+                      />
+                    </div>
+                  </div>
+                )}
               </>
             )}
 

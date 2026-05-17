@@ -14,7 +14,7 @@ export default function SidebarContent({ children }: { children: React.ReactNode
         marginLeft: isMobile ? 0 : isOpen ? SIDEBAR_WIDTH : 0,
         transition: 'margin-left 0.3s',
         width: `calc(100% - ${isMobile ? 0 : isOpen ? SIDEBAR_WIDTH : 0}px)`,
-        height: `calc(100vh - ${HEADER_HEIGHT}px)`,
+        minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
         backgroundColor: MAIN_BG_COLOR,
       }}
     >
