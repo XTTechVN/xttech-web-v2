@@ -47,8 +47,8 @@ export default function PtzModal({ onClose }: PtzModalProps) {
       {/* Header */}
       <div className="flex items-center justify-between p-6 pb-2 border-b border-gray-100">
         <div className="flex flex-col gap-1">
-          <Heading className="text-xl">Cấu hình PTZ Settings</Heading>
-          <SubHeading>Cài đặt tốc độ và thời gian phản hồi PTZ</SubHeading>
+          <Heading className="text-xl">Cấu hình PTZ</Heading>
+          <SubHeading>Cài đặt tốc độ và thời gian di chuyển</SubHeading>
         </div>
         <Button
           type="button"
@@ -65,7 +65,7 @@ export default function PtzModal({ onClose }: PtzModalProps) {
         {/* Speed setting */}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center">
-            <Label>Tốc độ (Speed)</Label>
+            <Label>Tốc độ</Label>
             <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
               {localSpeed.toFixed(2)}
             </span>
@@ -103,7 +103,7 @@ export default function PtzModal({ onClose }: PtzModalProps) {
         {/* Duration setting */}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center">
-            <Label>Thời gian di chuyển (Duration)</Label>
+            <Label>Thời gian di chuyển</Label>
             <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
               {localDuration.toFixed(2)}s
             </span>
@@ -140,7 +140,7 @@ export default function PtzModal({ onClose }: PtzModalProps) {
       </div>
 
       {/* Footer */}
-      <div className="flex justify-end items-center gap-3 p-6 pt-4 border-t border-gray-100 bg-gray-50">
+      <div className="flex justify-end items-center gap-3 p-6">
         <Button
           type="button"
           variant="outline"
