@@ -2,12 +2,14 @@
 
 import { 
   ChevronUp, ChevronDown, ChevronLeft, ChevronRight, 
-  ZoomIn, ZoomOut, Home, Plus, Trash2, MapPin, Loader2, Target
+  ZoomIn, ZoomOut, Home, Plus, Trash2, MapPin, Loader2, Target, Settings
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Camera } from '@/types/shared/camera';
 import { usePtzStore } from '@/stores/usePtzStore';
+import ModalWrapper from '@/components/modal/ModalWrapper';
+import PtzModal from './PtzModal';
 
 interface Props {
   camera: Camera;
@@ -28,6 +30,8 @@ export default function Ptz({ camera }: Props) {
     gotoHome,
     setHome
   } = usePtzStore();
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const hasPtz = camera.ptz ?? camera.onvif;
 
@@ -55,7 +59,19 @@ export default function Ptz({ camera }: Props) {
     <div className="px-4 pb-4 text-black space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold">Điều khiển PTZ (Onvif)</p>
-        {!hasPtz && <span className="text-xs text-red-600 rounded bg-red-100 px-2 py-1">Không hỗ trợ</span>}
+        <div className="flex items-center gap-2">
+          {!hasPtz ? (
+            <span className="text-xs text-red-600 rounded bg-red-100 px-2 py-1">Không hỗ trợ</span>
+          ) : (
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="p-1.5 text-gray-500 hover:text-primary hover:bg-gray-100 rounded-lg transition-all cursor-pointer"
+              title="Cấu hình PTZ"
+            >
+              <Settings size={18} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={`space-y-4 ${!hasPtz ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
@@ -240,6 +256,10 @@ export default function Ptz({ camera }: Props) {
           </div>
         </div>
       </div>
+
+      <ModalWrapper isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)}>
+        <PtzModal onClose={() => setIsSettingsOpen(false)} />
+      </ModalWrapper>
     </div>
   );
 }
