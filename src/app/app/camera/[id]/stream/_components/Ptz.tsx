@@ -33,7 +33,7 @@ export default function Ptz({ camera }: Props) {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const hasPtz = camera.ptz ?? camera.onvif;
+  const hasPtz = camera.ptz ?? false;
 
   useEffect(() => {
     fetchPresets(camera.id, !!hasPtz);
