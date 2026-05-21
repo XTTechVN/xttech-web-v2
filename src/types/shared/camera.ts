@@ -10,7 +10,6 @@ export type Camera = {
   id: string;
   createdAt: string;
   updatedAt: string;
-  onvif: boolean;
   ptz?: boolean;
   onvifIp?: string;
   onvifPort?: number;
