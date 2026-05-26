@@ -100,7 +100,7 @@ function FloatingInfo({ camera }: FloatingInfoProps) {
     >
       <div className="flex items-center gap-3">
         <div>
-          <h4 className="font-semibold text-sm">{camera.name}</h4>
+          <h4 className="font-semibold text-sm text-primary">{camera.name}</h4>
           <p className="text-xs text-gray-500 flex items-center gap-1">
             <MapPin size={10} /> {camera.address}
           </p>

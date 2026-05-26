@@ -13,11 +13,11 @@ export default function AlertToolbar({
         <Search size="sm" className="w-full md:w-96" placeholder="Tìm kiếm cảnh báo..." />
       </div>
 
-      <div className="flex items-center gap-2 w-full md:w-fit">
+      {/* <div className="flex items-center gap-2 w-full md:w-fit">
         <Button size="sm" icon={<Download size={16} />} onClick={onExport}>
           Xuất báo cáo
         </Button>
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -44,17 +44,17 @@ export default function ControlBar({
   return (
     <div className="bg-white border-y border-gray-200 py-2 px-4 flex items-center gap-3 overflow-x-auto no-scrollbar shadow-sm">
       {/* Playback Controls */}
-      <ControlGroup>
+      {/* <ControlGroup>
         <IconButton icon={ChevronLeft} />
         <IconButton icon={RotateCcw} />
         <IconButton icon={Play} active />
         <IconButton icon={Pause} />
         <IconButton icon={FastForward} />
         <IconButton icon={ChevronRight} />
-      </ControlGroup>
+      </ControlGroup> */}
 
       {/* Speed Controls */}
-      <ControlGroup>
+      {/* <ControlGroup>
         {['x1', 'x2', 'x5'].map((speed) => (
           <button
             key={speed}
@@ -68,10 +68,10 @@ export default function ControlBar({
             {speed}
           </button>
         ))}
-      </ControlGroup>
+      </ControlGroup> */}
 
       {/* Scale Controls */}
-      <ControlGroup>
+      {/* <ControlGroup>
         {[1, 2, 3].map((num) => (
           <button
             key={num}
@@ -83,7 +83,7 @@ export default function ControlBar({
             {num}
           </button>
         ))}
-      </ControlGroup>
+      </ControlGroup> */}
 
       {/* Action Icons */}
       <ControlGroup>

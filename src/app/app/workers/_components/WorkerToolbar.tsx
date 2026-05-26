@@ -19,9 +19,9 @@ export default function WorkerToolbar({
         <Button size="sm" icon={<Plus size={16} />} onClick={onAdd}>
           Thêm worker
         </Button>
-        <Button size="sm" icon={<Download size={16} />} onClick={onExport}>
+        {/* <Button size="sm" icon={<Download size={16} />} onClick={onExport}>
           Xuất file
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

@@ -7,10 +7,8 @@ import {
   Map,
   Monitor,
   User,
-  Video,
   Clock,
-  Settings,
-  Image,
+  Server,
 } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 import SidebarCategory from './SidebarCategory';
@@ -89,26 +87,26 @@ export default function AppSidebar() {
         {
           path: '/app/workers',
           label: 'Danh sách máy chủ',
-          icon: <User size={16} />,
+          icon: <Server size={16} />,
         },
       ],
     },
     // Cài đặt
-    {
-      category: 'Cài đặt',
-      items: [
-        {
-          path: '/app/settings/system',
-          label: 'Cài đặt hệ thống',
-          icon: <Settings size={16} />,
-        },
-        {
-          path: '/app/settings/monitor',
-          label: 'Cài đặt màn hình',
-          icon: <Monitor size={16} />,
-        },
-      ],
-    },
+    // {
+    //   category: 'Cài đặt',
+    //   items: [
+    //     {
+    //       path: '/app/settings/system',
+    //       label: 'Cài đặt hệ thống',
+    //       icon: <Settings size={16} />,
+    //     },
+    //     {
+    //       path: '/app/settings/monitor',
+    //       label: 'Cài đặt màn hình',
+    //       icon: <Monitor size={16} />,
+    //     },
+    //   ],
+    // },
   ];
 
   return (
