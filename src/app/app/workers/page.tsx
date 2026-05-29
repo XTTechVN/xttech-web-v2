@@ -27,7 +27,7 @@ export default function WorkerPage() {
   const [isModalConfirmOpen, setIsModalConfirmOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
-  const [selectedWorkerId, setSelectedWorkerId] = useState<string>('');
+  const [selectedWorkerMacId, setSelectedWorkerMacId] = useState<string>('');
   const [defaultValues, setDefaultValues] = useState<Worker | undefined>(undefined);
 
   const handleAddWorker = async (data: WorkerFormModalData) => {
@@ -44,10 +44,10 @@ export default function WorkerPage() {
     }
   };
 
-  const handleDeleteWorker = async (id: string) => {
+  const handleDeleteWorker = async (macId: string) => {
     setIsLoading(true);
     try {
-      await api.delete(`/api/v1/workers/${id}`);
+      await api.delete(`/api/v1/workers/${macId}`);
       toast.success('Xóa worker thành công');
       queryClient.invalidateQueries({ queryKey: ['workers'] });
     } catch (error) {
@@ -61,7 +61,7 @@ export default function WorkerPage() {
   const handleEditWorker = async (data: WorkerFormModalData) => {
     setIsLoading(true);
     try {
-      await api.patch(`/api/v1/workers/${selectedWorkerId}`, data);
+      await api.patch(`/api/v1/workers/${selectedWorkerMacId}`, data);
       toast.success('Cập nhật worker thành công');
       queryClient.invalidateQueries({ queryKey: ['workers'] });
     } catch (error) {
@@ -85,13 +85,13 @@ export default function WorkerPage() {
 
       {/* Table */}
       <WorkerTable
-        onDelete={(id) => {
-          setSelectedWorkerId(id);
+        onDelete={(macId) => {
+          setSelectedWorkerMacId(macId);
           setIsModalConfirmOpen(true);
         }}
         onEdit={(worker: Worker) => {
           setDefaultValues(worker);
-          setSelectedWorkerId(worker.id);
+          setSelectedWorkerMacId(worker.macId);
           setIsEdit(true);
         }}
         onView={(worker: Worker) => {
@@ -124,7 +124,7 @@ export default function WorkerPage() {
             description="Bạn có chắc chắn muốn xóa worker này? Các camera đang kết nối với worker này có thể bị gián đoạn."
             isLoading={isLoading}
             onCancel={() => setIsModalConfirmOpen(false)}
-            onConfirm={() => handleDeleteWorker(selectedWorkerId)}
+            onConfirm={() => handleDeleteWorker(selectedWorkerMacId)}
           />
         </ModalWrapper>
       </>

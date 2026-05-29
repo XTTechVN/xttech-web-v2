@@ -23,7 +23,7 @@ export default function WorkerTable({
   onEdit,
   onView,
 }: {
-  onDelete: (id: string) => void;
+  onDelete: (macId: string) => void;
   onEdit: (worker: Worker) => void;
   onView: (worker: Worker) => void;
 }) {
@@ -70,7 +70,7 @@ export default function WorkerTable({
         <TableAction
           onView={() => onView(item)}
           onEdit={() => onEdit(item)}
-          onDelete={() => onDelete(item.id)}
+          onDelete={() => onDelete(item.macId)}
         />
       ),
     },

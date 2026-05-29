@@ -31,6 +31,7 @@ export default function WorkerEditModal({
     formState: { errors },
   } = useForm<WorkerFormModalData>({
     defaultValues: {
+      macId: defaultValues?.macId || '',
       name: defaultValues?.name || '',
       ip: defaultValues?.ip || '',
       port: defaultValues?.port || 8000,
@@ -68,6 +69,17 @@ export default function WorkerEditModal({
 
       <div className="flex-1 overflow-y-auto">
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+          {/* Mac ID */}
+          <div className="flex flex-col gap-2">
+            <Label>Mac ID</Label>
+            <Input
+              placeholder="VD: 12:34:56:78:90:AB"
+              {...register('macId', { required: 'Mac ID là bắt buộc' })}
+              error={errors.macId?.message as string}
+              disabled
+            />
+          </div>
+
           {/* Name */}
           <div className="flex flex-col gap-2">
             <Label>Tên Worker</Label>

@@ -98,7 +98,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             // Border states using semantic colors
             error && 'border-red-500 focus:border-red-500',
             // Disabled state
-            disabled && 'bg-bg-disabled text-text-disabled cursor-not-allowed opacity-60',
+            disabled && 'bg-gray-100 text-gray-600 cursor-not-allowed opacity-90',
             className,
             'px-4',
           )}
