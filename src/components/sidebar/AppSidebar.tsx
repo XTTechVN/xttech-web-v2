@@ -11,6 +11,7 @@ import {
   Server,
   Shield,
   Key,
+  Bell,
 } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 import SidebarCategory from './SidebarCategory';
@@ -32,9 +33,34 @@ export default function AppSidebar() {
           label: 'Tổng quan',
           icon: <Home size={16} />,
         },
+      ],
+    },
+    {
+      category: 'Cảnh báo & sự kiện',
+      items: [
         {
-          path: '/app/alert',
+          path: '/app/event',
           label: 'Cảnh báo',
+          icon: <AlertCircle size={16} />,
+        },
+        {
+          path: '/app/event/access',
+          label: 'Cảnh báo ra vào',
+          icon: <Bell size={16} />,
+        },
+        {
+          path: '/app/event/safety',
+          label: 'Cảnh báo ATLĐ',
+          icon: <Bell size={16} />,
+        },
+        {
+          path: '/app/event/violation',
+          label: 'Cảnh báo vi phạm',
+          icon: <AlertCircle size={16} />,
+        },
+        {
+          path: '/app/event/vehicle',
+          label: 'Cảnh báo phương tiện',
           icon: <AlertCircle size={16} />,
         },
       ],
@@ -117,7 +143,7 @@ export default function AppSidebar() {
   ];
 
   return (
-    <div className="bg-gray-100 h-full p-4 flex flex-col">
+    <div className="bg-gray-100 min-h-full p-4 flex flex-col space-y-8">
       <div className="flex-1 space-y-4">
         {appRoutes.map((route) => (
           <SidebarCategory key={route.category} title={route.category}>

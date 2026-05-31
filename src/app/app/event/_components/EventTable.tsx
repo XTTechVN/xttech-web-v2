@@ -18,20 +18,22 @@ import dayjs from 'dayjs';
 import { Alert } from '@/types/shared/alert';
 import { ResponsePagination } from '@/types/shared/reponse';
 
-export default function AlertTable({
+export default function EventTable({
   onDelete,
   onView,
+  search = '',
 }: {
   onDelete: (id: string) => void;
   onView: (alert: Alert) => void;
+  search?: string;
 }) {
   const [limit, setLimit] = useState(10);
   const [offset, setOffset] = useState(0);
 
   const { data, isLoading, error } = useQuery<ResponsePagination<Alert>>({
-    queryKey: ['alerts', offset, limit],
+    queryKey: ['alerts', offset, limit, search],
     queryFn: () =>
-      api.get(`/api/v1/events?offset=${offset}&limit=${limit}`).then((res) => res.data),
+      api.get(`/api/v1/events?offset=${offset}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ''}`).then((res) => res.data),
   });
 
   const columns = [

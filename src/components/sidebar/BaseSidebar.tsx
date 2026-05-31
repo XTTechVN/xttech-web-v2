@@ -20,7 +20,10 @@ export default function BaseSidebar({ children }: { children: React.ReactNode })
           opacity: isOpen ? 1 : 0,
         }}
         transition={{ duration: 0.3 }}
-        className={cn('overflow-hidden text-nowrap', isMobile === undefined && 'max-md:hidden')}
+        className={cn(
+          'overflow-auto text-nowrap scrollbar-hide',
+          isMobile === undefined && 'max-md:hidden',
+        )}
         style={{
           position: 'fixed',
           top: HEADER_HEIGHT,
