@@ -9,6 +9,8 @@ import {
   User,
   Clock,
   Server,
+  Shield,
+  Key,
 } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 import SidebarCategory from './SidebarCategory';
@@ -91,22 +93,27 @@ export default function AppSidebar() {
         },
       ],
     },
-    // Cài đặt
-    // {
-    //   category: 'Cài đặt',
-    //   items: [
-    //     {
-    //       path: '/app/settings/system',
-    //       label: 'Cài đặt hệ thống',
-    //       icon: <Settings size={16} />,
-    //     },
-    //     {
-    //       path: '/app/settings/monitor',
-    //       label: 'Cài đặt màn hình',
-    //       icon: <Monitor size={16} />,
-    //     },
-    //   ],
-    // },
+    // Hệ thống
+    {
+      category: 'Hệ thống',
+      items: [
+        {
+          path: '/app/system/users',
+          label: 'Quản lý người dùng',
+          icon: <User size={16} />,
+        },
+        {
+          path: '/app/system/roles',
+          label: 'Quản lý vai trò',
+          icon: <Shield size={16} />,
+        },
+        {
+          path: '/app/system/permissions',
+          label: 'Quản lý quyền hạn',
+          icon: <Key size={16} />,
+        },
+      ],
+    },
   ];
 
   return (
