@@ -12,6 +12,9 @@ import {
   Shield,
   Key,
   Bell,
+  Folder,
+  Layers,
+  Lock,
 } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 import SidebarCategory from './SidebarCategory';
@@ -137,6 +140,16 @@ export default function AppSidebar() {
           path: '/app/system/permissions',
           label: 'Quản lý quyền hạn',
           icon: <Key size={16} />,
+        },
+        {
+          path: '/app/projects',
+          label: 'Quản lý dự án',
+          icon: <Folder size={16} />,
+        },
+        {
+          path: '/app/system/user-projects',
+          label: 'Phân quyền dự án',
+          icon: <Lock size={16} />,
         },
       ],
     },
