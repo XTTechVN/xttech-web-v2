@@ -33,7 +33,9 @@ export default function PermissionTable({
     queryKey: ['permissions', offset, limit, searchQuery],
     queryFn: () =>
       api
-        .get(`/api/v1/permissions?offset=${offset}&limit=${limit}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`)
+        .get(
+          `/api/v1/permissions?offset=${offset}&sortBy=code&sortOrder=asc&limit=${limit}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`,
+        )
         .then((res) => res.data),
   });
 
