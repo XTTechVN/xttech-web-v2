@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import api from '@/utils/api';
 
 import useUserStore from './useUserStore';
 
@@ -23,8 +23,10 @@ const useAuthStore = create<AuthState>((set) => ({
   },
 
   signout: () => {
-    set({ isAuthenticated: false });
-    useUserStore.getState().clearUser();
+    api.post('/api/v1/auth/signout').finally(() => {
+      set({ isAuthenticated: false });
+      useUserStore.getState().clearUser();
+    });
   },
 
   setAuthenticated: (isAuthenticated: boolean) => set({ isAuthenticated }),

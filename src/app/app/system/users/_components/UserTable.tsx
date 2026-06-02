@@ -1,14 +1,15 @@
 'use client';
 
+// Hooks
+import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+
 // Components
+import Forbidden from '@/components/ui/Forbidden';
 import Table from '@/components/table/Table';
 import { Edit, Trash2, Shield } from 'lucide-react';
 import TablePagination from '@/components/table/TablePagination';
 import TableLoading from '@/components/table/TableLoading';
-
-// Hooks
-import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
 
 // Utils
 import api from '@/utils/api';
@@ -22,11 +23,13 @@ export default function UserTable({
   onEdit,
   onManageRoles,
   searchQuery = '',
+  onForbiddenChange,
 }: {
   onDelete: (id: string) => void;
   onEdit: (user: User) => void;
   onManageRoles: (user: User) => void;
   searchQuery?: string;
+  onForbiddenChange?: (forbidden: boolean) => void;
 }) {
   const [limit, setLimit] = useState(10);
   const [offset, setOffset] = useState(0);
@@ -38,6 +41,14 @@ export default function UserTable({
         .get(`/api/v1/users?offset=${offset}&limit=${limit}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`)
         .then((res) => res.data),
   });
+
+  const isForbidden = (error as any)?.response?.status === 403;
+
+  useEffect(() => {
+    if (onForbiddenChange) {
+      onForbiddenChange(isForbidden);
+    }
+  }, [isForbidden, onForbiddenChange]);
 
   const columns = [
     {
@@ -142,16 +153,24 @@ export default function UserTable({
     </div>
   );
 
+  const errorMessage = (error as any)?.response?.data?.detail || error?.message;
+
   return (
     <div>
       {isLoading && <TableLoading cols={columns} />}
-      {error && <div className="p-4 text-red-500 bg-red-50 rounded-lg">Lỗi: {error.message}</div>}
-      {data && (
+      {isForbidden ? (
+        <Forbidden message={errorMessage} />
+      ) : (
         <>
-          <Table data={data.items} columns={columns} cardView={cardView} />
-          <div className="flex justify-end mt-4">
-            <TablePagination {...data.meta} onChange={(newOffset) => setOffset(newOffset)} />
-          </div>
+          {error && <div className="p-4 text-red-500 bg-red-50 rounded-lg">Lỗi: {error.message}</div>}
+          {data && (
+            <>
+              <Table data={data.items} columns={columns} cardView={cardView} />
+              <div className="flex justify-end mt-4">
+                <TablePagination {...data.meta} onChange={(newOffset) => setOffset(newOffset)} />
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

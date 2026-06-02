@@ -30,6 +30,7 @@ export default function UsersPage() {
   const [isRolesModalOpen, setIsRolesModalOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [searchVal, setSearchVal] = useState('');
+  const [isForbidden, setIsForbidden] = useState(false);
 
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -90,34 +91,37 @@ export default function UsersPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row gap-2 items-center justify-between">
-        <div className="flex items-center gap-2 w-full md:w-fit">
-          <Search
-            size="sm"
-            className="w-full md:w-96"
-            placeholder="Tìm kiếm người dùng..."
-            onChange={(val) => setSearchVal(val)}
-          />
-        </div>
+      {!isForbidden && (
+        <div className="flex flex-col md:flex-row gap-2 items-center justify-between">
+          <div className="flex items-center gap-2 w-full md:w-fit">
+            <Search
+              size="sm"
+              className="w-full md:w-96"
+              placeholder="Tìm kiếm người dùng..."
+              onChange={(val) => setSearchVal(val)}
+            />
+          </div>
 
-        <div className="flex items-center gap-2 w-full md:w-fit">
-          <Button
-            size="sm"
-            onClick={() => {
-              setDefaultValues(undefined);
-              setIsEdit(false);
-              setIsModalOpen(true);
-            }}
-            icon={<PlusIcon size={16} />}
-          >
-            Thêm người dùng
-          </Button>
+          <div className="flex items-center gap-2 w-full md:w-fit">
+            <Button
+              size="sm"
+              onClick={() => {
+                setDefaultValues(undefined);
+                setIsEdit(false);
+                setIsModalOpen(true);
+              }}
+              icon={<PlusIcon size={16} />}
+            >
+              Thêm người dùng
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Table */}
       <UserTable
         searchQuery={searchVal}
+        onForbiddenChange={setIsForbidden}
         onDelete={(id) => {
           setSelectedUserId(id);
           setIsModalConfirmOpen(true);
