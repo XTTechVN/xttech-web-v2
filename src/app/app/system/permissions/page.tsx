@@ -9,6 +9,7 @@ import ModalConfirm from '@/components/modal/ModalConfirm';
 import ModalWrapper from '@/components/modal/ModalWrapper';
 import PermissionTable from './_components/PermissionTable';
 import PermissionModal, { PermissionFormData } from './_components/PermissionModal';
+import Breadcrumb from '@/components/ui/Breadcrumb';
 import { PlusIcon } from 'lucide-react';
 
 // Hooks
@@ -80,6 +81,15 @@ export default function PermissionsPage() {
 
   return (
     <div className="p-4 space-y-4">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { path: '/app/system/users', label: 'Quản lý người dùng' },
+          { path: '/app/system/roles', label: 'Quản lý vai trò' },
+          { label: 'Quản lý quyền hạn' },
+        ]}
+      />
+
       {/* Heading */}
       <div className="flex flex-col gap-1">
         <Heading>Quản lý quyền hạn</Heading>

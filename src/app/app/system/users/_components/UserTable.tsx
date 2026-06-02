@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 // Components
 import Forbidden from '@/components/ui/Forbidden';
 import Table from '@/components/table/Table';
-import { Edit, Trash2, Shield } from 'lucide-react';
+import { Edit, Trash2, Shield, Briefcase } from 'lucide-react';
 import TablePagination from '@/components/table/TablePagination';
 import TableLoading from '@/components/table/TableLoading';
 
@@ -22,12 +22,14 @@ export default function UserTable({
   onDelete,
   onEdit,
   onManageRoles,
+  onManageProjects,
   searchQuery = '',
   onForbiddenChange,
 }: {
   onDelete: (id: string) => void;
   onEdit: (user: User) => void;
   onManageRoles: (user: User) => void;
+  onManageProjects: (user: User) => void;
   searchQuery?: string;
   onForbiddenChange?: (forbidden: boolean) => void;
 }) {
@@ -65,7 +67,7 @@ export default function UserTable({
     {
       key: 'email',
       label: 'Email',
-      width: '25%',
+      width: '20%',
     },
     {
       key: 'phone',
@@ -84,6 +86,13 @@ export default function UserTable({
             title="Quản lý vai trò (Roles)"
           >
             <Shield size={16} />
+          </button>
+          <button
+            className="text-gray-500 hover:text-blue-600 cursor-pointer flex items-center gap-1 text-xs"
+            onClick={() => onManageProjects(item)}
+            title="Phân quyền dự án (Projects)"
+          >
+            <Briefcase size={16} />
           </button>
           <button
             className="text-gray-500 hover:text-black cursor-pointer"

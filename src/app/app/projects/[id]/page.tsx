@@ -11,6 +11,8 @@ import ZoneTable from './_components/ZoneTable';
 import ZoneModal, { ZoneFormData } from './_components/ZoneModal';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import ProjectDetail from './_components/ProjectDetail';
+import ProjectUsersList from './_components/ProjectUsersList';
+import ProjectUsersModal from './_components/ProjectUsersModal';
 import {
   PlusIcon,
   ArrowLeft,
@@ -52,6 +54,7 @@ export default function ProjectDetailPage() {
   const [defaultValues, setDefaultValues] = useState<Zone | undefined>(undefined);
 
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
   const [isSubmittingProject, setIsSubmittingProject] = useState(false);
 
   const handleEditProject = async (data: ProjectFormData) => {
@@ -163,27 +166,45 @@ export default function ProjectDetailPage() {
         items={[{ path: '/app/projects', label: 'Danh sách dự án' }, { label: project.name }]}
       />
 
-      <div className="flex items-center justify-between gap-3 border-b py-2">
-        <Heading>Thông tin chi tiết dự án</Heading>
-
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setIsProjectModalOpen(true);
-          }}
-          icon={<Pencil size={16} />}
-        >
-          Chỉnh sửa
-        </Button>
+      {/* Detail Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <Heading>Thông tin chi tiết dự án</Heading>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setIsProjectModalOpen(true);
+              }}
+              icon={<Pencil size={16} />}
+            >
+              Chỉnh sửa
+            </Button>
+          </div>
+          <ProjectDetail project={project} />
+        </div>
+        <div className="border-t lg:border-t-0 lg:border-l border-gray-150 pt-6 lg:pt-0 lg:pl-6 flex flex-col">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <Heading>Nhân sự được cấp quyền</Heading>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setIsUsersModalOpen(true);
+              }}
+              icon={<PlusIcon size={16} />}
+            >
+              Thêm nhân sự
+            </Button>
+          </div>
+          <ProjectUsersList projectId={projectId} />
+        </div>
       </div>
-
-      {/* Flat List Properties */}
-      <ProjectDetail project={project} />
 
       {/* Zones Management Section */}
       <div className="space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b pb-2">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <Heading>Danh sách phân khu</Heading>
 
           <div className="flex items-center gap-2 w-full md:w-fit">
@@ -234,6 +255,11 @@ export default function ProjectDetailPage() {
             onSave={handleEditProject}
             defaultValues={project}
           />
+        </ModalWrapper>
+
+        {/* Manage Users for Project Modal */}
+        <ModalWrapper isOpen={isUsersModalOpen} onClose={() => setIsUsersModalOpen(false)}>
+          <ProjectUsersModal projectId={projectId} onClose={() => setIsUsersModalOpen(false)} />
         </ModalWrapper>
 
         {/* Add/Edit Zone Modal */}

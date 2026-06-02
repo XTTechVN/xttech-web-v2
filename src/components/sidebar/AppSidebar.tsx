@@ -132,24 +132,9 @@ export default function AppSidebar() {
           icon: <User size={16} />,
         },
         {
-          path: '/app/system/roles',
-          label: 'Quản lý vai trò',
-          icon: <Shield size={16} />,
-        },
-        {
-          path: '/app/system/permissions',
-          label: 'Quản lý quyền hạn',
-          icon: <Key size={16} />,
-        },
-        {
           path: '/app/projects',
           label: 'Quản lý dự án',
           icon: <Folder size={16} />,
-        },
-        {
-          path: '/app/system/user-projects',
-          label: 'Phân quyền dự án',
-          icon: <Lock size={16} />,
         },
       ],
     },

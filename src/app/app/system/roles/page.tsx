@@ -10,10 +10,12 @@ import ModalWrapper from '@/components/modal/ModalWrapper';
 import RoleTable from './_components/RoleTable';
 import RoleModal, { RoleFormData } from './_components/RoleModal';
 import RolePermissionsModal from './_components/RolePermissionsModal';
-import { PlusIcon } from 'lucide-react';
+import Breadcrumb from '@/components/ui/Breadcrumb';
+import { PlusIcon, Key } from 'lucide-react';
 
 // Hooks
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import queryClient from '@/utils/query';
 
 // Utils
@@ -24,6 +26,7 @@ import toast from 'react-hot-toast';
 import { Role } from '@/types/shared/role';
 
 export default function RolesPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalConfirmOpen, setIsModalConfirmOpen] = useState(false);
@@ -83,6 +86,14 @@ export default function RolesPage() {
 
   return (
     <div className="p-4 space-y-4">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { path: '/app/system/users', label: 'Quản lý người dùng' },
+          { label: 'Quản lý vai trò' },
+        ]}
+      />
+
       {/* Heading */}
       <div className="flex flex-col gap-1">
         <Heading>Quản lý vai trò</Heading>
@@ -101,6 +112,14 @@ export default function RolesPage() {
         </div>
 
         <div className="flex items-center gap-2 w-full md:w-fit">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push('/app/system/permissions')}
+            icon={<Key size={16} />}
+          >
+            Quản lý quyền hạn
+          </Button>
           <Button
             size="sm"
             onClick={() => {

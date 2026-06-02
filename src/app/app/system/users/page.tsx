@@ -10,10 +10,12 @@ import ModalWrapper from '@/components/modal/ModalWrapper';
 import UserTable from './_components/UserTable';
 import UserModal, { UserFormData } from './_components/UserModal';
 import UserRolesModal from './_components/UserRolesModal';
-import { PlusIcon } from 'lucide-react';
+import UserProjectModal from './_components/UserProjectModal';
+import { PlusIcon, Shield } from 'lucide-react';
 
 // Hooks
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import queryClient from '@/utils/query';
 
 // Utils
@@ -24,10 +26,12 @@ import toast from 'react-hot-toast';
 import { User } from '@/types/shared/user';
 
 export default function UsersPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalConfirmOpen, setIsModalConfirmOpen] = useState(false);
   const [isRolesModalOpen, setIsRolesModalOpen] = useState(false);
+  const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [searchVal, setSearchVal] = useState('');
   const [isForbidden, setIsForbidden] = useState(false);
@@ -105,6 +109,14 @@ export default function UsersPage() {
           <div className="flex items-center gap-2 w-full md:w-fit">
             <Button
               size="sm"
+              variant="outline"
+              onClick={() => router.push('/app/system/roles')}
+              icon={<Shield size={16} />}
+            >
+              Quản lý vai trò
+            </Button>
+            <Button
+              size="sm"
               onClick={() => {
                 setDefaultValues(undefined);
                 setIsEdit(false);
@@ -136,6 +148,10 @@ export default function UsersPage() {
           setSelectedUser(user);
           setIsRolesModalOpen(true);
         }}
+        onManageProjects={(user: User) => {
+          setSelectedUser(user);
+          setIsProjectsModalOpen(true);
+        }}
       />
 
       {/* Modals */}
@@ -154,6 +170,13 @@ export default function UsersPage() {
         <ModalWrapper isOpen={isRolesModalOpen} onClose={() => setIsRolesModalOpen(false)}>
           {selectedUser && (
             <UserRolesModal user={selectedUser} onClose={() => setIsRolesModalOpen(false)} />
+          )}
+        </ModalWrapper>
+
+        {/* Manage Projects for User Modal */}
+        <ModalWrapper isOpen={isProjectsModalOpen} onClose={() => setIsProjectsModalOpen(false)}>
+          {selectedUser && (
+            <UserProjectModal user={selectedUser} onClose={() => setIsProjectsModalOpen(false)} />
           )}
         </ModalWrapper>
 
