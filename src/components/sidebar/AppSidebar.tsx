@@ -46,26 +46,6 @@ export default function AppSidebar() {
           label: 'Cảnh báo',
           icon: <AlertCircle size={16} />,
         },
-        {
-          path: '/app/event/access',
-          label: 'Cảnh báo ra vào',
-          icon: <Bell size={16} />,
-        },
-        {
-          path: '/app/event/safety',
-          label: 'Cảnh báo ATLĐ',
-          icon: <Bell size={16} />,
-        },
-        {
-          path: '/app/event/violation',
-          label: 'Cảnh báo vi phạm',
-          icon: <AlertCircle size={16} />,
-        },
-        {
-          path: '/app/event/vehicle',
-          label: 'Cảnh báo phương tiện',
-          icon: <AlertCircle size={16} />,
-        },
       ],
     },
     // Camera
