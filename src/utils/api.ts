@@ -32,7 +32,7 @@ api.interceptors.response.use(
       try {
         // call api refresh, api này sẽ tự cấp phát vào cookie
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://api_vision.bosky.vn'}/api/v1/auth/refresh`,
           {},
           {
             headers: {
