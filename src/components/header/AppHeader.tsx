@@ -28,12 +28,12 @@ export default function AppHeader() {
         >
           <Menu />
         </button>
-        <img
+        {/* <img
           src="https://blueai.vn/wp-content/uploads/2022/03/White.svg"
           alt=""
           className="h-6 cursor-pointer"
           onClick={() => (window.location.href = '/')}
-        />
+        /> */}
       </div>
 
       {/* Right side */}
