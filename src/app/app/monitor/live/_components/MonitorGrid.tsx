@@ -46,6 +46,7 @@ class CustomSource {
   }
   start() {}
   resume() {}
+  destroy() {}
   feed(arrayBuffer: ArrayBuffer) {
     if (this.destination) {
       this.destination.write(arrayBuffer);
