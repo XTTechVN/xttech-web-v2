@@ -54,6 +54,13 @@ export default function SignInPage() {
             ? 'Sai tài khoản hoặc mật khẩu'
             : detail,
         );
+      } else if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
+        const message = detail.message;
+        toast.error(
+          message === 'Incorrect username or password'
+            ? 'Sai tài khoản hoặc mật khẩu'
+            : message || 'Có lỗi xảy ra, vui lòng thử lại',
+        );
       } else if (Array.isArray(detail)) {
         // Trường hợp lỗi validation của FastAPI (Pydantic trả về mảng objects có key 'msg')
         const firstErrorMsg = detail[0]?.msg;

@@ -3,6 +3,13 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import api from '@/utils/api';
 import toast from 'react-hot-toast';
 
+const getErrorMessage = (error: any, fallback: string): string => {
+  const detail = error.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (detail && typeof detail === 'object' && detail.message) return detail.message;
+  return fallback;
+};
+
 interface Preset {
   token: string;
   name: string;
@@ -72,7 +79,7 @@ export const usePtzStore = create<PtzState>()(
             duration
           });
         } catch (error: any) {
-          toast.error(error.response?.data?.detail || 'Có lỗi xảy ra khi gọi lệnh PTZ');
+          toast.error(getErrorMessage(error, 'Có lỗi xảy ra khi gọi lệnh PTZ'));
         } finally {
           set({ isMoving: false });
         }
@@ -85,7 +92,7 @@ export const usePtzStore = create<PtzState>()(
           toast.success('Đã lưu preset thành công');
           await get().fetchPresets(cameraId, true);
         } catch (error: any) {
-          toast.error(error.response?.data?.detail || 'Lỗi khi lưu preset');
+          toast.error(getErrorMessage(error, 'Lỗi khi lưu preset'));
         }
       },
 
@@ -94,7 +101,7 @@ export const usePtzStore = create<PtzState>()(
           toast.success('Đang di chuyển tới preset');
           await api.post(`/api/v1/cameras/${cameraId}/ptz/presets/${token}/goto`);
         } catch (error: any) {
-          toast.error(error.response?.data?.detail || 'Lỗi khi gọi preset');
+          toast.error(getErrorMessage(error, 'Lỗi khi gọi preset'));
         }
       },
 
@@ -104,7 +111,7 @@ export const usePtzStore = create<PtzState>()(
           toast.success('Đã xóa preset');
           await get().fetchPresets(cameraId, true);
         } catch (error: any) {
-          toast.error(error.response?.data?.detail || 'Lỗi khi xóa preset');
+          toast.error(getErrorMessage(error, 'Lỗi khi xóa preset'));
         }
       },
 
@@ -113,7 +120,7 @@ export const usePtzStore = create<PtzState>()(
           toast.success('Đang di chuyển về Home');
           await api.post(`/api/v1/cameras/${cameraId}/ptz/home`);
         } catch (error: any) {
-          toast.error(error.response?.data?.detail || 'Lỗi khi di chuyển về Home');
+          toast.error(getErrorMessage(error, 'Lỗi khi di chuyển về Home'));
         }
       },
 
@@ -122,7 +129,7 @@ export const usePtzStore = create<PtzState>()(
           await api.post(`/api/v1/cameras/${cameraId}/ptz/home/set`);
           toast.success('Đã đặt Home thành công');
         } catch (error: any) {
-          toast.error(error.response?.data?.detail || 'Lỗi khi đặt Home');
+          toast.error(getErrorMessage(error, 'Lỗi khi đặt Home'));
         }
       }
     }),

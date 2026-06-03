@@ -40,7 +40,9 @@ export default function UserTable({
     queryKey: ['users', offset, limit, searchQuery],
     queryFn: () =>
       api
-        .get(`/api/v1/users?offset=${offset}&limit=${limit}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`)
+        .get(
+          `/api/v1/users?offset=${offset}&limit=${limit}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`,
+        )
         .then((res) => res.data),
   });
 
@@ -162,7 +164,7 @@ export default function UserTable({
     </div>
   );
 
-  const errorMessage = (error as any)?.response?.data?.detail || error?.message;
+  const errorMessage = (error as any)?.response?.data?.detail?.message || error?.message;
 
   return (
     <div>
@@ -171,7 +173,9 @@ export default function UserTable({
         <Forbidden message={errorMessage} />
       ) : (
         <>
-          {error && <div className="p-4 text-red-500 bg-red-50 rounded-lg">Lỗi: {error.message}</div>}
+          {error && (
+            <div className="p-4 text-red-500 bg-red-50 rounded-lg">Lỗi: {error.message}</div>
+          )}
           {data && (
             <>
               <Table data={data.items} columns={columns} cardView={cardView} />
