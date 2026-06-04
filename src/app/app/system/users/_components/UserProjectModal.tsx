@@ -1,6 +1,5 @@
 'use client';
 
-import Label from '@/components/ui/Label';
 import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
 import Loading from '@/components/ui/icons/Loading';
@@ -53,7 +52,7 @@ export default function UserProjectModal({ user, onClose }: { user: User; onClos
   const zonesByProjectId = useMemo(() => {
     const groups: Record<string, Zone[]> = {};
     allZones.forEach((zone) => {
-      const pId = zone.project_id;
+      const pId = zone.projectId;
       if (!groups[pId]) {
         groups[pId] = [];
       }

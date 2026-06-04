@@ -12,7 +12,7 @@ import { useEffect } from 'react';
 import { Zone } from '@/types/shared/zone';
 
 export interface ZoneFormData {
-  project_id: string;
+  projectId: string;
   name: string;
   description?: string;
 }
@@ -39,7 +39,7 @@ export default function ZoneModal({
     formState: { errors },
   } = useForm<ZoneFormData>({
     defaultValues: {
-      project_id: projectId,
+      projectId: projectId,
       name: '',
       description: '',
     },
@@ -48,13 +48,13 @@ export default function ZoneModal({
   useEffect(() => {
     if (defaultValues) {
       reset({
-        project_id: defaultValues.project_id || projectId,
+        projectId: defaultValues.projectId || projectId,
         name: defaultValues.name || '',
         description: defaultValues.description || '',
       });
     } else {
       reset({
-        project_id: projectId,
+        projectId: projectId,
         name: '',
         description: '',
       });
