@@ -2,7 +2,7 @@ import { Project } from './project';
 
 export type Zone = {
   id: string;
-  project_id: string;
+  projectId: string;
   name: string;
   description?: string;
   createdAt?: string;

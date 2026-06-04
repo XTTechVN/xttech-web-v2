@@ -24,6 +24,7 @@ import api from '@/utils/api';
 // Types
 import { CameraEditFormData } from '@/types/shared/camera';
 import { Worker } from '@/types/shared/worker';
+import { Zone } from '@/types/shared/zone';
 
 export default function CameraEditModal({
   isLoading,
@@ -47,6 +48,12 @@ export default function CameraEditModal({
   } = useQuery<Worker[]>({
     queryKey: ['workers'],
     queryFn: () => api.get('/api/v1/workers?limit=100&offset=0').then((res: any) => res.data.items),
+  });
+
+  // Fetch zone data from API
+  const { data: zones, isLoading: isLoadingZones } = useQuery<Zone[]>({
+    queryKey: ['zones'],
+    queryFn: () => api.get('/api/v1/zones?limit=100&offset=0').then((res: any) => res.data.items),
   });
 
   const {
@@ -73,6 +80,7 @@ export default function CameraEditModal({
       onvifPort: defaultValues?.onvifPort || 80,
       onvifUsername: defaultValues?.onvifUsername || '',
       onvifPassword: defaultValues?.onvifPassword || '',
+      zoneId: defaultValues?.zoneId || '',
     },
   });
 
@@ -103,6 +111,7 @@ export default function CameraEditModal({
       setValue('onvifPort', defaultValues.onvifPort);
       setValue('onvifUsername', defaultValues.onvifUsername);
       setValue('onvifPassword', defaultValues.onvifPassword);
+      setValue('zoneId', defaultValues.zoneId || '');
     }
   }, [defaultValues, setValue]);
 
@@ -199,14 +208,44 @@ export default function CameraEditModal({
                   </div>
                 </div>
 
-                {/* Address */}
-                <div className="flex flex-col gap-2">
-                  <Label>Địa chỉ</Label>
-                  <Input
-                    placeholder="VD: Hà Nội"
-                    {...register('address', { required: 'Địa chỉ là bắt buộc' })}
-                    error={errors.address?.message as string}
-                  />
+                {/* Address and Zone */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <Label>Địa chỉ</Label>
+                    <Input
+                      placeholder="VD: Hà Nội"
+                      {...register('address', { required: 'Địa chỉ là bắt buộc' })}
+                      error={errors.address?.message as string}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Label>Phân khu (Zone)</Label>
+                    {isLoadingZones ? (
+                      <Loading />
+                    ) : (
+                      <Controller
+                        name="zoneId"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value}
+                            onChange={field.onChange}
+                            ref={field.ref}
+                            options={
+                              zones?.map((zone: Zone) => ({
+                                value: zone.id as string,
+                                label: zone.name as string,
+                              })) || []
+                            }
+                            placeholder="Chọn phân khu"
+                            error={errors.zoneId?.message}
+                            className="w-full h-full"
+                          />
+                        )}
+                      />
+                    )}
+                  </div>
                 </div>
 
                 {/* Coordinates and Map Button */}
