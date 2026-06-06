@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '@/stores';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://api_vision.bosky.vn',
@@ -8,10 +9,25 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// tự động refresh access token khi expired
+// Thêm request interceptor để đính kèm access token mới nhất vào header của mỗi request
+api.interceptors.request.use(
+  (config) => {
+    const accessToken = useAuthStore.getState().accessToken;
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
+// Tự động refresh access token khi expired
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
+    // Lưu lại request lỗi
     const originalRequest = error.config;
 
     // bỏ qua những api không cần kiểm tra
@@ -30,6 +46,7 @@ api.interceptors.response.use(
       originalRequest._retryCount++;
 
       try {
+        const refreshToken = useAuthStore.getState().refreshToken;
         // call api refresh, api này sẽ tự cấp phát vào cookie
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL || 'http://api_vision.bosky.vn'}/api/v1/auth/refresh`,
@@ -37,10 +54,15 @@ api.interceptors.response.use(
           {
             headers: {
               'Content-Type': 'application/json',
+              Authorization: `Bearer ${refreshToken}`,
             },
             withCredentials: true,
           },
         );
+
+        // Lưu access token mới nếu API trả về token mới (nếu có cập nhật trong store)
+        const newAccessToken = response.data.accessToken;
+        useAuthStore.getState().setAccessToken(newAccessToken);
 
         // call lại api đã lỗi với access token mới
         return api(originalRequest);

@@ -2,12 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Loader2, Lock, User as UserIcon } from 'lucide-react';
-import useUserStore from '@/stores/useUserStore';
 import { useForm } from 'react-hook-form';
-import api from '@/utils/api';
-import { AxiosResponse } from 'axios';
-import { User } from '@/types/shared/user';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '@/stores';
 
 type SignInInputs = {
   username: string;
@@ -16,6 +13,7 @@ type SignInInputs = {
 
 export default function SignInPage() {
   const router = useRouter();
+  const { signin } = useAuthStore();
 
   const {
     register,
@@ -31,15 +29,14 @@ export default function SignInPage() {
   const onSubmit = async (data: SignInInputs) => {
     try {
       // 1. Call API đăng nhập
-      const response: AxiosResponse<User> = await api.post('/api/v1/auth/signin', data);
+      // const response: AxiosResponse<User> = await api.post('/api/v1/auth/signin', data);
 
-      // 2. Lưu thông tin user vào store
-      useUserStore.getState().setUser(response.data);
+      const success = await signin(data.username, data.password);
 
-      // 3. Chuyển hướng sang trang /app
-      router.push('/app');
+      if (success) {
+        router.push('/app');
+      }
 
-      // 4. Hiển thị toast thông báo
       setTimeout(() => {
         toast.success('Đăng nhập thành công');
       }, 500);
@@ -50,9 +47,7 @@ export default function SignInPage() {
       // 2. Hiển thị toast thông báo lỗi an toàn
       if (typeof detail === 'string') {
         toast.error(
-          detail === 'Incorrect username or password'
-            ? 'Sai tài khoản hoặc mật khẩu'
-            : detail,
+          detail === 'Incorrect username or password' ? 'Sai tài khoản hoặc mật khẩu' : detail,
         );
       } else if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
         const message = detail.message;
