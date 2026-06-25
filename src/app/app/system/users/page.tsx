@@ -31,7 +31,7 @@ export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalConfirmOpen, setIsModalConfirmOpen] = useState(false);
   const [isRolesModalOpen, setIsRolesModalOpen] = useState(false);
-  const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
+  const [isSpacesModalOpen, setIsSpacesModalOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [searchVal, setSearchVal] = useState('');
   const [isForbidden, setIsForbidden] = useState(false);
@@ -150,7 +150,7 @@ export default function UsersPage() {
         }}
         onManageProjects={(user: User) => {
           setSelectedUser(user);
-          setIsProjectsModalOpen(true);
+          setIsSpacesModalOpen(true);
         }}
       />
 
@@ -173,10 +173,10 @@ export default function UsersPage() {
           )}
         </ModalWrapper>
 
-        {/* Manage Projects for User Modal */}
-        <ModalWrapper isOpen={isProjectsModalOpen} onClose={() => setIsProjectsModalOpen(false)}>
+        {/* Manage Spaces for User Modal */}
+        <ModalWrapper isOpen={isSpacesModalOpen} onClose={() => setIsSpacesModalOpen(false)}>
           {selectedUser && (
-            <UserProjectModal user={selectedUser} onClose={() => setIsProjectsModalOpen(false)} />
+            <UserProjectModal user={selectedUser} onClose={() => setIsSpacesModalOpen(false)} />
           )}
         </ModalWrapper>
 

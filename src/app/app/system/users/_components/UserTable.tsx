@@ -92,7 +92,7 @@ export default function UserTable({
           <button
             className="text-gray-500 hover:text-blue-600 cursor-pointer flex items-center gap-1 text-xs"
             onClick={() => onManageProjects(item)}
-            title="Phân quyền dự án (Projects)"
+            title="Phân quyền vị trí (Spaces)"
           >
             <Briefcase size={16} />
           </button>

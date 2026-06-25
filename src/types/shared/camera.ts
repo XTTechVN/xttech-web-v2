@@ -15,7 +15,7 @@ export type Camera = {
   onvifPort?: number;
   onvifUsername?: string;
   onvifPassword?: string;
-  zoneId?: string;
+  spaceId?: string;
   worker?: {
     name: string;
     ip: string;
@@ -32,7 +32,7 @@ export interface CameraAddFormData {
   workerId: string;
   lat: number;
   lng: number;
-  zoneId?: string;
+  spaceId?: string;
 }
 
 export interface CameraEditFormData {
@@ -51,5 +51,5 @@ export interface CameraEditFormData {
   onvifPort?: number;
   onvifUsername?: string;
   onvifPassword?: string;
-  zoneId?: string;
+  spaceId?: string;
 }

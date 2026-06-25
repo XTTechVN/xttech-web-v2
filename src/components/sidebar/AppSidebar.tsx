@@ -112,8 +112,8 @@ export default function AppSidebar() {
           icon: <User size={16} />,
         },
         {
-          path: '/app/projects',
-          label: 'Quản lý dự án',
+          path: '/app/spaces',
+          label: 'Quản lý khu vực',
           icon: <Folder size={16} />,
         },
       ],

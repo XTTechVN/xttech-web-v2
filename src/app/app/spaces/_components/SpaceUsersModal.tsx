@@ -11,12 +11,13 @@ import api from '@/utils/api';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 
-interface ProjectUsersModalProps {
-  projectId: string;
+interface SpaceUsersModalProps {
+  spaceId: string;
+  spaceName: string;
   onClose: () => void;
 }
 
-export default function ProjectUsersModal({ projectId, onClose }: ProjectUsersModalProps) {
+export default function SpaceUsersModal({ spaceId, spaceName, onClose }: SpaceUsersModalProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchVal, setSearchVal] = useState('');
@@ -33,19 +34,19 @@ export default function ProjectUsersModal({ projectId, onClose }: ProjectUsersMo
         const resAllUsers = await api.get('/api/v1/users?limit=1000');
         setAllUsers(resAllUsers.data.items || []);
 
-        // 2. Fetch current active users for this project
-        const resActiveUsers = await api.get(`/api/v1/projects/${projectId}/users`);
+        // 2. Fetch current active users for this space
+        const resActiveUsers = await api.get(`/api/v1/spaces/${spaceId}/users`);
         const activeIds = (resActiveUsers.data || []).map((u: UserType) => u.id);
         setInitialUserIds(activeIds);
         setSelectedUserIds(activeIds);
       } catch (error) {
-        toast.error('Lấy dữ liệu nhân sự dự án thất bại');
+        toast.error('Lấy danh sách người dùng được gán không gian thất bại');
       } finally {
         setIsLoading(false);
       }
     };
     fetchData();
-  }, [projectId]);
+  }, [spaceId]);
 
   const filteredUsers = useMemo(() => {
     if (!searchVal.trim()) return allUsers;
@@ -72,23 +73,23 @@ export default function ProjectUsersModal({ projectId, onClose }: ProjectUsersMo
 
       // 1. Gán thêm các nhân sự mới
       if (added.length > 0) {
-        await api.post(`/api/v1/projects/${projectId}/users`, {
+        await api.post(`/api/v1/spaces/${spaceId}/users`, {
           user_ids: added,
         });
       }
 
       // 2. Thu hồi quyền các nhân sự đã bỏ chọn
       if (removed.length > 0) {
-        await api.delete(`/api/v1/projects/${projectId}/users`, {
+        await api.delete(`/api/v1/spaces/${spaceId}/users`, {
           data: { user_ids: removed },
         });
       }
 
-      toast.success('Cập nhật nhân sự cho dự án thành công');
-      queryClient.invalidateQueries({ queryKey: ['project-users', projectId] });
+      toast.success('Cập nhật nhân sự thành công');
+      queryClient.invalidateQueries({ queryKey: ['space-users', spaceId] });
       onClose();
     } catch (error: any) {
-      const msg = error.response?.data?.message || 'Lưu cấu hình nhân sự thất bại';
+      const msg = error.response?.data?.message || 'Lưu phân quyền thất bại';
       toast.error(msg);
     } finally {
       setIsSaving(false);
@@ -100,11 +101,11 @@ export default function ProjectUsersModal({ projectId, onClose }: ProjectUsersMo
       {/* Header */}
       <div className="flex items-center justify-between p-6 pb-2">
         <div className="flex flex-col gap-1">
-          <Heading>Phân quyền nhân sự cho dự án</Heading>
-          <SubHeading>Gán quyền giám sát và quản trị công trường cho nhân sự</SubHeading>
+          <Heading>Gán người dùng cho vị trí</Heading>
+          <SubHeading>Gán quyền giám sát cho nhân sự tại: <span className="font-semibold text-black">{spaceName}</span> (bao gồm toàn bộ các nút con)</SubHeading>
         </div>
 
-        <Button type="button" variant="ghost" onClick={onClose} className="rounded-full">
+        <Button type="button" variant="ghost" onClick={onClose} className="rounded-full hover:bg-transparent">
           <X size={20} />
         </Button>
       </div>
@@ -146,14 +147,14 @@ export default function ProjectUsersModal({ projectId, onClose }: ProjectUsersMo
                       key={item.id}
                       onClick={() => handleToggleUser(item.id)}
                       className={`flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer select-none ${
-                        isChecked ? 'border-primary' : 'border-gray-200'
+                        isChecked ? 'border-indigo-600 bg-indigo-50/20' : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        onChange={() => {}} // Ngăn cảnh báo React, click được handle ở div cha
-                        className="mt-1 rounded border-gray-300 text-primary focus:primary w-4.5 h-4.5 cursor-pointer"
+                        onChange={() => {}} // Click is handled by parent div
+                        className="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4.5 h-4.5 cursor-pointer"
                       />
                       <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                         <span className="text-sm font-semibold text-gray-800 flex items-center gap-1.5 truncate">

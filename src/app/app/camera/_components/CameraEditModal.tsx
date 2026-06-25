@@ -24,7 +24,7 @@ import api from '@/utils/api';
 // Types
 import { CameraEditFormData } from '@/types/shared/camera';
 import { Worker } from '@/types/shared/worker';
-import { Zone } from '@/types/shared/zone';
+import { Space } from '@/types/shared/space';
 
 export default function CameraEditModal({
   isLoading,
@@ -50,10 +50,10 @@ export default function CameraEditModal({
     queryFn: () => api.get('/api/v1/workers?limit=100&offset=0').then((res: any) => res.data.items),
   });
 
-  // Fetch zone data from API
-  const { data: zones, isLoading: isLoadingZones } = useQuery<Zone[]>({
-    queryKey: ['zones'],
-    queryFn: () => api.get('/api/v1/zones?limit=100&offset=0').then((res: any) => res.data.items),
+  // Fetch space data from API
+  const { data: spaces, isLoading: isLoadingSpaces } = useQuery<Space[]>({
+    queryKey: ['spaces'],
+    queryFn: () => api.get('/api/v1/spaces/flat').then((res: any) => res.data),
   });
 
   const {
@@ -80,14 +80,14 @@ export default function CameraEditModal({
       onvifPort: defaultValues?.onvifPort || 80,
       onvifUsername: defaultValues?.onvifUsername || '',
       onvifPassword: defaultValues?.onvifPassword || '',
-      zoneId: defaultValues?.zoneId || null,
+      spaceId: defaultValues?.spaceId || null,
     },
   });
 
   const onSubmit = (data: CameraEditFormData) => {
     const payload = {
       ...data,
-      zoneId: data.zoneId === '' ? null : data.zoneId,
+      spaceId: data.spaceId === '' ? null : data.spaceId,
     };
     onEdit(payload as any);
   };
@@ -115,7 +115,7 @@ export default function CameraEditModal({
       setValue('onvifPort', defaultValues.onvifPort);
       setValue('onvifUsername', defaultValues.onvifUsername);
       setValue('onvifPassword', defaultValues.onvifPassword);
-      setValue('zoneId', defaultValues.zoneId || '');
+      setValue('spaceId', defaultValues.spaceId || '');
     }
   }, [defaultValues, setValue]);
 
@@ -224,12 +224,12 @@ export default function CameraEditModal({
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <Label>Phân khu (Zone)</Label>
-                    {isLoadingZones ? (
+                    <Label>Vị trí (Space)</Label>
+                    {isLoadingSpaces ? (
                       <Loading />
                     ) : (
                       <Controller
-                        name="zoneId"
+                        name="spaceId"
                         control={control}
                         render={({ field }) => (
                           <Select
@@ -237,13 +237,13 @@ export default function CameraEditModal({
                             onChange={field.onChange}
                             ref={field.ref}
                             options={
-                              zones?.map((zone: Zone) => ({
-                                value: zone.id as string,
-                                label: zone.name as string,
+                              spaces?.map((space: Space) => ({
+                                value: space.id as string,
+                                label: space.name as string,
                               })) || []
                             }
-                            placeholder="Chọn phân khu"
-                            error={errors.zoneId?.message}
+                            placeholder="Chọn vị trí"
+                            error={errors.spaceId?.message}
                             className="w-full h-full"
                           />
                         )}
