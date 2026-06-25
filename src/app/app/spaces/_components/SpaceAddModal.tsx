@@ -11,6 +11,7 @@ import { PlusIcon, X } from 'lucide-react';
 
 import { useForm, Controller } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import api from '@/utils/api';
 
 import { Space } from '@/types/shared/space';
@@ -32,14 +33,19 @@ export default function SpaceAddModal({
   onAdd: (value: SpaceAddFormData) => void;
 }) {
   // Fetch spaces list from API to populate Parent options
-  const { data: spaces = [] } = useQuery<Space[]>({
+  const { data: rawSpaces } = useQuery<any>({
     queryKey: ['spaces-flat'],
     queryFn: () => api.get('/api/v1/spaces/flat').then((res: any) => res.data),
   });
 
+  const spacesList = useMemo(() => {
+    if (!rawSpaces) return [];
+    return Array.isArray(rawSpaces) ? rawSpaces : (rawSpaces.items || []);
+  }, [rawSpaces]);
+
   const parentOptions = [
     { value: '', label: 'Không có (Là khu vực gốc)' },
-    ...spaces.map((s) => ({
+    ...spacesList.map((s: Space) => ({
       value: s.id,
       label: `${s.name} (${s.spaceId})`,
     })),

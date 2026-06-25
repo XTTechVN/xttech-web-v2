@@ -12,7 +12,7 @@ import queryClient from '@/utils/query';
 import { Toaster } from 'react-hot-toast';
 import { QueryClientProvider } from '@tanstack/react-query';
 import useUserStore from '@/stores/useUserStore';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, hasHydrated } = useUserStore();
@@ -39,7 +39,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <BaseSidebar>
               <AppSidebar />
             </BaseSidebar>
-            <SidebarContent>{children}</SidebarContent>
+            <SidebarContent>
+              <Suspense fallback={<LoadingScreen animate={true} />}>
+                {children}
+              </Suspense>
+            </SidebarContent>
           </div>
         </SidebarProvider>
       </QueryClientProvider>

@@ -11,7 +11,7 @@ import { SaveIcon, X } from 'lucide-react';
 
 import { useForm, Controller } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import api from '@/utils/api';
 
 import { Space } from '@/types/shared/space';
@@ -35,37 +35,45 @@ export default function SpaceEditModal({
   defaultValues?: Space;
 }) {
   // Fetch spaces list from API to populate Parent options
-  const { data: spaces = [] } = useQuery<Space[]>({
+  const { data: rawSpaces } = useQuery<any>({
     queryKey: ['spaces-flat'],
     queryFn: () => api.get('/api/v1/spaces/flat').then((res: any) => res.data),
   });
 
+  const spacesList = useMemo(() => {
+    if (!rawSpaces) return [];
+    return Array.isArray(rawSpaces) ? rawSpaces : (rawSpaces.items || []);
+  }, [rawSpaces]);
+
   // Filter out self and any of self's descendant spaces to avoid circular reference loops
   // Wait, the backend already handles prevention of circular loops by throwing error,
   // but filtering them in UI is even nicer. Let's build the descendants list.
-  const descendants = new Set<string>();
-  useEffect(() => {
-    if (!defaultValues || spaces.length === 0) return;
+  const descendants = useMemo(() => {
+    const set = new Set<string>();
+    if (!defaultValues || spacesList.length === 0) return set;
     const findChildren = (parentId: string) => {
-      spaces.forEach((s) => {
+      spacesList.forEach((s: any) => {
         if (s.parentId === parentId) {
-          descendants.add(s.id);
+          set.add(s.id);
           findChildren(s.id);
         }
       });
     };
     findChildren(defaultValues.id);
-  }, [defaultValues, spaces]);
+    return set;
+  }, [defaultValues, spacesList]);
 
-  const parentOptions = [
-    { value: '', label: 'Không có (Là khu vực gốc)' },
-    ...spaces
-      .filter((s) => s.id !== defaultValues?.id && !descendants.has(s.id))
-      .map((s) => ({
-        value: s.id,
-        label: `${s.name} (${s.spaceId})`,
-      })),
-  ];
+  const parentOptions = useMemo(() => {
+    return [
+      { value: '', label: 'Không có (Là khu vực gốc)' },
+      ...spacesList
+        .filter((s: any) => s.id !== defaultValues?.id && !descendants.has(s.id))
+        .map((s: any) => ({
+          value: s.id,
+          label: `${s.name} (${s.spaceId})`,
+        })),
+    ];
+  }, [spacesList, defaultValues, descendants]);
 
   const {
     register,

@@ -1,6 +1,6 @@
 import Button from '@/components/ui/Button';
 import Search from '@/components/ui/Search';
-import { Plus } from 'lucide-react';
+import { LayoutGrid, Plus } from 'lucide-react';
 
 export default function SpaceToolbar({
   onAdd,
@@ -21,6 +21,9 @@ export default function SpaceToolbar({
       </div>
 
       <div className="flex items-center gap-2 w-full md:w-fit">
+        <Button size="sm" variant="outline" icon={<LayoutGrid size={16} />} onClick={onAdd}>
+          Xem sơ đồ cây
+        </Button>
         <Button size="sm" icon={<Plus size={16} />} onClick={onAdd}>
           Thêm khu vực
         </Button>
