@@ -26,7 +26,9 @@ export default function UserProjectModal({ user, onClose }: { user: User; onClos
       try {
         // 1. Fetch all spaces flat list
         const resAllSpaces = await api.get('/api/v1/spaces/flat');
-        setAllSpaces(resAllSpaces.data || []);
+        const rawData = resAllSpaces.data;
+        const spacesArray = Array.isArray(rawData) ? rawData : (rawData?.items || []);
+        setAllSpaces(spacesArray);
 
         // 2. Fetch current active spaces for this user
         const resActiveSpaces = await api.get(`/api/v1/users/${user.id}/spaces`);
