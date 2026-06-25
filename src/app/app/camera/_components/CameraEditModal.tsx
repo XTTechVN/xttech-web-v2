@@ -80,12 +80,16 @@ export default function CameraEditModal({
       onvifPort: defaultValues?.onvifPort || 80,
       onvifUsername: defaultValues?.onvifUsername || '',
       onvifPassword: defaultValues?.onvifPassword || '',
-      zoneId: defaultValues?.zoneId || '',
+      zoneId: defaultValues?.zoneId || null,
     },
   });
 
   const onSubmit = (data: CameraEditFormData) => {
-    onEdit(data);
+    const payload = {
+      ...data,
+      zoneId: data.zoneId === '' ? null : data.zoneId,
+    };
+    onEdit(payload as any);
   };
 
   const handleMapSelect = (position: { lat: number; lng: number }) => {
