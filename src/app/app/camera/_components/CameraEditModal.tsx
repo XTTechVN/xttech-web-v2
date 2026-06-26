@@ -53,7 +53,7 @@ export default function CameraEditModal({
   // Fetch space data from API
   const { data: spaces, isLoading: isLoadingSpaces } = useQuery<Space[]>({
     queryKey: ['spaces'],
-    queryFn: () => api.get('/api/v1/spaces/flat').then((res: any) => res.data),
+    queryFn: () => api.get('/api/v1/spaces/flat').then((res: any) => res.data.items),
   });
 
   const {
@@ -133,6 +133,8 @@ export default function CameraEditModal({
       </div>
     );
   }
+
+  console.log(spaces);
 
   return (
     <div className="flex items-start gap-4">
