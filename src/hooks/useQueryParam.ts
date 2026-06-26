@@ -19,12 +19,19 @@ export function useQueryParam(key: string, defaultValue?: string) {
 
   // Hàm cập nhật giá trị lên URL
   const setValue = (newValue: string | undefined | null) => {
+    // Chuẩn hóa giá trị: undefined, null, '' đều coi là "không có giá trị"
+    const normalizedNew = newValue || undefined;
+    const normalizedCurrent = searchParams.get(key) || undefined;
+
+    // Nếu giá trị không thay đổi, không cần cập nhật URL (tránh vòng lặp)
+    if (normalizedNew === normalizedCurrent) return;
+
     const params = new URLSearchParams(Array.from(searchParams.entries()));
 
-    if (newValue === undefined || newValue === null || newValue === '') {
+    if (!normalizedNew) {
       params.delete(key);
     } else {
-      params.set(key, newValue);
+      params.set(key, normalizedNew);
     }
 
     // Tự động reset số trang (offset) về 0 bất cứ khi nào bộ lọc khác thay đổi

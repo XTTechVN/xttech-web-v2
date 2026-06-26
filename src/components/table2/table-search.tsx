@@ -16,7 +16,8 @@ export function TableSearch({ placeholder, value, onChange, className }: ITableS
   const searchDebounce = useDebounce(search, 300);
 
   useEffect(() => {
-    if (onChange) {
+    // Chỉ gọi onChange khi giá trị debounce thực sự khác với giá trị hiện tại từ bên ngoài
+    if (onChange && searchDebounce !== (value || '')) {
       onChange(searchDebounce);
     }
   }, [searchDebounce]);
