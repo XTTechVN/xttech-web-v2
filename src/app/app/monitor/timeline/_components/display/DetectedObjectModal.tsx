@@ -87,18 +87,34 @@ export default function DetectedObjectModal({ event, detectedObject }: DetectedO
             </div>
 
             {/* Hình ảnh */}
-            <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 h-[180px]">
-              <img
-                src={`http://157.66.100.182:9000/ai-data/detection_results/${event.id}/license_plates/${detectedObject.id}.jpg`}
-                alt={`Biển số ${detectedObject.label}`}
-                className="w-full h-full object-contain"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                <p className="text-xs text-white/80">
-                  {dayjs(detectedObject.createdAt).format('HH:mm:ss DD/MM/YYYY')}
-                </p>
+            {detectedObject.rawPlate && (
+              <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 h-[180px]">
+                <img
+                  src={`http://157.66.100.182:9000/ai-data/thumbnails/${event.id}/license_plates/${detectedObject.id}.jpg`}
+                  alt={`Biển số ${detectedObject.label}`}
+                  className="w-full h-full object-contain"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                  <p className="text-xs text-white/80">
+                    {dayjs(detectedObject.createdAt).format('HH:mm:ss DD/MM/YYYY')}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
+            {!detectedObject.rawPlate && (
+              <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 h-[180px]">
+                <img
+                  src={`http://157.66.100.182:9000/ai-data/thumbnails/${event.id}.jpg`}
+                  alt={`Xe ${detectedObject.label}`}
+                  className="w-full h-full object-contain"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                  <p className="text-xs text-white/80">
+                    {dayjs(detectedObject.createdAt).format('HH:mm:ss DD/MM/YYYY')}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
