@@ -34,7 +34,7 @@ export default function Page() {
     error,
   } = useQuery<ResponsePagination<Camera>>({
     queryKey: ['cameras'],
-    queryFn: () => api.get('/api/v1/cameras').then((res) => res.data),
+    queryFn: () => api.get('/api/v1/cameras?limit=1000').then((res) => res.data),
   });
 
   useEffect(() => {
