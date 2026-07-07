@@ -90,7 +90,7 @@ export default function DetectedObjectModal({ event, detectedObject }: DetectedO
             {detectedObject.rawPlate && (
               <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 h-[180px]">
                 <img
-                  src={`http://157.66.100.182:9000/ai-data/thumbnails/${event.id}/license_plates/${detectedObject.id}.jpg`}
+                  src={`http://157.66.100.182:9000/ai-data/thumbnail/${event.id}/license_plates/${detectedObject.id}.jpg`}
                   alt={`Biển số ${detectedObject.label}`}
                   className="w-full h-full object-contain"
                 />
@@ -104,7 +104,7 @@ export default function DetectedObjectModal({ event, detectedObject }: DetectedO
             {!detectedObject.rawPlate && (
               <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 h-[180px]">
                 <img
-                  src={`http://157.66.100.182:9000/ai-data/thumbnails/${event.id}.jpg`}
+                  src={`http://157.66.100.182:9000/ai-data/thumbnail/${event.id}.jpg`}
                   alt={`Xe ${detectedObject.label}`}
                   className="w-full h-full object-contain"
                 />
