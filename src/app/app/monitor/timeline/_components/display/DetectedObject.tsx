@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import api from '@/utils/api';
-import { Alert } from '@/types/shared/alert';
+import { Event } from '@/types/shared/event';
 import { motion } from 'motion/react';
 import { X, Info, Tag } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -20,7 +20,7 @@ export interface DetectedObject {
 }
 
 interface DetectedObjectProps {
-  event: Alert | null;
+  event: Event | null;
   isOpen: boolean;
   onClose: () => void;
   onClick: (event: DetectedObject) => void;
@@ -29,12 +29,12 @@ interface DetectedObjectProps {
 export default function DetectedObject({ event, isOpen, onClose, onClick }: DetectedObjectProps) {
   // Fetch detected objects
   const { data: detections, isLoading } = useQuery({
-    queryKey: ['detected-objects', event?.videoId],
+    queryKey: ['detected-objects', event?.record?.videoId],
     queryFn: () =>
       api
-        .get(`/api/v1/detected-objects?offset=0&limit=100&videoId=${event?.videoId}`)
+        .get(`/api/v1/detected-objects?offset=0&limit=100&videoId=${event?.record?.videoId}`)
         .then((res) => res.data),
-    enabled: !!event?.videoId && isOpen,
+    enabled: !!event?.record?.videoId && isOpen,
   });
 
   console.log(event)

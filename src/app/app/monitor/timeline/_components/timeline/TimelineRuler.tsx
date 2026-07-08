@@ -7,13 +7,13 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/utils/api';
 import dayjs from 'dayjs';
 // Types
-import { Alert } from '@/types/shared/alert';
+import { Event } from '@/types/shared/event';
 import { Camera } from '@/types/shared/camera';
 
 interface TimelineRulerProps {
   camera: Camera | null;
   date: Date;
-  onSelectEvent: (event: Alert) => void;
+  onSelectEvent: (event: Event) => void;
 }
 
 export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineRulerProps) {
@@ -153,7 +153,7 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
 
           {/* Events Layer */}
           <div className="absolute inset-0">
-            {events?.items?.map((event: Alert) => {
+            {events?.items?.map((event: Event) => {
               const eventTime = dayjs(event.createdAt);
               const eventSeconds =
                 eventTime.hour() * 3600 + eventTime.minute() * 60 + eventTime.second();

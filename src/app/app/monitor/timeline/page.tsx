@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence } from 'motion/react';
 
 import api from '@/utils/api';
-import { Alert } from '@/types/shared/alert';
+import { Event } from '@/types/shared/event';
 import { Camera } from '@/types/shared/camera';
 import { ResponsePagination } from '@/types/shared/reponse';
 import { DetectedObject as DetectedObjectProps } from './_components/display/DetectedObject';
@@ -23,7 +23,7 @@ export default function Page() {
   // State
   const [date, setDate] = useState<Date>(new Date());
   const [selectedCam, setSelectedCamera] = useState<Camera | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<Alert | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [openDetail, setOpenDetail] = useState<boolean>(true);
   const [openDetectedObject, setOpenDetectedObject] = useState<DetectedObjectProps | null>(null);
 

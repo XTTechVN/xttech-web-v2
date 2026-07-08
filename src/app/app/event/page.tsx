@@ -17,7 +17,7 @@ import toast from 'react-hot-toast';
 import { featureNotImplemented } from '@/utils/toast';
 
 // Types
-import { Alert } from '@/types/shared/alert';
+import { Event } from '@/types/shared/event';
 
 interface EventPageProps {
   title?: string;
@@ -63,7 +63,7 @@ export default function EventPage({
           setSelectedAlertId(id);
           setIsModalConfirmOpen(true);
         }}
-        onView={(alert: Alert) => {
+        onView={(alert: Event) => {
           featureNotImplemented();
         }}
       />

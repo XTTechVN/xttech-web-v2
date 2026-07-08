@@ -1,10 +1,10 @@
-import { Alert } from '@/types/shared/alert';
+import { Event } from '@/types/shared/event';
 import { DetectedObject as DetectedObjectProps } from './DetectedObject';
 import dayjs from 'dayjs';
 import { Camera, Tag, Clock, Hash, MapPin, Cpu } from 'lucide-react';
 
 interface DetectedObjectModalProps {
-  event: Alert | null;
+  event: Event | null;
   detectedObject: DetectedObjectProps | null;
 }
 
