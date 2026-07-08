@@ -15,9 +15,9 @@ export default function MediaViewer({ selectedId, data }: { selectedId: string; 
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <img src={`http://157.66.100.182:9000/ai-data/thumbnail/${event?.thumbnailId}`} alt="" />
+        <img src={`http://157.66.100.182:9000/ai-data/thumbnail/${event?.record?.thumbnailId}`} alt="" />
 
-        <video src={`http://157.66.100.182:9000/ai-data/video/${event?.videoId}`} controls></video>
+        <video src={`http://157.66.100.182:9000/ai-data/video/${event?.record?.videoId}`} controls></video>
       </div>
     </div>
   );
