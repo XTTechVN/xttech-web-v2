@@ -7,30 +7,46 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/utils/api';
 import dayjs from 'dayjs';
 // Types
-import { Event } from '@/types/shared/event';
+import { Event, Record } from '@/types/shared/event';
 import { Camera } from '@/types/shared/camera';
 
 interface TimelineRulerProps {
   camera: Camera | null;
   date: Date;
   onSelectEvent: (event: Event) => void;
+  onSelectRecord?: (record: Record, seekSeconds?: number) => void;
 }
 
-export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineRulerProps) {
+export default function TimelineRuler({ camera, date, onSelectEvent, onSelectRecord }: TimelineRulerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hourWidth, setHourWidth] = useState(80);
   const totalWidth = 24 * hourWidth;
   const [now, setNow] = useState(dayjs());
 
-  // Call API get events
+  // Layer 1: Fetch Events (recording_event mode)
   const { data: events } = useQuery({
-    queryKey: ['events', camera?.id, date],
+    queryKey: ['timeline-events', camera?.id, date],
     queryFn: () => {
       const start_date = dayjs(date).startOf('day').toISOString();
       const end_date = dayjs(date).endOf('day').toISOString();
       return api
         .get(
           `/api/v1/cameras/${camera?.id}/events?limit=9999&startDate=${start_date}&endDate=${end_date}`,
+        )
+        .then((res) => res.data);
+    },
+    enabled: !!camera?.id,
+  });
+
+  // Layer 2: Fetch Records (continuous mode - video segments)
+  const { data: records } = useQuery({
+    queryKey: ['timeline-records', camera?.id, date],
+    queryFn: () => {
+      const start_date = dayjs(date).startOf('day').toISOString();
+      const end_date = dayjs(date).endOf('day').toISOString();
+      return api
+        .get(
+          `/api/v1/cameras/${camera?.id}/records?limit=9999&type=continuous&startDate=${start_date}&endDate=${end_date}`,
         )
         .then((res) => res.data);
     },
@@ -63,8 +79,8 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
 
   // Chọn event mới nhất theo sort created at, index là 0
   useEffect(() => {
-    if (events) {
-      onSelectEvent(events?.items?.[0]);
+    if (events?.items?.[0]) {
+      onSelectEvent(events.items[0]);
     }
   }, [events]);
 
@@ -72,19 +88,11 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
   useEffect(() => {
     if (containerRef.current) {
       const container = containerRef.current;
-      // Đợi một chút để đảm bảo layout và width đã được tính toán chính xác
       const timer = setTimeout(() => {
         const containerWidth = container.clientWidth;
-        // pointerPosition là vị trí của kim thời gian so với vạch 00:00
-        // 40 là giá trị px-10 (padding-left) của container
         const scrollAmount = pointerPosition + 40 - containerWidth / 2;
-
-        container.scrollTo({
-          left: scrollAmount,
-          behavior: 'smooth',
-        });
+        container.scrollTo({ left: scrollAmount, behavior: 'smooth' });
       }, 600);
-
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -99,6 +107,26 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
   // Tính toán vị trí của con trỏ thời gian hiện tại
   const currentTimeInSeconds = now.hour() * 3600 + now.minute() * 60 + now.second();
   const pointerPosition = (currentTimeInSeconds / 86400) * totalWidth;
+
+  // Helper tính vị trí pixel từ datetime
+  const getPosition = (isoTime: string) => {
+    const t = dayjs(isoTime);
+    const seconds = t.hour() * 3600 + t.minute() * 60 + t.second();
+    return (seconds / 86400) * totalWidth;
+  };
+
+  // Helper tính chiều rộng của một record segment
+  const getRecordWidth = (record: Record) => {
+    const startSeconds =
+      dayjs(record.startTime).hour() * 3600 +
+      dayjs(record.startTime).minute() * 60 +
+      dayjs(record.startTime).second();
+    const endSeconds =
+      dayjs(record.endTime).hour() * 3600 +
+      dayjs(record.endTime).minute() * 60 +
+      dayjs(record.endTime).second();
+    return ((endSeconds - startSeconds) / 86400) * totalWidth;
+  };
 
   return (
     <div className="bg-white border-t border-gray-200 h-32 relative overflow-hidden flex flex-col pt-2 shadow-sm">
@@ -121,28 +149,14 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
                   className="absolute bottom-0 flex flex-col items-center group"
                   style={{ left: `${x}px` }}
                 >
-                  {/* Tick Mark */}
                   <div className="h-6 w-px bg-gray-300 group-hover:bg-primary transition-colors" />
-
-                  {/* Minute Markers (only between hours) */}
                   {i < 24 && (
                     <>
-                      <div
-                        className="absolute bottom-0 h-1 w-px bg-gray-100"
-                        style={{ left: `${hourWidth * 0.25}px` }}
-                      />
-                      <div
-                        className="absolute bottom-0 h-2 w-px bg-gray-200"
-                        style={{ left: `${hourWidth * 0.5}px` }}
-                      />
-                      <div
-                        className="absolute bottom-0 h-1 w-px bg-gray-100"
-                        style={{ left: `${hourWidth * 0.75}px` }}
-                      />
+                      <div className="absolute bottom-0 h-1 w-px bg-gray-100" style={{ left: `${hourWidth * 0.25}px` }} />
+                      <div className="absolute bottom-0 h-2 w-px bg-gray-200" style={{ left: `${hourWidth * 0.5}px` }} />
+                      <div className="absolute bottom-0 h-1 w-px bg-gray-100" style={{ left: `${hourWidth * 0.75}px` }} />
                     </>
                   )}
-
-                  {/* Hour Label */}
                   <span className="absolute top-7 -translate-x-1/2 text-[10px] text-gray-500 font-medium select-none whitespace-nowrap">
                     {hour}
                   </span>
@@ -151,13 +165,32 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
             })}
           </div>
 
-          {/* Events Layer */}
+          {/* Layer 1: Record Segments (Continuous) — Thanh nền xanh */}
+          <div className="absolute bottom-6 left-0 right-0 h-2">
+            {records?.items?.map((record: Record) => {
+              const left = getPosition(record.startTime);
+              const width = getRecordWidth(record);
+              return (
+                <div
+                  key={record.id}
+                  title={`${dayjs(record.startTime).format('HH:mm')} — ${dayjs(record.endTime).format('HH:mm')}`}
+                  className="absolute top-0 h-full bg-blue-200 hover:bg-blue-400 rounded-sm cursor-pointer transition-colors opacity-70"
+                  style={{ left: `${left}px`, width: `${width}px` }}
+                  onClick={() => {
+                    if (onSelectRecord) onSelectRecord(record, 0);
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* Layer 2: Event Markers — Thumbnail + đường kẻ dọc */}
           <div className="absolute inset-0">
             {events?.items?.map((event: Event) => {
-              const eventTime = dayjs(event.createdAt);
-              const eventSeconds =
-                eventTime.hour() * 3600 + eventTime.minute() * 60 + eventTime.second();
-              const position = (eventSeconds / 86400) * totalWidth;
+              const position = getPosition(event.createdAt);
+              const thumbnailSrc = event.record?.thumbnailId
+                ? `http://157.66.100.182:9000/ai-data/thumbnail/${event.record.thumbnailId}`
+                : null;
 
               return (
                 <div
@@ -166,23 +199,28 @@ export default function TimelineRuler({ camera, date, onSelectEvent }: TimelineR
                   style={{ left: `${position}px` }}
                   onClick={() => {
                     onSelectEvent(event);
+                    // Nếu là continuous, tính offset seek
+                    if (event.record?.type === 'continuous' && onSelectRecord) {
+                      const seekSeconds = dayjs(event.createdAt).diff(
+                        dayjs(event.record.startTime),
+                        'second',
+                      );
+                      onSelectRecord(event.record, seekSeconds);
+                    }
                   }}
                 >
-                  {/* Event Tooltip/Name */}
-                  {/* <div className="absolute z-50 -top-6 bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-bold">
-                    {event.name} • {eventTime.format('HH:mm:ss')}
-                  </div> */}
-
-                  {/* Event Marker */}
-                  {/* <div className="w-1.5 h-1.5 bg-blue-500 rounded-full border border-white ring-2 ring-blue-100 ring-offset-0 group-hover:scale-125 transition-transform" /> */}
-
-                  {/* Vertical Line */}
-                  <img
-                    src={`http://157.66.100.182:9000/ai-data/thumbnail/${event.id}.jpg`}
-                    className="aspect-video w-16"
-                    alt=""
-                  />
-                  <div className="w-px h-14 bg-blue-400 opacity-20 group-hover:opacity-40 transition-opacity" />
+                  {thumbnailSrc ? (
+                    <img
+                      src={thumbnailSrc}
+                      className="aspect-video w-16 rounded-sm border border-blue-200 shadow-sm"
+                      alt=""
+                    />
+                  ) : (
+                    <div className="aspect-video w-16 bg-gray-100 rounded-sm flex items-center justify-center">
+                      <span className="text-[8px] text-gray-400">No img</span>
+                    </div>
+                  )}
+                  <div className="w-px h-14 bg-blue-400 opacity-20 group-hover:opacity-60 transition-opacity" />
                 </div>
               );
             })}

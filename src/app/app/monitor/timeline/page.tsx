@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence } from 'motion/react';
 
 import api from '@/utils/api';
-import { Event } from '@/types/shared/event';
+import { Event, Record } from '@/types/shared/event';
 import { Camera } from '@/types/shared/camera';
 import { ResponsePagination } from '@/types/shared/reponse';
 import { DetectedObject as DetectedObjectProps } from './_components/display/DetectedObject';
@@ -24,6 +24,8 @@ export default function Page() {
   const [date, setDate] = useState<Date>(new Date());
   const [selectedCam, setSelectedCamera] = useState<Camera | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [seekSeconds, setSeekSeconds] = useState<number>(0);
   const [openDetail, setOpenDetail] = useState<boolean>(true);
   const [openDetectedObject, setOpenDetectedObject] = useState<DetectedObjectProps | null>(null);
 
@@ -43,6 +45,30 @@ export default function Page() {
     }
   }, [cameras]);
 
+  // Khi chọn event, tự động set videoId và seekSeconds
+  const handleSelectEvent = (event: Event) => {
+    setSelectedEvent(event);
+    const videoId = event.record?.videoId ?? null;
+    setSelectedVideoId(videoId);
+
+    // Nếu là continuous record, tính offset để seek
+    if (event.record?.type === 'continuous' && event.record.startTime) {
+      const eventTime = new Date(event.createdAt).getTime();
+      const startTime = new Date(event.record.startTime).getTime();
+      const offset = Math.max(0, Math.floor((eventTime - startTime) / 1000));
+      setSeekSeconds(offset);
+    } else {
+      setSeekSeconds(0);
+    }
+  };
+
+  // Khi click trực tiếp lên khối record continuous trên timeline
+  const handleSelectRecord = (record: Record, seek = 0) => {
+    setSelectedVideoId(record.videoId ?? null);
+    setSeekSeconds(seek);
+    setSelectedEvent(null); // Clear event selection
+  };
+
   // Handle Loading and Error
   if (isLoading) return null;
   if (error) return null;
@@ -52,7 +78,8 @@ export default function Page() {
       {/* Top: Video Monitor & Detail Sidebar */}
       <div className="flex-1 p-4 flex flex-row min-h-0 gap-4 overflow-hidden">
         <MonitorDisplay
-          filename={selectedEvent?.id || ''}
+          videoId={selectedVideoId}
+          seekSeconds={seekSeconds}
           onDetail={() => setOpenDetail((prev) => !prev)}
         />
         <AnimatePresence>
@@ -68,7 +95,12 @@ export default function Page() {
       </div>
 
       {/* Middle: Timeline Ruler */}
-      <TimelineRuler camera={selectedCam} date={date} onSelectEvent={setSelectedEvent} />
+      <TimelineRuler
+        camera={selectedCam}
+        date={date}
+        onSelectEvent={handleSelectEvent}
+        onSelectRecord={handleSelectRecord}
+      />
 
       {/* Bottom: Control Bar */}
       <ControlBar

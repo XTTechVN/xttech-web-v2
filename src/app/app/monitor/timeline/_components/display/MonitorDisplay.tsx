@@ -1,20 +1,39 @@
 'use client';
 
 import { Camera, Maximize2 } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 interface MonitorDisplayProps {
-  filename?: string;
+  videoId?: string | null;
+  seekSeconds?: number;
   onDetail?: () => void;
 }
 
-export default function MonitorDisplay({ filename, onDetail }: MonitorDisplayProps) {
+export default function MonitorDisplay({ videoId, seekSeconds, onDetail }: MonitorDisplayProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Seek đến đúng thời điểm khi seekSeconds thay đổi (cho chế độ continuous)
+  useEffect(() => {
+    if (videoRef.current && seekSeconds !== undefined && seekSeconds > 0) {
+      const handleCanPlay = () => {
+        if (videoRef.current) {
+          videoRef.current.currentTime = seekSeconds;
+          videoRef.current.play();
+        }
+      };
+      videoRef.current.addEventListener('canplay', handleCanPlay, { once: true });
+      return () => videoRef.current?.removeEventListener('canplay', handleCanPlay);
+    }
+  }, [videoId, seekSeconds]);
+
   return (
     <div className="flex-1 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden relative group">
       {/* Video Area */}
       <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        {filename ? (
+        {videoId ? (
           <video
-            src={`http://157.66.100.182:9000/ai-data/video/${filename}.mp4`}
+            ref={videoRef}
+            src={`http://157.66.100.182:9000/ai-data/video/${videoId}`}
             autoPlay
             controls
             loop
@@ -28,20 +47,7 @@ export default function MonitorDisplay({ filename, onDetail }: MonitorDisplayPro
         )}
       </div>
 
-      {/* Overlay: Camera Info */}
-      {/* <div className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm border border-gray-200 px-3 py-1.5 rounded shadow-sm z-10">
-        <p className="text-xs font-bold text-gray-800 flex items-center gap-2">
-          <span className="w-2 h-2 bg-green-500 rounded-full" />
-          Camera Cổng Chính - LIVE
-        </p>
-      </div> */}
-
-      {/* Overlay: Fullscreen Toggle */}
-      {/* <button className="absolute bottom-4 right-4 p-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded shadow-sm hover:bg-white transition-colors opacity-0 group-hover:opacity-100 z-10 focus:opacity-100 outline-none">
-        <Maximize2 size={16} className="text-gray-600" />
-      </button> */}
-
-      {/* Playback Time Overlay */}
+      {/* Overlay: Xem chi tiết AI */}
       <div
         onClick={onDetail}
         className="absolute top-4 right-4 bg-gray-900/40 backdrop-blur-sm px-2 py-1 rounded text-[10px] text-white tracking-widest z-10 cursor-pointer"
@@ -51,3 +57,4 @@ export default function MonitorDisplay({ filename, onDetail }: MonitorDisplayPro
     </div>
   );
 }
+
