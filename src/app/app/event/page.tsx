@@ -17,7 +17,7 @@ import toast from 'react-hot-toast';
 import { featureNotImplemented } from '@/utils/toast';
 
 // Types
-import { Event } from '@/types/shared/event';
+import { Record } from '@/types/shared/event';
 
 interface EventPageProps {
   title?: string;
@@ -37,7 +37,7 @@ export default function EventPage({
   const handleDeleteAlert = async (id: string) => {
     setIsLoading(true);
     try {
-      await api.delete(`/api/v1/events/${id}`);
+      await api.delete(`/api/v1/records/${id}`);
       toast.success('Xóa sự kiện thành công');
       queryClient.invalidateQueries({ queryKey: ['alerts'] });
     } catch (error) {
@@ -63,7 +63,7 @@ export default function EventPage({
           setSelectedAlertId(id);
           setIsModalConfirmOpen(true);
         }}
-        onView={(alert: Event) => {
+        onView={(alert: Record) => {
           featureNotImplemented();
         }}
       />

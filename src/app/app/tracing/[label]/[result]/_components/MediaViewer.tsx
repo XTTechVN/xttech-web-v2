@@ -1,11 +1,11 @@
 import Heading from '@/components/ui/Heading';
 import SubHeading from '@/components/ui/SubHeading';
 
-import type { Event } from '@/types/shared/event';
+import type { Record } from '@/types/shared/event';
 
 export default function MediaViewer({ selectedId, data }: { selectedId: string; data: any }) {
   const detectedObject = data?.find((item: any) => item.id === selectedId);
-  const event: Event = detectedObject?.event;
+  const record: Record = detectedObject?.record;
 
   return (
     <div className="space-y-4">
@@ -15,9 +15,9 @@ export default function MediaViewer({ selectedId, data }: { selectedId: string; 
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <img src={`http://157.66.100.182:9000/ai-data/thumbnail/${event?.record?.thumbnailId}`} alt="" />
+        <img src={`http://157.66.100.182:9000/ai-data/thumbnail/${record?.thumbnailId}`} alt="" />
 
-        <video src={`http://157.66.100.182:9000/ai-data/video/${event?.record?.videoId}`} controls></video>
+        <video src={`http://157.66.100.182:9000/ai-data/video/${record?.videoId}`} controls></video>
       </div>
     </div>
   );

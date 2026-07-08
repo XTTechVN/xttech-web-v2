@@ -7,38 +7,22 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/utils/api';
 import dayjs from 'dayjs';
 // Types
-import { Event, Record } from '@/types/shared/event';
+import { Record } from '@/types/shared/event';
 import { Camera } from '@/types/shared/camera';
 
 interface TimelineRulerProps {
   camera: Camera | null;
   date: Date;
-  onSelectEvent: (event: Event) => void;
-  onSelectRecord?: (record: Record, seekSeconds?: number) => void;
+  onSelectRecord: (record: Record, seekSeconds?: number) => void;
 }
 
-export default function TimelineRuler({ camera, date, onSelectEvent, onSelectRecord }: TimelineRulerProps) {
+export default function TimelineRuler({ camera, date, onSelectRecord }: TimelineRulerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hourWidth, setHourWidth] = useState(80);
   const totalWidth = 24 * hourWidth;
   const [now, setNow] = useState(dayjs());
 
-  // Layer 1: Fetch Events (recording_event mode)
-  const { data: events } = useQuery({
-    queryKey: ['timeline-events', camera?.id, date],
-    queryFn: () => {
-      const start_date = dayjs(date).startOf('day').toISOString();
-      const end_date = dayjs(date).endOf('day').toISOString();
-      return api
-        .get(
-          `/api/v1/cameras/${camera?.id}/events?limit=9999&startDate=${start_date}&endDate=${end_date}`,
-        )
-        .then((res) => res.data);
-    },
-    enabled: !!camera?.id,
-  });
-
-  // Layer 2: Fetch Records (continuous mode - video segments)
+  // Fetch all records for the day (both continuous and event)
   const { data: records } = useQuery({
     queryKey: ['timeline-records', camera?.id, date],
     queryFn: () => {
@@ -46,7 +30,7 @@ export default function TimelineRuler({ camera, date, onSelectEvent, onSelectRec
       const end_date = dayjs(date).endOf('day').toISOString();
       return api
         .get(
-          `/api/v1/cameras/${camera?.id}/records?limit=9999&type=continuous&startDate=${start_date}&endDate=${end_date}`,
+          `/api/v1/cameras/${camera?.id}/records?limit=9999&startDate=${start_date}&endDate=${end_date}`,
         )
         .then((res) => res.data);
     },
@@ -77,12 +61,12 @@ export default function TimelineRuler({ camera, date, onSelectEvent, onSelectRec
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
-  // Chọn event mới nhất theo sort created at, index là 0
+  // Chọn record event mới nhất theo sort hoặc record đầu tiên
   useEffect(() => {
-    if (events?.items?.[0]) {
-      onSelectEvent(events.items[0]);
+    if (records?.items?.[0]) {
+      onSelectRecord(records.items[0], 0);
     }
-  }, [events]);
+  }, [records]);
 
   // Tự động scroll đến vị trí thời gian hiện tại khi load trang
   useEffect(() => {
@@ -125,8 +109,11 @@ export default function TimelineRuler({ camera, date, onSelectEvent, onSelectRec
       dayjs(record.endTime).hour() * 3600 +
       dayjs(record.endTime).minute() * 60 +
       dayjs(record.endTime).second();
-    return ((endSeconds - startSeconds) / 86400) * totalWidth;
+    return Math.max(2, ((endSeconds - startSeconds) / 86400) * totalWidth);
   };
+
+  const continuousRecords = records?.items?.filter((r: Record) => r.type === 'continuous') || [];
+  const eventRecords = records?.items?.filter((r: Record) => r.type === 'event') || [];
 
   return (
     <div className="bg-white border-t border-gray-200 h-32 relative overflow-hidden flex flex-col pt-2 shadow-sm">
@@ -167,45 +154,53 @@ export default function TimelineRuler({ camera, date, onSelectEvent, onSelectRec
 
           {/* Layer 1: Record Segments (Continuous) — Thanh nền xanh */}
           <div className="absolute bottom-6 left-0 right-0 h-2">
-            {records?.items?.map((record: Record) => {
+            {continuousRecords.map((record: Record) => {
               const left = getPosition(record.startTime);
               const width = getRecordWidth(record);
               return (
                 <div
                   key={record.id}
-                  title={`${dayjs(record.startTime).format('HH:mm')} — ${dayjs(record.endTime).format('HH:mm')}`}
+                  title={`${record.name} | ${dayjs(record.startTime).format('HH:mm')} — ${dayjs(record.endTime).format('HH:mm')}`}
                   className="absolute top-0 h-full bg-blue-200 hover:bg-blue-400 rounded-sm cursor-pointer transition-colors opacity-70"
                   style={{ left: `${left}px`, width: `${width}px` }}
                   onClick={() => {
-                    if (onSelectRecord) onSelectRecord(record, 0);
+                    onSelectRecord(record, 0);
                   }}
                 />
               );
             })}
           </div>
 
-          {/* Layer 2: Event Markers — Thumbnail + đường kẻ dọc */}
+          {/* Layer 2: Event Records — Thumbnail + đường kẻ dọc */}
           <div className="absolute inset-0">
-            {events?.items?.map((event: Event) => {
-              const position = getPosition(event.createdAt);
-              const thumbnailSrc = event.record?.thumbnailId
-                ? `http://157.66.100.182:9000/ai-data/thumbnail/${event.record.thumbnailId}`
+            {eventRecords.map((record: Record) => {
+              const position = getPosition(record.startTime);
+              const thumbnailSrc = record.thumbnailId
+                ? `http://157.66.100.182:9000/ai-data/thumbnail/${record.thumbnailId}`
                 : null;
 
               return (
                 <div
-                  key={event.id}
+                  key={record.id}
                   className="absolute top-[-20px] flex flex-col items-start group cursor-pointer z-20"
                   style={{ left: `${position}px` }}
                   onClick={() => {
-                    onSelectEvent(event);
-                    // Nếu là continuous, tính offset seek
-                    if (event.record?.type === 'continuous' && onSelectRecord) {
-                      const seekSeconds = dayjs(event.createdAt).diff(
-                        dayjs(event.record.startTime),
+                    // Tìm xem sự kiện này có rơi vào file continuous nào đang lưu không
+                    const parentContinuous = continuousRecords.find((c: Record) => {
+                      const eventTime = dayjs(record.startTime);
+                      const cStart = dayjs(c.startTime);
+                      const cEnd = dayjs(c.endTime);
+                      return (eventTime.isAfter(cStart) || eventTime.isSame(cStart)) && eventTime.isBefore(cEnd);
+                    });
+
+                    if (parentContinuous) {
+                      const seekSeconds = dayjs(record.startTime).diff(
+                        dayjs(parentContinuous.startTime),
                         'second',
                       );
-                      onSelectRecord(event.record, seekSeconds);
+                      onSelectRecord(parentContinuous, seekSeconds);
+                    } else {
+                      onSelectRecord(record, 0);
                     }
                   }}
                 >

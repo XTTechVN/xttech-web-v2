@@ -15,7 +15,7 @@ import api from '@/utils/api';
 import dayjs from 'dayjs';
 
 // Types
-import { Event } from '@/types/shared/event';
+import { Record } from '@/types/shared/event';
 import { ResponsePagination } from '@/types/shared/reponse';
 
 export default function EventTable({
@@ -24,18 +24,18 @@ export default function EventTable({
   search = '',
 }: {
   onDelete: (id: string) => void;
-  onView: (alert: Event) => void;
+  onView: (alert: Record) => void;
   search?: string;
 }) {
   const [limit, setLimit] = useState(10);
   const [offset, setOffset] = useState(0);
 
-  const { data, isLoading, error } = useQuery<ResponsePagination<Event>>({
+  const { data, isLoading, error } = useQuery<ResponsePagination<Record>>({
     queryKey: ['alerts', offset, limit, search],
     queryFn: () =>
       api
         .get(
-          `/api/v1/events?offset=${offset}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ''}`,
+          `/api/v1/records?offset=${offset}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ''}`,
         )
         .then((res) => res.data),
   });
@@ -45,10 +45,10 @@ export default function EventTable({
       key: 'thumbnail',
       label: 'Ảnh',
       width: '5%',
-      render: (item: Event) =>
-        item.record?.thumbnailId ? (
+      render: (item: Record) =>
+        item.thumbnailId ? (
           <img
-            src={`http://157.66.100.182:9000/ai-data/thumbnail/${item.record.thumbnailId}`}
+            src={`http://157.66.100.182:9000/ai-data/thumbnail/${item.thumbnailId}`}
             alt={item.name}
             className="w-12 h-12 object-cover rounded-md border border-gray-100 shadow-sm"
           />
@@ -60,12 +60,12 @@ export default function EventTable({
     },
     {
       key: 'name',
-      label: 'Sự kiện',
+      label: 'Sự kiện / Bản ghi',
       width: '20%',
-      render: (item: Event) => (
+      render: (item: Record) => (
         <div>
           <p className="font-semibold">{item.name}</p>
-          <span className="text-xs">ID: {item.id}</span>
+          <span className="text-xs text-gray-400">ID: {item.id}</span>
         </div>
       ),
     },
@@ -73,7 +73,7 @@ export default function EventTable({
       key: 'camera',
       label: 'Camera / Worker',
       width: '10%',
-      render: (item: Event) => (
+      render: (item: Record) => (
         <div>
           <p className="font-semibold">{item.camera?.name || 'N/A'}</p>
           <p className="text-xs">
@@ -93,7 +93,7 @@ export default function EventTable({
       key: 'aiProcessedLevel',
       label: 'Cấp độ AI',
       width: '10%',
-      render: (item: Event) => (
+      render: (item: Record) => (
         <span className="px-2.5 py-1 text-xs font-semibold rounded bg-blue-50 text-blue-600 border border-blue-100">
           Cấp {item.aiProcessedLevel}
         </span>
@@ -103,24 +103,24 @@ export default function EventTable({
       key: 'created_at',
       label: 'Thời gian',
       width: '15%',
-      render: (item: Event) =>
+      render: (item: Record) =>
         item.createdAt ? dayjs(item.createdAt).format('DD/MM/YYYY HH:mm:ss') : '-',
     },
     {
       key: 'actions',
       label: 'Hành động',
       width: '10%',
-      render: (item: Event) => (
+      render: (item: Record) => (
         <TableAction
           onView={() => onView(item)}
-          onEdit={() => {}} // Disabled for alerts by default
+          onEdit={() => {}} // Disabled by default
           onDelete={() => onDelete(item.id.toString())}
         />
       ),
     },
   ];
 
-  const cardView = (items: Event[]) => (
+  const cardView = (items: Record[]) => (
     <div className="flex flex-col gap-2">
       {items.map((item) => (
         <div
@@ -129,9 +129,9 @@ export default function EventTable({
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex gap-3">
-              {item.record?.thumbnailId ? (
+              {item.thumbnailId ? (
                 <img
-                  src={`http://157.66.100.182:9000/ai-data/thumbnail/${item.record.thumbnailId}`}
+                  src={`http://157.66.100.182:9000/ai-data/thumbnail/${item.thumbnailId}`}
                   alt={item.name}
                   className="w-16 h-16 object-cover rounded-md border border-gray-100 shadow-sm flex-shrink-0"
                 />

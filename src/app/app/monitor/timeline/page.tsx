@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence } from 'motion/react';
 
 import api from '@/utils/api';
-import { Event, Record } from '@/types/shared/event';
+import { Record } from '@/types/shared/event';
 import { Camera } from '@/types/shared/camera';
 import { ResponsePagination } from '@/types/shared/reponse';
 import { DetectedObject as DetectedObjectProps } from './_components/display/DetectedObject';
@@ -23,7 +23,7 @@ export default function Page() {
   // State
   const [date, setDate] = useState<Date>(new Date());
   const [selectedCam, setSelectedCamera] = useState<Camera | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [seekSeconds, setSeekSeconds] = useState<number>(0);
   const [openDetail, setOpenDetail] = useState<boolean>(true);
@@ -45,28 +45,11 @@ export default function Page() {
     }
   }, [cameras]);
 
-  // Khi chọn event, tự động set videoId và seekSeconds
-  const handleSelectEvent = (event: Event) => {
-    setSelectedEvent(event);
-    const videoId = event.record?.videoId ?? null;
-    setSelectedVideoId(videoId);
-
-    // Nếu là continuous record, tính offset để seek
-    if (event.record?.type === 'continuous' && event.record.startTime) {
-      const eventTime = new Date(event.createdAt).getTime();
-      const startTime = new Date(event.record.startTime).getTime();
-      const offset = Math.max(0, Math.floor((eventTime - startTime) / 1000));
-      setSeekSeconds(offset);
-    } else {
-      setSeekSeconds(0);
-    }
-  };
-
-  // Khi click trực tiếp lên khối record continuous trên timeline
+  // Khi chọn hoặc click lên record trên timeline
   const handleSelectRecord = (record: Record, seek = 0) => {
+    setSelectedRecord(record);
     setSelectedVideoId(record.videoId ?? null);
     setSeekSeconds(seek);
-    setSelectedEvent(null); // Clear event selection
   };
 
   // Handle Loading and Error
@@ -85,7 +68,7 @@ export default function Page() {
         <AnimatePresence>
           {openDetail && (
             <DetectedObject
-              event={selectedEvent}
+              record={selectedRecord}
               isOpen={openDetail}
               onClose={() => setOpenDetail(false)}
               onClick={(item: DetectedObjectProps) => setOpenDetectedObject(item)}
@@ -98,7 +81,6 @@ export default function Page() {
       <TimelineRuler
         camera={selectedCam}
         date={date}
-        onSelectEvent={handleSelectEvent}
         onSelectRecord={handleSelectRecord}
       />
 
@@ -118,7 +100,7 @@ export default function Page() {
           }}
         >
           <DetectedObjectModal
-            event={selectedEvent || null}
+            record={selectedRecord || null}
             detectedObject={openDetectedObject || null}
           />
         </ModalWrapper>

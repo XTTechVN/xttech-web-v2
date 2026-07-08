@@ -1,10 +1,10 @@
-import { Event } from '@/types/shared/event';
+import { Record } from '@/types/shared/event';
 import { DetectedObject as DetectedObjectProps } from './DetectedObject';
 import dayjs from 'dayjs';
 import { Camera, Tag, Clock, Hash, MapPin, Cpu } from 'lucide-react';
 
 interface DetectedObjectModalProps {
-  event: Event | null;
+  record: Record | null;
   detectedObject: DetectedObjectProps | null;
 }
 
@@ -27,15 +27,8 @@ function InfoRow({ icon, label, value, className = '' }: InfoRowProps) {
   );
 }
 
-export default function DetectedObjectModal({ event, detectedObject }: DetectedObjectModalProps) {
-  if (!event || !detectedObject) return null;
-
-  const confidenceColor =
-    detectedObject.confidenceScore >= 90
-      ? 'text-green-600 bg-green-50 border-green-100'
-      : detectedObject.confidenceScore >= 70
-        ? 'text-yellow-600 bg-yellow-50 border-yellow-100'
-        : 'text-red-600 bg-red-50 border-red-100';
+export default function DetectedObjectModal({ record, detectedObject }: DetectedObjectModalProps) {
+  if (!record || !detectedObject) return null;
 
   return (
     <div className="w-full h-full">
@@ -90,7 +83,7 @@ export default function DetectedObjectModal({ event, detectedObject }: DetectedO
             {detectedObject.rawPlate && (
               <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 h-[180px]">
                 <img
-                  src={`http://157.66.100.182:9000/ai-data/thumbnail/${event.id}/license_plates/${detectedObject.id}.jpg`}
+                  src={`http://157.66.100.182:9000/ai-data/thumbnail/${record.id}/license_plates/${detectedObject.id}.jpg`}
                   alt={`Biển số ${detectedObject.label}`}
                   className="w-full h-full object-contain"
                 />
@@ -104,7 +97,7 @@ export default function DetectedObjectModal({ event, detectedObject }: DetectedO
             {!detectedObject.rawPlate && (
               <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 h-[180px]">
                 <img
-                  src={`http://157.66.100.182:9000/ai-data/thumbnail/${event.id}.jpg`}
+                  src={`http://157.66.100.182:9000/ai-data/thumbnail/${record.thumbnailId}`}
                   alt={`Xe ${detectedObject.label}`}
                   className="w-full h-full object-contain"
                 />

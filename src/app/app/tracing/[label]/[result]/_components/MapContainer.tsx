@@ -82,8 +82,8 @@ export default function Map({
     if (data && data.length > 0) {
       const coords = data.map((item: any) => ({
         id: item.id || Math.random().toString(), // Use item.id if available
-        lat: item.event.camera.lat,
-        lng: item.event.camera.lng,
+        lat: item.record?.camera?.lat ?? 21.0278,
+        lng: item.record?.camera?.lng ?? 105.8526,
       }));
       const firstCenter: [number, number] = [coords[0].lat, coords[0].lng];
       setRouteCoordinates(coords);

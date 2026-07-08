@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import api from '@/utils/api';
-import { Event } from '@/types/shared/event';
+import { Record as RecordModel } from '@/types/shared/event';
 import { motion } from 'motion/react';
 import { X, Info, Tag } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -11,6 +11,7 @@ import Search from '@/components/ui/Search';
 export interface DetectedObject {
   id: string;
   videoId: string;
+  recordId: string;
   label: string;
   confidenceScore: number;
   detectionResult: string;
@@ -20,24 +21,22 @@ export interface DetectedObject {
 }
 
 interface DetectedObjectProps {
-  event: Event | null;
+  record: RecordModel | null;
   isOpen: boolean;
   onClose: () => void;
-  onClick: (event: DetectedObject) => void;
+  onClick: (item: DetectedObject) => void;
 }
 
-export default function DetectedObject({ event, isOpen, onClose, onClick }: DetectedObjectProps) {
-  // Fetch detected objects
+export default function DetectedObject({ record, isOpen, onClose, onClick }: DetectedObjectProps) {
+  // Fetch detected objects by record_id
   const { data: detections, isLoading } = useQuery({
-    queryKey: ['detected-objects', event?.record?.videoId],
+    queryKey: ['detected-objects', record?.id],
     queryFn: () =>
       api
-        .get(`/api/v1/detected-objects?offset=0&limit=100&videoId=${event?.record?.videoId}`)
+        .get(`/api/v1/detected-objects?offset=0&limit=100&recordId=${record?.id}`)
         .then((res) => res.data),
-    enabled: !!event?.record?.videoId && isOpen,
+    enabled: !!record?.id && isOpen,
   });
-
-  console.log(event)
 
   if (!isOpen) return null;
 
@@ -84,7 +83,7 @@ export default function DetectedObject({ event, isOpen, onClose, onClick }: Dete
                   {/* License Plate Image */}
                   <div
                     style={{
-                      backgroundImage: `url(http://157.66.100.182:9000/ai-data/detection_results/${event?.id}/license_plates/${item.id}.jpg)`
+                      backgroundImage: `url(http://157.66.100.182:9000/ai-data/detection_results/${record?.id}/license_plates/${item.id}.jpg)`
                     }}
                     className="w-10 h-10 rounded-md bg-cover bg-center justify-end items-end">
                   </div>
@@ -117,13 +116,13 @@ export default function DetectedObject({ event, isOpen, onClose, onClick }: Dete
       </div>
 
       {/* Footer Meta */}
-      {event && (
+      {record && (
         <div className="p-4 bg-gray-50/50 border-t border-gray-100">
           <div className="flex flex-col gap-1.5">
             <div className="flex justify-between text-[10px]">
-              <span className="text-gray-400">Thời gian sự kiện:</span>
+              <span className="text-gray-400">Thời gian bắt đầu:</span>
               <span className="text-gray-700 font-bold">
-                {dayjs(event.createdAt).format('HH:mm:ss DD/MM')}
+                {dayjs(record.startTime).format('HH:mm:ss DD/MM')}
               </span>
             </div>
           </div>
