@@ -1,15 +1,15 @@
 import Heading from '@/components/ui/Heading';
 import SubHeading from '@/components/ui/SubHeading';
 
-interface EventHeadingProps {
+interface RecordHeadingProps {
   title?: string;
   description?: string;
 }
 
-export default function EventHeading({
-  title = 'Danh sách sự kiện',
-  description = 'Quản lý lịch sử các sự kiện từ hệ thống camera',
-}: EventHeadingProps) {
+export default function RecordHeading({
+  title = 'Danh sách bản ghi',
+  description = 'Quản lý lịch sử các bản ghi hình từ hệ thống camera',
+}: RecordHeadingProps) {
   return (
     <div>
       <Heading>{title}</Heading>

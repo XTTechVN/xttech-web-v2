@@ -18,7 +18,7 @@ import dayjs from 'dayjs';
 import { Record } from '@/types/shared/event';
 import { ResponsePagination } from '@/types/shared/reponse';
 
-export default function EventTable({
+export default function RecordTable({
   onDelete,
   onView,
   search = '',

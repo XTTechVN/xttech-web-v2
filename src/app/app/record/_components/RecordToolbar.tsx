@@ -2,9 +2,9 @@ import Button from '@/components/ui/Button';
 import Search from '@/components/ui/Search';
 import { Download } from 'lucide-react';
 
-export default function EventToolbar({
+export default function RecordToolbar({
   onExport,
-  placeholder = 'Tìm kiếm sự kiện...',
+  placeholder = 'Tìm kiếm bản ghi...',
 }: {
   onExport: () => void;
   placeholder?: string;

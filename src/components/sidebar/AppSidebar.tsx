@@ -39,11 +39,11 @@ export default function AppSidebar() {
       ],
     },
     {
-      category: 'Cảnh báo & sự kiện',
+      category: 'Bản ghi hình',
       items: [
         {
-          path: '/app/event',
-          label: 'Cảnh báo',
+          path: '/app/record',
+          label: 'Danh sách bản ghi',
           icon: <AlertCircle size={16} />,
         },
       ],
