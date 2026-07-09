@@ -80,25 +80,11 @@ export default function DetectedObjectModal({ record, detectedObject }: Detected
             </div>
 
             {/* Hình ảnh */}
-            {detectedObject.rawPlate && (
+            {detectedObject && (
               <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 h-[180px]">
                 <img
                   src={`http://157.66.100.182:9000/ai-data/${detectedObject.extraData?.imagePath}`}
-                  alt={`Biển số ${detectedObject.label}`}
-                  className="w-full h-full object-contain"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                  <p className="text-xs text-white/80">
-                    {dayjs(detectedObject.createdAt).format('HH:mm:ss DD/MM/YYYY')}
-                  </p>
-                </div>
-              </div>
-            )}
-            {!detectedObject.rawPlate && (
-              <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 h-[180px]">
-                <img
-                  src={`http://157.66.100.182:9000/ai-data/thumbnail/${record.thumbnailId}`}
-                  alt={`Xe ${detectedObject.label}`}
+                  alt={`${detectedObject.label}`}
                   className="w-full h-full object-contain"
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
