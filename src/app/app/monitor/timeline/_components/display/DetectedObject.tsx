@@ -83,10 +83,10 @@ export default function DetectedObject({ record, isOpen, onClose, onClick }: Det
                   {/* License Plate Image */}
                   <div
                     style={{
-                      backgroundImage: `url(http://157.66.100.182:9000/ai-data/detection_results/${record?.id}/license_plates/${item.id}.jpg)`
+                      backgroundImage: `url(http://157.66.100.182:9000/ai-data/${item.extraData?.imagePath})`,
                     }}
-                    className="w-10 h-10 rounded-md bg-cover bg-center justify-end items-end">
-                  </div>
+                    className="w-10 h-10 rounded-md bg-cover bg-center justify-end items-end"
+                  ></div>
                 </div>
 
                 {/* Result */}

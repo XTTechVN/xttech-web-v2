@@ -83,7 +83,7 @@ export default function DetectedObjectModal({ record, detectedObject }: Detected
             {detectedObject.rawPlate && (
               <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 h-[180px]">
                 <img
-                  src={`http://157.66.100.182:9000/ai-data/thumbnail/${record.id}/license_plates/${detectedObject.id}.jpg`}
+                  src={`http://157.66.100.182:9000/ai-data/${detectedObject.extraData?.imagePath}`}
                   alt={`Biển số ${detectedObject.label}`}
                   className="w-full h-full object-contain"
                 />
