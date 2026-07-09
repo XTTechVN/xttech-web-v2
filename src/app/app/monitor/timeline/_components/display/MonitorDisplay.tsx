@@ -33,7 +33,7 @@ export default function MonitorDisplay({ videoId, seekSeconds, onDetail }: Monit
         {videoId ? (
           <video
             ref={videoRef}
-            src={`http://157.66.100.182:9000/ai-data/video/${videoId}`}
+            src={`http://157.66.100.182:9000/ai-data/${videoId}`}
             autoPlay
             controls
             loop
@@ -57,4 +57,3 @@ export default function MonitorDisplay({ videoId, seekSeconds, onDetail }: Monit
     </div>
   );
 }
-

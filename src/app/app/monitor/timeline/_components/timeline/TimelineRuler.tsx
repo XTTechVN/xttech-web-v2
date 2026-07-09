@@ -139,9 +139,18 @@ export default function TimelineRuler({ camera, date, onSelectRecord }: Timeline
                   <div className="h-6 w-px bg-gray-300 group-hover:bg-primary transition-colors" />
                   {i < 24 && (
                     <>
-                      <div className="absolute bottom-0 h-1 w-px bg-gray-100" style={{ left: `${hourWidth * 0.25}px` }} />
-                      <div className="absolute bottom-0 h-2 w-px bg-gray-200" style={{ left: `${hourWidth * 0.5}px` }} />
-                      <div className="absolute bottom-0 h-1 w-px bg-gray-100" style={{ left: `${hourWidth * 0.75}px` }} />
+                      <div
+                        className="absolute bottom-0 h-1 w-px bg-gray-100"
+                        style={{ left: `${hourWidth * 0.25}px` }}
+                      />
+                      <div
+                        className="absolute bottom-0 h-2 w-px bg-gray-200"
+                        style={{ left: `${hourWidth * 0.5}px` }}
+                      />
+                      <div
+                        className="absolute bottom-0 h-1 w-px bg-gray-100"
+                        style={{ left: `${hourWidth * 0.75}px` }}
+                      />
                     </>
                   )}
                   <span className="absolute top-7 -translate-x-1/2 text-[10px] text-gray-500 font-medium select-none whitespace-nowrap">
@@ -176,7 +185,7 @@ export default function TimelineRuler({ camera, date, onSelectRecord }: Timeline
             {eventRecords.map((record: Record) => {
               const position = getPosition(record.startTime);
               const thumbnailSrc = record.thumbnailId
-                ? `http://157.66.100.182:9000/ai-data/thumbnail/${record.thumbnailId}`
+                ? `http://157.66.100.182:9000/ai-data/${record.thumbnailId}`
                 : null;
 
               return (
@@ -190,7 +199,10 @@ export default function TimelineRuler({ camera, date, onSelectRecord }: Timeline
                       const eventTime = dayjs(record.startTime);
                       const cStart = dayjs(c.startTime);
                       const cEnd = dayjs(c.endTime);
-                      return (eventTime.isAfter(cStart) || eventTime.isSame(cStart)) && eventTime.isBefore(cEnd);
+                      return (
+                        (eventTime.isAfter(cStart) || eventTime.isSame(cStart)) &&
+                        eventTime.isBefore(cEnd)
+                      );
                     });
 
                     if (parentContinuous) {
