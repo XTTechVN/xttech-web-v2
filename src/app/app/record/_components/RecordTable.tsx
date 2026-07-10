@@ -48,7 +48,7 @@ export default function RecordTable({
       render: (item: Record) =>
         item.thumbnailId ? (
           <img
-            src={`http://157.66.100.182:9000/ai-data/thumbnail/${item.thumbnailId}`}
+            src={`http://157.66.100.182:9000/ai-data/${item.thumbnailId}`}
             alt={item.name}
             className="w-12 h-12 object-cover rounded-md border border-gray-100 shadow-sm"
           />
