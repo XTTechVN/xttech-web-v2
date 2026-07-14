@@ -26,7 +26,7 @@ interface AuthState {
 
 const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set: any) => ({
       isAuthenticated: false,
       hasHydrated: false,
 

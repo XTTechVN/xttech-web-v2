@@ -329,6 +329,7 @@ export default function CameraEditModal({
                         <Radio value="streaming">Phát trực tiếp</Radio>
                         <Radio value="recording_continuous">Ghi hình liên tục</Radio>
                         <Radio value="recording_event">Ghi hình sự kiện</Radio>
+                        <Radio value="recording_continuous_event">Liên tục + Sự kiện</Radio>
                       </Radio.Group>
                     )}
                   />

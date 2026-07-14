@@ -5,10 +5,11 @@ interface Props {
   camera: Camera;
 }
 
-// 'stopped' | 'streaming' | 'recording_continuous' | 'recording_event'
+// 'stopped' | 'streaming' | 'recording_continuous' | 'recording_event' | 'recording_continuous_event'
 const MappingRecordingStatus = {
   recording_continuous: 'Đang ghi hình liên tục',
   recording_event: 'Đang ghi hình sự kiện',
+  recording_continuous_event: 'Đang ghi liên tục + sự kiện',
   stopped: 'Dừng',
   streaming: 'Đang stream',
 }

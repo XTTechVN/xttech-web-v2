@@ -20,7 +20,7 @@ interface PtzState {
   newPresetName: string;
   presets: Preset[];
   isLoadingPresets: boolean;
-  
+
   speed: number;
   duration: number;
   setSpeed: (speed: number) => void;
@@ -38,7 +38,7 @@ interface PtzState {
 
 export const usePtzStore = create<PtzState>()(
   persist(
-    (set, get) => ({
+    (set: any, get: any) => ({
       isMoving: false,
       newPresetName: '',
       presets: [],
@@ -47,12 +47,12 @@ export const usePtzStore = create<PtzState>()(
       speed: 0.05,
       duration: 0.1,
 
-      setSpeed: (speed) => set({ speed }),
-      setDuration: (duration) => set({ duration }),
+      setSpeed: (speed: number) => set({ speed }),
+      setDuration: (duration: number) => set({ duration }),
 
-      setNewPresetName: (name) => set({ newPresetName: name }),
+      setNewPresetName: (name: string) => set({ newPresetName: name }),
 
-      fetchPresets: async (cameraId, hasPtz) => {
+      fetchPresets: async (cameraId: string, hasPtz: boolean) => {
         if (!hasPtz) {
           set({ presets: [] });
           return;
@@ -68,15 +68,15 @@ export const usePtzStore = create<PtzState>()(
         }
       },
 
-      movePtz: async (cameraId, command) => {
+      movePtz: async (cameraId: string, command: string) => {
         try {
           set({ isMoving: true });
           const speed = get().speed;
           const duration = get().duration;
-          await api.post(`/api/v1/cameras/${cameraId}/ptz/move`, { 
+          await api.post(`/api/v1/cameras/${cameraId}/ptz/move`, {
             command,
             speed,
-            duration
+            duration,
           });
         } catch (error: any) {
           toast.error(getErrorMessage(error, 'Có lỗi xảy ra khi gọi lệnh PTZ'));
@@ -85,7 +85,7 @@ export const usePtzStore = create<PtzState>()(
         }
       },
 
-      createPreset: async (cameraId, name) => {
+      createPreset: async (cameraId: string, name: string) => {
         try {
           await api.post(`/api/v1/cameras/${cameraId}/ptz/presets`, { name });
           set({ newPresetName: '' });
@@ -96,7 +96,7 @@ export const usePtzStore = create<PtzState>()(
         }
       },
 
-      gotoPreset: async (cameraId, token) => {
+      gotoPreset: async (cameraId: string, token: string) => {
         try {
           toast.success('Đang di chuyển tới preset');
           await api.post(`/api/v1/cameras/${cameraId}/ptz/presets/${token}/goto`);
@@ -105,7 +105,7 @@ export const usePtzStore = create<PtzState>()(
         }
       },
 
-      deletePreset: async (cameraId, token) => {
+      deletePreset: async (cameraId: string, token: string) => {
         try {
           await api.delete(`/api/v1/cameras/${cameraId}/ptz/presets/${token}`);
           toast.success('Đã xóa preset');
@@ -115,7 +115,7 @@ export const usePtzStore = create<PtzState>()(
         }
       },
 
-      gotoHome: async (cameraId) => {
+      gotoHome: async (cameraId: string) => {
         try {
           toast.success('Đang di chuyển về Home');
           await api.post(`/api/v1/cameras/${cameraId}/ptz/home`);
@@ -124,22 +124,22 @@ export const usePtzStore = create<PtzState>()(
         }
       },
 
-      setHome: async (cameraId) => {
+      setHome: async (cameraId: string) => {
         try {
           await api.post(`/api/v1/cameras/${cameraId}/ptz/home/set`);
           toast.success('Đã đặt Home thành công');
         } catch (error: any) {
           toast.error(getErrorMessage(error, 'Lỗi khi đặt Home'));
         }
-      }
+      },
     }),
     {
       name: 'cv_ptz_settings',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
+      partialize: (state: PtzState) => ({
         speed: state.speed,
-        duration: state.duration
-      })
-    }
-  )
+        duration: state.duration,
+      }),
+    },
+  ),
 );

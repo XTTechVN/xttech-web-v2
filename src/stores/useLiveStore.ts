@@ -11,7 +11,7 @@ interface LiveState {
 
 export const useLiveStore = create<LiveState>()(
   persist(
-    (set) => ({
+    (set: any) => ({
       viewMode: '2x2',
       portView: null,
       setViewMode: (viewMode: ViewMode) => set({ viewMode }),

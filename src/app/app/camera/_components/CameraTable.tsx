@@ -22,6 +22,7 @@ const mappingStatus = {
   streaming: 'Phát trực tiếp',
   recording_continuous: 'Ghi hình liên tục',
   recording_event: 'Ghi hình sự kiện',
+  recording_continuous_event: 'Liên tục + Sự kiện',
 };
 
 const mappingRtspType = {

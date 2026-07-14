@@ -50,7 +50,7 @@ interface MonitorState {
 
 const useMonitorStore = create<MonitorState>()(
   persist(
-    (set, get) => ({
+    (set: any, get: any) => ({
       monitor: null,
       gridKey: null,
 
@@ -64,17 +64,17 @@ const useMonitorStore = create<MonitorState>()(
 
       hasHydrated: false,
 
-      setMonitor: (monitor) => set({ monitor }),
-      setGridKey: (gridKey) => set({ gridKey }),
+      setMonitor: (monitor: Monitor | null) => set({ monitor }),
+      setGridKey: (gridKey: string | null) => set({ gridKey }),
 
-      setIsAdding: (isAdding) => set({ isAdding }),
-      setIsRemoving: (isRemoving) => set({ isRemoving }),
-      setIsLoading: (isLoading) => set({ isLoading }),
+      setIsAdding: (isAdding: boolean) => set({ isAdding }),
+      setIsRemoving: (isRemoving: boolean) => set({ isRemoving }),
+      setIsLoading: (isLoading: boolean) => set({ isLoading }),
 
-      setIsShowSetting: (isShowSetting) => set({ isShowSetting }),
-      setIsShowList: (isShowList) => set({ isShowList }),
+      setIsShowSetting: (isShowSetting: boolean) => set({ isShowSetting }),
+      setIsShowList: (isShowList: boolean) => set({ isShowList }),
 
-      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
+      setHasHydrated: (hasHydrated: boolean) => set({ hasHydrated }),
 
       getMonitorGridSize: () => {
         const monitor = get().monitor;
@@ -247,10 +247,10 @@ const useMonitorStore = create<MonitorState>()(
     {
       name: 'cv_monitor',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
+      partialize: (state: MonitorState) => ({
         monitor: state.monitor,
       }),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state: MonitorState) => {
         state?.setHasHydrated(true);
       },
     },

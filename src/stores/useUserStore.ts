@@ -14,7 +14,7 @@ interface UserState {
 
 const useUserStore = create<UserState>()(
   persist(
-    (set) => ({
+    (set: any) => ({
       user: null,
       hasHydrated: false,
 
@@ -29,7 +29,7 @@ const useUserStore = create<UserState>()(
     {
       name: 'cv_user',
       storage: createJSONStorage(() => localStorage),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state: UserState) => {
         state?.setHasHydrated(true);
       },
     },

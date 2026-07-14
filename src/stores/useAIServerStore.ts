@@ -10,7 +10,7 @@ interface AIServerState {
 
 export const useAIServerStore = create<AIServerState>()(
   persist(
-    (set, get) => ({
+    (set: any, get: any) => ({
       serverIp: 'ws://157.66.100.182',
       serverPort: '8000',
 
