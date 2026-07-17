@@ -49,7 +49,7 @@ export default function Stream({ camera }: Props) {
   const lastDetectTimeRef = useRef<number>(0);
 
   useEffect(() => {
-    if (!camera.worker?.socket || !camera.worker?.port || !camera.id) return;
+    if (!camera.worker?.socket || !camera.id) return;
 
     setStatus('connecting');
     lastTimeRef.current = -1;
@@ -93,7 +93,7 @@ export default function Stream({ camera }: Props) {
         socketUrl = `${protocol}//${socketUrl}`;
       }
       const baseSocket = socketUrl.replace(/\/$/, '');
-      const url = `${baseSocket}:${camera.worker.port}/${camera.id}`;
+      const url = `${baseSocket}/${camera.id}`;
       ws = new WebSocket(url);
       ws.binaryType = 'arraybuffer';
 

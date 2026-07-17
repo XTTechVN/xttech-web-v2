@@ -45,12 +45,7 @@ export default function WorkerTable({
     {
       key: 'socket',
       label: 'Socket',
-      width: '20%',
-    },
-    {
-      key: 'port',
-      label: 'Cổng (Port)',
-      width: '15%',
+      width: '35%',
     },
     {
       key: 'isActive',
@@ -87,10 +82,6 @@ export default function WorkerTable({
           <div className="flex items-center gap-2">
             <p className="font-semibold text-sm">Socket:</p>
             <p className="text-sm">{item.socket}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <p className="font-semibold text-sm">Cổng:</p>
-            <p className="text-sm">{item.port}</p>
           </div>
           <div className="flex items-center gap-2 mt-2">
             <p className="font-semibold text-sm">Hành động:</p>

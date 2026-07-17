@@ -76,31 +76,14 @@ export default function WorkerAddModal({
             />
           </div>
 
-          {/* IP and Port */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <Label>Socket</Label>
-              <Input
-                placeholder="ws://192.168.1.100"
-                {...register('socket', { required: 'Socket là bắt buộc' })}
-                error={errors.socket?.message as string}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label>Cổng (Port)</Label>
-              <Input
-                type="number"
-                placeholder="8000"
-                {...register('port', { 
-                  required: 'Port là bắt buộc',
-                  valueAsNumber: true,
-                  min: { value: 1, message: 'Min port 1' },
-                  max: { value: 65535, message: 'Max port 65535' }
-                })}
-                error={errors.port?.message as string}
-              />
-            </div>
+          {/* Socket (IP removed) */}
+          <div className="flex flex-col gap-2">
+            <Label>Socket</Label>
+            <Input
+              placeholder="wss://ai-wk1.vifence.io"
+              {...register('socket', { required: 'Socket là bắt buộc' })}
+              error={errors.socket?.message as string}
+            />
           </div>
 
           {/* Status */}

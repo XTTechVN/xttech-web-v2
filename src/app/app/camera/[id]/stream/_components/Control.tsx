@@ -37,10 +37,6 @@ export default function Control({ camera }: Props) {
             <p className="text-sm">{camera.worker?.socket}</p>
           </div>
           <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">Port:</p>
-            <p className="text-sm">{camera.worker?.port}</p>
-          </div>
-          <div className="flex items-center gap-2">
             <p className="text-sm font-medium">Cho phép PTZ:</p>
             <p className="text-sm">{camera.ptz ? 'Có' : 'Không'}</p>
           </div>

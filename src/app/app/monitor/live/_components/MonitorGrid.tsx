@@ -75,9 +75,9 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
   const lastDetectionsRef = useRef<any[]>([]);
   const lastDetectTimeRef = useRef<number>(0);
 
-  // Xử lý hiển thị stream khi có workerSocket, workerPort, cameraId
+  // Xử lý hiển thị stream khi có workerSocket, cameraId
   useEffect(() => {
-    if (!cell.workerSocket || !cell.workerPort || !cell.cameraId) return;
+    if (!cell.workerSocket || !cell.cameraId) return;
 
     setStatus('connecting');
     lastTimeRef.current = -1;
@@ -121,7 +121,7 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
         socketUrl = `${protocol}//${socketUrl}`;
       }
       const baseSocket = socketUrl.replace(/\/$/, '');
-      const url = `${baseSocket}:${cell.workerPort}/${cell.cameraId}`;
+      const url = `${baseSocket}/${cell.cameraId}`;
       ws = new WebSocket(url);
       ws.binaryType = 'arraybuffer';
 
@@ -269,10 +269,10 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
     };
   }, [cell]);
 
-  // Xử lý hiển thị cell khi không có workerSocket, workerPort, cameraId
+  // Xử lý hiển thị cell khi không có workerSocket, cameraId
   // 1. Click vào cell để thêm camera vào cell đó (chuyển sang trang chọn camera)
   // 2. Right click vào cell để xóa camera khỏi cell đó (chuyển sang trang xóa camera)
-  if (!cell.cameraId && !cell.workerSocket && !cell.workerPort)
+  if (!cell.cameraId && !cell.workerSocket)
     return (
       <div
         onClick={() => {
@@ -286,9 +286,9 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
         }}
         className="relative flex flex-col bg-white border border-[#a2a2a2] overflow-hidden aspect-video"
       >
-        {/* 1. Nếu không có cameraId, workerSocket, workerPort thì hiển thị khung cho phép chọn add cam vào cell đó. */}
+        {/* 1. Nếu không có cameraId, workerSocket thì hiển thị khung cho phép chọn add cam vào cell đó. */}
         {/* 2. Icon upload ở giữa cell */}
-        {!cell.cameraId && !cell.workerSocket && !cell.workerPort && (
+        {!cell.cameraId && !cell.workerSocket && (
           <div className="absolute inset-0 gap-2 cursor-pointer flex flex-col items-center justify-center z-10 text-xs font-medium select-none">
             <Plus size={40} color="#444" />
             <p className="text-[#444]">Thêm camera vào ô trống này</p>
