@@ -75,7 +75,7 @@ export default function InsertCameraModal() {
                       updateMonitorGrid(monitor, gridKey, {
                         cameraId: camera.id,
                         cameraName: camera.name || null,
-                        workerIp: camera.worker?.ip || null,
+                        workerSocket: camera.worker?.socket || null,
                         workerPort: camera.worker?.port || null,
                       });
                     }}

@@ -75,9 +75,9 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
   const lastDetectionsRef = useRef<any[]>([]);
   const lastDetectTimeRef = useRef<number>(0);
 
-  // Xử lý hiển thị stream khi có workerIp, workerPort, cameraId
+  // Xử lý hiển thị stream khi có workerSocket, workerPort, cameraId
   useEffect(() => {
-    if (!cell.workerIp || !cell.workerPort || !cell.cameraId) return;
+    if (!cell.workerSocket || !cell.workerPort || !cell.cameraId) return;
 
     setStatus('connecting');
     lastTimeRef.current = -1;
@@ -110,7 +110,18 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
       });
 
       // 2. Khởi tạo WebSocket kết nối thủ công
-      const url = `ws://${cell.workerIp}:${cell.workerPort}/${cell.cameraId}`;
+      let socketUrl = cell.workerSocket;
+      if (window.location.protocol === 'https:') {
+        socketUrl = socketUrl.replace(/^ws:\/\//i, 'wss://');
+      } else if (window.location.protocol === 'http:') {
+        socketUrl = socketUrl.replace(/^wss:\/\//i, 'ws://');
+      }
+      if (socketUrl && !socketUrl.startsWith('ws://') && !socketUrl.startsWith('wss://')) {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        socketUrl = `${protocol}//${socketUrl}`;
+      }
+      const baseSocket = socketUrl.replace(/\/$/, '');
+      const url = `${baseSocket}:${cell.workerPort}/${cell.cameraId}`;
       ws = new WebSocket(url);
       ws.binaryType = 'arraybuffer';
 
@@ -258,10 +269,10 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
     };
   }, [cell]);
 
-  // Xử lý hiển thị cell khi không có workerIp, workerPort, cameraId
+  // Xử lý hiển thị cell khi không có workerSocket, workerPort, cameraId
   // 1. Click vào cell để thêm camera vào cell đó (chuyển sang trang chọn camera)
   // 2. Right click vào cell để xóa camera khỏi cell đó (chuyển sang trang xóa camera)
-  if (!cell.cameraId && !cell.workerIp && !cell.workerPort)
+  if (!cell.cameraId && !cell.workerSocket && !cell.workerPort)
     return (
       <div
         onClick={() => {
@@ -275,9 +286,9 @@ function MonitorCell({ cell, gridKey }: { cell: GridCell; gridKey: string }) {
         }}
         className="relative flex flex-col bg-white border border-[#a2a2a2] overflow-hidden aspect-video"
       >
-        {/* 1. Nếu không có cameraId, workerIp, workerPort thì hiển thị khung cho phép chọn add cam vào cell đó. */}
+        {/* 1. Nếu không có cameraId, workerSocket, workerPort thì hiển thị khung cho phép chọn add cam vào cell đó. */}
         {/* 2. Icon upload ở giữa cell */}
-        {!cell.cameraId && !cell.workerIp && !cell.workerPort && (
+        {!cell.cameraId && !cell.workerSocket && !cell.workerPort && (
           <div className="absolute inset-0 gap-2 cursor-pointer flex flex-col items-center justify-center z-10 text-xs font-medium select-none">
             <Plus size={40} color="#444" />
             <p className="text-[#444]">Thêm camera vào ô trống này</p>

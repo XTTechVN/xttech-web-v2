@@ -43,8 +43,8 @@ export default function WorkerTable({
       width: '20%',
     },
     {
-      key: 'ip',
-      label: 'Địa chỉ IP',
+      key: 'socket',
+      label: 'Socket',
       width: '20%',
     },
     {
@@ -85,8 +85,8 @@ export default function WorkerTable({
             <p className="text-sm">{item.name}</p>
           </div>
           <div className="flex items-center gap-2">
-            <p className="font-semibold text-sm">Địa chỉ IP:</p>
-            <p className="text-sm">{item.ip}</p>
+            <p className="font-semibold text-sm">Socket:</p>
+            <p className="text-sm">{item.socket}</p>
           </div>
           <div className="flex items-center gap-2">
             <p className="font-semibold text-sm">Cổng:</p>

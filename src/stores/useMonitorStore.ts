@@ -97,7 +97,7 @@ const useMonitorStore = create<MonitorState>()(
             grid[i.toString()] = {
               cameraId: null,
               cameraName: null,
-              workerIp: null,
+              workerSocket: null,
               workerPort: null,
             };
           }
@@ -174,7 +174,7 @@ const useMonitorStore = create<MonitorState>()(
               ...monitor.grid,
               [gridKey]: {
                 cameraId: null,
-                workerIp: null,
+                workerSocket: null,
                 workerPort: null,
               },
             },
@@ -200,7 +200,7 @@ const useMonitorStore = create<MonitorState>()(
               ...monitor.grid,
               [newKey]: {
                 cameraId: null,
-                workerIp: null,
+                workerSocket: null,
                 workerPort: null,
               },
             },

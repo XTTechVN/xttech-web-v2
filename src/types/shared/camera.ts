@@ -18,7 +18,7 @@ export type Camera = {
   spaceId?: string;
   worker?: {
     name: string;
-    ip: string;
+    socket: string;
     port: number;
     isActive: boolean;
     id: string;

@@ -49,7 +49,7 @@ export default function Stream({ camera }: Props) {
   const lastDetectTimeRef = useRef<number>(0);
 
   useEffect(() => {
-    if (!camera.worker?.ip || !camera.worker?.port || !camera.id) return;
+    if (!camera.worker?.socket || !camera.worker?.port || !camera.id) return;
 
     setStatus('connecting');
     lastTimeRef.current = -1;
@@ -82,7 +82,18 @@ export default function Stream({ camera }: Props) {
       });
 
       // 2. Khởi tạo WebSocket kết nối thủ công
-      const url = `ws://${camera.worker.ip}:${camera.worker.port}/${camera.id}`;
+      let socketUrl = camera.worker.socket;
+      if (window.location.protocol === 'https:') {
+        socketUrl = socketUrl.replace(/^ws:\/\//i, 'wss://');
+      } else if (window.location.protocol === 'http:') {
+        socketUrl = socketUrl.replace(/^wss:\/\//i, 'ws://');
+      }
+      if (socketUrl && !socketUrl.startsWith('ws://') && !socketUrl.startsWith('wss://')) {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        socketUrl = `${protocol}//${socketUrl}`;
+      }
+      const baseSocket = socketUrl.replace(/\/$/, '');
+      const url = `${baseSocket}:${camera.worker.port}/${camera.id}`;
       ws = new WebSocket(url);
       ws.binaryType = 'arraybuffer';
 

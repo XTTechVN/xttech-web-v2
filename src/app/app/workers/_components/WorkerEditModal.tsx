@@ -33,7 +33,7 @@ export default function WorkerEditModal({
     defaultValues: {
       macId: defaultValues?.macId || '',
       name: defaultValues?.name || '',
-      ip: defaultValues?.ip || '',
+      socket: defaultValues?.socket || '',
       port: defaultValues?.port || 8000,
       isActive: defaultValues?.isActive ?? true,
     },
@@ -47,7 +47,7 @@ export default function WorkerEditModal({
   useEffect(() => {
     if (defaultValues) {
       setValue('name', defaultValues.name);
-      setValue('ip', defaultValues.ip);
+      setValue('socket', defaultValues.socket);
       setValue('port', defaultValues.port);
       setValue('isActive', defaultValues.isActive);
     }
@@ -93,11 +93,11 @@ export default function WorkerEditModal({
           {/* IP and Port */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label>Địa chỉ IP</Label>
+              <Label>Socket</Label>
               <Input
-                placeholder="192.168.1.100"
-                {...register('ip', { required: 'IP là bắt buộc' })}
-                error={errors.ip?.message as string}
+                placeholder="ws://192.168.1.100"
+                {...register('socket', { required: 'Socket là bắt buộc' })}
+                error={errors.socket?.message as string}
               />
             </div>
 

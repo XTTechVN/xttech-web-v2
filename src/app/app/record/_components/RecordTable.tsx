@@ -78,7 +78,7 @@ export default function RecordTable({
           <p className="font-semibold">{item.camera?.name || 'N/A'}</p>
           <p className="text-xs">
             {item.camera?.worker?.name
-              ? `${item.camera.worker.name} (${item.camera.worker.ip})`
+              ? `${item.camera.worker.name} (${item.camera.worker.socket})`
               : 'N/A'}
           </p>
         </div>

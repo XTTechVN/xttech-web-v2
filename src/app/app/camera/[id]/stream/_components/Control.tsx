@@ -33,8 +33,8 @@ export default function Control({ camera }: Props) {
           </div>
 
           <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">IP:</p>
-            <p className="text-sm">{camera.worker?.ip}</p>
+            <p className="text-sm font-medium">Socket:</p>
+            <p className="text-sm">{camera.worker?.socket}</p>
           </div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium">Port:</p>

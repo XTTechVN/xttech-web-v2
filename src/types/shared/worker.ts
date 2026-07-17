@@ -1,7 +1,7 @@
 export interface Worker {
   id: string;
   name: string;
-  ip: string;
+  socket: string;
   port: number;
   macId: string;
   isActive: boolean;
@@ -12,7 +12,7 @@ export interface Worker {
 export interface WorkerFormModalData {
   macId: string;
   name: string;
-  ip: string;
+  socket: string;
   port: number;
   isActive: boolean;
 }
