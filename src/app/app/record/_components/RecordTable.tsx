@@ -13,6 +13,7 @@ import { useState } from 'react';
 // Utils
 import api from '@/utils/api';
 import dayjs from 'dayjs';
+import { MEDIA_BASE_URL } from '@/config/app';
 
 // Types
 import { Record } from '@/types/shared/event';
@@ -48,7 +49,7 @@ export default function RecordTable({
       render: (item: Record) =>
         item.thumbnailId ? (
           <img
-            src={`http://157.66.100.182:9000/ai-data/${item.thumbnailId}`}
+            src={`${MEDIA_BASE_URL}/ai-data/${item.thumbnailId}`}
             alt={item.name}
             className="w-12 h-12 object-cover rounded-md border border-gray-100 shadow-sm"
           />
@@ -131,7 +132,7 @@ export default function RecordTable({
             <div className="flex gap-3">
               {item.thumbnailId ? (
                 <img
-                  src={`http://157.66.100.182:9000/ai-data/thumbnail/${item.thumbnailId}`}
+                  src={`${MEDIA_BASE_URL}/ai-data/thumbnail/${item.thumbnailId}`}
                   alt={item.name}
                   className="w-16 h-16 object-cover rounded-md border border-gray-100 shadow-sm flex-shrink-0"
                 />

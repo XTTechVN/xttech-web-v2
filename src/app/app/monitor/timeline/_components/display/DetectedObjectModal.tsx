@@ -2,6 +2,7 @@ import { Record } from '@/types/shared/event';
 import { DetectedObject as DetectedObjectProps } from './DetectedObject';
 import dayjs from 'dayjs';
 import { Camera, Tag, Clock, Hash, MapPin, Cpu } from 'lucide-react';
+import { MEDIA_BASE_URL } from '@/config/app';
 
 interface DetectedObjectModalProps {
   record: Record | null;
@@ -83,7 +84,7 @@ export default function DetectedObjectModal({ record, detectedObject }: Detected
             {detectedObject && (
               <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 h-[180px]">
                 <img
-                  src={`http://157.66.100.182:9000/ai-data/${detectedObject.extraData?.imagePath}`}
+                  src={`${MEDIA_BASE_URL}/ai-data/${detectedObject.extraData?.imagePath}`}
                   alt={`${detectedObject.label}`}
                   className="w-full h-full object-contain"
                 />

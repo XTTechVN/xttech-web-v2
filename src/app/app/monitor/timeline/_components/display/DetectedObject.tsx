@@ -7,6 +7,7 @@ import { motion } from 'motion/react';
 import { X, Info, Tag } from 'lucide-react';
 import dayjs from 'dayjs';
 import Search from '@/components/ui/Search';
+import { MEDIA_BASE_URL } from '@/config/app';
 
 export interface DetectedObject {
   id: string;
@@ -83,7 +84,7 @@ export default function DetectedObject({ record, isOpen, onClose, onClick }: Det
                   {/* License Plate Image */}
                   <div
                     style={{
-                      backgroundImage: `url(http://157.66.100.182:9000/ai-data/${item.extraData?.imagePath})`,
+                      backgroundImage: `url(${MEDIA_BASE_URL}/ai-data/${item.extraData?.imagePath})`,
                     }}
                     className="w-10 h-10 rounded-md bg-cover bg-center justify-end items-end"
                   ></div>

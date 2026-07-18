@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 // Utils
 import api from '@/utils/api';
 import dayjs from 'dayjs';
+import { MEDIA_BASE_URL } from '@/config/app';
 // Types
 import { Record } from '@/types/shared/event';
 import { Camera } from '@/types/shared/camera';
@@ -185,7 +186,7 @@ export default function TimelineRuler({ camera, date, onSelectRecord }: Timeline
             {eventRecords.map((record: Record) => {
               const position = getPosition(record.startTime);
               const thumbnailSrc = record.thumbnailId
-                ? `http://157.66.100.182:9000/ai-data/${record.thumbnailId}`
+                ? `${MEDIA_BASE_URL}/ai-data/${record.thumbnailId}`
                 : null;
 
               return (

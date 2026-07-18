@@ -2,6 +2,7 @@
 
 import { Camera, Maximize2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { MEDIA_BASE_URL } from '@/config/app';
 
 interface MonitorDisplayProps {
   videoId?: string | null;
@@ -33,7 +34,7 @@ export default function MonitorDisplay({ videoId, seekSeconds, onDetail }: Monit
         {videoId ? (
           <video
             ref={videoRef}
-            src={`http://157.66.100.182:9000/ai-data/${videoId}`}
+            src={`${MEDIA_BASE_URL}/ai-data/${videoId}`}
             autoPlay
             controls
             loop

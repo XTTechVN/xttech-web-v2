@@ -1,5 +1,6 @@
 import Heading from '@/components/ui/Heading';
 import SubHeading from '@/components/ui/SubHeading';
+import { MEDIA_BASE_URL } from '@/config/app';
 
 import type { Record } from '@/types/shared/event';
 
@@ -15,9 +16,9 @@ export default function MediaViewer({ selectedId, data }: { selectedId: string; 
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <img src={`http://157.66.100.182:9000/ai-data/thumbnail/${record?.thumbnailId}`} alt="" />
+        <img src={`${MEDIA_BASE_URL}/ai-data/thumbnail/${record?.thumbnailId}`} alt="" />
 
-        <video src={`http://157.66.100.182:9000/ai-data/video/${record?.videoId}`} controls></video>
+        <video src={`${MEDIA_BASE_URL}/ai-data/video/${record?.videoId}`} controls></video>
       </div>
     </div>
   );
