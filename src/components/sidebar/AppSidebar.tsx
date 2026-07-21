@@ -9,12 +9,8 @@ import {
   User,
   Clock,
   Server,
-  Shield,
-  Key,
-  Bell,
   Folder,
-  Layers,
-  Lock,
+  Tag,
 } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 import SidebarCategory from './SidebarCategory';
@@ -115,6 +111,17 @@ export default function AppSidebar() {
           path: '/app/spaces',
           label: 'Quản lý khu vực',
           icon: <Folder size={16} />,
+        },
+      ],
+    },
+    // Dữ liệu AI
+    {
+      category: 'AI',
+      items: [
+        {
+          path: '/app/training',
+          label: 'AI Training',
+          icon: <Tag size={16} />,
         },
       ],
     },
