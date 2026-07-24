@@ -1,5 +1,0 @@
-import { Loader2 } from 'lucide-react';
-
-export default function Loading({ size = 16 }: { size?: number }) {
-  return <Loader2 size={size} className="animate-spin" />;
-}
