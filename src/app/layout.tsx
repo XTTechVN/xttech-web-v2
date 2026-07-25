@@ -20,8 +20,8 @@ const lexend = Lexend({
 });
 
 export const metadata: Metadata = {
-  title: 'Quản lý doanh nghiệp',
-  description: 'Quản lý doanh nghiệp',
+  title: 'XTTech - Quản lý doanh nghiệp',
+  description: 'XTTech - Quản lý doanh nghiệp',
 };
 
 export default function RootLayout({

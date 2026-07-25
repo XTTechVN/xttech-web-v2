@@ -1,28 +1,2 @@
 @theme inline {
-  --color-primary: #0a4111;
-  --color-secondary: #26658c;
-  --color-blue-dark: #0f2c4b;
-
-  --color-bg-primary: #fff;
-  --color-bg-secondary: #f5f5f5;
-
-  --color-text-primary: #313131;
-  /* gray-800 */
-  --color-text-secondary: #0c0c0c;
-  /* gray-900 */
-
-  --color-hd-primary: #0a4174;
-  --color-hd-secondary: #26658c;
-
-  /* Cấu hình màu sắc tương thích cho Table2 (Bosky) */
-  --color-bk-primary: #0a4174;
-  --color-bk-secondary: #26658c;
-  --color-border-secondary: #e5e7eb;
-  --color-border-hover: #d1d5db;
-  --color-border-focus: #0a4174;
-  --color-border-primary: #e5e7eb;
-  --color-bg-hover: #f9fafb;
-  --color-icon-secondary: #9ca3af;
-  --color-icon-tertiary: #9ca3af;
-  --color-text-placeholder: #9ca3af;
 }

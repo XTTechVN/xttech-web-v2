@@ -142,8 +142,10 @@ Bản tổng hợp ngắn gọn, dễ nhớ các quy tắc cốt lõi khi phát 
 - **Data Fetching:**
   - [PREFER] Ưu tiên gọi API Backend trực tiếp ở Server-side (Next.js Server Components / Page level).
   - [MUST] Truyền dữ liệu (pass down) dưới dạng props từ Server Components xuống các Client Components hoặc UI components.
-- **Cấu hình UI tập trung:**
+- **Cấu hình UI & Màu sắc tập trung:**
   - [MUST] Mọi giá trị cấu hình giao diện mang tính chất hệ thống (Header height, Sidebar width, default backgrounds, section offsets) phải được khai báo tập trung tại `src/config/ui.ts`.
+  - [MUST] Khi code giao diện, bắt buộc phải tuân thủ các màu chủ đạo được định nghĩa trong file [color.css](file:///home/trvv/workspace/xttech2/xttech-web-v2/src/styles/color.css).
+  - [IMPORTANT] Khi thấy một màu sắc được lặp lại nhiều lần, phải hỏi lại người dùng để thêm vào hệ thống màu chung. Tuyệt đối không tự ý tạo mới, không tự đoán mò hay tự ý chế cháo mã màu.
   - [NEVER] Không hardcode các hằng số kích thước/màu sắc rải rác trong component.
 - **Cấu hình Ứng dụng tập trung:**
   - [MUST] Tất cả hằng số cấu hình hệ thống (như `APP_NAME`, `APP_VERSION`, API endpoints, Media base URL,...) phải khai báo và quản lý tập trung tại `src/config/app.ts`.
