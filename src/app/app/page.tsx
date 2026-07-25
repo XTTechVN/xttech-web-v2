@@ -44,25 +44,25 @@ export default function App() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 auto-rows-max">
         {/* Main Charts */}
         <div className="lg:col-span-2 space-y-4">
-          <MockupChart 
-            title="Lưu lượng video theo thời gian" 
-            data={[20, 35, 45, 30, 55, 70, 65, 80, 95, 85, 100, 90]} 
-            color="#3b82f6" 
+          <MockupChart
+            title="Lưu lượng video theo thời gian"
+            data={[20, 35, 45, 30, 55, 70, 65, 80, 95, 85, 100, 90]}
+            color="#3b82f6"
           />
-          <MockupChart 
-            title="Tần suất phát hiện biển số" 
-            data={[10, 25, 20, 45, 50, 40, 60, 55, 75, 70, 80, 85]} 
-            color="#a855f7" 
+          <MockupChart
+            title="Tần suất phát hiện biển số"
+            data={[10, 25, 20, 45, 50, 40, 60, 55, 75, 70, 80, 85]}
+            color="#a855f7"
           />
         </div>
 
         {/* Server Side Sidebar */}
         <div className="space-y-4">
           <ServerStatusCard />
-          <MockupChart 
-            title="Độ trễ hệ thống (ms)" 
-            data={[45, 42, 48, 50, 47, 44, 46, 49, 52, 50, 48, 45]} 
-            color="#ef4444" 
+          <MockupChart
+            title="Độ trễ hệ thống (ms)"
+            data={[45, 42, 48, 50, 47, 44, 46, 49, 52, 50, 48, 45]}
+            color="#ef4444"
           />
         </div>
       </div>
