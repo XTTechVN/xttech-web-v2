@@ -20,8 +20,8 @@ const lexend = Lexend({
 });
 
 export const metadata: Metadata = {
-  title: 'Vifence AI - Giám sát camera thông minh',
-  description: 'Vifence AI - Giám sát camera thông minh',
+  title: 'Quản lý doanh nghiệp',
+  description: 'Quản lý doanh nghiệp',
 };
 
 export default function RootLayout({
@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="">{children}</body>
     </html>
   );
 }
