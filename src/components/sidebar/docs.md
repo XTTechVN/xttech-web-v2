@@ -52,10 +52,12 @@ export default function Layout() {
 
 ## Props API Table
 
-| Prop | Kiểu dữ liệu | Bắt buộc? | Mô tả |
-| :--- | :--- | :--- | :--- |
-| `sections` | `SidebarSectionProps[]` | Có | Danh sách cấu hình các phần và các liên kết điều hướng |
-| `activeId` | `string` | Không | ID của phần tử đang được chọn hoạt động |
-| `onItemSelect` | `(id: string) => void` | Không | Callback khi nhấn chọn các item hoặc sub-item |
-| `user` | `{ name: string; role: string; avatar: string; }` | Không | Cấu hình khối thông tin người dùng ở đầu Sidebar |
-| `cta` | `{ title: string; description: string; buttonText: string; onButtonClick?: () => void; }` | Không | Cấu hình thẻ kêu gọi hành động (CTA Card) dưới cùng |
+| Prop           | Kiểu dữ liệu                                                                              | Bắt buộc? | Mô tả                                                     |
+| :------------- | :---------------------------------------------------------------------------------------- | :-------- | :-------------------------------------------------------- |
+| `sections`     | `SidebarSectionProps[]`                                                                   | Có        | Danh sách cấu hình các phần và các liên kết điều hướng    |
+| `activeId`     | `string`                                                                                  | Không     | ID của phần tử đang được chọn hoạt động                   |
+| `onItemSelect` | `(id: string) => void`                                                                    | Không     | Callback khi nhấn chọn các item hoặc sub-item             |
+| `user`         | `{ name: string; role: string; avatar: string; }`                                         | Không     | Cấu hình khối thông tin người dùng ở đầu Sidebar          |
+| `cta`          | `{ title: string; description: string; buttonText: string; onButtonClick?: () => void; }` | Không     | Cấu hình thẻ kêu gọi hành động (CTA Card) dưới cùng       |
+| `variant`      | `'light' \| 'dark'`                                                                       | Không     | Giao diện màu sáng/tối cho Sidebar (Mặc định: `'light'`)  |
+| `...props`     | `React.HTMLAttributes<HTMLDivElement>`                                                    | Không     | Kế thừa các thuộc tính và sự kiện HTML cơ bản của thẻ div |
