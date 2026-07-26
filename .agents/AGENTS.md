@@ -58,6 +58,7 @@
 - **Đề xuất Tối ưu & Refactoring:**
   - [MUST] Khi đọc code, nếu phát hiện ra phương pháp tối ưu hơn, ngắn gọn, dễ hiểu và nâng cao hiệu năng/bảo trì, bắt buộc phải hỏi lại để chủ động đề xuất giải pháp tốt hơn cho người dùng.
   - [IMPORTANT] Nếu codebase hiện tại quá bẩn (messy/dirty), tuyệt đối không cố gắng sửa thêm code mới theo yêu cầu một cách mù quáng để tránh làm code tệ hơn. Bắt buộc phải đề xuất refactor/clean code trước khi thực hiện tiếp.
+- **Quy trình thay đổi code (MUST):** Yêu cầu thảo luận và trao đổi trước khi thực hiện bất kỳ thay đổi nào. Sau khi thảo luận và nhận được lệnh triển khai rõ ràng từ người dùng mới được phép sửa code.
 
 ---
 
