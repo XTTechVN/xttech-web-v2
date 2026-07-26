@@ -9,6 +9,8 @@ import { InteractiveTabsBadges } from './_components/interactive-tabs-badges';
 import { InteractiveLoadersAccs } from './_components/interactive-loaders-accs';
 import { InteractiveAlerts } from './_components/interactive-alerts';
 import { InteractiveSidebars } from './_components/interactive-sidebars';
+import { InteractiveHeaders } from './_components/interactive-headers';
+import { InteractiveTables } from './_components/interactive-tables';
 import { Heading, Breadcrumb, Avatar } from '@/components';
 import { Home, Folder, FileText, Slash } from 'lucide-react';
 
@@ -369,6 +371,34 @@ export default function ComponentsPage() {
           </div>
 
           <InteractiveSidebars />
+        </section>
+
+        <hr className="border-gray-200" />
+
+        {/* Header Section */}
+        <section className="space-y-6">
+          <div>
+            <Heading size="h2">Header Component</Heading>
+            <p className="text-sm text-gray-500">
+              Thanh tiêu đề trên của hệ thống hỗ trợ hiển thị tiêu đề động, tìm kiếm nhanh và cụm thông báo, thư mục cá nhân.
+            </p>
+          </div>
+
+          <InteractiveHeaders />
+        </section>
+
+        <hr className="border-gray-200" />
+
+        {/* Table Section */}
+        <section className="space-y-6">
+          <div>
+            <Heading size="h2">Table Component (TableData)</Heading>
+            <p className="text-sm text-gray-500">
+              Bảng dữ liệu thông minh hỗ trợ phân trang chuẩn hệ thống, responsive sang card trên thiết bị di động.
+            </p>
+          </div>
+
+          <InteractiveTables />
         </section>
       </div>
     </div>

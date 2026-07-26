@@ -51,18 +51,18 @@ export function TableView({ views, visibleKeys, onToggle }: TableViewProps) {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-text-secondary bg-white border border-border-secondary hover:border-border-hover hover:bg-bg-hover rounded-lg transition shadow-xs cursor-pointer select-none h-9',
-          isOpen && 'border-solid border-border-focus bg-bg-hover',
+          'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-lg transition shadow-xs cursor-pointer select-none h-9',
+          isOpen && 'border-solid border-slate-300 bg-slate-50',
         )}
       >
-        <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500 shrink-0" />
-        <span className="text-gray-700">Cài đặt</span>
+        <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+        <span className="text-slate-700">Cài đặt</span>
       </button>
 
       {/* Menu dropdown hiển thị danh sách các cột cần ẩn/hiện */}
       {isOpen && (
-        <div className="absolute right-0 mt-1.5 z-50 w-44 bg-white rounded-lg shadow-lg border border-border-primary overflow-hidden animate-in fade-in-0 zoom-in-95 duration-100">
-          <div className="px-3 py-2 text-xs font-semibold text-text-primary border-b border-border-primary">
+        <div className="absolute right-0 mt-1.5 z-50 w-44 bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-100">
+          <div className="px-3 py-2 text-xs font-semibold text-slate-800 border-b border-slate-100 bg-slate-50/50">
             Cài đặt hiển thị
           </div>
 
@@ -74,11 +74,11 @@ export function TableView({ views, visibleKeys, onToggle }: TableViewProps) {
                   key={view.key}
                   type="button"
                   onClick={() => onToggle(view.key)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-medium text-text-secondary hover:bg-bg-hover transition cursor-pointer"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 transition cursor-pointer"
                 >
                   {/* Hiển thị checkmark nếu cột đang được bật */}
                   {isVisible ? (
-                    <Check className="w-3.5 h-3.5 text-text-primary shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-primary shrink-0" strokeWidth={3} />
                   ) : (
                     <div className="w-3.5 h-3.5 shrink-0" />
                   )}
