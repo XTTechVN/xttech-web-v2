@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Lexend } from 'next/font/google';
+import { Toaster } from 'react-hot-toast';
 
 import './globals.css';
 
@@ -31,7 +32,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="">{children}</body>
+      <body className="">
+        {children}
+        <Toaster position="top-right" />
+      </body>
     </html>
   );
 }

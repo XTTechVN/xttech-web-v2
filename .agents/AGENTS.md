@@ -4,7 +4,8 @@
 > Tài liệu AI AGENTS này dành cho tech stack **FE: Next.js**, **BE: FastAPI**, **DB: PostgreSQL**.
 
 > [!IMPORTANT]
-> Đây là tài liệu quy chuẩn duy nhất và bắt buộc đối với cả Lập trình viên (Humans) và AI Agents khi tham gia phát triển, bảo trì dự án này. Hãy tuân thủ nghiêm ngặt mọi quy tắc bên dưới.
+> - **RULE 0 (TỐI THƯỢNG): Nghiêm cấm tự ý sửa đổi các file quy tắc (rule files, cấu hình trong thư mục `.agents`) của hệ thống đối với cả Lập trình viên (Humans) và AI Agents, trừ khi có yêu cầu rõ ràng từ Leader hoặc Mentor.**
+> - Đây là tài liệu quy chuẩn duy nhất và bắt buộc đối với cả Lập trình viên (Humans) và AI Agents khi tham gia phát triển, bảo trì dự án này. Hãy tuân thủ nghiêm ngặt mọi quy tắc bên dưới.
 
 ---
 
@@ -33,6 +34,7 @@
 - **Terminal & Logs:** Khi chạy terminal gặp lỗi (ví dụ: `pytest` hoặc `npm run build`), CHỈ đọc và phân tích tối đa 10-15 dòng log lỗi cuối cùng.
 - **File Exclusions:** Bỏ qua hoàn toàn các folder build, cache (`node_modules`, `.next`, `__pycache__`, `.venv`, `dist`, `.git`).
 - **File Limits:** Không tự động chạy lệnh liệt kê tất cả các file (`ls -R` hoặc quét toàn bộ folder) trừ khi được yêu cầu đích danh.
+- **No Absolute Paths in Codebase:** Nghiêm cấm sử dụng đường dẫn tuyệt đối (như `/home/trvv/...` hoặc `file:///home/trvv/...`) trong mã nguồn hoặc tài liệu (.md, .txt) của dự án. Chỉ sử dụng đường dẫn tương đối hoặc bắt đầu từ project root.
 
 ### 1.3. Phong cách phản hồi (Response Style & Tone)
 
@@ -164,7 +166,7 @@ Bản tổng hợp ngắn gọn, dễ nhớ các quy tắc cốt lõi khi phát 
     ```
 - **Cấu hình UI & Màu sắc tập trung:**
   - [MUST] Mọi giá trị cấu hình giao diện mang tính chất hệ thống (Header height, Sidebar width, default backgrounds, section offsets) phải được khai báo tập trung tại `src/config/ui.ts`.
-  - [MUST] Khi code giao diện, bắt buộc phải tuân thủ các màu chủ đạo được định nghĩa trong file [color.css](file:///home/trvv/workspace/xttech2/xttech-web-v2/src/styles/color.css).
+  - [MUST] Khi code giao diện, bắt buộc phải tuân thủ các màu chủ đạo được định nghĩa trong file [src/styles/color.css](src/styles/color.css).
   - [IMPORTANT] Khi thấy một màu sắc được lặp lại nhiều lần, phải hỏi lại người dùng để thêm vào hệ thống màu chung. Tuyệt đối không tự ý tạo mới, không tự đoán mò hay tự ý chế cháo mã màu.
   - [NEVER] Không hardcode các hằng số kích thước/màu sắc rải rác trong component.
 - **Cấu hình Ứng dụng tập trung:**
@@ -200,8 +202,14 @@ Bản tổng hợp ngắn gọn, dễ nhớ các quy tắc cốt lõi khi phát 
     "printWidth": 100
   }
   ```
+- **3.6. Quy chuẩn Thiết kế Component (Design Patterns):**
+  - [MUST] **Cấu trúc File & Export:** Mỗi component phải được đặt trong thư mục riêng kèm file `index.ts` để barrel export và `docs.md` để hướng dẫn sử dụng.
+  - [MUST] **Interface Pattern:** Bắt buộc kế thừa từ các thuộc tính HTML gốc (ví dụ: `React.ButtonHTMLAttributes`) và phân tách rõ ràng các custom props.
+  - [MUST] **Forward Ref Pattern:** Sử dụng `React.forwardRef` cho toàn bộ các interactive components (như Button, Input, Select, Dropdown...) để hỗ trợ truy cập DOM node trực tiếp.
+  - [MUST] **Style Composition:** Sử dụng helper `cn` để gộp class CSS. Quản lý trạng thái (`hover`, `active`, `focus-visible`, `disabled`) và các biến thể giao diện (`variant`, `size`) thông qua cấu hình object/dictionary rõ ràng.
 
 ---
+
 
 ## 4. QUY ĐỊNH PHÁT TRIỂN BACKEND CHI TIẾT
 

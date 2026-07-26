@@ -1,2 +1,20 @@
-@theme inline {
+:root {
+  --color-primary-raw: 8 145 178; /* #0891b2 - Cyan tối hơn giúp nổi bật chữ trắng */
+  --color-secondary-raw: 231 249 252; /* #E7F9FC */
+  
+  --color-success-raw: 16 185 129; /* #10B981 */
+  --color-danger-raw: 239 68 68; /* #EF4444 */
+  --color-warning-raw: 245 158 11; /* #F59E0B */
+  --color-info-raw: 59 130 246; /* #3B82F6 */
 }
+
+@theme inline {
+  --color-primary: rgb(var(--color-primary-raw));
+  --color-secondary: rgb(var(--color-secondary-raw));
+  
+  --color-success: rgb(var(--color-success-raw));
+  --color-danger: rgb(var(--color-danger-raw));
+  --color-warning: rgb(var(--color-warning-raw));
+  --color-info: rgb(var(--color-info-raw));
+}
+
