@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { cn } from '@/utils/cn';
 import { ChevronDown, ChevronRight, Plus, ChevronLeft } from 'lucide-react';
 import { Avatar } from '@/components';
+import { HEADER_HEIGHT } from '@/config';
 
 export interface SidebarSubItem {
   id: string;
@@ -90,8 +91,9 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         {/* Khối thông tin người dùng */}
         {user && (
           <div
+            style={{ height: HEADER_HEIGHT }}
             className={cn(
-              'px-6 py-4 flex items-center border-b shrink-0 gap-3',
+              'px-6 flex items-center border-b shrink-0 gap-3',
               isLight ? 'border-slate-100' : 'border-slate-800/60',
               isCollapsed && 'justify-center',
             )}
@@ -118,9 +120,10 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                     </span>
                   </div>
 
+                  {/* Nút thu nhỏ (ẩn trên mobile) */}
                   <div
                     className={cn(
-                      'shrink-0 flex justify-center border-t',
+                      'hidden md:flex shrink-0   justify-center border-t',
                       isLight ? 'border-slate-100' : 'border-slate-800/50',
                     )}
                   >

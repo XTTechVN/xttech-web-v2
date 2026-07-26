@@ -17,3 +17,5 @@ export * from './skeleton';
 export * from './accordion';
 export * from './alert';
 export * from './sidebar';
+export * from './header';
+export * from './table';

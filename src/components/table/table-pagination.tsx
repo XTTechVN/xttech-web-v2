@@ -36,7 +36,7 @@ export function TablePagination({
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              className="appearance-none border border-gray-300 rounded-lg px-4 h-[36px] pr-8 bg-white text-gray-500 font-medium hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 cursor-pointer text-sm"
+              className="appearance-none border border-slate-200 rounded-lg px-4 h-[36px] pr-8 bg-white text-slate-500 font-medium hover:border-slate-350 focus:outline-none focus:ring-1 focus:ring-slate-300 cursor-pointer text-sm"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -59,7 +59,7 @@ export function TablePagination({
           <button
             onClick={() => onPageChange(1)}
             disabled={currentPage === 1}
-            className={`hidden md:flex w-9 h-9 items-center justify-center rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50 transition ${
+            className={`hidden md:flex w-9 h-9 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 transition ${
               currentPage === 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
             }`}
           >
@@ -70,7 +70,7 @@ export function TablePagination({
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className={`w-9 h-9 flex items-center justify-center rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50 transition ${
+            className={`w-9 h-9 flex items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 transition ${
               currentPage === 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
             }`}
           >
@@ -89,10 +89,10 @@ export function TablePagination({
                 onClick={() => onPageChange(Number(button))}
                 className={`w-9 h-9 flex items-center justify-center rounded-md text-sm font-semibold transition ${
                   isCurrent
-                    ? 'bg-bk-primary text-white border border-bk-primary'
+                    ? 'bg-primary text-white border border-primary'
                     : isEllipsis
-                      ? 'text-bk-primary/40 cursor-default'
-                      : 'bg-white border border-gray-300 text-gray-500 hover:bg-gray-50 cursor-pointer'
+                      ? 'text-primary/40 cursor-default'
+                      : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 cursor-pointer'
                 }`}
               >
                 {button}
@@ -104,7 +104,7 @@ export function TablePagination({
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className={`w-9 h-9 flex items-center justify-center rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50 transition ${
+            className={`w-9 h-9 flex items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 transition ${
               currentPage === totalPages ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
             }`}
           >
@@ -115,7 +115,7 @@ export function TablePagination({
           <button
             onClick={() => onPageChange(totalPages)}
             disabled={currentPage === totalPages}
-            className={`hidden md:flex w-9 h-9 items-center justify-center rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50 transition ${
+            className={`hidden md:flex w-9 h-9 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 transition ${
               currentPage === totalPages ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
             }`}
           >

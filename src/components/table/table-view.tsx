@@ -55,7 +55,7 @@ export function TableView({ views, visibleKeys, onToggle }: TableViewProps) {
           isOpen && 'border-solid border-border-focus bg-bg-hover',
         )}
       >
-        <SlidersHorizontal className="w-3.5 h-3.5 text-icon-secondary shrink-0" />
+        <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500 shrink-0" />
         <span className="text-gray-700">Cài đặt</span>
       </button>
 

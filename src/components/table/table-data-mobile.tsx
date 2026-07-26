@@ -60,7 +60,7 @@ export function TableDataMobile<T>({
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-8 text-bk-primary/60 text-sm">
+      <div className="flex justify-center items-center py-8 text-primary/60 text-sm">
         Đang tải dữ liệu...
       </div>
     );
@@ -77,7 +77,7 @@ export function TableDataMobile<T>({
   return (
     <div className="flex flex-col gap-3 w-full">
       {items.length === 0 ? (
-        <div className="flex justify-center items-center py-12 bg-white border border-bk-secondary/20 rounded-lg text-bk-primary/50 text-sm">
+        <div className="flex justify-center items-center py-12 bg-white border border-secondary/20 rounded-lg text-primary/50 text-sm">
           Không tìm thấy dữ liệu.
         </div>
       ) : (
@@ -89,7 +89,7 @@ export function TableDataMobile<T>({
 
           {/* Indicator khi đang tải thêm trang tiếp theo */}
           {isFetchingNextPage && (
-            <div className="flex justify-center items-center py-4 text-bk-primary/60 text-sm">
+            <div className="flex justify-center items-center py-4 text-primary/60 text-sm">
               Đang tải thêm...
             </div>
           )}

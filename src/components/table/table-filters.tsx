@@ -154,7 +154,7 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
                       className={cn(
                         'w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all',
                         isSelected
-                          ? 'border-bk-primary bg-bk-primary text-white'
+                          ? 'border-primary bg-primary text-white'
                           : 'border-border-secondary bg-white',
                       )}
                     >

@@ -1,13 +1,19 @@
 import { ITableColumn } from './types';
 
-export function TableHeader<T>({ columns, select }: { columns: ITableColumn<T>[]; select: boolean }) {
+export function TableHeader<T>({
+  columns,
+  select,
+}: {
+  columns: ITableColumn<T>[];
+  select: boolean;
+}) {
   return (
-    <thead className="bg-gray-100">
-      <tr className="border-b border-gray-300">
+    <thead className="bg-primary text-white">
+      <tr className="border-b border-cyan-600/40">
         {/* Render checkbox */}
         {select && (
-          <th className="border-b border-gray-300 px-4 py-2 text-left text-sm h-12 text-gray-700 w-12 min-w-[48px] text-center">
-            <input type="checkbox" />
+          <th className="border-b border-cyan-600/40 px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider h-11 text-white/90 w-12 min-w-[48px] text-center">
+            <input type="checkbox" className="accent-primary" />
           </th>
         )}
 
@@ -18,12 +24,10 @@ export function TableHeader<T>({ columns, select }: { columns: ITableColumn<T>[]
 
           return (
             <th
-              className={`border-b border-gray-300 px-4 py-2 text-left text-sm h-12 text-gray-700 whitespace-normal wrap-break-word hover:text-bk-black ${
+              className={`border-b border-cyan-600/40 px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider h-11 text-white/90 whitespace-normal wrap-break-word hover:text-white transition-colors ${
                 column.maxWidth ? 'truncate' : ''
               } ${
-                isSticky
-                  ? 'sticky z-20 bg-gray-100 border-r md:border-r-0 border-gray-300'
-                  : ''
+                isSticky ? 'sticky z-20 bg-primary border-r md:border-r-0 border-cyan-600/40' : ''
               }`}
               style={{
                 minWidth: column.minWidth,
