@@ -33,7 +33,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       secondary: 'bg-secondary text-primary hover:bg-secondary/80 focus-visible:ring-secondary active:bg-secondary/70',
       outline: 'border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 focus-visible:ring-primary active:bg-gray-100',
       ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-400 active:bg-gray-200',
-      danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 active:bg-red-800',
+      danger: 'bg-danger text-white hover:bg-danger/90 focus-visible:ring-danger active:bg-danger/80',
     };
 
     // Định nghĩa các class CSS cho kích thước (size)
