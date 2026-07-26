@@ -8,6 +8,7 @@ import { InteractiveForms } from './_components/interactive-forms';
 import { InteractiveTabsBadges } from './_components/interactive-tabs-badges';
 import { InteractiveLoadersAccs } from './_components/interactive-loaders-accs';
 import { InteractiveAlerts } from './_components/interactive-alerts';
+import { InteractiveSidebars } from './_components/interactive-sidebars';
 import { Heading, Breadcrumb, Avatar } from '@/components';
 import { Home, Folder, FileText, Slash } from 'lucide-react';
 
@@ -355,6 +356,20 @@ export default function ComponentsPage() {
             </section>
           </div>
         </div>
+
+        <hr className="border-gray-200" />
+
+        {/* Sidebar Section */}
+        <section className="space-y-6">
+          <div>
+            <Heading size="h2">Sidebar Component</Heading>
+            <p className="text-sm text-gray-500">
+              Thanh điều hướng bên chuyên nghiệp cho Dashboard với cấu hình động, hỗ trợ đóng/mở và menu con.
+            </p>
+          </div>
+
+          <InteractiveSidebars />
+        </section>
       </div>
     </div>
   );
