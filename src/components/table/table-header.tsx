@@ -24,7 +24,7 @@ export function TableHeader<T>({
 
           return (
             <th
-              className={`border-b border-cyan-600/40 px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider h-11 text-white/90 whitespace-normal wrap-break-word hover:text-white transition-colors ${
+              className={`border-b border-cyan-600/40 px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider h-11 text-white whitespace-normal wrap-break-word hover:text-white transition-colors ${
                 column.maxWidth ? 'truncate' : ''
               } ${
                 isSticky ? 'sticky z-20 bg-primary border-r md:border-r-0 border-cyan-600/40' : ''

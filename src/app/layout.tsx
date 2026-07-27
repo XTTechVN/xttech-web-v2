@@ -34,7 +34,7 @@ export default function RootLayout({
     <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="">
         {children}
-        <Toaster position="top-right" />
+        <Toaster position="top-center" />
       </body>
     </html>
   );

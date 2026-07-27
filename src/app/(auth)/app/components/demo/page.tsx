@@ -187,7 +187,7 @@ export default function DemoDashboardPage() {
       key: 'details',
       label: 'Chi tiết',
       minWidth: '260px',
-      cell: (row) => <span className="text-xs text-slate-500 font-mono">{row.details}</span>,
+      cell: (row) => <span className="text-xs">{row.details}</span>,
     },
     {
       key: 'status',
@@ -251,7 +251,7 @@ export default function DemoDashboardPage() {
         activeId={activeMenu}
         variant="light"
         className="hidden md:flex h-full rounded-none border-y-0 border-l-0 border-r border-slate-200 shadow-none bg-white shrink-0"
-        onItemSelect={setActiveMenu}
+        onItemSelect={(item) => setActiveMenu(item.id)}
         user={user}
       />
 
@@ -267,8 +267,8 @@ export default function DemoDashboardPage() {
             activeId={activeMenu}
             variant="light"
             className="relative h-full w-72 rounded-none border-y-0 border-l-0 border-r border-slate-200 shadow-2xl bg-white z-10 animate-in slide-in-from-left duration-300"
-            onItemSelect={(id) => {
-              setActiveMenu(id);
+            onItemSelect={(item) => {
+              setActiveMenu(item.id);
               setIsMobileOpen(false);
             }}
             user={user}
@@ -308,6 +308,13 @@ export default function DemoDashboardPage() {
                   queryKey={['today-activities', searchQuery]}
                   fetcher={fetcher}
                   columns={columns}
+                  search={{
+                    placeholder: 'Tìm kiếm hoạt động',
+                    value: searchQuery,
+                    onChange: (value) => {
+                      setSearchQuery(value);
+                    },
+                  }}
                   renderCard={renderCard}
                   select={false}
                   syncToUrl={false}

@@ -31,7 +31,7 @@ export interface SidebarSectionProps {
 export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   sections: SidebarSectionProps[];
   activeId?: string;
-  onItemSelect?: (id: string) => void;
+  onItemSelect?: (item: SidebarItemProps) => void;
   user?: {
     name: string;
     role: string;
@@ -47,10 +47,7 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
-  (
-    { sections = [], activeId, onItemSelect, user, cta, className, variant = 'light', ...props },
-    ref,
-  ) => {
+  ({ sections = [], activeId, onItemSelect, user, cta, className, variant = 'light', ...props }, ref) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>({});
 
@@ -69,7 +66,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
       if (item.subItems && item.subItems.length > 0) {
         toggleSubMenu(item.id);
       } else if (onItemSelect) {
-        onItemSelect(item.id);
+        onItemSelect(item);
       }
     };
 
@@ -77,13 +74,9 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
       <div
         ref={ref}
         className={cn(
-          'h-[800px] flex flex-col transition-all duration-300 border rounded-2xl relative select-none overflow-hidden',
-          isLight
-            ? 'bg-white text-slate-700 border-slate-200 shadow-lg'
-            : 'bg-slate-900 text-slate-300 border-slate-800 shadow-2xl',
-          isCollapsed
-            ? 'w-0 md:w-20 border-r-0 md:border-r opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto'
-            : 'w-72',
+          'h-[800px] flex flex-col transition-all duration-300 border rounded-2xl relative select-none overflow-hidden ',
+          isLight ? 'bg-white text-slate-700 border-slate-200 shadow-lg' : 'bg-slate-900 text-slate-300 border-slate-800 shadow-2xl',
+          isCollapsed ? 'w-0 md:w-20 border-r-0 md:border-r opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto' : 'w-72',
           className,
         )}
         {...props}
@@ -94,7 +87,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
             style={{ height: HEADER_HEIGHT }}
             className={cn(
               'px-6 flex items-center border-b shrink-0 gap-3',
-              isLight ? 'border-slate-100' : 'border-slate-800/60',
+              isLight ? 'border-slate-200' : 'border-slate-800/60',
               isCollapsed && 'justify-center',
             )}
           >
@@ -107,26 +100,12 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                 <Avatar src={user.avatar} name={user.name} size="md" />
                 <div className="flex-1 min-w-0 flex justify-between">
                   <div className="flex flex-col">
-                    <span
-                      className={cn(
-                        'text-sm font-semibold truncate block',
-                        isLight ? 'text-slate-900' : 'text-slate-100',
-                      )}
-                    >
-                      {user.name}
-                    </span>
-                    <span className="text-[9px] font-bold tracking-wider text-slate-500 uppercase block">
-                      {user.role}
-                    </span>
+                    <span className={cn('text-sm font-semibold truncate block', isLight ? 'text-slate-900' : 'text-slate-100')}>{user.name}</span>
+                    <span className="text-[9px] font-bold tracking-wider text-slate-500 uppercase block">{user.role}</span>
                   </div>
 
                   {/* Nút thu nhỏ (ẩn trên mobile) */}
-                  <div
-                    className={cn(
-                      'hidden md:flex shrink-0   justify-center border-t',
-                      isLight ? 'border-slate-100' : 'border-slate-800/50',
-                    )}
-                  >
+                  <div className={cn('hidden md:flex shrink-0   justify-center border-t', isLight ? 'border-slate-100' : 'border-slate-800/50')}>
                     <button
                       onClick={() => setIsCollapsed(true)}
                       className={cn(
@@ -148,7 +127,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         {/* Danh sách mục điều hướng */}
         <div
           className={cn(
-            'flex-1 overflow-y-auto px-4 py-4 space-y-6 scrollbar-thin scrollbar-track-transparent',
+            'flex-1 overflow-y-auto px-4 py-4 space-y-6 scrollbar-thin scrollbar-track-transparent scrollbar-hide',
             isLight ? 'scrollbar-thumb-slate-200' : 'scrollbar-thumb-slate-800',
           )}
         >
@@ -163,9 +142,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                   )}
                 >
                   {isCollapsed ? (
-                    <span
-                      className={cn('w-4 h-[1px] block', isLight ? 'bg-slate-200' : 'bg-slate-800')}
-                    />
+                    <span className={cn('w-4 h-[1px] block', isLight ? 'bg-slate-200' : 'bg-slate-800')} />
                   ) : (
                     <>
                       <span>{section.title}</span>
@@ -174,9 +151,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                           onClick={section.onAddClick}
                           className={cn(
                             'p-0.5 rounded transition-colors cursor-pointer',
-                            isLight
-                              ? 'hover:bg-slate-100 hover:text-slate-950'
-                              : 'hover:bg-slate-800 hover:text-white',
+                            isLight ? 'hover:bg-slate-100 hover:text-slate-950' : 'hover:bg-slate-800 hover:text-white',
                           )}
                         >
                           <Plus size={12} />
@@ -192,9 +167,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                 {section.items.map((item) => {
                   const hasSubItems = item.subItems && item.subItems.length > 0;
                   const isSubMenuOpen = openSubMenus[item.id];
-                  const isItemActive =
-                    activeId === item.id ||
-                    (hasSubItems && item.subItems?.some((sub) => sub.id === activeId));
+                  const isItemActive = activeId === item.id || (hasSubItems && item.subItems?.some((sub) => sub.id === activeId));
 
                   return (
                     <div key={item.id} className="space-y-1">
@@ -215,19 +188,12 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                         )}
                       >
                         {/* Dải chỉ báo khi ở trạng thái thu gọn */}
-                        {isCollapsed && isItemActive && (
-                          <span className="absolute right-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-l-md" />
-                        )}
+                        {isCollapsed && isItemActive && <span className="absolute right-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-l-md" />}
 
                         {/* Icon hiển thị */}
                         {item.icon && (
                           <span
-                            className={cn(
-                              'shrink-0 transition-colors',
-                              isItemActive
-                                ? 'text-primary'
-                                : 'text-slate-500 group-hover:text-slate-400',
-                            )}
+                            className={cn('shrink-0 transition-colors', isItemActive ? 'text-primary' : 'text-slate-500 group-hover:text-slate-400')}
                           >
                             {item.icon}
                           </span>
@@ -238,13 +204,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                           <>
                             <span className="flex-1 truncate">{item.label}</span>
                             {hasSubItems && (
-                              <span className="text-slate-500">
-                                {isSubMenuOpen ? (
-                                  <ChevronDown size={14} />
-                                ) : (
-                                  <ChevronRight size={14} />
-                                )}
-                              </span>
+                              <span className="text-slate-500">{isSubMenuOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</span>
                             )}
                           </>
                         )}
@@ -252,12 +212,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
 
                       {/* Danh sách menu con */}
                       {!isCollapsed && hasSubItems && isSubMenuOpen && (
-                        <div
-                          className={cn(
-                            'relative pl-6 space-y-1 ml-4 border-l',
-                            isLight ? 'border-slate-200' : 'border-slate-800',
-                          )}
-                        >
+                        <div className={cn('relative pl-6 space-y-1 ml-4 border-l', isLight ? 'border-slate-200' : 'border-slate-800')}>
                           {item.subItems?.map((sub) => {
                             const isSubActive = activeId === sub.id;
 
@@ -265,7 +220,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                               <button
                                 key={sub.id}
                                 type="button"
-                                onClick={() => onItemSelect?.(sub.id)}
+                                onClick={() => onItemSelect?.(sub)}
                                 className={cn(
                                   'w-full text-left py-2 px-3 text-xs rounded-md transition-colors relative cursor-pointer block',
                                   isSubActive
@@ -282,11 +237,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                                   className={cn(
                                     'absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full border',
                                     isLight ? 'border-white' : 'border-slate-900',
-                                    isSubActive
-                                      ? 'bg-primary'
-                                      : isLight
-                                        ? 'bg-slate-200'
-                                        : 'bg-slate-800',
+                                    isSubActive ? 'bg-primary' : isLight ? 'bg-slate-200' : 'bg-slate-800',
                                   )}
                                 />
                                 {sub.label}
@@ -305,27 +256,12 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
 
         {/* Khung quảng bá hành động ở chân trang */}
         {cta && !isCollapsed && (
-          <div
-            className={cn(
-              'p-4 shrink-0 border-t',
-              isLight ? 'border-slate-100 bg-slate-50/50' : 'border-slate-800/50 bg-slate-950/20',
-            )}
-          >
+          <div className={cn('p-4 shrink-0 border-t', isLight ? 'border-slate-100 bg-slate-50/50' : 'border-slate-800/50 bg-slate-950/20')}>
             <div
-              className={cn(
-                'p-4 rounded-xl border flex flex-col gap-3',
-                isLight ? 'bg-white border-slate-200' : 'bg-slate-800/40 border-slate-800',
-              )}
+              className={cn('p-4 rounded-xl border flex flex-col gap-3', isLight ? 'bg-white border-slate-200' : 'bg-slate-800/40 border-slate-800')}
             >
               <div className="space-y-1">
-                <h5
-                  className={cn(
-                    'text-xs font-semibold',
-                    isLight ? 'text-slate-800' : 'text-slate-100',
-                  )}
-                >
-                  {cta.title}
-                </h5>
+                <h5 className={cn('text-xs font-semibold', isLight ? 'text-slate-800' : 'text-slate-100')}>{cta.title}</h5>
                 <p className="text-[10px] text-slate-500 leading-relaxed">{cta.description}</p>
               </div>
               <button
@@ -341,12 +277,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
 
         {/* Nút mở rộng ở cuối cùng khi thu gọn */}
         {isCollapsed && (
-          <div
-            className={cn(
-              'p-4 shrink-0 flex justify-center border-t',
-              isLight ? 'border-slate-100' : 'border-slate-800/50',
-            )}
-          >
+          <div className={cn('p-4 shrink-0 flex justify-center border-t', isLight ? 'border-slate-100' : 'border-slate-800/50')}>
             <button
               onClick={() => setIsCollapsed(false)}
               className={cn(
