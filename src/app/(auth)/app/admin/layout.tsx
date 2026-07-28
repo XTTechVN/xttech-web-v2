@@ -232,7 +232,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           messageBadge={null}
         /> */}
 
-        {/* Nội dung trang con */}
+        {/* Nội dung trang con 1*/}
         <div className="flex-1 p-4 overflow-y-auto">{children}</div>
       </div>
     </div>
