@@ -47,10 +47,14 @@
     "typescript": "^5"
   },
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0ef9cf8 (fix: move onlyBuiltDependencies to top-level in package.json to correctly register dependencies for pnpm)
   "onlyBuiltDependencies": [
     "sharp",
     "unrs-resolver"
   ]
+<<<<<<< HEAD
 =======
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -59,4 +63,6 @@
     ]
   }
 >>>>>>> adaaf15 (refactor: remove global .npmrc config and explicitly define onlyBuiltDependencies in package.json for pnpm compatibility)
+=======
+>>>>>>> 0ef9cf8 (fix: move onlyBuiltDependencies to top-level in package.json to correctly register dependencies for pnpm)
 }
