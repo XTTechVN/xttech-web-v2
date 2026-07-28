@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="">
+      <body className="" suppressHydrationWarning>
         {children}
         <Toaster position="top-center" />
       </body>

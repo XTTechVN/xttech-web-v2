@@ -75,7 +75,7 @@ const page = () => {
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-12 gap-2">
+        <div className="md:grid md:grid-cols-12 md:gap-2 flex flex-col gap-2">
           <div className="col-span-7">
             <AnalyticsChart />
           </div>
