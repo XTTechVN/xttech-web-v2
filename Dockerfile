@@ -5,7 +5,7 @@ WORKDIR /app
 # Cài đặt dependencies dựa trên lockfile có sẵn
 COPY package.json package-lock.json* pnpm-lock.yaml* .npmrc* ./
 RUN \
-  if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+  if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && PNPM_CONFIG_ONLY_BUILT_DEPENDENCIES_FILE=false PNPM_CONFIG_ONLY_BUILT_DEPENDENCIES="*" pnpm i --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
   else npm install; \
   fi
