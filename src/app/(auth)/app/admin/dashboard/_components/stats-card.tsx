@@ -25,7 +25,7 @@ const StatCart = ({
       <div className="flex items-center relative">
         <div className={`p-3 rounded-xl ${bgIcon}`}>{icon}</div>
         {trend !== undefined && (
-          <div
+          <div 
             className={`px-3 py-0.5 absolute right-0 top-0 rounded-full text-xs font-semibold flex items-center gap-1 ${isUp ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}
           >
             {isUp ? <TrendingUp size={16} /> : <TrendingDown size={16} />} {Math.abs(trend)}%
