@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-
 // Thành phần riêng cho trang Home
 import Banner from './_components/banner';
-import StatCard from './_components/stat-card';
+import StatCard from './_components/stats-card';
 import SystemHistory from './_components/system-history';
 import AnalyticsChart from './_components/analytics-chart';
+
 // Icon thư viện lucide-react
 import { Users, UserPlus, Building2, Briefcase, BarChart3, LayoutGrid } from 'lucide-react';
 
@@ -75,7 +74,7 @@ const page = () => {
             </div>
           ))}
         </div>
-        <div className="md:grid md:grid-cols-12 md:gap-2 flex flex-col gap-2">
+        <div className="md:grid md:grid-cols-12 md:gap-8 flex flex-col gap-2">
           <div className="col-span-7">
             <AnalyticsChart />
           </div>
