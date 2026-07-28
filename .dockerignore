@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+.git
+.gitignore
+.gitlab-ci.yml
+*.md
+Dockerfile
+docker-compose.yml
+.vscode
