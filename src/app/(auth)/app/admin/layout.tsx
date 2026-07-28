@@ -210,7 +210,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* 3. Vùng nội dung chính */}
       <div className="flex-1 h-full bg-slate-50 flex flex-col min-w-0">
-        <Header
+        {/* <Header
           className="border-x-0 border-t-0 bg-white"
           title={
             <div className="flex items-center gap-3">
@@ -230,7 +230,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           }
           notificationBadge={null}
           messageBadge={null}
-        />
+        /> */}
 
         {/* Nội dung trang con */}
         <div className="flex-1 p-4 overflow-y-auto">{children}</div>
