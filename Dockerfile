@@ -1,5 +1,5 @@
 # Giai đoạn 1: Build
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Cài đặt dependencies dựa trên lockfile có sẵn
@@ -15,7 +15,7 @@ ENV NODE_OPTIONS="--max-old-space-size=3000"
 RUN npm run build
 
 # Giai đoạn 2: Runner
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV production
 
