@@ -46,8 +46,17 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
+<<<<<<< HEAD
   "onlyBuiltDependencies": [
     "sharp",
     "unrs-resolver"
   ]
+=======
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+>>>>>>> adaaf15 (refactor: remove global .npmrc config and explicitly define onlyBuiltDependencies in package.json for pnpm compatibility)
 }
