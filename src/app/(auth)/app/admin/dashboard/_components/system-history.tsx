@@ -74,23 +74,24 @@ const SystemHistory = () => {
           const timeOnly = item.time.split(' ')[1] || item.time;
 
           return (
-            <div key={item.id} className="grid grid-cols-12 items-center py-3 border-b border-gray-100 last:border-b-0 text-sm gap-2">
-              {/* User Column */}
-              <div className="col-span-4 flex items-center gap-3">
-                <img src={item.avatar} alt={item.user} className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-200" />
-                <span className="font-semibold text-gray-800 truncate">{item.user}</span>
+            <div key={item.id} className="py-3 border-b border-gray-100 last:border-b-0 text-sm">
+              <div className="flex gap-3">
+                <img
+                  src={item.avatar}
+                  alt={item.user}
+                  className="w-9 h-9 rounded-full object-cover shrink-0 border border-gray-200"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="font-semibold text-gray-700 text-xs truncate">{item.user}</span>
+                    <span className="text-xs md:text-sm text-gray-500 font-medium">{timeOnly}</span>
+                  </div>
+                  <p className="font-semibold text-gray-700 text-sm mt-0.5">{item.action}</p>
+                  <p className={`text-[11px] font-light italic mt-0.5 ${item.status === 'success' ? 'text-success' : 'text-danger'}`}>
+                    IP: {item.ip} • Vai trò: {item.role}
+                  </p>
+                </div>
               </div>
-
-              {/* Action Column */}
-              <div className="col-span-6 flex flex-col min-w-0">
-                <span className="font-semibold text-gray-700">{item.action}</span>
-                <span className={`text-xs font-light italic ${item.status === 'success' ? 'text-success' : 'text-danger'}`}>
-                  IP: {item.ip} • Vai trò: {item.role}
-                </span>
-              </div>
-
-              {/* Time Column */}
-              <div className="col-span-2 text-right text-xs text-gray-500 font-medium">{timeOnly}</div>
             </div>
           );
         })}

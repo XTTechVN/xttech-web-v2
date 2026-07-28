@@ -29,28 +29,12 @@ const page = () => {
       bgIcon: 'bg-purple-50 text-purple-600',
     },
     {
-      title: 'Số người đã gửi báo cáo',
-      value: '12',
-      icon: <Building2 size={18} />,
-      trend: 0,
-      trendType: 'up',
-      bgIcon: 'bg-orange-50 text-orange-600',
-    },
-    {
       title: 'Số người đã chấm công',
       value: '8',
       icon: <Briefcase size={18} />,
       trend: 2,
       trendType: 'up',
       bgIcon: 'bg-red-50 text-red-600',
-    },
-    {
-      title: 'Số người đang đúng tiến độ học',
-      value: '8',
-      icon: <BarChart3 size={18} />,
-      trend: 2,
-      trendType: 'up',
-      bgIcon: 'bg-pink-50 text-pink-600',
     },
     {
       title: 'Số buổi đào tạo',
@@ -65,13 +49,11 @@ const page = () => {
   return (
     <div className="flex  relative">
       {/* Nội dung chínhg*/}
-      <div className="flex-1 min-w-0 flex flex-col p-4 gap-12">
+      <div className="flex-1 min-w-0 flex flex-col p-4 gap-6 md:gap-12">
         <Banner />
-        <div className="flex flex-row overflow-x-auto pb-2 md:grid md:grid-cols-3 lg:grid-cols-6 gap-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
           {statsMockupData.map((stat, index) => (
-            <div key={index} className="">
-              <StatCard title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendType={stat.trendType} bgIcon={stat.bgIcon} />
-            </div>
+            <StatCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendType={stat.trendType} bgIcon={stat.bgIcon} />
           ))}
         </div>
         <div className="md:grid md:grid-cols-12 md:gap-8 flex flex-col gap-2">
