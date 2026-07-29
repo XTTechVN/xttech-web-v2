@@ -28,6 +28,26 @@ const mockHistoryData: HistoryLog[] = [
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60',
   },
   {
+    id: '7',
+    time: '2026-07-28 09:30',
+    user: 'Nguyễn Văn C',
+    role: 'admin',
+    ip: '192.168.1.1',
+    action: 'Đăng nhập hệ thống',
+    status: 'success',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60',
+  },
+  {
+    id: '8',
+    time: '2026-07-28 09:30',
+    user: 'Nguyễn Văn C',
+    role: 'admin',
+    ip: '192.168.1.1',
+    action: 'Đăng nhập hệ thống',
+    status: 'success',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60',
+  },
+  {
     id: '2',
     time: '2026-07-28 09:15',
     user: 'Trần Thị B',
@@ -61,14 +81,13 @@ const mockHistoryData: HistoryLog[] = [
 
 const SystemHistory = () => {
   return (
-    <div className="flex flex-col gap-4 bg-white border border-gray-300 rounded-xl p-4 shadow-xs">
+    <div className="flex flex-col gap-4 bg-white border border-gray-100 rounded-xl p-4 shadow-xs">
       <div className="flex justify-between items-center gap-4">
         <h1 className="text-lg font-bold text-gray-800">
-          <span className="hidden md:inline text-primary">Hoạt động gần đây</span>
-          <span className="md:hidden text-primary">Hoạt động gần đây</span>
+          <span className="inline text-primary">Hoạt động gần đây</span>
         </h1>
       </div>
-      <div className="flex flex-col">
+      <div className="flex flex-col max-h-99 overflow-y-auto pr-1 scrollbar-hide">
         {mockHistoryData.map((item) => {
           // Lấy giờ (hh:mm) từ chuỗi thời gian YYYY-MM-DD hh:mm
           const timeOnly = item.time.split(' ')[1] || item.time;
