@@ -1,345 +1,236 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { Button, TableData, Badge, ITableColumn, Breadcrumb, Select } from '@/components';
-
+import { useState } from 'react';
+import { Tooltip, Button, TableData, Badge, Breadcrumb, ITableColumn } from '@/components';
 import { toast } from 'react-hot-toast';
-import { Filter, Plus, RefreshCw, Download, X } from 'lucide-react';
+import { Plus, RefreshCw, Pencil, Trash2, Eye } from 'lucide-react';
 import AddAttendanceModal from "./_components/AddAttendanceModal";
 import EditAttendanceModal from "./_components/EditAttendanceModal";
 import AttendanceDetailModal from "./_components/AttendanceDetailModal";
 import Loading from '../../loading';
 
-import { attendanceApi, Attendance } from './api';
-
-interface Activity {
-  id?: string;
-  time?: string;
-  avatar?: string;
-  user?: string;
-  checkinTime?: string;
-  checkoutTime?: string;
-  action?: string;
-  status?: 'success' | 'warning' | 'failed';
-  details?: string;
-
+export interface UserResponse {
+  id: string;
+  email: string;
+  username: string;
+  fullName: string;
+  phoneNumber: string | null;
+  avatar: string | null;
+  gender: 'male' | 'female' | 'other';
+  birthday: string | null;
+  address: string | null;
+  joinedAt: string | null;
+  identifyCode: string;
+  attendancePolicy: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-const lorem = `
-  Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, lorem
-  totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. 
-  Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. lorem
-  Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, 
-  sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, 
-  quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? 
-`
-const empty: Activity[] = [{}]
+export interface Attendance {
+  id: number;
+  userId: string;
+  workShiftId: number | null;
+  workDate: string;
+  checkIn: string | null;
+  checkInLatitude: number | null;
+  checkInLongitude: number | null;
+  isLate: boolean | null;
+  lateMinutes: number | null;
+  imgCheckinPath: string | null;
+  checkOut: string | null;
+  checkOutLatitude: number | null;
+  checkOutLongitude: number | null;
+  isEarlyLeave: boolean | null;
+  earlyLeaveMinutes: number | null;
+  imgCheckoutPath: string | null;
+  status: string | null;
+  note: string | null;
+  totalHours: number | null;
+  user: UserResponse | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
-const mockActivities: Activity[] = [
-  {
-    id: '1',
-    time: '18:45',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Nguyễn Văn Anh',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
+export interface AttendanceResponse {
+  items: Attendance[];
+  pagination: {
+    next: boolean;
+    total: number;
+    offset: number;
+    limit: number;
+  };
+}
+
+const mockAttendances: Attendance[] = Array.from({ length: 15 }, (_, index) => ({
+  id: index + 1,
+  userId: `${(index % 5) + 1}`,
+  workShiftId: (index % 3) + 1,
+
+  workDate: `2026-07-${String((index % 30) + 1).padStart(2, '0')}`,
+
+  checkIn: `08:${String(index % 60).padStart(2, '0')}`,
+  checkInLatitude: 20.8449 + index * 0.001,
+  checkInLongitude: 106.6881 + index * 0.001,
+
+  isLate: index % 4 === 0,
+  lateMinutes: index % 4 === 0 ? 15 : 0,
+
+  imgCheckinPath: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60`,
+
+  checkOut: `17:${String(index % 60).padStart(2, '0')}`,
+  checkOutLatitude: 20.8449 + index * 0.001,
+  checkOutLongitude: 106.6881 + index * 0.001,
+
+  isEarlyLeave: index % 6 === 0,
+  earlyLeaveMinutes: index % 6 === 0 ? 20 : 0,
+
+  imgCheckoutPath: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60`,
+
+  status:
+    index % 5 === 0
+      ? 'absent'
+      : index % 4 === 0
+        ? 'late'
+        : 'present',
+
+  note: `Attendance note ${index + 1}`,
+  totalHours: 8,
+
+  user: {
+    id: `${(index % 5) + 1}`,
+    email: `user${(index % 5) + 1}@example.com`,
+    username: `user${(index % 5) + 1}`,
+    fullName: `Employee ${(index % 5) + 1}`,
+    phoneNumber: `09000000${String(index + 1).padStart(2, '00')}`,
+    avatar: `/avatars/avatar-${(index % 5) + 1}.png`,
+    gender: index % 3 === 0 ? 'male' : index % 3 === 1 ? 'female' : 'other',
+    birthday: '1995-01-01',
+    address: `Address ${index + 1}`,
+    joinedAt: '2025-01-01',
+    identifyCode: `12345678${String(index + 1).padStart(2, '0')}`,
+    attendancePolicy: 'Standard',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
-  {
-    id: '2',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '3',
-    time: '16:15',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Lê Hoàng Long',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'warning',
-    details: lorem,
-  },
-  {
-    id: '4',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '5',
-    time: '14:20',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'failed',
-    details: lorem,
-  },
-  {
-    id: '6',
-    time: '11:10',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '7',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '8',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '9',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '10',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'failed',
-    details: lorem,
-  }, {
-    id: '11',
-    time: '18:45',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Nguyễn Văn Anh',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '12',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '13',
-    time: '16:15',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Lê Hoàng Long',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'warning',
-    details: lorem,
-  },
-  {
-    id: '14',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '15',
-    time: '14:20',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'failed',
-    details: lorem,
-  },
-  {
-    id: '16',
-    time: '11:10',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '17',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '18',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '19',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'success',
-    details: lorem,
-  },
-  {
-    id: '20',
-    time: '15:00',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    user: 'Le Manh Toan',
-    checkinTime: '08:00',
-    checkoutTime: '17:00',
-    action: lorem,
-    status: 'failed',
-    details: lorem,
-  },
-];
+
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+}));
 
 export default function AttendancesPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isLoading] = useState(false);
 
-  const [employeeId, setEmployeeId] = useState<string>();
-  const [departmentId, setDepartmentId] = useState<string>();
-  const [shiftId, setShiftId] = useState<string>();
-  const [status, setStatus] = useState<string>();
-  const [attendanceDate, setAttendanceDate] = useState<string>();
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [attendances, setAttendances] = useState<Attendance[]>([]);
-  const [offset, setOffset] = useState(0);
-  const [limit, setLimit] = useState(10);
+  // Filter states khớp với ITableFilterProps
+  const [filterEmployeeId, setFilterEmployeeId] = useState<string | undefined>();
+  const [filterStatus, setFilterStatus] = useState<string | undefined>();
+  const [filterWorkDate, setFilterWorkDate] = useState<string | undefined>();
+  const [filterDepartment, setFilterDepartment] = useState<string | undefined>();
+  const [filterShift, setFilterShift] = useState<string | undefined>();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<Attendance | null>(null);
 
-  const [selectedRow, setSelectedRow] = useState<Activity | null>(null);
+  const breadcrumbItems = [
+    { label: 'Trang chủ', href: '/app' },
+    { label: 'Quản lý', href: '/app/admin' },
+    { label: 'Chấm công', href: '/app/admin/attendances' },
+  ];
 
-  useEffect(() => {
+  // Tạo option list duy nhất từ mock data
+  const employeeOptions = [
+    ...new Map(
+      mockAttendances.map((item) => [
+        item.userId,
+        { label: item.user?.fullName ?? 'Không xác định', value: item.userId },
+      ])
+    ).values(),
+  ];
 
-    const fetchAttendances = async () => {
-      try {
-        setIsLoading(true);
-        const response = await attendanceApi.getAttendances({
-          offset,
-          limit,
-          userId: employeeId,
-          status,
-          workDate: attendanceDate,
-        });
-        console.log('reponse', response);
-        setAttendances(response.items);
-      } catch (error) {
-        console.error(error);
-        toast.error("Không thể tải dữ liệu chấm công");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchAttendances();
-  }, [
-    offset,
-    limit,
-    employeeId,
-    status,
-    attendanceDate
-  ]);
+  const workDateOptions = [
+    ...new Map(
+      mockAttendances.map((item) => [
+        item.workDate,
+        { label: item.workDate, value: item.workDate },
+      ])
+    ).values(),
+  ];
 
-  const activeFilterCount = [
-    employeeId,
-    departmentId,
-    shiftId,
-    status,
-    attendanceDate,
-  ].filter(Boolean).length;
+  // Cấu hình filters truyền vào TableData
+  const tableFilters = [
+    {
+      label: 'Nhân viên',
+      value: filterEmployeeId,
+      options: employeeOptions,
+      onChange: (val: string | undefined) => setFilterEmployeeId(val),
+    },
+    {
+      label: 'Phòng ban',
+      value: filterDepartment,
+      options: [
+        { label: 'IT', value: 'it' },
+        { label: 'Kinh doanh', value: 'sales' },
+        { label: 'Marketing', value: 'marketing' },
+        { label: 'Nhân sự', value: 'hr' },
+        { label: 'Kế toán', value: 'accounting' },
+      ],
+      onChange: (val: string | undefined) => setFilterDepartment(val),
+    },
+    {
+      label: 'Ca làm',
+      value: filterShift,
+      options: [
+        { label: 'Ca sáng', value: 'morning' },
+        { label: 'Ca chiều', value: 'afternoon' },
+        { label: 'Ca tối', value: 'night' },
+      ],
+      onChange: (val: string | undefined) => setFilterShift(val),
+    },
+    {
+      label: 'Ngày làm việc',
+      value: filterWorkDate,
+      options: workDateOptions,
+      onChange: (val: string | undefined) => setFilterWorkDate(val),
+    },
+    {
+      label: 'Trạng thái',
+      value: filterStatus,
+      options: [
+        { label: 'Có mặt', value: 'present' },
+        { label: 'Đi muộn', value: 'late' },
+        { label: 'Vắng mặt', value: 'absent' },
+      ],
+      onChange: (val: string | undefined) => setFilterStatus(val),
+    },
+  ];
 
-  const handleResetFilters = () => {
-    setEmployeeId("");
-    setDepartmentId("");
-    setShiftId("");
-    setStatus("");
-    setAttendanceDate("");
-    toast.success('Xóa bộ lọc thành công ');
-  };
-
-
-  // Fetcher giả lập lấy dữ liệu và phân trang
+  // Fetcher giả lập với lọc theo search + filters
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    // Giả lập độ trễ mạng
     await new Promise((resolve) => setTimeout(resolve, 300));
 
-    let filtered = mockActivities;
+    let filtered = [...mockAttendances];
+
     if (searchQuery) {
-      filtered = mockActivities.filter(
-        (act) =>
-          act?.user?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          act?.action?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          act?.details?.toLowerCase().includes(searchQuery.toLowerCase()),
+      filtered = filtered.filter(
+        (item) =>
+          item.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.note?.toLowerCase().includes(searchQuery.toLowerCase())
       );
+    }
+
+    if (filterEmployeeId) {
+      filtered = filtered.filter((item) => item.userId === filterEmployeeId);
+    }
+
+    if (filterStatus) {
+      filtered = filtered.filter((item) => item.status === filterStatus);
+    }
+
+    if (filterWorkDate) {
+      filtered = filtered.filter((item) => item.workDate === filterWorkDate);
     }
 
     const paginated = filtered.slice(offset, offset + limit);
@@ -356,391 +247,258 @@ export default function AttendancesPage() {
   };
 
   // Giao diện Card cho Mobile View
-  const renderCard = (row: Activity, index: number) => {
+  const renderCard = (row: Attendance, index: number) => {
     const variantMap = {
-      success: 'success' as const,
-      warning: 'warning' as const,
-      failed: 'danger' as const,
+      present: 'success' as const,
+      late: 'warning' as const,
+      absent: 'danger' as const,
     };
+
     const labelMap = {
-      success: 'Thành công',
-      warning: 'Cảnh báo',
-      failed: 'Thất bại',
+      present: 'Có mặt',
+      late: 'Đi muộn',
+      absent: 'Vắng mặt',
     };
+
     return (
       <div
         key={row.id || index}
-        className="p-4 rounded-xl border border-slate-200 bg-white flex flex-col gap-2.5 shadow-xs"
+        className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
       >
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-semibold text-slate-800 text-sm">{row.user}</span>
-          <span className="text-xs text-slate-400">{row.time}</span>
+        <div className="flex items-center gap-3">
+          <img
+            src={row.user?.avatar || '/images/default-avatar.png'}
+            alt={row.user?.fullName || 'User'}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+          <div>
+            <p className="font-semibold text-black">{row.user?.fullName}</p>
+            <p className="text-xs text-slate-500">{row.user?.email}</p>
+          </div>
         </div>
-        <div className="text-sm text-slate-700 font-medium">{row.action}</div>
-        <div className="text-xs text-slate-500 font-mono bg-slate-50 p-2 rounded-lg border border-slate-100">
-          {row.details}
+
+        <div className="mt-3 space-y-1 text-sm text-black">
+          <p><strong>Ngày:</strong> {row.workDate}</p>
+          <p><strong>Check In:</strong> {row.checkIn || '-'}</p>
+          <p><strong>Check Out:</strong> {row.checkOut || '-'}</p>
+          <p><strong>Tổng giờ:</strong> {row.totalHours ?? 0} giờ</p>
         </div>
-        <div className="flex justify-end">
-          <Badge variant={variantMap[row.status]} size="sm">
-            {labelMap[row.status]}
+
+        <div className="mt-2 text-xs text-slate-500">{row.note || '-'}</div>
+
+        <div className="mt-3 flex justify-end">
+          <Badge variant={variantMap[row.status as keyof typeof variantMap] ?? 'danger'}>
+            {labelMap[row.status as keyof typeof labelMap] ?? 'Vắng mặt'}
           </Badge>
-        </div>?
+        </div>
       </div>
     );
   };
 
-
-  const breadcrumbItems = [
-    { label: 'Trang chủ', href: '/app' },
-    { label: 'Quản lý', href: '/app/admin' },
-    { label: 'Chấm công', href: '/app/admin/attendances' },
-  ];
-
-  const options = [
-    { value: 'Sửa', label: 'Sửa' },
-    { value: 'Xóa', label: 'Xóa' },
-    { value: 'Chi tiết', label: 'Chi tiết' }
-  ];
-
-
-  const handleChange = (name: string, value: string) => {
-    toast.success(`[${name}] Đã chọn: ${value}`);
-  };
-
-
   // Cấu hình các cột cho Desktop View
-  // Thêm avatar, giờ checkin, giờ checkout, nút bảng.
-  const columns: ITableColumn<Activity>[] = [
+  const columns: ITableColumn<Attendance>[] = [
     {
-      key: 'time',
-      label: 'Thời gian',
+      key: 'workDate',
+      label: 'Ngày làm việc',
+      minWidth: '120px',
+      cell: (row) => (
+        <span className="font-medium text-slate-500">{row.workDate}</span>
+      ),
+    },
+    {
+      key: 'employee',
+      label: 'Nhân viên',
+      minWidth: '180px',
+      cell: (row) => (
+        <div>
+          <div className="font-semibold text-slate-800">{row.user?.fullName || '-'}</div>
+          <div className="text-xs text-slate-500">{row.user?.email || '-'}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'checkIn',
+      label: 'Check In',
+      minWidth: '140px',
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          <img
+            src={row.imgCheckinPath || '/images/default-avatar.png'}
+            alt={row.user?.fullName || 'User'}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+          <span className="font-medium text-slate-500">{row.checkIn || '-'}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'checkOut',
+      label: 'Check Out',
+      minWidth: '140px',
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          <img
+            src={row.imgCheckoutPath || '/images/default-avatar.png'}
+            alt={row.user?.fullName || 'User'}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+          <span className="font-medium text-slate-500">{row.checkOut || '-'}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'totalHours',
+      label: 'Tổng giờ',
       minWidth: '100px',
-      cell: (row) => <span className="font-medium text-slate-500">{row.time}</span>,
+      cell: (row) => (
+        <span className="font-medium">{row.totalHours ?? 0} giờ</span>
+      ),
     },
     {
-      key: 'avatar',
-      label: 'Ảnh',
-      minWidth: '100px',
-      cell: (row) => <img src={row.avatar} alt={row.user} className="rounded-full h-10 w-10 object-cover" />,
-    },
-    {
-      key: 'user',
-      label: 'Người thực hiện',
-      minWidth: '160px',
-      cell: (row) => <span className="font-semibold text-slate-800">{row.user}</span>,
-    },
-    {
-      key: 'checkinTime',
-      label: 'Checkin',
-      minWidth: '100px',
-      cell: (row) => <span className="font-medium text-slate-500">{row.checkinTime}</span>,
-    },
-    {
-      key: 'checkoutTime',
-      label: 'Checkout',
-      minWidth: '160px',
-      cell: (row) => <span className="font-medium text-slate-500">{row.checkoutTime}</span>,
-    },
-    {
-      key: 'details',
-      label: 'Chi tiết',
-      minWidth: '260px',
-      cell: (row) => <span className="text-xs">{row.details}</span>,
+      key: 'note',
+      label: 'Ghi chú',
+      minWidth: '220px',
+      cell: (row) => (
+        <span className="text-xs">{row.note || '-'}</span>
+      ),
     },
     {
       key: 'status',
       label: 'Trạng thái',
       minWidth: '120px',
       cell: (row) => {
-        const variantMap = {
-          success: 'success' as const,
-          warning: 'warning' as const,
-          failed: 'danger' as const,
+        const variantMap: Record<string, 'success' | 'warning' | 'danger'> = {
+          present: 'success',
+          late: 'warning',
+          absent: 'danger',
         };
-        const labelMap = {
-          success: 'Thành công',
-          warning: 'Cảnh báo',
-          failed: 'Thất bại',
+        const labelMap: Record<string, string> = {
+          present: 'Có mặt',
+          late: 'Đi muộn',
+          absent: 'Vắng mặt',
         };
-        return <Badge variant={variantMap[row.status]}>{labelMap[row.status]}</Badge>;
+        return (
+          <Badge variant={variantMap[row.status || 'absent']}>
+            {labelMap[row.status || 'absent']}
+          </Badge>
+        );
       },
     },
     {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
-
       cell: (row) => (
-        <Select
-          placeholder="Chọn một hành động"
-          options={options}
-          onChange={(e) => {
-            const action = e.target.value;
-            setSelectedRow(row);
-            switch (action) {
-              case "Sửa":
-                setShowEditModal(true);
-                break;
-              case "Chi tiết":
+        <div className="flex items-center">
+          <Tooltip content="Chi tiết chấm công" position="top">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedRow(row);
                 setShowDetailModal(true);
-                break;
-              case "Xóa":
-                handleDelete(row);
-                break;
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition"
+            >
+              <Eye size={15} />
+            </button>
+          </Tooltip>
 
-            }
-            // reset select về placeholder
-            e.target.value = "";
+          <Tooltip content="Chỉnh sửa chấm công" position="top">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedRow(row);
+                setShowEditModal(true);
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition"
+            >
+              <Pencil size={15} />
+            </button>
+          </Tooltip>
 
-          }}
-        />
+          <Tooltip content="Xóa chấm công" position="top">
+            <button
+              type="button"
+              onClick={() => handleDelete(row)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition"
+            >
+              <Trash2 size={15} />
+            </button>
+          </Tooltip>
+        </div>
       ),
-    }
-
+    },
   ];
 
-  const handleDelete = (row: Activity) => {
-
-    if (!confirm("Chắc chắn xóa?")) return;
-
-    // api delete
-    // await attendanceApi.delete(row.id);
-
-    toast.success("Đã xóa chấm công");
+  const handleDelete = (row: Attendance) => {
+    if (!confirm('Chắc chắn xóa?')) return;
+    // await attendanceApi.deleteAttendance(row.id);
+    toast.success('Đã xóa chấm công');
   };
 
-  const filterOptions = [
-    {
-      key: 'nhansu',
-      label: 'Nhân viên',
-      value: mockActivities.map((item) => ({
-        label: item.user ?? '',
-        value: item.id ?? '',
-      })),
-    },
-
-    {
-      key: 'phongban',
-      label: 'Phòng ban',
-      value: [
-        {
-          label: 'IT',
-          value: 'it',
-        },
-        {
-          label: 'Sale',
-          value: 'sale',
-        },
-      ],
-    },
-
-    {
-      key: 'calam',
-      label: 'Ca làm',
-      value: [
-        {
-          label: 'Ca sáng',
-          value: 'morning',
-        },
-        {
-          label: 'Ca chiều',
-          value: 'afternoon',
-        },
-        {
-          label: 'Ca tối',
-          value: 'night',
-        },
-      ],
-    },
-
-    {
-      key: 'ngay',
-      label: 'Ngày',
-      value: mockActivities.map((item) => ({
-        label: item.time ?? '',
-        value: item.id ?? '',
-      })),
-    },
-
-    {
-      key: 'trangthai',
-      label: 'Trạng thái',
-      value: [
-        {
-          label: 'Thành công',
-          value: 'success',
-        },
-        {
-          label: 'Cảnh báo',
-          value: 'warning',
-        },
-        {
-          label: 'Thất bại',
-          value: 'failed',
-        },
-      ],
-    },
-  ];
-
-  if (isLoading) {
-    return <Loading />
-  }
+  if (isLoading) return <Loading />;
 
   return (
     <div className="flex h-full w-full flex-1 flex-col bg-slate-50 p-6">
       <Breadcrumb items={breadcrumbItems} className="mb-4" />
 
-      {/* Header: tiêu đề + nhóm nút hành động */}
+      {/* Header */}
       <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">
-            Danh sách chấm công
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Quản lý và theo dõi dữ liệu chấm công nhân viên
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900">Danh sách chấm công</h1>
+          <p className="mt-1 text-sm text-slate-500">Quản lý và theo dõi dữ liệu chấm công nhân viên</p>
         </div>
 
         <div className="flex shrink-0 flex-nowrap items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => setIsFilterOpen((prev) => !prev)}
             className="gap-2"
+            onClick={() => toast.success('Làm mới thành công')}
           >
-            <Filter size={15} />
-            {activeFilterCount > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-xs text-white">
-                {activeFilterCount}
-              </span>
-            )}
-          </Button>
-
-          <Button variant="outline" className="gap-2" onClick={() => toast.success('Làm mới thành công ')}>
             <RefreshCw size={15} />
           </Button>
 
-          {/* <Button variant="outline" className="gap-2">
-            <Download size={15} />
-          </Button> */}
-
-          <Button
-            className="gap-2"
-            onClick={() => setShowAddModal(true)}
-          >
+          <Button className="gap-2" onClick={() => setShowAddModal(true)}>
             <Plus size={15} />
           </Button>
         </div>
       </div>
 
-      {/* Panel bộ lọc — hiển thị bên dưới header khi isFilterOpen = true */}
-      {isFilterOpen && (
-        <div className="mb-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-semibold text-slate-800">Bộ lọc chấm công</h3>
-            <Button
-              variant="ghost"
-              onClick={() => setIsFilterOpen(false)}
-            >
-              <X size={16} />
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
-            {/* Nhân sự */}
-            <Select
-              placeholder="Nhân sự"
-              options={filterOptions.find((option) => option.key === 'nhansu')?.value}
-              onChange={(e) => setEmployeeId(e.target.value)}
-            />
-
-            {/* Phòng ban */}
-            <Select
-              placeholder="Phòng ban"
-              options={filterOptions.find((option) => option.key === 'phongban')?.value}
-              onChange={(e) => setDepartmentId(e.target.value)}
-            />
-
-            {/* Ca làm */}
-            <Select
-              placeholder="Ca làm"
-              options={filterOptions.find((option) => option.key === 'calam')?.value}
-              onChange={(e) => setShiftId(e.target.value)}
-            />
-
-            {/* Trạng thái */}
-            <Select
-              placeholder="Trạng thái"
-              options={filterOptions.find((option) => option.key === 'trangthai')?.value}
-              onChange={(e) => setStatus(e.target.value)}
-            />
-
-            {/* Ngày */}
-            <input
-              type="date"
-              value={attendanceDate || ''}
-              onChange={(e) => setAttendanceDate(e.target.value)}
-              className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
-            />
-          </div>
-
-          <div className="mt-5 flex justify-end gap-2">
-            <Button variant="outline" onClick={handleResetFilters}>
-              Xóa lọc
-            </Button>
-            <Button
-              onClick={() => {
-                setIsFilterOpen(false);
-                toast.success('Đã áp dụng bộ lọc');
-              }}
-            >
-              Áp dụng
-            </Button>
-          </div>
-        </div>
-      )}
-
+      {/* Table */}
       <div className="space-y-4">
-        <TableData<Activity>
-          queryKey={['today-activities', searchQuery]}
+        <TableData<Attendance>
+          queryKey={['attendances', searchQuery, filterEmployeeId, filterStatus, filterWorkDate, filterDepartment, filterShift]}
           fetcher={fetcher}
           columns={columns}
           search={{
-            placeholder: 'Tìm kiếm hoạt động',
+            placeholder: 'Tìm kiếm theo tên, email...',
             value: searchQuery,
-            onChange: (value) => {
-              setSearchQuery(value);
-            },
+            onChange: (value) => setSearchQuery(value),
           }}
+          filters={tableFilters}
           renderCard={renderCard}
           select={false}
           syncToUrl={false}
         />
       </div>
+
       <AddAttendanceModal
         open={showAddModal}
-        onClose={() => {
-          setShowAddModal(false)
-        }}
-        onSuccess={() => {
-          toast.success("Thêm thành công")
-        }}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={() => toast.success('Thêm thành công')}
       />
+
       <EditAttendanceModal
         open={showEditModal}
         data={selectedRow}
-        onClose={() => {
-          setShowEditModal(false)
-        }}
-        onSuccess={() => {
-          toast.success("Cập nhật thành công")
-        }}
+        onClose={() => setShowEditModal(false)}
+        onSuccess={() => toast.success('Cập nhật thành công')}
       />
+
       <AttendanceDetailModal
         open={showDetailModal}
         data={selectedRow}
-        onClose={() => {
-          setShowDetailModal(false)
-        }}
+        onClose={() => setShowDetailModal(false)}
       />
     </div>
   );
