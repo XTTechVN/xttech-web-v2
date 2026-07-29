@@ -1,9 +1,10 @@
-import React from 'react';
-
-// import heading dùng chung cho toàn bộ trang
+// Heading dùng chung cho toàn bộ trang
 import { Heading } from '@/components';
-import { FileText, Eye, Download } from 'lucide-react';
 
+// Icons thư viện lucide-react
+import { Eye, Download } from 'lucide-react';
+
+// Interface cho tài liệu
 interface DocumentItem {
   id: string;
   title: string;
