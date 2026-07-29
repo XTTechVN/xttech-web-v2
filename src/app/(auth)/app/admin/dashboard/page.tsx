@@ -9,43 +9,43 @@ import AnalyticsChart from './_components/analytics-chart';
 // Icon thư viện lucide-react
 import { Users, UserPlus, Building2, Briefcase, BarChart3, LayoutGrid } from 'lucide-react';
 
-const page = () => {
-  // Dữ liệu mockup cho stat - card
-  const statsMockupData = [
-    {
-      title: 'Số lượng nhân viên',
-      value: '10',
-      icon: <Users size={18} />,
-      trend: 5,
-      trendType: 'up',
-      bgIcon: 'bg-blue-50 text-blue-600',
-    },
-    {
-      title: 'Số lượng ứng viên',
-      value: '45',
-      icon: <UserPlus size={18} />,
-      trend: 12,
-      trendType: 'up',
-      bgIcon: 'bg-purple-50 text-purple-600',
-    },
-    {
-      title: 'Số người đã chấm công',
-      value: '8',
-      icon: <Briefcase size={18} />,
-      trend: 2,
-      trendType: 'up',
-      bgIcon: 'bg-red-50 text-red-600',
-    },
-    {
-      title: 'Số buổi đào tạo',
-      value: '8',
-      icon: <LayoutGrid size={18} />,
-      trend: 2,
-      trendType: 'up',
-      bgIcon: 'bg-emerald-50 text-emerald-600',
-    },
-  ];
+// Dữ liệu mockup cho stat - card
+const statsMockupData = [
+  {
+    title: 'Số lượng nhân viên',
+    value: '10',
+    icon: <Users size={18} />,
+    trend: 5,
+    trendType: 'up',
+    bgIcon: 'bg-primary/30 text-primary',
+  },
+  {
+    title: 'Số lượng ứng viên',
+    value: '45',
+    icon: <UserPlus size={18} />,
+    trend: 12,
+    trendType: 'up',
+    bgIcon: 'bg-primary/30 text-primary',
+  },
+  {
+    title: 'Số người đã chấm công',
+    value: '8',
+    icon: <Briefcase size={18} />,
+    trend: 2,
+    trendType: 'up',
+    bgIcon: 'bg-primary/30 text-primary',
+  },
+  {
+    title: 'Số buổi đào tạo',
+    value: '8',
+    icon: <LayoutGrid size={18} />,
+    trend: 2,
+    trendType: 'up',
+    bgIcon: 'bg-primary/30 text-primary',
+  },
+];
 
+const page = () => {
   return (
     <div className="flex  relative">
       {/* Nội dung chínhg*/}
@@ -53,14 +53,22 @@ const page = () => {
         <Banner />
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
           {statsMockupData.map((stat, index) => (
-            <StatCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendType={stat.trendType} bgIcon={stat.bgIcon} />
+            <StatCard
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              trend={stat.trend}
+              trendType={stat.trendType}
+              bgIcon={stat.bgIcon}
+            />
           ))}
         </div>
         <div className="md:grid md:grid-cols-12 md:gap-8 flex flex-col gap-2">
-          <div className="col-span-7">
+          <div className="col-span-8">
             <AnalyticsChart />
           </div>
-          <div className="col-span-5">
+          <div className="col-span-4">
             <SystemHistory />
           </div>
         </div>
