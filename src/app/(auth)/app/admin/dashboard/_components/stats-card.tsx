@@ -36,7 +36,7 @@ const StatCart = ({
       </div>
       <div className="flex flex-col gap-1 md:gap-3">
         <span className="text-gray-500 text-[10px] md:text-xs font-medium truncate whitespace-nowrap overflow-hidden">{title}</span>
-        <span className="text-lg md:text-2xl font-bold text-gray-800">{value}</span>
+        <span className="text-lg md:text-2xl font-bold text-primary">{value}</span>
       </div>
     </div>
   );
