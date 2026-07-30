@@ -16,3 +16,5 @@ export * from './customer';
 // Suggestions
 export * from './suggestion';
 
+// Authentication
+export * from './auth';
