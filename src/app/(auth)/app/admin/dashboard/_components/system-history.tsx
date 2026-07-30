@@ -1,4 +1,4 @@
-//  Kiểu dữ liệu cho lịch sử truy cập hệ thống
+//  Kiểu dữ liệu dùng riêng cho lịch sử truy cập hệ thống
 interface HistoryLog {
   id: string;
   time: string;

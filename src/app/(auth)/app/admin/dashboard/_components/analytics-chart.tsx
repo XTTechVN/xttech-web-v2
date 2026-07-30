@@ -1,3 +1,7 @@
+
+'use client';
+
+// Các hooks dùng chung cho toàn bộ trang
 import { useEffect, useState } from 'react';
 
 // import biểu đồ

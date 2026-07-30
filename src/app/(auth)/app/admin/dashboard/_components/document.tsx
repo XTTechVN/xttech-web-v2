@@ -4,7 +4,7 @@ import { Heading } from '@/components';
 // Icons thư viện lucide-react
 import { Eye, Download } from 'lucide-react';
 
-// Interface cho tài liệu
+// Kiểu dữ liệu dùng riêng cho tài liệu
 interface DocumentItem {
   id: string;
   title: string;
