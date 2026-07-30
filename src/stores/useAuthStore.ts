@@ -1,49 +1,46 @@
+// Bộ tiện ích gọi API cấu hình sẵn Axios
 import api from '@/utils/api';
+
+// Thư viện quản lý trạng thái client-side
 import { create } from 'zustand';
+
+// Middleware lưu trữ trạng thái của Zustand vào LocalStorage
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-import useUserStore from './useUserStore';
-
+// Kiểu dữ liệu phản hồi của Axios
 import { AxiosResponse } from 'axios';
-import { AuthResponse } from '@/types/shared';
 
+// Kiểu dữ liệu dùng chung cho thông tin tài khoản và kết quả đăng nhập
+import { SignInResponse, AuthUser } from '@/types';
+
+// Kiểu dữ liệu cho trạng thái đăng nhập
 interface AuthState {
   isAuthenticated: boolean;
-  hasHydrated: boolean;
-
   accessToken: string | null;
   refreshToken: string | null;
-
+  user: AuthUser | null;
   signin: (username: string, password: string) => Promise<boolean>;
-  signout: () => void;
-
   setAccessToken: (accessToken: string) => void;
-  setRefreshToken: (refreshToken: string) => void;
-
-  setAuthenticated: (isAuthenticated: boolean) => void;
-  setHasHydrated: (hasHydrated: boolean) => void;
 }
 
 const useAuthStore = create<AuthState>()(
   persist(
     (set: any) => ({
-      isAuthenticated: false,
-      hasHydrated: false,
-
-      accessToken: null,
-      refreshToken: null,
+      isAuthenticated: false as boolean,
+      accessToken: null as string | null,
+      refreshToken: null as string | null,
+      user: null as AuthUser | null,
 
       signin: async (username: string, password: string) => {
         try {
-          const response: AxiosResponse<AuthResponse> = await api.post('/api/v1/auth/signin', {
+          const response: AxiosResponse<SignInResponse> = await api.post('/api/v1/auth/signin', {
             username,
             password,
           });
 
           const { accessToken, refreshToken, user } = response.data;
 
-          set({ accessToken, refreshToken, isAuthenticated: true });
-          useUserStore.getState().setUser(user);
+          set({ accessToken, refreshToken, user, isAuthenticated: true });
 
           return true;
         } catch (error) {
@@ -51,21 +48,10 @@ const useAuthStore = create<AuthState>()(
         }
       },
 
-      signout: () => {
-        api.post('/api/v1/auth/signout').finally(() => {
-          set({ isAuthenticated: false });
-          useUserStore.getState().clearUser();
-        });
-      },
-
       setAccessToken: (accessToken: string) => set({ accessToken }),
-      setRefreshToken: (refreshToken: string) => set({ refreshToken }),
-
-      setAuthenticated: (isAuthenticated: boolean) => set({ isAuthenticated }),
-      setHasHydrated: (hasHydrated: boolean) => set({ hasHydrated }),
     }),
     {
-      name: 'cv_auth',
+      name: 'auth',
       storage: createJSONStorage(() => localStorage),
     },
   ),

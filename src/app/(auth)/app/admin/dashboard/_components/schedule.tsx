@@ -4,7 +4,7 @@ import { Heading } from '@/components';
 // Icons của lucide - react
 import { Clock, MapPin } from 'lucide-react';
 
-//  Kiểu dữ liệu cho lịch đào tạo
+//  Kiểu dữ liệu dùng riêng cho lịch đào tạo
 interface ScheduleEvent {
   id: string;
   title: string;

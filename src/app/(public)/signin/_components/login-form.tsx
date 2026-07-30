@@ -1,60 +1,102 @@
 'use client';
 
 // Các thuộc tính React
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 
 // Các thuộc tính dùng chung cho toàn bộ trang
-import { Button, Checkbox } from '@/components';
+import { Button, Checkbox, Input } from '@/components';
 
-// Các icons trong thư viện lucide - react
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { useAuthStore } from '@/stores';
+
+// Các thông báo Toast
+import { toast } from 'react-hot-toast';
+
+// Nhập router điều hướng
+import { useRouter } from 'next/navigation';
+
+// Icons của lucide-react
+import { Eye, EyeOff } from 'lucide-react';
 
 const LoginForm = () => {
+  const router = useRouter();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [error, setError] = useState('');
+  const [isPending, startTransition] = useTransition();
+
+  // Hàm xử lý khi người dùng submit form
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setUsernameError('');
+    setPasswordError('');
+    setError('');
+
+    let hasError = false;
+    if (!username) {
+      setUsernameError('Vui lòng nhập vào tên đăng nhập');
+      hasError = true;
+    }
+    if (!password) {
+      setPasswordError('Vui lòng nhập vào mật khẩu');
+      hasError = true;
+    }
+
+    if (hasError) return;
+    // Xử lý logic đăng nhập
+    startTransition(async () => {
+      const success = await useAuthStore.getState().signin(username, password);
+      if (success) {
+        toast.success('Đăng nhập thành công!');
+        router.push('/app/admin/dashboard');
+      } else {
+        const errorMsg = 'Tên đăng nhập hoặc mật khẩu không chính xác';
+        setError(errorMsg);
+        toast.error(errorMsg);
+      }
+    });
+  };
 
   return (
-    <form className="flex flex-col gap-4 w-full" onSubmit={(e) => e.preventDefault()}>
-      {/* Nhập email */}
-      <div className="flex flex-col gap-1.5 w-full">
-        <label className="text-xs font-semibold text-gray-700 select-none">
-          Email Address
-        </label>
-        <div className="relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Mail size={16} className="text-gray-400" />
-          </div>
-          <input
-            type="email"
-            placeholder="youremail@example.com"
-            className="w-full h-11 pl-10 pr-4 text-sm bg-white border border-gray-200 rounded-xl outline-none transition-all duration-200 text-gray-900 hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-      </div>
+    <form className="flex flex-col gap-4 w-full" onSubmit={handleSubmit}>
+      {error && <div className="text-red-500 text-xs bg-red-50 p-2.5 rounded-lg border border-red-100 font-medium">{error}</div>}
+
+      {/* Nhập tên đăng nhập */}
+      <Input
+        label="Tên đăng nhập"
+        type="text"
+        value={username}
+        onChange={(e) => {
+          setUsername(e.target.value);
+          if (usernameError) setUsernameError('');
+        }}
+        placeholder="Nhập tên đăng nhập"
+        error={usernameError}
+      />
 
       {/* Nhập mật khẩu */}
-      <div className="flex flex-col gap-1.5 w-full">
-        <div className="flex justify-between items-center">
-          <label className="text-xs font-semibold text-gray-700 select-none">
-            Password
-          </label>
-        </div>
-        <div className="relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Lock size={16} className="text-gray-400" />
-          </div>
-          <input
-            type={showPassword ? 'text' : 'password'}
-            placeholder="••••••••"
-            className="w-full h-11 pl-10 pr-10 text-sm bg-white border border-gray-200 rounded-xl outline-none transition-all duration-200 text-gray-900 hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition"
-          >
-            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
-        </div>
+      <div className="relative">
+        <Input
+          label="Mật khẩu"
+          type={showPassword ? 'text' : 'password'}
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (passwordError) setPasswordError('');
+          }}
+          placeholder="••••••••"
+          error={passwordError}
+          className="pr-10"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-3 top-8.5 text-gray-400 hover:text-gray-500 transition cursor-pointer"
+        >
+          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
       </div>
 
       {/* Ghi nhớ đăng nhập và quên mật khẩu */}
@@ -66,8 +108,8 @@ const LoginForm = () => {
       </div>
 
       {/* Nút đăng nhập */}
-      <Button type="submit" size="lg" fullWidth className="mt-2 rounded-xl">
-        Đăng nhập
+      <Button type="submit" size="lg" fullWidth className="mt-2 rounded-xl" disabled={isPending}>
+        {isPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
       </Button>
     </form>
   );
