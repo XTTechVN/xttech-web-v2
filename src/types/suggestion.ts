@@ -1,5 +1,20 @@
 import { User } from './user';
 
+export enum SuggestionType {
+  PROCESS = 'process',
+  PRODUCT = 'product',
+  TECHNOLOGY = 'technology',
+  COST = 'cost',
+  QUALITY = 'quality',
+  SAFETY = 'safety',
+  WORKPLACE = 'workplace',
+  WELFARE = 'welfare',
+  TRAINING = 'training',
+  CUSTOMER = 'customer',
+  COMPLAINT = 'complaint',
+  OTHER = 'other',
+}
+
 export interface SuggestionAttachment {
   id: number;
   suggestionId: number;
@@ -14,8 +29,7 @@ export interface Suggestion {
   anonymous: boolean;
   userId: string;
   status: 'pending' | 'approve' | 'reject';
-  priority: 'low' | 'medium' | 'high';
-  category?: string;
+  type?: string;
   review: string | null;
   reviewById: string | null;
   attachments: SuggestionAttachment[];
@@ -46,8 +60,7 @@ export interface SuggestionCreate {
   title: string;
   content: string;
   anonymous: boolean;
-  priority?: 'low' | 'medium' | 'high';
-  category?: string;
+  type?: SuggestionType;
 }
 
 export interface SuggestionReviewSchema {
@@ -59,6 +72,5 @@ export interface SuggestionUpdate {
   title?: string;
   content?: string;
   anonymous?: boolean;
-  priority?: 'low' | 'medium' | 'high';
-  category?: string;
+  type?: SuggestionType;
 }

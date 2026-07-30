@@ -35,8 +35,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     activeId = 'attendances';
   } else if (pathname.includes('/admin/quotation')) {
     activeId = 'quotation';
-  } else if (pathname.includes('/admin/suggestions')) {
-    activeId = 'suggestions';
   }
 
   const handleItemSelect = (id: string) => {
@@ -44,8 +42,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.push('/admin/attendances');
     } else if (id === 'quotation') {
       router.push('/admin/quotation');
-    } else if (id === 'suggestions') {
-      router.push('/admin/suggestions');
     }
   };
 
@@ -55,8 +51,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     title = 'Quản lý Điểm danh';
   } else if (activeId === 'quotation') {
     title = 'Quản lý Báo giá';
-  } else if (activeId === 'suggestions') {
-    title = 'Quản lý Đề xuất, góp ý';
   }
 
   return (

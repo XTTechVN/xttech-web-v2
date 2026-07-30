@@ -1,28 +1,30 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useRef } from 'react';
-import { Check, Trash2, User, Upload, X, AlertCircle, Sparkles, Paperclip, UserLock, SendHorizontal, Forward } from 'lucide-react';
+import { Check, Trash2, User, Upload, X, AlertCircle, Paperclip, UserLock, SendHorizontal, Forward } from 'lucide-react';
 import { useSuggestionStore } from '@/stores/useSuggestionStore';
-import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Modal, Select, Button, Textarea, Input, Alert, Badge } from '@/components';
+import { Modal, Select, Button, Textarea, Input, Alert } from '@/components';
 import { reviewSuggestion, deleteSuggestion, updateSuggestion } from '@/actions/suggestion';
 import { Suggestion } from '@/types';
 
 // Helper labels for suggestion categories
 const categoryLabels: Record<string, string> = {
-  process: 'Cải tiến quy trình',
-  technology: 'Nâng cấp công nghệ',
-  environment: 'Môi trường làm việc',
-  other: 'Ý kiến đóng góp khác',
-};
-
-const priorityLabels: Record<string, { label: string; variant: 'danger' | 'warning' | 'info' | 'default' }> = {
-  high: { label: 'Ưu tiên Cao', variant: 'danger' },
-  medium: { label: 'Ưu tiên Trung bình', variant: 'warning' },
-  low: { label: 'Ưu tiên Thấp', variant: 'info' },
+  process: 'Cải tiến quy trình làm việc',
+  product: 'Cải tiến sản phẩm/dịch vụ',
+  technology: 'Đề xuất kỹ thuật, CNTT',
+  cost: 'Tiết kiệm chi phí',
+  quality: 'Nâng cao chất lượng',
+  safety: 'An toàn lao động',
+  workplace: 'Môi trường làm việc',
+  welfare: 'Chế độ, phúc lợi',
+  training: 'Đào tạo, phát triển nhân sự',
+  customer: 'Chăm sóc khách hàng',
+  complaint: 'Phản ánh, khiếu nại',
+  other: 'Khác',
 };
 
 // Helper labels and classes for statuses
@@ -44,49 +46,42 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Parse content to extract category, problem, and solution
-  const getParsedContent = (content: string, pCategory?: string) => {
+  // Parse content to extract type, problem, and solution
+  const getParsedContent = (content: string, pType?: string) => {
     const parts = content.split('|||');
     if (parts.length === 3) {
       return {
-        category: parts[0],
+        type: parts[0],
         problem: parts[1],
-        solution: parts[2],
       };
     } else if (parts.length === 2) {
       return {
-        category: pCategory || 'other',
+        type: pType || 'other',
         problem: parts[0],
-        solution: parts[1],
       };
     } else {
       return {
-        category: pCategory || 'other',
+        type: pType || 'other',
         problem: content,
-        solution: '',
       };
     }
   };
 
-  const { category, problem, solution } = getParsedContent(selectedSuggestion.content, (selectedSuggestion as any).category);
+  const { type, problem } = getParsedContent(selectedSuggestion.content, (selectedSuggestion as any).type);
 
   const {
     reviewText,
     setReviewText,
     isEditing,
     setIsEditing,
-    editCategory,
-    setEditCategory,
+    editType,
+    setEditType,
     editTitle,
     setEditTitle,
     editProblem,
     setEditProblem,
-    editSolution,
-    setEditSolution,
     editAttachments,
     setEditAttachments,
-    editPriority,
-    setEditPriority,
     isDeleteConfirmOpen,
     setIsDeleteConfirmOpen,
     isSaving,
@@ -105,28 +100,24 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
 
   React.useEffect(() => {
     if (selectedSuggestion) {
-      const {
-        category: parsedCat,
-        problem: parsedProb,
-        solution: parsedSol,
-      } = getParsedContent(selectedSuggestion.content, (selectedSuggestion as any).category);
+      const { type: parsedType, problem: parsedProb } = getParsedContent(selectedSuggestion.content, (selectedSuggestion as any).type);
       setReviewText(selectedSuggestion.review || '');
       setIsEditing(false);
-      setEditCategory(parsedCat || 'process');
+      setEditType(parsedType || 'process');
       setEditTitle(selectedSuggestion.title || '');
       setEditProblem(parsedProb || '');
-      setEditSolution(parsedSol || '');
-      setEditPriority(selectedSuggestion.priority || 'medium');
       setEditAttachments(
         selectedSuggestion.attachments?.map((att) => {
-          const isImg = /\.(jpg|jpeg|png|webp)$/i.test(att.path);
-          const fileName = att.path.split('/').pop() || 'document.pdf';
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://dev-xt-api-v2.up.railway.app';
+          const fullPath = att.path.startsWith('http') ? att.path : `${baseUrl}${att.path}`;
+          const isImg = /\.(jpg|jpeg|png|webp)$/i.test(fullPath);
+          const fileName = fullPath.split('/').pop() || 'document.pdf';
           return {
             id: `existing-${att.id}`,
             name: fileName,
-            preview: isImg ? att.path : null,
+            preview: isImg ? fullPath : null,
             isExisting: true,
-            path: att.path,
+            path: fullPath,
           };
         }) || [],
       );
@@ -137,14 +128,12 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
     selectedSuggestion,
     setReviewText,
     setIsEditing,
-    setEditCategory,
     setEditTitle,
     setEditProblem,
-    setEditSolution,
     setEditAttachments,
-    setEditPriority,
     setIsDeleteConfirmOpen,
     setIsSaving,
+    setEditType,
   ]);
 
   // Mutations
@@ -154,6 +143,7 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-suggestions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-suggestions-all-stats'] });
       toast.success('Gửi phản hồi thành công!');
       setDetailModalOpen(false);
       setSelectedSuggestion(null);
@@ -169,6 +159,7 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-suggestions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-suggestions-all-stats'] });
       toast.success('Xóa đề xuất thành công!');
       setDetailModalOpen(false);
       setSelectedSuggestion(null);
@@ -184,6 +175,7 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-suggestions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-suggestions-all-stats'] });
       toast.success('Chỉnh sửa ý kiến thành công!');
       setIsEditing(false);
       setDetailModalOpen(false);
@@ -340,9 +332,8 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
                     id: selectedSuggestion.id,
                     data: {
                       title: editTitle,
-                      content: `${editCategory}|||${editProblem.trim()}|||${editSolution.trim()}`,
-                      priority: editPriority,
-                      category: editCategory,
+                      content: editProblem.trim(),
+                      type: editType,
                     },
                     files: validFiles,
                   });
@@ -354,7 +345,7 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
                 }
               }}
               loading={updateSuggestionMutation.isPending || isSaving}
-              disabled={!editTitle.trim() || !editProblem.trim() || !editSolution.trim() || isPending}
+              disabled={!editTitle.trim() || !editProblem.trim() || isPending}
               leftIcon={<Check className="w-4 h-4" />}
             >
               Lưu
@@ -406,34 +397,27 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
         <div className="flex flex-col gap-4">
           <Input label="Chủ đề đề xuất" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} disabled={isPending} fullWidth />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <Select
-              label="Loại đề xuất"
-              value={editCategory}
-              onChange={(e) => setEditCategory(e.target.value)}
-              options={[
-                { value: 'process', label: 'Quy trình' },
-                { value: 'technology', label: 'Công nghệ' },
-                { value: 'environment', label: 'Môi trường' },
-                { value: 'other', label: 'Khác' },
-              ]}
-              disabled={isPending}
-              className="w-full"
-            />
-
-            <Select
-              label="Mức độ ưu tiên"
-              value={editPriority}
-              onChange={(e) => setEditPriority(e.target.value as 'low' | 'medium' | 'high')}
-              options={[
-                { value: 'low', label: 'Thấp' },
-                { value: 'medium', label: 'Trung bình' },
-                { value: 'high', label: 'Cao' },
-              ]}
-              disabled={isPending}
-              className="w-full"
-            />
-          </div>
+          <Select
+            label="Loại đề xuất"
+            value={editType}
+            onChange={(e) => setEditType(e.target.value)}
+            options={[
+              { value: 'process', label: 'Cải tiến quy trình làm việc' },
+              { value: 'product', label: 'Cải tiến sản phẩm/dịch vụ' },
+              { value: 'technology', label: 'Đề xuất kỹ thuật, CNTT' },
+              { value: 'cost', label: 'Tiết kiệm chi phí' },
+              { value: 'quality', label: 'Nâng cao chất lượng' },
+              { value: 'safety', label: 'An toàn lao động' },
+              { value: 'workplace', label: 'Môi trường làm việc' },
+              { value: 'welfare', label: 'Chế độ, phúc lợi' },
+              { value: 'training', label: 'Đào tạo, phát triển nhân sự' },
+              { value: 'customer', label: 'Chăm sóc khách hàng' },
+              { value: 'complaint', label: 'Phản ánh, khiếu nại' },
+              { value: 'other', label: 'Khác' },
+            ]}
+            disabled={isPending}
+            className="w-full mb-4"
+          />
 
           {/* File / Image Attachment */}
           <div className="flex flex-col gap-2">
@@ -471,7 +455,7 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
                     <div key={item.id} className="shrink-0 max-w-50 md:max-w-xs">
                       {item.preview ? (
                         <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200">
-                          <Image src={item.preview} alt="Preview" className="w-full h-full object-cover" />
+                          <img src={item.preview} alt="Preview" className="w-full h-full object-cover" />
                           <button
                             type="button"
                             onClick={() => handleRemoveFile(item.id)}
@@ -515,36 +499,20 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
             rows={4}
             fullWidth
           />
-
-          <Textarea
-            label="Giải pháp đề xuất"
-            value={editSolution}
-            onChange={(e) => setEditSolution(e.target.value)}
-            disabled={isPending}
-            rows={4}
-            fullWidth
-          />
         </div>
       ) : (
         <div className="flex flex-col gap-6">
           {/* Header Layout based on design */}
           <div className="border border-cyan-100 bg-cyan-50/20 rounded-2xl py-3 px-6 flex flex-col gap-2">
             <div className="flex items-center justify-between select-none">
-              <span className="text-[12px] font-bold text-[#0891b2] tracking-wider uppercase">
-                {categoryLabels[category] || 'Ý kiến đóng góp khác'}
-              </span>
-              {selectedSuggestion.priority && (
-                <Badge variant={priorityLabels[selectedSuggestion.priority]?.variant || 'default'} size="sm" pill>
-                  {priorityLabels[selectedSuggestion.priority]?.label || selectedSuggestion.priority}
-                </Badge>
-              )}
+              <span className="text-[12px] font-bold text-[#0891b2] tracking-wider uppercase">{categoryLabels[type] || 'Ý kiến đóng góp khác'}</span>
             </div>
             <h2 className="text-[30px] md:text-[24px] font-bold text-slate-800 leading-snug">{selectedSuggestion.title}</h2>
             {/* Sender card in dark teal */}
             <div className="flex items-center gap-3 py-1 px-4 bg-[#005a70] text-white rounded-xl select-none shadow-xs w-fit">
               {senderAvatar ? (
                 <div className="relative w-9 h-9 rounded-full overflow-hidden border border-white/20 shrink-0">
-                  <Image src={senderAvatar} alt={senderName} width={36} height={36} className="object-cover" />
+                  <img src={senderAvatar} alt={senderName} width={36} height={36} className="object-cover" />
                 </div>
               ) : selectedSuggestion.anonymous ? (
                 <div className="w-9 h-9 rounded-full bg-white/10 border border-white/20 shrink-0 flex items-center justify-center text-white">
@@ -578,17 +546,6 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
                 <p className="text-[#404040] text-[16px] md:text-sm leading-relaxed whitespace-pre-line font-medium">{problem}</p>
               </div>
 
-              {/* Giải pháp đề xuất */}
-              {solution && (
-                <div className="border border-cyan-100 bg-cyan-50/10 rounded-2xl p-4.5 flex flex-col gap-3">
-                  <span className="text-[18px] md:text-[16px] font-bold text-[#0CC0DF] tracking-wider flex items-center gap-2 select-none">
-                    <Sparkles className="w-4.5 h-4.5 text-[#0891b2] shrink-0" />
-                    Giải pháp đề xuất
-                  </span>
-                  <p className="text-[#404040] text-[16px] md:text-sm leading-relaxed whitespace-pre-line font-medium">{solution}</p>
-                </div>
-              )}
-
               {/* Attachments Section */}
               {selectedSuggestion.attachments && selectedSuggestion.attachments.length > 0 && (
                 <div className="border border-slate-100 bg-slate-50/20 rounded-2xl p-4.5 flex flex-col gap-3">
@@ -598,18 +555,20 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
                   </span>
                   <div className="grid grid-cols-2 gap-3">
                     {selectedSuggestion.attachments.map((att) => {
-                      const isImg = /\.(jpg|jpeg|png|webp)$/i.test(att.path);
-                      const fileName = att.path.split('/').pop() || 'document.pdf';
+                      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://dev-xt-api-v2.up.railway.app';
+                      const fullPath = att.path.startsWith('http') ? att.path : `${baseUrl}${att.path}`;
+                      const isImg = /\.(jpg|jpeg|png|webp)$/i.test(fullPath);
+                      const fileName = fullPath.split('/').pop() || 'document.pdf';
                       if (isImg) {
                         return (
                           <a
                             key={att.id}
-                            href={att.path}
+                            href={fullPath}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 group cursor-pointer shadow-xs block"
                           >
-                            <Image src={att.path} alt="Attachment" className="w-full h-full object-cover" />
+                            <img src={fullPath} alt="Attachment" className="w-full h-full object-cover" />
                             <div className="absolute bottom-0 inset-x-0 bg-slate-900/60 backdrop-blur-xs px-2.5 py-1.5 flex items-center justify-between text-[10px] text-white font-bold">
                               <span className="truncate pr-2">{fileName}</span>
                             </div>
@@ -619,7 +578,7 @@ function SuggestionDetailModalInner({ selectedSuggestion }: { selectedSuggestion
                       return (
                         <a
                           key={att.id}
-                          href={att.path}
+                          href={fullPath}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="items-center gap-3 p-3 bg-white border border-slate-150 rounded-xl hover:shadow-xs transition-shadow group block"

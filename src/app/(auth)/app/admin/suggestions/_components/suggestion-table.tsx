@@ -1,10 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useCallback } from 'react';
 import { RotateCw, User, Plus, EyeOff, Download } from 'lucide-react';
 import { useSuggestionStore } from '@/stores/useSuggestionStore';
-import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks';
@@ -12,37 +12,24 @@ import { TableData, Button } from '@/components';
 import { getSuggestions } from '@/actions/suggestion';
 import { Suggestion } from '@/types';
 
-const priorityLabels: Record<string, { label: string; class: string }> = {
-  high: { label: 'Cao', class: 'bg-red-50 text-red-700 border-red-200' },
-  medium: { label: 'T.Bình', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-  low: { label: 'Thấp', class: 'bg-sky-50 text-sky-700 border-sky-200' },
+// Hàm bổ trợ phân loại chủ đề linh hoạt từ type hoặc content
+const getSuggestionType = (p: Suggestion) => {
+  const cat = (p.type || '').toLowerCase().trim();
+  return cat || 'other';
 };
 
-// Hàm bổ trợ phân loại chủ đề linh hoạt từ category hoặc content
-const getSuggestionCategory = (p: Suggestion) => {
-  const cat = (p.category || '').toLowerCase().trim();
-  if (cat === 'process' || cat.includes('quy trình') || cat.includes('cải tiến')) return 'process';
-  if (cat === 'technology' || cat.includes('công nghệ') || cat.includes('thiết bị')) return 'technology';
-  if (cat === 'environment' || cat.includes('môi trường') || cat.includes('làm việc')) return 'environment';
-  if (cat === 'other' || cat.includes('khác')) return 'other';
-
-  if (p.content) {
-    const parts = p.content.split('|||');
-    if (parts.length === 3) {
-      const firstPart = parts[0].toLowerCase().trim();
-      if (firstPart.includes('quy trình') || firstPart.includes('process')) return 'process';
-      if (firstPart.includes('công nghệ') || firstPart.includes('technology')) return 'technology';
-      if (firstPart.includes('môi trường') || firstPart.includes('environment')) return 'environment';
-      if (firstPart.includes('khác') || firstPart.includes('other')) return 'other';
-    }
-  }
-  return 'other';
-};
-
-const categoryLabels: Record<string, { label: string; class: string }> = {
-  process: { label: 'Quy trình', class: 'bg-[#E7F9FC] text-[#045863] border-[#0CBFDF]/30' },
-  technology: { label: 'Công nghệ', class: 'bg-[#FEFCE8] text-[#A16207] border-[#FACC15]/30' },
-  environment: { label: 'Môi trường', class: 'bg-[#FDF4F5] text-[#991B1B] border-[#F87171]/30' },
+const typeLabels: Record<string, { label: string; class: string }> = {
+  process: { label: 'Cải tiến quy trình làm việc', class: 'bg-[#E7F9FC] text-[#045863] border-[#0CBFDF]/30' },
+  product: { label: 'Cải tiến sản phẩm/dịch vụ', class: 'bg-[#F0FDF4] text-[#166534] border-[#86EFAC]/30' },
+  technology: { label: 'Đề xuất kỹ thuật, CNTT', class: 'bg-[#FEFCE8] text-[#A16207] border-[#FACC15]/30' },
+  cost: { label: 'Tiết kiệm chi phí', class: 'bg-[#ECFDF5] text-[#065F46] border-[#6EE7B7]/30' },
+  quality: { label: 'Nâng cao chất lượng', class: 'bg-[#F5F3FF] text-[#5B21B6] border-[#C4B5FD]/30' },
+  safety: { label: 'An toàn lao động', class: 'bg-[#FFF5F5] text-[#C53030] border-[#FEB2B2]/30' },
+  workplace: { label: 'Môi trường làm việc', class: 'bg-[#FFF7ED] text-[#9A3412] border-[#FDBA74]/30' },
+  welfare: { label: 'Chế độ, phúc lợi', class: 'bg-[#FDF2F8] text-[#9D174D] border-[#FBCFE8]/30' },
+  training: { label: 'Đào tạo, phát triển nhân sự', class: 'bg-[#EEF2F6] text-[#1E293B] border-[#CBD5E1]/30' },
+  customer: { label: 'Chăm sóc khách hàng', class: 'bg-[#E0F2FE] text-[#0369A1] border-[#7DD3FC]/30' },
+  complaint: { label: 'Phản ánh, khiếu nại', class: 'bg-[#FEF2F2] text-[#991B1B] border-[#FCA5A5]/30' },
   other: { label: 'Khác', class: 'bg-slate-50 text-slate-600 border-slate-200' },
 };
 
@@ -58,10 +45,8 @@ export default function SuggestionTable() {
     setExporting,
     isRefreshing,
     setRefreshing,
-    priorityFilterVal,
-    setPriorityFilterVal,
-    categoryFilterVal,
-    setCategoryFilterVal,
+    typeFilterVal,
+    setTypeFilterVal,
     senderVal,
     setSenderVal,
     tab,
@@ -81,12 +66,11 @@ export default function SuggestionTable() {
   // Debounced filter states (500ms delay)
   const debouncedSearch = useDebounce(search || '', 500);
   const debouncedSender = useDebounce(senderVal || '', 500);
-  const debouncedPriority = useDebounce(priorityFilterVal || '', 500);
-  const debouncedCategory = useDebounce(categoryFilterVal || '', 500);
+  const debouncedType = useDebounce(typeFilterVal || '', 500);
   const debouncedTab = useDebounce(tab || 'all', 500);
 
   // React Query queryKey containing all debounced filters
-  const queryKey = ['admin-suggestions', debouncedSearch, debouncedTab, debouncedSender, debouncedPriority, debouncedCategory];
+  const queryKey = ['admin-suggestions', debouncedSearch, debouncedTab, debouncedSender, debouncedType];
 
   // 2. Fetcher tied to React Query
   const fetcher = useCallback(
@@ -96,7 +80,7 @@ export default function SuggestionTable() {
         statusParam = 'pending';
       }
 
-      const hasFilters = debouncedSearch || debouncedSender || debouncedPriority || debouncedCategory || debouncedTab === 'processed';
+      const hasFilters = debouncedSearch || debouncedSender || debouncedType || debouncedTab === 'processed';
 
       const response = await getSuggestions({
         status: statusParam,
@@ -106,9 +90,9 @@ export default function SuggestionTable() {
 
       let filtered = [...response.items];
 
-      // Filter by debouncedCategory
-      if (debouncedCategory) {
-        filtered = filtered.filter((p) => getSuggestionCategory(p) === debouncedCategory);
+      // Filter by debouncedType
+      if (debouncedType) {
+        filtered = filtered.filter((p) => getSuggestionType(p) === debouncedType);
       }
 
       // Filter by tab
@@ -123,11 +107,6 @@ export default function SuggestionTable() {
         } else if (debouncedSender === 'identified') {
           filtered = filtered.filter((p) => !p.anonymous);
         }
-      }
-
-      // Filter by debouncedPriority
-      if (debouncedPriority) {
-        filtered = filtered.filter((p) => p.priority === debouncedPriority);
       }
 
       // Filter by search (keyword search)
@@ -168,7 +147,7 @@ export default function SuggestionTable() {
 
       return response;
     },
-    [debouncedTab, debouncedSearch, debouncedSender, debouncedPriority, debouncedCategory],
+    [debouncedTab, debouncedSearch, debouncedSender, debouncedType],
   );
 
   const handleExportExcel = () => {
@@ -218,12 +197,12 @@ export default function SuggestionTable() {
       ),
     },
     {
-      key: 'category',
+      key: 'type',
       label: 'Chủ đề',
       minWidth: '130px',
       cell: (row: Suggestion) => {
-        const cat = getSuggestionCategory(row);
-        const info = categoryLabels[cat] || categoryLabels.other;
+        const cat = getSuggestionType(row);
+        const info = typeLabels[cat] || typeLabels.other;
         return <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${info.class}`}>{info.label}</span>;
       },
     },
@@ -244,7 +223,7 @@ export default function SuggestionTable() {
               </div>
             ) : senderAvatar ? (
               <div className="relative w-10 h-10 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                <Image src={senderAvatar} alt={senderName} width={40} height={40} className="object-cover w-full h-full" />
+                <img src={senderAvatar} alt={senderName} width={40} height={40} className="object-cover w-full h-full" />
               </div>
             ) : (
               <div className="w-10 h-10 rounded-full bg-cyan-50 shrink-0 flex items-center justify-center text-cyan-700 border border-cyan-100/50">
@@ -294,22 +273,7 @@ export default function SuggestionTable() {
         );
       },
     },
-    {
-      key: 'priority',
-      label: 'Độ ưu tiên',
-      minWidth: '115px',
-      cell: (row: Suggestion) => {
-        const priorityInfo = priorityLabels[row.priority] || {
-          label: row.priority || 'Trung bình',
-          class: 'bg-slate-50 text-slate-500 border-slate-100',
-        };
-        return (
-          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold select-none border ${priorityInfo.class}`}>
-            {priorityInfo.label}
-          </span>
-        );
-      },
-    },
+
     {
       key: 'status',
       label: 'Trạng thái',
@@ -337,8 +301,8 @@ export default function SuggestionTable() {
 
   const renderCard = (row: Suggestion, index: number) => {
     const statusInfo = getStatusDetails(row.status);
-    const cat = getSuggestionCategory(row);
-    const catInfo = categoryLabels[cat] || categoryLabels.other;
+    const cat = getSuggestionType(row);
+    const catInfo = typeLabels[cat] || typeLabels.other;
 
     const senderName = row.anonymous ? 'Ẩn danh' : row.user?.fullName || 'Ẩn danh';
     const senderAvatar = row.anonymous ? null : row.user?.avatar;
@@ -368,13 +332,7 @@ export default function SuggestionTable() {
           </div>
           <div className="flex flex-col gap-1 items-end shrink-0 select-none">
             <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${statusInfo.class}`}>{statusInfo.label}</span>
-            {row.priority && (
-              <span
-                className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${priorityLabels[row.priority]?.class || 'bg-slate-50 text-slate-500 border-slate-100'}`}
-              >
-                {priorityLabels[row.priority]?.label || row.priority}
-              </span>
-            )}
+
             <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${catInfo.class}`}>{catInfo.label}</span>
           </div>
         </div>
@@ -384,7 +342,7 @@ export default function SuggestionTable() {
         <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-[10px] font-bold text-slate-500">
           <div className="flex items-center gap-1.5">
             {senderAvatar ? (
-              <Image
+              <img
                 src={senderAvatar}
                 alt={senderName}
                 width={18}
@@ -500,13 +458,21 @@ export default function SuggestionTable() {
         filters={[
           {
             label: 'Chủ đề',
-            value: categoryFilterVal,
-            onChange: setCategoryFilterVal,
+            value: typeFilterVal,
+            onChange: setTypeFilterVal,
             options: [
               { value: undefined, label: 'Tất cả chủ đề' },
               { value: 'process', label: 'Quy trình' },
-              { value: 'technology', label: 'Công nghệ' },
-              { value: 'environment', label: 'Môi trường' },
+              { value: 'product', label: 'Sản phẩm/Dịch vụ' },
+              { value: 'technology', label: 'Công nghệ, kỹ thuật' },
+              { value: 'cost', label: 'Tiết kiệm chi phí' },
+              { value: 'quality', label: 'Nâng cao chất lượng' },
+              { value: 'safety', label: 'An toàn lao động' },
+              { value: 'workplace', label: 'Môi trường làm việc' },
+              { value: 'welfare', label: 'Chế độ, phúc lợi' },
+              { value: 'training', label: 'Đào tạo, phát triển' },
+              { value: 'customer', label: 'Chăm sóc khách hàng' },
+              { value: 'complaint', label: 'Phản ánh, khiếu nại' },
               { value: 'other', label: 'Khác' },
             ],
             className: 'w-44',
@@ -519,18 +485,6 @@ export default function SuggestionTable() {
               { value: undefined, label: 'Tất cả người gửi' },
               { value: 'anonymous', label: 'Ẩn danh' },
               { value: 'identified', label: 'Công khai' },
-            ],
-            className: 'w-44',
-          },
-          {
-            label: 'Độ ưu tiên',
-            value: priorityFilterVal,
-            onChange: setPriorityFilterVal,
-            options: [
-              { value: undefined, label: 'Tất cả độ ưu tiên' },
-              { value: 'high', label: 'Cao' },
-              { value: 'medium', label: 'Trung bình' },
-              { value: 'low', label: 'Thấp' },
             ],
             className: 'w-44',
           },

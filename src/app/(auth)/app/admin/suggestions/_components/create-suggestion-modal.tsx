@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
@@ -9,7 +10,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal, Input, Textarea, Checkbox, Button, Alert, Select } from '@/components';
 import { createSuggestion } from '@/actions/suggestion';
 import { AttachmentItem } from '@/types';
-import Image from 'next/image';
 
 export default function CreateSuggestionModal() {
   const queryClient = useQueryClient();
@@ -20,14 +20,10 @@ export default function CreateSuggestionModal() {
     setCreateModalOpen,
     createTitle: title,
     setCreateTitle: setTitle,
-    createCategory: category,
-    setCreateCategory: setCategory,
-    createPriority: priority,
-    setCreatePriority: setPriority,
+    createType: type,
+    setCreateType: setType,
     createProblem: problem,
     setCreateProblem: setProblem,
-    createSolution: solution,
-    setCreateSolution: setSolution,
     createIsAnonymous: isAnonymous,
     setCreateIsAnonymous: setIsAnonymous,
     createAttachments: attachments,
@@ -46,7 +42,7 @@ export default function CreateSuggestionModal() {
   };
 
   // Form dirty state check
-  const isDirty = title.trim() !== '' || problem.trim() !== '' || solution.trim() !== '' || attachments.length > 0;
+  const isDirty = title.trim() !== '' || problem.trim() !== '' || attachments.length > 0;
 
   const handleClose = () => {
     if (isDirty) {
@@ -66,6 +62,7 @@ export default function CreateSuggestionModal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-suggestions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-suggestions-all-stats'] });
       toast.success('Gửi đề xuất thành công!');
       handleResetForm();
       setCreateModalOpen(false);
@@ -94,10 +91,6 @@ export default function CreateSuggestionModal() {
       newErrors.problem = 'Vui lòng nhập chi tiết vấn đề tồn tại.';
     }
 
-    if (!priority) {
-      newErrors.priority = 'Vui lòng chọn mức độ ưu tiên.';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -112,10 +105,9 @@ export default function CreateSuggestionModal() {
 
     const payload = {
       title: title.trim(),
-      content: `${problem.trim()}|||${solution.trim()}`,
+      content: `${problem.trim()}`,
       anonymous: isAnonymous,
-      category: category,
-      priority: priority,
+      type: type,
     };
 
     createMutation.mutate({
@@ -229,37 +221,27 @@ export default function CreateSuggestionModal() {
           fullWidth
         />
 
-        {/* Category & Priority Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Category */}
-          <Select
-            label="Loại đề xuất"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            options={[
-              { value: 'process', label: 'Quy trình' },
-              { value: 'technology', label: 'Công nghệ' },
-              { value: 'environment', label: 'Môi trường' },
-              { value: 'other', label: 'Khác' },
-            ]}
-            disabled={createMutation.isPending}
-            className="w-full"
-          />
-
-          {/* Priority */}
-          <Select
-            label="Mức độ ưu tiên"
-            value={priority}
-            onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
-            options={[
-              { value: 'low', label: 'Thấp' },
-              { value: 'medium', label: 'Trung bình' },
-              { value: 'high', label: 'Cao' },
-            ]}
-            disabled={createMutation.isPending}
-            className="w-full"
-          />
-        </div>
+        <Select
+          label="Loại đề xuất"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          options={[
+            { value: 'process', label: 'Cải tiến quy trình làm việc' },
+            { value: 'product', label: 'Cải tiến sản phẩm/dịch vụ' },
+            { value: 'technology', label: 'Đề xuất kỹ thuật, CNTT' },
+            { value: 'cost', label: 'Tiết kiệm chi phí' },
+            { value: 'quality', label: 'Nâng cao chất lượng' },
+            { value: 'safety', label: 'An toàn lao động' },
+            { value: 'workplace', label: 'Môi trường làm việc' },
+            { value: 'welfare', label: 'Chế độ, phúc lợi' },
+            { value: 'training', label: 'Đào tạo, phát triển nhân sự' },
+            { value: 'customer', label: 'Chăm sóc khách hàng' },
+            { value: 'complaint', label: 'Phản ánh, khiếu nại' },
+            { value: 'other', label: 'Khác' },
+          ]}
+          disabled={createMutation.isPending}
+          className="w-full"
+        />
 
         {/* Anonymous Check */}
         <div className="flex items-center px-1 py-1">
@@ -307,7 +289,7 @@ export default function CreateSuggestionModal() {
                   <div key={item.id} className="shrink-0 max-w-50 md:max-w-xs">
                     {item.preview ? (
                       <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200">
-                        <Image src={item.preview} alt="Preview" className="w-full h-full object-cover" />
+                        <img src={item.preview} alt="Preview" className="w-full h-full object-cover" />
                         <button
                           type="button"
                           onClick={() => handleRemoveFile(item.id)}
@@ -351,21 +333,6 @@ export default function CreateSuggestionModal() {
             if (errors.problem) setErrors((prev) => ({ ...prev, problem: '' }));
           }}
           error={errors.problem}
-          disabled={createMutation.isPending}
-          rows={3}
-          fullWidth
-        />
-
-        {/* Solution */}
-        <Textarea
-          label="Giải pháp đề xuất"
-          placeholder="Đề xuất các phương án, kế hoạch hoặc sáng kiến cải tiến khả thi..."
-          value={solution}
-          onChange={(e) => {
-            setSolution(e.target.value);
-            if (errors.solution) setErrors((prev) => ({ ...prev, solution: '' }));
-          }}
-          error={errors.solution}
           disabled={createMutation.isPending}
           rows={3}
           fullWidth

@@ -51,27 +51,35 @@ export default function StatCards({ containerWidth }: { containerWidth?: number 
   const processedRecent = approvedSolutions + rejectedSolutions;
   const unprocessedRecent = proposals.filter((p: Suggestion) => p.status === 'pending').length;
 
-  // Hàm bổ trợ phân loại chủ đề linh hoạt từ category hoặc content
+  // Hàm bổ trợ phân loại chủ đề linh hoạt từ type hoặc content
   const getProposalCategory = (p: Suggestion) => {
-    const cat = (p.category || '').toLowerCase().trim();
-    if (cat === 'process' || cat.includes('quy trình')) return 'process';
-    if (cat === 'technology' || cat.includes('công nghệ')) return 'technology';
-    if (cat === 'environment' || cat.includes('môi trường')) return 'environment';
+    const cat = (p.type || '').toLowerCase().trim();
+    if (cat === 'process') return 'process';
+    if (cat === 'technology') return 'technology';
+    if (cat === 'environment') return 'environment';
+    if (cat === 'cost') return 'cost';
+    if (cat === 'quality') return 'quality';
+    if (cat === 'safety') return 'safety';
+    if (cat === 'workplace') return 'workplace';
+    if (cat === 'welfare') return 'welfare';
+    if (cat === 'training') return 'training';
+    if (cat === 'customer') return 'customer';
+    if (cat === 'complaint') return 'complaint';
     return 'other';
   };
 
   // Phân loại chủ đề
   const processCount = proposals.filter((p: Suggestion) => getProposalCategory(p) === 'process').length;
   const techCount = proposals.filter((p: Suggestion) => getProposalCategory(p) === 'technology').length;
-  const envCount = proposals.filter((p: Suggestion) => getProposalCategory(p) === 'environment').length;
+  const envCount = proposals.filter((p: Suggestion) => getProposalCategory(p) === 'workplace').length;
 
   const total = proposals.length;
-  const displayTotal = total > 0 ? total : 128;
+  const displayTotal = total ?? 0;
 
-  const processPercent = total > 0 ? Math.round((processCount / total) * 100) : 50;
-  const techPercent = total > 0 ? Math.round((techCount / total) * 100) : 20;
-  const envPercent = total > 0 ? Math.round((envCount / total) * 100) : 12;
-  const otherPercent = total > 0 ? 100 - processPercent - techPercent - envPercent : 18;
+  const processPercent = total > 0 ? Math.round((processCount / total) * 100) : 0;
+  const techPercent = total > 0 ? Math.round((techCount / total) * 100) : 0;
+  const envPercent = total > 0 ? Math.round((envCount / total) * 100) : 0;
+  const otherPercent = total > 0 ? 100 - processPercent - techPercent - envPercent : 0;
 
   const radius = 48;
   const circumference = 2 * Math.PI * radius; // ~301.59
