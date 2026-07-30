@@ -3,10 +3,10 @@ WORKDIR /app
 
 # Sao chép mã nguồn và cài đặt dependencies
 COPY . .
-RUN corepack enable pnpm && pnpm install --frozen-lockfile
+RUN npm ci
 
 # Build ứng dụng
-RUN pnpm build
+RUN npm run build
 
 EXPOSE 3000
-CMD ["pnpm", "start"]
+CMD ["npm", "start"]
