@@ -1,7 +1,15 @@
+// Thành phần dùng chung cho toàn trang
 import { Heading } from '@/components';
+
+// Các thành phần dùng riêng cho phòng ban
 import StatCart from './_components/stats-card';
+import ActionBar from './_components/action-bar';
+import Table from './_components/table';
+
+// icons thư viện lucide - react
 import { Building2, Users, UserCheck, Briefcase } from 'lucide-react';
 
+// Dữ liệu mockup cho stat - card
 const departmentStats = [
   {
     title: 'Tổng số phòng ban',
@@ -56,6 +64,8 @@ const Page = () => {
           />
         ))}
       </div>
+      <ActionBar />
+      <Table/>
     </div>
   );
 };
