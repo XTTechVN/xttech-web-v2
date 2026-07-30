@@ -27,8 +27,8 @@ const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       isAuthenticated: false,
-      accessToken: "",
-      refreshToken: "",
+      accessToken: '',
+      refreshToken: '',
       user: null,
       isLoading: false,
       signin: async (username: string, password: string) => {
@@ -41,8 +41,7 @@ const useAuthStore = create<AuthState>()(
           return true;
         } catch (error) {
           return false;
-        }
-        finally{
+        } finally {
           set({ isLoading: false });
         }
       },
@@ -50,12 +49,12 @@ const useAuthStore = create<AuthState>()(
       setAccessToken: (accessToken: string) => set({ accessToken }),
     }),
     {
-      name: 'auth',
+      name: 'xt-auth',
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken
+        refreshToken: state.refreshToken,
       }),
     },
   ),
