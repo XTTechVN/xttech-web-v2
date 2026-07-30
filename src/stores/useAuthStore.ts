@@ -1,12 +1,10 @@
-// Bộ tiện ích gọi API cấu hình sẵn Axios
-import api from '@/utils/api';
-
 // Thư viện quản lý trạng thái client-side
 import { create } from 'zustand';
 
 // Middleware lưu trữ trạng thái của Zustand vào LocalStorage
 import { persist } from 'zustand/middleware';
 
+// Hàm xử lý đăng nhập
 import { signIn } from '@/actions';
 
 // Kiểu dữ liệu dùng chung cho thông tin tài khoản và kết quả đăng nhập
