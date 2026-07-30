@@ -37,18 +37,19 @@ const MicrosoftIcon = () => (
 
 const LoginOption = () => {
   return (
-    <div className="flex flex-col gap-3 md:gap-4 w-full">
-      <div className="relative flex items-center justify-center py-1 md:py-2">
+    <div className="flex flex-col gap-4 w-full">
+      <div className="relative flex items-center justify-center py-2">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-gray-100"></div>
         </div>
-        <span className="relative px-3 text-[10px] md:text-xs font-semibold text-gray-400 bg-white uppercase">OR</span>
+        <span className="relative px-3 text-xs font-semibold text-gray-400 bg-white uppercase">OR</span>
       </div>
-      <div className="flex flex-col gap-2 md:gap-3">
+      <div className="flex flex-col gap-3">
         <Button
           variant="outline"
           fullWidth
-          className="rounded-xl border-gray-200 hover:border-gray-300 active:bg-gray-50 flex items-center justify-center gap-2.5 font-semibold text-gray-700 text-xs md:text-sm h-10 md:h-12"
+          size="lg"
+          className="rounded-xl border-gray-200 hover:border-gray-300 active:bg-gray-50 flex items-center justify-center gap-3 font-semibold text-gray-700 text-sm h-12"
           leftIcon={<GoogleIcon />}
         >
           Đăng nhập với Google
@@ -56,13 +57,14 @@ const LoginOption = () => {
         <Button
           variant="outline"
           fullWidth
-          className="rounded-xl border-gray-200 hover:border-gray-300 active:bg-gray-50 flex items-center justify-center gap-2.5 font-semibold text-gray-700 text-xs md:text-sm h-10 md:h-12"
+          size="lg"
+          className="rounded-xl border-gray-200 hover:border-gray-300 active:bg-gray-50 flex items-center justify-center gap-3 font-semibold text-gray-700 text-sm h-12"
           leftIcon={<MicrosoftIcon />}
         >
           Đăng nhập với Microsoft
         </Button>
       </div>
-      <div className="text-center text-[11px] md:text-xs text-gray-500 mt-2 md:mt-4">
+      <div className="text-center text-xs text-gray-500 mt-4">
         Chưa có tài khoản?{' '}
         <Link href="/signup" className="font-semibold text-primary hover:underline">
           Yêu cầu tạo tài khoản
