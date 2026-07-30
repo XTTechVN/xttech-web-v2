@@ -5,12 +5,12 @@ import api from '@/utils/api';
 import { create } from 'zustand';
 
 // Middleware lưu trữ trạng thái của Zustand vào LocalStorage
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 
-import { getSignIn } from '@/actions';
+import { signIn } from '@/actions';
 
 // Kiểu dữ liệu dùng chung cho thông tin tài khoản và kết quả đăng nhập
-import { SignInResponse, AuthUser } from '@/types';
+import { AuthUser } from '@/types';
 
 // Kiểu dữ liệu cho trạng thái đăng nhập
 interface AuthState {
@@ -34,7 +34,7 @@ const useAuthStore = create<AuthState>()(
       signin: async (username: string, password: string) => {
         try {
           set({ isLoading: true });
-          const res = await getSignIn({ username, password });
+          const res = await signIn({ username, password });
           const { accessToken, refreshToken, user } = res;
           set({ accessToken, refreshToken, user, isAuthenticated: true });
 
