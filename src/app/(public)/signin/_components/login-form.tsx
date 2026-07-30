@@ -55,7 +55,7 @@ const LoginForm = () => {
   };
 
   return (
-    <form className="flex flex-col gap-3 md:gap-4 w-full" onSubmit={handleSubmit(onSubmit)}>
+    <form className="flex flex-col gap-4 w-full" onSubmit={handleSubmit(onSubmit)}>
       {error && <div className="text-red-500 text-xs bg-red-50 p-2.5 rounded-lg border border-red-100 font-medium">{error}</div>}
 
       {/* Nhập tên đăng nhập */}
@@ -87,15 +87,15 @@ const LoginForm = () => {
       </div>
 
       {/* Ghi nhớ đăng nhập và quên mật khẩu */}
-      <div className="flex items-center justify-between mt-0.5">
-        <Checkbox label="Ghi nhớ đăng nhập" className="text-[11px] md:text-xs" />
-        <a href="#forgot" className="text-[11px] md:text-xs font-medium text-primary hover:underline">
+      <div className="flex items-center justify-between mt-1">
+        <Checkbox label="Ghi nhớ đăng nhập" className="text-xs" />
+        <a href="#forgot" className="text-xs font-medium text-primary hover:underline">
           Quên mật khẩu?
         </a>
       </div>
 
       {/* Nút đăng nhập */}
-      <Button type="submit" fullWidth className="mt-1 md:mt-2 h-10 md:h-12 text-xs md:text-sm font-semibold rounded-xl" disabled={isPending}>
+      <Button type="submit" size="lg" fullWidth className="mt-2 rounded-xl" disabled={isPending}>
         {isPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
       </Button>
     </form>
