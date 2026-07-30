@@ -2,8 +2,6 @@ import api from '@/utils/api';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-import useUserStore from './useUserStore';
-
 import { AxiosResponse } from 'axios';
 import { AuthResponse } from '@/types/shared';
 
@@ -43,7 +41,6 @@ const useAuthStore = create<AuthState>()(
           const { accessToken, refreshToken, user } = response.data;
 
           set({ accessToken, refreshToken, isAuthenticated: true });
-          useUserStore.getState().setUser(user);
 
           return true;
         } catch (error) {
@@ -54,7 +51,6 @@ const useAuthStore = create<AuthState>()(
       signout: () => {
         api.post('/api/v1/auth/signout').finally(() => {
           set({ isAuthenticated: false });
-          useUserStore.getState().clearUser();
         });
       },
 

@@ -1,9 +1,16 @@
 export interface User {
   id: string;
-  name: string;
-}
-
-export interface User2 {
-  id: number;
-  name: string;
+  email: string;
+  username: string;
+  fullName: string;
+  phoneNumber: string;
+  avatar: string | null;
+  gender: 'male' | 'female' | 'other' | string;
+  birthday: string;
+  address: string;
+  joinedAt: string;
+  identifyCode: string;
+  attendancePolicy: 'administrative' | string;
+  createdAt: string;
+  updatedAt: string;
 }

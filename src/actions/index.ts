@@ -12,3 +12,7 @@ export * from './user/permission';
 
 // Customers
 export * from './customer';
+
+// Suggestions
+export * from './suggestion';
+
