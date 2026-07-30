@@ -1,8 +1,9 @@
+import React, { useState } from 'react';
 // Heading dùng chung cho toàn bộ trang
-import { Heading } from '@/components';
+import { Heading, Modal, Button } from '@/components';
 
 // Icons thư viện lucide-react
-import { Eye, Download } from 'lucide-react';
+import { Eye, Download, Calendar, FileText } from 'lucide-react';
 
 // Kiểu dữ liệu dùng riêng cho tài liệu
 interface DocumentItem {
@@ -59,6 +60,8 @@ const mockDocuments: DocumentItem[] = [
 ];
 
 const Document = () => {
+  const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
+
   // Lấy màu dựa theo loại file
   const getBadgeColor = (type: string) => {
     switch (type) {
@@ -93,7 +96,7 @@ const Document = () => {
                 <span className="text-[10px] text-gray-400">Cập nhật: {doc.updatedAt}</span>
               </div>
               <div className="flex gap-1.5 text-gray-500 shrink-0 mt-1">
-                <button className="hover:text-primary p-0.5 transition" title="Xem chi tiết">
+                <button onClick={() => setSelectedDoc(doc)} className="hover:text-primary p-0.5 transition cursor-pointer" title="Xem chi tiết">
                   <Eye size={14} />
                 </button>
                 <button className="hover:text-primary p-0.5 transition" title="Tải xuống">
@@ -104,6 +107,24 @@ const Document = () => {
           </div>
         ))}
       </div>
+
+      {/* Modal chi tiết tài liệu */}
+      <Modal
+        isOpen={!!selectedDoc}
+        onClose={() => setSelectedDoc(null)}
+        title="Chi tiết tài liệu"
+        size="xl"
+        footer={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setSelectedDoc(null)}>
+              Đóng
+            </Button>
+            <Button className="flex items-center gap-1.5">Tải xuống</Button>
+          </div>
+        }
+      >
+        {selectedDoc && <div className="flex flex-col gap-4"></div>}
+      </Modal>
     </div>
   );
 };
