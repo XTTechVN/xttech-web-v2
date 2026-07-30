@@ -1,3 +1,4 @@
+// Icons thư viện lucide - react
 import { TrendingDown, TrendingUp } from 'lucide-react';
 
 const StatCart = ({
@@ -5,17 +6,17 @@ const StatCart = ({
   value,
   icon,
   trend,
-  trendType = 'up',
+  trendDirection = 'up',
   onClick,
 }: {
   title: string;
   value: string;
   icon: React.ReactNode;
   trend: number;
-  trendType?: string;
+  trendDirection?: 'up' | 'down';
   onClick?: () => void;
 }) => {
-  const isUp = trendType === 'up';
+  const isUp = trendDirection === 'up';
 
   return (
     <div

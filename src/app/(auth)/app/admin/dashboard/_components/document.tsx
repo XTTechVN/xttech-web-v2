@@ -59,6 +59,7 @@ const mockDocuments: DocumentItem[] = [
 ];
 
 const Document = () => {
+  // Lấy màu dựa theo loại file
   const getBadgeColor = (type: string) => {
     switch (type) {
       case 'PDF':
