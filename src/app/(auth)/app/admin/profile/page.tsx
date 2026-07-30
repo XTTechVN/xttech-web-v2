@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 // Thành phần dùng chung cho toàn trang
 import { Heading, Button } from '@/components';
 
@@ -12,7 +10,8 @@ import { LogOut } from 'lucide-react';
 
 const Page = () => {
   const handleLogout = () => {
-    alert('Đăng xuất thành công!');
+    localStorage.clear();
+    window.location.href = '/signin';
   };
 
   return (
