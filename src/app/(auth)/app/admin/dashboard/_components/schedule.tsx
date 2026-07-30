@@ -1,7 +1,10 @@
 // Heading dùng chung cho toàn bộ trang
 import { Heading } from '@/components';
-import { Calendar, Clock, MapPin } from 'lucide-react';
 
+// Icons của lucide - react
+import { Clock, MapPin } from 'lucide-react';
+
+//  Kiểu dữ liệu cho lịch đào tạo
 interface ScheduleEvent {
   id: string;
   title: string;
@@ -62,6 +65,8 @@ const mockEvents: ScheduleEvent[] = [
 ];
 
 const Schedule = () => {
+
+  // Lấy màu dựa theo trạng thái
   const getStatusStyles = (status: string) => {
     switch (status) {
       case 'ongoing':
@@ -73,6 +78,7 @@ const Schedule = () => {
     }
   };
 
+  // Lấy nhãn dựa theo trạng thái
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'ongoing':
@@ -89,7 +95,7 @@ const Schedule = () => {
       <Heading size="h2" className="text-primary text-lg">
         Lịch đào tạo và Sự kiện
       </Heading>
-      
+
       <div className="flex flex-col gap-3 max-h-40 overflow-y-auto pr-1 scrollbar-hide">
         {mockEvents.map((event) => (
           <div key={event.id} className="flex gap-3 p-2 hover:bg-gray-50 rounded-lg transition border border-transparent hover:border-gray-100">
@@ -105,7 +111,9 @@ const Schedule = () => {
                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-400 mt-1">
                     <div className="flex items-center gap-1">
                       <Clock size={12} className="text-gray-400 shrink-0" />
-                      <span>{event.date} • {event.time}</span>
+                      <span>
+                        {event.date} • {event.time}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <MapPin size={12} className="text-gray-400 shrink-0" />

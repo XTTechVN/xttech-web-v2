@@ -1,9 +1,4 @@
-'use client';
-
-import React, { useState } from 'react';
-import { Input } from '@/components';
-import { Select } from '@/components';
-
+//  Kiểu dữ liệu cho lịch sử truy cập hệ thống
 interface HistoryLog {
   id: string;
   time: string;

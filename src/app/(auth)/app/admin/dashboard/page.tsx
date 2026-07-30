@@ -12,7 +12,6 @@ import { Heading } from '@/components';
 
 // Icon thư viện lucide-react
 import { Users, UserPlus, Building2, Briefcase, BarChart3, LayoutGrid } from 'lucide-react';
-import { Head } from 'next/document';
 
 // Dữ liệu mockup cho stat - card
 const statsMockupData = [
@@ -21,35 +20,34 @@ const statsMockupData = [
     value: '10',
     icon: <Users size={18} />,
     trend: 5,
-    trendType: 'up',
+    trendDirection: 'up' as const,
   },
   {
     title: 'Số lượng ứng viên',
     value: '45',
     icon: <UserPlus size={18} />,
     trend: 12,
-    trendType: 'up',
+    trendDirection: 'up' as const,
   },
   {
     title: 'Số người đã chấm công',
     value: '8',
     icon: <Briefcase size={18} />,
     trend: 2,
-    trendType: 'up',
+    trendDirection: 'up' as const,
   },
   {
     title: 'Số buổi đào tạo',
     value: '8',
     icon: <LayoutGrid size={18} />,
     trend: 2,
-    trendType: 'up',
+    trendDirection: 'up' as const,
   },
 ];
 
 const page = () => {
   return (
     <div className="flex relative">
-      {/* Nội dung chínhg*/}
       <div className="flex-1 min-w-0 flex flex-col p-3 gap-4">
         <div className="flex flex-col gap-2">
           <Heading size="h1" className="text-primary">
@@ -59,10 +57,9 @@ const page = () => {
             Quản lý nội bộ báo cáo an toàn hiệu quả cho doanh nghiệp
           </Heading>
         </div>
-
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
           {statsMockupData.map((stat, index) => (
-            <StatCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendType={stat.trendType} />
+            <StatCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection} />
           ))}
         </div>
         <div className="md:grid md:grid-cols-12 md:gap-4 flex flex-col gap-2">
