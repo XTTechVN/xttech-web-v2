@@ -7,8 +7,7 @@ import { create } from 'zustand';
 // Middleware lưu trữ trạng thái của Zustand vào LocalStorage
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-// Kiểu dữ liệu phản hồi của Axios
-import { AxiosResponse } from 'axios';
+import { getSignIn } from '@/actions';
 
 // Kiểu dữ liệu dùng chung cho thông tin tài khoản và kết quả đăng nhập
 import { SignInResponse, AuthUser } from '@/types';
@@ -16,35 +15,35 @@ import { SignInResponse, AuthUser } from '@/types';
 // Kiểu dữ liệu cho trạng thái đăng nhập
 interface AuthState {
   isAuthenticated: boolean;
-  accessToken: string | null;
-  refreshToken: string | null;
+  accessToken: string;
+  refreshToken: string;
   user: AuthUser | null;
+  isLoading: boolean;
   signin: (username: string, password: string) => Promise<boolean>;
   setAccessToken: (accessToken: string) => void;
 }
 
 const useAuthStore = create<AuthState>()(
   persist(
-    (set: any) => ({
-      isAuthenticated: false as boolean,
-      accessToken: null as string | null,
-      refreshToken: null as string | null,
-      user: null as AuthUser | null,
-
+    (set) => ({
+      isAuthenticated: false,
+      accessToken: "",
+      refreshToken: "",
+      user: null,
+      isLoading: false,
       signin: async (username: string, password: string) => {
         try {
-          const response: AxiosResponse<SignInResponse> = await api.post('/api/v1/auth/signin', {
-            username,
-            password,
-          });
-
-          const { accessToken, refreshToken, user } = response.data;
-
+          set({ isLoading: true });
+          const res = await getSignIn({ username, password });
+          const { accessToken, refreshToken, user } = res;
           set({ accessToken, refreshToken, user, isAuthenticated: true });
 
           return true;
         } catch (error) {
           return false;
+        }
+        finally{
+          set({ isLoading: false });
         }
       },
 
@@ -52,7 +51,12 @@ const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth',
-      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken
+      }),
     },
   ),
 );
