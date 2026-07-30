@@ -49,7 +49,7 @@ api.interceptors.response.use(
         const refreshToken = useAuthStore.getState().refreshToken;
         // call api refresh, api này sẽ tự cấp phát vào cookie
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://api_vision.bosky.vn'}/api/v1/auth/refresh`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'https://dev-xt-api-v2.up.railway.app'}/api/v1/auth/refresh`,
           {},
           {
             headers: {
