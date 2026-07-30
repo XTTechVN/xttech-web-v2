@@ -31,8 +31,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="">
+    <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="flex justify-center items-center h-screen w-screen bg-white" suppressHydrationWarning>
         {children}
         <Toaster position="top-center" />
       </body>
