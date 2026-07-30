@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Tooltip, Button, TableData, Badge, Breadcrumb, ITableColumn } from '@/components';
 import { toast } from 'react-hot-toast';
 import { Plus, RefreshCw, Pencil, Trash2, Eye } from 'lucide-react';
-import AddAttendanceModal from "./_components/AddAttendanceModal";
-import EditAttendanceModal from "./_components/EditAttendanceModal";
-import AttendanceDetailModal from "./_components/AttendanceDetailModal";
+import AddAttendanceModal from "./_components/add-attendance-modal";
+import EditAttendanceModal from "./_components/edit-attendance-modal";
+import AttendanceDetailModal from "./_components/attendance-detail-modal";
 import Loading from '../../loading';
 
 export interface UserResponse {
