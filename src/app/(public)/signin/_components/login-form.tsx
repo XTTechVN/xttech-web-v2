@@ -17,37 +17,32 @@ import { useRouter } from 'next/navigation';
 // Icons của lucide-react
 import { Eye, EyeOff } from 'lucide-react';
 
+import { useForm } from 'react-hook-form';
+
 const LoginForm = () => {
   const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [usernameError, setUsernameError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
   const [error, setError] = useState('');
   const [isPending, startTransition] = useTransition();
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      username: '',
+      password: '',
+    },
+  });
+
   // Hàm xử lý khi người dùng submit form
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setUsernameError('');
-    setPasswordError('');
+  const onSubmit = (data: any) => {
     setError('');
 
-    let hasError = false;
-    if (!username) {
-      setUsernameError('Vui lòng nhập vào tên đăng nhập');
-      hasError = true;
-    }
-    if (!password) {
-      setPasswordError('Vui lòng nhập vào mật khẩu');
-      hasError = true;
-    }
-
-    if (hasError) return;
     // Xử lý logic đăng nhập
     startTransition(async () => {
-      const success = await useAuthStore.getState().signin(username, password);
+      const success = await useAuthStore.getState().signin(data.username, data.password);
       if (success) {
         toast.success('Đăng nhập thành công!');
         router.push('/app/admin/dashboard');
@@ -60,20 +55,16 @@ const LoginForm = () => {
   };
 
   return (
-    <form className="flex flex-col gap-4 w-full" onSubmit={handleSubmit}>
+    <form className="flex flex-col gap-4 w-full" onSubmit={handleSubmit(onSubmit)}>
       {error && <div className="text-red-500 text-xs bg-red-50 p-2.5 rounded-lg border border-red-100 font-medium">{error}</div>}
 
       {/* Nhập tên đăng nhập */}
       <Input
         label="Tên đăng nhập"
         type="text"
-        value={username}
-        onChange={(e) => {
-          setUsername(e.target.value);
-          if (usernameError) setUsernameError('');
-        }}
         placeholder="Nhập tên đăng nhập"
-        error={usernameError}
+        error={errors.username?.message}
+        {...register('username', { required: 'Vui lòng nhập vào tên đăng nhập' })}
       />
 
       {/* Nhập mật khẩu */}
@@ -81,14 +72,10 @@ const LoginForm = () => {
         <Input
           label="Mật khẩu"
           type={showPassword ? 'text' : 'password'}
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            if (passwordError) setPasswordError('');
-          }}
           placeholder="••••••••"
-          error={passwordError}
+          error={errors.password?.message}
           className="pr-10"
+          {...register('password', { required: 'Vui lòng nhập vào mật khẩu' })}
         />
         <button
           type="button"
