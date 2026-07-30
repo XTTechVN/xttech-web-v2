@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Tooltip, Button, TableData, Badge, Breadcrumb, ITableColumn } from '@/components';
 import { toast } from 'react-hot-toast';
-import { Plus, RefreshCw, Pencil, Trash2, Eye } from 'lucide-react';
+import { Plus, RefreshCw, Pencil, Trash2, Eye, FileWarning } from 'lucide-react';
 import AddAttendanceModal from "./_components/add-attendance-modal";
 import EditAttendanceModal from "./_components/edit-attendance-modal";
 import AttendanceDetailModal from "./_components/attendance-detail-modal";
 import Loading from '../../loading';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import attendanceApi from './api';
 
 export interface UserResponse {
   id: string;
@@ -133,10 +136,29 @@ export default function AttendancesPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState<Attendance | null>(null);
 
+  const pathname = usePathname();
+  const isAppealPage = pathname.includes('/attendances/appeals');
+
+  useEffect(() => {
+    const getAttendancesList = async () => {
+      try {
+        const res = await attendanceApi.getAttendances();
+        console.log(res);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    getAttendancesList();
+  }, []);
+
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/app' },
     { label: 'Quản lý', href: '/app/admin' },
     { label: 'Chấm công', href: '/app/admin/attendances' },
+    ...(isAppealPage
+      ? [{ label: 'Khiếu nại', href: '/app/admin/attendances/appeals' }]
+      : []),
   ];
 
   // Tạo option list duy nhất từ mock data
@@ -300,7 +322,7 @@ export default function AttendancesPage() {
     {
       key: 'workDate',
       label: 'Ngày làm việc',
-      minWidth: '120px',
+      minWidth: '60px',
       cell: (row) => (
         <span className="font-medium text-slate-500">{row.workDate}</span>
       ),
@@ -450,16 +472,25 @@ export default function AttendancesPage() {
         </div>
 
         <div className="flex shrink-0 flex-nowrap items-center gap-2">
+          <Link href="/app/admin/attendances/appeals">
+            <Button
+              className="gap-2"
+              leftIcon={<FileWarning size={15} />}
+            >
+              Khiếu nại
+            </Button>
+          </Link>
           <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => toast.success('Làm mới thành công')}
-          >
-            <RefreshCw size={15} />
+            className='gap-2'
+            leftIcon={<Plus size={16} />}
+            onClick={() => setShowAddModal(true)}>
+            Thêm mới
           </Button>
-
-          <Button className="gap-2" onClick={() => setShowAddModal(true)}>
-            <Plus size={15} />
+          <Button
+            className='gap-2'
+            leftIcon={<RefreshCw size={16} />}
+            onClick={() => toast.success('Làm mới thành công')}>
+            Tải lại trang
           </Button>
         </div>
       </div>

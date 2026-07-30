@@ -5,8 +5,10 @@ import axios from "axios";
 /**
  * Axios Client
  */
+
+const url = "https://dev-xt-api-v2.up.railway.app";
 const axiosClient = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL + "/api/v1",
+    baseURL: url + "/api/v1",
     headers: {
         "Content-Type": "application/json",
     },
