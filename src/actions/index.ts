@@ -12,3 +12,6 @@ export * from './user/permission';
 
 // Customers
 export * from './customer';
+
+// Authentication
+export * from './auth';
