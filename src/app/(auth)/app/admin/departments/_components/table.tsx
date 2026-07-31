@@ -3,7 +3,7 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
-import * as LucideIcons from 'lucide-react';
+import {Building2, Pencil, Trash2} from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData } from '@/components/table';
@@ -14,13 +14,14 @@ import { Department } from '@/types';
 
 // Store
 import { useDapartmentStore } from '@/stores';
+import DepartmentFormModal from './form-modal';
 
 // toast
 import toast from 'react-hot-toast';
 
 // Component hiển thị Badge Icon đẹp mắt
 const IconBadge = ({ iconName, color }: { iconName: string; color: string }) => {
-  const IconComponent = (LucideIcons as any)[iconName] || LucideIcons.Building2;
+  const IconComponent = Building2;
   return (
     <div
       className="w-9 h-9 rounded-lg flex items-center justify-center border transition-all duration-200 hover:scale-105"
@@ -36,6 +37,10 @@ const IconBadge = ({ iconName, color }: { iconName: string; color: string }) => 
 };
 
 const Table = () => {
+  // Trạng thái cho modal sửa phòng ban
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [selectedDept, setSelectedDept] = React.useState<Department | null>(null);
+
   // Lấy action fetch danh sách phòng ban từ store
   const fetchDepartments = useDapartmentStore((state) => state.fetchDepartments);
 
@@ -48,6 +53,12 @@ const Table = () => {
     }
     toast.success('Tải danh sách phòng ban thành công');
     return res;
+  };
+
+  const handleEditSubmit = (data: { name: string; mainColor: string; mainIcon: string }) => {
+    alert(`Mock Sửa: ${selectedDept?.name} -> ${data.name} | Màu: ${data.mainColor} | Icon: ${data.mainIcon}`);
+    setIsEditOpen(false);
+    setSelectedDept(null);
   };
 
   // Cấu hình các cột cho Desktop
@@ -90,12 +101,18 @@ const Table = () => {
       minWidth: '150px',
       cell: (row: Department) => (
         <div className="flex gap-2">
-          <button className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10">
-            <LucideIcons.Pencil size={18} />
+          <button
+            onClick={() => {
+              setSelectedDept(row);
+              setIsEditOpen(true);
+            }}
+            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+          >
+            <Pencil size={18} />
           </button>
 
           <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100">
-            <LucideIcons.Trash2 size={18} />
+            <Trash2 size={18} />
           </button>
         </div>
       ),
@@ -125,17 +142,20 @@ const Table = () => {
       </div>
       <div className="flex gap-2">
         <button
-          onClick={() => alert(`Sửa phòng ban: ${row.name}`)}
+          onClick={() => {
+            setSelectedDept(row);
+            setIsEditOpen(true);
+          }}
           className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
         >
-          <LucideIcons.Pencil size={18} />
+          <Pencil size={18} />
         </button>
 
         <button
           onClick={() => alert(`Xóa phòng ban: ${row.name}`)}
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
         >
-          <LucideIcons.Trash2 size={18} />
+          <Trash2 size={18} />
         </button>
       </div>
     </div>
@@ -147,6 +167,23 @@ const Table = () => {
         Danh sách phòng ban
       </Heading>
       <TableData<Department> queryKey={['departments']} fetcher={fetcher} columns={columns} renderCard={renderCard} select={false} />
+
+      {/* Modal Sửa phòng ban */}
+      <DepartmentFormModal
+        isOpen={isEditOpen}
+        onClose={() => {
+          setIsEditOpen(false);
+          setSelectedDept(null);
+        }}
+        onSubmit={handleEditSubmit}
+        title="Sửa phòng ban"
+        submitText="Xác nhận lưu"
+        initialData={selectedDept ? {
+          name: selectedDept.name,
+          mainColor: selectedDept.mainColor,
+          mainIcon: selectedDept.mainIcon,
+        } : undefined}
+      />
     </div>
   );
 };
