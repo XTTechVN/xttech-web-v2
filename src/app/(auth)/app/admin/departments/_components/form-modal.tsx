@@ -5,6 +5,7 @@ import { Input, Button, Modal } from '@/components';
 import * as LucideIcons from 'lucide-react';
 import { Plus, CheckCircle2 } from 'lucide-react';
 
+// Màu sắc
 const colors = [
   '#EF4444', // Đỏ
   '#3F6212', // Xanh lục đậm
@@ -16,6 +17,7 @@ const colors = [
   '#D1D5DB', // Xám
 ];
 
+// Icon biểu tượng
 const availableIcons = [
   { name: 'Building2', Icon: LucideIcons.Building2 },
   { name: 'Megaphone', Icon: LucideIcons.Megaphone },
@@ -31,6 +33,7 @@ const availableIcons = [
   { name: 'Code', Icon: LucideIcons.Code },
 ];
 
+// Kiểu dữ liệu cho modal
 interface DepartmentFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -44,6 +47,7 @@ interface DepartmentFormModalProps {
   };
 }
 
+// Modal tạo / sửa phòng ban
 export default function DepartmentFormModal({
   isOpen,
   onClose,
