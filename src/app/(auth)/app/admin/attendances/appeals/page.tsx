@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Tooltip, Button, TableData, Badge, Breadcrumb, ITableColumn } from '@/components';
 import { toast } from 'react-hot-toast';
 import { Plus, RefreshCw, Pencil, Trash2, Eye, CheckCircle, XCircle } from 'lucide-react';
-import type { AttendanceAdjustmentRequest, AdjustmentStatus, RequestType } from '../api';
+import type { AttendanceAdjustmentRequest, AdjustmentStatus, RequestType } from '@/types';
 import AddAppealModal from './_components/add-appeal-modal';
 import EditAppealModal from './_components/edit-appeal-modal';
 import AppealDetailModal from './_components/appeal-detail-modal';
