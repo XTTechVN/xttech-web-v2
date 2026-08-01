@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getDepartments, createDepartment } from '@/actions/dapartment';
+import { getDepartments, createDepartment } from '@/actions/department';
 import { Department } from '@/types';
 
 // Kiểu dữ liệu cho trạng thái phòng ban

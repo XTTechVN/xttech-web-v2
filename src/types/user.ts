@@ -1,3 +1,4 @@
+// Kiểu dữ liệu thông tin người dùng
 export interface User {
   id: string;
   email: string;
@@ -10,7 +11,9 @@ export interface User {
   address: string;
   joinedAt: string;
   identifyCode: string;
-  attendancePolicy: 'administrative' | string;
+  attendancePolicy: string;
   createdAt: string;
   updatedAt: string;
+  roles: string[];
+  positions: string[];
 }

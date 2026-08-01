@@ -16,11 +16,6 @@ const ActionBar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useQueryParam('search');
 
-  const handleCreateDepartment = (data: { name: string; mainColor: string; mainIcon: string }) => {
-    alert(`Mock Tạo: ${data.name} | Màu: ${data.mainColor} | Icon: ${data.mainIcon}`);
-    setIsOpen(false);
-  };
-
   return (
     <div className="p-2 border border-gray-100 shadow-sm rounded-lg bg-white flex justify-between">
       <div className="flex justify-between w-full gap-4">
@@ -42,7 +37,6 @@ const ActionBar = () => {
       <DepartmentFormModal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        onSubmit={handleCreateDepartment}
         title="Thêm phòng ban mới"
         submitText="Xác nhận tạo"
       />

@@ -3,21 +3,26 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
-import {Building2, Pencil, Trash2} from 'lucide-react';
+import { Building2, Pencil, Trash2, AlertTriangle } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData } from '@/components/table';
-import { Heading } from '@/components';
+import { Heading, Modal, Button } from '@/components';
 
 // Kiểu dữ liệu phòng ban
 import { Department } from '@/types';
 
 // Store
+import { useSearchParams } from 'next/navigation';
 import { useDapartmentStore } from '@/stores';
 import DepartmentFormModal from './form-modal';
 
 // toast
 import toast from 'react-hot-toast';
+
+import { useMutation } from '@tanstack/react-query';
+import queryClient from '@/utils/query';
+import { deleteDepartment } from '@/actions/department';
 
 // Component hiển thị Badge Icon đẹp mắt
 const IconBadge = ({ iconName, color }: { iconName: string; color: string }) => {
@@ -37,12 +42,19 @@ const IconBadge = ({ iconName, color }: { iconName: string; color: string }) => 
 };
 
 const Table = () => {
+  const searchParams = useSearchParams();
+  const offset = Number(searchParams.get('offset') || 0);
+
   // Trạng thái cho modal sửa phòng ban
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [selectedDept, setSelectedDept] = React.useState<Department | null>(null);
 
-  // Lấy action fetch danh sách phòng ban từ store
-  const fetchDepartments = useDapartmentStore((state) => state.fetchDepartments);
+  // Trạng thái cho modal xóa phòng ban
+  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+  const [deptToDelete, setDeptToDelete] = React.useState<Department | null>(null);
+
+  // Lấy hàm fetch danh sách phòng ban từ store
+  const { fetchDepartments } = useDapartmentStore();
 
   // Hàm fetcher gọi API thực tế từ Store
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
@@ -51,23 +63,29 @@ const Table = () => {
       toast.error('Lỗi khi tải danh sách phòng ban');
       throw new Error('Lỗi khi tải danh sách phòng ban');
     }
-    toast.success('Tải danh sách phòng ban thành công');
     return res;
   };
-
-  const handleEditSubmit = (data: { name: string; mainColor: string; mainIcon: string }) => {
-    alert(`Mock Sửa: ${selectedDept?.name} -> ${data.name} | Màu: ${data.mainColor} | Icon: ${data.mainIcon}`);
-    setIsEditOpen(false);
-    setSelectedDept(null);
-  };
+  
+  // tạo hàm xóa phòng ban
+  const { mutate: deletDepartmentm, isPending } = useMutation({
+    mutationFn: deleteDepartment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['departments'] });
+      toast.success('Xóa phòng ban thành công');
+      setIsDeleteOpen(false);
+      setDeptToDelete(null);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   // Cấu hình các cột cho Desktop
   const columns = [
     {
-      key: 'icon',
-      label: 'Biểu tượng',
-      minWidth: '100px',
-      cell: (row: Department) => <IconBadge iconName={row.mainIcon} color={row.mainColor} />,
+      key: 'code',
+      label: 'Mã phòng ban',
+      cell: (row: Department) => <span className="text-slate-500 font-medium">{row.code}</span>,
     },
     {
       key: 'name',
@@ -111,7 +129,14 @@ const Table = () => {
             <Pencil size={18} />
           </button>
 
-          <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100">
+          <button
+            onClick={() => {
+              setDeptToDelete(row);
+              setIsDeleteOpen(true);
+            }}
+            disabled={isPending}
+            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+          >
             <Trash2 size={18} />
           </button>
         </div>
@@ -152,7 +177,11 @@ const Table = () => {
         </button>
 
         <button
-          onClick={() => alert(`Xóa phòng ban: ${row.name}`)}
+          onClick={() => {
+            setDeptToDelete(row);
+            setIsDeleteOpen(true);
+          }}
+          disabled={isPending}
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
         >
           <Trash2 size={18} />
@@ -175,15 +204,68 @@ const Table = () => {
           setIsEditOpen(false);
           setSelectedDept(null);
         }}
-        onSubmit={handleEditSubmit}
         title="Sửa phòng ban"
         submitText="Xác nhận lưu"
-        initialData={selectedDept ? {
-          name: selectedDept.name,
-          mainColor: selectedDept.mainColor,
-          mainIcon: selectedDept.mainIcon,
-        } : undefined}
+        initialData={
+          selectedDept
+            ? {
+                id: Number(selectedDept.id),
+                name: selectedDept.name,
+                code: selectedDept.code,
+              }
+            : undefined
+        }
       />
+
+      {/* Modal Xác nhận xóa phòng ban */}
+      <Modal
+        isOpen={isDeleteOpen}
+        onClose={() => {
+          setIsDeleteOpen(false);
+          setDeptToDelete(null);
+        }}
+        title="Xác nhận xóa phòng ban"
+        className="m-2 max-w-md w-full"
+      >
+        <div className="flex gap-4 items-center py-2">
+          <div className="p-2 bg-red-50 text-red-600 rounded-full shrink-0">
+            <AlertTriangle size={24} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Bạn có chắc chắn muốn xóa phòng ban{' '}
+              <strong className="text-gray-900 font-semibold">
+                {deptToDelete?.name}
+              </strong>
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3 justify-end w-full mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setIsDeleteOpen(false);
+              setDeptToDelete(null);
+            }}
+            disabled={isPending}
+          >
+            Hủy
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => {
+              if (deptToDelete) {
+                deletDepartmentm(deptToDelete.id);
+              }
+            }}
+            loading={isPending}
+          >
+            Xác nhận xóa
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 };
