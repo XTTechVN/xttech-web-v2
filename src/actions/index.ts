@@ -15,3 +15,6 @@ export * from './customer';
 
 // Authentication
 export * from './auth';
+
+// Attendance
+export * from './attendance';

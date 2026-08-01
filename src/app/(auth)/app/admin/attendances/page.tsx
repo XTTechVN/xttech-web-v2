@@ -10,59 +10,10 @@ import AttendanceDetailModal from "./_components/attendance-detail-modal";
 import Loading from '../../loading';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import attendanceApi from './api';
+import { useQuery } from '@tanstack/react-query';
+import { getAttendances } from '@/actions';
+import { Attendance } from '@/types';
 
-export interface UserResponse {
-  id: string;
-  email: string;
-  username: string;
-  fullName: string;
-  phoneNumber: string | null;
-  avatar: string | null;
-  gender: 'male' | 'female' | 'other';
-  birthday: string | null;
-  address: string | null;
-  joinedAt: string | null;
-  identifyCode: string;
-  attendancePolicy: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Attendance {
-  id: number;
-  userId: string;
-  workShiftId: number | null;
-  workDate: string;
-  checkIn: string | null;
-  checkInLatitude: number | null;
-  checkInLongitude: number | null;
-  isLate: boolean | null;
-  lateMinutes: number | null;
-  imgCheckinPath: string | null;
-  checkOut: string | null;
-  checkOutLatitude: number | null;
-  checkOutLongitude: number | null;
-  isEarlyLeave: boolean | null;
-  earlyLeaveMinutes: number | null;
-  imgCheckoutPath: string | null;
-  status: string | null;
-  note: string | null;
-  totalHours: number | null;
-  user: UserResponse | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AttendanceResponse {
-  items: Attendance[];
-  pagination: {
-    next: boolean;
-    total: number;
-    offset: number;
-    limit: number;
-  };
-}
 
 const mockAttendances: Attendance[] = Array.from({ length: 15 }, (_, index) => ({
   id: index + 1,
@@ -138,18 +89,22 @@ export default function AttendancesPage() {
 
   const pathname = usePathname();
   const isAppealPage = pathname.includes('/attendances/appeals');
-
+  const { data: attendances, isLoading: loadingAttendances } = useQuery({
+    queryKey: ['attendances'],
+    queryFn: () => getAttendances(),
+  })
+  // const createMutation = useMutation({
+  //   mutationFn: createAttendance,
+  //   onSuccess: () => {
+  //     toast.success('Thêm chấm công thành công');
+  //     queryClient.invalidateQueries({ queryKey: ['attendances'] });
+  //   },
+  //   onError: (error) => {
+  //     toast.error('Thêm chấm công thất bại');
+  //   },
+  // });
   useEffect(() => {
-    const getAttendancesList = async () => {
-      try {
-        const res = await attendanceApi.getAttendances();
-        console.log(res);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    getAttendancesList();
+    console.log(attendances);
   }, []);
 
   const breadcrumbItems = [
@@ -164,7 +119,7 @@ export default function AttendancesPage() {
   // Tạo option list duy nhất từ mock data
   const employeeOptions = [
     ...new Map(
-      mockAttendances.map((item) => [
+      mockAttendances?.map((item) => [
         item.userId,
         { label: item.user?.fullName ?? 'Không xác định', value: item.userId },
       ])
@@ -173,7 +128,7 @@ export default function AttendancesPage() {
 
   const workDateOptions = [
     ...new Map(
-      mockAttendances.map((item) => [
+      mockAttendances?.map((item) => [
         item.workDate,
         { label: item.workDate, value: item.workDate },
       ])
