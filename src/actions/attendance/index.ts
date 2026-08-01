@@ -1,11 +1,15 @@
 import api from "@/utils/api";
 import {
     Attendance,
+    AttendanceCreate,
     DataListResponse,
     AttendanceQueryParams,
     AttendanceAdjustmentRequest,
-    AutoTimekeepingData
+    AutoTimekeepingData,
+    UserResponse,
+    UserCreate
 } from "@/types";
+
 
 const baseVersion1 = "/api/v1";
 
@@ -21,7 +25,7 @@ export const getAttendances = async (
     return response.data;
 };
 
-export const createAttendance = async (data: Attendance) => {
+export const createAttendance = async (data: AttendanceCreate) => {
     return api.post<Attendance>(`${baseVersion1}/attendances`, data);
 }
 
@@ -83,3 +87,27 @@ export const deleteAdjustmentRequest = async (id: number) => {
         `${baseVersion1}/attendances/requests/${id}`
     );
 }
+
+export const getUsers = async (params?: any) => {
+    const res = await api.get<DataListResponse<UserResponse>>(
+        `${baseVersion1}/users`,
+        {
+            params,
+        }
+    );
+
+    return res.data;
+};
+
+export const createUser = async (
+    data: UserCreate
+) => {
+    const res = await api.post<UserResponse>(
+        `${baseVersion1}/users`,
+        data
+    );
+
+    return res.data;
+};
+
+

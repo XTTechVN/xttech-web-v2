@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components";
 import { X } from "lucide-react";
-import { Attendance } from "../page";
-
+import { Attendance } from "@/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { updateAttendance } from "@/actions";
 interface Props {
     open: boolean;
     data: Attendance | null;
@@ -34,7 +36,48 @@ export default function EditAttendanceModal({
     useEffect(() => {
         setForm(data);
     }, [data]);
+    const queryClient = useQueryClient();
 
+
+    const updateMutation = useMutation({
+        mutationFn: ({
+            id,
+            data,
+        }: {
+            id: number;
+            data: Attendance;
+        }) => updateAttendance(id, data),
+
+
+        onSuccess: () => {
+
+            toast.success(
+                "Cập nhật chấm công thành công"
+            );
+
+
+            queryClient.invalidateQueries({
+                queryKey: ["attendances"]
+            });
+
+
+            onSuccess?.();
+            onClose();
+        },
+
+
+        onError: (error: any) => {
+
+            console.error(
+                error.response?.data
+            );
+
+            toast.error(
+                error.response?.data?.message ||
+                "Cập nhật chấm công thất bại"
+            );
+        }
+    });
     if (!open || !form) return null;
 
     const handleChange = (key: keyof Attendance, value: any) => {
@@ -42,12 +85,21 @@ export default function EditAttendanceModal({
     };
 
     const handleUpdate = () => {
-        console.log("Update attendance:", form);
-        // await attendanceApi.update(form.id, form)
-        onSuccess?.();
-        onClose();
-    };
 
+        if (!form.id) {
+            toast.error(
+                "Không tìm thấy bản ghi chấm công"
+            );
+            return;
+        }
+
+
+        updateMutation.mutate({
+            id: form.id,
+            data: form,
+        });
+
+    };
     return (
         <div
             className="
@@ -203,8 +255,15 @@ export default function EditAttendanceModal({
                     <Button variant="outline" onClick={onClose}>
                         Hủy
                     </Button>
-                    <Button onClick={handleUpdate}>
-                        Cập nhật
+                    <Button
+                        onClick={handleUpdate}
+                        disabled={updateMutation.isPending}
+                    >
+                        {
+                            updateMutation.isPending
+                                ? "Đang cập nhật..."
+                                : "Cập nhật"
+                        }
                     </Button>
                 </div>
             </div>

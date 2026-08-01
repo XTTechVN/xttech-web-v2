@@ -7,73 +7,73 @@ import { Plus, RefreshCw, Pencil, Trash2, Eye, FileWarning } from 'lucide-react'
 import AddAttendanceModal from "./_components/add-attendance-modal";
 import EditAttendanceModal from "./_components/edit-attendance-modal";
 import AttendanceDetailModal from "./_components/attendance-detail-modal";
+import AddUserModal from "./_components/add-user-modal";
 import Loading from '../../loading';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { getAttendances } from '@/actions';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { deleteAttendance, getAttendances } from '@/actions';
 import { Attendance } from '@/types';
 
 
-const mockAttendances: Attendance[] = Array.from({ length: 15 }, (_, index) => ({
-  id: index + 1,
-  userId: `${(index % 5) + 1}`,
-  workShiftId: (index % 3) + 1,
+// const mockAttendances: Attendance[] = Array.from({ length: 15 }, (_, index) => ({
+//   id: index + 1,
+//   userId: `${(index % 5) + 1}`,
+//   workShiftId: (index % 3) + 1,
 
-  workDate: `2026-07-${String((index % 30) + 1).padStart(2, '0')}`,
+//   workDate: `2026-07-${String((index % 30) + 1).padStart(2, '0')}`,
 
-  checkIn: `08:${String(index % 60).padStart(2, '0')}`,
-  checkInLatitude: 20.8449 + index * 0.001,
-  checkInLongitude: 106.6881 + index * 0.001,
+//   checkIn: `08:${String(index % 60).padStart(2, '0')}`,
+//   checkInLatitude: 20.8449 + index * 0.001,
+//   checkInLongitude: 106.6881 + index * 0.001,
 
-  isLate: index % 4 === 0,
-  lateMinutes: index % 4 === 0 ? 15 : 0,
+//   isLate: index % 4 === 0,
+//   lateMinutes: index % 4 === 0 ? 15 : 0,
 
-  imgCheckinPath: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60`,
+//   imgCheckinPath: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60`,
 
-  checkOut: `17:${String(index % 60).padStart(2, '0')}`,
-  checkOutLatitude: 20.8449 + index * 0.001,
-  checkOutLongitude: 106.6881 + index * 0.001,
+//   checkOut: `17:${String(index % 60).padStart(2, '0')}`,
+//   checkOutLatitude: 20.8449 + index * 0.001,
+//   checkOutLongitude: 106.6881 + index * 0.001,
 
-  isEarlyLeave: index % 6 === 0,
-  earlyLeaveMinutes: index % 6 === 0 ? 20 : 0,
+//   isEarlyLeave: index % 6 === 0,
+//   earlyLeaveMinutes: index % 6 === 0 ? 20 : 0,
 
-  imgCheckoutPath: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60`,
+//   imgCheckoutPath: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60`,
 
-  status:
-    index % 5 === 0
-      ? 'absent'
-      : index % 4 === 0
-        ? 'late'
-        : 'present',
+//   status:
+//     index % 5 === 0
+//       ? 'absent'
+//       : index % 4 === 0
+//         ? 'late'
+//         : 'present',
 
-  note: `Attendance note ${index + 1}`,
-  totalHours: 8,
+//   note: `Attendance note ${index + 1}`,
+//   totalHours: 8,
 
-  user: {
-    id: `${(index % 5) + 1}`,
-    email: `user${(index % 5) + 1}@example.com`,
-    username: `user${(index % 5) + 1}`,
-    fullName: `Employee ${(index % 5) + 1}`,
-    phoneNumber: `09000000${String(index + 1).padStart(2, '00')}`,
-    avatar: `/avatars/avatar-${(index % 5) + 1}.png`,
-    gender: index % 3 === 0 ? 'male' : index % 3 === 1 ? 'female' : 'other',
-    birthday: '1995-01-01',
-    address: `Address ${index + 1}`,
-    joinedAt: '2025-01-01',
-    identifyCode: `12345678${String(index + 1).padStart(2, '0')}`,
-    attendancePolicy: 'Standard',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
+//   user: {
+//     id: `${(index % 5) + 1}`,
+//     email: `user${(index % 5) + 1}@example.com`,
+//     username: `user${(index % 5) + 1}`,
+//     fullName: `Employee ${(index % 5) + 1}`,
+//     phoneNumber: `09000000${String(index + 1).padStart(2, '00')}`,
+//     avatar: `/avatars/avatar-${(index % 5) + 1}.png`,
+//     gender: index % 3 === 0 ? 'male' : index % 3 === 1 ? 'female' : 'other',
+//     birthday: '1995-01-01',
+//     address: `Address ${index + 1}`,
+//     joinedAt: '2025-01-01',
+//     identifyCode: `12345678${String(index + 1).padStart(2, '0')}`,
+//     attendancePolicy: 'Standard',
+//     createdAt: new Date().toISOString(),
+//     updatedAt: new Date().toISOString(),
+//   },
 
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-}));
+//   createdAt: new Date().toISOString(),
+//   updatedAt: new Date().toISOString(),
+// }));
 
 export default function AttendancesPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading] = useState(false);
 
   // Filter states khớp với ITableFilterProps
   const [filterEmployeeId, setFilterEmployeeId] = useState<string | undefined>();
@@ -86,13 +86,20 @@ export default function AttendancesPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState<Attendance | null>(null);
-
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
   const pathname = usePathname();
   const isAppealPage = pathname.includes('/attendances/appeals');
-  const { data: attendances, isLoading: loadingAttendances } = useQuery({
-    queryKey: ['attendances'],
-    queryFn: () => getAttendances(),
-  })
+
+
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
+  const [attendances, setAttendances] = useState<Attendance[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // const { data: attendances, isLoading: loadingAttendances, isFetching, refetch } = useQuery({
+  //   queryKey: ['attendances'],
+  //   queryFn: () => getAttendances(),
+  // })
   // const createMutation = useMutation({
   //   mutationFn: createAttendance,
   //   onSuccess: () => {
@@ -103,9 +110,9 @@ export default function AttendancesPage() {
   //     toast.error('Thêm chấm công thất bại');
   //   },
   // });
-  useEffect(() => {
-    console.log(attendances);
-  }, []);
+  // useEffect(() => {
+  //   console.log(attendances);
+  // }, [attendances]);
 
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/app' },
@@ -119,7 +126,7 @@ export default function AttendancesPage() {
   // Tạo option list duy nhất từ mock data
   const employeeOptions = [
     ...new Map(
-      mockAttendances?.map((item) => [
+      attendances?.map((item) => [
         item.userId,
         { label: item.user?.fullName ?? 'Không xác định', value: item.userId },
       ])
@@ -128,11 +135,37 @@ export default function AttendancesPage() {
 
   const workDateOptions = [
     ...new Map(
-      mockAttendances?.map((item) => [
+      attendances?.map((item) => [
         item.workDate,
         { label: item.workDate, value: item.workDate },
       ])
     ).values(),
+  ];
+
+  const getStatusLabel = (status?: string | null) => {
+    const map: Record<string, string> = {
+      present: "Có mặt",
+      late: "Đi muộn",
+      absent: "Vắng mặt",
+      early_leave: "Về sớm",
+      half_day: "Nửa ngày",
+    };
+
+    return map[status ?? ""] ?? "Không xác định";
+  };
+
+  const statusOptions = [
+    ...new Map(
+      attendances
+        .filter(item => item.status)
+        .map(item => [
+          item.status,
+          {
+            value: item.status ?? undefined,
+            label: getStatusLabel(item.status ?? "")
+          }
+        ])
+    ).values()
   ];
 
   // Cấu hình filters truyền vào TableData
@@ -174,52 +207,120 @@ export default function AttendancesPage() {
     {
       label: 'Trạng thái',
       value: filterStatus,
-      options: [
-        { label: 'Có mặt', value: 'present' },
-        { label: 'Đi muộn', value: 'late' },
-        { label: 'Vắng mặt', value: 'absent' },
-      ],
+      options: statusOptions,
       onChange: (val: string | undefined) => setFilterStatus(val),
     },
   ];
 
   // Fetcher giả lập với lọc theo search + filters
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
+  // const fetcher = async ({
+  //   offset,
+  //   limit,
+  // }: {
+  //   offset: number;
+  //   limit: number;
+  // }) => {
 
-    let filtered = [...mockAttendances];
+  //   const data = await getAttendances();
+
+
+  //   let filtered = [...(data.items ?? [])];
+
+
+  //   if (searchQuery) {
+  //     filtered = filtered.filter(
+  //       item =>
+  //         item.user?.fullName
+  //           ?.toLowerCase()
+  //           .includes(searchQuery.toLowerCase())
+  //     )
+  //   }
+
+
+  //   const paginated = filtered.slice(
+  //     offset,
+  //     offset + limit
+  //   );
+
+
+  //   return {
+  //     items: paginated,
+  //     meta: {
+  //       total: filtered.length,
+  //       offset,
+  //       limit,
+  //       next: offset + limit < filtered.length
+  //     }
+  //   };
+  // };
+
+  const fetcher = async ({
+    offset,
+    limit,
+  }: {
+    offset: number;
+    limit: number;
+  }) => {
+    console.log("Table loading");
+    // setIsLoading(true);
+    const response = await getAttendances();
+    // setIsLoading(false);
+
+    const items = response.items ?? [];
+
+
+    // lưu data để tạo filter
+    setAttendances(items);
+
+    let filtered = [...items];
+
 
     if (searchQuery) {
-      filtered = filtered.filter(
-        (item) =>
-          item.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.note?.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(item =>
+        item.user?.fullName
+          ?.toLowerCase()
+          .includes(
+            searchQuery.toLowerCase()
+          )
       );
     }
 
+
     if (filterEmployeeId) {
-      filtered = filtered.filter((item) => item.userId === filterEmployeeId);
+      filtered = filtered.filter(
+        item => item.userId === filterEmployeeId
+      );
     }
+
 
     if (filterStatus) {
-      filtered = filtered.filter((item) => item.status === filterStatus);
+      filtered = filtered.filter(
+        item => item.status === filterStatus
+      );
+
     }
+
 
     if (filterWorkDate) {
-      filtered = filtered.filter((item) => item.workDate === filterWorkDate);
+      filtered = filtered.filter(
+        item => item.workDate === filterWorkDate
+      );
     }
 
-    const paginated = filtered.slice(offset, offset + limit);
+
 
     return {
-      items: paginated,
+      items: filtered.slice(
+        offset,
+        offset + limit
+      ),
       meta: {
         total: filtered.length,
         offset,
         limit,
-        next: offset + limit < filtered.length,
-      },
+        next:
+          offset + limit < filtered.length
+      }
     };
   };
 
@@ -344,19 +445,26 @@ export default function AttendancesPage() {
       label: 'Trạng thái',
       minWidth: '120px',
       cell: (row) => {
-        const variantMap: Record<string, 'success' | 'warning' | 'danger'> = {
+        const statusVariantMap: Record<
+          string,
+          'success' | 'warning' | 'danger'
+        > = {
           present: 'success',
           late: 'warning',
           absent: 'danger',
+          half_day: 'warning',
+          early_leave: 'warning',
         };
-        const labelMap: Record<string, string> = {
-          present: 'Có mặt',
-          late: 'Đi muộn',
-          absent: 'Vắng mặt',
+
+
+        const getStatusVariant = (status?: string | null) => {
+          return statusVariantMap[status ?? ""] ?? "danger";
         };
         return (
-          <Badge variant={variantMap[row.status || 'absent']}>
-            {labelMap[row.status || 'absent']}
+          <Badge
+            variant={getStatusVariant(row.status)}
+          >
+            {getStatusLabel(row.status)}
           </Badge>
         );
       },
@@ -407,9 +515,10 @@ export default function AttendancesPage() {
     },
   ];
 
-  const handleDelete = (row: Attendance) => {
+  const handleDelete = async (row: Attendance) => {
     if (!confirm('Chắc chắn xóa?')) return;
-    // await attendanceApi.deleteAttendance(row.id);
+    await deleteAttendance(row.id);
+    queryClient.invalidateQueries({ queryKey: ['attendances'] });
     toast.success('Đã xóa chấm công');
   };
 
@@ -439,14 +548,33 @@ export default function AttendancesPage() {
             className='gap-2'
             leftIcon={<Plus size={16} />}
             onClick={() => setShowAddModal(true)}>
-            Thêm mới
+            Thêm mới chấm công
           </Button>
+
           <Button
             className='gap-2'
-            leftIcon={<RefreshCw size={16} />}
-            onClick={() => toast.success('Làm mới thành công')}>
-            Tải lại trang
+            leftIcon={<Plus size={16} />}
+            onClick={() => setShowAddUserModal(true)}
+          >
+            Thêm user mới
           </Button>
+          {/* <Button
+            className='gap-2'
+            leftIcon={
+              <RefreshCw
+                size={16}
+                className={isLoading ? "animate-spin" : ""}
+              />
+            }
+            disabled={isLoading}
+            onClick={async () => {
+              queryClient.invalidateQueries({
+                queryKey: ['attendances']
+              });
+              toast.success("Làm mới dữ liệu thành công")
+            }}>
+            {isLoading ? "Đang tải..." : "Tải lại trang"} */}
+          {/* </Button> */}
         </div>
       </div>
 
@@ -471,14 +599,24 @@ export default function AttendancesPage() {
       <AddAttendanceModal
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onSuccess={() => toast.success('Thêm thành công')}
+        onSuccess={() => {
+          // await refetch();
+          queryClient.invalidateQueries({
+            queryKey: ['attendances']
+          });
+          toast.success('Thêm thành công')
+        }}
       />
 
       <EditAttendanceModal
         open={showEditModal}
         data={selectedRow}
         onClose={() => setShowEditModal(false)}
-        onSuccess={() => toast.success('Cập nhật thành công')}
+        onSuccess={() => {
+          queryClient.invalidateQueries({
+            queryKey: ['attendances']
+          });
+        }}
       />
 
       <AttendanceDetailModal
@@ -486,6 +624,17 @@ export default function AttendancesPage() {
         data={selectedRow}
         onClose={() => setShowDetailModal(false)}
       />
-    </div>
+
+      <AddUserModal
+        open={showAddUserModal}
+        onClose={() => setShowAddUserModal(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({
+            queryKey: ['users']
+          });
+          toast.success('Thêm User mới thành công')
+        }}
+      />
+    </div >
   );
 }

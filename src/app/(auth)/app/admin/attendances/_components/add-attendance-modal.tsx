@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { Button, Select } from "@/components";
 import { X } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { AttendanceCreate, AttendanceStatus } from "@/types";
+import { createAttendance, getUsers } from "@/actions";
 
 interface Props {
     open: boolean;
@@ -11,23 +14,6 @@ interface Props {
     onSuccess?: () => void;
 }
 
-interface AttendanceForm {
-    userId: string;
-    workShiftId: number | null;
-    workDate: string;
-    checkIn: string;
-    checkOut: string;
-    checkInLatitude: number | null;
-    checkInLongitude: number | null;
-    checkOutLatitude: number | null;
-    checkOutLongitude: number | null;
-    isLate: boolean;
-    lateMinutes: number;
-    isEarlyLeave: boolean;
-    earlyLeaveMinutes: number;
-    status: string;
-    note: string;
-}
 
 function FormItem({ label, children }: { label: string; children: React.ReactNode; }) {
 
@@ -53,65 +39,118 @@ export default function AddAttendanceModal({
     onSuccess,
 }: Props) {
 
-
-    const [form, setForm] = useState<AttendanceForm>({
+    const [form, setForm] = useState<AttendanceCreate>({
         userId: "",
-        workShiftId: null,
+        workShiftId: undefined,
         workDate: "",
         checkIn: "",
         checkOut: "",
-        checkInLatitude: null,
-        checkInLongitude: null,
-        checkOutLatitude: null,
-        checkOutLongitude: null,
+        checkInLatitude: undefined,
+        checkInLongitude: undefined,
+        checkOutLatitude: undefined,
+        checkOutLongitude: undefined,
         isLate: false,
         lateMinutes: 0,
         isEarlyLeave: false,
         earlyLeaveMinutes: 0,
-        status: "absent",
+        imgCheckinPath: "",
+        imgCheckoutPath: "",
+        status: "present",
         note: "",
     });
+    const {
+        data: usersData,
+        isLoading: isLoadingUsers,
+    } = useQuery({
+        queryKey: ["users"],
+        queryFn: () =>
+            getUsers({
+                limit: 100,
+            }),
+    });
 
-    const updateField = (
-        field: keyof AttendanceForm,
-        value: any
+    const updateField = <K extends keyof AttendanceCreate>(
+        field: K,
+        value: AttendanceCreate[K]
     ) => {
-        setForm(prev => ({ ...prev, [field]: value }));
+        setForm((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
     };
+    const createMutation = useMutation({
+        mutationFn: createAttendance,
+
+        onSuccess: () => {
+            toast.success("Thêm chấm công thành công");
+
+            onSuccess?.();
+            onClose();
+
+            // reset form nếu cần
+            setForm({
+                userId: "",
+                workShiftId: undefined,
+                workDate: "",
+                checkIn: "",
+                checkOut: "",
+                checkInLatitude: undefined,
+                checkInLongitude: undefined,
+                checkOutLatitude: undefined,
+                checkOutLongitude: undefined,
+                isLate: false,
+                lateMinutes: 0,
+                isEarlyLeave: false,
+                earlyLeaveMinutes: 0,
+                imgCheckinPath: "",
+                imgCheckoutPath: "",
+                status: "present",
+                note: "",
+            });
+        },
+
+        onError: (error: any) => {
+            console.error(error);
+            toast.error(
+                error?.response?.data?.message ||
+                "Không thể tạo chấm công"
+            );
+        },
+    });
+
     if (!open) return null;
     const handleChange = (name: string, value: string) => {
         toast.success(`[${name}] Đã chọn: ${value}`);
     };
-    const options = [
-        { value: 'A', label: 'Nguyễn Văn A' },
-        { value: 'B', label: 'Nguyễn Văn B' },
-        { value: 'C', label: 'Nguyễn Văn C' },
-    ];
-    const handleSubmit = async () => {
-        const payload = {
-            workShiftId:
-                form.workShiftId
-                    ? Number(form.workShiftId)
-                    : null,
-            lateMinutes:
-                Number(form.lateMinutes),
-            earlyLeaveMinutes:
-                Number(form.earlyLeaveMinutes),
+
+    const options =
+        usersData?.items?.map((user) => ({
+            value: user.id,
+            label: user.fullName,
+        })) ?? [];
+
+    const handleSubmit = () => {
+
+        if (!form.userId) {
+            toast.error("Vui lòng chọn nhân viên");
+            return;
+        }
+
+        if (!form.workDate) {
+            toast.error("Vui lòng chọn ngày làm việc");
+            return;
+        }
+
+
+        const payload: AttendanceCreate = {
+            ...form,
+            workDate: form.workDate,
         };
-        console.log(
-            "Create attendance payload:",
-            payload
-        );
-        // await attendanceApi.create(payload)
-        onSuccess?.();
-        onClose();
+
+
+        createMutation.mutate(payload);
     };
-    const formatDate = (date?: string) => {
-        if (!date) return "";
-        const [year, month, day] = date.split("-");
-        if (!year || !month || !day) return "";
-        return `${day}/${month}/${year}`;
-    };
+
     return (
         <div
             className="
@@ -196,46 +235,33 @@ export default function AddAttendanceModal({
                         {/* User */}
                         <FormItem label="Nhân viên">
                             <Select
-                                placeholder="Chọn quốc gia"
+                                placeholder={isLoadingUsers ? "Đang tải nhân viên..." : "Chọn nhân viên"}
                                 options={options}
-                                onChange={(e) => handleChange('Basic Select', e.target.value)}
+                                value={form.userId}
+                                disabled={isLoadingUsers}
+                                onChange={(e) => {
+                                    updateField(
+                                        "userId",
+                                        e.target.value
+                                    )
+                                }
+                                }
                             />
                         </FormItem>
 
-                        {/* Date */}
                         <FormItem label="Ngày làm việc">
                             <input
-                                type="text"
+                                type="date"
                                 className="form-input"
-                                placeholder="dd/mm/yyyy"
-                                value={
-                                    form.workDate
-                                        ? formatDate(form.workDate)
-                                        : ""
+                                value={form.workDate}
+                                onChange={(e) =>
+                                    updateField(
+                                        "workDate",
+                                        e.target.value
+                                    )
                                 }
-                                onChange={(e) => {
-                                    const value = e.target.value;
-
-                                    // dd/mm/yyyy -> yyyy-mm-dd
-                                    const parts = value.split("/");
-
-                                    if (parts.length === 3) {
-                                        const [day, month, year] = parts;
-
-                                        updateField(
-                                            "workDate",
-                                            `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
-                                        );
-                                    } else {
-                                        updateField(
-                                            "workDate",
-                                            value
-                                        );
-                                    }
-                                }}
                             />
                         </FormItem>
-
                         {/* Checkin */}
                         <FormItem label="Check in">
                             <input
@@ -270,30 +296,18 @@ export default function AddAttendanceModal({
                             <select
                                 className="form-input"
                                 value={form.status}
-                                onChange={
-                                    e =>
-                                        updateField(
-                                            "status",
-                                            e.target.value
-                                        )
+                                onChange={(e) =>
+                                    updateField(
+                                        "status",
+                                        e.target.value as AttendanceStatus
+                                    )
                                 }
                             >
-                                <option value="absent">
-                                    Vắng mặt
-                                </option>
-
-                                <option value="present">
-                                    Có mặt
-                                </option>
-
-                                <option value="late">
-                                    Đi muộn
-                                </option>
-
-                                <option value="leave">
-                                    Nghỉ phép
-                                </option>
-
+                                <option value="present">Có mặt</option>
+                                <option value="late">Đi muộn</option>
+                                <option value="early_leave">Về sớm</option>
+                                <option value="half_day">Nửa ngày</option>
+                                <option value="absent">Vắng mặt</option>
                             </select>
                         </FormItem>
                     </div>
@@ -353,8 +367,12 @@ export default function AddAttendanceModal({
                     </Button>
                     <Button
                         onClick={handleSubmit}
+                        disabled={createMutation.isPending}
                     >
-                        Lưu chấm công
+                        {
+                            createMutation.isPending
+                                ? "Đang lưu" : "Lưu chấm công"
+                        }
                     </Button>
                 </div>
             </div>
