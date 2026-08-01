@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { Attendance } from "../page";
+import { Attendance } from "@/types";
 
 interface Props {
     open: boolean;

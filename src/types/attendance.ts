@@ -1,9 +1,6 @@
 // =======================
 // COMMON TYPES
 // =======================
-
-import { User } from "./user";
-
 export interface Pagination {
     next: boolean;
     total: number;
@@ -30,6 +27,20 @@ export interface DataListResponse<T> {
 //     phoneNumber?: string;
 //     avatar?: string;
 // }
+export interface UserCreate {
+    email: string;
+    username: string;
+    fullName: string;
+    phoneNumber?: string | null;
+    avatar?: string | null;
+    gender?: string;
+    birthday?: string | null;
+    address?: string | null;
+    joinedAt?: string | null;
+    identifyCode: string;
+    attendancePolicy?: string | null;
+    password: string;
+}
 
 
 export interface UserResponse {
