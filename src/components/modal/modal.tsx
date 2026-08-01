@@ -66,7 +66,7 @@ const Modal: React.FC<ModalProps> = ({
     xl: 'max-w-5xl',
     full: 'max-w-full h-full m-0 rounded-none',
   };
-
+  
   const modalElement = (
     <AnimatePresence>
       {isOpen && (

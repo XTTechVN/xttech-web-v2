@@ -10,7 +10,7 @@ const StatCart = ({
   onClick,
 }: {
   title: string;
-  value: string;
+  value: number;
   icon: React.ReactNode;
   trend: number;
   trendDirection?: 'up' | 'down';

@@ -1,31 +1,24 @@
-"use client";
+'use client';
 
 import React, { useState } from 'react';
 
 // Icons thư viện lucide-react
-import { User, Camera, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { User, Camera } from 'lucide-react';
 
 // Components dùng chung cho toàn bộ trang
 import { Input, Button } from '@/components';
-
-// Dữ liệu mockup
-const userMockupData = {
-  fullName: 'Trịnh Trần Pi Nút',
-  email: 'quyen.nv@xttech.com',
-  phoneNumber: '0987654321',
-  username: 'quyen.nv',
-  roles: 'Admin',
-  positions: 'Nhân viên',
-};
+import { useAuthStore } from '@/stores';
 
 const ProfileCard = () => {
+  const { user } = useAuthStore();
+
   const [formData, setFormData] = useState({
-    fullName: userMockupData.fullName,
-    email: userMockupData.email,
-    phoneNumber: userMockupData.phoneNumber,
-    username: userMockupData.username,
-    roles: userMockupData.roles,
-    positions: userMockupData.positions,
+    fullName: user?.fullName,
+    email: user?.email,
+    phoneNumber: user?.phoneNumber,
+    username: user?.username,
+    roles: user?.roles[0],
+    positions: user?.positions[0],
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,31 +44,9 @@ const ProfileCard = () => {
             </div>
           </div>
           <div className="col-span-12 md:col-span-9 lg:col-span-10 md:border-l md:border-gray-200 md:pl-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Họ và tên"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="Nhập họ và tên"
-              fullWidth
-            />
-            <Input
-              label="Tên đăng nhập"
-              name="username"
-              value={formData.username}
-              placeholder="Tên đăng nhập"
-              readOnly
-              fullWidth
-            />
-            <Input
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Nhập email"
-              fullWidth
-            />
+            <Input label="Họ và tên" name="fullName" value={formData.fullName} onChange={handleChange} placeholder="Nhập họ và tên" fullWidth />
+            <Input label="Tên đăng nhập" name="username" value={formData.username} placeholder="Tên đăng nhập" readOnly fullWidth />
+            <Input label="Email" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Nhập email" fullWidth />
             <Input
               label="Số điện thoại"
               name="phoneNumber"
@@ -84,24 +55,8 @@ const ProfileCard = () => {
               placeholder="Nhập số điện thoại"
               fullWidth
             />
-            <Input
-              label="Vai trò"
-              name="roles"
-              value={formData.roles}
-              disabled
-              readOnly
-              placeholder="Vai trò hệ thống"
-              fullWidth
-            />
-            <Input
-              label="Chức vụ"
-              name="positions"
-              value={formData.positions}
-              disabled
-              readOnly
-              placeholder="Chức vụ"
-              fullWidth
-            />
+            <Input label="Vai trò" name="roles" value={formData.roles} disabled readOnly placeholder="Vai trò hệ thống" fullWidth />
+            <Input label="Chức vụ" name="positions" value={formData.positions} disabled readOnly placeholder="Chức vụ" fullWidth />
           </div>
         </div>
 

@@ -48,17 +48,7 @@ api.interceptors.response.use(
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
         // call api refresh, api này sẽ tự cấp phát vào cookie
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://api_vision.bosky.vn'}/api/v1/auth/refresh`,
-          {},
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${refreshToken}`,
-            },
-            withCredentials: true,
-          },
-        );
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`, { refreshToken });
 
         // Lưu access token mới nếu API trả về token mới (nếu có cập nhật trong store)
         const newAccessToken = response.data.accessToken;

@@ -1,3 +1,5 @@
+'use client';
+
 // Thành phần dùng chung cho toàn trang
 import { Heading } from '@/components';
 
@@ -9,39 +11,45 @@ import Table from './_components/table';
 // icons thư viện lucide - react
 import { Building2, Users, UserCheck, Briefcase } from 'lucide-react';
 
-// Dữ liệu mockup cho stat - card
-const departmentStats = [
-  {
-    title: 'Tổng số phòng ban',
-    value: '8',
-    icon: <Building2 />,
-    trend: 10,
-    trendDirection: 'up' as const,
-  },
-  {
-    title: 'Tổng số nhân sự',
-    value: '124',
-    icon: <Users />,
-    trend: 15,
-    trendDirection: 'up' as const,
-  },
-  {
-    title: 'Đang hoạt động',
-    value: '118',
-    icon: <UserCheck />,
-    trend: 2,
-    trendDirection: 'up' as const,
-  },
-  {
-    title: 'Phòng ban mới',
-    value: '1',
-    icon: <Briefcase />,
-    trend: 0,
-    trendDirection: 'up' as const,
-  },
-];
+// Store
+import { useDapartmentStore } from '@/stores';
+import { number } from 'motion/react';
 
 const Page = () => {
+  const totalDepartments = useDapartmentStore((state) => state.total);
+  const activeDepartments = useDapartmentStore((state) => state.total);
+
+  // Dữ liệu mockup cho stat - card
+  const departmentStats = [
+    {
+      title: 'Tổng số phòng ban',
+      value: Number(totalDepartments),
+      icon: <Building2 />,
+      trend: 10,
+      trendDirection: 'up' as const,
+    },
+    {
+      title: 'Tổng số nhân sự',
+      value: 124,
+      icon: <Users />,
+      trend: 15,
+      trendDirection: 'up' as const,
+    },
+    {
+      title: 'Đang hoạt động',
+      value: Number(activeDepartments),
+      icon: <UserCheck />,
+      trend: 2,
+      trendDirection: 'up' as const,
+    },
+    {
+      title: 'Phòng ban mới',
+      value: 1,
+      icon: <Briefcase />,
+      trend: 0,
+      trendDirection: 'up' as const,
+    },
+  ];
   return (
     <div className="flex flex-col p-3 gap-4">
       <div className="flex flex-col gap-2">
