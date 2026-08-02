@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components';
 import { X, Clock, Calendar, User, FileText, CheckCircle, XCircle } from 'lucide-react';
-import type { AttendanceAdjustmentRequest } from '../../api';
+import type { AttendanceAdjustmentRequest } from '@/types';
 
 interface Props {
   open: boolean;
@@ -25,7 +25,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'warning' | 'succe
   rejected: { label: 'Từ chối', variant: 'danger' },
 };
 
-function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
+function InfoRow({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-2.5 border-b border-slate-100 last:border-0">
       <span className="text-sm font-medium text-slate-500 shrink-0">{label}</span>
@@ -34,7 +34,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export default function AppealDetailModal({ open, data, onClose, onApprove, onReject, canReview }: Props) {
+export default function AdjustmentDetailModal({ open, data, onClose, onApprove, onReject, canReview }: Props) {
   if (!open || !data) return null;
 
   const statusConfig = STATUS_CONFIG[data.status] ?? STATUS_CONFIG['pending'];

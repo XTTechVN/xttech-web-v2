@@ -1,3 +1,4 @@
 import useAuthStore from './useAuthStore';
+import { useAttendances } from './useAttendances';
 
-export { useAuthStore };
+export { useAuthStore, useAttendances };

@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { Tooltip, Button, TableData, Badge, Breadcrumb, ITableColumn } from '@/components';
 import { toast } from 'react-hot-toast';
 import { Plus, RefreshCw, Pencil, Trash2, Eye, FileWarning } from 'lucide-react';
-import AddAttendanceModal from "./_components/add-attendance-modal";
-import EditAttendanceModal from "./_components/edit-attendance-modal";
-import AttendanceDetailModal from "./_components/attendance-detail-modal";
-import AddUserModal from "./_components/add-user-modal";
+import AddAttendanceModal from "./_components/add-modal";
+import EditAttendanceModal from "./_components/edit-modal";
+import AttendanceDetailModal from "./_components/attendance-modal";
+import AddUserModal from "./_components/users/add-modal";
 import Loading from '../../loading';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -88,7 +88,7 @@ export default function AttendancesPage() {
   const [selectedRow, setSelectedRow] = useState<Attendance | null>(null);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const pathname = usePathname();
-  const isAppealPage = pathname.includes('/attendances/appeals');
+  const isAdjustmentPage = pathname.includes('/attendances/adjustments');
 
 
   const queryClient = useQueryClient();
@@ -118,8 +118,8 @@ export default function AttendancesPage() {
     { label: 'Trang chủ', href: '/app' },
     { label: 'Quản lý', href: '/app/admin' },
     { label: 'Chấm công', href: '/app/admin/attendances' },
-    ...(isAppealPage
-      ? [{ label: 'Khiếu nại', href: '/app/admin/attendances/appeals' }]
+    ...(isAdjustmentPage
+      ? [{ label: 'Khiếu nại', href: '/app/admin/attendances/adjustments' }]
       : []),
   ];
 
@@ -267,7 +267,7 @@ export default function AttendancesPage() {
     // setIsLoading(false);
 
     const items = response.items ?? [];
-
+    console.log(items);
 
     // lưu data để tạo filter
     setAttendances(items);
@@ -536,7 +536,7 @@ export default function AttendancesPage() {
         </div>
 
         <div className="flex shrink-0 flex-nowrap items-center gap-2">
-          <Link href="/app/admin/attendances/appeals">
+          <Link href="/app/admin/attendances/adjustments">
             <Button
               className="gap-2"
               leftIcon={<FileWarning size={15} />}

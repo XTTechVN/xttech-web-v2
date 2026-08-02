@@ -7,6 +7,10 @@ import { Attendance } from "@/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { updateAttendance } from "@/actions";
+
+
+import FormItem from "./form-item";
+
 interface Props {
     open: boolean;
     data: Attendance | null;
@@ -14,16 +18,7 @@ interface Props {
     onSuccess?: () => void;
 }
 
-function FormItem({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-900">
-                {label}
-            </label>
-            {children}
-        </div>
-    );
-}
+
 
 export default function EditAttendanceModal({
     open,

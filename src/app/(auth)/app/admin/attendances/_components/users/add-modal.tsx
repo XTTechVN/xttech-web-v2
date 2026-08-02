@@ -8,28 +8,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components";
 import { createUser } from "@/actions";
 import { UserCreate } from "@/types";
+
+import FormItem from "../form-item";
+
 interface Props {
     open: boolean;
     onClose: () => void;
     onSuccess?: () => void;
 }
-function FormItem({
-    label,
-    children,
-}: {
-    label: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-900">
-                {label}
-            </label>
 
-            {children}
-        </div>
-    );
-}
 
 
 export default function CreateUserModal({

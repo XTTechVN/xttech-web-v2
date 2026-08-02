@@ -1,57 +1,59 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Tooltip, Button, TableData, Badge, Breadcrumb, ITableColumn } from '@/components';
 import { toast } from 'react-hot-toast';
 import { Plus, RefreshCw, Pencil, Trash2, Eye, CheckCircle, XCircle } from 'lucide-react';
 import type { AttendanceAdjustmentRequest, AdjustmentStatus, RequestType } from '@/types';
-import AddAppealModal from './_components/add-appeal-modal';
-import EditAppealModal from './_components/edit-appeal-modal';
-import AppealDetailModal from './_components/appeal-detail-modal';
-import DeleteAppealModal from './_components/delete-appeal-modal';
+import AddAdjustmentModal from '../_components/adjustment/add-modal';
+import EditAdjustmentModal from '../_components/adjustment/edit-modal';
+import AdjustmentDetailModal from '../_components/adjustment/detail-modal';
+import DeleteAdjustmentModal from '../_components/delete-modal';
+import { getAdjustmentRequests, updateAdjustmentRequest, deleteAdjustmentRequest } from '@/actions';
+import Loading from '../../../loading';
 
 // ===================== Types =====================
-interface AppealRecord extends AttendanceAdjustmentRequest {
+interface AdjustmentRecord extends AttendanceAdjustmentRequest {
     _employeeId?: string;
     _employeeName?: string;
 }
 
 // ===================== Mock Data =====================
-const mockAppeals: AppealRecord[] = Array.from({ length: 20 }, (_, i) => {
-    const statuses: AdjustmentStatus[] = ['pending', 'approved', 'rejected'];
-    const types: RequestType[] = ['check_in', 'check_out', 'both'];
-    const employees = [
-        { id: '1', name: 'Nguyễn Văn A' },
-        { id: '2', name: 'Trần Thị B' },
-        { id: '3', name: 'Lê Văn C' },
-        { id: '4', name: 'Phạm Thị D' },
-        { id: '5', name: 'Hoàng Văn E' },
-    ];
-    const emp = employees[i % employees.length];
-    const status = statuses[i % statuses.length];
-    const requestType = types[i % types.length];
-    const day = String((i % 28) + 1).padStart(2, '0');
+// const mockAppeals: AdjustmentRecord[] = Array.from({ length: 20 }, (_, i) => {
+//     const statuses: AdjustmentStatus[] = ['pending', 'approved', 'rejected'];
+//     const types: RequestType[] = ['check_in', 'check_out', 'both'];
+//     const employees = [
+//         { id: '1', name: 'Nguyễn Văn A' },
+//         { id: '2', name: 'Trần Thị B' },
+//         { id: '3', name: 'Lê Văn C' },
+//         { id: '4', name: 'Phạm Thị D' },
+//         { id: '5', name: 'Hoàng Văn E' },
+//     ];
+//     const emp = employees[i % employees.length];
+//     const status = statuses[i % statuses.length];
+//     const requestType = types[i % types.length];
+//     const day = String((i % 28) + 1).padStart(2, '0');
 
-    return {
-        id: i + 1,
-        attendanceId: i % 3 !== 0 ? (i + 100) : undefined,
-        requestType,
-        oldCheckIn: requestType !== 'check_out' ? `0${7 + (i % 3)}:${String(i % 60).padStart(2, '0')}` : undefined,
-        oldCheckOut: requestType !== 'check_in' ? `17:${String(i % 60).padStart(2, '0')}` : undefined,
-        requestedCheckIn: requestType !== 'check_out' ? `08:00` : undefined,
-        requestedCheckOut: requestType !== 'check_in' ? `17:30` : undefined,
-        reason: `Lý do khiếu nại số ${i + 1}: Nhân viên ${emp.name} yêu cầu điều chỉnh thời gian chấm công do lỗi hệ thống.`,
-        status,
-        workDate: `2026-07-${day}`,
-        reviewedBy: status !== 'pending' ? 'Admin HR' : undefined,
-        reviewedAt: status !== 'pending' ? `2026-07-${day}T10:00:00Z` : undefined,
-        reviewNote: status === 'rejected' ? 'Không đủ bằng chứng' : status === 'approved' ? 'Đã xác minh' : undefined,
-        createdAt: `2026-07-${day}T08:00:00Z`,
-        updatedAt: `2026-07-${day}T10:00:00Z`,
-        _employeeId: emp.id,
-        _employeeName: emp.name,
-    };
-});
+//     return {
+//         id: i + 1,
+//         attendanceId: i % 3 !== 0 ? (i + 100) : undefined,
+//         requestType,
+//         oldCheckIn: requestType !== 'check_out' ? `0${7 + (i % 3)}:${String(i % 60).padStart(2, '0')}` : undefined,
+//         oldCheckOut: requestType !== 'check_in' ? `17:${String(i % 60).padStart(2, '0')}` : undefined,
+//         requestedCheckIn: requestType !== 'check_out' ? `08:00` : undefined,
+//         requestedCheckOut: requestType !== 'check_in' ? `17:30` : undefined,
+//         reason: `Lý do khiếu nại số ${i + 1}: Nhân viên ${emp.name} yêu cầu điều chỉnh thời gian chấm công do lỗi hệ thống.`,
+//         status,
+//         workDate: `2026-07-${day}`,
+//         reviewedBy: status !== 'pending' ? 'Admin HR' : undefined,
+//         reviewedAt: status !== 'pending' ? `2026-07-${day}T10:00:00Z` : undefined,
+//         reviewNote: status === 'rejected' ? 'Không đủ bằng chứng' : status === 'approved' ? 'Đã xác minh' : undefined,
+//         createdAt: `2026-07-${day}T08:00:00Z`,
+//         updatedAt: `2026-07-${day}T10:00:00Z`,
+//         _employeeId: emp.id,
+//         _employeeName: emp.name,
+//     };
+// });
 
 // ===================== Config =====================
 
@@ -76,10 +78,11 @@ const canReview = USER_ROLE === 'admin' || USER_ROLE === 'manager';
 
 // ===================== Page =====================
 
-export default function AppealsPage() {
+export default function AdjustmentsPage() {
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterStatus, setFilterStatus] = useState<string | undefined>();
-    const [filterType, setFilterType] = useState<string | undefined>();
+    const [filterStatus, setFilterStatus] = useState<AdjustmentStatus | undefined>();
+
+    const [filterType, setFilterType] = useState<RequestType | undefined>();
     const [filterEmployee, setFilterEmployee] = useState<string | undefined>();
     const [filterDate, setFilterDate] = useState<string | undefined>();
 
@@ -91,50 +94,85 @@ export default function AppealsPage() {
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [queryKey, setQueryKey] = useState(0);
+    const [attendanceAdjustments, setAttendanceAdjustments] = useState<AttendanceAdjustmentRequest[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     const breadcrumbItems = [
         { label: 'Trang chủ', href: '/app' },
         { label: 'Quản lý', href: '/app/admin' },
         { label: 'Chấm công', href: '/app/admin/attendances' },
-        { label: 'Khiếu nại', href: '/app/admin/attendances/appeals' },
+        { label: 'Điều chỉnh', href: '/app/admin/attendances/adjustments' },
     ];
 
     // Danh sách nhân viên cho filter
-    const employeeOptions = [
-        { value: '1', label: 'Nguyễn Văn A' },
-        { value: '2', label: 'Trần Thị B' },
-        { value: '3', label: 'Lê Văn C' },
-        { value: '4', label: 'Phạm Thị D' },
-        { value: '5', label: 'Hoàng Văn E' },
-    ];
+    const employeeOptions = useMemo(() => {
+        const ids = Array.from(
+            new Set(
+                attendanceAdjustments
+                    .map(item => item.userId)
+                    .filter(Boolean)
+            )
+        );
+
+        return ids.map(userId => ({
+            value: userId,
+            label: userId,
+        }));
+    }, [attendanceAdjustments]);
 
     // Danh sách ngày duy nhất cho filter
-    const workDateOptions = [
-        ...new Map(
-            mockAppeals.map((item) => [item.workDate, { label: item.workDate, value: item.workDate }]),
-        ).values(),
-    ];
+    const workDateOptions = useMemo(() => {
+        const dates = Array.from(
+            new Set(
+                attendanceAdjustments
+                    .map(item => item.workDate)
+                    .filter(Boolean)
+            )
+        );
+        return dates.map(date => ({
+            label: date,
+            value: date,
+        }));
+    }, [attendanceAdjustments]);
+
+    const statusOptions = useMemo(() => {
+        const statuses = Array.from(
+            new Set(
+                attendanceAdjustments.map(item => item.status)
+            )
+        );
+        return statuses.map(status => ({
+            label: STATUS_CONFIG[status]?.label ?? status,
+            value: status,
+        }));
+    }, [attendanceAdjustments]);
+
+    const typeOptions = useMemo(() => {
+        const types = Array.from(
+            new Set(
+                attendanceAdjustments.map(item => item.requestType)
+            )
+        );
+        return types.map(type => ({
+            label: REQUEST_TYPE_LABEL[type],
+            value: type,
+        }));
+    }, [attendanceAdjustments]);
 
     const tableFilters = [
         {
             label: 'Trạng thái',
             value: filterStatus,
-            options: [
-                { label: 'Chờ duyệt', value: 'pending' },
-                { label: 'Đã duyệt', value: 'approved' },
-                { label: 'Từ chối', value: 'rejected' },
-            ],
-            onChange: (val: string | undefined) => setFilterStatus(val),
+            options: statusOptions,
+            onChange: (val: string | undefined) =>
+                setFilterStatus(val as AdjustmentStatus | undefined),
         },
         {
             label: 'Loại khiếu nại',
             value: filterType,
-            options: [
-                { label: 'Điều chỉnh Check In', value: 'check_in' },
-                { label: 'Điều chỉnh Check Out', value: 'check_out' },
-                { label: 'Điều chỉnh cả hai', value: 'both' },
-            ],
-            onChange: (val: string | undefined) => setFilterType(val),
+            options: typeOptions,
+            onChange: (val: string | undefined) =>
+                setFilterType(val as RequestType | undefined),
         },
         {
             label: 'Nhân sự',
@@ -151,35 +189,35 @@ export default function AppealsPage() {
     ];
 
     // Fetcher với filter + search + phân trang
-    const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-        await new Promise((resolve) => setTimeout(resolve, 400));
-
-        let filtered = [...mockAppeals];
-
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            filtered = filtered.filter(
-                (item) =>
-                    item.reason?.toLowerCase().includes(q) ||
-                    item.workDate?.toLowerCase().includes(q) ||
-                    item._employeeName?.toLowerCase().includes(q),
-            );
-        }
-
-        if (filterStatus) filtered = filtered.filter((item) => item.status === filterStatus);
-        if (filterType) filtered = filtered.filter((item) => item.requestType === filterType);
-        if (filterEmployee) filtered = filtered.filter((item) => item._employeeId === filterEmployee);
-        if (filterDate) filtered = filtered.filter((item) => item.workDate === filterDate);
-
-        const paginated = filtered.slice(offset, offset + limit);
-
+    const fetcher = async ({
+        offset,
+        limit
+    }: {
+        offset: number;
+        limit: number
+    }) => {
+        const response = await getAdjustmentRequests({
+            offset,
+            limit,
+            search: searchQuery || undefined,
+            status: filterStatus,
+            workDate: filterDate,
+            userId: filterEmployee,
+        });
+        // lưu data để tạo filter employee
+        setAttendanceAdjustments(response.items);
+        const items: AdjustmentRecord[] = response.items.map(item => ({
+            ...item,
+            _employeeId: item.userId,
+            _employeeName: item.userId,
+        }));
         return {
-            items: paginated,
+            items,
             meta: {
-                total: filtered.length,
-                offset,
-                limit,
-                next: offset + limit < filtered.length,
+                total: response.pagination.total,
+                offset: response.pagination.offset,
+                limit: response.pagination.limit,
+                next: response.pagination.next,
             },
         };
     };
@@ -187,12 +225,19 @@ export default function AppealsPage() {
     // Xử lý duyệt
     const handleApprove = async (id: number) => {
         if (!confirm('Phê duyệt khiếu nại này?')) return;
+        console.log("Approve request id:", id);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            const response = await updateAdjustmentRequest(id, {
+                status: 'approved',
+                reviewNote: selectedRow?.reviewNote ?? '',
+            });
+            console.log(response);
             toast.success('Đã phê duyệt khiếu nại');
             setShowDetailModal(false);
             setQueryKey((k) => k + 1);
-        } catch {
+
+        } catch (err) {
+            console.log(err);
             toast.error('Có lỗi xảy ra');
         }
     };
@@ -201,7 +246,12 @@ export default function AppealsPage() {
     const handleReject = async (id: number) => {
         if (!confirm('Từ chối khiếu nại này?')) return;
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            // await new Promise((resolve) => setTimeout(resolve, 500));
+            const response = await updateAdjustmentRequest(id, {
+                status: 'rejected',
+                reviewNote: selectedRow?.reviewNote ?? '',
+            });
+            console.log(response);
             toast.success('Đã từ chối khiếu nại');
             setShowDetailModal(false);
             setQueryKey((k) => k + 1);
@@ -214,7 +264,8 @@ export default function AppealsPage() {
     const handleDeleteConfirm = async () => {
         setIsDeleting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 600));
+            // await new Promise((resolve) => setTimeout(resolve, 600));
+            await deleteAdjustmentRequest(deletingId!);
             toast.success('Đã xóa khiếu nại');
             setShowDeleteModal(false);
             setDeletingId(null);
@@ -225,7 +276,7 @@ export default function AppealsPage() {
     };
 
     // Cấu hình mobile card
-    const renderCard = (row: AppealRecord, index: number) => {
+    const renderCard = (row: AdjustmentRecord, index: number) => {
         const statusCfg = STATUS_CONFIG[row.status] ?? STATUS_CONFIG['pending'];
         return (
             <div key={row.id ?? index} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
@@ -265,7 +316,7 @@ export default function AppealsPage() {
     };
 
     // Cấu hình cột desktop
-    const columns: ITableColumn<AppealRecord>[] = [
+    const columns: ITableColumn<AdjustmentRecord>[] = [
         {
             key: 'id',
             label: '#',
@@ -427,7 +478,7 @@ export default function AppealsPage() {
             ),
         },
     ];
-
+    if (isLoading) return <Loading />;
     return (
         <div className="flex h-full w-full flex-1 flex-col bg-slate-50 p-6">
             <Breadcrumb items={breadcrumbItems} className="mb-4" />
@@ -439,12 +490,6 @@ export default function AppealsPage() {
                     <p className="mt-1 text-sm text-slate-500">Quản lý các yêu cầu điều chỉnh chấm công của nhân viên</p>
                 </div>
                 <div className="flex shrink-0 flex-nowrap items-center gap-2">
-                    <Button
-                        className='gap-2'
-                        leftIcon={<RefreshCw size={16} />}
-                        onClick={() => toast.success('Làm mới thành công')}>
-                        Tải lại trang
-                    </Button>
                     {canAdd && (
                         <Button
                             className='gap-2'
@@ -458,7 +503,7 @@ export default function AppealsPage() {
 
             {/* Table */}
             <div className="space-y-4">
-                <TableData<AppealRecord>
+                <TableData<AdjustmentRecord>
                     queryKey={[
                         'appeals',
                         queryKey,
@@ -483,7 +528,7 @@ export default function AppealsPage() {
             </div>
 
             {/* Modals */}
-            <AddAppealModal
+            <AddAdjustmentModal
                 open={showAddModal}
                 onClose={() => setShowAddModal(false)}
                 onSuccess={() => {
@@ -491,7 +536,7 @@ export default function AppealsPage() {
                 }}
             />
 
-            <EditAppealModal
+            <EditAdjustmentModal
                 open={showEditModal}
                 data={selectedRow}
                 onClose={() => setShowEditModal(false)}
@@ -500,7 +545,7 @@ export default function AppealsPage() {
                 }}
             />
 
-            <AppealDetailModal
+            <AdjustmentDetailModal
                 open={showDetailModal}
                 data={selectedRow}
                 onClose={() => setShowDetailModal(false)}
@@ -509,7 +554,7 @@ export default function AppealsPage() {
                 canReview={canReview}
             />
 
-            <DeleteAppealModal
+            <DeleteAdjustmentModal
                 open={showDeleteModal}
                 appealId={deletingId}
                 onClose={() => {

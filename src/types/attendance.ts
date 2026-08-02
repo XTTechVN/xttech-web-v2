@@ -169,7 +169,7 @@ export interface AttendanceUpdate {
 export type AdjustmentStatus =
     | "pending"
     | "approved"
-    | "rejected";
+    | "rejected"
 
 
 export type RequestType =
@@ -177,51 +177,89 @@ export type RequestType =
     | "check_out"
     | "both";
 
-
+export interface AdjustmentRequestQueryParams {
+    search?: string;
+    limit?: number;
+    offset?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    allowDeleted?: boolean;
+    userId?: string;
+    workDate?: string;
+    startDate?: string;
+    endDate?: string;
+    status?: AdjustmentStatus;
+}
 
 export interface AttendanceAdjustmentRequest {
     id: number;
-    attendanceId?: number;
+    attendanceId: number | null;
+    userId: string;
     requestType: RequestType;
-    oldCheckIn?: string;
-    oldCheckOut?: string;
-    requestedCheckIn?: string;
-    requestedCheckOut?: string;
+    oldCheckIn?: string | null;
+    oldCheckOut?: string | null;
+    requestedCheckIn?: string | null;
+    requestedCheckOut?: string | null;
     reason: string;
     status: AdjustmentStatus;
     workDate: string;
-    reviewedBy?: string;
-    reviewedAt?: string;
-    reviewNote?: string;
-    createdAt?: string;
-    updatedAt?: string;
+    reviewedBy?: string | null;
+    reviewedAt?: string | null;
+    reviewNote?: string | null;
+    createdAt: string;
+    updatedAt: string;
 }
 
 
 
 export interface AttendanceAdjustmentRequestCreate {
-    attendanceId?: number;
+    attendanceId?: number | null;
+
     userId: string;
+
     requestType: RequestType;
+
     oldCheckIn?: string;
+
     oldCheckOut?: string;
+
     requestedCheckIn?: string;
+
     requestedCheckOut?: string;
+
     reason: string;
+
     status?: AdjustmentStatus;
+
     workDate: string;
 }
 
 
 
 export interface AttendanceAdjustmentRequestUpdate {
-    status?: AdjustmentStatus;
-    reviewedBy?: string;
-    reviewedAt?: string;
-    reviewNote?: string;
+    requestType?: RequestType;
+    requestedCheckIn?: string | null;
+    requestedCheckOut?: string | null;
+    reason?: string | null;
+    status?: string | null;
+    workDate?: string | null;
+
+    reviewedBy?: string | null;
+    reviewedAt?: string | null;
+    reviewNote?: string | null;
 }
 
-
+export interface AdjustmentForm {
+    userId: string;
+    attendanceId: string;
+    requestType: RequestType;
+    workDate: string;
+    oldCheckIn: string;
+    oldCheckOut: string;
+    requestedCheckIn: string;
+    requestedCheckOut: string;
+    reason: string;
+}
 
 // =======================
 // AUTO TIMEKEEPING

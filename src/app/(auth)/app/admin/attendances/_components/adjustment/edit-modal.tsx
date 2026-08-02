@@ -1,20 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import type { RequestType } from '../../api';
+import { updateAdjustmentRequest } from "@/actions";
+import type { AttendanceAdjustmentRequest, RequestType, AttendanceAdjustmentRequestUpdate } from "@/types";
 
 interface Props {
   open: boolean;
+  data: AttendanceAdjustmentRequest | null;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-interface AppealForm {
-  userId: string;
-  attendanceId: string;
+interface EditForm {
   requestType: RequestType;
   workDate: string;
   oldCheckIn: string;
@@ -24,30 +24,17 @@ interface AppealForm {
   reason: string;
 }
 
-function FormItem({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function FormItem({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-gray-900">
-        {label}
-        {required && <span className="ml-1 text-red-500">*</span>}
-      </label>
+      <label className="text-sm font-medium text-gray-900">{label}</label>
       {children}
     </div>
   );
 }
 
-const mockEmployees = [
-  { value: '1', label: 'Nguyễn Văn A' },
-  { value: '2', label: 'Trần Thị B' },
-  { value: '3', label: 'Lê Văn C' },
-  { value: '4', label: 'Phạm Thị D' },
-  { value: '5', label: 'Hoàng Văn E' },
-];
-
-export default function AddAppealModal({ open, onClose, onSuccess }: Props) {
-  const [form, setForm] = useState<AppealForm>({
-    userId: '',
-    attendanceId: '',
+export default function EditAdjustmentModal({ open, data, onClose, onSuccess }: Props) {
+  const [form, setForm] = useState<EditForm>({
     requestType: 'both',
     workDate: '',
     oldCheckIn: '',
@@ -58,38 +45,59 @@ export default function AddAppealModal({ open, onClose, onSuccess }: Props) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const updateField = <K extends keyof AppealForm>(field: K, value: AppealForm[K]) => {
+  // Đồng bộ form khi data thay đổi
+  useEffect(() => {
+    if (data) {
+      setForm({
+        requestType: data.requestType,
+        workDate: data.workDate ?? '',
+        oldCheckIn: data.oldCheckIn ?? '',
+        oldCheckOut: data.oldCheckOut ?? '',
+        requestedCheckIn: data.requestedCheckIn ?? '',
+        requestedCheckOut: data.requestedCheckOut ?? '',
+        reason: data.reason ?? '',
+      });
+    }
+  }, [data]);
+
+  const updateField = <K extends keyof EditForm>(field: K, value: EditForm[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
-    if (!form.userId || !form.workDate || !form.reason) {
-      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+    if (!data) return;
+    if (!form.reason) {
+      toast.error('Vui lòng nhập lý do khiếu nại');
       return;
     }
     setIsSubmitting(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      toast.success('Tạo khiếu nại thành công');
+      const payload: AttendanceAdjustmentRequestUpdate = {
+        requestType: form.requestType,
+        requestedCheckIn: form.requestedCheckIn || null,
+        requestedCheckOut: form.requestedCheckOut || null,
+        reason: form.reason,
+        workDate: form.workDate,
+        status: data.status ?? "pending",
+      };
+      await updateAdjustmentRequest(
+        data.id,
+        payload
+      );
+      toast.success('Cập nhật khiếu nại thành công');
       onSuccess?.();
       onClose();
-      setForm({
-        userId: '',
-        attendanceId: '',
-        requestType: 'both',
-        workDate: '',
-        oldCheckIn: '',
-        oldCheckOut: '',
-        requestedCheckIn: '',
-        requestedCheckOut: '',
-        reason: '',
-      });
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.detail?.[0]?.msg
+        || "Cập nhật thất bại"
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!open) return null;
+  if (!open || !data) return null;
 
   const showCheckIn = form.requestType === 'check_in' || form.requestType === 'both';
   const showCheckOut = form.requestType === 'check_out' || form.requestType === 'both';
@@ -100,8 +108,8 @@ export default function AddAppealModal({ open, onClose, onSuccess }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Thêm khiếu nại</h2>
-            <p className="mt-0.5 text-sm text-gray-500">Tạo yêu cầu điều chỉnh chấm công</p>
+            <h2 className="text-lg font-semibold text-gray-900">Chỉnh sửa khiếu nại #{data.id}</h2>
+            <p className="mt-0.5 text-sm text-gray-500">Cập nhật thông tin yêu cầu điều chỉnh</p>
           </div>
           <button
             onClick={onClose}
@@ -114,24 +122,8 @@ export default function AddAppealModal({ open, onClose, onSuccess }: Props) {
         {/* Body */}
         <div className="max-h-[70vh] overflow-y-auto px-6 py-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            {/* Nhân viên */}
-            <FormItem label="Nhân viên" required>
-              <select
-                className="form-input w-full"
-                value={form.userId}
-                onChange={(e) => updateField('userId', e.target.value)}
-              >
-                <option value="">-- Chọn nhân viên --</option>
-                {mockEmployees.map((emp) => (
-                  <option key={emp.value} value={emp.value}>
-                    {emp.label}
-                  </option>
-                ))}
-              </select>
-            </FormItem>
-
             {/* Loại yêu cầu */}
-            <FormItem label="Loại khiếu nại" required>
+            <FormItem label="Loại khiếu nại">
               <select
                 className="form-input w-full"
                 value={form.requestType}
@@ -144,7 +136,7 @@ export default function AddAppealModal({ open, onClose, onSuccess }: Props) {
             </FormItem>
 
             {/* Ngày làm việc */}
-            <FormItem label="Ngày làm việc" required>
+            <FormItem label="Ngày làm việc">
               <input
                 type="date"
                 className="form-input w-full"
@@ -153,18 +145,6 @@ export default function AddAppealModal({ open, onClose, onSuccess }: Props) {
               />
             </FormItem>
 
-            {/* Attendance ID */}
-            <FormItem label="Mã chấm công">
-              <input
-                type="text"
-                className="form-input w-full"
-                placeholder="Nhập mã chấm công"
-                value={form.attendanceId}
-                onChange={(e) => updateField('attendanceId', e.target.value)}
-              />
-            </FormItem>
-
-            {/* Old times */}
             {showCheckIn && (
               <FormItem label="Check In cũ">
                 <input
@@ -185,10 +165,8 @@ export default function AddAppealModal({ open, onClose, onSuccess }: Props) {
                 />
               </FormItem>
             )}
-
-            {/* Requested times */}
             {showCheckIn && (
-              <FormItem label="Check In yêu cầu" required>
+              <FormItem label="Check In yêu cầu">
                 <input
                   type="time"
                   className="form-input w-full"
@@ -198,7 +176,7 @@ export default function AddAppealModal({ open, onClose, onSuccess }: Props) {
               </FormItem>
             )}
             {showCheckOut && (
-              <FormItem label="Check Out yêu cầu" required>
+              <FormItem label="Check Out yêu cầu">
                 <input
                   type="time"
                   className="form-input w-full"
@@ -209,8 +187,7 @@ export default function AddAppealModal({ open, onClose, onSuccess }: Props) {
             )}
           </div>
 
-          {/* Lý do */}
-          <FormItem label="Lý do khiếu nại" required>
+          <FormItem label="Lý do khiếu nại">
             <textarea
               className="form-input w-full min-h-[100px] resize-y"
               placeholder="Nhập lý do khiếu nại..."
@@ -226,7 +203,7 @@ export default function AddAppealModal({ open, onClose, onSuccess }: Props) {
             Hủy
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Đang lưu...' : 'Tạo khiếu nại'}
+            {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
           </Button>
         </div>
       </div>

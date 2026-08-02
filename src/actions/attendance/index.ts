@@ -7,7 +7,9 @@ import {
     AttendanceAdjustmentRequest,
     AutoTimekeepingData,
     UserResponse,
-    UserCreate
+    UserCreate, AttendanceAdjustmentRequestCreate,
+    AdjustmentRequestQueryParams,
+    AttendanceAdjustmentRequestUpdate
 } from "@/types";
 
 
@@ -61,30 +63,38 @@ export const autoTimekeeping = async (data: AutoTimekeepingData, image: File) =>
     );
 }
 
-export const getAdjustmentRequests = async (params?: AttendanceQueryParams) => {
-    return api.get<DataListResponse<AttendanceAdjustmentRequest>>(
-        `${baseVersion1}/attendances/requests`,
+export const getAdjustmentRequests = async (
+    params?: AdjustmentRequestQueryParams
+) => {
+    const res = await api.get<DataListResponse<AttendanceAdjustmentRequest>>(
+        `${baseVersion1}/attendance-request`,
         { params }
     );
-}
+
+    return res.data;
+};
 export const getAdjustmentRequestById = async (id: number) => {
     return api.get<AttendanceAdjustmentRequest>(`${baseVersion1}/attendances/requests/${id}`);
 }
-export const createAdjustmentRequest = async (data: AttendanceAdjustmentRequest) => {
-    return api.post<AttendanceAdjustmentRequest>(
-        `${baseVersion1}/attendances/requests`,
+export const createAdjustmentRequest = async (
+    data: AttendanceAdjustmentRequestCreate
+) => {
+    const res = await api.post<AttendanceAdjustmentRequest>(
+        `${baseVersion1}/attendance-request`,
         data
     );
-}
-export const updateAdjustmentRequest = async (id: number, data: AttendanceAdjustmentRequest) => {
+
+    return res.data;
+};
+export const updateAdjustmentRequest = async (id: number, data: AttendanceAdjustmentRequestUpdate) => {
     return api.put<AttendanceAdjustmentRequest>(
-        `${baseVersion1}/attendances/requests/${id}`,
+        `${baseVersion1}/attendance-request/${id}`,
         data
     );
 }
 export const deleteAdjustmentRequest = async (id: number) => {
     return api.delete<AttendanceAdjustmentRequest>(
-        `${baseVersion1}/attendances/requests/${id}`
+        `${baseVersion1}/attendance-request/${id}`
     );
 }
 
