@@ -45,6 +45,8 @@ export interface AttachmentItem {
   name: string;
   size: number;
   preview: string | null;
+  isUploading?: boolean;
+  uploadProgress?: number;
 }
 
 export interface SuggestionQueryParams {

@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import api from '@/utils/api';
 import { Suggestion, SuggestionCreate, SuggestionQueryParams, SuggestionReviewSchema, SuggestionUpdate } from '@/types';
+import { BaseResponseWithPagination } from '@/components';
 
-export const getSuggestions = async (params?: SuggestionQueryParams) => {
+export const getSuggestions = async (params?: SuggestionQueryParams): Promise<BaseResponseWithPagination<Suggestion>> => {
   try {
     const response = await api.get('/api/v1/suggestions', { params });
     const { items, pagination } = response.data;
@@ -17,6 +18,7 @@ export const getSuggestions = async (params?: SuggestionQueryParams) => {
     };
   } catch (error: any) {
     console.warn('API error, using localStorage mock data:', error.message || error);
+    throw error;
   }
 };
 
@@ -26,10 +28,11 @@ export const getSuggestion = async (id: number) => {
     return response.data;
   } catch (error: any) {
     console.warn('API error, fetching single suggestion from mock data:', error.message || error);
+    throw error;
   }
 };
 
-export const createSuggestion = async (data: SuggestionCreate, files?: File[]) => {
+export const createSuggestion = async (data: SuggestionCreate, files?: File[], onUploadProgress?: (progressEvent: any) => void) => {
   try {
     const formData = new FormData();
     formData.append('data', JSON.stringify(data));
@@ -42,10 +45,12 @@ export const createSuggestion = async (data: SuggestionCreate, files?: File[]) =
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      onUploadProgress,
     });
     return response.data;
   } catch (error: any) {
     console.warn('API error, creating suggestion in mock data:', error.message || error);
+    throw error;
   }
 };
 
@@ -55,10 +60,11 @@ export const reviewSuggestion = async (id: number, data: SuggestionReviewSchema)
     return response.data;
   } catch (error: any) {
     console.warn('API error, reviewing suggestion in mock data:', error.message || error);
+    throw error;
   }
 };
 
-export const updateSuggestion = async (id: number, data: SuggestionUpdate, files?: File[]) => {
+export const updateSuggestion = async (id: number, data: SuggestionUpdate, files?: File[], onUploadProgress?: (progressEvent: any) => void) => {
   try {
     const formData = new FormData();
     formData.append('data', JSON.stringify(data));
@@ -71,10 +77,12 @@ export const updateSuggestion = async (id: number, data: SuggestionUpdate, files
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      onUploadProgress,
     });
     return response.data;
   } catch (error: any) {
     console.warn('API error, updating suggestion in mock data:', error.message || error);
+    throw error;
   }
 };
 
@@ -84,5 +92,6 @@ export const deleteSuggestion = async (id: number) => {
     return response.data;
   } catch (error: any) {
     console.warn('API error, deleting suggestion in mock data:', error.message || error);
+    throw error;
   }
 };

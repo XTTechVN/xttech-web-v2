@@ -27,6 +27,10 @@ interface SuggestionState {
   createIsAnonymous: boolean;
   createAttachments: any[];
   createErrors: Record<string, string>;
+  createShowAllImages: boolean;
+  createShowAllFiles: boolean;
+  createPreviewUrl: string | null;
+  createUploadProgress: number | null;
 
   // Detail / Edit Modal Form States
   reviewText: string;
@@ -37,6 +41,12 @@ interface SuggestionState {
   editAttachments: any[];
   isDeleteConfirmOpen: boolean;
   isSaving: boolean;
+  detailShowAllImages: boolean;
+  detailShowAllFiles: boolean;
+  detailPreviewUrl: string | null;
+  detailShowAllDetailImages: boolean;
+  detailShowAllDetailFiles: boolean;
+  detailUploadProgress: number | null;
 
   // Actions
   setSearchQuery: (query: string) => void;
@@ -63,6 +73,10 @@ interface SuggestionState {
   setCreateIsAnonymous: (val: boolean) => void;
   setCreateAttachments: (val: any[] | ((prev: any[]) => any[])) => void;
   setCreateErrors: (val: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
+  setCreateShowAllImages: (val: boolean) => void;
+  setCreateShowAllFiles: (val: boolean) => void;
+  setCreatePreviewUrl: (val: string | null) => void;
+  setCreateUploadProgress: (val: number | null) => void;
   resetCreateForm: () => void;
 
   // Detail / Edit Modal Form Actions
@@ -74,6 +88,12 @@ interface SuggestionState {
   setEditAttachments: (val: any[] | ((prev: any[]) => any[])) => void;
   setIsDeleteConfirmOpen: (val: boolean) => void;
   setIsSaving: (val: boolean) => void;
+  setDetailShowAllImages: (val: boolean) => void;
+  setDetailShowAllFiles: (val: boolean) => void;
+  setDetailPreviewUrl: (val: string | null) => void;
+  setDetailShowAllDetailImages: (val: boolean) => void;
+  setDetailShowAllDetailFiles: (val: boolean) => void;
+  setDetailUploadProgress: (val: number | null) => void;
   resetEditForm: () => void;
 }
 
@@ -103,6 +123,10 @@ export const useSuggestionStore = create<SuggestionState>((set) => ({
   createIsAnonymous: false,
   createAttachments: [],
   createErrors: {},
+  createShowAllImages: false,
+  createShowAllFiles: false,
+  createPreviewUrl: null,
+  createUploadProgress: null,
 
   // Detail / Edit Modal Form initial values
   reviewText: '',
@@ -114,6 +138,12 @@ export const useSuggestionStore = create<SuggestionState>((set) => ({
   editAttachments: [],
   isDeleteConfirmOpen: false,
   isSaving: false,
+  detailShowAllImages: false,
+  detailShowAllFiles: false,
+  detailPreviewUrl: null,
+  detailShowAllDetailImages: false,
+  detailShowAllDetailFiles: false,
+  detailUploadProgress: null,
 
   setSearchQuery: (query) => set({ searchQuery: query, currentPage: 1 }),
   setSelectedType: (type) => set({ selectedType: type, currentPage: 1 }),
@@ -155,6 +185,10 @@ export const useSuggestionStore = create<SuggestionState>((set) => ({
     set((state) => ({
       createErrors: typeof val === 'function' ? val(state.createErrors) : val,
     })),
+  setCreateShowAllImages: (val) => set({ createShowAllImages: val }),
+  setCreateShowAllFiles: (val) => set({ createShowAllFiles: val }),
+  setCreatePreviewUrl: (val) => set({ createPreviewUrl: val }),
+  setCreateUploadProgress: (val) => set({ createUploadProgress: val }),
   resetCreateForm: () =>
     set({
       createTitle: '',
@@ -163,6 +197,10 @@ export const useSuggestionStore = create<SuggestionState>((set) => ({
       createIsAnonymous: false,
       createAttachments: [],
       createErrors: {},
+      createShowAllImages: false,
+      createShowAllFiles: false,
+      createPreviewUrl: null,
+      createUploadProgress: null,
     }),
 
   // Detail / Edit Modal Form Actions
@@ -177,6 +215,12 @@ export const useSuggestionStore = create<SuggestionState>((set) => ({
     })),
   setIsDeleteConfirmOpen: (val) => set({ isDeleteConfirmOpen: val }),
   setIsSaving: (val) => set({ isSaving: val }),
+  setDetailShowAllImages: (val) => set({ detailShowAllImages: val }),
+  setDetailShowAllFiles: (val) => set({ detailShowAllFiles: val }),
+  setDetailPreviewUrl: (val) => set({ detailPreviewUrl: val }),
+  setDetailShowAllDetailImages: (val) => set({ detailShowAllDetailImages: val }),
+  setDetailShowAllDetailFiles: (val) => set({ detailShowAllDetailFiles: val }),
+  setDetailUploadProgress: (val) => set({ detailUploadProgress: val }),
   resetEditForm: () =>
     set({
       reviewText: '',
@@ -187,5 +231,11 @@ export const useSuggestionStore = create<SuggestionState>((set) => ({
       editAttachments: [],
       isDeleteConfirmOpen: false,
       isSaving: false,
+      detailShowAllImages: false,
+      detailShowAllFiles: false,
+      detailPreviewUrl: null,
+      detailShowAllDetailImages: false,
+      detailShowAllDetailFiles: false,
+      detailUploadProgress: null,
     }),
 }));

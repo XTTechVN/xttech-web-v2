@@ -56,10 +56,21 @@ export default function SuggestionTable() {
   } = useSuggestionStore();
 
   // Fetch suggestions to calculate accurate statistics (sharing cache with StatCards)
-  const { data: suggestionsStats } = useQuery({
+  const {
+    data: suggestionsStats,
+    isError: isStatsError,
+    error: statsError,
+  } = useQuery({
     queryKey: ['admin-suggestions-all-stats'],
     queryFn: () => getSuggestions({ limit: 1000 }),
+    refetchOnWindowFocus: false,
   });
+
+  React.useEffect(() => {
+    if (isStatsError && statsError) {
+      toast.error((statsError as any).message || 'Không thể tải số liệu thống kê.');
+    }
+  }, [isStatsError, statsError]);
 
   const pendingCount = suggestionsStats?.items?.filter((p: Suggestion) => p.status === 'pending').length || 0;
 
@@ -82,13 +93,19 @@ export default function SuggestionTable() {
 
       const hasFilters = debouncedSearch || debouncedSender || debouncedType || debouncedTab === 'processed';
 
-      const response = await getSuggestions({
-        status: statusParam,
-        limit: hasFilters ? 1000 : limit,
-        offset: hasFilters ? 0 : offset,
-      });
+      let response;
+      try {
+        response = await getSuggestions({
+          status: statusParam,
+          limit: hasFilters ? 1000 : limit,
+          offset: hasFilters ? 0 : offset,
+        });
+      } catch (err: any) {
+        toast.error(err.message || 'Không thể tải danh sách đề xuất.');
+        throw err;
+      }
 
-      let filtered = [...response.items];
+      let filtered = [...(response?.items ?? [])];
 
       // Filter by debouncedType
       if (debouncedType) {
