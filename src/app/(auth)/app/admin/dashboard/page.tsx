@@ -13,6 +13,9 @@ import { Heading } from '@/components';
 // Icon thư viện lucide-react
 import { Users, UserPlus, Building2, Briefcase, BarChart3, LayoutGrid } from 'lucide-react';
 
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/utils';
+
 // Dữ liệu mockup cho stat - card
 const statsMockupData = [
   {
@@ -46,6 +49,13 @@ const statsMockupData = [
 ];
 
 const page = () => {
+  const { data: testdata, isLoading } = useQuery({
+    queryKey: ['test'],
+    queryFn: () => api.get('/api/v1/users').then((res) => res.data),
+  });
+
+  console.log(testdata, isLoading);
+
   return (
     <div className="flex relative">
       <div className="flex-1 min-w-0 flex flex-col p-3 gap-4">
