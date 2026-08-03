@@ -17,17 +17,17 @@ export const getSuggestions = async (params?: SuggestionQueryParams): Promise<Ba
       },
     };
   } catch (error: any) {
-    console.warn('API error, using localStorage mock data:', error.message || error);
+    console.warn('API error', error.message || error);
     throw error;
   }
 };
 
-export const getSuggestion = async (id: number) => {
+export const getSuggestion = async (id: string) => {
   try {
     const response = await api.get(`/api/v1/suggestions/${id}`);
     return response.data;
   } catch (error: any) {
-    console.warn('API error, fetching single suggestion from mock data:', error.message || error);
+    console.warn('API error', error.message || error);
     throw error;
   }
 };
@@ -49,22 +49,22 @@ export const createSuggestion = async (data: SuggestionCreate, files?: File[], o
     });
     return response.data;
   } catch (error: any) {
-    console.warn('API error, creating suggestion in mock data:', error.message || error);
+    console.warn('API create suggestion error', error.message || error);
     throw error;
   }
 };
 
-export const reviewSuggestion = async (id: number, data: SuggestionReviewSchema) => {
+export const reviewSuggestion = async (id: string, data: SuggestionReviewSchema) => {
   try {
     const response = await api.post(`/api/v1/suggestions/${id}/review`, data);
     return response.data;
   } catch (error: any) {
-    console.warn('API error, reviewing suggestion in mock data:', error.message || error);
+    console.warn('API reviewing suggestion error', error.message || error);
     throw error;
   }
 };
 
-export const updateSuggestion = async (id: number, data: SuggestionUpdate, files?: File[], onUploadProgress?: (progressEvent: any) => void) => {
+export const updateSuggestion = async (id: string, data: SuggestionUpdate, files?: File[], onUploadProgress?: (progressEvent: any) => void) => {
   try {
     const formData = new FormData();
     formData.append('data', JSON.stringify(data));
@@ -81,17 +81,17 @@ export const updateSuggestion = async (id: number, data: SuggestionUpdate, files
     });
     return response.data;
   } catch (error: any) {
-    console.warn('API error, updating suggestion in mock data:', error.message || error);
+    console.warn('API updating suggestion error', error.message || error);
     throw error;
   }
 };
 
-export const deleteSuggestion = async (id: number) => {
+export const deleteSuggestion = async (id: string) => {
   try {
     const response = await api.delete(`/api/v1/suggestions/${id}`);
     return response.data;
   } catch (error: any) {
-    console.warn('API error, deleting suggestion in mock data:', error.message || error);
+    console.warn('API deleting suggestion error:', error.message || error);
     throw error;
   }
 };

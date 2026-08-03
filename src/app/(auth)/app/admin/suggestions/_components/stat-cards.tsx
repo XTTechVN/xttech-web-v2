@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React from 'react';
@@ -24,7 +23,7 @@ export default function StatCards({ containerWidth }: { containerWidth?: number 
 
   React.useEffect(() => {
     if (isError && error) {
-      toast.error((error as any).message || 'Không thể tải dữ liệu thống kê.');
+      toast.error('Không thể tải dữ liệu thống kê.');
     }
   }, [isError, error]);
 
@@ -57,23 +56,17 @@ export default function StatCards({ containerWidth }: { containerWidth?: number 
   const pendingCount = proposals.filter((p: Suggestion) => p.status === 'pending').length;
 
   // Tính số lượng đã hoàn thành (approve) và reject
-  const approvedCount = proposals.filter((p: Suggestion) => p.status === 'approve').length;
-  const rejectedCount = proposals.filter((p: Suggestion) => p.status === 'reject').length;
-
-  // Tỷ lệ giải quyết = ((approve + reject) / total) * 100
-  const solvedCount = approvedCount + rejectedCount;
-  const resolvePercent = totalFeedback > 0 ? Math.round((solvedCount / totalFeedback) * 100) : 0;
+  const completedCount = proposals.filter((p: Suggestion) => p.status === 'approve' || p.status === 'reject').length;
+  const resolvePercent = totalFeedback > 0 ? Math.round((completedCount / totalFeedback) * 100) : 0;
 
   return (
-    <div className={`${gridClass} gap-4 md:gap-6 select-none w-full`}>
-      {/* Card 1: Tổng số ý kiến */}
+    <div className={`${gridClass} gap-4 select-none w-full`}>
+      {/* Card 1: Tổng số đề xuất */}
       <div className="bg-white border border-slate-200/60 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-xs flex flex-col gap-2 hover:shadow-md transition-all duration-300">
         <div className="flex justify-between items-start w-full">
           <div className="flex flex-col gap-1">
-            <span className="text-slate-500 font-semibold text-[13px] md:text-[14px] leading-5">Tổng số ý kiến</span>
-            <span className="text-[32px] md:text-[48px] font-bold text-primary leading-none">
-              {Intl.NumberFormat('en-US').format(totalFeedback || 1284)}
-            </span>
+            <span className="text-slate-500 font-semibold text-[13px] md:text-[14px] leading-5">Tổng số đề xuất</span>
+            <span className="text-[32px] md:text-[48px] font-bold text-primary leading-none">{Intl.NumberFormat('en-US').format(totalFeedback)}</span>
           </div>
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-[#e6f6f8] flex items-center justify-center shrink-0">
             <MessageSquare className="w-5 h-5 md:w-6 md:h-6 text-primary" />
@@ -92,7 +85,7 @@ export default function StatCards({ containerWidth }: { containerWidth?: number 
           <div className="flex flex-col gap-1">
             <span className="text-slate-500 font-medium text-[13px] md:text-[14px] leading-5">Đang xử lý</span>
             <span className="text-[32px] md:text-[48px] font-bold text-[#5C647A] leading-none">
-              {Intl.NumberFormat('en-US').format(pendingCount || 86)}
+              {Intl.NumberFormat('en-US').format(pendingCount)}
             </span>
           </div>
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-[#f0f1fa] flex items-center justify-center shrink-0">
@@ -112,7 +105,7 @@ export default function StatCards({ containerWidth }: { containerWidth?: number 
           <div className="flex flex-col gap-1">
             <span className="text-slate-500 font-medium text-[13px] md:text-[14px] leading-5">Đã hoàn thành</span>
             <span className="text-[32px] md:text-[48px] font-bold text-[#005e70] leading-none">
-              {Intl.NumberFormat('en-US').format(approvedCount || 1152)}
+              {Intl.NumberFormat('en-US').format(completedCount)}
             </span>
           </div>
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-[#e6f6f8] flex items-center justify-center shrink-0">
@@ -122,7 +115,7 @@ export default function StatCards({ containerWidth }: { containerWidth?: number 
 
         <div className="flex items-center gap-1.5 text-[#005e70] font-medium text-[11px] md:text-[12px] leading-tight">
           <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-          <span>Tỷ lệ giải quyết {resolvePercent > 0 ? `${resolvePercent}%` : '92%'}</span>
+          <span>Tỷ lệ giải quyết {resolvePercent > 0 ? `${resolvePercent}%` : '0%'}</span>
         </div>
       </div>
 

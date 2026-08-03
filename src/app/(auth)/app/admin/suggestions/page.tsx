@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, Suspense } from 'react';
 import { Header } from '@/components';
-import { StatCards, SuggestionTable, CreateSuggestionModal, SuggestionDetailModal } from './_components';
+import { StatCards, SuggestionTable, SuggestionModal } from './_components';
 
 function SuggestionsPageContent() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -20,7 +20,7 @@ function SuggestionsPageContent() {
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full flex flex-col gap-6">
+    <div ref={containerRef} className="w-full flex flex-col gap-6 p-3">
       {/* Header Section */}
       <Header title="QUẢN LÝ ĐỀ XUẤT & SÁNG KIẾN NHÂN SỰ" className="rounded-2xl border border-slate-200 bg-white px-6 shadow-sm" />
 
@@ -31,8 +31,7 @@ function SuggestionsPageContent() {
       <SuggestionTable />
 
       {/* Modals & Dialogs */}
-      <CreateSuggestionModal />
-      <SuggestionDetailModal />
+      <SuggestionModal />
     </div>
   );
 }

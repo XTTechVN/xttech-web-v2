@@ -23,7 +23,7 @@ export interface SuggestionAttachment {
 }
 
 export interface Suggestion {
-  id: number;
+  id: string;
   title: string;
   content: string;
   anonymous: boolean;
@@ -55,7 +55,7 @@ export interface SuggestionQueryParams {
   offset?: number;
   limit?: number;
   search?: string;
-  tab?: string;
+  type?: string | null;
 }
 
 export interface SuggestionCreate {
