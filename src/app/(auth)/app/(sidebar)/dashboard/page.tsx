@@ -12,9 +12,12 @@ import { Heading } from '@/components';
 
 // Icon thư viện lucide-react
 import { Users, UserPlus, Briefcase, LayoutGrid } from 'lucide-react';
+<<<<<<< HEAD:src/app/(auth)/app/(sidebar)/dashboard/page.tsx
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/utils';
+=======
+>>>>>>> 08032d9 (feat: add reusable TableAction component and clean up unused imports in admin dashboard):src/app/(auth)/app/admin/dashboard/page.tsx
 
 // Dữ liệu mockup cho stat - card
 const statsMockupData = [
@@ -49,13 +52,6 @@ const statsMockupData = [
 ];
 
 const page = () => {
-  const { data: testdata, isLoading } = useQuery({
-    queryKey: ['test'],
-    queryFn: () => api.get('/api/v1/users').then((res) => res.data),
-  });
-
-  console.log(testdata, isLoading);
-
   return (
     <div className="flex relative">
       <div className="flex-1 min-w-0 flex flex-col p-3 gap-4">
