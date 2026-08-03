@@ -62,18 +62,11 @@ const Page = () => {
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {departmentStats.map((stat, index) => (
-          <StatCart
-            key={index}
-            title={stat.title}
-            value={stat.value}
-            icon={stat.icon}
-            trend={stat.trend}
-            trendDirection={stat.trendDirection}
-          />
+          <StatCart key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection} />
         ))}
       </div>
       <ActionBar />
-      <Table/>
+      <Table />
     </div>
   );
 };
