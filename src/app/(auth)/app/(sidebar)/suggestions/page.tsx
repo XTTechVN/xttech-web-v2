@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 'use client';
 
 import React, { useRef, useState, useEffect, Suspense } from 'react';
@@ -43,3 +44,12 @@ export default function SuggestionsPage() {
     </Suspense>
   );
 }
+=======
+export default function SuggestionsPage() {
+  return (
+    <div className="flex w-full h-full flex-1 flex-col bg-slate-50">
+      <h1 className="text-black">Suggestions Page</h1>
+    </div>
+  );
+}
+>>>>>>> b6dee1d (refactor: migrate dashboard and UI components to organized sidebar and public demo directory structures)
