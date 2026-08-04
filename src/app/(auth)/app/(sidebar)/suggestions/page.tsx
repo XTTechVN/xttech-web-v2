@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-export default function SuggestionsPage() {
-  return (
-    <div className="flex w-full h-full flex-1 flex-col bg-slate-50">
-      <h1 className="text-black">Suggestions Page</h1>
-    </div>
-  );
-}
-=======
 'use client';
 
 import React, { useRef, useState, useEffect, Suspense } from 'react';
@@ -52,4 +43,3 @@ export default function SuggestionsPage() {
     </Suspense>
   );
 }
->>>>>>> users/longnh

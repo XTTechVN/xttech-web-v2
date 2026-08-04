@@ -14,6 +14,8 @@ import { InteractiveTables } from './_components/interactive-tables';
 import { Heading, Breadcrumb, Avatar } from '@/components';
 import { Home, Folder, FileText, Slash } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function ComponentsPage() {
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '#', icon: <Home size={14} /> },
