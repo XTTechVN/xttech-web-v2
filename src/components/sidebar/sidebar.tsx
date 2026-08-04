@@ -74,7 +74,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
       <div
         ref={ref}
         className={cn(
-          'h-[800px] flex flex-col transition-all duration-300 border rounded-2xl relative select-none overflow-hidden ',
+          'h-200 flex flex-col transition-all duration-300 border rounded-2xl relative select-none overflow-hidden ',
           isLight ? 'bg-white text-slate-700 border-slate-200 shadow-lg' : 'bg-slate-900 text-slate-300 border-slate-800 shadow-2xl',
           isCollapsed ? 'w-0 md:w-20 border-r-0 md:border-r opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto' : 'w-72',
           className,

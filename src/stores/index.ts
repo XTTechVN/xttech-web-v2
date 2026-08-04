@@ -1,3 +1,8 @@
+// Auth
 import useAuthStore from './useAuthStore';
 
-export { useAuthStore };
+// Phòng ban
+import useDapartmentStore from './useDapartmentStore';
+
+export { useAuthStore, useDapartmentStore };
+
