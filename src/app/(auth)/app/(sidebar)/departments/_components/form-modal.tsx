@@ -1,15 +1,31 @@
 'use client';
 
 import { useEffect } from 'react';
+
+// Thành phần dùng chung cho toàn trang
 import { Input, Button, Modal } from '@/components';
+
+// Icons từ thư viện lucide-react
 import { CheckCircle2 } from 'lucide-react';
+
+// thư viện validate form
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+
+// Gọi API từ action
 import { createDepartment, updateDepartment } from '@/actions/department';
+
+// notification
 import toast from 'react-hot-toast';
+
+// query
 import { useMutation } from '@tanstack/react-query';
+
+// utils
 import queryClient from '@/utils/query';
+
+// Kiểu dữ liệu của phòng ban
 import { Department } from '@/types';
 
 // Kiểu dữ liệu cho modal
@@ -25,11 +41,13 @@ interface DepartmentFormModalProps {
   };
 }
 
+// Validation cho thêm / sửa  phòng ban
 const departmentSchema = z.object({
   name: z.string().min(1, { message: 'Tên phòng ban không được để trống' }),
   code: z.string().min(1, { message: 'Mã phòng ban không được để trống' }),
 });
 type DepartmentFormValues = z.infer<typeof departmentSchema>;
+
 // Modal tạo / sửa phòng ban
 export default function DepartmentFormModal({ isOpen, onClose, title, submitText = 'Xác nhận tạo', initialData }: DepartmentFormModalProps) {
   const {
@@ -103,6 +121,8 @@ export default function DepartmentFormModal({ isOpen, onClose, title, submitText
     <Modal isOpen={isOpen} onClose={handleOnClose} title={title} className="m-2 max-w-md w-full">
       <form onSubmit={handleSubmit(handleConfirm)}>
         <div className="flex flex-col gap-4 py-2">
+
+          {/* Tên Phòng Ban */}
           <div className="flex flex-col gap-1.5">
             <Input
               label="Tên phòng ban *"
@@ -112,10 +132,14 @@ export default function DepartmentFormModal({ isOpen, onClose, title, submitText
               error={errors.name?.message || undefined}
             />
           </div>
+
+          {/* Mã Phòng Ban */}
           <div className="flex flex-col gap-1.5">
             <Input label="Mã phòng ban *" placeholder="Nhập mã phòng ban" fullWidth {...register('code')} error={errors.code?.message || undefined} />
           </div>
         </div>
+
+        {/* Button Thêm / Sửa */}
         <div className="flex gap-2 justify-end w-full">
           <Button variant="outline" size="sm" onClick={handleOnClose}>
             Hủy
