@@ -88,7 +88,7 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Cập nhật Preview Ảnh
+  // Cập nhật Preview ảnh
   useEffect(() => {
     if (avatarValue && avatarValue.length > 0) {
       const file = avatarValue[0];
@@ -97,8 +97,12 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
         setPreviewUrl(url);
         return () => URL.revokeObjectURL(url);
       }
+    } else if (initialData?.avatar) {
+      const path = initialData.avatar;
+      const baseUrl = process.env.NEXT_PUBLIC_MINIO_URL;
+      setPreviewUrl(path.startsWith('http') ? path : `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`);
     } else {
-      setPreviewUrl(initialData?.avatar || null);
+      setPreviewUrl(null);
     }
   }, [avatarValue, initialData]);
 
