@@ -44,10 +44,11 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
     onButtonClick?: () => void;
   };
   variant?: 'light' | 'dark';
+  onUserClick?: () => void;
 }
 
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
-  ({ sections = [], activeId, onItemSelect, user, cta, className, variant = 'light', ...props }, ref) => {
+  ({ sections = [], activeId, onItemSelect, user, cta, className, variant = 'light', onUserClick, ...props }, ref) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>({});
 
@@ -86,13 +87,21 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
           <div
             style={{ height: HEADER_HEIGHT }}
             className={cn(
-              'px-6 flex items-center border-b shrink-0 gap-3',
+              'px-6 flex items-center border-b shrink-0 gap-3 transition-colors',
               isLight ? 'border-slate-200' : 'border-slate-800/60',
+              onUserClick && (isLight ? 'cursor-pointer hover:bg-slate-50/50' : 'cursor-pointer hover:bg-slate-800/30'),
               isCollapsed && 'justify-center',
             )}
+            onClick={() => !isCollapsed && onUserClick?.()}
           >
             {isCollapsed ? (
-              <button onClick={() => setIsCollapsed(false)} className="cursor-pointer">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCollapsed(false);
+                }}
+                className="cursor-pointer"
+              >
                 <Avatar src={user.avatar} name={user.name} size="sm" />
               </button>
             ) : (
@@ -107,7 +116,10 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                   {/* Nút thu nhỏ (ẩn trên mobile) */}
                   <div className={cn('hidden md:flex shrink-0   justify-center border-t', isLight ? 'border-slate-100' : 'border-slate-800/50')}>
                     <button
-                      onClick={() => setIsCollapsed(true)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCollapsed(true);
+                      }}
                       className={cn(
                         'w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer',
                         isLight
