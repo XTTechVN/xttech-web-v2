@@ -53,7 +53,6 @@ export default function DepartmentFormModal({ isOpen, onClose, title, submitText
   const {
     register,
     handleSubmit,
-    watch,
     reset,
     formState: { errors },
   } = useForm<DepartmentFormValues>({
@@ -119,9 +118,8 @@ export default function DepartmentFormModal({ isOpen, onClose, title, submitText
   };
   return (
     <Modal isOpen={isOpen} onClose={handleOnClose} title={title} className="m-2 max-w-md w-full">
-      <form onSubmit={handleSubmit(handleConfirm)}>
+      <form onSubmit={handleSubmit(handleConfirm)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-4 py-2">
-
           {/* Tên Phòng Ban */}
           <div className="flex flex-col gap-1.5">
             <Input
@@ -140,7 +138,7 @@ export default function DepartmentFormModal({ isOpen, onClose, title, submitText
         </div>
 
         {/* Button Thêm / Sửa */}
-        <div className="flex gap-2 justify-end w-full">
+        <div className="flex gap-4 justify-end w-full">
           <Button variant="outline" size="sm" onClick={handleOnClose}>
             Hủy
           </Button>
