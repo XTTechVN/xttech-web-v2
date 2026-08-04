@@ -6,3 +6,6 @@ export * from './auth';
 
 // Department
 export * from './department';
+
+// Employee
+export * from './employee';
