@@ -1,16 +1,22 @@
 'use client';
 
+// React
 import React from 'react';
-import toast from 'react-hot-toast';
+
+// Next.js
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  Sidebar,
-  Header,
-  SidebarItemProps as SidebarItemType,
-  SidebarSubItem as SidebarSubItemType,
-  SidebarSectionProps as SidebarSectionType,
-} from '@/components';
-import { Layout, CalendarCheck, Clock, FileText, ShieldCheck, ListChecks, User } from 'lucide-react';
+
+// Third-party
+import toast from 'react-hot-toast';
+
+// Components
+import { Sidebar, SidebarItemProps as SidebarItemType } from '@/components';
+
+// Config
+import { getSidebarSectionsForRole, UserRole, acceptedSections, BASE_MINIO_URL } from '@/config';
+
+// Stores
+import { useAuthStore } from '@/stores';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
@@ -21,125 +27,53 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [activeMenu, setActiveMenu] = React.useState(lastPath);
 
-  const acceptedSections = ['dashboard', 'attendances', 'employees', 'suggestions', 'departments'];
-  const sidebarConfig: {
+  // Định nghĩa role hiện tại của user (mock, sau này có thể lấy từ auth context/store)
+  const [userRole, setUserRole] = React.useState<UserRole>('admin');
+
+  // Đồng bộ role từ cookie lúc component mount
+  React.useEffect(() => {
+    const xtAuthCookie = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith('xt-auth='))
+      ?.split('=')[1];
+
+    if (xtAuthCookie) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(xtAuthCookie));
+        const firstRole = parsed.roles?.[0];
+        const roleCode = typeof firstRole === 'string' ? firstRole : firstRole?.code;
+        const normalized = roleCode === 'super' ? 'admin' : roleCode;
+        if (normalized) {
+          setUserRole(normalized as UserRole);
+        }
+      } catch (e) {}
+    }
+  }, []);
+
+  // Lấy danh sách sections đã được lọc theo role của user
+  const filteredSections = React.useMemo(() => {
+    return getSidebarSectionsForRole(userRole);
+  }, [userRole]);
+
+
+  const user = useAuthStore((state) => state.user);
+
+  const sidebarConfig = {
     user: {
-      name: string;
-      role: string;
-      avatar: string;
-    };
-    sections: SidebarSectionType[];
-    cta: {
-      title: string;
-      description: string;
-      buttonText: string;
-    };
-    onItemSelect: (item: SidebarItemType) => void;
-    onItemSelectMobile: (item: SidebarItemType) => void;
-  } = {
-    user: {
-      name: 'Nguyễn Văn Anh',
-      role: 'Quản trị viên',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
+      name: user?.fullName || 'Nhân viên',
+      role: user?.roles?.[0]?.name ||
+        (userRole === 'admin'
+          ? 'Quản trị viên'
+          : userRole === 'hr'
+            ? 'Nhân sự (HR)'
+            : userRole === 'sale'
+              ? 'Kinh doanh (Sale)'
+              : 'Kỹ thuật viên (Technician)'),
+      avatar: user?.avatar
+        ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_MINIO_URL}${user.avatar}`)
+        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
     },
-    sections: [
-      // Điều hành
-      {
-        title: 'Điều hành doanh nghiệp',
-        items: [
-          {
-            id: 'dashboard',
-            label: 'Tổng quan',
-            icon: <Layout size={18} />,
-            href: '/app/admin/dashboard',
-          },
-        ],
-      },
-      // Quản lý nhân sự
-      {
-        title: 'Quản lý nhân sự',
-        items: [
-          {
-            id: 'employees-root',
-            label: 'Nhân viên',
-            icon: <User size={18} />,
-            href: '/app/admin/employees',
-            subItems: [
-              {
-                id: 'departments',
-                label: 'Danh sách phòng ban',
-                href: '/app/admin/departments',
-              },
-              {
-                id: 'employees',
-                label: 'Danh sách nhân viên',
-                href: '/app/admin/employees',
-              },
-            ],
-          },
-          {
-            id: 'attendances',
-            label: 'Bảng chấm công',
-            icon: <CalendarCheck size={18} />,
-            href: '/app/admin/attendances',
-          },
-          {
-            id: 'shifts',
-            label: 'Ca làm việc',
-            icon: <Clock size={18} />,
-            href: '/app/admin/shifts',
-          },
-          {
-            id: 'leave-request',
-            label: 'Nghỉ phép & Đơn từ',
-            icon: <FileText size={18} />,
-            href: '/app/admin/leave-requests',
-          },
-          {
-            id: 'attendances-policy',
-            label: 'Chính sách chấm công',
-            icon: <ShieldCheck size={18} />,
-            href: '/app/admin/attendances-policy',
-          },
-          {
-            id: 'attendances-summary',
-            label: 'Bảng tổng hợp',
-            icon: <ListChecks size={18} />,
-            href: '/app/admin/attendances-summary',
-          },
-        ],
-      },
-      // Quản lý dự án
-      {
-        title: 'Quản lý dự án',
-        items: [
-          {
-            id: 'projects',
-            label: 'Danh sách dự án',
-            icon: <CalendarCheck size={18} />,
-            href: '/app/admin/projects',
-          },
-          {
-            id: 'project-tasks',
-            label: 'Công việc',
-            icon: <Clock size={18} />,
-            href: '/app/admin/project-tasks',
-          },
-        ],
-      },
-      // Góp ý đề xuất
-      {
-        title: 'Góp ý đề xuất',
-        items: [
-          {
-            id: 'suggestions',
-            label: 'Danh sách góp ý',
-            icon: <CalendarCheck size={18} />,
-            href: '/app/admin/suggestions',
-          },
-        ],
-      },
-    ],
+    sections: filteredSections,
     cta: {
       title: 'Cần hỗ trợ?',
       description: 'Liên hệ với chúng tôi để được tư vấn thêm về các dịch vụ của chúng tôi.',
