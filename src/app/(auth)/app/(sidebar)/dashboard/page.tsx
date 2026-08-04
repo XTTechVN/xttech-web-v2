@@ -54,6 +54,7 @@ const statsMockupData = [
   },
 ];
 
+<<<<<<< HEAD
 const page = () => {
   const { data: testdata, isLoading } = useQuery({
     queryKey: ['test'],
@@ -62,6 +63,9 @@ const page = () => {
 
   console.log(testdata, isLoading);
 
+=======
+const Dashboard = () => {
+>>>>>>> 915d7c3 (refactor: move profile page components and remove unused admin department files)
   return (
     <div className="flex relative">
       <div className="flex-1 min-w-0 flex flex-col p-3 gap-4">
@@ -99,4 +103,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Dashboard;
