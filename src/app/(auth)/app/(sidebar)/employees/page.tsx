@@ -30,8 +30,6 @@ const Page = () => {
   });
 
   const totalDepartments = departmentData?.pagination?.total || 0;
-  const activeDepartments = departmentData?.pagination?.total || 0;
-
   const totalEmployees = employeeData?.pagination?.total || 0;
 
   // Dữ liệu mockup cho stat - card
