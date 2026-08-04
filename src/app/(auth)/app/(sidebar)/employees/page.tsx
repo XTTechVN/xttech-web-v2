@@ -11,12 +11,28 @@ import Table from './_components/table';
 // icons thư viện lucide - react
 import { Building2, Users, UserCheck, Briefcase } from 'lucide-react';
 
-// Store
-import { useDapartmentStore } from '@/stores';
+// API Actions & React Query
+import { useQuery } from '@tanstack/react-query';
+import { getEmployees } from '@/actions/employee';
+import { getDepartments } from '@/actions/department';
 
 const Page = () => {
-  const totalDepartments = useDapartmentStore((state) => state.total);
-  const activeDepartments = useDapartmentStore((state) => state.total);
+  // Lấy tổng số phòng ban
+  const { data: departmentData } = useQuery({
+    queryKey: ['departments', 'total'],
+    queryFn: () => getDepartments({ limit: 1 }),
+  });
+
+  // Lấy tổng số nhân viên
+  const { data: employeeData } = useQuery({
+    queryKey: ['employees', 'total'],
+    queryFn: () => getEmployees({ limit: 1 }),
+  });
+
+  const totalDepartments = departmentData?.pagination?.total || 0;
+  const activeDepartments = departmentData?.pagination?.total || 0;
+
+  const totalEmployees = employeeData?.pagination?.total || 0;
 
   // Dữ liệu mockup cho stat - card
   const employeeStats = [
@@ -29,21 +45,21 @@ const Page = () => {
     },
     {
       title: 'Tổng số nhân sự',
-      value: 124,
+      value: totalEmployees,
       icon: <Users />,
       trend: 15,
       trendDirection: 'up' as const,
     },
     {
       title: 'Đang hoạt động',
-      value: Number(activeDepartments),
+      value: Number(totalEmployees),
       icon: <UserCheck />,
       trend: 2,
       trendDirection: 'up' as const,
     },
     {
-      title: 'Phòng ban mới',
-      value: 1,
+      title: 'Nhân viên mới',
+      value: Number(totalEmployees),
       icon: <Briefcase />,
       trend: 0,
       trendDirection: 'up' as const,
