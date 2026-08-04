@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
 import { rawSidebarSections } from './config/sidebar';
 
 const ROUTE_PERMISSIONS: Record<string, string[]> = {};
@@ -26,7 +25,7 @@ const DEFAULT_PAGES: Record<string, string> = {
   technician: '/app/shifts',
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const xtAuthCookie = request.cookies.get('xt-auth')?.value;
@@ -46,9 +45,9 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  console.log(`[Middleware] Pathname: ${pathname}`);
-  console.log(`[Middleware] Raw Cookie: ${xtAuthCookie}`);
-  console.log(`[Middleware] parsed userRoles:`, userRoles);
+  console.log(`[Proxy] Pathname: ${pathname}`);
+  console.log(`[Proxy] Raw Cookie: ${xtAuthCookie}`);
+  console.log(`[Proxy] parsed userRoles:`, userRoles);
 
   // 1. Nếu đã đăng nhập mà cố tình vào lại trang /signin -> redirect về trang mặc định của role
   if (pathname === '/signin') {

@@ -2,7 +2,7 @@ import React from 'react';
 import { Layout, CalendarCheck, Clock, FileText, ShieldCheck, ListChecks, User } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
-export type UserRole = 'admin' | 'hr' | 'sale' | 'technician';
+export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician';
 
 export const acceptedSections = ['dashboard', 'attendances', 'employees', 'suggestions', 'departments'];
 
@@ -25,7 +25,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Tổng quan',
         icon: React.createElement(Layout, { size: 18 }),
         href: '/app/dashboard',
-        roles: ['admin'],
+        roles: ['super', 'admin'],
       },
     ],
   },
