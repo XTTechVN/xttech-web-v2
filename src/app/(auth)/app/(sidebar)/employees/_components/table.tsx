@@ -31,12 +31,6 @@ import EmployeeFormModal from './form-modal';
 const Table = () => {
   const [search, setSearch] = useQueryParam('search');
 
-  const getAvatarUrl = (path: string | null | undefined) => {
-    if (!path) return undefined;
-    const baseUrl = process.env.NEXT_PUBLIC_MINIO_URL;
-    return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
-
   // Trạng thái cho modal sửa nhân sự
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [selectedEmp, setSelectedEmp] = React.useState<Employee | null>(null);
@@ -85,7 +79,7 @@ const Table = () => {
       minWidth: '220px',
       cell: (row: Employee) => (
         <div className="flex items-center gap-3">
-          <Avatar src={getAvatarUrl(row.avatar)} name={row.fullName || row.username || '---'} size="sm" />
+          <Avatar src={`${process.env.NEXT_PUBLIC_MINIO_URL}${row.avatar}`} name={row.fullName || row.username} size="sm" />
           <div className="flex flex-col">
             <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
             <span className="text-xs text-gray-500">{row.email}</span>
@@ -171,7 +165,7 @@ const Table = () => {
       className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex items-center gap-3">
-        <Avatar src={getAvatarUrl(row.avatar)} name={row.fullName || row.username} size="md" />
+        <Avatar src={row.avatar || undefined} name={row.fullName || row.username} size="md" />
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
           <span className="text-xs text-gray-400">{row.email}</span>
