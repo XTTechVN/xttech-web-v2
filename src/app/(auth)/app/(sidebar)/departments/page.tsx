@@ -13,7 +13,6 @@ import { Building2, Users, UserCheck, Briefcase } from 'lucide-react';
 
 // Store
 import { useDapartmentStore } from '@/stores';
-import { number } from 'motion/react';
 
 const Page = () => {
   const totalDepartments = useDapartmentStore((state) => state.total);

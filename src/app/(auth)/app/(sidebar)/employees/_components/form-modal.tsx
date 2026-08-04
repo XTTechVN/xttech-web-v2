@@ -1,17 +1,34 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { CheckCircle2, Camera, Eye, EyeOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+// Components
 import { Input, Button, Modal, Select, Avatar } from '@/components';
+
+// Icon thư viện lucide-react
+import { CheckCircle2, Camera, Eye, EyeOff } from 'lucide-react';
+
+// Thư viện validate dữ liệu
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+
+// React-hook-form
+import { useForm } from 'react-hook-form';
+
+// Lấy api từ actions
 import { createEmployee, updateEmployee } from '@/actions/employee';
+
+// Load ra thông báo
 import toast from 'react-hot-toast';
+
+// Thư viện react query
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
+
+// Lấy employee types
 import { Employee } from '@/types';
 
+// Định nghĩa Props cho Modal
 interface EmployeeFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -20,7 +37,7 @@ interface EmployeeFormModalProps {
   initialData?: Employee | null;
 }
 
-// 1. Schema chung cho Form
+// Schema chung cho Form
 const baseEmployeeSchema = z.object({
   fullName: z.string().min(1, { message: 'Họ và tên không được để trống' }),
   username: z.string().min(1, { message: 'Tên đăng nhập không được để trống' }),
@@ -38,12 +55,12 @@ const baseEmployeeSchema = z.object({
   avatar: z.any().optional(),
 });
 
-// 2. Schema dành riêng cho TẠO MỚI (Bắt buộc mật khẩu)
+// Schema dành riêng cho TẠO MỚI (Bắt buộc mật khẩu)
 const createEmployeeSchema = baseEmployeeSchema.extend({
   password: z.string().min(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' }),
 });
 
-// 3. Schema dành riêng cho CẬP NHẬT (Mật khẩu là tùy chọn, nếu điền mới validate)
+// Schema dành riêng cho CẬP NHẬT (Mật khẩu là tùy chọn, nếu điền mới validate)
 const updateEmployeeSchema = baseEmployeeSchema.extend({
   password: z.string().optional(),
 });
@@ -51,7 +68,6 @@ const updateEmployeeSchema = baseEmployeeSchema.extend({
 export default function EmployeeFormModal({ isOpen, onClose, title, submitText = 'Xác nhận', initialData }: EmployeeFormModalProps) {
   // Chọn schema linh hoạt theo việc có initialData hay không
   const isEditMode = Boolean(initialData);
-
   const {
     register,
     handleSubmit,
@@ -82,7 +98,18 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
         return () => URL.revokeObjectURL(url);
       }
     } else {
-      setPreviewUrl(initialData?.avatar || null);
+      const avatarPath = initialData?.avatar;
+      if (avatarPath) {
+        if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
+          setPreviewUrl(avatarPath);
+        } else {
+          const baseUrl = process.env.NEXT_PUBLIC_MINIO_URL || '';
+          const separator = baseUrl.endsWith('/') || avatarPath.startsWith('/') ? '' : '/';
+          setPreviewUrl(`${baseUrl}${separator}${avatarPath}`);
+        }
+      } else {
+        setPreviewUrl(null);
+      }
     }
   }, [avatarValue, initialData]);
 
@@ -203,8 +230,10 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Họ và tên */}
           <Input label="Họ và tên *" placeholder="Nhập họ và tên" fullWidth {...register('fullName')} error={errors.fullName?.message} />
 
+          {/* Tên đăng nhập */}
           <Input
             label="Tên đăng nhập *"
             placeholder="Nhập tên đăng nhập"
@@ -214,6 +243,7 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
             error={errors.username?.message}
           />
 
+          {/* Mật khẩu */}
           {!isEditMode && (
             <div className="relative w-full">
               <Input
@@ -228,15 +258,17 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[42px] -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none flex items-center justify-center bg-white"
+                className="absolute right-3 top-10.5 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none flex items-center justify-center bg-white"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           )}
 
+          {/* Email */}
           <Input label="Email *" placeholder="example@gmail.com" type="email" fullWidth {...register('email')} error={errors.email?.message} />
 
+          {/* Số điện thoại */}
           <Input
             label="Số điện thoại *"
             placeholder="Nhập số điện thoại"
@@ -245,6 +277,7 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
             error={errors.phoneNumber?.message}
           />
 
+          {/* CCCD */}
           <Input
             label="Căn cước công dân *"
             placeholder="Nhập căn cước công dân"
@@ -253,6 +286,7 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
             error={errors.identifyCode?.message}
           />
 
+          {/* Giới tính */}
           <Select
             label="Giới tính"
             {...register('gender')}
@@ -263,10 +297,13 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
             ]}
           />
 
+          {/* Ngày sinh */}
           <Input label="Ngày sinh" type="date" fullWidth {...register('birthday')} error={errors.birthday?.message} />
 
+          {/* Ngày gia nhập */}
           <Input label="Ngày gia nhập" type="date" fullWidth {...register('joinedAt')} error={errors.joinedAt?.message} />
 
+          {/* Chính sách */}
           <Select
             label="Chính sách chấm công"
             {...register('attendancePolicy')}
@@ -278,8 +315,10 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
           />
         </div>
 
+        {/* Địa chỉ */}
         <Input label="Địa chỉ *" placeholder="Nhập địa chỉ cư trú" fullWidth {...register('address')} error={errors.address?.message} />
 
+        {/* Nut huỷ và Lưu */}
         <div className="flex gap-2 justify-end w-full mt-4">
           <Button variant="outline" size="sm" type="button" onClick={onClose} disabled={isPending}>
             Hủy

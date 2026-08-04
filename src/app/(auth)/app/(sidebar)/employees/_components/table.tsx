@@ -79,7 +79,7 @@ const Table = () => {
       minWidth: '220px',
       cell: (row: Employee) => (
         <div className="flex items-center gap-3">
-          <Avatar name={row.avatar || '---'} size="sm" />
+          <Avatar src={`${process.env.NEXT_PUBLIC_MINIO_URL}${row.avatar}`} name={row.fullName || row.username} size="sm" />
           <div className="flex flex-col">
             <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
             <span className="text-xs text-gray-500">{row.email}</span>
