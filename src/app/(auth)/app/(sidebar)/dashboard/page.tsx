@@ -45,6 +45,7 @@ const statsMockupData = [
   },
 ];
 
+const Dashboard = () => {
   return (
     <div className="flex relative">
       <div className="flex-1 min-w-0 flex flex-col p-3 gap-4">
@@ -82,4 +83,4 @@ const statsMockupData = [
   );
 };
 
-export default page;
+export default Dashboard;
