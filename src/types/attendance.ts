@@ -214,23 +214,14 @@ export interface AttendanceAdjustmentRequest {
 
 export interface AttendanceAdjustmentRequestCreate {
     attendanceId?: number | null;
-
     userId: string;
-
     requestType: RequestType;
-
     oldCheckIn?: string;
-
     oldCheckOut?: string;
-
     requestedCheckIn?: string;
-
     requestedCheckOut?: string;
-
     reason: string;
-
     status?: AdjustmentStatus;
-
     workDate: string;
 }
 
@@ -271,3 +262,29 @@ export interface AutoTimekeepingData {
     latitude: number;
     note?: string;
 }
+
+// =======================
+// DEPARTMENT
+// =======================
+
+export interface Department {
+    id: number;
+    name: string;
+    code: string | null;
+    mainColor: string | null;
+    mainIcon: string | null;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+}
+
+export interface DepartmentQueryParams {
+    search?: string;
+    limit?: number;
+    offset?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    allowDeleted?: boolean;
+}
+
+export type DepartmentListResponse = DataListResponse<Department>;

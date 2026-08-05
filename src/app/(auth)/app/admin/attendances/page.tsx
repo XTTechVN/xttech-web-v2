@@ -12,7 +12,7 @@ import Loading from '../../loading';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { deleteAttendance, getAttendances } from '@/actions';
+import { deleteAttendance, getAttendances, getDepartments, getUsers } from '@/actions';
 import { Attendance } from '@/types';
 
 
@@ -95,7 +95,14 @@ export default function AttendancesPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
+  const { data: departments, isLoading: loadingDepartments } = useQuery({
+    queryKey: ['departments'],
+    queryFn: () => getDepartments(),
+  })
+  const { data: users, isLoading: loadingUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => getUsers(),
+  })
   // const { data: attendances, isLoading: loadingAttendances, isFetching, refetch } = useQuery({
   //   queryKey: ['attendances'],
   //   queryFn: () => getAttendances(),
@@ -110,9 +117,9 @@ export default function AttendancesPage() {
   //     toast.error('Thêm chấm công thất bại');
   //   },
   // });
-  // useEffect(() => {
-  //   console.log(attendances);
-  // }, [attendances]);
+  useEffect(() => {
+    console.log(departments);
+  }, [departments]);
 
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/app' },
@@ -126,9 +133,9 @@ export default function AttendancesPage() {
   // Tạo option list duy nhất từ mock data
   const employeeOptions = [
     ...new Map(
-      attendances?.map((item) => [
-        item.userId,
-        { label: item.user?.fullName ?? 'Không xác định', value: item.userId },
+      users?.items?.map((item) => [
+        item.id,
+        { label: item.fullName ?? 'Không xác định', value: item.id },
       ])
     ).values(),
   ];
@@ -141,7 +148,14 @@ export default function AttendancesPage() {
       ])
     ).values(),
   ];
-
+  const departmentOptions = [
+    ...new Map(
+      departments?.items?.map((item) => [
+        item.id,
+        { label: item.name ?? 'Không xác định', value: String(item.id), },
+      ])
+    ).values(),
+  ];
   const getStatusLabel = (status?: string | null) => {
     const map: Record<string, string> = {
       present: "Có mặt",
@@ -179,13 +193,7 @@ export default function AttendancesPage() {
     {
       label: 'Phòng ban',
       value: filterDepartment,
-      options: [
-        { label: 'IT', value: 'it' },
-        { label: 'Kinh doanh', value: 'sales' },
-        { label: 'Marketing', value: 'marketing' },
-        { label: 'Nhân sự', value: 'hr' },
-        { label: 'Kế toán', value: 'accounting' },
-      ],
+      options: departmentOptions,
       onChange: (val: string | undefined) => setFilterDepartment(val),
     },
     {
@@ -286,26 +294,26 @@ export default function AttendancesPage() {
     }
 
 
-    if (filterEmployeeId) {
-      filtered = filtered.filter(
-        item => item.userId === filterEmployeeId
-      );
-    }
+    // if (filterEmployeeId) {
+    //   filtered = filtered.filter(
+    //     item => item.userId === filterEmployeeId
+    //   );
+    // }
 
 
-    if (filterStatus) {
-      filtered = filtered.filter(
-        item => item.status === filterStatus
-      );
+    // if (filterStatus) {
+    //   filtered = filtered.filter(
+    //     item => item.status === filterStatus
+    //   );
 
-    }
+    // }
 
 
-    if (filterWorkDate) {
-      filtered = filtered.filter(
-        item => item.workDate === filterWorkDate
-      );
-    }
+    // if (filterWorkDate) {
+    //   filtered = filtered.filter(
+    //     item => item.workDate === filterWorkDate
+    //   );
+    // }
 
 
 
@@ -581,7 +589,7 @@ export default function AttendancesPage() {
       {/* Table */}
       <div className="space-y-4">
         <TableData<Attendance>
-          queryKey={['attendances', searchQuery, filterEmployeeId, filterStatus, filterWorkDate, filterDepartment, filterShift]}
+          queryKey={['attendances', searchQuery]}
           fetcher={fetcher}
           columns={columns}
           search={{

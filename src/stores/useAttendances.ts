@@ -8,18 +8,12 @@ import {
 
 
 export const useAttendances = () => {
-
     return useQuery({
-
         queryKey: [
             "attendances"
         ],
-
-
         queryFn:
             () => getAttendances(),
-
-
     });
 
 };

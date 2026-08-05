@@ -9,7 +9,9 @@ import {
     UserResponse,
     UserCreate, AttendanceAdjustmentRequestCreate,
     AdjustmentRequestQueryParams,
-    AttendanceAdjustmentRequestUpdate
+    AttendanceAdjustmentRequestUpdate,
+    Department,
+    DepartmentQueryParams
 } from "@/types";
 
 
@@ -120,4 +122,10 @@ export const createUser = async (
     return res.data;
 };
 
-
+export const getDepartments = async (params?: DepartmentQueryParams) => {
+    const res = await api.get<DataListResponse<Department>>(
+        `${baseVersion1}/departments`,
+        { params }
+    );
+    return res.data;
+}
