@@ -3,7 +3,7 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
-import { Building2, Pencil, Trash2 } from 'lucide-react';
+import { Building2, Pencil, Trash2, PlusCircle} from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData } from '@/components/table';
@@ -13,6 +13,7 @@ import { useQueryParam } from '@/hooks';
 // Kiểu dữ liệu phòng ban
 import { Department } from '@/types';
 
+// Store
 // Store
 import { useSearchParams } from 'next/navigation';
 import { useDapartmentStore } from '@/stores';
@@ -24,6 +25,7 @@ import toast from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import { deleteDepartment } from '@/actions/department';
+import PositionPage from '../positions/page';
 
 // Component hiển thị Badge Icon đẹp mắt
 const IconBadge = ({ iconName, color }: { iconName: string; color: string }) => {
@@ -54,6 +56,10 @@ const Table = () => {
   // Trạng thái cho modal xóa phòng ban
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [deptToDelete, setDeptToDelete] = React.useState<Department | null>(null);
+
+  // Trạng thái cho modal quản lý vị trí
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const [deptToCreate, setDeptToCreate] = React.useState<Department | null>(null);
 
   // Lấy hàm fetch danh sách phòng ban từ store
   const { fetchDepartments } = useDapartmentStore();
@@ -140,6 +146,17 @@ const Table = () => {
             className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
           >
             <Trash2 size={18} />
+          </button>
+
+          <button
+            onClick={() => {
+              setDeptToCreate(row);
+              setIsCreateOpen(true);
+            }}
+            title="Quản lý vị trí"
+            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+          >
+            <PlusCircle size={18} />
           </button>
         </div>
       ),
@@ -272,6 +289,22 @@ const Table = () => {
           >
             Xác nhận xóa
           </Button>
+        </div>
+      </Modal>
+
+      {/* Modal hiển thị trang Quản lý vị trí */}
+      <Modal
+        size='xl'
+        isOpen={isCreateOpen}
+        onClose={() => {
+          setIsCreateOpen(false);
+          setDeptToCreate(null);
+        }}
+        title={`Quản lý vị trí - ${deptToCreate?.name || ''}`}
+        className="m-2 max-w-6xl w-full"
+      >
+        <div className="max-h-[80vh] overflow-y-auto w-full">
+          <PositionPage />
         </div>
       </Modal>
     </div>
