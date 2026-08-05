@@ -52,7 +52,7 @@ const Page = () => {
       trendDirection: 'up' as const,
     },
     {
-      title: 'Đang hoạt động',
+      title: 'Tổng số vị trí',
       value: Number(activeDepartments),
       icon: <UserCheck />,
       trend: 2,
@@ -70,10 +70,10 @@ const Page = () => {
     <div className="flex flex-col p-3 gap-4">
       <div className="flex flex-col gap-2">
         <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Quản lý phòng ban
+          Quản lý vị trí
         </Heading>
         <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-          Danh sách các phòng ban sẽ đc hiển thị tại đây
+          Danh sách các vị trí trong phòng ban sẽ được hiển thị tại đây
         </Heading>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

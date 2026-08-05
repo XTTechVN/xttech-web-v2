@@ -3,7 +3,7 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
-import { Building2, Pencil, Trash2, PlusCircle} from 'lucide-react';
+import { Building2, Pencil, Trash2, PlusCircle } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData } from '@/components/table';
@@ -170,7 +170,6 @@ const Table = () => {
       className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex items-center gap-3">
-        <IconBadge iconName={row.mainIcon} color={row.mainColor} />
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">{row.name}</span>
           <span className="text-xs text-gray-400">ID: {row.id}</span>
@@ -204,6 +203,17 @@ const Table = () => {
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
         >
           <Trash2 size={18} />
+        </button>
+
+        <button
+          onClick={() => {
+            setDeptToCreate(row);
+            setIsCreateOpen(true);
+          }}
+          title="Quản lý vị trí"
+          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+        >
+          <PlusCircle size={18} />
         </button>
       </div>
     </div>
@@ -294,14 +304,14 @@ const Table = () => {
 
       {/* Modal hiển thị trang Quản lý vị trí */}
       <Modal
-        size='xl'
+        size="xl"
         isOpen={isCreateOpen}
         onClose={() => {
           setIsCreateOpen(false);
           setDeptToCreate(null);
         }}
         title={`Quản lý vị trí - ${deptToCreate?.name || ''}`}
-        className="m-2 max-w-6xl w-full"
+        className="m-2 md:m-8 max-w-[95%] md:max-w-[85%] w-full"
       >
         <div className="max-h-[80vh] overflow-y-auto w-full">
           <PositionPage />

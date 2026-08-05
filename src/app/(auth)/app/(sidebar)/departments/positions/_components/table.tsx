@@ -89,35 +89,20 @@ const Table = () => {
 
   // Cấu hình các cột cho Desktop
   const columns = [
+    { key: 'id', label: 'STT', minWidth: '80px', cell: (row: Department) => <span className="text-slate-500 font-medium">{row.id}</span> },
     {
       key: 'code',
-      label: 'Mã phòng ban',
+      label: 'Mã vị trí',
       cell: (row: Department) => <span className="text-slate-500 font-medium">{row.code}</span>,
     },
     {
       key: 'name',
-      label: 'Tên phòng ban',
+      label: 'Tên vị trí',
       minWidth: '250px',
       cell: (row: Department) => (
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">{row.name}</span>
         </div>
-      ),
-    },
-    {
-      key: 'createdAt',
-      label: 'Ngày tạo',
-      minWidth: '180px',
-      cell: (row: Department) => (
-        <span className="text-gray-600 text-sm">
-          {new Date(row.createdAt).toLocaleDateString('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </span>
       ),
     },
     {
@@ -147,15 +132,6 @@ const Table = () => {
             <Trash2 size={18} />
           </button>
 
-          <button
-            onClick={() => {
-              setDeptToCreate(row);
-              setIsCreateOpen(true);
-            }}
-            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-          >
-            <PlusCircle size={18} />
-          </button>
         </div>
       ),
     },
@@ -168,7 +144,6 @@ const Table = () => {
       className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex items-center gap-3">
-        <IconBadge iconName={row.mainIcon} color={row.mainColor} />
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">{row.name}</span>
           <span className="text-xs text-gray-400">ID: {row.id}</span>
@@ -210,7 +185,7 @@ const Table = () => {
   return (
     <div className="flex flex-col gap-2">
       <Heading className="text-primary pr-2 pt-2 text-2xl" size="h1">
-        Danh sách phòng ban
+        Danh sách vị trí
       </Heading>
       <TableData<Department>
         queryKey={['departments', search]}
@@ -219,7 +194,7 @@ const Table = () => {
         renderCard={renderCard}
         select={false}
         search={{
-          placeholder: 'Tìm kiếm phòng ban...',
+          placeholder: 'Tìm kiếm vị trí...',
           value: search,
           onChange: setSearch,
           className: 'w-80',
@@ -301,7 +276,7 @@ const Table = () => {
         submitText="Xác nhận tạo"
         initialData={undefined}
         // Thêm prop departmentId nếu cần thiết ở trong form-modal để biết vị trí thuộc phòng ban nào
-        // departmentId={deptToCreate?.id} 
+        // departmentId={deptToCreate?.id}
       />
     </div>
   );
