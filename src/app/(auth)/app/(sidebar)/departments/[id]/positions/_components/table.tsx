@@ -10,9 +10,6 @@ import { TableData } from '@/components/table';
 import { Heading, Modal, Button } from '@/components';
 import { useQueryParam } from '@/hooks';
 
-// Kiểu dữ liệu phòng ban
-import { Department } from '@/types';
-
 // Store
 import { useParams, useSearchParams } from 'next/navigation';
 
@@ -25,13 +22,12 @@ import toast from 'react-hot-toast';
 
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
-import { deleteDepartment } from '@/actions/department';
+import { deletePosition } from '@/actions';
 
 import { Position } from '@/types';
 
 const Table = () => {
-  const params = useParams()
-  console.log(params)
+  const params = useParams();
   const searchParams = useSearchParams();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
@@ -64,14 +60,14 @@ const Table = () => {
     };
   };
 
-  // tạo hàm xóa phòng ban
-  const { mutate: deletDepartmentm, isPending } = useMutation({
-    mutationFn: deleteDepartment,
+  // tạo hàm xóa vị trí
+  const { mutate: deleteMutation, isPending } = useMutation({
+    mutationFn: deletePosition,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['departments'] });
-      toast.success('Xóa phòng ban thành công');
+      queryClient.invalidateQueries({ queryKey: ['positions'] });
+      toast.success('Xóa vị trí thành công');
       setIsDeleteOpen(false);
-      setDeptToDelete(null);
+      setPositionToDelete(null);
     },
     onError: (error) => {
       toast.error(error.message);
@@ -80,12 +76,6 @@ const Table = () => {
 
   // Cấu hình các cột cho Desktop
   const columns = [
-    { key: 'id', label: 'STT', minWidth: '80px', cell: (row: Position) => <span className="text-slate-500 font-medium">{row.id}</span> },
-    {
-      key: 'code',
-      label: 'Mã vị trí',
-      cell: (row: Position) => <span className="text-slate-500 font-medium">{row.id}</span>,
-    },
     {
       key: 'name',
       label: 'Tên vị trí',
@@ -94,6 +84,20 @@ const Table = () => {
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">{row.name}</span>
         </div>
+      ),
+    },
+    {
+      key: 'createdAt',
+      label: 'Ngày tạo',
+      minWidth: '150px',
+      cell: (row: Position) => (
+        <span className="text-slate-500">
+          {new Date(row.createdAt).toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          })}
+        </span>
       ),
     },
     {
@@ -136,7 +140,6 @@ const Table = () => {
       <div className="flex items-center gap-3">
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">{row.name}</span>
-          <span className="text-xs text-gray-400">ID: {row.id}</span>
           <span className="text-xs text-gray-500 mt-1">
             Ngày tạo:{' '}
             {new Date(row.createdAt).toLocaleDateString('vi-VN', {
@@ -174,11 +177,8 @@ const Table = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      <Heading className="text-primary pr-2 pt-2 text-2xl" size="h1">
-        Danh sách vị trí
-      </Heading>
       <TableData<Position>
-        queryKey={['positions',departmentId, search]}
+        queryKey={['positions', departmentId, search]}
         fetcher={fetcher}
         columns={columns}
         renderCard={renderCard}
@@ -191,34 +191,33 @@ const Table = () => {
         }}
       />
 
-      {/* Modal Sửa phòng ban */}
+      {/* Modal Sửa vị trí */}
       <PositionFormModal
         isOpen={isEditOpen}
         onClose={() => {
           setIsEditOpen(false);
           setSelectedPosition(null);
         }}
-        title="Sửa vị trí"
+        title="Sửa vị trí"
         submitText="Xác nhận lưu"
         initialData={
           selectedPosition
             ? {
                 id: Number(selectedPosition.id),
                 name: selectedPosition.name,
-                code: selectedPosition.id.toString(), // Position doesn't have code in type currently, using id as fallback
               }
             : undefined
         }
       />
 
-      {/* Modal Xác nhận xóa phòng ban */}
+      {/* Modal Xác nhận xóa vị trí */}
       <Modal
         isOpen={isDeleteOpen}
         onClose={() => {
           setIsDeleteOpen(false);
           setPositionToDelete(null);
         }}
-        title="Xác nhận xóa phòng ban"
+        title="Xác nhận xóa vị trí"
         className="m-2 max-w-md w-full"
       >
         <div className="flex gap-4 items-center py-2">
@@ -245,7 +244,7 @@ const Table = () => {
             size="sm"
             onClick={() => {
               if (positionToDelete) {
-                deletDepartmentm(positionToDelete.id);
+                deleteMutation(positionToDelete.id);
               }
             }}
             loading={isPending}

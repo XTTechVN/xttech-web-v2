@@ -3,19 +3,22 @@
 import React, { useState } from 'react';
 
 // Thành phần dùng chung cho toàn bộ trang
-import { Button } from '@/components';
+import { Button, Heading } from '@/components';
 
 // Icon thư viện lucide-react
 import { Plus } from 'lucide-react';
 
 // Component con dùng riêng cho phòng ban
-import DepartmentFormModal from './form-modal';
+import PositionFormModal from './form-modal';
 
 const ActionBar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="flex justify-end w-full">
+    <div className="flex justify-between w-full">
+      <Heading className="text-primary text-2xl flex items-center" size="h1">
+        Danh sách vị trí
+      </Heading>
       <Button
         variant="primary"
         size="sm"
@@ -27,7 +30,7 @@ const ActionBar = () => {
       </Button>
 
       {/* Modal Thêm phòng ban mới */}
-      <DepartmentFormModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Thêm phòng ban mới" submitText="Xác nhận tạo" />
+      <PositionFormModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Thêm vị trí mới" submitText="Xác nhận tạo" />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useParams } from 'next/navigation';
 
 // Thành phần dùng chung cho toàn trang
 import { Input, Button, Modal } from '@/components';
@@ -37,14 +38,12 @@ interface PositionFormModalProps {
   initialData?: {
     id: number;
     name: string;
-    code: string;
   };
 }
 
 // Validation cho thêm / sửa vị trí
 const positionSchema = z.object({
   name: z.string().min(1, { message: 'Tên vị trí không được để trống' }),
-  code: z.string().min(1, { message: 'Mã vị trí không được để trống' }),
 });
 type PositionFormValues = z.infer<typeof positionSchema>;
 
@@ -59,9 +58,8 @@ export default function PositionFormModal({ isOpen, onClose, title, submitText =
     resolver: zodResolver(positionSchema),
   });
 
-  // TODO: Thay đổi createDepartment thành createPosition khi API sẵn sàng
   const { mutate, isPending } = useMutation({
-    mutationFn: createDepartment,
+    mutationFn: createPosition,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['positions'] });
       toast.success('Thêm vị trí thành công');
@@ -73,9 +71,8 @@ export default function PositionFormModal({ isOpen, onClose, title, submitText =
     },
   });
 
-  // TODO: Thay đổi updateDepartment thành updatePosition khi API sẵn sàng
   const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Omit<Department, 'id' | 'createdAt' | 'mainColor' | 'mainIcon'> }) => updateDepartment(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Partial<Omit<Position, 'id' | 'createdAt' | 'updatedAt'>> }) => updatePosition(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['positions'] });
       toast.success('Cập nhật vị trí thành công');
@@ -92,20 +89,21 @@ export default function PositionFormModal({ isOpen, onClose, title, submitText =
     if (isOpen) {
       reset({
         name: initialData?.name || '',
-        code: initialData?.code || '',
       });
     } else {
       reset({
         name: '',
-        code: '',
       });
     }
   }, [isOpen, initialData]);
 
+  const params = useParams();
+  const departmentId = Number(params.id);
+
   const handleConfirm = (data: PositionFormValues) => {
     const payload = {
       name: data.name,
-      code: data.code,
+      departmentId: departmentId,
     };
     if (initialData) {
       updateMutation({ id: Number(initialData?.id), data: payload });
@@ -129,11 +127,6 @@ export default function PositionFormModal({ isOpen, onClose, title, submitText =
               {...register('name')}
               error={errors.name?.message || undefined}
             />
-          </div>
-
-          {/* Mã vị trí */}
-          <div className="flex flex-col gap-1.5">
-            <Input label="Mã vị trí *" placeholder="Nhập mã vị trí" fullWidth {...register('code')} error={errors.code?.message || undefined} />
           </div>
         </div>
 
