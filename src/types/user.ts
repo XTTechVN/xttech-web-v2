@@ -1,3 +1,5 @@
+import { Role } from './auth';
+
 // Kiểu dữ liệu thông tin người dùng
 export interface User {
   id: string;
@@ -14,6 +16,6 @@ export interface User {
   attendancePolicy: string;
   createdAt: string;
   updatedAt: string;
-  roles: string[];
+  roles: Role[];
   positions: string[];
 }

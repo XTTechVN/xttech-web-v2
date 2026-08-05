@@ -16,7 +16,6 @@ interface SuggestionState {
   isExporting: boolean;
   isRefreshing: boolean;
   typeFilterVal: string | undefined;
-  senderVal: string | undefined;
   tab: string;
   search: string;
 
@@ -62,7 +61,6 @@ interface SuggestionState {
   setExporting: (val: boolean) => void;
   setRefreshing: (val: boolean) => void;
   setTypeFilterVal: (val: string | undefined) => void;
-  setSenderVal: (val: string | undefined) => void;
   setTab: (val: string) => void;
   setSearch: (val: string) => void;
 
@@ -159,7 +157,6 @@ export const useSuggestionStore = create<SuggestionState>((set) => ({
       activeTab: 'all',
       currentPage: 1,
       typeFilterVal: undefined,
-      senderVal: undefined,
       tab: 'all',
       search: '',
     }),
@@ -168,7 +165,6 @@ export const useSuggestionStore = create<SuggestionState>((set) => ({
   setExporting: (val) => set({ isExporting: val }),
   setRefreshing: (val) => set({ isRefreshing: val }),
   setTypeFilterVal: (val) => set({ typeFilterVal: val }),
-  setSenderVal: (val) => set({ senderVal: val }),
   setTab: (val) => set({ tab: val }),
   setSearch: (val) => set({ search: val }),
 

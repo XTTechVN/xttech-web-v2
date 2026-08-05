@@ -12,6 +12,7 @@ import { TableData, Button } from '@/components';
 import { getSuggestions } from '@/actions/suggestion';
 import { Suggestion } from '@/types';
 import TableAction from '@/components/table/table-action';
+import { BASE_MINIO_URL } from '@/config';
 
 // Hàm bổ trợ phân loại chủ đề linh hoạt từ type hoặc content
 const getSuggestionType = (p: Suggestion) => {
@@ -34,7 +35,12 @@ const typeLabels: Record<string, { label: string; class: string }> = {
   other: { label: 'Khác', class: 'bg-slate-50 text-slate-600 border-slate-200' },
 };
 
-export default function SuggestionTable() {
+interface SuggestionTableProps {
+  isManager: boolean;
+  currentUserId?: string;
+}
+
+export default function SuggestionTable({ isManager, currentUserId }: SuggestionTableProps) {
   const queryClient = useQueryClient();
 
   const {
@@ -48,8 +54,6 @@ export default function SuggestionTable() {
     setRefreshing,
     typeFilterVal,
     setTypeFilterVal,
-    senderVal,
-    setSenderVal,
     tab,
     setTab,
     search,
@@ -60,12 +64,11 @@ export default function SuggestionTable() {
 
   // Debounced filter states (500ms delay)
   const debouncedSearch = useDebounce(search || '', 500);
-  const debouncedSender = useDebounce(senderVal || '', 500);
   const debouncedType = useDebounce(typeFilterVal || '', 500);
   const debouncedTab = useDebounce(tab || 'all', 500);
 
   // React Query queryKey containing all debounced filters
-  const queryKey = ['admin-suggestions', debouncedSearch, debouncedTab, debouncedSender, debouncedType];
+  const queryKey = ['admin-suggestions', debouncedSearch, debouncedTab, isManager ? undefined : currentUserId, debouncedType];
 
   // 2. Fetcher tied to React Query
   const fetcher = useCallback(
@@ -83,7 +86,7 @@ export default function SuggestionTable() {
       try {
         response = await getSuggestions({
           status: statusParam,
-          userId: debouncedSender && debouncedSender !== 'anonymous' && debouncedSender !== 'identified' ? debouncedSender : undefined,
+          userId: isManager ? undefined : currentUserId,
           search: debouncedSearch || undefined,
           type: debouncedType || undefined,
           limit: limit,
@@ -96,7 +99,7 @@ export default function SuggestionTable() {
 
       return response;
     },
-    [debouncedTab, debouncedSearch, debouncedSender, debouncedType],
+    [debouncedTab, isManager, currentUserId, debouncedSearch, debouncedType],
   );
 
   const handleExportExcel = () => {
@@ -140,9 +143,8 @@ export default function SuggestionTable() {
       cell: (row: Suggestion) => {
         const cat = getSuggestionType(row);
         const catInfo = typeLabels[cat] || typeLabels.other;
-        const senderName = row.anonymous ? 'Ẩn danh' : row.user?.fullName || 'Ẩn danh';
+        const senderName = row.anonymous ? 'Ẩn danh' : `${row.user?.fullName} (${row.user?.email})` || 'Ẩn danh';
         const senderAvatar = row.anonymous ? null : row.user?.avatar;
-        const dept = (row as any).department || (row.user as any)?.department || '';
 
         return (
           <div className="flex flex-col gap-1 cursor-default w-full max-w-150">
@@ -165,7 +167,13 @@ export default function SuggestionTable() {
                 </div>
               ) : senderAvatar ? (
                 <div className="relative w-6 h-6 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                  <img src={senderAvatar} alt={senderName} width={24} height={24} className="object-cover w-full h-full" />
+                  <img
+                    src={senderAvatar.startsWith('http') ? senderAvatar : `${BASE_MINIO_URL}${senderAvatar}`}
+                    alt={senderName}
+                    width={24}
+                    height={24}
+                    className="object-cover w-full h-full"
+                  />
                 </div>
               ) : (
                 <div className="w-6 h-6 rounded-full bg-cyan-50 shrink-0 flex items-center justify-center text-cyan-700 border border-cyan-100/50">
@@ -174,12 +182,6 @@ export default function SuggestionTable() {
               )}
               <div className="flex items-center gap-1.5 min-w-0 text-[11px]">
                 <span className="font-semibold text-slate-700 truncate">{senderName}</span>
-                {dept && (
-                  <>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-slate-500 font-normal truncate">{dept}</span>
-                  </>
-                )}
               </div>
             </div>
           </div>
@@ -242,7 +244,7 @@ export default function SuggestionTable() {
         <TableAction
           onView={() => handleViewDetails(row)}
           onEdit={
-            row.status === 'pending'
+            row.status === 'pending' && row.userId === currentUserId
               ? () => {
                   setSelectedSuggestion(row);
                   setIsEditing(true);
@@ -251,7 +253,7 @@ export default function SuggestionTable() {
               : undefined
           }
           onDelete={
-            row.status === 'pending'
+            row.status === 'pending' && (isManager || row.userId === currentUserId)
               ? () => {
                   setSelectedSuggestion(row);
                   setIsDeleteConfirmOpen(true);
@@ -326,7 +328,7 @@ export default function SuggestionTable() {
   return (
     <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-md shadow-slate-900/2">
       {/* 1. Header Panel */}
-      <div className="flex flex-col gap-5 md:flex-row md:items-center justify-end pb-5 border-b border-slate-100 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-end pb-4 border-b border-slate-100 mb-4">
         {/* Right Actions (Export & Refresh) */}
         <div className="flex items-center gap-3">
           <Button
@@ -339,16 +341,18 @@ export default function SuggestionTable() {
             <span className="hidden lg:inline">Tạo đề xuất</span>
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportExcel}
-            loading={isExporting}
-            leftIcon={<Download className="w-4 h-4" />}
-            className="px-2.5 lg:px-3 gap-0 lg:gap-2"
-          >
-            <span className="hidden lg:inline">{isExporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
-          </Button>
+          {isManager && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportExcel}
+              loading={isExporting}
+              leftIcon={<Download className="w-4 h-4" />}
+              className="px-2.5 lg:px-3 gap-0 lg:gap-2"
+            >
+              <span className="hidden lg:inline">{isExporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
+            </Button>
+          )}
 
           <Button variant="outline" size="sm" onClick={handleRefresh} className="p-2 h-9 w-9 shrink-0 flex items-center justify-center rounded-lg">
             <RotateCw className={`w-4 h-4 text-slate-500 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -364,10 +368,10 @@ export default function SuggestionTable() {
         renderCard={renderCard}
         select={false}
         search={{
-          placeholder: 'Tìm kiếm đề xuất...',
+          placeholder: 'Tìm kiếm theo tên nhân viên hoặc phòng ban...',
           value: search || '',
           onChange: setSearch,
-          className: 'w-80',
+          className: 'min-w-[350px]',
         }}
         filters={[
           {
@@ -400,17 +404,6 @@ export default function SuggestionTable() {
               { value: 'customer', label: 'Chăm sóc khách hàng' },
               { value: 'complaint', label: 'Phản ánh, khiếu nại' },
               { value: 'other', label: 'Khác' },
-            ],
-            className: 'w-44',
-          },
-          {
-            label: 'Người gửi',
-            value: senderVal,
-            onChange: setSenderVal,
-            options: [
-              { value: undefined, label: 'Tất cả người gửi' },
-              { value: 'anonymous', label: 'Ẩn danh' },
-              { value: 'identified', label: 'Công khai' },
             ],
             className: 'w-44',
           },
