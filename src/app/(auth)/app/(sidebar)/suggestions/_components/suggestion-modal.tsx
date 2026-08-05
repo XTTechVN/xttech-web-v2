@@ -26,13 +26,17 @@ const formatDateTime = (dateStr: string | Date | undefined) => {
   if (isNaN(date.getTime())) return 'N/A';
 
   const pad = (num: number) => String(num).padStart(2, '0');
-  const hours = pad(date.getHours());
+  let hours = date.getHours();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+
   const minutes = pad(date.getMinutes());
   const day = pad(date.getDate());
   const month = pad(date.getMonth() + 1);
   const year = date.getFullYear();
 
-  return `${hours}:${minutes} ${day}/${month}/${year}`;
+  return `${pad(hours)}:${minutes} ${ampm} ${day}/${month}/${year}`;
 };
 
 interface AttachmentItem {
@@ -47,7 +51,12 @@ interface AttachmentItem {
   uploadProgress?: number;
 }
 
-export default function SuggestionModal() {
+interface SuggestionModalProps {
+  isManager: boolean;
+  currentUserId?: string;
+}
+
+export default function SuggestionModal({ isManager, currentUserId }: SuggestionModalProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -183,8 +192,9 @@ export default function SuggestionModal() {
   const imageAttachments = attachments.filter((att) => att.preview);
   const fileAttachments = attachments.filter((att) => !att.preview);
 
-  const senderName = selectedSuggestion?.anonymous ? 'Ẩn danh' : selectedSuggestion?.user?.fullName || 'Ẩn danh';
-  const deptName = (selectedSuggestion as any)?.department || (selectedSuggestion?.user as any)?.department || 'Thành viên';
+  const senderName = selectedSuggestion?.anonymous
+    ? 'Ẩn danh'
+    : `${selectedSuggestion?.user?.fullName} (${selectedSuggestion?.user?.email})` || 'Ẩn danh';
   const formattedDate = selectedSuggestion?.createdAt ? formatDateTime(selectedSuggestion.createdAt) : 'N/A';
 
   // React to suggestion selection in detail mode
@@ -523,25 +533,11 @@ export default function SuggestionModal() {
     }
   };
 
-  const canEdit = selectedSuggestion?.status === 'pending';
-  const canDelete = selectedSuggestion?.status === 'pending';
+  const canEdit = selectedSuggestion?.status === 'pending' && currentUserId === selectedSuggestion?.userId;
 
   // Footer Setup
   const footer = (
-    <div className="flex items-center justify-between w-full">
-      {mode === 'view' && canDelete && selectedSuggestion ? (
-        <Button
-          variant="danger"
-          onClick={() => setIsDeleteConfirmOpen(true)}
-          loading={deleteMutation.isPending}
-          disabled={isPending}
-          leftIcon={<Trash2 className="w-4 h-4" />}
-        >
-          Xóa đề xuất
-        </Button>
-      ) : (
-        <div />
-      )}
+    <div className="flex items-center justify-end w-full">
 
       <div className="flex items-center gap-2">
         {mode === 'create' && (
@@ -589,28 +585,32 @@ export default function SuggestionModal() {
                     Sửa đề xuất
                   </Button>
                 )}
-                <Button
-                  variant="primary"
-                  className="bg-rose-500 hover:bg-rose-600 border-0 text-white font-bold"
-                  onClick={() => {
-                    setFeedbackType('reject');
-                    setFeedbackModalOpen(true);
-                  }}
-                  disabled={isPending}
-                >
-                  Từ chối
-                </Button>
-                <Button
-                  variant="primary"
-                  className="bg-[#0CBFDF] hover:bg-[#0bb1ce] border-0 text-white font-bold"
-                  onClick={() => {
-                    setFeedbackType('approve');
-                    setFeedbackModalOpen(true);
-                  }}
-                  disabled={isPending}
-                >
-                  Duyệt đề xuất
-                </Button>
+                {isManager && (
+                  <>
+                    <Button
+                      variant="primary"
+                      className="bg-rose-500 hover:bg-rose-600 border-0 text-white font-bold"
+                      onClick={() => {
+                        setFeedbackType('reject');
+                        setFeedbackModalOpen(true);
+                      }}
+                      disabled={isPending}
+                    >
+                      Từ chối
+                    </Button>
+                    <Button
+                      variant="primary"
+                      className="bg-[#0CBFDF] hover:bg-[#0bb1ce] border-0 text-white font-bold"
+                      onClick={() => {
+                        setFeedbackType('approve');
+                        setFeedbackModalOpen(true);
+                      }}
+                      disabled={isPending}
+                    >
+                      Duyệt đề xuất
+                    </Button>
+                  </>
+                )}
               </>
             ) : (
               <>
@@ -705,7 +705,7 @@ export default function SuggestionModal() {
             {mode === 'view' && (
               /* Sender Info (Only for View Mode) */
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label="Người gửi" value={selectedSuggestion?.anonymous ? 'Ẩn danh' : `${senderName} (${deptName})`} disabled fullWidth />
+                <Input label="Người gửi" value={selectedSuggestion?.anonymous ? 'Ẩn danh' : `${senderName}`} disabled fullWidth />
                 <Input label="Thời gian gửi" value={formattedDate} disabled fullWidth />
               </div>
             )}
@@ -992,7 +992,12 @@ export default function SuggestionModal() {
                   <span className="text-sm font-bold text-[#006377] select-none tracking-wider uppercase">PHẢN HỒI ĐỀ XUẤT:</span>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input label="Người phản hồi" value={selectedSuggestion.reviewBy?.fullName || 'Ban Giám Đốc'} disabled fullWidth />
+                    <Input
+                      label="Người phản hồi"
+                      value={`${selectedSuggestion.reviewBy?.fullName} (${selectedSuggestion.reviewBy?.email})` || 'Ban Giám Đốc'}
+                      disabled
+                      fullWidth
+                    />
                     <Input
                       label="Thời gian phản hồi"
                       value={selectedSuggestion.updatedAt ? formatDateTime(selectedSuggestion.updatedAt) : 'N/A'}
@@ -1059,7 +1064,7 @@ export default function SuggestionModal() {
       {/* Lightbox Preview */}
       {previewUrl && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs animate-fade-in"
+          className="fixed inset-0 z-51 flex items-center justify-center bg-black/85 backdrop-blur-xs animate-fade-in"
           onClick={() => setPreviewUrl(null)}
         >
           <button

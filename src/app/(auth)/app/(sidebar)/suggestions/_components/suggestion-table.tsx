@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { RotateCw, User, Plus, EyeOff, Download } from 'lucide-react';
 import { useSuggestionStore } from '@/stores/useSuggestionStore';
 import toast from 'react-hot-toast';
@@ -10,8 +10,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks';
 import { TableData, Button } from '@/components';
 import { getSuggestions } from '@/actions/suggestion';
-import { Suggestion } from '@/types';
+import { Suggestion, User as UserEntity } from '@/types';
 import TableAction from '@/components/table/table-action';
+import { BASE_MINIO_URL } from '@/config';
+import { getUsers } from '@/actions';
 
 // Hàm bổ trợ phân loại chủ đề linh hoạt từ type hoặc content
 const getSuggestionType = (p: Suggestion) => {
@@ -34,7 +36,12 @@ const typeLabels: Record<string, { label: string; class: string }> = {
   other: { label: 'Khác', class: 'bg-slate-50 text-slate-600 border-slate-200' },
 };
 
-export default function SuggestionTable() {
+interface SuggestionTableProps {
+  isManager: boolean;
+  currentUserId?: string;
+}
+
+export default function SuggestionTable({ isManager, currentUserId }: SuggestionTableProps) {
   const queryClient = useQueryClient();
 
   const {
@@ -56,6 +63,10 @@ export default function SuggestionTable() {
     setSearch,
     setIsEditing,
     setIsDeleteConfirmOpen,
+    userSearch,
+    setUserSearch,
+    usersList,
+    setUsersList,
   } = useSuggestionStore();
 
   // Debounced filter states (500ms delay)
@@ -63,9 +74,84 @@ export default function SuggestionTable() {
   const debouncedSender = useDebounce(senderVal || '', 500);
   const debouncedType = useDebounce(typeFilterVal || '', 500);
   const debouncedTab = useDebounce(tab || 'all', 500);
+  const debouncedUserSearch = useDebounce(userSearch, 500);
+  const [selectedSenderUser, setSelectedSenderUser] = useState<UserEntity | null>(null);
+
+  // Đồng bộ local state khi senderVal bị xóa hoặc reset từ store
+  if (!senderVal && selectedSenderUser !== null) {
+    setSelectedSenderUser(null);
+  }
+
+  const [hasMoreUsers, setHasMoreUsers] = useState(true);
+  const [isLoadingMoreUsers, setIsLoadingMoreUsers] = useState(false);
+
+  useEffect(() => {
+    if (!isManager) return;
+    if (!debouncedUserSearch || debouncedUserSearch.trim().length < 2) {
+      setUsersList([]);
+      setHasMoreUsers(false);
+      return;
+    }
+    const fetchUsers = async () => {
+      try {
+        const res = await getUsers({ search: debouncedUserSearch.trim(), limit: 10, offset: 0 });
+        setUsersList(res.items || []);
+        setHasMoreUsers((res.items || []).length === 7);
+      } catch (error) {
+        console.error('Lỗi khi fetch users:', error);
+      }
+    };
+    fetchUsers();
+  }, [debouncedUserSearch, isManager, setUsersList]);
+
+  const handleLoadMoreUsers = useCallback(async () => {
+    if (!isManager || isLoadingMoreUsers || !hasMoreUsers || !debouncedUserSearch || debouncedUserSearch.trim().length < 2) return;
+    setIsLoadingMoreUsers(true);
+    try {
+      const res = await getUsers({ search: debouncedUserSearch.trim(), limit: 10, offset: usersList.length });
+      if (res.items && res.items.length > 0) {
+        setUsersList((prev) => {
+          const newItems = res.items.filter((item) => !prev.some((p) => p.id === item.id));
+          return [...prev, ...newItems];
+        });
+        setHasMoreUsers(res.items.length === 7);
+      } else {
+        setHasMoreUsers(false);
+      }
+    } catch (error) {
+      console.error('Lỗi khi load thêm users:', error);
+    } finally {
+      setIsLoadingMoreUsers(false);
+    }
+  }, [debouncedUserSearch, isManager, hasMoreUsers, isLoadingMoreUsers, usersList.length, setUsersList]);
+
+  const selectedUserObj = useMemo(() => {
+    if (senderVal) {
+      const found = usersList.find((u) => u.id === senderVal) || (selectedSenderUser?.id === senderVal ? selectedSenderUser : null);
+      if (found) {
+        return {
+          value: found.id,
+          label: `${found.fullName} (${found.email})`,
+        };
+      }
+    }
+    return null;
+  }, [senderVal, usersList, selectedSenderUser]);
+
+  const senderOptions = [
+    { value: undefined, label: 'Tất cả người gửi' },
+    ...usersList.map((u) => ({
+      value: u.id,
+      label: `${u.fullName} (${u.email})`,
+    })),
+  ];
+
+  if (selectedUserObj && !senderOptions.some((opt) => opt.value === selectedUserObj.value)) {
+    senderOptions.push(selectedUserObj);
+  }
 
   // React Query queryKey containing all debounced filters
-  const queryKey = ['admin-suggestions', debouncedSearch, debouncedTab, debouncedSender, debouncedType];
+  const queryKey = ['admin-suggestions', debouncedSearch, debouncedTab, isManager ? debouncedSender : currentUserId, debouncedType];
 
   // 2. Fetcher tied to React Query
   const fetcher = useCallback(
@@ -83,7 +169,7 @@ export default function SuggestionTable() {
       try {
         response = await getSuggestions({
           status: statusParam,
-          userId: debouncedSender && debouncedSender !== 'anonymous' && debouncedSender !== 'identified' ? debouncedSender : undefined,
+          userId: isManager ? debouncedSender || undefined : currentUserId,
           search: debouncedSearch || undefined,
           type: debouncedType || undefined,
           limit: limit,
@@ -96,7 +182,7 @@ export default function SuggestionTable() {
 
       return response;
     },
-    [debouncedTab, debouncedSearch, debouncedSender, debouncedType],
+    [debouncedTab, isManager, debouncedSender, currentUserId, debouncedSearch, debouncedType],
   );
 
   const handleExportExcel = () => {
@@ -140,9 +226,8 @@ export default function SuggestionTable() {
       cell: (row: Suggestion) => {
         const cat = getSuggestionType(row);
         const catInfo = typeLabels[cat] || typeLabels.other;
-        const senderName = row.anonymous ? 'Ẩn danh' : row.user?.fullName || 'Ẩn danh';
+        const senderName = row.anonymous ? 'Ẩn danh' : `${row.user?.fullName} (${row.user?.email})` || 'Ẩn danh';
         const senderAvatar = row.anonymous ? null : row.user?.avatar;
-        const dept = (row as any).department || (row.user as any)?.department || '';
 
         return (
           <div className="flex flex-col gap-1 cursor-default w-full max-w-150">
@@ -165,7 +250,13 @@ export default function SuggestionTable() {
                 </div>
               ) : senderAvatar ? (
                 <div className="relative w-6 h-6 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                  <img src={senderAvatar} alt={senderName} width={24} height={24} className="object-cover w-full h-full" />
+                  <img
+                    src={senderAvatar.startsWith('http') ? senderAvatar : `${BASE_MINIO_URL}${senderAvatar}`}
+                    alt={senderName}
+                    width={24}
+                    height={24}
+                    className="object-cover w-full h-full"
+                  />
                 </div>
               ) : (
                 <div className="w-6 h-6 rounded-full bg-cyan-50 shrink-0 flex items-center justify-center text-cyan-700 border border-cyan-100/50">
@@ -174,12 +265,6 @@ export default function SuggestionTable() {
               )}
               <div className="flex items-center gap-1.5 min-w-0 text-[11px]">
                 <span className="font-semibold text-slate-700 truncate">{senderName}</span>
-                {dept && (
-                  <>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-slate-500 font-normal truncate">{dept}</span>
-                  </>
-                )}
               </div>
             </div>
           </div>
@@ -242,7 +327,7 @@ export default function SuggestionTable() {
         <TableAction
           onView={() => handleViewDetails(row)}
           onEdit={
-            row.status === 'pending'
+            row.status === 'pending' && row.userId === currentUserId
               ? () => {
                   setSelectedSuggestion(row);
                   setIsEditing(true);
@@ -251,7 +336,7 @@ export default function SuggestionTable() {
               : undefined
           }
           onDelete={
-            row.status === 'pending'
+            row.status === 'pending' && (isManager || row.userId === currentUserId)
               ? () => {
                   setSelectedSuggestion(row);
                   setIsDeleteConfirmOpen(true);
@@ -326,7 +411,7 @@ export default function SuggestionTable() {
   return (
     <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-md shadow-slate-900/2">
       {/* 1. Header Panel */}
-      <div className="flex flex-col gap-5 md:flex-row md:items-center justify-end pb-5 border-b border-slate-100 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-end pb-4 border-b border-slate-100 mb-4">
         {/* Right Actions (Export & Refresh) */}
         <div className="flex items-center gap-3">
           <Button
@@ -339,16 +424,18 @@ export default function SuggestionTable() {
             <span className="hidden lg:inline">Tạo đề xuất</span>
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportExcel}
-            loading={isExporting}
-            leftIcon={<Download className="w-4 h-4" />}
-            className="px-2.5 lg:px-3 gap-0 lg:gap-2"
-          >
-            <span className="hidden lg:inline">{isExporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
-          </Button>
+          {isManager && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportExcel}
+              loading={isExporting}
+              leftIcon={<Download className="w-4 h-4" />}
+              className="px-2.5 lg:px-3 gap-0 lg:gap-2"
+            >
+              <span className="hidden lg:inline">{isExporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
+            </Button>
+          )}
 
           <Button variant="outline" size="sm" onClick={handleRefresh} className="p-2 h-9 w-9 shrink-0 flex items-center justify-center rounded-lg">
             <RotateCw className={`w-4 h-4 text-slate-500 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -403,17 +490,30 @@ export default function SuggestionTable() {
             ],
             className: 'w-44',
           },
-          {
-            label: 'Người gửi',
-            value: senderVal,
-            onChange: setSenderVal,
-            options: [
-              { value: undefined, label: 'Tất cả người gửi' },
-              { value: 'anonymous', label: 'Ẩn danh' },
-              { value: 'identified', label: 'Công khai' },
-            ],
-            className: 'w-44',
-          },
+          ...(isManager
+            ? [
+                {
+                  label: 'Người gửi',
+                  value: senderVal,
+                  onChange: (val: string | undefined) => {
+                    setSenderVal(val);
+                    if (val) {
+                      const found = usersList.find((u) => u.id === val);
+                      if (found) {
+                        setSelectedSenderUser(found);
+                      }
+                    } else {
+                      setSelectedSenderUser(null);
+                    }
+                  },
+                  onSearchChange: setUserSearch,
+                  onLoadMore: handleLoadMoreUsers,
+                  placeholder: 'Nhập tên để tìm kiếm ...',
+                  options: senderOptions,
+                  className: 'w-44',
+                },
+              ]
+            : []),
         ]}
       />
     </div>
