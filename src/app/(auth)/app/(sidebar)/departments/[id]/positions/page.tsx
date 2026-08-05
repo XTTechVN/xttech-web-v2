@@ -13,12 +13,11 @@ import { Building2, Users, UserCheck, Briefcase } from 'lucide-react';
 
 // API Actions & React Query
 import { getEmployees } from '@/actions/employee';
-import { getDepartments } from '@/actions/department';
+import { getDepartments } from '@/actions';
 
 import { useQuery } from '@tanstack/react-query';
 
 const Page = () => {
-
   // Lấy tổng số phòng ban
   const { data: departmentData } = useQuery({
     queryKey: ['departments', 'total'],
@@ -70,7 +69,7 @@ const Page = () => {
     <div className="flex flex-col p-3 gap-4">
       <div className="flex flex-col gap-2">
         <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Quản lý vị trí
+          Chi tiết phòng ban
         </Heading>
         <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
           Danh sách các vị trí trong phòng ban sẽ được hiển thị tại đây

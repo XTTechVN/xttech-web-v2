@@ -14,9 +14,11 @@ import { useQueryParam } from '@/hooks';
 import { Department } from '@/types';
 
 // Store
-import { useSearchParams } from 'next/navigation';
-import { useDapartmentStore } from '@/stores';
-import DepartmentFormModal from './form-modal';
+import { useParams, useSearchParams } from 'next/navigation';
+
+import { getDepartmentPositions } from '@/actions/department/position';
+
+import PositionFormModal from './form-modal';
 
 // toast
 import toast from 'react-hot-toast';
@@ -24,53 +26,42 @@ import toast from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import { deleteDepartment } from '@/actions/department';
-import PositionFormModal from './form-modal';
 
-// Component hiển thị Badge Icon đẹp mắt
-const IconBadge = ({ iconName, color }: { iconName: string; color: string }) => {
-  const IconComponent = Building2;
-  return (
-    <div
-      className="w-9 h-9 rounded-lg flex items-center justify-center border transition-all duration-200 hover:scale-105"
-      style={{
-        backgroundColor: `${color}15`,
-        borderColor: `${color}30`,
-        color: color,
-      }}
-    >
-      <IconComponent size={18} />
-    </div>
-  );
-};
+import { Position } from '@/types';
 
 const Table = () => {
+  const params = useParams()
+  console.log(params)
   const searchParams = useSearchParams();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
 
-  // Trạng thái cho modal sửa phòng ban
+  // Trạng thái cho modal sửa vị trí
   const [isEditOpen, setIsEditOpen] = React.useState(false);
-  const [selectedDept, setSelectedDept] = React.useState<Department | null>(null);
+  const [selectedPosition, setSelectedPosition] = React.useState<Position | null>(null);
 
-  // Trạng thái cho modal xóa phòng ban
+  // Trạng thái cho modal xóa vị trí
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
-  const [deptToDelete, setDeptToDelete] = React.useState<Department | null>(null);
+  const [positionToDelete, setPositionToDelete] = React.useState<Position | null>(null);
 
-  // Trạng thái cho modal tạo vị trí trong phòng ban
-  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
-  const [deptToCreate, setDeptToCreate] = React.useState<Department | null>(null);
-
-  // Lấy hàm fetch danh sách phòng ban từ store
-  const { fetchDepartments } = useDapartmentStore();
+  const departmentId = Number(params.id);
 
   // Hàm fetcher gọi API thực tế từ Store
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const res = await fetchDepartments({ offset, limit, search: search || undefined });
+  const fetcher = async () => {
+    const res = await getDepartmentPositions(departmentId);
     if (!res) {
-      toast.error('Lỗi khi tải danh sách phòng ban');
-      throw new Error('Lỗi khi tải danh sách phòng ban');
+      toast.error('Lỗi khi tải danh sách vị trí');
+      throw new Error('Lỗi khi tải danh sách vị trí');
     }
-    return res;
+    return {
+      items: res.items || [],
+      meta: {
+        total: res.pagination.total || 0,
+        offset: res.pagination.offset || 0,
+        limit: res.pagination.limit || 10,
+        next: res.pagination.next || false,
+      },
+    };
   };
 
   // tạo hàm xóa phòng ban
@@ -89,17 +80,17 @@ const Table = () => {
 
   // Cấu hình các cột cho Desktop
   const columns = [
-    { key: 'id', label: 'STT', minWidth: '80px', cell: (row: Department) => <span className="text-slate-500 font-medium">{row.id}</span> },
+    { key: 'id', label: 'STT', minWidth: '80px', cell: (row: Position) => <span className="text-slate-500 font-medium">{row.id}</span> },
     {
       key: 'code',
       label: 'Mã vị trí',
-      cell: (row: Department) => <span className="text-slate-500 font-medium">{row.code}</span>,
+      cell: (row: Position) => <span className="text-slate-500 font-medium">{row.id}</span>,
     },
     {
       key: 'name',
       label: 'Tên vị trí',
       minWidth: '250px',
-      cell: (row: Department) => (
+      cell: (row: Position) => (
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">{row.name}</span>
         </div>
@@ -109,11 +100,11 @@ const Table = () => {
       key: 'actions',
       label: 'Hành động',
       minWidth: '150px',
-      cell: (row: Department) => (
+      cell: (row: Position) => (
         <div className="flex gap-2">
           <button
             onClick={() => {
-              setSelectedDept(row);
+              setSelectedPosition(row);
               setIsEditOpen(true);
             }}
             className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
@@ -123,7 +114,7 @@ const Table = () => {
 
           <button
             onClick={() => {
-              setDeptToDelete(row);
+              setPositionToDelete(row);
               setIsDeleteOpen(true);
             }}
             disabled={isPending}
@@ -131,14 +122,13 @@ const Table = () => {
           >
             <Trash2 size={18} />
           </button>
-
         </div>
       ),
     },
   ];
 
   // Cấu hình Card hiển thị trên thiết bị di động
-  const renderCard = (row: Department, index: number) => (
+  const renderCard = (row: Position, index: number) => (
     <div
       key={row.id || index}
       className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
@@ -160,7 +150,7 @@ const Table = () => {
       <div className="flex gap-2">
         <button
           onClick={() => {
-            setSelectedDept(row);
+            setSelectedPosition(row);
             setIsEditOpen(true);
           }}
           className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
@@ -170,7 +160,7 @@ const Table = () => {
 
         <button
           onClick={() => {
-            setDeptToDelete(row);
+            setPositionToDelete(row);
             setIsDeleteOpen(true);
           }}
           disabled={isPending}
@@ -187,8 +177,8 @@ const Table = () => {
       <Heading className="text-primary pr-2 pt-2 text-2xl" size="h1">
         Danh sách vị trí
       </Heading>
-      <TableData<Department>
-        queryKey={['departments', search]}
+      <TableData<Position>
+        queryKey={['positions',departmentId, search]}
         fetcher={fetcher}
         columns={columns}
         renderCard={renderCard}
@@ -202,20 +192,20 @@ const Table = () => {
       />
 
       {/* Modal Sửa phòng ban */}
-      <DepartmentFormModal
+      <PositionFormModal
         isOpen={isEditOpen}
         onClose={() => {
           setIsEditOpen(false);
-          setSelectedDept(null);
+          setSelectedPosition(null);
         }}
-        title="Sửa phòng ban"
+        title="Sửa vị trí"
         submitText="Xác nhận lưu"
         initialData={
-          selectedDept
+          selectedPosition
             ? {
-                id: Number(selectedDept.id),
-                name: selectedDept.name,
-                code: selectedDept.code,
+                id: Number(selectedPosition.id),
+                name: selectedPosition.name,
+                code: selectedPosition.id.toString(), // Position doesn't have code in type currently, using id as fallback
               }
             : undefined
         }
@@ -226,7 +216,7 @@ const Table = () => {
         isOpen={isDeleteOpen}
         onClose={() => {
           setIsDeleteOpen(false);
-          setDeptToDelete(null);
+          setPositionToDelete(null);
         }}
         title="Xác nhận xóa phòng ban"
         className="m-2 max-w-md w-full"
@@ -234,7 +224,7 @@ const Table = () => {
         <div className="flex gap-4 items-center py-2">
           <div className="flex flex-col gap-1.5">
             <p className="text-gray-600 text-sm leading-relaxed">
-              Bạn có chắc chắn muốn xóa phòng ban <strong className="text-gray-900 font-semibold">{deptToDelete?.name}</strong>
+              Bạn có chắc chắn muốn xóa vị trí <strong className="text-gray-900 font-semibold">{positionToDelete?.name}</strong>
             </p>
           </div>
         </div>
@@ -244,7 +234,7 @@ const Table = () => {
             size="sm"
             onClick={() => {
               setIsDeleteOpen(false);
-              setDeptToDelete(null);
+              setPositionToDelete(null);
             }}
             disabled={isPending}
           >
@@ -254,8 +244,8 @@ const Table = () => {
             variant="danger"
             size="sm"
             onClick={() => {
-              if (deptToDelete) {
-                deletDepartmentm(deptToDelete.id);
+              if (positionToDelete) {
+                deletDepartmentm(positionToDelete.id);
               }
             }}
             loading={isPending}
@@ -264,20 +254,6 @@ const Table = () => {
           </Button>
         </div>
       </Modal>
-
-      {/* Modal Tạo vị trí trong phòng ban */}
-      <PositionFormModal
-        isOpen={isCreateOpen}
-        onClose={() => {
-          setIsCreateOpen(false);
-          setDeptToCreate(null);
-        }}
-        title={`Thêm vị trí cho phòng ban ${deptToCreate?.name || ''}`}
-        submitText="Xác nhận tạo"
-        initialData={undefined}
-        // Thêm prop departmentId nếu cần thiết ở trong form-modal để biết vị trí thuộc phòng ban nào
-        // departmentId={deptToCreate?.id}
-      />
     </div>
   );
 };

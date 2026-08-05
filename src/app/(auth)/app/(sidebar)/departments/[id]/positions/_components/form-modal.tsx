@@ -14,7 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
 // Gọi API từ action
-import { createDepartment, updateDepartment } from '@/actions/department';
+import { createPosition, updatePosition } from '@/actions';
 
 // notification
 import toast from 'react-hot-toast';
@@ -26,7 +26,7 @@ import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 
 // Kiểu dữ liệu của phòng ban
-import { Department } from '@/types';
+import { Position } from '@/types';
 
 // Kiểu dữ liệu cho modal
 interface PositionFormModalProps {

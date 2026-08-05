@@ -1,3 +1,5 @@
+export * from './position';
+
 import type { Department } from '@/types';
 import api from '@/utils/api';
 

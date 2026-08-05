@@ -15,3 +15,9 @@ export * from './customer';
 
 // Authentication
 export * from './auth';
+
+// Department
+export * from './department';
+
+// Position
+export * from './position';

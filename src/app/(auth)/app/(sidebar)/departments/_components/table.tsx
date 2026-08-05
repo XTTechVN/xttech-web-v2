@@ -25,30 +25,15 @@ import toast from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import { deleteDepartment } from '@/actions/department';
-import PositionPage from '../positions/page';
-
-// Component hiển thị Badge Icon đẹp mắt
-const IconBadge = ({ iconName, color }: { iconName: string; color: string }) => {
-  const IconComponent = Building2;
-  return (
-    <div
-      className="w-9 h-9 rounded-lg flex items-center justify-center border transition-all duration-200 hover:scale-105"
-      style={{
-        backgroundColor: `${color}15`,
-        borderColor: `${color}30`,
-        color: color,
-      }}
-    >
-      <IconComponent size={18} />
-    </div>
-  );
-};
+import PositionPage from '../[id]/positions/page';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const Table = () => {
   const searchParams = useSearchParams();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
-
+  const router = useRouter()
   // Trạng thái cho modal sửa phòng ban
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [selectedDept, setSelectedDept] = React.useState<Department | null>(null);
@@ -148,16 +133,14 @@ const Table = () => {
             <Trash2 size={18} />
           </button>
 
-          <button
-            onClick={() => {
-              setDeptToCreate(row);
-              setIsCreateOpen(true);
-            }}
-            title="Quản lý vị trí"
-            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+          <Link href={`/app/departments/${row.id}/positions`}>
+            <button
+              title="Quản lý vị trí"
+              className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
           >
             <PlusCircle size={18} />
           </button>
+          </Link>
         </div>
       ),
     },
@@ -207,8 +190,7 @@ const Table = () => {
 
         <button
           onClick={() => {
-            setDeptToCreate(row);
-            setIsCreateOpen(true);
+            router.push(`/app/departments/${row.id}/positions`)
           }}
           title="Quản lý vị trí"
           className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
