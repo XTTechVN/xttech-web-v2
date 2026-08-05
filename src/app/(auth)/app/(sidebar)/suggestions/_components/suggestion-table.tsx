@@ -60,6 +60,7 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
     setSearch,
     setIsEditing,
     setIsDeleteConfirmOpen,
+    setUsersList,
   } = useSuggestionStore();
 
   // Debounced filter states (500ms delay)

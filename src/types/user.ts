@@ -19,3 +19,18 @@ export interface User {
   roles: Role[];
   positions: string[];
 }
+
+export interface UserQueryParams {
+  offset?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  allowDeleted?: boolean | null;
+  email?: string;
+  name?: string;
+  department?: string;
+  position?: string;
+  startTime?: string | null;
+  endTime?: string | null;
+}

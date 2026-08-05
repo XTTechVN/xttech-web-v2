@@ -35,6 +35,7 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setSearchQuery('');
+        filter.onSearchChange?.('');
       }
     };
     if (isOpen) {
@@ -43,7 +44,7 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, filter.onSearchChange]);
 
   // Đóng dropdown khi nhấn phím Escape
   useEffect(() => {
@@ -51,6 +52,7 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
       if (event.key === 'Escape') {
         setIsOpen(false);
         setSearchQuery('');
+        filter.onSearchChange?.('');
       }
     };
     if (isOpen) {
@@ -59,7 +61,7 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [isOpen]);
+  }, [isOpen, filter.onSearchChange]);
 
   // Lọc các lựa chọn dựa trên truy vấn tìm kiếm
   const filteredOptions = filter.options.filter((option) =>
@@ -114,14 +116,26 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
             <input
               type="text"
               className="w-full text-sm outline-none bg-transparent text-text-primary placeholder:text-text-placeholder"
-              placeholder={filter.label}
+              placeholder={filter.placeholder || filter.label}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchQuery(val);
+                filter.onSearchChange?.(val);
+              }}
             />
           </div>
 
           {/* Danh sách các lựa chọn */}
-          <div className="max-h-56 overflow-y-auto py-1">
+          <div
+            className="max-h-56 overflow-y-auto py-1"
+            onScroll={(e) => {
+              const target = e.currentTarget;
+              if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {
+                filter.onLoadMore?.();
+              }
+            }}
+          >
             {filteredOptions.length === 0 ? (
               <div className="px-3 py-2 text-sm text-text-placeholder text-center">
                 Không tìm thấy kết quả
@@ -141,6 +155,7 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
                       }
                       setIsOpen(false);
                       setSearchQuery('');
+                      filter.onSearchChange?.('');
                     }}
                     className={cn(
                       'w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm font-medium transition cursor-pointer',

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from 'zustand';
-import { Suggestion } from '@/types';
+import { Suggestion, User } from '@/types';
 
 interface SuggestionState {
   selectedSuggestion: Suggestion | null;
@@ -18,6 +18,8 @@ interface SuggestionState {
   typeFilterVal: string | undefined;
   tab: string;
   search: string;
+  userSearch: string;
+  usersList: User[];
 
   // Create Modal Form States
   createTitle: string;
@@ -63,6 +65,8 @@ interface SuggestionState {
   setTypeFilterVal: (val: string | undefined) => void;
   setTab: (val: string) => void;
   setSearch: (val: string) => void;
+  setUserSearch: (val: string) => void;
+  setUsersList: (val: User[] | ((prev: User[]) => User[])) => void;
 
   // Create Modal Form Actions
   setCreateTitle: (val: string) => void;
@@ -112,6 +116,8 @@ export const useSuggestionStore = create<SuggestionState>((set) => ({
   senderVal: undefined,
   tab: 'all',
   search: '',
+  userSearch: '',
+  usersList: [],
 
   // Create Modal Form initial values
   createTitle: '',
@@ -159,6 +165,8 @@ export const useSuggestionStore = create<SuggestionState>((set) => ({
       typeFilterVal: undefined,
       tab: 'all',
       search: '',
+      userSearch: '',
+      usersList: [],
     }),
 
   // New actions implementation
@@ -167,6 +175,11 @@ export const useSuggestionStore = create<SuggestionState>((set) => ({
   setTypeFilterVal: (val) => set({ typeFilterVal: val }),
   setTab: (val) => set({ tab: val }),
   setSearch: (val) => set({ search: val }),
+  setUserSearch: (val) => set({ userSearch: val }),
+  setUsersList: (val) =>
+    set((state) => ({
+      usersList: typeof val === 'function' ? val(state.usersList) : val,
+    })),
 
   // Create Modal Form Actions
   setCreateTitle: (val) => set({ createTitle: val }),
