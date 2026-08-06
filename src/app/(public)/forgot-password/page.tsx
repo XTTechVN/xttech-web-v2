@@ -1,11 +1,11 @@
 import React from 'react';
 
-// Use local components
+// Thành phần dùng riêng cho trang  - cột phải
 import Hero from './_components/hero';
 import PreviewSystem from './_components/preview-system';
 import StatCard from './_components/stats-card';
 
-// Container components
+// Thành phần dùng riêng cho trang  - cột trái
 import Container from './_components/container';
 
 const ForgotPassword = () => {

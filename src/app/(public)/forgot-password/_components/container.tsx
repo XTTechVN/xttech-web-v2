@@ -1,13 +1,22 @@
 'use client';
-import React, { useState } from 'react';
+
+import { useState } from 'react';
+
+// Thành phần dùng riêng cho trang quên mật khẩu
 import Intro from './intro';
 import Form from './form';
 import Link from 'next/link';
+
+// Icons từ thư viện lucide - react
 import { ArrowLeft } from 'lucide-react';
+
 import { QueryClientProvider } from '@tanstack/react-query';
+
+// Hàm tiện ích
 import queryClient from '@/utils/query';
 
 const Container = () => {
+  // State chuyển bước nhập mail - nhập Otp + mật khẩu mới
   const [step, setStep] = useState<1 | 2>(1);
 
   return (
