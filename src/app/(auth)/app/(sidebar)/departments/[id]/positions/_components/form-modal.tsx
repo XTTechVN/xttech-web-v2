@@ -100,6 +100,7 @@ export default function PositionFormModal({ isOpen, onClose, title, submitText =
   const params = useParams();
   const departmentId = Number(params.id);
 
+  // Xử lý thêm mới hoặc cập nhật chức vụ khi người dùng xác nhận
   const handleConfirm = (data: PositionFormValues) => {
     const payload = {
       name: data.name,
@@ -120,13 +121,7 @@ export default function PositionFormModal({ isOpen, onClose, title, submitText =
         <div className="flex flex-col gap-4 py-2">
           {/* Tên vị trí */}
           <div className="flex flex-col gap-1.5">
-            <Input
-              label="Tên vị trí *"
-              placeholder="Nhập tên vị trí"
-              fullWidth
-              {...register('name')}
-              error={errors.name?.message || undefined}
-            />
+            <Input label="Tên vị trí *" placeholder="Nhập tên vị trí" fullWidth {...register('name')} error={errors.name?.message || undefined} />
           </div>
         </div>
 

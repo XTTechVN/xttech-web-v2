@@ -13,6 +13,16 @@ export const getDepartments = async (params?: { offset?: number; limit?: number;
   }
 };
 
+// Lấy thông tin một phòng ban
+export const getDepartment = async (id: number) => {
+  try {
+    const res = await api.get(`/api/v1/departments/${id}`);
+    return res.data;
+  } catch (error) {
+    throw new Error('Lỗi khi lấy thông tin phòng ban');
+  }
+};
+
 // Tạo mới phòng ban
 export const createDepartment = async (department: Omit<Department, 'id' | 'createdAt' | 'mainColor' | 'mainIcon'>) => {
   try {

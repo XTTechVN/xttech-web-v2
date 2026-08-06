@@ -3,27 +3,32 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
-import { Building2, Pencil, Trash2, PlusCircle } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData } from '@/components/table';
-import { Heading, Modal, Button } from '@/components';
-import { useQueryParam } from '@/hooks';
+import { Modal, Button } from '@/components';
 
-// Store
-import { useParams, useSearchParams } from 'next/navigation';
-
-import { getDepartmentPositions } from '@/actions/department/position';
-
+// Thành phần dùng riêng cho trang vị trí
 import PositionFormModal from './form-modal';
 
-// toast
+// Thông báo toast
 import toast from 'react-hot-toast';
 
-import { useMutation } from '@tanstack/react-query';
-import queryClient from '@/utils/query';
-import { deletePosition } from '@/actions';
+// Hook điều hướng
+import { useParams, useSearchParams } from 'next/navigation';
 
+import { useQueryParam } from '@/hooks';
+import { useMutation } from '@tanstack/react-query';
+
+// Hàm tiện ích
+import queryClient from '@/utils/query';
+
+// Gọi hàm lấy dữ liệu vị trí và xóa vị trí từ action
+import { deletePosition } from '@/actions';
+import { getDepartmentPositions } from '@/actions/department/position';
+
+// Kiểu dữ liệu cho vị trí
 import { Position } from '@/types';
 
 const Table = () => {
@@ -40,9 +45,10 @@ const Table = () => {
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [positionToDelete, setPositionToDelete] = React.useState<Position | null>(null);
 
+  // Id phòng ban
   const departmentId = Number(params.id);
 
-  // Hàm fetcher gọi API thực tế từ Store
+  // Lấy danh sách vị trí
   const fetcher = async () => {
     const res = await getDepartmentPositions(departmentId);
     if (!res) {
@@ -60,7 +66,7 @@ const Table = () => {
     };
   };
 
-  // tạo hàm xóa vị trí
+  // Hàm xóa vị trí
   const { mutate: deleteMutation, isPending } = useMutation({
     mutationFn: deletePosition,
     onSuccess: () => {
@@ -74,8 +80,14 @@ const Table = () => {
     },
   });
 
-  // Cấu hình các cột cho Desktop
+  // Cấu hình các cột vị trí cho desktop
   const columns = [
+    {
+      key: 'index',
+      label: 'STT',
+      width: '100px',
+      cell: (row: Position, index: number) => <span>{index + 1}</span>,
+    },
     {
       key: 'name',
       label: 'Tên vị trí',
