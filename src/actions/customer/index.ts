@@ -1,1 +1,64 @@
-export const getCustomers = async () => {};
+import api from '@/utils/api';
+import type { BaseResponseWithPagination } from '@/components';
+import type { Customer, CustomerCreate, CustomerQueryParams, CustomerUpdate } from '@/types';
+
+export const getCustomers = async (
+  params?: CustomerQueryParams,
+): Promise<BaseResponseWithPagination<Customer>> => {
+  try {
+    const response = await api.get('/api/v1/customers', { params });
+    const { items, meta } = response.data;
+    return {
+      items: items || [],
+      meta: {
+        total: meta?.total ?? 0,
+        offset: meta?.offset ?? 0,
+        limit: meta?.limit ?? 10,
+        next: meta?.next ?? false,
+      },
+    };
+  } catch (error: unknown) {
+    console.warn('API error getCustomers', error);
+    throw error;
+  }
+};
+
+export const getCustomer = async (id: number): Promise<Customer> => {
+  try {
+    const response = await api.get(`/api/v1/customers/${id}`);
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error getCustomer', error);
+    throw error;
+  }
+};
+
+export const createCustomer = async (data: CustomerCreate): Promise<Customer> => {
+  try {
+    const response = await api.post('/api/v1/customers', data);
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error createCustomer', error);
+    throw error;
+  }
+};
+
+export const updateCustomer = async (id: number, data: CustomerUpdate): Promise<Customer> => {
+  try {
+    const response = await api.put(`/api/v1/customers/${id}`, data);
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error updateCustomer', error);
+    throw error;
+  }
+};
+
+export const deleteCustomer = async (id: number): Promise<Customer> => {
+  try {
+    const response = await api.delete(`/api/v1/customers/${id}`);
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error deleteCustomer', error);
+    throw error;
+  }
+};

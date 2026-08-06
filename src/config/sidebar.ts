@@ -4,7 +4,19 @@ import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSect
 
 export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician';
 
-export const acceptedSections = ['dashboard', 'attendances', 'employees', 'suggestions', 'departments'];
+export const acceptedSections = [
+  'dashboard',
+  'attendances',
+  'employees',
+  'suggestions',
+  'departments',
+  'projects',
+  'customers',
+  'doors',
+  'accessories',
+  'materials',
+  'quotations'
+];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
   roles?: UserRole[];
@@ -100,6 +112,41 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Danh sách dự án',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/projects',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'quotations',
+        label: 'Báo giá',
+        icon: React.createElement(FileText, { size: 18 }),
+        href: '/app/quotations',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'customers',
+        label: 'Khách hàng',
+        icon: React.createElement(User, { size: 18 }),
+        href: '/app/customers',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'doors',
+        label: 'Cửa',
+        icon: React.createElement(Layout, { size: 18 }),
+        href: '/app/doors',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'accessories',
+        label: 'Phụ kiện',
+        icon: React.createElement(ListChecks, { size: 18 }),
+        href: '/app/accessories',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'materials',
+        label: 'Vật tư',
+        icon: React.createElement(ListChecks, { size: 18 }),
+        href: '/app/materials',
         roles: ['admin', 'sale'],
       },
       {
