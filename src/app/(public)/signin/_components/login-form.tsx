@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 
 // Icons của lucide-react
 import { Eye, EyeOff } from 'lucide-react';
+import Link from 'next/link';
 
 import { useForm } from 'react-hook-form';
 
@@ -89,9 +90,9 @@ const LoginForm = () => {
       {/* Ghi nhớ đăng nhập và quên mật khẩu */}
       <div className="flex items-center justify-between mt-1">
         <Checkbox label="Ghi nhớ đăng nhập" className="text-xs" />
-        <a href="#forgot" className="text-xs font-medium text-primary hover:underline">
+        <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
           Quên mật khẩu?
-        </a>
+        </Link>
       </div>
 
       {/* Nút đăng nhập */}

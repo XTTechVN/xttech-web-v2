@@ -13,10 +13,7 @@ import { useQueryParam } from '@/hooks';
 // Kiểu dữ liệu phòng ban
 import { Department } from '@/types';
 
-// Store
-// Store
 import { useSearchParams } from 'next/navigation';
-import { useDapartmentStore } from '@/stores';
 import DepartmentFormModal from './form-modal';
 
 // toast
@@ -24,7 +21,7 @@ import toast from 'react-hot-toast';
 
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
-import { deleteDepartment } from '@/actions/department';
+import { deleteDepartment, getDepartments } from '@/actions/department';
 import PositionPage from '../[id]/positions/page';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -46,17 +43,23 @@ const Table = () => {
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
   const [deptToCreate, setDeptToCreate] = React.useState<Department | null>(null);
 
-  // Lấy hàm fetch danh sách phòng ban từ store
-  const { fetchDepartments } = useDapartmentStore();
-
-  // Hàm fetcher gọi API thực tế từ Store
+  // Hàm fetcher gọi API thực tế
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const res = await fetchDepartments({ offset, limit, search: search || undefined });
-    if (!res) {
+    try {
+      const data = await getDepartments({ offset, limit, search: search || undefined });
+      return {
+        items: data.items || [],
+        meta: {
+          total: data.pagination?.total || 0,
+          offset: data.pagination?.offset || 0,
+          limit: data.pagination?.limit || 10,
+          next: data.pagination?.next || false,
+        },
+      };
+    } catch (error) {
       toast.error('Lỗi khi tải danh sách phòng ban');
       throw new Error('Lỗi khi tải danh sách phòng ban');
     }
-    return res;
   };
 
   // tạo hàm xóa phòng ban
