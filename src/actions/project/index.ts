@@ -2,9 +2,7 @@ import api from '@/utils/api';
 import type { BaseResponseWithPagination } from '@/components';
 import type { Project, ProjectCreate, ProjectDetail, ProjectQueryParams, ProjectUpdate } from '@/types';
 
-export const getProjects = async (
-  params?: ProjectQueryParams,
-): Promise<BaseResponseWithPagination<Project>> => {
+export const getProjects = async (params?: ProjectQueryParams): Promise<BaseResponseWithPagination<Project>> => {
   try {
     const response = await api.get('/api/v1/projects', { params });
     const { items, meta } = response.data;
@@ -26,9 +24,11 @@ export const getProjects = async (
 export const getProject = async (id: number): Promise<ProjectDetail> => {
   try {
     const response = await api.get(`/api/v1/projects/${id}`);
+    console.log('Project API Response:', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error: unknown) {
-    console.warn('API error getProject', error);
+    const axiosError = error as any;
+    console.error('API error getProject:', axiosError.response?.data || axiosError.message || axiosError);
     throw error;
   }
 };

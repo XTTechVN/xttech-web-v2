@@ -26,12 +26,13 @@ import type { Customer } from '@/types';
 
 interface TableProps {
   customers?: Pick<Customer, 'id' | 'name'>[];
+  onViewClick?: (project: Project) => void;
   onEditClick: (project: Project) => void;
   onDeleteClick: (project: Project) => void;
   onAddClick: () => void;
 }
 
-const Table = ({ customers = [], onEditClick, onDeleteClick, onAddClick }: TableProps) => {
+const Table = ({ customers = [], onViewClick, onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const searchParams = useSearchParams();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
@@ -95,6 +96,7 @@ const Table = ({ customers = [], onEditClick, onDeleteClick, onAddClick }: Table
       minWidth: '120px',
       cell: (row: Project) => (
         <TableAction
+          onView={() => onViewClick?.(row)}
           onEdit={() => onEditClick(row)}
           onDelete={() => onDeleteClick(row)}
         />
@@ -119,6 +121,7 @@ const Table = ({ customers = [], onEditClick, onDeleteClick, onAddClick }: Table
         </div>
       </div>
       <TableAction
+        onView={() => onViewClick?.(row)}
         onEdit={() => onEditClick(row)}
         onDelete={() => onDeleteClick(row)}
       />

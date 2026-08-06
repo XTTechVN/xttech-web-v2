@@ -11,12 +11,14 @@ import { FolderOpen, CheckCircle2, Clock, Users } from 'lucide-react';
 
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { getCustomers, deleteProject } from '@/actions';
 import type { Project } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 
 const Page = () => {
+  const router = useRouter();
   // Lấy danh sách khách hàng
   const { data: customerData } = useQuery({
     queryKey: ['customers'],
@@ -96,6 +98,10 @@ const Page = () => {
     setIsDeleteOpen(true);
   };
 
+  const handleViewProject = (project: Project) => {
+    router.push(`/app/projects/${project.id}`);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
@@ -113,6 +119,7 @@ const Page = () => {
       </div>
       <Table 
         customers={customerData} 
+        onViewClick={handleViewProject}
         onEditClick={handleOpenEditModal}
         onDeleteClick={handleOpenDeleteModal}
         onAddClick={handleOpenCreateModal}
