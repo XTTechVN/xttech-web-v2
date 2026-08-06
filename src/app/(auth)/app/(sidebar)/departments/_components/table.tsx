@@ -7,7 +7,7 @@ import { Building2, Pencil, Trash2, PlusCircle } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData } from '@/components/table';
-import { Heading, Modal, Button } from '@/components';
+import { Modal, Button } from '@/components';
 import { useQueryParam } from '@/hooks';
 
 // Kiểu dữ liệu phòng ban
@@ -203,9 +203,7 @@ const Table = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      <Heading className="text-primary pr-2 pt-2 text-2xl" size="h1">
-        Danh sách phòng ban
-      </Heading>
+      
       <TableData<Department>
         queryKey={['departments', search]}
         fetcher={fetcher}
