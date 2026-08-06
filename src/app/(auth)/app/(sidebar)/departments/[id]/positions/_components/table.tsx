@@ -49,8 +49,11 @@ const Table = () => {
   const departmentId = Number(params.id);
 
   // Lấy danh sách vị trí
-  const fetcher = async () => {
-    const res = await getDepartmentPositions(departmentId);
+  const fetcher = async (params: { offset: number; limit: number }) => {
+    const res = await getDepartmentPositions(departmentId, {
+      ...params,
+      search: search || undefined,
+    });
     if (!res) {
       toast.error('Lỗi khi tải danh sách vị trí');
       throw new Error('Lỗi khi tải danh sách vị trí');
