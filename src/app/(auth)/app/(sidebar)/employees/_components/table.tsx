@@ -28,6 +28,17 @@ import { getEmployees, deleteEmployee } from '@/actions/employee';
 // components dùng riêng cho trang nhân viên
 import EmployeeFormModal from './form-modal';
 
+// Lấy màu theo từng vị trí
+const getRoleVariant = (roleName: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default' => {
+  const lowerName = roleName.toLowerCase();
+  if (lowerName.includes('admin')) return 'danger';
+  if (lowerName.includes('hr')) return 'warning';
+  if (lowerName.includes('sale')) return 'primary';
+  if (lowerName.includes('technician')) return 'info';
+  if (lowerName.includes('super') || lowerName.includes('supper')) return 'success';
+  return 'default';
+};
+
 const Table = () => {
   const [search, setSearch] = useQueryParam('search');
 
@@ -101,7 +112,7 @@ const Table = () => {
         <div className="flex flex-wrap gap-1">
           {row.roles && row.roles.length > 0 ? (
             row.roles.map((role) => (
-              <Badge key={role.id} variant="primary" size="sm">
+              <Badge key={role.id} variant={getRoleVariant(role.name)} size="sm">
                 {role.name}
               </Badge>
             ))
@@ -172,7 +183,7 @@ const Table = () => {
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-gray-500">Mã: {row.identifyCode || 'N/A'}</span>
             {row.roles && row.roles.length > 0 && (
-              <Badge variant="primary" size="sm">
+              <Badge variant={getRoleVariant(row.roles[0].name)} size="sm">
                 {row.roles[0].name}
               </Badge>
             )}
