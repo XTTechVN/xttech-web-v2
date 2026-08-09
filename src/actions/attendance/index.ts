@@ -1,4 +1,6 @@
 import api from "@/utils/api";
+import { useAuthStore } from "@/stores";
+import { BASE_API_URL } from "@/config";
 import {
     Attendance,
     AttendanceCreate,
@@ -11,7 +13,6 @@ import {
     AdjustmentRequestQueryParams,
     AttendanceAdjustmentRequestUpdate,
     Department,
-    DepartmentQueryParams
 } from "@/types";
 
 
@@ -46,24 +47,28 @@ export const deleteAttendance = async (id: number) => {
 
 export const autoTimekeeping = async (data: AutoTimekeepingData, image: File) => {
     const formData = new FormData();
-    formData.append(
-        "data",
-        JSON.stringify(data)
-    );
-    formData.append(
-        "image",
-        image
-    );
-    return api.post<Attendance>(
-        `${baseVersion1}/attendances/auto-timekeeping`,
-        formData,
-        {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        }
-    );
-}
+    formData.append('data', JSON.stringify(data));
+    formData.append('image', image);
+
+    // Dùng native fetch thay axios để tránh vấn đề Content-Type của axios instance
+    // fetch + FormData tự động set đúng multipart/form-data; boundary=...
+    const accessToken = useAuthStore.getState().accessToken;
+    const response = await fetch(`${BASE_API_URL}${baseVersion1}/users/attendance`, {
+        method: 'POST',
+        headers: {
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        credentials: 'include',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw { response: { data: errorData, status: response.status } };
+    }
+
+    return response.json() as Promise<Attendance>;
+};
 
 export const getAdjustmentRequests = async (
     params?: AdjustmentRequestQueryParams
@@ -111,18 +116,34 @@ export const getUsers = async (params?: any) => {
     return res.data;
 };
 
-export const createUser = async (
-    data: UserCreate
-) => {
-    const res = await api.post<UserResponse>(
-        `${baseVersion1}/users`,
-        data
-    );
+export const createUser = async (data: UserCreate, file?: File) => {
+    const formData = new FormData();
+    // BE yêu cầu data wrap trong field 'create_data' dạng FormData
+    formData.append('create_data', JSON.stringify(data));
+    // Thêm avatar file nếu có upload
+    if (file) {
+        formData.append('file', file);
+    }
 
-    return res.data;
+    const accessToken = useAuthStore.getState().accessToken;
+    const response = await fetch(`${BASE_API_URL}${baseVersion1}/users`, {
+        method: 'POST',
+        headers: {
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        credentials: 'include',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw { response: { data: errorData, status: response.status } };
+    }
+
+    return response.json() as Promise<UserResponse>;
 };
 
-export const getDepartments = async (params?: DepartmentQueryParams) => {
+export const getDepartments = async (params?: any) => {
     const res = await api.get<DataListResponse<Department>>(
         `${baseVersion1}/departments`,
         { params }

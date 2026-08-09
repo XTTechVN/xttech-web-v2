@@ -34,6 +34,11 @@ const useAuthStore = create<AuthState>()(
           set({ isLoading: true });
           const res = await signIn({ username, password });
           const { accessToken, refreshToken, user } = res;
+          
+          if (user && user.roles) {
+            document.cookie = `xt-auth=${encodeURIComponent(JSON.stringify({ roles: user.roles }))}; path=/; max-age=604800; SameSite=Lax`;
+          }
+
           set({ accessToken, refreshToken, user, isAuthenticated: true });
 
           return true;

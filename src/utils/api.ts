@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores';
+import { BASE_API_URL } from '@/config';
 
 const api = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL}` || 'https://dev-xt-api-v2.up.railway.app',
+  baseURL: BASE_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -16,6 +17,13 @@ api.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
+
+    // Axios v1.x dùng AxiosHeaders instance — gọi .delete() để xóa Content-Type
+    // cho FormData, trình duyệt/Node sẽ tự thêm multipart/form-data + boundary đúng
+    if (config.data instanceof FormData) {
+      config.headers.delete('Content-Type');
+    }
+
     return config;
   },
   (error) => {
@@ -48,17 +56,9 @@ api.interceptors.response.use(
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
         // call api refresh, api này sẽ tự cấp phát vào cookie
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://api_vision.bosky.vn'}/api/v1/auth/refresh`,
-          {},
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${refreshToken}`,
-            },
-            withCredentials: true,
-          },
-        );
+        const response = await axios.post(`${BASE_API_URL}/api/v1/auth/refresh`, {
+          refreshToken: refreshToken,
+        });
 
         // Lưu access token mới nếu API trả về token mới (nếu có cập nhật trong store)
         const newAccessToken = response.data.accessToken;

@@ -256,35 +256,38 @@ export interface AdjustmentForm {
 // AUTO TIMEKEEPING
 // =======================
 
+// Phân biệt loại điểm danh: check-in hoặc check-out
+export type TimekeepingType = 'check_in' | 'check_out';
 
 export interface AutoTimekeepingData {
     longitude: number;
     latitude: number;
     note?: string;
+    type?: TimekeepingType;
 }
 
 // =======================
 // DEPARTMENT
 // =======================
 
-export interface Department {
-    id: number;
-    name: string;
-    code: string | null;
-    mainColor: string | null;
-    mainIcon: string | null;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-}
+// export interface Department {
+//     id: number;
+//     name: string;
+//     code: string | null;
+//     mainColor: string | null;
+//     mainIcon: string | null;
+//     createdAt: string;
+//     updatedAt: string;
+//     deletedAt: string | null;
+// }
 
-export interface DepartmentQueryParams {
-    search?: string;
-    limit?: number;
-    offset?: number;
-    sortBy?: string;
-    sortOrder?: "asc" | "desc";
-    allowDeleted?: boolean;
-}
+// export interface DepartmentQueryParams {
+//     search?: string;
+//     limit?: number;
+//     offset?: number;
+//     sortBy?: string;
+//     sortOrder?: "asc" | "desc";
+//     allowDeleted?: boolean;
+// }
 
-export type DepartmentListResponse = DataListResponse<Department>;
+// export type DepartmentListResponse = DataListResponse<Department>;
