@@ -139,7 +139,7 @@ const Table = () => {
   const renderCard = (row: Position, index: number) => (
     <div
       key={row.id || index}
-      className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+      className="p-4 rounded-xl border border-gray-200 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex items-center gap-3">
         <div className="flex flex-col">

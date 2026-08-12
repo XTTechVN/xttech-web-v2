@@ -31,7 +31,7 @@ const Table = () => {
   const searchParams = useSearchParams();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
-  const router = useRouter()
+  const router = useRouter();
   // Trạng thái cho modal sửa phòng ban
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [selectedDept, setSelectedDept] = React.useState<Department | null>(null);
@@ -134,7 +134,7 @@ const Table = () => {
   const renderCard = (row: Department, index: number) => (
     <div
       key={row.id || index}
-      className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+      className="p-4 rounded-xl border border-gray-200 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex items-center gap-3">
         <div className="flex flex-col">
@@ -166,7 +166,6 @@ const Table = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      
       <TableData<Department>
         queryKey={['departments', search]}
         fetcher={fetcher}
