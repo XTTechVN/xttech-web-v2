@@ -3,10 +3,14 @@
 import React, { useRef, useState, useEffect, Suspense } from 'react';
 import { Header } from '@/components';
 import { StatCards, SuggestionTable, SuggestionModal } from './_components';
+import useAuthStore from '@/stores/useAuthStore';
 
 function SuggestionsPageContent() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
+
+  const { user } = useAuthStore();
+  const isManager = user?.roles?.some((role) => role.code === 'admin' || role.code === 'hr') ?? false;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -25,13 +29,13 @@ function SuggestionsPageContent() {
       <Header title="QUẢN LÝ ĐỀ XUẤT & SÁNG KIẾN NHÂN SỰ" className="rounded-2xl border border-slate-200 bg-white px-6 shadow-sm" />
 
       {/* Statistical Metrics Cards */}
-      <StatCards containerWidth={containerWidth} />
+      {isManager && <StatCards containerWidth={containerWidth} />}
 
       {/* Suggestions Data Grid / Table */}
-      <SuggestionTable />
+      <SuggestionTable isManager={isManager} currentUserId={user?.id} />
 
       {/* Modals & Dialogs */}
-      <SuggestionModal />
+      <SuggestionModal isManager={isManager} currentUserId={user?.id} />
     </div>
   );
 }

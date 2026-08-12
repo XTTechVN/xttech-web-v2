@@ -31,6 +31,9 @@ export interface ITableFilterProps {
   value?: string | undefined;
   options: { value: string | undefined; label: string; icon?: ReactNode }[];
   onChange?: (value: string | undefined) => void;
+  onSearchChange?: (search: string) => void;
+  onLoadMore?: () => void;
+  placeholder?: string;
   className?: string;
   icon?: ReactNode;
 }
