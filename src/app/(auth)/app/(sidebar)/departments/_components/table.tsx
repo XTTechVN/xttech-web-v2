@@ -7,6 +7,7 @@ import { Building2, Pencil, Trash2, PlusCircle } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData } from '@/components/table';
+import TableAction from '@/components/table/table-action';
 import { Modal, Button } from '@/components';
 import { useQueryParam } from '@/hooks';
 
@@ -114,37 +115,17 @@ const Table = () => {
       label: 'Hành động',
       minWidth: '150px',
       cell: (row: Department) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setSelectedDept(row);
-              setIsEditOpen(true);
-            }}
-            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-          >
-            <Pencil size={18} />
-          </button>
-
-          <button
-            onClick={() => {
-              setDeptToDelete(row);
-              setIsDeleteOpen(true);
-            }}
-            disabled={isPending}
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-          >
-            <Trash2 size={18} />
-          </button>
-
-          <Link href={`/app/departments/${row.id}/positions`}>
-            <button
-              title="Quản lý vị trí"
-              className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-          >
-            <PlusCircle size={18} />
-          </button>
-          </Link>
-        </div>
+        <TableAction
+          onView={() => router.push(`/app/departments/${row.id}/positions`)}
+          onEdit={() => {
+            setSelectedDept(row);
+            setIsEditOpen(true);
+          }}
+          onDelete={() => {
+            setDeptToDelete(row);
+            setIsDeleteOpen(true);
+          }}
+        />
       ),
     },
   ];
@@ -169,38 +150,17 @@ const Table = () => {
           </span>
         </div>
       </div>
-      <div className="flex gap-2">
-        <button
-          onClick={() => {
-            setSelectedDept(row);
-            setIsEditOpen(true);
-          }}
-          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-        >
-          <Pencil size={18} />
-        </button>
-
-        <button
-          onClick={() => {
-            setDeptToDelete(row);
-            setIsDeleteOpen(true);
-          }}
-          disabled={isPending}
-          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-        >
-          <Trash2 size={18} />
-        </button>
-
-        <button
-          onClick={() => {
-            router.push(`/app/departments/${row.id}/positions`)
-          }}
-          title="Quản lý vị trí"
-          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-        >
-          <PlusCircle size={18} />
-        </button>
-      </div>
+      <TableAction
+        onView={() => router.push(`/app/departments/${row.id}/positions`)}
+        onEdit={() => {
+          setSelectedDept(row);
+          setIsEditOpen(true);
+        }}
+        onDelete={() => {
+          setDeptToDelete(row);
+          setIsDeleteOpen(true);
+        }}
+      />
     </div>
   );
 
