@@ -7,7 +7,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData } from '@/components/table';
-import { Heading, Modal, Button, Badge, Avatar } from '@/components';
+import { Modal, Button, Badge, Avatar } from '@/components';
 import { useQueryParam } from '@/hooks';
 
 // Kiểu dữ liệu NHÂN SỰ
@@ -29,6 +29,18 @@ import { getEmployees, deleteEmployee } from '@/actions/employee';
 import EmployeeFormModal from './form-modal';
 
 import { BASE_MINIO_URL } from '@/config';
+
+// Lấy màu theo từng vị trí
+const getRoleVariant = (roleName: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default' => {
+  const lowerName = roleName.toLowerCase();
+  if (lowerName.includes('admin')) return 'danger';
+  if (lowerName.includes('hr')) return 'warning';
+  if (lowerName.includes('sale')) return 'primary';
+  if (lowerName.includes('technician')) return 'info';
+  if (lowerName.includes('super') || lowerName.includes('supper')) return 'success';
+  return 'default';
+};
+
 
 const Table = () => {
   const [search, setSearch] = useQueryParam('search');
@@ -103,7 +115,7 @@ const Table = () => {
         <div className="flex flex-wrap gap-1">
           {row.roles && row.roles.length > 0 ? (
             row.roles.map((role) => (
-              <Badge key={role.id} variant="primary" size="sm">
+              <Badge key={role.id} variant={getRoleVariant(role.name)} size="sm">
                 {role.name}
               </Badge>
             ))
@@ -174,7 +186,7 @@ const Table = () => {
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-gray-500">Mã: {row.identifyCode || 'N/A'}</span>
             {row.roles && row.roles.length > 0 && (
-              <Badge variant="primary" size="sm">
+              <Badge variant={getRoleVariant(row.roles[0].name)} size="sm">
                 {row.roles[0].name}
               </Badge>
             )}
@@ -208,9 +220,6 @@ const Table = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      <Heading className="text-primary pr-2 pt-2 text-2xl" size="h1">
-        Danh sách nhân sự
-      </Heading>
       <TableData<Employee>
         queryKey={['employees', search]}
         fetcher={fetcher}

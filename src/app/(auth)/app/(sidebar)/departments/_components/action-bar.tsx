@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 
 // Thành phần dùng chung cho toàn bộ trang
-import { Button } from '@/components';
+import { Button, Heading } from '@/components';
 
 // Icon thư viện lucide-react
 import { Plus } from 'lucide-react';
@@ -15,7 +15,10 @@ const ActionBar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="flex justify-end w-full">
+    <div className="flex md:flex-row justify-between items-start md:items-center w-full gap-4">
+      <Heading className="text-primary text-2xl" size="h1">
+        Danh sách phòng ban
+      </Heading>
       <Button
         variant="primary"
         size="sm"
