@@ -59,12 +59,12 @@ const Table = () => {
       throw new Error('Lỗi khi tải danh sách vị trí');
     }
     return {
-      items: res.items || [],
+      items: Array.isArray(res) ? res : (res?.items || []),
       meta: {
-        total: res.pagination.total || 0,
-        offset: res.pagination.offset || 0,
-        limit: res.pagination.limit || 10,
-        next: res.pagination.next || false,
+        total: res?.pagination?.total || (Array.isArray(res) ? res.length : 0),
+        offset: res?.pagination?.offset || 0,
+        limit: res?.pagination?.limit || 10,
+        next: res?.pagination?.next || false,
       },
     };
   };
