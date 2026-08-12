@@ -150,8 +150,8 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
         return (
           <div className="flex flex-col gap-1 cursor-default w-full max-w-150">
             {/* Title & Tag */}
-            <div className="flex items-center justify-between gap-4 w-full">
-              <span className="font-bold text-[#101718] text-sm group-hover:text-[#045863] transition-colors leading-tight truncate flex-1">
+            <div className="flex items-center justify-start gap-2 w-full">
+              <span className="font-bold text-[#101718] text-sm group-hover:text-[#045863] transition-colors leading-tight truncate">
                 {row.title}
               </span>
               <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${catInfo.class}`}>{catInfo.label}</span>
