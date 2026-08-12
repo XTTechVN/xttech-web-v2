@@ -51,10 +51,10 @@ const Table = () => {
       return {
         items: data.items || [],
         meta: {
-          total: data.pagination?.total || 0,
-          offset: data.pagination?.offset || 0,
-          limit: data.pagination?.limit || 10,
-          next: data.pagination?.next || false,
+          total: data.meta?.total || 0,
+          offset: data.meta?.offset || 0,
+          limit: data.meta?.limit || 10,
+          next: data.meta?.next || false,
         },
       };
     } catch (error) {
