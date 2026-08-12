@@ -16,7 +16,7 @@ export interface ITableColumn<T> {
   maxWidth?: string;
   sticky?: boolean;
   visible?: boolean; // Xác định cột có hiển thị mặc định hay không (mặc định là true)
-  cell: (row: T) => ReactNode;
+  cell: (row: T, index: number) => ReactNode;
 }
 
 export interface ITableSearchProps {

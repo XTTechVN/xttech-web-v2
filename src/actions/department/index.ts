@@ -1,3 +1,5 @@
+export * from './position';
+
 import type { Department } from '@/types';
 import api from '@/utils/api';
 
@@ -8,6 +10,16 @@ export const getDepartments = async (params?: { offset?: number; limit?: number;
     return res.data;
   } catch (error) {
     throw new Error('Lỗi khi lấy dữ liệu danh sách phòng ban');
+  }
+};
+
+// Lấy thông tin một phòng ban
+export const getDepartment = async (id: number) => {
+  try {
+    const res = await api.get(`/api/v1/departments/${id}`);
+    return res.data;
+  } catch (error) {
+    throw new Error('Lỗi khi lấy thông tin phòng ban');
   }
 };
 

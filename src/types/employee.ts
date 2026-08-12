@@ -1,4 +1,4 @@
-import type { Position } from './auth';
+import type { Position } from './position';
 
 export interface EmployeeRole {
   id: string;

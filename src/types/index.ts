@@ -12,3 +12,6 @@ export * from './department';
 
 // Employee
 export * from './employee';
+
+// Position
+export * from './position'
