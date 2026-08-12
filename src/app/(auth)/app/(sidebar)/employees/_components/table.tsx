@@ -28,6 +28,8 @@ import { getEmployees, deleteEmployee } from '@/actions/employee';
 // components dùng riêng cho trang nhân viên
 import EmployeeFormModal from './form-modal';
 
+import { BASE_MINIO_URL } from '@/config';
+
 // Lấy màu theo từng vị trí
 const getRoleVariant = (roleName: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default' => {
   const lowerName = roleName.toLowerCase();
@@ -38,6 +40,7 @@ const getRoleVariant = (roleName: string): 'primary' | 'success' | 'warning' | '
   if (lowerName.includes('super') || lowerName.includes('supper')) return 'success';
   return 'default';
 };
+
 
 const Table = () => {
   const [search, setSearch] = useQueryParam('search');
@@ -90,7 +93,7 @@ const Table = () => {
       minWidth: '220px',
       cell: (row: Employee) => (
         <div className="flex items-center gap-3">
-          <Avatar src={`${process.env.NEXT_PUBLIC_MINIO_URL}${row.avatar}`} name={row.fullName || row.username} size="sm" />
+          <Avatar src={`${BASE_MINIO_URL}${row.avatar}`} name={row.fullName || row.username} size="sm" />
           <div className="flex flex-col">
             <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
             <span className="text-xs text-gray-500">{row.email}</span>

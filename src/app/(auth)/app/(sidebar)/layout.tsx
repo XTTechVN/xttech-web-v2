@@ -125,6 +125,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         user={sidebarConfig.user}
         sections={sidebarConfig.sections}
         onItemSelect={sidebarConfig.onItemSelect}
+        onUserClick={() => router.push('/app/profile')}
       />
 
       {/* 2. Sidebar Drawer trên Mobile */}
@@ -138,6 +139,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             user={sidebarConfig.user}
             sections={sidebarConfig.sections}
             onItemSelect={sidebarConfig.onItemSelectMobile}
+            onUserClick={() => {
+              router.push('/app/profile');
+              setIsMobileOpen(false);
+            }}
           />
         </div>
       )}

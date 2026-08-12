@@ -5,8 +5,8 @@ export interface User {
   username: string;
   fullName: string;
   phoneNumber: string;
-  avatar: string;
-  gender: string;
+  avatar: string | null;
+  gender: 'male' | 'female' | 'other' | string;
   birthday: string;
   address: string;
   joinedAt: string;

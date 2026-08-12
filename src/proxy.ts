@@ -1,28 +1,31 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { rawSidebarSections } from './config/sidebar';
 
-const ROUTE_PERMISSIONS: Record<string, string[]> = {
-  '/app/dashboard': ['admin'],
-  '/app/employees': ['admin', 'hr'],
-  '/app/departments': ['admin', 'hr'],
-  '/app/attendances': ['admin', 'hr'],
-  '/app/shifts': ['admin', 'hr', 'technician'],
-  '/app/leave-requests': ['admin', 'hr'],
-  '/app/attendances-policy': ['admin', 'hr'],
-  '/app/attendances-summary': ['admin', 'hr'],
-  '/app/projects': ['admin', 'sale'],
-  '/app/project-tasks': ['admin', 'sale', 'technician'],
-  '/app/suggestions': ['admin', 'hr', 'sale', 'technician'],
-};
+const ROUTE_PERMISSIONS: Record<string, string[]> = {};
+for (const section of rawSidebarSections) {
+  for (const item of section.items) {
+    if (item.href && item.roles) {
+      ROUTE_PERMISSIONS[item.href] = item.roles;
+    }
+    if (item.subItems) {
+      for (const sub of item.subItems) {
+        if (sub.href && sub.roles) {
+          ROUTE_PERMISSIONS[sub.href] = sub.roles;
+        }
+      }
+    }
+  }
+}
 
 const DEFAULT_PAGES: Record<string, string> = {
   admin: '/app/dashboard',
-  hr: '/app/employees',
+  hr: '/app/departments',
   sale: '/app/projects',
   technician: '/app/shifts',
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const xtAuthCookie = request.cookies.get('xt-auth')?.value;
@@ -41,6 +44,10 @@ export function middleware(request: NextRequest) {
       // Bỏ qua lỗi parse JSON
     }
   }
+
+  console.log(`[Proxy] Pathname: ${pathname}`);
+  console.log(`[Proxy] Raw Cookie: ${xtAuthCookie}`);
+  console.log(`[Proxy] parsed userRoles:`, userRoles);
 
   // 1. Nếu đã đăng nhập mà cố tình vào lại trang /signin -> redirect về trang mặc định của role
   if (pathname === '/signin') {
