@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { PlusCircle, Search, Check, Calendar, X } from 'lucide-react';
+import { PlusCircle, Search, Check } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 import type { ITableFilterProps } from './types';
@@ -15,8 +15,6 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownAlign, setDropdownAlign] = useState<'left' | 'right'>('left');
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const options = filter.options || [];
 
   // Tự động tính toán hướng mở dropdown dựa trên không gian trống bên phải nút để tránh tràn viền
   useEffect(() => {
@@ -64,12 +62,12 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
   }, [isOpen]);
 
   // Lọc các lựa chọn dựa trên truy vấn tìm kiếm
-  const filteredOptions = options.filter((option) =>
+  const filteredOptions = filter.options.filter((option) =>
     option.label.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Tìm lựa chọn đang được chọn hiện tại
-  const selectedOption = options.find((opt) => opt.value === filter.value);
+  const selectedOption = filter.options.find((opt) => opt.value === filter.value);
 
   return (
     <div ref={containerRef} className="relative inline-block">
@@ -80,8 +78,8 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
         className={cn(
           'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-text-secondary bg-white border border-dashed border-border-secondary hover:border-border-hover rounded-lg transition shadow-xs cursor-pointer select-none h-9',
           selectedOption &&
-            selectedOption.value !== undefined &&
-            'border-solid border-border-focus',
+          selectedOption.value !== undefined &&
+          'border-solid border-border-focus',
         )}
       >
         {filter.icon ? (
@@ -179,186 +177,14 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
   );
 }
 
-function DateRangeFilter({ filter }: { filter: ITableFilterProps }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [dropdownAlign, setDropdownAlign] = useState<'left' | 'right'>('left');
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const startDate = filter.startDate;
-  const endDate = filter.endDate;
-  const hasValue = Boolean(startDate || endDate);
-
-  useEffect(() => {
-    if (isOpen && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const dropdownWidth = 280;
-      if (rect.left + dropdownWidth > window.innerWidth) {
-        setDropdownAlign('right');
-      } else {
-        setDropdownAlign('left');
-      }
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isOpen]);
-
-  const getLabelText = () => {
-    if (startDate && endDate) {
-      return `${startDate} ~ ${endDate}`;
-    }
-    if (startDate) {
-      return `Từ ${startDate}`;
-    }
-    if (endDate) {
-      return `Đến ${endDate}`;
-    }
-    return null;
-  };
-
-  const labelText = getLabelText();
-
-  return (
-    <div ref={containerRef} className="relative inline-block">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-text-secondary bg-white border border-dashed border-border-secondary hover:border-border-hover rounded-lg transition shadow-xs cursor-pointer select-none h-9',
-          hasValue && 'border-solid border-border-focus',
-        )}
-      >
-        <Calendar className="w-3.5 h-3.5 text-icon-secondary shrink-0" />
-        <span className="text-gray-500">{filter.label || 'Ngày làm việc'}</span>
-        {hasValue && (
-          <>
-            <span className="w-px h-4 bg-border-primary mx-1" />
-            <span className="bg-[#f3f4f6] text-gray-700 text-xs px-1.5 py-0.5 rounded font-semibold tracking-wider flex items-center justify-center">
-              {labelText}
-            </span>
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={(e) => {
-                e.stopPropagation();
-                filter.onDateChange?.(undefined, undefined);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.stopPropagation();
-                  filter.onDateChange?.(undefined, undefined);
-                }
-              }}
-              className="p-0.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition"
-            >
-              <X className="w-3 h-3" />
-            </span>
-          </>
-        )}
-      </button>
-
-      {isOpen && (
-        <div
-          className={cn(
-            'absolute mt-1.5 z-50 w-72 bg-white rounded-xl shadow-lg border border-slate-200 p-3.5 animate-in fade-in-0 zoom-in-95 duration-100 space-y-3',
-            dropdownAlign === 'right' ? 'right-0' : 'left-0',
-          )}
-        >
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-teal-600" />
-              {filter.label || 'Ngày làm việc'}
-            </span>
-            {hasValue && (
-              <button
-                type="button"
-                onClick={() => {
-                  filter.onDateChange?.(undefined, undefined);
-                }}
-                className="text-[11px] font-semibold text-red-500 hover:text-red-700 hover:underline"
-              >
-                Xóa chọn
-              </button>
-            )}
-          </div>
-
-          <div className="space-y-2.5">
-            <div>
-              <label className="block text-[11px] font-medium text-slate-500 mb-1">
-                Từ ngày
-              </label>
-              <input
-                type="date"
-                value={startDate || ''}
-                onChange={(e) => filter.onDateChange?.(e.target.value || undefined, endDate)}
-                className="w-full h-9 px-2.5 text-xs text-slate-800 border border-slate-200 rounded-lg outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-medium text-slate-500 mb-1">
-                Đến ngày
-              </label>
-              <input
-                type="date"
-                value={endDate || ''}
-                onChange={(e) => filter.onDateChange?.(startDate, e.target.value || undefined)}
-                className="w-full h-9 px-2.5 text-xs text-slate-800 border border-slate-200 rounded-lg outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-white"
-              />
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-end">
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="px-3 py-1 text-xs font-semibold text-white bg-[#005c53] hover:bg-[#004740] rounded-lg transition shadow-xs cursor-pointer"
-            >
-              Đóng
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function TableFilters({ filters }: { filters: ITableFilterProps[] }) {
   if (!filters || filters.length === 0) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {filters.map((filter, index) => {
-        if (filter.type === 'date-range' || filter.onDateChange) {
-          return <DateRangeFilter key={index} filter={filter} />;
-        }
-        return <FacetedFilter key={index} filter={filter} />;
-      })}
+      {filters.map((filter, index) => (
+        <FacetedFilter key={index} filter={filter} />
+      ))}
     </div>
   );
 }

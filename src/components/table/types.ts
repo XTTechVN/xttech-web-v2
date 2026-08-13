@@ -28,13 +28,9 @@ export interface ITableSearchProps {
 
 export interface ITableFilterProps {
   label?: string;
-  type?: 'select' | 'date-range';
   value?: string | undefined;
-  startDate?: string | undefined;
-  endDate?: string | undefined;
-  options?: { value: string | undefined; label: string; icon?: ReactNode }[];
+  options: { value: string | undefined; label: string; icon?: ReactNode }[];
   onChange?: (value: string | undefined) => void;
-  onDateChange?: (startDate: string | undefined, endDate: string | undefined) => void;
   className?: string;
   icon?: ReactNode;
 }

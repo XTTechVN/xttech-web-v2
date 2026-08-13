@@ -9,6 +9,7 @@ import {
   Breadcrumb,
   Heading,
   ITableColumn,
+  ITableFilterProps,
   Avatar
 } from '@/components';
 import { toast } from 'react-hot-toast';
@@ -45,7 +46,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteAttendance, getAttendances, getDepartments, getUsers, getAdjustmentRequests, updateAdjustmentRequest } from '@/actions';
-import { Attendance, AttendanceAdjustmentRequest } from '@/types';
+import { Attendance, AttendanceAdjustmentRequest, AttendanceStatus } from '@/types';
 import StatCart from '../dashboard/_components/stats-card';
 import AddAdjustmentModal from './_components/adjustment/add-modal';
 import ReviewAdjustmentModal from './_components/adjustment/review-modal';
@@ -118,8 +119,9 @@ export default function AttendancesPage() {
   // Filter states khớp với ITableFilterProps
   const [filterEmployeeId, setFilterEmployeeId] = useState<string | undefined>();
   const [filterStatus, setFilterStatus] = useState<string | undefined>();
-  const [filterStartDate, setFilterStartDate] = useState<string | undefined>();
-  const [filterEndDate, setFilterEndDate] = useState<string | undefined>();
+  const [filterStartDate, setFilterStartDate] = useState<string>();
+  const [filterEndDate, setFilterEndDate] = useState<string>();
+  const [filterDate, setFilterDate] = useState<string>();
   const [filterDepartment, setFilterDepartment] = useState<string | undefined>();
   const [filterShift, setFilterShift] = useState<string | undefined>();
 
@@ -298,17 +300,17 @@ export default function AttendancesPage() {
     ).values()
   );
 
-  const workDateOptions: FilterOption[] = [
-    ...new Map(
-      attendances.map((item) => [
-        item.workDate,
-        {
-          label: item.workDate,
-          value: item.workDate,
-        },
-      ])
-    ).values(),
-  ];
+  const dateOptions: FilterOption[] = Array.from(
+    { length: 31 },
+    (_, i) => {
+      const day = String(i + 1).padStart(2, '0');
+
+      return {
+        label: `2026-08-${day}`,
+        value: `2026-08-${day}`,
+      };
+    }
+  );
 
   const departmentOptions: FilterOption[] = [
     ...new Map(
@@ -336,19 +338,25 @@ export default function AttendancesPage() {
     ).values(),
   ];
   // Cấu hình filters truyền vào TableData
-  const tableFilters = [
+  const tableFilters: ITableFilterProps[] = [
     {
       label: 'Nhân viên',
       value: filterEmployeeId,
       options: employeeOptions,
-      onChange: (val: string | undefined) => setFilterEmployeeId(val),
+      onChange: (val: string | undefined) => {
+        setFilterEmployeeId(val);
+      },
     },
+
     {
       label: 'Phòng ban',
       value: filterDepartment,
       options: departmentOptions,
-      onChange: (val: string | undefined) => setFilterDepartment(val),
+      onChange: (val: string | undefined) => {
+        setFilterDepartment(val);
+      },
     },
+
     {
       label: 'Ca làm',
       value: filterShift,
@@ -357,23 +365,30 @@ export default function AttendancesPage() {
         { label: 'Ca chiều', value: 'afternoon' },
         { label: 'Ca tối', value: 'night' },
       ],
-      onChange: (val: string | undefined) => setFilterShift(val),
-    },
-    {
-      label: 'Ngày làm việc',
-      type: 'date-range' as const,
-      startDate: filterStartDate,
-      endDate: filterEndDate,
-      onDateChange: (start?: string, end?: string) => {
-        setFilterStartDate(start);
-        setFilterEndDate(end);
+      onChange: (val: string | undefined) => {
+        setFilterShift(val);
       },
     },
     {
+      label: 'Từ ngày',
+      value: filterStartDate,
+      options: dateOptions,
+      onChange: (val: string | undefined) => setFilterStartDate(val),
+    },
+    {
+      label: 'Đến ngày',
+      value: filterEndDate,
+      options: dateOptions,
+      onChange: (val: string | undefined) => setFilterEndDate(val),
+    },
+
+    {
       label: 'Trạng thái',
-      value: filterStatus,
+      value: filterStatus as string | undefined,
       options: statusOptions,
-      onChange: (val: string | undefined) => setFilterStatus(val),
+      onChange: (val: string | undefined) => {
+        setFilterStatus(val as AttendanceStatus | undefined);
+      },
     },
   ];
 
@@ -388,74 +403,90 @@ export default function AttendancesPage() {
       startDate: filterStartDate || undefined,
       endDate: filterEndDate || undefined,
       userId: filterEmployeeId || undefined,
-      status: (filterStatus as any) || undefined,
+      status: (filterStatus as AttendanceStatus) || undefined,
     });
 
     const items = response.items ?? [];
 
-    // lưu data để tạo filter
+    // Lưu data để tạo các filter/options khác
     setAttendances(items);
 
     let filtered = [...items];
 
+    // Search
     if (searchQuery) {
+      const keyword = searchQuery.toLowerCase();
+
       filtered = filtered.filter(
         (item) =>
-          item.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.user?.email?.toLowerCase().includes(searchQuery.toLowerCase())
+          item.user?.fullName?.toLowerCase().includes(keyword) ||
+          item.user?.email?.toLowerCase().includes(keyword)
       );
     }
 
+    // Filter nhân viên
     if (filterEmployeeId) {
       filtered = filtered.filter(
         (item) => String(item.userId) === String(filterEmployeeId)
       );
     }
 
+    // Filter phòng ban
     if (filterDepartment) {
       filtered = filtered.filter((item) => {
         const u = item.user as any;
-        const deptId = String(u?.departmentId ?? u?.department?.id ?? (item as any)?.departmentId ?? '');
-        const deptName = String(u?.department?.name ?? u?.departmentName ?? u?.department ?? (item as any)?.department ?? '');
-        return deptId === String(filterDepartment) || deptName === String(filterDepartment);
+
+        const deptId = String(
+          u?.departmentId ??
+          u?.department?.id ??
+          (item as any)?.departmentId ??
+          ''
+        );
+
+        const deptName = String(
+          u?.department?.name ??
+          u?.departmentName ??
+          u?.department ??
+          (item as any)?.department ??
+          ''
+        );
+
+        return (
+          deptId === String(filterDepartment) ||
+          deptName === String(filterDepartment)
+        );
       });
     }
 
+    // Filter ca làm
     if (filterShift) {
       filtered = filtered.filter((item) => {
-        const shiftStr = String(item.workShiftId ?? (item as any)?.shift ?? '').toLowerCase();
+        const shiftStr = String(
+          item.workShiftId ?? (item as any)?.shift ?? ''
+        ).toLowerCase();
+
         return shiftStr.includes(filterShift.toLowerCase());
       });
     }
 
-    if (filterStartDate) {
-      filtered = filtered.filter((item) => item.workDate >= filterStartDate);
-    }
+    // Không cần filter startDate/endDate ở đây nữa
+    // vì đã truyền startDate/endDate cho API ở phía trên.
 
-    if (filterEndDate) {
-      filtered = filtered.filter((item) => item.workDate <= filterEndDate);
-    }
-
+    // Filter trạng thái
     if (filterStatus) {
       filtered = filtered.filter(
         (item) => item.status === filterStatus
       );
     }
 
-
-
     return {
-      items: filtered.slice(
-        offset,
-        offset + limit
-      ),
+      items: filtered.slice(offset, offset + limit),
       meta: {
         total: filtered.length,
         offset,
         limit,
-        next:
-          offset + limit < filtered.length
-      }
+        next: offset + limit < filtered.length,
+      },
     };
   };
 

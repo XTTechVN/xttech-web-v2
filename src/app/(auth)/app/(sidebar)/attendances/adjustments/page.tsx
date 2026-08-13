@@ -8,6 +8,7 @@ import {
   Badge,
   Breadcrumb,
   ITableColumn,
+  ITableFilterProps,
   Heading,
   Alert,
 } from '@/components';
@@ -196,7 +197,17 @@ export default function AdjustmentsSidebarPage() {
     }));
   }, [allAdjustments]);
 
-  const tableFilters = [
+  const dateOptions = useMemo(() => {
+    return Array.from({ length: 31 }, (_, i) => {
+      const day = String(i + 1).padStart(2, '0');
+      return {
+        label: `2026-08-${day}`,
+        value: `2026-08-${day}`,
+      };
+    });
+  }, []);
+
+  const tableFilters: ITableFilterProps[] = [
     {
       label: 'Trạng thái',
       value: filterStatus,
@@ -220,14 +231,16 @@ export default function AdjustmentsSidebarPage() {
       ]
       : []),
     {
-      label: 'Ngày làm việc',
-      type: 'date-range' as const,
-      startDate: filterStartDate,
-      endDate: filterEndDate,
-      onDateChange: (start?: string, end?: string) => {
-        setFilterStartDate(start);
-        setFilterEndDate(end);
-      },
+      label: 'Từ ngày',
+      value: filterStartDate,
+      options: dateOptions,
+      onChange: (val: string | undefined) => setFilterStartDate(val),
+    },
+    {
+      label: 'Đến ngày',
+      value: filterEndDate,
+      options: dateOptions,
+      onChange: (val: string | undefined) => setFilterEndDate(val),
     },
   ];
 
