@@ -54,6 +54,17 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
 
     const isLight = variant === 'light';
 
+    React.useEffect(() => {
+      if (!activeId) return;
+      sections.forEach((section) => {
+        section.items.forEach((item) => {
+          if (item.subItems?.some((sub) => sub.id === activeId)) {
+            setOpenSubMenus((prev) => ({ ...prev, [item.id]: true }));
+          }
+        });
+      });
+    }, [activeId, sections]);
+
     const toggleSubMenu = (itemId: string) => {
       setOpenSubMenus((prev) => ({
         ...prev,

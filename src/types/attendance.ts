@@ -196,6 +196,7 @@ export interface AttendanceAdjustmentRequest {
     id: number;
     attendanceId: number | null;
     userId: string;
+    user: UserResponse | null;
     requestType: RequestType;
     oldCheckIn?: string | null;
     oldCheckOut?: string | null;

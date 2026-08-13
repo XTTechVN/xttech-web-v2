@@ -226,15 +226,91 @@ export default function PayrollDataPage() {
     return Boolean(todayAttendance && (todayAttendance.checkIn || todayAttendance.status));
   }, [todayAttendance]);
   // console.log(myAttendances);
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => ({
-    items: myAttendances.slice(offset, offset + limit),
-    meta: {
-      total: myAttendances.length,
+  // Filters and search for Payroll attendance history table
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string | undefined>();
+  const [filterWorkDate, setFilterWorkDate] = useState<string | undefined>();
+
+  const statusOptions = useMemo(() => {
+    const statuses = Array.from(
+      new Set(myAttendances.map((item) => item.status).filter((s): s is string => Boolean(s)))
+    );
+    return statuses.map((status) => ({
+      label: String(getStatusBadge(status) || status),
+      value: String(status),
+    }));
+  }, [myAttendances]);
+
+  const workDateOptions = useMemo(() => {
+    const dates = Array.from(
+      new Set(myAttendances.map((item) => item.workDate).filter((d): d is string => Boolean(d)))
+    );
+    return dates.map((date) => ({
+      label: String(date),
+      value: String(date),
+    }));
+  }, [myAttendances]);
+
+  const tableFilters = [
+    {
+      label: 'Trạng thái',
+      value: filterStatus,
+      options: statusOptions,
+      onChange: (val: string | undefined) => setFilterStatus(val),
+    },
+    {
+      label: 'Ngày làm việc',
+      value: filterWorkDate,
+      options: workDateOptions,
+      onChange: (val: string | undefined) => setFilterWorkDate(val),
+    },
+  ];
+
+  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
+    if (!user?.id) {
+      return {
+        items: myAttendances.slice(offset, offset + limit),
+        meta: {
+          total: myAttendances.length,
+          offset,
+          limit,
+          next: offset + limit < myAttendances.length,
+        },
+      };
+    }
+    const response = await getAttendances({
       offset,
       limit,
-      next: offset + limit < myAttendances.length,
-    },
-  });
+      userId: user.id,
+      search: searchQuery || undefined,
+      status: (filterStatus as any) || undefined,
+      workDate: filterWorkDate || undefined,
+    });
+    const rawItems = response.items ?? [];
+    let items = [...rawItems];
+    if (searchQuery) {
+      items = items.filter((item) =>
+        (item.note || item.workDate || item.status || '')
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
+      );
+    }
+    if (filterStatus) {
+      items = items.filter((item) => item.status === filterStatus);
+    }
+    if (filterWorkDate) {
+      items = items.filter((item) => item.workDate === filterWorkDate);
+    }
+    return {
+      items,
+      meta: {
+        total: response.pagination?.total ?? items.length,
+        offset: response.pagination?.offset ?? offset,
+        limit: response.pagination?.limit ?? limit,
+        next: response.pagination?.next ?? false,
+      },
+    };
+  };
 
 
 
@@ -713,9 +789,15 @@ export default function PayrollDataPage() {
               </div>
             ) : (
               <TableData<Attendance>
-                queryKey={['payroll-daily-logs', user?.id]}
+                queryKey={['payroll-daily-logs', user?.id, searchQuery, filterStatus, filterWorkDate]}
                 fetcher={fetcher}
                 columns={attendanceColumns}
+                search={{
+                  placeholder: 'Tìm kiếm theo ngày, ghi chú, trạng thái...',
+                  value: searchQuery,
+                  onChange: (value) => setSearchQuery(value),
+                }}
+                filters={tableFilters}
                 renderCard={renderAttendanceCard}
                 select={false}
                 syncToUrl={false}

@@ -44,22 +44,13 @@ export default function AdjustmentDetailModal({ open, data, onClose, onApprove, 
   const footer = (
     <div className="flex items-center justify-end gap-3 w-full">
       {canReview && isPending && (
-        <>
-          <Button
-            variant="danger"
-            onClick={() => onReject?.(data.id)}
-            leftIcon={<XCircle size={15} />}
-          >
-            Từ chối
-          </Button>
-          <Button
-            className="bg-green-600 hover:bg-green-700 text-white"
-            onClick={() => onApprove?.(data.id)}
-            leftIcon={<CheckCircle size={15} />}
-          >
-            Phê duyệt
-          </Button>
-        </>
+        <Button
+          className="bg-teal-600 hover:bg-teal-700 text-white font-bold"
+          onClick={() => onApprove?.(data.id)}
+          leftIcon={<CheckCircle size={15} />}
+        >
+          Xét duyệt khiếu nại
+        </Button>
       )}
       <Button variant="primary" onClick={onClose}>
         Đóng

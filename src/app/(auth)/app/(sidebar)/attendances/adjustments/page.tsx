@@ -24,6 +24,7 @@ import {
   CheckCircle,
   AlertCircle,
   Info,
+  FileCheck,
   Calendar,
   User as UserIcon,
 } from 'lucide-react';
@@ -158,7 +159,6 @@ export default function AdjustmentsSidebarPage() {
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/app' },
     { label: 'Quản lý nhân sự', href: '/app/employees' },
-    { label: 'Bảng chấm công', href: '/app/attendances' },
     { label: 'Danh sách khiếu nại', href: '/app/attendances/adjustments' },
   ];
 
@@ -245,11 +245,14 @@ export default function AdjustmentsSidebarPage() {
     });
     const rawItems = response?.items || [];
     setAttendanceAdjustments(rawItems);
-    const items: AdjustmentRecord[] = rawItems;
+    let items: AdjustmentRecord[] = rawItems;
+    if (filterType) {
+      items = items.filter((item) => item.requestType === filterType);
+    }
     return {
       items,
       meta: {
-        total: response?.pagination?.total ?? rawItems.length,
+        total: response?.pagination?.total ?? items.length,
         offset: response?.pagination?.offset ?? offset,
         limit: response?.pagination?.limit ?? limit,
         next: response?.pagination?.next ?? false,
@@ -415,24 +418,15 @@ export default function AdjustmentsSidebarPage() {
           </button>
 
           <div className="flex items-center gap-1.5">
-            {/* Admin approve/reject preview triggers */}
+            {/* Admin approve/reject preview trigger */}
             {isAdmin && isPending && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => openReviewModal(row, 'approved')}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold hover:bg-emerald-100 transition"
-                >
-                  <CheckCircle size={13} /> Duyệt
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openReviewModal(row, 'rejected')}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 text-red-700 font-bold hover:bg-red-100 transition"
-                >
-                  <XCircle size={13} /> Từ chối
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => openReviewModal(row, 'approved')}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 font-bold hover:bg-teal-100 transition"
+              >
+                <FileCheck size={13} /> Xét duyệt
+              </button>
             )}
 
             {/* Owner or Admin can Edit/Delete */}
@@ -574,25 +568,13 @@ export default function AdjustmentsSidebarPage() {
             </Tooltip>
 
             {isAdmin && row.status === 'pending' && (
-              <Tooltip content="Phê duyệt" position="top">
+              <Tooltip content="Xét duyệt khiếu nại" position="top">
                 <button
                   type="button"
                   onClick={() => openReviewModal(row, 'approved')}
-                  className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition"
+                  className="p-1.5 rounded-lg text-teal-600 hover:bg-teal-50 hover:text-teal-700 transition"
                 >
-                  <CheckCircle size={15} />
-                </button>
-              </Tooltip>
-            )}
-
-            {isAdmin && row.status === 'pending' && (
-              <Tooltip content="Từ chối" position="top">
-                <button
-                  type="button"
-                  onClick={() => openReviewModal(row, 'rejected')}
-                  className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition"
-                >
-                  <XCircle size={15} />
+                  <FileCheck size={15} />
                 </button>
               </Tooltip>
             )}

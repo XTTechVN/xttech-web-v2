@@ -48,6 +48,7 @@ import { deleteAttendance, getAttendances, getDepartments, getUsers, getAdjustme
 import { Attendance, AttendanceAdjustmentRequest } from '@/types';
 import StatCart from '../dashboard/_components/stats-card';
 import AddAdjustmentModal from './_components/adjustment/add-modal';
+import ReviewAdjustmentModal from './_components/adjustment/review-modal';
 
 type FilterOption = {
   value: string | undefined;
@@ -235,13 +236,39 @@ export default function AttendancesPage() {
   //   console.log(departments);
   // }, [departments]);
 
+  const [reviewModalState, setReviewModalState] = useState<{
+    open: boolean;
+    data: AttendanceAdjustmentRequest | null;
+    action: 'approved' | 'rejected' | null;
+  }>({
+    open: false,
+    data: null,
+    action: null,
+  });
+  const [isReviewing, setIsReviewing] = useState(false);
+
+  const handleConfirmReview = async (id: number, action: 'approved' | 'rejected', reviewNote: string) => {
+    setIsReviewing(true);
+    try {
+      await updateAdjustmentRequest(id, {
+        status: action,
+        reviewNote,
+      });
+      toast.success(action === 'approved' ? 'Đã phê duyệt khiếu nại thành công' : 'Đã từ chối khiếu nại');
+      setReviewModalState({ open: false, data: null, action: null });
+      refetchAdjustmentRequests();
+      queryClient.invalidateQueries({ queryKey: ['attendances'] });
+    } catch {
+      toast.error('Có lỗi xảy ra khi xử lý khiếu nại');
+    } finally {
+      setIsReviewing(false);
+    }
+  };
+
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/app' },
     { label: 'Quản lý nhân sự', href: '/app/employees' },
     { label: 'Bảng công tháng', href: '/app/attendances' },
-    ...(isAdjustmentPage
-      ? [{ label: 'Khiếu nại', href: '/app/admin/attendances/adjustments' }]
-      : []),
   ];
 
   // Tạo option list duy nhất từ mock data
@@ -409,36 +436,46 @@ export default function AttendancesPage() {
 
 
     if (searchQuery) {
-      filtered = filtered.filter(item =>
-        item.user?.fullName
-          ?.toLowerCase()
-          .includes(
-            searchQuery.toLowerCase()
-          )
+      filtered = filtered.filter(
+        (item) =>
+          item.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.user?.email?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
+    if (filterEmployeeId) {
+      filtered = filtered.filter(
+        (item) => String(item.userId) === String(filterEmployeeId)
+      );
+    }
 
-    // if (filterEmployeeId) {
-    //   filtered = filtered.filter(
-    //     item => item.userId === filterEmployeeId
-    //   );
-    // }
+    if (filterDepartment) {
+      filtered = filtered.filter((item) => {
+        const u = item.user as any;
+        const deptId = String(u?.departmentId ?? u?.department?.id ?? (item as any)?.departmentId ?? '');
+        const deptName = String(u?.department?.name ?? u?.departmentName ?? u?.department ?? (item as any)?.department ?? '');
+        return deptId === String(filterDepartment) || deptName === String(filterDepartment);
+      });
+    }
 
+    if (filterShift) {
+      filtered = filtered.filter((item) => {
+        const shiftStr = String(item.workShiftId ?? (item as any)?.shift ?? '').toLowerCase();
+        return shiftStr.includes(filterShift.toLowerCase());
+      });
+    }
 
-    // if (filterStatus) {
-    //   filtered = filtered.filter(
-    //     item => item.status === filterStatus
-    //   );
+    if (filterWorkDate) {
+      filtered = filtered.filter(
+        (item) => item.workDate === filterWorkDate
+      );
+    }
 
-    // }
-
-
-    // if (filterWorkDate) {
-    //   filtered = filtered.filter(
-    //     item => item.workDate === filterWorkDate
-    //   );
-    // }
+    if (filterStatus) {
+      filtered = filtered.filter(
+        (item) => item.status === filterStatus
+      );
+    }
 
 
 
@@ -907,10 +944,10 @@ export default function AttendancesPage() {
         </div> */}
       </div>
 
-      {/* Table Section (GIỮ NGUYÊN KHÔNG THAY ĐỔI THEO YÊU CẦU) */}
+      {/* Table Section */}
       <div className="space-y-4">
         <TableData<Attendance>
-          queryKey={['attendances', searchQuery]}
+          queryKey={['attendances', searchQuery, filterEmployeeId, filterWorkDate, filterStatus, filterDepartment, filterShift]}
           fetcher={fetcher}
           columns={columns}
           search={{
@@ -948,6 +985,7 @@ export default function AttendancesPage() {
                 </p>
               ) : (
                 pendingAdjustmentRequests.map((item) => {
+                  console.log("Item:", item);
                   const titleDisplay = item.reviewNote || (
                     item.requestType === 'check_in'
                       ? 'Điều chỉnh giờ vào muộn'
@@ -974,33 +1012,31 @@ export default function AttendancesPage() {
                             <span className="text-xs text-slate-400">{formattedTime}</span>
                           </div>
                           <p className="mt-1 text-xs text-slate-500">
-                            Nhân viên: {item.userId} - {item.reason}
+                            Nhân viên: {item.user?.fullName || 'Không xác định'} - {item.reason}
                           </p>
                           <div className="mt-2 flex items-center gap-3">
                             <button
-                              onClick={async () => {
-                                try {
-                                  await updateAdjustmentRequest(item.id, { status: 'approved' });
-                                  toast.success('Đã duyệt yêu cầu');
-                                  refetchAdjustmentRequests();
-                                } catch {
-                                  toast.error('Duyệt thất bại');
-                                }
-                              }}
+                              type="button"
+                              onClick={() =>
+                                setReviewModalState({
+                                  open: true,
+                                  data: item,
+                                  action: 'approved',
+                                })
+                              }
                               className="text-xs font-semibold text-teal-600 hover:text-teal-700"
                             >
                               Duyệt
                             </button>
                             <button
-                              onClick={async () => {
-                                try {
-                                  await updateAdjustmentRequest(item.id, { status: 'rejected' });
-                                  toast.error('Đã từ chối');
-                                  refetchAdjustmentRequests();
-                                } catch {
-                                  toast.error('Từ chối thất bại');
-                                }
-                              }}
+                              type="button"
+                              onClick={() =>
+                                setReviewModalState({
+                                  open: true,
+                                  data: item,
+                                  action: 'rejected',
+                                })
+                              }
                               className="text-xs font-semibold text-red-500 hover:text-red-600"
                             >
                               Từ chối
@@ -1127,6 +1163,16 @@ export default function AttendancesPage() {
           toast.success('Điểm danh thành công!');
         }}
       />
-    </div >
+
+      <ReviewAdjustmentModal
+        open={reviewModalState.open}
+        data={reviewModalState.data}
+        action={reviewModalState.action}
+        employeeName={reviewModalState.data?.user?.fullName || 'Nhân sự'}
+        onClose={() => setReviewModalState({ open: false, data: null, action: null })}
+        onConfirm={handleConfirmReview}
+        isLoading={isReviewing}
+      />
+    </div>
   );
 }

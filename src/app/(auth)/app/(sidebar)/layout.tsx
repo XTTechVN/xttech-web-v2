@@ -13,19 +13,38 @@ import toast from 'react-hot-toast';
 import { Sidebar, SidebarItemProps as SidebarItemType } from '@/components';
 
 // Config
-import { getSidebarSectionsForRole, UserRole, acceptedSections, BASE_MINIO_URL } from '@/config';
+import { getSidebarSectionsForRole, UserRole, acceptedSections, BASE_MINIO_URL, rawSidebarSections } from '@/config';
 
 // Stores
 import { useAuthStore } from '@/stores';
 
+function getActiveMenuId(currentPath: string): string {
+  for (const section of rawSidebarSections) {
+    for (const item of section.items) {
+      if (item.subItems && item.subItems.length > 0) {
+        for (const sub of item.subItems) {
+          if (sub.href === currentPath) return sub.id;
+        }
+      }
+      if (item.href === currentPath) return item.id;
+    }
+  }
+
+  if (currentPath.startsWith('/app/attendances/adjustments')) return 'attendances-adjustments';
+  if (currentPath.startsWith('/app/attendances/payroll')) return 'attendances-payroll';
+  if (currentPath.startsWith('/app/attendances')) return 'attendances';
+  if (currentPath.startsWith('/app/departments')) return 'departments';
+  if (currentPath.startsWith('/app/employees')) return 'employees';
+
+  const segments = currentPath.split('/').filter(Boolean);
+  return segments[segments.length - 1] || 'dashboard';
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const pathSegments = path.split('/');
-  const lastPath = pathSegments[pathSegments.length - 1];
-
   const router = useRouter();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
-  const [activeMenu, setActiveMenu] = React.useState(lastPath);
+  const activeMenu = React.useMemo(() => getActiveMenuId(path), [path]);
 
   // Định nghĩa role hiện tại của user (mock, sau này có thể lấy từ auth context/store)
   const [userRole, setUserRole] = React.useState<UserRole>('admin');
@@ -90,7 +109,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
 
-      setActiveMenu(item.id);
       if (item.href) {
         router.push(item.href);
       }
@@ -106,7 +124,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
 
-      setActiveMenu(item.id);
       if (item.href) {
         router.push(item.href);
       }

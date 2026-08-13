@@ -39,13 +39,7 @@ export default function ReviewAdjustmentModal({
     }
   }, [open]);
 
-  if (!data || !action) return null;
-
-  const isApprove = action === 'approved';
-
-  const handleConfirm = async () => {
-    await onConfirm(data.id, action, reviewNote);
-  };
+  if (!data) return null;
 
   const footer = (
     <div className="flex items-center justify-end gap-3 w-full">
@@ -53,20 +47,20 @@ export default function ReviewAdjustmentModal({
         Hủy
       </Button>
       <Button
-        className={
-          isApprove
-            ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20'
-            : 'bg-red-600 hover:bg-red-700 text-white font-bold shadow-md shadow-red-600/20'
-        }
-        leftIcon={isApprove ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
-        onClick={handleConfirm}
+        className="bg-red-600 hover:bg-red-700 text-white font-bold shadow-md shadow-red-600/20"
+        leftIcon={<XCircle size={16} />}
+        onClick={async () => await onConfirm(data.id, 'rejected', reviewNote)}
         disabled={isLoading}
       >
-        {isLoading
-          ? 'Đang xử lý...'
-          : isApprove
-          ? 'Xác nhận Chấp thuận'
-          : 'Xác nhận Từ chối'}
+        {isLoading ? 'Đang xử lý...' : 'Từ chối'}
+      </Button>
+      <Button
+        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20"
+        leftIcon={<CheckCircle2 size={16} />}
+        onClick={async () => await onConfirm(data.id, 'approved', reviewNote)}
+        disabled={isLoading}
+      >
+        {isLoading ? 'Đang xử lý...' : 'Chấp thuận'}
       </Button>
     </div>
   );
@@ -75,32 +69,18 @@ export default function ReviewAdjustmentModal({
     <Modal
       isOpen={open}
       onClose={() => { if (!isLoading) onClose(); }}
-      title={isApprove ? `Xem trước & Chấp thuận khiếu nại #${data.id}` : `Xem trước & Từ chối khiếu nại #${data.id}`}
+      title={`Xét duyệt khiếu nại #${data.id}`}
       size="md"
       footer={footer}
     >
       <div className="space-y-4 py-1">
         {/* Banner cảnh báo xem trước */}
-        <div
-          className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs font-medium ${
-            isApprove
-              ? 'bg-emerald-50/80 border-emerald-200 text-emerald-800'
-              : 'bg-red-50/80 border-red-200 text-red-800'
-          }`}
-        >
-          {isApprove ? (
-            <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
-          ) : (
-            <AlertCircle size={18} className="text-red-500 shrink-0 mt-0.5" />
-          )}
+        <div className="flex items-start gap-3 p-3.5 rounded-xl border border-teal-200 bg-teal-50/80 text-teal-900 text-xs font-medium">
+          <AlertCircle size={18} className="text-teal-600 shrink-0 mt-0.5" />
           <div>
-            <p className="font-bold text-sm">
-              {isApprove
-                ? 'Bạn sắp chấp thuận yêu cầu điều chỉnh này.'
-                : 'Bạn sắp từ chối yêu cầu điều chỉnh này.'}
-            </p>
+            <p className="font-bold text-sm">Xem trước thông tin điều chỉnh khiếu nại</p>
             <p className="mt-0.5 opacity-90">
-              Vui lòng kiểm tra kỹ các thông tin thay đổi thời gian quẹt thẻ trước khi xác nhận.
+              Vui lòng kiểm tra dữ liệu cũ và mới trước khi bấm <strong>Chấp thuận</strong> hoặc <strong>Từ chối</strong>.
             </p>
           </div>
         </div>
@@ -174,7 +154,7 @@ export default function ReviewAdjustmentModal({
         <div>
           <Textarea
             label="Ghi chú xét duyệt (tuỳ chọn)"
-            placeholder={isApprove ? 'Nhập ghi chú chấp thuận...' : 'Nhập lý do từ chối...'}
+            placeholder="Nhập ghi chú xét duyệt (nếu có)..."
             value={reviewNote}
             onChange={(e) => setReviewNote(e.target.value)}
             rows={2}
