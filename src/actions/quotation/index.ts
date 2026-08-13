@@ -1,6 +1,6 @@
 import api from '@/utils/api';
 import type { BaseResponseWithPagination } from '@/components';
-import type { Quotation, QuotationCreate, QuotationQueryParams, QuotationUpdate } from '@/types';
+import type { Quotation, QuotationCreate, QuotationQueryParams, QuotationUpdate, QuotationDetail } from '@/types';
 
 export const getQuotations = async (
   params?: QuotationQueryParams,
@@ -23,7 +23,7 @@ export const getQuotations = async (
   }
 };
 
-export const getQuotation = async (id: number): Promise<Quotation> => {
+export const getQuotation = async (id: number): Promise<QuotationDetail> => {
   try {
     const response = await api.get(`/api/v1/quotations/${id}`);
     return response.data;
@@ -59,6 +59,16 @@ export const deleteQuotation = async (id: number): Promise<Quotation> => {
     return response.data;
   } catch (error: unknown) {
     console.warn('API error deleteQuotation', error);
+    throw error;
+  }
+};
+
+export const getQuotationPreview = async (data: QuotationUpdate): Promise<QuotationDetail> => {
+  try {
+    const response = await api.post('/api/v1/quotations/preview', data);
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error getQuotationPreview', error);
     throw error;
   }
 };

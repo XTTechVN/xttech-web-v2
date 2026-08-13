@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, CalendarCheck, Clock, FileText, ShieldCheck, ListChecks, User } from 'lucide-react';
+import { Layout, CalendarCheck, Clock, FileText, ShieldCheck, ListChecks, User, Settings } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
 export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician';
@@ -15,7 +15,8 @@ export const acceptedSections = [
   'doors',
   'accessories',
   'materials',
-  'quotations'
+  'quotations',
+  'extra-options'
 ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
@@ -144,9 +145,16 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
       },
       {
         id: 'materials',
-        label: 'Vật tư',
+        label: 'Hệ nhôm',
         icon: React.createElement(ListChecks, { size: 18 }),
         href: '/app/materials',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'extra-options',
+        label: 'Tùy chọn phát sinh',
+        icon: React.createElement(Settings, { size: 18 }),
+        href: '/app/extra-options',
         roles: ['admin', 'sale'],
       },
       {

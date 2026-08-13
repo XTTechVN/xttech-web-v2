@@ -30,3 +30,6 @@ export * from './quotation';
 
 // Material
 export * from './material';
+
+// Extra Option
+export * from './extra-option';

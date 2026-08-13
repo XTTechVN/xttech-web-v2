@@ -1,6 +1,6 @@
 import api from '@/utils/api';
 import type { BaseResponseWithPagination } from '@/components';
-import type { Project, ProjectCreate, ProjectDetail, ProjectQueryParams, ProjectUpdate } from '@/types';
+import type { Project, ProjectCreate, ProjectDetail, ProjectQueryParams, ProjectUpdate, QuotationQueryParams, Quotation } from '@/types';
 
 export const getProjects = async (params?: ProjectQueryParams): Promise<BaseResponseWithPagination<Project>> => {
   try {
@@ -17,6 +17,25 @@ export const getProjects = async (params?: ProjectQueryParams): Promise<BaseResp
     };
   } catch (error: unknown) {
     console.warn('API error getProjects', error);
+    throw error;
+  }
+};
+
+export const getProjectQuotations = async (projectId: number, params?: QuotationQueryParams): Promise<BaseResponseWithPagination<Quotation>> => {
+  try {
+    const response = await api.get(`/api/v1/projects/${projectId}/quotations`, { params });
+    const { items, meta } = response.data;
+    return {
+      items: items || [],
+      meta: {
+        total: meta?.total ?? 0,
+        offset: meta?.offset ?? 0,
+        limit: meta?.limit ?? 10,
+        next: meta?.next ?? false,
+      },
+    };
+  } catch (error: unknown) {
+    console.warn('API error getProjectQuotations', error);
     throw error;
   }
 };
