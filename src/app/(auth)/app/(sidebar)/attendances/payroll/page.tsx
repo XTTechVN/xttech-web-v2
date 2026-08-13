@@ -454,7 +454,7 @@ export default function PayrollDataPage() {
     {
       key: 'note',
       label: 'Ghi chú',
-      minWidth: '180px',
+      minWidth: '100px',
       cell: (row) => row.note || '-',
     },
     {

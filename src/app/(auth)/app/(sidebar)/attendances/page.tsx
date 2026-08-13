@@ -340,7 +340,7 @@ export default function AttendancesPage() {
   // Cấu hình filters truyền vào TableData
   const tableFilters: ITableFilterProps[] = [
     {
-      label: 'Nhân viên',
+      label: 'Nhân sự',
       value: filterEmployeeId,
       options: employeeOptions,
       onChange: (val: string | undefined) => {
@@ -607,7 +607,7 @@ export default function AttendancesPage() {
     },
     {
       key: 'employee',
-      label: 'Nhân viên',
+      label: 'Nhân sự',
       minWidth: '180px',
       cell: (row) => (
         <div>
@@ -657,7 +657,7 @@ export default function AttendancesPage() {
     {
       key: 'note',
       label: 'Ghi chú',
-      minWidth: '220px',
+      minWidth: '100px',
       cell: (row) => (
         <span className="text-xs">{row.note || '-'}</span>
       ),

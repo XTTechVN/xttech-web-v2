@@ -208,18 +208,6 @@ export default function AdjustmentsSidebarPage() {
   }, []);
 
   const tableFilters: ITableFilterProps[] = [
-    {
-      label: 'Trạng thái',
-      value: filterStatus,
-      options: statusOptions,
-      onChange: (val: string | undefined) => setFilterStatus(val as AdjustmentStatus | undefined),
-    },
-    {
-      label: 'Loại khiếu nại',
-      value: filterType,
-      options: typeOptions,
-      onChange: (val: string | undefined) => setFilterType(val as RequestType | undefined),
-    },
     ...(isAdmin
       ? [
         {
@@ -231,6 +219,13 @@ export default function AdjustmentsSidebarPage() {
       ]
       : []),
     {
+      label: 'Loại khiếu nại',
+      value: filterType,
+      options: typeOptions,
+      onChange: (val: string | undefined) => setFilterType(val as RequestType | undefined),
+    },
+
+    {
       label: 'Từ ngày',
       value: filterStartDate,
       options: dateOptions,
@@ -241,6 +236,12 @@ export default function AdjustmentsSidebarPage() {
       value: filterEndDate,
       options: dateOptions,
       onChange: (val: string | undefined) => setFilterEndDate(val),
+    },
+    {
+      label: 'Trạng thái',
+      value: filterStatus,
+      options: statusOptions,
+      onChange: (val: string | undefined) => setFilterStatus(val as AdjustmentStatus | undefined),
     },
   ];
 
@@ -547,7 +548,7 @@ export default function AdjustmentsSidebarPage() {
     {
       key: 'reason',
       label: 'Lý do khiếu nại',
-      minWidth: '220px',
+      minWidth: '155px',
       cell: (row) => (
         <span className="text-xs text-slate-600 line-clamp-2 max-w-[220px] block italic" title={row.reason}>
           &quot;{row.reason}&quot;
