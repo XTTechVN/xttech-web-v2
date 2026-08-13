@@ -63,8 +63,10 @@ export default function AdjustmentsSidebarPage() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
 
-  const isAdmin = useMemo(
-    () => Boolean(currentUser?.roles?.some((r) => r.code?.toLowerCase() === 'admin' || r.name?.toLowerCase() === 'admin')),
+  const isAdmin = useMemo(() =>
+    Boolean(currentUser?.roles?.some((r) =>
+      r.code?.toLowerCase() === 'admin' || r.name?.toLowerCase() === 'admin' || r.code?.toLowerCase() === 'super')
+    ),
     [currentUser]
   );
 

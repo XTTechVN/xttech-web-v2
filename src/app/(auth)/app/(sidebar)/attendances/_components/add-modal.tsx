@@ -34,7 +34,7 @@ export default function AddAttendanceModal({
         earlyLeaveMinutes: 0,
         imgCheckinPath: "",
         imgCheckoutPath: "",
-        status: "present",
+        status: "normal",
         note: "",
     });
 
@@ -83,7 +83,7 @@ export default function AddAttendanceModal({
                 earlyLeaveMinutes: 0,
                 imgCheckinPath: "",
                 imgCheckoutPath: "",
-                status: "present",
+                status: "normal",
                 note: "",
             });
         },
@@ -102,7 +102,7 @@ export default function AddAttendanceModal({
         })) ?? [];
 
     const statusOptions = [
-        { value: "present", label: "Có mặt" },
+        { value: "normal", label: "Đúng giờ" },
         { value: "late", label: "Đi muộn" },
         { value: "early_leave", label: "Về sớm" },
         { value: "half_day", label: "Nửa ngày" },

@@ -13,6 +13,7 @@ import {
   TableData,
   ITableColumn,
   BaseResponseWithPagination,
+  Tooltip,
 } from '@/components';
 import { toast } from 'react-hot-toast';
 import {
@@ -30,6 +31,7 @@ import {
   Users,
   Briefcase,
   BookOpen,
+  Eye,
 } from 'lucide-react';
 import Link from 'next/link';
 import PayrollTransferHistoryModal from './_components/payroll-history-modal';
@@ -44,12 +46,14 @@ import { useQuery } from '@tanstack/react-query';
 import { getAttendances } from '@/actions';
 import { Attendance } from '@/types';
 import StatCart from '../../dashboard/_components/stats-card';
+import AddAdjustmentModal from '../_components/adjustment/add-modal';
+import queryClient from '@/utils/query';
+import AttendanceDetailModal from '../_components/attendance-modal';
 
 const statusVariantMap: Record<
   string,
   'success' | 'warning' | 'danger'
 > = {
-  present: 'success',
   normal: 'success',
   late: 'warning',
   absent: 'danger',
@@ -63,8 +67,7 @@ const getStatusVariant = (status?: string | null) => {
 };
 const getStatusBadge = (status?: string | null) => {
   const statusTextMap: Record<string, string> = {
-    present: 'Có mặt',
-    normal: 'Bình thường',
+    normal: 'Đúng giờ',
     late: 'Đi muộn',
     absent: 'Vắng mặt',
     half_day: 'Nghỉ nửa ngày',
@@ -192,6 +195,9 @@ export default function PayrollDataPage() {
   const [activeTab, setActiveTab] = useState('history');
   const [showTransferHistoryModal, setShowTransferHistoryModal] = useState(false);
   const [showTimekeepingModal, setShowTimekeepingModal] = useState(false);
+  const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<Attendance | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   // Tab 1: Lịch sử chấm công
 
@@ -363,6 +369,42 @@ export default function PayrollDataPage() {
       minWidth: '180px',
       cell: (row) => row.note || '-',
     },
+    {
+      key: 'actions',
+      label: 'Hành động',
+      minWidth: '120px',
+      cell: (row) => (
+        <div className="flex items-center">
+          <Tooltip content="Khiếu nại" position='top'>
+            <button
+              type='button'
+              className='flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition'
+              onClick={() => {
+                setSelectedRow(row);
+                setShowAdjustmentModal(true);
+              }}
+            >
+              <FileEdit size={15} />
+            </button>
+          </Tooltip>
+
+          <Tooltip content="Chi tiết chấm công" position="top">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedRow(row);
+                setShowDetailModal(true);
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition"
+            >
+              <Eye size={15} />
+            </button>
+          </Tooltip>
+
+
+        </div>
+      ),
+    },
   ];
 
   const renderAttendanceCard = (row: Attendance, index: number) => (
@@ -447,8 +489,8 @@ export default function PayrollDataPage() {
       trendDirection: getTotalOvertime() > 0 ? 1 : -1,
     },
     {
-      title: "Tổng thời gian đi muộn/về sớm",
-      value: `${getLatePolicy()} phút`,
+      title: "Tổng số lần đi muộn/về sớm",
+      value: `${getLatePolicy()}`,
       icon: <AlertCircle />,
       trend: getLatePolicy(),
       trendDirection: getLatePolicy() > 0 ? 1 : -1,
@@ -745,6 +787,24 @@ export default function PayrollDataPage() {
           </div>
         )} */}
       </div>
+
+      <AddAdjustmentModal
+        open={showAdjustmentModal}
+        onClose={() => setShowAdjustmentModal(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({
+            queryKey: ['attendances']
+          });
+          toast.success('Thêm thành công');
+        }}
+        data={selectedRow}
+      />
+
+      <AttendanceDetailModal
+        open={showDetailModal}
+        data={selectedRow}
+        onClose={() => setShowDetailModal(false)}
+      />
 
       {/* Modals */}
       <PayrollTransferHistoryModal

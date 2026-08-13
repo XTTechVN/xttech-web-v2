@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Modal, Button, Select, Input, Textarea } from "@/components";
 import toast from "react-hot-toast";
 import { createAdjustmentRequest, getUsers } from "@/actions";
@@ -12,27 +12,34 @@ import type {
 } from "@/types";
 import { useAttendances, useAuthStore } from "@/stores";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  data?: Attendance | null;
 }
 
 export default function AddAdjustmentModal({
   open,
   onClose,
   onSuccess,
+  data,
 }: Props) {
   const currentUser = useAuthStore((state) => state.user);
   const isAdmin = useMemo(
-    () => currentUser?.roles?.some((r) => r.code?.toLowerCase() === "admin" || r.name?.toLowerCase() === "admin"),
+    () =>
+      currentUser?.roles?.some(
+        (r) =>
+          r.code?.toLowerCase() === "admin" ||
+          r.name?.toLowerCase() === "admin" ||
+          r.code?.toLowerCase() === "super"
+      ),
     [currentUser]
   );
 
   const [form, setForm] = useState<AdjustmentForm>({
-    userId: currentUser && !isAdmin ? currentUser.id : "",
+    userId: "",
     attendanceId: "",
     requestType: "check_in",
     workDate: "",
@@ -43,405 +50,260 @@ export default function AddAdjustmentModal({
     reason: "",
   });
 
-  useEffect(() => {
-    if (open && currentUser && !isAdmin) {
-      setForm((prev) => ({ ...prev, userId: currentUser.id }));
-    }
-  }, [open, currentUser, isAdmin]);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // =========================================================
-  // USERS
-  // =========================================================
 
-  const {
-    data: usersList,
-    isLoading: isLoadingUsers,
-  } = useQuery({
+  // Convert time ISO/string -> HH:mm
+  const formatTime = (value?: string | null): string => {
+    if (!value) return "";
+    if (value.includes("T")) {
+      return value.substring(11, 16);
+    }
+    return value.substring(0, 5);
+  };
+
+  useEffect(() => {
+    if (open) {
+      if (data) {
+        // Trường hợp 1: Có dữ liệu attendance truyền vào (từ bảng chấm công)
+        const uId =
+          data.userId ||
+          data.user?.id ||
+          (currentUser && !isAdmin ? currentUser.id : "");
+        const wDate = data.workDate ? String(data.workDate).slice(0, 10) : "";
+        setForm({
+          userId: uId,
+          attendanceId: data.id ? String(data.id) : "",
+          requestType: "check_in",
+          workDate: wDate,
+          oldCheckIn: formatTime(data.checkIn),
+          oldCheckOut: formatTime(data.checkOut),
+          requestedCheckIn: "",
+          requestedCheckOut: "",
+          reason: "",
+        });
+      } else {
+        // Trường hợp 2: Được render từ trang danh sách khiếu nại (không có data)
+        setForm({
+          userId: currentUser && !isAdmin ? currentUser.id : "",
+          attendanceId: "",
+          requestType: "forgot_attendance",
+          workDate: "",
+          oldCheckIn: "",
+          oldCheckOut: "",
+          requestedCheckIn: "",
+          requestedCheckOut: "",
+          reason: "",
+        });
+      }
+    }
+  }, [open, data, currentUser, isAdmin]);
+
+  // USERS LIST
+  const { data: usersList, isLoading: isLoadingUsers } = useQuery({
     queryKey: ["users-list"],
     queryFn: () => getUsers(),
   });
 
-  const employees = useMemo(
-    () => usersList?.items ?? [],
-    [usersList]
-  );
+  const employees = useMemo(() => usersList?.items ?? [], [usersList]);
 
-  // =========================================================
-  // ATTENDANCES
-  // =========================================================
+  const employeeOptions = useMemo(() => {
+    const list = [...employees];
+    if (data?.user && !list.some((u) => u.id === data.user?.id)) {
+      list.unshift(data.user);
+    }
+    return [
+      {
+        value: "",
+        label: "-- Chọn nhân viên --",
+      },
+      ...list.map((user) => ({
+        value: user?.id ?? "",
+        label: user?.fullName ?? user?.email ?? "Không tên",
+      })),
+    ];
+  }, [employees, data]);
 
-  const {
-    data: attendancesData,
-    isLoading: isLoadingAttendances,
-  } = useAttendances();
+  // ATTENDANCES LIST
+  const { data: attendancesData, isLoading: isLoadingAttendances } =
+    useAttendances();
 
   const attendances: Attendance[] = useMemo(
     () => attendancesData?.items ?? [],
     [attendancesData]
   );
 
-  // =========================================================
-  // HELPERS
-  // =========================================================
-
-  /**
-   * Convert:
-   *
-   * 18:00
-   * 18:00:00
-   * 2026-08-10T18:00:00
-   *
-   * thành:
-   *
-   * 18:00
-   */
-  const formatTime = (
-    value?: string | null
-  ): string => {
-    if (!value) {
-      return "";
-    }
-
-    if (value.includes("T")) {
-      return value.substring(11, 16);
-    }
-
-    return value.substring(0, 5);
-  };
-
-  /**
-   * Reset form
-   */
   const resetForm = () => {
-    setForm({
-      userId: "",
-      attendanceId: "",
-      requestType: "both",
-      workDate: "",
-      oldCheckIn: "",
-      oldCheckOut: "",
-      requestedCheckIn: "",
-      requestedCheckOut: "",
-      reason: "",
-    });
+    if (data) {
+      const uId =
+        data.userId ||
+        data.user?.id ||
+        (currentUser && !isAdmin ? currentUser.id : "");
+      const wDate = data.workDate ? String(data.workDate).slice(0, 10) : "";
+      setForm({
+        userId: uId,
+        attendanceId: data.id ? String(data.id) : "",
+        requestType: "check_in",
+        workDate: wDate,
+        oldCheckIn: formatTime(data.checkIn),
+        oldCheckOut: formatTime(data.checkOut),
+        requestedCheckIn: "",
+        requestedCheckOut: "",
+        reason: "",
+      });
+    } else {
+      setForm({
+        userId: currentUser && !isAdmin ? currentUser.id : "",
+        attendanceId: "",
+        requestType: "forgot_attendance",
+        workDate: "",
+        oldCheckIn: "",
+        oldCheckOut: "",
+        requestedCheckIn: "",
+        requestedCheckOut: "",
+        reason: "",
+      });
+    }
   };
 
-  /**
-   * Xử lý lỗi API
-   */
   const handleCreateError = (err: any) => {
-    console.error(
-      "Create adjustment error:",
-      err
-    );
-
+    console.error("Create adjustment error:", err);
     const responseData = err?.response?.data;
 
-    // FastAPI validation error
     if (Array.isArray(responseData?.detail)) {
       responseData.detail.forEach((item: any) => {
-        toast.error(
-          item?.msg ?? "Dữ liệu không hợp lệ"
-        );
+        toast.error(item?.msg ?? "Dữ liệu không hợp lệ");
       });
-
       return;
     }
 
-    // detail string
-    if (
-      typeof responseData?.detail === "string"
-    ) {
+    if (typeof responseData?.detail === "string") {
       toast.error(responseData.detail);
       return;
     }
 
-    // message
-    if (
-      typeof responseData?.message === "string"
-    ) {
+    if (typeof responseData?.message === "string") {
       toast.error(responseData.message);
       return;
     }
 
-    // Axios network/server error
     if (err?.response?.status) {
-      toast.error(
-        `Lỗi server(${err.response.status})`
-      );
-
+      toast.error(`Lỗi server (${err.response.status})`);
       return;
     }
 
     toast.error("Không thể tạo khiếu nại");
   };
 
-  // =========================================================
-  // REQUEST TYPE
-  // =========================================================
-
-  /**
-   * Quy ước:
-   *
-   * check_in
-   * -> Attendance đã tồn tại
-   * -> Điều chỉnh Check In
-   *
-   * check_out
-   * -> Attendance đã tồn tại
-   * -> Điều chỉnh Check Out
-   *
-   * both
-   * -> Quên chấm công hoàn toàn
-   * -> Không có Attendance
-   * -> Không gửi attendanceId
-   */
-
   const isMissingAttendance =
-    form.requestType === "both" || form.requestType === "forgot_attendance";
+    !data &&
+    (form.requestType === "forgot_attendance");
 
-  // =========================================================
-  // FIND ATTENDANCE
-  // =========================================================
-
-  /**
-   * Chỉ tìm attendance cho:
-   *
-   * check_in
-   * check_out
-   *
-   * Với both:
-   * -> Không tìm attendance
-   * -> Vì both = quên chấm công hoàn toàn
-   */
   const selectedAttendance = useMemo(() => {
-    if (
-      !form.userId ||
-      !form.workDate
-    ) {
+    if (data) {
+      return data;
+    }
+    if (!form.userId || !form.workDate || isMissingAttendance) {
       return undefined;
     }
+    return attendances.find((attendance) => {
+      const attendanceUserId = attendance.userId ?? attendance.user?.id;
+      const attendanceDate = attendance.workDate;
+      return (
+        String(attendanceUserId) === String(form.userId) &&
+        String(attendanceDate).slice(0, 10) === form.workDate
+      );
+    });
+  }, [data, attendances, form.userId, form.workDate, isMissingAttendance]);
 
-    if (isMissingAttendance) {
-      return undefined;
-    }
-
-    const result = attendances.find(
-      (attendance) => {
-        const attendanceUserId =
-          attendance.userId ??
-          attendance.user?.id;
-
-        const attendanceDate =
-          attendance.workDate;
-
-        return (
-          String(attendanceUserId) ===
-          String(form.userId) &&
-          String(attendanceDate).slice(0, 10) ===
-          form.workDate
-        );
-      }
-    );
-
-    console.log(
-      "SELECTED ATTENDANCE:",
-      result
-    );
-
-    return result;
-  }, [
-    attendances,
-    form.userId,
-    form.workDate,
-    form.requestType,
-    isMissingAttendance,
-  ]);
-
-  // =========================================================
-  // USER CHANGE
-  // =========================================================
-
-  const handleSelectUser = (
-    userId: string
-  ) => {
+  const handleSelectUser = (userId: string) => {
     setForm((prev) => ({
       ...prev,
-
       userId,
-
-      // Reset attendance mapping
       attendanceId: "",
-
-      // User đổi -> chọn ngày lại
       workDate: "",
-
       oldCheckIn: "",
       oldCheckOut: "",
-
       requestedCheckIn: "",
       requestedCheckOut: "",
     }));
   };
 
-  // =========================================================
-  // DATE CHANGE
-  // =========================================================
-
-  const handleSelectWorkDate = (
-    date: string
-  ) => {
-    /**
-     * BOTH = quên chấm công hoàn toàn
-     *
-     * Không tìm attendance.
-     */
-    if (form.requestType === "both") {
+  const handleSelectWorkDate = (date: string) => {
+    if (form.requestType === "forgot_attendance") {
       setForm((prev) => ({
         ...prev,
-
         workDate: date,
-
         attendanceId: "",
-
         oldCheckIn: "",
         oldCheckOut: "",
       }));
-
       return;
     }
 
-    /**
-     * CHECK_IN / CHECK_OUT
-     *
-     * Tìm attendance theo:
-     * userId + workDate
-     */
-    const attendance =
-      attendances.find(
-        (item) =>
-          String(item.userId) ===
-          String(form.userId) &&
-          String(item.workDate).slice(0, 10) ===
-          date
-      );
+    const attendance = attendances.find(
+      (item) =>
+        String(item.userId) === String(form.userId) &&
+        String(item.workDate).slice(0, 10) === date
+    );
 
     setForm((prev) => ({
       ...prev,
-
       workDate: date,
-
-      attendanceId:
-        attendance?.id != null
-          ? String(attendance.id)
-          : "",
-
-      oldCheckIn:
-        formatTime(
-          attendance?.checkIn
-        ),
-
-      oldCheckOut:
-        formatTime(
-          attendance?.checkOut
-        ),
+      attendanceId: attendance?.id != null ? String(attendance.id) : "",
+      oldCheckIn: formatTime(attendance?.checkIn),
+      oldCheckOut: formatTime(attendance?.checkOut),
     }));
   };
 
-  // =========================================================
-  // REQUEST TYPE CHANGE
-  // =========================================================
-
-  const handleChangeRequestType = (
-    requestType: RequestType
-  ) => {
-    /**
-     * BOTH
-     *
-     * = Quên chấm công hoàn toàn
-     *
-     * Không có attendanceId
-     * Không có oldCheckIn
-     * Không có oldCheckOut
-     */
-    if (requestType === "both") {
+  const handleChangeRequestType = (requestType: RequestType) => {
+    if (data) {
       setForm((prev) => ({
         ...prev,
-
         requestType,
-
-        attendanceId: "",
-
-        oldCheckIn: "",
-        oldCheckOut: "",
+        attendanceId: data.id ? String(data.id) : "",
+        oldCheckIn: formatTime(data.checkIn),
+        oldCheckOut: formatTime(data.checkOut),
+        requestedCheckIn: "",
+        requestedCheckOut: "",
       }));
-
       return;
     }
 
-    /**
-     * CHECK_IN / CHECK_OUT
-     *
-     * Tìm lại attendance nếu:
-     * user + date đã được chọn.
-     */
-    let attendance:
-      | Attendance
-      | undefined;
+    if (requestType === "forgot_attendance") {
+      setForm((prev) => ({
+        ...prev,
+        requestType,
+        attendanceId: "",
+        oldCheckIn: "",
+        oldCheckOut: "",
+        requestedCheckIn: "",
+        requestedCheckOut: "",
+      }));
+      return;
+    }
 
-    if (
-      form.userId &&
-      form.workDate
-    ) {
-      attendance =
-        attendances.find(
-          (item) =>
-            String(item.userId) ===
-            String(form.userId) &&
-            String(item.workDate).slice(0, 10) ===
-            form.workDate
-        );
+    let attendance: Attendance | undefined;
+    if (form.userId && form.workDate) {
+      attendance = attendances.find(
+        (item) =>
+          String(item.userId) === String(form.userId) &&
+          String(item.workDate).slice(0, 10) === form.workDate
+      );
     }
 
     setForm((prev) => ({
       ...prev,
-
       requestType,
-
-      attendanceId:
-        attendance?.id != null
-          ? String(attendance.id)
-          : "",
-
-      oldCheckIn:
-        attendance
-          ? formatTime(
-            attendance.checkIn
-          )
-          : "",
-
-      oldCheckOut:
-        attendance
-          ? formatTime(
-            attendance.checkOut
-          )
-          : "",
-
-      // Reset requested time khi đổi loại
+      attendanceId: attendance?.id != null ? String(attendance.id) : "",
+      oldCheckIn: attendance ? formatTime(attendance.checkIn) : "",
+      oldCheckOut: attendance ? formatTime(attendance.checkOut) : "",
       requestedCheckIn: "",
       requestedCheckOut: "",
     }));
   };
 
-  // =========================================================
-  // UPDATE FIELD
-  // =========================================================
-
-  const updateField = <
-    K extends keyof AdjustmentForm
-  >(
+  const updateField = <K extends keyof AdjustmentForm>(
     field: K,
     value: AdjustmentForm[K]
   ) => {
@@ -451,122 +313,47 @@ export default function AddAdjustmentModal({
     }));
   };
 
-  // =========================================================
-  // SUBMIT
-  // =========================================================
-
   const handleSubmit = async () => {
-    // -------------------------------------------------------
-    // BASIC VALIDATION
-    // -------------------------------------------------------
-
     if (!form.userId) {
-      toast.error(
-        "Vui lòng chọn nhân viên"
-      );
+      toast.error("Vui lòng chọn nhân viên");
       return;
     }
 
     if (!form.workDate) {
-      toast.error(
-        "Vui lòng chọn ngày làm việc"
-      );
+      toast.error("Vui lòng chọn ngày làm việc");
       return;
     }
 
     if (!form.reason.trim()) {
-      toast.error(
-        "Vui lòng nhập lý do"
-      );
+      toast.error("Vui lòng nhập lý do");
       return;
     }
 
-    // =======================================================
-    // CASE 1
-    // BOTH = QUÊN CHẤM CÔNG HOÀN TOÀN
-    // =======================================================
-
-    if (
-      form.requestType === "both" || form.requestType === "forgot_attendance"
-    ) {
-      /**
-       * Không có attendance.
-       *
-       * Không gửi attendanceId.
-       *
-       * requestedCheckIn / requestedCheckOut
-       * là thời gian chấm công mới.
-       */
-
-      if (
-        !form.requestedCheckIn &&
-        !form.requestedCheckOut
-      ) {
-        toast.error(
-          "Vui lòng nhập Check In hoặc Check Out yêu cầu"
-        );
-
+    // TH 2: Render từ trang danh sách khiếu nại (Quên chấm công)
+    if (!data && (form.requestType === "forgot_attendance")) {
+      if (!form.requestedCheckIn && !form.requestedCheckOut) {
+        toast.error("Vui lòng nhập Check In hoặc Check Out yêu cầu");
         return;
       }
 
-      const payload: AttendanceAdjustmentRequestCreate =
-      {
+      const payload: AttendanceAdjustmentRequestCreate = {
         attendanceId: undefined,
-
-        userId:
-          form.userId,
-
-        requestType:
-          form.requestType,
-
-        workDate:
-          form.workDate,
-
-        oldCheckIn:
-          undefined,
-
-        oldCheckOut:
-          undefined,
-
-        requestedCheckIn:
-          form.requestedCheckIn ||
-          undefined,
-
-        requestedCheckOut:
-          form.requestedCheckOut ||
-          undefined,
-
-        reason:
-          form.reason.trim(),
-
-        status:
-          "pending",
+        userId: form.userId,
+        requestType: form.requestType,
+        workDate: form.workDate,
+        oldCheckIn: undefined,
+        oldCheckOut: undefined,
+        requestedCheckIn: form.requestedCheckIn || undefined,
+        requestedCheckOut: form.requestedCheckOut || undefined,
+        reason: form.reason.trim(),
+        status: "pending",
       };
 
-      console.log(
-        "CREATE MISSING ATTENDANCE REQUEST:",
-        payload
-      );
-
       setIsSubmitting(true);
-
       try {
-        const res =
-          await createAdjustmentRequest(
-            payload
-          );
-
-        console.log(
-          "CREATE MISSING RESPONSE:",
-          res
-        );
-
-        toast.success(
-          "Tạo khiếu nại thành công"
-        );
-
+        await createAdjustmentRequest(payload);
+        toast.success("Tạo khiếu nại thành công");
         resetForm();
-
         onSuccess?.();
         onClose();
       } catch (err: any) {
@@ -574,190 +361,63 @@ export default function AddAdjustmentModal({
       } finally {
         setIsSubmitting(false);
       }
-
       return;
     }
 
-    // =======================================================
-    // CASE 2
-    // CHECK_IN / CHECK_OUT
-    // ATTENDANCE ĐÃ TỒN TẠI
-    // =======================================================
-
-    if (!selectedAttendance) {
-      toast.error(
-        "Không tìm thấy dữ liệu chấm công trong ngày này"
-      );
-
+    // TH 1: Khi có dữ liệu attendance truyền vào (Quên checkin hoặc Quên checkout)
+    const targetAttendance = data;
+    if (!targetAttendance) {
+      toast.error("Không tìm thấy dữ liệu chấm công trong ngày này");
       return;
     }
 
-    if (
-      selectedAttendance.id == null
-    ) {
-      toast.error(
-        "Không xác định được mã chấm công"
-      );
-
+    if (form.requestType === "check_in" && !form.requestedCheckIn) {
+      toast.error("Vui lòng nhập Check In yêu cầu");
       return;
     }
 
-    // -------------------------------------------------------
-    // CHECK IN
-    // -------------------------------------------------------
-
-    if (
-      form.requestType ===
-      "check_in"
-    ) {
-      if (
-        !form.requestedCheckIn
-      ) {
-        toast.error(
-          "Vui lòng nhập Check In yêu cầu"
-        );
-
-        return;
-      }
+    if (form.requestType === "check_out" && !form.requestedCheckOut) {
+      toast.error("Vui lòng nhập Check Out yêu cầu");
+      return;
     }
 
-    // -------------------------------------------------------
-    // CHECK OUT
-    // -------------------------------------------------------
-
-    if (
-      form.requestType ===
-      "check_out"
-    ) {
-      if (
-        !form.requestedCheckOut
-      ) {
-        toast.error(
-          "Vui lòng nhập Check Out yêu cầu"
-        );
-
-        return;
-      }
-    }
-
-    // -------------------------------------------------------
-    // PAYLOAD
-    // -------------------------------------------------------
-
-    const payload: AttendanceAdjustmentRequestCreate =
-    {
-      /**
-       * Attendance đã tồn tại
-       *
-       * -> bắt buộc gửi ID
-       */
-      attendanceId:
-        Number(
-          selectedAttendance.id
-        ),
-
-      userId:
-        form.userId,
-
-      requestType:
-        form.requestType,
-
-      workDate:
-        form.workDate,
-
-      oldCheckIn:
-        form.oldCheckIn ||
-        undefined,
-
-      oldCheckOut:
-        form.oldCheckOut ||
-        undefined,
-
+    const payload: AttendanceAdjustmentRequestCreate = {
+      attendanceId: Number(targetAttendance.id),
+      userId: form.userId,
+      requestType: form.requestType,
+      workDate: form.workDate,
+      oldCheckIn: form.requestType === "check_in" ? form.oldCheckIn || undefined : undefined,
+      oldCheckOut: form.requestType === "check_out" ? form.oldCheckOut || undefined : undefined,
       requestedCheckIn:
-        form.requestType ===
-          "check_in"
-          ? form.requestedCheckIn ||
-          undefined
+        form.requestType === "check_in"
+          ? form.requestedCheckIn || undefined
           : undefined,
-
       requestedCheckOut:
-        form.requestType ===
-          "check_out"
-          ? form.requestedCheckOut ||
-          undefined
+        form.requestType === "check_out"
+          ? form.requestedCheckOut || undefined
           : undefined,
-
-      reason:
-        form.reason.trim(),
-
-      status:
-        "pending",
+      reason: form.reason.trim(),
+      status: "pending",
     };
 
-    console.log(
-      "CREATE ATTENDANCE ADJUSTMENT:",
-      payload
-    );
-
     setIsSubmitting(true);
-
     try {
-      const res =
-        await createAdjustmentRequest(
-          payload
-        );
-
-      console.log(
-        "CREATE ADJUSTMENT RESPONSE:",
-        res
-      );
-
-      toast.success(
-        "Tạo khiếu nại thành công"
-      );
-
+      const res = await createAdjustmentRequest(payload);
+      // console.log(res);
+      toast.success("Tạo khiếu nại thành công");
       resetForm();
-
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      handleCreateError(err);
+      // handleCreateError(err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // =========================================================
-  // UI CONDITIONS
-  // =========================================================
+  const showOldCheckIn = Boolean(data) && form.requestType === "check_in";
+  const showOldCheckOut = Boolean(data) && form.requestType === "check_out";
 
-  /**
-   * BOTH = quên chấm công hoàn toàn
-   */
-
-  /**
-   * Chỉ hiển thị Check In cũ
-   * khi requestType = check_in
-   */
-  const showOldCheckIn =
-    form.requestType ===
-    "check_in";
-
-  /**
-   * Chỉ hiển thị Check Out cũ
-   * khi requestType = check_out
-   */
-  const showOldCheckOut =
-    form.requestType ===
-    "check_out";
-
-  /**
-   * Check In yêu cầu:
-   *
-   * check_in -> Có
-   * check_out -> Không
-   * both -> Có
-   */
   const showRequestedCheckIn =
     form.requestType === "check_in" ||
     form.requestType === "both" ||
@@ -768,85 +428,41 @@ export default function AddAdjustmentModal({
     form.requestType === "both" ||
     form.requestType === "forgot_attendance";
 
-  // =========================================================
-  // OPTIONS
-  // =========================================================
-
-  const employeeOptions = [
-    {
-      value: "",
-      label:
-        "-- Chọn nhân viên --",
-    },
-
-    ...employees.map(
-      (user) => ({
-        value:
-          user?.id ?? "",
-
-        label:
-          user?.fullName ??
-          "Không tên",
-      })
-    ),
-  ];
-
-  /**
-   * RequestType:
-   *
-   * check_in
-   * check_out
-   * both = quên chấm công
-   */
-  const requestTypeOptions = [
-    {
-      value: "check_in",
-      label: "Điều chỉnh Check In",
-    },
-    {
-      value: "check_out",
-      label: "Điều chỉnh Check Out",
-    },
-    {
-      value: "forgot_attendance",
-      label: "Quên điểm danh",
-    },
-  ];
-
-  // =========================================================
-  // FOOTER
-  // =========================================================
+  // RequestType Options
+  // 1. Khi có data truyền vào: Chỉ hiển thị "Quên checkin" hoặc "Quên checkout"
+  // 2. Khi không có data (render từ trang danh sách khiếu nại): Chỉ hiển thị "Quên chấm công"
+  const requestTypeOptions = useMemo(() => {
+    if (data) {
+      return [
+        {
+          value: "check_in",
+          label: "Quên checkin",
+        },
+        {
+          value: "check_out",
+          label: "Quên checkout",
+        },
+      ];
+    }
+    return [
+      {
+        value: "forgot_attendance",
+        label: "Quên chấm công",
+      },
+    ];
+  }, [data]);
 
   const footer = (
     <div className="flex justify-end gap-3 w-full">
-      <Button
-        variant="outline"
-        onClick={onClose}
-        disabled={
-          isSubmitting
-        }
-      >
+      <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
         Hủy
       </Button>
 
-      <Button
-        onClick={
-          handleSubmit
-        }
-        disabled={
-          isSubmitting
-        }
-      >
-        {isSubmitting
-          ? "Đang lưu..."
-          : "Tạo khiếu nại"}
+      <Button onClick={handleSubmit} disabled={isSubmitting}>
+        {isSubmitting ? "Đang lưu..." : "Tạo khiếu nại"}
       </Button>
     </div>
   );
-
-  // =========================================================
-  // RENDER
-  // =========================================================
 
   return (
     <Modal
@@ -857,240 +473,122 @@ export default function AddAdjustmentModal({
       footer={footer}
     >
       <div className="space-y-4 py-2">
-
         <p className="text-xs text-slate-500 mb-2">
           Tạo yêu cầu điều chỉnh chấm công mới
         </p>
-
-        {/* =================================================
-            USER + DATE
-        ================================================= */}
-
+        {/* USER + DATE */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
           <Select
             label="Nhân viên *"
-            options={
-              employeeOptions
-            }
-            value={
-              form.userId
-            }
-            onChange={(
-              e
-            ) =>
-              handleSelectUser(
-                e.target.value
-              )
-            }
-            disabled={
-              isLoadingUsers || !isAdmin
-            }
+            options={employeeOptions}
+            value={form.userId}
+            onChange={(e) => handleSelectUser(e.target.value)}
+            disabled={Boolean(data) || isLoadingUsers || !isAdmin}
             fullWidth
           />
 
           <Input
             label="Ngày làm việc *"
-            value={
-              form.workDate
-            }
-            onChange={(
-              e
-            ) =>
-              handleSelectWorkDate(
-                e.target.value
-              )
-            }
+            value={form.workDate}
+            onChange={(e) => handleSelectWorkDate(e.target.value)}
+            disabled={Boolean(data)}
             fullWidth
             type="date"
           />
-
         </div>
 
-        {/* =================================================
-            REQUEST TYPE
-        ================================================= */}
-
+        {/* REQUEST TYPE */}
         <Select
           label="Loại khiếu nại *"
-          options={
-            requestTypeOptions
-          }
-          value={
-            form.requestType
-          }
-          onChange={(
-            e
-          ) =>
-            handleChangeRequestType(
-              e.target
-                .value as RequestType
-            )
+          options={requestTypeOptions}
+          value={form.requestType}
+          onChange={(e) =>
+            handleChangeRequestType(e.target.value as RequestType)
           }
           fullWidth
         />
 
-        {/* =================================================
-            ATTENDANCE STATUS
-        ================================================= */}
+        {/* ATTENDANCE STATUS INFO */}
+        {/* {form.userId && form.workDate && !isMissingAttendance && (
+          <div className="text-xs">
+            {isLoadingAttendances ? (
+              <p className="text-slate-500">
+                Đang tìm dữ liệu chấm công...
+              </p>
+            ) : selectedAttendance ? (
+              <p className="text-green-600">
+                Đã tìm thấy dữ liệu chấm công ngày {form.workDate}.
+              </p>
+            ) : (
+              <p className="text-red-500">
+                Không tìm thấy dữ liệu chấm công ngày {form.workDate}.
+              </p>
+            )}
+          </div>
+        )} */}
 
-        {form.userId &&
-          form.workDate &&
-          !isMissingAttendance && (
-            <div className="text-xs">
-
-              {isLoadingAttendances ? (
-                <p className="text-slate-500">
-                  Đang tìm dữ liệu chấm công...
-                </p>
-              ) : selectedAttendance ? (
-                <p className="text-green-600">
-                  Đã tìm thấy dữ liệu chấm công.
-                </p>
-              ) : (
-                <p className="text-red-500">
-                  Không có dữ liệu chấm công
-                  trong ngày này.
-                  Nếu nhân viên quên chấm công
-                  hoàn toàn, hãy chọn
-                  <strong>
-                    {" "}
-                    "Quên chấm công"
-                  </strong>
-                  .
-                </p>
-              )}
-
-            </div>
-          )}
-
-        {/* =================================================
-            OLD CHECK IN
-        ================================================= */}
-
+        {/* OLD CHECK IN */}
         {showOldCheckIn && (
           <Input
             label="Check In cũ"
             type="time"
-            value={
-              form.oldCheckIn
-            }
-            onChange={(
-              e
-            ) =>
-              updateField(
-                "oldCheckIn",
-                e.target.value
-              )
-            }
+            value={form.oldCheckIn}
+            onChange={(e) => updateField("oldCheckIn", e.target.value)}
+            disabled
             fullWidth
           />
         )}
 
-        {/* =================================================
-            OLD CHECK OUT
-        ================================================= */}
-
+        {/* OLD CHECK OUT */}
         {showOldCheckOut && (
           <Input
             label="Check Out cũ"
             type="time"
-            value={
-              form.oldCheckOut
-            }
-            onChange={(
-              e
-            ) =>
-              updateField(
-                "oldCheckOut",
-                e.target.value
-              )
-            }
+            value={form.oldCheckOut}
+            onChange={(e) => updateField("oldCheckOut", e.target.value)}
+            disabled
             fullWidth
           />
         )}
 
-        {/* =================================================
-            REQUESTED CHECK IN
-        ================================================= */}
-
+        {/* REQUESTED CHECK IN */}
         {showRequestedCheckIn && (
           <Input
-            label="Check In yêu cầu *"
+            label={data ? "Check In yêu cầu *" : "Check In yêu cầu"}
             type="time"
-            value={
-              form.requestedCheckIn
-            }
-            onChange={(
-              e
-            ) =>
-              updateField(
-                "requestedCheckIn",
-                e.target.value
-              )
-            }
+            value={form.requestedCheckIn}
+            onChange={(e) => updateField("requestedCheckIn", e.target.value)}
             fullWidth
           />
         )}
 
-        {/* =================================================
-            REQUESTED CHECK OUT
-        ================================================= */}
-
+        {/* REQUESTED CHECK OUT */}
         {showRequestedCheckOut && (
           <Input
-            label="Check Out yêu cầu *"
+            label={data ? "Check Out yêu cầu *" : "Check Out yêu cầu"}
             type="time"
-            value={
-              form.requestedCheckOut
-            }
-            onChange={(
-              e
-            ) =>
-              updateField(
-                "requestedCheckOut",
-                e.target.value
-              )
-            }
+            value={form.requestedCheckOut}
+            onChange={(e) => updateField("requestedCheckOut", e.target.value)}
             fullWidth
           />
         )}
 
-        {/* =================================================
-            REASON
-        ================================================= */}
-
+        {/* REASON */}
         <Textarea
           label="Lý do khiếu nại *"
           placeholder="Nhập lý do khiếu nại..."
-          value={
-            form.reason
-          }
-          onChange={(
-            e
-          ) =>
-            updateField(
-              "reason",
-              e.target.value
-            )
-          }
+          value={form.reason}
+          onChange={(e) => updateField("reason", e.target.value)}
           rows={3}
           fullWidth
         />
 
-        {/* =================================================
-            BOTH = MISSING ATTENDANCE INFO
-        ================================================= */}
-
+        {/* MISSING ATTENDANCE INFO BOX */}
         {isMissingAttendance && (
           <div className="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700">
-            Không tìm kiếm bản ghi chấm công.
-            Yêu cầu này được tạo mới và
-            không tham chiếu đến attendance
-            hiện có.
+            Tạo yêu cầu cho ngày quên chấm công. Vui lòng nhập thời gian Check In và/hoặc Check Out yêu cầu.
           </div>
         )}
-
       </div>
     </Modal>
   );

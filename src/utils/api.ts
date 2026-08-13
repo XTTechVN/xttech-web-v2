@@ -17,13 +17,6 @@ api.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
-
-    // Axios v1.x dùng AxiosHeaders instance — gọi .delete() để xóa Content-Type
-    // cho FormData, trình duyệt/Node sẽ tự thêm multipart/form-data + boundary đúng
-    if (config.data instanceof FormData) {
-      config.headers.delete('Content-Type');
-    }
-
     return config;
   },
   (error) => {

@@ -67,7 +67,6 @@ export interface UserResponse {
 
 
 export type AttendanceStatus =
-    | "present"
     | "late"
     | "early_leave"
     | "absent"

@@ -90,7 +90,6 @@ export const createAdjustmentRequest = async (
         `${baseVersion1}/attendance-request`,
         data
     );
-
     return res.data;
 };
 export const updateAdjustmentRequest = async (id: number, data: AttendanceAdjustmentRequestUpdate) => {

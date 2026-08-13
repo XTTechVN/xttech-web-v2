@@ -47,6 +47,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteAttendance, getAttendances, getDepartments, getUsers, getAdjustmentRequests, updateAdjustmentRequest } from '@/actions';
 import { Attendance, AttendanceAdjustmentRequest } from '@/types';
 import StatCart from '../dashboard/_components/stats-card';
+import AddAdjustmentModal from './_components/adjustment/add-modal';
 
 type FilterOption = {
   value: string | undefined;
@@ -126,6 +127,9 @@ export default function AttendancesPage() {
   const [selectedRow, setSelectedRow] = useState<Attendance | null>(null);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showTimekeepingModal, setShowTimekeepingModal] = useState(false);
+  const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+
+
   const pathname = usePathname();
   const isAdjustmentPage = pathname.includes('/attendances/adjustments');
 
@@ -244,8 +248,7 @@ export default function AttendancesPage() {
 
   const getStatusLabel = (status?: string | null) => {
     const map: Record<string, string> = {
-      present: "Có mặt",
-      normal: "Bình thường",
+      normal: "Đúng giờ",
       late: "Đi muộn",
       absent: "Vắng mặt",
       early_leave: "Về sớm",
@@ -635,7 +638,6 @@ export default function AttendancesPage() {
           string,
           'success' | 'warning' | 'danger'
         > = {
-          present: 'success',
           normal: 'success',
           late: 'warning',
           absent: 'danger',
@@ -662,6 +664,19 @@ export default function AttendancesPage() {
       minWidth: '120px',
       cell: (row) => (
         <div className="flex items-center">
+          <Tooltip content="Khiếu nại" position='top'>
+            <button
+              type='button'
+              className='flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition'
+              onClick={() => {
+                setSelectedRow(row);
+                setShowAdjustmentModal(true);
+              }}
+            >
+              <FileEdit size={15} />
+            </button>
+          </Tooltip>
+
           <Tooltip content="Chi tiết chấm công" position="top">
             <button
               type="button"
@@ -779,6 +794,12 @@ export default function AttendancesPage() {
           >
             Yêu cầu điều chỉnh
           </Button> */}
+
+          <Button
+            onClick={() => setShowAddModal(true)}
+          >
+            Thêm chấm công
+          </Button>
 
           {/* Preserved secondary action triggers */}
           <Link href="/app/attendances/adjustments">
@@ -1044,6 +1065,18 @@ export default function AttendancesPage() {
           </div>
         </div>
       </div>
+
+      <AddAdjustmentModal
+        open={showAdjustmentModal}
+        onClose={() => setShowAdjustmentModal(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({
+            queryKey: ['attendances']
+          });
+          toast.success('Thêm thành công');
+        }}
+        data={selectedRow}
+      />
 
       <AddAttendanceModal
         open={showAddModal}
