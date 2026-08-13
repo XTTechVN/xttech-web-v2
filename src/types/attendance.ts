@@ -71,7 +71,8 @@ export type AttendanceStatus =
     | "late"
     | "early_leave"
     | "absent"
-    | "half_day";
+    | "half_day"
+    | "normal";
 
 
 
@@ -175,6 +176,7 @@ export type AdjustmentStatus =
 export type RequestType =
     | "check_in"
     | "check_out"
+    | "forgot_attendance"
     | "both";
 
 export interface AdjustmentRequestQueryParams {

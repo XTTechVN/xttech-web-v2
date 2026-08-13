@@ -16,6 +16,7 @@ interface Props {
 const REQUEST_TYPE_LABEL: Record<string, string> = {
   check_in: 'Điều chỉnh Check In',
   check_out: 'Điều chỉnh Check Out',
+  forgot_attendance: 'Quên điểm danh',
   both: 'Điều chỉnh cả hai',
 };
 

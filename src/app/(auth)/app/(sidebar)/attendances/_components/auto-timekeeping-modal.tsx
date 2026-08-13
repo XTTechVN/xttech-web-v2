@@ -22,6 +22,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  hasCheckedIn?: boolean;
 }
 
 type Step = 'camera' | 'preview';
@@ -32,7 +33,7 @@ interface GpsCoords {
   accuracy: number;
 }
 
-export default function AutoTimekeepingModal({ open, onClose, onSuccess }: Props) {
+export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasCheckedIn = false }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -420,31 +421,34 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess }: Props
 
         {/* Nút Check-in / Check-out */}
         <div className="flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            id="btn-check-in"
-            onClick={() => handleSubmit('check_in')}
-            disabled={step !== 'preview' || !location || isSubmitting}
-            className="flex flex-1 items-center justify-center gap-2.5 rounded-xl bg-[#005c53] py-3 text-sm font-bold text-white shadow-md shadow-[#005c53]/20 hover:bg-[#004740] disabled:cursor-not-allowed disabled:opacity-50 transition"
-          >
-            {isSubmitting ? <Loader2 size={17} className="animate-spin" /> : <LogIn size={17} />}
-            Check-in
-          </button>
-          <button
-            type="button"
-            id="btn-check-out"
-            onClick={() => handleSubmit('check_out')}
-            disabled={step !== 'preview' || !location || isSubmitting}
-            className="flex flex-1 items-center justify-center gap-2.5 rounded-xl border-2 border-[#005c53] bg-white py-3 text-sm font-bold text-[#005c53] shadow-sm hover:bg-[#005c53]/5 disabled:cursor-not-allowed disabled:opacity-50 transition"
-          >
-            {isSubmitting ? <Loader2 size={17} className="animate-spin" /> : <LogOut size={17} />}
-            Check-out
-          </button>
+          {hasCheckedIn ? (
+            <button
+              type="button"
+              id="btn-check-out"
+              onClick={() => handleSubmit('check_out')}
+              disabled={step !== 'preview' || !location || isSubmitting}
+              className="flex flex-1 items-center justify-center gap-2.5 rounded-xl bg-[#005c53] py-3 text-sm font-bold text-white shadow-md shadow-[#005c53]/20 hover:bg-[#004740] disabled:cursor-not-allowed disabled:opacity-50 transition"
+            >
+              {isSubmitting ? <Loader2 size={17} className="animate-spin" /> : <LogOut size={17} />}
+              Check-out
+            </button>
+          ) : (
+            <button
+              type="button"
+              id="btn-check-in"
+              onClick={() => handleSubmit('check_in')}
+              disabled={step !== 'preview' || !location || isSubmitting}
+              className="flex flex-1 items-center justify-center gap-2.5 rounded-xl bg-[#005c53] py-3 text-sm font-bold text-white shadow-md shadow-[#005c53]/20 hover:bg-[#004740] disabled:cursor-not-allowed disabled:opacity-50 transition"
+            >
+              {isSubmitting ? <Loader2 size={17} className="animate-spin" /> : <LogIn size={17} />}
+              Check-in
+            </button>
+          )}
         </div>
 
         {step !== 'preview' && (
           <p className="text-center text-xs text-slate-400">
-            ⬆ Chụp ảnh trước để kích hoạt nút Check-in / Check-out
+            ⬆ Chụp ảnh trước để kích hoạt nút {hasCheckedIn ? 'Check-out' : 'Check-in'}
           </p>
         )}
       </div>

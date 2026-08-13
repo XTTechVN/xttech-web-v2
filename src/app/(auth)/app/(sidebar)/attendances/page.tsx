@@ -8,7 +8,8 @@ import {
   Badge,
   Breadcrumb,
   Heading,
-  ITableColumn
+  ITableColumn,
+  Avatar
 } from '@/components';
 import { toast } from 'react-hot-toast';
 import {
@@ -21,13 +22,18 @@ import {
   LogIn,
   Clock,
   FileEdit,
-  Users,
   UserX,
   Briefcase,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  Calendar,
+  UserCheck,
+  Users,
+  UserCircle,
+  AlertCircle,
+  UserCheck2
 } from 'lucide-react';
 import AddAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/add-modal";
 import EditAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/edit-modal";
@@ -40,6 +46,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteAttendance, getAttendances, getDepartments, getUsers, getAdjustmentRequests, updateAdjustmentRequest } from '@/actions';
 import { Attendance, AttendanceAdjustmentRequest } from '@/types';
+import StatCart from '../dashboard/_components/stats-card';
 
 type FilterOption = {
   value: string | undefined;
@@ -149,6 +156,10 @@ export default function AttendancesPage() {
     ).length;
   }, [attendances]);
 
+  useEffect(() => {
+    console.log(attendances);
+  }, [attendances]);
+
   const userList = users?.items ?? [];
   const totalUsersCount =
     userList.length || attendances.length || 150;
@@ -234,6 +245,7 @@ export default function AttendancesPage() {
   const getStatusLabel = (status?: string | null) => {
     const map: Record<string, string> = {
       present: "Có mặt",
+      normal: "Bình thường",
       late: "Đi muộn",
       absent: "Vắng mặt",
       early_leave: "Về sớm",
@@ -444,48 +456,104 @@ export default function AttendancesPage() {
 
   // Giao diện Card cho Mobile View
   const renderCard = (row: Attendance, index: number) => {
-    const variantMap = {
-      present: 'success' as const,
-      late: 'warning' as const,
-      absent: 'danger' as const,
+    const statusMap: Record<string, { label: string; variant: 'success' | 'warning' | 'danger' | 'info' }> = {
+      present: { label: 'Có mặt', variant: 'success' },
+      normal: { label: 'Bình thường', variant: 'success' },
+      late: { label: 'Đi muộn', variant: 'warning' },
+      absent: { label: 'Vắng mặt', variant: 'danger' },
+      early_leave: { label: 'Về sớm', variant: 'warning' },
+      half_day: { label: 'Nửa ngày', variant: 'warning' },
     };
 
-    const labelMap = {
-      present: 'Có mặt',
-      late: 'Đi muộn',
-      absent: 'Vắng mặt',
-    };
+    const statusInfo = statusMap[row.status ?? ''] ?? { label: row.status || 'Không xác định', variant: 'info' };
 
     return (
       <div
         key={row.id || index}
-        className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+        className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs hover:shadow-md transition space-y-3"
       >
-        <div className="flex items-center gap-3">
-          <img
-            src={row.user?.avatar || '/images/default-avatar.png'}
-            alt={row.user?.fullName || 'User'}
-            className="h-10 w-10 rounded-full object-cover"
-          />
-          <div>
-            <p className="font-semibold text-black">{row.user?.fullName}</p>
-            <p className="text-xs text-slate-500">{row.user?.email}</p>
+        {/* Header: User Avatar + Name + Status */}
+        <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <Avatar
+              src={row.user?.avatar || undefined}
+              name={row.user?.fullName || 'NV'}
+              size="md"
+            />
+            <div>
+              <p className="font-bold text-slate-900 text-sm">{row.user?.fullName || 'Nhân viên'}</p>
+              <p className="text-[11px] text-slate-400">{row.user?.email || '-'}</p>
+            </div>
+          </div>
+          <Badge variant={statusInfo.variant} pill>
+            {statusInfo.label}
+          </Badge>
+        </div>
+
+        {/* Date & Hours Badge */}
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-medium text-slate-500 flex items-center gap-1">
+            <Calendar size={13} className="text-slate-400" /> {row.workDate}
+          </span>
+          <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-full">
+            {row.totalHours ?? 0} giờ công
+          </span>
+        </div>
+
+        {/* Check In / Out Box */}
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-2.5 border border-slate-100 text-xs">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase">Check In</span>
+            <p className="font-semibold text-slate-800">{row.checkIn ? row.checkIn.slice(0, 5) : '--:--'}</p>
+            {row.isLate && (
+              <span className="text-[10px] text-amber-600 font-medium block">Muộn {row.lateMinutes ?? 0} phút</span>
+            )}
+          </div>
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase">Check Out</span>
+            <p className="font-semibold text-slate-800">{row.checkOut ? row.checkOut.slice(0, 5) : '--:--'}</p>
+            {row.isEarlyLeave && (
+              <span className="text-[10px] text-amber-600 font-medium block">Về sớm {row.earlyLeaveMinutes ?? 0} phút</span>
+            )}
           </div>
         </div>
 
-        <div className="mt-3 space-y-1 text-sm text-black">
-          <p><strong>Ngày:</strong> {row.workDate}</p>
-          <p><strong>Check In:</strong> {row.checkIn || '-'}</p>
-          <p><strong>Check Out:</strong> {row.checkOut || '-'}</p>
-          <p><strong>Tổng giờ:</strong> {row.totalHours ?? 0} giờ</p>
-        </div>
+        {/* Note if any */}
+        {row.note && (
+          <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 line-clamp-2">
+            Ghi chú: {row.note}
+          </p>
+        )}
 
-        <div className="mt-2 text-xs text-slate-500">{row.note || '-'}</div>
-
-        <div className="mt-3 flex justify-end">
-          <Badge variant={variantMap[row.status as keyof typeof variantMap] ?? 'danger'}>
-            {labelMap[row.status as keyof typeof labelMap] ?? 'Vắng mặt'}
-          </Badge>
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedRow(row);
+              setShowDetailModal(true);
+            }}
+            className="flex items-center gap-1 text-xs text-blue-600 font-semibold px-2 py-1 rounded-lg hover:bg-blue-50 transition"
+          >
+            <Eye size={13} /> Chi tiết
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedRow(row);
+              setShowEditModal(true);
+            }}
+            className="flex items-center gap-1 text-xs text-slate-600 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 transition"
+          >
+            <Pencil size={13} /> Sửa
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDelete(row)}
+            className="flex items-center gap-1 text-xs text-red-500 font-medium px-2 py-1 rounded-lg hover:bg-red-50 transition"
+          >
+            <Trash2 size={13} /> Xóa
+          </button>
         </div>
       </div>
     );
@@ -519,7 +587,7 @@ export default function AttendancesPage() {
       cell: (row) => (
         <div className="flex items-center gap-2">
           <img
-            src={row.imgCheckinPath || '/images/default-avatar.png'}
+            src={row.imgCheckinPath || 'https://picsum.photos/600/400'}
             alt={row.user?.fullName || 'User'}
             className="h-10 w-10 rounded-full object-cover"
           />
@@ -534,7 +602,7 @@ export default function AttendancesPage() {
       cell: (row) => (
         <div className="flex items-center gap-2">
           <img
-            src={row.imgCheckoutPath || '/images/default-avatar.png'}
+            src={row.imgCheckoutPath || 'https://picsum.photos/600/400'}
             alt={row.user?.fullName || 'User'}
             className="h-10 w-10 rounded-full object-cover"
           />
@@ -568,6 +636,7 @@ export default function AttendancesPage() {
           'success' | 'warning' | 'danger'
         > = {
           present: 'success',
+          normal: 'success',
           late: 'warning',
           absent: 'danger',
           half_day: 'warning',
@@ -640,6 +709,30 @@ export default function AttendancesPage() {
     toast.success('Đã xóa chấm công');
   };
 
+  const attendanceStats = [
+    {
+      title: "Tổng số có mặt",
+      value: presentCount,
+      icon: <Users />,
+      trend: presentCount,
+      trendDirection: "up" as const,
+    },
+    {
+      title: "Vắng mặt hôm nay",
+      value: todayAbsentCount,
+      icon: <UserCheck />,
+      trend: absentDiff,
+      trendDirection: "up" as const,
+    },
+    {
+      title: "Đi muộn / về sớm",
+      value: todayLateCount,
+      icon: <UserCheck2 />,
+      trend: lateDiff,
+      trendDirection: lateDiff >= 0 ? "up" : "down" as const,
+    },
+  ]
+
   if (isLoading) return <Loading />;
 
   return (
@@ -697,21 +790,21 @@ export default function AttendancesPage() {
               Danh sách khiếu nại
             </Button>
           </Link>
-          <Button
+          {/* <Button
             variant="outline"
             className="gap-1.5 text-xs py-2"
             onClick={() => setShowAddUserModal(true)}
           >
             <Plus size={14} />
             Thêm User
-          </Button>
+          </Button> */}
         </div>
       </div>
 
       {/* 4 Stat Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1: Tổng số có mặt */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
+        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-slate-600">Tổng số có mặt</span>
             <div className="rounded-lg bg-teal-50 p-2.5 text-teal-600">
@@ -730,10 +823,12 @@ export default function AttendancesPage() {
               {presentPercentage}% Nhân sự đang làm việc
             </div>
           </div>
-        </div>
-
+        </div> */}
+        {attendanceStats.map((stat, index) => (
+          <StatCart key={index} title={stat.title} value={String(stat.value)} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection as any} />
+        ))}
         {/* Card 2: Vắng mặt hôm nay */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
+        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-slate-600">Vắng mặt hôm nay</span>
             <div className="rounded-lg bg-red-50 p-2.5 text-red-500">
@@ -751,10 +846,10 @@ export default function AttendancesPage() {
               {absentDiff >= 0 ? `+${absentDiff}` : absentDiff} so với hôm qua
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Card 3: Đi muộn / Về sớm */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
+        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-slate-600">Đi muộn / Về sớm</span>
             <div className="rounded-lg bg-blue-50 p-2.5 text-blue-500">
@@ -772,7 +867,7 @@ export default function AttendancesPage() {
               {lateDiff >= 0 ? `+${lateDiff}` : lateDiff} so với hôm qua
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Card 4: Đi công tác */}
         {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">

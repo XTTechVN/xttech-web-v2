@@ -23,6 +23,7 @@ import {
   AlertCircle,
   RefreshCw,
   LogIn,
+  LogOut,
   FileEdit,
   Search,
   Filter,
@@ -42,12 +43,14 @@ import { useAuthStore } from '@/stores';
 import { useQuery } from '@tanstack/react-query';
 import { getAttendances } from '@/actions';
 import { Attendance } from '@/types';
+import StatCart from '../../dashboard/_components/stats-card';
 
 const statusVariantMap: Record<
   string,
   'success' | 'warning' | 'danger'
 > = {
   present: 'success',
+  normal: 'success',
   late: 'warning',
   absent: 'danger',
   half_day: 'warning',
@@ -61,6 +64,7 @@ const getStatusVariant = (status?: string | null) => {
 const getStatusBadge = (status?: string | null) => {
   const statusTextMap: Record<string, string> = {
     present: 'Có mặt',
+    normal: 'Bình thường',
     late: 'Đi muộn',
     absent: 'Vắng mặt',
     half_day: 'Nghỉ nửa ngày',
@@ -179,62 +183,6 @@ const renderReferenceCard = (row: PayrollRecord, index: number) => (
   </div>
 );
 
-// ─── Mock data ──────────────────────────────────────────────────────────────
-const mockPayrollData: PayrollRecord[] = [
-  {
-    id: '1',
-    code: 'NV-2015',
-    fullName: 'Trần Văn Phong',
-    department: 'Sản xuất Xưởng A',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
-    standardWorkdays: 26.0,
-    actualWorkdays: 26.0,
-    leaveDays: 0,
-    overtimeHours: 12.5,
-    penaltyMinutes: 0,
-    status: 'matched',
-  },
-  {
-    id: '2',
-    code: 'NV-3122',
-    fullName: 'Lê Thị Hoa',
-    department: 'Kiểm định chất lượng',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60',
-    standardWorkdays: 26.0,
-    actualWorkdays: 24.5,
-    leaveDays: 1.0,
-    overtimeHours: 0,
-    penaltyMinutes: 45,
-    status: 'needs_check',
-  },
-  {
-    id: '3',
-    code: 'NV-1089',
-    fullName: 'Nguyễn Văn Minh',
-    department: 'Kỹ thuật & Bảo trì',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60',
-    standardWorkdays: 26.0,
-    actualWorkdays: 26.0,
-    leaveDays: 0,
-    overtimeHours: 22.0,
-    penaltyMinutes: 10,
-    status: 'matched',
-  },
-  {
-    id: '4',
-    code: 'NV-4456',
-    fullName: 'Phạm Anh Tuấn',
-    department: 'Sản xuất Xưởng B',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60',
-    standardWorkdays: 26.0,
-    actualWorkdays: 25.0,
-    leaveDays: 1.0,
-    overtimeHours: 4.0,
-    penaltyMinutes: 0,
-    status: 'matched',
-  },
-];
-
 
 
 
@@ -263,6 +211,14 @@ export default function PayrollDataPage() {
   });
 
   const myAttendances = attendances?.items ?? [];
+
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const todayAttendance = useMemo(() => {
+    return myAttendances.find((a) => a.workDate === todayStr);
+  }, [myAttendances, todayStr]);
+  const hasCheckedInToday = useMemo(() => {
+    return Boolean(todayAttendance && (todayAttendance.checkIn || todayAttendance.status));
+  }, [todayAttendance]);
   // console.log(myAttendances);
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => ({
     items: myAttendances.slice(offset, offset + limit),
@@ -286,7 +242,7 @@ export default function PayrollDataPage() {
 
   const tabs = [
     { value: 'history', label: 'Lịch sử chấm công', icon: <History size={15} /> },
-    { value: 'reference', label: 'Dữ liệu tham khảo', icon: <BookOpen size={15} /> },
+    // { value: 'reference', label: 'Dữ liệu tham khảo', icon: <BookOpen size={15} /> },
   ];
 
   // const employeeOptions = mockPayrollData.map((e) => ({ value: e.id, label: `${e.fullName} (${e.code})` }));
@@ -409,72 +365,96 @@ export default function PayrollDataPage() {
     },
   ];
 
-  const renderAttendanceCard = (
-    row: Attendance,
-    index: number
-  ) => (
+  const renderAttendanceCard = (row: Attendance, index: number) => (
     <div
       key={row.id ?? index}
-      className="rounded-xl border border-slate-200 bg-white p-4 space-y-3"
+      className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs hover:shadow-md transition space-y-3"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
         <div>
-          <p className="font-semibold text-slate-900">
+          <p className="font-bold text-slate-900 text-sm">
             {formatWorkDate(row.workDate)}
           </p>
-
-          <p className="text-xs text-slate-500">
+          <p className="text-[11px] text-slate-400 font-medium">
             {getDayOfWeek(row.workDate)}
           </p>
         </div>
-
-        <Badge variant={getStatusVariant(row.status)}>
+        <Badge variant={getStatusVariant(row.status)} pill>
           {getStatusBadge(row.status)}
         </Badge>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 text-sm">
+      <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
         <div>
-          <p className="text-xs text-slate-500">Check In</p>
-          <p className="font-medium">
-            {row.checkIn || '-'}
-          </p>
+          <span className="text-[10px] font-bold text-slate-400 uppercase block">Check In</span>
+          <span className="font-semibold text-slate-800">{row.checkIn ? row.checkIn.slice(0, 5) : '--:--'}</span>
+          {(row.lateMinutes ?? 0) > 0 && (
+            <span className="text-[10px] text-amber-600 font-medium block">Muộn {row.lateMinutes}p</span>
+          )}
         </div>
-
         <div>
-          <p className="text-xs text-slate-500">Check Out</p>
-          <p className="font-medium">
-            {row.checkOut || '-'}
-          </p>
+          <span className="text-[10px] font-bold text-slate-400 uppercase block">Check Out</span>
+          <span className="font-semibold text-slate-800">{row.checkOut ? row.checkOut.slice(0, 5) : '--:--'}</span>
+          {(row.earlyLeaveMinutes ?? 0) > 0 && (
+            <span className="text-[10px] text-amber-600 font-medium block">Về sớm {row.earlyLeaveMinutes}p</span>
+          )}
         </div>
-
         <div>
-          <p className="text-xs text-slate-500">Giờ công</p>
-          <p className="font-medium">
-            {row.totalHours?.toFixed(1) ?? '-'} h
-          </p>
+          <span className="text-[10px] font-bold text-slate-400 uppercase block">Giờ công</span>
+          <span className="font-bold text-teal-700">{row.totalHours?.toFixed(1) ?? '0'}h</span>
         </div>
-
         <div>
-          <p className="text-xs text-slate-500">Đi muộn</p>
-          <p className="font-medium">
-            {(row.lateMinutes ?? 0) > 0
-              ? `${row.lateMinutes} phút`
-              : '-'}
-          </p>
+          <span className="text-[10px] font-bold text-slate-400 uppercase block">Tăng ca</span>
+          <span className="font-bold text-slate-700">0h</span>
         </div>
       </div>
 
       {row.note && (
-        <div className="border-t border-slate-100 pt-2">
-          <p className="text-xs text-slate-500">Ghi chú</p>
-          <p className="text-sm text-slate-700">
-            {row.note}
-          </p>
-        </div>
+        <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200">
+          Ghi chú: {row.note}
+        </p>
       )}
     </div>
   );
+
+  const payrollStats = [
+    {
+      title: "Tổng ngày công",
+      value: getTotalWorkingDay(),
+      icon: <Calendar />,
+      trend: getTotalWorkingDay(),
+      trendDirection: getTotalWorkingDay() > 0 ? 1 : -1,
+    },
+    {
+      title: "Tổng ngày phép",
+      value: getTotalLeaveDays(),
+      icon: <Briefcase />,
+      trend: getTotalLeaveDays(),
+      trendDirection: getTotalLeaveDays() > 0 ? 1 : -1,
+    },
+    {
+      title: "Ngày nghỉ",
+      value: getTotalAbsenceDays(),
+      icon: <Users />,
+      trend: getTotalAbsenceDays(),
+      trendDirection: getTotalAbsenceDays() > 0 ? 1 : -1,
+    },
+    {
+      title: "Tăng ca (OT)",
+      value: getTotalOvertime(),
+      icon: <Clock />,
+      trend: getTotalOvertime(),
+      trendDirection: getTotalOvertime() > 0 ? 1 : -1,
+    },
+    {
+      title: "Tổng thời gian đi muộn/về sớm",
+      value: `${getLatePolicy()} phút`,
+      icon: <AlertCircle />,
+      trend: getLatePolicy(),
+      trendDirection: getLatePolicy() > 0 ? 1 : -1,
+    },
+
+  ]
 
   return (
     <div className="flex h-full w-full flex-1 flex-col bg-slate-50 p-6 space-y-6 overflow-y-auto">
@@ -484,10 +464,10 @@ export default function PayrollDataPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Button
             className="gap-2 bg-[#005c53] hover:bg-[#004740] text-white font-semibold shadow-sm"
-            leftIcon={<LogIn size={16} />}
+            leftIcon={hasCheckedInToday ? <LogOut size={16} /> : <LogIn size={16} />}
             onClick={() => setShowTimekeepingModal(true)}
           >
-            Điểm danh ngay
+            {hasCheckedInToday ? 'Check-out ngay' : 'Check-in ngay'}
           </Button>
           <Button
             variant="secondary"
@@ -509,13 +489,13 @@ export default function PayrollDataPage() {
               Yêu cầu điều chỉnh
             </Button>
           </Link>
-          <Button
+          {/* <Button
             className="gap-2 bg-[#005c53] hover:bg-[#004740] text-white font-semibold shadow-sm"
             leftIcon={<FileSpreadsheet size={16} />}
             onClick={() => toast.success('Đã xuất file Excel dữ liệu công thành công!')}
           >
             Xuất Excel
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -531,7 +511,7 @@ export default function PayrollDataPage() {
 
       {/* 5 Summary Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {[
+        {/* {[
           { icon: <Calendar size={18} />, bg: 'bg-teal-50', color: 'text-[#005c53]', label: 'TỔNG NGÀY CÔNG', value: getTotalWorkingDay(), unit: 'ngày', badge: '', badgeColor: 'text-blue-600 bg-blue-50' },
           { icon: <Briefcase size={18} />, bg: 'bg-sky-50', color: 'text-sky-600', label: 'TỔNG NGÀY PHÉP', value: getTotalLeaveDays(), unit: 'ngày' },
           { icon: <Users size={18} />, bg: 'bg-indigo-50', color: 'text-indigo-600', label: 'NGÀY NGHỈ', value: getTotalAbsenceDays(), unit: 'ngày' },
@@ -554,6 +534,17 @@ export default function PayrollDataPage() {
               </div>
             </div>
           </div>
+        ))} */}
+
+        {payrollStats.map((stat, i) => (
+          <StatCart
+            key={i}
+            title={stat.title}
+            value={String(stat.value)}
+            icon={stat.icon}
+            trend={stat.trend}
+            trendDirection={stat.trendDirection as any}
+          />
         ))}
       </div>
 
@@ -598,8 +589,8 @@ export default function PayrollDataPage() {
         {activeTab === 'history' && (
           <div className="p-6 space-y-5">
             {/* Employee picker + metric cards */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
+            {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"> */}
+            {/* <div className="flex items-center gap-3">
                 <Avatar src={user?.avatar} name={user?.fullName} size="md" />
                 <div>
                   <p className="font-bold text-slate-900 text-sm leading-tight">{user?.fullName}</p>
@@ -607,15 +598,15 @@ export default function PayrollDataPage() {
                     {user?.positions?.map((item) => item.name).join(', ')}</p>
                   <p className="text-xs text-slate-500">{user?.roles?.[0]?.code}</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {/* <Select
+              </div> */}
+            {/* <div className="flex items-center gap-3"> */}
+            {/* <Select
                   value={selectedEmployeeId}
                   onChange={(e) => setSelectedEmployeeId(e.target.value)}
                   options={employeeOptions}
                   className="text-xs w-56"
                 /> */}
-                <Button
+            {/* <Button
                   variant="outline"
                   className="gap-1.5 text-xs border-slate-200"
                   leftIcon={<FileSpreadsheet size={14} />}
@@ -623,8 +614,8 @@ export default function PayrollDataPage() {
                 >
                   Xuất bảng công
                 </Button>
-              </div>
-            </div>
+              </div> */}
+            {/* </div> */}
 
             {/* 4 metric mini cards */}
             {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -692,9 +683,8 @@ export default function PayrollDataPage() {
         )}
 
         {/* ── Tab 2: Dữ liệu tham khảo ─────────────────────────── */}
-        {activeTab === 'reference' && (
+        {/* {activeTab === 'reference' && (
           <div className="p-6 space-y-4">
-            {/* Reference info banner */}
             <div className="flex items-start gap-3 rounded-xl bg-blue-50/70 border border-blue-200/60 px-4 py-3">
               <BookOpen size={18} className="text-blue-500 shrink-0 mt-0.5" />
               <div>
@@ -707,7 +697,6 @@ export default function PayrollDataPage() {
               </div>
             </div>
 
-            {/* Filter row */}
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-700">
                 <Calendar size={14} className="text-slate-500" />
@@ -730,7 +719,6 @@ export default function PayrollDataPage() {
               </Button>
             </div>
 
-            {/* Reference table */}
             <TableData<PayrollRecord>
               queryKey={['payroll-reference-data', deptFilter]}
               fetcher={async ({ offset, limit }) => {
@@ -755,7 +743,7 @@ export default function PayrollDataPage() {
               syncToUrl={false}
             />
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Modals */}
@@ -766,6 +754,7 @@ export default function PayrollDataPage() {
       <AutoTimekeepingModal
         open={showTimekeepingModal}
         onClose={() => setShowTimekeepingModal(false)}
+        hasCheckedIn={hasCheckedInToday}
       />
     </div >
   );

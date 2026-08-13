@@ -75,6 +75,7 @@ export default function EditAttendanceModal({
     const statusOptions = [
         { value: "absent", label: "Vắng mặt" },
         { value: "present", label: "Có mặt" },
+        { value: "normal", label: "Bình thường" },
         { value: "late", label: "Đi muộn" },
         { value: "leave", label: "Nghỉ phép" },
         { value: "early_leave", label: "Về sớm" },

@@ -18,6 +18,7 @@ export default function AttendanceDetailModal({
 
     const statusMap: Record<string, { label: string; variant: 'success' | 'warning' | 'danger' | 'info' }> = {
         present: { label: "Có mặt", variant: "success" },
+        normal: { label: "Bình thường", variant: "success" },
         late: { label: "Đi muộn", variant: "warning" },
         absent: { label: "Vắng mặt", variant: "danger" },
         early_leave: { label: "Về sớm", variant: "warning" },

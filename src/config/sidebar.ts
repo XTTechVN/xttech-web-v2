@@ -10,7 +10,7 @@ export const acceptedSections = [
   'attendances',
   // 'shifts',
   'leave-request',
-  'attendances-policy',
+  // 'attendances-policy',
   'attendances-payroll',
   'attendances-adjustments',
   'employees',
@@ -80,12 +80,12 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
             href: '/app/attendances',
             roles: ['super', 'admin', 'hr'],
           },
-          {
-            id: 'attendances-policy',
-            label: 'Chính sách chấm công',
-            href: '/app/attendances/policy',
-            roles: ['super', 'admin', 'hr'],
-          },
+          // {
+          //   id: 'attendances-policy',
+          //   label: 'Chính sách chấm công',
+          //   href: '/app/attendances/policy',
+          //   roles: ['super', 'admin', 'hr'],
+          // },
           // {
           //   id: 'shifts',
           //   label: 'Ca làm việc',

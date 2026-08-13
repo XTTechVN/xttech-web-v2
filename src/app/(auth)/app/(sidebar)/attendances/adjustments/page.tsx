@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Tooltip,
   Button,
@@ -24,18 +24,20 @@ import {
   CheckCircle,
   AlertCircle,
   Info,
-  TrendingUp,
-  Filter,
-  BarChart3,
+  Calendar,
+  User as UserIcon,
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AttendanceAdjustmentRequest, AdjustmentStatus, RequestType } from '@/types';
 import AddAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/add-modal';
 import EditAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/edit-modal';
 import AdjustmentDetailModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/detail-modal';
+import ReviewAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/review-modal';
 import DeleteAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/delete-modal';
-import { getAdjustmentRequests, updateAdjustmentRequest, deleteAdjustmentRequest } from '@/actions';
+import { getAdjustmentRequests, updateAdjustmentRequest, deleteAdjustmentRequest, getUsers } from '@/actions';
 import Loading from '@/app/(auth)/app/loading';
+import { useAuthStore } from '@/stores';
+import StatCart from '../../dashboard/_components/stats-card';
 
 // ===================== Types =====================
 interface AdjustmentRecord extends AttendanceAdjustmentRequest {
@@ -50,19 +52,22 @@ const STATUS_CONFIG: Record<AdjustmentStatus, { label: string; variant: 'warning
   rejected: { label: 'Từ chối', variant: 'danger' },
 };
 
-const REQUEST_TYPE_LABEL: Record<RequestType, string> = {
+const REQUEST_TYPE_LABEL: Record<string, string> = {
   check_in: 'Điều chỉnh Check In',
   check_out: 'Điều chỉnh Check Out',
+  forgot_attendance: 'Quên điểm danh',
   both: 'Điều chỉnh Check In & Out',
 };
 
-const USER_ROLE = 'admin';
-const canAdd = USER_ROLE === 'admin' || USER_ROLE === 'manager' || USER_ROLE === 'employee';
-const canEdit = USER_ROLE === 'admin' || USER_ROLE === 'manager';
-const canDelete = USER_ROLE === 'admin';
-const canReview = USER_ROLE === 'admin' || USER_ROLE === 'manager';
-
 export default function AdjustmentsSidebarPage() {
+  const queryClient = useQueryClient();
+  const currentUser = useAuthStore((state) => state.user);
+
+  const isAdmin = useMemo(
+    () => Boolean(currentUser?.roles?.some((r) => r.code?.toLowerCase() === 'admin' || r.name?.toLowerCase() === 'admin')),
+    [currentUser]
+  );
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<AdjustmentStatus | undefined>();
   const [filterType, setFilterType] = useState<RequestType | undefined>();
@@ -73,17 +78,56 @@ export default function AdjustmentsSidebarPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // State Modal Preview Phê duyệt / Từ chối
+  const [reviewModalState, setReviewModalState] = useState<{
+    open: boolean;
+    data: AttendanceAdjustmentRequest | null;
+    action: 'approved' | 'rejected' | null;
+  }>({
+    open: false,
+    data: null,
+    action: null,
+  });
+  const [isReviewing, setIsReviewing] = useState(false);
+
   const [selectedRow, setSelectedRow] = useState<AttendanceAdjustmentRequest | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [queryKey, setQueryKey] = useState(0);
   const [attendanceAdjustments, setAttendanceAdjustments] = useState<AttendanceAdjustmentRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+
+
+
+  const refreshData = () => {
+    setQueryKey((k) => k + 1);
+    refetchAllAdjustments();
+    queryClient.invalidateQueries();
+  };
 
   const { data: allAdjustmentsData, refetch: refetchAllAdjustments } = useQuery({
-    queryKey: ['all-adjustments', queryKey],
-    queryFn: () => getAdjustmentRequests({ limit: 1000 }),
+    queryKey: ['all-adjustments', queryKey, isAdmin, currentUser?.id],
+    queryFn: () => getAdjustmentRequests(isAdmin ? undefined : { userId: currentUser?.id }),
+    enabled: !!currentUser?.id,
   });
+
+  const { data: usersData } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => getUsers(),
+    enabled: isAdmin,
+  });
+
+  const userMap = useMemo(() => {
+    const users = usersData?.items ?? [];
+    return new Map(users.map((u) => [u.id, u]));
+  }, [usersData]);
+
+  const getEmployeeName = (userId?: string) => {
+    if (!userId) return '-';
+    if (userId === currentUser?.id) return currentUser.fullName || 'Tôi';
+    const u = userMap.get(userId);
+    return u ? u.fullName : 'Không xác định';
+  };
 
   const allAdjustments = useMemo(
     () => allAdjustmentsData?.items ?? attendanceAdjustments,
@@ -109,12 +153,6 @@ export default function AdjustmentsSidebarPage() {
     return Math.round((approvedCount / totalRequestsCount) * 100 * 10) / 10;
   }, [approvedCount, totalRequestsCount]);
 
-  const checkOutRequestsPercent = useMemo(() => {
-    if (!totalRequestsCount) return 0;
-    const count = allAdjustments.filter((r) => r.requestType === 'check_out').length;
-    return Math.round((count / totalRequestsCount) * 100);
-  }, [allAdjustments, totalRequestsCount]);
-
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/app' },
     { label: 'Quản lý nhân sự', href: '/app/employees' },
@@ -123,30 +161,45 @@ export default function AdjustmentsSidebarPage() {
   ];
 
   const employeeOptions = useMemo(() => {
-    const ids = Array.from(new Set(attendanceAdjustments.map((item) => item.userId).filter(Boolean)));
-    return ids.map((userId) => ({ value: userId, label: userId }));
-  }, [attendanceAdjustments]);
+    if (!isAdmin) return [];
+    const ids = Array.from(
+      new Set(allAdjustments.map((item) => item.userId).filter((id): id is string => Boolean(id)))
+    );
+    return ids.map((userId) => ({
+      value: String(userId),
+      label: String(getEmployeeName(userId) || userId || 'Không xác định'),
+    }));
+  }, [allAdjustments, userMap, isAdmin]);
 
   const workDateOptions = useMemo(() => {
-    const dates = Array.from(new Set(attendanceAdjustments.map((item) => item.workDate).filter(Boolean)));
-    return dates.map((date) => ({ label: date, value: date }));
-  }, [attendanceAdjustments]);
+    const dates = Array.from(
+      new Set(allAdjustments.map((item) => item.workDate).filter((date): date is string => Boolean(date)))
+    );
+    return dates.map((date) => ({
+      label: String(date),
+      value: String(date),
+    }));
+  }, [allAdjustments]);
 
   const statusOptions = useMemo(() => {
-    const statuses = Array.from(new Set(attendanceAdjustments.map((item) => item.status)));
+    const statuses = Array.from(
+      new Set(allAdjustments.map((item) => item.status).filter((status): status is AdjustmentStatus => Boolean(status)))
+    );
     return statuses.map((status) => ({
-      label: STATUS_CONFIG[status]?.label ?? status,
-      value: status,
+      label: String(STATUS_CONFIG[status]?.label ?? status ?? 'Không xác định'),
+      value: String(status),
     }));
-  }, [attendanceAdjustments]);
+  }, [allAdjustments]);
 
   const typeOptions = useMemo(() => {
-    const types = Array.from(new Set(attendanceAdjustments.map((item) => item.requestType)));
+    const types = Array.from(
+      new Set(allAdjustments.map((item) => item.requestType).filter((type): type is RequestType => Boolean(type)))
+    );
     return types.map((type) => ({
-      label: REQUEST_TYPE_LABEL[type],
-      value: type,
+      label: String(REQUEST_TYPE_LABEL[type] ?? type ?? 'Không xác định'),
+      value: String(type),
     }));
-  }, [attendanceAdjustments]);
+  }, [allAdjustments]);
 
   const tableFilters = [
     {
@@ -161,12 +214,16 @@ export default function AdjustmentsSidebarPage() {
       options: typeOptions,
       onChange: (val: string | undefined) => setFilterType(val as RequestType | undefined),
     },
-    {
-      label: 'Nhân sự',
-      value: filterEmployee,
-      options: employeeOptions,
-      onChange: (val: string | undefined) => setFilterEmployee(val),
-    },
+    ...(isAdmin
+      ? [
+        {
+          label: 'Nhân sự',
+          value: filterEmployee,
+          options: employeeOptions,
+          onChange: (val: string | undefined) => setFilterEmployee(val),
+        },
+      ]
+      : []),
     {
       label: 'Ngày làm việc',
       value: filterDate,
@@ -182,15 +239,11 @@ export default function AdjustmentsSidebarPage() {
       search: searchQuery || undefined,
       status: filterStatus,
       workDate: filterDate,
-      userId: filterEmployee,
+      userId: isAdmin ? filterEmployee : currentUser?.id,
     });
     const rawItems = response?.items || [];
     setAttendanceAdjustments(rawItems);
-    const items: AdjustmentRecord[] = rawItems.map((item) => ({
-      ...item,
-      _employeeId: item.userId,
-      _employeeName: item.userId,
-    }));
+    const items: AdjustmentRecord[] = rawItems;
     return {
       items,
       meta: {
@@ -202,33 +255,31 @@ export default function AdjustmentsSidebarPage() {
     };
   };
 
-  const handleApprove = async (id: number) => {
-    if (!confirm('Phê duyệt khiếu nại này?')) return;
-    try {
-      await updateAdjustmentRequest(id, {
-        status: 'approved',
-        reviewNote: selectedRow?.reviewNote ?? '',
-      });
-      toast.success('Đã phê duyệt khiếu nại');
-      setShowDetailModal(false);
-      setQueryKey((k) => k + 1);
-    } catch {
-      toast.error('Có lỗi xảy ra');
-    }
+  // Mở modal Preview Phê duyệt / Từ chối
+  const openReviewModal = (data: AttendanceAdjustmentRequest, action: 'approved' | 'rejected') => {
+    setReviewModalState({
+      open: true,
+      data,
+      action,
+    });
   };
 
-  const handleReject = async (id: number) => {
-    if (!confirm('Từ chối khiếu nại này?')) return;
+  // Thực hiện phê duyệt / từ chối sau khi xác nhận trong Review Modal
+  const handleConfirmReview = async (id: number, action: 'approved' | 'rejected', reviewNote: string) => {
+    setIsReviewing(true);
     try {
       await updateAdjustmentRequest(id, {
-        status: 'rejected',
-        reviewNote: selectedRow?.reviewNote ?? '',
+        status: action,
+        reviewNote,
       });
-      toast.success('Đã từ chối khiếu nại');
+      toast.success(action === 'approved' ? 'Đã phê duyệt khiếu nại thành công' : 'Đã từ chối khiếu nại');
+      setReviewModalState({ open: false, data: null, action: null });
       setShowDetailModal(false);
-      setQueryKey((k) => k + 1);
+      refreshData();
     } catch {
-      toast.error('Có lỗi xảy ra');
+      toast.error('Có lỗi xảy ra khi xử lý khiếu nại');
+    } finally {
+      setIsReviewing(false);
     }
   };
 
@@ -239,40 +290,175 @@ export default function AdjustmentsSidebarPage() {
       toast.success('Đã xóa khiếu nại');
       setShowDeleteModal(false);
       setDeletingId(null);
-      setQueryKey((k) => k + 1);
+      refreshData();
     } finally {
       setIsDeleting(false);
     }
   };
 
+  const adjustmentsStats = [
+    {
+      title: "Tổng khiếu nại",
+      value: totalRequestsCount,
+      icon: <FileEdit />,
+      trend: totalRequestsCount,
+      trendDirection: totalRequestsCount > 0 ? "up" : "down"
+    },
+    {
+      title: "Chờ phê duyệt",
+      value: pendingCount,
+      icon: <Clock />,
+      trend: pendingCount,
+      trendDirection: pendingCount > 0 ? "up" : "down"
+    },
+    {
+      title: "Đã phê duyệt",
+      value: approvedCount,
+      icon: <CheckCircle2 />,
+      trend: approvedCount,
+      trendDirection: approvedCount > 0 ? "up" : "down"
+    },
+    {
+      title: "Từ chối",
+      value: rejectedCount,
+      icon: <AlertCircle />,
+      trend: rejectedCount,
+      trendDirection: rejectedCount > 0 ? "up" : "down"
+    },
+  ]
+
+  // ===================== Redesigned Mobile Card =====================
   const renderCard = (row: AdjustmentRecord, index: number) => {
     const statusCfg = STATUS_CONFIG[row.status] ?? STATUS_CONFIG['pending'];
+    const canManageThisRow = isAdmin || row.userId === currentUser?.id;
+    const isPending = row.status === 'pending';
+
     return (
-      <div key={row.id ?? index} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
+      <div
+        key={row.id ?? index}
+        className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs transition hover:shadow-md space-y-3"
+      >
+        {/* Header: ID + User + Status */}
+        <div className="flex items-start justify-between gap-2 pb-2 border-b border-slate-100">
           <div>
-            <p className="font-bold text-slate-900">{row._employeeName || 'Nhân viên'}</p>
-            <p className="text-xs text-slate-500">{REQUEST_TYPE_LABEL[row.requestType]}</p>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-400">#{row.id}</span>
+              <h4 className="font-bold text-slate-900 text-sm">
+                {getEmployeeName(row.userId)}
+              </h4>
+            </div>
+            <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+              <Calendar size={12} className="text-slate-400" /> {row.workDate}
+            </p>
           </div>
-          <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
+          <Badge variant={statusCfg.variant} pill>
+            {statusCfg.label}
+          </Badge>
         </div>
-        <div className="text-xs text-slate-700 space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-          <p><strong>Ngày làm việc:</strong> {row.workDate}</p>
-          <p><strong>Check In:</strong> <span className="line-through text-slate-400">{row.oldCheckIn || '-'}</span> → <span className="font-bold text-blue-600">{row.requestedCheckIn || '-'}</span></p>
-          <p><strong>Check Out:</strong> <span className="line-through text-slate-400">{row.oldCheckOut || '-'}</span> → <span className="font-bold text-blue-600">{row.requestedCheckOut || '-'}</span></p>
+
+        {/* Request Type Badge */}
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-slate-400 font-medium">Loại khiếu nại:</span>
+          <Badge variant="info" className="text-[11px] font-semibold">
+            {REQUEST_TYPE_LABEL[row.requestType] || row.requestType}
+          </Badge>
         </div>
-        <p className="text-xs text-slate-500 italic line-clamp-2">&quot;{row.reason}&quot;</p>
-        <div className="flex items-center gap-2 pt-1">
+
+        {/* Adjustment Comparison Box */}
+        <div className="rounded-xl bg-slate-50 p-3 border border-slate-100 space-y-1.5 text-xs">
+          {(row.oldCheckIn || row.requestedCheckIn || row.requestType !== 'check_out') && (
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 font-medium">Check In:</span>
+              <div className="flex items-center gap-1.5">
+                <span className="line-through text-slate-400">{row.oldCheckIn || '--:--'}</span>
+                <span className="text-slate-400">→</span>
+                <span className="font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                  {row.requestedCheckIn || '--:--'}
+                </span>
+              </div>
+            </div>
+          )}
+          {(row.oldCheckOut || row.requestedCheckOut || row.requestType !== 'check_in') && (
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 font-medium">Check Out:</span>
+              <div className="flex items-center gap-1.5">
+                <span className="line-through text-slate-400">{row.oldCheckOut || '--:--'}</span>
+                <span className="text-slate-400">→</span>
+                <span className="font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                  {row.requestedCheckOut || '--:--'}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Reason Quote */}
+        {row.reason && (
+          <p className="text-xs text-slate-600 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 line-clamp-2">
+            &quot;{row.reason}&quot;
+          </p>
+        )}
+
+        {/* Actions Bar */}
+        <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
           <button
             type="button"
             onClick={() => {
               setSelectedRow(row);
               setShowDetailModal(true);
             }}
-            className="flex items-center gap-1 text-xs text-blue-600 font-semibold hover:underline"
+            className="flex items-center gap-1 text-blue-600 font-semibold hover:underline"
           >
-            <Eye size={13} /> Xem chi tiết
+            <Eye size={14} /> Chi tiết
           </button>
+
+          <div className="flex items-center gap-1.5">
+            {/* Admin approve/reject preview triggers */}
+            {isAdmin && isPending && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => openReviewModal(row, 'approved')}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold hover:bg-emerald-100 transition"
+                >
+                  <CheckCircle size={13} /> Duyệt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openReviewModal(row, 'rejected')}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 text-red-700 font-bold hover:bg-red-100 transition"
+                >
+                  <XCircle size={13} /> Từ chối
+                </button>
+              </>
+            )}
+
+            {/* Owner or Admin can Edit/Delete */}
+            {canManageThisRow && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRow(row);
+                    setShowEditModal(true);
+                  }}
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeletingId(row.id);
+                    setShowDeleteModal(true);
+                  }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -290,9 +476,8 @@ export default function AdjustmentsSidebarPage() {
       label: 'Nhân sự',
       minWidth: '160px',
       cell: (row) => (
-        <div>
-          <div className="font-bold text-slate-900 text-sm">{row._employeeName || '-'}</div>
-          <div className="text-[11px] text-slate-500">Mã NV: {row.userId || '-'}</div>
+        <div className="font-bold text-slate-900 text-sm">
+          {getEmployeeName(row.userId)}
         </div>
       ),
     },
@@ -308,7 +493,7 @@ export default function AdjustmentsSidebarPage() {
       minWidth: '170px',
       cell: (row) => (
         <Badge variant="info" className="text-[11px] font-semibold">
-          {REQUEST_TYPE_LABEL[row.requestType]}
+          {REQUEST_TYPE_LABEL[row.requestType] || row.requestType}
         </Badge>
       ),
     },
@@ -369,95 +554,94 @@ export default function AdjustmentsSidebarPage() {
       key: 'actions',
       label: 'Thao tác',
       minWidth: '160px',
-      cell: (row) => (
-        <div className="flex items-center gap-1">
-          <Tooltip content="Xem chi tiết" position="top">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedRow(row);
-                setShowDetailModal(true);
-              }}
-              className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
-            >
-              <Eye size={15} />
-            </button>
-          </Tooltip>
-
-          {canReview && row.status === 'pending' && (
-            <Tooltip content="Phê duyệt nhanh" position="top">
-              <button
-                type="button"
-                onClick={() => handleApprove(row.id)}
-                className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition"
-              >
-                <CheckCircle size={15} />
-              </button>
-            </Tooltip>
-          )}
-
-          {canReview && row.status === 'pending' && (
-            <Tooltip content="Từ chối nhanh" position="top">
-              <button
-                type="button"
-                onClick={() => handleReject(row.id)}
-                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition"
-              >
-                <XCircle size={15} />
-              </button>
-            </Tooltip>
-          )}
-
-          {canEdit && (
-            <Tooltip content="Chỉnh sửa" position="top">
+      cell: (row) => {
+        const canManageThisRow = isAdmin || row.userId === currentUser?.id;
+        return (
+          <div className="flex items-center gap-1">
+            <Tooltip content="Xem chi tiết" position="top">
               <button
                 type="button"
                 onClick={() => {
                   setSelectedRow(row);
-                  setShowEditModal(true);
+                  setShowDetailModal(true);
                 }}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
+                className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
               >
-                <Pencil size={15} />
+                <Eye size={15} />
               </button>
             </Tooltip>
-          )}
 
-          {canDelete && (
-            <Tooltip content="Xóa khiếu nại" position="top">
-              <button
-                type="button"
-                onClick={() => {
-                  setDeletingId(row.id);
-                  setShowDeleteModal(true);
-                }}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
-              >
-                <Trash2 size={15} />
-              </button>
-            </Tooltip>
-          )}
-        </div>
-      ),
+            {isAdmin && row.status === 'pending' && (
+              <Tooltip content="Phê duyệt" position="top">
+                <button
+                  type="button"
+                  onClick={() => openReviewModal(row, 'approved')}
+                  className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition"
+                >
+                  <CheckCircle size={15} />
+                </button>
+              </Tooltip>
+            )}
+
+            {isAdmin && row.status === 'pending' && (
+              <Tooltip content="Từ chối" position="top">
+                <button
+                  type="button"
+                  onClick={() => openReviewModal(row, 'rejected')}
+                  className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition"
+                >
+                  <XCircle size={15} />
+                </button>
+              </Tooltip>
+            )}
+
+            {canManageThisRow && (
+              <Tooltip content="Chỉnh sửa" position="top">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRow(row);
+                    setShowEditModal(true);
+                  }}
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
+                >
+                  <Pencil size={15} />
+                </button>
+              </Tooltip>
+            )}
+
+            {canManageThisRow && (
+              <Tooltip content="Xóa khiếu nại" position="top">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeletingId(row.id);
+                    setShowDeleteModal(true);
+                  }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </Tooltip>
+            )}
+          </div>
+        );
+      },
     },
   ];
-
-  if (isLoading) return <Loading />;
 
   return (
     <div className="flex h-full w-full flex-1 flex-col bg-slate-50 p-6 space-y-6">
       {/* Top Breadcrumb & Header Action */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Breadcrumb items={breadcrumbItems} />
-        {canAdd && (
-          <Button
-            className="bg-[#005c53] hover:bg-[#004740] text-white font-semibold shadow-sm gap-2 self-start sm:self-auto"
-            leftIcon={<Plus size={18} />}
-            onClick={() => setShowAddModal(true)}
-          >
-            Tạo khiếu nại mới
-          </Button>
-        )}
+        <Button
+          className="bg-[#005c53] hover:bg-[#004740] text-white font-semibold shadow-sm gap-2 self-start sm:self-auto"
+          leftIcon={<Plus size={18} />}
+          onClick={() => setShowAddModal(true)}
+        >
+          Tạo khiếu nại mới
+        </Button>
       </div>
 
       {/* Title Header */}
@@ -466,64 +650,83 @@ export default function AdjustmentsSidebarPage() {
           Danh sách khiếu nại & Điều chỉnh chấm công
         </Heading>
         <p className="mt-1 text-sm text-slate-500">
-          Tiếp nhận, thẩm định và phê duyệt các yêu cầu điều chỉnh thời gian quẹt thẻ từ nhân viên.
+          {isAdmin
+            ? 'Tiếp nhận, thẩm định và phê duyệt các yêu cầu điều chỉnh thời gian quẹt thẻ từ nhân viên.'
+            : 'Quản lý các yêu cầu điều chỉnh chấm công và xem trạng thái xử lý.'}
         </p>
       </div>
 
       {/* 4 Summary Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1 */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
+        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">TỔNG KHIẾU NẠI</span>
             <div className="rounded-xl bg-slate-100 p-2.5 text-slate-700">
               <FileEdit size={20} />
             </div>
           </div>
-          <div className="text-3xl font-black text-slate-900">{totalRequestsCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span></div>
-        </div>
+          <div className="text-3xl font-black text-slate-900">
+            {totalRequestsCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
+          </div>
+        </div> */}
 
         {/* Card 2 */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
+        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">CHỜ PHÊ DUYỆT</span>
             <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600">
               <Clock size={20} />
             </div>
             {pendingCount > 0 && (
-              <Badge variant="warning" pill className="font-extrabold text-[10px]">CẦN XỬ LÝ</Badge>
+              <Badge variant="warning" pill className="font-extrabold text-[10px]">
+                {isAdmin ? 'CẦN XỬ LÝ' : 'ĐANG CHỜ'}
+              </Badge>
             )}
           </div>
-          <div className="text-3xl font-black text-slate-700">{pendingCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span></div>
-        </div>
+          <div className="text-3xl font-black text-slate-700">
+            {pendingCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
+          </div>
+        </div> */}
 
         {/* Card 3 */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
+        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">ĐÃ PHÊ DUYỆT</span>
             <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-600">
               <CheckCircle2 size={20} />
             </div>
-            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">{approvedPercentage}%</span>
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+              {approvedPercentage}%
+            </span>
           </div>
-          <div className="text-3xl font-black text-slate-700">{approvedCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span></div>
-        </div>
+          <div className="text-3xl font-black text-slate-700">
+            {approvedCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
+          </div>
+        </div> */}
 
         {/* Card 4 */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
+        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">TỪ CHỐI</span>
             <div className="rounded-xl bg-red-50 p-2.5 text-red-500">
               <AlertCircle size={20} />
             </div>
           </div>
-          <div className="text-3xl font-black text-slate-700">{rejectedCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span></div>
-        </div>
+          <div className="text-3xl font-black text-slate-700">
+            {rejectedCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
+          </div>
+        </div> */}
+        {adjustmentsStats.map((stat, index) => (
+          <StatCart key={index} title={stat.title} value={String(stat.value)} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection as any} />
+        ))}
       </div>
 
       {/* Informative Guidance Banner */}
       <Alert variant="info" title="Quy trình xử lý khiếu nại chấm công" icon={<Info size={18} />}>
-        Các yêu cầu điều chỉnh từ nhân viên cần được thẩm định trong vòng 48 giờ làm việc. Sau khi được duyệt, dữ liệu công sẽ tự động cập nhật vào Bảng tổng hợp công tháng.
+        {isAdmin
+          ? 'Các yêu cầu điều chỉnh từ nhân viên cần được thẩm định trong vòng 48 giờ làm việc. Sau khi được duyệt, dữ liệu công sẽ tự động cập nhật vào Bảng tổng hợp công tháng.'
+          : 'Yêu cầu điều chỉnh chấm công của bạn sẽ được gửi tới Ban Quản trị xét duyệt. Bạn có thể theo dõi trạng thái tại danh sách bên dưới.'}
       </Alert>
 
       {/* Main Table Section */}
@@ -537,11 +740,13 @@ export default function AdjustmentsSidebarPage() {
             filterType,
             filterEmployee,
             filterDate,
+            isAdmin,
+            currentUser?.id,
           ]}
           fetcher={fetcher}
           columns={columns}
           search={{
-            placeholder: 'Tìm kiếm theo tên nhân viên, lý do khiếu nại...',
+            placeholder: isAdmin ? 'Tìm kiếm theo tên nhân viên, lý do...' : 'Tìm kiếm lý do khiếu nại...',
             value: searchQuery,
             onChange: (value) => setSearchQuery(value),
           }}
@@ -552,60 +757,42 @@ export default function AdjustmentsSidebarPage() {
         />
       </div>
 
-      {/* Analytics Insight Card */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="flex items-start gap-3">
-          <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 shrink-0">
-            <BarChart3 size={20} />
-          </div>
-          <div>
-            <h5 className="font-bold text-slate-900 text-sm">Loại khiếu nại phổ biến</h5>
-            <p className="text-xs text-slate-500 mt-0.5">{checkOutRequestsPercent}% các yêu cầu liên quan đến điều chỉnh Check-Out.</p>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3">
-          <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-600 shrink-0">
-            <TrendingUp size={20} />
-          </div>
-          <div>
-            <h5 className="font-bold text-slate-900 text-sm">Tỷ lệ phê duyệt</h5>
-            <p className="text-xs text-slate-500 mt-0.5">Đã xử lý xong {approvedCount + rejectedCount}/{totalRequestsCount} đơn khiếu nại ({approvedPercentage}% được chấp thuận).</p>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3">
-          <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600 shrink-0">
-            <Filter size={20} />
-          </div>
-          <div>
-            <h5 className="font-bold text-slate-900 text-sm">Lý do khiếu nại chính</h5>
-            <p className="text-xs text-slate-500 mt-0.5">Quên quẹt thẻ, Lỗi máy chấm công vân tay, Công tác ngoài.</p>
-          </div>
-        </div>
-      </div>
-
       {/* Modals */}
       <AddAdjustmentModal
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onSuccess={() => setQueryKey((k) => k + 1)}
+        onSuccess={refreshData}
       />
 
       <EditAdjustmentModal
         open={showEditModal}
         data={selectedRow}
         onClose={() => setShowEditModal(false)}
-        onSuccess={() => setQueryKey((k) => k + 1)}
+        onSuccess={refreshData}
       />
 
       <AdjustmentDetailModal
         open={showDetailModal}
         data={selectedRow}
         onClose={() => setShowDetailModal(false)}
-        onApprove={handleApprove}
-        onReject={handleReject}
-        canReview={canReview}
+        onApprove={(id) => {
+          if (selectedRow) openReviewModal(selectedRow, 'approved');
+        }}
+        onReject={(id) => {
+          if (selectedRow) openReviewModal(selectedRow, 'rejected');
+        }}
+        canReview={isAdmin}
+      />
+
+      {/* Review Modal (Popup Preview Phê duyệt / Từ chối) */}
+      <ReviewAdjustmentModal
+        open={reviewModalState.open}
+        data={reviewModalState.data}
+        action={reviewModalState.action}
+        employeeName={getEmployeeName(reviewModalState.data?.userId)}
+        onClose={() => setReviewModalState({ open: false, data: null, action: null })}
+        onConfirm={handleConfirmReview}
+        isLoading={isReviewing}
       />
 
       <DeleteAdjustmentModal
