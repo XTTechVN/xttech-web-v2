@@ -75,7 +75,8 @@ export default function AdjustmentsSidebarPage() {
   const [filterStatus, setFilterStatus] = useState<AdjustmentStatus | undefined>();
   const [filterType, setFilterType] = useState<RequestType | undefined>();
   const [filterEmployee, setFilterEmployee] = useState<string | undefined>();
-  const [filterDate, setFilterDate] = useState<string | undefined>();
+  const [filterStartDate, setFilterStartDate] = useState<string | undefined>();
+  const [filterEndDate, setFilterEndDate] = useState<string | undefined>();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -100,8 +101,6 @@ export default function AdjustmentsSidebarPage() {
   const [queryKey, setQueryKey] = useState(0);
   const [attendanceAdjustments, setAttendanceAdjustments] = useState<AttendanceAdjustmentRequest[]>([]);
 
-
-
   const refreshData = () => {
     setQueryKey((k) => k + 1);
     refetchAllAdjustments();
@@ -109,8 +108,12 @@ export default function AdjustmentsSidebarPage() {
   };
 
   const { data: allAdjustmentsData, refetch: refetchAllAdjustments } = useQuery({
-    queryKey: ['all-adjustments', queryKey, isAdmin, currentUser?.id],
-    queryFn: () => getAdjustmentRequests(isAdmin ? undefined : { userId: currentUser?.id }),
+    queryKey: ['all-adjustments', queryKey, isAdmin, currentUser?.id, filterStartDate, filterEndDate],
+    queryFn: () => getAdjustmentRequests({
+      ...(isAdmin ? {} : { userId: currentUser?.id }),
+      startDate: filterStartDate || undefined,
+      endDate: filterEndDate || undefined,
+    }),
     enabled: !!currentUser?.id,
   });
 
@@ -173,16 +176,6 @@ export default function AdjustmentsSidebarPage() {
     }));
   }, [allAdjustments, userMap, isAdmin]);
 
-  const workDateOptions = useMemo(() => {
-    const dates = Array.from(
-      new Set(allAdjustments.map((item) => item.workDate).filter((date): date is string => Boolean(date)))
-    );
-    return dates.map((date) => ({
-      label: String(date),
-      value: String(date),
-    }));
-  }, [allAdjustments]);
-
   const statusOptions = useMemo(() => {
     const statuses = Array.from(
       new Set(allAdjustments.map((item) => item.status).filter((status): status is AdjustmentStatus => Boolean(status)))
@@ -228,9 +221,13 @@ export default function AdjustmentsSidebarPage() {
       : []),
     {
       label: 'Ngày làm việc',
-      value: filterDate,
-      options: workDateOptions,
-      onChange: (val: string | undefined) => setFilterDate(val),
+      type: 'date-range' as const,
+      startDate: filterStartDate,
+      endDate: filterEndDate,
+      onDateChange: (start?: string, end?: string) => {
+        setFilterStartDate(start);
+        setFilterEndDate(end);
+      },
     },
   ];
 
@@ -240,7 +237,8 @@ export default function AdjustmentsSidebarPage() {
       limit,
       search: searchQuery || undefined,
       status: filterStatus,
-      workDate: filterDate,
+      startDate: filterStartDate || undefined,
+      endDate: filterEndDate || undefined,
       userId: isAdmin ? filterEmployee : currentUser?.id,
     });
     const rawItems = response?.items || [];
@@ -248,6 +246,12 @@ export default function AdjustmentsSidebarPage() {
     let items: AdjustmentRecord[] = rawItems;
     if (filterType) {
       items = items.filter((item) => item.requestType === filterType);
+    }
+    if (filterStartDate) {
+      items = items.filter((item) => item.workDate >= filterStartDate);
+    }
+    if (filterEndDate) {
+      items = items.filter((item) => item.workDate <= filterEndDate);
     }
     return {
       items,
@@ -630,14 +634,14 @@ export default function AdjustmentsSidebarPage() {
 
       {/* Title Header */}
       <div>
-        <Heading size="h2" className="text-2xl font-bold text-slate-900">
-          Danh sách khiếu nại & Điều chỉnh chấm công
+        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
+          Quản lý Chấm công & Thời gian
         </Heading>
-        <p className="mt-1 text-sm text-slate-500">
+        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
           {isAdmin
             ? 'Tiếp nhận, thẩm định và phê duyệt các yêu cầu điều chỉnh thời gian quẹt thẻ từ nhân viên.'
             : 'Quản lý các yêu cầu điều chỉnh chấm công và xem trạng thái xử lý.'}
-        </p>
+        </Heading>
       </div>
 
       {/* 4 Summary Stat Cards */}
@@ -715,6 +719,9 @@ export default function AdjustmentsSidebarPage() {
 
       {/* Main Table Section */}
       <div className="space-y-4">
+        <Heading size="h1" className="text-primary pr-2 pt-2 text-2xl">
+          Danh sách khiếu nại
+        </Heading>
         <TableData<AdjustmentRecord>
           queryKey={[
             'appeals',
@@ -723,7 +730,8 @@ export default function AdjustmentsSidebarPage() {
             filterStatus,
             filterType,
             filterEmployee,
-            filterDate,
+            filterStartDate,
+            filterEndDate,
             isAdmin,
             currentUser?.id,
           ]}

@@ -229,7 +229,8 @@ export default function PayrollDataPage() {
   // Filters and search for Payroll attendance history table
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string | undefined>();
-  const [filterWorkDate, setFilterWorkDate] = useState<string | undefined>();
+  const [filterStartDate, setFilterStartDate] = useState<string | undefined>();
+  const [filterEndDate, setFilterEndDate] = useState<string | undefined>();
 
   const statusOptions = useMemo(() => {
     const statuses = Array.from(
@@ -238,16 +239,6 @@ export default function PayrollDataPage() {
     return statuses.map((status) => ({
       label: String(getStatusBadge(status) || status),
       value: String(status),
-    }));
-  }, [myAttendances]);
-
-  const workDateOptions = useMemo(() => {
-    const dates = Array.from(
-      new Set(myAttendances.map((item) => item.workDate).filter((d): d is string => Boolean(d)))
-    );
-    return dates.map((date) => ({
-      label: String(date),
-      value: String(date),
     }));
   }, [myAttendances]);
 
@@ -260,9 +251,13 @@ export default function PayrollDataPage() {
     },
     {
       label: 'Ngày làm việc',
-      value: filterWorkDate,
-      options: workDateOptions,
-      onChange: (val: string | undefined) => setFilterWorkDate(val),
+      type: 'date-range' as const,
+      startDate: filterStartDate,
+      endDate: filterEndDate,
+      onDateChange: (start?: string, end?: string) => {
+        setFilterStartDate(start);
+        setFilterEndDate(end);
+      },
     },
   ];
 
@@ -284,7 +279,8 @@ export default function PayrollDataPage() {
       userId: user.id,
       search: searchQuery || undefined,
       status: (filterStatus as any) || undefined,
-      workDate: filterWorkDate || undefined,
+      startDate: filterStartDate || undefined,
+      endDate: filterEndDate || undefined,
     });
     const rawItems = response.items ?? [];
     let items = [...rawItems];
@@ -298,8 +294,11 @@ export default function PayrollDataPage() {
     if (filterStatus) {
       items = items.filter((item) => item.status === filterStatus);
     }
-    if (filterWorkDate) {
-      items = items.filter((item) => item.workDate === filterWorkDate);
+    if (filterStartDate) {
+      items = items.filter((item) => item.workDate >= filterStartDate);
+    }
+    if (filterEndDate) {
+      items = items.filter((item) => item.workDate <= filterEndDate);
     }
     return {
       items,
@@ -619,12 +618,12 @@ export default function PayrollDataPage() {
 
       {/* Title */}
       <div>
-        <Heading size="h2" className="text-2xl font-bold text-slate-900">
-          Tính công & Dữ liệu lương
+        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
+          Quản lý Chấm công & Thời gian
         </Heading>
-        <p className="mt-1 text-sm text-slate-500">
+        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
           Tổng hợp và kiểm tra dữ liệu công trước khi kết chuyển lương.
-        </p>
+        </Heading>
       </div>
 
       {/* 5 Summary Stat Cards */}
@@ -788,20 +787,25 @@ export default function PayrollDataPage() {
                 Đang tải dữ liệu...
               </div>
             ) : (
-              <TableData<Attendance>
-                queryKey={['payroll-daily-logs', user?.id, searchQuery, filterStatus, filterWorkDate]}
-                fetcher={fetcher}
-                columns={attendanceColumns}
-                search={{
-                  placeholder: 'Tìm kiếm theo ngày, ghi chú, trạng thái...',
-                  value: searchQuery,
-                  onChange: (value) => setSearchQuery(value),
-                }}
-                filters={tableFilters}
-                renderCard={renderAttendanceCard}
-                select={false}
-                syncToUrl={false}
-              />
+              <>
+                <Heading className="text-primary pr-2 pt-2 text-2xl" size="h1">
+                  Tính công & Dữ liệu lương
+                </Heading>
+                <TableData<Attendance>
+                  queryKey={['payroll-daily-logs', user?.id, searchQuery, filterStatus, filterStartDate, filterEndDate]}
+                  fetcher={fetcher}
+                  columns={attendanceColumns}
+                  search={{
+                    placeholder: 'Tìm kiếm theo ngày, ghi chú, trạng thái...',
+                    value: searchQuery,
+                    onChange: (value) => setSearchQuery(value),
+                  }}
+                  filters={tableFilters}
+                  renderCard={renderAttendanceCard}
+                  select={false}
+                  syncToUrl={false}
+                />
+              </>
             )}
           </div>
         )}

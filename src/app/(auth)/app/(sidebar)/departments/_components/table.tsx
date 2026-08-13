@@ -223,10 +223,10 @@ const Table = () => {
         initialData={
           selectedDept
             ? {
-                id: Number(selectedDept.id),
-                name: selectedDept.name,
-                code: selectedDept.code,
-              }
+              id: Number(selectedDept.id),
+              name: selectedDept.name,
+              code: selectedDept.code,
+            }
             : undefined
         }
       />

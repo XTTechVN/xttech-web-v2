@@ -118,7 +118,8 @@ export default function AttendancesPage() {
   // Filter states khớp với ITableFilterProps
   const [filterEmployeeId, setFilterEmployeeId] = useState<string | undefined>();
   const [filterStatus, setFilterStatus] = useState<string | undefined>();
-  const [filterWorkDate, setFilterWorkDate] = useState<string | undefined>();
+  const [filterStartDate, setFilterStartDate] = useState<string | undefined>();
+  const [filterEndDate, setFilterEndDate] = useState<string | undefined>();
   const [filterDepartment, setFilterDepartment] = useState<string | undefined>();
   const [filterShift, setFilterShift] = useState<string | undefined>();
 
@@ -360,9 +361,13 @@ export default function AttendancesPage() {
     },
     {
       label: 'Ngày làm việc',
-      value: filterWorkDate,
-      options: workDateOptions,
-      onChange: (val: string | undefined) => setFilterWorkDate(val),
+      type: 'date-range' as const,
+      startDate: filterStartDate,
+      endDate: filterEndDate,
+      onDateChange: (start?: string, end?: string) => {
+        setFilterStartDate(start);
+        setFilterEndDate(end);
+      },
     },
     {
       label: 'Trạng thái',
@@ -372,48 +377,6 @@ export default function AttendancesPage() {
     },
   ];
 
-  // Fetcher giả lập với lọc theo search + filters
-  // const fetcher = async ({
-  //   offset,
-  //   limit,
-  // }: {
-  //   offset: number;
-  //   limit: number;
-  // }) => {
-
-  //   const data = await getAttendances();
-
-
-  //   let filtered = [...(data.items ?? [])];
-
-
-  //   if (searchQuery) {
-  //     filtered = filtered.filter(
-  //       item =>
-  //         item.user?.fullName
-  //           ?.toLowerCase()
-  //           .includes(searchQuery.toLowerCase())
-  //     )
-  //   }
-
-
-  //   const paginated = filtered.slice(
-  //     offset,
-  //     offset + limit
-  //   );
-
-
-  //   return {
-  //     items: paginated,
-  //     meta: {
-  //       total: filtered.length,
-  //       offset,
-  //       limit,
-  //       next: offset + limit < filtered.length
-  //     }
-  //   };
-  // };
-
   const fetcher = async ({
     offset,
     limit,
@@ -421,19 +384,19 @@ export default function AttendancesPage() {
     offset: number;
     limit: number;
   }) => {
-    // console.log("Table loading");
-    // setIsLoading(true);
-    const response = await getAttendances();
-    // setIsLoading(false);
+    const response = await getAttendances({
+      startDate: filterStartDate || undefined,
+      endDate: filterEndDate || undefined,
+      userId: filterEmployeeId || undefined,
+      status: (filterStatus as any) || undefined,
+    });
 
     const items = response.items ?? [];
-    // console.log(items);
 
     // lưu data để tạo filter
     setAttendances(items);
 
     let filtered = [...items];
-
 
     if (searchQuery) {
       filtered = filtered.filter(
@@ -465,10 +428,12 @@ export default function AttendancesPage() {
       });
     }
 
-    if (filterWorkDate) {
-      filtered = filtered.filter(
-        (item) => item.workDate === filterWorkDate
-      );
+    if (filterStartDate) {
+      filtered = filtered.filter((item) => item.workDate >= filterStartDate);
+    }
+
+    if (filterEndDate) {
+      filtered = filtered.filter((item) => item.workDate <= filterEndDate);
     }
 
     if (filterStatus) {
@@ -794,12 +759,12 @@ export default function AttendancesPage() {
       {/* Header Bar using system components */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <Heading size="h2" className="text-2xl font-bold text-slate-900">
+          <Heading size="h1" className="text-primary text-2xl md:text-4xl">
             Quản lý Chấm công & Thời gian
           </Heading>
-          <p className="mt-1 text-sm text-slate-500">
+          <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
             Giám sát lực lượng lao động và theo dõi chuyên cần thời gian thực.
-          </p>
+          </Heading>
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-3">
@@ -946,8 +911,11 @@ export default function AttendancesPage() {
 
       {/* Table Section */}
       <div className="space-y-4">
+        <Heading className="text-primary pr-2 pt-2 text-2xl" size="h1">
+          Bảng công tháng (Admin)
+        </Heading>
         <TableData<Attendance>
-          queryKey={['attendances', searchQuery, filterEmployeeId, filterWorkDate, filterStatus, filterDepartment, filterShift]}
+          queryKey={['attendances', searchQuery, filterEmployeeId, filterStartDate, filterEndDate, filterStatus, filterDepartment, filterShift]}
           fetcher={fetcher}
           columns={columns}
           search={{
