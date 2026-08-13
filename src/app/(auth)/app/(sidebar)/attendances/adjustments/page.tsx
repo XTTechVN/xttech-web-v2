@@ -461,12 +461,12 @@ export default function AdjustmentsSidebarPage() {
   };
 
   const columns: ITableColumn<AdjustmentRecord>[] = [
-    {
-      key: 'id',
-      label: '#',
-      minWidth: '60px',
-      cell: (row) => <span className="text-slate-400 font-bold text-xs">#{row.id}</span>,
-    },
+    // {
+    //   key: 'id',
+    //   label: '#',
+    //   minWidth: '60px',
+    //   cell: (row) => <span className="text-slate-400 font-bold text-xs">#{row.id}</span>,
+    // },
     {
       key: 'employee',
       label: 'Nhân sự',
