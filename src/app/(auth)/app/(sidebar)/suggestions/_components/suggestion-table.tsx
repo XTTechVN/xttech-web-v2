@@ -8,7 +8,7 @@ import { useSuggestionStore } from '@/stores/useSuggestionStore';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks';
-import { TableData, Button } from '@/components';
+import { TableData, Button, Heading } from '@/components';
 import { getSuggestions } from '@/actions/suggestion';
 import { Suggestion } from '@/types';
 import TableAction from '@/components/table/table-action';
@@ -60,7 +60,6 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
     setSearch,
     setIsEditing,
     setIsDeleteConfirmOpen,
-    setUsersList,
   } = useSuggestionStore();
 
   // Debounced filter states (500ms delay)
@@ -327,10 +326,15 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
   };
 
   return (
-    <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-md shadow-slate-900/2">
+    <div className="flex flex-col gap-4">
       {/* 1. Header Panel */}
-      <div className="flex flex-col md:flex-row md:items-center justify-end pb-4 border-b border-slate-100 mb-4">
-        {/* Right Actions (Export & Refresh) */}
+      <div className="flex md:flex-row justify-between items-start md:items-center w-full gap-4">
+        {/* Left Header Panel */}
+        <Heading className="text-primary text-2xl" size="h1">
+          Danh sách đề xuất
+        </Heading>
+
+        {/* Right Header (Add, Export & Refresh) */}
         <div className="flex items-center gap-3">
           <Button
             variant="primary"

@@ -6,14 +6,15 @@ import { BaseResponseWithPagination } from '@/components';
 export const getSuggestions = async (params?: SuggestionQueryParams): Promise<BaseResponseWithPagination<Suggestion>> => {
   try {
     const response = await api.get('/api/v1/suggestions', { params });
-    const { items, pagination } = response.data;
+    const { items, pagination, meta } = response.data;
+    const pageMeta = meta || pagination;
     return {
       items: items || [],
       meta: {
-        total: pagination?.total ?? 0,
-        offset: pagination?.offset ?? 0,
-        limit: pagination?.limit ?? 10,
-        next: pagination?.next ?? false,
+        total: pageMeta?.total ?? 0,
+        offset: pageMeta?.offset ?? 0,
+        limit: pageMeta?.limit ?? 10,
+        next: pageMeta?.next ?? false,
       },
     };
   } catch (error: any) {
