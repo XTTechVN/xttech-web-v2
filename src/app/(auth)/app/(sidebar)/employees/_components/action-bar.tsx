@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { Button, Heading } from '@/components';

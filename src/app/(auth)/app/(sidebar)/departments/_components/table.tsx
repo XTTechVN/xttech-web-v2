@@ -22,14 +22,15 @@ import toast from 'react-hot-toast';
 
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
-import { deleteDepartment, getDepartments } from '@/actions/department';
-import PositionPage from '../[id]/positions/page';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+
+// action
+import { deleteDepartment, getDepartments } from '@/actions/department';
+
+// positions page
+import PositionPage from '../[id]/positions/page';
 
 const Table = () => {
-  const searchParams = useSearchParams();
-  const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
   const router = useRouter();
   // Trạng thái cho modal sửa phòng ban
