@@ -15,3 +15,6 @@ export * from './employee';
 
 // Position
 export * from './position'
+
+// Attendance
+export * from './attendance';
