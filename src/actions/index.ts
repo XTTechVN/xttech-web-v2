@@ -24,3 +24,6 @@ export * from './department';
 
 // Position
 export * from './position';
+
+// Attendance
+export * from './attendance';
