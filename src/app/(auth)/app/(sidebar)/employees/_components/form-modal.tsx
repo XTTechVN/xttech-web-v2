@@ -115,7 +115,7 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
 
   // Mutation Tạo
   const { mutate: createMutate, isPending: isCreating } = useMutation({
-    mutationFn: ({ data, file }: { data: any; file: File }) => createEmployee(data, file),
+    mutationFn: ({ data, file }: { data: Omit<Employee, 'id' | 'createdAt' | 'updatedAt' | 'roles' | 'positions'> & { password?: string }; file?: File }) => createEmployee(data, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       toast.success('Thêm nhân sự thành công');
@@ -129,7 +129,7 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
 
   // Mutation Cập nhật
   const { mutate: updateMutate, isPending: isUpdating } = useMutation({
-    mutationFn: ({ id, data, file }: { id: string; data: any; file: File }) => updateEmployee(id, data, file),
+    mutationFn: ({ id, data, file }: { id: string; data: Partial<Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>>; file?: File }) => updateEmployee(id, data, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       toast.success('Cập nhật thông tin nhân sự thành công');
