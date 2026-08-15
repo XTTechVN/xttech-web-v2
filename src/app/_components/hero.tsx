@@ -1,5 +1,9 @@
 import Link from 'next/link';
+
+// Thành phần dùng chung cho components
 import { Button } from '@/components';
+
+// Các icons trong lucide - react
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 export const Hero = () => {

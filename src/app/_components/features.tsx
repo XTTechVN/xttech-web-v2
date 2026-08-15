@@ -1,5 +1,7 @@
+// Các icons của thư viện lucide - react
 import { Users, Building2, ShieldCheck, Zap } from 'lucide-react';
 
+// Danh sách các tính năng nổi bật của hệ thống
 const FEATURES = [
   {
     icon: <Users className="w-6 h-6 text-primary" />,
@@ -35,14 +37,13 @@ export const Features = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {FEATURES.map((feature, idx) => (
-            <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center mb-4">
-                {feature.icon}
-              </div>
+            <div
+              key={idx}
+              className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+            >
+              <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center mb-4">{feature.icon}</div>
               <h3 className="text-lg font-bold text-primary mb-1.5">{feature.title}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {feature.description}
-              </p>
+              <p className="text-sm text-gray-600 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>

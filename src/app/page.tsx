@@ -1,3 +1,4 @@
+// Thành phần dùng riêng cho trang
 import { Header, Hero, Features, Footer } from './_components';
 
 export default function Home() {

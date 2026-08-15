@@ -1,4 +1,6 @@
 import Link from 'next/link';
+
+// Icon của thư viện lucide - react
 import { Settings } from 'lucide-react';
 
 // Thành phần dùng chung cho components

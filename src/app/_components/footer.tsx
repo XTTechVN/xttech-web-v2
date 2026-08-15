@@ -1,4 +1,6 @@
+// Các icons trong lucide - react
 import { Mail, Phone } from 'lucide-react';
+
 import Link from 'next/link';
 
 export const Footer = () => {
@@ -6,7 +8,7 @@ export const Footer = () => {
     <footer id="contact" className="bg-white border-t border-gray-200 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between gap-6">
-          {/* Logo & Info */}
+          {/* Logo & Thông Tin */}
           <div className="flex flex-col gap-3 md:max-w-xs">
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-primary">XTTECH</span>
@@ -14,7 +16,7 @@ export const Footer = () => {
             <p className="text-gray-500 text-sm leading-relaxed pr-4">Giải pháp quản trị doanh nghiệp toàn diện.</p>
           </div>
 
-          {/* Contact */}
+          {/* Liên Hệ */}
           <div className="flex flex-col gap-3">
             <h3 className="font-semibold text-primary text-lg">Liên hệ</h3>
             <div className="flex flex-col gap-2">
