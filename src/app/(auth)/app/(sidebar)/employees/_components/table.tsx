@@ -55,21 +55,13 @@ const Table = () => {
   const [empToDelete, setEmpToDelete] = React.useState<Employee | null>(null);
 
   // Hàm fetcher gọi API thực tế qua React Query / TableData
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const res = await getEmployees({ offset, limit, search: search || undefined });
+  const fetcher = async (params: { offset: number; limit: number }) => {
+    const res = await getEmployees({ ...params, search: search || undefined });
     if (!res) {
       toast.error('Lỗi khi tải danh sách nhân sự');
       throw new Error('Lỗi khi tải danh sách nhân sự');
     }
-    return {
-      items: res.items || [],
-      meta: {
-        total: res.meta?.total || 0,
-        offset: res.meta?.offset || 0,
-        limit: res.meta?.limit || 10,
-        next: res.meta?.next || false,
-      },
-    };
+    return res;
   };
 
   // Hàm xóa nhân sự dùng useMutation
