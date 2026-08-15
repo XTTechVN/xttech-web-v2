@@ -59,15 +59,7 @@ const Table = () => {
       toast.error('Lỗi khi tải danh sách vị trí');
       throw new Error('Lỗi khi tải danh sách vị trí');
     }
-    return {
-      items: Array.isArray(res) ? res : (res?.items || []),
-      meta: {
-        total: res?.meta?.total || (Array.isArray(res) ? res.length : 0),
-        offset: res?.meta?.offset || 0,
-        limit: res?.meta?.limit || 10,
-        next: res?.meta?.next || false,
-      },
-    };
+    return res;
   };
 
   // Hàm xóa vị trí
