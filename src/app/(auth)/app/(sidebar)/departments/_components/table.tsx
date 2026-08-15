@@ -46,18 +46,9 @@ const Table = () => {
   const [deptToCreate, setDeptToCreate] = React.useState<Department | null>(null);
 
   // Hàm fetcher gọi API thực tế
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
+  const fetcher = async (params: { offset: number; limit: number }) => {
     try {
-      const data = await getDepartments({ offset, limit, search: search || undefined });
-      return {
-        items: data.items || [],
-        meta: {
-          total: data.meta?.total || 0,
-          offset: data.meta?.offset || 0,
-          limit: data.meta?.limit || 10,
-          next: data.meta?.next || false,
-        },
-      };
+      return await getDepartments({ ...params, search: search || undefined });
     } catch (error) {
       toast.error('Lỗi khi tải danh sách phòng ban');
       throw new Error('Lỗi khi tải danh sách phòng ban');
