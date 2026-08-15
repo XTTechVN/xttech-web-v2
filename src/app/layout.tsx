@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="flex justify-center items-center h-screen w-screen bg-white" suppressHydrationWarning>
+      <body className="bg-white antialiased min-h-screen" suppressHydrationWarning>
         {children}
         <Toaster position="top-center" />
       </body>
