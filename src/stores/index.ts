@@ -1,5 +1,5 @@
 // Auth
 import useAuthStore from './useAuthStore';
-
-export { useAuthStore };
+import { useAttendances } from './useAttendances';
+export { useAuthStore, useAttendances };
 
