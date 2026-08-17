@@ -1,18 +1,11 @@
-import React, { useState } from 'react';
-import { Modal, Button, Badge, Avatar, Input, Select, TableData, ITableColumn } from '@/components';
+import { useState } from 'react';
+import { Modal, Button, Badge, Avatar, Input, Select, TableData, TableAction, ITableColumn } from '@/components';
 import { toast } from 'react-hot-toast';
 import {
   History,
-  Download,
   Search,
   CheckCircle2,
-  Clock,
-  XCircle,
   FileSpreadsheet,
-  Calendar,
-  User,
-  AlertCircle,
-  ArrowRight,
   TrendingUp,
 } from 'lucide-react';
 
@@ -229,14 +222,17 @@ export default function PayrollTransferHistoryModal({ open, onClose }: Props) {
       minWidth: '100px',
       cell: (row) => (
         <div className="flex justify-center">
-          <Button
-            variant="outline"
-            className="py-1 px-2.5 text-[11px] gap-1 border-slate-200 text-slate-700 hover:bg-slate-100"
-            onClick={() => handleExportBatchLog(row.code)}
-          >
-            <FileSpreadsheet size={13} className="text-teal-700" />
-            Tải file
-          </Button>
+          <TableAction
+            items={[
+              {
+                title: 'Tải file',
+                icon: FileSpreadsheet,
+                size: 18,
+                className: 'text-teal-700 hover:text-teal-800 hover:bg-teal-50',
+                onClick: () => handleExportBatchLog(row.code),
+              },
+            ]}
+          />
         </div>
       ),
     },
