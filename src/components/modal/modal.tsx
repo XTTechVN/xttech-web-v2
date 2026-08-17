@@ -15,6 +15,7 @@ export interface ModalProps {
   footer?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   closeOnOverlayClick?: boolean;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -26,6 +27,7 @@ const Modal: React.FC<ModalProps> = ({
   footer,
   size = 'md',
   closeOnOverlayClick = true,
+  disabled = false,
   className,
 }) => {
   const [mounted, setMounted] = useState(false);
@@ -49,13 +51,13 @@ const Modal: React.FC<ModalProps> = ({
   // Đóng Modal khi nhấn phím Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape' && isOpen && !disabled) {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, disabled]);
 
   if (!mounted) return null;
 
@@ -77,7 +79,7 @@ const Modal: React.FC<ModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={closeOnOverlayClick ? onClose : undefined}
+            onClick={closeOnOverlayClick && !disabled ? onClose : undefined}
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
           />
 
@@ -106,7 +108,8 @@ const Modal: React.FC<ModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                disabled={disabled}
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 aria-label="Close modal"
               >
                 <X size={18} />

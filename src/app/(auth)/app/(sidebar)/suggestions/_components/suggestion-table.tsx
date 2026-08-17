@@ -248,17 +248,16 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
               size: 18,
               onClick: () => handleViewDetails(row),
             },
-            row.status === 'pending' &&
-              row.userId === currentUserId && {
-                title: 'Chỉnh sửa',
-                icon: Pencil,
-                size: 18,
-                onClick: () => {
-                  setSelectedSuggestion(row);
-                  setIsEditing(true);
-                  setDetailModalOpen(true);
-                },
+            row.status === 'pending' && {
+              title: 'Chỉnh sửa',
+              icon: Pencil,
+              size: 18,
+              onClick: () => {
+                setSelectedSuggestion(row);
+                setIsEditing(true);
+                setDetailModalOpen(true);
               },
+            },
             row.status === 'pending' &&
               (isManager || row.userId === currentUserId) && {
                 title: 'Xóa',
@@ -281,7 +280,9 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
     const cat = getSuggestionType(row);
     const catInfo = typeLabels[cat] || typeLabels.other;
 
-    const senderName = row.anonymous ? 'Ẩn danh' : `${row.user?.fullName || 'Người dùng'} ${row.user?.email ? `(${row.user.email})` : ''}`.trim() || 'Ẩn danh';
+    const senderName = row.anonymous
+      ? 'Ẩn danh'
+      : `${row.user?.fullName || 'Người dùng'} ${row.user?.email ? `(${row.user.email})` : ''}`.trim() || 'Ẩn danh';
     const senderAvatar = row.anonymous ? null : row.user?.avatar;
 
     const date = row.createdAt ? new Date(row.createdAt) : null;
@@ -303,12 +304,8 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-[#101718] text-sm leading-tight">
-                {row.title}
-              </span>
-              <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${catInfo.class}`}>
-                {catInfo.label}
-              </span>
+              <span className="font-bold text-[#101718] text-sm leading-tight">{row.title}</span>
+              <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${catInfo.class}`}>{catInfo.label}</span>
             </div>
           </div>
           <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border shrink-0 ${statusInfo.class}`}>
@@ -317,11 +314,7 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
         </div>
 
         {/* Nội dung đề xuất */}
-        {row.content && (
-          <p className="text-[12px] text-[#5E858D] font-normal line-clamp-2 leading-relaxed">
-            {row.content}
-          </p>
-        )}
+        {row.content && <p className="text-[12px] text-[#5E858D] font-normal line-clamp-2 leading-relaxed">{row.content}</p>}
 
         {/* Footer: Thông tin người gửi, Thời gian & Các nút thao tác */}
         <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
@@ -347,7 +340,9 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
             )}
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-slate-700 text-[11px] truncate">{senderName}</span>
-              <span className="text-[10px] text-[#5E858D]">{timeStr} • {dateStr}</span>
+              <span className="text-[10px] text-[#5E858D]">
+                {timeStr} • {dateStr}
+              </span>
             </div>
           </div>
 
