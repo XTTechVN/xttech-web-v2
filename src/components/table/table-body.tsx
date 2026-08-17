@@ -32,7 +32,7 @@ export function TableBody<T>({ data, columns, select }: { data: T[]; columns: IT
                     ...(isSticky ? { left: leftOffset } : {}),
                   }}
                 >
-                  {column.cell(row)}
+                  {column.cell(row, index)}
                 </td>
               );
             })}

@@ -7,5 +7,8 @@ import useDapartmentStore from './useDapartmentStore';
 // Báo giá
 import useQuotationStore from './useQuotationStore';
 
-export { useAuthStore, useDapartmentStore, useQuotationStore };
+import { useAttendances } from './useAttendances';
+
+
+export { useAuthStore, useDapartmentStore, useQuotationStore, useAttendances };
 

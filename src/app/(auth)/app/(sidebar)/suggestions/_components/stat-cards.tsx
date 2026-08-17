@@ -1,12 +1,55 @@
 'use client';
 
 import React from 'react';
-import { MessageSquare, ClipboardList, CheckCircle2, Smile, TrendingUp, Clock, Star, StarHalf } from 'lucide-react';
+import { MessageSquare, ClipboardList, CheckCircle2, Smile, TrendingUp, TrendingDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { getSuggestions } from '@/actions/suggestion';
 import { Suggestion } from '@/types';
 import { Skeleton } from '@/components';
 import toast from 'react-hot-toast';
+
+// Thẻ thống kê dùng chung cho suggestions
+const StatCart = ({
+  title,
+  value,
+  icon,
+  trend,
+  trendDirection = 'up',
+  onClick,
+}: {
+  title: string;
+  value: number | string;
+  icon: React.ReactNode;
+  trend?: number;
+  trendDirection?: 'up' | 'down';
+  onClick?: () => void;
+}) => {
+  const isUp = trendDirection === 'up';
+
+  return (
+    <div
+      className="bg-white rounded-xl md:rounded-2xl shadow-xs p-3 md:p-4 flex flex-col gap-2 md:gap-4 hover:shadow-sm transition w-full cursor-pointer border border-gray-100"
+      onClick={onClick}
+    >
+      <div className="flex items-center relative">
+        <div className={`p-2 md:p-3 rounded-lg md:rounded-xl bg-primary/5 text-primary [&>svg]:w-4 [&>svg]:h-4 md:[&>svg]:w-5 md:[&>svg]:h-5`}>
+          {icon}
+        </div>
+        {trend !== undefined && (
+          <div
+            className={`px-2 py-0.5 absolute right-0 top-0 rounded-full text-[10px] md:text-xs font-semibold flex items-center gap-0.5 md:gap-1 ${isUp ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}
+          >
+            {isUp ? <TrendingUp className="w-3 h-3 md:w-4 md:h-4" /> : <TrendingDown className="w-3 h-3 md:w-4 md:h-4" />} {Math.abs(trend)}%
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-1 md:gap-3">
+        <span className="text-gray-500 text-[10px] md:text-xs font-medium truncate whitespace-nowrap overflow-hidden">{title}</span>
+        <span className="text-lg md:text-2xl font-bold text-primary">{value}</span>
+      </div>
+    </div>
+  );
+};
 
 export default function StatCards({ containerWidth }: { containerWidth?: number }) {
   // Fetch suggestions to calculate accurate statistics
@@ -59,86 +102,38 @@ export default function StatCards({ containerWidth }: { containerWidth?: number 
   const completedCount = proposals.filter((p: Suggestion) => p.status === 'approve' || p.status === 'reject').length;
   const resolvePercent = totalFeedback > 0 ? Math.round((completedCount / totalFeedback) * 100) : 0;
 
+  const suggestionStats = [
+    {
+      title: 'Tổng số đề xuất',
+      value: totalFeedback,
+      icon: <MessageSquare />,
+      trend: 12,
+      trendDirection: 'up' as const,
+    },
+    {
+      title: 'Đang xử lý',
+      value: pendingCount,
+      icon: <ClipboardList />,
+    },
+    {
+      title: 'Đã hoàn thành',
+      value: completedCount,
+      icon: <CheckCircle2 />,
+      trend: resolvePercent,
+      trendDirection: 'up' as const,
+    },
+    {
+      title: 'Độ hài lòng TB',
+      value: 4.8,
+      icon: <Smile />,
+    },
+  ];
+
   return (
     <div className={`${gridClass} gap-4 select-none w-full`}>
-      {/* Card 1: Tổng số đề xuất */}
-      <div className="bg-white border border-slate-200/60 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-xs flex flex-col gap-2 hover:shadow-md transition-all duration-300">
-        <div className="flex justify-between items-start w-full">
-          <div className="flex flex-col gap-1">
-            <span className="text-slate-500 font-semibold text-[13px] md:text-[14px] leading-5">Tổng số đề xuất</span>
-            <span className="text-[32px] md:text-[48px] font-bold text-primary leading-none">{Intl.NumberFormat('en-US').format(totalFeedback)}</span>
-          </div>
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-[#e6f6f8] flex items-center justify-center shrink-0">
-            <MessageSquare className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 text-primary font-medium text-[11px] md:text-[12px] leading-tight">
-          <TrendingUp className="w-3.5 h-3.5 shrink-0" />
-          <span>+12% so với tháng trước</span>
-        </div>
-      </div>
-
-      {/* Card 2: Đang xử lý */}
-      <div className="bg-white border border-slate-200/60 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-xs flex flex-col gap-2 hover:shadow-md transition-all duration-300">
-        <div className="flex justify-between items-start w-full">
-          <div className="flex flex-col gap-1">
-            <span className="text-slate-500 font-medium text-[13px] md:text-[14px] leading-5">Đang xử lý</span>
-            <span className="text-[32px] md:text-[48px] font-bold text-[#5C647A] leading-none">
-              {Intl.NumberFormat('en-US').format(pendingCount)}
-            </span>
-          </div>
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-[#f0f1fa] flex items-center justify-center shrink-0">
-            <ClipboardList className="w-5 h-5 md:w-6 md:h-6 text-[#5c68ad]" />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 text-slate-500 font-medium text-[11px] md:text-[12px] leading-tight">
-          <Clock className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-          <span>Trung bình 24h xử lý</span>
-        </div>
-      </div>
-
-      {/* Card 3: Đã hoàn thành */}
-      <div className="bg-white border border-slate-200/60 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-xs flex flex-col gap-2 hover:shadow-md transition-all duration-300">
-        <div className="flex justify-between items-start w-full">
-          <div className="flex flex-col gap-1">
-            <span className="text-slate-500 font-medium text-[13px] md:text-[14px] leading-5">Đã hoàn thành</span>
-            <span className="text-[32px] md:text-[48px] font-bold text-[#005e70] leading-none">
-              {Intl.NumberFormat('en-US').format(completedCount)}
-            </span>
-          </div>
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-[#e6f6f8] flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-[#005e70]" />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 text-[#005e70] font-medium text-[11px] md:text-[12px] leading-tight">
-          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-          <span>Tỷ lệ giải quyết {resolvePercent > 0 ? `${resolvePercent}%` : '0%'}</span>
-        </div>
-      </div>
-
-      {/* Card 4: Độ hài lòng TB */}
-      <div className="bg-white border border-slate-200/60 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-xs flex flex-col gap-2 hover:shadow-md transition-all duration-300">
-        <div className="flex justify-between items-start w-full">
-          <div className="flex flex-col gap-1">
-            <span className="text-slate-500 font-medium text-[13px] md:text-[14px] leading-5">Độ hài lòng TB</span>
-            <span className="text-[32px] md:text-[48px] font-bold text-[#d97706] leading-none">4.8</span>
-          </div>
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-[#fef3c7] flex items-center justify-center shrink-0">
-            <Smile className="w-5 h-5 md:w-6 md:h-6 text-[#d97706]" />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-0.5">
-          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-          <StarHalf className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-        </div>
-      </div>
+      {suggestionStats.map((stat, index) => (
+        <StatCart key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection} />
+      ))}
     </div>
   );
 }

@@ -19,6 +19,10 @@ export const acceptedSections = [
   'extra-options',
   'formulas'
 ];
+  'dashboard', 'attendances-root', 'attendances', 'attendances-adjustments', 'attendances-payroll',
+  'employees',
+  'suggestions',
+  'departments'];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
   roles?: UserRole[];
@@ -69,11 +73,43 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         ],
       },
       {
-        id: 'attendances',
-        label: 'Bảng chấm công',
+        id: 'attendances-root',
+        label: 'Chấm công & Thời gian',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/attendances',
-        roles: ['admin', 'hr'],
+        roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+        subItems: [
+          {
+            id: 'attendances',
+            label: 'Bảng công tháng (Admin)',
+            href: '/app/attendances',
+            roles: ['super', 'admin', 'hr'],
+          },
+          // {
+          //   id: 'attendances-policy',
+          //   label: 'Chính sách chấm công',
+          //   href: '/app/attendances/policy',
+          //   roles: ['super', 'admin', 'hr'],
+          // },
+          // {
+          //   id: 'shifts',
+          //   label: 'Ca làm việc',
+          //   href: '/app/shifts',
+          //   roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+          // },
+          {
+            id: 'attendances-payroll',
+            label: 'Tính công & Dữ liệu lương',
+            href: '/app/attendances/payroll',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+          },
+          {
+            id: 'attendances-adjustments',
+            label: 'Danh sách khiếu nại',
+            href: '/app/attendances/adjustments',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+          },
+        ],
       },
       {
         id: 'shifts',

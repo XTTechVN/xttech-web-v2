@@ -40,3 +40,11 @@ export * from './extra-option';
 // Formulas
 export * from './formula';
 
+// Department
+export * from './department';
+
+// Position
+export * from './position';
+
+// Attendance
+export * from './attendance';
