@@ -71,8 +71,8 @@ export type AttendanceStatus =
     | "early_leave"
     | "absent"
     | "half_day"
-    | "normal";
-
+    | "normal"
+    | "present";
 
 
 export interface Attendance {

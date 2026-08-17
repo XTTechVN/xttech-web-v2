@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Modal, Button, Select, Input, Textarea } from "@/components";
+import { Modal, Button, Select, Input, Textarea, DateInput } from "@/components";
 import { Attendance } from "@/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -60,9 +60,31 @@ export default function EditAttendanceModal({
         setForm({ ...form, [key]: value });
     };
 
+    const todayStr = new Date().toISOString().split("T")[0];
+
     const handleUpdate = () => {
         if (!form.id) {
             toast.error("Không tìm thấy bản ghi chấm công");
+            return;
+        }
+
+        if (!form.workDate) {
+            toast.error("Vui lòng chọn ngày làm việc");
+            return;
+        }
+
+        // if (form.workDate > todayStr) {
+        //     toast.error("Ngày làm việc phải nhỏ hơn hoặc bằng ngày hôm nay");
+        //     return;
+        // }
+
+        if (form.checkIn && form.checkOut && form.checkOut < form.checkIn) {
+            toast.error("Thời gian check-out phải lớn hơn hoặc bằng thời gian check-in");
+            return;
+        }
+
+        if (form.totalHours != null && form.totalHours < 0) {
+            toast.error("Tổng số giờ làm việc không được âm");
             return;
         }
 
@@ -116,9 +138,9 @@ export default function EditAttendanceModal({
                     />
 
                     {/* Work Date */}
-                    <Input
+                    <DateInput
                         label="Ngày làm việc"
-                        type="date"
+                        max={todayStr}
                         value={form.workDate || ""}
                         onChange={(e) => handleChange("workDate", e.target.value)}
                         fullWidth

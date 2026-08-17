@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Modal, Button, Select, Input, Textarea } from '@/components';
+import { Modal, Button, Select, Input, Textarea, DateInput } from '@/components';
 import toast from 'react-hot-toast';
 import { updateAdjustmentRequest } from "@/actions";
 import type { AttendanceAdjustmentRequest, RequestType, AttendanceAdjustmentRequestUpdate } from "@/types";
@@ -123,9 +123,8 @@ export default function EditAdjustmentModal({ open, data, onClose, onSuccess }: 
             fullWidth
           />
 
-          <Input
+          <DateInput
             label="Ngày làm việc"
-            type="date"
             value={form.workDate}
             onChange={(e) => updateField('workDate', e.target.value)}
             fullWidth

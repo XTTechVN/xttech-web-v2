@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Modal, Button, Badge, Textarea } from '@/components';
 import { CheckCircle2, XCircle, Clock, Calendar, User, FileText, AlertCircle } from 'lucide-react';
 import type { AttendanceAdjustmentRequest, RequestType } from '@/types';
+import { formatDateVN } from '../attendance-modal';
 
 interface Props {
   open: boolean;
@@ -97,7 +98,7 @@ export default function ReviewAdjustmentModal({
             <span className="font-semibold text-slate-500 flex items-center gap-1.5">
               <Calendar size={13} className="text-slate-400" /> Ngày làm việc:
             </span>
-            <span className="font-bold text-slate-800">{data.workDate}</span>
+            <span className="font-bold text-slate-800">{formatDateVN(data.workDate)}</span>
           </div>
           <div className="flex items-center justify-between border-t border-slate-200/50 pt-2">
             <span className="font-semibold text-slate-500 flex items-center gap-1.5">

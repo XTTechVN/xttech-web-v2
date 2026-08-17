@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Modal, Button, Select, Input, Textarea } from "@/components";
+import { Modal, Button, Select, Input, Textarea, DateInput } from "@/components";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { AttendanceCreate, AttendanceStatus } from "@/types";
@@ -109,6 +109,8 @@ export default function AddAttendanceModal({
         { value: "absent", label: "Vắng mặt" },
     ];
 
+    const todayStr = new Date().toISOString().split("T")[0];
+
     const handleSubmit = () => {
         if (!form.userId) {
             toast.error("Vui lòng chọn nhân viên");
@@ -117,6 +119,16 @@ export default function AddAttendanceModal({
 
         if (!form.workDate) {
             toast.error("Vui lòng chọn ngày làm việc");
+            return;
+        }
+
+        if (form.workDate > todayStr) {
+            toast.error("Ngày làm việc phải nhỏ hơn hoặc bằng ngày hôm nay");
+            return;
+        }
+
+        if (form.checkIn && form.checkOut && form.checkOut < form.checkIn) {
+            toast.error("Thời gian check-out phải lớn hơn hoặc bằng thời gian check-in");
             return;
         }
 
@@ -165,9 +177,9 @@ export default function AddAttendanceModal({
                     />
 
                     {/* Work Date */}
-                    <Input
+                    <DateInput
                         label="Ngày làm việc *"
-                        type="date"
+                        max={todayStr}
                         value={form.workDate}
                         onChange={(e) => updateField("workDate", e.target.value)}
                         fullWidth

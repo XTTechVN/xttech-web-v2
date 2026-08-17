@@ -18,6 +18,8 @@ import {
   Navigation,
 } from 'lucide-react';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -34,6 +36,7 @@ interface GpsCoords {
 }
 
 export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasCheckedIn = false }: Props) {
+  const queryClient = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -199,6 +202,8 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
       );
       const label = type === 'check_in' ? 'Check-in' : 'Check-out';
       toast.success(`${label} thành công! 🎉`);
+      queryClient.invalidateQueries({ queryKey: ['attendances'] });
+      queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'] });
       onSuccess?.();
       onClose();
     } catch (err: unknown) {

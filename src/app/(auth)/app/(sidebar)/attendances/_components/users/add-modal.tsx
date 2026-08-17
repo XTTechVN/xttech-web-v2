@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Modal, Button, Input, Select, Textarea } from "@/components";
+import { Modal, Button, Input, Select, Textarea, DateInput } from "@/components";
 import { createUser } from "@/actions";
 import { UserCreate } from "@/types";
 import { Upload, X, User } from "lucide-react";
@@ -181,16 +181,14 @@ export default function CreateUserModal({ open, onClose, onSuccess }: Props) {
                         onChange={(e) => updateField("gender", e.target.value)}
                         fullWidth
                     />
-                    <Input
+                    <DateInput
                         label="Ngày sinh"
-                        type="date"
                         value={form.birthday ?? ""}
                         onChange={(e) => updateField("birthday", e.target.value || null)}
                         fullWidth
                     />
-                    <Input
+                    <DateInput
                         label="Ngày vào làm"
-                        type="date"
                         value={form.joinedAt ?? ""}
                         onChange={(e) => updateField("joinedAt", e.target.value || null)}
                         fullWidth

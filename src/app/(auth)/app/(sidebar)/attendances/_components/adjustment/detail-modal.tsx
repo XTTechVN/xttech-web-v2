@@ -3,6 +3,7 @@
 import { Modal, Button, Badge } from '@/components';
 import { Clock, Calendar, User, FileText, CheckCircle, XCircle } from 'lucide-react';
 import type { AttendanceAdjustmentRequest } from '@/types';
+import { formatDateVN } from '../attendance-modal';
 
 interface Props {
   open: boolean;
@@ -77,7 +78,7 @@ export default function AdjustmentDetailModal({ open, data, onClose, onApprove, 
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-1">
           <InfoRow
             label={<><Calendar size={13} className="inline mr-1" />Ngày làm việc</>}
-            value={data.workDate}
+            value={formatDateVN(data.workDate)}
           />
           <InfoRow
             label={<><FileText size={13} className="inline mr-1" />Loại yêu cầu</>}

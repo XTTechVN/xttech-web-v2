@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { Modal, Button, Select, Input, Textarea } from "@/components";
+import { Modal, Button, Select, Input, Textarea, DateInput } from "@/components";
 import toast from "react-hot-toast";
 import { createAdjustmentRequest, getUsers } from "@/actions";
 import type {
@@ -10,8 +10,9 @@ import type {
   Attendance,
   AdjustmentForm,
 } from "@/types";
-import { useAttendances, useAuthStore } from "@/stores";
+import { useAuthStore, useAttendances } from "@/stores";
 import { useQuery } from "@tanstack/react-query";
+import { formatDateVN } from "../attendance-modal";
 
 interface Props {
   open: boolean;
@@ -199,23 +200,6 @@ export default function AddAdjustmentModal({
     !data &&
     (form.requestType === "forgot_attendance");
 
-  const selectedAttendance = useMemo(() => {
-    if (data) {
-      return data;
-    }
-    if (!form.userId || !form.workDate || isMissingAttendance) {
-      return undefined;
-    }
-    return attendances.find((attendance) => {
-      const attendanceUserId = attendance.userId ?? attendance.user?.id;
-      const attendanceDate = attendance.workDate;
-      return (
-        String(attendanceUserId) === String(form.userId) &&
-        String(attendanceDate).slice(0, 10) === form.workDate
-      );
-    });
-  }, [data, attendances, form.userId, form.workDate, isMissingAttendance]);
-
   const handleSelectUser = (userId: string) => {
     setForm((prev) => ({
       ...prev,
@@ -313,6 +297,8 @@ export default function AddAdjustmentModal({
     }));
   };
 
+  const todayStr = new Date().toISOString().split("T")[0];
+
   const handleSubmit = async () => {
     if (!form.userId) {
       toast.error("Vui lòng chọn nhân viên");
@@ -324,8 +310,18 @@ export default function AddAdjustmentModal({
       return;
     }
 
+    if (form.workDate > todayStr) {
+      toast.error("Ngày làm việc phải nhỏ hơn hoặc bằng ngày hôm nay");
+      return;
+    }
+
     if (!form.reason.trim()) {
       toast.error("Vui lòng nhập lý do");
+      return;
+    }
+
+    if (form.requestedCheckIn && form.requestedCheckOut && form.requestedCheckOut < form.requestedCheckIn) {
+      toast.error("Thời gian check-out yêu cầu phải lớn hơn hoặc bằng thời gian check-in yêu cầu");
       return;
     }
 
@@ -402,14 +398,13 @@ export default function AddAdjustmentModal({
 
     setIsSubmitting(true);
     try {
-      const res = await createAdjustmentRequest(payload);
-      // console.log(res);
+      await createAdjustmentRequest(payload);
       toast.success("Tạo khiếu nại thành công");
       resetForm();
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      // handleCreateError(err);
+      handleCreateError(err);
     } finally {
       setIsSubmitting(false);
     }
@@ -487,13 +482,13 @@ export default function AddAdjustmentModal({
             fullWidth
           />
 
-          <Input
+          <DateInput
             label="Ngày làm việc *"
             value={form.workDate}
             onChange={(e) => handleSelectWorkDate(e.target.value)}
             disabled={Boolean(data)}
             fullWidth
-            type="date"
+            max={todayStr}
           />
         </div>
 
@@ -517,11 +512,11 @@ export default function AddAdjustmentModal({
               </p>
             ) : selectedAttendance ? (
               <p className="text-green-600">
-                Đã tìm thấy dữ liệu chấm công ngày {form.workDate}.
+                Đã tìm thấy dữ liệu chấm công ngày {formatDateVN(form.workDate)}.
               </p>
             ) : (
               <p className="text-red-500">
-                Không tìm thấy dữ liệu chấm công ngày {form.workDate}.
+                Không tìm thấy dữ liệu chấm công ngày {formatDateVN(form.workDate)}.
               </p>
             )}
           </div>

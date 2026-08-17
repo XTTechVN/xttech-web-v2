@@ -37,6 +37,7 @@ import AdjustmentDetailModal from '@/app/(auth)/app/(sidebar)/attendances/_compo
 import ReviewAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/review-modal';
 import DeleteAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/delete-modal';
 import { getAdjustmentRequests, updateAdjustmentRequest, deleteAdjustmentRequest, getUsers } from '@/actions';
+import { formatDateVN } from '../_components/attendance-modal';
 import Loading from '@/app/(auth)/app/loading';
 import { useAuthStore } from '@/stores';
 import StatCart from '../../dashboard/_components/stats-card';
@@ -71,6 +72,15 @@ export default function AdjustmentsSidebarPage() {
     ),
     [currentUser]
   );
+
+  // Sync sidebar active item for 'Danh sách khiếu nại'
+  useEffect(() => {
+    const buttons = Array.from(document.querySelectorAll('button'));
+    const appealButton = buttons.find((btn) => btn.textContent?.trim() === 'Danh sách khiếu nại');
+    if (appealButton && !appealButton.className.includes('text-primary')) {
+      appealButton.click();
+    }
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<AdjustmentStatus | undefined>();
@@ -201,7 +211,7 @@ export default function AdjustmentsSidebarPage() {
     return Array.from({ length: 31 }, (_, i) => {
       const day = String(i + 1).padStart(2, '0');
       return {
-        label: `2026-08-${day}`,
+        label: `${day}/08/2026`,
         value: `2026-08-${day}`,
       };
     });
@@ -258,6 +268,22 @@ export default function AdjustmentsSidebarPage() {
     const rawItems = response?.items || [];
     setAttendanceAdjustments(rawItems);
     let items: AdjustmentRecord[] = rawItems;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase().trim();
+      items = items.filter((item) => {
+        const empName = getEmployeeName(item.userId).toLowerCase();
+        const reason = (item.reason || '').toLowerCase();
+        const workDate = (item.workDate || '').toLowerCase();
+        const typeLabel = (REQUEST_TYPE_LABEL[item.requestType] || '').toLowerCase();
+        return (
+          empName.includes(q) ||
+          reason.includes(q) ||
+          workDate.includes(q) ||
+          typeLabel.includes(q) ||
+          String(item.id).includes(q)
+        );
+      });
+    }
     if (filterType) {
       items = items.filter((item) => item.requestType === filterType);
     }
@@ -307,13 +333,17 @@ export default function AdjustmentsSidebarPage() {
   };
 
   const handleDeleteConfirm = async () => {
+    if (!deletingId) return;
     setIsDeleting(true);
     try {
-      await deleteAdjustmentRequest(deletingId!);
-      toast.success('Đã xóa khiếu nại');
+      await deleteAdjustmentRequest(deletingId);
+      toast.success('Đã xóa khiếu nại thành công');
       setShowDeleteModal(false);
       setDeletingId(null);
       refreshData();
+    } catch (err: any) {
+      console.error('Delete adjustment error:', err);
+      toast.error(err?.response?.data?.message || 'Có lỗi xảy ra khi xóa khiếu nại');
     } finally {
       setIsDeleting(false);
     }
@@ -371,7 +401,7 @@ export default function AdjustmentsSidebarPage() {
               </h4>
             </div>
             <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-              <Calendar size={12} className="text-slate-400" /> {row.workDate}
+              <Calendar size={12} className="text-slate-400" /> {formatDateVN(row.workDate)}
             </p>
           </div>
           <Badge variant={statusCfg.variant} pill>
@@ -499,7 +529,7 @@ export default function AdjustmentsSidebarPage() {
       key: 'workDate',
       label: 'Ngày làm việc',
       minWidth: '130px',
-      cell: (row) => <span className="text-xs font-semibold text-slate-700">{row.workDate}</span>,
+      cell: (row) => <span className="text-xs font-semibold text-slate-700">{formatDateVN(row.workDate)}</span>,
     },
     {
       key: 'requestType',

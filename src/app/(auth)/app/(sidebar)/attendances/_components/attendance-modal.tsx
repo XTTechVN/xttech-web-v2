@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Mail,
 } from "lucide-react";
+import { BASE_MINIO_URL } from '@/config';
 
 interface Props {
   open: boolean;
@@ -66,7 +67,15 @@ export default function AttendanceDetailModal({
       </Button>
     </div>
   );
+  const PLACEHOLDER_IMAGE = 'https://picsum.photos/600/400';
+  const getAttendanceImageUrl = (path?: string | null) => {
+    // Không có ảnh hoặc API trả dữ liệu mẫu "string"
+    if (!path || path === 'string') {
+      return PLACEHOLDER_IMAGE;
+    }
 
+    return `${BASE_MINIO_URL}${path}`;
+  };
   return (
     <Modal
       isOpen={open}
@@ -116,7 +125,7 @@ export default function AttendanceDetailModal({
             <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200/60 w-full sm:w-auto justify-between sm:justify-end">
               <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 shadow-2xs">
                 <Calendar size={14} className="text-teal-600" />
-                <span>{data.workDate || "-"}</span>
+                <span>{formatDateVN(data.workDate)}</span>
               </div>
               <Badge variant={statusInfo.variant} pill className="px-3.5 py-1.5 text-xs font-bold shadow-2xs">
                 {statusInfo.label}
@@ -201,7 +210,7 @@ export default function AttendanceDetailModal({
               {data.imgCheckinPath ? (
                 <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 group">
                   <img
-                    src={data.imgCheckinPath}
+                    src={getAttendanceImageUrl(data.imgCheckinPath)}
                     alt="Check In Photo"
                     className="h-full w-full object-cover transition transform duration-300 group-hover:scale-105"
                   />
@@ -263,7 +272,7 @@ export default function AttendanceDetailModal({
               {data.imgCheckoutPath ? (
                 <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 group">
                   <img
-                    src={data.imgCheckoutPath}
+                    src={getAttendanceImageUrl(data.imgCheckoutPath)}
                     alt="Check Out Photo"
                     className="h-full w-full object-cover transition transform duration-300 group-hover:scale-105"
                   />
@@ -317,4 +326,15 @@ export default function AttendanceDetailModal({
       </div>
     </Modal>
   );
+}
+
+export function formatDateVN(dateStr?: string | null): string {
+  if (!dateStr) return "-";
+  const rawDate = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+  const parts = rawDate.split("-");
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+  }
+  return dateStr;
 }

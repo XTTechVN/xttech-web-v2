@@ -22,8 +22,8 @@ export const getUsers = async (params?: UserQueryParams): Promise<GetUsersRespon
   }
 };
 
-export const getUser = async () => {};
-export const createUser = async () => {};
+export const getUser = async () => { };
+export const createUser = async () => { };
 export const updateUser = async (): Promise<User> => {
   try {
     const res = await api.put(`/api/v1/users/${id}`, data);
@@ -32,4 +32,4 @@ export const updateUser = async (): Promise<User> => {
     throw new Error('Lỗi khi cập nhật người dùng');
   }
 };
-export const deleteUser = async () => {};
+export const deleteUser = async () => { };

@@ -60,6 +60,7 @@ const statusVariantMap: Record<
   absent: 'danger',
   half_day: 'warning',
   early_leave: 'warning',
+  present: 'success',
 };
 
 
@@ -69,6 +70,7 @@ const getStatusVariant = (status?: string | null) => {
 const getStatusBadge = (status?: string | null) => {
   const statusTextMap: Record<string, string> = {
     normal: 'Đúng giờ',
+    present: 'Đúng giờ',
     late: 'Đi muộn',
     absent: 'Vắng mặt',
     half_day: 'Nghỉ nửa ngày',
@@ -247,7 +249,7 @@ export default function PayrollDataPage() {
     return Array.from({ length: 31 }, (_, i) => {
       const day = String(i + 1).padStart(2, '0');
       return {
-        label: `2026-08-${day}`,
+        label: `${day}/08/2026`,
         value: `2026-08-${day}`,
       };
     });
@@ -809,7 +811,7 @@ export default function PayrollDataPage() {
                   fetcher={fetcher}
                   columns={attendanceColumns}
                   search={{
-                    placeholder: 'Tìm kiếm theo ngày, ghi chú, trạng thái...',
+                    placeholder: 'Tìm kiếm theo GHI CHÚ',
                     value: searchQuery,
                     onChange: (value) => setSearchQuery(value),
                   }}
@@ -913,6 +915,10 @@ export default function PayrollDataPage() {
       <AutoTimekeepingModal
         open={showTimekeepingModal}
         onClose={() => setShowTimekeepingModal(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'] });
+          queryClient.invalidateQueries({ queryKey: ['attendances'] });
+        }}
         hasCheckedIn={hasCheckedInToday}
       />
     </div >

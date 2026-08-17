@@ -10,8 +10,9 @@ import {
   Heading,
   ITableColumn,
   ITableFilterProps,
-  Avatar
+  Avatar,
 } from '@/components';
+import DeleteAppealModal from './_components/delete-modal';
 import { toast } from 'react-hot-toast';
 import {
   Plus,
@@ -37,6 +38,7 @@ import {
   UserCheck2
 } from 'lucide-react';
 import AddAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/add-modal";
+import { formatDateVN } from "./_components/attendance-modal";
 import EditAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/edit-modal";
 import AttendanceDetailModal from "@/app/(auth)/app/(sidebar)/attendances/_components/attendance-modal";
 import AddUserModal from "@/app/(auth)/app/(sidebar)/attendances/_components/users/add-modal";
@@ -50,6 +52,9 @@ import { Attendance, AttendanceAdjustmentRequest, AttendanceStatus } from '@/typ
 import StatCart from '../dashboard/_components/stats-card';
 import AddAdjustmentModal from './_components/adjustment/add-modal';
 import ReviewAdjustmentModal from './_components/adjustment/review-modal';
+import { BASE_MINIO_URL } from '@/config';
+
+
 
 type FilterOption = {
   value: string | undefined;
@@ -132,6 +137,11 @@ export default function AttendancesPage() {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showTimekeepingModal, setShowTimekeepingModal] = useState(false);
   const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+
+  // Modal Xóa chấm công
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
 
   const pathname = usePathname();
@@ -283,6 +293,7 @@ export default function AttendancesPage() {
       absent: "Vắng mặt",
       early_leave: "Về sớm",
       half_day: "Nửa ngày",
+      present: "Đúng giờ",
     };
 
     return map[status ?? ""] ?? "Không xác định";
@@ -306,26 +317,26 @@ export default function AttendancesPage() {
       const day = String(i + 1).padStart(2, '0');
 
       return {
-        label: `2026-08-${day}`,
+        label: `${day}/08/2026`,
         value: `2026-08-${day}`,
       };
     }
   );
 
-  const departmentOptions: FilterOption[] = [
-    ...new Map(
-      (departments?.items ?? []).map((item) => [
+  const departmentOptions: FilterOption[] = Array.from(
+    new Map(
+      (departments?.items ?? []).map((item: any) => [
         item.id,
         {
           label: item.name ?? 'Không xác định',
           value: String(item.id),
         },
       ])
-    ).values(),
-  ];
+    ).values()
+  ) as FilterOption[];
 
-  const statusOptions: FilterOption[] = [
-    ...new Map(
+  const statusOptions: FilterOption[] = Array.from(
+    new Map(
       attendances
         .filter((item) => item.status)
         .map((item) => [
@@ -335,8 +346,8 @@ export default function AttendancesPage() {
             label: getStatusLabel(item.status),
           },
         ])
-    ).values(),
-  ];
+    ).values()
+  ) as FilterOption[];
   // Cấu hình filters truyền vào TableData
   const tableFilters: ITableFilterProps[] = [
     {
@@ -347,10 +358,6 @@ export default function AttendancesPage() {
         setFilterEmployeeId(val);
       },
     },
-
-
-
-
     {
       label: 'Phòng ban',
       value: filterDepartment,
@@ -359,19 +366,18 @@ export default function AttendancesPage() {
         setFilterDepartment(val);
       },
     },
-
-    {
-      label: 'Ca làm',
-      value: filterShift,
-      options: [
-        { label: 'Ca sáng', value: 'morning' },
-        { label: 'Ca chiều', value: 'afternoon' },
-        { label: 'Ca tối', value: 'night' },
-      ],
-      onChange: (val: string | undefined) => {
-        setFilterShift(val);
-      },
-    },
+    // {
+    //   label: 'Ca làm',
+    //   value: filterShift,
+    //   options: [
+    //     { label: 'Ca sáng', value: 'morning' },
+    //     { label: 'Ca chiều', value: 'afternoon' },
+    //     { label: 'Ca tối', value: 'night' },
+    //   ],
+    //   onChange: (val: string | undefined) => {
+    //     setFilterShift(val);
+    //   },
+    // },
     {
       label: 'Từ ngày',
       value: filterStartDate,
@@ -532,7 +538,7 @@ export default function AttendancesPage() {
         {/* Date & Hours Badge */}
         <div className="flex items-center justify-between text-xs">
           <span className="font-medium text-slate-500 flex items-center gap-1">
-            <Calendar size={13} className="text-slate-400" /> {row.workDate}
+            <Calendar size={13} className="text-slate-400" /> {formatDateVN(row.workDate)}
           </span>
           <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-full">
             {row.totalHours ?? 0} giờ công
@@ -588,16 +594,30 @@ export default function AttendancesPage() {
           </button>
           <button
             type="button"
-            onClick={() => handleDelete(row)}
+            onClick={() => {
+              // handleDelete(row)
+              alert("Xóa");
+            }}
             className="flex items-center gap-1 text-xs text-red-500 font-medium px-2 py-1 rounded-lg hover:bg-red-50 transition"
           >
             <Trash2 size={13} /> Xóa
           </button>
         </div>
-      </div>
+      </div >
     );
   };
+  const PLACEHOLDER_IMAGE = 'https://picsum.photos/600/400';
+  const formatTime = (time?: string | null) => {
+    return time ? time.split('.')[0] : '-';
+  };
+  const getAttendanceImageUrl = (path?: string | null) => {
+    // Không có ảnh hoặc API trả dữ liệu mẫu "string"
+    if (!path || path === 'string') {
+      return PLACEHOLDER_IMAGE;
+    }
 
+    return `${BASE_MINIO_URL}${path}`;
+  };
   // Cấu hình các cột cho Desktop View
   const columns: ITableColumn<Attendance>[] = [
     {
@@ -605,7 +625,7 @@ export default function AttendancesPage() {
       label: 'Ngày làm việc',
       minWidth: '60px',
       cell: (row) => (
-        <span className="font-medium text-slate-500">{row.workDate}</span>
+        <span className="font-medium text-slate-500">{formatDateVN(row.workDate)}</span>
       ),
     },
     {
@@ -626,11 +646,11 @@ export default function AttendancesPage() {
       cell: (row) => (
         <div className="flex items-center gap-2">
           <img
-            src={row.imgCheckinPath || 'https://picsum.photos/600/400'}
+            src={getAttendanceImageUrl(row.imgCheckinPath)}
             alt={row.user?.fullName || 'User'}
             className="h-10 w-10 rounded-full object-cover"
           />
-          <span className="font-medium text-slate-500">{row.checkIn || '-'}</span>
+          <span className="font-medium text-slate-500">{formatTime(row.checkIn) || '-'}</span>
         </div>
       ),
     },
@@ -641,11 +661,11 @@ export default function AttendancesPage() {
       cell: (row) => (
         <div className="flex items-center gap-2">
           <img
-            src={row.imgCheckoutPath || 'https://picsum.photos/600/400'}
+            src={getAttendanceImageUrl(row.imgCheckoutPath)}
             alt={row.user?.fullName || 'User'}
             className="h-10 w-10 rounded-full object-cover"
           />
-          <span className="font-medium text-slate-500">{row.checkOut || '-'}</span>
+          <span className="font-medium text-slate-500">{formatTime(row.checkOut) || '-'}</span>
         </div>
       ),
     },
@@ -679,6 +699,7 @@ export default function AttendancesPage() {
           absent: 'danger',
           half_day: 'warning',
           early_leave: 'warning',
+          present: 'success',
         };
 
 
@@ -700,10 +721,10 @@ export default function AttendancesPage() {
       minWidth: '120px',
       cell: (row) => (
         <div className="flex items-center">
-          <Tooltip content="Khiếu nại" position='top'>
+          <Tooltip content="Khiếu nại" position="top">
             <button
-              type='button'
-              className='flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition'
+              type="button"
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition"
               onClick={() => {
                 setSelectedRow(row);
                 setShowAdjustmentModal(true);
@@ -742,7 +763,10 @@ export default function AttendancesPage() {
           <Tooltip content="Xóa chấm công" position="top">
             <button
               type="button"
-              onClick={() => handleDelete(row)}
+              onClick={() => {
+                setDeletingId(row.id);
+                setShowDeleteModal(true);
+              }}
               className="flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition"
             >
               <Trash2 size={15} />
@@ -753,11 +777,20 @@ export default function AttendancesPage() {
     },
   ];
 
-  const handleDelete = async (row: Attendance) => {
-    if (!confirm('Chắc chắn xóa?')) return;
-    await deleteAttendance(row.id);
-    queryClient.invalidateQueries({ queryKey: ['attendances'] });
-    toast.success('Đã xóa chấm công');
+  const handleDeleteConfirm = async () => {
+    if (!deletingId) return;
+    setIsDeleting(true);
+    try {
+      await deleteAttendance(deletingId);
+      toast.success('Đã xóa bản ghi chấm công');
+      setShowDeleteModal(false);
+      setDeletingId(null);
+      queryClient.invalidateQueries({ queryKey: ['attendances'] });
+    } catch {
+      toast.error('Có lỗi xảy ra khi xóa bản ghi chấm công');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const attendanceStats = [
@@ -987,7 +1020,6 @@ export default function AttendancesPage() {
                 </p>
               ) : (
                 pendingAdjustmentRequests.map((item) => {
-                  console.log("Item:", item);
                   const titleDisplay = item.reviewNote || (
                     item.requestType === 'check_in'
                       ? 'Điều chỉnh giờ vào muộn'
@@ -995,10 +1027,24 @@ export default function AttendancesPage() {
                         ? 'Điều chỉnh giờ ra'
                         : 'Điều chỉnh giờ vào & ra'
                   );
-                  const formattedTime = item.updatedAt
-                    ? new Date(item.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' trước'
-                    : 'Gần đây';
+                  const formatDateTime = (dateString?: string | null) => {
+                    if (!dateString) return 'Gần đây';
 
+                    const date = new Date(dateString);
+
+                    if (isNaN(date.getTime())) return 'Không xác định';
+
+                    const d = String(date.getDate()).padStart(2, '0');
+                    const m = String(date.getMonth() + 1).padStart(2, '0');
+                    const y = date.getFullYear();
+
+                    const h = String(date.getHours()).padStart(2, '0');
+                    const min = String(date.getMinutes()).padStart(2, '0');
+                    const s = String(date.getSeconds()).padStart(2, '0');
+
+                    return `${d}/${m}/${y} ${h}:${min}:${s}`;
+                  };
+                  const formattedTime = formatDateTime(item.updatedAt);
                   return (
                     <div
                       key={item.id}
@@ -1064,7 +1110,7 @@ export default function AttendancesPage() {
         {/* Right Column: Bất thường chuyên cần */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
           <Heading size="h4" className="text-base font-bold text-slate-900">
-            Bất thường chuyên cần
+            Bất thường chuyên cần (Ví dụ mẫu)
           </Heading>
 
           <div className="space-y-3">
@@ -1174,6 +1220,20 @@ export default function AttendancesPage() {
         onClose={() => setReviewModalState({ open: false, data: null, action: null })}
         onConfirm={handleConfirmReview}
         isLoading={isReviewing}
+      />
+
+      <DeleteAppealModal
+        open={showDeleteModal}
+        appealId={deletingId}
+        title={`Xóa bản ghi chấm công #${deletingId}`}
+        description="Bạn có chắc chắn muốn xóa bản ghi chấm công này? Hành động này không thể hoàn tác."
+        confirmText="Xóa chấm công"
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeletingId(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleting}
       />
     </div>
   );
