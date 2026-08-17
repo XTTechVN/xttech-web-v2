@@ -19,10 +19,6 @@ export const acceptedSections = [
   'extra-options',
   'formulas'
 ];
-  'dashboard', 'attendances-root', 'attendances', 'attendances-adjustments', 'attendances-payroll',
-  'employees',
-  'suggestions',
-  'departments'];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
   roles?: UserRole[];
