@@ -7,7 +7,7 @@ import { Heading, Button } from '@/components';
 import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
 import type { Quotation, Project } from '@/types';
-import { getQuotations } from '@/actions';
+import api from '@/utils/api';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'next/navigation';
 
@@ -24,12 +24,24 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, projects = [] }: TableP
   const [search, setSearch] = useQueryParam('search');
 
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const res = await getQuotations({ offset, limit, search: search || undefined });
-    if (!res) {
-      toast.error('Lỗi khi tải danh sách báo giá');
-      throw new Error('Lỗi khi tải danh sách báo giá');
+    try {
+      const response = await api.get('/api/v1/quotations', {
+        params: { offset, limit, search: search || undefined },
+      });
+      const { items, meta } = response.data;
+      return {
+        items: items || [],
+        meta: {
+          total: meta?.total ?? 0,
+          offset: meta?.offset ?? 0,
+          limit: meta?.limit ?? 10,
+          next: meta?.next ?? false,
+        },
+      };
+    } catch (error: any) {
+      toast.error(`Lỗi kết nối / tải danh sách báo giá: ${error.message || error}`);
+      throw error;
     }
-    return res;
   };
 
   const getProjectName = (projectId: number) => {

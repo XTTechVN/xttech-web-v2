@@ -1,15 +1,8 @@
 'use client';
 
-import { use, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import {
-  getQuotation,
-  getDoors,
-  getMaterials,
-  getAccessories,
-  getExtraOptions,
-  getQuotationPreview,
-} from '@/actions';
+import { use, useEffect, useState } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { getQuotation, getDoors, getMaterials, getAccessories, getExtraOptions, getQuotationPreview, getFormulas } from '@/actions';
 import { useQuotationStore } from '@/stores';
 import { useDebounce } from '@/hooks';
 import { QuotationEditor, QuotationPreview } from './components';
@@ -22,11 +15,15 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
   const { id } = use(params);
   const quotationId = parseInt(id, 10);
   const store = useQuotationStore();
+  const [initialized, setInitialized] = useState(false);
 
   // 1. Chi tiết báo giá
   const { data: quotation, isLoading } = useQuery({
     queryKey: ['quotation', quotationId],
-    queryFn: () => getQuotation(quotationId),
+    queryFn: async () => {
+      const data = await getQuotation(quotationId);
+      return data;
+    },
     enabled: !!quotationId,
   });
 
@@ -66,13 +63,24 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
     },
   });
 
+  // 6. Danh sách công thức
+  const { data: formulas } = useQuery({
+    queryKey: ['formulas-all'],
+    queryFn: async () => {
+      const data = await getFormulas({ limit: 1000 });
+      return data.items;
+    },
+  });
+
   const accessoriesList = accessories || [];
   const extraOptionsList = extraOptions || [];
+  const formulasList = formulas || [];
 
   // Khởi tạo Zustand Store khi nhận được dữ liệu báo giá ban đầu từ API
   useEffect(() => {
     if (quotation) {
       store.initialize(quotation);
+      setInitialized(true);
     }
   }, [quotation]);
 
@@ -98,50 +106,44 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
         projectId: store.projectId,
         floors: debouncedFloors as any,
       }),
-    enabled: !!store.title && debouncedFloors.length > 0,
+    enabled: initialized && debouncedFloors.length > 0,
+    placeholderData: keepPreviousData,
   });
 
-  if (isLoading || !store.title) {
+  if (isLoading || !initialized) {
     return <div className="p-6 text-black flex justify-center items-center h-64 font-medium">Đang tải thông tin báo giá...</div>;
   }
 
   return (
-    <div className="w-full max-w-[1800px] mx-auto p-4 lg:p-6 flex flex-col xl:flex-row gap-6 items-start text-black">
+    <div className="grid grid-cols-1 xl:grid-cols-[35%_65%] gap-4 text-black">
       {/* Cột trái: Editor */}
-      <div className="w-full xl:w-[42%] bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-900">Trình biên tập báo giá: {store.title}</h1>
-          <p className="text-sm text-gray-500">
-            Mã báo giá: {store.code} | Dự án ID: #{store.projectId}
-          </p>
-        </div>
-
-        <div className="border-t border-gray-100 pt-6">
-          <QuotationEditor
+      <div className="bg-white rounded border border-gray-200 p-4">
+        <QuotationEditor
             quotationId={quotationId}
             materialsList={materials || []}
             doorsList={doors || []}
             accessoriesList={accessoriesList}
             extraOptionsList={extraOptionsList}
+            formulasList={formulasList}
           />
-        </div>
       </div>
 
       {/* Cột phải: Live Preview */}
-      <div className="w-full xl:w-[58%] flex flex-col gap-4 self-stretch xl:sticky xl:top-6 max-h-[calc(100vh-3rem)] overflow-y-auto pr-1">
-        <div className="flex justify-between items-center px-2">
-          <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <span>XEM TRƯỚC BÁO GIÁ THỜI GIAN THỰC</span>
-            {isPreviewFetching && (
-              <span className="text-xs font-normal text-amber-600 animate-pulse">(Đang tính toán...)</span>
-            )}
-          </h2>
-        </div>
-
+      <div className="relative">
         {previewData ? (
-          <QuotationPreview quotation={previewData} floors={previewData.floors} />
+          <>
+            <QuotationPreview quotation={previewData} materialsList={materials || []} doorsList={doors || []} extraOptionsList={extraOptionsList} />
+            {isPreviewFetching && (
+              <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex justify-center items-center z-10 rounded">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#045863] border-t-transparent"></div>
+                  <span className="text-xs text-gray-500 font-medium">Đang cập nhật...</span>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
-          <div className="flex-1 bg-gray-100 border border-dashed border-gray-300 rounded-xl flex items-center justify-center text-gray-400 italic p-12 min-h-[600px]">
+          <div className="bg-gray-100 border border-dashed border-gray-300 rounded p-12 text-center text-gray-400 italic">
             Chưa có dữ liệu preview hoặc đang tải...
           </div>
         )}

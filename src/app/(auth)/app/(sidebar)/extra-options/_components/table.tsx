@@ -6,7 +6,7 @@ import { TableData, TableAction } from '@/components/table';
 import { Heading, Button } from '@/components';
 import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
-import type { ExtraOption } from '@/types';
+import { EXTRA_OPTION_UNIT_MAP, type ExtraOption, type ExtraOptionUnit } from '@/types';
 import { getExtraOptions } from '@/actions';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'next/navigation';
@@ -53,6 +53,16 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       cell: (row: ExtraOption) => <span className="text-gray-600 text-sm">{row.code || '—'}</span>,
     },
     {
+      key: 'unit',
+      label: 'Đơn vị tính',
+      minWidth: '100px',
+      cell: (row: ExtraOption) => (
+        <span className="text-gray-600 text-sm">
+          {EXTRA_OPTION_UNIT_MAP[row.unit as ExtraOptionUnit] || row.unit || '—'}
+        </span>
+      ),
+    },
+    {
       key: 'price',
       label: 'Đơn giá',
       minWidth: '150px',
@@ -87,7 +97,9 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">{row.name}</span>
           <span className="text-xs text-gray-400">Mã: {row.code || '—'}</span>
-          <span className="text-xs text-gray-500 mt-0.5">Đơn giá: {formatCurrency(row.price)}</span>
+          <span className="text-xs text-gray-500 mt-0.5">
+            Đơn giá: {formatCurrency(row.price)} / {EXTRA_OPTION_UNIT_MAP[row.unit as ExtraOptionUnit] || row.unit || 'Bộ'}
+          </span>
         </div>
       </div>
       <TableAction

@@ -5,7 +5,8 @@ import { Heading, StatsCard } from '@/components';
 import Table from './_components/table';
 import { FileSpreadsheet, Eye, ClipboardCheck, Ban } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getQuotations, deleteQuotation, getProjects } from '@/actions';
+import { deleteQuotation, getProjects } from '@/actions';
+import api from '@/utils/api';
 import type { Quotation } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
@@ -14,9 +15,9 @@ import { QuotationCreateModal, QuotationUpdateModal, QuotationDeleteModal } from
 const Page = () => {
   const { data: quotationData } = useQuery({
     queryKey: ['quotations'],
-    queryFn: async () => {
-      const res = await getQuotations({ limit: 9999 });
-      return res.items;
+    queryFn: async (): Promise<Quotation[]> => {
+      const res = await api.get('/api/v1/quotations', { params: { limit: 9999 } });
+      return res.data.items || [];
     },
   });
 

@@ -36,3 +36,7 @@ export * from './material';
 
 // Extra Options
 export * from './extra-option';
+
+// Formulas
+export * from './formula';
+

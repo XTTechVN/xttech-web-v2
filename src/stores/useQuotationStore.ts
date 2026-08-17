@@ -1,28 +1,7 @@
 import { create } from 'zustand';
 import { createQuotation as apiCreateQuotation, updateQuotation as apiUpdateQuotation } from '@/actions';
-import type { QuotationDetail, Quotation } from '@/types';
+import type { QuotationDetail, Quotation, DraftFormula, DraftDoor, DraftMaterial, DraftFloor } from '@/types';
 
-export interface DraftDoor {
-  doorId: number;
-  code: string;
-  width: number;
-  height: number;
-  quantity: number;
-  accessoryIds: number[];
-  extraOptionIds: number[];
-}
-
-export interface DraftMaterial {
-  materialId: number;
-  initPrice: number;
-  doors: DraftDoor[];
-}
-
-export interface DraftFloor {
-  name: string;
-  index: number;
-  materials: DraftMaterial[];
-}
 
 interface QuotationState {
   title: string;
@@ -61,6 +40,11 @@ interface QuotationState {
   updateExtraOption: (fIndex: number, mIndex: number, dIndex: number, oIndex: number, newExtraOptionId: number) => void;
   removeExtraOption: (fIndex: number, mIndex: number, dIndex: number, oIndex: number) => void;
 
+  // Formula Actions
+  addFormula: (fIndex: number, mIndex: number, dIndex: number, formulaId: number, width?: number, salary?: number) => void;
+  updateFormula: (fIndex: number, mIndex: number, dIndex: number, foIndex: number, field: string, value: any) => void;
+  removeFormula: (fIndex: number, mIndex: number, dIndex: number, foIndex: number) => void;
+
   // API Payload & Operations Helpers
   getPayload: () => any;
   createQuotation: () => Promise<Quotation>;
@@ -91,6 +75,15 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
           quantity: door.quantity || 1,
           accessoryIds: door.accessoryIds || (door.accessories || []).map((a: any) => a.accessoryId),
           extraOptionIds: door.extraOptionIds || (door.extraOptions || []).map((o: any) => o.optionId),
+          fomulas: door.fomulas || (door.formulas && door.formulas.length > 0
+            ? door.formulas.map((f: any) => ({
+                fomulaId: f.formulaId ?? f.fomulaId,
+                width: f.width,
+                salary: f.salary,
+              }))
+            : (door.formulaIds || []).map((id: number) => ({
+                fomulaId: id,
+              }))),
         })),
       })),
     }));
@@ -188,11 +181,12 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
         {
           doorId: defaultDoorId,
           code: defaultCode,
-          width: 0,
-          height: 0,
+          width: 1000,
+          height: 2000,
           quantity: 1,
           accessoryIds: [],
           extraOptionIds: [],
+          fomulas: [],
         },
       ];
       materials[mIndex] = mat;
@@ -348,6 +342,74 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
       const extraOptionIds = [...(door.extraOptionIds || [])];
       extraOptionIds.splice(oIndex, 1);
       door.extraOptionIds = extraOptionIds;
+
+      doors[dIndex] = door;
+      mat.doors = doors;
+      materials[mIndex] = mat;
+      floor.materials = materials;
+      newFloors[fIndex] = floor;
+      return { floors: newFloors };
+    });
+  },
+
+  addFormula: (fIndex, mIndex, dIndex, formulaId, width, salary) => {
+    set((state) => {
+      const newFloors = [...state.floors];
+      const floor = { ...newFloors[fIndex] };
+      const materials = [...floor.materials];
+      const mat = { ...materials[mIndex] };
+      const doors = [...mat.doors];
+      const door = { ...doors[dIndex] };
+      door.fomulas = [
+        ...(door.fomulas || []),
+        {
+          fomulaId: formulaId,
+          width: width,
+          salary: salary,
+        },
+      ];
+
+      doors[dIndex] = door;
+      mat.doors = doors;
+      materials[mIndex] = mat;
+      floor.materials = materials;
+      newFloors[fIndex] = floor;
+      return { floors: newFloors };
+    });
+  },
+
+  updateFormula: (fIndex, mIndex, dIndex, foIndex, field, value) => {
+    set((state) => {
+      const newFloors = [...state.floors];
+      const floor = { ...newFloors[fIndex] };
+      const materials = [...floor.materials];
+      const mat = { ...materials[mIndex] };
+      const doors = [...mat.doors];
+      const door = { ...doors[dIndex] };
+      const fomulas = [...(door.fomulas || [])];
+      fomulas[foIndex] = { ...fomulas[foIndex], [field]: value };
+      door.fomulas = fomulas;
+
+      doors[dIndex] = door;
+      mat.doors = doors;
+      materials[mIndex] = mat;
+      floor.materials = materials;
+      newFloors[fIndex] = floor;
+      return { floors: newFloors };
+    });
+  },
+
+  removeFormula: (fIndex, mIndex, dIndex, foIndex) => {
+    set((state) => {
+      const newFloors = [...state.floors];
+      const floor = { ...newFloors[fIndex] };
+      const materials = [...floor.materials];
+      const mat = { ...materials[mIndex] };
+      const doors = [...mat.doors];
+      const door = { ...doors[dIndex] };
+      const fomulas = [...(door.fomulas || [])];
+      fomulas.splice(foIndex, 1);
+      door.fomulas = fomulas;
 
       doors[dIndex] = door;
       mat.doors = doors;

@@ -141,6 +141,7 @@ const Page = () => {
                 name: selectedOption.name,
                 code: selectedOption.code,
                 price: selectedOption.price,
+                unit: selectedOption.unit,
               }
             : undefined
         }

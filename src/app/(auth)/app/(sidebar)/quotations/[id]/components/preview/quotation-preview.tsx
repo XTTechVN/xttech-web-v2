@@ -1,69 +1,49 @@
-'use client';
-
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getMaterials } from '@/actions/material';
-import { getDoors } from '@/actions/door';
 import { QuotationHeader } from './quotation-header';
 import { QuotationTitle } from './quotation-title';
 import { CustomerInfo } from './customer-info';
 import { QuotationTable } from './quotation-table';
 import { QuotationSummary } from './quotation-summary';
-import type { QuotationDetail, PreviewFloor } from '@/types';
+import { adaptQuotationPreview } from './adapter';
+import { PREVIEW_FONT_SIZE } from './config';
+import type { QuotationDetail, PreviewFloor, Material, Door, ExtraOption } from '@/types';
 
 interface QuotationPreviewProps {
   quotation: QuotationDetail;
-  floors: PreviewFloor[];
+  materialsList: Material[];
+  doorsList: Door[];
+  extraOptionsList: ExtraOption[];
 }
 
-export const QuotationPreview = ({ quotation, floors }: QuotationPreviewProps) => {
-  const { data: materialsData } = useQuery({
-    queryKey: ['materials'],
-    queryFn: () => getMaterials({ limit: 100 }),
-  });
+export const QuotationPreview = ({ quotation, materialsList, doorsList, extraOptionsList }: QuotationPreviewProps) => {
+  const adaptedFloors = adaptQuotationPreview(quotation);
+  console.log('--- ADAPTED PREVIEW DATA ---', adaptedFloors);
 
-  const { data: doorsData } = useQuery({
-    queryKey: ['doors'],
-    queryFn: () => getDoors({ limit: 100 }),
-  });
-
-  const materialsList = materialsData?.items || [];
-  const doorsList = doorsData?.items || [];
-
-  // Tính toán lại tổng tiền dựa trên local state floors
-  const calculatedSubtotal = floors.reduce((acc, floor) => {
-    return acc + (floor.totalAmount || 0);
-  }, 0);
-  
-  const discountAmount = calculatedSubtotal * (quotation.discountPercentage / 100);
-  const calculatedFinalAmount = calculatedSubtotal - discountAmount;
+  const subtotal = quotation.subtotalPrice ?? 0;
+  const finalAmount = quotation.totalPrice ?? 0;
+  const discountAmount = subtotal - finalAmount;
 
   return (
-    <div className="flex-1 flex flex-col gap-4 min-w-0">
-      {/* Document Area */}
-      <div className="bg-gray-200 rounded-xl p-4 md:p-8 overflow-y-auto flex-1 border border-gray-300 shadow-inner min-h-[800px]">
-        <div className="bg-white max-w-5xl mx-auto shadow-md rounded border border-gray-300 p-8 md:p-12 min-h-full">
-          {/* Document Header */}
-          <QuotationHeader createdAt={quotation.createdAt} />
+    <div className={`bg-white p-4 ${PREVIEW_FONT_SIZE} font-normal not-italic text-gray-900`}>
+      {/* Document Header */}
+      <QuotationHeader createdAt={quotation.createdAt} />
 
-          {/* Document Title */}
-          <QuotationTitle title={quotation.title} code={quotation.code} id={quotation.id} />
+      {/* Document Title */}
+      <QuotationTitle title={quotation.title} code={quotation.code} id={quotation.id} />
 
-          {/* Customer Info */}
-          <CustomerInfo projectId={quotation.projectId} />
+      {/* Customer Info */}
+      <CustomerInfo customer={quotation.customer} />
 
-          {/* Main Table */}
-          <QuotationTable floors={floors} materialsList={materialsList} doorsList={doorsList} />
+      {/* Main Table */}
+      <QuotationTable floors={adaptedFloors} materialsList={materialsList} doorsList={doorsList} />
 
-          {/* Document Footer / Summary */}
-          <QuotationSummary
-            subtotal={calculatedSubtotal}
-            discountPercentage={quotation.discountPercentage}
-            discountAmount={discountAmount}
-            finalAmount={calculatedFinalAmount}
-          />
-        </div>
-      </div>
+      {/* Document Footer / Summary */}
+      <QuotationSummary
+        subtotal={subtotal}
+        discountPercentage={quotation.discountPercentage}
+        discountAmount={discountAmount}
+        finalAmount={finalAmount}
+      />
     </div>
   );
 };

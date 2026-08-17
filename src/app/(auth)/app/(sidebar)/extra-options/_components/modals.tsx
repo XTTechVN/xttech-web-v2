@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Input, Button, Modal, CurrencyInput } from '@/components';
+import { Input, Button, Modal, CurrencyInput, Select } from '@/components';
 import { CheckCircle2 } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { createExtraOption, updateExtraOption } from '@/actions';
 import toast from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
-import type { ExtraOption, ExtraOptionCreate, ExtraOptionUpdate } from '@/types';
+import { EXTRA_OPTION_UNIT_MAP, type ExtraOption, type ExtraOptionCreate, type ExtraOptionUpdate, type ExtraOptionUnit } from '@/types';
 
 // ==========================================
 // 1. MODAL TẠO MỚI TÙY CHỌN PHÁT SINH
@@ -34,7 +34,14 @@ export function ExtraOptionCreateModal({
     control,
     reset,
     formState: { errors },
-  } = useForm<ExtraOptionCreateFormValues>();
+  } = useForm<ExtraOptionCreateFormValues>({
+    defaultValues: {
+      name: '',
+      code: '',
+      price: 0,
+      unit: 'set',
+    },
+  });
 
   const { mutate: createMutation, isPending: isCreating } = useMutation({
     mutationFn: createExtraOption,
@@ -51,7 +58,7 @@ export function ExtraOptionCreateModal({
 
   useEffect(() => {
     if (isOpen) {
-      reset({ name: '', code: '', price: 0 });
+      reset({ name: '', code: '', price: 0, unit: 'set' });
     }
   }, [isOpen]);
 
@@ -60,6 +67,7 @@ export function ExtraOptionCreateModal({
       name: data.name,
       code: data.code,
       price: data.price || 0,
+      unit: data.unit,
     });
   };
 
@@ -80,6 +88,16 @@ export function ExtraOptionCreateModal({
             fullWidth
             {...register('code', { required: true })}
             error={errors.code ? 'Mã tùy chọn không được để trống' : undefined}
+          />
+          <Select
+            label="Đơn vị tính *"
+            fullWidth
+            {...register('unit', { required: 'Vui lòng chọn đơn vị tính' })}
+            options={Object.entries(EXTRA_OPTION_UNIT_MAP).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+            error={errors.unit?.message}
           />
           <Controller
             name="price"
@@ -132,7 +150,7 @@ interface ExtraOptionUpdateModalProps {
   onClose: () => void;
   title: string;
   submitText?: string;
-  initialData?: Pick<ExtraOption, 'id' | 'name' | 'code' | 'price'>;
+  initialData?: Pick<ExtraOption, 'id' | 'name' | 'code' | 'price' | 'unit'>;
 }
 
 type ExtraOptionUpdateFormValues = ExtraOptionUpdate;
@@ -171,6 +189,7 @@ export function ExtraOptionUpdateModal({
         name: initialData.name || '',
         code: initialData.code || '',
         price: initialData.price !== undefined ? initialData.price : undefined,
+        unit: initialData.unit || 'set',
       });
     }
   }, [isOpen, initialData]);
@@ -197,6 +216,16 @@ export function ExtraOptionUpdateModal({
             fullWidth
             {...register('code', { required: true })}
             error={errors.code ? 'Mã tùy chọn không được để trống' : undefined}
+          />
+          <Select
+            label="Đơn vị tính *"
+            fullWidth
+            {...register('unit', { required: 'Vui lòng chọn đơn vị tính' })}
+            options={Object.entries(EXTRA_OPTION_UNIT_MAP).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+            error={errors.unit?.message}
           />
           <Controller
             name="price"
