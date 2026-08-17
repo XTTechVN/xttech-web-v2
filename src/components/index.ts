@@ -18,3 +18,4 @@ export * from './alert';
 export * from './sidebar';
 export * from './header';
 export * from './table';
+export * from './input';
