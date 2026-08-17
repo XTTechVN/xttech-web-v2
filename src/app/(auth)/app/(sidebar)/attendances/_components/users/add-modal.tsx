@@ -3,7 +3,9 @@
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Modal, Button, Input, Select, Textarea, DateInput } from "@/components";
+import { Modal, Button, Select, Textarea } from "@/components";
+import DateInput from "../date-input";
+import Input from "../input";
 import { createUser } from "@/actions";
 import { UserCreate } from "@/types";
 import { Upload, X, User } from "lucide-react";

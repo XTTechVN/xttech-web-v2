@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Modal, Button, Select, Input, Textarea, DateInput } from '@/components';
+import { Modal, Button, Select, Textarea } from '@/components';
+import DateInput from '../date-input';
+import Input from '../input';
 import toast from 'react-hot-toast';
 import { updateAdjustmentRequest } from "@/actions";
 import type { AttendanceAdjustmentRequest, RequestType, AttendanceAdjustmentRequestUpdate } from "@/types";

@@ -9,7 +9,8 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, fullWidth = false, type = 'text', id, disabled, ...props }, ref) => {
-    const inputId = id || React.useId();
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
 
     return (
       <div className={cn('flex flex-col gap-1.5', fullWidth && 'w-full')}>
@@ -25,12 +26,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           type={type}
           disabled={disabled}
           className={cn(
-            // Lớp CSS cơ bản tuân thủ design system
             'w-full h-10 px-3 text-sm bg-white border rounded-md outline-none transition-all duration-200 text-gray-900',
             'hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20',
             'disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed',
             error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200',
-            className,
+            className
           )}
           {...props}
         />
@@ -38,7 +38,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {error && <span className="text-xs text-red-500">{error}</span>}
       </div>
     );
-  },
+  }
 );
 
 Input.displayName = 'Input';

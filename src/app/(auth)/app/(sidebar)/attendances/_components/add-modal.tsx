@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Modal, Button, Select, Input, Textarea, DateInput } from "@/components";
+import { Modal, Button, Select, Textarea } from "@/components";
+import DateInput from "./date-input";
+import Input from "./input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { AttendanceCreate, AttendanceStatus } from "@/types";

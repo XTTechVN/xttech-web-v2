@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Modal, Button, Select, Input, Textarea, DateInput } from "@/components";
+import { Modal, Button, Select, Textarea } from "@/components";
+import DateInput from "./date-input";
+import Input from "./input";
 import { Attendance } from "@/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";

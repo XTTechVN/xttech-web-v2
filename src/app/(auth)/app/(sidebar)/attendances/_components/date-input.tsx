@@ -3,6 +3,7 @@
 import React, { useMemo, useRef } from 'react';
 import { Calendar } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import Input from './input';
 
 export interface DateInputProps {
   label?: string;
@@ -78,39 +79,32 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
 
     return (
       <div className={cn('flex flex-col gap-1.5', fullWidth && 'w-full')}>
-        {label && (
-          <label
-            htmlFor={inputId}
-            className="text-xs font-semibold text-gray-700 select-none cursor-pointer"
-            onClick={handleOpenPicker}
-          >
-            {label}
-          </label>
-        )}
-
         <div
           onClick={handleOpenPicker}
-          className="relative w-full flex items-center cursor-pointer group"
+          className="relative w-full cursor-pointer group"
         >
-          <input
-            type="text"
+          <Input
+            label={label}
+            error={error}
+            fullWidth={fullWidth}
             readOnly
             tabIndex={-1}
             disabled={disabled}
             placeholder={placeholder}
             value={displayValue}
             className={cn(
-              'w-full h-10 px-3 pr-10 text-sm bg-white border rounded-md outline-none transition-all duration-200 text-gray-900 cursor-pointer select-none',
-              'hover:border-gray-300 group-hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20',
-              'disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed',
-              error ? 'border-red-500' : 'border-gray-200',
+              'pr-10 cursor-pointer select-none',
+              'hover:border-gray-300 group-hover:border-gray-300',
               className
             )}
           />
 
           <Calendar
             size={18}
-            className="absolute right-3 text-gray-400 group-hover:text-gray-600 pointer-events-none transition-colors"
+            className={cn(
+              'absolute right-3 text-gray-400 group-hover:text-gray-600 pointer-events-none transition-colors',
+              label ? 'bottom-2.5' : 'top-1/2 -translate-y-1/2'
+            )}
           />
 
           <input
@@ -125,8 +119,6 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
             className="sr-only pointer-events-none"
           />
         </div>
-
-        {error && <span className="text-xs text-red-500">{error}</span>}
       </div>
     );
   }
