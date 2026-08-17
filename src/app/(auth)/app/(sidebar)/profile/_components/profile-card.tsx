@@ -22,7 +22,7 @@ const ProfileCard = () => {
     phoneNumber: user?.phoneNumber || '',
     username: user?.username || '',
     roles: user?.roles?.[0]?.name || '',
-    positions: user?.positions?.[0]?.name || '',
+    positions: (user as any)?.positions?.[0]?.name || '',
   });
 
   const avatarUrl = user?.avatar

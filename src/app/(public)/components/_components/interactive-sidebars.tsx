@@ -86,9 +86,9 @@ export function InteractiveSidebars() {
         <Sidebar
           sections={sections}
           activeId={activeId}
-          onItemSelect={(id) => {
-            setActiveId(id);
-            toast.success(`Chuyển mục: ${id}`);
+          onItemSelect={(item) => {
+            setActiveId(item.id);
+            toast.success(`Chuyển mục: ${item.id}`);
           }}
           user={{
             name: 'Andrew Smith',
@@ -110,9 +110,9 @@ export function InteractiveSidebars() {
         <Sidebar
           sections={sections}
           activeId={activeId}
-          onItemSelect={(id) => {
-            setActiveId(id);
-            toast.success(`Chuyển mục: ${id}`);
+          onItemSelect={(item) => {
+            setActiveId(item.id);
+            toast.success(`Chuyển mục: ${item.id}`);
           }}
         />
       </div>
