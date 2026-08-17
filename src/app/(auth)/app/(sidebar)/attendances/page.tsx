@@ -302,17 +302,17 @@ export default function AttendancesPage() {
     }
   );
 
-  const departmentOptions: FilterOption[] = [
-    ...new Map(
-      (departments?.items ?? []).map((item) => [
+  const departmentOptions: FilterOption[] = Array.from(
+    new Map(
+      ((departments as any)?.items ?? []).map((item: any) => [
         item.id,
         {
           label: item.name ?? 'Không xác định',
           value: String(item.id),
         },
       ])
-    ).values(),
-  ];
+    ).values()
+  ) as any;
 
   const statusOptions: FilterOption[] = [
     ...new Map(

@@ -1,0 +1,310 @@
+'use client';
+
+import { useEffect } from 'react';
+import { Input, Button, Modal, CurrencyInput, Select } from '@/components';
+import { CheckCircle2 } from 'lucide-react';
+import { useForm, Controller } from 'react-hook-form';
+import { createExtraOption, updateExtraOption } from '@/actions';
+import toast from 'react-hot-toast';
+import { useMutation } from '@tanstack/react-query';
+import queryClient from '@/utils/query';
+import { EXTRA_OPTION_UNIT_MAP, type ExtraOption, type ExtraOptionCreate, type ExtraOptionUpdate, type ExtraOptionUnit } from '@/types';
+
+// ==========================================
+// 1. MODAL TẠO MỚI TÙY CHỌN PHÁT SINH
+// ==========================================
+interface ExtraOptionCreateModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  submitText?: string;
+}
+
+type ExtraOptionCreateFormValues = ExtraOptionCreate;
+
+export function ExtraOptionCreateModal({
+  isOpen,
+  onClose,
+  title,
+  submitText = 'Xác nhận tạo',
+}: ExtraOptionCreateModalProps) {
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<ExtraOptionCreateFormValues>({
+    defaultValues: {
+      name: '',
+      code: '',
+      price: 0,
+      unit: 'set',
+    },
+  });
+
+  const { mutate: createMutation, isPending: isCreating } = useMutation({
+    mutationFn: createExtraOption,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['extra-options'] });
+      toast.success('Thêm tùy chọn phát sinh thành công');
+      onClose();
+      reset();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Có lỗi xảy ra');
+    },
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      reset({ name: '', code: '', price: 0, unit: 'set' });
+    }
+  }, [isOpen]);
+
+  const handleConfirm = (data: ExtraOptionCreateFormValues) => {
+    createMutation({
+      name: data.name,
+      code: data.code,
+      price: data.price || 0,
+      unit: data.unit,
+    });
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-md w-full">
+      <form onSubmit={handleSubmit(handleConfirm)}>
+        <div className="flex flex-col space-y-4">
+          <Input
+            label="Tên tùy chọn *"
+            placeholder="Ví dụ: Sơn anodet, Kính hộp"
+            fullWidth
+            {...register('name', { required: true })}
+            error={errors.name ? 'Tên tùy chọn không được để trống' : undefined}
+          />
+          <Input
+            label="Mã tùy chọn *"
+            placeholder="Ví dụ: OPT01"
+            fullWidth
+            {...register('code', { required: true })}
+            error={errors.code ? 'Mã tùy chọn không được để trống' : undefined}
+          />
+          <Select
+            label="Đơn vị tính *"
+            fullWidth
+            {...register('unit', { required: 'Vui lòng chọn đơn vị tính' })}
+            options={Object.entries(EXTRA_OPTION_UNIT_MAP).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+            error={errors.unit?.message}
+          />
+          <Controller
+            name="price"
+            control={control}
+            rules={{
+              required: 'Đơn giá không được để trống',
+              validate: (val) => {
+                const num = Number(val);
+                if (isNaN(num) || num < 0) return 'Đơn giá phải lớn hơn hoặc bằng 0';
+                return true;
+              },
+            }}
+            render={({ field }) => (
+              <CurrencyInput
+                label="Đơn giá (VNĐ) *"
+                placeholder="Nhập đơn giá"
+                fullWidth
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.price?.message}
+              />
+            )}
+          />
+        </div>
+        <div className="flex gap-2 justify-end w-full mt-6">
+          <Button variant="outline" size="sm" onClick={onClose}>
+            Hủy
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<CheckCircle2 size={16} />}
+            type="submit"
+            disabled={isCreating}
+            loading={isCreating}
+          >
+            {submitText}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+// ==========================================
+// 2. MODAL CẬP NHẬT TÙY CHỌN PHÁT SINH
+// ==========================================
+interface ExtraOptionUpdateModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  submitText?: string;
+  initialData?: Pick<ExtraOption, 'id' | 'name' | 'code' | 'price' | 'unit'>;
+}
+
+type ExtraOptionUpdateFormValues = ExtraOptionUpdate;
+
+export function ExtraOptionUpdateModal({
+  isOpen,
+  onClose,
+  title,
+  submitText = 'Xác nhận lưu',
+  initialData,
+}: ExtraOptionUpdateModalProps) {
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<ExtraOptionUpdateFormValues>();
+
+  const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: ExtraOptionUpdate }) => updateExtraOption(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['extra-options'] });
+      toast.success('Cập nhật tùy chọn phát sinh thành công');
+      onClose();
+      reset();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Có lỗi xảy ra');
+    },
+  });
+
+  useEffect(() => {
+    if (isOpen && initialData) {
+      reset({
+        name: initialData.name || '',
+        code: initialData.code || '',
+        price: initialData.price !== undefined ? initialData.price : undefined,
+        unit: initialData.unit || 'set',
+      });
+    }
+  }, [isOpen, initialData]);
+
+  const handleConfirm = (data: ExtraOptionUpdateFormValues) => {
+    if (!initialData) return;
+    updateMutation({ id: initialData.id, data });
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-md w-full">
+      <form onSubmit={handleSubmit(handleConfirm)}>
+        <div className="flex flex-col space-y-4">
+          <Input
+            label="Tên tùy chọn *"
+            placeholder="Ví dụ: Sơn anodet, Kính hộp"
+            fullWidth
+            {...register('name', { required: true })}
+            error={errors.name ? 'Tên tùy chọn không được để trống' : undefined}
+          />
+          <Input
+            label="Mã tùy chọn *"
+            placeholder="Ví dụ: OPT01"
+            fullWidth
+            {...register('code', { required: true })}
+            error={errors.code ? 'Mã tùy chọn không được để trống' : undefined}
+          />
+          <Select
+            label="Đơn vị tính *"
+            fullWidth
+            {...register('unit', { required: 'Vui lòng chọn đơn vị tính' })}
+            options={Object.entries(EXTRA_OPTION_UNIT_MAP).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+            error={errors.unit?.message}
+          />
+          <Controller
+            name="price"
+            control={control}
+            rules={{
+              validate: (val) => {
+                if (val === undefined || val === 0) return true;
+                const num = Number(val);
+                if (isNaN(num) || num < 0) return 'Đơn giá phải lớn hơn hoặc bằng 0';
+                return true;
+              },
+            }}
+            render={({ field }) => (
+              <CurrencyInput
+                label="Đơn giá (VNĐ)"
+                placeholder="Nhập đơn giá"
+                fullWidth
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.price?.message}
+              />
+            )}
+          />
+        </div>
+        <div className="flex gap-2 justify-end w-full mt-6">
+          <Button variant="outline" size="sm" onClick={onClose}>
+            Hủy
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<CheckCircle2 size={16} />}
+            type="submit"
+            disabled={updateIsPending}
+            loading={updateIsPending}
+          >
+            {submitText}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+// ==========================================
+// 3. MODAL XÁC NHẬN XÓA TÙY CHỌN PHÁT SINH
+// ==========================================
+interface ExtraOptionDeleteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  optionName?: string;
+  onConfirm: () => void;
+  isPending?: boolean;
+}
+
+export function ExtraOptionDeleteModal({
+  isOpen,
+  onClose,
+  optionName,
+  onConfirm,
+  isPending = false,
+}: ExtraOptionDeleteModalProps) {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Xác nhận xóa tùy chọn phát sinh" className="m-2 max-w-md w-full">
+      <div className="flex gap-4 items-center py-2">
+        <div className="flex flex-col gap-1.5">
+          <p className="text-gray-600 text-sm leading-relaxed">
+            Bạn có chắc chắn muốn xóa tùy chọn phát sinh <strong className="text-gray-900 font-semibold">{optionName}</strong>?
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-3 justify-end w-full mt-6">
+        <Button variant="outline" size="sm" onClick={onClose} disabled={isPending}>
+          Hủy
+        </Button>
+        <Button variant="danger" size="sm" onClick={onConfirm} loading={isPending}>
+          Xác nhận xóa
+        </Button>
+      </div>
+    </Modal>
+  );
+}

@@ -4,6 +4,8 @@ import React from 'react';
 import { Tooltip } from '@/components/tooltip';
 import { cn } from '@/utils/cn';
 
+import { Edit2, Trash2, Eye } from 'lucide-react';
+
 export interface TableActionItem {
   title?: string;
   icon: React.ReactNode | React.ComponentType<{ size?: number; className?: string }>;
@@ -14,16 +16,76 @@ export interface TableActionItem {
 }
 
 export interface TableActionProps {
-  items: (TableActionItem | null | undefined | false)[];
+  items?: (TableActionItem | null | undefined | false)[];
   className?: string;
+  
+  // Backward compatibility props
+  onEdit?: (e?: any) => void;
+  onDelete?: (e?: any) => void;
+  onView?: (e?: any) => void;
+  editDisabled?: boolean;
+  deleteDisabled?: boolean;
+  viewDisabled?: boolean;
 }
 
 const DEFAULT_BUTTON_CLASS =
   'flex items-center justify-center p-1.5 rounded-md text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed';
 
-export default function TableAction({ items = [], className }: TableActionProps) {
-  // Lọc bỏ các phần tử falsy để hỗ trợ conditional rendering
-  const validItems = items.filter(Boolean) as TableActionItem[];
+export default function TableAction({
+  items = [],
+  className,
+  onEdit,
+  onDelete,
+  onView,
+  editDisabled,
+  deleteDisabled,
+  viewDisabled,
+}: TableActionProps) {
+  // Build items from backward compatibility props if present
+  const backwardItems: TableActionItem[] = [];
+
+  if (onView) {
+    backwardItems.push({
+      title: 'Xem',
+      icon: Eye,
+      onClick: (e) => {
+        e.stopPropagation();
+        onView(e);
+      },
+      disabled: viewDisabled,
+    });
+  }
+
+  if (onEdit) {
+    backwardItems.push({
+      title: 'Chỉnh sửa',
+      icon: Edit2,
+      onClick: (e) => {
+        e.stopPropagation();
+        onEdit(e);
+      },
+      disabled: editDisabled,
+    });
+  }
+
+  if (onDelete) {
+    backwardItems.push({
+      title: 'Xóa',
+      icon: Trash2,
+      onClick: (e) => {
+        e.stopPropagation();
+        onDelete(e);
+      },
+      disabled: deleteDisabled,
+      className: 'text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30',
+    });
+  }
+
+  // Combine both types of items
+  const validItems = [
+    ...backwardItems,
+    ...(items || []).filter(Boolean) as TableActionItem[],
+  ];
 
   if (validItems.length === 0) return null;
 
