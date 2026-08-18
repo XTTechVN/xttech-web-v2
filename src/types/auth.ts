@@ -1,3 +1,5 @@
+import { Position } from './position';
+
 // Kiểu dữ liệu đăng nhập
 export interface SignInCredentials {
   username: string;
@@ -39,7 +41,7 @@ export interface AuthUser {
   createdAt: string;
   updatedAt: string;
   roles: Role[];
-  // positions: Position[];
+  positions: Position[];
 }
 
 // Kiểu dữ liệu trả về sau khi đăng nhập

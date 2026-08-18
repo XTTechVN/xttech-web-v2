@@ -37,5 +37,5 @@ export interface EmployeePagination {
 
 export interface GetEmployeesResponse {
   items: Employee[];
-  pagination: EmployeePagination;
+  meta: EmployeePagination;
 }

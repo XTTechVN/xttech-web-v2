@@ -58,21 +58,13 @@ const Table = () => {
   const [empToDelete, setEmpToDelete] = React.useState<Employee | null>(null);
 
   // Hàm fetcher gọi API thực tế qua React Query / TableData
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const res = await getEmployees({ offset, limit, search: search || undefined });
+  const fetcher = async (params: { offset: number; limit: number }) => {
+    const res = await getEmployees({ ...params, search: search || undefined });
     if (!res) {
       toast.error('Lỗi khi tải danh sách nhân sự');
       throw new Error('Lỗi khi tải danh sách nhân sự');
     }
-    return {
-      items: res.items || [],
-      meta: {
-        total: res.pagination?.total || 0,
-        offset: res.pagination?.offset || 0,
-        limit: res.pagination?.limit || 10,
-        next: res.pagination?.next || false,
-      },
-    };
+    return res;
   };
 
   // Hàm xóa nhân sự dùng useMutation
@@ -97,7 +89,11 @@ const Table = () => {
       minWidth: '220px',
       cell: (row: Employee) => (
         <div className="flex items-center gap-3">
-          <Avatar src={`${BASE_MINIO_URL}${row.avatar}`} name={row.fullName || row.username} size="sm" />
+          <Avatar 
+            src={row.avatar ? (row.avatar.startsWith('http') ? row.avatar : `${BASE_MINIO_URL}${row.avatar}`) : undefined} 
+            name={row.fullName || row.username} 
+            size="sm" 
+          />
           <div className="flex flex-col">
             <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
             <span className="text-xs text-gray-500">{row.email}</span>
@@ -194,10 +190,14 @@ const Table = () => {
   const renderCard = (row: Employee, index: number) => (
     <div
       key={row.id || index}
-      className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+      className="p-4 rounded-xl border border-gray-200 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex items-center gap-3">
-        <Avatar src={row.avatar || undefined} name={row.fullName || row.username} size="md" />
+        <Avatar 
+          src={row.avatar ? (row.avatar.startsWith('http') ? row.avatar : `${BASE_MINIO_URL}${row.avatar}`) : undefined} 
+          name={row.fullName || row.username} 
+          size="md" 
+        />
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
           <span className="text-xs text-gray-400">{row.email}</span>
