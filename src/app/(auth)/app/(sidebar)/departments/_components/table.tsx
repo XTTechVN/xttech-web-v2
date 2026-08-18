@@ -24,8 +24,6 @@ import queryClient from '@/utils/query';
 // action
 import { deleteDepartment, getDepartments } from '@/actions/department';
 
-// positions page
-import PositionPage from '../[id]/positions/page';
 import { useRouter } from 'next/navigation';
 
 
@@ -40,9 +38,7 @@ const Table = () => {
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [deptToDelete, setDeptToDelete] = React.useState<Department | null>(null);
 
-  // Trạng thái cho modal quản lý vị trí
-  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
-  const [deptToCreate, setDeptToCreate] = React.useState<Department | null>(null);
+
 
   // Hàm fetcher gọi API thực tế
   const fetcher = async (params: { offset: number; limit: number }) => {
@@ -186,7 +182,7 @@ const Table = () => {
 
         <button
           onClick={() => {
-            router.push(`/app/departments/${row.id}/positions`)
+            router.push(`/app/departments/${row.id}/positions`);
           }}
           title="Quản lý vị trí"
           className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
@@ -277,21 +273,7 @@ const Table = () => {
         </div>
       </Modal>
 
-      {/* Modal hiển thị trang Quản lý vị trí */}
-      <Modal
-        size="xl"
-        isOpen={isCreateOpen}
-        onClose={() => {
-          setIsCreateOpen(false);
-          setDeptToCreate(null);
-        }}
-        title={`Quản lý vị trí - ${deptToCreate?.name || ''}`}
-        className="m-2 md:m-8 max-w-[95%] md:max-w-[85%] w-full"
-      >
-        <div className="max-h-[80vh] overflow-y-auto w-full">
-          <PositionPage />
-        </div>
-      </Modal>
+
     </div>
   );
 };
