@@ -61,7 +61,7 @@ export default function AttendanceDetailModal({
         <ShieldCheck size={14} className="text-emerald-500" />
         <span>Dữ liệu chấm công thời gian thực</span>
       </div>
-      <Button variant="primary" onClick={onClose} className="px-5">
+      <Button variant="outline" onClick={onClose} className="px-5">
         Đóng
       </Button>
     </div>

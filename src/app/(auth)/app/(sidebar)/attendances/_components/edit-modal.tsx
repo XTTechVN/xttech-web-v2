@@ -88,6 +88,7 @@ export default function EditAttendanceModal({
                 Hủy
             </Button>
             <Button
+                variant="primary"
                 onClick={handleUpdate}
                 disabled={updateMutation.isPending}
             >
