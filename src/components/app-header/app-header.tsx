@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Menu } from 'lucide-react';
-import { UserRole } from '@/config';
+import { UserRole, HEADER_HEIGHT } from '@/config';
 import { cn } from '@/utils';
 import { AppBreadcrumb } from './app-breadcrumb';
 import { HeaderProfile } from './header-profile';
@@ -22,7 +22,10 @@ export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(
         {...props}
       >
         {/* Top Header Bar */}
-        <div className="flex h-16 items-center justify-between px-4 md:px-6">
+        <div
+          style={{ height: HEADER_HEIGHT }}
+          className="flex items-center justify-between px-4 md:px-6"
+        >
           {/* Left side: Mobile menu & Search */}
           <div className="flex items-center gap-4 flex-1">
             <button
