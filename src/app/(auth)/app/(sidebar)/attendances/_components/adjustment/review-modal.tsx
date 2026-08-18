@@ -46,22 +46,26 @@ export default function ReviewAdjustmentModal({
       <Button variant="outline" onClick={onClose} disabled={isLoading}>
         Hủy
       </Button>
-      <Button
-        className="bg-red-600 hover:bg-red-700 text-white font-bold shadow-md shadow-red-600/20"
-        leftIcon={<XCircle size={16} />}
-        onClick={async () => await onConfirm(data.id, 'rejected', reviewNote)}
-        disabled={isLoading}
-      >
-        {isLoading ? 'Đang xử lý...' : 'Từ chối'}
-      </Button>
-      <Button
-        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20"
-        leftIcon={<CheckCircle2 size={16} />}
-        onClick={async () => await onConfirm(data.id, 'approved', reviewNote)}
-        disabled={isLoading}
-      >
-        {isLoading ? 'Đang xử lý...' : 'Chấp thuận'}
-      </Button>
+      {(!action || action === 'rejected') && (
+        <Button
+          variant="primary"
+          className="bg-rose-500 hover:bg-rose-600 border-0 text-white font-bold"
+          onClick={async () => await onConfirm(data.id, 'rejected', reviewNote)}
+          disabled={isLoading}
+        >
+          {isLoading && action === 'rejected' ? 'Đang xử lý...' : 'Từ chối'}
+        </Button>
+      )}
+      {(!action || action === 'approved') && (
+        <Button
+          variant="primary"
+          className="bg-[#0CBFDF] hover:bg-[#0bb1ce] border-0 text-white font-bold"
+          onClick={async () => await onConfirm(data.id, 'approved', reviewNote)}
+          disabled={isLoading}
+        >
+          {isLoading && action === 'approved' ? 'Đang xử lý...' : 'Duyệt khiếu nại'}
+        </Button>
+      )}
     </div>
   );
 
@@ -69,7 +73,7 @@ export default function ReviewAdjustmentModal({
     <Modal
       isOpen={open}
       onClose={() => { if (!isLoading) onClose(); }}
-      title={`Xét duyệt khiếu nại #${data.id}`}
+      title={`${action === 'rejected' ? 'Từ chối' : 'Phê duyệt'} khiếu nại #${data.id}`}
       size="md"
       footer={footer}
     >

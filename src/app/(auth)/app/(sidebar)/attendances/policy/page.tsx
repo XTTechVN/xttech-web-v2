@@ -88,7 +88,8 @@ export default function AttendancePolicyPage() {
             Lịch sử thay đổi
           </Button>
           <Button
-            className="gap-2 bg-[#005c53] hover:bg-[#004740] text-white font-semibold shadow-sm"
+            variant="primary"
+            className="gap-2"
             leftIcon={<Save size={16} />}
             onClick={handleSave}
           >

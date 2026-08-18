@@ -96,7 +96,7 @@ export default function CreateUserModal({ open, onClose, onSuccess }: Props) {
             <Button variant="outline" onClick={onClose} disabled={mutation.isPending}>
                 Hủy
             </Button>
-            <Button onClick={handleSubmit} disabled={mutation.isPending}>
+            <Button variant="primary" onClick={handleSubmit} disabled={mutation.isPending}>
                 {mutation.isPending ? "Đang tạo..." : "Tạo người dùng"}
             </Button>
         </div>

@@ -98,7 +98,7 @@ export default function EditAdjustmentModal({ open, data, onClose, onSuccess }: 
       <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
         Hủy
       </Button>
-      <Button onClick={handleSubmit} disabled={isSubmitting}>
+      <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
         {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
       </Button>
     </div>

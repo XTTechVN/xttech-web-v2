@@ -7,7 +7,12 @@ export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician';
 export const acceptedSections = [
   'dashboard',
   'attendances',
+  'attendances-root',
+  'attendances-adjustments',
+  'attendances-payroll',
+  'adjustments',
   'employees',
+  'employees-root',
   'suggestions',
   'departments',
   'projects',
