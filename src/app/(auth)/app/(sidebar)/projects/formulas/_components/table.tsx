@@ -38,8 +38,8 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     {
       key: 'code',
       label: 'Mã công thức',
-      minWidth: '120px',
-      cell: (row: Formula) => <span className="text-gray-600 text-sm font-mono font-medium">{row.code || '—'}</span>,
+      minWidth: '150px',
+      cell: (row: Formula) => <span className="font-semibold text-gray-900">{row.code || '—'}</span>,
     },
     {
       key: 'name',
@@ -149,7 +149,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center w-full pr-2 pt-2">
+      <div className="flex justify-between items-center w-full pr-2">
         <Heading className="text-primary text-2xl" size="h1">
           Danh sách công thức tính toán
         </Heading>

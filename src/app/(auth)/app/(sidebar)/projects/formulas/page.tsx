@@ -92,15 +92,6 @@ const Page = () => {
 
   return (
     <div className="flex flex-col gap-4 text-black">
-      <div className="flex flex-col gap-2">
-        <Heading size="h1" className="text-primary text-2xl md:text-4xl font-bold">
-          Quản lý công thức tính toán
-        </Heading>
-        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-          Quản lý các công thức phào, tỷ lệ hao hụt của công thức cả đường tròn và công thức nửa đường tròn
-        </Heading>
-      </div>
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <StatsCard

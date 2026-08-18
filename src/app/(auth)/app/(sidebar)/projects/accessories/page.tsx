@@ -89,14 +89,6 @@ const Page = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Quản lý phụ kiện
-        </Heading>
-        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-          Danh mục phụ kiện đi kèm thiết kế lắp đặt
-        </Heading>
-      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <StatsCard

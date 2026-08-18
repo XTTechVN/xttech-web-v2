@@ -8,7 +8,7 @@ export * from './role';
 export * from './suggestion';
 
 // Authentication
-export * from './auth';
+export { type SignInCredentials, type AuthUser, type SignInResponse } from './auth';
 
 // Department
 export * from './department';
