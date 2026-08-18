@@ -3,7 +3,7 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
-import { Pencil, Trash2, PlusCircle } from 'lucide-react';
+import { Pencil, Trash2, Eye } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData, TableAction } from '@/components/table';
@@ -130,7 +130,7 @@ const Table = () => {
             },
             {
               title: 'Quản lý vị trí',
-              icon: PlusCircle,
+              icon: Eye,
               size: 18,
               onClick: () => {
                 router.push(`/app/departments/${row.id}/positions`);
@@ -191,7 +191,7 @@ const Table = () => {
           title="Quản lý vị trí"
           className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
         >
-          <PlusCircle size={18} />
+          <Eye size={18} />
         </button>
       </div>
     </div>
