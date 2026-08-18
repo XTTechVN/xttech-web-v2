@@ -2,9 +2,9 @@
 // Cập nhật code trang attendanceModule
 import { useEffect, useState, useMemo } from 'react';
 import {
-  Tooltip,
   Button,
   TableData,
+  TableAction,
   Badge,
   Breadcrumb,
   Heading,
@@ -14,26 +14,16 @@ import {
 } from '@/components';
 import { toast } from 'react-hot-toast';
 import {
-  Plus,
-  RefreshCw,
   Pencil,
   Trash2,
   Eye,
-  FileWarning,
-  LogIn,
   Clock,
   FileEdit,
-  UserX,
-  Briefcase,
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
   CheckCircle2,
   Calendar,
   UserCheck,
   Users,
-  UserCircle,
-  AlertCircle,
   UserCheck2
 } from 'lucide-react';
 import AddAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/add-modal";
@@ -312,17 +302,17 @@ export default function AttendancesPage() {
     }
   );
 
-  const departmentOptions: FilterOption[] = [
-    ...new Map(
-      (departments?.items ?? []).map((item) => [
+  const departmentOptions: FilterOption[] = Array.from(
+    new Map(
+      ((departments as any)?.items ?? []).map((item: any) => [
         item.id,
         {
           label: item.name ?? 'Không xác định',
           value: String(item.id),
         },
       ])
-    ).values(),
-  ];
+    ).values()
+  ) as any;
 
   const statusOptions: FilterOption[] = [
     ...new Map(
@@ -695,56 +685,44 @@ export default function AttendancesPage() {
       label: 'Hành động',
       minWidth: '120px',
       cell: (row) => (
-        <div className="flex items-center">
-          <Tooltip content="Khiếu nại" position='top'>
-            <button
-              type='button'
-              className='flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition'
-              onClick={() => {
+        <TableAction
+          items={[
+            {
+              title: 'Khiếu nại',
+              icon: FileEdit,
+              size: 18,
+              onClick: () => {
                 setSelectedRow(row);
                 setShowAdjustmentModal(true);
-              }}
-            >
-              <FileEdit size={15} />
-            </button>
-          </Tooltip>
-
-          <Tooltip content="Chi tiết chấm công" position="top">
-            <button
-              type="button"
-              onClick={() => {
+              },
+            },
+            {
+              title: 'Xem chi tiết',
+              icon: Eye,
+              size: 18,
+              onClick: () => {
                 setSelectedRow(row);
                 setShowDetailModal(true);
-              }}
-              className="flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition"
-            >
-              <Eye size={15} />
-            </button>
-          </Tooltip>
-
-          <Tooltip content="Chỉnh sửa chấm công" position="top">
-            <button
-              type="button"
-              onClick={() => {
+              },
+            },
+            {
+              title: 'Chỉnh sửa',
+              icon: Pencil,
+              size: 18,
+              onClick: () => {
                 setSelectedRow(row);
                 setShowEditModal(true);
-              }}
-              className="flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition"
-            >
-              <Pencil size={15} />
-            </button>
-          </Tooltip>
-
-          <Tooltip content="Xóa chấm công" position="top">
-            <button
-              type="button"
-              onClick={() => handleDelete(row)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition"
-            >
-              <Trash2 size={15} />
-            </button>
-          </Tooltip>
-        </div>
+              },
+            },
+            {
+              title: 'Xóa',
+              icon: Trash2,
+              size: 18,
+              className: 'hover:text-red-600 hover:bg-red-50',
+              onClick: () => handleDelete(row),
+            },
+          ]}
+        />
       ),
     },
   ];

@@ -6,7 +6,7 @@ import React from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
-import { TableData } from '@/components/table';
+import { TableData, TableAction } from '@/components/table';
 import { Modal, Button, Badge, Avatar } from '@/components';
 import { useQueryParam } from '@/hooks';
 
@@ -41,7 +41,6 @@ const getRoleVariant = (roleName: string): 'primary' | 'success' | 'warning' | '
   return 'default';
 };
 
-
 const Table = () => {
   const [search, setSearch] = useQueryParam('search');
 
@@ -54,21 +53,13 @@ const Table = () => {
   const [empToDelete, setEmpToDelete] = React.useState<Employee | null>(null);
 
   // Hàm fetcher gọi API thực tế qua React Query / TableData
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const res = await getEmployees({ offset, limit, search: search || undefined });
+  const fetcher = async (params: { offset: number; limit: number }) => {
+    const res = await getEmployees({ ...params, search: search || undefined });
     if (!res) {
       toast.error('Lỗi khi tải danh sách nhân sự');
       throw new Error('Lỗi khi tải danh sách nhân sự');
     }
-    return {
-      items: res.items || [],
-      meta: {
-        total: res.pagination?.total || 0,
-        offset: res.pagination?.offset || 0,
-        limit: res.pagination?.limit || 10,
-        next: res.pagination?.next || false,
-      },
-    };
+    return res;
   };
 
   // Hàm xóa nhân sự dùng useMutation
@@ -93,7 +84,11 @@ const Table = () => {
       minWidth: '220px',
       cell: (row: Employee) => (
         <div className="flex items-center gap-3">
-          <Avatar src={`${BASE_MINIO_URL}${row.avatar}`} name={row.fullName || row.username} size="sm" />
+          <Avatar 
+            src={row.avatar ? (row.avatar.startsWith('http') ? row.avatar : `${BASE_MINIO_URL}${row.avatar}`) : undefined} 
+            name={row.fullName || row.username} 
+            size="sm" 
+          />
           <div className="flex flex-col">
             <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
             <span className="text-xs text-gray-500">{row.email}</span>
@@ -146,28 +141,30 @@ const Table = () => {
       label: 'Hành động',
       minWidth: '120px',
       cell: (row: Employee) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setSelectedEmp(row);
-              setIsEditOpen(true);
-            }}
-            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-          >
-            <Pencil size={18} />
-          </button>
-
-          <button
-            onClick={() => {
-              setEmpToDelete(row);
-              setIsDeleteOpen(true);
-            }}
-            disabled={isPending}
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
+        <TableAction
+          items={[
+            {
+              title: 'Chỉnh sửa',
+              icon: Pencil,
+              size: 18,
+              onClick: () => {
+                setSelectedEmp(row);
+                setIsEditOpen(true);
+              },
+            },
+            {
+              title: 'Xóa',
+              icon: Trash2,
+              size: 18,
+              className: 'hover:text-red-600 hover:bg-red-50',
+              disabled: isPending,
+              onClick: () => {
+                setEmpToDelete(row);
+                setIsDeleteOpen(true);
+              },
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -176,10 +173,14 @@ const Table = () => {
   const renderCard = (row: Employee, index: number) => (
     <div
       key={row.id || index}
-      className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+      className="p-4 rounded-xl border border-gray-200 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex items-center gap-3">
-        <Avatar src={row.avatar || undefined} name={row.fullName || row.username} size="md" />
+        <Avatar 
+          src={row.avatar ? (row.avatar.startsWith('http') ? row.avatar : `${BASE_MINIO_URL}${row.avatar}`) : undefined} 
+          name={row.fullName || row.username} 
+          size="md" 
+        />
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
           <span className="text-xs text-gray-400">{row.email}</span>
@@ -196,8 +197,8 @@ const Table = () => {
       <div className="flex gap-2">
         <button
           onClick={() => {
-            setSelectedEmp(row);
-            setIsEditOpen(true);
+              setSelectedEmp(row);
+              setIsEditOpen(true);
           }}
           className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
         >
@@ -206,8 +207,8 @@ const Table = () => {
 
         <button
           onClick={() => {
-            setEmpToDelete(row);
-            setIsDeleteOpen(true);
+              setEmpToDelete(row);
+              setIsDeleteOpen(true);
           }}
           disabled={isPending}
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"

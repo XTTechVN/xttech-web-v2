@@ -3,10 +3,10 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
-import { Building2, Pencil, Trash2, PlusCircle } from 'lucide-react';
+import { Pencil, Trash2, Eye, PlusCircle } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
-import { TableData } from '@/components/table';
+import { TableData, TableAction } from '@/components/table';
 import { Modal, Button } from '@/components';
 import { useQueryParam } from '@/hooks';
 
@@ -21,16 +21,15 @@ import toast from 'react-hot-toast';
 
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
+// action
 import { deleteDepartment, getDepartments } from '@/actions/department';
-import PositionPage from '../[id]/positions/page';
+
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+
 
 const Table = () => {
-  const searchParams = useSearchParams();
-  const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
-  const router = useRouter()
+  const router = useRouter();
   // Trạng thái cho modal sửa phòng ban
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [selectedDept, setSelectedDept] = React.useState<Department | null>(null);
@@ -39,23 +38,12 @@ const Table = () => {
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [deptToDelete, setDeptToDelete] = React.useState<Department | null>(null);
 
-  // Trạng thái cho modal quản lý vị trí
-  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
-  const [deptToCreate, setDeptToCreate] = React.useState<Department | null>(null);
+
 
   // Hàm fetcher gọi API thực tế
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
+  const fetcher = async (params: { offset: number; limit: number }) => {
     try {
-      const data = await getDepartments({ offset, limit, search: search || undefined });
-      return {
-        items: data.items || [],
-        meta: {
-          total: data.pagination?.total || 0,
-          offset: data.pagination?.offset || 0,
-          limit: data.pagination?.limit || 10,
-          next: data.pagination?.next || false,
-        },
-      };
+      return await getDepartments({ ...params, search: search || undefined });
     } catch (error) {
       toast.error('Lỗi khi tải danh sách phòng ban');
       throw new Error('Lỗi khi tải danh sách phòng ban');
@@ -114,37 +102,38 @@ const Table = () => {
       label: 'Hành động',
       minWidth: '150px',
       cell: (row: Department) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setSelectedDept(row);
-              setIsEditOpen(true);
-            }}
-            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-          >
-            <Pencil size={18} />
-          </button>
-
-          <button
-            onClick={() => {
-              setDeptToDelete(row);
-              setIsDeleteOpen(true);
-            }}
-            disabled={isPending}
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-          >
-            <Trash2 size={18} />
-          </button>
-
-          <Link href={`/app/departments/${row.id}/positions`}>
-            <button
-              title="Quản lý vị trí"
-              className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-          >
-            <PlusCircle size={18} />
-          </button>
-          </Link>
-        </div>
+        <TableAction
+          items={[
+            {
+              title: 'Chỉnh sửa',
+              icon: Pencil,
+              size: 18,
+              onClick: () => {
+                setSelectedDept(row);
+                setIsEditOpen(true);
+              },
+            },
+            {
+              title: 'Xóa',
+              icon: Trash2,
+              size: 18,
+              className: 'hover:text-red-600 hover:bg-red-50',
+              disabled: isPending,
+              onClick: () => {
+                setDeptToDelete(row);
+                setIsDeleteOpen(true);
+              },
+            },
+            {
+              title: 'Quản lý vị trí',
+              icon: Eye,
+              size: 18,
+              onClick: () => {
+                router.push(`/app/departments/${row.id}/positions`);
+              },
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -153,7 +142,7 @@ const Table = () => {
   const renderCard = (row: Department, index: number) => (
     <div
       key={row.id || index}
-      className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+      className="p-4 rounded-xl border border-gray-200 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex items-center gap-3">
         <div className="flex flex-col">
@@ -172,8 +161,8 @@ const Table = () => {
       <div className="flex gap-2">
         <button
           onClick={() => {
-            setSelectedDept(row);
-            setIsEditOpen(true);
+              setSelectedDept(row);
+              setIsEditOpen(true);
           }}
           className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
         >
@@ -182,8 +171,8 @@ const Table = () => {
 
         <button
           onClick={() => {
-            setDeptToDelete(row);
-            setIsDeleteOpen(true);
+              setDeptToDelete(row);
+              setIsDeleteOpen(true);
           }}
           disabled={isPending}
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
@@ -193,12 +182,12 @@ const Table = () => {
 
         <button
           onClick={() => {
-            router.push(`/app/departments/${row.id}/positions`)
+            router.push(`/app/departments/${row.id}/positions`);
           }}
           title="Quản lý vị trí"
           className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
         >
-          <PlusCircle size={18} />
+          <Eye size={18} />
         </button>
       </div>
     </div>
@@ -206,7 +195,6 @@ const Table = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      
       <TableData<Department>
         queryKey={['departments', search]}
         fetcher={fetcher}
@@ -285,21 +273,7 @@ const Table = () => {
         </div>
       </Modal>
 
-      {/* Modal hiển thị trang Quản lý vị trí */}
-      <Modal
-        size="xl"
-        isOpen={isCreateOpen}
-        onClose={() => {
-          setIsCreateOpen(false);
-          setDeptToCreate(null);
-        }}
-        title={`Quản lý vị trí - ${deptToCreate?.name || ''}`}
-        className="m-2 md:m-8 max-w-[95%] md:max-w-[85%] w-full"
-      >
-        <div className="max-h-[80vh] overflow-y-auto w-full">
-          <PositionPage />
-        </div>
-      </Modal>
+
     </div>
   );
 };

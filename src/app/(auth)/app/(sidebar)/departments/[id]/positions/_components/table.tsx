@@ -7,6 +7,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData } from '@/components/table';
+import TableAction from '@/components/table/table-action';
 import { Modal, Button } from '@/components';
 
 // Thành phần dùng riêng cho trang vị trí
@@ -120,28 +121,16 @@ const Table = () => {
       label: 'Hành động',
       minWidth: '150px',
       cell: (row: Position) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setSelectedPosition(row);
-              setIsEditOpen(true);
-            }}
-            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-          >
-            <Pencil size={18} />
-          </button>
-
-          <button
-            onClick={() => {
-              setPositionToDelete(row);
-              setIsDeleteOpen(true);
-            }}
-            disabled={isPending}
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
+        <TableAction
+          onEdit={() => {
+            setSelectedPosition(row);
+            setIsEditOpen(true);
+          }}
+          onDelete={() => {
+            setPositionToDelete(row);
+            setIsDeleteOpen(true);
+          }}
+        />
       ),
     },
   ];
@@ -150,7 +139,7 @@ const Table = () => {
   const renderCard = (row: Position, index: number) => (
     <div
       key={row.id || index}
-      className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+      className="p-4 rounded-xl border border-gray-200 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex items-center gap-3">
         <div className="flex flex-col">
@@ -165,28 +154,16 @@ const Table = () => {
           </span>
         </div>
       </div>
-      <div className="flex gap-2">
-        <button
-          onClick={() => {
-            setSelectedPosition(row);
-            setIsEditOpen(true);
-          }}
-          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-        >
-          <Pencil size={18} />
-        </button>
-
-        <button
-          onClick={() => {
-            setPositionToDelete(row);
-            setIsDeleteOpen(true);
-          }}
-          disabled={isPending}
-          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-        >
-          <Trash2 size={18} />
-        </button>
-      </div>
+      <TableAction
+        onEdit={() => {
+          setSelectedPosition(row);
+          setIsEditOpen(true);
+        }}
+        onDelete={() => {
+          setPositionToDelete(row);
+          setIsDeleteOpen(true);
+        }}
+      />
     </div>
   );
 

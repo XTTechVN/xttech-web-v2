@@ -12,6 +12,7 @@ import { CheckCircle2 } from 'lucide-react';
 // thư viện validate form
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+
 import { useForm } from 'react-hook-form';
 
 // Gọi API từ action
@@ -26,7 +27,7 @@ import { useMutation } from '@tanstack/react-query';
 // utils
 import queryClient from '@/utils/query';
 
-// Kiểu dữ liệu của phòng ban
+// Kiểu dữ liệu của vị trí
 import { Position } from '@/types';
 
 // Kiểu dữ liệu cho modal
@@ -58,6 +59,7 @@ export default function PositionFormModal({ isOpen, onClose, title, submitText =
     resolver: zodResolver(positionSchema),
   });
 
+  // Hàm thêm vị trí
   const { mutate, isPending } = useMutation({
     mutationFn: createPosition,
     onSuccess: () => {
@@ -71,6 +73,7 @@ export default function PositionFormModal({ isOpen, onClose, title, submitText =
     },
   });
 
+  // Hàm sửa vị trí
   const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<Omit<Position, 'id' | 'createdAt' | 'updatedAt'>> }) => updatePosition(id, data),
     onSuccess: () => {

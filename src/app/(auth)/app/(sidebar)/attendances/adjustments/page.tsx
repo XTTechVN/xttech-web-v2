@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  Tooltip,
+  TableAction,
   Button,
   TableData,
   Badge,
@@ -19,15 +19,12 @@ import {
   Trash2,
   Eye,
   CheckCircle2,
-  XCircle,
   FileEdit,
   Clock,
-  CheckCircle,
   AlertCircle,
   Info,
   FileCheck,
   Calendar,
-  User as UserIcon,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AttendanceAdjustmentRequest, AdjustmentStatus, RequestType } from '@/types';
@@ -37,7 +34,6 @@ import AdjustmentDetailModal from '@/app/(auth)/app/(sidebar)/attendances/_compo
 import ReviewAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/review-modal';
 import DeleteAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/delete-modal';
 import { getAdjustmentRequests, updateAdjustmentRequest, deleteAdjustmentRequest, getUsers } from '@/actions';
-import Loading from '@/app/(auth)/app/loading';
 import { useAuthStore } from '@/stores';
 import StatCart from '../../dashboard/_components/stats-card';
 
@@ -68,7 +64,7 @@ export default function AdjustmentsSidebarPage() {
   const isAdmin = useMemo(() =>
     Boolean(currentUser?.roles?.some((r) =>
       r.code?.toLowerCase() === 'admin' || r.name?.toLowerCase() === 'admin' || r.code?.toLowerCase() === 'super')
-    ),
+      ),
     [currentUser]
   );
 
@@ -111,10 +107,10 @@ export default function AdjustmentsSidebarPage() {
   const { data: allAdjustmentsData, refetch: refetchAllAdjustments } = useQuery({
     queryKey: ['all-adjustments', queryKey, isAdmin, currentUser?.id, filterStartDate, filterEndDate],
     queryFn: () => getAdjustmentRequests({
-      ...(isAdmin ? {} : { userId: currentUser?.id }),
-      startDate: filterStartDate || undefined,
-      endDate: filterEndDate || undefined,
-    }),
+        ...(isAdmin ? {} : { userId: currentUser?.id }),
+        startDate: filterStartDate || undefined,
+        endDate: filterEndDate || undefined,
+      }),
     enabled: !!currentUser?.id,
   });
 
@@ -210,13 +206,13 @@ export default function AdjustmentsSidebarPage() {
   const tableFilters: ITableFilterProps[] = [
     ...(isAdmin
       ? [
-        {
-          label: 'Nhân sự',
-          value: filterEmployee,
-          options: employeeOptions,
-          onChange: (val: string | undefined) => setFilterEmployee(val),
-        },
-      ]
+          {
+            label: 'Nhân sự',
+            value: filterEmployee,
+            options: employeeOptions,
+            onChange: (val: string | undefined) => setFilterEmployee(val),
+          },
+        ]
       : []),
     {
       label: 'Loại khiếu nại',
@@ -571,62 +567,46 @@ export default function AdjustmentsSidebarPage() {
       cell: (row) => {
         const canManageThisRow = isAdmin || row.userId === currentUser?.id;
         return (
-          <div className="flex items-center gap-1">
-            <Tooltip content="Xem chi tiết" position="top">
-              <button
-                type="button"
-                onClick={() => {
+          <TableAction
+            items={[
+              {
+                title: 'Xem chi tiết',
+                icon: Eye,
+                size: 18,
+                onClick: () => {
                   setSelectedRow(row);
                   setShowDetailModal(true);
-                }}
-                className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
-              >
-                <Eye size={15} />
-              </button>
-            </Tooltip>
-
-            {isAdmin && row.status === 'pending' && (
-              <Tooltip content="Xét duyệt khiếu nại" position="top">
-                <button
-                  type="button"
-                  onClick={() => openReviewModal(row, 'approved')}
-                  className="p-1.5 rounded-lg text-teal-600 hover:bg-teal-50 hover:text-teal-700 transition"
-                >
-                  <FileCheck size={15} />
-                </button>
-              </Tooltip>
-            )}
-
-            {canManageThisRow && (
-              <Tooltip content="Chỉnh sửa" position="top">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedRow(row);
-                    setShowEditModal(true);
-                  }}
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
-                >
-                  <Pencil size={15} />
-                </button>
-              </Tooltip>
-            )}
-
-            {canManageThisRow && (
-              <Tooltip content="Xóa khiếu nại" position="top">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDeletingId(row.id);
-                    setShowDeleteModal(true);
-                  }}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </Tooltip>
-            )}
-          </div>
+                },
+              },
+              isAdmin &&
+                row.status === 'pending' && {
+                  title: 'Xét duyệt khiếu nại',
+                  icon: FileCheck,
+                  size: 18,
+                  className: 'text-teal-600 hover:bg-teal-50 hover:text-teal-700',
+                  onClick: () => openReviewModal(row, 'approved'),
+                },
+              canManageThisRow && {
+                title: 'Chỉnh sửa',
+                icon: Pencil,
+                size: 18,
+                onClick: () => {
+                  setSelectedRow(row);
+                  setShowEditModal(true);
+                },
+              },
+              canManageThisRow && {
+                title: 'Xóa',
+                icon: Trash2,
+                size: 18,
+                className: 'hover:text-red-600 hover:bg-red-50',
+                onClick: () => {
+                  setDeletingId(row.id);
+                  setShowDeleteModal(true);
+                },
+              },
+            ]}
+          />
         );
       },
     },

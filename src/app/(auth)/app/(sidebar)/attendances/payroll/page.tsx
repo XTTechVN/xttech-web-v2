@@ -7,38 +7,28 @@ import {
   Button,
   Badge,
   Avatar,
-  Select,
-  Input,
   Tabs,
   TableData,
+  TableAction,
   ITableColumn,
   ITableFilterProps,
-  BaseResponseWithPagination,
-  Tooltip,
 } from '@/components';
 import { toast } from 'react-hot-toast';
 import {
   History,
-  FileSpreadsheet,
   Calendar,
   Clock,
   AlertCircle,
-  RefreshCw,
   LogIn,
   LogOut,
   FileEdit,
-  Search,
-  Filter,
   Users,
   Briefcase,
-  BookOpen,
   Eye,
 } from 'lucide-react';
 import Link from 'next/link';
 import PayrollTransferHistoryModal from './_components/payroll-history-modal';
 import {
-  generateMockDailyLogs,
-  DailyAttendanceRecord,
   PayrollRecord,
 } from './_components/employee-attendance-history-modal';
 import AutoTimekeepingModal from '@/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal';
@@ -462,35 +452,28 @@ export default function PayrollDataPage() {
       label: 'Hành động',
       minWidth: '120px',
       cell: (row) => (
-        <div className="flex items-center">
-          <Tooltip content="Khiếu nại" position='top'>
-            <button
-              type='button'
-              className='flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition'
-              onClick={() => {
+        <TableAction
+          items={[
+            {
+              title: 'Khiếu nại',
+              icon: FileEdit,
+              size: 18,
+              onClick: () => {
                 setSelectedRow(row);
                 setShowAdjustmentModal(true);
-              }}
-            >
-              <FileEdit size={15} />
-            </button>
-          </Tooltip>
-
-          <Tooltip content="Chi tiết chấm công" position="top">
-            <button
-              type="button"
-              onClick={() => {
+              },
+            },
+            {
+              title: 'Chi tiết chấm công',
+              icon: Eye,
+              size: 18,
+              onClick: () => {
                 setSelectedRow(row);
                 setShowDetailModal(true);
-              }}
-              className="flex h-8 w-8 items-center justify-center rounded-lg hover:scale-150 transition"
-            >
-              <Eye size={15} />
-            </button>
-          </Tooltip>
-
-
-        </div>
+              },
+            },
+          ]}
+        />
       ),
     },
   ];

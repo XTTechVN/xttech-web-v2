@@ -108,7 +108,7 @@ export default function AddAdjustmentModal({
   const employees = useMemo(() => usersList?.items ?? [], [usersList]);
 
   const employeeOptions = useMemo(() => {
-    const list = [...employees];
+    const list = [...employees] as any[];
     if (data?.user && !list.some((u) => u.id === data.user?.id)) {
       list.unshift(data.user);
     }
