@@ -199,34 +199,11 @@ export default function AdjustmentsSidebarPage() {
   }, []);
 
   const tableFilters: ITableFilterProps[] = [
-    ...(isAdmin
-      ? [
-          {
-            label: 'Nhân sự',
-            value: filterEmployee,
-            options: employeeOptions,
-            onChange: (val: string | undefined) => setFilterEmployee(val),
-          },
-        ]
-      : []),
     {
       label: 'Loại khiếu nại',
       value: filterType,
       options: typeOptions,
       onChange: (val: string | undefined) => setFilterType(val as RequestType | undefined),
-    },
-
-    {
-      label: 'Từ ngày',
-      value: filterStartDate,
-      options: dateOptions,
-      onChange: (val: string | undefined) => setFilterStartDate(val),
-    },
-    {
-      label: 'Đến ngày',
-      value: filterEndDate,
-      options: dateOptions,
-      onChange: (val: string | undefined) => setFilterEndDate(val),
     },
     {
       label: 'Trạng thái',

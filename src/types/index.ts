@@ -1,6 +1,9 @@
 // Users
 export * from './user';
 
+// Roles
+export * from './role';
+
 // Suggestions
 export * from './suggestion';
 

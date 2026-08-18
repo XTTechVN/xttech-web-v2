@@ -4,9 +4,9 @@
 import { Heading } from '@/components';
 
 // Các thành phần dùng riêng cho nhân viên
-import StatCart from './_components/stats-card';
-import ActionBar from './_components/action-bar';
-import Table from './_components/table';
+import { StatCart } from './_components';
+import { ActionBar } from './_components';
+import { Table } from './_components';
 
 // icons thư viện lucide - react
 import { Building2, Users, UserCheck, Briefcase } from 'lucide-react';

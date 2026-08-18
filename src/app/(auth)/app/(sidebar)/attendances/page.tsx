@@ -30,7 +30,8 @@ import {
   UserCheck2,
   Plus,
   Check,
-  X
+  X,
+  MessageSquareWarning
 } from 'lucide-react';
 import AddAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/add-modal";
 import EditAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/edit-modal";
@@ -339,18 +340,6 @@ export default function AttendancesPage() {
   // Cấu hình filters truyền vào TableData
   const tableFilters: ITableFilterProps[] = [
     {
-      label: 'Nhân sự',
-      value: filterEmployeeId,
-      options: employeeOptions,
-      onChange: (val: string | undefined) => {
-        setFilterEmployeeId(val);
-      },
-    },
-
-
-
-
-    {
       label: 'Phòng ban',
       value: filterDepartment,
       options: departmentOptions,
@@ -358,32 +347,6 @@ export default function AttendancesPage() {
         setFilterDepartment(val);
       },
     },
-
-    {
-      label: 'Ca làm',
-      value: filterShift,
-      options: [
-        { label: 'Ca sáng', value: 'morning' },
-        { label: 'Ca chiều', value: 'afternoon' },
-        { label: 'Ca tối', value: 'night' },
-      ],
-      onChange: (val: string | undefined) => {
-        setFilterShift(val);
-      },
-    },
-    {
-      label: 'Từ ngày',
-      value: filterStartDate,
-      options: dateOptions,
-      onChange: (val: string | undefined) => setFilterStartDate(val),
-    },
-    {
-      label: 'Đến ngày',
-      value: filterEndDate,
-      options: dateOptions,
-      onChange: (val: string | undefined) => setFilterEndDate(val),
-    },
-
     {
       label: 'Trạng thái',
       value: filterStatus as string | undefined,
@@ -613,7 +576,7 @@ export default function AttendancesPage() {
     {
       key: 'workDate',
       label: 'Ngày làm việc',
-      minWidth: '60px',
+      minWidth: '140px',
       cell: (row) => (
         <span className="font-medium text-slate-500">{row.workDate}</span>
       ),
@@ -837,6 +800,13 @@ export default function AttendancesPage() {
       title: "Đi muộn / về sớm",
       value: todayLateCount,
       icon: <UserCheck2 />,
+      trend: lateDiff,
+      trendDirection: lateDiff >= 0 ? "up" : "down" as const,
+    },
+    {
+      title: "Số khiếu nại chờ duyệt",
+      value: pendingAdjustmentRequests.length,
+      icon: <MessageSquareWarning />,
       trend: lateDiff,
       trendDirection: lateDiff >= 0 ? "up" : "down" as const,
     },
