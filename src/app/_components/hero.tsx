@@ -25,7 +25,7 @@ export const Hero = () => {
           Hệ thống XTTech cung cấp các công cụ mạnh mẽ để quản lý nhân sự, tối ưu hóa quy trình và nâng cao năng suất cho doanh nghiệp của bạn.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/app">
+          <Link href="/signin">
             <Button size="lg" className="group relative w-full sm:w-auto rounded-full px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 text-white overflow-hidden">
               <span className="inline-flex transition-all duration-300 group-hover:-translate-y-8 group-hover:opacity-0">
                 Bắt đầu ngay
