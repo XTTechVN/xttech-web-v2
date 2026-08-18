@@ -82,12 +82,18 @@ export function AppBreadcrumb() {
           if (segment === 'positions') label = 'Vị trí';
           else if (segment === 'create') label = 'Thêm mới';
           else if (segment === 'edit') label = 'Chỉnh sửa';
+          else if (segment === 'quotations') label = 'Báo giá';
           else if (!isNaN(Number(segment))) label = `Chi tiết #${segment}`;
           else label = segment.charAt(0).toUpperCase() + segment.slice(1);
 
+          let href: string | undefined = index === segments.length - 1 ? undefined : currentDynamicPath;
+          if (segment === 'quotations') {
+            href = undefined;
+          }
+
           items.push({
             label,
-            href: index === segments.length - 1 ? undefined : currentDynamicPath,
+            href,
           });
         });
       }

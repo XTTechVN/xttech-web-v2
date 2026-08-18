@@ -25,15 +25,7 @@ const Page = () => {
   });
 
   return (
-    <div className="flex flex-col p-3 gap-4">
-      <div className="flex flex-col gap-2">
-        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Chi tiết phòng ban{departmentDetail?.name ? ` - ${departmentDetail.name}` : ''}
-        </Heading>
-        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-          Danh sách các vị trí trong phòng ban sẽ được hiển thị tại đây
-        </Heading>
-      </div>
+    <div className="flex flex-col gap-4">
       <ActionBar />
       <Table />
     </div>

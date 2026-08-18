@@ -19,6 +19,7 @@ interface QuotationCreateModalProps {
   title: string;
   submitText?: string;
   projects?: Pick<Project, 'id' | 'name'>[];
+  defaultProjectId?: number;
 }
 
 type QuotationCreateFormValues = Omit<QuotationCreate, 'projectId' | 'discountPercentage'> & {
@@ -32,6 +33,7 @@ export function QuotationCreateModal({
   title,
   submitText = 'Xác nhận tạo',
   projects = [],
+  defaultProjectId,
 }: QuotationCreateModalProps) {
   const {
     register,
@@ -44,6 +46,9 @@ export function QuotationCreateModal({
     mutationFn: createQuotation,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
+      if (defaultProjectId) {
+        queryClient.invalidateQueries({ queryKey: ['project_quotations', defaultProjectId] });
+      }
       toast.success('Thêm báo giá thành công');
       onClose();
       reset();
@@ -55,14 +60,19 @@ export function QuotationCreateModal({
 
   useEffect(() => {
     if (isOpen) {
-      reset({ title: '', code: '', discountPercentage: 0, projectId: '' });
+      reset({ 
+        title: '', 
+        code: '', 
+        discountPercentage: 0, 
+        projectId: defaultProjectId || '' 
+      });
     }
-  }, [isOpen]);
+  }, [isOpen, defaultProjectId]);
 
   const handleConfirm = (data: QuotationCreateFormValues) => {
     const formattedData: QuotationCreate = {
       title: data.title,
-      projectId: Number(data.projectId),
+      projectId: Number(defaultProjectId || data.projectId),
       discountPercentage: Number(data.discountPercentage || 0),
     };
     if (data.code && data.code.trim() !== '') {
@@ -82,14 +92,16 @@ export function QuotationCreateModal({
             {...register('title', { required: true })}
             error={errors.title ? 'Tiêu đề không được để trống' : undefined}
           />
-          <Select
-            label="Dự án áp dụng *"
-            placeholder="Chọn dự án"
-            fullWidth
-            {...register('projectId', { required: true })}
-            options={projects.map((p) => ({ value: p.id, label: p.name }))}
-            error={errors.projectId ? 'Vui lòng chọn dự án' : undefined}
-          />
+          {!defaultProjectId && (
+            <Select
+              label="Dự án áp dụng *"
+              placeholder="Chọn dự án"
+              fullWidth
+              {...register('projectId', { required: true })}
+              options={projects.map((p) => ({ value: p.id, label: p.name }))}
+              error={errors.projectId ? 'Vui lòng chọn dự án' : undefined}
+            />
+          )}
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Mã báo giá"

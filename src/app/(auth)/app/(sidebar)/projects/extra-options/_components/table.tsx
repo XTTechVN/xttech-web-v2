@@ -111,10 +111,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center w-full pr-2">
-        <Heading className="text-primary text-2xl" size="h1">
-          Danh sách tùy chọn phát sinh
-        </Heading>
+      <div className="flex justify-end items-center w-full pr-2">
         <Button
           variant="primary"
           size="sm"

@@ -15,10 +15,7 @@ const ActionBar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="flex md:flex-row justify-between items-start md:items-center w-full gap-4">
-      <Heading className="text-primary text-2xl" size="h1">
-        Danh sách phòng ban
-      </Heading>
+    <div className="flex md:flex-row justify-end items-start md:items-center w-full gap-4">
       <Button
         variant="primary"
         size="sm"

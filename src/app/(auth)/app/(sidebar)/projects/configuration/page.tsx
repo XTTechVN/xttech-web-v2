@@ -19,7 +19,7 @@ const TABS = [
 ];
 
 export default function ProjectConfigurationPage() {
-  const [activeTab, setActiveTab] = useState('doors');
+  const [activeTab, setActiveTab] = useState('materials');
   const router = useRouter();
 
   const ActiveComponent = TABS.find((t) => t.id === activeTab)?.component || DoorsPage;
