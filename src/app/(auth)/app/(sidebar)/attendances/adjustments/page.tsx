@@ -6,7 +6,6 @@ import {
   Button,
   TableData,
   Badge,
-  Breadcrumb,
   ITableColumn,
   ITableFilterProps,
   Heading,
@@ -25,6 +24,8 @@ import {
   Info,
   FileCheck,
   Calendar,
+  SquareCheck,
+  Check,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AttendanceAdjustmentRequest, AdjustmentStatus, RequestType } from '@/types';
@@ -155,12 +156,6 @@ export default function AdjustmentsSidebarPage() {
     if (!totalRequestsCount) return 0;
     return Math.round((approvedCount / totalRequestsCount) * 100 * 10) / 10;
   }, [approvedCount, totalRequestsCount]);
-
-  const breadcrumbItems = [
-    { label: 'Trang chủ', href: '/app' },
-    { label: 'Quản lý nhân sự', href: '/app/employees' },
-    { label: 'Danh sách khiếu nại', href: '/app/attendances/adjustments' },
-  ];
 
   const employeeOptions = useMemo(() => {
     if (!isAdmin) return [];
@@ -419,56 +414,46 @@ export default function AdjustmentsSidebarPage() {
         )}
 
         {/* Actions Bar */}
-        <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedRow(row);
-              setShowDetailModal(true);
-            }}
-            className="flex items-center gap-1 text-blue-600 font-semibold hover:underline"
-          >
-            <Eye size={14} /> Chi tiết
-          </button>
-
-          <div className="flex items-center gap-1.5">
-            {/* Admin approve/reject preview trigger */}
-            {isAdmin && isPending && (
-              <button
-                type="button"
-                onClick={() => openReviewModal(row, 'approved')}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 font-bold hover:bg-teal-100 transition"
-              >
-                <FileCheck size={13} /> Xét duyệt
-              </button>
-            )}
-
-            {/* Owner or Admin can Edit/Delete */}
-            {canManageThisRow && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedRow(row);
-                    setShowEditModal(true);
-                  }}
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-                >
-                  <Pencil size={14} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDeletingId(row.id);
-                    setShowDeleteModal(true);
-                  }}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </>
-            )}
-          </div>
+        <div className="flex items-center justify-end pt-1 border-t border-slate-100">
+          <TableAction
+            items={[
+              {
+                title: 'Xem chi tiết',
+                icon: Eye,
+                size: 18,
+                onClick: () => {
+                  setSelectedRow(row);
+                  setShowDetailModal(true);
+                },
+              },
+              isAdmin &&
+                isPending && {
+                  title: 'Xét duyệt khiếu nại',
+                  icon: Check,
+                  size: 18,
+                  onClick: () => openReviewModal(row, 'approved'),
+                },
+              canManageThisRow && {
+                title: 'Chỉnh sửa',
+                icon: Pencil,
+                size: 18,
+                onClick: () => {
+                  setSelectedRow(row);
+                  setShowEditModal(true);
+                },
+              },
+              canManageThisRow && {
+                title: 'Xóa',
+                icon: Trash2,
+                size: 18,
+                className: 'hover:text-red-600 hover:bg-red-50',
+                onClick: () => {
+                  setDeletingId(row.id);
+                  setShowDeleteModal(true);
+                },
+              },
+            ]}
+          />
         </div>
       </div>
     );
@@ -581,9 +566,9 @@ export default function AdjustmentsSidebarPage() {
               isAdmin &&
                 row.status === 'pending' && {
                   title: 'Xét duyệt khiếu nại',
-                  icon: FileCheck,
+                  icon: Check,
                   size: 18,
-                  className: 'text-teal-600 hover:bg-teal-50 hover:text-teal-700',
+                  // className: 'text-teal-600 hover:bg-teal-50 hover:text-teal-700',
                   onClick: () => openReviewModal(row, 'approved'),
                 },
               canManageThisRow && {
@@ -613,23 +598,11 @@ export default function AdjustmentsSidebarPage() {
   ];
 
   return (
-    <div className="flex h-full w-full flex-1 flex-col bg-slate-50 p-6 space-y-6">
-      {/* Top Breadcrumb & Header Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <Breadcrumb items={breadcrumbItems} />
-        <Button
-          className="bg-[#005c53] hover:bg-[#004740] text-white font-semibold shadow-sm gap-2 self-start sm:self-auto"
-          leftIcon={<Plus size={18} />}
-          onClick={() => setShowAddModal(true)}
-        >
-          Tạo khiếu nại mới
-        </Button>
-      </div>
-
+    <div className="w-full flex flex-col gap-4 p-3">
       {/* Title Header */}
-      <div>
+      <div className="flex flex-col gap-1">
         <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Quản lý Chấm công & Thời gian
+          Quản lý khiếu nại chấm công
         </Heading>
         <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
           {isAdmin
@@ -713,9 +686,21 @@ export default function AdjustmentsSidebarPage() {
 
       {/* Main Table Section */}
       <div className="space-y-4">
-        <Heading size="h1" className="text-primary pr-2 pt-2 text-2xl">
-          Danh sách khiếu nại
-        </Heading>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
+          <Heading size="h1" className="text-primary text-2xl">
+            Danh sách khiếu nại
+          </Heading>
+
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<Plus size={16} />}
+            onClick={() => setShowAddModal(true)}
+            className="px-3 gap-1.5"
+          >
+            Tạo khiếu nại mới
+          </Button>
+        </div>
         <TableData<AdjustmentRecord>
           queryKey={[
             'appeals',

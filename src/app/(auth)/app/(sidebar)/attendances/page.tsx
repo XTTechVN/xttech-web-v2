@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 // Cập nhật code trang attendanceModule
 import { useEffect, useState, useMemo } from 'react';
@@ -10,7 +12,8 @@ import {
   Heading,
   ITableColumn,
   ITableFilterProps,
-  Avatar
+  Avatar,
+  Modal,
 } from '@/components';
 import { toast } from 'react-hot-toast';
 import {
@@ -24,7 +27,10 @@ import {
   Calendar,
   UserCheck,
   Users,
-  UserCheck2
+  UserCheck2,
+  Plus,
+  Check,
+  X
 } from 'lucide-react';
 import AddAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/add-modal";
 import EditAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/edit-modal";
@@ -37,6 +43,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteAttendance, getAttendances, getDepartments, getUsers, getAdjustmentRequests, updateAdjustmentRequest } from '@/actions';
 import { Attendance, AttendanceAdjustmentRequest, AttendanceStatus } from '@/types';
+import { BASE_MINIO_URL } from '@/config';
 import StatCart from '../dashboard/_components/stats-card';
 import AddAdjustmentModal from './_components/adjustment/add-modal';
 import ReviewAdjustmentModal from './_components/adjustment/review-modal';
@@ -122,6 +129,8 @@ export default function AttendancesPage() {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showTimekeepingModal, setShowTimekeepingModal] = useState(false);
   const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
 
   const pathname = usePathname();
@@ -501,7 +510,7 @@ export default function AttendancesPage() {
         <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <Avatar
-              src={row.user?.avatar || undefined}
+              src={row.user?.avatar ? (row.user.avatar.startsWith('http') ? row.user.avatar : `${BASE_MINIO_URL}${row.user.avatar}`) : undefined}
               name={row.user?.fullName || 'NV'}
               size="md"
             />
@@ -552,33 +561,44 @@ export default function AttendancesPage() {
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedRow(row);
-              setShowDetailModal(true);
-            }}
-            className="flex items-center gap-1 text-xs text-blue-600 font-semibold px-2 py-1 rounded-lg hover:bg-blue-50 transition"
-          >
-            <Eye size={13} /> Chi tiết
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedRow(row);
-              setShowEditModal(true);
-            }}
-            className="flex items-center gap-1 text-xs text-slate-600 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 transition"
-          >
-            <Pencil size={13} /> Sửa
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDelete(row)}
-            className="flex items-center gap-1 text-xs text-red-500 font-medium px-2 py-1 rounded-lg hover:bg-red-50 transition"
-          >
-            <Trash2 size={13} /> Xóa
-          </button>
+          <TableAction
+            items={[
+              {
+                title: 'Khiếu nại',
+                icon: FileEdit,
+                size: 18,
+                onClick: () => {
+                  setSelectedRow(row);
+                  setShowAdjustmentModal(true);
+                },
+              },
+              {
+                title: 'Xem chi tiết',
+                icon: Eye,
+                size: 18,
+                onClick: () => {
+                  setSelectedRow(row);
+                  setShowDetailModal(true);
+                },
+              },
+              {
+                title: 'Chỉnh sửa',
+                icon: Pencil,
+                size: 18,
+                onClick: () => {
+                  setSelectedRow(row);
+                  setShowEditModal(true);
+                },
+              },
+              {
+                title: 'Xóa',
+                icon: Trash2,
+                size: 18,
+                className: 'hover:text-red-600 hover:bg-red-50',
+                onClick: () => handleDelete(row),
+              },
+            ]}
+          />
         </div>
       </div>
     );
@@ -598,42 +618,89 @@ export default function AttendancesPage() {
       key: 'employee',
       label: 'Nhân sự',
       minWidth: '180px',
-      cell: (row) => (
-        <div>
-          <div className="font-semibold text-slate-800">{row.user?.fullName || '-'}</div>
-          <div className="text-xs text-slate-500">{row.user?.email || '-'}</div>
-        </div>
-      ),
+      cell: (row) => {
+        const avatar = row.user?.avatar;
+        const avatarSrc = avatar ? (avatar.startsWith('http') ? avatar : `${BASE_MINIO_URL}${avatar}`) : undefined;
+        return (
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Avatar
+              src={avatarSrc}
+              name={row.user?.fullName || 'NV'}
+              size="sm"
+            />
+            <div className="flex flex-col min-w-0">
+              <div className="font-semibold text-slate-800 text-sm truncate">{row.user?.fullName || '-'}</div>
+              <div className="text-xs text-slate-500 truncate">{row.user?.email || '-'}</div>
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: 'checkIn',
       label: 'Check In',
-      minWidth: '140px',
-      cell: (row) => (
-        <div className="flex items-center gap-2">
-          <img
-            src={row.imgCheckinPath || 'https://picsum.photos/600/400'}
-            alt={row.user?.fullName || 'User'}
-            className="h-10 w-10 rounded-full object-cover"
-          />
-          <span className="font-medium text-slate-500">{row.checkIn || '-'}</span>
-        </div>
-      ),
+      minWidth: '100px',
+      cell: (row) => {
+        const imgPath = row.imgCheckinPath;
+        const imgSrc = imgPath ? (imgPath.startsWith('http') ? imgPath : `${BASE_MINIO_URL}${imgPath}`) : null;
+
+        return (
+          <div className="flex items-center gap-2">
+            {imgSrc ? (
+              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                <img
+                  src={imgSrc}
+                  alt={row.user?.fullName || 'Check In'}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
+                <Clock className="w-4 h-4" />
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="font-medium text-slate-700 text-sm">{row.checkIn ? row.checkIn.slice(0, 5) : '--:--'}</span>
+              {row.isLate && (
+                <span className="text-[10px] text-amber-600 font-semibold">Muộn {row.lateMinutes ?? 0}p</span>
+              )}
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: 'checkOut',
       label: 'Check Out',
-      minWidth: '140px',
-      cell: (row) => (
-        <div className="flex items-center gap-2">
-          <img
-            src={row.imgCheckoutPath || 'https://picsum.photos/600/400'}
-            alt={row.user?.fullName || 'User'}
-            className="h-10 w-10 rounded-full object-cover"
-          />
-          <span className="font-medium text-slate-500">{row.checkOut || '-'}</span>
-        </div>
-      ),
+      minWidth: '100px',
+      cell: (row) => {
+        const imgPath = row.imgCheckoutPath;
+        const imgSrc = imgPath ? (imgPath.startsWith('http') ? imgPath : `${BASE_MINIO_URL}${imgPath}`) : null;
+
+        return (
+          <div className="flex items-center gap-2">
+            {imgSrc ? (
+              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                <img
+                  src={imgSrc}
+                  alt={row.user?.fullName || 'Check Out'}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
+                <Clock className="w-4 h-4" />
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="font-medium text-slate-700 text-sm">{row.checkOut ? row.checkOut.slice(0, 5) : '--:--'}</span>
+              {row.isEarlyLeave && (
+                <span className="text-[10px] text-amber-600 font-semibold">Về sớm {row.earlyLeaveMinutes ?? 0}p</span>
+              )}
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: 'totalHours',
@@ -727,11 +794,24 @@ export default function AttendancesPage() {
     },
   ];
 
-  const handleDelete = async (row: Attendance) => {
-    if (!confirm('Chắc chắn xóa?')) return;
-    await deleteAttendance(row.id);
-    queryClient.invalidateQueries({ queryKey: ['attendances'] });
-    toast.success('Đã xóa chấm công');
+  const handleDelete = (row: Attendance) => {
+    setSelectedRow(row);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedRow?.id) return;
+    setIsDeleting(true);
+    try {
+      await deleteAttendance(selectedRow.id);
+      queryClient.invalidateQueries({ queryKey: ['attendances'] });
+      toast.success('Đã xóa chấm công thành công');
+      setShowDeleteModal(false);
+    } catch {
+      toast.error('Có lỗi xảy ra khi xóa bản ghi chấm công');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const attendanceStats = [
@@ -761,75 +841,17 @@ export default function AttendancesPage() {
   if (isLoading) return <Loading />;
 
   return (
-    <div className="flex h-full w-full flex-1 flex-col bg-slate-50 p-6 space-y-6">
-      <Breadcrumb items={breadcrumbItems} className="mb-2" />
+    <div className="w-full flex flex-col gap-4 p-3">
+      {/* <Breadcrumb items={breadcrumbItems} className="mb-2" /> */}
 
       {/* Header Bar using system components */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-            Quản lý Chấm công & Thời gian
-          </Heading>
-          <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-            Giám sát lực lượng lao động và theo dõi chuyên cần thời gian thực.
-          </Heading>
-        </div>
-
-        <div className="flex shrink-0 flex-wrap items-center gap-3">
-          {/* Main Action 1: Điểm danh tự động (Camera + GPS) */}
-          {/* <Button
-            className="bg-[#005c53] hover:bg-[#004740] text-white font-semibold px-4 py-2.5 rounded-lg shadow-sm gap-2"
-            leftIcon={<LogIn size={18} />}
-            onClick={() => setShowTimekeepingModal(true)}
-          >
-            Điểm danh ngay
-          </Button> */}
-
-          {/* Main Action 2: Đăng ký tăng ca (Light Blue Button) */}
-          {/* <Button
-            variant="secondary"
-            className="bg-[#dbeafe] text-[#1e40af] hover:bg-[#bfdbfe] font-semibold px-4 py-2.5 rounded-lg gap-2"
-            leftIcon={<Clock size={18} className="text-[#1e40af]" />}
-            onClick={() => setShowAddModal(true)}
-          >
-            Đăng ký tăng ca
-          </Button> */}
-
-          {/* Main Action 3: Yêu cầu điều chỉnh (Light Blue Button) */}
-          {/* <Button
-            variant="secondary"
-            className="bg-[#dbeafe] text-[#1e40af] hover:bg-[#bfdbfe] font-semibold px-4 py-2.5 rounded-lg gap-2"
-            leftIcon={<FileEdit size={18} className="text-[#1e40af]" />}
-            onClick={() => router.push('/app/admin/attendances/adjustments')}
-          >
-            Yêu cầu điều chỉnh
-          </Button> */}
-
-          <Button
-            onClick={() => setShowAddModal(true)}
-          >
-            Thêm chấm công
-          </Button>
-
-          {/* Preserved secondary action triggers */}
-          <Link href="/app/attendances/adjustments">
-            <Button variant="secondary"
-              className="bg-[#dbeafe] text-[#1e40af] hover:bg-[#bfdbfe] font-semibold px-4 py-2.5 rounded-lg gap-2"
-              leftIcon={<FileEdit size={18} className="text-[#1e40af]" />}
-              onClick={() => router.push('/app/attendances/adjustments')}
-            >
-              Danh sách khiếu nại
-            </Button>
-          </Link>
-          {/* <Button
-            variant="outline"
-            className="gap-1.5 text-xs py-2"
-            onClick={() => setShowAddUserModal(true)}
-          >
-            <Plus size={14} />
-            Thêm User
-          </Button> */}
-        </div>
+      <div className="flex flex-col gap-1">
+        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
+          Quản lý Chấm công & Thời gian
+        </Heading>
+        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
+          Giám sát lực lượng lao động và theo dõi chuyên cần thời gian thực.
+        </Heading>
       </div>
 
       {/* 4 Stat Cards Grid */}
@@ -919,9 +941,35 @@ export default function AttendancesPage() {
 
       {/* Table Section */}
       <div className="space-y-4">
-        <Heading className="text-primary pr-2 pt-2 text-2xl" size="h1">
-          Bảng công tháng (Admin)
-        </Heading>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
+          <Heading className="text-primary text-2xl" size="h1">
+            Bảng công tháng (Admin)
+          </Heading>
+
+          <div className="flex items-center justify-end gap-2 flex-wrap">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowAddModal(true)}
+              leftIcon={<Plus size={16} />}
+              className="px-3 gap-1.5"
+            >
+              Thêm chấm công
+            </Button>
+
+            <Link href="/app/attendances/adjustments">
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<FileEdit size={16} className="text-sky-600" />}
+                className="px-3 gap-1.5 text-slate-700 hover:bg-slate-50 border-slate-200"
+              >
+                Danh sách khiếu nại
+              </Button>
+            </Link>
+          </div>
+        </div>
+
         <TableData<Attendance>
           queryKey={['attendances', searchQuery, filterEmployeeId, filterStartDate, filterEndDate, filterStatus, filterDepartment, filterShift]}
           fetcher={fetcher}
@@ -948,9 +996,11 @@ export default function AttendancesPage() {
                 <Heading size="h4" className="text-base font-bold text-slate-900">
                   Yêu cầu chờ duyệt
                 </Heading>
-                <Badge variant="danger" pill className="bg-red-100 text-red-600 font-bold border-none px-2.5">
-                  {pendingAdjustmentRequests.length} MỚI
-                </Badge>
+                {pendingAdjustmentRequests.length > 0 && (
+                  <Badge variant="danger" pill className="bg-red-100 text-red-600 font-bold border-none px-2.5">
+                    {pendingAdjustmentRequests.length} MỚI
+                  </Badge>
+                )}
               </div>
             </div>
 
@@ -960,8 +1010,7 @@ export default function AttendancesPage() {
                   Hiện không có yêu cầu nào đang chờ duyệt.
                 </p>
               ) : (
-                pendingAdjustmentRequests.map((item) => {
-                  console.log("Item:", item);
+                pendingAdjustmentRequests.slice(0, 4).map((item) => {
                   const titleDisplay = item.reviewNote || (
                     item.requestType === 'check_in'
                       ? 'Điều chỉnh giờ vào muộn'
@@ -976,50 +1025,52 @@ export default function AttendancesPage() {
                   return (
                     <div
                       key={item.id}
-                      className="flex items-start justify-between rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition hover:bg-slate-50"
+                      className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition hover:bg-slate-50 gap-3"
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-sky-100 p-2.5 text-sky-700 shrink-0">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className="rounded-full bg-sky-100 p-2.5 text-sky-700 shrink-0 mt-0.5">
                           <FileEdit size={18} />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="font-semibold text-slate-900 text-sm">{titleDisplay}</h4>
                             <span className="text-xs text-slate-400">{formattedTime}</span>
                           </div>
-                          <p className="mt-1 text-xs text-slate-500">
-                            Nhân viên: {item.user?.fullName || 'Không xác định'} - {item.reason}
+                          <p className="mt-1 text-xs text-slate-500 line-clamp-2">
+                            Nhân viên: <span className="font-medium text-slate-700">{item.user?.fullName || 'Không xác định'}</span> - {item.reason}
                           </p>
-                          <div className="mt-2 flex items-center gap-3">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setReviewModalState({
-                                  open: true,
-                                  data: item,
-                                  action: 'approved',
-                                })
-                              }
-                              className="text-xs font-semibold text-teal-600 hover:text-teal-700"
-                            >
-                              Duyệt
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setReviewModalState({
-                                  open: true,
-                                  data: item,
-                                  action: 'rejected',
-                                })
-                              }
-                              className="text-xs font-semibold text-red-500 hover:text-red-600"
-                            >
-                              Từ chối
-                            </button>
-                          </div>
                         </div>
                       </div>
+
+                      <TableAction
+                        className="shrink-0 self-center"
+                        items={[
+                          {
+                            title: 'Duyệt',
+                            icon: Check,
+                            size: 18,
+                            className: 'hover:text-emerald-600 hover:bg-emerald-50 text-slate-500',
+                            onClick: () =>
+                              setReviewModalState({
+                                open: true,
+                                data: item,
+                                action: 'approved',
+                              }),
+                          },
+                          {
+                            title: 'Từ chối',
+                            icon: X,
+                            size: 18,
+                            className: 'hover:text-red-600 hover:bg-red-50 text-slate-500',
+                            onClick: () =>
+                              setReviewModalState({
+                                open: true,
+                                data: item,
+                                action: 'rejected',
+                              }),
+                          },
+                        ]}
+                      />
                     </div>
                   );
                 })
@@ -1031,7 +1082,7 @@ export default function AttendancesPage() {
             href="/app/attendances/adjustments"
             className="mt-4 block text-center text-xs font-semibold text-teal-600 hover:text-teal-700 hover:underline"
           >
-            Xem tất cả yêu cầu
+            Xem tất cả yêu cầu khiếu nại →
           </Link>
         </div>
 
@@ -1149,6 +1200,45 @@ export default function AttendancesPage() {
         onConfirm={handleConfirmReview}
         isLoading={isReviewing}
       />
+
+      {/* Modal xác nhận xóa chấm công */}
+      {selectedRow && (
+        <Modal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            if (isDeleting) return;
+            setShowDeleteModal(false);
+          }}
+          title="Xác nhận xóa"
+          size="sm"
+          disabled={isDeleting}
+          footer={
+            <div className="flex items-center gap-3 w-full justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (isDeleting) return;
+                  setShowDeleteModal(false);
+                }}
+                disabled={isDeleting}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleDeleteConfirm}
+                loading={isDeleting}
+              >
+                Xác nhận
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-gray-600 text-sm">
+            Bạn có chắc chắn muốn xóa bản ghi chấm công này? Hành động này không thể hoàn tác.
+          </p>
+        </Modal>
+      )}
     </div>
   );
 }

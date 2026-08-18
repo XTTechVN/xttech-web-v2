@@ -277,7 +277,8 @@ export default function PayrollTransferHistoryModal({ open, onClose }: Props) {
           Đóng
         </Button>
         <Button
-          className="bg-[#005c53] hover:bg-[#004740] text-white gap-2"
+          variant="primary"
+          className="gap-2"
           onClick={handleCreateNewTransfer}
           leftIcon={<TrendingUp size={16} />}
         >
