@@ -347,10 +347,6 @@ export default function AttendancesPage() {
         setFilterEmployeeId(val);
       },
     },
-
-
-
-
     {
       label: 'Phòng ban',
       value: filterDepartment,

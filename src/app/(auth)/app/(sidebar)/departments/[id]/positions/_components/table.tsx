@@ -61,10 +61,10 @@ const Table = () => {
     return {
       items: res.items || [],
       meta: {
-        total: res.pagination.total || 0,
-        offset: res.pagination.offset || 0,
-        limit: res.pagination.limit || 10,
-        next: res.pagination.next || false,
+        total: res.pagination?.total || 0,
+        offset: res.pagination?.offset || 0,
+        limit: res.pagination?.limit || 10,
+        next: res.pagination?.next || false,
       },
     };
   };

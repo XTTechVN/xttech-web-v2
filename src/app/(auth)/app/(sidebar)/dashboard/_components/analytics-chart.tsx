@@ -50,7 +50,7 @@ const AnalyticsChart = () => {
       </div>
       <ResponsiveContainer width="100%" height={400}>
         <BarChart data={analyticsData} margin={{ top: 10, right: 3, left: -24, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 7" vertical={false} />
+          <CartesianGrid strokeDasharray="3 5" vertical={false} />
           <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'black' }} tickLine={false} />
           <YAxis tick={{ fontSize: 9, fill: 'black' }} tickLine={false} axisLine={false} />
           <Tooltip />
