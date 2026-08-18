@@ -815,20 +815,7 @@ export default function AttendancesPage() {
   if (isLoading) return <Loading />;
 
   return (
-    <div className="w-full flex flex-col gap-4 p-3">
-      {/* <Breadcrumb items={breadcrumbItems} className="mb-2" /> */}
-
-      {/* Header Bar using system components */}
-      <div className="flex flex-col gap-1">
-        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Quản lý Chấm công & Thời gian
-        </Heading>
-        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-          Giám sát lực lượng lao động và theo dõi chuyên cần thời gian thực.
-        </Heading>
-      </div>
-
-      {/* 4 Stat Cards Grid */}
+    <div className="w-full flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1: Tổng số có mặt */}
         {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">

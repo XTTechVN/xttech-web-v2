@@ -54,18 +54,18 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       ),
     },
     {
+      key: 'code',
+      label: 'Mã phụ kiện',
+      minWidth: '150px',
+      cell: (row: Accessory) => <span className="font-semibold text-gray-900">{row.code || '—'}</span>,
+    },
+    {
       key: 'name',
       label: 'Tên phụ kiện',
       minWidth: '200px',
       cell: (row: Accessory) => (
-        <span className="font-semibold text-gray-900">{row.name}</span>
+        <span className="font-medium text-gray-700">{row.name}</span>
       ),
-    },
-    {
-      key: 'code',
-      label: 'Mã phụ kiện',
-      minWidth: '120px',
-      cell: (row: Accessory) => <span className="text-gray-600 text-sm">{row.code || '—'}</span>,
     },
     {
       key: 'specification',
@@ -154,10 +154,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center w-full pr-2 pt-2">
-        <Heading className="text-primary text-2xl" size="h1">
-          Danh sách phụ kiện
-        </Heading>
+      <div className="flex justify-end items-center w-full pr-2">
         <Button
           variant="primary"
           size="sm"

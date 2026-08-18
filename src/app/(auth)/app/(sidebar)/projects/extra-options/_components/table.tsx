@@ -34,23 +34,23 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
   const columns = [
     {
-      key: 'name',
-      label: 'Tên tùy chọn',
-      minWidth: '200px',
+      key: 'code',
+      label: 'Mã tùy chọn',
+      minWidth: '150px',
       cell: (row: ExtraOption) => (
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-primary/5 text-primary">
             <Settings size={16} />
           </div>
-          <span className="font-semibold text-gray-900">{row.name}</span>
+          <span className="font-semibold text-gray-900">{row.code || '—'}</span>
         </div>
       ),
     },
     {
-      key: 'code',
-      label: 'Mã tùy chọn',
-      minWidth: '120px',
-      cell: (row: ExtraOption) => <span className="text-gray-600 text-sm">{row.code || '—'}</span>,
+      key: 'name',
+      label: 'Tên tùy chọn',
+      minWidth: '200px',
+      cell: (row: ExtraOption) => <span className="font-medium text-gray-700">{row.name}</span>,
     },
     {
       key: 'unit',
@@ -111,10 +111,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center w-full pr-2 pt-2">
-        <Heading className="text-primary text-2xl" size="h1">
-          Danh sách tùy chọn phát sinh
-        </Heading>
+      <div className="flex justify-end items-center w-full pr-2">
         <Button
           variant="primary"
           size="sm"

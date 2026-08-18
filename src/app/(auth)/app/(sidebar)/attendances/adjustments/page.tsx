@@ -575,20 +575,7 @@ export default function AdjustmentsSidebarPage() {
   ];
 
   return (
-    <div className="w-full flex flex-col gap-4 p-3">
-      {/* Title Header */}
-      <div className="flex flex-col gap-1">
-        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Quản lý khiếu nại chấm công
-        </Heading>
-        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-          {isAdmin
-            ? 'Tiếp nhận, thẩm định và phê duyệt các yêu cầu điều chỉnh thời gian quẹt thẻ từ nhân viên.'
-            : 'Quản lý các yêu cầu điều chỉnh chấm công và xem trạng thái xử lý.'}
-        </Heading>
-      </div>
-
-      {/* 4 Summary Stat Cards */}
+    <div className="w-full flex flex-col gap-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1 */}
         {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
@@ -663,11 +650,7 @@ export default function AdjustmentsSidebarPage() {
 
       {/* Main Table Section */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
-          <Heading size="h1" className="text-primary text-2xl">
-            Danh sách khiếu nại
-          </Heading>
-
+        <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center w-full gap-4">
           <Button
             variant="primary"
             size="sm"

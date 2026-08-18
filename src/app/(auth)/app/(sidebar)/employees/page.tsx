@@ -64,15 +64,7 @@ const Page = () => {
     },
   ];
   return (
-    <div className="flex flex-col p-3 gap-4">
-      <div className="flex flex-col gap-2">
-        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Quản lý nhân viên
-        </Heading>
-        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-          Danh sách các nhân viên sẽ đc hiển thị tại đây
-        </Heading>
-      </div>
+    <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {employeeStats.map((stat, index) => (
           <StatCart key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection} />

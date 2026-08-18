@@ -53,8 +53,9 @@ export function ProjectFormModal({
   const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateProject>[1] }) =>
       updateProject(id, data),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project', variables.id] });
       toast.success('Cập nhật dự án thành công');
       onClose();
       reset();
