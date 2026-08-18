@@ -117,7 +117,7 @@ export function AppBreadcrumb() {
   const breadcrumbs = generateBreadcrumbs();
 
   return (
-    <div className="flex items-center px-4 md:px-6 py-2.5 bg-slate-50/50 border-t border-slate-100">
+    <div className="flex items-center px-4 md:px-6 py-2.5 bg-slate-50/50">
       <Breadcrumb items={breadcrumbs} />
     </div>
   );

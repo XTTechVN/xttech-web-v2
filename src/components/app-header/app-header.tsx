@@ -24,7 +24,7 @@ export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(
         {/* Top Header Bar */}
         <div
           style={{ height: HEADER_HEIGHT }}
-          className="flex items-center justify-between px-4 md:px-6"
+          className="flex items-center justify-between px-4 md:px-6  border-b border-slate-100"
         >
           {/* Left side: Mobile menu & Search */}
           <div className="flex items-center gap-4 flex-1">
