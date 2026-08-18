@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
-import { Bell } from 'lucide-react';
-import { Avatar } from '@/components';
+import React, { useState } from 'react';
+import { Bell, User, Lock, LogOut } from 'lucide-react';
+import { Avatar, Dropdown } from '@/components';
 import { useAuthStore } from '@/stores';
 import { BASE_MINIO_URL, UserRole } from '@/config';
+import { ProfileModal } from './profile-modal';
+import { PasswordModal } from './password-modal';
 
 interface HeaderProfileProps {
   userRole?: UserRole;
@@ -13,6 +15,15 @@ interface HeaderProfileProps {
 export function HeaderProfile({ userRole }: HeaderProfileProps) {
   const { user } = useAuthStore();
   
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    document.cookie = 'xt-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
+    window.location.href = '/signin';
+  };
+
   const roleName = user?.roles?.[0]?.name ||
         (userRole === 'admin'
           ? 'Quản trị viên'
@@ -21,6 +32,8 @@ export function HeaderProfile({ userRole }: HeaderProfileProps) {
             : userRole === 'sale'
               ? 'Kinh doanh (Sale)'
               : 'Kỹ thuật viên (Technician)');
+
+  const avatarUrl = user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_MINIO_URL}${user.avatar}`) : null;
 
   return (
     <div className="flex items-center gap-4 md:gap-6">
@@ -31,17 +44,31 @@ export function HeaderProfile({ userRole }: HeaderProfileProps) {
       
       <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
 
-      <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 pr-2 rounded-xl transition-colors">
-        <div className="hidden md:flex flex-col items-end">
-          <span className="text-sm font-semibold text-slate-700">{user?.fullName || user?.username || 'Admin User'}</span>
-          <span className="text-xs text-slate-500">{roleName}</span>
-        </div>
-        <Avatar 
-          src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_MINIO_URL}${user.avatar}`) : undefined} 
-          name={user?.fullName || user?.username || 'Admin'} 
-          size="md" 
-        />
-      </div>
+      <Dropdown 
+        align="right"
+        trigger={
+          <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 pr-2 rounded-xl transition-colors">
+            <div className="hidden md:flex flex-col items-end">
+              <span className="text-sm font-semibold text-slate-700">{user?.fullName || user?.username || 'Admin User'}</span>
+              <span className="text-xs text-slate-500">{roleName}</span>
+            </div>
+            <Avatar 
+              src={avatarUrl || undefined} 
+              name={user?.fullName || user?.username || 'Admin'} 
+              size="md"   
+            />
+          </div>
+        }
+        items={[
+          { label: 'Thông tin cá nhân', icon: <User size={16} />, onClick: () => setIsProfileOpen(true) },
+          { label: 'Đổi mật khẩu', icon: <Lock size={16} />, onClick: () => setIsPasswordOpen(true) },
+          { label: 'Đăng xuất', icon: <LogOut size={16} />, danger: true, onClick: handleLogout },
+        ]}
+      />
+
+      {/* Modals */}
+      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+      <PasswordModal isOpen={isPasswordOpen} onClose={() => setIsPasswordOpen(false)} />
     </div>
   );
 }
