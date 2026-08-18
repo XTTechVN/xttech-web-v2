@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Input, Button, Modal, Select, Avatar } from '@/components';
 
 // Icon thư viện lucide-react
-import { CheckCircle2, Camera, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, Camera, Eye, EyeOff, X } from 'lucide-react';
 
 // Thư viện validate dữ liệu
 import { z } from 'zod';
@@ -73,6 +73,7 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(isEditMode ? updateEmployeeSchema : createEmployeeSchema),
@@ -97,6 +98,8 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
         setPreviewUrl(url);
         return () => URL.revokeObjectURL(url);
       }
+    } else if (avatarValue === null) {
+      setPreviewUrl(null);
     } else {
       const avatarPath = initialData?.avatar;
       if (avatarPath) {
@@ -115,7 +118,7 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
 
   // Mutation Tạo
   const { mutate: createMutate, isPending: isCreating } = useMutation({
-    mutationFn: ({ data, file }: { data: any; file: File }) => createEmployee(data, file),
+    mutationFn: ({ data, file }: { data: Omit<Employee, 'id' | 'createdAt' | 'updatedAt' | 'roles' | 'positions'> & { password?: string }; file?: File }) => createEmployee(data, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       toast.success('Thêm nhân sự thành công');
@@ -129,7 +132,7 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
 
   // Mutation Cập nhật
   const { mutate: updateMutate, isPending: isUpdating } = useMutation({
-    mutationFn: ({ id, data, file }: { id: string; data: any; file: File }) => updateEmployee(id, data, file),
+    mutationFn: ({ id, data, file }: { id: string; data: Partial<Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>>; file?: File }) => updateEmployee(id, data, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       toast.success('Cập nhật thông tin nhân sự thành công');
@@ -193,6 +196,10 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
       address: data.address,
     };
 
+    if (data.avatar === null) {
+      body.avatar = null;
+    }
+
     if (isEditMode && initialData?.id) {
       updateMutate({ id: initialData.id, data: body, file });
     } else {
@@ -223,10 +230,21 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
             </label>
             <input id="avatar-file-input" type="file" accept="image/*" className="hidden" {...register('avatar')} />
           </div>
-          <label htmlFor="avatar-file-input" className="text-xs text-primary font-medium hover:underline cursor-pointer flex items-center gap-1">
-            <Camera size={14} />
-            <span>Chọn ảnh đại diện</span>
-          </label>
+          <div className="flex items-center gap-4">
+            <label htmlFor="avatar-file-input" className="text-xs text-primary font-medium hover:underline cursor-pointer flex items-center gap-1">
+              <Camera size={14} />
+              <span>Chọn ảnh đại diện</span>
+            </label>
+            {previewUrl && (
+              <button
+                type="button"
+                className="text-xs text-red-500 font-medium hover:underline flex items-center gap-1"
+                onClick={() => setValue('avatar', null)}
+              >
+                <span>Xóa ảnh</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

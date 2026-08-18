@@ -29,8 +29,8 @@ const Page = () => {
     queryFn: () => getEmployees({ limit: 1 }),
   });
 
-  const totalDepartments = departmentData?.pagination?.total || 0;
-  const totalEmployees = employeeData?.pagination?.total || 0;
+  const totalDepartments = departmentData?.meta?.total || 0;
+  const totalEmployees = employeeData?.meta?.total || 0;
 
   // Dữ liệu mockup cho stat - card
   const employeeStats = [
