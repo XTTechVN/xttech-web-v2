@@ -3,11 +3,10 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
-import { Building2, Pencil, Trash2, PlusCircle } from 'lucide-react';
+import { Pencil, Trash2, PlusCircle } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
-import { TableData } from '@/components/table';
-import TableAction from '@/components/table/table-action';
+import { TableData, TableAction } from '@/components/table';
 import { Modal, Button } from '@/components';
 import { useQueryParam } from '@/hooks';
 
@@ -22,13 +21,13 @@ import toast from 'react-hot-toast';
 
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
-import { useRouter } from 'next/navigation';
-
 // action
 import { deleteDepartment, getDepartments } from '@/actions/department';
 
 // positions page
 import PositionPage from '../[id]/positions/page';
+import { useRouter } from 'next/navigation';
+
 
 const Table = () => {
   const [search, setSearch] = useQueryParam('search');
@@ -108,15 +107,36 @@ const Table = () => {
       minWidth: '150px',
       cell: (row: Department) => (
         <TableAction
-          onView={() => router.push(`/app/departments/${row.id}/positions`)}
-          onEdit={() => {
-            setSelectedDept(row);
-            setIsEditOpen(true);
-          }}
-          onDelete={() => {
-            setDeptToDelete(row);
-            setIsDeleteOpen(true);
-          }}
+          items={[
+            {
+              title: 'Chỉnh sửa',
+              icon: Pencil,
+              size: 18,
+              onClick: () => {
+                setSelectedDept(row);
+                setIsEditOpen(true);
+              },
+            },
+            {
+              title: 'Xóa',
+              icon: Trash2,
+              size: 18,
+              className: 'hover:text-red-600 hover:bg-red-50',
+              disabled: isPending,
+              onClick: () => {
+                setDeptToDelete(row);
+                setIsDeleteOpen(true);
+              },
+            },
+            {
+              title: 'Quản lý vị trí',
+              icon: PlusCircle,
+              size: 18,
+              onClick: () => {
+                router.push(`/app/departments/${row.id}/positions`);
+              },
+            },
+          ]}
         />
       ),
     },
@@ -142,17 +162,38 @@ const Table = () => {
           </span>
         </div>
       </div>
-      <TableAction
-        onView={() => router.push(`/app/departments/${row.id}/positions`)}
-        onEdit={() => {
-          setSelectedDept(row);
-          setIsEditOpen(true);
-        }}
-        onDelete={() => {
-          setDeptToDelete(row);
-          setIsDeleteOpen(true);
-        }}
-      />
+      <div className="flex gap-2">
+        <button
+          onClick={() => {
+              setSelectedDept(row);
+              setIsEditOpen(true);
+          }}
+          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+        >
+          <Pencil size={18} />
+        </button>
+
+        <button
+          onClick={() => {
+              setDeptToDelete(row);
+              setIsDeleteOpen(true);
+          }}
+          disabled={isPending}
+          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+        >
+          <Trash2 size={18} />
+        </button>
+
+        <button
+          onClick={() => {
+            router.push(`/app/departments/${row.id}/positions`)
+          }}
+          title="Quản lý vị trí"
+          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+        >
+          <PlusCircle size={18} />
+        </button>
+      </div>
     </div>
   );
 

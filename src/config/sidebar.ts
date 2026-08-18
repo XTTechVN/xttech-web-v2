@@ -1,10 +1,24 @@
 import React from 'react';
-import { Layout, CalendarCheck, Clock, FileText, ShieldCheck, ListChecks, User } from 'lucide-react';
+import { Layout, CalendarCheck, Clock, FileText, ShieldCheck, ListChecks, User, Settings, Calculator } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
 export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician';
 
-export const acceptedSections = ['dashboard', 'attendances', 'employees', 'suggestions', 'departments'];
+export const acceptedSections = [
+  'dashboard',
+  'attendances',
+  'employees',
+  'suggestions',
+  'departments',
+  'projects',
+  'customers',
+  'doors',
+  'accessories',
+  'materials',
+  'quotations',
+  'extra-options',
+  'formulas'
+];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
   roles?: UserRole[];
@@ -55,11 +69,43 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         ],
       },
       {
-        id: 'attendances',
-        label: 'Bảng chấm công',
+        id: 'attendances-root',
+        label: 'Chấm công & Thời gian',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/attendances',
-        roles: ['admin', 'hr'],
+        roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+        subItems: [
+          {
+            id: 'attendances',
+            label: 'Bảng công tháng (Admin)',
+            href: '/app/attendances',
+            roles: ['super', 'admin', 'hr'],
+          },
+          // {
+          //   id: 'attendances-policy',
+          //   label: 'Chính sách chấm công',
+          //   href: '/app/attendances/policy',
+          //   roles: ['super', 'admin', 'hr'],
+          // },
+          // {
+          //   id: 'shifts',
+          //   label: 'Ca làm việc',
+          //   href: '/app/shifts',
+          //   roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+          // },
+          {
+            id: 'attendances-payroll',
+            label: 'Tính công & Dữ liệu lương',
+            href: '/app/attendances/payroll',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+          },
+          {
+            id: 'attendances-adjustments',
+            label: 'Danh sách khiếu nại',
+            href: '/app/attendances/adjustments',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+          },
+        ],
       },
       {
         id: 'shifts',
@@ -100,6 +146,55 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Danh sách dự án',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/projects',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'quotations',
+        label: 'Báo giá',
+        icon: React.createElement(FileText, { size: 18 }),
+        href: '/app/quotations',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'customers',
+        label: 'Khách hàng',
+        icon: React.createElement(User, { size: 18 }),
+        href: '/app/customers',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'doors',
+        label: 'Cửa',
+        icon: React.createElement(Layout, { size: 18 }),
+        href: '/app/doors',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'formulas',
+        label: 'Công thức',
+        icon: React.createElement(Calculator, { size: 18 }),
+        href: '/app/formulas',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'accessories',
+        label: 'Phụ kiện',
+        icon: React.createElement(ListChecks, { size: 18 }),
+        href: '/app/accessories',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'materials',
+        label: 'Hệ nhôm',
+        icon: React.createElement(ListChecks, { size: 18 }),
+        href: '/app/materials',
+        roles: ['admin', 'sale'],
+      },
+      {
+        id: 'extra-options',
+        label: 'Tùy chọn phát sinh',
+        icon: React.createElement(Settings, { size: 18 }),
+        href: '/app/extra-options',
         roles: ['admin', 'sale'],
       },
       {

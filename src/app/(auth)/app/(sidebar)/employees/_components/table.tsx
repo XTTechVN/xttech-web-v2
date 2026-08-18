@@ -6,8 +6,7 @@ import React from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
-import { TableData } from '@/components/table';
-import TableAction from '@/components/table/table-action';
+import { TableData, TableAction } from '@/components/table';
 import { Modal, Button, Badge, Avatar } from '@/components';
 import { useQueryParam } from '@/hooks';
 
@@ -41,7 +40,6 @@ const getRoleVariant = (roleName: string): 'primary' | 'success' | 'warning' | '
   if (lowerName.includes('super') || lowerName.includes('supper')) return 'success';
   return 'default';
 };
-
 
 const Table = () => {
   const [search, setSearch] = useQueryParam('search');
@@ -144,14 +142,28 @@ const Table = () => {
       minWidth: '120px',
       cell: (row: Employee) => (
         <TableAction
-          onEdit={() => {
-            setSelectedEmp(row);
-            setIsEditOpen(true);
-          }}
-          onDelete={() => {
-            setEmpToDelete(row);
-            setIsDeleteOpen(true);
-          }}
+          items={[
+            {
+              title: 'Chỉnh sửa',
+              icon: Pencil,
+              size: 18,
+              onClick: () => {
+                setSelectedEmp(row);
+                setIsEditOpen(true);
+              },
+            },
+            {
+              title: 'Xóa',
+              icon: Trash2,
+              size: 18,
+              className: 'hover:text-red-600 hover:bg-red-50',
+              disabled: isPending,
+              onClick: () => {
+                setEmpToDelete(row);
+                setIsDeleteOpen(true);
+              },
+            },
+          ]}
         />
       ),
     },
@@ -182,16 +194,28 @@ const Table = () => {
           </div>
         </div>
       </div>
-      <TableAction
-        onEdit={() => {
-          setSelectedEmp(row);
-          setIsEditOpen(true);
-        }}
-        onDelete={() => {
-          setEmpToDelete(row);
-          setIsDeleteOpen(true);
-        }}
-      />
+      <div className="flex gap-2">
+        <button
+          onClick={() => {
+              setSelectedEmp(row);
+              setIsEditOpen(true);
+          }}
+          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+        >
+          <Pencil size={18} />
+        </button>
+
+        <button
+          onClick={() => {
+              setEmpToDelete(row);
+              setIsDeleteOpen(true);
+          }}
+          disabled={isPending}
+          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+        >
+          <Trash2 size={18} />
+        </button>
+      </div>
     </div>
   );
 

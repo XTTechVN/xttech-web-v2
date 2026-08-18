@@ -19,8 +19,32 @@ export * from './suggestion';
 // Authentication
 export * from './auth';
 
+// Projects
+export * from './project';
+
+// Doors
+export * from './door';
+
+// Accessories
+export * from './accessory';
+
+// Quotations
+export * from './quotation';
+
+// Materials
+export * from './material';
+
+// Extra Options
+export * from './extra-option';
+
+// Formulas
+export * from './formula';
+
 // Department
 export * from './department';
 
 // Position
 export * from './position';
+
+// Attendance
+export * from './attendance';

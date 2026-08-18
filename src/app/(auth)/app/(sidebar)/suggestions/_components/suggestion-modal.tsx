@@ -265,6 +265,7 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
   };
 
   const handleClose = () => {
+    if (isPending) return;
     if (mode === 'create') {
       const isDirty = createTitle.trim() !== '' || createProblem.trim() !== '' || createAttachments.length > 0;
       if (isDirty) {
@@ -533,12 +534,11 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
     }
   };
 
-  const canEdit = selectedSuggestion?.status === 'pending' && currentUserId === selectedSuggestion?.userId;
+  const canEdit = selectedSuggestion?.status === 'pending' && (isManager || currentUserId === selectedSuggestion?.userId);
 
   // Footer Setup
   const footer = (
     <div className="flex items-center justify-end w-full">
-
       <div className="flex items-center gap-2">
         {mode === 'create' && (
           <>
@@ -646,7 +646,7 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
   return (
     <>
       {isOpen && (
-        <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle} size="xl" footer={footer}>
+        <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle} size="xl" footer={footer} disabled={isPending}>
           {errorMessage && (
             <Alert variant="danger" className="mb-4">
               {errorMessage}
@@ -772,7 +772,7 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
                           <div className="flex items-center gap-3">
                             <button
                               type="button"
-                              disabled={attachments.some((att) => att.isUploading)}
+                              disabled={isPending || attachments.some((att) => att.isUploading)}
                               onClick={() => {
                                 imageAttachments.forEach((att) => {
                                   if (att.preview && !att.preview.startsWith('http')) URL.revokeObjectURL(att.preview);
@@ -843,11 +843,12 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
                                 {!item.isUploading && (
                                   <Button
                                     variant="ghost"
+                                    disabled={isPending}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleRemoveFile(item.id);
                                     }}
-                                    className="absolute -top-1.5 -right-1.5 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-full w-5 h-5 p-0 flex items-center justify-center transition-colors cursor-pointer shadow-xs z-10 min-w-0"
+                                    className="absolute -top-1.5 -right-1.5 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-full w-5 h-5 p-0 flex items-center justify-center transition-colors cursor-pointer shadow-xs z-10 min-w-0 disabled:cursor-not-allowed"
                                     title="Xóa ảnh"
                                   >
                                     <X className="w-3 h-3" />
@@ -900,7 +901,7 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
                           <div className="flex items-center gap-3">
                             <button
                               type="button"
-                              disabled={attachments.some((att) => att.isUploading)}
+                              disabled={isPending || attachments.some((att) => att.isUploading)}
                               onClick={() => {
                                 setAttachments((prev: any[]) => prev.filter((att) => !!att.preview));
                               }}
@@ -959,8 +960,9 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
                                 ) : (
                                   <button
                                     type="button"
+                                    disabled={isPending}
                                     onClick={() => handleRemoveFile(item.id)}
-                                    className="text-slate-400 hover:text-slate-600 rounded-full p-1 transition-colors shrink-0 cursor-pointer"
+                                    className="text-slate-400 hover:text-slate-600 disabled:text-slate-300 rounded-full p-1 transition-colors shrink-0 cursor-pointer disabled:cursor-not-allowed"
                                   >
                                     <X className="w-3.5 h-3.5" />
                                   </button>
@@ -1024,6 +1026,7 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
         <Modal
           isOpen={isDeleteConfirmOpen}
           onClose={() => {
+            if (isPending) return;
             setIsDeleteConfirmOpen(false);
             if (!isDetailModalOpen) {
               setSelectedSuggestion(null);
@@ -1031,6 +1034,7 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
           }}
           title="Xác nhận xóa"
           size="sm"
+          disabled={isPending}
           footer={
             <div className="flex items-center gap-3 w-full justify-end">
               <Button

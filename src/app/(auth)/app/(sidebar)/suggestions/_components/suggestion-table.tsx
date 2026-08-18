@@ -3,15 +3,14 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { RotateCw, User, Plus, EyeOff, Download } from 'lucide-react';
+import { RotateCw, User, Plus, EyeOff, Download, Eye, Pencil, Trash2 } from 'lucide-react';
 import { useSuggestionStore } from '@/stores/useSuggestionStore';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks';
-import { TableData, Button } from '@/components';
+import { TableData, TableAction, Button, Heading } from '@/components';
 import { getSuggestions } from '@/actions/suggestion';
 import { Suggestion } from '@/types';
-import TableAction from '@/components/table/table-action';
 import { BASE_MINIO_URL } from '@/config';
 
 // Hàm bổ trợ phân loại chủ đề linh hoạt từ type hoặc content
@@ -60,7 +59,6 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
     setSearch,
     setIsEditing,
     setIsDeleteConfirmOpen,
-    setUsersList,
   } = useSuggestionStore();
 
   // Debounced filter states (500ms delay)
@@ -243,24 +241,35 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
       minWidth: '120px',
       cell: (row: Suggestion) => (
         <TableAction
-          onView={() => handleViewDetails(row)}
-          onEdit={
-            row.status === 'pending' && row.userId === currentUserId
-              ? () => {
-                  setSelectedSuggestion(row);
-                  setIsEditing(true);
-                  setDetailModalOpen(true);
-                }
-              : undefined
-          }
-          onDelete={
-            row.status === 'pending' && (isManager || row.userId === currentUserId)
-              ? () => {
+          items={[
+            {
+              title: 'Xem chi tiết',
+              icon: Eye,
+              size: 18,
+              onClick: () => handleViewDetails(row),
+            },
+            row.status === 'pending' && {
+              title: 'Chỉnh sửa',
+              icon: Pencil,
+              size: 18,
+              onClick: () => {
+                setSelectedSuggestion(row);
+                setIsEditing(true);
+                setDetailModalOpen(true);
+              },
+            },
+            row.status === 'pending' &&
+              (isManager || row.userId === currentUserId) && {
+                title: 'Xóa',
+                icon: Trash2,
+                size: 18,
+                className: 'hover:text-red-600 hover:bg-red-50',
+                onClick: () => {
                   setSelectedSuggestion(row);
                   setIsDeleteConfirmOpen(true);
-                }
-              : undefined
-          }
+                },
+              },
+          ]}
         />
       ),
     },
@@ -271,7 +280,9 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
     const cat = getSuggestionType(row);
     const catInfo = typeLabels[cat] || typeLabels.other;
 
-    const senderName = row.anonymous ? 'Ẩn danh' : row.user?.fullName || 'Ẩn danh';
+    const senderName = row.anonymous
+      ? 'Ẩn danh'
+      : `${row.user?.fullName || 'Người dùng'} ${row.user?.email ? `(${row.user.email})` : ''}`.trim() || 'Ẩn danh';
     const senderAvatar = row.anonymous ? null : row.user?.avatar;
 
     const date = row.createdAt ? new Date(row.createdAt) : null;
@@ -287,50 +298,102 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
     return (
       <div
         key={row.id || index}
-        className="p-4 rounded-xl border border-slate-200 bg-white flex flex-col gap-3 hover:shadow-md transition-shadow cursor-pointer select-none"
-        onClick={() => handleViewDetails(row)}
+        className="p-4 rounded-xl border border-slate-200 bg-white flex flex-col gap-3 hover:shadow-md transition-shadow select-none"
       >
-        <div className="flex justify-between items-start gap-2">
-          <div className="flex flex-col gap-0.5">
-            <span className="font-extrabold text-slate-800 text-sm hover:text-emerald-600 transition-colors">{row.title}</span>
-            <span className="text-[10px] text-slate-400 font-medium">
-              {timeStr} - {dateStr}
-            </span>
+        {/* Header: Tiêu đề, Phân loại & Trạng thái */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-[#101718] text-sm leading-tight">{row.title}</span>
+              <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${catInfo.class}`}>{catInfo.label}</span>
+            </div>
           </div>
-          <div className="flex flex-col gap-1 items-end shrink-0 select-none">
-            <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${statusInfo.class}`}>{statusInfo.label}</span>
-
-            <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${catInfo.class}`}>{catInfo.label}</span>
-          </div>
+          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border shrink-0 ${statusInfo.class}`}>
+            {statusInfo.label}
+          </span>
         </div>
 
-        <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">{row.content}</p>
+        {/* Nội dung đề xuất */}
+        {row.content && <p className="text-[12px] text-[#5E858D] font-normal line-clamp-2 leading-relaxed">{row.content}</p>}
 
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-[10px] font-bold text-slate-500">
-          <div className="flex items-center gap-1.5">
-            {senderAvatar ? (
-              <img
-                src={senderAvatar}
-                alt={senderName}
-                width={18}
-                height={18}
-                className="w-4.5 h-4.5 rounded-full object-cover border border-slate-200"
-              />
+        {/* Footer: Thông tin người gửi, Thời gian & Các nút thao tác */}
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {row.anonymous ? (
+              <div className="w-6 h-6 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-500 border border-slate-200/60">
+                <EyeOff className="w-3 h-3" />
+              </div>
+            ) : senderAvatar ? (
+              <div className="relative w-6 h-6 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                <img
+                  src={senderAvatar.startsWith('http') ? senderAvatar : `${BASE_MINIO_URL}${senderAvatar}`}
+                  alt={senderName}
+                  width={24}
+                  height={24}
+                  className="object-cover w-full h-full"
+                />
+              </div>
             ) : (
-              <User className="w-4 h-4 text-slate-400" />
+              <div className="w-6 h-6 rounded-full bg-cyan-50 shrink-0 flex items-center justify-center text-cyan-700 border border-cyan-100/50">
+                <User className="w-3.5 h-3.5" />
+              </div>
             )}
-            <span>{senderName}</span>
+            <div className="flex flex-col min-w-0">
+              <span className="font-semibold text-slate-700 text-[11px] truncate">{senderName}</span>
+              <span className="text-[10px] text-[#5E858D]">
+                {timeStr} • {dateStr}
+              </span>
+            </div>
           </div>
+
+          {/* Các nút hành động */}
+          <TableAction
+            items={[
+              {
+                title: 'Xem chi tiết',
+                icon: Eye,
+                size: 18,
+                onClick: () => handleViewDetails(row),
+              },
+              row.status === 'pending' &&
+                row.userId === currentUserId && {
+                  title: 'Chỉnh sửa',
+                  icon: Pencil,
+                  size: 18,
+                  onClick: () => {
+                    setSelectedSuggestion(row);
+                    setIsEditing(true);
+                    setDetailModalOpen(true);
+                  },
+                },
+              row.status === 'pending' &&
+                (isManager || row.userId === currentUserId) && {
+                  title: 'Xóa',
+                  icon: Trash2,
+                  size: 18,
+                  className: 'hover:text-red-600 hover:bg-red-50',
+                  onClick: () => {
+                    setSelectedSuggestion(row);
+                    setIsDeleteConfirmOpen(true);
+                  },
+                },
+            ]}
+          />
         </div>
       </div>
     );
   };
 
   return (
-    <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-md shadow-slate-900/2">
+    <div className="flex flex-col gap-4">
       {/* 1. Header Panel */}
-      <div className="flex flex-col md:flex-row md:items-center justify-end pb-4 border-b border-slate-100 mb-4">
-        {/* Right Actions (Export & Refresh) */}
+      <div className="flex md:flex-row justify-between items-start md:items-center w-full gap-4">
+        {/* Left Header Panel */}
+        <Heading className="text-primary text-2xl" size="h1">
+          Danh sách đề xuất
+        </Heading>
+
+        {/* Right Header (Add, Export & Refresh) */}
         <div className="flex items-center gap-3">
           <Button
             variant="primary"

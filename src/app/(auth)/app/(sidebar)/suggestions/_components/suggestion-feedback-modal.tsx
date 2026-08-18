@@ -61,7 +61,7 @@ export default function SuggestionFeedbackModal({ isOpen, onClose, type, onSubmi
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="md" footer={footer}>
+    <Modal isOpen={isOpen} onClose={onClose} title={title} size="md" footer={footer} disabled={isPending}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="text-sm font-medium text-slate-600 mb-1">
           {type === 'approve'
