@@ -458,7 +458,7 @@ export default function AddAdjustmentModal({
         Hủy
       </Button>
 
-      <Button onClick={handleSubmit} disabled={isSubmitting}>
+      <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
         {isSubmitting ? "Đang lưu..." : "Tạo khiếu nại"}
       </Button>
     </div>

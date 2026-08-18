@@ -4,7 +4,21 @@ import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSect
 
 export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician';
 
-export const acceptedSections = ['dashboard', 'attendances', 'employees', 'suggestions', 'departments', 'projects', 'customers', 'configurations'];
+export const acceptedSections = [
+  'dashboard',
+  'attendances',
+  'employees',
+  'suggestions',
+  'departments',
+  'projects',
+  'customers',
+  'doors',
+  'accessories',
+  'materials',
+  'quotations',
+  'extra-options',
+  'formulas'
+];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
   roles?: UserRole[];

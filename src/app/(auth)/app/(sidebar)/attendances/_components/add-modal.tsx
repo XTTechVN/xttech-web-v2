@@ -134,6 +134,7 @@ export default function AddAttendanceModal({
                 Hủy
             </Button>
             <Button
+                variant="primary"
                 onClick={handleSubmit}
                 disabled={createMutation.isPending}
             >
