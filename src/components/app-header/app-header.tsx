@@ -1,0 +1,52 @@
+'use client';
+
+import React from 'react';
+import { Menu } from 'lucide-react';
+import { UserRole } from '@/config';
+import { cn } from '@/utils';
+import { AppBreadcrumb } from './app-breadcrumb';
+import { HeaderProfile } from './header-profile';
+import { HeaderSearch } from './header-search';
+
+export interface AppHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  onMenuClick?: () => void;
+  userRole?: UserRole;
+}
+
+export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(
+  ({ onMenuClick, userRole, className, ...props }, ref) => {
+    return (
+      <header
+        ref={ref}
+        className={cn('flex flex-col w-full bg-white border-b border-slate-200 shrink-0', className)}
+        {...props}
+      >
+        {/* Top Header Bar */}
+        <div className="flex h-16 items-center justify-between px-4 md:px-6">
+          {/* Left side: Mobile menu & Search */}
+          <div className="flex items-center gap-4 flex-1">
+            <button
+              type="button"
+              aria-label="Mở menu"
+              onClick={onMenuClick}
+              className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+            >
+              <Menu size={24} />
+            </button>
+
+            <HeaderSearch userRole={userRole} />
+          </div>
+
+          {/* Right side: Notifications & User profile */}
+          <HeaderProfile userRole={userRole} />
+        </div>
+
+        {/* Breadcrumb Bar */}
+        <AppBreadcrumb />
+      </header>
+    );
+  },
+);
+
+AppHeader.displayName = 'AppHeader';
+export default AppHeader;

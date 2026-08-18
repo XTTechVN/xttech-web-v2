@@ -5,6 +5,7 @@ import api from '@/utils/api';
 export const getDepartmentPositions = async (departmentId: number, params?: { offset?: number; limit?: number; search?: string }) => {
   try {
     const res = await api.get(`/api/v1/departments/${departmentId}/positions`, { params });
+    console.log(res.data);
     return res.data;
   } catch (error) {
     throw new Error('Lỗi khi lấy danh sách vị trí theo phòng ban');

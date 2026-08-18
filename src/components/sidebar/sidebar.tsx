@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { cn } from '@/utils/cn';
+import { cn } from '@/utils';
 import { ChevronDown, ChevronRight, Plus, ChevronLeft } from 'lucide-react';
 import { Avatar } from '@/components';
 import { HEADER_HEIGHT } from '@/config';
@@ -28,10 +28,18 @@ export interface SidebarSectionProps {
   onAddClick?: () => void;
 }
 
+export interface SidebarBrandProps {
+  name?: string;
+  subtitle?: string;
+  logo?: string | React.ReactNode;
+  onClick?: () => void;
+}
+
 export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   sections: SidebarSectionProps[];
   activeId?: string;
   onItemSelect?: (item: SidebarItemProps) => void;
+  brand?: SidebarBrandProps;
   user?: {
     name: string;
     role: string;
@@ -48,7 +56,7 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
-  ({ sections = [], activeId, onItemSelect, user, cta, className, variant = 'light', onUserClick, ...props }, ref) => {
+  ({ sections = [], activeId, onItemSelect, brand, user, cta, className, variant = 'light', onUserClick, ...props }, ref) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>({});
 
@@ -82,54 +90,99 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         )}
         {...props}
       >
-        {/* Khối thông tin người dùng */}
-        {user && (
+        {/* Khối Header Sidebar: Thương hiệu hoặc Người dùng */}
+        {(brand || user) && (
           <div
             style={{ height: HEADER_HEIGHT }}
             className={cn(
-              'px-6 flex items-center border-b shrink-0 gap-3 transition-colors',
+              'px-4 flex items-center border-b shrink-0 gap-3 transition-colors',
               isLight ? 'border-slate-200' : 'border-slate-800/60',
-              onUserClick && (isLight ? 'cursor-pointer hover:bg-slate-50/50' : 'cursor-pointer hover:bg-slate-800/30'),
-              isCollapsed && 'justify-center',
+              (brand?.onClick || onUserClick) && (isLight ? 'cursor-pointer hover:bg-slate-50/50' : 'cursor-pointer hover:bg-slate-800/30'),
+              isCollapsed && 'justify-center px-2',
             )}
-            onClick={() => !isCollapsed && onUserClick?.()}
+            onClick={() => {
+              if (!isCollapsed) {
+                if (brand?.onClick) brand.onClick();
+                else onUserClick?.();
+              }
+            }}
           >
             {isCollapsed ? (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsCollapsed(false);
                 }}
-                className="cursor-pointer"
+                className="cursor-pointer flex items-center justify-center p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                title={brand?.name || user?.name}
               >
-                <Avatar src={user.avatar} name={user.name} size="sm" />
+                {brand ? (
+                  typeof brand.logo === 'string' ? (
+                    <img src={brand.logo} alt={brand.name || 'Brand'} className="w-8 h-8 object-contain" />
+                  ) : (
+                    brand.logo || <div className="w-8 h-8 rounded-lg bg-primary text-white font-bold flex items-center justify-center text-sm">{brand.name?.charAt(0) || 'X'}</div>
+                  )
+                ) : (
+                  user && <Avatar src={user.avatar} name={user.name} size="sm" />
+                )}
               </button>
             ) : (
               <>
-                <Avatar src={user.avatar} name={user.name} size="md" />
-                <div className="flex-1 min-w-0 flex justify-between">
-                  <div className="flex flex-col">
-                    <span className={cn('text-sm font-semibold truncate block', isLight ? 'text-slate-900' : 'text-slate-100')}>{user.name}</span>
-                    <span className="text-[9px] font-bold tracking-wider text-slate-500 uppercase block">{user.role}</span>
-                  </div>
-
-                  {/* Nút thu nhỏ (ẩn trên mobile) */}
-                  <div className={cn('hidden md:flex shrink-0   justify-center border-t', isLight ? 'border-slate-100' : 'border-slate-800/50')}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsCollapsed(true);
-                      }}
-                      className={cn(
-                        'w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer',
-                        isLight
-                          ? 'border-slate-200 bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700'
-                          : 'border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white',
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {brand ? (
+                    <>
+                      {typeof brand.logo === 'string' ? (
+                        <img src={brand.logo} alt={brand.name || 'Brand'} className="w-8 h-8 object-contain shrink-0" />
+                      ) : (
+                        brand.logo || (
+                          <div className="w-8 h-8 rounded-lg bg-primary text-white font-bold flex items-center justify-center text-sm shrink-0">
+                            {brand.name?.charAt(0) || 'X'}
+                          </div>
+                        )
                       )}
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-                  </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className={cn('text-base font-bold tracking-tight truncate block', isLight ? 'text-primary' : 'text-white')}>
+                          {brand.name || 'XTTECH'}
+                        </span>
+                        {brand.subtitle && (
+                          <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase truncate block">
+                            {brand.subtitle}
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    user && (
+                      <>
+                        <Avatar src={user.avatar} name={user.name} size="md" />
+                        <div className="flex flex-col min-w-0">
+                          <span className={cn('text-sm font-semibold truncate block', isLight ? 'text-slate-900' : 'text-slate-100')}>{user.name}</span>
+                          <span className="text-[9px] font-bold tracking-wider text-slate-500 uppercase block">{user.role}</span>
+                        </div>
+                      </>
+                    )
+                  )}
+                </div>
+
+                {/* Nút thu nhỏ (ẩn trên mobile) */}
+                <div className="hidden md:flex shrink-0">
+                  <button
+                    type="button"
+                    aria-label="Thu nhỏ sidebar"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsCollapsed(true);
+                    }}
+                    className={cn(
+                      'w-7 h-7 rounded-lg border flex items-center justify-center transition-colors cursor-pointer',
+                      isLight
+                        ? 'border-slate-200 bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700'
+                        : 'border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white',
+                    )}
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
                 </div>
               </>
             )}
