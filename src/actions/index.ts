@@ -1,6 +1,9 @@
 // User
 export * from './user';
 
+// Role
+export * from './role';
+
 // Employee
 export * from './employee';
 

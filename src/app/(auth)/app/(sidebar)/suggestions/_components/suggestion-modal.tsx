@@ -59,6 +59,7 @@ interface SuggestionModalProps {
 export default function SuggestionModal({ isManager, currentUserId }: SuggestionModalProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
 
   // States from store
   const {
@@ -264,24 +265,56 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
     resetEditForm();
   };
 
+  const isEditDirty = React.useMemo(() => {
+    if (!selectedSuggestion) return false;
+    const { type: origType, problem: origProb } = getParsedContent(
+      selectedSuggestion.content,
+      (selectedSuggestion as any).type,
+    );
+
+    const titleChanged = editTitle.trim() !== (selectedSuggestion.title || '').trim();
+    const typeChanged = editType !== (origType || 'process');
+    const problemChanged = editProblem.trim() !== (origProb || '').trim();
+
+    const originalAttachmentsCount = selectedSuggestion.attachments?.length || 0;
+    const hasNewAttachments = editAttachments.some((att) => !att.isExisting || att.file);
+    const attachmentsCountChanged = editAttachments.length !== originalAttachmentsCount;
+
+    return titleChanged || typeChanged || problemChanged || hasNewAttachments || attachmentsCountChanged;
+  }, [selectedSuggestion, editTitle, editType, editProblem, editAttachments]);
+
   const handleClose = () => {
     if (isPending) return;
     if (mode === 'create') {
       const isDirty = createTitle.trim() !== '' || createProblem.trim() !== '' || createAttachments.length > 0;
       if (isDirty) {
-        if (confirm('Bạn có thay đổi chưa lưu. Bạn có chắc muốn đóng form?')) {
-          handleResetCreateForm();
-          setCreateModalOpen(false);
-        }
+        setIsCloseConfirmOpen(true);
       } else {
         setCreateModalOpen(false);
       }
     } else if (mode === 'edit') {
-      handleResetEditForm();
-      setIsEditing(false);
+      if (isEditDirty) {
+        setIsCloseConfirmOpen(true);
+      } else {
+        handleResetEditForm();
+        setIsEditing(false);
+        setDetailModalOpen(false);
+        setSelectedSuggestion(null);
+      }
+    } else {
       setDetailModalOpen(false);
       setSelectedSuggestion(null);
-    } else {
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setIsCloseConfirmOpen(false);
+    if (mode === 'create') {
+      handleResetCreateForm();
+      setCreateModalOpen(false);
+    } else if (mode === 'edit') {
+      handleResetEditForm();
+      setIsEditing(false);
       setDetailModalOpen(false);
       setSelectedSuggestion(null);
     }
@@ -1125,6 +1158,36 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
         onSubmit={handleFeedbackSubmit}
         isPending={updateStatusMutation.isPending}
       />
+
+      {/* Modal xác nhận đóng form khi có thay đổi chưa lưu */}
+      <Modal
+        isOpen={isCloseConfirmOpen}
+        onClose={() => setIsCloseConfirmOpen(false)}
+        title="Xác nhận đóng form"
+        className="m-2 max-w-md w-full"
+      >
+        <div className="py-2">
+          <p className="text-gray-600 text-sm leading-relaxed">
+            Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn đóng form và hủy các nội dung đang nhập không?
+          </p>
+        </div>
+        <div className="flex gap-3 justify-end w-full mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsCloseConfirmOpen(false)}
+          >
+            Tiếp tục chỉnh sửa
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={handleConfirmClose}
+          >
+            Xác nhận đóng
+          </Button>
+        </div>
+      </Modal>
     </>
   );
 }

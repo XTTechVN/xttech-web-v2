@@ -69,3 +69,25 @@ export const deleteUser = async (id: string): Promise<void> => {
     throw new Error('Lỗi khi xóa người dùng');
   }
 };
+
+export const assignRole = async (id: string, roleIds: string[]): Promise<any> => {
+  try {
+    const res = await api.post(`/api/v1/users/${id}/roles`, roleIds);
+    return res.data;
+  } catch (error) {
+    console.error('Lỗi khi gán vai trò người dùng:', error);
+    throw error;
+  }
+};
+
+export const revokeRole = async (id: string, roleIds: string[]): Promise<any> => {
+  try {
+    const res = await api.delete(`/api/v1/users/${id}/roles`, { data: roleIds });
+    return res.data;
+  } catch (error) {
+    console.error('Lỗi khi thu hồi quyền người dùng:', error);
+    throw error;
+  }
+};
+
+

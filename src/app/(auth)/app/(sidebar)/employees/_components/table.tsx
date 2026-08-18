@@ -3,7 +3,7 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, UserCog } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData, TableAction } from '@/components/table';
@@ -27,12 +27,13 @@ import { getEmployees, deleteEmployee } from '@/actions/employee';
 
 // components dùng riêng cho trang nhân viên
 import EmployeeFormModal from './form-modal';
+import RoleModal from './role-modal';
 
 import { BASE_MINIO_URL } from '@/config';
 
 // Lấy màu theo từng vị trí
-const getRoleVariant = (roleName: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default' => {
-  const lowerName = roleName.toLowerCase();
+const getRoleVariant = (roleCode: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default' => {
+  const lowerName = roleCode.toLowerCase();
   if (lowerName.includes('admin')) return 'danger';
   if (lowerName.includes('hr')) return 'warning';
   if (lowerName.includes('sale')) return 'primary';
@@ -47,6 +48,10 @@ const Table = () => {
   // Trạng thái cho modal sửa nhân sự
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [selectedEmp, setSelectedEmp] = React.useState<Employee | null>(null);
+
+  // Trạng thái cho modal gán vai trò nhân sự
+  const [isRoleModalOpen, setIsRoleModalOpen] = React.useState(false);
+  const [empToAssignRole, setEmpToAssignRole] = React.useState<Employee | null>(null);
 
   // Trạng thái cho modal xóa nhân sự
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
@@ -110,12 +115,14 @@ const Table = () => {
         <div className="flex flex-wrap gap-1">
           {row.roles && row.roles.length > 0 ? (
             row.roles.map((role) => (
-              <Badge key={role.id} variant={getRoleVariant(role.name)} size="sm">
+              <Badge key={role.id} variant={getRoleVariant(role.code)} size="sm">
                 {role.name}
               </Badge>
             ))
           ) : (
-            <span className="text-xs text-gray-400">Nhân viên</span>
+            <Badge variant="default" size="sm">
+              Nhân viên
+            </Badge>
           )}
         </div>
       ),
@@ -139,7 +146,7 @@ const Table = () => {
     {
       key: 'actions',
       label: 'Hành động',
-      minWidth: '120px',
+      minWidth: '140px',
       cell: (row: Employee) => (
         <TableAction
           items={[
@@ -150,6 +157,16 @@ const Table = () => {
               onClick: () => {
                 setSelectedEmp(row);
                 setIsEditOpen(true);
+              },
+            },
+            {
+              title: 'Gán vai trò',
+              icon: UserCog,
+              size: 18,
+              className: 'hover:text-primary hover:bg-primary/5',
+              onClick: () => {
+                setEmpToAssignRole(row);
+                setIsRoleModalOpen(true);
               },
             },
             {
@@ -187,7 +204,7 @@ const Table = () => {
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-gray-500">Mã: {row.identifyCode || 'N/A'}</span>
             {row.roles && row.roles.length > 0 && (
-              <Badge variant={getRoleVariant(row.roles[0].name)} size="sm">
+              <Badge variant={getRoleVariant(row.roles[0].code)} size="sm">
                 {row.roles[0].name}
               </Badge>
             )}
@@ -197,21 +214,34 @@ const Table = () => {
       <div className="flex gap-2">
         <button
           onClick={() => {
-              setSelectedEmp(row);
-              setIsEditOpen(true);
+            setSelectedEmp(row);
+            setIsEditOpen(true);
           }}
           className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+          title="Chỉnh sửa"
         >
           <Pencil size={18} />
+        </button>
+        
+        <button
+          onClick={() => {
+            setEmpToAssignRole(row);
+            setIsRoleModalOpen(true);
+          }}
+          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+          title="Gán vai trò"
+        >
+          <UserCog size={18} />
         </button>
 
         <button
           onClick={() => {
-              setEmpToDelete(row);
-              setIsDeleteOpen(true);
+            setEmpToDelete(row);
+            setIsDeleteOpen(true);
           }}
           disabled={isPending}
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+          title="Xóa"
         >
           <Trash2 size={18} />
         </button>
@@ -233,6 +263,16 @@ const Table = () => {
           onChange: setSearch,
           className: 'w-80',
         }}
+      />
+
+      {/* Modal Gán vai trò nhân sự */}
+      <RoleModal
+        isOpen={isRoleModalOpen}
+        onClose={() => {
+          setIsRoleModalOpen(false);
+          setEmpToAssignRole(null);
+        }}
+        employee={empToAssignRole}
       />
 
       {/* Modal Sửa nhân sự */}

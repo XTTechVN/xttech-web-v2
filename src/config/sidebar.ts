@@ -13,6 +13,7 @@ export const acceptedSections = [
   'adjustments',
   'employees',
   'employees-root',
+  'roles',
   'suggestions',
   'departments',
   'projects',
@@ -58,7 +59,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Nhân viên',
         icon: React.createElement(User, { size: 18 }),
         href: '/app/employees',
-        roles: ['admin', 'hr'],
+        roles: ['super', 'admin', 'hr'],
         subItems: [
           {
             id: 'departments',
@@ -71,6 +72,12 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
             label: 'Danh sách nhân viên',
             href: '/app/employees',
             roles: ['admin', 'hr'],
+          },
+          {
+            id: 'roles',
+            label: 'Danh sách vai trò',
+            href: '/app/roles',
+            roles: ['admin'],
           },
         ],
       },

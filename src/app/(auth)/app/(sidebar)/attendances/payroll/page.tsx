@@ -113,18 +113,6 @@ export default function PayrollDataPage() {
 
   const tableFilters: ITableFilterProps[] = [
     {
-      label: 'Từ ngày',
-      value: filterStartDate,
-      options: dateOptions,
-      onChange: (val: string | undefined) => setFilterStartDate(val),
-    },
-    {
-      label: 'Đến ngày',
-      value: filterEndDate,
-      options: dateOptions,
-      onChange: (val: string | undefined) => setFilterEndDate(val),
-    },
-    {
       label: 'Trạng thái',
       value: filterStatus,
       options: statusOptions,
