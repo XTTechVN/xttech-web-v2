@@ -3,7 +3,11 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
+<<<<<<< HEAD
 import { Pencil, Trash2, Eye } from 'lucide-react';
+=======
+import { Pencil, Trash2, PlusCircle } from 'lucide-react';
+>>>>>>> origin/dev
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData, TableAction } from '@/components/table';
