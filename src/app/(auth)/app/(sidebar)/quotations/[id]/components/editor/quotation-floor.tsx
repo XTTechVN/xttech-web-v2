@@ -30,6 +30,8 @@ export const QuotationFloor = ({
   const store = useQuotationStore();
   const floor = store.floors[fIndex];
 
+  if (!floor) return null;
+
   const handleAddMaterial = () => {
     const defaultMat = materialsList[0];
     if (defaultMat) {

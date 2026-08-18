@@ -28,7 +28,12 @@ export const QuotationDoor = ({
   formulasList,
 }: QuotationDoorProps) => {
   const store = useQuotationStore();
-  const door = store.floors[fIndex].materials[mIndex].doors[dIndex];
+  const floor = store.floors[fIndex];
+  if (!floor) return null;
+  const material = floor.materials[mIndex];
+  if (!material) return null;
+  const door = material.doors[dIndex];
+  if (!door) return null;
   const [isOpen, setIsOpen] = useState(true);
 
   const handleUpdateDoor = (field: string, value: any) => {

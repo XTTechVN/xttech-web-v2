@@ -26,7 +26,10 @@ export const QuotationMaterial = ({
   formulasList,
 }: QuotationMaterialProps) => {
   const store = useQuotationStore();
-  const material = store.floors[fIndex].materials[mIndex];
+  const floor = store.floors[fIndex];
+  if (!floor) return null;
+  const material = floor.materials[mIndex];
+  if (!material) return null;
   const [isOpen, setIsOpen] = useState(true);
 
   const handleUpdateMaterial = (materialIdStr: string) => {

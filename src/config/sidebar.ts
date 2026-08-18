@@ -17,6 +17,7 @@ export const acceptedSections = [
   'departments',
   'projects',
   'customers',
+  'configurations',
   'doors',
   'accessories',
   'materials',
@@ -144,62 +145,34 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
   },
   // Quản lý dự án
   {
-    title: 'Quản lý dự án',
+    title: 'Dự án',
     items: [
       {
-        id: 'projects',
-        label: 'Danh sách dự án',
+        id: 'projects-root',
+        label: 'Quản lý dự án',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/projects',
         roles: ['admin', 'sale'],
-      },
-      {
-        id: 'quotations',
-        label: 'Báo giá',
-        icon: React.createElement(FileText, { size: 18 }),
-        href: '/app/quotations',
-        roles: ['admin', 'sale'],
+        subItems: [
+          {
+            id: 'projects',
+            label: 'Danh sách dự án',
+            href: '/app/projects',
+            roles: ['admin', 'sale'],
+          },
+          {
+            id: 'configurations',
+            label: 'Cấu hình dự án',
+            href: '/app/projects/configuration',
+            roles: ['admin', 'sale'],
+          },
+        ],
       },
       {
         id: 'customers',
         label: 'Khách hàng',
         icon: React.createElement(User, { size: 18 }),
         href: '/app/customers',
-        roles: ['admin', 'sale'],
-      },
-      {
-        id: 'doors',
-        label: 'Cửa',
-        icon: React.createElement(Layout, { size: 18 }),
-        href: '/app/doors',
-        roles: ['admin', 'sale'],
-      },
-      {
-        id: 'formulas',
-        label: 'Công thức',
-        icon: React.createElement(Calculator, { size: 18 }),
-        href: '/app/formulas',
-        roles: ['admin', 'sale'],
-      },
-      {
-        id: 'accessories',
-        label: 'Phụ kiện',
-        icon: React.createElement(ListChecks, { size: 18 }),
-        href: '/app/accessories',
-        roles: ['admin', 'sale'],
-      },
-      {
-        id: 'materials',
-        label: 'Hệ nhôm',
-        icon: React.createElement(ListChecks, { size: 18 }),
-        href: '/app/materials',
-        roles: ['admin', 'sale'],
-      },
-      {
-        id: 'extra-options',
-        label: 'Tùy chọn phát sinh',
-        icon: React.createElement(Settings, { size: 18 }),
-        href: '/app/extra-options',
         roles: ['admin', 'sale'],
       },
       {
