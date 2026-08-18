@@ -6,8 +6,16 @@ import { useRouter } from 'next/navigation';
 import { rawSidebarSections, UserRole } from '@/config';
 import { Input } from '@/components';
 
-interface HeaderSearchProps {
+export interface HeaderSearchProps {
   userRole?: UserRole;
+}
+
+interface SearchResultItem {
+  title: string;
+  href?: string;
+  section?: string;
+  icon?: React.ReactNode;
+  parent?: string;
 }
 
 const removeAccents = (str: string) => {
@@ -21,7 +29,7 @@ const removeAccents = (str: string) => {
 export function HeaderSearch({ userRole }: HeaderSearchProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [searchResults, setSearchResults] = React.useState<any[]>([]);
+  const [searchResults, setSearchResults] = React.useState<SearchResultItem[]>([]);
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const searchRef = React.useRef<HTMLDivElement>(null);
 
@@ -46,11 +54,11 @@ export function HeaderSearch({ userRole }: HeaderSearchProps) {
     }
 
     const lowerQuery = removeAccents(query).toLowerCase();
-    const results: any[] = [];
+    const results: SearchResultItem[] = [];
 
-    rawSidebarSections.forEach(section => {
-      section.items.forEach(item => {
-        const hasAccess = !item.roles || (userRole && item.roles.includes(userRole as any));
+    rawSidebarSections.forEach((section) => {
+      section.items.forEach((item) => {
+        const hasAccess = !item.roles || (userRole && item.roles.includes(userRole));
         if (!hasAccess && userRole !== 'admin') return;
 
         const normalizedItemLabel = removeAccents(item.label).toLowerCase();
@@ -59,13 +67,13 @@ export function HeaderSearch({ userRole }: HeaderSearchProps) {
             title: item.label,
             href: item.href,
             section: section.title,
-            icon: item.icon
+            icon: item.icon,
           });
         }
 
         if (item.subItems) {
-          item.subItems.forEach(sub => {
-            const hasSubAccess = !sub.roles || (userRole && sub.roles.includes(userRole as any));
+          item.subItems.forEach((sub) => {
+            const hasSubAccess = !sub.roles || (userRole && sub.roles.includes(userRole));
             if (!hasSubAccess && userRole !== 'admin') return;
 
             const normalizedSubLabel = removeAccents(sub.label).toLowerCase();
@@ -74,7 +82,7 @@ export function HeaderSearch({ userRole }: HeaderSearchProps) {
                 title: sub.label,
                 href: sub.href,
                 section: section.title,
-                parent: item.label
+                parent: item.label,
               });
             }
           });
@@ -131,7 +139,7 @@ export function HeaderSearch({ userRole }: HeaderSearchProps) {
       
       {isSearchOpen && searchResults.length === 0 && searchQuery.trim() !== '' && (
         <div className="absolute top-[110%] left-0 right-0 bg-white rounded-lg shadow-xl border border-slate-200 z-50 p-4 text-center">
-          <p className="text-sm text-slate-500">Không tìm thấy kết quả nào cho "{searchQuery}"</p>
+          <p className="text-sm text-slate-500">Không tìm thấy kết quả nào cho &quot;{searchQuery}&quot;</p>
         </div>
       )}
     </div>

@@ -57,7 +57,8 @@ export default function Layout() {
 | `sections`     | `SidebarSectionProps[]`                                                                   | Có        | Danh sách cấu hình các phần và các liên kết điều hướng    |
 | `activeId`     | `string`                                                                                  | Không     | ID của phần tử đang được chọn hoạt động                   |
 | `onItemSelect` | `(id: string) => void`                                                                    | Không     | Callback khi nhấn chọn các item hoặc sub-item             |
-| `user`         | `{ name: string; role: string; avatar: string; }`                                         | Không     | Cấu hình khối thông tin người dùng ở đầu Sidebar          |
+| `brand`        | `SidebarBrandProps` (`{ name?: string; subtitle?: string; logo?: string \| React.ReactNode; onClick?: () => void; }`) | Không     | Cấu hình Logo và Tên thương hiệu ở đầu Sidebar            |
+| `user`         | `{ name: string; role: string; avatar: string; }`                                         | Không     | Cấu hình khối thông tin người dùng ở đầu Sidebar (legacy) |
 | `cta`          | `{ title: string; description: string; buttonText: string; onButtonClick?: () => void; }` | Không     | Cấu hình thẻ kêu gọi hành động (CTA Card) dưới cùng       |
 | `variant`      | `'light' \| 'dark'`                                                                       | Không     | Giao diện màu sáng/tối cho Sidebar (Mặc định: `'light'`)  |
 | `...props`     | `React.HTMLAttributes<HTMLDivElement>`                                                    | Không     | Kế thừa các thuộc tính và sự kiện HTML cơ bản của thẻ div |

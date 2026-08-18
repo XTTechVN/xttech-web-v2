@@ -8,7 +8,7 @@ import { BASE_MINIO_URL, UserRole } from '@/config';
 import { ProfileModal } from './profile-modal';
 import { PasswordModal } from './password-modal';
 
-interface HeaderProfileProps {
+export interface HeaderProfileProps {
   userRole?: UserRole;
 }
 
@@ -24,20 +24,29 @@ export function HeaderProfile({ userRole }: HeaderProfileProps) {
     window.location.href = '/signin';
   };
 
-  const roleName = user?.roles?.[0]?.name ||
-        (userRole === 'admin'
-          ? 'Quản trị viên'
-          : userRole === 'hr'
-            ? 'Nhân sự (HR)'
-            : userRole === 'sale'
-              ? 'Kinh doanh (Sale)'
-              : 'Kỹ thuật viên (Technician)');
+  const roleName =
+    user?.roles?.[0]?.name ||
+    (userRole === 'admin'
+      ? 'Quản trị viên'
+      : userRole === 'hr'
+        ? 'Nhân sự (HR)'
+        : userRole === 'sale'
+          ? 'Kinh doanh (Sale)'
+          : 'Kỹ thuật viên (Technician)');
 
-  const avatarUrl = user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_MINIO_URL}${user.avatar}`) : null;
+  const avatarUrl = user?.avatar
+    ? user.avatar.startsWith('http')
+      ? user.avatar
+      : `${BASE_MINIO_URL}${user.avatar}`
+    : null;
 
   return (
     <div className="flex items-center gap-4 md:gap-6">
-      <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
+      <button
+        type="button"
+        aria-label="Thông báo"
+        className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+      >
         <Bell size={20} />
         <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
       </button>

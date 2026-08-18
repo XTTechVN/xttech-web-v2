@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import Breadcrumb, { BreadcrumbItem } from '@/components/breadcrumb/breadcrumb';
+import { Breadcrumb, BreadcrumbItem } from '@/components';
 import { usePathname } from 'next/navigation';
-import { rawSidebarSections } from '@/config';
+import { rawSidebarSections, SidebarItemWithRoles } from '@/config';
 
 export function AppBreadcrumb() {
   const pathname = usePathname();
@@ -11,7 +11,7 @@ export function AppBreadcrumb() {
   const generateBreadcrumbs = (): BreadcrumbItem[] => {
     // 1. Luôn có "Trang chủ"
     const items: BreadcrumbItem[] = [
-      { label: 'Trang chủ', href: '/app/dashboard' }
+      { label: 'Trang chủ', href: '/app/dashboard' },
     ];
 
     if (pathname === '/app' || pathname === '/app/dashboard') {
@@ -20,12 +20,12 @@ export function AppBreadcrumb() {
     }
 
     // 2. Tìm item phù hợp nhất trong rawSidebarSections
-    let matchedItem: any = null;
-    let matchedSubItem: any = null;
+    let matchedItem: SidebarItemWithRoles | null = null;
+    let matchedSubItem: SidebarItemWithRoles | null = null;
     let maxMatchLen = 0;
 
-    rawSidebarSections.forEach(section => {
-      section.items.forEach(item => {
+    rawSidebarSections.forEach((section) => {
+      section.items.forEach((item) => {
         // Kiểm tra item gốc
         if (item.href && pathname.startsWith(item.href)) {
           if (item.href.length > maxMatchLen) {
@@ -34,10 +34,10 @@ export function AppBreadcrumb() {
             matchedSubItem = null;
           }
         }
-        
+
         // Kiểm tra subItem
         if (item.subItems) {
-          item.subItems.forEach(sub => {
+          item.subItems.forEach((sub) => {
             if (sub.href && pathname.startsWith(sub.href)) {
               if (sub.href.length > maxMatchLen) {
                 maxMatchLen = sub.href.length;
@@ -51,18 +51,20 @@ export function AppBreadcrumb() {
     });
 
     if (matchedItem) {
-      if (matchedItem.label !== 'Tổng quan' && matchedItem.label !== 'Trang chủ') {
-         items.push({
-           label: matchedItem.label,
-           href: matchedSubItem ? undefined : (matchedItem.href || '#')
-         });
+      const parentItem = matchedItem as SidebarItemWithRoles;
+      if (parentItem.label !== 'Tổng quan' && parentItem.label !== 'Trang chủ') {
+        items.push({
+          label: parentItem.label,
+          href: matchedSubItem ? undefined : parentItem.href || '#',
+        });
       }
-      
+
       if (matchedSubItem) {
-         items.push({
-           label: matchedSubItem.label,
-           href: matchedSubItem.href
-         });
+        const subItem = matchedSubItem as SidebarItemWithRoles;
+        items.push({
+          label: subItem.label,
+          href: subItem.href,
+        });
       }
     }
 
@@ -72,10 +74,10 @@ export function AppBreadcrumb() {
       if (remainingPath) {
         const segments = remainingPath.split('/');
         let currentDynamicPath = pathname.slice(0, maxMatchLen);
-        
+
         segments.forEach((segment, index) => {
           currentDynamicPath += `/${segment}`;
-          
+
           let label = segment;
           if (segment === 'positions') label = 'Vị trí';
           else if (segment === 'create') label = 'Thêm mới';
@@ -93,10 +95,10 @@ export function AppBreadcrumb() {
       // Fallback nếu không khớp sidebar (ẩn đường dẫn app)
       const paths = pathname.split('/').filter(Boolean);
       let currentPath = '';
-      paths.forEach((path, index) => {
+      paths.forEach((path) => {
         currentPath += `/${path}`;
         if (path === 'app') return; // Bỏ qua chữ 'app' đầu tiên vì đã có Trang chủ
-        
+
         items.push({
           label: path.charAt(0).toUpperCase() + path.slice(1),
           href: currentPath,

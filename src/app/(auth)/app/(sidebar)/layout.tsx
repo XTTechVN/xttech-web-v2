@@ -10,14 +10,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 // Components
-import { Sidebar, SidebarItemProps as SidebarItemType } from '@/components';
-import AppHeader from './header/page';
+import { AppHeader, Sidebar, SidebarItemProps } from '@/components';
 
 // Config
-import { getSidebarSectionsForRole, UserRole, acceptedSections, BASE_MINIO_URL } from '@/config';
-
-// Stores
-import { useAuthStore } from '@/stores';
+import { getSidebarSectionsForRole, UserRole, acceptedSections } from '@/config';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
@@ -47,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         if (normalized) {
           setUserRole(normalized as UserRole);
         }
-      } catch (e) {}
+      } catch {}
     }
   }, []);
 
@@ -56,23 +52,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return getSidebarSectionsForRole(userRole);
   }, [userRole]);
 
-
-  const user = useAuthStore((state) => state.user);
-
   const sidebarConfig = {
-    user: {
-      name: user?.fullName || 'Nhân viên',
-      role: user?.roles?.[0]?.name ||
-        (userRole === 'admin'
-          ? 'Quản trị viên'
-          : userRole === 'hr'
-            ? 'Nhân sự (HR)'
-            : userRole === 'sale'
-              ? 'Kinh doanh (Sale)'
-              : 'Kỹ thuật viên (Technician)'),
-      avatar: user?.avatar
-        ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_MINIO_URL}${user.avatar}`)
-        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60',
+    brand: {
+      name: 'XTTECH',
+      subtitle: 'ERP SYSTEM',
+      logo: '/image-xttech/logo-xttech.svg',
+      onClick: () => router.push('/app/dashboard'),
     },
     sections: filteredSections,
     cta: {
@@ -80,7 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       description: 'Liên hệ với chúng tôi để được tư vấn thêm về các dịch vụ của chúng tôi.',
       buttonText: 'Liên hệ ngay',
     },
-    onItemSelect: (item: SidebarItemType) => {
+    onItemSelect: (item: SidebarItemProps) => {
       // Chặn người dùng truy cập một số tính năng trên sidebar
       const isAccepted = acceptedSections.includes(item.id);
       if (!isAccepted) {
@@ -96,7 +81,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.push(item.href);
       }
     },
-    onItemSelectMobile: (item: SidebarItemType) => {
+    onItemSelectMobile: (item: SidebarItemProps) => {
       // Chặn người dùng truy cập một số tính năng trên sidebar
       const isAccepted = acceptedSections.includes(item.id);
       if (!isAccepted) {
@@ -123,10 +108,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         className="hidden md:flex h-full rounded-none border-y-0 border-l-0 border-r border-slate-200 shadow-none bg-white shrink-0"
         activeId={activeMenu}
         cta={sidebarConfig.cta}
-        user={sidebarConfig.user}
+        brand={sidebarConfig.brand}
         sections={sidebarConfig.sections}
         onItemSelect={sidebarConfig.onItemSelect}
-        onUserClick={() => router.push('/app/profile')}
       />
 
       {/* 2. Sidebar Drawer trên Mobile */}
@@ -137,13 +121,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             variant="light"
             className="relative h-full w-72 rounded-none border-y-0 border-l-0 border-r border-slate-200 shadow-2xl bg-white z-10 animate-in slide-in-from-left duration-300"
             activeId={activeMenu}
-            user={sidebarConfig.user}
+            brand={sidebarConfig.brand}
             sections={sidebarConfig.sections}
             onItemSelect={sidebarConfig.onItemSelectMobile}
-            onUserClick={() => {
-              router.push('/app/profile');
-              setIsMobileOpen(false);
-            }}
           />
         </div>
       )}
