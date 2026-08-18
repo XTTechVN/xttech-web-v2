@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 
 // Components
 import { Sidebar, SidebarItemProps as SidebarItemType } from '@/components';
+import AppHeader from './header/page';
 
 // Config
 import { getSidebarSectionsForRole, UserRole, acceptedSections, BASE_MINIO_URL } from '@/config';
@@ -149,6 +150,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* 3. Vùng nội dung chính */}
       <div className="flex-1 h-full bg-slate-50 flex flex-col min-w-0">
+        <AppHeader 
+          onMenuClick={() => setIsMobileOpen(true)} 
+          userRole={userRole} 
+        />
         <div className="flex-1 p-4 overflow-y-auto">{children}</div>
       </div>
     </div>
