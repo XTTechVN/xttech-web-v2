@@ -8,7 +8,6 @@ import {
   TableData,
   TableAction,
   Badge,
-  Breadcrumb,
   Heading,
   ITableColumn,
   ITableFilterProps,
@@ -22,15 +21,11 @@ import {
   Eye,
   Clock,
   FileEdit,
-  AlertTriangle,
-  CheckCircle2,
   Calendar,
   UserCheck,
   Users,
   UserCheck2,
   Plus,
-  Check,
-  X,
   MessageSquareWarning
 } from 'lucide-react';
 import AddAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/add-modal";
@@ -54,64 +49,7 @@ type FilterOption = {
   label: string;
 };
 
-// const mockAttendances: Attendance[] = Array.from({ length: 15 }, (_, index) => ({
-//   id: index + 1,
-//   userId: `${(index % 5) + 1}`,
-//   workShiftId: (index % 3) + 1,
-
-//   workDate: `2026-07-${String((index % 30) + 1).padStart(2, '0')}`,
-
-//   checkIn: `08:${String(index % 60).padStart(2, '0')}`,
-//   checkInLatitude: 20.8449 + index * 0.001,
-//   checkInLongitude: 106.6881 + index * 0.001,
-
-//   isLate: index % 4 === 0,
-//   lateMinutes: index % 4 === 0 ? 15 : 0,
-
-//   imgCheckinPath: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60`,
-
-//   checkOut: `17:${String(index % 60).padStart(2, '0')}`,
-//   checkOutLatitude: 20.8449 + index * 0.001,
-//   checkOutLongitude: 106.6881 + index * 0.001,
-
-//   isEarlyLeave: index % 6 === 0,
-//   earlyLeaveMinutes: index % 6 === 0 ? 20 : 0,
-
-//   imgCheckoutPath: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60`,
-
-//   status:
-//     index % 5 === 0
-//       ? 'absent'
-//       : index % 4 === 0
-//         ? 'late'
-//         : 'present',
-
-//   note: `Attendance note ${index + 1}`,
-//   totalHours: 8,
-
-//   user: {
-//     id: `${(index % 5) + 1}`,
-//     email: `user${(index % 5) + 1}@example.com`,
-//     username: `user${(index % 5) + 1}`,
-//     fullName: `Employee ${(index % 5) + 1}`,
-//     phoneNumber: `09000000${String(index + 1).padStart(2, '00')}`,
-//     avatar: `/avatars/avatar-${(index % 5) + 1}.png`,
-//     gender: index % 3 === 0 ? 'male' : index % 3 === 1 ? 'female' : 'other',
-//     birthday: '1995-01-01',
-//     address: `Address ${index + 1}`,
-//     joinedAt: '2025-01-01',
-//     identifyCode: `12345678${String(index + 1).padStart(2, '0')}`,
-//     attendancePolicy: 'Standard',
-//     createdAt: new Date().toISOString(),
-//     updatedAt: new Date().toISOString(),
-//   },
-
-//   createdAt: new Date().toISOString(),
-//   updatedAt: new Date().toISOString(),
-// }));
-
 export default function AttendancesPage() {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter states khớp với ITableFilterProps
@@ -268,12 +206,6 @@ export default function AttendancesPage() {
     }
   };
 
-  const breadcrumbItems = [
-    { label: 'Trang chủ', href: '/app' },
-    { label: 'Quản lý nhân sự', href: '/app/employees' },
-    { label: 'Bảng công tháng', href: '/app/attendances' },
-  ];
-
   // Tạo option list duy nhất từ mock data
 
   const getStatusLabel = (status?: string | null) => {
@@ -287,30 +219,6 @@ export default function AttendancesPage() {
 
     return map[status ?? ""] ?? "Không xác định";
   };
-
-  const employeeOptions: FilterOption[] = Array.from(
-    new Map<string, FilterOption>(
-      userList.map((item) => [
-        String(item.id),
-        {
-          label: item.fullName ?? 'Không xác định',
-          value: String(item.id),
-        },
-      ])
-    ).values()
-  );
-
-  const dateOptions: FilterOption[] = Array.from(
-    { length: 31 },
-    (_, i) => {
-      const day = String(i + 1).padStart(2, '0');
-
-      return {
-        label: `2026-08-${day}`,
-        value: `2026-08-${day}`,
-      };
-    }
-  );
 
   const departmentOptions: FilterOption[] = Array.from(
     new Map(
@@ -945,149 +853,6 @@ export default function AttendancesPage() {
           select={false}
           syncToUrl={false}
         />
-      </div>
-
-      {/* Bottom Section: 2 Columns (Yêu cầu chờ duyệt & Bất thường chuyên cần) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Left Column: Yêu cầu chờ duyệt */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Heading size="h4" className="text-base font-bold text-slate-900">
-                  Yêu cầu chờ duyệt
-                </Heading>
-                {pendingAdjustmentRequests.length > 0 && (
-                  <Badge variant="danger" pill className="bg-red-100 text-red-600 font-bold border-none px-2.5">
-                    {pendingAdjustmentRequests.length} MỚI
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {pendingAdjustmentRequests.length === 0 ? (
-                <p className="text-xs text-slate-500 py-6 text-center italic">
-                  Hiện không có yêu cầu nào đang chờ duyệt.
-                </p>
-              ) : (
-                pendingAdjustmentRequests.slice(0, 4).map((item) => {
-                  const titleDisplay = item.reviewNote || (
-                    item.requestType === 'check_in'
-                      ? 'Điều chỉnh giờ vào muộn'
-                      : item.requestType === 'check_out'
-                        ? 'Điều chỉnh giờ ra'
-                        : 'Điều chỉnh giờ vào & ra'
-                  );
-                  const formattedTime = item.updatedAt
-                    ? new Date(item.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' trước'
-                    : 'Gần đây';
-
-                  return (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition hover:bg-slate-50 gap-3"
-                    >
-                      <div className="flex items-start gap-3 min-w-0 flex-1">
-                        <div className="rounded-full bg-sky-100 p-2.5 text-sky-700 shrink-0 mt-0.5">
-                          <FileEdit size={18} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="font-semibold text-slate-900 text-sm">{titleDisplay}</h4>
-                            <span className="text-xs text-slate-400">{formattedTime}</span>
-                          </div>
-                          <p className="mt-1 text-xs text-slate-500 line-clamp-2">
-                            Nhân viên: <span className="font-medium text-slate-700">{item.user?.fullName || 'Không xác định'}</span> - {item.reason}
-                          </p>
-                        </div>
-                      </div>
-
-                      <TableAction
-                        className="shrink-0 self-center"
-                        items={[
-                          {
-                            title: 'Duyệt',
-                            icon: Check,
-                            size: 18,
-                            className: 'hover:text-emerald-600 hover:bg-emerald-50 text-slate-500',
-                            onClick: () =>
-                              setReviewModalState({
-                                open: true,
-                                data: item,
-                                action: 'approved',
-                              }),
-                          },
-                          {
-                            title: 'Từ chối',
-                            icon: X,
-                            size: 18,
-                            className: 'hover:text-red-600 hover:bg-red-50 text-slate-500',
-                            onClick: () =>
-                              setReviewModalState({
-                                open: true,
-                                data: item,
-                                action: 'rejected',
-                              }),
-                          },
-                        ]}
-                      />
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          <Link
-            href="/app/attendances/adjustments"
-            className="mt-4 block text-center text-xs font-semibold text-teal-600 hover:text-teal-700 hover:underline"
-          >
-            Xem tất cả yêu cầu khiếu nại →
-          </Link>
-        </div>
-
-        {/* Right Column: Bất thường chuyên cần */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
-          <Heading size="h4" className="text-base font-bold text-slate-900">
-            Bất thường chuyên cần
-          </Heading>
-
-          <div className="space-y-3">
-            {/* Warning 1: Red */}
-            <div className="flex items-start gap-3 rounded-xl border border-red-100 bg-red-50/70 p-4">
-              <AlertTriangle className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-semibold text-red-800">Cảnh báo vắng mặt nghiêm trọng</h4>
-                <p className="mt-0.5 text-xs text-red-700/80">
-                  Dây chuyền lắp ráp B thiếu 5 nhân viên (Đã chạm ngưỡng nghiêm trọng).
-                </p>
-              </div>
-            </div>
-
-            {/* Warning 2: Slate/Gray */}
-            <div className="flex items-start gap-3 rounded-xl border border-slate-200/70 bg-slate-50 p-4">
-              <Clock className="h-5 w-5 shrink-0 text-slate-600 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-semibold text-slate-800">Sử dụng tăng ca cao</h4>
-                <p className="mt-0.5 text-xs text-slate-600">
-                  Phòng Đảm bảo Chất lượng đã vượt quá 40 giờ tăng ca tập thể trong tuần này.
-                </p>
-              </div>
-            </div>
-
-            {/* Warning 3: Teal/Green */}
-            <div className="flex items-start gap-3 rounded-xl border border-teal-100 bg-teal-50/70 p-4">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-teal-600 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-semibold text-teal-800">Đồng bộ hệ thống thành công</h4>
-                <p className="mt-0.5 text-xs text-teal-700/80">
-                  Dữ liệu từ máy chấm công sinh trắc học đã được đồng bộ lúc 12:00.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <AddAdjustmentModal
