@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Clock, MapPin, Building2 } from 'lucide-react';
+import { Clock, MapPin, Building2, Layers, CheckCircle2 } from 'lucide-react';
 
 import { TableData, TableAction } from '@/components/table';
+import type { ITableFilterProps } from '@/components/table/types';
 import { Modal, Button, Badge } from '@/components';
 import { deleteWorkShift, getWorkShifts, getDepartments } from '@/actions';
 import queryClient from '@/utils/query';
@@ -38,6 +39,8 @@ const SHIFT_TYPE_BADGES: Record<string, { label: string; variant: 'primary' | 'w
 export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
   const [search, setSearch] = useQueryParam('search');
   const [selectedDeptFilter, setSelectedDeptFilter] = useState<string>('');
+  const [selectedShiftType, setSelectedShiftType] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
 
   // Modal Sửa
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -67,7 +70,9 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
     const res = await getWorkShifts({
       ...params,
       search: search || undefined,
-      department_id: queryDept,
+      departmentId: queryDept,
+      shift_type: selectedShiftType || undefined,
+      status: selectedStatus || undefined,
     });
 
     if (!res) {
@@ -330,31 +335,65 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
     );
   };
 
+  // Cấu hình bộ lọc của TableData
+  const tableFilters: ITableFilterProps[] = [];
+
+  // 1. Lọc theo Phòng ban (khi ở trang tổng /shifts)
+  if (!departmentId && departmentList.length > 0) {
+    tableFilters.push({
+      label: 'Phòng ban',
+      placeholder: 'Tất cả phòng ban',
+      value: selectedDeptFilter || undefined,
+      onChange: (val) => setSelectedDeptFilter(val || ''),
+      icon: <Building2 className="w-4 h-4" />,
+      options: [
+        { value: undefined, label: 'Tất cả phòng ban' },
+        ...departmentList.map((d) => ({
+          value: String(d.id),
+          label: d.name,
+        })),
+      ],
+    });
+  }
+
+  // 2. Lọc theo Loại ca làm việc
+  tableFilters.push({
+    label: 'Loại ca',
+    placeholder: 'Tất cả loại ca',
+    value: selectedShiftType || undefined,
+    onChange: (val) => setSelectedShiftType(val || ''),
+    icon: <Layers className="w-4 h-4" />,
+    options: [
+      { value: undefined, label: 'Tất cả loại ca' },
+      { value: 'morning', label: 'Ca sáng' },
+      { value: 'afternoon', label: 'Ca chiều' },
+      { value: 'full_day', label: 'Hành chính (Cả ngày)' },
+      { value: 'night', label: 'Ca đêm' },
+    ],
+  });
+
+  // 3. Lọc theo Trạng thái
+  tableFilters.push({
+    label: 'Trạng thái',
+    placeholder: 'Tất cả trạng thái',
+    value: selectedStatus || undefined,
+    onChange: (val) => setSelectedStatus(val || ''),
+    icon: <CheckCircle2 className="w-4 h-4" />,
+    options: [
+      { value: undefined, label: 'Tất cả trạng thái' },
+      { value: 'active', label: 'Hoạt động' },
+      { value: 'inactive', label: 'Tạm dừng' },
+    ],
+  });
+
   return (
     <div className="flex flex-col gap-3">
-      {/* Bộ lọc phòng ban (chỉ hiển thị ở trang tổng /shifts) */}
-      {!departmentId && departmentList.length > 0 && (
-        <div className="flex items-center gap-2 max-w-xs self-end">
-          <select
-            value={selectedDeptFilter}
-            onChange={(e) => setSelectedDeptFilter(e.target.value)}
-            className="w-full h-9 px-3 text-xs bg-white border border-gray-200 rounded-lg outline-none focus:border-primary text-gray-700 cursor-pointer"
-          >
-            <option value="">Tất cả phòng ban</option>
-            {departmentList.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
       <TableData<WorkShift>
-        queryKey={['work_shifts', departmentId, selectedDeptFilter, search]}
+        queryKey={['work_shifts', departmentId, selectedDeptFilter, selectedShiftType, selectedStatus, search]}
         fetcher={fetcher}
         columns={columns}
         renderCard={renderCard}
+        filters={tableFilters}
         select={false}
         search={{
           placeholder: 'Tìm kiếm ca làm việc...',
