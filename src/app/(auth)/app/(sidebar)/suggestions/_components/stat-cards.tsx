@@ -76,9 +76,7 @@ export default function StatCards({ containerWidth }: { containerWidth?: number 
   const gridClass = containerWidth
     ? isLarge
       ? 'grid grid-cols-4'
-      : isMedium
-        ? 'grid grid-cols-2'
-        : 'grid grid-cols-1'
+      : 'grid grid-cols-2'
     : 'grid grid-cols-2 md:grid-cols-4';
 
   if (isLoading) {
