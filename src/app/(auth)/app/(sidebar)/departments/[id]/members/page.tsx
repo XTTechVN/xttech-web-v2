@@ -38,7 +38,7 @@ export default function DepartmentMembersPage() {
     const res = await getEmployees({
       ...queryParam,
       search: search || undefined,
-      department_id: departmentId,
+      departmentId: departmentId,
     } as any);
 
     if (!res) {
@@ -197,6 +197,88 @@ export default function DepartmentMembersPage() {
     },
   ];
 
+  // Cấu hình Card hiển thị trên thiết bị di động
+  const renderCard = (row: Employee, index: number) => {
+    const deptPositions = (row.positions || []).filter(
+      (p: any) => Number(p.departmentId || p.department_id) === departmentId
+    );
+
+    return (
+      <div
+        key={row.id || index}
+        className="p-4 rounded-xl border border-gray-200 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md transition-shadow"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Avatar
+              src={
+                row.avatar
+                  ? row.avatar.startsWith('http')
+                    ? row.avatar
+                    : `${BASE_MINIO_URL}${row.avatar}`
+                  : undefined
+              }
+              name={row.fullName || row.username}
+              size="md"
+            />
+            <div className="flex flex-col min-w-0">
+              <span className="font-semibold text-gray-900 text-sm truncate">
+                {row.fullName || row.username}
+              </span>
+              <span className="text-xs text-gray-400 truncate">{row.email}</span>
+              {row.phoneNumber && (
+                <span className="text-xs text-slate-500 mt-0.5">{row.phoneNumber}</span>
+              )}
+            </div>
+          </div>
+
+          <TableAction
+            items={[
+              {
+                title: 'Đổi chức vụ / vị trí',
+                icon: Briefcase,
+                size: 18,
+                className: 'hover:text-blue-600 hover:bg-blue-50',
+                onClick: () => {
+                  setSelectedEmpForPos(row);
+                  setIsPositionModalOpen(true);
+                },
+              },
+              {
+                title: 'Gỡ khỏi phòng ban',
+                icon: UserMinus,
+                size: 18,
+                className: 'hover:text-red-600 hover:bg-red-50',
+                onClick: () => {
+                  setEmpToRemove(row);
+                  setIsRemoveOpen(true);
+                },
+              },
+            ]}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100">
+          <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+            {row.identifyCode || 'NV'}
+          </span>
+
+          <div className="flex flex-wrap gap-1">
+            {deptPositions.length > 0 ? (
+              deptPositions.map((pos: any) => (
+                <Badge key={pos.id} variant="info" size="sm">
+                  {pos.name}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-gray-400 text-xs italic">Chưa chỉ định chức vụ</span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-4">
       {/* Header Action */}
@@ -223,6 +305,7 @@ export default function DepartmentMembersPage() {
         queryKey={['department_members', departmentId, search]}
         fetcher={fetcher}
         columns={columns}
+        renderCard={renderCard}
         select={false}
         search={{
           placeholder: 'Tìm kiếm nhân sự theo tên, mã, email...',

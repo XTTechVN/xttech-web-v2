@@ -139,7 +139,14 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
   };
 
   const getExceptions = (row: WorkShift) => {
-    return row.workShiftException || row.work_shift_exception || [];
+    return (
+      row.exceptions ||
+      row.workShiftExceptions ||
+      row.workShiftException ||
+      row.work_shift_exceptions ||
+      row.work_shift_exception ||
+      []
+    );
   };
 
   const getDepartmentId = (row: WorkShift) => {

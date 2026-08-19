@@ -139,7 +139,13 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
         const lat = initialData.workLatitude ?? initialData.work_latitude ?? '';
         const lng = initialData.workLongitude ?? initialData.work_longitude ?? '';
         const dist = initialData.allowedDistance ?? initialData.allowed_distance ?? 200;
-        const rawExceptions = initialData.workShiftException || initialData.work_shift_exception || [];
+        const rawExceptions =
+          initialData.exceptions ||
+          initialData.workShiftExceptions ||
+          initialData.workShiftException ||
+          initialData.work_shift_exceptions ||
+          initialData.work_shift_exception ||
+          [];
 
         reset({
           name: initialData.name || '',
