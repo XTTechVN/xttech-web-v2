@@ -151,15 +151,6 @@ const Table = () => {
         <TableAction
           items={[
             {
-              title: 'Chỉnh sửa',
-              icon: Pencil,
-              size: 18,
-              onClick: () => {
-                setSelectedEmp(row);
-                setIsEditOpen(true);
-              },
-            },
-            {
               title: 'Gán vai trò',
               icon: UserCog,
               size: 18,
@@ -167,6 +158,15 @@ const Table = () => {
               onClick: () => {
                 setEmpToAssignRole(row);
                 setIsRoleModalOpen(true);
+              },
+            },
+            {
+              title: 'Chỉnh sửa',
+              icon: Pencil,
+              size: 18,
+              onClick: () => {
+                setSelectedEmp(row);
+                setIsEditOpen(true);
               },
             },
             {
@@ -214,17 +214,6 @@ const Table = () => {
       <div className="flex gap-2">
         <button
           onClick={() => {
-            setSelectedEmp(row);
-            setIsEditOpen(true);
-          }}
-          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-          title="Chỉnh sửa"
-        >
-          <Pencil size={18} />
-        </button>
-        
-        <button
-          onClick={() => {
             setEmpToAssignRole(row);
             setIsRoleModalOpen(true);
           }}
@@ -232,6 +221,17 @@ const Table = () => {
           title="Gán vai trò"
         >
           <UserCog size={18} />
+        </button>
+
+        <button
+          onClick={() => {
+            setSelectedEmp(row);
+            setIsEditOpen(true);
+          }}
+          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+          title="Chỉnh sửa"
+        >
+          <Pencil size={18} />
         </button>
 
         <button

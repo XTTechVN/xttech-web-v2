@@ -105,6 +105,14 @@ const Table = () => {
         <TableAction
           items={[
             {
+              title: 'Quản lý vị trí',
+              icon: Eye,
+              size: 18,
+              onClick: () => {
+                router.push(`/app/departments/${row.id}/positions`);
+              },
+            },
+            {
               title: 'Chỉnh sửa',
               icon: Pencil,
               size: 18,
@@ -122,14 +130,6 @@ const Table = () => {
               onClick: () => {
                 setDeptToDelete(row);
                 setIsDeleteOpen(true);
-              },
-            },
-            {
-              title: 'Quản lý vị trí',
-              icon: Eye,
-              size: 18,
-              onClick: () => {
-                router.push(`/app/departments/${row.id}/positions`);
               },
             },
           ]}
@@ -161,6 +161,16 @@ const Table = () => {
       <div className="flex gap-2">
         <button
           onClick={() => {
+            router.push(`/app/departments/${row.id}/positions`);
+          }}
+          title="Quản lý vị trí"
+          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+        >
+          <Eye size={18} />
+        </button>
+
+        <button
+          onClick={() => {
               setSelectedDept(row);
               setIsEditOpen(true);
           }}
@@ -178,16 +188,6 @@ const Table = () => {
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
         >
           <Trash2 size={18} />
-        </button>
-
-        <button
-          onClick={() => {
-            router.push(`/app/departments/${row.id}/positions`);
-          }}
-          title="Quản lý vị trí"
-          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-        >
-          <Eye size={18} />
         </button>
       </div>
     </div>
