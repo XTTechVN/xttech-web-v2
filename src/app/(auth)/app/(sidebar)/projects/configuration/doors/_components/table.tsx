@@ -6,10 +6,10 @@ import { TableData, TableAction } from '@/components/table';
 import { Heading, Button } from '@/components';
 import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
-import type { Door } from '@/types';
+import { Door, formatDoorType } from '@/types';
 import { getDoors } from '@/actions';
 import toast from 'react-hot-toast';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import { BASE_MINIO_URL } from '@/config/app';
 
@@ -20,6 +20,7 @@ interface TableProps {
 }
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
@@ -62,14 +63,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       key: 'type',
       label: 'Phân loại',
       minWidth: '150px',
-      cell: (row: Door) => {
-        const typeMap: Record<string, string> = {
-          cd: 'Cửa đi',
-          cs: 'Cửa sổ',
-          ck: 'Cửa kính',
-        };
-        return <span className="text-gray-600 text-sm">{typeMap[row.type || ''] || row.type || '—'}</span>;
-      },
+      cell: (row: Door) => <span className="text-gray-600 text-sm">{formatDoorType(row.type) || '—'}</span>,
     },
     {
       key: 'name',
@@ -87,17 +81,18 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
-      cell: (row: Door) => <TableAction onEdit={() => onEditClick(row)} onDelete={() => onDeleteClick(row)} />,
+      cell: (row: Door) => (
+        <TableAction
+          onView={() => router.push(`/app/projects/configuration/doors/${row.id}`)}
+          onEdit={() => onEditClick(row)}
+          onDelete={() => onDeleteClick(row)}
+        />
+      ),
     },
   ];
 
   // Cấu hình Card hiển thị trên thiết bị di động
   const renderCard = (row: Door, index: number) => {
-    const typeMap: Record<string, string> = {
-      cd: 'Cửa đi',
-      cs: 'Cửa sổ',
-      ck: 'Cửa kính',
-    };
     return (
       <div
         key={row.id || index}
@@ -118,10 +113,14 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
           <div className="flex flex-col">
             <span className="font-semibold text-gray-900">{row.name}</span>
             <span className="text-xs text-gray-400">Code: {row.code || '—'}</span>
-            {row.type && <span className="text-xs text-gray-500 mt-0.5">{typeMap[row.type] || row.type}</span>}
+            {row.type && <span className="text-xs text-gray-500 mt-0.5">{formatDoorType(row.type)}</span>}
           </div>
         </div>
-        <TableAction onEdit={() => onEditClick(row)} onDelete={() => onDeleteClick(row)} />
+        <TableAction
+          onView={() => router.push(`/app/projects/configuration/doors/${row.id}`)}
+          onEdit={() => onEditClick(row)}
+          onDelete={() => onDeleteClick(row)}
+        />
       </div>
     );
   };

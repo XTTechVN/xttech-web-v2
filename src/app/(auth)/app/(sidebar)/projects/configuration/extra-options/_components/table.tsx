@@ -9,7 +9,7 @@ import { useQueryParam } from '@/hooks';
 import { EXTRA_OPTION_UNIT_MAP, type ExtraOption, type ExtraOptionUnit } from '@/types';
 import { getExtraOptions } from '@/actions';
 import toast from 'react-hot-toast';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { formatCurrency } from '@/utils';
 
 interface TableProps {
@@ -19,6 +19,7 @@ interface TableProps {
 }
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
@@ -78,6 +79,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       minWidth: '120px',
       cell: (row: ExtraOption) => (
         <TableAction
+          onView={() => router.push(`/app/projects/configuration/extra-options/${row.id}`)}
           onEdit={() => onEditClick(row)}
           onDelete={() => onDeleteClick(row)}
         />
@@ -103,6 +105,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         </div>
       </div>
       <TableAction
+        onView={() => router.push(`/app/projects/configuration/extra-options/${row.id}`)}
         onEdit={() => onEditClick(row)}
         onDelete={() => onDeleteClick(row)}
       />

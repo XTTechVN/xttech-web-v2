@@ -50,10 +50,9 @@ export function AppBreadcrumb() {
     if (matchedItem) {
       const parentItem = matchedItem as SidebarItemWithRoles;
       if (parentItem.label !== 'Tổng quan' && parentItem.label !== 'Trang chủ') {
-        const isConfigPath = ['/materials', '/doors', '/accessories', '/extra-options', '/formulas'].some((path) => pathname.includes(path));
         items.push({
           label: parentItem.label,
-          href: isConfigPath ? '/app/projects/configuration' : matchedSubItem ? undefined : parentItem.href || '#',
+          href: matchedSubItem ? undefined : parentItem.href || '#',
         });
       }
 
