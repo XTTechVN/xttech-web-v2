@@ -255,18 +255,13 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
 
   const handleConfirm = (data: AccessoryUpdateFormValues) => {
     if (!initialData) return;
-    const payload: AccessoryUpdate = {};
-    if (data.name && data.name.trim() !== '') {
-      payload.name = data.name;
-    }
-    if (data.code && data.code.trim() !== '') {
-      payload.code = data.code;
-    }
+    const payload: AccessoryUpdate = {
+      name: data.name,
+      code: data.code,
+      unit: data.unit,
+    };
     if (data.specification && data.specification.trim() !== '') {
       payload.specification = data.specification;
-    }
-    if (data.unit && data.unit.trim() !== '') {
-      payload.unit = data.unit;
     }
     if (data.price !== undefined) {
       payload.price = data.price;
@@ -312,11 +307,11 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
               error={errors.name ? 'Tên phụ kiện không được để trống' : undefined}
             />
             <Input
-              label="Mã phụ kiện"
+              label="Mã phụ kiện *"
               placeholder="Nhập mã phụ kiện"
               fullWidth
-              {...register('code')}
-              error={errors.code ? 'Mã phụ kiện không hợp lệ' : undefined}
+              {...register('code', { required: true })}
+              error={errors.code ? 'Mã phụ kiện không được để trống' : undefined}
             />
             <Input
               label="Thông số kỹ thuật"
@@ -327,32 +322,32 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
             />
             <div className="grid grid-cols-2 gap-4">
               <Select
-                label="Đơn vị tính"
+                label="Đơn vị tính *"
                 placeholder="Chọn ĐVT"
                 fullWidth
-                {...register('unit')}
+                {...register('unit', { required: true })}
                 options={[
                   { value: 'set', label: 'Bộ' },
                   { value: 'pcs', label: 'Cái' },
                   { value: 'unit', label: 'Chiếc' },
                   { value: 'pair', label: 'Đôi' },
                 ]}
-                error={errors.unit ? 'Đơn vị tính không hợp lệ' : undefined}
+                error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
               />
               <Controller
                 name="price"
                 control={control}
                 rules={{
+                  required: 'Đơn giá không được để trống',
                   validate: (val) => {
-                    if (val === undefined || val === 0) return true;
                     const num = Number(val);
-                    if (isNaN(num) || num < 0) return 'Đơn giá phải lớn hơn hoặc bằng 0';
+                    if (isNaN(num) || num <= 0) return 'Đơn giá phải lớn hơn 0';
                     return true;
                   },
                 }}
                 render={({ field }) => (
                   <CurrencyInput
-                    label="Đơn giá (VNĐ)"
+                    label="Đơn giá (VNĐ) *"
                     placeholder="Nhập đơn giá"
                     fullWidth
                     value={field.value}

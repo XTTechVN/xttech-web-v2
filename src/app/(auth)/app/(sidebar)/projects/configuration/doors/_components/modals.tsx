@@ -226,16 +226,11 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
 
   const handleConfirm = (data: DoorUpdateFormValues) => {
     if (!initialData) return;
-    const payload: DoorUpdate = {};
-    if (data.name && data.name.trim() !== '') {
-      payload.name = data.name;
-    }
-    if (data.type && data.type.trim() !== '') {
-      payload.type = data.type;
-    }
-    if (data.code && data.code.trim() !== '') {
-      payload.code = data.code;
-    }
+    const payload: DoorUpdate = {
+      name: data.name,
+      type: data.type,
+      code: data.code,
+    };
     if (data.specification && data.specification.trim() !== '') {
       payload.specification = data.specification;
     }
@@ -280,23 +275,23 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
               error={errors.name ? 'Tên cửa không được để trống' : undefined}
             />
             <Input
-              label="Mã cửa"
+              label="Mã cửa *"
               placeholder="Nhập mã sản phẩm cửa"
               fullWidth
-              {...register('code')}
-              error={errors.code ? 'Mã cửa không hợp lệ' : undefined}
+              {...register('code', { required: true })}
+              error={errors.code ? 'Mã cửa không được để trống' : undefined}
             />
             <Select
-              label="Phân loại"
+              label="Phân loại *"
               placeholder="Chọn phân loại"
               fullWidth
-              {...register('type')}
+              {...register('type', { required: true })}
               options={[
                 { value: 'cd', label: 'Cửa đi' },
                 { value: 'cs', label: 'Cửa sổ' },
                 { value: 'ck', label: 'Cửa kính' },
               ]}
-              error={errors.type ? 'Phân loại không hợp lệ' : undefined}
+              error={errors.type ? 'Vui lòng chọn phân loại cửa' : undefined}
             />
             <Input
               label="Thông số kỹ thuật"
