@@ -53,3 +53,19 @@ export interface MaterialAssignAccessories {
 export interface MaterialUnassignAccessories {
   accessoryIds: number[];
 }
+
+export interface MaterialAssignExtraOptions {
+  extraOptionIds: number[];
+}
+
+export interface MaterialUnassignExtraOptions {
+  extraOptionIds: number[];
+}
+
+export interface MaterialAssignFormulas {
+  formulaIds: number[];
+}
+
+export interface MaterialUnassignFormulas {
+  formulaIds: number[];
+}
