@@ -128,11 +128,11 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
               error={errors.code ? 'Mã phụ kiện không được để trống' : undefined}
             />
             <Input
-              label="Thông số kỹ thuật *"
+              label="Thông số kỹ thuật"
               placeholder="Nhập thông số phụ kiện"
               fullWidth
-              {...register('specification', { required: true })}
-              error={errors.specification ? 'Thông số kỹ thuật không được để trống' : undefined}
+              {...register('specification')}
+              error={errors.specification ? 'Thông số kỹ thuật không hợp lệ' : undefined}
             />
             <div className="grid grid-cols-2 gap-4">
               <Select

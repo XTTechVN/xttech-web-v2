@@ -51,14 +51,19 @@ export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác
   }, [isOpen]);
 
   const handleConfirm = (data: MaterialCreateFormValues) => {
-    createMutation({
+    const payload: any = {
       name: data.name,
       code: data.code,
-      specification: data.specification,
-      description: data.description,
       price: data.price || 0,
       unit: data.unit,
-    });
+    };
+    if (data.specification && data.specification.trim() !== '') {
+      payload.specification = data.specification;
+    }
+    if (data.description && data.description.trim() !== '') {
+      payload.description = data.description;
+    }
+    createMutation(payload);
   };
 
   return (
@@ -80,11 +85,11 @@ export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác
             error={errors.code ? 'Mã hệ nhôm không được để trống' : undefined}
           />
           <Input
-            label="Thông số kỹ thuật *"
+            label="Thông số kỹ thuật"
             placeholder="Nhập thông số kỹ thuật"
             fullWidth
-            {...register('specification', { required: true })}
-            error={errors.specification ? 'Thông số kỹ thuật không được để trống' : undefined}
+            {...register('specification')}
+            error={errors.specification ? 'Thông số kỹ thuật không hợp lệ' : undefined}
           />
           <Input
             label="Mô tả chi tiết"
@@ -191,7 +196,19 @@ export function MaterialUpdateModal({ isOpen, onClose, title, submitText = 'Xác
 
   const handleConfirm = (data: MaterialUpdateFormValues) => {
     if (!initialData) return;
-    updateMutation({ id: initialData.id, data });
+    const payload: any = {
+      name: data.name,
+      code: data.code,
+      price: data.price !== undefined ? data.price : undefined,
+      unit: data.unit,
+    };
+    if (data.specification && data.specification.trim() !== '') {
+      payload.specification = data.specification;
+    }
+    if (data.description && data.description.trim() !== '') {
+      payload.description = data.description;
+    }
+    updateMutation({ id: initialData.id, data: payload });
   };
 
   return (
@@ -213,11 +230,11 @@ export function MaterialUpdateModal({ isOpen, onClose, title, submitText = 'Xác
             error={errors.code ? 'Mã hệ nhôm không được để trống' : undefined}
           />
           <Input
-            label="Thông số kỹ thuật *"
+            label="Thông số kỹ thuật"
             placeholder="Nhập thông số kỹ thuật"
             fullWidth
-            {...register('specification', { required: true })}
-            error={errors.specification ? 'Thông số kỹ thuật không được để trống' : undefined}
+            {...register('specification')}
+            error={errors.specification ? 'Thông số kỹ thuật không hợp lệ' : undefined}
           />
           <Input
             label="Mô tả chi tiết"

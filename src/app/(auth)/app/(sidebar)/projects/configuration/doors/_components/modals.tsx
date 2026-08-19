@@ -138,11 +138,11 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
               error={errors.type ? 'Vui lòng chọn phân loại cửa' : undefined}
             />
             <Input
-              label="Thông số kỹ thuật *"
+              label="Thông số kỹ thuật"
               placeholder="Nhập thông số kỹ thuật"
               fullWidth
-              {...register('specification', { required: true })}
-              error={errors.specification ? 'Thông số kỹ thuật không được để trống' : undefined}
+              {...register('specification')}
+              error={errors.specification ? 'Thông số kỹ thuật không hợp lệ' : undefined}
             />
           </div>
         </div>
