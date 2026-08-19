@@ -3,7 +3,7 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
-import { Pencil, Trash2, UserCog } from 'lucide-react';
+import { Pencil, Trash2, UserCog, Briefcase } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData, TableAction } from '@/components/table';
@@ -28,6 +28,7 @@ import { getEmployees, deleteEmployee } from '@/actions/employee';
 // components dùng riêng cho trang nhân viên
 import EmployeeFormModal from './form-modal';
 import RoleModal from './role-modal';
+import PositionModal from './position-modal';
 
 import { BASE_MINIO_URL } from '@/config';
 
@@ -52,6 +53,10 @@ const Table = () => {
   // Trạng thái cho modal gán vai trò nhân sự
   const [isRoleModalOpen, setIsRoleModalOpen] = React.useState(false);
   const [empToAssignRole, setEmpToAssignRole] = React.useState<Employee | null>(null);
+
+  // Trạng thái cho modal gán chức vụ / vị trí nhân sự
+  const [isPositionModalOpen, setIsPositionModalOpen] = React.useState(false);
+  const [empToAssignPos, setEmpToAssignPos] = React.useState<Employee | null>(null);
 
   // Trạng thái cho modal xóa nhân sự
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
@@ -110,7 +115,7 @@ const Table = () => {
     {
       key: 'roles',
       label: 'Vai trò',
-      minWidth: '160px',
+      minWidth: '150px',
       cell: (row: Employee) => (
         <div className="flex flex-wrap gap-1">
           {row.roles && row.roles.length > 0 ? (
@@ -128,9 +133,27 @@ const Table = () => {
       ),
     },
     {
+      key: 'positions',
+      label: 'Chức vụ & Phòng ban',
+      minWidth: '180px',
+      cell: (row: Employee) => (
+        <div className="flex flex-wrap gap-1">
+          {row.positions && row.positions.length > 0 ? (
+            row.positions.map((pos: any) => (
+              <Badge key={pos.id} variant="info" size="sm">
+                {pos.name}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-gray-400 text-xs italic">Chưa gán</span>
+          )}
+        </div>
+      ),
+    },
+    {
       key: 'createdAt',
       label: 'Ngày tạo',
-      minWidth: '160px',
+      minWidth: '130px',
       cell: (row: Employee) => (
         <span className="text-gray-600 text-sm">
           {row.createdAt
@@ -167,6 +190,16 @@ const Table = () => {
               onClick: () => {
                 setEmpToAssignRole(row);
                 setIsRoleModalOpen(true);
+              },
+            },
+            {
+              title: 'Gán chức vụ / vị trí',
+              icon: Briefcase,
+              size: 18,
+              className: 'hover:text-blue-600 hover:bg-blue-50',
+              onClick: () => {
+                setEmpToAssignPos(row);
+                setIsPositionModalOpen(true);
               },
             },
             {
@@ -273,6 +306,16 @@ const Table = () => {
           setEmpToAssignRole(null);
         }}
         employee={empToAssignRole}
+      />
+
+      {/* Modal Gán chức vụ / vị trí nhân sự */}
+      <PositionModal
+        isOpen={isPositionModalOpen}
+        onClose={() => {
+          setIsPositionModalOpen(false);
+          setEmpToAssignPos(null);
+        }}
+        employee={empToAssignPos}
       />
 
       {/* Modal Sửa nhân sự */}
