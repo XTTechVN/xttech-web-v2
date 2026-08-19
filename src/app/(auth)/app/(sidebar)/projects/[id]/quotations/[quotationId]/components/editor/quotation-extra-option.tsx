@@ -3,7 +3,7 @@ import { Trash2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { EDITOR_STYLES } from './config';
-import { SearchSelect } from '../modal';
+import { SearchSelect } from '../modal/search-select';
 import { ExtraOption, EXTRA_OPTION_UNIT_MAP } from '@/types';
 
 interface QuotationExtraOptionProps {
@@ -43,7 +43,7 @@ export const QuotationExtraOption = ({
           <ChevronDown size={14} className="text-slate-400 shrink-0" />
         </div>
 
-        <SearchSelect
+        <SearchSelect<ExtraOption>
           isOpen={isSelectOpen}
           onClose={() => setIsSelectOpen(false)}
           title="Chọn tùy chọn phát sinh"
@@ -54,11 +54,11 @@ export const QuotationExtraOption = ({
           renderItem={(item) => {
             const unitText = item.unit ? (EXTRA_OPTION_UNIT_MAP[item.unit] || item.unit) : '';
             return (
-              <div className="flex items-center justify-between w-full">
-                <div className="whitespace-nowrap pr-[100px] font-medium flex-1">
+              <div className="relative flex items-center justify-between w-full min-w-0 pr-8">
+                <div className="truncate pr-24 font-medium flex-1">
                   {item.name}
                 </div>
-                <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 sticky right-8 bg-inherit pl-2.5 z-10 select-none">
+                <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 absolute right-0 top-1/2 -translate-y-1/2 bg-inherit pl-2.5 z-10 select-none">
                   {item.price.toLocaleString('vi-VN')}đ{unitText ? `/${unitText}` : ''}
                 </span>
               </div>
