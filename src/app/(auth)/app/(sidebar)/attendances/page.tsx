@@ -812,23 +812,23 @@ export default function AttendancesPage() {
             Quản lý chấm công
           </Heading>
 
-          <div className="flex items-center justify-end gap-2 flex-wrap">
+          <div className="flex items-center sm:justify-end gap-2 overflow-x-auto scrollbar-none max-w-full w-full sm:w-auto shrink-0 pb-1 sm:pb-0 flex-nowrap sm:flex-wrap">
             <Button
               variant="primary"
               size="sm"
               onClick={() => setShowAddModal(true)}
               leftIcon={<Plus size={16} />}
-              className="px-3 gap-1.5"
+              className="px-3 gap-1.5 shrink-0"
             >
               Thêm chấm công
             </Button>
 
-            <Link href="/app/attendances/adjustments">
+            <Link href="/app/attendances/adjustments" className="shrink-0">
               <Button
                 variant="outline"
                 size="sm"
                 leftIcon={<FileEdit size={16} className="text-sky-600" />}
-                className="px-3 gap-1.5 text-slate-700 hover:bg-slate-50 border-slate-200"
+                className="px-3 gap-1.5 text-slate-700 hover:bg-slate-50 border-slate-200 w-full"
               >
                 Danh sách khiếu nại
               </Button>

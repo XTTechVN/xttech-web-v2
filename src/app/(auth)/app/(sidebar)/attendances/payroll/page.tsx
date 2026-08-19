@@ -355,7 +355,7 @@ export default function PayrollDataPage() {
   const renderAttendanceCard = (row: Attendance, index: number) => (
     <div
       key={row.id ?? index}
-      className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs hover:shadow-md transition space-y-3"
+      className="rounded-2xl border border-primary/10 bg-white p-4 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 space-y-3"
     >
       <div className="flex items-center justify-between pb-2 border-b border-slate-100">
         <div>
@@ -460,11 +460,11 @@ export default function PayrollDataPage() {
       {/* Main Table Section */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center w-full gap-4">
-          <div className="flex items-center justify-end gap-2 flex-wrap">
+          <div className="flex items-center sm:justify-end gap-2 overflow-x-auto scrollbar-none max-w-full w-full sm:w-auto shrink-0 pb-1 sm:pb-0 flex-nowrap sm:flex-wrap">
             <Button
               variant="primary"
               size="sm"
-              className="gap-2 px-3"
+              className="gap-2 px-3 shrink-0"
               leftIcon={hasCheckedInToday ? <LogOut size={16} /> : <LogIn size={16} />}
               onClick={() => setShowTimekeepingModal(true)}
             >
@@ -473,7 +473,7 @@ export default function PayrollDataPage() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 px-3 hover:bg-[#ececf27d]"
+              className="gap-2 px-3 hover:bg-[#ececf27d] shrink-0"
               leftIcon={<Clock size={16} className="text-[#314158]" />}
               onClick={() => {
                 toast.loading('Tính năng đang được phát triển', { id: 'loading' });
@@ -484,11 +484,11 @@ export default function PayrollDataPage() {
             >
               Đăng ký tăng ca
             </Button>
-            <Link href="/app/attendances/adjustments">
+            <Link href="/app/attendances/adjustments" className="shrink-0">
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 px-3 hover:bg-[#ececf27d]"
+                className="gap-2 px-3 hover:bg-[#ececf27d] w-full"
                 leftIcon={<FileEdit size={16} className="text-[#314158]" />}
               >
                 Yêu cầu điều chỉnh

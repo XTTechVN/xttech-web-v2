@@ -258,7 +258,7 @@ export function ReportTable() {
   );
 
   // Render Card cho thiết bị di động
-  const renderCard = (row: AttendanceReportItem) => {
+  const renderCard = (row: AttendanceReportItem, index: number) => {
     const policyInfo = POLICY_BADGES[row.attendancePolicy || 'administrative'] || {
       label: row.attendancePolicy || 'Hành chính',
       variant: 'default',
@@ -266,7 +266,7 @@ export function ReportTable() {
     const isPartTime = row.attendancePolicy === 'part_time';
 
     return (
-      <div className="p-4 rounded-xl border border-gray-200 bg-white flex flex-col gap-3 shadow-xs">
+      <div key={row.userId || index} className="p-4 rounded-xl border border-gray-200 bg-white flex flex-col gap-3 shadow-xs">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <Avatar
@@ -336,20 +336,20 @@ export function ReportTable() {
           </div>
         </div>
 
-        {((row.lateDays && row.lateDays > 0) || (row.earlyLeaveDays && row.earlyLeaveDays > 0)) && (
+        {((row.lateDays ?? 0) > 0 || (row.earlyLeaveDays ?? 0) > 0) ? (
           <div className="flex items-center gap-2 text-xs">
-            {row.lateDays && row.lateDays > 0 ? (
+            {(row.lateDays ?? 0) > 0 ? (
               <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-semibold">
-                Muộn: {row.lateDays} ngày ({row.lateMinutes}p)
+                Muộn: {row.lateDays} ngày ({row.lateMinutes || 0}p)
               </span>
             ) : null}
-            {row.earlyLeaveDays && row.earlyLeaveDays > 0 ? (
+            {(row.earlyLeaveDays ?? 0) > 0 ? (
               <span className="text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-200 font-semibold">
-                Sớm: {row.earlyLeaveDays} ngày ({row.earlyLeaveMinutes}p)
+                Sớm: {row.earlyLeaveDays} ngày ({row.earlyLeaveMinutes || 0}p)
               </span>
             ) : null}
           </div>
-        )}
+        ) : null}
       </div>
     );
   };
