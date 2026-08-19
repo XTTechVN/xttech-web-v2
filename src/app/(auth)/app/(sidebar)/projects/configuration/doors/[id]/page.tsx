@@ -54,7 +54,7 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
     : '—';
 
   return (
-    <div className="w-full flex flex-col gap-5 text-slate-800 pb-12">
+    <div className="w-full flex flex-col gap-6 text-slate-800 pb-12">
       {/* Title & Actions */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4 mt-2">
@@ -72,35 +72,14 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
         <p className="text-xs text-slate-400">Cập nhật ngày {formattedUpdatedAt}</p>
       </div>
 
-      <hr className="border-slate-200" />
+      <hr className="border-slate-100" />
 
-      {/* Main Details */}
-      <div className="flex flex-col md:flex-row gap-8 items-start">
-        {/* Left Side text */}
-        <div className="flex-1 flex flex-col gap-5">
-          <div className="flex flex-wrap gap-x-12 gap-y-4 text-sm">
-            <div>
-              <span className="text-xs text-slate-400 block select-none">Mã sản phẩm</span>
-              <span className="font-semibold text-slate-800">{door.code || '—'}</span>
-            </div>
-            <div>
-              <span className="text-xs text-slate-400 block select-none">Phân loại</span>
-              <span className="font-semibold text-slate-800">{formatDoorType(door.type) || '—'}</span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5 mt-2">
-            <h2 className="text-base font-semibold text-slate-800">1. Thông số kỹ thuật</h2>
-            <p className="text-sm text-slate-650 leading-relaxed whitespace-pre-line">
-              {door.specification || '—'}
-            </p>
-          </div>
-        </div>
-
-        {/* Right Side Image */}
-        <div className="w-full md:w-64 flex flex-col gap-2 shrink-0">
-          <span className="text-xs text-slate-400 block select-none">Ảnh minh họa</span>
-          <div className="w-full h-64 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center">
+      {/* Main Details (Ảnh bên trái, Text bên phải) */}
+      <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row gap-8 items-start">
+        {/* Left Side Image */}
+        <div className="w-full md:w-72 flex flex-col gap-2 shrink-0">
+          <span className="text-xs text-primary font-semibold select-none">Hình ảnh minh họa</span>
+          <div className="w-full aspect-square md:h-64 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center">
             {door.imagePath ? (
               <img
                 src={door.imagePath.startsWith('http') ? door.imagePath : `${BASE_MINIO_URL}${door.imagePath}`}
@@ -108,11 +87,32 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="flex flex-col items-center gap-2 text-slate-450">
-                <Image size={24} />
-                <span className="text-[10px]">Chưa có ảnh</span>
+              <div className="flex flex-col items-center gap-2 text-slate-400">
+                <Image size={32} strokeWidth={1.5} />
+                <span className="text-[10px] font-medium">Chưa có ảnh</span>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Right Side Text */}
+        <div className="flex-1 flex flex-col gap-2 w-full text-sm">
+          <span className="text-xs text-primary font-semibold select-none">Thông tin sản phẩm</span>
+          <div className="flex flex-col gap-3.5 text-slate-650 mt-0.5">
+            <div>
+              <span className="font-semibold text-slate-500">Mã cửa: </span>
+              <span className="text-slate-800 font-medium">{door.code || '—'}</span>
+            </div>
+            <div>
+              <span className="font-semibold text-slate-500">Phân loại: </span>
+              <span className="text-slate-800 font-medium">{formatDoorType(door.type) || '—'}</span>
+            </div>
+            <div className="flex flex-col gap-1 mt-1 border-t border-slate-100 pt-3">
+              <span className="font-semibold text-slate-500">Thông số kỹ thuật:</span>
+              <p className="text-slate-800 leading-relaxed whitespace-pre-line">
+                {door.specification || '—'}
+              </p>
+            </div>
           </div>
         </div>
       </div>
