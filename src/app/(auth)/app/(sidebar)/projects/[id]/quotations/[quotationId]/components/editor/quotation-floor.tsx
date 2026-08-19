@@ -56,7 +56,7 @@ export const QuotationFloor = ({
             placeholder="Tên tầng..."
             value={floor.name}
             onChange={(e) => store.updateFloorName(fIndex, e.target.value)}
-            className="h-8 text-sm px-0.5 text-black bg-transparent border-none focus:ring-0 focus:outline-none w-full font-bold text-gray-800"
+            className="h-8 text-base md:text-sm px-0.5 text-black bg-transparent border-none focus:ring-0 focus:outline-none w-full font-bold text-gray-800"
           />
         </div>
         <div className="flex items-center gap-3.5 ml-3">

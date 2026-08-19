@@ -6,10 +6,10 @@ export const EDITOR_STYLES = {
   sectionHeader: 'text-[10px] font-bold text-primary uppercase tracking-wider select-none',
   
   // Ô nhập liệu (Input): Chỉ có đường gạch chân, không nền, không viền 3 bên
-  input: 'h-8 text-xs px-0.5 text-black bg-transparent border-t-0 border-l-0 border-r-0 border-b border-gray-200 rounded-none focus:border-black focus:ring-0 transition-colors duration-150',
+  input: 'h-8 text-base md:text-sm px-0.5 text-black bg-transparent border-t-0 border-l-0 border-r-0 border-b border-gray-200 rounded-none focus:border-black focus:ring-0 transition-colors duration-150',
 
   // Dropdown (Select): Cùng kiểu dáng với input
-  select: 'h-8 text-xs px-0.5 text-black bg-transparent border-t-0 border-l-0 border-r-0 border-b border-gray-200 rounded-none focus:border-black focus:ring-0 transition-colors duration-150',
+  select: 'h-8 text-base md:text-sm px-0.5 text-black bg-transparent border-t-0 border-l-0 border-r-0 border-b border-gray-200 rounded-none focus:border-black focus:ring-0 transition-colors duration-150',
   
   // Nút Thêm (Add): Chỉ có icon Plus màu primary, không text, không padding
   addButton: 'text-[#045863] hover:opacity-80 p-0 bg-transparent hover:bg-transparent h-auto w-auto min-w-0 inline-flex items-center justify-center border-none transition-all duration-150',

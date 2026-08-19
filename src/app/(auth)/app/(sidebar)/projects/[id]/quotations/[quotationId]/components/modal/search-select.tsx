@@ -209,7 +209,7 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
             placeholder="Tìm kiếm..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 pr-6 py-1 text-[11px] bg-slate-50 border border-slate-200 rounded focus:outline-none focus:border-primary focus:bg-white transition-all text-slate-800 font-normal"
+            className="w-full pl-8 pr-6 py-1 text-base md:text-sm bg-slate-50 border border-slate-200 rounded focus:outline-none focus:border-primary focus:bg-white transition-all text-slate-800 font-normal"
             autoFocus
           />
           {searchTerm && (
