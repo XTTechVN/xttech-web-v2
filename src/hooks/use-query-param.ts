@@ -14,14 +14,15 @@ export function useQueryParam(key: string, defaultValue?: string) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Lấy giá trị hiện tại từ URL, nếu không có thì dùng defaultValue
-  const value = searchParams.get(key) || defaultValue;
+  // Lấy giá trị hiện tại từ URL, xử lý dấu cộng '+' thành khoảng trắng nếu có
+  const rawValue = searchParams.get(key);
+  const value = rawValue !== null ? rawValue.replace(/\+/g, ' ') : defaultValue;
 
   // Hàm cập nhật giá trị lên URL
   const setValue = (newValue: string | undefined | null) => {
     // Chuẩn hóa giá trị: undefined, null, '' đều coi là "không có giá trị"
-    const normalizedNew = newValue || undefined;
-    const normalizedCurrent = searchParams.get(key) || undefined;
+    const normalizedNew = newValue ? newValue.trim() : undefined;
+    const normalizedCurrent = searchParams.get(key) ? searchParams.get(key)!.replace(/\+/g, ' ') : undefined;
 
     // Nếu giá trị không thay đổi, không cần cập nhật URL (tránh vòng lặp)
     if (normalizedNew === normalizedCurrent) return;
