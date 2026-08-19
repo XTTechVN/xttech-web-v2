@@ -153,7 +153,7 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
                         : 'bg-white text-slate-650 hover:bg-slate-50 hover:text-slate-900 font-normal border-slate-100 shadow-xs'
                     }`}
                   >
-                    <div className="flex-1 min-w-0 pr-6">
+                    <div className="flex-1 min-w-0 pr-1">
                       <div className="flex flex-col gap-1.5 w-full text-left">
                         <div className="font-semibold text-slate-800 text-sm leading-snug whitespace-normal break-words">
                           {item.name || '—'}
@@ -172,7 +172,6 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
                         </div>
                       </div>
                     </div>
-                    {isSelected && <Check size={14} className="text-primary shrink-0 absolute right-3 top-1/2 -translate-y-1/2" />}
                   </div>
                 );
               })
@@ -225,49 +224,46 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
       </div>
 
       {/* Content list */}
-      <div className="flex-1 overflow-auto p-1 min-h-0 text-[11px] scrollbar-none">
+      <div className="flex-1 overflow-y-auto p-1 space-y-0.5 min-h-0 text-[11px]">
         {filteredItems.length > 0 ? (
-          <div className="min-w-full w-max flex flex-col space-y-0.5 relative">
-            {filteredItems.map((item) => {
-              const isSelected = item.id === selectedValue;
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => {
-                    onSelect(item);
-                    onClose();
-                  }}
-                  className={`w-full text-left px-2.5 py-1.5 rounded flex items-center justify-between gap-3 transition-all cursor-pointer relative min-w-0 ${
-                    isSelected
-                      ? 'bg-primary/5 text-primary font-medium'
-                      : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-normal'
-                  }`}
-                >
-                  <div className="flex-1 min-w-0 pr-1">
-                    {renderItem ? (
-                      renderItem(item)
-                    ) : (
-                      <div className="flex items-center justify-between gap-2 w-full">
-                        <div className="whitespace-nowrap pr-[90px] font-medium flex-1">
-                          {item.name || '—'}
-                        </div>
-                        {item.code && (
-                          <span className={`text-[9px] uppercase font-medium px-1.5 py-0.5 rounded shrink-0 sticky right-8 bg-inherit pl-2.5 z-10 ${
-                            isSelected 
-                              ? 'text-primary border border-primary/10' 
-                              : 'text-slate-500 border border-slate-200/50'
-                          }`}>
-                            {item.code}
-                          </span>
-                        )}
+          filteredItems.map((item) => {
+            const isSelected = item.id === selectedValue;
+            return (
+              <div
+                key={item.id}
+                onClick={() => {
+                  onSelect(item);
+                  onClose();
+                }}
+                className={`w-full text-left px-2.5 py-1.5 rounded flex items-center justify-between gap-3 transition-all cursor-pointer relative min-w-0 ${
+                  isSelected
+                    ? 'bg-primary/5 text-primary font-medium'
+                    : 'bg-white text-slate-650 hover:bg-slate-50 hover:text-slate-900 font-normal'
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  {renderItem ? (
+                    renderItem(item)
+                  ) : (
+                    <div className="relative flex items-center justify-between w-full min-w-0 pr-8">
+                      <div className="truncate pr-12 font-medium flex-1">
+                        {item.name || '—'}
                       </div>
-                    )}
-                  </div>
-                  {isSelected && <Check size={12} className="text-primary shrink-0 sticky right-2 z-20 bg-inherit pl-1.5" />}
+                      {item.code && (
+                        <span className={`text-[9px] uppercase font-medium px-1.5 py-0.5 rounded shrink-0 absolute right-0 top-1/2 -translate-y-1/2 bg-inherit pl-2.5 z-10 ${
+                          isSelected 
+                            ? 'text-primary border border-primary/10' 
+                            : 'text-slate-500 border border-slate-200/50'
+                        }`}>
+                          {item.code}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })
         ) : (
           <div className="text-center py-6 text-slate-400 text-[11px] italic">
             Không tìm thấy kết quả phù hợp

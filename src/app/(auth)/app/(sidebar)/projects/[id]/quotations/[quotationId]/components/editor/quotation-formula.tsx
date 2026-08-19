@@ -3,7 +3,7 @@ import { Trash2, ChevronDown } from 'lucide-react';
 import { Button, Input } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { EDITOR_STYLES } from './config';
-import { SearchSelect } from '../modal';
+import { SearchSelect } from '../modal/search-select';
 import type { Formula, DraftFormula } from '@/types';
 
 interface QuotationFormulaProps {

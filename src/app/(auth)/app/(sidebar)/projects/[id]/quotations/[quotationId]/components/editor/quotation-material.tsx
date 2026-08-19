@@ -4,7 +4,7 @@ import { Button } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { QuotationDoor } from './quotation-door';
 import { EDITOR_STYLES } from './config';
-import { SearchSelect } from '../modal';
+import { SearchSelect } from '../modal/search-select';
 import type { Accessory, ExtraOption, Material, Door, Formula } from '@/types';
 
 interface QuotationMaterialProps {
@@ -84,7 +84,7 @@ export const QuotationMaterial = ({
               <ChevronDown size={14} className="text-slate-400 shrink-0" />
             </div>
 
-            <SearchSelect
+            <SearchSelect<Material>
               isOpen={isSelectOpen}
               onClose={() => setIsSelectOpen(false)}
               title="Chọn hệ nhôm"
@@ -93,11 +93,11 @@ export const QuotationMaterial = ({
               onSelect={(item) => handleUpdateMaterial(item.id.toString())}
               searchKeys={['name', 'code']}
               renderItem={(item) => (
-                <div className="flex items-center justify-between w-full">
-                  <div className="whitespace-nowrap pr-[110px] font-medium flex-1">
+                <div className="relative flex items-center justify-between w-full min-w-0 pr-8">
+                  <div className="truncate pr-24 font-medium flex-1">
                     {item.name}
                   </div>
-                  <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 sticky right-8 bg-inherit pl-2.5 z-10 select-none">
+                  <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 absolute right-0 top-1/2 -translate-y-1/2 bg-inherit pl-2.5 z-10 select-none">
                     {item.price.toLocaleString('vi-VN')}đ/m²
                   </span>
                 </div>

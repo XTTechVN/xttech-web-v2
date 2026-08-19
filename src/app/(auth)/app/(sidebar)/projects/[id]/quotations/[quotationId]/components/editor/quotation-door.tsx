@@ -6,7 +6,7 @@ import { EDITOR_STYLES } from './config';
 import { QuotationAccessory } from './quotation-accessory';
 import { QuotationExtraOption } from './quotation-extra-option';
 import { QuotationFormula } from './quotation-formula';
-import { SearchSelect } from '../modal';
+import { SearchSelect } from '../modal/search-select';
 import type { Accessory, ExtraOption, Door, Formula } from '@/types';
 
 interface QuotationDoorProps {
