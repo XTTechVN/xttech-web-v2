@@ -22,12 +22,7 @@ interface MaterialCreateModalProps {
 
 type MaterialCreateFormValues = Omit<MaterialCreate, 'imagePath'>;
 
-export function MaterialCreateModal({
-  isOpen,
-  onClose,
-  title,
-  submitText = 'Xác nhận tạo',
-}: MaterialCreateModalProps) {
+export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác nhận tạo' }: MaterialCreateModalProps) {
   const {
     register,
     handleSubmit,
@@ -106,6 +101,7 @@ export function MaterialCreateModal({
             options={[
               { value: 'set', label: 'Bộ' },
               { value: 'area', label: 'Diện tích (m²)' },
+              // { value: 'm2', label: 'm²' },
             ]}
             error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
           />
@@ -136,14 +132,7 @@ export function MaterialCreateModal({
           <Button variant="outline" size="sm" onClick={onClose}>
             Hủy
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<CheckCircle2 size={16} />}
-            type="submit"
-            disabled={isCreating}
-            loading={isCreating}
-          >
+          <Button variant="primary" size="sm" leftIcon={<CheckCircle2 size={16} />} type="submit" disabled={isCreating} loading={isCreating}>
             {submitText}
           </Button>
         </div>
@@ -165,13 +154,7 @@ interface MaterialUpdateModalProps {
 
 type MaterialUpdateFormValues = Omit<MaterialUpdate, 'imagePath'>;
 
-export function MaterialUpdateModal({
-  isOpen,
-  onClose,
-  title,
-  submitText = 'Xác nhận lưu',
-  initialData,
-}: MaterialUpdateModalProps) {
+export function MaterialUpdateModal({ isOpen, onClose, title, submitText = 'Xác nhận lưu', initialData }: MaterialUpdateModalProps) {
   const {
     register,
     handleSubmit,
@@ -251,6 +234,7 @@ export function MaterialUpdateModal({
             options={[
               { value: 'set', label: 'Bộ' },
               { value: 'area', label: 'Diện tích (m²)' },
+              // { value: 'm2', label: 'm²' },
             ]}
             error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
           />
@@ -308,13 +292,7 @@ interface MaterialDeleteModalProps {
   isPending?: boolean;
 }
 
-export function MaterialDeleteModal({
-  isOpen,
-  onClose,
-  materialName,
-  onConfirm,
-  isPending = false,
-}: MaterialDeleteModalProps) {
+export function MaterialDeleteModal({ isOpen, onClose, materialName, onConfirm, isPending = false }: MaterialDeleteModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Xác nhận xóa hệ nhôm" className="m-2 max-w-md w-full">
       <div className="flex gap-4 items-center py-2">

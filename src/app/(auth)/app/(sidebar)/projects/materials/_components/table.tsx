@@ -6,10 +6,10 @@ import { TableData, TableAction } from '@/components/table';
 import { Heading, Button } from '@/components';
 import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
-import type { Material } from '@/types';
+import { Material, formatMaterialUnit } from '@/types';
 import { getMaterials } from '@/actions';
 import toast from 'react-hot-toast';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import { BASE_MINIO_URL } from '@/config/app';
 import { formatCurrency } from '@/utils';
@@ -21,6 +21,7 @@ interface TableProps {
 }
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
@@ -65,11 +66,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       label: 'ĐVT',
       minWidth: '100px',
       cell: (row: Material) => {
-        const unitMap: Record<string, string> = {
-          set: 'Bộ',
-          area: 'Diện tích (m²)',
-        };
-        return <span className="text-gray-600 text-sm">{unitMap[row.unit || ''] || row.unit || '—'}</span>;
+        return <span className="text-gray-600 text-sm">{formatMaterialUnit(row.unit) || '—'}</span>;
       },
     },
     {
@@ -88,6 +85,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       minWidth: '120px',
       cell: (row: Material) => (
         <TableAction
+          onView={() => router.push(`/app/projects/materials/${row.id}`)}
           onEdit={() => onEditClick(row)}
           onDelete={() => onDeleteClick(row)}
         />
@@ -96,10 +94,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   ];
 
   const renderCard = (row: Material, index: number) => {
-    const unitMap: Record<string, string> = {
-      set: 'Bộ',
-      area: 'Diện tích (m²)',
-    };
+
     return (
       <div
         key={row.id || index}
@@ -114,12 +109,13 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             <span className="text-xs text-gray-400">Đơn giá: {formatCurrency(row.price)}</span>
             {row.unit && (
               <span className="text-xs text-gray-500 mt-0.5">
-                ĐVT: {unitMap[row.unit] || row.unit}
+                ĐVT: {formatMaterialUnit(row.unit)}
               </span>
             )}
           </div>
         </div>
         <TableAction
+          onView={() => router.push(`/app/projects/materials/${row.id}`)}
           onEdit={() => onEditClick(row)}
           onDelete={() => onDeleteClick(row)}
         />
