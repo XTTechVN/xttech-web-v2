@@ -129,7 +129,7 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
       </div>
 
       {/* Cột phải: Live Preview */}
-      <div className="relative">
+      <div className="relative min-w-0">
         {previewData ? (
           <>
             <QuotationPreview quotation={previewData} materialsList={materials || []} doorsList={doors || []} extraOptionsList={extraOptionsList} />

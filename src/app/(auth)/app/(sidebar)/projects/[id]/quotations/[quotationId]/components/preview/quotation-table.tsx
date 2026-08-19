@@ -39,7 +39,7 @@ const toRoman = (num: number): string => {
 export const QuotationTable = ({ floors, materialsList, doorsList }: QuotationTableProps) => {
   return (
     <div className="overflow-x-auto">
-      <table className={`w-full border-collapse border border-gray-400 ${PREVIEW_TABLE_FONT_SIZE} font-normal not-italic`}>
+      <table className={`w-full min-w-[800px] border-collapse border border-gray-400 ${PREVIEW_TABLE_FONT_SIZE} font-normal not-italic`}>
         <thead>
           <tr className="bg-primary text-white">
             <th rowSpan={2} className="border border-gray-400 py-1.5 px-1 text-center w-8">
