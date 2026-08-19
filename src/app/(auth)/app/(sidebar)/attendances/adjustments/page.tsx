@@ -238,10 +238,10 @@ export default function AdjustmentsSidebarPage() {
     return {
       items,
       meta: {
-        total: response?.pagination?.total ?? items.length,
-        offset: response?.pagination?.offset ?? offset,
-        limit: response?.pagination?.limit ?? limit,
-        next: response?.pagination?.next ?? false,
+        total: response?.meta?.total ?? items.length,
+        offset: response?.meta?.offset ?? offset,
+        limit: response?.meta?.limit ?? limit,
+        next: response?.meta?.next ?? false,
       },
     };
   };

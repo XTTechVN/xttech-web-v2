@@ -133,7 +133,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Ca làm việc',
         icon: React.createElement(Clock, { size: 18 }),
         href: '/app/shifts',
-        roles: ['admin', 'hr', 'technician'],
+        roles: ['admin', 'hr'],
       },
       {
         id: 'leave-request',
