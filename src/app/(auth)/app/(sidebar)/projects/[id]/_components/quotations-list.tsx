@@ -47,9 +47,9 @@ export function QuotationsList({ projectId, quotations, isLoadingQuotations, onA
             {quotations.map((quotation, index) => (
               <div 
                 key={quotation.id} 
-                className={`py-4 flex items-center justify-between gap-4 ${index === 0 ? 'pt-0' : ''} ${index === quotations.length - 1 ? 'pb-0' : ''}`}
+                className={`py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${index === 0 ? 'pt-0' : ''} ${index === quotations.length - 1 ? 'pb-0' : ''}`}
               >
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 flex-1 w-full">
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mã báo giá</span>
                     <span className="text-sm font-semibold text-slate-800 mt-0.5 block">{quotation.code || '—'}</span>
@@ -58,7 +58,7 @@ export function QuotationsList({ projectId, quotations, isLoadingQuotations, onA
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tên báo giá</span>
                     <Link 
                       href={`/app/projects/${projectId}/quotations/${quotation.id}`}
-                      className="text-sm font-bold text-slate-800 hover:text-primary transition-colors mt-0.5 block truncate max-w-[180px]"
+                      className="text-sm font-bold text-slate-800 hover:text-primary transition-colors mt-0.5 block truncate max-w-[140px] sm:max-w-[180px]"
                     >
                       {quotation.title}
                     </Link>
@@ -73,7 +73,7 @@ export function QuotationsList({ projectId, quotations, isLoadingQuotations, onA
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 w-full sm:w-auto pt-3.5 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                     quotation.status === 'Chờ duyệt' || quotation.status?.toLowerCase() === 'pending'
                       ? 'bg-orange-50 text-orange-600 border-orange-100'
@@ -84,30 +84,32 @@ export function QuotationsList({ projectId, quotations, isLoadingQuotations, onA
                     {quotation.status === 'pending' || quotation.status === 'Chờ duyệt' ? 'Chờ duyệt' : quotation.status === 'approved' || quotation.status === 'Đã duyệt' ? 'Đã duyệt' : quotation.status}
                   </span>
 
-                  {onStatusChange && (
-                    <button
-                      onClick={() => handleStatusChange(quotation.id, (quotation.status === 'approved' || quotation.status === 'Đã duyệt') ? 'pending' : 'approved')}
-                      disabled={updatingId !== null}
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-md border transition-all cursor-pointer flex items-center justify-center gap-1 min-w-[75px] ${
-                        (quotation.status === 'approved' || quotation.status === 'Đã duyệt')
-                          ? 'text-red-650 hover:text-red-700 bg-red-50 hover:bg-red-100 border-red-100 hover:border-red-200'
-                          : 'text-primary hover:text-primary/90 bg-primary/5 hover:bg-primary/10 border-primary/20 hover:border-primary/30'
-                      }`}
+                  <div className="flex items-center gap-2">
+                    {onStatusChange && (
+                      <button
+                        onClick={() => handleStatusChange(quotation.id, (quotation.status === 'approved' || quotation.status === 'Đã duyệt') ? 'pending' : 'approved')}
+                        disabled={updatingId !== null}
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-md border transition-all cursor-pointer flex items-center justify-center gap-1 min-w-[75px] ${
+                          (quotation.status === 'approved' || quotation.status === 'Đã duyệt')
+                            ? 'text-red-650 hover:text-red-700 bg-red-50 hover:bg-red-100 border-red-100 hover:border-red-200'
+                            : 'text-primary hover:text-primary/90 bg-primary/5 hover:bg-primary/10 border-primary/20 hover:border-primary/30'
+                        }`}
+                      >
+                        {updatingId === quotation.id ? (
+                          <Loader2 size={12} className="animate-spin text-current" />
+                        ) : (
+                          (quotation.status === 'approved' || quotation.status === 'Đã duyệt') ? 'Hủy duyệt' : 'Duyệt'
+                        )}
+                      </button>
+                    )}
+                    
+                    <Link 
+                      href={`/app/projects/${projectId}/quotations/${quotation.id}`}
+                      className="p-1.5 rounded-md text-slate-400 hover:text-primary hover:bg-slate-50 transition-all border border-slate-150 sm:border-0"
                     >
-                      {updatingId === quotation.id ? (
-                        <Loader2 size={12} className="animate-spin text-current" />
-                      ) : (
-                        (quotation.status === 'approved' || quotation.status === 'Đã duyệt') ? 'Hủy duyệt' : 'Duyệt'
-                      )}
-                    </button>
-                  )}
-                  
-                  <Link 
-                    href={`/app/projects/${projectId}/quotations/${quotation.id}`}
-                    className="p-1 rounded-md text-slate-400 hover:text-primary hover:bg-slate-50 transition-all"
-                  >
-                    <ExternalLink size={15} />
-                  </Link>
+                      <ExternalLink size={15} />
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

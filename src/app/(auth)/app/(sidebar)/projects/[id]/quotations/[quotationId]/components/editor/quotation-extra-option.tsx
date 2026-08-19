@@ -54,11 +54,11 @@ export const QuotationExtraOption = ({
           renderItem={(item) => {
             const unitText = item.unit ? (EXTRA_OPTION_UNIT_MAP[item.unit] || item.unit) : '';
             return (
-              <div className="flex items-center justify-between gap-2 w-full">
-                <span className="line-clamp-2 whitespace-normal break-words pr-2 font-medium">
+              <div className="flex items-center justify-between w-full">
+                <div className="whitespace-nowrap pr-[100px] font-medium flex-1">
                   {item.name}
-                </span>
-                <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0">
+                </div>
+                <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 sticky right-8 bg-inherit pl-2.5 z-10 select-none">
                   {item.price.toLocaleString('vi-VN')}đ{unitText ? `/${unitText}` : ''}
                 </span>
               </div>
