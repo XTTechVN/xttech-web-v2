@@ -25,12 +25,11 @@ import {
 import Link from 'next/link';
 import AutoTimekeepingModal from '@/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal';
 import { useAuthStore } from '@/stores';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAttendances } from '@/actions';
 import { Attendance } from '@/types';
 import StatCart from '../../dashboard/_components/stats-card';
 import AddAdjustmentModal from '../_components/adjustment/add-modal';
-import queryClient from '@/utils/query';
 import AttendanceDetailModal from '../_components/attendance-modal';
 
 const statusVariantMap: Record<
@@ -48,6 +47,13 @@ const getStatusVariant = (status?: string | null) => {
   return statusVariantMap[status ?? ''] ?? 'danger';
 };
 
+const formatTime = (value?: string | null): string => {
+  if (!value) return '--:--';
+  if (value.includes('T')) return value.substring(11, 16);
+  if (value.includes(' ') && value.length >= 16) return value.substring(11, 16);
+  return value.substring(0, 5);
+};
+
 const getStatusBadge = (status?: string | null) => {
   const statusTextMap: Record<string, string> = {
     normal: 'Đúng giờ',
@@ -61,6 +67,7 @@ const getStatusBadge = (status?: string | null) => {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 export default function PayrollDataPage() {
+  const queryClient = useQueryClient();
   const [showTimekeepingModal, setShowTimekeepingModal] = useState(false);
   const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState<Attendance | null>(null);
@@ -227,7 +234,7 @@ export default function PayrollDataPage() {
               : 'text-slate-800'
           }
         >
-          {row.checkIn || '-'}
+          {formatTime(row.checkIn)}
         </span>
       ),
     },
@@ -235,7 +242,17 @@ export default function PayrollDataPage() {
       key: 'checkOut',
       label: 'Check Out',
       minWidth: '100px',
-      cell: (row) => row.checkOut || '-',
+      cell: (row) => (
+        <span
+          className={
+            row.isEarlyLeave
+              ? 'font-medium text-amber-600'
+              : 'text-slate-800'
+          }
+        >
+          {formatTime(row.checkOut)}
+        </span>
+      ),
     },
     {
       key: 'totalHours',
@@ -254,15 +271,24 @@ export default function PayrollDataPage() {
         const lateMinutes = row.lateMinutes ?? 0;
         const earlyLeaveMinutes = row.earlyLeaveMinutes ?? 0;
 
-        if (lateMinutes > 0) {
-          return `Đi muộn: ${lateMinutes} phút`;
+        if (lateMinutes === 0 && earlyLeaveMinutes === 0) {
+          return '-';
         }
 
-        if (earlyLeaveMinutes > 0) {
-          return `Về sớm: ${earlyLeaveMinutes} phút`;
-        }
-
-        return '-';
+        return (
+          <div className="flex flex-col gap-0.5 text-[13px]">
+            {lateMinutes > 0 && (
+              <span className="font-medium whitespace-nowrap">
+                Đi muộn: {lateMinutes} phút
+              </span>
+            )}
+            {earlyLeaveMinutes > 0 && (
+              <span className="font-medium whitespace-nowrap">
+                Về sớm: {earlyLeaveMinutes} phút
+              </span>
+            )}
+          </div>
+        );
       },
     },
     {
@@ -336,14 +362,14 @@ export default function PayrollDataPage() {
       <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
         <div>
           <span className="text-[10px] font-bold text-slate-400 uppercase block">Check In</span>
-          <span className="font-semibold text-slate-800">{row.checkIn ? row.checkIn.slice(0, 5) : '--:--'}</span>
+          <span className="font-semibold text-slate-800">{formatTime(row.checkIn)}</span>
           {(row.lateMinutes ?? 0) > 0 && (
             <span className="text-[10px] text-amber-600 font-medium block">Muộn {row.lateMinutes}p</span>
           )}
         </div>
         <div>
           <span className="text-[10px] font-bold text-slate-400 uppercase block">Check Out</span>
-          <span className="font-semibold text-slate-800">{row.checkOut ? row.checkOut.slice(0, 5) : '--:--'}</span>
+          <span className="font-semibold text-slate-800">{formatTime(row.checkOut)}</span>
           {(row.earlyLeaveMinutes ?? 0) > 0 && (
             <span className="text-[10px] text-amber-600 font-medium block">Về sớm {row.earlyLeaveMinutes}p</span>
           )}
@@ -433,10 +459,10 @@ export default function PayrollDataPage() {
               {hasCheckedInToday ? 'Check-out ngay' : 'Check-in ngay'}
             </Button>
             <Button
-              variant="secondary"
+              variant="outline"
               size="sm"
-              className="gap-2 px-3 bg-[#dbeafe] text-[#1e40af] hover:bg-[#bfdbfe] font-semibold"
-              leftIcon={<Clock size={16} className="text-[#1e40af]" />}
+              className="gap-2 px-3 hover:bg-[#ececf27d]"
+              leftIcon={<Clock size={16} className="text-[#314158]" />}
               onClick={() => {
                 toast.loading('Tính năng đang được phát triển', { id: 'loading' });
                 setTimeout(() => {
@@ -448,10 +474,10 @@ export default function PayrollDataPage() {
             </Button>
             <Link href="/app/attendances/adjustments">
               <Button
-                variant="secondary"
+                variant="outline"
                 size="sm"
-                className="gap-2 px-3 bg-[#dbeafe] text-[#1e40af] hover:bg-[#bfdbfe] font-semibold"
-                leftIcon={<FileEdit size={16} className="text-[#1e40af]" />}
+                className="gap-2 px-3 hover:bg-[#ececf27d]"
+                leftIcon={<FileEdit size={16} className="text-[#314158]" />}
               >
                 Yêu cầu điều chỉnh
               </Button>
@@ -472,6 +498,7 @@ export default function PayrollDataPage() {
               placeholder: 'Tìm kiếm theo ngày, ghi chú, trạng thái...',
               value: searchQuery,
               onChange: (value) => setSearchQuery(value),
+              className: 'min-w-[310px]',
             }}
             filters={tableFilters}
             renderCard={renderAttendanceCard}
@@ -502,6 +529,10 @@ export default function PayrollDataPage() {
       <AutoTimekeepingModal
         open={showTimekeepingModal}
         onClose={() => setShowTimekeepingModal(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['attendances'] });
+          queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'] });
+        }}
         hasCheckedIn={hasCheckedInToday}
       />
     </div>
