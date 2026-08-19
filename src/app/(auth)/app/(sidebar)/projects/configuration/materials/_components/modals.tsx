@@ -22,12 +22,7 @@ interface MaterialCreateModalProps {
 
 type MaterialCreateFormValues = Omit<MaterialCreate, 'imagePath'>;
 
-export function MaterialCreateModal({
-  isOpen,
-  onClose,
-  title,
-  submitText = 'Xác nhận tạo',
-}: MaterialCreateModalProps) {
+export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác nhận tạo' }: MaterialCreateModalProps) {
   const {
     register,
     handleSubmit,
@@ -56,14 +51,19 @@ export function MaterialCreateModal({
   }, [isOpen]);
 
   const handleConfirm = (data: MaterialCreateFormValues) => {
-    createMutation({
+    const payload: any = {
       name: data.name,
       code: data.code,
-      specification: data.specification,
-      description: data.description,
       price: data.price || 0,
       unit: data.unit,
-    });
+    };
+    if (data.specification && data.specification.trim() !== '') {
+      payload.specification = data.specification;
+    }
+    if (data.description && data.description.trim() !== '') {
+      payload.description = data.description;
+    }
+    createMutation(payload);
   };
 
   return (
@@ -85,11 +85,11 @@ export function MaterialCreateModal({
             error={errors.code ? 'Mã hệ nhôm không được để trống' : undefined}
           />
           <Input
-            label="Thông số kỹ thuật *"
+            label="Thông số kỹ thuật"
             placeholder="Nhập thông số kỹ thuật"
             fullWidth
-            {...register('specification', { required: true })}
-            error={errors.specification ? 'Thông số kỹ thuật không được để trống' : undefined}
+            {...register('specification')}
+            error={errors.specification ? 'Thông số kỹ thuật không hợp lệ' : undefined}
           />
           <Input
             label="Mô tả chi tiết"
@@ -106,6 +106,7 @@ export function MaterialCreateModal({
             options={[
               { value: 'set', label: 'Bộ' },
               { value: 'area', label: 'Diện tích (m²)' },
+              // { value: 'm2', label: 'm²' },
             ]}
             error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
           />
@@ -136,14 +137,7 @@ export function MaterialCreateModal({
           <Button variant="outline" size="sm" onClick={onClose}>
             Hủy
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<CheckCircle2 size={16} />}
-            type="submit"
-            disabled={isCreating}
-            loading={isCreating}
-          >
+          <Button variant="primary" size="sm" leftIcon={<CheckCircle2 size={16} />} type="submit" disabled={isCreating} loading={isCreating}>
             {submitText}
           </Button>
         </div>
@@ -165,13 +159,7 @@ interface MaterialUpdateModalProps {
 
 type MaterialUpdateFormValues = Omit<MaterialUpdate, 'imagePath'>;
 
-export function MaterialUpdateModal({
-  isOpen,
-  onClose,
-  title,
-  submitText = 'Xác nhận lưu',
-  initialData,
-}: MaterialUpdateModalProps) {
+export function MaterialUpdateModal({ isOpen, onClose, title, submitText = 'Xác nhận lưu', initialData }: MaterialUpdateModalProps) {
   const {
     register,
     handleSubmit,
@@ -208,7 +196,19 @@ export function MaterialUpdateModal({
 
   const handleConfirm = (data: MaterialUpdateFormValues) => {
     if (!initialData) return;
-    updateMutation({ id: initialData.id, data });
+    const payload: any = {
+      name: data.name,
+      code: data.code,
+      price: data.price !== undefined ? data.price : undefined,
+      unit: data.unit,
+    };
+    if (data.specification && data.specification.trim() !== '') {
+      payload.specification = data.specification;
+    }
+    if (data.description && data.description.trim() !== '') {
+      payload.description = data.description;
+    }
+    updateMutation({ id: initialData.id, data: payload });
   };
 
   return (
@@ -230,11 +230,11 @@ export function MaterialUpdateModal({
             error={errors.code ? 'Mã hệ nhôm không được để trống' : undefined}
           />
           <Input
-            label="Thông số kỹ thuật *"
+            label="Thông số kỹ thuật"
             placeholder="Nhập thông số kỹ thuật"
             fullWidth
-            {...register('specification', { required: true })}
-            error={errors.specification ? 'Thông số kỹ thuật không được để trống' : undefined}
+            {...register('specification')}
+            error={errors.specification ? 'Thông số kỹ thuật không hợp lệ' : undefined}
           />
           <Input
             label="Mô tả chi tiết"
@@ -251,6 +251,7 @@ export function MaterialUpdateModal({
             options={[
               { value: 'set', label: 'Bộ' },
               { value: 'area', label: 'Diện tích (m²)' },
+              // { value: 'm2', label: 'm²' },
             ]}
             error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
           />
@@ -258,16 +259,16 @@ export function MaterialUpdateModal({
             name="price"
             control={control}
             rules={{
+              required: 'Đơn giá không được để trống',
               validate: (val) => {
-                if (val === undefined || val === 0) return true;
                 const num = Number(val);
-                if (isNaN(num) || num < 0) return 'Đơn giá phải lớn hơn hoặc bằng 0';
+                if (isNaN(num) || num <= 0) return 'Đơn giá phải lớn hơn 0';
                 return true;
               },
             }}
             render={({ field }) => (
               <CurrencyInput
-                label="Đơn giá (VNĐ)"
+                label="Đơn giá (VNĐ) *"
                 placeholder="Nhập đơn giá"
                 fullWidth
                 value={field.value}
@@ -308,13 +309,7 @@ interface MaterialDeleteModalProps {
   isPending?: boolean;
 }
 
-export function MaterialDeleteModal({
-  isOpen,
-  onClose,
-  materialName,
-  onConfirm,
-  isPending = false,
-}: MaterialDeleteModalProps) {
+export function MaterialDeleteModal({ isOpen, onClose, materialName, onConfirm, isPending = false }: MaterialDeleteModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Xác nhận xóa hệ nhôm" className="m-2 max-w-md w-full">
       <div className="flex gap-4 items-center py-2">

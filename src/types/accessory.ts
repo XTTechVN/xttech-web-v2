@@ -1,3 +1,15 @@
+export const ACCESSORY_UNIT_MAP: Record<string, string> = {
+  set: 'Bộ',
+  pcs: 'Cái',
+  unit: 'Chiếc',
+  pair: 'Đôi',
+};
+
+export const formatAccessoryUnit = (unit: string | null | undefined): string => {
+  if (!unit) return '';
+  return ACCESSORY_UNIT_MAP[unit.toLowerCase()] || unit;
+};
+
 export interface Accessory {
   id: number;
   code: string | null;

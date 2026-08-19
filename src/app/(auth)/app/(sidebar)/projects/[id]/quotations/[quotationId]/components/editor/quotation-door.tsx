@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button, Input, Select } from '@/components';
 import { useQuotationStore } from '@/stores';
@@ -6,6 +6,7 @@ import { EDITOR_STYLES } from './config';
 import { QuotationAccessory } from './quotation-accessory';
 import { QuotationExtraOption } from './quotation-extra-option';
 import { QuotationFormula } from './quotation-formula';
+import { SearchSelect } from '../modal';
 import type { Accessory, ExtraOption, Door, Formula } from '@/types';
 
 interface QuotationDoorProps {
@@ -35,6 +36,8 @@ export const QuotationDoor = ({
   const door = material.doors[dIndex];
   if (!door) return null;
   const [isOpen, setIsOpen] = useState(true);
+  const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
 
   const handleUpdateDoor = (field: string, value: any) => {
     if (field === 'doorId') {
@@ -102,22 +105,36 @@ export const QuotationDoor = ({
         <div className="pl-4 flex flex-col gap-2.5">
         {/* Biên dạng cửa */}
         <div className="py-2 grid grid-cols-[1fr_auto] gap-2 items-end">
-          <div className="w-full">
+          <div className="w-full min-w-0">
             <span className={EDITOR_STYLES.label}>Biên dạng cửa</span>
-            <Select
-              value={door.doorId.toString()}
-              onChange={(e) => handleUpdateDoor('doorId', e.target.value)}
-              className={EDITOR_STYLES.select + ' w-full'}
+            <div 
+              ref={triggerRef}
+              onClick={() => setIsSelectModalOpen(true)}
+              className={EDITOR_STYLES.select + ' flex justify-between items-center w-full cursor-pointer'}
+              title={
+                doorsList.find((d) => d.id === door.doorId) 
+                  ? `${doorsList.find((d) => d.id === door.doorId)?.name} (${doorsList.find((d) => d.id === door.doorId)?.code})` 
+                  : 'Chọn cửa...'
+              }
             >
-              <option value="0" disabled>
-                Chọn cửa...
-              </option>
-              {doorsList.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name} ({d.code})
-                </option>
-              ))}
-            </Select>
+              <span className="truncate pr-4">
+                {doorsList.find((d) => d.id === door.doorId) 
+                  ? `${doorsList.find((d) => d.id === door.doorId)?.name} (${doorsList.find((d) => d.id === door.doorId)?.code})` 
+                  : 'Chọn cửa...'}
+              </span>
+              <ChevronDown size={14} className="text-slate-400 shrink-0" />
+            </div>
+
+            <SearchSelect
+              isOpen={isSelectModalOpen}
+              onClose={() => setIsSelectModalOpen(false)}
+              title="Chọn biên dạng cửa"
+              items={doorsList}
+              selectedValue={door.doorId}
+              onSelect={(item) => handleUpdateDoor('doorId', item.id)}
+              searchKeys={['name', 'code']}
+              triggerRef={triggerRef}
+            />
           </div>
         </div>
 

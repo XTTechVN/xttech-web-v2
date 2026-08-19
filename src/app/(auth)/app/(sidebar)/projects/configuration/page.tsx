@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import DoorsPage from '../doors/page';
-import MaterialsPage from '../materials/page';
-import AccessoriesPage from '../accessories/page';
-import ExtraOptionsPage from '../extra-options/page';
-import FormulasPage from '../formulas/page';
+import DoorsPage from './doors/page';
+import MaterialsPage from './materials/page';
+import AccessoriesPage from './accessories/page';
+import ExtraOptionsPage from './extra-options/page';
+import FormulasPage from './formulas/page';
 import { Columns, ListChecks, Settings, Calculator, LayoutGrid } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';

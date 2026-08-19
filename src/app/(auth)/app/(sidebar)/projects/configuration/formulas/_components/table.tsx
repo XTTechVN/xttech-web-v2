@@ -9,7 +9,7 @@ import { useQueryParam } from '@/hooks';
 import { FORMULA_TYPE_MAP, DOOR_TYPE_MAP, type Formula } from '@/types';
 import { getFormulas } from '@/actions';
 import toast from 'react-hot-toast';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 interface TableProps {
   onEditClick: (formula: Formula) => void;
@@ -18,6 +18,7 @@ interface TableProps {
 }
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
@@ -106,7 +107,13 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
-      cell: (row: Formula) => <TableAction onEdit={() => onEditClick(row)} onDelete={() => onDeleteClick(row)} />,
+      cell: (row: Formula) => (
+        <TableAction
+          onView={() => router.push(`/app/projects/configuration/formulas/${row.id}`)}
+          onEdit={() => onEditClick(row)}
+          onDelete={() => onDeleteClick(row)}
+        />
+      ),
     },
   ];
 
@@ -142,7 +149,11 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             )}
           </div>
         </div>
-        <TableAction onEdit={() => onEditClick(row)} onDelete={() => onDeleteClick(row)} />
+        <TableAction
+          onView={() => router.push(`/app/projects/configuration/formulas/${row.id}`)}
+          onEdit={() => onEditClick(row)}
+          onDelete={() => onDeleteClick(row)}
+        />
       </div>
     );
   };

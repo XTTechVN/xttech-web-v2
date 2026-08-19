@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
-import { Button, Select } from '@/components';
+import { Button } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { QuotationDoor } from './quotation-door';
 import { EDITOR_STYLES } from './config';
+import { SearchSelect } from '../modal';
 import type { Accessory, ExtraOption, Material, Door, Formula } from '@/types';
 
 interface QuotationMaterialProps {
@@ -31,6 +32,9 @@ export const QuotationMaterial = ({
   const material = floor.materials[mIndex];
   if (!material) return null;
   const [isOpen, setIsOpen] = useState(true);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const selectedMat = materialsList.find((m) => m.id === material.materialId);
 
   const handleUpdateMaterial = (materialIdStr: string) => {
     const id = parseInt(materialIdStr, 10);
@@ -51,7 +55,7 @@ export const QuotationMaterial = ({
     <div className="flex flex-col gap-2 py-2">
       {/* Chọn hệ nhôm & Thêm cửa / Xóa */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 flex-1">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <Button
             variant="ghost"
             size="sm"
@@ -61,17 +65,46 @@ export const QuotationMaterial = ({
           >
             {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </Button>
-          <Select
-            value={material.materialId.toString()}
-            onChange={(e) => handleUpdateMaterial(e.target.value)}
-            className={EDITOR_STYLES.select + ' w-full'}
-          >
-            {materialsList.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} ({m.code}) - {m.price.toLocaleString('vi-VN')}/m²
-              </option>
-            ))}
-          </Select>
+          <div className="w-full relative min-w-0">
+            <div 
+              ref={triggerRef}
+              onClick={() => setIsSelectOpen(true)}
+              className={EDITOR_STYLES.select + ' flex justify-between items-center w-full cursor-pointer'}
+              title={
+                selectedMat 
+                  ? `${selectedMat.name} (${selectedMat.code}) - ${selectedMat.price.toLocaleString('vi-VN')}/m²` 
+                  : 'Chọn hệ nhôm...'
+              }
+            >
+              <span className="truncate pr-4">
+                {selectedMat 
+                  ? `${selectedMat.name} (${selectedMat.code}) - ${selectedMat.price.toLocaleString('vi-VN')}/m²` 
+                  : 'Chọn hệ nhôm...'}
+              </span>
+              <ChevronDown size={14} className="text-slate-400 shrink-0" />
+            </div>
+
+            <SearchSelect
+              isOpen={isSelectOpen}
+              onClose={() => setIsSelectOpen(false)}
+              title="Chọn hệ nhôm"
+              items={materialsList}
+              selectedValue={material.materialId}
+              onSelect={(item) => handleUpdateMaterial(item.id.toString())}
+              searchKeys={['name', 'code']}
+              renderItem={(item) => (
+                <div className="flex items-center justify-between gap-2 w-full">
+                  <span className="line-clamp-2 whitespace-normal break-words pr-2 font-medium">
+                    {item.name}
+                  </span>
+                  <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0">
+                    {item.price.toLocaleString('vi-VN')}đ/m²
+                  </span>
+                </div>
+              )}
+              triggerRef={triggerRef}
+            />
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <Button
