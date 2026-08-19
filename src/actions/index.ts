@@ -54,3 +54,6 @@ export * from './position';
 
 // Attendance
 export * from './attendance';
+
+// Work Shift
+export * from './work-shift';
