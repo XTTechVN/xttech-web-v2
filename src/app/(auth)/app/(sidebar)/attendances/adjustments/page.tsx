@@ -680,6 +680,7 @@ export default function AdjustmentsSidebarPage() {
             placeholder: isAdmin ? 'Tìm kiếm theo tên nhân viên, lý do...' : 'Tìm kiếm lý do khiếu nại...',
             value: searchQuery,
             onChange: (value) => setSearchQuery(value),
+            className: 'min-w-[280px]',
           }}
           filters={tableFilters}
           renderCard={renderCard}
