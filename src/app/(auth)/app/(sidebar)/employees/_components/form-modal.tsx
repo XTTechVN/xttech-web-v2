@@ -48,16 +48,16 @@ const baseEmployeeSchema = z.object({
     .min(1, { message: 'Mã định danh/CCCD không được để trống' })
     .regex(/^\d{9,12}$/, { message: 'Mã định danh/CCCD không hợp lệ' }),
   gender: z.string(),
-  birthday: z.string().optional(),
+  birthday: z.string().min(1, { message: 'Ngày sinh không được để trống' }),
   address: z.string().min(1, { message: 'Địa chỉ không được để trống' }),
-  joinedAt: z.string().optional(),
+  joinedAt: z.string().min(1, { message: 'Ngày gia nhập không được để trống' }),
   attendancePolicy: z.string(),
   avatar: z.any().optional(),
 });
 
 // Schema dành riêng cho TẠO MỚI (Bắt buộc mật khẩu)
 const createEmployeeSchema = baseEmployeeSchema.extend({
-  password: z.string().min(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' }),
+  password: z.string().min(8, { message: 'Mật khẩu phải có ít nhất 8 ký tự' }),
 });
 
 // Schema dành riêng cho CẬP NHẬT (Mật khẩu là tùy chọn, nếu điền mới validate)
@@ -316,10 +316,10 @@ export default function EmployeeFormModal({ isOpen, onClose, title, submitText =
           />
 
           {/* Ngày sinh */}
-          <Input label="Ngày sinh" type="date" fullWidth {...register('birthday')} error={errors.birthday?.message} />
+          <Input label="Ngày sinh *" type="date" fullWidth {...register('birthday')} error={errors.birthday?.message} />
 
           {/* Ngày gia nhập */}
-          <Input label="Ngày gia nhập" type="date" fullWidth {...register('joinedAt')} error={errors.joinedAt?.message} />
+          <Input label="Ngày gia nhập *" type="date" fullWidth {...register('joinedAt')} error={errors.joinedAt?.message} />
 
           {/* Chính sách */}
           <Select
