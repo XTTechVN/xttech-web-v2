@@ -1,9 +1,10 @@
-import React from 'react';
-import { Trash2 } from 'lucide-react';
-import { Button, Select } from '@/components';
+import React, { useState, useRef } from 'react';
+import { Trash2, ChevronDown } from 'lucide-react';
+import { Button } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { EDITOR_STYLES } from './config';
-import type { Accessory } from '@/types';
+import { SearchSelect } from '../modal';
+import { Accessory, formatAccessoryUnit } from '@/types';
 
 interface QuotationAccessoryProps {
   fIndex: number;
@@ -23,22 +24,46 @@ export const QuotationAccessory = ({
   accessoriesList,
 }: QuotationAccessoryProps) => {
   const store = useQuotationStore();
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const selectedAcc = accessoriesList.find(acc => acc.id === selectedAccId);
 
   return (
     <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-1">
-      <Select
-        value={selectedAccId.toString()}
-        onChange={(e) =>
-          store.updateAccessory(fIndex, mIndex, dIndex, aIndex, parseInt(e.target.value, 10))
-        }
-        className={EDITOR_STYLES.select + ' w-full'}
-      >
-        {accessoriesList.map((acc) => (
-          <option key={acc.id} value={acc.id}>
-            {acc.name} ({acc.code})
-          </option>
-        ))}
-      </Select>
+      <div className="w-full relative min-w-0">
+        <div 
+          ref={triggerRef}
+          onClick={() => setIsSelectOpen(true)}
+          className={EDITOR_STYLES.select + ' flex justify-between items-center w-full cursor-pointer'}
+          title={selectedAcc ? `${selectedAcc.name} (${selectedAcc.code})` : 'Chọn phụ kiện...'}
+        >
+          <span className="truncate pr-4">
+            {selectedAcc ? `${selectedAcc.name} (${selectedAcc.code})` : 'Chọn phụ kiện...'}
+          </span>
+          <ChevronDown size={14} className="text-slate-400 shrink-0" />
+        </div>
+
+        <SearchSelect
+          isOpen={isSelectOpen}
+          onClose={() => setIsSelectOpen(false)}
+          title="Chọn phụ kiện"
+          items={accessoriesList}
+          selectedValue={selectedAccId}
+          onSelect={(item) => store.updateAccessory(fIndex, mIndex, dIndex, aIndex, item.id)}
+          searchKeys={['name', 'code']}
+          renderItem={(item) => (
+            <div className="flex items-center justify-between gap-2 w-full">
+              <span className="line-clamp-2 whitespace-normal break-words pr-2 font-medium">
+                {item.name}
+              </span>
+              <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0">
+                {item.price.toLocaleString('vi-VN')}đ{item.unit ? `/${formatAccessoryUnit(item.unit)}` : ''}
+              </span>
+            </div>
+          )}
+          triggerRef={triggerRef}
+        />
+      </div>
       <Button
         variant="ghost"
         size="sm"

@@ -231,16 +231,16 @@ export function ExtraOptionUpdateModal({
             name="price"
             control={control}
             rules={{
+              required: 'Đơn giá không được để trống',
               validate: (val) => {
-                if (val === undefined || val === 0) return true;
                 const num = Number(val);
-                if (isNaN(num) || num < 0) return 'Đơn giá phải lớn hơn hoặc bằng 0';
+                if (isNaN(num) || num <= 0) return 'Đơn giá phải lớn hơn 0';
                 return true;
               },
             }}
             render={({ field }) => (
               <CurrencyInput
-                label="Đơn giá (VNĐ)"
+                label="Đơn giá (VNĐ) *"
                 placeholder="Nhập đơn giá"
                 fullWidth
                 value={field.value}

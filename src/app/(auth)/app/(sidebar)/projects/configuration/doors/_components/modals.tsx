@@ -1,44 +1,43 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Input, Button, Modal, Select, CurrencyInput } from '@/components';
-import { CheckCircle2, Upload, Settings } from 'lucide-react';
-import { useForm, Controller } from 'react-hook-form';
-import { createAccessory, updateAccessory } from '@/actions';
+import { Input, Button, Modal, Select } from '@/components';
+import { CheckCircle2, Upload, Columns } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { createDoor, updateDoor } from '@/actions';
 import toast from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
-import type { Accessory, AccessoryCreate, AccessoryUpdate } from '@/types';
+import type { Door, DoorCreate, DoorUpdate } from '@/types';
 import { BASE_MINIO_URL } from '@/config/app';
 
 // ==========================================
-// 1. MODAL TẠO MỚI PHỤ KIỆN (AccessoryCreate) HỖ TRỢ UPLOAD & PREVIEW 2 CỘT
+// 1. MODAL TẠO MỚI CỬA (DoorCreate) HỖ TRỢ PREVIEW ẢNH & 2 CỘT
 // ==========================================
-interface AccessoryCreateModalProps {
+interface DoorCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   submitText?: string;
 }
 
-type AccessoryCreateFormValues = Omit<AccessoryCreate, 'imagePath'>;
+type DoorCreateFormValues = Omit<DoorCreate, 'imagePath'>;
 
-export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xác nhận tạo' }: AccessoryCreateModalProps) {
+export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nhận tạo' }: DoorCreateModalProps) {
   const {
     register,
     handleSubmit,
-    control,
     reset,
     formState: { errors },
-  } = useForm<AccessoryCreateFormValues>();
+  } = useForm<DoorCreateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { mutate: createMutation, isPending: isCreating } = useMutation({
-    mutationFn: createAccessory,
+    mutationFn: createDoor,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accessories'] });
-      toast.success('Thêm phụ kiện thành công');
+      queryClient.invalidateQueries({ queryKey: ['doors'] });
+      toast.success('Thêm loại cửa thành công');
       onClose();
       reset();
       setSelectedFile(null);
@@ -51,7 +50,7 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
 
   useEffect(() => {
     if (isOpen) {
-      reset({ name: '', code: '', specification: '', unit: '', price: 0 });
+      reset({ name: '', type: '', code: '', specification: '' });
       setSelectedFile(null);
       setPreviewUrl(null);
     }
@@ -67,19 +66,18 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
     return () => URL.revokeObjectURL(objectUrl);
   }, [selectedFile]);
 
-  const handleConfirm = (data: AccessoryCreateFormValues) => {
-    const payload: AccessoryCreate = {
+  const handleConfirm = (data: DoorCreateFormValues) => {
+    const payload: DoorCreate = {
       name: data.name,
-      price: data.price || 0,
     };
+    if (data.type && data.type.trim() !== '') {
+      payload.type = data.type;
+    }
     if (data.code && data.code.trim() !== '') {
       payload.code = data.code;
     }
     if (data.specification && data.specification.trim() !== '') {
       payload.specification = data.specification;
-    }
-    if (data.unit && data.unit.trim() !== '') {
-      payload.unit = data.unit;
     }
     createMutation({
       data: payload,
@@ -98,7 +96,7 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
-                <Settings className="w-10 h-10 text-gray-300 animate-spin-slow" />
+                <Columns className="w-10 h-10 text-gray-300" />
               )}
             </div>
             <label className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 transition shadow-xs w-full justify-center">
@@ -114,63 +112,38 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
           {/* Cột phải: Thông tin nhập */}
           <div className="md:col-span-8 flex flex-col space-y-4">
             <Input
-              label="Tên phụ kiện *"
-              placeholder="Nhập tên phụ kiện"
+              label="Tên cửa *"
+              placeholder="Nhập tên cửa"
               fullWidth
               {...register('name', { required: true })}
-              error={errors.name ? 'Tên phụ kiện không được để trống' : undefined}
+              error={errors.name ? 'Tên cửa không được để trống' : undefined}
             />
             <Input
-              label="Mã phụ kiện *"
-              placeholder="Nhập mã phụ kiện"
+              label="Mã cửa *"
+              placeholder="Nhập mã sản phẩm cửa"
               fullWidth
               {...register('code', { required: true })}
-              error={errors.code ? 'Mã phụ kiện không được để trống' : undefined}
+              error={errors.code ? 'Mã cửa không được để trống' : undefined}
+            />
+            <Select
+              label="Phân loại *"
+              placeholder="Chọn phân loại"
+              fullWidth
+              {...register('type', { required: true })}
+              options={[
+                { value: 'cd', label: 'Cửa đi' },
+                { value: 'cs', label: 'Cửa sổ' },
+                { value: 'ck', label: 'Cửa kính' },
+              ]}
+              error={errors.type ? 'Vui lòng chọn phân loại cửa' : undefined}
             />
             <Input
-              label="Thông số kỹ thuật *"
-              placeholder="Nhập thông số phụ kiện"
+              label="Thông số kỹ thuật"
+              placeholder="Nhập thông số kỹ thuật"
               fullWidth
-              {...register('specification', { required: true })}
-              error={errors.specification ? 'Thông số kỹ thuật không được để trống' : undefined}
+              {...register('specification')}
+              error={errors.specification ? 'Thông số kỹ thuật không hợp lệ' : undefined}
             />
-            <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Đơn vị tính *"
-                placeholder="Chọn ĐVT"
-                fullWidth
-                {...register('unit', { required: true })}
-                options={[
-                  { value: 'set', label: 'Bộ' },
-                  { value: 'pcs', label: 'Cái' },
-                  { value: 'unit', label: 'Chiếc' },
-                  { value: 'pair', label: 'Đôi' },
-                ]}
-                error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
-              />
-              <Controller
-                name="price"
-                control={control}
-                rules={{
-                  required: 'Đơn giá không được để trống',
-                  validate: (val) => {
-                    const num = Number(val);
-                    if (isNaN(num) || num <= 0) return 'Đơn giá phải lớn hơn 0';
-                    return true;
-                  },
-                }}
-                render={({ field }) => (
-                  <CurrencyInput
-                    label="Đơn giá (VNĐ) *"
-                    placeholder="Nhập đơn giá"
-                    fullWidth
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.price?.message}
-                  />
-                )}
-              />
-            </div>
           </div>
         </div>
 
@@ -188,34 +161,33 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
 }
 
 // ==========================================
-// 2. MODAL CẬP NHẬT PHỤ KIỆN (AccessoryUpdate) HỖ TRỢ UPLOAD & PREVIEW 2 CỘT
+// 2. MODAL CẬP NHẬT CỬA (DoorUpdate) HỖ TRỢ PREVIEW ẢNH & 2 CỘT
 // ==========================================
-interface AccessoryUpdateModalProps {
+interface DoorUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   submitText?: string;
-  initialData?: Pick<Accessory, 'id' | 'name' | 'code' | 'specification' | 'unit' | 'price' | 'imagePath'>;
+  initialData?: Pick<Door, 'id' | 'name' | 'type' | 'code' | 'imagePath' | 'specification'>;
 }
 
-type AccessoryUpdateFormValues = Omit<AccessoryUpdate, 'imagePath'>;
+type DoorUpdateFormValues = Omit<DoorUpdate, 'imagePath'>;
 
-export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xác nhận lưu', initialData }: AccessoryUpdateModalProps) {
+export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nhận lưu', initialData }: DoorUpdateModalProps) {
   const {
     register,
     handleSubmit,
-    control,
     reset,
     formState: { errors },
-  } = useForm<AccessoryUpdateFormValues>();
+  } = useForm<DoorUpdateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
-    mutationFn: ({ id, data, file }: { id: number; data: AccessoryUpdate; file?: File }) => updateAccessory(id, { data, file }),
+    mutationFn: ({ id, data, file }: { id: number; data: DoorUpdate; file?: File }) => updateDoor(id, { data, file }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accessories'] });
-      toast.success('Cập nhật phụ kiện thành công');
+      queryClient.invalidateQueries({ queryKey: ['doors'] });
+      toast.success('Cập nhật loại cửa thành công');
       onClose();
       reset();
       setSelectedFile(null);
@@ -230,10 +202,9 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
     if (isOpen && initialData) {
       reset({
         name: initialData.name || '',
+        type: initialData.type || '',
         code: initialData.code || '',
         specification: initialData.specification || '',
-        unit: initialData.unit || '',
-        price: initialData.price !== undefined ? initialData.price : undefined,
       });
       setSelectedFile(null);
       setPreviewUrl(
@@ -253,23 +224,15 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
     return () => URL.revokeObjectURL(objectUrl);
   }, [selectedFile]);
 
-  const handleConfirm = (data: AccessoryUpdateFormValues) => {
+  const handleConfirm = (data: DoorUpdateFormValues) => {
     if (!initialData) return;
-    const payload: AccessoryUpdate = {};
-    if (data.name && data.name.trim() !== '') {
-      payload.name = data.name;
-    }
-    if (data.code && data.code.trim() !== '') {
-      payload.code = data.code;
-    }
+    const payload: DoorUpdate = {
+      name: data.name,
+      type: data.type,
+      code: data.code,
+    };
     if (data.specification && data.specification.trim() !== '') {
       payload.specification = data.specification;
-    }
-    if (data.unit && data.unit.trim() !== '') {
-      payload.unit = data.unit;
-    }
-    if (data.price !== undefined) {
-      payload.price = data.price;
     }
     updateMutation({
       id: initialData.id,
@@ -289,7 +252,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
-                <Settings className="w-10 h-10 text-gray-300" />
+                <Columns className="w-10 h-10 text-gray-300" />
               )}
             </div>
             <label className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 transition shadow-xs w-full justify-center">
@@ -305,63 +268,38 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
           {/* Cột phải: Thông tin nhập */}
           <div className="md:col-span-8 flex flex-col space-y-4">
             <Input
-              label="Tên phụ kiện *"
-              placeholder="Nhập tên phụ kiện"
+              label="Tên cửa *"
+              placeholder="Nhập tên cửa"
               fullWidth
               {...register('name', { required: true })}
-              error={errors.name ? 'Tên phụ kiện không được để trống' : undefined}
+              error={errors.name ? 'Tên cửa không được để trống' : undefined}
             />
             <Input
-              label="Mã phụ kiện"
-              placeholder="Nhập mã phụ kiện"
+              label="Mã cửa *"
+              placeholder="Nhập mã sản phẩm cửa"
               fullWidth
-              {...register('code')}
-              error={errors.code ? 'Mã phụ kiện không hợp lệ' : undefined}
+              {...register('code', { required: true })}
+              error={errors.code ? 'Mã cửa không được để trống' : undefined}
+            />
+            <Select
+              label="Phân loại *"
+              placeholder="Chọn phân loại"
+              fullWidth
+              {...register('type', { required: true })}
+              options={[
+                { value: 'cd', label: 'Cửa đi' },
+                { value: 'cs', label: 'Cửa sổ' },
+                { value: 'ck', label: 'Cửa kính' },
+              ]}
+              error={errors.type ? 'Vui lòng chọn phân loại cửa' : undefined}
             />
             <Input
               label="Thông số kỹ thuật"
-              placeholder="Nhập thông số phụ kiện"
+              placeholder="Nhập thông số kỹ thuật"
               fullWidth
               {...register('specification')}
               error={errors.specification ? 'Thông số kỹ thuật không hợp lệ' : undefined}
             />
-            <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Đơn vị tính"
-                placeholder="Chọn ĐVT"
-                fullWidth
-                {...register('unit')}
-                options={[
-                  { value: 'set', label: 'Bộ' },
-                  { value: 'pcs', label: 'Cái' },
-                  { value: 'unit', label: 'Chiếc' },
-                  { value: 'pair', label: 'Đôi' },
-                ]}
-                error={errors.unit ? 'Đơn vị tính không hợp lệ' : undefined}
-              />
-              <Controller
-                name="price"
-                control={control}
-                rules={{
-                  validate: (val) => {
-                    if (val === undefined || val === 0) return true;
-                    const num = Number(val);
-                    if (isNaN(num) || num < 0) return 'Đơn giá phải lớn hơn hoặc bằng 0';
-                    return true;
-                  },
-                }}
-                render={({ field }) => (
-                  <CurrencyInput
-                    label="Đơn giá (VNĐ)"
-                    placeholder="Nhập đơn giá"
-                    fullWidth
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.price?.message}
-                  />
-                )}
-              />
-            </div>
           </div>
         </div>
 
@@ -386,23 +324,23 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
 }
 
 // ==========================================
-// 3. MODAL XÁC NHẬN XÓA PHỤ KIỆN
+// 3. MODAL XÁC NHẬN XÓA CỬA
 // ==========================================
-interface AccessoryDeleteModalProps {
+interface DoorDeleteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  accessoryName?: string;
+  doorName?: string;
   onConfirm: () => void;
   isPending?: boolean;
 }
 
-export function AccessoryDeleteModal({ isOpen, onClose, accessoryName, onConfirm, isPending = false }: AccessoryDeleteModalProps) {
+export function DoorDeleteModal({ isOpen, onClose, doorName, onConfirm, isPending = false }: DoorDeleteModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Xác nhận xóa phụ kiện" className="m-2 max-w-md w-full">
+    <Modal isOpen={isOpen} onClose={onClose} title="Xác nhận xóa thiết kế cửa" className="m-2 max-w-md w-full">
       <div className="flex gap-4 items-center py-2">
         <div className="flex flex-col gap-1.5">
           <p className="text-gray-600 text-sm leading-relaxed">
-            Bạn có chắc chắn muốn xóa phụ kiện <strong className="text-gray-900 font-semibold">{accessoryName}</strong>?
+            Bạn có chắc chắn muốn xóa thiết kế cửa <strong className="text-gray-900 font-semibold">{doorName}</strong>?
           </p>
         </div>
       </div>

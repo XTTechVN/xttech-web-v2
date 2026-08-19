@@ -1,3 +1,10 @@
+import { DOOR_TYPE_MAP } from './formula';
+
+export const formatDoorType = (type: string | null | undefined): string => {
+  if (!type) return '';
+  return (DOOR_TYPE_MAP as Record<string, string>)[type.toLowerCase()] || type;
+};
+
 export interface Door {
   id: number;
   type: string | null;
