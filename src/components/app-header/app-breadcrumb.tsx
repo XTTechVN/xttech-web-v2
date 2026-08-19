@@ -80,6 +80,8 @@ export function AppBreadcrumb() {
 
           let label = segment;
           if (segment === 'positions') label = 'Vị trí';
+          else if (segment === 'members') label = 'Nhân sự';
+          else if (segment === 'shifts') label = 'Ca làm việc';
           else if (segment === 'create') label = 'Thêm mới';
           else if (segment === 'edit') label = 'Chỉnh sửa';
           else if (segment === 'quotations') label = 'Báo giá';

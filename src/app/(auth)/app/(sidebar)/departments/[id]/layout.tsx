@@ -3,10 +3,8 @@
 import React from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Briefcase, CalendarClock, Home, Building2 } from 'lucide-react';
-import Link from 'next/link';
+import { Briefcase, CalendarClock, Users } from 'lucide-react';
 
-import { Breadcrumb } from '@/components';
 import { getDepartment } from '@/actions';
 
 const TABS = [
@@ -14,6 +12,11 @@ const TABS = [
     id: 'positions',
     label: 'Vị trí & Chức danh',
     icon: <Briefcase size={16} />,
+  },
+  {
+    id: 'members',
+    label: 'Nhân sự phòng ban',
+    icon: <Users size={16} />,
   },
   {
     id: 'shifts',
@@ -40,22 +43,26 @@ export default function DepartmentDetailLayout({
   });
 
   // Xác định tab đang active dựa trên pathname
-  const activeTab = pathname.includes('/shifts') ? 'shifts' : 'positions';
+  const activeTab = pathname.includes('/shifts')
+    ? 'shifts'
+    : pathname.includes('/members')
+    ? 'members'
+    : 'positions';
 
   const handleTabChange = (tabId: string) => {
     if (tabId === 'positions') {
       router.push(`/app/departments/${departmentId}/positions`);
+    } else if (tabId === 'members') {
+      router.push(`/app/departments/${departmentId}/members`);
     } else if (tabId === 'shifts') {
       router.push(`/app/departments/${departmentId}/shifts`);
     }
   };
 
-
   return (
     <div className="flex flex-col gap-4 text-black w-full">
-
-      {/* Tab Navigation giống phong cách Projects */}
-      <div className="flex overflow-x-auto scrollbar-none gap-4 p-1">
+      {/* Tab Navigation 3 Tabs */}
+      <div className="flex overflow-x-auto scrollbar-none gap-3 p-1">
         {TABS.map((tab) => {
           const isActive = tab.id === activeTab;
           return (
