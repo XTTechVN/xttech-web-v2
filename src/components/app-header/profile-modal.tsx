@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { User, Camera } from 'lucide-react';
 import { Modal, Input, Button } from '@/components';
 import { useAuthStore } from '@/stores';
@@ -16,6 +16,29 @@ export interface ProfileModalProps {
 }
 
 function ProfileForm({ user, onClose }: { user: AuthUser | null; onClose: () => void }) {
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [previewUrl, setpreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    }
+  },[previewUrl])
+
+  // Tạo và dọn dẹp URL preview khi chọn file
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file){
+      setAvatarFile(file)
+      setpreviewUrl(URL.createObjectURL(file));0
+    }
+  }
+
+
   const [profileData, setProfileData] = useState({
     fullName: user?.fullName || '',
     email: user?.email || '',
@@ -33,7 +56,7 @@ function ProfileForm({ user, onClose }: { user: AuthUser | null; onClose: () => 
   const { mutate: updateProfile, isPending } = useMutation({
     mutationFn: async (data: Record<string, string>) => {
       if (!user?.id) throw new Error('Không tìm thấy ID người dùng');
-      return updateEmployee(user.id, data);
+      return updateEmployee(user.id, data,  avatarFile || undefined);
     },
     onSuccess: (res) => {
       if (res && res.user) {
@@ -56,32 +79,40 @@ function ProfileForm({ user, onClose }: { user: AuthUser | null; onClose: () => 
     if (profileData.email && profileData.email !== user?.email) payload.email = profileData.email;
     if (profileData.phoneNumber && profileData.phoneNumber !== user?.phoneNumber) payload.phoneNumber = profileData.phoneNumber;
 
-    if (Object.keys(payload).length === 0) {
+    if (Object.keys(payload).length === 0 && !avatarFile) {
       toast.error('Không có thông tin nào thay đổi!');
       return;
     }
     updateProfile(payload);
   };
 
-  const avatarUrl = user?.avatar
-    ? user.avatar.startsWith('http')
-      ? user.avatar
-      : `${BASE_MINIO_URL}${user.avatar}`
-    : null;
-
+  // Ảnh đại diện hiển thị (ưu tiên ảnh preview, sau đó đến ảnh từ server)
+   const initialAvatarUrl = user?.avatar ?  `${BASE_MINIO_URL}${user.avatar}` : null;
+  const currentAvatar = previewUrl || initialAvatarUrl;
   return (
     <form id="profile-form" onSubmit={handleProfileSubmit} className="flex flex-col gap-6">
       <div className="grid grid-cols-12 gap-6 items-center">
         <div className="col-span-12 md:col-span-4 flex justify-center">
-          <div className="relative group w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-primary/10 bg-gray-50 flex items-center justify-center transition-all duration-300 hover:border-primary/30 shadow-sm">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="relative group w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-primary/10 bg-gray-50 flex items-center justify-center transition-all duration-300 hover:border-primary/30 shadow-sm cursor-pointer"
+          >
+            {currentAvatar ? (
+              <img src={currentAvatar} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               <User className="w-12 h-12 md:w-16 md:h-16 text-gray-400 group-hover:text-primary transition-colors duration-300" />
             )}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300 cursor-pointer">
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
               <Camera className="w-6 h-6 text-white" />
             </div>
+            {/* Input file ẩn */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
           </div>
         </div>
         <div className="col-span-12 md:col-span-8 md:border-l md:border-gray-200 md:pl-6 grid grid-cols-1 gap-4">
