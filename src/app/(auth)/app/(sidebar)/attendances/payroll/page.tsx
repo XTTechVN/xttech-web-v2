@@ -405,18 +405,7 @@ export default function PayrollDataPage() {
   ];
 
   return (
-    <div className="w-full flex flex-col gap-4 p-3">
-      {/* Title Header */}
-      <div className="flex flex-col gap-1">
-        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Quản lý Tính công & Dữ liệu lương
-        </Heading>
-        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-          Tổng hợp và kiểm tra dữ liệu công trước khi kết chuyển lương.
-        </Heading>
-      </div>
-
-      {/* 5 Summary Stat Cards */}
+    <div className="w-full flex flex-col gap-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {payrollStats.map((stat, i) => (
           <StatCart
@@ -432,11 +421,7 @@ export default function PayrollDataPage() {
 
       {/* Main Table Section */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
-          <Heading size="h1" className="text-primary text-2xl">
-            Danh sách tính công & dữ liệu lương
-          </Heading>
-
+        <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center w-full gap-4">
           <div className="flex items-center justify-end gap-2 flex-wrap">
             <Button
               variant="primary"

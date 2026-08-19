@@ -8,12 +8,12 @@ import { useDebounce } from '@/hooks';
 import { QuotationEditor, QuotationPreview } from './components';
 
 interface QuotationDetailPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; quotationId: string }>;
 }
 
 export default function QuotationDetailPage({ params }: QuotationDetailPageProps) {
-  const { id } = use(params);
-  const quotationId = parseInt(id, 10);
+  const { id, quotationId: quotationIdParam } = use(params);
+  const quotationId = parseInt(quotationIdParam, 10);
   const store = useQuotationStore();
   const [initialized, setInitialized] = useState(false);
 

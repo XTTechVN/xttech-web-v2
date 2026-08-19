@@ -104,21 +104,13 @@ const Page = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Quản lý dự án
-        </Heading>
-        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-          Danh sách các dự án sẽ được hiển thị tại đây
-        </Heading>
-      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {projectStats.map((stat, index) => (
           <StatsCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection} />
         ))}
       </div>
-      <Table 
-        customers={customerData} 
+      <Table
+        customers={customerData}
         onViewClick={handleViewProject}
         onEditClick={handleOpenEditModal}
         onDeleteClick={handleOpenDeleteModal}

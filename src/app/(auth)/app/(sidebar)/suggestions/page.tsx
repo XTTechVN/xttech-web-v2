@@ -24,18 +24,7 @@ function SuggestionsPageContent() {
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full flex flex-col gap-4 p-3">
-      {/* Header Section */}
-      {/* <Header title="QUẢN LÝ ĐỀ XUẤT & SÁNG KIẾN NHÂN SỰ" className="rounded-2xl border border-slate-200 bg-white px-6 shadow-sm" /> */}
-
-      <div className="flex flex-col gap-2">
-        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Quản lý đề xuất
-        </Heading>
-        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-          Danh sách các đề xuất sẽ đc hiển thị tại đây
-        </Heading>
-      </div>
+    <div ref={containerRef} className="w-full flex flex-col gap-4">
 
       {/* Statistical Metrics Cards */}
       {isManager && <StatCards containerWidth={containerWidth} />}

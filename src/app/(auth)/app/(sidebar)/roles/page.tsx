@@ -8,17 +8,7 @@ function RolesPageContent() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div ref={containerRef} className="w-full flex flex-col gap-4 p-3">
-      {/* Header Section */}
-      <div className="flex flex-col gap-2">
-        <Heading size="h1" className="text-primary text-2xl md:text-4xl">
-          Quản lý vai trò
-        </Heading>
-        <Heading size="h3" className="text-gray-500 text-sm md:text-lg">
-          Danh sách các vai trò sẽ đc hiển thị tại đây
-        </Heading>
-      </div>
-
+    <div ref={containerRef} className="w-full flex flex-col gap-4">
       {/* Roles Data Grid / Table */}
       <RoleTable />
     </div>

@@ -184,12 +184,7 @@ export default function RoleTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex md:flex-row justify-between items-start md:items-center w-full gap-4">
-        {/* Left Header Panel */}
-        <Heading className="text-primary text-2xl" size="h1">
-          Danh sách vai trò
-        </Heading>
-
+      <div className="flex md:flex-row justify-end items-start md:items-center w-full gap-4">
         {/* Right Header (Add, Export & Refresh) */}
         <div className="flex items-center gap-3">
           <Button
