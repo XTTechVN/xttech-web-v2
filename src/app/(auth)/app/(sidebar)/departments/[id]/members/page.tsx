@@ -282,14 +282,7 @@ export default function DepartmentMembersPage() {
   return (
     <div className="flex flex-col gap-4">
       {/* Header Action */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-bold text-gray-900">Danh sách nhân sự phòng ban</h3>
-          <p className="text-xs text-gray-500">
-            Quản lý đội ngũ nhân viên và phân bổ vị trí trực thuộc phòng ban
-          </p>
-        </div>
-
+      <div className="flex items-center justify-end">
         <Button
           variant="primary"
           size="sm"

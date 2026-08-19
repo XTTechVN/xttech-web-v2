@@ -71,7 +71,7 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
       ...params,
       search: search || undefined,
       departmentId: queryDept,
-      shift_type: selectedShiftType || undefined,
+      shiftType: selectedShiftType || undefined,
       status: selectedStatus || undefined,
     });
 

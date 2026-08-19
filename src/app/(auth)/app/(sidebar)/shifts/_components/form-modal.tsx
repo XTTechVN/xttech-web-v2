@@ -351,13 +351,17 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
           <div className="flex flex-col gap-1.5 justify-center">
             <span className="text-xs font-semibold text-gray-700 select-none">Trạng thái hoạt động</span>
             <div className="flex items-center gap-3 h-10">
-              <Switch
-                checked={shiftStatus === 'active'}
-                onChange={(checked) => setValue('status', checked ? 'active' : 'inactive')}
+              <Controller
+                control={control}
+                name="status"
+                render={({ field }) => (
+                  <Switch
+                    checked={field.value === 'active'}
+                    onChange={(e) => field.onChange(e.target.checked ? 'active' : 'inactive')}
+                    label={field.value === 'active' ? 'Đang hoạt động' : 'Tạm dừng'}
+                  />
+                )}
               />
-              <span className="text-sm font-medium text-gray-800">
-                {shiftStatus === 'active' ? 'Đang hoạt động' : 'Tạm dừng'}
-              </span>
             </div>
           </div>
         </div>
