@@ -90,4 +90,35 @@ export const revokeRole = async (id: string, roleIds: string[]): Promise<any> =>
   }
 };
 
+export const setUserPositions = async (id: string, positionIds: number[]): Promise<any> => {
+  try {
+    const res = await api.put(`/api/v1/users/${id}/positions`, positionIds);
+    return res.data;
+  } catch (error) {
+    console.error('Lỗi khi cập nhật chức vụ người dùng:', error);
+    throw error;
+  }
+};
+
+export const assignPositions = async (id: string, positionIds: number[]): Promise<any> => {
+  try {
+    const res = await api.post(`/api/v1/users/${id}/positions`, positionIds);
+    return res.data;
+  } catch (error) {
+    console.error('Lỗi khi gán chức vụ người dùng:', error);
+    throw error;
+  }
+};
+
+export const revokePositions = async (id: string, positionIds: number[]): Promise<any> => {
+  try {
+    const res = await api.delete(`/api/v1/users/${id}/positions`, { data: positionIds });
+    return res.data;
+  } catch (error) {
+    console.error('Lỗi khi gỡ chức vụ người dùng:', error);
+    throw error;
+  }
+};
+
+
 

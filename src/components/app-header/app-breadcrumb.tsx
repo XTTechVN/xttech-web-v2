@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Breadcrumb, BreadcrumbItem } from '@/components';
 import { usePathname } from 'next/navigation';
 import { rawSidebarSections, SidebarItemWithRoles } from '@/config';
@@ -10,9 +9,7 @@ export function AppBreadcrumb() {
 
   const generateBreadcrumbs = (): BreadcrumbItem[] => {
     // 1. Luôn có "Trang chủ"
-    const items: BreadcrumbItem[] = [
-      { label: 'Trang chủ', href: '/app/dashboard' },
-    ];
+    const items: BreadcrumbItem[] = [{ label: 'Trang chủ', href: '/app/dashboard' }];
 
     if (pathname === '/app' || pathname === '/app/dashboard') {
       items[0].href = undefined;
@@ -80,15 +77,24 @@ export function AppBreadcrumb() {
 
           let label = segment;
           if (segment === 'positions') label = 'Vị trí';
+          else if (segment === 'members') label = 'Nhân sự';
+          else if (segment === 'shifts') label = 'Ca làm việc';
           else if (segment === 'create') label = 'Thêm mới';
           else if (segment === 'edit') label = 'Chỉnh sửa';
           else if (segment === 'quotations') label = 'Báo giá';
+          else if (segment === 'materials') label = 'Hệ nhôm';
+          else if (segment === 'doors') label = 'Biên dạng cửa';
+          else if (segment === 'accessories') label = 'Phụ kiện';
+          else if (segment === 'extra-options') label = 'Tùy chọn phát sinh';
+          else if (segment === 'formulas') label = 'Công thức';
           else if (!isNaN(Number(segment))) label = `Chi tiết #${segment}`;
           else label = segment.charAt(0).toUpperCase() + segment.slice(1);
 
           let href: string | undefined = index === segments.length - 1 ? undefined : currentDynamicPath;
           if (segment === 'quotations') {
             href = undefined;
+          } else if (['materials', 'doors', 'accessories', 'extra-options', 'formulas'].includes(segment)) {
+            href = '/app/projects/configuration';
           }
 
           items.push({

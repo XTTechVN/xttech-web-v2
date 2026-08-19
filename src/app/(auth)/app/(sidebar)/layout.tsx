@@ -62,8 +62,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     sections: filteredSections,
     cta: {
       title: 'Cần hỗ trợ?',
-      description: 'Liên hệ với chúng tôi để được tư vấn thêm về các dịch vụ của chúng tôi.',
+      description: 'Liên hệ với chúng tôi để góp ý nếu chương trình có lỗi hoặc để cải thiện chương trình',
       buttonText: 'Liên hệ ngay',
+      onButtonClick: () => {
+        const phoneNumber = '0862163122';
+        const userAgent = typeof window !== 'undefined' ? navigator.userAgent : '';
+        // Mở Zalo Native App trên iOS/Android
+        if (/iPhone|iPod|iPad|Android/i.test(userAgent)) {
+          window.location.href = `zalo://chat?phone=${phoneNumber}`;
+        } else {
+          // Mở Zalo Web / Zalo PC chuyển hướng trên Desktop
+          window.open(`https://zalo.me/${phoneNumber}`, '_blank', 'noopener,noreferrer');
+        }
+      },
     },
     onItemSelect: (item: SidebarItemProps) => {
       // Chặn người dùng truy cập một số tính năng trên sidebar
@@ -130,10 +141,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* 3. Vùng nội dung chính */}
       <div className="flex-1 h-full bg-slate-50 flex flex-col min-w-0">
-        <AppHeader 
-          onMenuClick={() => setIsMobileOpen(true)} 
-          userRole={userRole} 
-        />
+        <AppHeader onMenuClick={() => setIsMobileOpen(true)} userRole={userRole} />
         <div className="flex-1 p-4 overflow-y-auto">{children}</div>
       </div>
     </div>

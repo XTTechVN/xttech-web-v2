@@ -1,10 +1,17 @@
+'use client';
 
-import React from 'react'
+import { useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 
-const Page = () => {
-  return (
-    <div>Page</div>
-  )
+export default function DepartmentIndexPage() {
+  const params = useParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (params.id) {
+      router.replace(`/app/departments/${params.id}/positions`);
+    }
+  }, [params.id, router]);
+
+  return null;
 }
-
-export default Page

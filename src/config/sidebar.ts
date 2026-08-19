@@ -24,7 +24,8 @@ export const acceptedSections = [
   'materials',
   'quotations',
   'extra-options',
-  'formulas'
+  'formulas',
+  "shifts"
 ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {

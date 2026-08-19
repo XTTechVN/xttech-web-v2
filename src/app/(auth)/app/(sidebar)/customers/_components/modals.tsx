@@ -84,10 +84,24 @@ export function CustomerFormModal({
   }, [isOpen, initialData]);
 
   const handleConfirm = (data: CustomerFormValues) => {
+    const payload: any = {
+      name: data.name,
+      phone: data.phone,
+    };
+    if (data.identifyCode && data.identifyCode.trim() !== '') {
+      payload.identifyCode = data.identifyCode;
+    }
+    if (data.email && data.email.trim() !== '') {
+      payload.email = data.email;
+    }
+    if (data.address && data.address.trim() !== '') {
+      payload.address = data.address;
+    }
+
     if (initialData) {
-      updateMutation({ id: initialData.id, data: data as CustomerUpdate });
+      updateMutation({ id: initialData.id, data: payload as CustomerUpdate });
     } else {
-      mutate(data);
+      mutate(payload as CustomerCreate);
     }
   };
 
@@ -106,23 +120,39 @@ export function CustomerFormModal({
             label="Mã định danh"
             placeholder="Nhập mã định danh (MST/CCCD)"
             fullWidth
-            {...register('identifyCode')}
-            error={errors.identifyCode ? 'Mã định danh không hợp lệ' : undefined}
+            {...register('identifyCode', {
+              pattern: {
+                value: /^(?:\d{10}|\d{12}|\d{13})$/,
+                message: 'Mã định danh phải là MST (10 hoặc 13 số) hoặc CCCD (12 số)',
+              },
+            })}
+            error={errors.identifyCode?.message}
           />
           <Input
-            label="Số điện thoại"
+            label="Số điện thoại *"
             placeholder="Nhập số điện thoại"
             fullWidth
-            {...register('phone')}
-            error={errors.phone ? 'Số điện thoại không hợp lệ' : undefined}
+            {...register('phone', {
+              required: 'Số điện thoại không được để trống',
+              pattern: {
+                value: /^(0[3|5|7|8|9])[0-9]{8}$/,
+                message: 'Số điện thoại không đúng định dạng Việt Nam',
+              },
+            })}
+            error={errors.phone?.message}
           />
           <Input
             label="Email"
             placeholder="Nhập địa chỉ email"
             type="email"
             fullWidth
-            {...register('email')}
-            error={errors.email ? 'Email không hợp lệ' : undefined}
+            {...register('email', {
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'Email không đúng định dạng',
+              },
+            })}
+            error={errors.email?.message}
           />
           <Input
             label="Địa chỉ"

@@ -115,7 +115,7 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[35%_65%] gap-4 text-black">
+    <div className="grid grid-cols-1 xl:grid-cols-[35%_65%] gap-4 text-black pb-80">
       {/* Cột trái: Editor */}
       <div className="bg-white rounded border border-gray-200 p-4">
         <QuotationEditor
