@@ -407,13 +407,13 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
               onClick={handleExportExcel}
               loading={isExporting}
               leftIcon={<Download className="w-4 h-4" />}
-              className="px-2.5 lg:px-3 gap-0 lg:gap-2"
+              className="px-2.5 lg:px-3 gap-0 lg:gap-2 hover:bg-[#ececf27d]"
             >
               <span className="hidden lg:inline">{isExporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
             </Button>
           )}
 
-          <Button variant="outline" size="sm" onClick={handleRefresh} className="p-2 h-9 w-9 shrink-0 flex items-center justify-center rounded-lg">
+          <Button variant="outline" size="sm" onClick={handleRefresh} className="p-2 h-9 w-9 shrink-0 flex items-center justify-center rounded-lg hover:bg-[#ececf27d]">
             <RotateCw className={`w-4 h-4 text-slate-500 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
         </div>

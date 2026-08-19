@@ -514,7 +514,7 @@ export default function AttendancesPage() {
     {
       key: 'checkIn',
       label: 'Check In',
-      minWidth: '100px',
+      minWidth: '130px',
       cell: (row) => {
         const imgPath = row.imgCheckinPath;
         const imgSrc = imgPath ? (imgPath.startsWith('http') ? imgPath : `${BASE_MINIO_URL}${imgPath}`) : null;
@@ -537,7 +537,7 @@ export default function AttendancesPage() {
             <div className="flex flex-col">
               <span className="font-medium text-slate-700 text-sm">{row.checkIn ? row.checkIn.slice(0, 5) : '--:--'}</span>
               {row.isLate && (
-                <span className="text-[10px] text-amber-600 font-semibold">Muộn {row.lateMinutes ?? 0}p</span>
+                <span className="text-[10px] text-slate-500 font-semibold">Muộn {row.lateMinutes ?? 0}p</span>
               )}
             </div>
           </div>
@@ -547,7 +547,7 @@ export default function AttendancesPage() {
     {
       key: 'checkOut',
       label: 'Check Out',
-      minWidth: '100px',
+      minWidth: '130px',
       cell: (row) => {
         const imgPath = row.imgCheckoutPath;
         const imgSrc = imgPath ? (imgPath.startsWith('http') ? imgPath : `${BASE_MINIO_URL}${imgPath}`) : null;
@@ -570,7 +570,7 @@ export default function AttendancesPage() {
             <div className="flex flex-col">
               <span className="font-medium text-slate-700 text-sm">{row.checkOut ? row.checkOut.slice(0, 5) : '--:--'}</span>
               {row.isEarlyLeave && (
-                <span className="text-[10px] text-amber-600 font-semibold">Về sớm {row.earlyLeaveMinutes ?? 0}p</span>
+                <span className="text-[10px] text-slate-500 font-semibold">Về sớm {row.earlyLeaveMinutes ?? 0}p</span>
               )}
             </div>
           </div>
@@ -913,7 +913,6 @@ export default function AttendancesPage() {
         onClose={() => setShowTimekeepingModal(false)}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['attendances'] });
-          toast.success('Điểm danh thành công!');
         }}
       />
 
