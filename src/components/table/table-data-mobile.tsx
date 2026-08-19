@@ -52,7 +52,7 @@ export function TableDataMobile<T>({
     isFetchingNextPage,
     hasNextPage: !!hasNextPage,
     fetchNextPage,
-    threshold: 100, // Kích hoạt fetch trước khi chạm đáy 100px
+    threshold: 300, // Kích hoạt fetch trước khi chạm đáy 300px
   });
 
   // Gom toàn bộ items từ tất cả các trang đã tải về thành 1 mảng phẳng duy nhất

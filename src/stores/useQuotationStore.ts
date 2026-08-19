@@ -422,14 +422,29 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
 
   getPayload: () => {
     const { title, code, discountPercentage, status, projectId, reviewBy, floors } = get();
+
+    // Làm sạch dữ liệu cấu trúc tầng trước khi tạo payload
+    const cleanedFloors = floors.map((floor) => ({
+      ...floor,
+      materials: floor.materials.map((mat) => ({
+        ...mat,
+        doors: mat.doors.map((door) => ({
+          ...door,
+          quantity: (door.quantity as any) === '' ? 1 : Number(door.quantity) || 1,
+          width: (door.width as any) === '' ? 0 : Number(door.width) || 0,
+          height: (door.height as any) === '' ? 0 : Number(door.height) || 0,
+        })),
+      })),
+    }));
+
     return {
       title,
       code,
-      discountPercentage,
+      discountPercentage: (discountPercentage as any) === '' ? 0 : Number(discountPercentage) || 0,
       status,
       projectId,
       reviewBy,
-      floors,
+      floors: cleanedFloors,
     };
   },
 

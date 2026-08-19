@@ -23,8 +23,8 @@ export const QuotationInfo = () => {
           <label className={EDITOR_STYLES.label}>Chiết khấu (%)</label>
           <Input
             type="number"
-            value={store.discountPercentage}
-            onChange={(e) => store.setQuotationField('discountPercentage', parseFloat(e.target.value) || 0)}
+            value={store.discountPercentage ?? ''}
+            onChange={(e) => store.setQuotationField('discountPercentage', e.target.value === '' ? '' : (parseFloat(e.target.value) || 0))}
             className={EDITOR_STYLES.input}
           />
         </div>

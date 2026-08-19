@@ -144,8 +144,8 @@ export const QuotationDoor = ({
             <span className={EDITOR_STYLES.label}>Rộng (mm)</span>
             <Input
               type="number"
-              value={door.width || ''}
-              onChange={(e) => handleUpdateDoor('width', parseFloat(e.target.value) || 0)}
+              value={door.width ?? ''}
+              onChange={(e) => handleUpdateDoor('width', e.target.value === '' ? '' : (parseFloat(e.target.value) || 0))}
               className={EDITOR_STYLES.input}
             />
           </div>
@@ -153,8 +153,8 @@ export const QuotationDoor = ({
             <span className={EDITOR_STYLES.label}>Cao (mm)</span>
             <Input
               type="number"
-              value={door.height || ''}
-              onChange={(e) => handleUpdateDoor('height', parseFloat(e.target.value) || 0)}
+              value={door.height ?? ''}
+              onChange={(e) => handleUpdateDoor('height', e.target.value === '' ? '' : (parseFloat(e.target.value) || 0))}
               className={EDITOR_STYLES.input}
             />
           </div>
@@ -162,8 +162,8 @@ export const QuotationDoor = ({
             <span className={EDITOR_STYLES.label}>Số lượng</span>
             <Input
               type="number"
-              value={door.quantity || ''}
-              onChange={(e) => handleUpdateDoor('quantity', parseInt(e.target.value, 10) || 1)}
+              value={door.quantity ?? ''}
+              onChange={(e) => handleUpdateDoor('quantity', e.target.value === '' ? '' : (parseInt(e.target.value, 10) || 0))}
               className={EDITOR_STYLES.input}
             />
           </div>

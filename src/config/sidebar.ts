@@ -160,19 +160,19 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Quản lý dự án',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/projects',
-        roles: ['admin', 'sale'],
+        roles: ['super', 'admin', 'sale'],
         subItems: [
           {
             id: 'projects',
             label: 'Danh sách dự án',
             href: '/app/projects',
-            roles: ['admin', 'sale'],
+            roles: ['super', 'admin', 'sale'],
           },
           {
             id: 'configurations',
             label: 'Cấu hình dự án',
             href: '/app/projects/configuration',
-            roles: ['admin', 'sale'],
+            roles: ['super', 'admin'],
           },
         ],
       },

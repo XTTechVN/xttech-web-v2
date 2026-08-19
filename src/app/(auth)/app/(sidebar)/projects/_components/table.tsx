@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import { useSearchParams } from 'next/navigation';
 
 import type { Customer } from '@/types';
+import { useAuthStore } from '@/stores';
 
 interface TableProps {
   customers?: Pick<Customer, 'id' | 'name'>[];
@@ -37,9 +38,17 @@ const Table = ({ customers = [], onViewClick, onEditClick, onDeleteClick, onAddC
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
 
+  const { user } = useAuthStore();
+  const isSaleOnly = user?.roles?.some((role) => role.code === 'sale') &&
+    !user?.roles?.some((role) => role.code === 'super' || role.code === 'admin');
+
   // Fetcher gọi thẳng action, không qua store
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const res = await getProjects({ offset, limit, search: search || undefined });
+    const params: any = { offset, limit, search: search || undefined };
+    if (isSaleOnly && user?.id) {
+      params.userId = user.id;
+    }
+    const res = await getProjects(params);
     if (!res) {
       toast.error('Lỗi khi tải danh sách dự án');
       throw new Error('Lỗi khi tải danh sách dự án');
