@@ -105,6 +105,14 @@ const Table = () => {
         <TableAction
           items={[
             {
+              title: 'Quản lý vị trí',
+              icon: Eye,
+              size: 18,
+              onClick: () => {
+                router.push(`/app/departments/${row.id}/positions`);
+              },
+            },
+            {
               title: 'Chỉnh sửa',
               icon: Pencil,
               size: 18,
@@ -122,14 +130,6 @@ const Table = () => {
               onClick: () => {
                 setDeptToDelete(row);
                 setIsDeleteOpen(true);
-              },
-            },
-            {
-              title: 'Quản lý vị trí',
-              icon: Eye,
-              size: 18,
-              onClick: () => {
-                router.push(`/app/departments/${row.id}/positions`);
               },
             },
           ]}
