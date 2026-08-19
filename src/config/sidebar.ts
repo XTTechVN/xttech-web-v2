@@ -25,7 +25,8 @@ export const acceptedSections = [
   'quotations',
   'extra-options',
   'formulas',
-  "shifts"
+  "shifts",
+  "attendances-reports",
 ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
@@ -90,6 +91,12 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         roles: ['super', 'admin', 'hr', 'sale', 'technician'],
         subItems: [
           {
+            id: 'attendances-reports',
+            label: 'Báo cáo thống kê',
+            href: '/app/attendances/reports',
+            roles: ['super', 'admin', 'hr'],
+          },
+          {
             id: 'attendances',
             label: 'Bảng công tháng (Admin)',
             href: '/app/attendances',
@@ -109,7 +116,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
           // },
           {
             id: 'attendances-payroll',
-            label: 'Tính công & Dữ liệu lương',
+            label: 'Lịch sử chấm công',
             href: '/app/attendances/payroll',
             roles: ['super', 'admin', 'hr', 'sale', 'technician'],
           },

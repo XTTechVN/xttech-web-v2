@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { PlusCircle, Search, Check } from 'lucide-react';
+import { PlusCircle, Search, Check, Calendar, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 import type { ITableFilterProps } from './types';
@@ -63,13 +64,15 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
     };
   }, [isOpen, filter.onSearchChange]);
 
+  const options = filter.options || [];
+
   // Lọc các lựa chọn dựa trên truy vấn tìm kiếm
-  const filteredOptions = filter.options.filter((option) =>
+  const filteredOptions = options.filter((option) =>
     option.label.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Tìm lựa chọn đang được chọn hiện tại
-  const selectedOption = filter.options.find((opt) => opt.value === filter.value);
+  const selectedOption = options.find((opt) => opt.value === filter.value);
 
   return (
     <div ref={containerRef} className="relative inline-block">
@@ -192,14 +195,190 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
   );
 }
 
+function DateRangeFilter({ filter }: { filter: ITableFilterProps }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [dropdownAlign, setDropdownAlign] = useState<'left' | 'right'>('left');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Tự động căn chỉnh popup
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const dropdownWidth = 288; // w-72
+      if (rect.left + dropdownWidth > window.innerWidth) {
+        setDropdownAlign('right');
+      } else {
+        setDropdownAlign('left');
+      }
+    }
+  }, [isOpen]);
+
+  // Đóng khi click ngoài
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const startDate = filter.startDate;
+  const endDate = filter.endDate;
+  const hasValue = Boolean(startDate || endDate);
+
+  const handlePreset = (type: 'this_month' | 'last_month' | 'this_year') => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+    if (type === 'this_month') {
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      filter.onDateRangeChange?.(fmt(first), fmt(last));
+    } else if (type === 'last_month') {
+      const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const last = new Date(now.getFullYear(), now.getMonth(), 0);
+      filter.onDateRangeChange?.(fmt(first), fmt(last));
+    } else if (type === 'this_year') {
+      const first = new Date(now.getFullYear(), 0, 1);
+      const last = new Date(now.getFullYear(), 11, 31);
+      filter.onDateRangeChange?.(fmt(first), fmt(last));
+    }
+    setIsOpen(false);
+  };
+
+  return (
+    <div ref={containerRef} className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-text-secondary bg-white border border-dashed border-border-secondary hover:border-border-hover rounded-lg transition shadow-xs cursor-pointer select-none h-9',
+          hasValue && 'border-solid border-border-focus',
+        )}
+      >
+        {filter.icon ? (
+          <span className="shrink-0">{filter.icon}</span>
+        ) : (
+          <Calendar className="w-3.5 h-3.5 text-icon-secondary shrink-0" />
+        )}
+        <span className="text-gray-500">{filter.label || 'Thời gian'}</span>
+        {hasValue && (
+          <>
+            <span className="w-px h-4 bg-border-primary mx-1" />
+            <span className="bg-[#f3f4f6] text-gray-700 text-xs px-2 py-0.5 rounded font-semibold tracking-wider flex items-center justify-center">
+              {startDate && endDate ? `${startDate} → ${endDate}` : startDate || endDate}
+            </span>
+          </>
+        )}
+      </button>
+
+      {isOpen && (
+        <div
+          className={cn(
+            'absolute mt-1.5 z-50 w-72 bg-white rounded-xl shadow-xl border border-border-primary p-3 space-y-3 animate-in fade-in-0 zoom-in-95 duration-100',
+            dropdownAlign === 'right' ? 'right-0' : 'left-0',
+          )}
+        >
+          {/* Nút chọn nhanh kỳ */}
+          <div className="grid grid-cols-3 gap-1 pb-2 border-b border-gray-100">
+            <button
+              type="button"
+              onClick={() => handlePreset('this_month')}
+              className="px-2 py-1 text-xs font-medium rounded-md hover:bg-primary/5 hover:text-primary text-gray-600 transition text-center cursor-pointer"
+            >
+              Tháng này
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePreset('last_month')}
+              className="px-2 py-1 text-xs font-medium rounded-md hover:bg-primary/5 hover:text-primary text-gray-600 transition text-center cursor-pointer whitespace-nowrap"
+            >
+              Tháng trước
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePreset('this_year')}
+              className="px-2 py-1 text-xs font-medium rounded-md hover:bg-primary/5 hover:text-primary text-gray-600 transition text-center cursor-pointer"
+            >
+              Năm nay
+            </button>
+          </div>
+
+          {/* Ô nhập ngày */}
+          <div className="space-y-2">
+            <div>
+              <label className="text-[11px] font-semibold text-gray-500 block mb-1">
+                Từ ngày
+              </label>
+              <input
+                type="date"
+                value={startDate || ''}
+                onChange={(e) =>
+                  filter.onDateRangeChange?.(e.target.value || undefined, endDate)
+                }
+                className="w-full text-xs h-8 px-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary focus:bg-white"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-gray-500 block mb-1">
+                Đến ngày
+              </label>
+              <input
+                type="date"
+                value={endDate || ''}
+                onChange={(e) =>
+                  filter.onDateRangeChange?.(startDate, e.target.value || undefined)
+                }
+                className="w-full text-xs h-8 px-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary focus:bg-white"
+              />
+            </div>
+          </div>
+
+          {/* Footer actions */}
+          <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => {
+                filter.onDateRangeChange?.(undefined, undefined);
+                setIsOpen(false);
+              }}
+              className="text-xs text-gray-500 hover:text-red-600 font-medium cursor-pointer"
+            >
+              Xóa bộ lọc
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="px-3 py-1 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 cursor-pointer"
+            >
+              Áp dụng
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function TableFilters({ filters }: { filters: ITableFilterProps[] }) {
   if (!filters || filters.length === 0) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {filters.map((filter, index) => (
-        <FacetedFilter key={index} filter={filter} />
-      ))}
+      {filters.map((filter, index) =>
+        filter.type === 'date-range' ? (
+          <DateRangeFilter key={index} filter={filter} />
+        ) : (
+          <FacetedFilter key={index} filter={filter} />
+        ),
+      )}
     </div>
   );
 }

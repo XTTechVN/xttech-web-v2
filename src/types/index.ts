@@ -48,3 +48,6 @@ export * from './attendance';
 
 // Work Shift
 export * from './work_shift';
+
+// Report
+export * from './report';
