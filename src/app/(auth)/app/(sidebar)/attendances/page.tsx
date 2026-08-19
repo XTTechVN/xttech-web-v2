@@ -211,6 +211,7 @@ export default function AttendancesPage() {
   const getStatusLabel = (status?: string | null) => {
     const map: Record<string, string> = {
       normal: "Đúng giờ",
+      present: "Đúng giờ",
       late: "Đi muộn",
       absent: "Vắng mặt",
       early_leave: "Về sớm",

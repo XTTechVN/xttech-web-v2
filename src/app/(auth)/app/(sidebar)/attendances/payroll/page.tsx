@@ -56,7 +56,7 @@ const formatTime = (value?: string | null): string => {
 
 const getStatusBadge = (status?: string | null) => {
   const statusTextMap: Record<string, string> = {
-    normal: 'Đúng giờ',
+    present: 'Đúng giờ',
     late: 'Đi muộn',
     absent: 'Vắng mặt',
     half_day: 'Nghỉ nửa ngày',
@@ -77,19 +77,30 @@ export default function PayrollDataPage() {
 
   const { data: attendances, isLoading: isLoadingAttendances } = useQuery({
     queryKey: ['attendances', user?.id],
-    queryFn: () => getAttendances({ userId: user!.id }),
+    queryFn: () => getAttendances({ userId: user!.id, limit: 100 }),
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
   });
 
   const myAttendances = attendances?.items ?? [];
 
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const todayStr = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
+
   const todayAttendance = useMemo(() => {
     return myAttendances.find((a) => a.workDate === todayStr);
   }, [myAttendances, todayStr]);
+
   const hasCheckedInToday = useMemo(() => {
-    return Boolean(todayAttendance && (todayAttendance.checkIn || todayAttendance.status));
+    return Boolean(
+      todayAttendance &&
+        (todayAttendance.checkIn ||
+          (todayAttendance.status && todayAttendance.status !== 'absent'))
+    );
   }, [todayAttendance]);
 
   // Filters and search for Payroll attendance history table
@@ -166,13 +177,14 @@ export default function PayrollDataPage() {
     if (filterEndDate) {
       items = items.filter((item) => item.workDate <= filterEndDate);
     }
+    const metaInfo = response.meta;
     return {
       items,
       meta: {
-        total: response.pagination?.total ?? items.length,
-        offset: response.pagination?.offset ?? offset,
-        limit: response.pagination?.limit ?? limit,
-        next: response.pagination?.next ?? false,
+        total: metaInfo?.total ?? items.length,
+        offset: metaInfo?.offset ?? offset,
+        limit: metaInfo?.limit ?? limit,
+        next: metaInfo?.next ?? false,
       },
     };
   };
@@ -511,10 +523,11 @@ export default function PayrollDataPage() {
       <AddAdjustmentModal
         open={showAdjustmentModal}
         onClose={() => setShowAdjustmentModal(false)}
-        onSuccess={() => {
-          queryClient.invalidateQueries({
-            queryKey: ['attendances'],
-          });
+        onSuccess={async () => {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['attendances'], refetchType: 'all' }),
+            queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'], refetchType: 'all' }),
+          ]);
           toast.success('Thêm thành công');
         }}
         data={selectedRow}
@@ -529,9 +542,11 @@ export default function PayrollDataPage() {
       <AutoTimekeepingModal
         open={showTimekeepingModal}
         onClose={() => setShowTimekeepingModal(false)}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['attendances'] });
-          queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'] });
+        onSuccess={async () => {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['attendances'], refetchType: 'all' }),
+            queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'], refetchType: 'all' }),
+          ]);
         }}
         hasCheckedIn={hasCheckedInToday}
       />

@@ -11,7 +11,7 @@ export interface Pagination {
 
 export interface DataListResponse<T> {
     items: T[];
-    pagination: Pagination;
+    meta?: Pagination;
 }
 
 
