@@ -36,6 +36,8 @@ export interface WorkShift {
   updatedAt?: string;
   deletedAt?: string | null;
   workShiftException?: WorkShiftException[];
+  workShiftExceptions?: WorkShiftException[];
+  exceptions?: WorkShiftException[];
   department?: {
     id: number;
     name: string;
@@ -52,6 +54,7 @@ export interface WorkShift {
   work_longitude?: number | null;
   allowed_distance?: number;
   work_shift_exception?: WorkShiftException[];
+  work_shift_exceptions?: WorkShiftException[];
   created_at?: string;
   updated_at?: string;
 }

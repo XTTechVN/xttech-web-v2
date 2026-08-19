@@ -724,7 +724,7 @@ export default function AttendancesPage() {
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Tổng số có mặt */}
         {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
           <div className="flex items-center justify-between">
