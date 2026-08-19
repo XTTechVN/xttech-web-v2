@@ -57,7 +57,7 @@ function PasswordForm({ onClose }: { onClose: () => void }) {
         />
         <button
           type="button"
-          className="absolute right-3 bottom-[11px] text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
+          className="absolute right-3 bottom-2.75 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
           onClick={() => setShowNewPassword(!showNewPassword)}
         >
           {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -76,7 +76,7 @@ function PasswordForm({ onClose }: { onClose: () => void }) {
         />
         <button
           type="button"
-          className="absolute right-3 bottom-[11px] text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
+          className="absolute right-3 bottom-2.75 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
         >
           {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}

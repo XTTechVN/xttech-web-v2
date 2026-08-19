@@ -77,7 +77,7 @@ export default function DepartmentDetailLayout({
       </div>
 
       {/* Tab Content */}
-      <div className="min-h-[400px] w-full">{children}</div>
+      <div className="min-h-100 w-full">{children}</div>
     </div>
   );
 }
