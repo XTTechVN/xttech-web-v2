@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, X, Check } from 'lucide-react';
+import { Modal } from '@/components';
 
 interface SearchSelectProps<T> {
   isOpen: boolean;
@@ -14,9 +15,10 @@ interface SearchSelectProps<T> {
   triggerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function SearchSelect<T extends { id: string | number; name?: string | null; code?: string | null }>({
+export function SearchSelect<T extends { id: string | number; name?: string | null; code?: string | null; price?: number | null; unit?: string | null }>({
   isOpen,
   onClose,
+  title,
   items,
   selectedValue,
   onSelect,
@@ -26,6 +28,17 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
 }: SearchSelectProps<T>) {
   const [searchTerm, setSearchTerm] = useState('');
   const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Theo dõi width của window để xác định thiết bị di động
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const filteredItems = useMemo(() => {
     if (!searchTerm.trim()) return items;
@@ -93,7 +106,88 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
     }
   }, [isOpen]);
 
-  if (!isOpen || !coords) return null;
+  if (!isOpen) return null;
+
+  if (isMobile) {
+    return (
+      <Modal isOpen={isOpen} onClose={onClose} title={title} size="full" className="h-full max-h-screen rounded-none">
+        <div className="flex flex-col h-full text-slate-800 -mx-6 -my-4">
+          {/* Search Input */}
+          <div className="p-3 border-b border-slate-100 shrink-0">
+            <div className="relative flex items-center">
+              <Search className="absolute left-3 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-primary focus:bg-white transition-all text-slate-800 font-normal"
+                autoFocus
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 p-1 rounded-full text-slate-400 hover:text-slate-600 bg-slate-200/50 hover:bg-slate-200 transition-all cursor-pointer border-0"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Content list */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2.5 min-h-0 text-xs pb-20">
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item) => {
+                const isSelected = item.id === selectedValue;
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      onSelect(item);
+                      onClose();
+                    }}
+                    className={`w-full text-left px-3 py-3 rounded-lg flex items-center justify-between gap-3 transition-all cursor-pointer relative min-w-0 border ${
+                      isSelected
+                        ? 'bg-primary/5 text-primary font-semibold border-primary/20 shadow-xs'
+                        : 'bg-white text-slate-650 hover:bg-slate-50 hover:text-slate-900 font-normal border-slate-100 shadow-xs'
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0 pr-6">
+                      <div className="flex flex-col gap-1.5 w-full text-left">
+                        <div className="font-semibold text-slate-800 text-sm leading-snug whitespace-normal break-words">
+                          {item.name || '—'}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {item.code && (
+                            <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">
+                              {item.code}
+                            </span>
+                          )}
+                          {(item.price !== undefined && item.price !== null) && (
+                            <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-2 py-0.5 rounded font-extrabold select-none">
+                              {Number(item.price).toLocaleString('vi-VN')}đ{item.unit ? `/${item.unit}` : ''}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {isSelected && <Check size={14} className="text-primary shrink-0 absolute right-3 top-1/2 -translate-y-1/2" />}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-10 text-slate-400 italic">
+                Không tìm thấy kết quả phù hợp
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  if (!coords) return null;
 
   return createPortal(
     <div
@@ -131,47 +225,49 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
       </div>
 
       {/* Content list */}
-      <div className="flex-1 overflow-y-auto p-1 space-y-0.5 min-h-0 text-[11px]">
+      <div className="flex-1 overflow-auto p-1 min-h-0 text-[11px] scrollbar-none">
         {filteredItems.length > 0 ? (
-          filteredItems.map((item) => {
-            const isSelected = item.id === selectedValue;
-            return (
-              <div
-                key={item.id}
-                onClick={() => {
-                  onSelect(item);
-                  onClose();
-                }}
-                className={`w-full text-left px-2.5 py-1.5 rounded flex items-center justify-between gap-3 transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-primary/5 text-primary font-medium'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-normal'
-                }`}
-              >
-                <div className="flex-1 min-w-0">
-                  {renderItem ? (
-                    renderItem(item)
-                  ) : (
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate pr-2">
-                        {item.name || '—'}
-                      </span>
-                      {item.code && (
-                        <span className={`text-[9px] uppercase font-medium px-1.5 py-0.5 rounded shrink-0 ${
-                          isSelected 
-                            ? 'bg-primary/10 text-primary border border-primary/20' 
-                            : 'bg-slate-100 text-slate-500 border border-slate-200/50'
-                        }`}>
-                          {item.code}
-                        </span>
-                      )}
-                    </div>
-                  )}
+          <div className="min-w-full w-max flex flex-col space-y-0.5 relative">
+            {filteredItems.map((item) => {
+              const isSelected = item.id === selectedValue;
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => {
+                    onSelect(item);
+                    onClose();
+                  }}
+                  className={`w-full text-left px-2.5 py-1.5 rounded flex items-center justify-between gap-3 transition-all cursor-pointer relative min-w-0 ${
+                    isSelected
+                      ? 'bg-primary/5 text-primary font-medium'
+                      : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-normal'
+                  }`}
+                >
+                  <div className="flex-1 min-w-0 pr-1">
+                    {renderItem ? (
+                      renderItem(item)
+                    ) : (
+                      <div className="flex items-center justify-between gap-2 w-full">
+                        <div className="whitespace-nowrap pr-[90px] font-medium flex-1">
+                          {item.name || '—'}
+                        </div>
+                        {item.code && (
+                          <span className={`text-[9px] uppercase font-medium px-1.5 py-0.5 rounded shrink-0 sticky right-8 bg-inherit pl-2.5 z-10 ${
+                            isSelected 
+                              ? 'text-primary border border-primary/10' 
+                              : 'text-slate-500 border border-slate-200/50'
+                          }`}>
+                            {item.code}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {isSelected && <Check size={12} className="text-primary shrink-0 sticky right-2 z-20 bg-inherit pl-1.5" />}
                 </div>
-                {isSelected && <Check size={12} className="text-primary shrink-0" />}
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         ) : (
           <div className="text-center py-6 text-slate-400 text-[11px] italic">
             Không tìm thấy kết quả phù hợp
