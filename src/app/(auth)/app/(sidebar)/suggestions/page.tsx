@@ -10,7 +10,7 @@ function SuggestionsPageContent() {
   const [containerWidth, setContainerWidth] = useState<number>(0);
 
   const { user } = useAuthStore();
-  const isManager = user?.roles?.some((role) => role.code === 'admin' || role.code === 'hr') ?? false;
+  const isManager = user?.roles?.some((role) => role.code === 'admin' || role.code === 'hr' ||  role.code === 'super') ?? false;
 
   useEffect(() => {
     if (!containerRef.current) return;
