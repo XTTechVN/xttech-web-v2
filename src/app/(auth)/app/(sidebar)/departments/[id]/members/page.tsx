@@ -206,7 +206,7 @@ export default function DepartmentMembersPage() {
     return (
       <div
         key={row.id || index}
-        className="p-4 rounded-xl border border-gray-200 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md transition-shadow"
+        className="p-4 rounded-xl border border-primary/10 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -231,48 +231,50 @@ export default function DepartmentMembersPage() {
               )}
             </div>
           </div>
-
-          <TableAction
-            items={[
-              {
-                title: 'Đổi chức vụ / vị trí',
-                icon: Briefcase,
-                size: 18,
-                className: 'hover:text-blue-600 hover:bg-blue-50',
-                onClick: () => {
-                  setSelectedEmpForPos(row);
-                  setIsPositionModalOpen(true);
-                },
-              },
-              {
-                title: 'Gỡ khỏi phòng ban',
-                icon: UserMinus,
-                size: 18,
-                className: 'hover:text-red-600 hover:bg-red-50',
-                onClick: () => {
-                  setEmpToRemove(row);
-                  setIsRemoveOpen(true);
-                },
-              },
-            ]}
-          />
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100">
-          <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-            {row.identifyCode || 'NV'}
-          </span>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-100/50">
+          <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+            <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 shrink-0">
+              {row.identifyCode || 'NV'}
+            </span>
 
-          <div className="flex flex-wrap gap-1">
-            {deptPositions.length > 0 ? (
-              deptPositions.map((pos: any) => (
-                <Badge key={pos.id} variant="info" size="sm">
-                  {pos.name}
-                </Badge>
-              ))
-            ) : (
-              <span className="text-gray-400 text-xs italic">Chưa chỉ định chức vụ</span>
-            )}
+            <div className="flex flex-wrap gap-1">
+              {deptPositions.length > 0 ? (
+                deptPositions.map((pos: any) => (
+                  <Badge key={pos.id} variant="info" size="sm">
+                    {pos.name}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-gray-400 text-xs italic">Chưa chỉ định chức vụ</span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedEmpForPos(row);
+                setIsPositionModalOpen(true);
+              }}
+              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Briefcase size={12} />
+              Vị trí
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEmpToRemove(row);
+                setIsRemoveOpen(true);
+              }}
+              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <UserMinus size={12} />
+              Gỡ
+            </button>
           </div>
         </div>
       </div>

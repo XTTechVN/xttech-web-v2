@@ -327,10 +327,14 @@ export default function AdjustmentsSidebarPage() {
     return (
       <div
         key={row.id ?? index}
-        className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs transition hover:shadow-md space-y-3"
+        onClick={() => {
+          setSelectedRow(row);
+          setShowDetailModal(true);
+        }}
+        className="rounded-2xl border border-primary/10 bg-white p-4 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 space-y-3 cursor-pointer"
       >
         {/* Header: ID + User + Status */}
-        <div className="flex items-start justify-between gap-2 pb-2 border-b border-slate-100">
+        <div className="flex items-start justify-between gap-2 pb-2 border-b border-gray-100/50">
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] font-bold text-slate-400">#{row.id}</span>
@@ -391,46 +395,43 @@ export default function AdjustmentsSidebarPage() {
         )}
 
         {/* Actions Bar */}
-        <div className="flex items-center justify-end pt-1 border-t border-slate-100">
-          <TableAction
-            items={[
-              {
-                title: 'Xem chi tiết',
-                icon: Eye,
-                size: 18,
-                onClick: () => {
-                  setSelectedRow(row);
-                  setShowDetailModal(true);
-                },
-              },
-              isAdmin &&
-                isPending && {
-                  title: 'Xét duyệt khiếu nại',
-                  icon: Check,
-                  size: 18,
-                  onClick: () => openReviewModal(row, 'approved'),
-                },
-              canManageThisRow && {
-                title: 'Chỉnh sửa',
-                icon: Pencil,
-                size: 18,
-                onClick: () => {
-                  setSelectedRow(row);
-                  setShowEditModal(true);
-                },
-              },
-              canManageThisRow && {
-                title: 'Xóa',
-                icon: Trash2,
-                size: 18,
-                className: 'hover:text-red-600 hover:bg-red-50',
-                onClick: () => {
-                  setDeletingId(row.id);
-                  setShowDeleteModal(true);
-                },
-              },
-            ]}
-          />
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100/50" onClick={(e) => e.stopPropagation()}>
+          {isAdmin && isPending && (
+            <button
+              type="button"
+              onClick={() => openReviewModal(row, 'approved')}
+              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Check size={12} />
+              Duyệt
+            </button>
+          )}
+          {canManageThisRow && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedRow(row);
+                setShowEditModal(true);
+              }}
+              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Pencil size={12} />
+              Sửa
+            </button>
+          )}
+          {canManageThisRow && (
+            <button
+              type="button"
+              onClick={() => {
+                setDeletingId(row.id);
+                setShowDeleteModal(true);
+              }}
+              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Trash2 size={12} />
+              Xóa
+            </button>
+          )}
         </div>
       </div>
     );

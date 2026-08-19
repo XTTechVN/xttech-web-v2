@@ -142,41 +142,42 @@ export default function RoleTable() {
   const renderCard = (row: Role, index: number) => (
     <div
       key={row.id || index}
-      className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+      className="p-4 rounded-xl border border-primary/10 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300"
     >
-      <div className="flex items-center gap-3">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-gray-900 text-sm">{row.name}</span>
+      <div className="flex items-start gap-3">
+        <div className="flex flex-col flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-gray-900 text-sm sm:text-base leading-snug">{row.name}</span>
             <Badge variant={getRoleVariant(row.code)} size="sm">
               {row.code || 'N/A'}
             </Badge>
           </div>
-          <span className="text-xs text-gray-500 line-clamp-1 mt-0.5">{row.description || 'Chưa có mô tả'}</span>
+          <span className="text-xs text-gray-500 line-clamp-2 mt-1">{row.description || 'Chưa có mô tả'}</span>
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5">
         <button
+          type="button"
           onClick={() => {
             setSelectedRole(row);
             setIsFormModalOpen(true);
           }}
-          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
-          title="Chỉnh sửa"
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
         >
-          <Pencil size={18} />
+          <Pencil size={12} />
+          Sửa
         </button>
-
         <button
+          type="button"
+          disabled={isDeleting}
           onClick={() => {
             setRoleToDelete(row);
             setIsDeleteModalOpen(true);
           }}
-          disabled={isDeleting}
-          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-          title="Xóa"
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
         >
-          <Trash2 size={18} />
+          <Trash2 size={12} />
+          Xóa
         </button>
       </div>
     </div>

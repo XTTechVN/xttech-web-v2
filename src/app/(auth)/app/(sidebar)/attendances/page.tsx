@@ -380,10 +380,14 @@ export default function AttendancesPage() {
     return (
       <div
         key={row.id || index}
-        className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs hover:shadow-md transition space-y-3"
+        onClick={() => {
+          setSelectedRow(row);
+          setShowDetailModal(true);
+        }}
+        className="rounded-2xl border border-primary/10 bg-white p-4 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 space-y-3 cursor-pointer"
       >
         {/* Header: User Avatar + Name + Status */}
-        <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+        <div className="flex items-center justify-between gap-3 pb-2 border-b border-gray-100/50">
           <div className="flex items-center gap-3">
             <Avatar
               src={row.user?.avatar ? (row.user.avatar.startsWith('http') ? row.user.avatar : `${BASE_MINIO_URL}${row.user.avatar}`) : undefined}
@@ -436,45 +440,37 @@ export default function AttendancesPage() {
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
-          <TableAction
-            items={[
-              {
-                title: 'Khiếu nại',
-                icon: FileEdit,
-                size: 18,
-                onClick: () => {
-                  setSelectedRow(row);
-                  setShowAdjustmentModal(true);
-                },
-              },
-              {
-                title: 'Xem chi tiết',
-                icon: Eye,
-                size: 18,
-                onClick: () => {
-                  setSelectedRow(row);
-                  setShowDetailModal(true);
-                },
-              },
-              {
-                title: 'Chỉnh sửa',
-                icon: Pencil,
-                size: 18,
-                onClick: () => {
-                  setSelectedRow(row);
-                  setShowEditModal(true);
-                },
-              },
-              {
-                title: 'Xóa',
-                icon: Trash2,
-                size: 18,
-                className: 'hover:text-red-600 hover:bg-red-50',
-                onClick: () => handleDelete(row),
-              },
-            ]}
-          />
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100/50" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedRow(row);
+              setShowAdjustmentModal(true);
+            }}
+            className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <FileEdit size={12} />
+            Khiếu nại
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedRow(row);
+              setShowEditModal(true);
+            }}
+            className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <Pencil size={12} />
+            Sửa
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDelete(row)}
+            className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <Trash2 size={12} />
+            Xóa
+          </button>
         </div>
       </div>
     );

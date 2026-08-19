@@ -28,7 +28,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           disabled={disabled}
           rows={rows}
           className={cn(
-            'w-full p-3 text-sm bg-white border rounded-md outline-none transition-all duration-200 text-gray-900 resize-y',
+            'w-full p-3 text-base md:text-sm bg-white border rounded-md outline-none transition-all duration-200 text-gray-900 resize-y',
             'hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20',
             'disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed',
             error

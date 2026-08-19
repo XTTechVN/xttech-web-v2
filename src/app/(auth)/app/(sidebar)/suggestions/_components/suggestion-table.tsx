@@ -298,13 +298,14 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
     return (
       <div
         key={row.id || index}
-        className="p-4 rounded-xl border border-slate-200 bg-white flex flex-col gap-3 hover:shadow-md transition-shadow select-none"
+        onClick={() => handleViewDetails(row)}
+        className="p-4 rounded-xl border border-primary/10 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 cursor-pointer"
       >
         {/* Header: Tiêu đề, Phân loại & Trạng thái */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-[#101718] text-sm leading-tight">{row.title}</span>
+              <span className="font-bold text-[#101718] text-sm leading-tight break-words">{row.title}</span>
               <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${catInfo.class}`}>{catInfo.label}</span>
             </div>
           </div>
@@ -317,7 +318,7 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
         {row.content && <p className="text-[12px] text-[#5E858D] font-normal line-clamp-2 leading-relaxed">{row.content}</p>}
 
         {/* Footer: Thông tin người gửi, Thời gian & Các nút thao tác */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100/50">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             {row.anonymous ? (
               <div className="w-6 h-6 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-500 border border-slate-200/60">
@@ -347,38 +348,35 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
           </div>
 
           {/* Các nút hành động */}
-          <TableAction
-            items={[
-              {
-                title: 'Xem chi tiết',
-                icon: Eye,
-                size: 18,
-                onClick: () => handleViewDetails(row),
-              },
-              row.status === 'pending' &&
-                row.userId === currentUserId && {
-                  title: 'Chỉnh sửa',
-                  icon: Pencil,
-                  size: 18,
-                  onClick: () => {
-                    setSelectedSuggestion(row);
-                    setIsEditing(true);
-                    setDetailModalOpen(true);
-                  },
-                },
-              row.status === 'pending' &&
-                (isManager || row.userId === currentUserId) && {
-                  title: 'Xóa',
-                  icon: Trash2,
-                  size: 18,
-                  className: 'hover:text-red-600 hover:bg-red-50',
-                  onClick: () => {
-                    setSelectedSuggestion(row);
-                    setIsDeleteConfirmOpen(true);
-                  },
-                },
-            ]}
-          />
+          <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+            {row.status === 'pending' && row.userId === currentUserId && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSuggestion(row);
+                  setIsEditing(true);
+                  setDetailModalOpen(true);
+                }}
+                className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Pencil size={12} />
+                Sửa
+              </button>
+            )}
+            {row.status === 'pending' && (isManager || row.userId === currentUserId) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSuggestion(row);
+                  setIsDeleteConfirmOpen(true);
+                }}
+                className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Trash2 size={12} />
+                Xóa
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );

@@ -5,7 +5,7 @@ import { cn } from '@/utils/cn';
 
 export interface DropdownItemProps {
   label: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   danger?: boolean;
   icon?: React.ReactNode;
@@ -67,8 +67,8 @@ const Dropdown: React.FC<DropdownProps> = ({
                 key={idx}
                 type="button"
                 disabled={item.disabled}
-                onClick={() => {
-                  if (item.onClick) item.onClick();
+                onClick={(e) => {
+                  if (item.onClick) item.onClick(e);
                   setIsOpen(false);
                 }}
                 className={cn(

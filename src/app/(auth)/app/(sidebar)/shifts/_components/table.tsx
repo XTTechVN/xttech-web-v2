@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Clock, MapPin, Building2, Layers, CheckCircle2 } from 'lucide-react';
+import { Clock, MapPin, Building2, Layers, CheckCircle2, Pencil, Trash2 } from 'lucide-react';
 
 import { TableData, TableAction } from '@/components/table';
 import type { ITableFilterProps } from '@/components/table/types';
@@ -304,12 +304,12 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
     return (
       <div
         key={row.id || index}
-        className="p-4 rounded-xl border border-gray-200 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md transition-shadow"
+        className="p-4 rounded-xl border border-primary/10 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300"
       >
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-col">
-            <span className="font-semibold text-gray-900 text-base">{row.name}</span>
-            <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-start gap-3 justify-between">
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="font-semibold text-gray-900 text-sm sm:text-base leading-snug break-words">{row.name}</span>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               <Badge variant={typeInfo.variant} size="sm">
                 {typeInfo.label}
               </Badge>
@@ -318,26 +318,42 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
               </Badge>
             </div>
           </div>
-          <TableAction
-            onEdit={() => {
-              setSelectedShift(row);
-              setIsEditOpen(true);
-            }}
-            onDelete={() => {
-              setShiftToDelete(row);
-              setIsDeleteOpen(true);
-            }}
-          />
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-slate-700">
-          <Clock className="w-4 h-4 text-slate-400" />
+        <div className="flex items-center gap-2 text-xs text-slate-700">
+          <Clock className="w-4 h-4 text-slate-400 shrink-0" />
           <span className="font-medium">
             {formatTime(getStartTime(row))} - {formatTime(getEndTime(row))}
           </span>
         </div>
 
-        <div>{renderDaysBadge(getWorkDays(row))}</div>
+        <div className="flex items-center justify-between gap-2 border-t border-gray-100/50 pt-2.5">
+          <div className="flex-1 min-w-0">{renderDaysBadge(getWorkDays(row))}</div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedShift(row);
+                setIsEditOpen(true);
+              }}
+              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Pencil size={12} />
+              Sửa
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShiftToDelete(row);
+                setIsDeleteOpen(true);
+              }}
+              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Trash2 size={12} />
+              Xóa
+            </button>
+          </div>
+        </div>
       </div>
     );
   };

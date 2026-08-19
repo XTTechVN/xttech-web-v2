@@ -142,52 +142,49 @@ const Table = () => {
   const renderCard = (row: Department, index: number) => (
     <div
       key={row.id || index}
-      className="p-4 rounded-xl border border-gray-200 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+      onClick={() => router.push(`/app/departments/${row.id}/positions`)}
+      className="p-4 rounded-xl border border-primary/10 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 cursor-pointer"
     >
-      <div className="flex items-center gap-3">
-        <div className="flex flex-col">
-          <span className="font-semibold text-gray-900">{row.name}</span>
-          <span className="text-xs text-gray-400">ID: {row.id}</span>
-          <span className="text-xs text-gray-500 mt-1">
-            Ngày tạo:{' '}
-            {new Date(row.createdAt).toLocaleDateString('vi-VN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-            })}
-          </span>
+      <div className="flex items-start gap-3">
+        <div className="flex flex-col flex-1 min-w-0">
+          <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className="text-xs text-gray-400 font-medium">ID: {row.id}</span>
+            <span className="text-xs text-gray-300 select-none">•</span>
+            <span className="text-xs text-gray-500">
+              Ngày tạo:{' '}
+              {new Date(row.createdAt).toLocaleDateString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+              })}
+            </span>
+          </div>
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5" onClick={(e) => e.stopPropagation()}>
         <button
+          type="button"
           onClick={() => {
-              setSelectedDept(row);
-              setIsEditOpen(true);
+            setSelectedDept(row);
+            setIsEditOpen(true);
           }}
-          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
         >
-          <Pencil size={18} />
+          <Pencil size={12} />
+          Sửa
         </button>
-
         <button
-          onClick={() => {
-              setDeptToDelete(row);
-              setIsDeleteOpen(true);
-          }}
+          type="button"
           disabled={isPending}
-          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-        >
-          <Trash2 size={18} />
-        </button>
-
-        <button
           onClick={() => {
-            router.push(`/app/departments/${row.id}/positions`);
+            setDeptToDelete(row);
+            setIsDeleteOpen(true);
           }}
-          title="Quản lý vị trí"
-          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all border border-transparent hover:border-primary/10"
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
         >
-          <Eye size={18} />
+          <Trash2 size={12} />
+          Xóa
         </button>
       </div>
     </div>

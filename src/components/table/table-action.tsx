@@ -4,7 +4,8 @@ import React from 'react';
 import { Tooltip } from '@/components/tooltip';
 import { cn } from '@/utils/cn';
 
-import { Edit2, Trash2, Eye } from 'lucide-react';
+import { Edit2, Trash2, Eye, MoreVertical } from 'lucide-react';
+import { Dropdown } from '../dropdown';
 
 export interface TableActionItem {
   title?: string;
@@ -107,27 +108,54 @@ export default function TableAction({
     return icon;
   };
 
+  const dropdownItems = validItems.map((item) => {
+    const isDanger = item.title === 'Xóa' || item.className?.includes('text-red') || item.className?.includes('red-600') || item.className?.includes('hover:bg-red');
+    return {
+      label: item.title || '',
+      onClick: item.onClick,
+      disabled: item.disabled,
+      danger: isDanger,
+      icon: renderIcon(item.icon, 16),
+    };
+  });
+
   return (
-    <div className={cn('flex items-center gap-1', className)}>
-      {validItems.map((item, index) => {
-        const itemSize = item.size ?? 16;
-        const button = (
-          <button key={index} type="button" onClick={item.onClick} disabled={item.disabled} className={cn(DEFAULT_BUTTON_CLASS, item.className)}>
-            {renderIcon(item.icon, itemSize)}
-          </button>
-        );
-
-        if (item.title) {
-          return (
-            <Tooltip key={index} content={item.title} position="top">
-              {button}
-            </Tooltip>
+    <>
+      {/* Desktop view */}
+      <div className={cn('hidden md:flex items-center gap-1', className)}>
+        {validItems.map((item, index) => {
+          const itemSize = item.size ?? 16;
+          const button = (
+            <button key={index} type="button" onClick={item.onClick} disabled={item.disabled} className={cn(DEFAULT_BUTTON_CLASS, item.className)}>
+              {renderIcon(item.icon, itemSize)}
+            </button>
           );
-        }
 
-        return button;
-      })}
-    </div>
+          if (item.title) {
+            return (
+              <Tooltip key={index} content={item.title} position="top">
+                {button}
+              </Tooltip>
+            );
+          }
+
+          return button;
+        })}
+      </div>
+
+      {/* Mobile view */}
+      <div className={cn('flex md:hidden items-center', className)} onClick={(e) => e.stopPropagation()}>
+        <Dropdown
+          align="right"
+          trigger={
+            <button key="mobile-trigger" type="button" className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer text-gray-500">
+              <MoreVertical size={18} />
+            </button>
+          }
+          items={dropdownItems}
+        />
+      </div>
+    </>
   );
 }
 

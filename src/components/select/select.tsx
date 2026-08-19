@@ -54,7 +54,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             disabled={disabled}
             className={cn(
               // Lớp CSS cơ bản tuân thủ design system
-              'appearance-none w-full h-10 pl-3 pr-10 text-sm bg-white border rounded-md outline-none transition-all duration-200 text-gray-900 cursor-pointer disabled:cursor-not-allowed',
+              'appearance-none w-full h-10 pl-3 pr-10 text-base md:text-sm bg-white border rounded-md outline-none transition-all duration-200 text-gray-900 cursor-pointer disabled:cursor-not-allowed',
               'hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20',
               'disabled:bg-gray-50 disabled:text-gray-400 disabled:pointer-events-none',
               error

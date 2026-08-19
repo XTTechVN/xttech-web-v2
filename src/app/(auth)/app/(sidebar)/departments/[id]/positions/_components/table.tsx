@@ -139,31 +139,50 @@ const Table = () => {
   const renderCard = (row: Position, index: number) => (
     <div
       key={row.id || index}
-      className="p-4 rounded-xl border border-gray-200 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+      className="p-4 rounded-xl border border-primary/10 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300"
     >
-      <div className="flex items-center gap-3">
-        <div className="flex flex-col">
-          <span className="font-semibold text-gray-900">{row.name}</span>
-          <span className="text-xs text-gray-500 mt-1">
-            Ngày tạo:{' '}
-            {new Date(row.createdAt).toLocaleDateString('vi-VN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-            })}
-          </span>
+      <div className="flex items-start gap-3">
+        <div className="flex flex-col flex-1 min-w-0">
+          <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className="text-xs text-gray-400 font-medium">ID: {row.id}</span>
+            <span className="text-xs text-gray-300 select-none">•</span>
+            <span className="text-xs text-gray-500">
+              Ngày tạo:{' '}
+              {new Date(row.createdAt).toLocaleDateString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+              })}
+            </span>
+          </div>
         </div>
       </div>
-      <TableAction
-        onEdit={() => {
-          setSelectedPosition(row);
-          setIsEditOpen(true);
-        }}
-        onDelete={() => {
-          setPositionToDelete(row);
-          setIsDeleteOpen(true);
-        }}
-      />
+      <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5">
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedPosition(row);
+            setIsEditOpen(true);
+          }}
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+        >
+          <Pencil size={12} />
+          Sửa
+        </button>
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={() => {
+            setPositionToDelete(row);
+            setIsDeleteOpen(true);
+          }}
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
+        >
+          <Trash2 size={12} />
+          Xóa
+        </button>
+      </div>
     </div>
   );
 

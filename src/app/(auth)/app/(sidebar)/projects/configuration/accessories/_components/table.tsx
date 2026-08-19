@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, Plus, Pencil, Trash2 } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
 import { Heading, Button } from '@/components';
-import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
 import { Accessory, formatAccessoryUnit } from '@/types';
 import { getAccessories } from '@/actions';
@@ -108,10 +107,11 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     return (
       <div
         key={row.id || index}
-        className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+        onClick={() => router.push(`/app/projects/configuration/accessories/${row.id}`)}
+        className="p-4 rounded-xl border border-primary/10 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 cursor-pointer"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0">
+        <div className="flex items-start gap-3">
+          <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0 mt-0.5">
             {row.imagePath ? (
               <img
                 src={row.imagePath.startsWith('http') ? row.imagePath : `${BASE_MINIO_URL}${row.imagePath}`}
@@ -122,21 +122,33 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
               <Settings className="w-5 h-5 text-gray-400" />
             )}
           </div>
-          <div className="flex flex-col">
-            <span className="font-semibold text-gray-900">{row.name}</span>
-            <span className="text-xs text-gray-400">Đơn giá: {formatCurrency(row.price)}</span>
-            {row.unit && (
-              <span className="text-xs text-gray-500 mt-0.5">
-                ĐVT: {formatAccessoryUnit(row.unit)}
-              </span>
-            )}
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
+            <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-gray-400">
+              <span>Đơn giá: {formatCurrency(row.price)}</span>
+              {row.unit && <span className="select-none">•</span>}
+              {row.unit && <span>ĐVT: {formatAccessoryUnit(row.unit)}</span>}
+            </div>
           </div>
         </div>
-        <TableAction
-          onView={() => router.push(`/app/projects/configuration/accessories/${row.id}`)}
-          onEdit={() => onEditClick(row)}
-          onDelete={() => onDeleteClick(row)}
-        />
+        <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => onEditClick(row)}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <Pencil size={12} />
+            Sửa
+          </button>
+          <button
+            type="button"
+            onClick={() => onDeleteClick(row)}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <Trash2 size={12} />
+            Xóa
+          </button>
+        </div>
       </div>
     );
   };
