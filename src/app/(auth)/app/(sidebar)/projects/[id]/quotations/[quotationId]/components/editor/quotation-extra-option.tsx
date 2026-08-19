@@ -1,9 +1,10 @@
-import React from 'react';
-import { Trash2 } from 'lucide-react';
-import { Button, Select } from '@/components';
+import React, { useState, useRef } from 'react';
+import { Trash2, ChevronDown } from 'lucide-react';
+import { Button } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { EDITOR_STYLES } from './config';
-import type { ExtraOption } from '@/types';
+import { SearchSelect } from '../modal';
+import { ExtraOption, EXTRA_OPTION_UNIT_MAP } from '@/types';
 
 interface QuotationExtraOptionProps {
   fIndex: number;
@@ -23,22 +24,49 @@ export const QuotationExtraOption = ({
   extraOptionsList,
 }: QuotationExtraOptionProps) => {
   const store = useQuotationStore();
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const selectedOpt = extraOptionsList.find(opt => opt.id === selectedOptId);
 
   return (
     <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-1">
-      <Select
-        value={selectedOptId.toString()}
-        onChange={(e) =>
-          store.updateExtraOption(fIndex, mIndex, dIndex, oIndex, parseInt(e.target.value, 10))
-        }
-        className={EDITOR_STYLES.select + ' w-full'}
-      >
-        {extraOptionsList.map((opt) => (
-          <option key={opt.id} value={opt.id}>
-            {opt.name} ({opt.code})
-          </option>
-        ))}
-      </Select>
+      <div className="w-full relative min-w-0">
+        <div 
+          ref={triggerRef}
+          onClick={() => setIsSelectOpen(true)}
+          className={EDITOR_STYLES.select + ' flex justify-between items-center w-full cursor-pointer'}
+          title={selectedOpt ? `${selectedOpt.name} (${selectedOpt.code})` : 'Chọn tùy chọn...'}
+        >
+          <span className="truncate pr-4">
+            {selectedOpt ? `${selectedOpt.name} (${selectedOpt.code})` : 'Chọn tùy chọn...'}
+          </span>
+          <ChevronDown size={14} className="text-slate-400 shrink-0" />
+        </div>
+
+        <SearchSelect
+          isOpen={isSelectOpen}
+          onClose={() => setIsSelectOpen(false)}
+          title="Chọn tùy chọn phát sinh"
+          items={extraOptionsList}
+          selectedValue={selectedOptId}
+          onSelect={(item) => store.updateExtraOption(fIndex, mIndex, dIndex, oIndex, item.id)}
+          searchKeys={['name', 'code']}
+          renderItem={(item) => {
+            const unitText = item.unit ? (EXTRA_OPTION_UNIT_MAP[item.unit] || item.unit) : '';
+            return (
+              <div className="flex items-center justify-between gap-2 w-full">
+                <span className="line-clamp-2 whitespace-normal break-words pr-2 font-medium">
+                  {item.name}
+                </span>
+                <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0">
+                  {item.price.toLocaleString('vi-VN')}đ{unitText ? `/${unitText}` : ''}
+                </span>
+              </div>
+            );
+          }}
+          triggerRef={triggerRef}
+        />
+      </div>
       <Button
         variant="ghost"
         size="sm"

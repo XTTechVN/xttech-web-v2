@@ -1,8 +1,9 @@
-import React from 'react';
-import { Trash2 } from 'lucide-react';
-import { Button, Input, Select } from '@/components';
+import React, { useState, useRef } from 'react';
+import { Trash2, ChevronDown } from 'lucide-react';
+import { Button, Input } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { EDITOR_STYLES } from './config';
+import { SearchSelect } from '../modal';
 import type { Formula, DraftFormula } from '@/types';
 
 interface QuotationFormulaProps {
@@ -23,6 +24,8 @@ export const QuotationFormula = ({
   formulasList,
 }: QuotationFormulaProps) => {
   const store = useQuotationStore();
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
 
   const selectedForm = formulasList.find((form) => form.id === formula.fomulaId);
   const isArch =
@@ -33,19 +36,30 @@ export const QuotationFormula = ({
   return (
     <div className="flex flex-col gap-1 py-1">
       <div className="grid grid-cols-[1fr_auto] gap-3 items-center">
-        <Select
-          value={formula.fomulaId.toString()}
-          onChange={(e) =>
-            store.updateFormula(fIndex, mIndex, dIndex, foIndex, 'fomulaId', parseInt(e.target.value, 10))
-          }
-          className={EDITOR_STYLES.select + ' w-full'}
-        >
-          {formulasList.map((form) => (
-            <option key={form.id} value={form.id}>
-              {form.name || form.code}
-            </option>
-          ))}
-        </Select>
+        <div className="w-full relative min-w-0">
+          <div 
+            ref={triggerRef}
+            onClick={() => setIsSelectOpen(true)}
+            className={EDITOR_STYLES.select + ' flex justify-between items-center w-full cursor-pointer'}
+            title={selectedForm ? (selectedForm.name || selectedForm.code || '—') : 'Chọn công thức...'}
+          >
+            <span className="truncate pr-4">
+              {selectedForm ? (selectedForm.name || selectedForm.code || '—') : 'Chọn công thức...'}
+            </span>
+            <ChevronDown size={14} className="text-slate-400 shrink-0" />
+          </div>
+
+          <SearchSelect
+            isOpen={isSelectOpen}
+            onClose={() => setIsSelectOpen(false)}
+            title="Chọn công thức"
+            items={formulasList}
+            selectedValue={formula.fomulaId}
+            onSelect={(item) => store.updateFormula(fIndex, mIndex, dIndex, foIndex, 'fomulaId', item.id)}
+            searchKeys={['name', 'code']}
+            triggerRef={triggerRef}
+          />
+        </div>
         <Button
           variant="ghost"
           size="sm"
