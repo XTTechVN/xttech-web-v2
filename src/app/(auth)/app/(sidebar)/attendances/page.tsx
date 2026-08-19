@@ -809,7 +809,7 @@ export default function AttendancesPage() {
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
           <Heading className="text-primary text-2xl" size="h1">
-            Bảng công tháng (Admin)
+            Quản lý chấm công
           </Heading>
 
           <div className="flex items-center justify-end gap-2 flex-wrap">

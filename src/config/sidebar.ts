@@ -25,8 +25,8 @@ export const acceptedSections = [
   'quotations',
   'extra-options',
   'formulas',
-  "shifts",
-  "attendances-reports",
+  'shifts',
+  'attendances-reports',
 ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
@@ -85,35 +85,23 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
       },
       {
         id: 'attendances-root',
-        label: 'Chấm công & Thời gian',
+        label: 'Chấm công',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/attendances',
         roles: ['super', 'admin', 'hr', 'sale', 'technician'],
         subItems: [
+          {
+            id: 'attendances',
+            label: 'Quản lý chấm công',
+            href: '/app/attendances',
+            roles: ['super', 'admin', 'hr'],
+          },
           {
             id: 'attendances-reports',
             label: 'Báo cáo thống kê',
             href: '/app/attendances/reports',
             roles: ['super', 'admin', 'hr'],
           },
-          {
-            id: 'attendances',
-            label: 'Bảng công tháng (Admin)',
-            href: '/app/attendances',
-            roles: ['super', 'admin', 'hr'],
-          },
-          // {
-          //   id: 'attendances-policy',
-          //   label: 'Chính sách chấm công',
-          //   href: '/app/attendances/policy',
-          //   roles: ['super', 'admin', 'hr'],
-          // },
-          // {
-          //   id: 'shifts',
-          //   label: 'Ca làm việc',
-          //   href: '/app/shifts',
-          //   roles: ['super', 'admin', 'hr', 'sale', 'technician'],
-          // },
           {
             id: 'attendances-payroll',
             label: 'Lịch sử chấm công',
