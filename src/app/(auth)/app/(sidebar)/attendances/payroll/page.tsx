@@ -36,13 +36,17 @@ import OvertimeModal from '../_components/overtime-modal';
 
 const statusVariantMap: Record<
   string,
-  'success' | 'warning' | 'danger'
+  'success' | 'warning' | 'danger' | 'info'
 > = {
   normal: 'success',
+  present: 'success',
   late: 'warning',
   absent: 'danger',
   half_day: 'warning',
   early_leave: 'warning',
+  early_checkout: 'warning',
+  late_and_early_leave: 'warning',
+  overtime: 'success',
 };
 
 const getStatusVariant = (status?: string | null) => {
@@ -58,11 +62,15 @@ const formatTime = (value?: string | null): string => {
 
 const getStatusBadge = (status?: string | null) => {
   const statusTextMap: Record<string, string> = {
+    normal: 'Đúng giờ',
     present: 'Đúng giờ',
     late: 'Đi muộn',
     absent: 'Vắng mặt',
     half_day: 'Nghỉ nửa ngày',
     early_leave: 'Về sớm',
+    early_checkout: 'Về sớm',
+    late_and_early_leave: 'Đi muộn & Về sớm',
+    overtime: 'Tăng ca',
   };
   return statusTextMap[status ?? ''] ?? status ?? '';
 };

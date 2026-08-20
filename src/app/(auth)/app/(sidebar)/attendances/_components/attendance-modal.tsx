@@ -33,9 +33,13 @@ export default function AttendanceDetailModal({
     { label: string; variant: "success" | "warning" | "danger" | "info" }
   > = {
     normal: { label: "Đúng giờ", variant: "success" },
+    present: { label: "Đúng giờ", variant: "success" },
     late: { label: "Đi muộn", variant: "warning" },
     absent: { label: "Vắng mặt", variant: "danger" },
     early_leave: { label: "Về sớm", variant: "warning" },
+    early_checkout: { label: "Về sớm", variant: "warning" },
+    late_and_early_leave: { label: "Đi muộn & Về sớm", variant: "warning" },
+    overtime: { label: "Tăng ca", variant: "success" },
     half_day: { label: "Nửa ngày", variant: "warning" },
   };
 

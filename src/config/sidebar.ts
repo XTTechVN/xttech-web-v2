@@ -196,7 +196,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Danh sách góp ý',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/suggestions',
-        roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant'],
       },
     ],
   },

@@ -67,11 +67,56 @@ export interface UserResponse {
 
 
 export type AttendanceStatus =
+    | "normal"
+    | "present"
     | "late"
     | "early_leave"
+    | "early_checkout"
+    | "late_and_early_leave"
     | "absent"
-    | "half_day"
-    | "normal";
+    | "overtime"
+    | "half_day";
+
+export const ATTENDANCE_STATUS_LABELS: Record<string, string> = {
+  normal: 'Đúng giờ',
+  present: 'Đúng giờ',
+  late: 'Đi muộn',
+  early_leave: 'Về sớm',
+  early_checkout: 'Về sớm',
+  late_and_early_leave: 'Đi muộn & Về sớm',
+  absent: 'Vắng mặt',
+  overtime: 'Tăng ca',
+  half_day: 'Nửa ngày',
+};
+
+export const ADJUSTMENT_STATUS_LABELS: Record<string, string> = {
+  pending: 'Chờ duyệt',
+  approved: 'Đã duyệt',
+  rejected: 'Từ chối',
+};
+
+export const REQUEST_TYPE_LABELS: Record<string, string> = {
+  check_in: 'Bổ sung check-in',
+  check_out: 'Bổ sung check-out',
+  forgot_attendance: 'Quên chấm công',
+  overtime: 'Tăng ca',
+  both: 'Cả hai',
+};
+
+export const getAttendanceStatusLabel = (status: string | null | undefined): string => {
+  if (!status) return 'Vắng mặt';
+  return ATTENDANCE_STATUS_LABELS[status] || status;
+};
+
+export const getAdjustmentStatusLabel = (status: string | null | undefined): string => {
+  if (!status) return 'Chờ duyệt';
+  return ADJUSTMENT_STATUS_LABELS[status] || status;
+};
+
+export const getRequestTypeLabel = (type: string | null | undefined): string => {
+  if (!type) return '';
+  return REQUEST_TYPE_LABELS[type] || type;
+};
 
 
 

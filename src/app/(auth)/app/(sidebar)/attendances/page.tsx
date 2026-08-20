@@ -215,6 +215,9 @@ export default function AttendancesPage() {
       late: "Đi muộn",
       absent: "Vắng mặt",
       early_leave: "Về sớm",
+      early_checkout: "Về sớm",
+      late_and_early_leave: "Đi muộn & Về sớm",
+      overtime: "Tăng ca",
       half_day: "Nửa ngày",
     };
 
@@ -367,11 +370,14 @@ export default function AttendancesPage() {
   // Giao diện Card cho Mobile View
   const renderCard = (row: Attendance, index: number) => {
     const statusMap: Record<string, { label: string; variant: 'success' | 'warning' | 'danger' | 'info' }> = {
-      present: { label: 'Có mặt', variant: 'success' },
-      normal: { label: 'Bình thường', variant: 'success' },
+      present: { label: 'Đúng giờ', variant: 'success' },
+      normal: { label: 'Đúng giờ', variant: 'success' },
       late: { label: 'Đi muộn', variant: 'warning' },
       absent: { label: 'Vắng mặt', variant: 'danger' },
       early_leave: { label: 'Về sớm', variant: 'warning' },
+      early_checkout: { label: 'Về sớm', variant: 'warning' },
+      late_and_early_leave: { label: 'Đi muộn & Về sớm', variant: 'warning' },
+      overtime: { label: 'Tăng ca', variant: 'success' },
       half_day: { label: 'Nửa ngày', variant: 'warning' },
     };
 
@@ -597,13 +603,17 @@ export default function AttendancesPage() {
       cell: (row) => {
         const statusVariantMap: Record<
           string,
-          'success' | 'warning' | 'danger'
+          'success' | 'warning' | 'danger' | 'info'
         > = {
           normal: 'success',
+          present: 'success',
           late: 'warning',
           absent: 'danger',
           half_day: 'warning',
           early_leave: 'warning',
+          early_checkout: 'warning',
+          late_and_early_leave: 'warning',
+          overtime: 'success',
         };
 
 
