@@ -41,7 +41,7 @@ export interface SidebarSectionWithRoles extends Omit<SidebarSectionType, 'items
 export const rawSidebarSections: SidebarSectionWithRoles[] = [
   // Điều hành
   {
-    title: 'Điều hành doanh nghiệp',
+    title: 'Doanh nghiệp',
     items: [
       {
         id: 'dashboard',
