@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -35,6 +35,7 @@ interface ShiftFormModalProps {
   submitText?: string;
   initialData?: WorkShift | null;
   defaultDepartmentId?: number;
+  defaultDepartmentName?: string;
 }
 
 interface FormValues {
@@ -64,6 +65,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
   submitText = 'Lưu thông tin',
   initialData,
   defaultDepartmentId,
+  defaultDepartmentName,
 }) => {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
@@ -71,8 +73,18 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
   const { data: departmentsData } = useQuery({
     queryKey: ['departments', 'all'],
     queryFn: () => getDepartments({ limit: 100 }),
-    enabled: isOpen && !defaultDepartmentId,
+    enabled: isOpen && !defaultDepartmentName,
   });
+
+  // Tên phòng ban hiện tại
+  const currentDepartmentName = useMemo(() => {
+    if (defaultDepartmentName) return defaultDepartmentName;
+    if (!defaultDepartmentId) return '';
+    const found = departmentsData?.items?.find(
+      (d: Department) => String(d.id) === String(defaultDepartmentId)
+    );
+    return found?.name || `Phòng ban ID: ${defaultDepartmentId}`;
+  }, [defaultDepartmentId, defaultDepartmentName, departmentsData]);
 
   // Lấy danh sách nhân viên (để gán ngoại lệ)
   const { data: usersData } = useQuery({
@@ -342,9 +354,9 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
           ) : (
             <Input
               label="Phòng ban"
-              value={`Phòng ban ID: ${defaultDepartmentId}`}
+              value={currentDepartmentName}
               disabled
-              className="bg-gray-100 cursor-not-allowed"
+              className="bg-gray-100 cursor-not-allowed font-medium text-slate-700"
             />
           )}
 

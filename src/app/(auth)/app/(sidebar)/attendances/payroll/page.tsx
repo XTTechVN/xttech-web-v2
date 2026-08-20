@@ -21,6 +21,7 @@ import {
   Users,
   Briefcase,
   Eye,
+  CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 import AutoTimekeepingModal from '@/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal';
@@ -97,13 +98,8 @@ export default function PayrollDataPage() {
     return myAttendances.find((a) => a.workDate === todayStr);
   }, [myAttendances, todayStr]);
 
-  const hasCheckedInToday = useMemo(() => {
-    return Boolean(
-      todayAttendance &&
-        (todayAttendance.checkIn ||
-          (todayAttendance.status && todayAttendance.status !== 'absent'))
-    );
-  }, [todayAttendance]);
+  // Chỉ hiển thị 'Check-out ngay' khi đã Check-in và chưa Check-out; còn lại luôn hiển thị 'Check-in ngay'
+  const isCheckOutAction = Boolean(todayAttendance?.checkIn && !todayAttendance?.checkOut);
 
   // Filters and search for Payroll attendance history table
   const [searchQuery, setSearchQuery] = useState('');
@@ -467,10 +463,10 @@ export default function PayrollDataPage() {
               variant="primary"
               size="sm"
               className="gap-2 px-3 shrink-0"
-              leftIcon={hasCheckedInToday ? <LogOut size={16} /> : <LogIn size={16} />}
+              leftIcon={isCheckOutAction ? <LogOut size={16} /> : <LogIn size={16} />}
               onClick={() => setShowTimekeepingModal(true)}
             >
-              {hasCheckedInToday ? 'Check-out ngay' : 'Check-in ngay'}
+              {isCheckOutAction ? 'Check-out ngay' : 'Check-in ngay'}
             </Button>
             <Button
               variant="outline"
@@ -557,7 +553,7 @@ export default function PayrollDataPage() {
             queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'], refetchType: 'all' }),
           ]);
         }}
-        hasCheckedIn={hasCheckedInToday}
+        hasCheckedIn={isCheckOutAction}
       />
     </div>
   );
