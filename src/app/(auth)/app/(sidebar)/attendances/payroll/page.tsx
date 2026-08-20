@@ -31,6 +31,7 @@ import { Attendance } from '@/types';
 import StatCart from '../../dashboard/_components/stats-card';
 import AddAdjustmentModal from '../_components/adjustment/add-modal';
 import AttendanceDetailModal from '../_components/attendance-modal';
+import OvertimeModal from '../_components/overtime-modal';
 
 const statusVariantMap: Record<
   string,
@@ -70,6 +71,7 @@ export default function PayrollDataPage() {
   const queryClient = useQueryClient();
   const [showTimekeepingModal, setShowTimekeepingModal] = useState(false);
   const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+  const [showOvertimeModal, setShowOvertimeModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState<Attendance | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
@@ -475,12 +477,7 @@ export default function PayrollDataPage() {
               size="sm"
               className="gap-2 px-3 hover:bg-[#ececf27d] shrink-0"
               leftIcon={<Clock size={16} className="text-[#314158]" />}
-              onClick={() => {
-                toast.loading('Tính năng đang được phát triển', { id: 'loading' });
-                setTimeout(() => {
-                  toast.dismiss('loading');
-                }, 1000);
-              }}
+              onClick={() => setShowOvertimeModal(true)}
             >
               Đăng ký tăng ca
             </Button>
@@ -519,6 +516,18 @@ export default function PayrollDataPage() {
           />
         )}
       </div>
+
+      <OvertimeModal
+        open={showOvertimeModal}
+        onClose={() => setShowOvertimeModal(false)}
+        onSuccess={async () => {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['attendances'], refetchType: 'all' }),
+            queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'], refetchType: 'all' }),
+            queryClient.invalidateQueries({ queryKey: ['attendance-requests'], refetchType: 'all' }),
+          ]);
+        }}
+      />
 
       <AddAdjustmentModal
         open={showAdjustmentModal}
