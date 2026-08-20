@@ -71,8 +71,16 @@ export function useEmployeeCheck({
         setEmailStatus('duplicate');
         setExistingUser(user);
         setDuplicateField('email');
-        setIsDuplicateModalOpen(true);
-        setError('email', { type: 'manual', message: 'Email này đã tồn tại trên hệ thống' });
+        
+        // Nếu tài khoản đã bị xóa -> Mở modal cho phép khôi phục
+        if (user.deletedAt) {
+          setIsDuplicateModalOpen(true);
+          setError('email', { type: 'manual', message: 'Email này thuộc tài khoản đã bị xóa (có thể khôi phục)' });
+        } else {
+          // Nếu tài khoản đang hoạt động (chưa bị xóa) -> Chỉ báo lỗi trực tiếp, không mở modal
+          setIsDuplicateModalOpen(false);
+          setError('email', { type: 'manual', message: 'Email này đã tồn tại trong hệ thống' });
+        }
       } else {
         setEmailStatus('valid');
         clearErrors('email');
@@ -106,8 +114,16 @@ export function useEmployeeCheck({
         setCccdStatus('duplicate');
         setExistingUser(user);
         setDuplicateField('identifyCode');
-        setIsDuplicateModalOpen(true);
-        setError('identifyCode', { type: 'manual', message: 'Căn cước công dân này đã tồn tại trên hệ thống' });
+
+        // Nếu tài khoản đã bị xóa -> Mở modal cho phép khôi phục
+        if (user.deletedAt) {
+          setIsDuplicateModalOpen(true);
+          setError('identifyCode', { type: 'manual', message: 'CCCD này thuộc tài khoản đã bị xóa (có thể khôi phục)' });
+        } else {
+          // Nếu tài khoản đang hoạt động (chưa bị xóa) -> Chỉ báo lỗi trực tiếp, không mở modal
+          setIsDuplicateModalOpen(false);
+          setError('identifyCode', { type: 'manual', message: 'Căn cước công dân này đã tồn tại trong hệ thống' });
+        }
       } else {
         setCccdStatus('valid');
         clearErrors('identifyCode');
