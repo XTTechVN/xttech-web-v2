@@ -176,6 +176,7 @@ export type RequestType =
     | "check_in"
     | "check_out"
     | "forgot_attendance"
+    | "overtime"
     | "both";
 
 export interface AdjustmentRequestQueryParams {
