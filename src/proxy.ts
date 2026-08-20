@@ -19,10 +19,12 @@ for (const section of rawSidebarSections) {
 }
 
 const DEFAULT_PAGES: Record<string, string> = {
+  super: '/app/dashboard',
   admin: '/app/dashboard',
-  hr: '/app/departments',
-  sale: '/app/projects',
-  technician: '/app/shifts',
+  hr: '/app/dashboard',
+  sale: '/app/dashboard',
+  technician: '/app/dashboard',
+  accountant: '/app/dashboard',
 };
 
 export function proxy(request: NextRequest) {
@@ -36,8 +38,7 @@ export function proxy(request: NextRequest) {
       const parsed = JSON.parse(decodeURIComponent(xtAuthCookie));
       if (Array.isArray(parsed.roles)) {
         userRoles = parsed.roles.map((r: any) => {
-          const code = typeof r === 'string' ? r : r?.code;
-          return code === 'super' ? 'admin' : code;
+          return typeof r === 'string' ? r : r?.code;
         });
       }
     } catch (e) {

@@ -17,6 +17,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       const accessToken = useAuthStore.getState().accessToken;
 
       if (!isAuthenticated || !accessToken) {
+        document.cookie = 'xt-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
         router.replace('/signin');
       } else {
         setIsLoading(false);

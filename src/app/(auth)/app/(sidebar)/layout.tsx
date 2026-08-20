@@ -39,9 +39,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const parsed = JSON.parse(decodeURIComponent(xtAuthCookie));
         const firstRole = parsed.roles?.[0];
         const roleCode = typeof firstRole === 'string' ? firstRole : firstRole?.code;
-        const normalized = roleCode === 'super' ? 'admin' : roleCode;
-        if (normalized) {
-          setUserRole(normalized as UserRole);
+        if (roleCode) {
+          setUserRole(roleCode as UserRole);
         }
       } catch {}
     }
