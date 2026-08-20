@@ -18,6 +18,12 @@ const lexend = Lexend({
 export const metadata: Metadata = {
   title: 'XTTech - Quản lý doanh nghiệp',
   description: 'XTTech - Quản lý doanh nghiệp',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+  },
 };
 
 export default function RootLayout({
