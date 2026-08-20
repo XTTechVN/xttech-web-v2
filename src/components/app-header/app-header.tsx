@@ -43,7 +43,7 @@ export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(
 
           {/* Right side: Notifications & User profile */}
           <div className="flex items-center gap-2">
-            <InstallPwaButton className="hidden sm:inline-flex" />
+            <InstallPwaButton className="inline-flex" />
             <HeaderProfile userRole={userRole} />
           </div>
         </div>

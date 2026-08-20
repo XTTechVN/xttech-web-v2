@@ -124,11 +124,11 @@ export default function DepartmentMembersPage() {
     },
     {
       key: 'identifyCode',
-      label: 'Mã nhân viên',
+      label: 'CCCD/CMND',
       minWidth: '130px',
       cell: (row: Employee) => (
         <span className="text-slate-700 text-xs font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-          {row.identifyCode || 'NV'}
+          {row.identifyCode || '---'}
         </span>
       ),
     },
