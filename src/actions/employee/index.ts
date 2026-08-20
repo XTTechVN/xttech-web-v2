@@ -63,3 +63,24 @@ export const updateEmployee = async (id: string | number, data: Partial<Omit<Emp
     throw new Error('Lỗi khi cập nhật thông tin nhân viên');
   }
 };
+
+// Kiểm tra sự tồn tại của người dùng qua email hoặc CCCD
+export const checkUserExists = async (params: {
+  email?: string;
+  identifyCode?: string;
+  uniqueQuery?: string;
+}): Promise<Employee | null> => {
+  try {
+    const res = await api.get<Employee | null>(`/api/v1/users/exists`, {
+      params: {
+        email: params.email,
+        identify_code: params.identifyCode,
+        uniqueQuery: params.uniqueQuery,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Lỗi khi kiểm tra tồn tại người dùng:', error);
+    return null;
+  }
+};

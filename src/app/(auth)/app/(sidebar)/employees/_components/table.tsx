@@ -37,6 +37,7 @@ const getRoleVariant = (roleCode: string): 'primary' | 'success' | 'warning' | '
   const lowerName = roleCode.toLowerCase();
   if (lowerName.includes('admin')) return 'danger';
   if (lowerName.includes('hr')) return 'warning';
+  if (lowerName.includes('accountant')) return 'warning';
   if (lowerName.includes('sale')) return 'primary';
   if (lowerName.includes('technician')) return 'info';
   if (lowerName.includes('super') || lowerName.includes('supper')) return 'success';
@@ -116,21 +117,22 @@ const Table = () => {
       key: 'roles',
       label: 'Vai trò',
       minWidth: '150px',
-      cell: (row: Employee) => (
-        <div className="flex flex-wrap gap-1">
-          {row.roles && row.roles.length > 0 ? (
-            row.roles.map((role) => (
-              <Badge key={role.id} variant={getRoleVariant(role.code)} size="sm">
-                {role.name}
+      cell: (row: Employee) => {
+        const primaryRole = row.roles && row.roles.length > 0 ? row.roles[0] : null;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {primaryRole ? (
+              <Badge variant={getRoleVariant(primaryRole.code)} size="sm">
+                {primaryRole.name}
               </Badge>
-            ))
-          ) : (
-            <Badge variant="default" size="sm">
-              Nhân viên
-            </Badge>
-          )}
-        </div>
-      ),
+            ) : (
+              <Badge variant="default" size="sm">
+                Nhân viên
+              </Badge>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'positions',
