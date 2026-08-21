@@ -1,7 +1,7 @@
 "use client";
 
 import { Modal, Button, Badge, Avatar } from "@/components";
-import { Attendance } from "@/types";
+import { Attendance, getAttendanceStatusInfo } from "@/types";
 import { BASE_MINIO_URL } from "@/config";
 import {
   Calendar,
@@ -28,25 +28,7 @@ export default function AttendanceDetailModal({
 }: Props) {
   if (!data) return null;
 
-  const statusMap: Record<
-    string,
-    { label: string; variant: "success" | "warning" | "danger" | "info" }
-  > = {
-    normal: { label: "Đúng giờ", variant: "success" },
-    present: { label: "Đúng giờ", variant: "success" },
-    late: { label: "Đi muộn", variant: "warning" },
-    absent: { label: "Vắng mặt", variant: "danger" },
-    early_leave: { label: "Về sớm", variant: "warning" },
-    early_checkout: { label: "Về sớm", variant: "warning" },
-    late_and_early_leave: { label: "Đi muộn & Về sớm", variant: "warning" },
-    overtime: { label: "Tăng ca", variant: "success" },
-    half_day: { label: "Nửa ngày", variant: "warning" },
-  };
-
-  const statusInfo = statusMap[data.status ?? ""] ?? {
-    label: data.status || "Không xác định",
-    variant: "info",
-  };
+  const statusInfo = getAttendanceStatusInfo(data.status);
 
   const formatTime = (value?: string | null): string => {
     if (!value) return "--:--";

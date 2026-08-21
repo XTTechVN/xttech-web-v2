@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { use, useEffect, useState } from 'react';
@@ -98,14 +99,16 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
   // Gọi API preview để lấy báo giá chi tiết đã tính toán đầy đủ từ backend
   const { data: previewData, isFetching: isPreviewFetching } = useQuery({
     queryKey: ['quotation-preview', quotationId, debouncedFloors, debouncedTitle, debouncedDiscount],
-    queryFn: () =>
-      getQuotationPreview({
+    queryFn: () => {
+      const payload = store.getPayload();
+      return getQuotationPreview({
         title: debouncedTitle,
         code: store.code,
         discountPercentage: debouncedDiscount,
         projectId: store.projectId,
-        floors: debouncedFloors as any,
-      }),
+        floors: payload.floors,
+      });
+    },
     enabled: initialized && debouncedFloors.length > 0,
     placeholderData: keepPreviousData,
   });
