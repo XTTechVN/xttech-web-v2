@@ -27,7 +27,6 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'XTTech - Quản lý doanh nghiệp',
   description: 'XTTech - Quản lý doanh nghiệp',
-  manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

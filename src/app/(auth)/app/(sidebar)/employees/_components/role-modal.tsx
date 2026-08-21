@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Modal, Button, Avatar } from '@/components';
-import { X, UserCog, ChevronDown, Check } from 'lucide-react';
+import { UserCog, ChevronDown, Check } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getRoles } from '@/actions/role';
 import { assignRole, revokeRole } from '@/actions/user';
@@ -42,15 +42,20 @@ export default function RoleModal({ isOpen, onClose, employee }: RoleModalProps)
 
   const allRoles: Role[] = rolesData?.items ?? [];
 
-  // Đồng bộ vai trò hiện tại của nhân viên khi mở Modal (lấy vai trò đầu tiên nếu có)
+  // Đồng bộ vai trò hiện tại của nhân viên khi mở Modal (mặc định role employee nếu chưa có)
   useEffect(() => {
     if (employee && employee.roles && employee.roles.length > 0) {
       setSelectedRoleId(String(employee.roles[0].id));
     } else {
-      setSelectedRoleId(null);
+      const defaultRole = allRoles.find((r) => r.code?.toLowerCase() === 'employee');
+      if (defaultRole) {
+        setSelectedRoleId(String(defaultRole.id));
+      } else {
+        setSelectedRoleId(null);
+      }
     }
     setIsDropdownOpen(false);
-  }, [employee, isOpen]);
+  }, [employee, isOpen, allRoles]);
 
   // Cập nhật vị trí dropdown nổi (tránh bị overflow/clip bởi modal)
   const updatePosition = () => {
@@ -110,10 +115,17 @@ export default function RoleModal({ isOpen, onClose, employee }: RoleModalProps)
     };
   }, [isDropdownOpen]);
 
-  // Mutation gọi API gán vai trò cho người dùng: xóa toàn bộ vai trò cũ rồi gán đúng 1 vai trò mới nếu được chọn
+  // Mutation gọi API gán vai trò cho người dùng: không cho phép rỗng, mặc định là role employee
   const { mutate: handleAssignRoles, isPending } = useMutation({
     mutationFn: async () => {
       if (!employee?.id) throw new Error('Không tìm thấy thông tin nhân sự');
+
+      const defaultRole = allRoles.find((r) => r.code?.toLowerCase() === 'employee');
+      const targetRoleId = selectedRoleId || (defaultRole ? String(defaultRole.id) : null);
+
+      if (!targetRoleId) {
+        throw new Error('Vui lòng chọn vai trò cho nhân viên (mặc định: Nhân viên)');
+      }
 
       const oldRoleIds = employee.roles ? employee.roles.map((r) => String(r.id)) : [];
 
@@ -122,10 +134,8 @@ export default function RoleModal({ isOpen, onClose, employee }: RoleModalProps)
         await revokeRole(employee.id, oldRoleIds);
       }
 
-      // 2. Gán 1 vai trò duy nhất mới được chọn
-      if (selectedRoleId) {
-        await assignRole(employee.id, [selectedRoleId]);
-      }
+      // 2. Luôn gán vai trò hợp lệ (mặc định: employee)
+      await assignRole(employee.id, [targetRoleId]);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -139,13 +149,8 @@ export default function RoleModal({ isOpen, onClose, employee }: RoleModalProps)
   });
 
   const handleSelectRole = (roleId: string) => {
-    setSelectedRoleId((prev) => (prev === roleId ? null : roleId));
+    setSelectedRoleId(roleId);
     setIsDropdownOpen(false);
-  };
-
-  const handleClearRole = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedRoleId(null);
   };
 
   return (
@@ -215,7 +220,7 @@ export default function RoleModal({ isOpen, onClose, employee }: RoleModalProps)
             >
               {!selectedRoleId ? (
                 <span className="text-gray-400 select-none text-sm">
-                  {isLoadingRoles ? 'Đang tải danh sách vai trò...' : '-- Chưa gán vai trò (Mặc định: Nhân viên) --'}
+                  {isLoadingRoles ? 'Đang tải danh sách vai trò...' : 'Chọn vai trò (Mặc định: Nhân viên)'}
                 </span>
               ) : (
                 (() => {
@@ -227,14 +232,6 @@ export default function RoleModal({ isOpen, onClose, employee }: RoleModalProps)
                   return (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-xs font-medium text-primary">
                       <span>{roleName}</span>
-                      <button
-                        type="button"
-                        onClick={handleClearRole}
-                        className="text-primary/70 hover:text-rose-600 rounded p-0.5 transition-colors cursor-pointer"
-                        title="Gỡ vai trò"
-                      >
-                        <X size={12} />
-                      </button>
                     </span>
                   );
                 })()
@@ -277,45 +274,29 @@ export default function RoleModal({ isOpen, onClose, employee }: RoleModalProps)
                 Không có vai trò nào
               </div>
             ) : (
-              <>
-                <div
-                  onClick={() => {
-                    setSelectedRoleId(null);
-                    setIsDropdownOpen(false);
-                  }}
-                  className={cn(
-                    'px-3 py-2 flex items-center justify-between cursor-pointer transition-colors border-b border-gray-100',
-                    selectedRoleId === null ? 'bg-gray-50 text-gray-900 font-medium' : 'hover:bg-gray-50 text-gray-500'
-                  )}
-                >
-                  <span className="text-sm italic">-- Không gán vai trò (Mặc định: Nhân viên) --</span>
-                  {selectedRoleId === null && <Check size={16} className="text-gray-600" />}
-                </div>
-
-                {allRoles.map((role) => {
-                  const isSelected = selectedRoleId === String(role.id);
-                  return (
-                    <div
-                      key={role.id}
-                      onClick={() => handleSelectRole(String(role.id))}
-                      className={cn(
-                        'px-3 py-2.5 flex items-center justify-between cursor-pointer transition-colors',
-                        isSelected ? 'bg-primary/5 text-primary font-semibold' : 'hover:bg-gray-50 text-gray-700'
-                      )}
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-sm">{role.name}</span>
-                        {role.description ? (
-                          <span className="text-xs text-gray-400">{role.description}</span>
-                        ) : role.code ? (
-                          <span className="text-[11px] text-gray-400">{role.code}</span>
-                        ) : null}
-                      </div>
-                      {isSelected && <Check size={16} className="text-primary" />}
+              allRoles.map((role) => {
+                const isSelected = selectedRoleId === String(role.id);
+                return (
+                  <div
+                    key={role.id}
+                    onClick={() => handleSelectRole(String(role.id))}
+                    className={cn(
+                      'px-3 py-2.5 flex items-center justify-between cursor-pointer transition-colors',
+                      isSelected ? 'bg-primary/5 text-primary font-semibold' : 'hover:bg-gray-50 text-gray-700'
+                    )}
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm">{role.name}</span>
+                      {role.description ? (
+                        <span className="text-xs text-gray-400">{role.description}</span>
+                      ) : role.code ? (
+                        <span className="text-[11px] text-gray-400">{role.code}</span>
+                      ) : null}
                     </div>
-                  );
-                })}
-              </>
+                    {isSelected && <Check size={16} className="text-primary" />}
+                  </div>
+                );
+              })
             )}
           </div>,
           document.body

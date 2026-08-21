@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -8,6 +9,7 @@ import {
   SaleDashboard,
   TechnicianDashboard,
   AccountantDashboard,
+  EmployeeDashboard,
 } from './_pages';
 
 const Dashboard = () => {
@@ -44,8 +46,10 @@ const Dashboard = () => {
       return <TechnicianDashboard />;
     case 'accountant':
       return <AccountantDashboard />;
+    case 'employee':
+      return <EmployeeDashboard />;
     default:
-      return <AdminDashboard />;
+      return <EmployeeDashboard />;
   }
 };
 
