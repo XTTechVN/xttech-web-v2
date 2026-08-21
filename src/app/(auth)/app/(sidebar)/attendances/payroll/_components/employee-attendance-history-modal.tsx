@@ -1,20 +1,8 @@
 import React, { useState } from 'react';
 import { Modal, Button, Badge, Avatar, Select, Input, TableData, ITableColumn } from '@/components';
+import { getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 import { toast } from 'react-hot-toast';
-import {
-  Calendar,
-  Clock,
-  AlertCircle,
-  CheckCircle2,
-  FileSpreadsheet,
-  Filter,
-  UserCheck,
-  Search,
-  LogIn,
-  LogOut,
-  ShieldCheck,
-  AlertTriangle,
-} from 'lucide-react';
+import { Calendar,FileSpreadsheet,Search } from 'lucide-react';
 
 export interface DailyAttendanceRecord {
   id: string;
@@ -189,20 +177,13 @@ export default function EmployeeAttendanceHistoryModal({ open, employee, onClose
   };
 
   const getStatusBadge = (status: DailyAttendanceRecord['status']) => {
-    switch (status) {
-      case 'present':
-        return <Badge variant="success">Có mặt</Badge>;
-      case 'late':
-        return <Badge variant="warning">Đi muộn</Badge>;
-      case 'early_leave':
-        return <Badge variant="warning">Về sớm</Badge>;
-      case 'absent':
-        return <Badge variant="danger">Vắng mặt</Badge>;
-      case 'leave':
-        return <Badge variant="info">Nghỉ phép / Nghỉ tuần</Badge>;
-      default:
-        return <Badge variant="default">-</Badge>;
-    }
+    if (!status) return <Badge variant="default">-</Badge>;
+    if (status === 'leave') return <Badge variant="info">Nghỉ phép / Nghỉ tuần</Badge>;
+    return (
+      <Badge variant={getAttendanceStatusVariant(status)}>
+        {getAttendanceStatusLabel(status)}
+      </Badge>
+    );
   };
 
   const attendanceColumns: ITableColumn<DailyAttendanceRecord>[] = [

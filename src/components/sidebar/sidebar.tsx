@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/utils';
-import { ChevronDown, ChevronRight, Plus, ChevronLeft } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, ChevronLeft, Headphones, ExternalLink, MessageCircle } from 'lucide-react';
 import { Avatar } from '@/components';
 import { HEADER_HEIGHT } from '@/config';
 
@@ -49,6 +49,8 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
     title: string;
     description: string;
     buttonText: string;
+    icon?: React.ReactNode;
+    badge?: string;
     onButtonClick?: () => void;
   };
   variant?: 'light' | 'dark';
@@ -321,20 +323,42 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
 
         {/* Khung quảng bá hành động ở chân trang */}
         {cta && !isCollapsed && (
-          <div className={cn('p-4 shrink-0 border-t', isLight ? 'border-slate-100 bg-slate-50/50' : 'border-slate-800/50 bg-slate-950/20')}>
+          <div className={cn('p-2.5 sm:p-3 shrink-0 border-t', isLight ? 'border-slate-100 bg-slate-50/40' : 'border-slate-800/50 bg-slate-950/20')}>
             <div
-              className={cn('p-4 rounded-xl border flex flex-col gap-3', isLight ? 'bg-white border-slate-200' : 'bg-slate-800/40 border-slate-800')}
+              className={cn(
+                'p-2.5 sm:p-3 rounded-xl border flex flex-col gap-2 sm:gap-2.5 transition-all relative overflow-hidden',
+                isLight
+                  ? 'bg-linear-to-b from-white to-slate-50/70 border-slate-200/80 shadow-xs'
+                  : 'bg-linear-to-b from-slate-800/60 to-slate-900/60 border-slate-800 shadow-sm',
+              )}
             >
-              <div className="space-y-1">
-                <h5 className={cn('text-xs font-semibold', isLight ? 'text-slate-800' : 'text-slate-100')}>{cta.title}</h5>
-                <p className="text-[10px] text-slate-500 leading-relaxed">{cta.description}</p>
+              <div className="flex items-start gap-2 sm:gap-2.5">
+                <div
+                  className={cn(
+                    'w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5',
+                    isLight ? 'bg-primary/10 text-primary' : 'bg-primary/20 text-primary',
+                  )}
+                >
+                  {cta.icon || <Headphones size={13} className="stroke-[2.2]" />}
+                </div>
+                <div className="space-y-0.5 min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <h5 className={cn('text-xs font-semibold truncate', isLight ? 'text-slate-800' : 'text-slate-100')}>{cta.title}</h5>
+                    {cta.badge && (
+                      <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-primary/10 text-primary shrink-0">
+                        {cta.badge}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">{cta.description}</p>
+                </div>
               </div>
               <button
                 onClick={cta.onButtonClick}
-                className="w-full h-8 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-semibold transition-all shadow-md shadow-primary/10 cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full h-7 sm:h-7.5 rounded-lg bg-primary hover:bg-primary/90 active:scale-[0.98] text-white text-[11px] font-medium transition-all shadow-xs shadow-primary/15 cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <Plus size={12} />
-                {cta.buttonText}
+                <span>{cta.buttonText}</span>
+                <ExternalLink size={11} className="opacity-80" />
               </button>
             </div>
           </div>

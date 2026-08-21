@@ -28,51 +28,17 @@ import AutoTimekeepingModal from '@/app/(auth)/app/(sidebar)/attendances/_compon
 import { useAuthStore } from '@/stores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAttendances } from '@/actions';
-import { Attendance } from '@/types';
+import { Attendance, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 import StatCart from '../../dashboard/_components/stats-card';
 import AddAdjustmentModal from '../_components/adjustment/add-modal';
 import AttendanceDetailModal from '../_components/attendance-modal';
 import OvertimeModal from '../_components/overtime-modal';
-
-const statusVariantMap: Record<
-  string,
-  'success' | 'warning' | 'danger' | 'info'
-> = {
-  normal: 'success',
-  present: 'success',
-  late: 'warning',
-  absent: 'danger',
-  half_day: 'warning',
-  early_leave: 'warning',
-  early_checkout: 'warning',
-  late_and_early_leave: 'warning',
-  overtime: 'success',
-};
-
-const getStatusVariant = (status?: string | null) => {
-  return statusVariantMap[status ?? ''] ?? 'danger';
-};
 
 const formatTime = (value?: string | null): string => {
   if (!value) return '--:--';
   if (value.includes('T')) return value.substring(11, 16);
   if (value.includes(' ') && value.length >= 16) return value.substring(11, 16);
   return value.substring(0, 5);
-};
-
-const getStatusBadge = (status?: string | null) => {
-  const statusTextMap: Record<string, string> = {
-    normal: 'Đúng giờ',
-    present: 'Đúng giờ',
-    late: 'Đi muộn',
-    absent: 'Vắng mặt',
-    half_day: 'Nghỉ nửa ngày',
-    early_leave: 'Về sớm',
-    early_checkout: 'Về sớm',
-    late_and_early_leave: 'Đi muộn & Về sớm',
-    overtime: 'Tăng ca',
-  };
-  return statusTextMap[status ?? ''] ?? status ?? '';
 };
 
 // ─── Main component ──────────────────────────────────────────────────────────
@@ -120,7 +86,7 @@ export default function PayrollDataPage() {
       new Set(myAttendances.map((item) => item.status).filter((s): s is string => Boolean(s)))
     );
     return statuses.map((status) => ({
-      label: String(getStatusBadge(status) || status),
+      label: getAttendanceStatusLabel(status),
       value: String(status),
     }));
   }, [myAttendances]);
@@ -313,13 +279,11 @@ export default function PayrollDataPage() {
       key: 'status',
       label: 'Trạng thái',
       minWidth: '120px',
-      cell: (row) => {
-        return (
-          <Badge variant={getStatusVariant(row.status)}>
-            {getStatusBadge(row.status)}
-          </Badge>
-        );
-      },
+      cell: (row) => (
+        <Badge variant={getAttendanceStatusVariant(row.status)}>
+          {getAttendanceStatusLabel(row.status)}
+        </Badge>
+      ),
     },
     {
       key: 'note',
@@ -372,8 +336,8 @@ export default function PayrollDataPage() {
             {getDayOfWeek(row.workDate)}
           </p>
         </div>
-        <Badge variant={getStatusVariant(row.status)} pill>
-          {getStatusBadge(row.status)}
+        <Badge variant={getAttendanceStatusVariant(row.status)} pill>
+          {getAttendanceStatusLabel(row.status)}
         </Badge>
       </div>
 

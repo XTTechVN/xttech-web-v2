@@ -28,13 +28,18 @@ export interface QuotationUpdate {
   floors?: QuotationFloorCreate[];
 }
 
+export interface QuotationAccessoryCreate {
+  accessoryId: number;
+  initPrice?: number;
+}
+
 export interface QuotationDoorCreate {
   code?: string;
   doorId: number;
   width?: number;
   height?: number;
   quantity: number;
-  accessoryIds?: number[];
+  accessories?: QuotationAccessoryCreate[];
   extraOptionIds?: number[];
   fomulas?: {
     fomulaId: number;
@@ -45,7 +50,7 @@ export interface QuotationDoorCreate {
 
 export interface QuotationMaterialCreate {
   materialId: number;
-  initPrice: number;
+  initPrice?: number;
   doors: QuotationDoorCreate[];
 }
 
