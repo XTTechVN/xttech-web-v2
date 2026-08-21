@@ -15,7 +15,7 @@ const getRoleVariant = (roleCode?: string | null): 'primary' | 'success' | 'warn
   if (!roleCode) return 'default';
   const lower = roleCode.toLowerCase();
   if (lower.includes('admin')) return 'danger';
-  if (lower.includes('hr')) return 'warning';
+  if (lower.includes('hr') || lower.includes('accountant')) return 'warning';
   if (lower.includes('sale')) return 'primary';
   if (lower.includes('technician')) return 'info';
   if (lower.includes('super') || lower.includes('supper')) return 'success';
