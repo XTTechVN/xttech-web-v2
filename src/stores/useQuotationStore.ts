@@ -429,10 +429,14 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
       materials: floor.materials.map((mat) => ({
         ...mat,
         doors: mat.doors.map((door) => ({
-          ...door,
-          quantity: (door.quantity as any) === '' ? 1 : Number(door.quantity) || 1,
+          doorId: door.doorId,
+          code: door.code,
           width: (door.width as any) === '' ? 0 : Number(door.width) || 0,
           height: (door.height as any) === '' ? 0 : Number(door.height) || 0,
+          quantity: (door.quantity as any) === '' ? 1 : Number(door.quantity) || 1,
+          accessories: (door.accessoryIds || []).map((id: number) => ({ accessoryId: id })),
+          extraOptionIds: door.extraOptionIds || [],
+          fomulas: door.fomulas || [],
         })),
       })),
     }));
