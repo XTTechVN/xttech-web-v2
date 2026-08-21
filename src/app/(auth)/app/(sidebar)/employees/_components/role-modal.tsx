@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Modal, Button, Avatar } from '@/components';
 import { UserCog, ChevronDown, Check } from 'lucide-react';
@@ -40,7 +40,7 @@ export default function RoleModal({ isOpen, onClose, employee }: RoleModalProps)
     enabled: isOpen,
   });
 
-  const allRoles: Role[] = rolesData?.items ?? [];
+  const allRoles: Role[] = useMemo(() => rolesData?.items ?? [], [rolesData?.items]);
 
   // Đồng bộ vai trò hiện tại của nhân viên khi mở Modal (mặc định role employee nếu chưa có)
   useEffect(() => {

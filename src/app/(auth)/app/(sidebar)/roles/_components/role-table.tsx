@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { TableData, TableAction, Button, Modal, Badge, Heading } from '@/components';
-import { Plus, Pencil, Trash2, Shield } from 'lucide-react';
+import { TableData, TableAction, Button, Modal, Badge } from '@/components';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getRoles, deleteRole } from '@/actions/role';

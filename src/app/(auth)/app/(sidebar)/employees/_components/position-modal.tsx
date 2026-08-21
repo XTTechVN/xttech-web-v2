@@ -59,8 +59,8 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
     queryFn: () => getPositions({ limit: 200 }),
   });
 
-  const departmentList: Department[] = deptsData?.items || [];
-  const allPositions: Position[] = positionsData?.items || [];
+  const departmentList: Department[] = useMemo(() => deptsData?.items || [], [deptsData?.items]);
+  const allPositions: Position[] = useMemo(() => positionsData?.items || [], [positionsData?.items]);
 
   // Lọc danh sách vị trí theo phòng ban được chọn (chỉ hiển thị khi đã chọn phòng ban)
   const filteredPositions = useMemo(() => {
