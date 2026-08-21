@@ -230,7 +230,7 @@ const SystemHistory = () => {
       </div>
 
       {/* Danh sách nhật ký */}
-      <div className="flex flex-col max-h-[380px] overflow-y-auto pr-1 divide-y divide-gray-100">
+      <div className="flex flex-col max-h-95 overflow-y-auto pr-1 divide-y divide-gray-100">
         {isLoading ? (
           <div className="flex flex-col gap-3 py-2">
             {[1, 2, 3, 4].map((n) => (
