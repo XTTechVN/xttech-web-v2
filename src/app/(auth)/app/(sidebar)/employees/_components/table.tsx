@@ -143,7 +143,7 @@ const Table = () => {
           {row.positions && row.positions.length > 0 ? (
             row.positions.map((pos: any) => (
               <Badge key={pos.id} variant="info" size="sm">
-                {pos.name}
+                {pos.name+" - "+pos?.department?.name}
               </Badge>
             ))
           ) : (
