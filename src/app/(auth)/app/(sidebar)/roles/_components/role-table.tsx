@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { TableData, TableAction, Button, Modal, Badge, Heading } from '@/components';
-import { Plus, Pencil, Trash2, Shield } from 'lucide-react';
+import { TableData, TableAction, Button, Modal, Badge } from '@/components';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getRoles, deleteRole } from '@/actions/role';
@@ -15,7 +15,7 @@ const getRoleVariant = (roleCode?: string | null): 'primary' | 'success' | 'warn
   if (!roleCode) return 'default';
   const lower = roleCode.toLowerCase();
   if (lower.includes('admin')) return 'danger';
-  if (lower.includes('hr')) return 'warning';
+  if (lower.includes('hr') || lower.includes('accountant')) return 'warning';
   if (lower.includes('sale')) return 'primary';
   if (lower.includes('technician')) return 'info';
   if (lower.includes('super') || lower.includes('supper')) return 'success';

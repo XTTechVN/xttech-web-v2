@@ -3,3 +3,4 @@ export * from './hr';
 export * from './sale';
 export * from './technician';
 export * from './accountant';
+export * from './employee';

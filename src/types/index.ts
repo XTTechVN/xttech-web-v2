@@ -51,3 +51,6 @@ export * from './work_shift';
 
 // Report
 export * from './report';
+
+// Audit Log
+export * from './audit-log';
