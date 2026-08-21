@@ -26,27 +26,37 @@ export const Header = () => {
           <div className="p-1.5 bg-primary/20 rounded-lg">
             <Settings className="w-5 h-5 text-primary" />
           </div>
-          <Heading size='h1' className='text-primary'>XTTECH</Heading>
+          <Heading size="h1" className="text-primary">
+            XTTECH
+          </Heading>
         </div>
         <nav className="hidden md:flex items-center gap-8">
-          <Link href="#features" className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">Tính năng</Link>
-          <Link href="#" className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">Về chúng tôi</Link>
-          <Link href="#contact" className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">Liên hệ</Link>
+          <Link href="#features" className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">
+            Tính năng
+          </Link>
+          <Link href="#" className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">
+            Về chúng tôi
+          </Link>
+          <Link href="#contact" className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">
+            Liên hệ
+          </Link>
         </nav>
         <div className="flex items-center gap-3">
           {mounted ? (
             isAuthenticated && user ? (
-              <Link href="/app" className="flex items-center gap-2 hover:bg-gray-100 p-1.5 rounded-full pr-4 transition-colors">
-                <Avatar 
-                  src={user.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_MINIO_URL}${user.avatar}`) : undefined} 
-                  name={user.fullName || user.username} 
-                  size="sm" 
+              <Link href="/app/dashboard" className="flex items-center gap-2 hover:bg-gray-100 p-1.5 rounded-full pr-4 transition-colors">
+                <Avatar
+                  src={user.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_MINIO_URL}${user.avatar}`) : undefined}
+                  name={user.fullName || user.username}
+                  size="sm"
                 />
                 <span className="text-sm font-semibold text-gray-700">{user.fullName || user.username}</span>
               </Link>
             ) : (
               <Link href="/signin">
-                <Button size="sm" className="rounded-full px-5 bg-primary hover:bg-primary/90 shadow-sm text-white">Đăng Nhập</Button>
+                <Button size="sm" className="rounded-full px-5 bg-primary hover:bg-primary/90 shadow-sm text-white">
+                  Đăng Nhập
+                </Button>
               </Link>
             )
           ) : (
