@@ -1,72 +1,64 @@
-import api from '@/utils/api';
+// Thư viện quản lý trạng thái client-side
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 
-import useUserStore from './useUserStore';
+// Middleware lưu trữ trạng thái của Zustand vào LocalStorage
+import { persist } from 'zustand/middleware';
 
-import { AxiosResponse } from 'axios';
-import { AuthResponse } from '@/types/shared';
+// Hàm xử lý đăng nhập
+import { signIn } from '@/actions';
 
+// Kiểu dữ liệu dùng chung cho thông tin tài khoản và kết quả đăng nhập
+import { AuthUser } from '@/types';
+
+// Kiểu dữ liệu cho trạng thái đăng nhập
 interface AuthState {
   isAuthenticated: boolean;
-  hasHydrated: boolean;
-
-  accessToken: string | null;
-  refreshToken: string | null;
-
+  accessToken: string;
+  refreshToken: string;
+  user: AuthUser | null;
+  isLoading: boolean;
   signin: (username: string, password: string) => Promise<boolean>;
-  signout: () => void;
-
   setAccessToken: (accessToken: string) => void;
-  setRefreshToken: (refreshToken: string) => void;
-
-  setAuthenticated: (isAuthenticated: boolean) => void;
-  setHasHydrated: (hasHydrated: boolean) => void;
 }
 
 const useAuthStore = create<AuthState>()(
   persist(
-    (set: any) => ({
+    (set) => ({
       isAuthenticated: false,
-      hasHydrated: false,
-
-      accessToken: null,
-      refreshToken: null,
-
+      accessToken: '',
+      refreshToken: '',
+      user: null,
+      isLoading: false,
       signin: async (username: string, password: string) => {
         try {
-          const response: AxiosResponse<AuthResponse> = await api.post('/api/v1/auth/signin', {
-            username,
-            password,
-          });
+          set({ isLoading: true });
+          const res = await signIn({ username, password });
+          const { accessToken, refreshToken, user } = res;
+          
+          if (user && user.roles) {
+            document.cookie = `xt-auth=${encodeURIComponent(JSON.stringify({ roles: user.roles }))}; path=/; max-age=604800; SameSite=Lax`;
+          }
 
-          const { accessToken, refreshToken, user } = response.data;
-
-          set({ accessToken, refreshToken, isAuthenticated: true });
-          useUserStore.getState().setUser(user);
+          set({ accessToken, refreshToken, user, isAuthenticated: true });
 
           return true;
         } catch (error) {
           return false;
+        } finally {
+          set({ isLoading: false });
         }
       },
 
-      signout: () => {
-        api.post('/api/v1/auth/signout').finally(() => {
-          set({ isAuthenticated: false });
-          useUserStore.getState().clearUser();
-        });
-      },
-
       setAccessToken: (accessToken: string) => set({ accessToken }),
-      setRefreshToken: (refreshToken: string) => set({ refreshToken }),
-
-      setAuthenticated: (isAuthenticated: boolean) => set({ isAuthenticated }),
-      setHasHydrated: (hasHydrated: boolean) => set({ hasHydrated }),
     }),
     {
-      name: 'cv_auth',
-      storage: createJSONStorage(() => localStorage),
+      name: 'xt-auth',
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+      }),
     },
   ),
 );

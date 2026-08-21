@@ -16,7 +16,7 @@ export interface ITableColumn<T> {
   maxWidth?: string;
   sticky?: boolean;
   visible?: boolean; // Xác định cột có hiển thị mặc định hay không (mặc định là true)
-  cell: (row: T) => ReactNode;
+  cell: (row: T, index: number) => ReactNode;
 }
 
 export interface ITableSearchProps {
@@ -27,12 +27,21 @@ export interface ITableSearchProps {
 }
 
 export interface ITableFilterProps {
+  type?: 'select' | 'date-range' | 'date';
   label?: string;
   value?: string | undefined;
-  options: { value: string | undefined; label: string; icon?: ReactNode }[];
+  options?: { value: string | undefined; label: string; icon?: ReactNode }[];
   onChange?: (value: string | undefined) => void;
+  onSearchChange?: (search: string) => void;
+  onLoadMore?: () => void;
+  placeholder?: string;
   className?: string;
   icon?: ReactNode;
+
+  // Hỗ trợ bộ lọc khoảng ngày (Date Range)
+  startDate?: string;
+  endDate?: string;
+  onDateRangeChange?: (startDate?: string, endDate?: string) => void;
 }
 
 export interface TableDataBaseProps<T> {

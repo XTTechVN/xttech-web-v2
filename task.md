@@ -1,0 +1,29 @@
+- [x] Tạo file `useQuotationStore.ts` trong `src/stores`
+- [x] Đăng ký export `useQuotationStore` tại `src/stores/index.ts`
+- [x] Cập nhật `src/actions/quotation/index.ts` nếu cần để thêm endpoint `/api/v1/quotations/preview`
+- [x] Cập nhật `src/app/(auth)/app/(sidebar)/quotations/[id]/page.tsx`
+  - Bước 1: Gọi các API cần thiết bằng `useQuery` và log kết quả ra console.
+  - Bước 2: Tích hợp và kết xuất component `QuotationEditor` ra giữa màn hình.
+  - Bước 3: Cập nhật đường dẫn import `QuotationEditor` để thông qua barrel export của thư mục components.
+- [x] Cấu trúc lại Editor và chia nhỏ thành các component con tại thư mục `src/app/(auth)/app/(sidebar)/quotations/[id]/components/editor/`:
+  - `quotation-info.tsx`: Thông tin chung của báo giá.
+  - `floor-item.tsx`: Render thông tin của từng Tầng.
+  - `material-item.tsx`: Render thông tin từng Hệ nhôm của tầng.
+  - `door-item.tsx`: Render thông tin từng Cửa (kích thước, số lượng, dropdown select cho phụ kiện và phát sinh).
+  - `quotation-editor.tsx`: Lắp ghép và cấu trúc lại toàn bộ các component con.
+  - `index.ts`: Barrel export tất cả component con bên trong thư mục editor.
+- [x] Cấu trúc lại Preview và chia nhỏ thành các component con tại thư mục `src/app/(auth)/app/(sidebar)/quotations/[id]/components/preview/`:
+  - `quotation-header.tsx`: Tiêu đề thông tin công ty và ngày tạo báo giá.
+  - `quotation-title.tsx`: Tên hạng mục báo giá và mã số ký hiệu.
+  - `customer-info.tsx`: Thông tin chi tiết khách hàng và hiệu lực.
+  - `quotation-table.tsx`: Bảng biểu phân rã chi tiết tầng -> hệ nhôm -> cửa -> phụ kiện & tùy chọn.
+  - `quotation-summary.tsx`: Khối hóa đơn tính toán tổng số tiền, chiết khấu, thành tiền.
+  - `quotation-preview.tsx`: Lắp ghép các component con của Preview lại.
+  - `index.ts`: Barrel export tất cả component con bên trong thư mục preview.
+- [x] Cập nhật `src/app/(auth)/app/(sidebar)/quotations/[id]/components/index.ts` để barrel export `QuotationEditor` từ `editor/` và `QuotationPreview` từ `preview/`.
+- [x] Xóa bỏ file `quotation-editor.tsx` và `quotation-preview.tsx` cũ bị trùng lặp ở thư mục ngoài.
+- [x] Loại bỏ toàn bộ logic tính toán tiền/diện tích khỏi `useQuotationStore.ts`.
+- [x] Định nghĩa các kiểu dữ liệu thô `DraftFloor`, `DraftMaterial`, `DraftDoor` cô lập hoàn toàn khỏi component Preview.
+- [x] Thiết lập các action add/update/remove cho phụ kiện và tùy chọn phát sinh trong store.
+- [x] Tích hợp thêm các hàm `getPayload`, `createQuotation` và `updateQuotation` trực tiếp trong Zustand store.
+- [x] Kiểm thử build toàn bộ dự án (`npm run build`).

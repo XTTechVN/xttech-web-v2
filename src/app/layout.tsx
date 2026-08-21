@@ -1,13 +1,8 @@
-import type { Metadata } from 'next';
-import { Geist, Geist_Mono, Lexend } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import { Geist_Mono, Lexend } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 
 import './globals.css';
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
@@ -20,10 +15,35 @@ const lexend = Lexend({
   weight: ['400', '500', '600', '700', '800', '900'],
 });
 
+// 1. Cấu hình Viewport để màn hình không bị phóng to thu nhỏ lung tung
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#045863',
+};
+
 export const metadata: Metadata = {
   title: 'XTTech - Quản lý doanh nghiệp',
   description: 'XTTech - Quản lý doanh nghiệp',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'XTTech ERP',
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
+
 
 export default function RootLayout({
   children,
@@ -31,8 +51,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="">
+    <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="bg-white antialiased min-h-screen" suppressHydrationWarning>
         {children}
         <Toaster position="top-center" />
       </body>

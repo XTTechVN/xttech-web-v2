@@ -1,9 +1,36 @@
+import { Role } from './auth';
+
+// Kiểu dữ liệu thông tin người dùng
 export interface User {
   id: string;
-  name: string;
+  email: string;
+  username: string;
+  fullName: string;
+  phoneNumber: string;
+  avatar: string | null;
+  gender: 'male' | 'female' | 'other' | string;
+  birthday: string;
+  address: string;
+  joinedAt: string;
+  identifyCode: string;
+  attendancePolicy: string;
+  createdAt: string;
+  updatedAt: string;
+  roles: Role[];
+  positions: string[];
 }
 
-export interface User2 {
-  id: number;
-  name: string;
+export interface UserQueryParams {
+  offset?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  allowDeleted?: boolean | null;
+  email?: string;
+  name?: string;
+  department?: string;
+  position?: string;
+  startTime?: string | null;
+  endTime?: string | null;
 }

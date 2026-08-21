@@ -46,3 +46,4 @@ export default function Page() {
 | `footer` | `React.ReactNode` | Không | Thanh chức năng (các Button) hiển thị dưới cùng của Modal |
 | `size` | `'sm' \| 'md' \| 'lg' \| 'xl' \| 'full'` | Không | Độ rộng tối đa của Modal (Mặc định: `'md'`) |
 | `closeOnOverlayClick` | `boolean` | Không | Cho phép đóng modal khi click ra ngoài backdrop (Mặc định: `true`) |
+| `disabled` | `boolean` | Không | Vô hiệu hóa đóng modal khi nhấn ESC, click backdrop hoặc bấm nút X (Mặc định: `false`) |
