@@ -6,6 +6,7 @@ import { Modal, Button, Badge, Avatar } from '@/components';
 import { getAttendances } from '@/actions';
 import { BASE_MINIO_URL } from '@/config';
 import type { AttendanceReportItem, Attendance } from '@/types';
+import { getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 
 interface ReportDetailModalProps {
   isOpen: boolean;
@@ -113,29 +114,12 @@ export function ReportDetailModal({
                     <span className="font-bold text-gray-700">
                       {att.totalHours ? `${att.totalHours}h` : '0h'}
                     </span>
-                    <Badge
-                      variant={
-                        att.status === 'normal' || att.status === 'present'
-                          ? 'success'
-                          : att.status === 'overtime'
-                          ? 'info'
-                          : att.status === 'late' || att.status === 'early_leave'
-                          ? 'warning'
-                          : 'default'
-                      }
-                      size="sm"
-                    >
-                      {att.status === 'normal'
-                        ? 'Đúng giờ'
-                        : att.status === 'overtime'
-                        ? 'Tăng ca'
-                        : att.status === 'late'
+                    <Badge variant={getAttendanceStatusVariant(att.status)} size="sm">
+                      {att.status === 'late' && att.lateMinutes
                         ? `Muộn (${att.lateMinutes}p)`
-                        : att.status === 'early_leave'
+                        : att.status === 'early_leave' && att.earlyLeaveMinutes
                         ? `Sớm (${att.earlyLeaveMinutes}p)`
-                        : att.status === 'absent'
-                        ? 'Vắng'
-                        : att.status}
+                        : getAttendanceStatusLabel(att.status)}
                     </Badge>
                   </div>
                 </div>

@@ -38,7 +38,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteAttendance, getAttendances, getDepartments, getUsers, getAdjustmentRequests, updateAdjustmentRequest } from '@/actions';
-import { Attendance, AttendanceAdjustmentRequest, AttendanceStatus } from '@/types';
+import { Attendance, AttendanceAdjustmentRequest, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 import StatCart from '../dashboard/_components/stats-card';
 import AddAdjustmentModal from './_components/adjustment/add-modal';
@@ -206,24 +206,6 @@ export default function AttendancesPage() {
     }
   };
 
-  // Tạo option list duy nhất từ mock data
-
-  const getStatusLabel = (status?: string | null) => {
-    const map: Record<string, string> = {
-      normal: "Đúng giờ",
-      present: "Đúng giờ",
-      late: "Đi muộn",
-      absent: "Vắng mặt",
-      early_leave: "Về sớm",
-      early_checkout: "Về sớm",
-      late_and_early_leave: "Đi muộn & Về sớm",
-      overtime: "Tăng ca",
-      half_day: "Nửa ngày",
-    };
-
-    return map[status ?? ""] ?? "Không xác định";
-  };
-
   const departmentOptions: FilterOption[] = Array.from(
     new Map(
       ((departments as any)?.items ?? []).map((item: any) => [
@@ -244,7 +226,7 @@ export default function AttendancesPage() {
           item.status,
           {
             value: item.status ?? undefined,
-            label: getStatusLabel(item.status),
+            label: getAttendanceStatusLabel(item.status as AttendanceStatus),
           },
         ])
     ).values(),
@@ -600,34 +582,11 @@ export default function AttendancesPage() {
       key: 'status',
       label: 'Trạng thái',
       minWidth: '120px',
-      cell: (row) => {
-        const statusVariantMap: Record<
-          string,
-          'success' | 'warning' | 'danger' | 'info'
-        > = {
-          normal: 'success',
-          present: 'success',
-          late: 'warning',
-          absent: 'danger',
-          half_day: 'warning',
-          early_leave: 'warning',
-          early_checkout: 'warning',
-          late_and_early_leave: 'warning',
-          overtime: 'success',
-        };
-
-
-        const getStatusVariant = (status?: string | null) => {
-          return statusVariantMap[status ?? ""] ?? "danger";
-        };
-        return (
-          <Badge
-            variant={getStatusVariant(row.status)}
-          >
-            {getStatusLabel(row.status)}
-          </Badge>
-        );
-      },
+      cell: (row) => (
+        <Badge variant={getAttendanceStatusVariant(row.status)}>
+          {getAttendanceStatusLabel(row.status)}
+        </Badge>
+      ),
     },
     {
       key: 'actions',
