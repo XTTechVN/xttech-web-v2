@@ -65,19 +65,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     },
     sections: filteredSections,
     cta: {
-      title: 'Cần hỗ trợ?',
-      description: 'Liên hệ với chúng tôi để góp ý nếu chương trình có lỗi hoặc để cải thiện chương trình',
-      buttonText: 'Liên hệ ngay',
+      title: 'Hỗ trợ kỹ thuật',
+      badge: 'Zalo',
+      description: 'Liên hệ để đóng góp ý kiến hoặc phản hồi sự cố hệ thống',
+      buttonText: 'Mở nhóm hỗ trợ',
       onButtonClick: () => {
-        const phoneNumber = '0862163122';
-        const userAgent = typeof window !== 'undefined' ? navigator.userAgent : '';
-        // Mở Zalo Native App trên iOS/Android
-        if (/iPhone|iPod|iPad|Android/i.test(userAgent)) {
-          window.location.href = `zalo://chat?phone=${phoneNumber}`;
-        } else {
-          // Mở Zalo Web / Zalo PC chuyển hướng trên Desktop
-          window.open(`https://zalo.me/${phoneNumber}`, '_blank', 'noopener,noreferrer');
-        }
+        const zaloGroupUrl = 'https://zalo.me/g/erv3bny3uug6i1qgbqez';
+
+        window.open(zaloGroupUrl, '_blank', 'noopener,noreferrer');
       },
     },
     onItemSelect: (item: SidebarItemProps) => {
@@ -136,6 +131,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             variant="light"
             className="relative h-full w-72 rounded-none border-y-0 border-l-0 border-r border-slate-200 shadow-2xl bg-white z-10 animate-in slide-in-from-left duration-300"
             activeId={activeMenu}
+            cta={sidebarConfig.cta}
             brand={sidebarConfig.brand}
             sections={sidebarConfig.sections}
             onItemSelect={sidebarConfig.onItemSelectMobile}
