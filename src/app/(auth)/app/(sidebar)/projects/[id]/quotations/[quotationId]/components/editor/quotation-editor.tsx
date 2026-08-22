@@ -11,6 +11,7 @@ import type { Accessory, ExtraOption, Material, Door, Formula } from '@/types';
 
 import { QuotationInfo } from './quotation-info';
 import { QuotationFloor } from './quotation-floor';
+import { QuotationTermsEditor } from './quotation-terms-editor';
 
 interface QuotationEditorProps {
   quotationId: number;
@@ -126,7 +127,10 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
       {/* 1. Thông tin chung */}
       <QuotationInfo />
 
-      {/* 2. Cấu trúc các tầng */}
+      {/* 2. Ghi chú & Điều khoản (Rich Text) */}
+      <QuotationTermsEditor />
+
+      {/* 3. Cấu trúc các tầng */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center pb-1.5">
           <h3 className="text-base font-bold text-primary">Cấu trúc các tầng</h3>
@@ -137,7 +141,7 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
 
         {floors.length === 0 ? (
           <div className="text-center p-6 border-2 border-dashed border-gray-200 rounded-lg text-gray-400 text-sm italic">
-            Chưa có tầng nào được tạo. Nhấn "Thêm tầng" để bắt đầu.
+            Chưa có tầng nào được tạo. Nhấn &ldquo;Thêm tầng&rdquo; để bắt đầu.
           </div>
         ) : (
           <div className="flex flex-col gap-4">

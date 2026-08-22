@@ -7,7 +7,6 @@ import { cn } from '@/utils';
 import { AppBreadcrumb } from './app-breadcrumb';
 import { HeaderProfile } from './header-profile';
 import { HeaderSearch } from './header-search';
-import { InstallPwaButton } from '@/components/install-pwa-button';
 
 export interface AppHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   onMenuClick?: () => void;

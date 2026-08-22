@@ -8,6 +8,7 @@ export interface Quotation {
   status: string;
   projectId: number;
   reviewBy: string | null;
+  termsAndConditions?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -17,6 +18,7 @@ export interface QuotationCreate {
   projectId: number;
   code?: string;
   discountPercentage?: number;
+  termsAndConditions?: string;
 }
 
 export interface QuotationUpdate {
@@ -25,6 +27,7 @@ export interface QuotationUpdate {
   discountPercentage?: number;
   status?: string;
   projectId?: number;
+  termsAndConditions?: string;
   floors?: QuotationFloorCreate[];
 }
 
