@@ -31,9 +31,9 @@ export const DEFAULT_TERMS_AND_CONDITIONS = `<p><strong>1. Quy định chung &am
 
 <p><strong>2. Phương thức &amp; Thông tin thanh toán:</strong></p>
 <ul>
-  <li><strong>Lần 1 (Tạm ứng):</strong> 30% trên tổng giá trị dự toán sau khi ký hợp đồng.</li>
-  <li><strong>Lần 2 (Giao hàng):</strong> Tạm ứng đến 80% giá trị dự toán sau khi hàng được chuyển đến công trình.</li>
-  <li><strong>Lần 3 (Quyết toán):</strong> Thanh toán đủ 100% tiền hàng sau khi hoàn thành lắp đặt.</li>
+  <li><strong>Lần 1: Tạm ứng 30% trên tổng giá trị dự toán sau khi ký hợp đồng.</li>
+  <li><strong>Lần 2: Tạm ứng 50% giá trị còn lại của dự toán sau khi hàng được chuyển đến công trình.</li>
+  <li><strong>Lần 3: Thanh toán đủ 20% giá trị còn lại khi hoàn thành lắp đặt.</li>
 </ul>
 <p><strong>* Hình thức thanh toán:</strong> Bằng tiền mặt hoặc chuyển khoản ngân hàng</p>
 <p><em><strong>Thông tin chuyển khoản:</strong> Tài khoản số: <strong>119000090101</strong>, tại Ngân Hàng TMCP Công Thương Việt Nam (Vietinbank) - Chi nhánh Đông Hải Phòng<br/>
