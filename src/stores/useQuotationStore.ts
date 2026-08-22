@@ -10,10 +10,12 @@ interface QuotationState {
   status: string;
   projectId: number;
   reviewBy: string | null;
+  termsAndConditions: string;
   floors: DraftFloor[];
 
   initialize: (quotation: QuotationDetail) => void;
   setQuotationField: (field: string, value: any) => void;
+  setTermsAndConditions: (content: string) => void;
 
   // Floor Actions
   addFloor: () => void;
@@ -51,6 +53,8 @@ interface QuotationState {
   updateQuotation: (id: number) => Promise<Quotation>;
 }
 
+import { DEFAULT_TERMS_AND_CONDITIONS } from '@/app/(auth)/app/(sidebar)/projects/[id]/quotations/[quotationId]/components/editor/config';
+
 export const useQuotationStore = create<QuotationState>((set, get) => ({
   title: '',
   code: '',
@@ -58,6 +62,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
   status: 'pending',
   projectId: 0,
   reviewBy: null,
+  termsAndConditions: DEFAULT_TERMS_AND_CONDITIONS,
   floors: [],
 
   initialize: (quotation) => {
@@ -95,12 +100,17 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
       status: quotation.status || 'pending',
       projectId: quotation.projectId || 0,
       reviewBy: quotation.reviewBy || null,
+      termsAndConditions: quotation.termsAndConditions ?? DEFAULT_TERMS_AND_CONDITIONS,
       floors: mappedFloors,
     });
   },
 
   setQuotationField: (field, value) => {
     set((state) => ({ ...state, [field]: value }));
+  },
+
+  setTermsAndConditions: (content) => {
+    set({ termsAndConditions: content });
   },
 
   addFloor: () => {
@@ -448,6 +458,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
       status,
       projectId,
       reviewBy,
+      termsAndConditions: get().termsAndConditions,
       floors: cleanedFloors,
     };
   },
