@@ -2,9 +2,7 @@ import api from '@/utils/api';
 import type { BaseResponseWithPagination } from '@/components';
 import type { Customer, CustomerCreate, CustomerQueryParams, CustomerUpdate } from '@/types';
 
-export const getCustomers = async (
-  params?: CustomerQueryParams,
-): Promise<BaseResponseWithPagination<Customer>> => {
+export const getCustomers = async (params?: CustomerQueryParams): Promise<BaseResponseWithPagination<Customer>> => {
   try {
     const response = await api.get('/api/v1/customers', { params });
     const { items, meta } = response.data;
