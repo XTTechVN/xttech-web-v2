@@ -167,7 +167,7 @@ export const QuotationTermsEditor: React.FC = () => {
               contentEditable
               onInput={handleInput}
               onBlur={handleInput}
-              className="min-h-[160px] max-h-[360px] overflow-y-auto p-3 text-xs leading-relaxed text-gray-800 border border-slate-200 rounded focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
+              className="min-h-40 max-h-90 overflow-y-auto p-3 text-xs leading-relaxed text-gray-800 border border-slate-200 rounded focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
               style={{
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',

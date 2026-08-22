@@ -34,17 +34,21 @@ const REQUEST_TYPE_LABEL: Record<string, string> = {
   forgot_attendance: 'Quên điểm danh',
   both: 'Điều chỉnh Check In & Out',
 };
-
+const ROLE_ALLOW_REVIEW = ['admin', 'super', 'hr'];
 export default function AdjustmentsSidebarPage() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
 
-  const isAdmin = useMemo(() =>
-    Boolean(currentUser?.roles?.some((r) =>
-      r.code?.toLowerCase() === 'admin' || r.name?.toLowerCase() === 'admin' || r.code?.toLowerCase() === 'super')
-      ),
-    [currentUser]
-  );
+  const isAdmin = useMemo(
+  () =>
+    Boolean(
+      currentUser?.roles?.some((role) =>
+        ROLE_ALLOW_REVIEW.includes(role.code?.toLowerCase() || '')
+      )
+    ),
+  [currentUser]
+);
+
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<AdjustmentStatus | undefined>();
