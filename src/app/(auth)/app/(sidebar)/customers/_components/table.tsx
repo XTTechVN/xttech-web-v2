@@ -1,6 +1,6 @@
 'use client';
 
-import { User, Pencil, Trash2 } from 'lucide-react';
+import { User, Pencil, Trash2, Eye } from 'lucide-react';
 
 import { TableData, TableAction } from '@/components/table';
 
@@ -111,6 +111,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       minWidth: '120px',
       cell: (row: Customer) => (
         <TableAction
+          onView={() => {}}
           onEdit={() => onEditClick(row)}
           onDelete={() => onDeleteClick(row)}
         />
@@ -165,6 +166,14 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         </div>
       </div>
       <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5">
+        <button
+          type="button"
+          onClick={() => {}}
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer"
+        >
+          <Eye size={12} />
+          Xem
+        </button>
         <button
           type="button"
           onClick={() => onEditClick(row)}
