@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useRef } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
-import { Button } from '@/components';
+import { Plus, Copy, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Button, Input } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { QuotationDoor } from './quotation-door';
 import { EDITOR_STYLES } from './config';
@@ -53,7 +54,7 @@ export const QuotationMaterial = ({
 
   return (
     <div className="flex flex-col gap-2 py-2">
-      {/* Chọn hệ nhôm & Thêm cửa / Xóa */}
+      {/* Chọn hệ nhôm & Đơn giá & Thêm cửa / Xóa */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <Button
@@ -65,45 +66,67 @@ export const QuotationMaterial = ({
           >
             {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </Button>
-          <div className="w-full relative min-w-0">
-            <div 
-              ref={triggerRef}
-              onClick={() => setIsSelectOpen(true)}
-              className={EDITOR_STYLES.select + ' flex justify-between items-center w-full cursor-pointer'}
-              title={
-                selectedMat 
-                  ? `${selectedMat.name} (${selectedMat.code}) - ${selectedMat.price.toLocaleString('vi-VN')}/m²` 
-                  : 'Chọn hệ nhôm...'
-              }
-            >
-              <span className="truncate pr-4">
-                {selectedMat 
-                  ? `${selectedMat.name} (${selectedMat.code}) - ${selectedMat.price.toLocaleString('vi-VN')}/m²` 
-                  : 'Chọn hệ nhôm...'}
-              </span>
-              <ChevronDown size={14} className="text-slate-400 shrink-0" />
+          <div className="grid grid-cols-[1fr_115px] gap-2 items-center flex-1 min-w-0">
+            <div className="w-full relative min-w-0">
+              <div 
+                ref={triggerRef}
+                onClick={() => setIsSelectOpen(true)}
+                className={EDITOR_STYLES.select + ' flex justify-between items-center w-full cursor-pointer'}
+                title={
+                  selectedMat 
+                    ? `${selectedMat.name} (${selectedMat.code})` 
+                    : 'Chọn hệ nhôm...'
+                }
+              >
+                <span className="truncate pr-4">
+                  {selectedMat 
+                    ? `${selectedMat.name} (${selectedMat.code})` 
+                    : 'Chọn hệ nhôm...'}
+                </span>
+                <ChevronDown size={14} className="text-slate-400 shrink-0" />
+              </div>
+
+              <SearchSelect<Material>
+                isOpen={isSelectOpen}
+                onClose={() => setIsSelectOpen(false)}
+                title="Chọn hệ nhôm"
+                items={materialsList}
+                selectedValue={material.materialId}
+                onSelect={(item) => handleUpdateMaterial(item.id.toString())}
+                searchKeys={['name', 'code']}
+                renderItem={(item) => (
+                  <div className="relative flex items-center justify-between w-full min-w-0 pr-8" title={item.name}>
+                    <div className="truncate pr-24 font-medium flex-1" title={item.name}>
+                      {item.name}
+                    </div>
+                    <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 absolute right-0 top-1/2 -translate-y-1/2 bg-inherit pl-2.5 z-10 select-none">
+                      {item.price.toLocaleString('vi-VN')}đ/m²
+                    </span>
+                  </div>
+                )}
+                triggerRef={triggerRef}
+              />
             </div>
 
-            <SearchSelect<Material>
-              isOpen={isSelectOpen}
-              onClose={() => setIsSelectOpen(false)}
-              title="Chọn hệ nhôm"
-              items={materialsList}
-              selectedValue={material.materialId}
-              onSelect={(item) => handleUpdateMaterial(item.id.toString())}
-              searchKeys={['name', 'code']}
-              renderItem={(item) => (
-                <div className="relative flex items-center justify-between w-full min-w-0 pr-8">
-                  <div className="truncate pr-24 font-medium flex-1">
-                    {item.name}
-                  </div>
-                  <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 absolute right-0 top-1/2 -translate-y-1/2 bg-inherit pl-2.5 z-10 select-none">
-                    {item.price.toLocaleString('vi-VN')}đ/m²
-                  </span>
-                </div>
-              )}
-              triggerRef={triggerRef}
-            />
+            <div className="relative min-w-0" title="Đơn giá hệ nhôm (đ/m²)">
+              <Input
+                type="number"
+                value={material.initPrice ?? ''}
+                onChange={(e) =>
+                  store.updateMaterialField(
+                    fIndex,
+                    mIndex,
+                    'initPrice',
+                    e.target.value === '' ? '' : parseFloat(e.target.value) || 0
+                  )
+                }
+                placeholder="Đơn giá/m²"
+                className={EDITOR_STYLES.input + ' text-right text-xs pr-7 font-medium'}
+              />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none select-none">
+                đ/m²
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -115,6 +138,15 @@ export const QuotationMaterial = ({
             title="Thêm cửa"
           >
             <Plus size={16} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-slate-400 hover:text-primary p-0 bg-transparent hover:bg-transparent h-auto w-auto min-w-0 inline-flex items-center justify-center border-none transition-all duration-150"
+            onClick={() => store.copyMaterial(fIndex, mIndex)}
+            title="Sao chép hệ nhôm này"
+          >
+            <Copy size={15} />
           </Button>
           <Button
             variant="ghost"
