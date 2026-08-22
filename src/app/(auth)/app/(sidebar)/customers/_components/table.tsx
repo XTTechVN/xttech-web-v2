@@ -4,10 +4,11 @@ import { User, Pencil, Trash2, Eye } from 'lucide-react';
 
 import { TableData, TableAction } from '@/components/table';
 
-import {  Button } from '@/components';
+import { Button } from '@/components';
 import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
 import type { Customer } from '@/types';
+import { getCustomerTypeLabel } from '../config';
 import { getCustomers } from '@/actions';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'next/navigation';
@@ -76,21 +77,15 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       label: 'Loại KH',
       minWidth: '120px',
       cell: (row: Customer) => {
-        return <span className="text-gray-600 text-sm">{row.type || '—'}</span>;
+        return <span className="text-gray-600 text-sm">{getCustomerTypeLabel(row.type)}</span>;
       },
     },
-   
+
     {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
-      cell: (row: Customer) => (
-        <TableAction
-          onView={() => {}}
-          onEdit={() => onEditClick(row)}
-          onDelete={() => onDeleteClick(row)}
-        />
-      ),
+      cell: (row: Customer) => <TableAction onView={() => {}} onEdit={() => onEditClick(row)} onDelete={() => onDeleteClick(row)} />,
     },
   ];
 
@@ -111,18 +106,14 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             {row.phone && <span className="text-xs text-gray-300 select-none">•</span>}
             {row.phone && <span className="text-xs text-gray-500 truncate">{row.phone}</span>}
             {row.type && <span className="text-xs text-gray-300 select-none">•</span>}
-            {row.type && (
-              <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">
-                {row.type}
-              </span>
-            )}
+            {row.type && <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">{getCustomerTypeLabel(row.type)}</span>}
           </div>
           {row.images && row.images.length > 0 && (
             <div className="flex items-center gap-2 mt-2">
               <span className="text-xs text-gray-500 font-medium">Đính kèm:</span>
               <div className="flex items-center gap-1">
-                {(row.images.slice(0, 3)).map((img: any, idx: number) => {
-                  const src = typeof img === 'string' ? img : (img?.path || img?.url);
+                {row.images.slice(0, 3).map((img: any, idx: number) => {
+                  const src = typeof img === 'string' ? img : img?.path || img?.url;
                   if (!src) return null;
                   return (
                     <div key={idx} className="w-6 h-6 rounded overflow-hidden border border-gray-200">
@@ -131,9 +122,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
                   );
                 })}
                 {row.images.length > 3 && (
-                  <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
-                    +{row.images.length - 3}
-                  </span>
+                  <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">+{row.images.length - 3}</span>
                 )}
               </div>
             </div>

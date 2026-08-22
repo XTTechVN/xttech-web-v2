@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 // Thành phần dùng chung cho toàn trang
 import { Input, Button, Modal, Select } from '@/components';
 
-// Icons 
+// Icons
 import { CheckCircle2, Upload, X } from 'lucide-react';
 
 // Form sử dụng
@@ -13,6 +13,9 @@ import { useForm } from 'react-hook-form';
 
 // Actions
 import { createCustomer, updateCustomer, getUsers } from '@/actions';
+
+import { BASE_MINIO_URL } from '@/config/app';
+import { CUSTOMER_TYPE_OPTIONS } from '../config';
 
 import toast from 'react-hot-toast';
 
@@ -42,13 +45,7 @@ interface CustomerFormModalProps {
 }
 
 type CustomerFormValues = CustomerCreate & { type?: string };
-export function CustomerFormModal({
-  isOpen,
-  onClose,
-  title,
-  submitText = 'Xác nhận tạo',
-  initialData,
-}: CustomerFormModalProps) {
+export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác nhận tạo', initialData }: CustomerFormModalProps) {
   const {
     register,
     handleSubmit,
@@ -62,21 +59,17 @@ export function CustomerFormModal({
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const [showAllImages, setShowAllImages] = useState(false);
 
-  const typeOptions = [
-    { value: '0', label: 'Cá nhân' },
-    { value: '1', label: 'Doanh nghiệp' },
-  ];
-
   // Load danh sách nhân viên
   const { data: usersData, isLoading: isLoadingUsers } = useQuery({
     queryKey: ['users', 'all'],
     queryFn: () => getUsers({ limit: 1000 }),
   });
 
-  const staffOptions = usersData?.items?.map((user) => ({
-    value: user.id,
-    label: user.fullName || user.username || user.email,
-  })) || [];
+  const staffOptions =
+    usersData?.items?.map((user) => ({
+      value: user.id,
+      label: user.fullName || user.username || user.email,
+    })) || [];
 
   // Xử lý upload hình ảnh có thể tải lên đc nhiều hình ảnh
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,8 +136,7 @@ export function CustomerFormModal({
 
   // Logic Cập nhật khách hàng
   const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: CustomerUpdate }) =>
-      updateCustomer(id, data),
+    mutationFn: ({ id, data }: { id: number; data: CustomerUpdate }) => updateCustomer(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       toast.success('Cập nhật khách hàng thành công');
@@ -169,20 +161,24 @@ export function CustomerFormModal({
         type: initialData?.type || '',
       });
       setSelectedImages([]);
-      
+
+      const getFullImageUrl = (path: string) => {
+        if (!path) return undefined;
+        return `${BASE_MINIO_URL}${path}`;
+      };
+
       const mappedImages = (initialData?.images || []).map((img, index) => {
-        if (typeof img === 'string') {
-          return { id: `img-str-${index}`, url: img, file: null, preview: img };
-        }
-        return { 
-          id: img.id || `img-obj-${index}`, 
-          url: img.path || img.url || img.preview, 
-          preview: img.path || img.url || img.preview,
-          ...img 
+        const imgPath = img.imagePath;
+        const fullUrl = getFullImageUrl(imgPath);
+        return {
+          id: img.id || `img-obj-${index}`,
+          url: fullUrl,
+          preview: fullUrl,
+          ...img,
         };
       });
       setExistingImages(mappedImages);
-      
+
       setDeletedImageIds([]);
       setShowAllImages(false);
     } else {
@@ -218,7 +214,7 @@ export function CustomerFormModal({
     if (initialData && data.type && data.type.trim() !== '') {
       payload.type = data.type;
     }
-  
+
     if (initialData) {
       const updateFormData = new FormData();
       updateFormData.append('customer', JSON.stringify(payload));
@@ -235,7 +231,7 @@ export function CustomerFormModal({
       const formData = new FormData();
       formData.append('customer', JSON.stringify(payload));
       if (selectedImages.length > 0) {
-        selectedImages.forEach(img => {
+        selectedImages.forEach((img) => {
           formData.append('images', img.file);
         });
       }
@@ -302,7 +298,7 @@ export function CustomerFormModal({
           <Select
             label="Nhân viên phụ trách"
             options={staffOptions}
-            placeholder={isLoadingUsers ? "Đang tải danh sách nhân viên..." : "Chọn nhân viên phụ trách"}
+            placeholder={isLoadingUsers ? 'Đang tải danh sách nhân viên...' : 'Chọn nhân viên phụ trách'}
             fullWidth
             disabled={isLoadingUsers}
             {...register('staffId')}
@@ -311,7 +307,7 @@ export function CustomerFormModal({
           {initialData && (
             <Select
               label="Loại khách hàng"
-              options={typeOptions}
+              options={CUSTOMER_TYPE_OPTIONS}
               placeholder="Chọn loại khách hàng"
               fullWidth
               disabled={updateIsPending}
@@ -320,44 +316,113 @@ export function CustomerFormModal({
             />
           )}
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-semibold text-gray-700 select-none">
-              Hình ảnh đính kèm (Cho phép chọn nhiều, tối đa 20MB/ảnh)
-            </span>
+            <span className="text-xs font-semibold text-gray-700 select-none">Hình ảnh đính kèm (Cho phép chọn nhiều, tối đa 20MB/ảnh)</span>
 
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-4">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/jpeg,image/png,image/webp,image/jpg"
-                    className="hidden"
-                    disabled={isPending || updateIsPending}
-                    multiple
-                  />
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/jpeg,image/png,image/webp,image/jpg"
+                  className="hidden"
+                  disabled={isPending || updateIsPending}
+                  multiple
+                />
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isPending || updateIsPending}
-                    leftIcon={<Upload className="w-4 h-4" />}
-                  >
-                    Chọn ảnh
-                  </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isPending || updateIsPending}
+                  leftIcon={<Upload className="w-4 h-4" />}
+                >
+                  Chọn ảnh
+                </Button>
+              </div>
+
+              {existingImages.length > 0 && (
+                <div className="flex flex-col gap-2 w-full mt-2">
+                  <span className="text-xs font-semibold text-slate-500 select-none">Hình ảnh đã tải lên ({existingImages.length})</span>
+                  <div className="flex flex-wrap gap-3">
+                    {existingImages.map((img) => (
+                      <div key={img.id} className="relative w-16 h-16 rounded-lg border border-slate-200 group shrink-0">
+                        <div className="w-full h-full rounded-lg overflow-hidden relative bg-gray-50">
+                          <img src={img.url || img.preview || undefined} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={isPending || updateIsPending}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveExistingImage(img.id);
+                          }}
+                          className="absolute -top-1.5 -right-1.5 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-full w-5 h-5 p-0 flex items-center justify-center transition-colors cursor-pointer shadow-xs z-10 min-w-0 disabled:cursor-not-allowed"
+                          title="Xóa ảnh"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
 
-                {existingImages.length > 0 && (
-                  <div className="flex flex-col gap-2 w-full mt-2">
-                    <span className="text-xs font-semibold text-slate-500 select-none">
-                      Hình ảnh đã tải lên ({existingImages.length})
-                    </span>
-                    <div className="flex flex-wrap gap-3">
-                      {existingImages.map((img) => (
+              {selectedImages.length > 0 && (
+                <div className="flex flex-col gap-2 w-full mt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-500 select-none">Hình ảnh đính kèm ({selectedImages.length})</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        disabled={isPending || updateIsPending}
+                        onClick={() => {
+                          selectedImages.forEach((img) => URL.revokeObjectURL(img.preview));
+                          setSelectedImages([]);
+                          setShowAllImages(false);
+                        }}
+                        className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline disabled:text-rose-350 disabled:no-underline cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        Xóa toàn bộ hình ảnh
+                      </button>
+                      {showAllImages && selectedImages.length > 4 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAllImages(false)}
+                          className="text-[11px] font-bold text-cyan-700 hover:text-cyan-800 hover:underline cursor-pointer"
+                        >
+                          Thu gọn
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {(showAllImages ? selectedImages : selectedImages.slice(0, 4)).map((img, index) => {
+                      const isLastItemAndHasMore = !showAllImages && selectedImages.length > 4 && index === 3;
+                      if (isLastItemAndHasMore) {
+                        return (
+                          <div
+                            key={img.id}
+                            onClick={() => setShowAllImages(true)}
+                            className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer group shrink-0"
+                          >
+                            <img
+                              src={img.preview || undefined}
+                              alt="Preview"
+                              className="w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-200"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-bold text-sm">
+                              +{selectedImages.length - 3}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
                         <div key={img.id} className="relative w-16 h-16 rounded-lg border border-slate-200 group shrink-0">
-                          <div className="w-full h-full rounded-lg overflow-hidden relative bg-gray-50">
-                            <img src={img.url || img.preview} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="w-full h-full rounded-lg overflow-hidden relative">
+                            <img src={img.preview || undefined} alt="Preview" className="w-full h-full object-cover" />
                           </div>
                           <Button
                             type="button"
@@ -365,7 +430,7 @@ export function CustomerFormModal({
                             disabled={isPending || updateIsPending}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleRemoveExistingImage(img.id);
+                              handleRemoveImage(img.id);
                             }}
                             className="absolute -top-1.5 -right-1.5 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-full w-5 h-5 p-0 flex items-center justify-center transition-colors cursor-pointer shadow-xs z-10 min-w-0 disabled:cursor-not-allowed"
                             title="Xóa ảnh"
@@ -373,87 +438,12 @@ export function CustomerFormModal({
                             <X className="w-3 h-3" />
                           </Button>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                )}
-
-                {selectedImages.length > 0 && (
-                  <div className="flex flex-col gap-2 w-full mt-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-500 select-none">
-                        Hình ảnh đính kèm ({selectedImages.length})
-                      </span>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          disabled={isPending || updateIsPending}
-                          onClick={() => {
-                            selectedImages.forEach((img) => URL.revokeObjectURL(img.preview));
-                            setSelectedImages([]);
-                            setShowAllImages(false);
-                          }}
-                          className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline disabled:text-rose-350 disabled:no-underline cursor-pointer disabled:cursor-not-allowed"
-                        >
-                          Xóa toàn bộ hình ảnh
-                        </button>
-                        {showAllImages && selectedImages.length > 4 && (
-                          <button
-                            type="button"
-                            onClick={() => setShowAllImages(false)}
-                            className="text-[11px] font-bold text-cyan-700 hover:text-cyan-800 hover:underline cursor-pointer"
-                          >
-                            Thu gọn
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                      {(showAllImages ? selectedImages : selectedImages.slice(0, 4)).map((img, index) => {
-                        const isLastItemAndHasMore = !showAllImages && selectedImages.length > 4 && index === 3;
-                        if (isLastItemAndHasMore) {
-                          return (
-                            <div
-                              key={img.id}
-                              onClick={() => setShowAllImages(true)}
-                              className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer group shrink-0"
-                            >
-                              <img
-                                src={img.preview}
-                                alt="Preview"
-                                className="w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-200"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-bold text-sm">
-                                +{selectedImages.length - 3}
-                              </div>
-                            </div>
-                          );
-                        }
-                        return (
-                          <div key={img.id} className="relative w-16 h-16 rounded-lg border border-slate-200 group shrink-0">
-                            <div className="w-full h-full rounded-lg overflow-hidden relative">
-                              <img src={img.preview} alt="Preview" className="w-full h-full object-cover" />
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              disabled={isPending || updateIsPending}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveImage(img.id);
-                              }}
-                              className="absolute -top-1.5 -right-1.5 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-full w-5 h-5 p-0 flex items-center justify-center transition-colors cursor-pointer shadow-xs z-10 min-w-0 disabled:cursor-not-allowed"
-                              title="Xóa ảnh"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex gap-2 justify-end w-full mt-4">
@@ -485,20 +475,9 @@ interface CustomerDeleteModalProps {
   isPending?: boolean;
 }
 
-export function CustomerDeleteModal({
-  isOpen,
-  onClose,
-  customerName,
-  onConfirm,
-  isPending = false,
-}: CustomerDeleteModalProps) {
+export function CustomerDeleteModal({ isOpen, onClose, customerName, onConfirm, isPending = false }: CustomerDeleteModalProps) {
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Xác nhận xóa khách hàng"
-      className="m-2 max-w-md w-full"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Xác nhận xóa khách hàng" className="m-2 max-w-md w-full">
       <div className="flex gap-4 items-center py-2">
         <div className="flex flex-col gap-1.5">
           <p className="text-gray-600 text-sm leading-relaxed">
@@ -507,20 +486,10 @@ export function CustomerDeleteModal({
         </div>
       </div>
       <div className="flex gap-3 justify-end w-full mt-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onClose}
-          disabled={isPending}
-        >
+        <Button variant="outline" size="sm" onClick={onClose} disabled={isPending}>
           Hủy
         </Button>
-        <Button
-          variant="danger"
-          size="sm"
-          onClick={onConfirm}
-          loading={isPending}
-        >
+        <Button variant="danger" size="sm" onClick={onConfirm} loading={isPending}>
           Xác nhận xóa
         </Button>
       </div>
