@@ -127,6 +127,9 @@ const Page = () => {
                 identifyCode: selectedCustomer.identifyCode,
                 email: selectedCustomer.email,
                 phone: selectedCustomer.phone,
+                staffId: selectedCustomer.staffId,
+                type: selectedCustomer.type,
+                images: selectedCustomer.images,
               }
             : undefined
         }

@@ -79,32 +79,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         return <span className="text-gray-600 text-sm">{row.type || '—'}</span>;
       },
     },
-    {
-      key: 'images',
-      label: 'Hình ảnh',
-      minWidth: '120px',
-      cell: (row: Customer) => {
-        if (!row.images || row.images.length === 0) return <span className="text-gray-400 text-sm">—</span>;
-        const firstImg = typeof row.images[0] === 'string' ? row.images[0] : (row.images[0]?.path || row.images[0]?.url);
-        
-        return (
-          <div className="flex items-center gap-1.5">
-            {firstImg ? (
-              <div className="w-8 h-8 rounded-md overflow-hidden border border-gray-200 shrink-0 bg-gray-50">
-                <img src={firstImg} alt="img" className="w-full h-full object-cover" />
-              </div>
-            ) : (
-              <span className="text-gray-500 text-sm">Có ảnh</span>
-            )}
-            {row.images.length > 1 && (
-              <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
-                +{row.images.length - 1}
-              </span>
-            )}
-          </div>
-        );
-      },
-    },
+   
     {
       key: 'actions',
       label: 'Hành động',

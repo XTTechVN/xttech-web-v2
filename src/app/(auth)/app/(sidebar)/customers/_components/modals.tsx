@@ -36,10 +36,12 @@ interface CustomerFormModalProps {
     email?: string | null;
     phone?: string | null;
     staffId?: string | null;
+    type?: string | null;
+    images?: any[];
   };
 }
 
-type CustomerFormValues = CustomerCreate;
+type CustomerFormValues = CustomerCreate & { type?: string };
 export function CustomerFormModal({
   isOpen,
   onClose,
@@ -56,7 +58,14 @@ export function CustomerFormModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImages, setSelectedImages] = useState<{ id: string; file: File; preview: string }[]>([]);
+  const [existingImages, setExistingImages] = useState<any[]>([]);
+  const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const [showAllImages, setShowAllImages] = useState(false);
+
+  const typeOptions = [
+    { value: '0', label: 'Cá nhân' },
+    { value: '1', label: 'Doanh nghiệp' },
+  ];
 
   // Load danh sách nhân viên
   const { data: usersData, isLoading: isLoadingUsers } = useQuery({
@@ -113,6 +122,11 @@ export function CustomerFormModal({
     });
   };
 
+  const handleRemoveExistingImage = (id: number) => {
+    setExistingImages((prev) => prev.filter((img) => img.id !== id));
+    setDeletedImageIds((prev) => [...prev, id]);
+  };
+
   // Logic Thêm khách hàng
   const { mutate, isPending } = useMutation({
     mutationFn: createCustomer,
@@ -152,15 +166,33 @@ export function CustomerFormModal({
         email: initialData?.email || '',
         phone: initialData?.phone || '',
         staffId: initialData?.staffId || '',
+        type: initialData?.type || '',
       });
       setSelectedImages([]);
+      
+      const mappedImages = (initialData?.images || []).map((img, index) => {
+        if (typeof img === 'string') {
+          return { id: `img-str-${index}`, url: img, file: null, preview: img };
+        }
+        return { 
+          id: img.id || `img-obj-${index}`, 
+          url: img.path || img.url || img.preview, 
+          preview: img.path || img.url || img.preview,
+          ...img 
+        };
+      });
+      setExistingImages(mappedImages);
+      
+      setDeletedImageIds([]);
       setShowAllImages(false);
     } else {
-      reset({ name: '', address: '', identifyCode: '', email: '', phone: '', staffId: '' });
+      reset({ name: '', address: '', identifyCode: '', email: '', phone: '', staffId: '', type: '' });
       setSelectedImages((prev) => {
         prev.forEach((img) => URL.revokeObjectURL(img.preview));
         return [];
       });
+      setExistingImages([]);
+      setDeletedImageIds([]);
       setShowAllImages(false);
     }
   }, [isOpen, initialData, reset]);
@@ -183,19 +215,25 @@ export function CustomerFormModal({
     if (data.staffId && data.staffId.trim() !== '') {
       payload.staffId = data.staffId;
     }
+    if (initialData && data.type && data.type.trim() !== '') {
+      payload.type = data.type;
+    }
   
     if (initialData) {
       const updateFormData = new FormData();
-      updateFormData.append('update_data', JSON.stringify(payload));
+      updateFormData.append('customer', JSON.stringify(payload));
       if (selectedImages.length > 0) {
         selectedImages.forEach((img) => {
           updateFormData.append('images', img.file);
         });
       }
+      if (deletedImageIds.length > 0) {
+        updateFormData.append('deleted_image_ids', JSON.stringify(deletedImageIds));
+      }
       updateMutation({ id: initialData.id, data: updateFormData as any });
     } else {
       const formData = new FormData();
-      formData.append('create_data', JSON.stringify(payload));
+      formData.append('customer', JSON.stringify(payload));
       if (selectedImages.length > 0) {
         selectedImages.forEach(img => {
           formData.append('images', img.file);
@@ -270,11 +308,21 @@ export function CustomerFormModal({
             {...register('staffId')}
             error={errors.staffId?.message}
           />
-          {!initialData && (
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-semibold text-gray-700 select-none">
-                Hình ảnh đính kèm (Cho phép chọn nhiều, tối đa 20MB/ảnh)
-              </span>
+          {initialData && (
+            <Select
+              label="Loại khách hàng"
+              options={typeOptions}
+              placeholder="Chọn loại khách hàng"
+              fullWidth
+              disabled={updateIsPending}
+              {...register('type')}
+              error={errors.type?.message}
+            />
+          )}
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold text-gray-700 select-none">
+              Hình ảnh đính kèm (Cho phép chọn nhiều, tối đa 20MB/ảnh)
+            </span>
 
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-4">
@@ -300,8 +348,38 @@ export function CustomerFormModal({
                   </Button>
                 </div>
 
+                {existingImages.length > 0 && (
+                  <div className="flex flex-col gap-2 w-full mt-2">
+                    <span className="text-xs font-semibold text-slate-500 select-none">
+                      Hình ảnh đã tải lên ({existingImages.length})
+                    </span>
+                    <div className="flex flex-wrap gap-3">
+                      {existingImages.map((img) => (
+                        <div key={img.id} className="relative w-16 h-16 rounded-lg border border-slate-200 group shrink-0">
+                          <div className="w-full h-full rounded-lg overflow-hidden relative bg-gray-50">
+                            <img src={img.url || img.preview} alt="Preview" className="w-full h-full object-cover" />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            disabled={isPending || updateIsPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveExistingImage(img.id);
+                            }}
+                            className="absolute -top-1.5 -right-1.5 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-full w-5 h-5 p-0 flex items-center justify-center transition-colors cursor-pointer shadow-xs z-10 min-w-0 disabled:cursor-not-allowed"
+                            title="Xóa ảnh"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {selectedImages.length > 0 && (
-                  <div className="flex flex-col gap-2 w-full">
+                  <div className="flex flex-col gap-2 w-full mt-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-slate-500 select-none">
                         Hình ảnh đính kèm ({selectedImages.length})
@@ -376,8 +454,7 @@ export function CustomerFormModal({
                   </div>
                 )}
               </div>
-            </div>
-          )}
+          </div>
         </div>
         <div className="flex gap-2 justify-end w-full mt-4">
           <Button variant="outline" size="sm" onClick={onClose}>
