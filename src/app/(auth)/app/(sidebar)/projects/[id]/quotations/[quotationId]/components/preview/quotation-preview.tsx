@@ -4,6 +4,7 @@ import { QuotationTitle } from './quotation-title';
 import { CustomerInfo } from './customer-info';
 import { QuotationTable } from './quotation-table';
 import { QuotationSummary } from './quotation-summary';
+import { QuotationTermsPreview } from './quotation-terms-preview';
 import { adaptQuotationPreview } from './adapter';
 import { PREVIEW_FONT_SIZE } from './config';
 import type { QuotationDetail, PreviewFloor, Material, Door, ExtraOption } from '@/types';
@@ -17,7 +18,6 @@ interface QuotationPreviewProps {
 
 export const QuotationPreview = ({ quotation, materialsList, doorsList, extraOptionsList }: QuotationPreviewProps) => {
   const adaptedFloors = adaptQuotationPreview(quotation);
-  console.log('--- ADAPTED PREVIEW DATA ---', adaptedFloors);
 
   const subtotal = quotation.subtotalPrice ?? 0;
   const finalAmount = quotation.totalPrice ?? 0;
@@ -37,13 +37,23 @@ export const QuotationPreview = ({ quotation, materialsList, doorsList, extraOpt
       {/* Main Table */}
       <QuotationTable floors={adaptedFloors} materialsList={materialsList} doorsList={doorsList} />
 
-      {/* Document Footer / Summary */}
-      <QuotationSummary
-        subtotal={subtotal}
-        discountPercentage={quotation.discountPercentage}
-        discountAmount={discountAmount}
-        finalAmount={finalAmount}
-      />
+      {/* Document Footer: Left (Terms & Notes) + Right (Summary) */}
+      <div className="mt-3 flex flex-col md:flex-row justify-between items-start gap-4">
+        {/* Góc dưới bên trái: Ghi chú & Điều khoản */}
+        <div className="flex-1 min-w-0 pr-2">
+          <QuotationTermsPreview content={quotation.termsAndConditions} />
+        </div>
+
+        {/* Góc dưới bên phải: Bảng tổng tiền */}
+        <div className="w-64 shrink-0">
+          <QuotationSummary
+            subtotal={subtotal}
+            discountPercentage={quotation.discountPercentage}
+            discountAmount={discountAmount}
+            finalAmount={finalAmount}
+          />
+        </div>
+      </div>
     </div>
   );
 };
