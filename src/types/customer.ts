@@ -19,6 +19,7 @@ export interface CustomerCreate {
   identifyCode?: string;
   email?: string;
   phone?: string;
+  staffId?: string;
 }
 
 export interface CustomerUpdate {
@@ -27,6 +28,8 @@ export interface CustomerUpdate {
   identifyCode?: string;
   email?: string;
   phone?: string;
+  staffId?: string;
+  type?: string;
 }
 
 export interface CustomerQueryParams {

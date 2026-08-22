@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 // Thành phần dùng chung cho toàn trang
-import { Input, Button, Modal } from '@/components';
+import { Input, Button, Modal, Select } from '@/components';
 
 // Icons 
 import { CheckCircle2, Upload, X } from 'lucide-react';
@@ -12,11 +12,11 @@ import { CheckCircle2, Upload, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 
 // Actions
-import { createCustomer, updateCustomer } from '@/actions';
+import { createCustomer, updateCustomer, getUsers } from '@/actions';
 
 import toast from 'react-hot-toast';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import queryClient from '@/utils/query';
 
@@ -35,6 +35,7 @@ interface CustomerFormModalProps {
     identifyCode?: string | null;
     email?: string | null;
     phone?: string | null;
+    staffId?: string | null;
   };
 }
 
@@ -56,6 +57,17 @@ export function CustomerFormModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImages, setSelectedImages] = useState<{ id: string; file: File; preview: string }[]>([]);
   const [showAllImages, setShowAllImages] = useState(false);
+
+  // Load danh sách nhân viên
+  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['users', 'all'],
+    queryFn: () => getUsers({ limit: 1000 }),
+  });
+
+  const staffOptions = usersData?.items?.map((user) => ({
+    value: user.id,
+    label: user.fullName || user.username || user.email,
+  })) || [];
 
   // Xử lý upload hình ảnh có thể tải lên đc nhiều hình ảnh
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,11 +151,12 @@ export function CustomerFormModal({
         identifyCode: initialData?.identifyCode || '',
         email: initialData?.email || '',
         phone: initialData?.phone || '',
+        staffId: initialData?.staffId || '',
       });
       setSelectedImages([]);
       setShowAllImages(false);
     } else {
-      reset({ name: '', address: '', identifyCode: '', email: '', phone: '' });
+      reset({ name: '', address: '', identifyCode: '', email: '', phone: '', staffId: '' });
       setSelectedImages((prev) => {
         prev.forEach((img) => URL.revokeObjectURL(img.preview));
         return [];
@@ -167,7 +180,10 @@ export function CustomerFormModal({
     if (data.address && data.address.trim() !== '') {
       payload.address = data.address;
     }
-
+    if (data.staffId && data.staffId.trim() !== '') {
+      payload.staffId = data.staffId;
+    }
+  
     if (initialData) {
       updateMutation({ id: initialData.id, data: payload as CustomerUpdate });
     } else {
@@ -241,6 +257,15 @@ export function CustomerFormModal({
             fullWidth
             {...register('address')}
             error={errors.address ? 'Địa chỉ không hợp lệ' : undefined}
+          />
+          <Select
+            label="Nhân viên phụ trách"
+            options={staffOptions}
+            placeholder={isLoadingUsers ? "Đang tải danh sách nhân viên..." : "Chọn nhân viên phụ trách"}
+            fullWidth
+            disabled={isLoadingUsers}
+            {...register('staffId')}
+            error={errors.staffId?.message}
           />
           {!initialData && (
             <div className="flex flex-col gap-2">

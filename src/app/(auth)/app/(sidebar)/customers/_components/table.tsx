@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
 import { User, Pencil, Trash2 } from 'lucide-react';
+
 import { TableData, TableAction } from '@/components/table';
-import { Heading, Button } from '@/components';
+
+import {  Button } from '@/components';
 import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
 import type { Customer } from '@/types';
@@ -31,6 +32,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     return res;
   };
 
+  // Các cột trong bảng khách hàng
   const columns = [
     {
       key: 'name',
@@ -67,7 +69,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       key: 'address',
       label: 'Địa chỉ',
       minWidth: '200px',
-      cell: (row: Customer) => <span className="text-gray-500 text-sm truncate max-w-[200px] block">{row.address || '—'}</span>,
+      cell: (row: Customer) => <span className="text-gray-500 text-sm truncate max-w-50 block">{row.address || '—'}</span>,
     },
     {
       key: 'type',
@@ -116,6 +118,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     },
   ];
 
+  //  Card dùng cho mobile
   const renderCard = (row: Customer, index: number) => (
     <div
       key={row.id || index}
