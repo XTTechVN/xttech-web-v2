@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useRef } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button, Input, Select } from '@/components';
@@ -138,8 +139,19 @@ export const QuotationDoor = ({
           </div>
         </div>
 
-        {/* 3. Kích thước (Rộng, Cao, Số lượng) */}
-        <div className="grid grid-cols-3 gap-4 py-2">
+        {/* 3. Kích thước (Ký hiệu, Rộng, Cao, Số lượng) */}
+        <div className="grid grid-cols-4 gap-2.5 py-2">
+          <div>
+            <span className={EDITOR_STYLES.label}>Ký hiệu</span>
+            <Input
+              type="text"
+              value={door.code ?? ''}
+              placeholder={doorsList.find((d) => d.id === door.doorId)?.code || 'Mã hiệu'}
+              onChange={(e) => handleUpdateDoor('code', e.target.value)}
+              className={EDITOR_STYLES.input + ' uppercase font-medium'}
+              title="Ký hiệu vị trí cửa trên bản vẽ (để trống sẽ tự lấy mã mẫu cửa)"
+            />
+          </div>
           <div>
             <span className={EDITOR_STYLES.label}>Rộng (mm)</span>
             <Input

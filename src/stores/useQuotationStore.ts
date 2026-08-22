@@ -19,12 +19,15 @@ interface QuotationState {
 
   // Floor Actions
   addFloor: () => void;
+  copyFloor: (fIndex: number) => void;
   removeFloor: (fIndex: number) => void;
   updateFloorName: (fIndex: number, name: string) => void;
 
   // Material Actions
   addMaterial: (fIndex: number, defaultMaterialId: number, defaultPrice: number) => void;
+  copyMaterial: (fIndex: number, mIndex: number) => void;
   updateMaterial: (fIndex: number, mIndex: number, materialId: number, initPrice: number) => void;
+  updateMaterialField: (fIndex: number, mIndex: number, field: string, value: any) => void;
   removeMaterial: (fIndex: number, mIndex: number) => void;
 
   // Door Actions
@@ -124,6 +127,22 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
     });
   },
 
+  copyFloor: (fIndex) => {
+    set((state) => {
+      const targetFloor = state.floors[fIndex];
+      if (!targetFloor) return state;
+
+      const clonedFloor: DraftFloor = JSON.parse(JSON.stringify(targetFloor));
+      clonedFloor.name = `${targetFloor.name} (Bản sao)`;
+
+      const newFloors = [...state.floors];
+      newFloors.splice(fIndex + 1, 0, clonedFloor);
+
+      const indexedFloors = newFloors.map((f, idx) => ({ ...f, index: idx }));
+      return { floors: indexedFloors };
+    });
+  },
+
   removeFloor: (fIndex) => {
     set((state) => {
       const newFloors = state.floors.filter((_, idx) => idx !== fIndex).map((f, idx) => ({ ...f, index: idx }));
@@ -156,12 +175,40 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
     });
   },
 
+  copyMaterial: (fIndex, mIndex) => {
+    set((state) => {
+      const newFloors = [...state.floors];
+      const floor = { ...newFloors[fIndex] };
+      const targetMaterial = floor.materials[mIndex];
+      if (!targetMaterial) return state;
+
+      const clonedMaterial: DraftMaterial = JSON.parse(JSON.stringify(targetMaterial));
+      const materials = [...floor.materials];
+      materials.splice(mIndex + 1, 0, clonedMaterial);
+      floor.materials = materials;
+      newFloors[fIndex] = floor;
+      return { floors: newFloors };
+    });
+  },
+
   updateMaterial: (fIndex, mIndex, materialId, initPrice) => {
     set((state) => {
       const newFloors = [...state.floors];
       const floor = { ...newFloors[fIndex] };
       const materials = [...floor.materials];
       materials[mIndex] = { ...materials[mIndex], materialId, initPrice };
+      floor.materials = materials;
+      newFloors[fIndex] = floor;
+      return { floors: newFloors };
+    });
+  },
+
+  updateMaterialField: (fIndex, mIndex, field, value) => {
+    set((state) => {
+      const newFloors = [...state.floors];
+      const floor = { ...newFloors[fIndex] };
+      const materials = [...floor.materials];
+      materials[mIndex] = { ...materials[mIndex], [field]: value };
       floor.materials = materials;
       newFloors[fIndex] = floor;
       return { floors: newFloors };
@@ -437,10 +484,11 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
     const cleanedFloors = floors.map((floor) => ({
       ...floor,
       materials: floor.materials.map((mat) => ({
-        ...mat,
+        materialId: mat.materialId,
+        initPrice: (mat.initPrice as any) === '' || mat.initPrice === undefined || mat.initPrice === null ? undefined : Number(mat.initPrice),
         doors: mat.doors.map((door) => ({
           doorId: door.doorId,
-          code: door.code,
+          code: door.code?.trim() || undefined,
           width: (door.width as any) === '' ? 0 : Number(door.width) || 0,
           height: (door.height as any) === '' ? 0 : Number(door.height) || 0,
           quantity: (door.quantity as any) === '' ? 1 : Number(door.quantity) || 1,
