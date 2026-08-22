@@ -5,6 +5,9 @@ export interface Customer {
   identifyCode: string | null;
   email: string | null;
   phone: string | null;
+  staffId: string | null;
+  type: string;
+  images: any[];
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

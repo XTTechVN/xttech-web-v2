@@ -70,6 +70,40 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       cell: (row: Customer) => <span className="text-gray-500 text-sm truncate max-w-[200px] block">{row.address || '—'}</span>,
     },
     {
+      key: 'type',
+      label: 'Loại KH',
+      minWidth: '120px',
+      cell: (row: Customer) => {
+        return <span className="text-gray-600 text-sm">{row.type || '—'}</span>;
+      },
+    },
+    {
+      key: 'images',
+      label: 'Hình ảnh',
+      minWidth: '120px',
+      cell: (row: Customer) => {
+        if (!row.images || row.images.length === 0) return <span className="text-gray-400 text-sm">—</span>;
+        const firstImg = typeof row.images[0] === 'string' ? row.images[0] : (row.images[0]?.path || row.images[0]?.url);
+        
+        return (
+          <div className="flex items-center gap-1.5">
+            {firstImg ? (
+              <div className="w-8 h-8 rounded-md overflow-hidden border border-gray-200 shrink-0 bg-gray-50">
+                <img src={firstImg} alt="img" className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <span className="text-gray-500 text-sm">Có ảnh</span>
+            )}
+            {row.images.length > 1 && (
+              <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                +{row.images.length - 1}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
@@ -97,7 +131,34 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             <span className="text-xs text-gray-400 font-medium">Code: {row.identifyCode || '—'}</span>
             {row.phone && <span className="text-xs text-gray-300 select-none">•</span>}
             {row.phone && <span className="text-xs text-gray-500 truncate">{row.phone}</span>}
+            {row.type && <span className="text-xs text-gray-300 select-none">•</span>}
+            {row.type && (
+              <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">
+                {row.type}
+              </span>
+            )}
           </div>
+          {row.images && row.images.length > 0 && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs text-gray-500 font-medium">Đính kèm:</span>
+              <div className="flex items-center gap-1">
+                {(row.images.slice(0, 3)).map((img: any, idx: number) => {
+                  const src = typeof img === 'string' ? img : (img?.path || img?.url);
+                  if (!src) return null;
+                  return (
+                    <div key={idx} className="w-6 h-6 rounded overflow-hidden border border-gray-200">
+                      <img src={src} alt="img" className="w-full h-full object-cover" />
+                    </div>
+                  );
+                })}
+                {row.images.length > 3 && (
+                  <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                    +{row.images.length - 3}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5">
