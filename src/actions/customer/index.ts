@@ -31,9 +31,12 @@ export const getCustomer = async (id: number): Promise<Customer> => {
   }
 };
 
-export const createCustomer = async (data: CustomerCreate): Promise<Customer> => {
+export const createCustomer = async (data: CustomerCreate | FormData): Promise<Customer> => {
   try {
-    const response = await api.post('/api/v1/customers', data);
+    const isFormData = typeof (data as any).append === 'function';
+    const response = await api.post('/api/v1/customers', data, {
+      headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+    });
     return response.data;
   } catch (error: unknown) {
     console.warn('API error createCustomer', error);
@@ -41,9 +44,12 @@ export const createCustomer = async (data: CustomerCreate): Promise<Customer> =>
   }
 };
 
-export const updateCustomer = async (id: number, data: CustomerUpdate): Promise<Customer> => {
+export const updateCustomer = async (id: number, data: CustomerUpdate | FormData): Promise<Customer> => {
   try {
-    const response = await api.put(`/api/v1/customers/${id}`, data);
+    const isFormData = typeof (data as any).append === 'function';
+    const response = await api.put(`/api/v1/customers/${id}`, data, {
+      headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+    });
     return response.data;
   } catch (error: unknown) {
     console.warn('API error updateCustomer', error);

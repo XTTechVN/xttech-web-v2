@@ -185,20 +185,23 @@ export function CustomerFormModal({
     }
   
     if (initialData) {
-      updateMutation({ id: initialData.id, data: payload as CustomerUpdate });
-    } else {
+      const updateFormData = new FormData();
+      updateFormData.append('update_data', JSON.stringify(payload));
       if (selectedImages.length > 0) {
-        const formData = new FormData();
-        Object.keys(payload).forEach(key => {
-          formData.append(key, payload[key]);
+        selectedImages.forEach((img) => {
+          updateFormData.append('images', img.file);
         });
+      }
+      updateMutation({ id: initialData.id, data: updateFormData as any });
+    } else {
+      const formData = new FormData();
+      formData.append('create_data', JSON.stringify(payload));
+      if (selectedImages.length > 0) {
         selectedImages.forEach(img => {
           formData.append('images', img.file);
         });
-        mutate(formData as any);
-      } else {
-        mutate(payload as CustomerCreate);
       }
+      mutate(formData as any);
     }
   };
 
