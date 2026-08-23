@@ -96,6 +96,16 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
       ),
     },
     {
+      key: 'nextFollowDate',
+      label: 'Ngày hẹn tiếp',
+      minWidth: '140px',
+      cell: (row: CustomerLog) => (
+        <span className="text-sm font-semibold text-gray-900">
+          {row.nextFollowDate ? new Date(row.nextFollowDate).toLocaleDateString('vi-VN') : '-'}
+        </span>
+      ),
+    },
+    {
       key: 'actions',
       label: 'Hành động',
       minWidth: '100px',
@@ -129,6 +139,12 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
       <div className="text-xs text-gray-600">
         {getCustomerLogTypeLabel(row.type)}
       </div>
+      {row.nextFollowDate && (
+        <div className="text-xs text-gray-600 flex items-center gap-1.5">
+          <span className="font-medium">Ngày hẹn tiếp theo:</span>
+          <span className="font-semibold text-primary">{new Date(row.nextFollowDate).toLocaleDateString('vi-VN')}</span>
+        </div>
+      )}
       {row.note && (
         <div className="text-sm text-gray-700 bg-gray-50 p-2.5 rounded-lg border border-gray-100 whitespace-pre-wrap">
           {row.note}

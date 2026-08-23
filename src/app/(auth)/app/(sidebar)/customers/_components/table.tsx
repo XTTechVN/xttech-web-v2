@@ -12,6 +12,7 @@ import { getCustomerTypeLabel } from '../config';
 import { getCustomers } from '@/actions';
 import toast from 'react-hot-toast';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useAuthStore } from '@/stores';
 
 interface TableProps {
   onEditClick: (customer: Customer) => void;
@@ -24,9 +25,13 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const router = useRouter();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
+  const user = useAuthStore((state) => state.user);
 
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const res = await getCustomers({ offset, limit, search: search || undefined });
+    const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
+    const staffId = !hasFullViewRole && user ? user.id : undefined;
+
+    const res = await getCustomers({ offset, limit, search: search || undefined, staffId });
     if (!res) {
       toast.error('Lỗi khi tải danh sách khách hàng');
       throw new Error('Lỗi khi tải danh sách khách hàng');

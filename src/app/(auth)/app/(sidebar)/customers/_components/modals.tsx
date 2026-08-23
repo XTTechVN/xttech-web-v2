@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import queryClient from '@/utils/query';
+import { useAuthStore } from '@/stores';
 
 import type { CustomerCreate, CustomerUpdate } from '@/types';
 
@@ -52,6 +53,9 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
     reset,
     formState: { errors },
   } = useForm<CustomerFormValues>();
+  
+  const user = useAuthStore((state) => state.user);
+  const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImages, setSelectedImages] = useState<{ id: string; file: File; preview: string }[]>([]);
@@ -66,10 +70,20 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
   });
 
   const staffOptions =
-    usersData?.items?.map((user) => ({
-      value: user.id,
-      label: user.fullName || user.username || user.email,
+    usersData?.items?.map((u) => ({
+      value: u.id,
+      label: u.fullName || u.username || u.email,
     })) || [];
+    
+  if (!hasFullViewRole && user) {
+    const isExist = staffOptions.some(opt => opt.value === user.id);
+    if (!isExist) {
+      staffOptions.push({
+        value: user.id,
+        label: user.fullName || user.username || user.email,
+      });
+    }
+  }
 
   // Xử lý upload hình ảnh có thể tải lên đc nhiều hình ảnh
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,7 +171,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
         identifyCode: initialData?.identifyCode || '',
         email: initialData?.email || '',
         phone: initialData?.phone || '',
-        staffId: initialData?.staffId || '',
+        staffId: initialData?.staffId || (!hasFullViewRole && user ? user.id : ''),
         type: initialData?.type || '',
       });
       setSelectedImages([]);
@@ -300,7 +314,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
             options={staffOptions}
             placeholder={isLoadingUsers ? 'Đang tải danh sách nhân viên...' : 'Chọn nhân viên phụ trách'}
             fullWidth
-            disabled={isLoadingUsers}
+            disabled={isLoadingUsers || !hasFullViewRole}
             {...register('staffId')}
             error={errors.staffId?.message}
           />

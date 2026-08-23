@@ -38,6 +38,7 @@ export interface CustomerQueryParams {
   identifyCode?: string;
   offset?: number;
   limit?: number;
+  staffId?: string;
 }
 
 export interface CustomerLog {
