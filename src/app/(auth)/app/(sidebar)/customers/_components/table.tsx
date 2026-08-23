@@ -11,7 +11,7 @@ import type { Customer } from '@/types';
 import { getCustomerTypeLabel } from '../config';
 import { getCustomers } from '@/actions';
 import toast from 'react-hot-toast';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 interface TableProps {
   onEditClick: (customer: Customer) => void;
@@ -21,6 +21,7 @@ interface TableProps {
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
 
@@ -85,7 +86,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
-      cell: (row: Customer) => <TableAction onView={() => {}} onEdit={() => onEditClick(row)} onDelete={() => onDeleteClick(row)} />,
+      cell: (row: Customer) => <TableAction onView={() => router.push(`/app/customers/${row.id}/customer-logs`)} onEdit={() => onEditClick(row)} onDelete={() => onDeleteClick(row)} />,
     },
   ];
 
@@ -132,7 +133,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5">
         <button
           type="button"
-          onClick={() => {}}
+          onClick={() => router.push(`/app/customers/${row.id}/customer-logs`)}
           className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer"
         >
           <Eye size={12} />
