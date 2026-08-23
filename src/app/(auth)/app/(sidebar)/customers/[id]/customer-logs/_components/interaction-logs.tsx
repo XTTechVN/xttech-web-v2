@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Modal } from '@/components';
-import { getCustomerLogChannelLabel, getCustomerLogStatusLabel, getCustomerLogTypeLabel } from '../../../config';
+import { getCustomerLogChannelLabel, getCustomerLogStatusLabel, getCustomerLogTypeLabel, getCustomerLogStatusColor } from '../../../config';
 import type { CustomerLog } from '@/types';
 import { TableData, TableAction } from '@/components/table';
 import { getCustomerLogs, deleteCustomerLog } from '@/actions';
 import toast from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
+import { LogFormModal } from './log-form-modal';
 
 interface InteractionLogsProps {
   customerId: number;
-  onCreateClick: () => void;
 }
 
-export const InteractionLogs = ({ customerId, onCreateClick }: InteractionLogsProps) => {
+export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [logToDelete, setLogToDelete] = useState<CustomerLog | null>(null);
+  
+  const [isLogFormOpen, setIsLogFormOpen] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<CustomerLog | null>(null);
 
   const deleteMutation = useMutation({
     mutationFn: deleteCustomerLog,
@@ -77,8 +80,18 @@ export const InteractionLogs = ({ customerId, onCreateClick }: InteractionLogsPr
       label: 'Trạng thái',
       minWidth: '150px',
       cell: (row: CustomerLog) => (
-        <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200 whitespace-nowrap">
+        <span className={`text-xs font-medium px-2 py-1 rounded-full border whitespace-nowrap ${getCustomerLogStatusColor(row.status)}`}>
           {getCustomerLogStatusLabel(row.status)}
+        </span>
+      ),
+    },
+    {
+      key: 'note',
+      label: 'Ghi chú',
+      minWidth: '200px',
+      cell: (row: CustomerLog) => (
+        <span className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-2">
+          {row.note || '-'}
         </span>
       ),
     },
@@ -88,7 +101,10 @@ export const InteractionLogs = ({ customerId, onCreateClick }: InteractionLogsPr
       minWidth: '100px',
       cell: (row: CustomerLog) => (
         <TableAction
-          onEdit={() => {}}
+          onEdit={() => {
+            setSelectedLog(row);
+            setIsLogFormOpen(true);
+          }}
           onDelete={() => handleDeleteClick(row)}
         />
       ),
@@ -106,15 +122,28 @@ export const InteractionLogs = ({ customerId, onCreateClick }: InteractionLogsPr
             {new Date(row.createdAt).toLocaleDateString('vi-VN')}
           </span>
         </div>
-        <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200 whitespace-nowrap">
+        <span className={`text-xs font-medium px-2 py-1 rounded-full border whitespace-nowrap ${getCustomerLogStatusColor(row.status)}`}>
           {getCustomerLogStatusLabel(row.status)}
         </span>
       </div>
       <div className="text-xs text-gray-600">
         {getCustomerLogTypeLabel(row.type)}
       </div>
+      {row.note && (
+        <div className="text-sm text-gray-700 bg-gray-50 p-2.5 rounded-lg border border-gray-100 whitespace-pre-wrap">
+          {row.note}
+        </div>
+      )}
       <div className="flex justify-end pt-2 border-t border-gray-100 gap-2">
-        <Button variant="ghost" size="xs" onClick={() => {}} className="text-primary hover:bg-primary/5 px-2 h-6">
+        <Button 
+          variant="ghost" 
+          size="xs" 
+          onClick={() => {
+            setSelectedLog(row);
+            setIsLogFormOpen(true);
+          }} 
+          className="text-primary hover:bg-primary/5 px-2 h-6"
+        >
           Sửa
         </Button>
         <Button variant="ghost" size="xs" onClick={() => handleDeleteClick(row)} className="text-red-600 hover:bg-red-50 hover:text-red-700 px-2 h-6">
@@ -135,7 +164,10 @@ export const InteractionLogs = ({ customerId, onCreateClick }: InteractionLogsPr
           size="sm"
           className="bg-transparent text-primary hover:bg-transparent hover:opacity-80 p-0 font-semibold"
           leftIcon={<Plus size={16} />}
-          onClick={onCreateClick}
+          onClick={() => {
+            setSelectedLog(null);
+            setIsLogFormOpen(true);
+          }}
         >
           Tạo lượt tương tác
         </Button>
@@ -150,6 +182,18 @@ export const InteractionLogs = ({ customerId, onCreateClick }: InteractionLogsPr
           select={false}
         />
       </div>
+
+      <LogFormModal
+        isOpen={isLogFormOpen}
+        onClose={() => {
+          setIsLogFormOpen(false);
+          setSelectedLog(null);
+        }}
+        customerId={customerId}
+        title={selectedLog ? 'Chỉnh sửa lượt tương tác' : 'Tạo mới lượt tương tác'}
+        submitText={selectedLog ? 'Cập nhật' : 'Lưu tương tác'}
+        initialData={selectedLog}
+      />
 
       <Modal
         isOpen={isDeleteOpen}

@@ -6,17 +6,20 @@ import { CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { createCustomerLog } from '@/actions';
+import { createCustomerLog, updateCustomerLog } from '@/actions';
 import { CUSTOMER_LOG_CHANNEL_OPTIONS, CUSTOMER_LOG_TYPE_OPTIONS, CUSTOMER_LOG_STATUS_OPTIONS } from '../../../config';
 import toast from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
-import type { CustomerLogCreate } from '@/types';
+import type { CustomerLogCreate, CustomerLog } from '@/types';
 
 interface LogFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   customerId: number;
+  title: string;
+  submitText?: string;
+  initialData?: CustomerLog | null;
 }
 
 const logSchema = z.object({
@@ -29,7 +32,7 @@ const logSchema = z.object({
 
 type LogFormValues = z.infer<typeof logSchema>;
 
-export function LogFormModal({ isOpen, onClose, customerId }: LogFormModalProps) {
+export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 'Lưu tương tác', initialData }: LogFormModalProps) {
   const {
     register,
     handleSubmit,
@@ -52,33 +55,68 @@ export function LogFormModal({ isOpen, onClose, customerId }: LogFormModalProps)
     },
   });
 
+  const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
+    mutationFn: ({ logId, data }: { logId: number; data: CustomerLogCreate }) => updateCustomerLog({ customerId, logId, data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-logs', customerId] });
+      toast.success('Cập nhật lượt tương tác thành công');
+      onClose();
+      reset();
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Có lỗi xảy ra khi cập nhật lượt tương tác');
+    },
+  });
+
   useEffect(() => {
     if (isOpen) {
+      if (initialData) {
+        reset({
+          channel: initialData.channel || initialData.type || 'call',
+          type: initialData.type || 'pending',
+          status: initialData.status || 'completed',
+          note: initialData.note || '',
+          nextFollowDate: initialData.nextFollowDate ? new Date(initialData.nextFollowDate).toISOString().split('T')[0] : '',
+        });
+      } else {
+        reset({
+          channel: 'call',
+          type: 'pending',
+          status: 'completed',
+          note: '',
+          nextFollowDate: '',
+        });
+      }
+    } else {
       reset({
         channel: 'call',
-        type: 'pending', // Mặc định tạm thời theo ví dụ
-        status: 'completed', // Mặc định tạm thời
+        type: 'pending',
+        status: 'completed',
         note: '',
         nextFollowDate: '',
       });
-    } else {
-      reset();
     }
-  }, [isOpen, reset]);
+  }, [isOpen, initialData, reset]);
 
   const onSubmit = (data: LogFormValues) => {
-    mutate({
-      index: 0, // Backend yêu cầu index
+    const payload = {
+      index: initialData?.index ?? 0,
       channel: data.channel,
       type: data.type,
       status: data.status,
       note: data.note || '',
       nextFollowDate: data.nextFollowDate || null,
-    });
+    };
+
+    if (initialData?.id) {
+      updateMutation({ logId: initialData.id, data: payload });
+    } else {
+      mutate(payload);
+    }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Tạo mới lượt tương tác" className="m-2 max-w-md w-full">
+    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-md w-full">
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-4 py-2">
           <div className="flex flex-col gap-1.5">
@@ -134,7 +172,7 @@ export function LogFormModal({ isOpen, onClose, customerId }: LogFormModalProps)
         </div>
         
         <div className="flex gap-4 justify-end w-full">
-          <Button variant="outline" size="sm" onClick={onClose} disabled={isPending}>
+          <Button variant="outline" size="sm" onClick={onClose} disabled={isPending || updateIsPending}>
             Hủy
           </Button>
           <Button
@@ -142,10 +180,10 @@ export function LogFormModal({ isOpen, onClose, customerId }: LogFormModalProps)
             size="sm"
             leftIcon={<CheckCircle2 size={16} />}
             type="submit"
-            disabled={isPending}
-            loading={isPending}
+            disabled={isPending || updateIsPending}
+            loading={isPending || updateIsPending}
           >
-            Lưu tương tác
+            {submitText}
           </Button>
         </div>
       </form>

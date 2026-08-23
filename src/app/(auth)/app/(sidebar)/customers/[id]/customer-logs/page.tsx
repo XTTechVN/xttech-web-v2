@@ -1,16 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Breadcrumb } from '@/components';
-import { CustomerInfo, InteractionLogs, LogFormModal } from './_components';
+import { CustomerInfo, InteractionLogs } from './_components';
 import { useQuery } from '@tanstack/react-query';
-import { getCustomer, getCustomerLogs } from '@/actions';
+import { getCustomer } from '@/actions';
 
 
 
 const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = React.use(params);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const { data: customer, isLoading } = useQuery({
     queryKey: ['customer', id],
@@ -22,10 +21,6 @@ const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
     { label: 'Khách hàng', href: '/app/customers' },
     { label: `Chi tiết khách hàng #${id}`, href: '#' },
   ];
-
-  const handleCreateLog = () => {
-    setIsModalOpen(true);
-  };
 
   if (isLoading) {
     return <div className="p-8 text-center text-gray-500 font-medium">Đang tải dữ liệu khách hàng...</div>;
@@ -47,14 +42,8 @@ const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
       <div className="flex flex-col gap-6 mt-2">
         <CustomerInfo customer={customer} />
-        <InteractionLogs customerId={Number(id)} onCreateClick={handleCreateLog} />
+        <InteractionLogs customerId={Number(id)} />
       </div>
-
-      <LogFormModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        customerId={Number(id)} 
-      />
     </div>
   );
 };

@@ -104,3 +104,12 @@ export const deleteCustomerLog = async ({ customerId, logId }: { customerId: num
     throw error;
   }
 };
+
+export const updateCustomerLog = async ({ customerId, logId, data }: { customerId: number; logId: number | string; data: CustomerLogCreate }): Promise<void> => {
+  try {
+    await api.put(`/api/v1/customers/${customerId}/logs/${logId}`, data);
+  } catch (error: unknown) {
+    console.warn('API error updateCustomerLog', error);
+    throw error;
+  }
+};

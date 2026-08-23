@@ -42,3 +42,16 @@ export const CUSTOMER_LOG_STATUS_OPTIONS = [
 export const getCustomerLogStatusLabel = (status?: string | null) => {
   return CUSTOMER_LOG_STATUS_OPTIONS.find((opt) => opt.value === status)?.label || status || '—';
 };
+
+export const getCustomerLogStatusColor = (status?: string | null) => {
+  switch (status) {
+    case 'completed':
+      return 'text-green-700 bg-green-50 border-green-200';
+    case 'pending':
+      return 'text-amber-700 bg-amber-50 border-amber-200';
+    case 'failed':
+      return 'text-red-700 bg-red-50 border-red-200';
+    default:
+      return 'text-gray-700 bg-gray-50 border-gray-200';
+  }
+};
