@@ -39,3 +39,25 @@ export interface CustomerQueryParams {
   offset?: number;
   limit?: number;
 }
+
+export interface CustomerLog {
+  id: number;
+  customerId: number;
+  index: number;
+  channel: string;
+  type: string;
+  status: string;
+  note: string;
+  nextFollowDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerLogCreate {
+  index: number;
+  channel: string;
+  type: string;
+  status: string;
+  note: string;
+  nextFollowDate?: string | null;
+}

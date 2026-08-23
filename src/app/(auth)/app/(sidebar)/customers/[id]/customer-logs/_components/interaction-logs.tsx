@@ -1,32 +1,139 @@
-import React from 'react';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components';
-
-// This is a dummy type for interaction logs, replace with actual type when API is ready
-export interface InteractionLog {
-  id: string;
-  date: string;
-  type: string;
-  status: string;
-  notes: string;
-}
+import React, { useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
+import { Button, Modal } from '@/components';
+import { getCustomerLogChannelLabel, getCustomerLogStatusLabel, getCustomerLogTypeLabel } from '../../../config';
+import type { CustomerLog } from '@/types';
+import { TableData, TableAction } from '@/components/table';
+import { getCustomerLogs, deleteCustomerLog } from '@/actions';
+import toast from 'react-hot-toast';
+import { useMutation } from '@tanstack/react-query';
+import queryClient from '@/utils/query';
 
 interface InteractionLogsProps {
-  logs: InteractionLog[];
+  customerId: number;
   onCreateClick: () => void;
 }
 
-export const InteractionLogs = ({ logs, onCreateClick }: InteractionLogsProps) => {
+export const InteractionLogs = ({ customerId, onCreateClick }: InteractionLogsProps) => {
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [logToDelete, setLogToDelete] = useState<CustomerLog | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteCustomerLog,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-logs', customerId] });
+      toast.success('Xóa lượt tương tác thành công');
+      setIsDeleteOpen(false);
+      setLogToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Lỗi khi xóa lượt tương tác');
+    },
+  });
+
+  const handleDeleteClick = (log: CustomerLog) => {
+    setLogToDelete(log);
+    setIsDeleteOpen(true);
+  };
+
+  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
+    try {
+      const res = await getCustomerLogs(customerId, { offset, limit });
+      return res;
+    } catch (error) {
+      toast.error('Lỗi khi tải danh sách lịch sử tương tác');
+      throw error;
+    }
+  };
+
+  const columns = [
+    {
+      key: 'date',
+      label: 'Ngày tạo',
+      minWidth: '120px',
+      cell: (row: CustomerLog) => (
+        <span className="text-sm font-semibold text-gray-900">
+          {new Date(row.createdAt).toLocaleDateString('vi-VN')}
+        </span>
+      ),
+    },
+    {
+      key: 'type',
+      label: 'Loại tương tác',
+      minWidth: '200px',
+      cell: (row: CustomerLog) => (
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold text-gray-700">
+            {getCustomerLogChannelLabel(row.channel || row.type)}
+          </span>
+          <span className="text-xs font-normal text-gray-500">
+            {getCustomerLogTypeLabel(row.type)}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Trạng thái',
+      minWidth: '150px',
+      cell: (row: CustomerLog) => (
+        <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200 whitespace-nowrap">
+          {getCustomerLogStatusLabel(row.status)}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      label: 'Hành động',
+      minWidth: '100px',
+      cell: (row: CustomerLog) => (
+        <TableAction
+          onEdit={() => {}}
+          onDelete={() => handleDeleteClick(row)}
+        />
+      ),
+    },
+  ];
+
+  const renderCard = (row: CustomerLog, index: number) => (
+    <div key={row.id || index} className="p-4 rounded-xl border border-gray-150 bg-white flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col">
+          <span className="font-semibold text-gray-900 text-sm">
+            {getCustomerLogChannelLabel(row.channel || row.type)}
+          </span>
+          <span className="text-xs text-gray-500 mt-0.5">
+            {new Date(row.createdAt).toLocaleDateString('vi-VN')}
+          </span>
+        </div>
+        <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200 whitespace-nowrap">
+          {getCustomerLogStatusLabel(row.status)}
+        </span>
+      </div>
+      <div className="text-xs text-gray-600">
+        {getCustomerLogTypeLabel(row.type)}
+      </div>
+      <div className="flex justify-end pt-2 border-t border-gray-100 gap-2">
+        <Button variant="ghost" size="xs" onClick={() => {}} className="text-primary hover:bg-primary/5 px-2 h-6">
+          Sửa
+        </Button>
+        <Button variant="ghost" size="xs" onClick={() => handleDeleteClick(row)} className="text-red-600 hover:bg-red-50 hover:text-red-700 px-2 h-6">
+          Xóa
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">
-          Lịch sử tương tác ({logs.length})
+          Lịch sử tương tác
         </h3>
         <Button
-          variant="primary"
+          variant="ghost"
           size="sm"
-          className="text-primary hover:bg-primary/5 font-semibold px-2 py-1 h-auto"
+          className="bg-transparent text-primary hover:bg-transparent hover:opacity-80 p-0 font-semibold"
           leftIcon={<Plus size={16} />}
           onClick={onCreateClick}
         >
@@ -34,44 +141,48 @@ export const InteractionLogs = ({ logs, onCreateClick }: InteractionLogsProps) =
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-2 shadow-sm">
-        {/* Table Header */}
-        <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 bg-gray-50/50 rounded-t-lg">
-          <div className="col-span-3 text-xs font-semibold text-gray-400 uppercase">Ngày tạo</div>
-          <div className="col-span-4 text-xs font-semibold text-gray-400 uppercase">Loại tương tác</div>
-          <div className="col-span-3 text-xs font-semibold text-gray-400 uppercase">Trạng thái</div>
-          <div className="col-span-2 text-xs font-semibold text-gray-400 uppercase text-right">Hành động</div>
-        </div>
-
-        {/* Table Body */}
-        <div className="flex flex-col">
-          {logs.length > 0 ? (
-            logs.map((log) => (
-              <div
-                key={log.id}
-                className="grid grid-cols-12 gap-4 px-4 py-3.5 border-b border-gray-50 last:border-0 items-center hover:bg-gray-50/50 transition-colors"
-              >
-                <div className="col-span-3 text-sm font-semibold text-gray-900">{log.date}</div>
-                <div className="col-span-4 text-sm font-semibold text-gray-700">{log.type}</div>
-                <div className="col-span-3">
-                  <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
-                    {log.status}
-                  </span>
-                </div>
-                <div className="col-span-2 flex justify-end gap-2">
-                  <Button variant="secondary" size="sm" className="h-7 px-3 text-xs">
-                    Chi tiết
-                  </Button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="p-8 text-center text-sm text-gray-500">
-              Chưa có lượt tương tác nào.
-            </div>
-          )}
-        </div>
+      <div className="">
+        <TableData<CustomerLog>
+          queryKey={['customer-logs', customerId]}
+          fetcher={fetcher}
+          columns={columns}
+          renderCard={renderCard}
+          select={false}
+        />
       </div>
+
+      <Modal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        title="Xác nhận xóa"
+        className="m-2 max-w-md w-full"
+      >
+        <div className="flex gap-4 items-center py-2">
+          <div className="flex flex-col gap-1.5">
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Bạn có chắc chắn muốn xóa lượt tương tác này? Hành động này không thể hoàn tác.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3 justify-end w-full mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsDeleteOpen(false)}
+            disabled={deleteMutation.isPending}
+          >
+            Hủy
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => logToDelete && deleteMutation.mutate({ customerId, logId: logToDelete.id })}
+            loading={deleteMutation.isPending}
+          >
+            Xác nhận xóa
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -2,38 +2,20 @@
 
 import React, { useState } from 'react';
 import { Breadcrumb } from '@/components';
-import { CustomerInfo, InteractionLogs, InteractionLog } from './_components';
+import { CustomerInfo, InteractionLogs, LogFormModal } from './_components';
 import { useQuery } from '@tanstack/react-query';
-import { getCustomer } from '@/actions';
+import { getCustomer, getCustomerLogs } from '@/actions';
 
-// Dummy data for initial UI presentation of logs
-const DUMMY_LOGS: InteractionLog[] = [
-  {
-    id: 'log-1',
-    date: '20/08/2026',
-    type: 'Gọi điện thoại tư vấn',
-    status: 'Đã hoàn thành',
-    notes: '',
-  },
-  {
-    id: 'log-2',
-    date: '21/08/2026',
-    type: 'Gửi báo giá cửa nhôm',
-    status: 'Chờ phản hồi',
-    notes: '',
-  },
-];
+
 
 const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = React.use(params);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const { data: customer, isLoading } = useQuery({
     queryKey: ['customer', id],
     queryFn: () => getCustomer(Number(id)),
   });
-
-  // TODO: Fetch logs from API when ready
-  const [logs] = useState<InteractionLog[]>(DUMMY_LOGS);
 
   const breadcrumbs = [
     { label: 'Trang chủ', href: '/app/dashboard' },
@@ -42,8 +24,7 @@ const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   ];
 
   const handleCreateLog = () => {
-    // TODO: Open create log modal or navigate
-    console.log('Open create log modal');
+    setIsModalOpen(true);
   };
 
   if (isLoading) {
@@ -66,8 +47,14 @@ const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
       <div className="flex flex-col gap-6 mt-2">
         <CustomerInfo customer={customer} />
-        <InteractionLogs logs={logs} onCreateClick={handleCreateLog} />
+        <InteractionLogs customerId={Number(id)} onCreateClick={handleCreateLog} />
       </div>
+
+      <LogFormModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        customerId={Number(id)} 
+      />
     </div>
   );
 };
