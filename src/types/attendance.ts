@@ -190,6 +190,7 @@ export interface AttendanceQueryParams {
     workDate?: string;
     startDate?: string;
     endDate?: string;
+    departmentId?: number;
     status?: AttendanceStatus;
 }
 
