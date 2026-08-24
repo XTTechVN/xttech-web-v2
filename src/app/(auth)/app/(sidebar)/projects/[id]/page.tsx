@@ -17,7 +17,6 @@ import {
   Edit,
   Trash2
 } from 'lucide-react';
-import { useAuthStore } from '@/stores';
 
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>;
@@ -46,10 +45,8 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     enabled: !isNaN(projectId),
   });
 
-  const user = useAuthStore((state) => state.user);
-
   const { data: customerData } = useQuery({
-    queryKey: ['customers', user?.id],
+    queryKey: ['customers'],
     queryFn: async () => {
       const res = await getCustomers({ limit: 9999 });
       return res.items;
