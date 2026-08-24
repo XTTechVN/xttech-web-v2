@@ -16,14 +16,19 @@ import { getCustomers, deleteProject } from '@/actions';
 import type { Project } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
+import { useAuthStore } from '@/stores';
 
 const Page = () => {
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+
   // Lấy danh sách khách hàng
   const { data: customerData } = useQuery({
-    queryKey: ['customers'],
+    queryKey: ['customers', user?.id],
     queryFn: async () => {
-      const res = await getCustomers({ limit: 9999 });
+      const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
+      const staffId = !hasFullViewRole && user ? user.id : undefined;
+      const res = await getCustomers({ limit: 9999, staffId });
       return res.items;
     },
   });
