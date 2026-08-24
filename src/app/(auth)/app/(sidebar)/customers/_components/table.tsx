@@ -138,7 +138,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             {row.phone && <span className="text-xs text-gray-500 truncate">{row.phone}</span>}
           </div>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {row.type && <span className={`text-xs font-medium px-2 py-1 rounded-md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>
+            {row.type && <span className={`text-xs font-medium px-2 py-1 rounded- md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>
               {getCustomerTypeLabel(row.type)}
             </span>}
             <span className="text-xs text-gray-500 font-medium ml-1">
