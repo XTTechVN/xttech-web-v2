@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
-import { Button, Modal } from '@/components';
+import { Button, Modal, Heading } from '@/components';
 
 // Config của dữ liệu khách hàng
 import {
@@ -10,11 +10,15 @@ import {
   getCustomerLogStatusLabel,
   getCustomerLogTypeLabel,
   getCustomerLogStatusColor,
+  CUSTOMER_LOG_CHANNEL_OPTIONS,
+  CUSTOMER_LOG_TYPE_OPTIONS,
+  CUSTOMER_LOG_STATUS_OPTIONS,
 } from '@/app/(auth)/app/(sidebar)/customers/config';
 
 import type { CustomerLog } from '@/types';
 
-import { TableData, TableAction } from '@/components/table';
+import { TableFilters } from '@/components/table/table-filters';
+import type { ITableFilterProps } from '@/components/table/types';
 
 import { getCustomerLogs, deleteCustomerLog } from '@/actions';
 
@@ -57,22 +61,55 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
     setIsDeleteOpen(true);
   };
 
+  const [channelFilter, setChannelFilter] = useState<string | undefined>();
+  const [typeFilter, setTypeFilter] = useState<string | undefined>();
+  const [statusFilter, setStatusFilter] = useState<string | undefined>();
+
   const { data, isLoading } = useQuery({
-    queryKey: ['customer-logs', customerId],
-    queryFn: () => getCustomerLogs(customerId, { offset: 0, limit: 100 }),
+    queryKey: ['customer-logs', customerId, channelFilter, typeFilter, statusFilter],
+    queryFn: () => getCustomerLogs(customerId, { 
+      offset: 0, 
+      limit: 100,
+      channel: channelFilter,
+      type: typeFilter,
+      status: statusFilter,
+    }),
   });
 
   const logs = data?.items || [];
 
+  const logFilters: ITableFilterProps[] = [
+    {
+      type: 'select',
+      label: 'Kênh tương tác',
+      value: channelFilter,
+      options: CUSTOMER_LOG_CHANNEL_OPTIONS,
+      onChange: setChannelFilter,
+    },
+    {
+      type: 'select',
+      label: 'Loại tương tác',
+      value: typeFilter,
+      options: CUSTOMER_LOG_TYPE_OPTIONS,
+      onChange: setTypeFilter,
+    },
+    {
+      type: 'select',
+      label: 'Trạng thái',
+      value: statusFilter,
+      options: CUSTOMER_LOG_STATUS_OPTIONS,
+      onChange: setStatusFilter,
+    },
+  ];
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Lịch sử tương tác ({data?.meta?.total || 0})</h3>
+        <Heading as="h3" className="text-xs md:text-sm font-bold text-gray-500 uppercase tracking-wider">Lịch sử tương tác ({data?.meta?.total || 0})</Heading>
         <Button
           variant="ghost"
           size="sm"
           className="bg-transparent text-primary hover:bg-transparent hover:opacity-80 p-0 font-semibold"
-          leftIcon={<Plus size={16} />}
           onClick={() => {
             setSelectedLog(null);
             setIsLogFormOpen(true);
@@ -80,6 +117,10 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
         >
           Tạo lượt tương tác
         </Button>
+      </div>
+
+      <div className="mb-4">
+        <TableFilters filters={logFilters} />
       </div>
 
       <div className="flex flex-col gap-3">
