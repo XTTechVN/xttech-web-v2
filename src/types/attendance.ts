@@ -204,8 +204,8 @@ export interface AttendanceCreate {
     userId: string;
     workShiftId?: number;
     workDate: string;
-    checkIn?: string;
-    checkOut?: string;
+    checkIn?: string | null;
+    checkOut?: string | null;
     checkInLatitude?: number;
     checkInLongitude?: number;
     checkOutLatitude?: number;
@@ -364,4 +364,4 @@ export interface AutoTimekeepingData {
 //     allowDeleted?: boolean;
 // }
 
-// export type DepartmentListResponse = DataListResponse<Department>;
+// export type DepartmentListResponse = DataListResponse<Department>;
