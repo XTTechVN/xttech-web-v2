@@ -32,7 +32,7 @@ const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6 w-full max-w-[1400px] mx-auto">
+    <div className="flex flex-col gap-4 p-4 md:p-6 w-full max-w-350 mx-auto">
       {/* Page Header */}
       <div className="flex flex-col gap-3">
         <Breadcrumb items={breadcrumbs} />

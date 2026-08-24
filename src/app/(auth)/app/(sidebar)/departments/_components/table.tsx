@@ -147,7 +147,7 @@ const Table = () => {
     >
       <div className="flex items-start gap-3">
         <div className="flex flex-col flex-1 min-w-0">
-          <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
+          <span className="font-semibold text-gray-900 wrap-break-word text-sm sm:text-base leading-snug">{row.name}</span>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-xs text-gray-400 font-medium">ID: {row.id}</span>
             <span className="text-xs text-gray-300 select-none">•</span>
