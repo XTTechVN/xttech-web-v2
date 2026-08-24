@@ -1,15 +1,19 @@
 'use client';
 
-import React from 'react';
-import { User, Pencil, Trash2 } from 'lucide-react';
+import { User, Pencil, Trash2, Eye } from 'lucide-react';
+
 import { TableData, TableAction } from '@/components/table';
-import { Heading, Button } from '@/components';
+
+import { Button } from '@/components';
 import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
 import type { Customer } from '@/types';
-import { getCustomers } from '@/actions';
+import { getCustomerTypeLabel, getCustomerTypeColor } from '../config';
+import { getCustomers, getUsers } from '@/actions';
+import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useAuthStore } from '@/stores';
 
 interface TableProps {
   onEditClick: (customer: Customer) => void;
@@ -19,11 +23,21 @@ interface TableProps {
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
+  const user = useAuthStore((state) => state.user);
+
+  const { data: usersData } = useQuery({
+    queryKey: ['users', 'all'],
+    queryFn: () => getUsers({ limit: 1000 }),
+  });
 
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const res = await getCustomers({ offset, limit, search: search || undefined });
+    const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
+    const staffId = !hasFullViewRole && user ? user.id : undefined;
+
+    const res = await getCustomers({ offset, limit, search: search || undefined, staffId });
     if (!res) {
       toast.error('Lỗi khi tải danh sách khách hàng');
       throw new Error('Lỗi khi tải danh sách khách hàng');
@@ -31,19 +45,13 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     return res;
   };
 
+  // Các cột trong bảng khách hàng
   const columns = [
     {
       key: 'name',
       label: 'Tên khách hàng',
       minWidth: '220px',
-      cell: (row: Customer) => (
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/5 text-primary">
-            <User size={16} />
-          </div>
-          <span className="font-semibold text-gray-900">{row.name}</span>
-        </div>
-      ),
+      cell: (row: Customer) => (<span className="font-semibold text-gray-900">{row.name}</span>),
     },
     {
       key: 'identifyCode',
@@ -67,14 +75,37 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       key: 'address',
       label: 'Địa chỉ',
       minWidth: '200px',
-      cell: (row: Customer) => <span className="text-gray-500 text-sm truncate max-w-[200px] block">{row.address || '—'}</span>,
+      cell: (row: Customer) => <span className="text-gray-500 text-sm truncate max-w-50 block">{row.address || '—'}</span>,
     },
+    {
+      key: 'staff',
+      label: 'Nhân viên phụ trách',
+      minWidth: '180px',
+      cell: (row: Customer) => {
+        const staffName = usersData?.items?.find((u: any) => u.id === row.staffId)?.fullName || (row as any).staff?.fullName || (row as any).staff?.username || row.staffId || '—';
+        return <span className="text-gray-600 text-sm">{staffName}</span>;
+      },
+    },
+    {
+      key: 'type',
+      label: 'Loại KH',
+      minWidth: '120px',
+      cell: (row: Customer) => {
+        return (
+          <span className={`text-xs font-medium px-2 py-1 rounded-md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>
+            {getCustomerTypeLabel(row.type)}
+          </span>
+        );
+      },
+    },
+
     {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
       cell: (row: Customer) => (
         <TableAction
+          onView={() => router.push(`/app/customers/${row.id}/customer-logs`)}
           onEdit={() => onEditClick(row)}
           onDelete={() => onDeleteClick(row)}
         />
@@ -82,6 +113,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     },
   ];
 
+  //  Card dùng cho mobile
   const renderCard = (row: Customer, index: number) => (
     <div
       key={row.id || index}
@@ -92,15 +124,50 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
           <User size={18} />
         </div>
         <div className="flex flex-col flex-1 min-w-0">
-          <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
+          <span className="font-semibold text-gray-900 wrap-break-word text-sm sm:text-base leading-snug">{row.name}</span>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-xs text-gray-400 font-medium">Code: {row.identifyCode || '—'}</span>
             {row.phone && <span className="text-xs text-gray-300 select-none">•</span>}
             {row.phone && <span className="text-xs text-gray-500 truncate">{row.phone}</span>}
           </div>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {row.type && <span className={`text-xs font-medium px-2 py-1 rounded-md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>
+              {getCustomerTypeLabel(row.type)}
+            </span>}
+            <span className="text-xs text-gray-500 font-medium ml-1">
+              • Phụ trách: {usersData?.items?.find((u: any) => u.id === row.staffId)?.fullName || (row as any).staff?.fullName || (row as any).staff?.username || row.staffId || '—'}
+            </span>
+          </div>
+          {row.images && row.images.length > 0 && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs text-gray-500 font-medium">Đính kèm:</span>
+              <div className="flex items-center gap-1">
+                {row.images.slice(0, 3).map((img: any, idx: number) => {
+                  const src = typeof img === 'string' ? img : img?.path || img?.url;
+                  if (!src) return null;
+                  return (
+                    <div key={idx} className="w-6 h-6 rounded overflow-hidden border border-gray-200">
+                      <img src={src} alt="img" className="w-full h-full object-cover" />
+                    </div>
+                  );
+                })}
+                {row.images.length > 3 && (
+                  <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">+{row.images.length - 3}</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5">
+        <button
+          type="button"
+          onClick={() => router.push(`/app/customers/${row.id}/customer-logs`)}
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer"
+        >
+          <Eye size={12} />
+          Xem
+        </button>
         <button
           type="button"
           onClick={() => onEditClick(row)}

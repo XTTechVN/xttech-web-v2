@@ -54,8 +54,8 @@ export const QuotationExtraOption = ({
           renderItem={(item) => {
             const unitText = item.unit ? (EXTRA_OPTION_UNIT_MAP[item.unit] || item.unit) : '';
             return (
-              <div className="relative flex items-center justify-between w-full min-w-0 pr-8">
-                <div className="truncate pr-24 font-medium flex-1">
+              <div className="relative flex items-center justify-between w-full min-w-0 pr-8" title={item.name}>
+                <div className="truncate pr-24 font-medium flex-1" title={item.name}>
                   {item.name}
                 </div>
                 <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 absolute right-0 top-1/2 -translate-y-1/2 bg-inherit pl-2.5 z-10 select-none">

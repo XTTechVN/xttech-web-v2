@@ -77,6 +77,7 @@ export interface QuotationDoorResponse {
   quotationMaterialId: number;
   doorId: number;
   code?: string;
+  unit?: string;
   width?: number;
   height?: number;
   effectiveWidth?: number;
@@ -168,6 +169,7 @@ export interface QuotationDetail extends Quotation {
 export interface PreviewDoor {
   id?: number;
   code?: string;
+  unit?: string;
   doorId: number;
   width?: number;
   height?: number;

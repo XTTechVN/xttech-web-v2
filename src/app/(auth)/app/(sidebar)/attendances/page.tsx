@@ -77,8 +77,6 @@ export default function AttendancesPage() {
 
 
   const queryClient = useQueryClient();
-  const [refreshing, setRefreshing] = useState(false);
-  const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
 
@@ -95,25 +93,6 @@ export default function AttendancesPage() {
     queryFn: () => getAdjustmentRequests(),
   });
 
-  // 1.1. Tổng số có mặt (records status != 'absent')
-  const presentCount = useMemo(() => {
-    return attendances.filter(
-      (r) => r.status && r.status.toLowerCase() !== 'absent' && r.status.toLowerCase() !== 'vắng mặt'
-    ).length;
-  }, [attendances]);
-
-  useEffect(() => {
-    console.log(attendances);
-  }, [attendances]);
-
-  const userList = users?.items ?? [];
-  const totalUsersCount =
-    userList.length || attendances.length || 150;
-  const presentPercentage = useMemo(() => {
-    if (!totalUsersCount) return 0;
-    return Math.round((presentCount / totalUsersCount) * 100 * 10) / 10;
-  }, [presentCount, totalUsersCount]);
-
   // Dates: today & yesterday
   const { todayStr, yesterdayStr } = useMemo(() => {
     const now = new Date();
@@ -124,24 +103,44 @@ export default function AttendancesPage() {
     return { todayStr: t, yesterdayStr: y };
   }, []);
 
+  const { data: statsData } = useQuery({
+    queryKey: ['attendances-stats', todayStr, yesterdayStr],
+    queryFn: () => getAttendances({ startDate: yesterdayStr, endDate: todayStr, limit: 1000 }),
+  });
+  const statsAttendances = statsData?.items ?? [];
+
+  // 1.1. Tổng số có mặt (records status != 'absent')
+  const presentCount = useMemo(() => {
+    return statsAttendances.filter(
+      (r) => r.workDate === todayStr && r.status && r.status.toLowerCase() !== 'absent' && r.status.toLowerCase() !== 'vắng mặt'
+    ).length;
+  }, [statsAttendances, todayStr]);
+
+  const userList = users?.items ?? [];
+  const totalUsersCount = userList.length || statsAttendances.length || 150;
+  const presentPercentage = useMemo(() => {
+    if (!totalUsersCount) return 0;
+    return Math.round((presentCount / totalUsersCount) * 100 * 10) / 10;
+  }, [presentCount, totalUsersCount]);
+
   // 1.2. Vắng mặt hôm nay & so sánh hôm qua
   const todayAbsentCount = useMemo(() => {
-    return attendances.filter(
+    return statsAttendances.filter(
       (r) => r.workDate === todayStr && (r.status?.toLowerCase() === 'absent' || r.status?.toLowerCase() === 'vắng mặt')
     ).length;
-  }, [attendances, todayStr]);
+  }, [statsAttendances, todayStr]);
 
   const yesterdayAbsentCount = useMemo(() => {
-    return attendances.filter(
+    return statsAttendances.filter(
       (r) => r.workDate === yesterdayStr && (r.status?.toLowerCase() === 'absent' || r.status?.toLowerCase() === 'vắng mặt')
     ).length;
-  }, [attendances, yesterdayStr]);
+  }, [statsAttendances, yesterdayStr]);
 
   const absentDiff = todayAbsentCount - yesterdayAbsentCount;
 
   // 1.3. Đi muộn / Về sớm hôm nay & so sánh hôm qua
   const todayLateCount = useMemo(() => {
-    return attendances.filter(
+    return statsAttendances.filter(
       (r) =>
         r.workDate === todayStr &&
         (r.isLate ||
@@ -151,10 +150,10 @@ export default function AttendancesPage() {
           r.status?.toLowerCase() === 'đi muộn' ||
           r.status?.toLowerCase() === 'về sớm')
     ).length;
-  }, [attendances, todayStr]);
+  }, [statsAttendances, todayStr]);
 
   const yesterdayLateCount = useMemo(() => {
-    return attendances.filter(
+    return statsAttendances.filter(
       (r) =>
         r.workDate === yesterdayStr &&
         (r.isLate ||
@@ -164,7 +163,7 @@ export default function AttendancesPage() {
           r.status?.toLowerCase() === 'đi muộn' ||
           r.status?.toLowerCase() === 'về sớm')
     ).length;
-  }, [attendances, yesterdayStr]);
+  }, [statsAttendances, yesterdayStr]);
 
   const lateDiff = todayLateCount - yesterdayLateCount;
 
@@ -172,10 +171,6 @@ export default function AttendancesPage() {
   const pendingAdjustmentRequests = useMemo(() => {
     return (adjustmentRequestsData?.items ?? []).filter((item) => item.status === 'pending');
   }, [adjustmentRequestsData]);
-
-  // useEffect(() => {
-  //   console.log(departments);
-  // }, [departments]);
 
   const [reviewModalState, setReviewModalState] = useState<{
     open: boolean;
@@ -219,18 +214,15 @@ export default function AttendancesPage() {
   ) as any;
 
   const statusOptions: FilterOption[] = [
-    ...new Map(
-      attendances
-        .filter((item) => item.status)
-        .map((item) => [
-          item.status,
-          {
-            value: item.status ?? undefined,
-            label: getAttendanceStatusLabel(item.status as AttendanceStatus),
-          },
-        ])
-    ).values(),
+    { value: undefined, label: 'Tất cả trạng thái' },
+    { value: 'present', label: 'Đúng giờ' },
+    { value: 'late', label: 'Đi muộn' },
+    { value: 'early_leave', label: 'Về sớm' },
+    { value: 'late_and_early_leave', label: 'Đi muộn & Về sớm' },
+    { value: 'overtime', label: 'Tăng ca' },
+    { value: 'absent', label: 'Vắng mặt' },
   ];
+
   // Cấu hình filters truyền vào TableData
   const tableFilters: ITableFilterProps[] = [
     {
@@ -259,92 +251,22 @@ export default function AttendancesPage() {
     limit: number;
   }) => {
     const response = await getAttendances({
+      offset,
+      limit,
+      search: searchQuery || undefined,
       startDate: filterStartDate || undefined,
       endDate: filterEndDate || undefined,
       userId: filterEmployeeId || undefined,
       status: (filterStatus as AttendanceStatus) || undefined,
     });
 
-    const items = response.items ?? [];
-
-    // Lưu data để tạo các filter/options khác
-    setAttendances(items);
-
-    let filtered = [...items];
-
-    // Search
-    if (searchQuery) {
-      const keyword = searchQuery.toLowerCase();
-
-      filtered = filtered.filter(
-        (item) =>
-          item.user?.fullName?.toLowerCase().includes(keyword) ||
-          item.user?.email?.toLowerCase().includes(keyword)
-      );
-    }
-
-    // Filter nhân viên
-    if (filterEmployeeId) {
-      filtered = filtered.filter(
-        (item) => String(item.userId) === String(filterEmployeeId)
-      );
-    }
-
-    // Filter phòng ban
-    if (filterDepartment) {
-      filtered = filtered.filter((item) => {
-        const u = item.user as any;
-
-        const deptId = String(
-          u?.departmentId ??
-          u?.department?.id ??
-          (item as any)?.departmentId ??
-          ''
-        );
-
-        const deptName = String(
-          u?.department?.name ??
-          u?.departmentName ??
-          u?.department ??
-          (item as any)?.department ??
-          ''
-        );
-
-        return (
-          deptId === String(filterDepartment) ||
-          deptName === String(filterDepartment)
-        );
-      });
-    }
-
-    // Filter ca làm
-    if (filterShift) {
-      filtered = filtered.filter((item) => {
-        const shiftStr = String(
-          item.workShiftId ?? (item as any)?.shift ?? ''
-        ).toLowerCase();
-
-        return shiftStr.includes(filterShift.toLowerCase());
-      });
-    }
-
-    // Không cần filter startDate/endDate ở đây nữa
-    // vì đã truyền startDate/endDate cho API ở phía trên.
-
-    // Filter trạng thái
-    if (filterStatus) {
-      filtered = filtered.filter(
-        (item) => item.status === filterStatus
-      );
-    }
-
     return {
-      items: filtered.slice(offset, offset + limit),
+      items: response?.items ?? [],
       meta: {
-        total: filtered.length,
-        offset,
-        limit,
-        next: offset + limit < filtered.length,
+        total: response?.meta?.total ?? 0,
+        offset: response?.meta?.offset ?? offset,
+        limit: response?.meta?.limit ?? limit,
+        next: response?.meta?.next ?? false,
       },
     };
   };
@@ -817,7 +739,6 @@ export default function AttendancesPage() {
           filters={tableFilters}
           renderCard={renderCard}
           select={false}
-          syncToUrl={false}
         />
       </div>
 

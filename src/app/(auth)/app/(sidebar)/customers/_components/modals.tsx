@@ -1,16 +1,32 @@
 'use client';
 
-import { useEffect } from 'react';
-import { Input, Button, Modal } from '@/components';
-import { CheckCircle2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { createCustomer, updateCustomer } from '@/actions';
-import toast from 'react-hot-toast';
-import { useMutation } from '@tanstack/react-query';
-import queryClient from '@/utils/query';
-import type { Customer, CustomerCreate, CustomerUpdate } from '@/types';
+import { useEffect, useRef, useState } from 'react';
 
-// Form modal để Thêm / Sửa thông tin khách hàng
+// Thành phần dùng chung cho toàn trang
+import { Input, Button, Modal, Select } from '@/components';
+
+// Icons
+import { CheckCircle2, Upload, X } from 'lucide-react';
+
+// Form sử dụng
+import { useForm } from 'react-hook-form';
+
+// Actions
+import { createCustomer, updateCustomer, getUsers } from '@/actions';
+
+import { BASE_MINIO_URL } from '@/config/app';
+import { CUSTOMER_TYPE_OPTIONS } from '../config';
+
+import toast from 'react-hot-toast';
+
+import { useMutation, useQuery } from '@tanstack/react-query';
+
+import queryClient from '@/utils/query';
+import { useAuthStore } from '@/stores';
+
+import type { CustomerCreate, CustomerUpdate } from '@/types';
+
+// Interface form modal để Thêm / Sửa thông tin khách hàng
 interface CustomerFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,25 +39,104 @@ interface CustomerFormModalProps {
     identifyCode?: string | null;
     email?: string | null;
     phone?: string | null;
+    staffId?: string | null;
+    type?: string | null;
+    images?: any[];
   };
 }
 
-type CustomerFormValues = CustomerCreate;
-
-export function CustomerFormModal({
-  isOpen,
-  onClose,
-  title,
-  submitText = 'Xác nhận tạo',
-  initialData,
-}: CustomerFormModalProps) {
+type CustomerFormValues = CustomerCreate & { type?: string };
+export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác nhận tạo', initialData }: CustomerFormModalProps) {
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<CustomerFormValues>();
+  
+  const user = useAuthStore((state) => state.user);
+  const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImages, setSelectedImages] = useState<{ id: string; file: File; preview: string }[]>([]);
+  const [existingImages, setExistingImages] = useState<any[]>([]);
+  const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
+  const [showAllImages, setShowAllImages] = useState(false);
+
+  // Load danh sách nhân viên
+  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['users', 'all'],
+    queryFn: () => getUsers({ limit: 1000 }),
+  });
+
+  const staffOptions =
+    usersData?.items
+      ?.filter((u) => u.roles?.some((r) => r.code === 'sale'))
+      ?.map((u) => ({
+        value: u.id,
+        label: u.fullName || u.username || u.email,
+      })) || [];
+    
+  if (!hasFullViewRole && user) {
+    const isExist = staffOptions.some(opt => opt.value === user.id);
+    if (!isExist) {
+      staffOptions.push({
+        value: user.id,
+        label: user.fullName || user.username || user.email,
+      });
+    }
+  }
+
+  // Xử lý upload hình ảnh có thể tải lên đc nhiều hình ảnh
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    const newImages: { id: string; file: File; preview: string }[] = [];
+
+    Array.from(files).forEach((file) => {
+      if (!allowedImageTypes.includes(file.type)) {
+        toast.error(`"${file.name}" không hợp lệ. Chỉ chấp nhận định dạng ảnh!`);
+        return;
+      }
+      const sizeLimit = 20 * 1024 * 1024;
+      if (file.size > sizeLimit) {
+        toast.error(`Dung lượng ảnh "${file.name}" vượt quá giới hạn (tối đa 20MB)!`);
+        return;
+      }
+
+      newImages.push({
+        id: `${file.name}-${file.size}-${Date.now()}`,
+        file,
+        preview: URL.createObjectURL(file),
+      });
+    });
+
+    if (newImages.length > 0) {
+      setSelectedImages((prev) => [...prev, ...newImages]);
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Xử lý xóa hình ảnh
+  const handleRemoveImage = (id: string) => {
+    setSelectedImages((prev) => {
+      const item = prev.find((img) => img.id === id);
+      if (item) URL.revokeObjectURL(item.preview);
+      return prev.filter((img) => img.id !== id);
+    });
+  };
+
+  const handleRemoveExistingImage = (id: number) => {
+    setExistingImages((prev) => prev.filter((img) => img.id !== id));
+    setDeletedImageIds((prev) => [...prev, id]);
+  };
+
+  // Logic Thêm khách hàng
   const { mutate, isPending } = useMutation({
     mutationFn: createCustomer,
     onSuccess: () => {
@@ -55,9 +150,9 @@ export function CustomerFormModal({
     },
   });
 
+  // Logic Cập nhật khách hàng
   const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: CustomerUpdate }) =>
-      updateCustomer(id, data),
+    mutationFn: ({ id, data }: { id: number; data: CustomerUpdate }) => updateCustomer(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       toast.success('Cập nhật khách hàng thành công');
@@ -69,6 +164,7 @@ export function CustomerFormModal({
     },
   });
 
+  // Xử lý khi open modal
   useEffect(() => {
     if (isOpen) {
       reset({
@@ -77,12 +173,44 @@ export function CustomerFormModal({
         identifyCode: initialData?.identifyCode || '',
         email: initialData?.email || '',
         phone: initialData?.phone || '',
+        staffId: initialData?.staffId || (!hasFullViewRole && user ? user.id : ''),
+        type: initialData?.type || '',
       });
-    } else {
-      reset({ name: '', address: '', identifyCode: '', email: '', phone: '' });
-    }
-  }, [isOpen, initialData]);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedImages([]);
 
+      const getFullImageUrl = (path: string) => {
+        if (!path) return undefined;
+        return `${BASE_MINIO_URL}${path}`;
+      };
+
+      const mappedImages = (initialData?.images || []).map((img, index) => {
+        const imgPath = img.imagePath;
+        const fullUrl = getFullImageUrl(imgPath);
+        return {
+          id: img.id || `img-obj-${index}`,
+          url: fullUrl,
+          preview: fullUrl,
+          ...img,
+        };
+      });
+      setExistingImages(mappedImages);
+
+      setDeletedImageIds([]);
+      setShowAllImages(false);
+    } else {
+      reset({ name: '', address: '', identifyCode: '', email: '', phone: '', staffId: '', type: '' });
+      setSelectedImages((prev) => {
+        prev.forEach((img) => URL.revokeObjectURL(img.preview));
+        return [];
+      });
+      setExistingImages([]);
+      setDeletedImageIds([]);
+      setShowAllImages(false);
+    }
+  }, [isOpen, initialData, reset]);
+
+  // Xử lý khi submit form
   const handleConfirm = (data: CustomerFormValues) => {
     const payload: any = {
       name: data.name,
@@ -97,11 +225,34 @@ export function CustomerFormModal({
     if (data.address && data.address.trim() !== '') {
       payload.address = data.address;
     }
+    if (data.staffId && data.staffId.trim() !== '') {
+      payload.staffId = data.staffId;
+    }
+    if (initialData && data.type && data.type.trim() !== '') {
+      payload.type = data.type;
+    }
 
     if (initialData) {
-      updateMutation({ id: initialData.id, data: payload as CustomerUpdate });
+      const updateFormData = new FormData();
+      updateFormData.append('customer', JSON.stringify(payload));
+      if (selectedImages.length > 0) {
+        selectedImages.forEach((img) => {
+          updateFormData.append('images', img.file);
+        });
+      }
+      if (deletedImageIds.length > 0) {
+        updateFormData.append('deleted_image_ids', JSON.stringify(deletedImageIds));
+      }
+      updateMutation({ id: initialData.id, data: updateFormData as any });
     } else {
-      mutate(payload as CustomerCreate);
+      const formData = new FormData();
+      formData.append('customer', JSON.stringify(payload));
+      if (selectedImages.length > 0) {
+        selectedImages.forEach((img) => {
+          formData.append('images', img.file);
+        });
+      }
+      mutate(formData as any);
     }
   };
 
@@ -161,6 +312,155 @@ export function CustomerFormModal({
             {...register('address')}
             error={errors.address ? 'Địa chỉ không hợp lệ' : undefined}
           />
+          <Select
+            label="Nhân viên phụ trách"
+            options={staffOptions}
+            placeholder={isLoadingUsers ? 'Đang tải danh sách nhân viên...' : 'Chọn nhân viên phụ trách'}
+            fullWidth
+            disabled={isLoadingUsers || !hasFullViewRole}
+            {...register('staffId')}
+            error={errors.staffId?.message}
+          />
+          {initialData && (
+            <Select
+              label="Loại khách hàng"
+              options={CUSTOMER_TYPE_OPTIONS}
+              placeholder="Chọn loại khách hàng"
+              fullWidth
+              disabled={updateIsPending}
+              {...register('type')}
+              error={errors.type?.message}
+            />
+          )}
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold text-gray-700 select-none">Hình ảnh đính kèm (Cho phép chọn nhiều, tối đa 20MB/ảnh)</span>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/jpeg,image/png,image/webp,image/jpg"
+                  className="hidden"
+                  disabled={isPending || updateIsPending}
+                  multiple
+                />
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isPending || updateIsPending}
+                  leftIcon={<Upload className="w-4 h-4" />}
+                >
+                  Chọn ảnh
+                </Button>
+              </div>
+
+              {existingImages.length > 0 && (
+                <div className="flex flex-col gap-2 w-full mt-2">
+                  <span className="text-xs font-semibold text-slate-500 select-none">Hình ảnh đã tải lên ({existingImages.length})</span>
+                  <div className="flex flex-wrap gap-3">
+                    {existingImages.map((img) => (
+                      <div key={img.id} className="relative w-16 h-16 rounded-lg border border-slate-200 group shrink-0">
+                        <div className="w-full h-full rounded-lg overflow-hidden relative bg-gray-50">
+                          <img src={img.url || img.preview || undefined} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={isPending || updateIsPending}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveExistingImage(img.id);
+                          }}
+                          className="absolute -top-1.5 -right-1.5 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-full w-5 h-5 p-0 flex items-center justify-center transition-colors cursor-pointer shadow-xs z-10 min-w-0 disabled:cursor-not-allowed"
+                          title="Xóa ảnh"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedImages.length > 0 && (
+                <div className="flex flex-col gap-2 w-full mt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-500 select-none">Hình ảnh đính kèm ({selectedImages.length})</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        disabled={isPending || updateIsPending}
+                        onClick={() => {
+                          selectedImages.forEach((img) => URL.revokeObjectURL(img.preview));
+                          setSelectedImages([]);
+                          setShowAllImages(false);
+                        }}
+                        className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline disabled:text-rose-350 disabled:no-underline cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        Xóa toàn bộ hình ảnh
+                      </button>
+                      {showAllImages && selectedImages.length > 4 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAllImages(false)}
+                          className="text-[11px] font-bold text-cyan-700 hover:text-cyan-800 hover:underline cursor-pointer"
+                        >
+                          Thu gọn
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {(showAllImages ? selectedImages : selectedImages.slice(0, 4)).map((img, index) => {
+                      const isLastItemAndHasMore = !showAllImages && selectedImages.length > 4 && index === 3;
+                      if (isLastItemAndHasMore) {
+                        return (
+                          <div
+                            key={img.id}
+                            onClick={() => setShowAllImages(true)}
+                            className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer group shrink-0"
+                          >
+                            <img
+                              src={img.preview || undefined}
+                              alt="Preview"
+                              className="w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-200"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-bold text-sm">
+                              +{selectedImages.length - 3}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={img.id} className="relative w-16 h-16 rounded-lg border border-slate-200 group shrink-0">
+                          <div className="w-full h-full rounded-lg overflow-hidden relative">
+                            <img src={img.preview || undefined} alt="Preview" className="w-full h-full object-cover" />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            disabled={isPending || updateIsPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveImage(img.id);
+                            }}
+                            className="absolute -top-1.5 -right-1.5 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-full w-5 h-5 p-0 flex items-center justify-center transition-colors cursor-pointer shadow-xs z-10 min-w-0 disabled:cursor-not-allowed"
+                            title="Xóa ảnh"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         <div className="flex gap-2 justify-end w-full mt-4">
           <Button variant="outline" size="sm" onClick={onClose}>
@@ -191,20 +491,9 @@ interface CustomerDeleteModalProps {
   isPending?: boolean;
 }
 
-export function CustomerDeleteModal({
-  isOpen,
-  onClose,
-  customerName,
-  onConfirm,
-  isPending = false,
-}: CustomerDeleteModalProps) {
+export function CustomerDeleteModal({ isOpen, onClose, customerName, onConfirm, isPending = false }: CustomerDeleteModalProps) {
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Xác nhận xóa khách hàng"
-      className="m-2 max-w-md w-full"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Xác nhận xóa khách hàng" className="m-2 max-w-md w-full">
       <div className="flex gap-4 items-center py-2">
         <div className="flex flex-col gap-1.5">
           <p className="text-gray-600 text-sm leading-relaxed">
@@ -213,20 +502,10 @@ export function CustomerDeleteModal({
         </div>
       </div>
       <div className="flex gap-3 justify-end w-full mt-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onClose}
-          disabled={isPending}
-        >
+        <Button variant="outline" size="sm" onClick={onClose} disabled={isPending}>
           Hủy
         </Button>
-        <Button
-          variant="danger"
-          size="sm"
-          onClick={onConfirm}
-          loading={isPending}
-        >
+        <Button variant="danger" size="sm" onClick={onConfirm} loading={isPending}>
           Xác nhận xóa
         </Button>
       </div>
