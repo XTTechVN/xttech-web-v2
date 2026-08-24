@@ -18,6 +18,7 @@ import {
 import type { CustomerLog } from '@/types';
 
 import { TableFilters } from '@/components/table/table-filters';
+
 import type { ITableFilterProps } from '@/components/table/types';
 
 import { getCustomerLogs, deleteCustomerLog } from '@/actions';
