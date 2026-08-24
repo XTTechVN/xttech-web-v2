@@ -29,11 +29,9 @@ export default function AddAdjustmentModal({
   const currentUser = useAuthStore((state) => state.user);
   const isAdmin = useMemo(
     () =>
-      currentUser?.roles?.some(
-        (r) =>
-          r.code?.toLowerCase() === "admin" ||
-          r.name?.toLowerCase() === "admin" ||
-          r.code?.toLowerCase() === "super"
+      currentUser?.roles?.some((r) =>
+        ["admin", "super", "hr"].includes(r.code?.toLowerCase() || "") ||
+        ["admin", "super", "hr"].includes(r.name?.toLowerCase() || "")
       ),
     [currentUser]
   );
