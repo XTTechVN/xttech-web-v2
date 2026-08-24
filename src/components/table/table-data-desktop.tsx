@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, useRef } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
@@ -61,13 +62,25 @@ export function TableDataDesktop<T>({
     }
   };
 
-  // Reset về offset 0 khi các bộ lọc bên ngoài (queryKey) thay đổi (chỉ áp dụng khi không đồng bộ URL)
+  // Reset về offset 0 khi các bộ lọc bên ngoài (queryKey) thay đổi
   const queryKeySerialized = JSON.stringify(queryKey);
+  const prevQueryKeyRef = useRef(queryKeySerialized);
+
   useEffect(() => {
-    if (!syncToUrl) {
-      setLocalOffset(0);
+    if (prevQueryKeyRef.current !== queryKeySerialized) {
+      prevQueryKeyRef.current = queryKeySerialized;
+      if (!syncToUrl) {
+        setLocalOffset(0);
+      } else {
+        const currentOffset = searchParams.get('offset');
+        if (currentOffset && currentOffset !== '0') {
+          const current = new URLSearchParams(Array.from(searchParams.entries()));
+          current.set('offset', '0');
+          router.replace(`${pathname}?${current.toString()}`, { scroll: false });
+        }
+      }
     }
-  }, [queryKeySerialized, syncToUrl]);
+  }, [queryKeySerialized, syncToUrl, searchParams, pathname, router]);
 
   // Sử dụng fetcher để lấy dữ liệu với offset và limit động
   const {
