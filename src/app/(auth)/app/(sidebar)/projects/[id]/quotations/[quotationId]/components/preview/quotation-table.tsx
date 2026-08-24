@@ -144,7 +144,9 @@ export const QuotationTable = ({ floors, materialsList, doorsList }: QuotationTa
                                 </td>
                                 <td className="border border-gray-400 py-1 px-2 text-center">{door.code || ''}</td>
                                 <td className="border border-gray-400 py-1 px-2">{doorName}</td>
-                                <td className="border border-gray-400 py-1 px-1 text-center">m2</td>
+                                <td className="border border-gray-400 py-1 px-1 text-center">
+                                  {door.unit === 'set' ? 'Bộ' : 'm²'}
+                                </td>
                                 <td className="border border-gray-400 py-1 px-2 text-center">{door.effectiveWidth ?? door.width ?? ''}</td>
                                 <td className="border border-gray-400 py-1 px-2 text-center">{door.effectiveHeight ?? door.height ?? ''}</td>
                                 <td className="border border-gray-400 py-1 px-1 text-center">{door.quantity}</td>
