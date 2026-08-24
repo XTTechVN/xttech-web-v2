@@ -101,7 +101,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
         reset({
           channel: 'call',
           type: 'pending',
-          status: 'completed',
+          status: 'pending',
           note: '',
           nextFollowDate: '',
         });
@@ -110,7 +110,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
       reset({
         channel: 'call',
         type: 'pending',
-        status: 'completed',
+        status: 'pending',
         note: '',
         nextFollowDate: '',
       });

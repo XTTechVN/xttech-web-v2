@@ -2,6 +2,8 @@ import type { Customer } from '@/types';
 
 import { getCustomerTypeLabel, getCustomerTypeColor } from '@/app/(auth)/app/(sidebar)/customers/config';
 
+import { Heading } from '@/components';
+
 import { BASE_MINIO_URL } from '@/config/app';
 
 // Lấy đường dẫn ảnh
@@ -20,12 +22,14 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
   if (!customer) return null;
 
   return (
-    <div className="mb-6">
-      <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Chi tiết khách hàng</h3>
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm flex flex-col md:flex-row gap-6 items-start">
+    <div className="mb-2">
+      <Heading as="h3" className="text-xs md:text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">
+        Chi tiết khách hàng
+      </Heading>
+      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex flex-col md:flex-row gap- items-start">
         {/* Hiển thị thông tin khách hàng */}
         <div className="flex-1 w-full mt-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold text-gray-400 uppercase">Tên khách hàng</span>
               <span className="text-base font-semibold text-gray-900">{customer.name}</span>
@@ -53,7 +57,9 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
 
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold text-gray-400 uppercase">Loại khách hàng</span>
-              <span className={`text-base font-medium w-fit px-3.5 py-1 rounded-lg border ${customer.type ? getCustomerTypeColor(customer.type) : 'text-gray-700 bg-gray-50 border-gray-200'}`}>
+              <span
+                className={`text-sm font-medium w-fit px-3 py-1 rounded-lg border ${customer.type ? getCustomerTypeColor(customer.type) : 'text-gray-700 bg-gray-50 border-gray-200'}`}
+              >
                 {customer.type ? getCustomerTypeLabel(customer.type) : '—'}
               </span>
             </div>
