@@ -5,6 +5,9 @@ export interface Customer {
   identifyCode: string | null;
   email: string | null;
   phone: string | null;
+  staffId: string | null;
+  type: string;
+  images: any[];
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -16,6 +19,7 @@ export interface CustomerCreate {
   identifyCode?: string;
   email?: string;
   phone?: string;
+  staffId?: string;
 }
 
 export interface CustomerUpdate {
@@ -24,6 +28,8 @@ export interface CustomerUpdate {
   identifyCode?: string;
   email?: string;
   phone?: string;
+  staffId?: string;
+  type?: string;
 }
 
 export interface CustomerQueryParams {
@@ -32,4 +38,27 @@ export interface CustomerQueryParams {
   identifyCode?: string;
   offset?: number;
   limit?: number;
+  staffId?: string;
+}
+
+export interface CustomerLog {
+  id: number;
+  customerId: number;
+  index: number;
+  channel: string;
+  type: string;
+  status: string;
+  note: string;
+  nextFollowDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerLogCreate {
+  index: number;
+  channel: string;
+  type: string;
+  status: string;
+  note: string;
+  nextFollowDate?: string | null;
 }
