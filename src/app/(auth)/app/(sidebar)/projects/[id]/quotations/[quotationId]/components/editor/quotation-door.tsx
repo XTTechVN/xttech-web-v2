@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useRef } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
 import { Button, Input, Select } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { EDITOR_STYLES } from './config';
@@ -8,6 +8,8 @@ import { QuotationAccessory } from './quotation-accessory';
 import { QuotationExtraOption } from './quotation-extra-option';
 import { QuotationFormula } from './quotation-formula';
 import { SearchSelect } from '../modal/search-select';
+import { fetchDefaultAccessories } from './utils';
+import toast from 'react-hot-toast';
 import type { Accessory, ExtraOption, Door, Formula } from '@/types';
 
 interface QuotationDoorProps {
@@ -38,9 +40,10 @@ export const QuotationDoor = ({
   if (!door) return null;
   const [isOpen, setIsOpen] = useState(true);
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
+  const [isLoadingAutoFill, setIsLoadingAutoFill] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  const handleUpdateDoor = (field: string, value: any) => {
+  const handleUpdateDoor = async (field: string, value: any) => {
     if (field === 'doorId') {
       const id = parseInt(value, 10);
       const selectedDoor = doorsList.find((d) => d.id === id);
@@ -48,6 +51,22 @@ export const QuotationDoor = ({
       store.updateDoor(fIndex, mIndex, dIndex, 'code', selectedDoor?.code || '');
     } else {
       store.updateDoor(fIndex, mIndex, dIndex, field, value);
+    }
+  };
+
+  const handleAutoFillAccessories = async () => {
+    if (!door.doorId && !material.materialId) return;
+    setIsLoadingAutoFill(true);
+    try {
+      const defaultAccIds = await fetchDefaultAccessories(material.materialId, door.doorId);
+      if (defaultAccIds.length > 0) {
+        store.setAccessories(fIndex, mIndex, dIndex, defaultAccIds);
+        toast.success(`Đã nạp ${defaultAccIds.length} phụ kiện theo biên dạng và hệ nhôm`);
+      } else {
+        toast.error('Không tìm thấy phụ kiện mặc định cho biên dạng & hệ nhôm này');
+      }
+    } finally {
+      setIsLoadingAutoFill(false);
     }
   };
 
@@ -185,9 +204,21 @@ export const QuotationDoor = ({
         <div className="py-2 flex flex-col gap-1.5">
           <div className="flex justify-between items-center">
             <span className={EDITOR_STYLES.sectionHeader}>Phụ kiện đính kèm</span>
-            <Button variant="ghost" size="sm" onClick={handleAddAccessory} className={EDITOR_STYLES.addButton} title="Thêm phụ kiện">
-              <Plus size={16} />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleAutoFillAccessories}
+                className="text-[#045863] hover:opacity-80 p-0 bg-transparent hover:bg-transparent h-auto w-auto min-w-0 inline-flex items-center gap-1 text-[10px] font-medium border-none cursor-pointer"
+                title="Tự động nạp phụ kiện theo hệ nhôm và biên dạng"
+                disabled={isLoadingAutoFill}
+              >
+                <RefreshCw size={11} className={isLoadingAutoFill ? "animate-spin" : ""} />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleAddAccessory} className={EDITOR_STYLES.addButton} title="Thêm phụ kiện">
+                <Plus size={16} />
+              </Button>
+            </div>
           </div>
           <div className={EDITOR_STYLES.subSectionContainer}>
             {!door.accessoryIds || door.accessoryIds.length === 0 ? (
