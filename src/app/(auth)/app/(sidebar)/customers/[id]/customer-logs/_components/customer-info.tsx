@@ -1,9 +1,11 @@
 import type { Customer } from '@/types';
 import { Image } from 'antd';
+import { MapPin, ExternalLink } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import { getCustomerTypeLabel, getCustomerTypeColor } from '@/app/(auth)/app/(sidebar)/customers/config';
 
-import { Heading } from '@/components';
+import { Heading, Button } from '@/components';
 
 import { BASE_MINIO_URL } from '@/config/app';
 
@@ -22,6 +24,20 @@ interface CustomerInfoProps {
 export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
   if (!customer) return null;
 
+  const hasCoordinates =
+    customer.latitude !== null &&
+    customer.latitude !== undefined &&
+    customer.longitude !== null &&
+    customer.longitude !== undefined;
+
+  const handleOpenGoogleMaps = () => {
+    if (hasCoordinates) {
+      window.open(`https://www.google.com/maps?q=${customer.latitude},${customer.longitude}`, '_blank', 'noopener,noreferrer');
+    } else {
+      toast.error('Chưa cập nhật tọa độ khách hàng');
+    }
+  };
+
   return (
     <div className="mb-2">
       <Heading as="h3" className="text-xs md:text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">
@@ -30,15 +46,10 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
       <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex flex-col md:flex-row gap- items-start">
         {/* Hiển thị thông tin khách hàng */}
         <div className="flex-1 w-full mt-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-6">
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold text-gray-400 uppercase">Tên khách hàng</span>
               <span className="text-base font-semibold text-gray-900">{customer.name}</span>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Mã định danh (ID)</span>
-              <span className="text-base font-semibold text-gray-900">{customer.identifyCode || '—'}</span>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -48,12 +59,55 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
 
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold text-gray-400 uppercase">Email</span>
-              <span className="text-base font-semibold text-gray-900">{customer.email || '—'}</span>
+              <span className="text-base font-semibold text-gray-900 truncate" title={customer.email || ''}>
+                {customer.email || '—'}
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-gray-400 uppercase">Mã định danh (ID)</span>
+              <span className="text-base font-semibold text-gray-900">{customer.identifyCode || '—'}</span>
             </div>
 
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold text-gray-400 uppercase">Địa chỉ</span>
-              <span className="text-base font-semibold text-gray-900">{customer.address || '—'}</span>
+              <span className="text-base font-semibold text-gray-900 truncate" title={customer.address || ''}>
+                {customer.address || '—'}
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-gray-400 uppercase">Vị trí (Google Maps)</span>
+              <div className="flex items-center">
+                {hasCoordinates ? (
+                  <a
+                    href={`https://www.google.com/maps?q=${customer.latitude},${customer.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/80 hover:bg-blue-100 hover:text-blue-700 border border-blue-200/80 rounded-lg transition-all shadow-2xs group whitespace-nowrap"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-blue-500 shrink-0 group-hover:scale-110 transition-transform" />
+                    <span>Mở Google Maps</span>
+                    <ExternalLink className="w-3 h-3 text-blue-400 shrink-0" />
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => toast.error('Chưa cập nhật tọa độ khách hàng')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 bg-gray-50 hover:bg-gray-100 border border-gray-200/80 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    <span>Chưa có tọa độ</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-gray-400 uppercase">Nhân viên phụ trách</span>
+              <span className="text-base font-semibold text-gray-900">
+                {(customer as any).staff?.fullName || (customer as any).staff?.username || customer.staffId || '—'}
+              </span>
             </div>
 
             <div className="flex flex-col gap-1.5">

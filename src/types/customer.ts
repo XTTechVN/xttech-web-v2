@@ -2,6 +2,8 @@ export interface Customer {
   id: number;
   name: string;
   address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   identifyCode: string | null;
   email: string | null;
   phone: string | null;
@@ -16,6 +18,8 @@ export interface Customer {
 export interface CustomerCreate {
   name: string;
   address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   identifyCode?: string;
   email?: string;
   phone?: string;
@@ -25,6 +29,8 @@ export interface CustomerCreate {
 export interface CustomerUpdate {
   name?: string;
   address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   identifyCode?: string;
   email?: string;
   phone?: string;
