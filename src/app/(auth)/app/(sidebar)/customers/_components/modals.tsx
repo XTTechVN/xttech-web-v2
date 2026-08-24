@@ -176,6 +176,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
         staffId: initialData?.staffId || (!hasFullViewRole && user ? user.id : ''),
         type: initialData?.type || '',
       });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedImages([]);
 
       const getFullImageUrl = (path: string) => {

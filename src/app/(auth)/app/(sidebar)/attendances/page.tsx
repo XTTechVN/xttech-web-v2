@@ -260,17 +260,14 @@ export default function AttendancesPage() {
       status: (filterStatus as AttendanceStatus) || undefined,
     });
 
-    const items = response?.items ?? [];
-    const meta = response?.meta ?? {
-      total: items.length,
-      offset,
-      limit,
-      next: offset + limit < items.length,
-    };
-
     return {
-      items,
-      meta,
+      items: response?.items ?? [],
+      meta: {
+        total: response?.meta?.total ?? 0,
+        offset: response?.meta?.offset ?? offset,
+        limit: response?.meta?.limit ?? limit,
+        next: response?.meta?.next ?? false,
+      },
     };
   };
 
@@ -742,7 +739,6 @@ export default function AttendancesPage() {
           filters={tableFilters}
           renderCard={renderCard}
           select={false}
-          syncToUrl={false}
         />
       </div>
 

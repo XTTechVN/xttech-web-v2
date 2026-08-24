@@ -1,6 +1,6 @@
 'use client';
 
-import { Heading, StatsCard } from '@/components';
+import { StatsCard } from '@/components';
 
 // Các thành phần dùng riêng cho dự án
 import Table from './_components/table';
