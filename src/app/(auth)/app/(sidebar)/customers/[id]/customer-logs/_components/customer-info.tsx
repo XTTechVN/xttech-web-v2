@@ -1,4 +1,5 @@
 import type { Customer } from '@/types';
+import { Image } from 'antd';
 
 import { getCustomerTypeLabel, getCustomerTypeColor } from '@/app/(auth)/app/(sidebar)/customers/config';
 
@@ -68,22 +69,32 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
           {/* Hiển thị ảnh đã đính kèm */}
           {customer.images && customer.images.length > 0 && (
             <div className="mt-6 border-t border-gray-100 pt-5">
-              <span className="text-xs font-semibold text-gray-400 uppercase block mb-3">Hình ảnh đính kèm ({customer.images.length})</span>
-              <div className="flex flex-wrap items-center gap-3">
-                {customer.images.map((img: any, idx: number) => {
-                  const imgPath = typeof img === 'string' ? img : img.imagePath;
-                  const src = getFullImageUrl(imgPath);
-                  if (!src) return null;
-                  return (
-                    <div
-                      key={idx}
-                      className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative group"
-                    >
-                      <img src={src} alt="img" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    </div>
-                  );
-                })}
-              </div>
+              <span className="text-xs font-semibold text-gray-400 uppercase block mb-3">
+                Hình ảnh đính kèm ({customer.images.length})
+              </span>
+              <Image.PreviewGroup>
+                <div className="flex flex-wrap items-center gap-3">
+                  {customer.images.map((img: any, idx: number) => {
+                    const imgPath = typeof img === 'string' ? img : img.imagePath;
+                    const src = getFullImageUrl(imgPath);
+                    if (!src) return null;
+                    return (
+                      <div
+                        key={idx}
+                        className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shadow-xs hover:shadow-md transition-shadow cursor-pointer relative group flex items-center justify-center bg-gray-50"
+                      >
+                        <Image
+                          src={src}
+                          alt={`customer-img-${idx}`}
+                          width={80}
+                          height={80}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-lg"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </Image.PreviewGroup>
             </div>
           )}
         </div>
