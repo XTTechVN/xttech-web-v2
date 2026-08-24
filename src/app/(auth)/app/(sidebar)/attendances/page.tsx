@@ -257,6 +257,7 @@ export default function AttendancesPage() {
       startDate: filterStartDate || undefined,
       endDate: filterEndDate || undefined,
       userId: filterEmployeeId || undefined,
+      departmentId: filterDepartment ? Number(filterDepartment) : undefined,
       status: (filterStatus as AttendanceStatus) || undefined,
     });
 
