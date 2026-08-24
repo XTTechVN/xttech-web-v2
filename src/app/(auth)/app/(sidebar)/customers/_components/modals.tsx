@@ -70,10 +70,12 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
   });
 
   const staffOptions =
-    usersData?.items?.map((u) => ({
-      value: u.id,
-      label: u.fullName || u.username || u.email,
-    })) || [];
+    usersData?.items
+      ?.filter((u) => u.roles?.some((r) => r.code === 'sale'))
+      ?.map((u) => ({
+        value: u.id,
+        label: u.fullName || u.username || u.email,
+      })) || [];
     
   if (!hasFullViewRole && user) {
     const isExist = staffOptions.some(opt => opt.value === user.id);
@@ -331,7 +333,6 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
           )}
           <div className="flex flex-col gap-2">
             <span className="text-xs font-semibold text-gray-700 select-none">Hình ảnh đính kèm (Cho phép chọn nhiều, tối đa 20MB/ảnh)</span>
-
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-4">
                 <input

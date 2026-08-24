@@ -149,45 +149,49 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
             />
           </div>
           
-          <div className="flex flex-col gap-1.5">
-            <Select
-              label="Loại tương tác (Đánh giá) *"
-              options={CUSTOMER_LOG_TYPE_OPTIONS}
-              placeholder="Chọn đánh giá mức độ tiềm năng"
-              fullWidth
-              {...register('type')}
-              error={errors.type?.message}
-            />
-          </div>
-          
-          <div className="flex flex-col gap-1.5">
-            <Select
-              label="Trạng thái *"
-              options={CUSTOMER_LOG_STATUS_OPTIONS}
-              placeholder="Chọn trạng thái kết quả"
-              fullWidth
-              {...register('status')}
-              error={errors.status?.message}
-            />
-          </div>
+          {!!initialData && (
+            <>
+              <div className="flex flex-col gap-1.5">
+                <Select
+                  label="Loại tương tác (Đánh giá) *"
+                  options={CUSTOMER_LOG_TYPE_OPTIONS}
+                  placeholder="Chọn đánh giá mức độ tiềm năng"
+                  fullWidth
+                  {...register('type')}
+                  error={errors.type?.message}
+                />
+              </div>
+              
+              <div className="flex flex-col gap-1.5">
+                <Select
+                  label="Trạng thái *"
+                  options={CUSTOMER_LOG_STATUS_OPTIONS}
+                  placeholder="Chọn trạng thái kết quả"
+                  fullWidth
+                  {...register('status')}
+                  error={errors.status?.message}
+                />
+              </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Input
-              label="Ghi chú"
-              placeholder="Nhập nội dung tương tác"
-              fullWidth
-              {...register('note')}
-            />
-          </div>
-          
-          <div className="flex flex-col gap-1.5">
-            <Input
-              label="Ngày follow-up tiếp theo"
-              type="date"
-              fullWidth
-              {...register('nextFollowDate')}
-            />
-          </div>
+              <div className="flex flex-col gap-1.5">
+                <Input
+                  label="Ghi chú"
+                  placeholder="Nhập nội dung tương tác"
+                  fullWidth
+                  {...register('note')}
+                />
+              </div>
+              
+              <div className="flex flex-col gap-1.5">
+                <Input
+                  label="Ngày follow-up tiếp theo"
+                  type="date"
+                  fullWidth
+                  {...register('nextFollowDate')}
+                />
+              </div>
+            </>
+          )}
         </div>
         
         <div className="flex gap-4 justify-end w-full">

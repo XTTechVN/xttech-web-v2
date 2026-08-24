@@ -10,6 +10,23 @@ export const getCustomerTypeLabel = (type?: string | null) => {
   return CUSTOMER_TYPE_OPTIONS.find((opt) => opt.value === type)?.label || type || '—';
 };
 
+// Config màu loại khách hàng
+export const getCustomerTypeColor = (type?: string | null) => {
+  switch (type) {
+    case 'potential':
+      return 'text-blue-700 bg-blue-50 border-blue-200';
+    case 'active':
+      return 'text-green-700 bg-green-50 border-green-200';
+    case 'inactive':
+      return 'text-gray-700 bg-gray-50 border-gray-200';
+    case 'vip':
+      return 'text-red-700 bg-red-50 border-red-200';
+    default:
+      return 'text-gray-700 bg-gray-50 border-gray-200';
+  }
+};
+
+
 // Config kênh tương tác
 export const CUSTOMER_LOG_CHANNEL_OPTIONS = [
   { value: 'call', label: 'Gọi điện' },
