@@ -1,6 +1,6 @@
 import type { Customer } from '@/types';
 
-import { getCustomerTypeLabel } from '@/app/(auth)/app/(sidebar)/customers/config';
+import { getCustomerTypeLabel, getCustomerTypeColor } from '@/app/(auth)/app/(sidebar)/customers/config';
 
 import { BASE_MINIO_URL } from '@/config/app';
 
@@ -53,7 +53,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
 
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold text-gray-400 uppercase">Loại khách hàng</span>
-              <span className="text-base font-semibold text-primary bg-primary/10 w-fit px-2.5 py-0.5 rounded">
+              <span className={`text-base font-medium w-fit px-3.5 py-1 rounded-lg border ${customer.type ? getCustomerTypeColor(customer.type) : 'text-gray-700 bg-gray-50 border-gray-200'}`}>
                 {customer.type ? getCustomerTypeLabel(customer.type) : '—'}
               </span>
             </div>
