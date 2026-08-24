@@ -52,6 +52,7 @@ export const adaptQuotationPreview = (data: QuotationDetail): PreviewFloor[] => 
             id: door.id,
             doorId: door.doorId,
             code: door.code || '',
+            unit: door.unit || 'area',
             width: door.width ?? 0,
             height: door.height ?? 0,
             effectiveWidth: door.effectiveWidth ?? door.width ?? 0,
