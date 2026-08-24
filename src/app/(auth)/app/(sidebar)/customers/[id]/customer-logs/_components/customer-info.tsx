@@ -20,7 +20,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
   if (!customer) return null;
 
   return (
-    <div className="mb-6">
+    <div className="mb-2">
       <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Chi tiết khách hàng</h3>
       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm flex flex-col md:flex-row gap-6 items-start">
         {/* Hiển thị thông tin khách hàng */}
@@ -53,7 +53,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
 
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold text-gray-400 uppercase">Loại khách hàng</span>
-              <span className={`text-base font-medium w-fit px-3.5 py-1 rounded-lg border ${customer.type ? getCustomerTypeColor(customer.type) : 'text-gray-700 bg-gray-50 border-gray-200'}`}>
+              <span className={`text-sm font-medium w-fit px-3 py-1 rounded-lg border ${customer.type ? getCustomerTypeColor(customer.type) : 'text-gray-700 bg-gray-50 border-gray-200'}`}>
                 {customer.type ? getCustomerTypeLabel(customer.type) : '—'}
               </span>
             </div>

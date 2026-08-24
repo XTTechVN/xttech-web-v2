@@ -83,7 +83,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       label: 'Loại KH',
       minWidth: '120px',
       cell: (row: Customer) => {
-        return <span className={`text-xs font-medium px-2 py-1 rounded-full border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>{getCustomerTypeLabel(row.type)}</span>;
+        return <span className={`text-xs font-medium px-2 py-1 rounded-md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>{getCustomerTypeLabel(row.type)}</span>;
       },
     },
 
@@ -112,7 +112,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             {row.phone && <span className="text-xs text-gray-300 select-none">•</span>}
             {row.phone && <span className="text-xs text-gray-500 truncate">{row.phone}</span>}
             {row.type && <span className="text-xs text-gray-300 select-none">•</span>}
-            {row.type && <span className={`text-xs font-medium px-2 py-1 rounded-full border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>{getCustomerTypeLabel(row.type)}</span>}
+            {row.type && <span className={`text-xs font-medium px-2 py-1 rounded- md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>{getCustomerTypeLabel(row.type)}</span>}
           </div>
           {row.images && row.images.length > 0 && (
             <div className="flex items-center gap-2 mt-2">

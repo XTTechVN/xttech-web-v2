@@ -5,7 +5,12 @@ import { Plus } from 'lucide-react';
 import { Button, Modal } from '@/components';
 
 // Config của dữ liệu khách hàng
-import { getCustomerLogChannelLabel, getCustomerLogStatusLabel, getCustomerLogTypeLabel, getCustomerLogStatusColor } from '@/app/(auth)/app/(sidebar)/customers/config';
+import {
+  getCustomerLogChannelLabel,
+  getCustomerLogStatusLabel,
+  getCustomerLogTypeLabel,
+  getCustomerLogStatusColor,
+} from '@/app/(auth)/app/(sidebar)/customers/config';
 
 import type { CustomerLog } from '@/types';
 
@@ -15,7 +20,7 @@ import { getCustomerLogs, deleteCustomerLog } from '@/actions';
 
 import toast from 'react-hot-toast';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import queryClient from '@/utils/query';
 
@@ -52,121 +57,17 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
     setIsDeleteOpen(true);
   };
 
-  // Lấy danh sách lựot tương tác
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    try {
-      const res = await getCustomerLogs(customerId, { offset, limit });
-      return res;
-    } catch (error) {
-      toast.error('Lỗi khi tải danh sách lịch sử tương tác');
-      throw error;
-    }
-  };
+  const { data, isLoading } = useQuery({
+    queryKey: ['customer-logs', customerId],
+    queryFn: () => getCustomerLogs(customerId, { offset: 0, limit: 100 }),
+  });
 
-  // Cấu hình danh sách
-  const columns = [
-    {
-      key: 'date',
-      label: 'Ngày tạo',
-      minWidth: '120px',
-      cell: (row: CustomerLog) => <span className="text-sm font-semibold text-gray-900">{new Date(row.createdAt).toLocaleDateString('vi-VN')}</span>,
-    },
-    {
-      key: 'type',
-      label: 'Loại tương tác',
-      minWidth: '200px',
-      cell: (row: CustomerLog) => (
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-gray-700">{getCustomerLogChannelLabel(row.channel || row.type)}</span>
-          <span className="text-xs font-normal text-gray-500">{getCustomerLogTypeLabel(row.type)}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'status',
-      label: 'Trạng thái',
-      minWidth: '150px',
-      cell: (row: CustomerLog) => (
-        <span className={`text-xs font-medium px-2 py-1 rounded-full border whitespace-nowrap ${getCustomerLogStatusColor(row.status)}`}>
-          {getCustomerLogStatusLabel(row.status)}
-        </span>
-      ),
-    },
-    {
-      key: 'note',
-      label: 'Ghi chú',
-      minWidth: '200px',
-      cell: (row: CustomerLog) => <span className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-2">{row.note || '-'}</span>,
-    },
-    {
-      key: 'nextFollowDate',
-      label: 'Ngày hẹn tiếp',
-      minWidth: '140px',
-      cell: (row: CustomerLog) => (
-        <span className="text-sm font-semibold text-gray-900">
-          {row.nextFollowDate ? new Date(row.nextFollowDate).toLocaleDateString('vi-VN') : '-'}
-        </span>
-      ),
-    },
-    {
-      key: 'actions',
-      label: 'Hành động',
-      minWidth: '100px',
-      cell: (row: CustomerLog) => (
-        <TableAction
-          onEdit={() => {
-            setSelectedLog(row);
-            setIsLogFormOpen(true);
-          }}
-          onDelete={() => handleDeleteClick(row)}
-        />
-      ),
-    },
-  ];
-
-  // Cấu hình danh sách render card mobile
-  const renderCard = (row: CustomerLog, index: number) => (
-    <div key={row.id || index} className="p-4 rounded-xl border border-gray-150 bg-white flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col">
-          <span className="font-semibold text-gray-900 text-sm">{getCustomerLogChannelLabel(row.channel || row.type)}</span>
-          <span className="text-xs text-gray-500 mt-0.5">{new Date(row.createdAt).toLocaleDateString('vi-VN')}</span>
-        </div>
-        <span className={`text-xs font-medium px-2 py-1 rounded-full border whitespace-nowrap ${getCustomerLogStatusColor(row.status)}`}>
-          {getCustomerLogStatusLabel(row.status)}
-        </span>
-      </div>
-      <div className="text-xs text-gray-600">{getCustomerLogTypeLabel(row.type)}</div>
-      {row.nextFollowDate && (
-        <div className="text-xs text-gray-600 flex items-center gap-1.5">
-          <span className="font-medium">Ngày hẹn tiếp theo:</span>
-          <span className="font-semibold text-primary">{new Date(row.nextFollowDate).toLocaleDateString('vi-VN')}</span>
-        </div>
-      )}
-      {row.note && <div className="text-sm text-gray-700 bg-gray-50 p-2.5 rounded-lg border border-gray-100 whitespace-pre-wrap">{row.note}</div>}
-      <div className="flex justify-end pt-2 border-t border-gray-100 gap-2">
-        <Button
-          variant="ghost"
-          size="xs"
-          onClick={() => {
-            setSelectedLog(row);
-            setIsLogFormOpen(true);
-          }}
-          className="text-primary hover:bg-primary/5 px-2 h-6"
-        >
-          Sửa
-        </Button>
-        <Button variant="ghost" size="xs" onClick={() => handleDeleteClick(row)} className="text-red-600 hover:bg-red-50 hover:text-red-700 px-2 h-6">
-          Xóa
-        </Button>
-      </div>
-    </div>
-  );
+  const logs = data?.items || [];
 
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Lịch sử tương tác</h3>
+        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Lịch sử tương tác ({data?.meta?.total || 0})</h3>
         <Button
           variant="ghost"
           size="sm"
@@ -181,8 +82,75 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
         </Button>
       </div>
 
-      <div className="">
-        <TableData<CustomerLog> queryKey={['customer-logs', customerId]} fetcher={fetcher} columns={columns} renderCard={renderCard} select={false} />
+      <div className="flex flex-col gap-3">
+        {isLoading ? (
+          <div className="p-8 text-center text-gray-500 text-sm">Đang tải dữ liệu...</div>
+        ) : logs.length === 0 ? (
+          <div className="p-8 text-center text-gray-500 text-sm border border-dashed border-gray-300 rounded-xl">Chưa có lịch sử tương tác nào</div>
+        ) : (
+          logs.map((row: CustomerLog) => (
+            <div
+              key={row.id}
+              className="px-4 py-3 rounded-xl border border-gray-200 bg-white flex flex-col gap-2 hover:border-primary/20 hover:shadow-md transition-all"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 flex-1">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Kênh tương tác</span>
+                    <span className="text-sm font-bold text-gray-900">{getCustomerLogChannelLabel(row.channel || row.type)}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Loại tương tác</span>
+                    <span className="text-sm font-semibold text-gray-700">{getCustomerLogTypeLabel(row.type)}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ngày tạo</span>
+                    <span className="text-sm font-semibold text-gray-900">{new Date(row.createdAt).toLocaleDateString('vi-VN')}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ngày hẹn tiếp</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {row.nextFollowDate ? new Date(row.nextFollowDate).toLocaleDateString('vi-VN') : '—'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between md:justify-end gap-4 mt-2 md:mt-0 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100 min-w-fit">
+                  <div className="flex flex-col gap-1 mr-4">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Trạng thái</span>
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-lg border whitespace-nowrap w-fit ${getCustomerLogStatusColor(row.status)}`}>
+                      {getCustomerLogStatusLabel(row.status)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedLog(row);
+                        setIsLogFormOpen(true);
+                      }}
+                      className="h-7 px-3 py-1 text-[11px]"
+                    >
+                      Sửa
+                    </Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDeleteClick(row)} className="h-7 px-3 py-1 text-[11px]">
+                      Xóa
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {row.note && (
+                <div className="mt-2 text-sm text-gray-700 bg-gray-50/80 p-3 rounded-lg border border-gray-100 whitespace-pre-wrap">
+                  <span className="font-semibold text-red-500 mr-2">Ghi chú:</span>
+                  {row.note}
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
 
       <LogFormModal
