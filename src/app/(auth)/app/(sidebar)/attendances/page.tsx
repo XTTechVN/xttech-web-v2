@@ -33,6 +33,7 @@ import EditAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_compone
 import AttendanceDetailModal from "@/app/(auth)/app/(sidebar)/attendances/_components/attendance-modal";
 import AddUserModal from "@/app/(auth)/app/(sidebar)/attendances/_components/users/add-modal";
 import AutoTimekeepingModal from "@/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal";
+import { useQueryParam } from '@/hooks';
 import Loading from '../../loading';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -50,7 +51,7 @@ type FilterOption = {
 };
 
 export default function AttendancesPage() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useQueryParam('search', '');
 
   // Filter states khớp với ITableFilterProps
   const [filterEmployeeId, setFilterEmployeeId] = useState<string | undefined>();
