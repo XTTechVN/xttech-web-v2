@@ -147,6 +147,8 @@ const Page = () => {
                 id: selectedCustomer.id,
                 name: selectedCustomer.name,
                 address: selectedCustomer.address,
+                latitude: selectedCustomer.latitude,
+                longitude: selectedCustomer.longitude,
                 identifyCode: selectedCustomer.identifyCode,
                 email: selectedCustomer.email,
                 phone: selectedCustomer.phone,

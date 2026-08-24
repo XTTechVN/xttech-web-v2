@@ -35,7 +35,6 @@ const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
     <div className="flex flex-col gap-4 p-4 md:p-6 w-full">
       {/* Page Header */}
       <div className="flex flex-col gap-3">
-        <Breadcrumb items={breadcrumbs} />
         <h1 className="text-2xl md:text-3xl font-extrabold text-primary tracking-tight">
           {customer.name}
         </h1>

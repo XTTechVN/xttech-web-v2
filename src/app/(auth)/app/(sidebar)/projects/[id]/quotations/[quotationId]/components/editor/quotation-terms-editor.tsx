@@ -92,7 +92,6 @@ export const QuotationTermsEditor: React.FC = () => {
               className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-primary px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <RotateCcw size={12} />
-              Mẫu chuẩn
             </button>
           </div>
         </div>

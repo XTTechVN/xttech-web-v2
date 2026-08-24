@@ -6,6 +6,7 @@ import { useQuotationStore } from '@/stores';
 import { QuotationDoor } from './quotation-door';
 import { EDITOR_STYLES } from './config';
 import { SearchSelect } from '../modal/search-select';
+import { fetchDefaultAccessories } from './utils';
 import type { Accessory, ExtraOption, Material, Door, Formula } from '@/types';
 
 interface QuotationMaterialProps {
@@ -45,10 +46,11 @@ export const QuotationMaterial = ({
     }
   };
 
-  const handleAddDoor = () => {
+  const handleAddDoor = async () => {
     const defaultDoor = doorsList[0];
     if (defaultDoor) {
-      store.addDoor(fIndex, mIndex, defaultDoor.id, defaultDoor.code || '');
+      const defaultAccIds = await fetchDefaultAccessories(material.materialId, defaultDoor.id);
+      store.addDoor(fIndex, mIndex, defaultDoor.id, defaultDoor.code || '', defaultAccIds);
     }
   };
 

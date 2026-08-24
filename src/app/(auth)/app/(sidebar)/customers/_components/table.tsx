@@ -1,11 +1,10 @@
 'use client';
 
-import { User, Pencil, Trash2, Eye } from 'lucide-react';
+import { User, Pencil, Trash2, Eye, Plus, MapPin } from 'lucide-react';
 
 import { TableData, TableAction } from '@/components/table';
 
 import { Button } from '@/components';
-import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
 import type { Customer } from '@/types';
 import { getCustomerTypeLabel, getCustomerTypeColor } from '../config';
@@ -45,60 +44,93 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     return res;
   };
 
-  // Các cột trong bảng khách hàng
+  // Các cột trong bảng khách hàng (Tối ưu 5 cột gom nhóm thông minh)
   const columns = [
     {
-      key: 'name',
-      label: 'Tên khách hàng',
-      minWidth: '220px',
-      cell: (row: Customer) => (<span className="font-semibold text-gray-900">{row.name}</span>),
+      key: 'customer',
+      label: 'Khách hàng',
+      minWidth: '240px',
+      cell: (row: Customer) => (
+        <div className="flex flex-col gap-1 py-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-gray-900 leading-tight">{row.name}</span>
+            {row.type && (
+              <span
+                className={`text-[11px] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap leading-none ${getCustomerTypeColor(row.type)}`}
+              >
+                {getCustomerTypeLabel(row.type)}
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-gray-400">
+            {row.identifyCode ? `Mã: ${row.identifyCode}` : 'Chưa có mã ĐD'}
+          </span>
+        </div>
+      ),
     },
     {
-      key: 'identifyCode',
-      label: 'Mã định danh',
-      minWidth: '150px',
-      cell: (row: Customer) => <span className="text-gray-600 text-sm">{row.identifyCode || '—'}</span>,
-    },
-    {
-      key: 'phone',
-      label: 'Số điện thoại',
-      minWidth: '150px',
-      cell: (row: Customer) => <span className="text-gray-65 text-sm">{row.phone || '—'}</span>,
-    },
-    {
-      key: 'email',
-      label: 'Email',
-      minWidth: '200px',
-      cell: (row: Customer) => <span className="text-gray-500 text-sm">{row.email || '—'}</span>,
+      key: 'contact',
+      label: 'Liên hệ',
+      minWidth: '180px',
+      cell: (row: Customer) => (
+        <div className="flex flex-col gap-0.5 py-1">
+          <span className="text-sm font-medium text-gray-800">
+            {row.phone || '—'}
+          </span>
+          {row.email && (
+            <span className="text-xs text-gray-400 truncate max-w-[180px]" title={row.email}>
+              {row.email}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'address',
-      label: 'Địa chỉ',
-      minWidth: '200px',
-      cell: (row: Customer) => <span className="text-gray-500 text-sm truncate max-w-50 block">{row.address || '—'}</span>,
-    },
-    {
-      key: 'staff',
-      label: 'Nhân viên phụ trách',
-      minWidth: '180px',
+      label: 'Địa chỉ & Vị trí',
+      minWidth: '220px',
       cell: (row: Customer) => {
-        const staffName = usersData?.items?.find((u: any) => u.id === row.staffId)?.fullName || (row as any).staff?.fullName || (row as any).staff?.username || row.staffId || '—';
-        return <span className="text-gray-600 text-sm">{staffName}</span>;
-      },
-    },
-    {
-      key: 'type',
-      label: 'Loại KH',
-      minWidth: '120px',
-      cell: (row: Customer) => {
+        const hasCoordinates =
+          row.latitude !== null &&
+          row.latitude !== undefined &&
+          row.longitude !== null &&
+          row.longitude !== undefined;
+
         return (
-          <span className={`text-xs font-medium px-2 py-1 rounded-md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>
-            {getCustomerTypeLabel(row.type)}
-          </span>
+          <div className="flex flex-col gap-1 py-1">
+            <span className="text-sm text-gray-700 truncate max-w-[220px]" title={row.address || ''}>
+              {row.address || '—'}
+            </span>
+            {hasCoordinates && (
+              <a
+                href={`https://www.google.com/maps?q=${row.latitude},${row.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 hover:underline w-fit"
+              >
+                <MapPin size={12} className="shrink-0" />
+                <span>Xem vị trí Google Maps</span>
+              </a>
+            )}
+          </div>
         );
       },
     },
-
+    {
+      key: 'staff',
+      label: 'Phụ trách',
+      minWidth: '160px',
+      cell: (row: Customer) => {
+        const staffName =
+          usersData?.items?.find((u: any) => u.id === row.staffId)?.fullName ||
+          (row as any).staff?.fullName ||
+          (row as any).staff?.username ||
+          row.staffId ||
+          '—';
+        return <span className="text-sm text-gray-700">{staffName}</span>;
+      },
+    },
     {
       key: 'actions',
       label: 'Hành động',
