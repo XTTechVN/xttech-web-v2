@@ -51,14 +51,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       key: 'name',
       label: 'Tên khách hàng',
       minWidth: '220px',
-      cell: (row: Customer) => (
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/5 text-primary">
-            <User size={16} />
-          </div>
-          <span className="font-semibold text-gray-900">{row.name}</span>
-        </div>
-      ),
+      cell: (row: Customer) => (<span className="font-semibold text-gray-900">{row.name}</span>),
     },
     {
       key: 'identifyCode',
