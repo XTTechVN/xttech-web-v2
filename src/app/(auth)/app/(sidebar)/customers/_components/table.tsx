@@ -9,7 +9,8 @@ import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
 import type { Customer } from '@/types';
 import { getCustomerTypeLabel, getCustomerTypeColor } from '../config';
-import { getCustomers } from '@/actions';
+import { getCustomers, getUsers } from '@/actions';
+import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores';
@@ -26,6 +27,11 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
   const user = useAuthStore((state) => state.user);
+
+  const { data: usersData } = useQuery({
+    queryKey: ['users', 'all'],
+    queryFn: () => getUsers({ limit: 1000 }),
+  });
 
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
     const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
@@ -79,11 +85,24 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       cell: (row: Customer) => <span className="text-gray-500 text-sm truncate max-w-50 block">{row.address || '—'}</span>,
     },
     {
+      key: 'staff',
+      label: 'Nhân viên phụ trách',
+      minWidth: '180px',
+      cell: (row: Customer) => {
+        const staffName = usersData?.items?.find((u: any) => u.id === row.staffId)?.fullName || (row as any).staff?.fullName || (row as any).staff?.username || row.staffId || '—';
+        return <span className="text-gray-600 text-sm">{staffName}</span>;
+      },
+    },
+    {
       key: 'type',
       label: 'Loại KH',
       minWidth: '120px',
       cell: (row: Customer) => {
-        return <span className={`text-xs font-medium px-2 py-1 rounded-md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>{getCustomerTypeLabel(row.type)}</span>;
+        return (
+          <span className={`text-xs font-medium px-2 py-1 rounded-md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>
+            {getCustomerTypeLabel(row.type)}
+          </span>
+        );
       },
     },
 
@@ -91,7 +110,13 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
-      cell: (row: Customer) => <TableAction onView={() => router.push(`/app/customers/${row.id}/customer-logs`)} onEdit={() => onEditClick(row)} onDelete={() => onDeleteClick(row)} />,
+      cell: (row: Customer) => (
+        <TableAction
+          onView={() => router.push(`/app/customers/${row.id}/customer-logs`)}
+          onEdit={() => onEditClick(row)}
+          onDelete={() => onDeleteClick(row)}
+        />
+      ),
     },
   ];
 
@@ -111,8 +136,14 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             <span className="text-xs text-gray-400 font-medium">Code: {row.identifyCode || '—'}</span>
             {row.phone && <span className="text-xs text-gray-300 select-none">•</span>}
             {row.phone && <span className="text-xs text-gray-500 truncate">{row.phone}</span>}
-            {row.type && <span className="text-xs text-gray-300 select-none">•</span>}
-            {row.type && <span className={`text-xs font-medium px-2 py-1 rounded- md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>{getCustomerTypeLabel(row.type)}</span>}
+          </div>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {row.type && <span className={`text-xs font-medium px-2 py-1 rounded-md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>
+              {getCustomerTypeLabel(row.type)}
+            </span>}
+            <span className="text-xs text-gray-500 font-medium ml-1">
+              • Phụ trách: {usersData?.items?.find((u: any) => u.id === row.staffId)?.fullName || (row as any).staff?.fullName || (row as any).staff?.username || row.staffId || '—'}
+            </span>
           </div>
           {row.images && row.images.length > 0 && (
             <div className="flex items-center gap-2 mt-2">
