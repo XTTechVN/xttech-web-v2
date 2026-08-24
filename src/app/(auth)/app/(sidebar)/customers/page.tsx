@@ -1,20 +1,42 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Heading, StatsCard } from '@/components';
+// Lấy hook từ thư viện React
+import { useState } from 'react';
+
+// Lấy component dùng chung từ thư mục components của dự án (src/components/)
+import { StatsCard } from '@/components';
+
+// Lấy component Table từ thư mục local ngay bên trong (src/app/(auth)/app/(sidebar)/customers/_components/table.tsx)
 import Table from './_components/table';
+
+// Lấy các icon từ thư viện lucide-react
 import { Users, UserCheck, ShieldAlert, Award } from 'lucide-react';
+
+// Lấy hook quản lý data fetching từ thư viện React Query
 import { useQuery, useMutation } from '@tanstack/react-query';
+
+// Lấy các Server Actions dùng để gọi API từ thư mục actions của dự án
 import { getCustomers, deleteCustomer } from '@/actions';
+
+// Lấy định nghĩa Type tập trung từ thư mục types của dự án (src/types/)
 import type { Customer } from '@/types';
+
+// Lấy thư viện hiển thị thông báo toast
 import toast from 'react-hot-toast';
+
+// Lấy cấu hình queryClient từ thư mục utils (src/utils/query.ts)
 import queryClient from '@/utils/query';
+
+// Lấy các component Modals từ thư mục local ngay bên trong (src/app/(auth)/app/(sidebar)/customers/_components/modals/)
 import { CustomerFormModal, CustomerDeleteModal } from './_components/modals';
+
+// Lấy hook quản lý state toàn cục từ thư mục stores của dự án (src/stores/)
 import { useAuthStore } from '@/stores';
 
 const Page = () => {
   const user = useAuthStore((state) => state.user);
-  
+
+  // Sử dụng React Query để fetch dữ liệu danh sách khách hàng nhằm mục đích tính toán thống kê (stats)
   const { data: customerData } = useQuery({
     queryKey: ['customers', 'stats', user?.id],
     queryFn: async () => {
@@ -46,8 +68,10 @@ const Page = () => {
     },
   });
 
+  // Lấy ra tổng khách hàng
   const totalCustomers = customerData?.length || 0;
 
+  // Thống kê khách hàng
   const stats = [
     {
       title: 'Tổng số khách hàng',
@@ -79,16 +103,19 @@ const Page = () => {
     },
   ];
 
+  // Mở modal thêm khách hàng
   const handleOpenCreateModal = () => {
     setSelectedCustomer(null);
     setIsFormOpen(true);
   };
 
+  // Mở modal sửa khách hàng
   const handleOpenEditModal = (customer: Customer) => {
     setSelectedCustomer(customer);
     setIsFormOpen(true);
   };
 
+  // Mở modal xóa khách hàng
   const handleOpenDeleteModal = (customer: Customer) => {
     setCustomerToDelete(customer);
     setIsDeleteOpen(true);
@@ -98,23 +125,14 @@ const Page = () => {
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
-          <StatsCard
-            key={index}
-            title={stat.title}
-            value={stat.value}
-            icon={stat.icon}
-            trend={stat.trend}
-            trendDirection={stat.trendDirection}
-          />
+          <StatsCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection} />
         ))}
       </div>
-      <Table 
-        onEditClick={handleOpenEditModal}
-        onDeleteClick={handleOpenDeleteModal}
-        onAddClick={handleOpenCreateModal}
-      />
 
-      {/* Modal Zone */}
+      {/* Bảng Danh Sách Khách Hàng */}
+      <Table onEditClick={handleOpenEditModal} onDeleteClick={handleOpenDeleteModal} onAddClick={handleOpenCreateModal} />
+
+      {/* Form Modal */}
       <CustomerFormModal
         isOpen={isFormOpen}
         onClose={() => {
@@ -140,6 +158,7 @@ const Page = () => {
         }
       />
 
+      {/* Modal Xóa Khách Hàng */}
       <CustomerDeleteModal
         isOpen={isDeleteOpen}
         onClose={() => {

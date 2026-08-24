@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { Breadcrumb } from '@/components';
-import { CustomerInfo, InteractionLogs } from './_components';
+import { CustomerInfo } from './_components/customer-info';
+import { InteractionLogs } from './_components/interaction-logs';
 import { useQuery } from '@tanstack/react-query';
 import { getCustomer } from '@/actions';
 

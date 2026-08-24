@@ -1,16 +1,35 @@
 'use client';
 
 import { useEffect } from 'react';
+
+// Thành phần dùng chung cho toàn trang
 import { Input, Button, Modal, Select } from '@/components';
+
+// Icons từ thư viện lucide react
 import { CheckCircle2 } from 'lucide-react';
+
+// Validation (Zod)
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { createCustomerLog, updateCustomerLog } from '@/actions';
-import { CUSTOMER_LOG_CHANNEL_OPTIONS, CUSTOMER_LOG_TYPE_OPTIONS, CUSTOMER_LOG_STATUS_OPTIONS } from '../../../config';
+
+// Action
+import { createCustomerLog, updateCustomerLog } from '@/actions'
+  ;
+
+// Config dữ liệu khách hàng
+import { CUSTOMER_LOG_CHANNEL_OPTIONS, CUSTOMER_LOG_TYPE_OPTIONS, CUSTOMER_LOG_STATUS_OPTIONS } from '@/app/(auth)/app/(sidebar)/customers/config';
+
+// Toast
 import toast from 'react-hot-toast';
+
+// Tanstack
 import { useMutation } from '@tanstack/react-query';
+
+// Utils
 import queryClient from '@/utils/query';
+
+// Types
 import type { CustomerLogCreate, CustomerLog } from '@/types';
 
 interface LogFormModalProps {

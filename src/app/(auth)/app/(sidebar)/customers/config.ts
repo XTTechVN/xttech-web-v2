@@ -1,31 +1,34 @@
+// Config loại khách hàng
 export const CUSTOMER_TYPE_OPTIONS = [
-  { value: 'potential', label: 'Khách hàng tiềm năng' },
+  { value: 'potential', label: 'Tiềm năng' },
   { value: 'active', label: 'Đang hoạt động' },
   { value: 'inactive', label: 'Ngưng hoạt động' },
-  { value: 'vip', label: 'Khách hàng thân thiết (VIP)' },
+  { value: 'vip', label: 'VIP' },
 ];
 
 export const getCustomerTypeLabel = (type?: string | null) => {
   return CUSTOMER_TYPE_OPTIONS.find((opt) => opt.value === type)?.label || type || '—';
 };
 
+// Config kênh tương tác
 export const CUSTOMER_LOG_CHANNEL_OPTIONS = [
-  { value: 'call', label: 'Gọi điện thoại trực tiếp' },
-  { value: 'zalo', label: 'Nhắn tin / Gọi qua Zalo' },
-  { value: 'meeting', label: 'Gặp mặt trực tiếp / Khảo sát tại công trình' },
-  { value: 'email', label: 'Gửi email trao đổi / Báo giá' },
-  { value: 'facebook', label: 'Nhắn tin qua Fanpage / Messenger' },
-  { value: 'other', label: 'Kênh khác' },
+  { value: 'call', label: 'Gọi điện' },
+  { value: 'zalo', label: 'Zalo' },
+  { value: 'meeting', label: 'Gặp mặt' },
+  { value: 'email', label: 'Email' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'other', label: 'Khác' },
 ];
 
 export const getCustomerLogChannelLabel = (channel?: string | null) => {
   return CUSTOMER_LOG_CHANNEL_OPTIONS.find((opt) => opt.value === channel)?.label || channel || '—';
 };
 
+// Config trạng thái tương tác
 export const CUSTOMER_LOG_TYPE_OPTIONS = [
-  { value: 'pending', label: 'Chưa đánh giá / Đang chờ phản hồi' },
-  { value: 'potential', label: 'Khách hàng tiềm năng (rất quan tâm)' },
-  { value: 'non_potential', label: 'Ít tiềm năng (cân nhắc thêm về giá/thời gian)' },
+  { value: 'pending', label: 'Chưa đánh giá' },
+  { value: 'potential', label: 'Tiềm năng' },
+  { value: 'non_potential', label: 'Ít tiềm năng' },
   { value: 'no_demand', label: 'Không có nhu cầu' },
 ];
 
@@ -33,16 +36,18 @@ export const getCustomerLogTypeLabel = (type?: string | null) => {
   return CUSTOMER_LOG_TYPE_OPTIONS.find((opt) => opt.value === type)?.label || type || '—';
 };
 
+// Config trạng thái 
 export const CUSTOMER_LOG_STATUS_OPTIONS = [
-  { value: 'completed', label: 'Thành công (đã kết nối, tư vấn hoặc gặp thành công)' },
-  { value: 'pending', label: 'Đang hẹn lại / Chờ gửi tài liệu' },
-  { value: 'failed', label: 'Thất bại (thuê bao, không nghe máy, khách hủy hẹn)' },
+  { value: 'completed', label: 'Thành công' },
+  { value: 'pending', label: 'Đang chờ' },
+  { value: 'failed', label: 'Thất bại' },
 ];
 
 export const getCustomerLogStatusLabel = (status?: string | null) => {
   return CUSTOMER_LOG_STATUS_OPTIONS.find((opt) => opt.value === status)?.label || status || '—';
 };
 
+// Config màu trạng thái tương tác
 export const getCustomerLogStatusColor = (status?: string | null) => {
   switch (status) {
     case 'completed':
