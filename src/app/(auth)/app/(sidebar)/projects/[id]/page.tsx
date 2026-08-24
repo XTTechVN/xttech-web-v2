@@ -51,9 +51,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   const { data: customerData } = useQuery({
     queryKey: ['customers', user?.id],
     queryFn: async () => {
-      const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
-      const staffId = !hasFullViewRole && user ? user.id : undefined;
-      const res = await getCustomers({ limit: 9999, staffId });
+      const res = await getCustomers({ limit: 9999 });
       return res.items;
     },
   });
