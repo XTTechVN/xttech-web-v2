@@ -18,6 +18,13 @@ All notable changes to the frontend project will be documented in this file.
 - Bổ sung nút 📍 **"Lấy vị trí hiện tại"** trong Form Thêm & Sửa khách hàng ([`CustomerFormModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx)): sử dụng HTML5 Geolocation API để tự động xác định tọa độ GPS của thiết bị và điền vào các ô Vĩ độ & Kinh độ.
 
 ### Fixed
+- Tái cấu trúc và dọn dẹp mã nguồn trang Bảng công cá nhân ([`attendances/payroll/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/payroll/page.tsx)):
+  - Loại bỏ các state và biến thừa (`filterStartDate`, `filterEndDate`, `dateOptions`, các import icon không dùng).
+  - Tinh gọn hàm `fetcher`, bỏ toàn bộ các bước lọc thủ công trùng lặp ở Client để giao quyền phân trang và lọc chuẩn cho Backend API.
+  - Gom các hàm tính toán thống kê (Tổng ngày công, Ngày phép, Ngày nghỉ, Tăng ca, Đi muộn/về sớm) vào duy nhất 1 hook `useMemo` tính toán 1 lượt (`O(n)`), nâng cao hiệu năng render.
+- Sửa lỗi nhận diện sai trạng thái nút Check-in / Check-out trên trang Chấm công cá nhân ([`attendances/payroll/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/payroll/page.tsx)):
+  - Ưu tiên tìm kiếm phiên chấm công đang mở (`checkIn` có giá trị và `checkOut` chưa có) trong danh sách chấm công thay vì chỉ đọc bản ghi đầu tiên trong ngày theo `workDate`.
+  - Đảm bảo khi nhân viên có phiên làm việc dở dang (ví dụ đã check-in 13:00 và sau đó tạo thêm bản ghi ca sáng 7:00-11:00) thì hệ thống vẫn luôn hiển thị nút **"Check-out ngay"** chính xác.
 - Căn chỉnh và hoàn thiện giao diện Khối Chi tiết Khách hàng ([`CustomerInfo`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/[id]/customer-logs/_components/customer-info.tsx)):
   - Tổ chức lại layout thành lưới 8 ô chuẩn (4 cột x 2 hàng), bổ sung ô *Nhân viên phụ trách* để cân đối 100% không gian.
   - Sửa lỗi vỡ dòng icon và text của nút *Mở Google Maps*, thiết kế dạng inline badge sang trọng (`whitespace-nowrap`, bo góc, hiệu ứng hover mượt mà).
