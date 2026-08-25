@@ -68,12 +68,13 @@ export default function PayrollDataPage() {
     return `${year}-${month}-${day}`;
   }, []);
 
-  const todayAttendance = useMemo(() => {
-    return myAttendances.find((a) => a.workDate === todayStr);
-  }, [myAttendances, todayStr]);
+  // Ưu tiên tìm phiên chấm công đang mở (đã check-in nhưng chưa check-out)
+  const activeOpenAttendance = useMemo(() => {
+    return myAttendances.find((a) => a.checkIn && !a.checkOut);
+  }, [myAttendances]);
 
-  // Chỉ hiển thị 'Check-out ngay' khi đã Check-in và chưa Check-out; còn lại luôn hiển thị 'Check-in ngay'
-  const isCheckOutAction = Boolean(todayAttendance?.checkIn && !todayAttendance?.checkOut);
+  // Chỉ hiển thị 'Check-out ngay' khi có phiên chấm công đang mở; ngược lại hiển thị 'Check-in ngay'
+  const isCheckOutAction = Boolean(activeOpenAttendance);
 
   // Filters and search for Payroll attendance history table
   const [searchQuery, setSearchQuery] = useState('');
