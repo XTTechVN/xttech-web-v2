@@ -31,12 +31,13 @@ interface QuotationState {
   removeMaterial: (fIndex: number, mIndex: number) => void;
 
   // Door Actions
-  addDoor: (fIndex: number, mIndex: number, defaultDoorId: number, defaultCode: string) => void;
+  addDoor: (fIndex: number, mIndex: number, defaultDoorId: number, defaultCode: string, defaultAccessoryIds?: number[]) => void;
   updateDoor: (fIndex: number, mIndex: number, dIndex: number, field: string, value: any) => void;
   removeDoor: (fIndex: number, mIndex: number, dIndex: number) => void;
 
   // Accessory Actions
   addAccessory: (fIndex: number, mIndex: number, dIndex: number, accessoryId: number) => void;
+  setAccessories: (fIndex: number, mIndex: number, dIndex: number, accessoryIds: number[]) => void;
   updateAccessory: (fIndex: number, mIndex: number, dIndex: number, aIndex: number, newAccessoryId: number) => void;
   removeAccessory: (fIndex: number, mIndex: number, dIndex: number, aIndex: number) => void;
 
@@ -227,7 +228,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
     });
   },
 
-  addDoor: (fIndex, mIndex, defaultDoorId, defaultCode) => {
+  addDoor: (fIndex, mIndex, defaultDoorId, defaultCode, defaultAccessoryIds = []) => {
     set((state) => {
       const newFloors = [...state.floors];
       const floor = { ...newFloors[fIndex] };
@@ -241,7 +242,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
           width: 1000,
           height: 2000,
           quantity: 1,
-          accessoryIds: [],
+          accessoryIds: defaultAccessoryIds,
           extraOptionIds: [],
           fomulas: [],
         },
@@ -296,6 +297,24 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
       const doors = [...mat.doors];
       const door = { ...doors[dIndex] };
       door.accessoryIds = [...(door.accessoryIds || []), accessoryId];
+
+      doors[dIndex] = door;
+      mat.doors = doors;
+      materials[mIndex] = mat;
+      floor.materials = materials;
+      newFloors[fIndex] = floor;
+      return { floors: newFloors };
+    });
+  },
+
+  setAccessories: (fIndex, mIndex, dIndex, accessoryIds) => {
+    set((state) => {
+      const newFloors = [...state.floors];
+      const floor = { ...newFloors[fIndex] };
+      const materials = [...floor.materials];
+      const mat = { ...materials[mIndex] };
+      const doors = [...mat.doors];
+      const door = { ...doors[dIndex], accessoryIds };
 
       doors[dIndex] = door;
       mat.doors = doors;
