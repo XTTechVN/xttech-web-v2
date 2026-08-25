@@ -238,7 +238,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5">
         <button
           type="button"
-          onClick={() => router.push(`/app/customers/${row.id}/customer-logs`)}
+          onClick={() => router.push(`/app/customers/${row.id}`)}
           className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer"
         >
           <Eye size={12} />

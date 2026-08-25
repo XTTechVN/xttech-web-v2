@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 import { getCustomerTypeLabel, getCustomerTypeColor } from '@/app/(auth)/app/(sidebar)/customers/config';
 
-import { Heading, Button } from '@/components';
+import { Heading } from '@/components';
 
 import { BASE_MINIO_URL } from '@/config/app';
 
