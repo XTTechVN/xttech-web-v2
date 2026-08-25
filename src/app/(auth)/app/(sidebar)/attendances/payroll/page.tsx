@@ -56,7 +56,7 @@ export default function PayrollDataPage() {
     enabled: !!user?.id,
   });
 
-  const myAttendances = attendances?.items ?? [];
+  const myAttendances = useMemo(() => attendances?.items ?? [], [attendances?.items]);
 
   // Ưu tiên tìm phiên chấm công đang mở (đã check-in nhưng chưa check-out)
   const activeOpenAttendance = useMemo(() => {
