@@ -137,7 +137,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       minWidth: '120px',
       cell: (row: Customer) => (
         <TableAction
-          onView={() => router.push(`/app/customers/${row.id}/customer-logs`)}
+          onView={() => router.push(`/app/customers/${row.id}`)}
           onEdit={() => onEditClick(row)}
           onDelete={() => onDeleteClick(row)}
         />
