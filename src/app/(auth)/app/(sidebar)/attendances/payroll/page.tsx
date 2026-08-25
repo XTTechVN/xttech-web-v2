@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-  Heading,
   Button,
   Badge,
   TableData,
@@ -18,10 +17,9 @@ import {
   LogIn,
   LogOut,
   FileEdit,
-  Users,
   Briefcase,
   Eye,
-  CheckCircle2,
+  UserX,
 } from 'lucide-react';
 import Link from 'next/link';
 import AutoTimekeepingModal from '@/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal';
@@ -60,14 +58,6 @@ export default function PayrollDataPage() {
 
   const myAttendances = attendances?.items ?? [];
 
-  const todayStr = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }, []);
-
   // Ưu tiên tìm phiên chấm công đang mở (đã check-in nhưng chưa check-out)
   const activeOpenAttendance = useMemo(() => {
     return myAttendances.find((a) => a.checkIn && !a.checkOut);
@@ -79,8 +69,6 @@ export default function PayrollDataPage() {
   // Filters and search for Payroll attendance history table
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string | undefined>();
-  const [filterStartDate, setFilterStartDate] = useState<string | undefined>();
-  const [filterEndDate, setFilterEndDate] = useState<string | undefined>();
 
   const statusOptions = useMemo(() => {
     const statuses = Array.from(
@@ -91,16 +79,6 @@ export default function PayrollDataPage() {
       value: String(status),
     }));
   }, [myAttendances]);
-
-  const dateOptions = useMemo(() => {
-    return Array.from({ length: 31 }, (_, i) => {
-      const day = String(i + 1).padStart(2, '0');
-      return {
-        label: `2026-08-${day}`,
-        value: `2026-08-${day}`,
-      };
-    });
-  }, []);
 
   const tableFilters: ITableFilterProps[] = [
     {
@@ -114,50 +92,24 @@ export default function PayrollDataPage() {
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
     if (!user?.id) {
       return {
-        items: myAttendances.slice(offset, offset + limit),
-        meta: {
-          total: myAttendances.length,
-          offset,
-          limit,
-          next: offset + limit < myAttendances.length,
-        },
+        items: [],
+        meta: { total: 0, offset, limit, next: false },
       };
     }
     const response = await getAttendances({
       offset,
       limit,
       userId: user.id,
-      search: searchQuery || undefined,
+      search: searchQuery.trim() || undefined,
       status: (filterStatus as any) || undefined,
-      startDate: filterStartDate || undefined,
-      endDate: filterEndDate || undefined,
     });
-    const rawItems = response.items ?? [];
-    let items = [...rawItems];
-    if (searchQuery) {
-      items = items.filter((item) =>
-        (item.note || item.workDate || item.status || '')
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase())
-      );
-    }
-    if (filterStatus) {
-      items = items.filter((item) => item.status === filterStatus);
-    }
-    if (filterStartDate) {
-      items = items.filter((item) => item.workDate >= filterStartDate);
-    }
-    if (filterEndDate) {
-      items = items.filter((item) => item.workDate <= filterEndDate);
-    }
-    const metaInfo = response.meta;
     return {
-      items,
-      meta: {
-        total: metaInfo?.total ?? items.length,
-        offset: metaInfo?.offset ?? offset,
-        limit: metaInfo?.limit ?? limit,
-        next: metaInfo?.next ?? false,
+      items: response.items ?? [],
+      meta: response.meta ?? {
+        total: response.items?.length ?? 0,
+        offset,
+        limit,
+        next: false,
       },
     };
   };
@@ -170,29 +122,62 @@ export default function PayrollDataPage() {
   const getDayOfWeek = (date: string) => {
     const dateObj = new Date(`${date}T00:00:00`);
     const day = dateObj.getDay();
-
     return day === 0 ? 'CN' : String(day + 1);
   };
 
-  const getTotalWorkingDay = () => {
-    return myAttendances.filter((a) => a.status !== 'absent').length;
-  };
+  const payrollStats = useMemo(() => {
+    let workingDays = 0;
+    let leaveDays = 0;
+    let absenceDays = 0;
+    let overtimeCount = 0;
+    let lateCount = 0;
 
-  const getTotalLeaveDays = () => {
-    return myAttendances.filter((a) => a.status === 'leave').length;
-  };
+    for (const a of myAttendances) {
+      if (a.status !== 'absent') workingDays++;
+      if (a.status === 'leave') leaveDays++;
+      if (a.status === 'absent') absenceDays++;
+      if (a.status === 'overtime') overtimeCount++;
+      if (a.status === 'late' || a.isLate || a.isEarlyLeave) lateCount++;
+    }
 
-  const getTotalAbsenceDays = () => {
-    return myAttendances.filter((a) => a.status === 'absent').length;
-  };
-
-  const getTotalOvertime = () => {
-    return myAttendances.filter((a) => a.status === 'overtime').length;
-  };
-
-  const getLatePolicy = () => {
-    return myAttendances.filter((a) => a.status === 'late').length;
-  };
+    return [
+      {
+        title: 'Tổng ngày công',
+        value: workingDays,
+        icon: <Calendar />,
+        trend: workingDays,
+        trendDirection: workingDays > 0 ? 1 : -1,
+      },
+      {
+        title: 'Tổng ngày phép',
+        value: leaveDays,
+        icon: <Briefcase />,
+        trend: leaveDays,
+        trendDirection: leaveDays > 0 ? 1 : -1,
+      },
+      {
+        title: 'Ngày nghỉ',
+        value: absenceDays,
+        icon: <UserX />,
+        trend: absenceDays,
+        trendDirection: absenceDays > 0 ? 1 : -1,
+      },
+      {
+        title: 'Tăng ca (OT)',
+        value: overtimeCount,
+        icon: <Clock />,
+        trend: overtimeCount,
+        trendDirection: overtimeCount > 0 ? 1 : -1,
+      },
+      {
+        title: 'Đi muộn / Về sớm',
+        value: `${lateCount}`,
+        icon: <AlertCircle />,
+        trend: lateCount,
+        trendDirection: lateCount > 0 ? 1 : -1,
+      },
+    ];
+  }, [myAttendances]);
 
   const attendanceColumns: ITableColumn<Attendance>[] = [
     {
@@ -375,44 +360,6 @@ export default function PayrollDataPage() {
     </div>
   );
 
-  const payrollStats = [
-    {
-      title: 'Tổng ngày công',
-      value: getTotalWorkingDay(),
-      icon: <Calendar />,
-      trend: getTotalWorkingDay(),
-      trendDirection: getTotalWorkingDay() > 0 ? 1 : -1,
-    },
-    {
-      title: 'Tổng ngày phép',
-      value: getTotalLeaveDays(),
-      icon: <Briefcase />,
-      trend: getTotalLeaveDays(),
-      trendDirection: getTotalLeaveDays() > 0 ? 1 : -1,
-    },
-    {
-      title: 'Ngày nghỉ',
-      value: getTotalAbsenceDays(),
-      icon: <Users />,
-      trend: getTotalAbsenceDays(),
-      trendDirection: getTotalAbsenceDays() > 0 ? 1 : -1,
-    },
-    {
-      title: 'Tăng ca (OT)',
-      value: getTotalOvertime(),
-      icon: <Clock />,
-      trend: getTotalOvertime(),
-      trendDirection: getTotalOvertime() > 0 ? 1 : -1,
-    },
-    {
-      title: 'Tổng số lần đi muộn/về sớm',
-      value: `${getLatePolicy()}`,
-      icon: <AlertCircle />,
-      trend: getLatePolicy(),
-      trendDirection: getLatePolicy() > 0 ? 1 : -1,
-    },
-  ];
-
   return (
     <div className="w-full flex flex-col gap-4">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -469,7 +416,7 @@ export default function PayrollDataPage() {
           </div>
         ) : (
           <TableData<Attendance>
-            queryKey={['payroll-daily-logs', user?.id, searchQuery, filterStatus, filterStartDate, filterEndDate]}
+            queryKey={['payroll-daily-logs', user?.id, searchQuery, filterStatus]}
             fetcher={fetcher}
             columns={attendanceColumns}
             search={{
