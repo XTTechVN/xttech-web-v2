@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 import { getCustomerTypeLabel, getCustomerTypeColor } from '@/app/(auth)/app/(sidebar)/customers/config';
 
-import { Heading, Button } from '@/components';
+import { Heading } from '@/components';
 
 import { BASE_MINIO_URL } from '@/config/app';
 
@@ -29,14 +29,6 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
     customer.latitude !== undefined &&
     customer.longitude !== null &&
     customer.longitude !== undefined;
-
-  const handleOpenGoogleMaps = () => {
-    if (hasCoordinates) {
-      window.open(`https://www.google.com/maps?q=${customer.latitude},${customer.longitude}`, '_blank', 'noopener,noreferrer');
-    } else {
-      toast.error('Chưa cập nhật tọa độ khách hàng');
-    }
-  };
 
   return (
     <div className="mb-2">
@@ -106,7 +98,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold text-gray-400 uppercase">Nhân viên phụ trách</span>
               <span className="text-base font-semibold text-gray-900">
-                {(customer as any).staff?.fullName || (customer as any).staff?.username || customer.staffId || '—'}
+                {customer.staff?.fullName || customer.staff?.username || '—'}
               </span>
             </div>
 
