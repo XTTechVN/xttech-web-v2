@@ -15,6 +15,10 @@ All notable changes to the frontend project will be documented in this file.
 - Tối ưu hóa cấu trúc Bảng danh sách Khách hàng ([`customers/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx)):
   - Rút gọn từ 8 cột cồng kềnh sang 5 cột tinh gọn: *Khách hàng (Tên + Badge Loại KH + Mã định danh)*, *Liên hệ (SĐT + Email)*, *Địa chỉ & Vị trí (Địa chỉ + Link mở nhanh Google Maps)*, *Phụ trách*, và *Hành động*.
   - Loại bỏ hoàn toàn thanh cuộn ngang (horizontal scroll), tối ưu trải nghiệm trực quan theo chuẩn SaaS CRM hiện đại.
+- Bổ sung bộ lọc (Filters) cho Bảng quản lý khách hàng ([`customers/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx)):
+  - Lọc theo **Loại khách hàng** (*Tiềm năng, Đang hoạt động, Ngưng hoạt động, VIP*).
+  - Lọc theo **Nhân viên phụ trách** (Tự động hiển thị danh sách nhân viên cho Admin/HR, và cố định theo tài khoản của Sale).
+  - Đồng bộ trạng thái lọc vào `queryKey` và `fetcher` để phân trang chuẩn xác từ Backend API.
 - Bổ sung nút 📍 **"Lấy vị trí hiện tại"** trong Form Thêm & Sửa khách hàng ([`CustomerFormModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx)): sử dụng HTML5 Geolocation API để tự động xác định tọa độ GPS của thiết bị và điền vào các ô Vĩ độ & Kinh độ.
 
 ### Fixed

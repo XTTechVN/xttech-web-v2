@@ -30,14 +30,6 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
     customer.longitude !== null &&
     customer.longitude !== undefined;
 
-  const handleOpenGoogleMaps = () => {
-    if (hasCoordinates) {
-      window.open(`https://www.google.com/maps?q=${customer.latitude},${customer.longitude}`, '_blank', 'noopener,noreferrer');
-    } else {
-      toast.error('Chưa cập nhật tọa độ khách hàng');
-    }
-  };
-
   return (
     <div className="mb-2">
       <Heading as="h3" className="text-xs md:text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">

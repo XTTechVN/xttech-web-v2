@@ -1,13 +1,14 @@
 'use client';
 
+import React, { useState, useMemo } from 'react';
 import { User, Pencil, Trash2, Eye, Plus, MapPin } from 'lucide-react';
 
-import { TableData, TableAction } from '@/components/table';
+import { TableData, TableAction, ITableFilterProps } from '@/components';
 
 import { Button } from '@/components';
 import { useQueryParam } from '@/hooks';
 import type { Customer } from '@/types';
-import { getCustomerTypeLabel, getCustomerTypeColor } from '../config';
+import { getCustomerTypeLabel, getCustomerTypeColor, CUSTOMER_TYPE_OPTIONS } from '../config';
 import { getCustomers, getUsers } from '@/actions';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -25,18 +26,61 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const router = useRouter();
   const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
+  const [filterType, setFilterType] = useState<string | undefined>();
+  const [filterStaffId, setFilterStaffId] = useState<string | undefined>();
   const user = useAuthStore((state) => state.user);
+
+  const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
 
   const { data: usersData } = useQuery({
     queryKey: ['users', 'all'],
     queryFn: () => getUsers({ limit: 1000 }),
   });
 
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
-    const staffId = !hasFullViewRole && user ? user.id : undefined;
+  const typeOptions = useMemo(() => {
+    return [{ label: 'Tất cả loại khách hàng', value: undefined }, ...CUSTOMER_TYPE_OPTIONS];
+  }, []);
 
-    const res = await getCustomers({ offset, limit, search: search || undefined, staffId });
+  const staffOptions = useMemo(() => {
+    const list = (usersData?.items || []).map((u: any) => ({
+      label: u.fullName || u.username || u.email,
+      value: u.id,
+    }));
+    return [{ label: 'Tất cả nhân viên', value: undefined }, ...list];
+  }, [usersData]);
+
+  const tableFilters = useMemo(() => {
+    const filters: ITableFilterProps[] = [
+      {
+        label: 'Loại khách hàng',
+        value: filterType,
+        options: typeOptions,
+        onChange: (val: string | undefined) => setFilterType(val),
+      },
+    ];
+
+    if (hasFullViewRole) {
+      filters.push({
+        label: 'Nhân viên phụ trách',
+        value: filterStaffId,
+        options: staffOptions,
+        onChange: (val: string | undefined) => setFilterStaffId(val),
+      });
+    }
+
+    return filters;
+  }, [filterType, filterStaffId, typeOptions, staffOptions, hasFullViewRole]);
+
+  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
+    const staffId = !hasFullViewRole && user ? user.id : (filterStaffId || undefined);
+
+    const res = await getCustomers({
+      offset,
+      limit,
+      search: search || undefined,
+      staffId,
+      type: filterType || undefined,
+    });
     if (!res) {
       toast.error('Lỗi khi tải danh sách khách hàng');
       throw new Error('Lỗi khi tải danh sách khách hàng');
@@ -78,7 +122,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             {row.phone || '—'}
           </span>
           {row.email && (
-            <span className="text-xs text-gray-400 truncate max-w-[180px]" title={row.email}>
+            <span className="text-xs text-gray-400 truncate max-w-45" title={row.email}>
               {row.email}
             </span>
           )}
@@ -98,7 +142,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
         return (
           <div className="flex flex-col gap-1 py-1">
-            <span className="text-sm text-gray-700 truncate max-w-[220px]" title={row.address || ''}>
+            <span className="text-sm text-gray-700 truncate max-w-55" title={row.address || ''}>
               {row.address || '—'}
             </span>
             {hasCoordinates && (
@@ -234,13 +278,14 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         </Button>
       </div>
       <TableData<Customer>
-        queryKey={['customers', search, offset]}
+        queryKey={['customers', search, filterType, filterStaffId, offset]}
         fetcher={fetcher}
         columns={columns}
+        filters={tableFilters}
         renderCard={renderCard}
         select={false}
         search={{
-          placeholder: 'Tìm kiếm khách hàng...',
+          placeholder: 'Tìm kiếm theo tên, SĐT, mã ĐD, email...',
           value: search,
           onChange: setSearch,
           className: 'w-80',

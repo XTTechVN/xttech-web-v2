@@ -51,6 +51,7 @@ export interface CustomerQueryParams {
   offset?: number;
   limit?: number;
   staffId?: string;
+  type?: string;
 }
 
 export interface CustomerLog {
