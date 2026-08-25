@@ -106,7 +106,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold text-gray-400 uppercase">Nhân viên phụ trách</span>
               <span className="text-base font-semibold text-gray-900">
-                {(customer as any).staff?.fullName || (customer as any).staff?.username || customer.staffId || '—'}
+                {customer.staff?.fullName || customer.staff?.username || '—'}
               </span>
             </div>
 

@@ -25,8 +25,9 @@ All notable changes to the frontend project will be documented in this file.
 - Sửa lỗi nhận diện sai trạng thái nút Check-in / Check-out trên trang Chấm công cá nhân ([`attendances/payroll/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/payroll/page.tsx)):
   - Ưu tiên tìm kiếm phiên chấm công đang mở (`checkIn` có giá trị và `checkOut` chưa có) trong danh sách chấm công thay vì chỉ đọc bản ghi đầu tiên trong ngày theo `workDate`.
   - Đảm bảo khi nhân viên có phiên làm việc dở dang (ví dụ đã check-in 13:00 và sau đó tạo thêm bản ghi ca sáng 7:00-11:00) thì hệ thống vẫn luôn hiển thị nút **"Check-out ngay"** chính xác.
-- Căn chỉnh và hoàn thiện giao diện Khối Chi tiết Khách hàng ([`CustomerInfo`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/[id]/customer-logs/_components/customer-info.tsx)):
+- Căn chỉnh và hoàn thiện giao diện Khối Chi tiết Khách hàng ([`CustomerInfo`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/[id]/_components/customer-info.tsx)):
   - Tổ chức lại layout thành lưới 8 ô chuẩn (4 cột x 2 hàng), bổ sung ô *Nhân viên phụ trách* để cân đối 100% không gian.
+  - Sửa lỗi hiển thị chuỗi UUID `staffId` sang họ tên đầy đủ của nhân viên phụ trách (`customer.staff?.fullName || customer.staff?.username`).
   - Sửa lỗi vỡ dòng icon và text của nút *Mở Google Maps*, thiết kế dạng inline badge sang trọng (`whitespace-nowrap`, bo góc, hiệu ứng hover mượt mà).
 - Sửa lỗi phân trang trên trang Quản lý chấm công ([`attendances/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx)):
   - Cập nhật hàm `fetcher` để đọc chính xác `response.meta.total`, `response.meta.offset`, `response.meta.limit` và `response.meta.next` từ Backend trả về, thay vì tính fallback `items.length`.

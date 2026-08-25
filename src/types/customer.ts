@@ -8,6 +8,12 @@ export interface Customer {
   email: string | null;
   phone: string | null;
   staffId: string | null;
+  staff?: {
+    id: string;
+    fullName?: string;
+    username?: string;
+    email?: string;
+  } | null;
   type: string;
   images: any[];
   createdAt: string;
