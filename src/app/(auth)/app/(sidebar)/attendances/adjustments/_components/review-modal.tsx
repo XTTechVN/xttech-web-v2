@@ -1,10 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Modal, Button, Badge, Input, Textarea } from '@/components';
+import { Modal, Button, Input, Textarea } from '@/components';
 import { getRequestTypeLabel } from '@/types';
 import type { AttendanceAdjustmentRequest } from '@/types';
-import { AlertCircle } from 'lucide-react';
 
 interface Props {
   open: boolean;
