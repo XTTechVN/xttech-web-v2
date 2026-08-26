@@ -113,6 +113,8 @@ export const REQUEST_TYPE_LABELS: Record<string, string> = {
   check_in: 'Bổ sung check-in',
   check_out: 'Bổ sung check-out',
   forgot_attendance: 'Quên chấm công',
+  forget_checkin: 'Quên check-in',
+  forget_checkout: 'Quên check-out',
   overtime: 'Tăng ca',
   both: 'Cả hai',
 };

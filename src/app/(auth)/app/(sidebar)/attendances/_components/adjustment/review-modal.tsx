@@ -2,35 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { Modal, Button, Badge, Textarea } from '@/components';
-import { CheckCircle2, XCircle, Clock, Calendar, User, FileText, AlertCircle } from 'lucide-react';
-import type { AttendanceAdjustmentRequest, RequestType } from '@/types';
+import { getRequestTypeLabel } from '@/types';
+import type { AttendanceAdjustmentRequest } from '@/types';
+import { Clock, Calendar, User, FileText, AlertCircle } from 'lucide-react';
 
 interface Props {
   open: boolean;
   data: AttendanceAdjustmentRequest | null;
   action: 'approved' | 'rejected' | null;
-  employeeName?: string;
   onClose: () => void;
   onConfirm: (id: number, action: 'approved' | 'rejected', reviewNote: string) => Promise<void>;
   isLoading?: boolean;
 }
 
-const REQUEST_TYPE_LABEL: Record<string, string> = {
-  check_in: 'Điều chỉnh Check In',
-  check_out: 'Điều chỉnh Check Out',
-  forgot_attendance: 'Quên điểm danh',
-  both: 'Điều chỉnh Check In & Out',
-};
-
-export default function ReviewAdjustmentModal({
-  open,
-  data,
-  action,
-  employeeName = 'Nhân sự',
-  onClose,
-  onConfirm,
-  isLoading = false,
-}: Props) {
+export default function ReviewAdjustmentModal({ open, data, action, onClose, onConfirm, isLoading = false }: Props) {
   const [reviewNote, setReviewNote] = useState('');
 
   useEffect(() => {
@@ -72,7 +57,9 @@ export default function ReviewAdjustmentModal({
   return (
     <Modal
       isOpen={open}
-      onClose={() => { if (!isLoading) onClose(); }}
+      onClose={() => {
+        if (!isLoading) onClose();
+      }}
       title={`${action === 'rejected' ? 'Từ chối' : 'Phê duyệt'} khiếu nại #${data.id}`}
       size="md"
       footer={footer}
@@ -95,7 +82,7 @@ export default function ReviewAdjustmentModal({
             <span className="font-semibold text-slate-500 flex items-center gap-1.5">
               <User size={13} className="text-slate-400" /> Nhân sự:
             </span>
-            <span className="font-bold text-slate-900 text-sm">{employeeName}</span>
+            <span className="font-bold text-slate-900 text-sm">{data?.user?.fullName}</span>
           </div>
           <div className="flex items-center justify-between border-t border-slate-200/50 pt-2">
             <span className="font-semibold text-slate-500 flex items-center gap-1.5">
@@ -107,7 +94,7 @@ export default function ReviewAdjustmentModal({
             <span className="font-semibold text-slate-500 flex items-center gap-1.5">
               <FileText size={13} className="text-slate-400" /> Loại khiếu nại:
             </span>
-            <Badge variant="info">{REQUEST_TYPE_LABEL[data.requestType] || data.requestType}</Badge>
+            <Badge variant="info">{getRequestTypeLabel(data.requestType)}</Badge>
           </div>
         </div>
 
@@ -118,7 +105,11 @@ export default function ReviewAdjustmentModal({
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             {/* Check In */}
-            {(data.oldCheckIn || data.requestedCheckIn || data.requestType === 'check_in' || data.requestType === 'both' || data.requestType === 'forgot_attendance') && (
+            {(data.oldCheckIn ||
+              data.requestedCheckIn ||
+              data.requestType === 'check_in' ||
+              data.requestType === 'both' ||
+              data.requestType === 'forgot_attendance') && (
               <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1 shadow-2xs">
                 <span className="text-[11px] font-bold text-slate-400 uppercase block">Check In</span>
                 <div className="flex items-center gap-2">
@@ -131,7 +122,11 @@ export default function ReviewAdjustmentModal({
               </div>
             )}
             {/* Check Out */}
-            {(data.oldCheckOut || data.requestedCheckOut || data.requestType === 'check_out' || data.requestType === 'both' || data.requestType === 'forgot_attendance') && (
+            {(data.oldCheckOut ||
+              data.requestedCheckOut ||
+              data.requestType === 'check_out' ||
+              data.requestType === 'both' ||
+              data.requestType === 'forgot_attendance') && (
               <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1 shadow-2xs">
                 <span className="text-[11px] font-bold text-slate-400 uppercase block">Check Out</span>
                 <div className="flex items-center gap-2">

@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { TableAction, Button, TableData, Badge, ITableColumn, ITableFilterProps, Heading, Alert, } from '@/components';
+import { TableAction, Button, TableData, Badge, ITableColumn, ITableFilterProps, Heading, Alert } from '@/components';
 import { toast } from 'react-hot-toast';
-import { Plus, Pencil, Trash2, Eye, CheckCircle2, FileEdit, Clock, AlertCircle, Info, FileCheck, Calendar, SquareCheck, Check, } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, CheckCircle2, FileEdit, Clock, AlertCircle, Info, FileCheck, Calendar, SquareCheck, Check } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getRequestTypeLabel } from '@/types';
 import type { AttendanceAdjustmentRequest, AdjustmentStatus, RequestType } from '@/types';
 import AddAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/add-modal';
 import EditAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/edit-modal';
@@ -28,27 +29,16 @@ const STATUS_CONFIG: Record<AdjustmentStatus, { label: string; variant: 'warning
   rejected: { label: 'Từ chối', variant: 'danger' },
 };
 
-const REQUEST_TYPE_LABEL: Record<string, string> = {
-  check_in: 'Điều chỉnh Check In',
-  check_out: 'Điều chỉnh Check Out',
-  forgot_attendance: 'Quên điểm danh',
-  both: 'Điều chỉnh Check In & Out',
-};
+// Sử dụng helper getRequestTypeLabel từ @/types để hiển thị loại khiếu nại
 const ROLE_ALLOW_REVIEW = ['admin', 'super', 'hr'];
 export default function AdjustmentsSidebarPage() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
 
   const isAdmin = useMemo(
-  () =>
-    Boolean(
-      currentUser?.roles?.some((role) =>
-        ROLE_ALLOW_REVIEW.includes(role.code?.toLowerCase() || '')
-      )
-    ),
-  [currentUser]
-);
-
+    () => Boolean(currentUser?.roles?.some((role) => ROLE_ALLOW_REVIEW.includes(role.code?.toLowerCase() || ''))),
+    [currentUser],
+  );
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<AdjustmentStatus | undefined>();
@@ -88,7 +78,8 @@ export default function AdjustmentsSidebarPage() {
 
   const { data: allAdjustmentsData, refetch: refetchAllAdjustments } = useQuery({
     queryKey: ['all-adjustments', queryKey, isAdmin, currentUser?.id, filterStartDate, filterEndDate],
-    queryFn: () => getAdjustmentRequests({
+    queryFn: () =>
+      getAdjustmentRequests({
         ...(isAdmin ? {} : { userId: currentUser?.id }),
         startDate: filterStartDate || undefined,
         endDate: filterEndDate || undefined,
@@ -114,10 +105,7 @@ export default function AdjustmentsSidebarPage() {
     return u ? u.fullName : 'Không xác định';
   };
 
-  const allAdjustments = useMemo(
-    () => allAdjustmentsData?.items ?? attendanceAdjustments,
-    [allAdjustmentsData, attendanceAdjustments]
-  );
+  const allAdjustments = useMemo(() => allAdjustmentsData?.items ?? attendanceAdjustments, [allAdjustmentsData, attendanceAdjustments]);
 
   const totalRequestsCount = useMemo(() => allAdjustments.length, [allAdjustments]);
 
@@ -133,26 +121,8 @@ export default function AdjustmentsSidebarPage() {
     return allAdjustments.filter((r) => r.status === 'rejected').length;
   }, [allAdjustments]);
 
-  const approvedPercentage = useMemo(() => {
-    if (!totalRequestsCount) return 0;
-    return Math.round((approvedCount / totalRequestsCount) * 100 * 10) / 10;
-  }, [approvedCount, totalRequestsCount]);
-
-  const employeeOptions = useMemo(() => {
-    if (!isAdmin) return [];
-    const ids = Array.from(
-      new Set(allAdjustments.map((item) => item.userId).filter((id): id is string => Boolean(id)))
-    );
-    return ids.map((userId) => ({
-      value: String(userId),
-      label: String(getEmployeeName(userId) || userId || 'Không xác định'),
-    }));
-  }, [allAdjustments, userMap, isAdmin]);
-
   const statusOptions = useMemo(() => {
-    const statuses = Array.from(
-      new Set(allAdjustments.map((item) => item.status).filter((status): status is AdjustmentStatus => Boolean(status)))
-    );
+    const statuses = Array.from(new Set(allAdjustments.map((item) => item.status).filter((status): status is AdjustmentStatus => Boolean(status))));
     return statuses.map((status) => ({
       label: String(STATUS_CONFIG[status]?.label ?? status ?? 'Không xác định'),
       value: String(status),
@@ -160,24 +130,12 @@ export default function AdjustmentsSidebarPage() {
   }, [allAdjustments]);
 
   const typeOptions = useMemo(() => {
-    const types = Array.from(
-      new Set(allAdjustments.map((item) => item.requestType).filter((type): type is RequestType => Boolean(type)))
-    );
+    const types = Array.from(new Set(allAdjustments.map((item) => item.requestType).filter((type): type is RequestType => Boolean(type))));
     return types.map((type) => ({
-      label: String(REQUEST_TYPE_LABEL[type] ?? type ?? 'Không xác định'),
+      label: getRequestTypeLabel(type) || 'Không xác định',
       value: String(type),
     }));
   }, [allAdjustments]);
-
-  const dateOptions = useMemo(() => {
-    return Array.from({ length: 31 }, (_, i) => {
-      const day = String(i + 1).padStart(2, '0');
-      return {
-        label: `2026-08-${day}`,
-        value: `2026-08-${day}`,
-      };
-    });
-  }, []);
 
   const tableFilters: ITableFilterProps[] = [
     {
@@ -270,34 +228,34 @@ export default function AdjustmentsSidebarPage() {
 
   const adjustmentsStats = [
     {
-      title: "Tổng khiếu nại",
+      title: 'Tổng khiếu nại',
       value: totalRequestsCount,
       icon: <FileEdit />,
       trend: totalRequestsCount,
-      trendDirection: totalRequestsCount > 0 ? "up" : "down"
+      trendDirection: totalRequestsCount > 0 ? 'up' : 'down',
     },
     {
-      title: "Chờ phê duyệt",
+      title: 'Chờ phê duyệt',
       value: pendingCount,
       icon: <Clock />,
       trend: pendingCount,
-      trendDirection: pendingCount > 0 ? "up" : "down"
+      trendDirection: pendingCount > 0 ? 'up' : 'down',
     },
     {
-      title: "Đã phê duyệt",
+      title: 'Đã phê duyệt',
       value: approvedCount,
       icon: <CheckCircle2 />,
       trend: approvedCount,
-      trendDirection: approvedCount > 0 ? "up" : "down"
+      trendDirection: approvedCount > 0 ? 'up' : 'down',
     },
     {
-      title: "Từ chối",
+      title: 'Từ chối',
       value: rejectedCount,
       icon: <AlertCircle />,
       trend: rejectedCount,
-      trendDirection: rejectedCount > 0 ? "up" : "down"
+      trendDirection: rejectedCount > 0 ? 'up' : 'down',
     },
-  ]
+  ];
 
   // ===================== Redesigned Mobile Card =====================
   const renderCard = (row: AdjustmentRecord, index: number) => {
@@ -319,9 +277,7 @@ export default function AdjustmentsSidebarPage() {
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] font-bold text-slate-400">#{row.id}</span>
-              <h4 className="font-bold text-slate-900 text-sm">
-                {getEmployeeName(row.userId)}
-              </h4>
+              <h4 className="font-bold text-slate-900 text-sm">{row?.user?.fullName}</h4>
             </div>
             <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
               <Calendar size={12} className="text-slate-400" /> {row.workDate}
@@ -336,7 +292,7 @@ export default function AdjustmentsSidebarPage() {
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-400 font-medium">Loại khiếu nại:</span>
           <Badge variant="info" className="text-[11px] font-semibold">
-            {REQUEST_TYPE_LABEL[row.requestType] || row.requestType}
+            {getRequestTypeLabel(row.requestType)}
           </Badge>
         </div>
 
@@ -419,21 +375,11 @@ export default function AdjustmentsSidebarPage() {
   };
 
   const columns: ITableColumn<AdjustmentRecord>[] = [
-    // {
-    //   key: 'id',
-    //   label: '#',
-    //   minWidth: '60px',
-    //   cell: (row) => <span className="text-slate-400 font-bold text-xs">#{row.id}</span>,
-    // },
     {
       key: 'employee',
       label: 'Nhân sự',
       minWidth: '160px',
-      cell: (row) => (
-        <div className="font-bold text-slate-900 text-sm">
-          {getEmployeeName(row.userId)}
-        </div>
-      ),
+      cell: (row) => <div className="font-bold text-slate-900 text-sm">{row?.user?.fullName}</div>,
     },
     {
       key: 'workDate',
@@ -447,7 +393,7 @@ export default function AdjustmentsSidebarPage() {
       minWidth: '170px',
       cell: (row) => (
         <Badge variant="info" className="text-[11px] font-semibold">
-          {REQUEST_TYPE_LABEL[row.requestType] || row.requestType}
+          {getRequestTypeLabel(row.requestType)}
         </Badge>
       ),
     },
@@ -460,9 +406,7 @@ export default function AdjustmentsSidebarPage() {
           <div className="text-xs">
             <span className="text-slate-400 line-through font-medium">{row.oldCheckIn || '-'}</span>
             <span className="mx-1 text-slate-400">→</span>
-            <span className="font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-              {row.requestedCheckIn || '-'}
-            </span>
+            <span className="font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{row.requestedCheckIn || '-'}</span>
           </div>
         ) : (
           <span className="text-slate-300">—</span>
@@ -477,9 +421,7 @@ export default function AdjustmentsSidebarPage() {
           <div className="text-xs">
             <span className="text-slate-400 line-through font-medium">{row.oldCheckOut || '-'}</span>
             <span className="mx-1 text-slate-400">→</span>
-            <span className="font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-              {row.requestedCheckOut || '-'}
-            </span>
+            <span className="font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{row.requestedCheckOut || '-'}</span>
           </div>
         ) : (
           <span className="text-slate-300">—</span>
@@ -559,67 +501,15 @@ export default function AdjustmentsSidebarPage() {
   return (
     <div className="w-full flex flex-col gap-4">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1 */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">TỔNG KHIẾU NẠI</span>
-            <div className="rounded-xl bg-slate-100 p-2.5 text-slate-700">
-              <FileEdit size={20} />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-900">
-            {totalRequestsCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
-          </div>
-        </div> */}
-
-        {/* Card 2 */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">CHỜ PHÊ DUYỆT</span>
-            <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600">
-              <Clock size={20} />
-            </div>
-            {pendingCount > 0 && (
-              <Badge variant="warning" pill className="font-extrabold text-[10px]">
-                {isAdmin ? 'CẦN XỬ LÝ' : 'ĐANG CHỜ'}
-              </Badge>
-            )}
-          </div>
-          <div className="text-3xl font-black text-slate-700">
-            {pendingCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
-          </div>
-        </div> */}
-
-        {/* Card 3 */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">ĐÃ PHÊ DUYỆT</span>
-            <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-600">
-              <CheckCircle2 size={20} />
-            </div>
-            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-              {approvedPercentage}%
-            </span>
-          </div>
-          <div className="text-3xl font-black text-slate-700">
-            {approvedCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
-          </div>
-        </div> */}
-
-        {/* Card 4 */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">TỪ CHỐI</span>
-            <div className="rounded-xl bg-red-50 p-2.5 text-red-500">
-              <AlertCircle size={20} />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-700">
-            {rejectedCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
-          </div>
-        </div> */}
         {adjustmentsStats.map((stat, index) => (
-          <StatCart key={index} title={stat.title} value={String(stat.value)} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection as any} />
+          <StatCart
+            key={index}
+            title={stat.title}
+            value={String(stat.value)}
+            icon={stat.icon}
+            trend={stat.trend}
+            trendDirection={stat.trendDirection as any}
+          />
         ))}
       </div>
 
@@ -633,13 +523,7 @@ export default function AdjustmentsSidebarPage() {
       {/* Main Table Section */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center w-full gap-4">
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<Plus size={16} />}
-            onClick={() => setShowAddModal(true)}
-            className="px-3 gap-1.5"
-          >
+          <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={() => setShowAddModal(true)} className="px-3 gap-1.5">
             Tạo khiếu nại mới
           </Button>
         </div>
@@ -672,18 +556,9 @@ export default function AdjustmentsSidebarPage() {
       </div>
 
       {/* Modals */}
-      <AddAdjustmentModal
-        open={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSuccess={refreshData}
-      />
+      <AddAdjustmentModal open={showAddModal} onClose={() => setShowAddModal(false)} onSuccess={refreshData} />
 
-      <EditAdjustmentModal
-        open={showEditModal}
-        data={selectedRow}
-        onClose={() => setShowEditModal(false)}
-        onSuccess={refreshData}
-      />
+      <EditAdjustmentModal open={showEditModal} data={selectedRow} onClose={() => setShowEditModal(false)} onSuccess={refreshData} />
 
       <AdjustmentDetailModal
         open={showDetailModal}
@@ -703,7 +578,6 @@ export default function AdjustmentsSidebarPage() {
         open={reviewModalState.open}
         data={reviewModalState.data}
         action={reviewModalState.action}
-        employeeName={getEmployeeName(reviewModalState.data?.userId)}
         onClose={() => setReviewModalState({ open: false, data: null, action: null })}
         onConfirm={handleConfirmReview}
         isLoading={isReviewing}
