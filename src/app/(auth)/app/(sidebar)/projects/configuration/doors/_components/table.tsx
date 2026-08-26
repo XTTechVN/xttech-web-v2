@@ -20,9 +20,8 @@ interface TableProps {
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
+
 
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
     const res = await getDoors({ offset, limit, search: search || undefined });
@@ -155,7 +154,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         </Button>
       </div>
       <TableData<Door>
-        queryKey={['doors', search, offset]}
+        queryKey={['doors', search]}
         fetcher={fetcher}
         columns={columns}
         renderCard={renderCard}
