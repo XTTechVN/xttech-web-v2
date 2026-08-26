@@ -21,3 +21,4 @@ export * from './header';
 export * from './table';
 export * from './stats-card';
 export * from './app-header';
+export * from './logo';
