@@ -1,7 +1,7 @@
 // Các icons trong lucide - react
 import { Mail, Phone } from 'lucide-react';
-
 import Link from 'next/link';
+import { XTLogo } from '@/components';
 
 export const Footer = () => {
   return (
@@ -11,7 +11,8 @@ export const Footer = () => {
           {/* Logo & Thông Tin */}
           <div className="flex flex-col gap-3 md:max-w-xs">
             <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-primary">XTTECH</span>
+              <XTLogo className="w-6 h-6 drop-shadow-[0_1px_3px_rgba(4,88,99,0.35)]" />
+              <span className="text-lg font-bold text-primary tracking-tight">XTTECH</span>
             </div>
             <p className="text-gray-500 text-sm leading-relaxed pr-4">Giải pháp quản trị doanh nghiệp toàn diện.</p>
           </div>
