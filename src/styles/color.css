@@ -6,6 +6,28 @@
   --color-danger-raw: 239 68 68; /* #EF4444 */
   --color-warning-raw: 245 158 11; /* #F59E0B */
   --color-info-raw: 59 130 246; /* #3B82F6 */
+
+  /* Custom status colors for badges */
+  --st-pending: #a6754c;
+  --st-pending-bg: #2e241b;
+
+  --st-progress: #509fe2;
+  --st-progress-bg: #142434;
+
+  --st-submitted: #755cba;
+  --st-submitted-bg: #211c32;
+
+  --st-review: #b7af4d;
+  --st-review-bg: #2b2817;
+
+  --st-success: #5dc070;
+  --st-success-bg: #1d2a20;
+
+  --st-failed: #d87767;
+  --st-failed-bg: #30211e;
+
+  --st-expired: #888888;
+  --st-expired-bg: #222222;
 }
 
 @theme inline {
@@ -16,4 +38,26 @@
   --color-danger: rgb(var(--color-danger-raw));
   --color-warning: rgb(var(--color-warning-raw));
   --color-info: rgb(var(--color-info-raw));
+
+  /* Map custom status colors */
+  --color-st-pending: var(--st-pending);
+  --color-st-pending-bg: var(--st-pending-bg);
+
+  --color-st-progress: var(--st-progress);
+  --color-st-progress-bg: var(--st-progress-bg);
+
+  --color-st-submitted: var(--st-submitted);
+  --color-st-submitted-bg: var(--st-submitted-bg);
+
+  --color-st-review: var(--st-review);
+  --color-st-review-bg: var(--st-review-bg);
+
+  --color-st-success: var(--color-st-success);
+  --color-st-success-bg: var(--st-success-bg);
+
+  --color-st-failed: var(--st-failed);
+  --color-st-failed-bg: var(--st-failed-bg);
+
+  --color-st-expired: var(--st-expired);
+  --color-st-expired-bg: var(--st-expired-bg);
 }

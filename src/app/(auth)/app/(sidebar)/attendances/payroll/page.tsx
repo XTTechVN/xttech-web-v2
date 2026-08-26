@@ -12,7 +12,7 @@ import { getAttendances } from '@/actions';
 import { Attendance, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 import { BASE_MINIO_URL } from '@/config/app';
 import StatCart from '../../dashboard/_components/stats-card';
-import AddAdjustmentModal from '../_components/adjustment/add-modal';
+import AddAdjustmentModal from '../adjustments/_components/add-modal';
 import AttendanceDetailModal from '../_components/attendance-modal';
 import OvertimeModal from '../_components/overtime-modal';
 

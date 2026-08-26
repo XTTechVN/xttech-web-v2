@@ -7,10 +7,10 @@ import { Plus, Pencil, Trash2, Eye, CheckCircle2, FileEdit, Clock, AlertCircle, 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRequestTypeLabel } from '@/types';
 import type { AttendanceAdjustmentRequest, AdjustmentStatus, RequestType } from '@/types';
-import AddAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/add-modal';
-import EditAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/edit-modal';
-import AdjustmentDetailModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/detail-modal';
-import ReviewAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/review-modal';
+import AddAdjustmentModal from './_components/add-modal';
+import EditAdjustmentModal from './_components/edit-modal';
+import AdjustmentDetailModal from './_components/detail-modal';
+import ReviewAdjustmentModal from './_components/review-modal';
 import DeleteAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/delete-modal';
 import { getAdjustmentRequests, updateAdjustmentRequest, deleteAdjustmentRequest, getUsers } from '@/actions';
 import { useAuthStore } from '@/stores';
@@ -513,13 +513,6 @@ export default function AdjustmentsSidebarPage() {
         ))}
       </div>
 
-      {/* Informative Guidance Banner */}
-      <Alert variant="info" title="Quy trình xử lý khiếu nại chấm công" icon={<Info size={18} />}>
-        {isAdmin
-          ? 'Các yêu cầu điều chỉnh từ nhân viên cần được thẩm định trong vòng 48 giờ làm việc. Sau khi được duyệt, dữ liệu công sẽ tự động cập nhật vào Bảng tổng hợp công tháng.'
-          : 'Yêu cầu điều chỉnh chấm công của bạn sẽ được gửi tới Ban Quản trị xét duyệt. Bạn có thể theo dõi trạng thái tại danh sách bên dưới.'}
-      </Alert>
-
       {/* Main Table Section */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center w-full gap-4">
@@ -560,18 +553,7 @@ export default function AdjustmentsSidebarPage() {
 
       <EditAdjustmentModal open={showEditModal} data={selectedRow} onClose={() => setShowEditModal(false)} onSuccess={refreshData} />
 
-      <AdjustmentDetailModal
-        open={showDetailModal}
-        data={selectedRow}
-        onClose={() => setShowDetailModal(false)}
-        onApprove={(id) => {
-          if (selectedRow) openReviewModal(selectedRow, 'approved');
-        }}
-        onReject={(id) => {
-          if (selectedRow) openReviewModal(selectedRow, 'rejected');
-        }}
-        canReview={isAdmin}
-      />
+      <AdjustmentDetailModal open={showDetailModal} data={selectedRow} onClose={() => setShowDetailModal(false)} />
 
       {/* Review Modal (Popup Preview Phê duyệt / Từ chối) */}
       <ReviewAdjustmentModal
