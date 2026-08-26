@@ -53,8 +53,41 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     });
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [openUpward, setOpenUpward] = useState(false);
 
     const canSearch = options.length > 10;
+
+    // Detect position and flip upward if there is not enough space below
+    useEffect(() => {
+      if (isOpen && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        
+        // Find closest scroll parent to get accurate bottom bounds
+        let scrollParent: HTMLElement | null = null;
+        let parent = containerRef.current.parentElement;
+        while (parent) {
+          const overflowY = window.getComputedStyle(parent).overflowY;
+          if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'hidden') {
+            scrollParent = parent;
+            break;
+          }
+          parent = parent.parentElement;
+        }
+
+        let spaceBelow = window.innerHeight - rect.bottom;
+        if (scrollParent) {
+          const parentRect = scrollParent.getBoundingClientRect();
+          spaceBelow = parentRect.bottom - rect.bottom;
+        }
+
+        const dropdownHeight = 220; // Maximum expected height of the dropdown
+        if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+          setOpenUpward(true);
+        } else {
+          setOpenUpward(false);
+        }
+      }
+    }, [isOpen]);
 
     // Update internal state when controlled value changes
     useEffect(() => {
@@ -227,7 +260,14 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
           {/* Custom Dropdown Menu Options list */}
           {isOpen && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-lg shadow-xl p-1 max-h-52 overflow-y-auto select-none animate-in fade-in slide-in-from-top-1 duration-150 flex flex-col gap-0.5 pr-0.5">
+            <div
+              className={cn(
+                "absolute z-50 w-full bg-white border border-gray-100 rounded-lg shadow-xl p-1 max-h-52 overflow-y-auto select-none animate-in fade-in duration-150 flex flex-col gap-0.5 pr-0.5",
+                openUpward
+                  ? "bottom-full mb-1 slide-in-from-bottom-1"
+                  : "top-full mt-1 slide-in-from-top-1"
+              )}
+            >
               {filteredOptions.length === 0 ? (
                 <div className="px-3 py-4 text-xs text-gray-400 text-center">
                   Không tìm thấy kết quả
