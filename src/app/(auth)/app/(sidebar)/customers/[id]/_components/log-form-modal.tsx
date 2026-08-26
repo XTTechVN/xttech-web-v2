@@ -45,7 +45,7 @@ const logSchema = z.object({
   channel: z.string().min(1, { message: 'Vui lòng chọn kênh tương tác' }),
   type: z.string().min(1, { message: 'Vui lòng chọn loại tương tác' }),
   status: z.string().min(1, { message: 'Vui lòng chọn trạng thái' }),
-  note: z.string().optional(),
+  note: z.string().min(1, { message: 'Vui lòng nhập ghi chú' }),
   nextFollowDate: z.string().optional(),
 });
 
@@ -102,7 +102,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
           channel: 'call',
           type: 'pending',
           status: 'pending',
-          note: '',
+          note: ' ',
           nextFollowDate: '',
         });
       }
@@ -111,7 +111,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
         channel: 'call',
         type: 'pending',
         status: 'pending',
-        note: '',
+        note: ' ',
         nextFollowDate: '',
       });
     }
@@ -123,7 +123,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
       channel: data.channel,
       type: data.type,
       status: data.status,
-      note: data.note || '',
+      note: data.note ? data.note.trim() : '',
       nextFollowDate: data.nextFollowDate || null,
     };
 
@@ -175,16 +175,17 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
 
               <div className="flex flex-col gap-1.5">
                 <Input
-                  label="Ghi chú"
+                  label="Ghi chú *"
                   placeholder="Nhập nội dung tương tác"
                   fullWidth
                   {...register('note')}
+                  error={errors.note?.message}
                 />
               </div>
               
               <div className="flex flex-col gap-1.5">
                 <Input
-                  label="Ngày follow-up tiếp theo"
+                  label="Ngày chăm sóc tiếp theo"
                   type="date"
                   fullWidth
                   {...register('nextFollowDate')}
