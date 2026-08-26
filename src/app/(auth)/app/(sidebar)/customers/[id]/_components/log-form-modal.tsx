@@ -32,6 +32,8 @@ import queryClient from '@/utils/query';
 // Types
 import type { CustomerLogCreate, CustomerLog } from '@/types';
 
+
+// Props của LogFormModal
 interface LogFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -41,6 +43,7 @@ interface LogFormModalProps {
   initialData?: CustomerLog | null;
 }
 
+// Validate dữ liệu cho thêm / sửa khách hàng
 const logSchema = z.object({
   channel: z.string().min(1, { message: 'Vui lòng chọn kênh tương tác' }),
   type: z.string().min(1, { message: 'Vui lòng chọn loại tương tác' }),
@@ -51,6 +54,7 @@ const logSchema = z.object({
 
 type LogFormValues = z.infer<typeof logSchema>;
 
+// Modal thêm / sửa thông tin khách hàng
 export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 'Lưu tương tác', initialData }: LogFormModalProps) {
   const {
     register,
@@ -61,6 +65,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
     resolver: zodResolver(logSchema),
   });
 
+  // Mutation thêm lượt tương tác của khách hàng
   const { mutate, isPending } = useMutation({
     mutationFn: (data: CustomerLogCreate) => createCustomerLog({ customerId, data }),
     onSuccess: () => {
@@ -74,6 +79,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
     },
   });
 
+  // Mutation cập nhật lượt tương tác của khách hàng
   const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
     mutationFn: ({ logId, data }: { logId: number; data: CustomerLogCreate }) => updateCustomerLog({ customerId, logId, data }),
     onSuccess: () => {
@@ -87,6 +93,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
     },
   });
 
+  // Effect xử lý khi mở / đóng modal
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -117,6 +124,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
     }
   }, [isOpen, initialData, reset]);
 
+  // Xử lý thêm mới hoặc cập nhật lượt tương tác
   const onSubmit = (data: LogFormValues) => {
     const payload = {
       index: initialData?.index ?? 0,
