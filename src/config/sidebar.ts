@@ -176,7 +176,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Khách hàng',
         icon: React.createElement(User, { size: 18 }),
         href: '/app/customers',
-        roles: ['super', 'admin', 'sale', 'accountant'],
+        roles: ['super', 'admin', 'sale', 'hr'],
       },
       {
         id: 'project-tasks',
