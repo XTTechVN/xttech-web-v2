@@ -72,24 +72,6 @@ export interface QuotationQueryParams {
   limit?: number;
 }
 
-export interface QuotationDoorResponse {
-  id: number;
-  quotationMaterialId: number;
-  doorId: number;
-  code?: string;
-  unit?: string;
-  width?: number;
-  height?: number;
-  effectiveWidth?: number;
-  effectiveHeight?: number;
-  quantity: number;
-  totalArea: number;
-  initPrice?: number;
-  totalPrice?: number;
-  formulaIds?: number[];
-  formulas?: any[];
-}
-
 export interface QuotationAccessoryResponse {
   id?: number;
   accessoryId: number;
@@ -113,6 +95,24 @@ export interface QuotationExtraOptionResponse {
   totalArea?: number;
 }
 
+export interface QuotationFormulaResponse {
+  id?: number;
+  formulaId: number;
+  code?: string;
+  name?: string;
+  unit?: string;
+  type?: string;
+  width?: number;
+  salary?: number;
+  wastageRate?: number;
+  widthAdd?: number;
+  heightAdd?: number;
+  coefficientWidth?: number;
+  coefficientHeight?: number;
+  totalPrice?: number;
+  totalArea?: number;
+}
+
 export interface QuotationArchResponse {
   id?: number;
   formulaId: number;
@@ -126,6 +126,26 @@ export interface QuotationArchResponse {
   totalArea?: number;
   coefficientWidth?: number;
   coefficientHeight?: number;
+}
+
+export interface QuotationDoorResponse {
+  id: number;
+  quotationMaterialId: number;
+  doorId: number;
+  code?: string;
+  unit?: string;
+  width?: number;
+  height?: number;
+  effectiveWidth?: number;
+  effectiveHeight?: number;
+  quantity: number;
+  totalArea: number;
+  initPrice?: number;
+  totalPrice?: number;
+  formulaIds?: number[];
+  formulas?: QuotationFormulaResponse[];
+  accessories?: QuotationAccessoryResponse[];
+  extraOptions?: QuotationExtraOptionResponse[];
 }
 
 export interface QuotationMaterialResponse {
@@ -168,9 +188,9 @@ export interface QuotationDetail extends Quotation {
 
 export interface PreviewDoor {
   id?: number;
+  doorId: number;
   code?: string;
   unit?: string;
-  doorId: number;
   width?: number;
   height?: number;
   effectiveWidth?: number;
@@ -180,39 +200,37 @@ export interface PreviewDoor {
   initPrice?: number;
   totalPrice?: number;
   imagePath?: string | null;
-  accessoryIds?: number[];
-  extraOptionIds?: number[];
   accessories?: {
-    id?: number;
     accessoryId: number;
     name: string;
+    code?: string;
     unit: string;
     initPrice: number;
     quantityPerDoor: number;
     totalPrice: number;
   }[];
   extraOptions?: {
-    id?: number;
     extraOptionId: number;
     name: string;
+    code?: string;
+    unit?: string;
     initPrice: number;
+    calculatedQuantity?: number;
+    totalArea?: number;
     totalPrice: number;
   }[];
   formulas?: {
-    id?: number;
-    quotationDoorId?: number;
     formulaId: number;
     code?: string;
     name?: string;
     unit?: string;
-    type?: string;
-    width?: number;
-    height?: number;
     salary?: number;
-    wastageRate?: number;
     widthAdd?: number;
     heightAdd?: number;
-    totalAmount?: number;
+    coefficientWidth?: number;
+    coefficientHeight?: number;
+    totalPrice?: number;
+    totalArea?: number;
   }[];
 }
 
@@ -224,7 +242,6 @@ export interface PreviewMaterial {
   quantity?: number;
   totalArea?: number;
   totalAmount?: number;
-  totalPrice?: number;
   doors: PreviewDoor[];
   accessories?: {
     accessoryId: number;
@@ -236,29 +253,25 @@ export interface PreviewMaterial {
     totalPrice: number;
   }[];
   extraOptions?: {
-    id?: number;
-    quotationDoorId?: number;
     optionId?: number;
     name: string;
-    code?: string;
+    code: string;
+    unit: string;
     initPrice: number;
-    quantityPerDoor?: number;
-    doorQuantity?: number;
-    calculatedQuantity?: number;
+    calculatedQuantity: number;
     totalPrice: number;
-    unit?: string;
-    totalArea?: number;
+    totalArea: number;
   }[];
   archs?: {
     formulaId: number;
-    code?: string;
-    name?: string;
-    unit?: string;
+    code: string;
+    name: string;
+    unit: string;
     type?: string;
     salary: number;
     totalQuantity: number;
     totalPrice: number;
-    totalArea?: number;
+    totalArea: number;
     coefficientWidth?: number;
     coefficientHeight?: number;
   }[];
@@ -302,4 +315,3 @@ export interface DraftFloor {
   index: number;
   materials: DraftMaterial[];
 }
-
