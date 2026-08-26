@@ -32,6 +32,8 @@ import queryClient from '@/utils/query';
 // Types
 import type { CustomerLogCreate, CustomerLog } from '@/types';
 
+
+// Props của LogFormModal
 interface LogFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -41,16 +43,18 @@ interface LogFormModalProps {
   initialData?: CustomerLog | null;
 }
 
+// Validate dữ liệu cho thêm / sửa khách hàng
 const logSchema = z.object({
   channel: z.string().min(1, { message: 'Vui lòng chọn kênh tương tác' }),
   type: z.string().min(1, { message: 'Vui lòng chọn loại tương tác' }),
   status: z.string().min(1, { message: 'Vui lòng chọn trạng thái' }),
-  note: z.string().optional(),
+  note: z.string().min(1, { message: 'Vui lòng nhập ghi chú' }),
   nextFollowDate: z.string().optional(),
 });
 
 type LogFormValues = z.infer<typeof logSchema>;
 
+// Modal thêm / sửa thông tin khách hàng
 export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 'Lưu tương tác', initialData }: LogFormModalProps) {
   const {
     register,
@@ -61,6 +65,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
     resolver: zodResolver(logSchema),
   });
 
+  // Mutation thêm lượt tương tác của khách hàng
   const { mutate, isPending } = useMutation({
     mutationFn: (data: CustomerLogCreate) => createCustomerLog({ customerId, data }),
     onSuccess: () => {
@@ -74,6 +79,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
     },
   });
 
+  // Mutation cập nhật lượt tương tác của khách hàng
   const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
     mutationFn: ({ logId, data }: { logId: number; data: CustomerLogCreate }) => updateCustomerLog({ customerId, logId, data }),
     onSuccess: () => {
@@ -87,6 +93,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
     },
   });
 
+  // Effect xử lý khi mở / đóng modal
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -102,7 +109,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
           channel: 'call',
           type: 'pending',
           status: 'pending',
-          note: '',
+          note: ' ',
           nextFollowDate: '',
         });
       }
@@ -111,19 +118,20 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
         channel: 'call',
         type: 'pending',
         status: 'pending',
-        note: '',
+        note: ' ',
         nextFollowDate: '',
       });
     }
   }, [isOpen, initialData, reset]);
 
+  // Xử lý thêm mới hoặc cập nhật lượt tương tác
   const onSubmit = (data: LogFormValues) => {
     const payload = {
       index: initialData?.index ?? 0,
       channel: data.channel,
       type: data.type,
       status: data.status,
-      note: data.note || '',
+      note: data.note ? data.note.trim() : '',
       nextFollowDate: data.nextFollowDate || null,
     };
 
@@ -175,16 +183,17 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
 
               <div className="flex flex-col gap-1.5">
                 <Input
-                  label="Ghi chú"
+                  label="Ghi chú *"
                   placeholder="Nhập nội dung tương tác"
                   fullWidth
                   {...register('note')}
+                  error={errors.note?.message}
                 />
               </div>
               
               <div className="flex flex-col gap-1.5">
                 <Input
-                  label="Ngày follow-up tiếp theo"
+                  label="Ngày chăm sóc tiếp theo"
                   type="date"
                   fullWidth
                   {...register('nextFollowDate')}
