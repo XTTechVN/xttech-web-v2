@@ -1,16 +1,12 @@
 'use client';
-
-import React from 'react';
 import { PackageOpen, Plus, Pencil, Trash2 } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
-import { Heading, Button } from '@/components';
+import { Button } from '@/components';
 import { useQueryParam } from '@/hooks';
 import { Material, formatMaterialUnit } from '@/types';
 import { getMaterials } from '@/actions';
 import toast from 'react-hot-toast';
-import { useSearchParams, useRouter } from 'next/navigation';
-
-import { BASE_MINIO_URL } from '@/config/app';
+import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/utils';
 
 interface TableProps {
@@ -57,7 +53,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       key: 'specification',
       label: 'Thông số kỹ thuật',
       minWidth: '200px',
-      cell: (row: Material) => <span className="text-gray-500 text-sm truncate max-w-[200px] block">{row.specification || '—'}</span>,
+      cell: (row: Material) => <span className="text-gray-500 text-sm truncate max-w-50 block">{row.specification || '—'}</span>,
     },
     {
       key: 'unit',
@@ -103,7 +99,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             <PackageOpen size={18} />
           </div>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
+            <span className="font-semibold text-gray-900 wrap-break-word text-sm sm:text-base leading-snug">{row.name}</span>
             <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-gray-400">
               <span>Đơn giá: {formatCurrency(row.price)}</span>
               {row.unit && <span className="select-none">•</span>}
