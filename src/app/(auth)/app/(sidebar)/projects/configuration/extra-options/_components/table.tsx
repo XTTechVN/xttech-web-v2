@@ -19,9 +19,8 @@ interface TableProps {
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
+
 
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
     const res = await getExtraOptions({ offset, limit, search: search || undefined });
@@ -140,7 +139,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         </Button>
       </div>
       <TableData<ExtraOption>
-        queryKey={['extra-options', search, offset]}
+        queryKey={['extra-options', search]}
         fetcher={fetcher}
         columns={columns}
         renderCard={renderCard}

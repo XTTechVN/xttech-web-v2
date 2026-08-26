@@ -33,9 +33,8 @@ interface TableProps {
 }
 
 const Table = ({ customers = [], onViewClick, onEditClick, onDeleteClick, onAddClick }: TableProps) => {
-  const searchParams = useSearchParams();
-  const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
+
 
   const { user } = useAuthStore();
   const isSaleOnly = user?.roles?.some((role) => role.code === 'sale') &&
@@ -167,7 +166,7 @@ const Table = ({ customers = [], onViewClick, onEditClick, onDeleteClick, onAddC
         </Button>
       </div>
       <TableData<Project>
-        queryKey={['projects', search, offset]}
+        queryKey={['projects', search]}
         fetcher={fetcher}
         columns={columns}
         renderCard={renderCard}

@@ -809,11 +809,11 @@ export default function AttendancesPage() {
         open={reviewModalState.open}
         data={reviewModalState.data}
         action={reviewModalState.action}
-        employeeName={reviewModalState.data?.user?.fullName || 'Nhân sự'}
         onClose={() => setReviewModalState({ open: false, data: null, action: null })}
         onConfirm={handleConfirmReview}
         isLoading={isReviewing}
       />
+
 
       {/* Modal xác nhận xóa chấm công */}
       {selectedRow && (

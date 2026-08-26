@@ -22,10 +22,9 @@ interface TableProps {
 }
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
+
   const [filterType, setFilterType] = useState<string | undefined>();
   const [filterStaffId, setFilterStaffId] = useState<string | undefined>();
   const user = useAuthStore((state) => state.user);
@@ -278,7 +277,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         </Button>
       </div>
       <TableData<Customer>
-        queryKey={['customers', search, filterType, filterStaffId, offset]}
+        queryKey={['customers', search, filterType, filterStaffId]}
         fetcher={fetcher}
         columns={columns}
         filters={tableFilters}
