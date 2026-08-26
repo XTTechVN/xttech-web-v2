@@ -42,8 +42,8 @@ import { deleteAttendance, getAttendances, getDepartments, getUsers, getAdjustme
 import { Attendance, AttendanceAdjustmentRequest, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 import StatCart from '../dashboard/_components/stats-card';
-import AddAdjustmentModal from './_components/adjustment/add-modal';
-import ReviewAdjustmentModal from './_components/adjustment/review-modal';
+import AddAdjustmentModal from './adjustments/_components/add-modal';
+import ReviewAdjustmentModal from './adjustments/_components/review-modal';
 
 type FilterOption = {
   value: string | undefined;
