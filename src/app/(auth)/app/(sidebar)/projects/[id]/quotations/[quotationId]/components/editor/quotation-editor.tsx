@@ -127,10 +127,7 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
       {/* 1. Thông tin chung */}
       <QuotationInfo />
 
-      {/* 2. Ghi chú & Điều khoản (Rich Text) */}
-      <QuotationTermsEditor />
-
-      {/* 3. Cấu trúc các tầng */}
+      {/* 2. Cấu trúc các tầng */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center pb-1.5">
           <h3 className="text-base font-bold text-primary">Cấu trúc các tầng</h3>
@@ -161,6 +158,9 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
           </div>
         )}
       </div>
+
+      {/* 3. Ghi chú & Điều khoản (Rich Text) */}
+      <QuotationTermsEditor />
     </div>
   );
 };
