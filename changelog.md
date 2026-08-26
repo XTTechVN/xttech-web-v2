@@ -2,7 +2,15 @@
 
 All notable changes to the frontend project will be documented in this file.
 
-## [Unreleased] - 2026-08-24
+## [Unreleased] - 2026-08-26
+
+### Added
+- Thêm action [`exportUserAttendanceDetailReport`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/report/index.ts) và type [`UserAttendanceDetailReportQueryParams`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/report.ts) để gọi API xuất file Excel chi tiết chấm công và bảng lương theo từng nhân sự.
+- Bổ sung nút bấm 📊 **"Xuất chi tiết Excel"** (`FileSpreadsheet`) vào cột Thao tác (`actions`) và giao diện Mobile Card trong Bảng báo cáo chấm công ([`attendances/reports/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/table.tsx)).
+- Tích hợp trạng thái `exportingUserId` để hiển thị spinner loading xoay tròn (`Loader2`) khi tải file và thông báo tiến trình bằng `react-hot-toast`.
+
+## [1.1.0] - 2026-08-24
+
 
 ### Added
 - Bổ sung `departmentId` vào [`AttendanceQueryParams`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/attendance.ts) và truyền `departmentId` vào hàm `fetcher` trong [`attendances/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx) để hỗ trợ lọc danh sách chấm công theo phòng ban.
