@@ -2,10 +2,18 @@ export interface Customer {
   id: number;
   name: string;
   address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   identifyCode: string | null;
   email: string | null;
   phone: string | null;
   staffId: string | null;
+  staff?: {
+    id: string;
+    fullName?: string;
+    username?: string;
+    email?: string;
+  } | null;
   type: string;
   images: any[];
   createdAt: string;
@@ -16,6 +24,8 @@ export interface Customer {
 export interface CustomerCreate {
   name: string;
   address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   identifyCode?: string;
   email?: string;
   phone?: string;
@@ -25,6 +35,8 @@ export interface CustomerCreate {
 export interface CustomerUpdate {
   name?: string;
   address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   identifyCode?: string;
   email?: string;
   phone?: string;
@@ -39,6 +51,7 @@ export interface CustomerQueryParams {
   offset?: number;
   limit?: number;
   staffId?: string;
+  type?: string;
 }
 
 export interface CustomerLog {

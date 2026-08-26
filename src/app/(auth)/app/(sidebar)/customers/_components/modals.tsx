@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -6,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Input, Button, Modal, Select } from '@/components';
 
 // Icons
-import { CheckCircle2, Upload, X } from 'lucide-react';
+import { CheckCircle2, Upload, X, LocateFixed } from 'lucide-react';
 
 // Form sử dụng
 import { useForm } from 'react-hook-form';
@@ -36,6 +37,8 @@ interface CustomerFormModalProps {
     id: number;
     name: string;
     address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     identifyCode?: string | null;
     email?: string | null;
     phone?: string | null;
@@ -51,6 +54,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<CustomerFormValues>();
   
@@ -62,6 +66,45 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
   const [existingImages, setExistingImages] = useState<any[]>([]);
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const [showAllImages, setShowAllImages] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+
+  // Lấy vị trí GPS hiện tại
+  const handleGetCurrentLocation = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      toast.error('Trình duyệt của bạn không hỗ trợ định vị GPS');
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setIsLocating(false);
+        const lat = Number(position.coords.latitude.toFixed(6));
+        const lng = Number(position.coords.longitude.toFixed(6));
+        setValue('latitude', lat, { shouldValidate: true, shouldDirty: true });
+        setValue('longitude', lng, { shouldValidate: true, shouldDirty: true });
+        toast.success('Đã lấy tọa độ vị trí hiện tại thành công');
+      },
+      (error) => {
+        setIsLocating(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            toast.error('Bạn đã từ chối quyền truy cập vị trí. Vui lòng cấp quyền trong cài đặt trình duyệt.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            toast.error('Không thể xác định vị trí hiện tại.');
+            break;
+          case error.TIMEOUT:
+            toast.error('Quá thời gian lấy vị trí GPS.');
+            break;
+          default:
+            toast.error('Lỗi khi lấy vị trí hiện tại.');
+            break;
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
   // Load danh sách nhân viên
   const { data: usersData, isLoading: isLoadingUsers } = useQuery({
@@ -170,12 +213,15 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
       reset({
         name: initialData?.name || '',
         address: initialData?.address || '',
+        latitude: initialData?.latitude ?? null,
+        longitude: initialData?.longitude ?? null,
         identifyCode: initialData?.identifyCode || '',
         email: initialData?.email || '',
         phone: initialData?.phone || '',
         staffId: initialData?.staffId || (!hasFullViewRole && user ? user.id : ''),
         type: initialData?.type || '',
       });
+       
       setSelectedImages([]);
 
       const getFullImageUrl = (path: string) => {
@@ -198,7 +244,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
       setDeletedImageIds([]);
       setShowAllImages(false);
     } else {
-      reset({ name: '', address: '', identifyCode: '', email: '', phone: '', staffId: '', type: '' });
+      reset({ name: '', address: '', latitude: null, longitude: null, identifyCode: '', email: '', phone: '', staffId: '', type: '' });
       setSelectedImages((prev) => {
         prev.forEach((img) => URL.revokeObjectURL(img.preview));
         return [];
@@ -223,6 +269,12 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
     }
     if (data.address && data.address.trim() !== '') {
       payload.address = data.address;
+    }
+    if (data.latitude !== undefined && data.latitude !== null && !isNaN(Number(data.latitude))) {
+      payload.latitude = Number(data.latitude);
+    }
+    if (data.longitude !== undefined && data.longitude !== null && !isNaN(Number(data.longitude))) {
+      payload.longitude = Number(data.longitude);
     }
     if (data.staffId && data.staffId.trim() !== '') {
       payload.staffId = data.staffId;
@@ -311,6 +363,44 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
             {...register('address')}
             error={errors.address ? 'Địa chỉ không hợp lệ' : undefined}
           />
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-700 select-none">Tọa độ địa lý (GPS)</span>
+              <button
+                type="button"
+                onClick={handleGetCurrentLocation}
+                disabled={isLocating}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <LocateFixed className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin' : ''}`} />
+                <span>{isLocating ? 'Đang lấy vị trí...' : 'Lấy vị trí hiện tại'}</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Vĩ độ (Latitude)"
+                placeholder="VD: 21.028511"
+                type="number"
+                step="any"
+                fullWidth
+                {...register('latitude', {
+                  setValueAs: (v) => (v === '' || v === undefined || v === null ? null : Number(v)),
+                })}
+                error={errors.latitude?.message}
+              />
+              <Input
+                label="Kinh độ (Longitude)"
+                placeholder="VD: 105.854444"
+                type="number"
+                step="any"
+                fullWidth
+                {...register('longitude', {
+                  setValueAs: (v) => (v === '' || v === undefined || v === null ? null : Number(v)),
+                })}
+                error={errors.longitude?.message}
+              />
+            </div>
+          </div>
           <Select
             label="Nhân viên phụ trách"
             options={staffOptions}

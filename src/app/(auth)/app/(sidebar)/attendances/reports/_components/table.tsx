@@ -2,15 +2,17 @@
 
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, Eye, ShieldCheck, Calendar } from 'lucide-react';
+import { Building2, Eye, ShieldCheck, Calendar, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { TableData, type ITableColumn } from '@/components/table';
 import type { ITableFilterProps } from '@/components/table/types';
 import { Badge, Avatar } from '@/components';
 import { BASE_MINIO_URL } from '@/config';
 import { useQueryParam } from '@/hooks';
-import { getAttendanceReport, getDepartments } from '@/actions';
+import { getAttendanceReport, getDepartments, exportUserAttendanceDetailReport } from '@/actions';
 import type { AttendanceReportItem, Department } from '@/types';
 import { ReportDetailModal } from './detail-modal';
+import toast from 'react-hot-toast';
+
 
 // Helper format date YYYY-MM-DD
 export const formatDateStr = (d: Date): string => {
@@ -51,6 +53,34 @@ export function ReportTable() {
   // Modal Chi tiết chấm công
   const [selectedEmployee, setSelectedEmployee] = useState<AttendanceReportItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [exportingUserId, setExportingUserId] = useState<string | null>(null);
+
+  const handleExportUserDetail = async (row: AttendanceReportItem) => {
+    const userId = row.userId || row.user_id;
+    if (!userId || !fromDate || !toDate) {
+      toast.error('Thiếu thông tin để xuất báo cáo');
+      return;
+    }
+
+    setExportingUserId(userId);
+    const toastId = toast.loading(`Đang xuất bảng công & lương của ${row.fullName || row.username}...`);
+    try {
+      await exportUserAttendanceDetailReport(
+        {
+          userId,
+          fromDate,
+          toDate,
+        },
+        row.identifyCode || row.username || 'nhan_vien'
+      );
+      toast.success('Xuất file Excel chi tiết thành công', { id: toastId });
+    } catch (err: any) {
+      toast.error(err?.message || 'Có lỗi xảy ra khi xuất file Excel chi tiết', { id: toastId });
+    } finally {
+      setExportingUserId(null);
+    }
+  };
+
 
   // Lấy danh sách phòng ban cho bộ lọc có sẵn của Table
   const { data: departmentsData } = useQuery({
@@ -237,24 +267,44 @@ export function ReportTable() {
       },
       {
         key: 'actions',
-        label: 'Chi tiết',
-        minWidth: '80px',
-        cell: (row) => (
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedEmployee(row);
-              setIsDetailOpen(true);
-            }}
-            title="Xem chi tiết chấm công"
-            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors cursor-pointer"
-          >
-            <Eye size={17} />
-          </button>
-        ),
+        label: 'Thao tác',
+        minWidth: '95px',
+        cell: (row) => {
+          const uId = row.userId || row.user_id;
+          const isCurrentExporting = exportingUserId === uId;
+
+          return (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedEmployee(row);
+                  setIsDetailOpen(true);
+                }}
+                title="Xem chi tiết chấm công"
+                className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors cursor-pointer"
+              >
+                <Eye size={17} />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExportUserDetail(row)}
+                disabled={isCurrentExporting}
+                title="Xuất chi tiết công & bảng lương ra Excel"
+                className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isCurrentExporting ? (
+                  <Loader2 size={17} className="animate-spin text-emerald-600" />
+                ) : (
+                  <FileSpreadsheet size={17} />
+                )}
+              </button>
+            </div>
+          );
+        },
       },
     ],
-    []
+    [exportingUserId, fromDate, toDate]
   );
 
   // Render Card cho thiết bị di động
@@ -264,6 +314,8 @@ export function ReportTable() {
       variant: 'default',
     };
     const isPartTime = row.attendancePolicy === 'part_time';
+    const uId = row.userId || row.user_id;
+    const isCurrentExporting = exportingUserId === uId;
 
     return (
       <div key={row.userId || index} className="p-4 rounded-xl border border-gray-200 bg-white flex flex-col gap-3 shadow-xs">
@@ -296,18 +348,34 @@ export function ReportTable() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedEmployee(row);
-              setIsDetailOpen(true);
-            }}
-            className="p-2 text-gray-500 hover:text-primary hover:bg-primary/5 rounded-lg border border-gray-200 cursor-pointer"
-            title="Xem chi tiết"
-          >
-            <Eye size={18} />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedEmployee(row);
+                setIsDetailOpen(true);
+              }}
+              className="p-2 text-gray-500 hover:text-primary hover:bg-primary/5 rounded-lg border border-gray-200 cursor-pointer"
+              title="Xem chi tiết"
+            >
+              <Eye size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleExportUserDetail(row)}
+              disabled={isCurrentExporting}
+              className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg border border-emerald-200 cursor-pointer disabled:opacity-50"
+              title="Xuất chi tiết công lương ra Excel"
+            >
+              {isCurrentExporting ? (
+                <Loader2 size={18} className="animate-spin text-emerald-600" />
+              ) : (
+                <FileSpreadsheet size={18} />
+              )}
+            </button>
+          </div>
         </div>
+
 
         <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100 text-center">
           <div className="bg-slate-50 p-2 rounded-lg">

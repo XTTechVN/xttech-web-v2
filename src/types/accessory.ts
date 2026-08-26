@@ -46,6 +46,9 @@ export interface AccessoryQueryParams {
   unit?: string;
   offset?: number;
   limit?: number;
+  allowDeleted?: boolean;
+  materialId?: number;
+  doorId?: number;
 }
 
 export interface AccessoryAssignDoors {

@@ -1,14 +1,14 @@
 'use client';
 
-import { User, Pencil, Trash2, Eye } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { User, Pencil, Trash2, Eye, Plus, MapPin } from 'lucide-react';
 
-import { TableData, TableAction } from '@/components/table';
+import { TableData, TableAction, ITableFilterProps } from '@/components';
 
 import { Button } from '@/components';
-import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
 import type { Customer } from '@/types';
-import { getCustomerTypeLabel, getCustomerTypeColor } from '../config';
+import { getCustomerTypeLabel, getCustomerTypeColor, CUSTOMER_TYPE_OPTIONS } from '../config';
 import { getCustomers, getUsers } from '@/actions';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -22,22 +22,64 @@ interface TableProps {
 }
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
+
+  const [filterType, setFilterType] = useState<string | undefined>();
+  const [filterStaffId, setFilterStaffId] = useState<string | undefined>();
   const user = useAuthStore((state) => state.user);
+
+  const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
 
   const { data: usersData } = useQuery({
     queryKey: ['users', 'all'],
     queryFn: () => getUsers({ limit: 1000 }),
   });
 
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
-    const staffId = !hasFullViewRole && user ? user.id : undefined;
+  const typeOptions = useMemo(() => {
+    return [{ label: 'Tất cả loại khách hàng', value: undefined }, ...CUSTOMER_TYPE_OPTIONS];
+  }, []);
 
-    const res = await getCustomers({ offset, limit, search: search || undefined, staffId });
+  const staffOptions = useMemo(() => {
+    const list = (usersData?.items || []).map((u: any) => ({
+      label: u.fullName || u.username || u.email,
+      value: u.id,
+    }));
+    return [{ label: 'Tất cả nhân viên', value: undefined }, ...list];
+  }, [usersData]);
+
+  const tableFilters = useMemo(() => {
+    const filters: ITableFilterProps[] = [
+      {
+        label: 'Loại khách hàng',
+        value: filterType,
+        options: typeOptions,
+        onChange: (val: string | undefined) => setFilterType(val),
+      },
+    ];
+
+    if (hasFullViewRole) {
+      filters.push({
+        label: 'Nhân viên phụ trách',
+        value: filterStaffId,
+        options: staffOptions,
+        onChange: (val: string | undefined) => setFilterStaffId(val),
+      });
+    }
+
+    return filters;
+  }, [filterType, filterStaffId, typeOptions, staffOptions, hasFullViewRole]);
+
+  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
+    const staffId = !hasFullViewRole && user ? user.id : (filterStaffId || undefined);
+
+    const res = await getCustomers({
+      offset,
+      limit,
+      search: search || undefined,
+      staffId,
+      type: filterType || undefined,
+    });
     if (!res) {
       toast.error('Lỗi khi tải danh sách khách hàng');
       throw new Error('Lỗi khi tải danh sách khách hàng');
@@ -45,74 +87,100 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     return res;
   };
 
-  // Các cột trong bảng khách hàng
+  // Các cột trong bảng khách hàng (Tối ưu 5 cột gom nhóm thông minh)
   const columns = [
     {
-      key: 'name',
-      label: 'Tên khách hàng',
-      minWidth: '220px',
+      key: 'customer',
+      label: 'Khách hàng',
+      minWidth: '240px',
       cell: (row: Customer) => (
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/5 text-primary">
-            <User size={16} />
+        <div className="flex flex-col gap-1 py-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-gray-900 leading-tight">{row.name}</span>
+            {row.type && (
+              <span
+                className={`text-[11px] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap leading-none ${getCustomerTypeColor(row.type)}`}
+              >
+                {getCustomerTypeLabel(row.type)}
+              </span>
+            )}
           </div>
-          <span className="font-semibold text-gray-900">{row.name}</span>
+          <span className="text-xs text-gray-400">
+            {row.identifyCode ? `Mã: ${row.identifyCode}` : 'Chưa có mã ĐD'}
+          </span>
         </div>
       ),
     },
     {
-      key: 'identifyCode',
-      label: 'Mã định danh',
-      minWidth: '150px',
-      cell: (row: Customer) => <span className="text-gray-600 text-sm">{row.identifyCode || '—'}</span>,
-    },
-    {
-      key: 'phone',
-      label: 'Số điện thoại',
-      minWidth: '150px',
-      cell: (row: Customer) => <span className="text-gray-65 text-sm">{row.phone || '—'}</span>,
-    },
-    {
-      key: 'email',
-      label: 'Email',
-      minWidth: '200px',
-      cell: (row: Customer) => <span className="text-gray-500 text-sm">{row.email || '—'}</span>,
+      key: 'contact',
+      label: 'Liên hệ',
+      minWidth: '180px',
+      cell: (row: Customer) => (
+        <div className="flex flex-col gap-0.5 py-1">
+          <span className="text-sm font-medium text-gray-800">
+            {row.phone || '—'}
+          </span>
+          {row.email && (
+            <span className="text-xs text-gray-400 truncate max-w-45" title={row.email}>
+              {row.email}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'address',
-      label: 'Địa chỉ',
-      minWidth: '200px',
-      cell: (row: Customer) => <span className="text-gray-500 text-sm truncate max-w-50 block">{row.address || '—'}</span>,
-    },
-    {
-      key: 'staff',
-      label: 'Nhân viên phụ trách',
-      minWidth: '180px',
+      label: 'Địa chỉ & Vị trí',
+      minWidth: '220px',
       cell: (row: Customer) => {
-        const staffName = usersData?.items?.find((u: any) => u.id === row.staffId)?.fullName || (row as any).staff?.fullName || (row as any).staff?.username || row.staffId || '—';
-        return <span className="text-gray-600 text-sm">{staffName}</span>;
-      },
-    },
-    {
-      key: 'type',
-      label: 'Loại KH',
-      minWidth: '120px',
-      cell: (row: Customer) => {
+        const hasCoordinates =
+          row.latitude !== null &&
+          row.latitude !== undefined &&
+          row.longitude !== null &&
+          row.longitude !== undefined;
+
         return (
-          <span className={`text-xs font-medium px-2 py-1 rounded-md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>
-            {getCustomerTypeLabel(row.type)}
-          </span>
+          <div className="flex flex-col gap-1 py-1">
+            <span className="text-sm text-gray-700 truncate max-w-55" title={row.address || ''}>
+              {row.address || '—'}
+            </span>
+            {hasCoordinates && (
+              <a
+                href={`https://www.google.com/maps?q=${row.latitude},${row.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 hover:underline w-fit"
+              >
+                <MapPin size={12} className="shrink-0" />
+                <span>Xem vị trí Google Maps</span>
+              </a>
+            )}
+          </div>
         );
       },
     },
-
+    {
+      key: 'staff',
+      label: 'Phụ trách',
+      minWidth: '160px',
+      cell: (row: Customer) => {
+        const staffName =
+          usersData?.items?.find((u: any) => u.id === row.staffId)?.fullName ||
+          (row as any).staff?.fullName ||
+          (row as any).staff?.username ||
+          row.staffId ||
+          '—';
+        return <span className="text-sm text-gray-700">{staffName}</span>;
+      },
+    },
     {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
       cell: (row: Customer) => (
         <TableAction
-          onView={() => router.push(`/app/customers/${row.id}/customer-logs`)}
+          onView={() => router.push(`/app/customers/${row.id}`)}
           onEdit={() => onEditClick(row)}
           onDelete={() => onDeleteClick(row)}
         />
@@ -169,7 +237,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5">
         <button
           type="button"
-          onClick={() => router.push(`/app/customers/${row.id}/customer-logs`)}
+          onClick={() => router.push(`/app/customers/${row.id}`)}
           className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer"
         >
           <Eye size={12} />
@@ -209,13 +277,14 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         </Button>
       </div>
       <TableData<Customer>
-        queryKey={['customers', search, offset]}
+        queryKey={['customers', search, filterType, filterStaffId]}
         fetcher={fetcher}
         columns={columns}
+        filters={tableFilters}
         renderCard={renderCard}
         select={false}
         search={{
-          placeholder: 'Tìm kiếm khách hàng...',
+          placeholder: 'Tìm kiếm theo tên, SĐT, mã ĐD, email...',
           value: search,
           onChange: setSearch,
           className: 'w-80',

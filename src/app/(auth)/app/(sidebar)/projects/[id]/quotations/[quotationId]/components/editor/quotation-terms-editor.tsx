@@ -92,7 +92,6 @@ export const QuotationTermsEditor: React.FC = () => {
               className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-primary px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <RotateCcw size={12} />
-              Mẫu chuẩn
             </button>
           </div>
         </div>
@@ -167,9 +166,17 @@ export const QuotationTermsEditor: React.FC = () => {
               contentEditable
               onInput={handleInput}
               onBlur={handleInput}
-              className="min-h-40 max-h-90 overflow-y-auto p-3 text-xs leading-relaxed text-gray-800 border border-slate-200 rounded focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
+              className="min-h-48 max-h-96 overflow-y-auto p-3.5 text-xs leading-[1.6] text-slate-800 border border-slate-200 rounded-md focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white
+                [&_p]:my-1 [&_p]:text-slate-800
+                [&_ul]:my-1 [&_ul]:pl-5 [&_ul]:list-disc [&_ul]:space-y-0.5
+                [&_ol]:my-1 [&_ol]:pl-5 [&_ol]:list-decimal [&_ol]:space-y-0.5
+                [&_li]:my-0.5 [&_li]:text-slate-700
+                [&_strong]:font-bold [&_strong]:text-slate-900
+                [&_u]:underline [&_em]:italic [&_em]:text-slate-600
+                [&_h3]:text-sm [&_h3]:font-bold [&_h3]:my-1.5 [&_h3]:text-slate-900
+                [&_h4]:text-xs [&_h4]:font-bold [&_h4]:my-1 [&_h4]:text-slate-900
+                [&_blockquote]:border-l-2 [&_blockquote]:border-primary/50 [&_blockquote]:pl-2.5 [&_blockquote]:italic [&_blockquote]:my-1"
               style={{
-                whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
               }}
             />

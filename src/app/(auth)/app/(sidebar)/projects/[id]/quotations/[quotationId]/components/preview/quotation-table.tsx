@@ -39,7 +39,7 @@ const toRoman = (num: number): string => {
 export const QuotationTable = ({ floors, materialsList, doorsList }: QuotationTableProps) => {
   return (
     <div className="overflow-x-auto">
-      <table className={`w-full min-w-[800px] border-collapse border border-gray-400 ${PREVIEW_TABLE_FONT_SIZE} font-normal not-italic`}>
+      <table className={`w-full min-w-200 border-collapse border border-gray-400 ${PREVIEW_TABLE_FONT_SIZE} font-normal not-italic`}>
         <thead>
           <tr className="bg-primary text-white">
             <th rowSpan={2} className="border border-gray-400 py-1.5 px-1 text-center w-8">
@@ -144,7 +144,9 @@ export const QuotationTable = ({ floors, materialsList, doorsList }: QuotationTa
                                 </td>
                                 <td className="border border-gray-400 py-1 px-2 text-center">{door.code || ''}</td>
                                 <td className="border border-gray-400 py-1 px-2">{doorName}</td>
-                                <td className="border border-gray-400 py-1 px-1 text-center">m2</td>
+                                <td className="border border-gray-400 py-1 px-1 text-center">
+                                  {door.unit === 'set' ? 'Bộ' : 'm²'}
+                                </td>
                                 <td className="border border-gray-400 py-1 px-2 text-center">{door.effectiveWidth ?? door.width ?? ''}</td>
                                 <td className="border border-gray-400 py-1 px-2 text-center">{door.effectiveHeight ?? door.height ?? ''}</td>
                                 <td className="border border-gray-400 py-1 px-1 text-center">{door.quantity}</td>

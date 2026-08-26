@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
-import { Button, Input } from '@/components';
+import { Plus, Copy, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Button } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { QuotationMaterial } from './quotation-material';
 import { EDITOR_STYLES } from './config';
@@ -40,26 +40,28 @@ export const QuotationFloor = ({
   };
 
   return (
-    <div className="border border-gray-200 rounded-md bg-white shadow-sm p-4 flex flex-col gap-4">
-      <div className={`flex items-center justify-between transition-all duration-200 ${isOpen ? 'pb-3 border-b border-gray-100' : 'pb-0'}`}>
-        <div className="flex items-center gap-2 flex-1">
+    <div className="border border-gray-200 rounded-md bg-white shadow-sm p-3.5 flex flex-col gap-3.5">
+      <div className={`flex items-center justify-between transition-all duration-200 ${isOpen ? 'pb-2.5 border-b border-gray-100' : 'pb-0'}`}>
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggle}
-            className="p-0 h-auto w-auto hover:opacity-80 text-gray-500 border-none flex items-center justify-center"
+            className="p-0 h-auto w-auto hover:opacity-80 text-gray-500 border-none flex items-center justify-center shrink-0"
             title={isOpen ? "Thu gọn tầng" : "Mở rộng tầng"}
           >
             {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
           </Button>
-          <Input
+          <input
+            type="text"
             placeholder="Tên tầng..."
             value={floor.name}
             onChange={(e) => store.updateFloorName(fIndex, e.target.value)}
-            className="h-8 text-base md:text-sm px-0.5 text-black bg-transparent border-none focus:ring-0 focus:outline-none w-full font-bold text-gray-800"
+            className="h-8 text-sm px-1.5 text-slate-800 bg-transparent border-none focus:ring-0 focus:outline-none flex-1 min-w-0 font-bold hover:bg-slate-50 focus:bg-white rounded transition-colors"
+            title={floor.name}
           />
         </div>
-        <div className="flex items-center gap-3.5 ml-3">
+        <div className="flex items-center gap-2.5 ml-2 shrink-0">
           <Button
             variant="ghost"
             size="sm"
@@ -68,6 +70,15 @@ export const QuotationFloor = ({
             title="Thêm hệ nhôm"
           >
             <Plus size={16} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-slate-400 hover:text-primary p-0 bg-transparent hover:bg-transparent h-auto w-auto min-w-0 inline-flex items-center justify-center border-none transition-all duration-150"
+            onClick={() => store.copyFloor(fIndex)}
+            title="Sao chép tầng này"
+          >
+            <Copy size={15} />
           </Button>
           <Button
             variant="ghost"
@@ -86,7 +97,7 @@ export const QuotationFloor = ({
         <div className="flex flex-col gap-3 pl-4">
           {floor.materials.length === 0 ? (
             <div className="text-center py-4 text-xs text-gray-400 italic">
-              Chưa có hệ nhôm nào. Nhấn "Thêm hệ nhôm" để bắt đầu.
+              Chưa có hệ nhôm nào. Nhấn &quot;Thêm hệ nhôm&quot; để bắt đầu.
             </div>
           ) : (
             floor.materials.map((_, mIndex) => (

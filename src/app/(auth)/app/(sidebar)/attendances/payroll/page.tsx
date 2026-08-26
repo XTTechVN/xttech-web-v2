@@ -1,36 +1,18 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import {
-  Heading,
-  Button,
-  Badge,
-  TableData,
-  TableAction,
-  ITableColumn,
-  ITableFilterProps,
-} from '@/components';
+import { Button, Badge, TableData, TableAction, ITableColumn, ITableFilterProps } from '@/components';
 import { toast } from 'react-hot-toast';
-import {
-  Calendar,
-  Clock,
-  AlertCircle,
-  LogIn,
-  LogOut,
-  FileEdit,
-  Users,
-  Briefcase,
-  Eye,
-  CheckCircle2,
-} from 'lucide-react';
+import { Calendar, Clock, AlertCircle, LogIn, LogOut, FileEdit, Briefcase, Eye, UserX } from 'lucide-react';
 import Link from 'next/link';
 import AutoTimekeepingModal from '@/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal';
 import { useAuthStore } from '@/stores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAttendances } from '@/actions';
 import { Attendance, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
+import { BASE_MINIO_URL } from '@/config/app';
 import StatCart from '../../dashboard/_components/stats-card';
-import AddAdjustmentModal from '../_components/adjustment/add-modal';
+import AddAdjustmentModal from '../adjustments/_components/add-modal';
 import AttendanceDetailModal from '../_components/attendance-modal';
 import OvertimeModal from '../_components/overtime-modal';
 
@@ -58,48 +40,27 @@ export default function PayrollDataPage() {
     enabled: !!user?.id,
   });
 
-  const myAttendances = attendances?.items ?? [];
+  const myAttendances = useMemo(() => attendances?.items ?? [], [attendances?.items]);
 
-  const todayStr = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }, []);
+  // Ưu tiên tìm phiên chấm công đang mở (đã check-in nhưng chưa check-out)
+  const activeOpenAttendance = useMemo(() => {
+    return myAttendances.find((a) => a.checkIn && !a.checkOut);
+  }, [myAttendances]);
 
-  const todayAttendance = useMemo(() => {
-    return myAttendances.find((a) => a.workDate === todayStr);
-  }, [myAttendances, todayStr]);
-
-  // Chỉ hiển thị 'Check-out ngay' khi đã Check-in và chưa Check-out; còn lại luôn hiển thị 'Check-in ngay'
-  const isCheckOutAction = Boolean(todayAttendance?.checkIn && !todayAttendance?.checkOut);
+  // Chỉ hiển thị 'Check-out ngay' khi có phiên chấm công đang mở; ngược lại hiển thị 'Check-in ngay'
+  const isCheckOutAction = Boolean(activeOpenAttendance);
 
   // Filters and search for Payroll attendance history table
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string | undefined>();
-  const [filterStartDate, setFilterStartDate] = useState<string | undefined>();
-  const [filterEndDate, setFilterEndDate] = useState<string | undefined>();
 
   const statusOptions = useMemo(() => {
-    const statuses = Array.from(
-      new Set(myAttendances.map((item) => item.status).filter((s): s is string => Boolean(s)))
-    );
+    const statuses = Array.from(new Set(myAttendances.map((item) => item.status).filter((s): s is string => Boolean(s))));
     return statuses.map((status) => ({
       label: getAttendanceStatusLabel(status),
       value: String(status),
     }));
   }, [myAttendances]);
-
-  const dateOptions = useMemo(() => {
-    return Array.from({ length: 31 }, (_, i) => {
-      const day = String(i + 1).padStart(2, '0');
-      return {
-        label: `2026-08-${day}`,
-        value: `2026-08-${day}`,
-      };
-    });
-  }, []);
 
   const tableFilters: ITableFilterProps[] = [
     {
@@ -113,50 +74,24 @@ export default function PayrollDataPage() {
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
     if (!user?.id) {
       return {
-        items: myAttendances.slice(offset, offset + limit),
-        meta: {
-          total: myAttendances.length,
-          offset,
-          limit,
-          next: offset + limit < myAttendances.length,
-        },
+        items: [],
+        meta: { total: 0, offset, limit, next: false },
       };
     }
     const response = await getAttendances({
       offset,
       limit,
       userId: user.id,
-      search: searchQuery || undefined,
+      search: searchQuery.trim() || undefined,
       status: (filterStatus as any) || undefined,
-      startDate: filterStartDate || undefined,
-      endDate: filterEndDate || undefined,
     });
-    const rawItems = response.items ?? [];
-    let items = [...rawItems];
-    if (searchQuery) {
-      items = items.filter((item) =>
-        (item.note || item.workDate || item.status || '')
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase())
-      );
-    }
-    if (filterStatus) {
-      items = items.filter((item) => item.status === filterStatus);
-    }
-    if (filterStartDate) {
-      items = items.filter((item) => item.workDate >= filterStartDate);
-    }
-    if (filterEndDate) {
-      items = items.filter((item) => item.workDate <= filterEndDate);
-    }
-    const metaInfo = response.meta;
     return {
-      items,
-      meta: {
-        total: metaInfo?.total ?? items.length,
-        offset: metaInfo?.offset ?? offset,
-        limit: metaInfo?.limit ?? limit,
-        next: metaInfo?.next ?? false,
+      items: response.items ?? [],
+      meta: response.meta ?? {
+        total: response.items?.length ?? 0,
+        offset,
+        limit,
+        next: false,
       },
     };
   };
@@ -169,107 +104,147 @@ export default function PayrollDataPage() {
   const getDayOfWeek = (date: string) => {
     const dateObj = new Date(`${date}T00:00:00`);
     const day = dateObj.getDay();
-
     return day === 0 ? 'CN' : String(day + 1);
   };
 
-  const getTotalWorkingDay = () => {
-    return myAttendances.filter((a) => a.status !== 'absent').length;
-  };
+  const payrollStats = useMemo(() => {
+    let workingDays = 0;
+    let leaveDays = 0;
+    let absenceDays = 0;
+    let overtimeCount = 0;
+    let lateCount = 0;
 
-  const getTotalLeaveDays = () => {
-    return myAttendances.filter((a) => a.status === 'leave').length;
-  };
+    for (const a of myAttendances) {
+      if (a.status !== 'absent') workingDays++;
+      if (a.status === 'leave') leaveDays++;
+      if (a.status === 'absent') absenceDays++;
+      if (a.status === 'overtime') overtimeCount++;
+      if (a.status === 'late' || a.isLate || a.isEarlyLeave) lateCount++;
+    }
 
-  const getTotalAbsenceDays = () => {
-    return myAttendances.filter((a) => a.status === 'absent').length;
-  };
-
-  const getTotalOvertime = () => {
-    return myAttendances.filter((a) => a.status === 'overtime').length;
-  };
-
-  const getLatePolicy = () => {
-    return myAttendances.filter((a) => a.status === 'late').length;
-  };
+    return [
+      {
+        title: 'Tổng ngày công',
+        value: workingDays,
+        icon: <Calendar />,
+        trend: workingDays,
+        trendDirection: workingDays > 0 ? 1 : -1,
+      },
+      {
+        title: 'Tổng ngày phép',
+        value: leaveDays,
+        icon: <Briefcase />,
+        trend: leaveDays,
+        trendDirection: leaveDays > 0 ? 1 : -1,
+      },
+      {
+        title: 'Ngày nghỉ',
+        value: absenceDays,
+        icon: <UserX />,
+        trend: absenceDays,
+        trendDirection: absenceDays > 0 ? 1 : -1,
+      },
+      {
+        title: 'Tăng ca (OT)',
+        value: overtimeCount,
+        icon: <Clock />,
+        trend: overtimeCount,
+        trendDirection: overtimeCount > 0 ? 1 : -1,
+      },
+      {
+        title: 'Đi muộn / Về sớm',
+        value: `${lateCount}`,
+        icon: <AlertCircle />,
+        trend: lateCount,
+        trendDirection: lateCount > 0 ? 1 : -1,
+      },
+    ];
+  }, [myAttendances]);
 
   const attendanceColumns: ITableColumn<Attendance>[] = [
     {
       key: 'workDate',
-      label: 'Ngày',
-      minWidth: '100px',
-      cell: (row) => formatWorkDate(row.workDate),
-    },
-    {
-      key: 'dayOfWeek',
-      label: 'Thứ',
-      minWidth: '80px',
-      cell: (row) => getDayOfWeek(row.workDate),
-    },
-    {
-      key: 'checkIn',
-      label: 'Check In',
-      minWidth: '100px',
-      cell: (row) => (
-        <span
-          className={
-            row.isLate
-              ? 'font-medium text-red-600'
-              : 'text-slate-800'
-          }
-        >
-          {formatTime(row.checkIn)}
-        </span>
-      ),
-    },
-    {
-      key: 'checkOut',
-      label: 'Check Out',
-      minWidth: '100px',
-      cell: (row) => (
-        <span
-          className={
-            row.isEarlyLeave
-              ? 'font-medium text-amber-600'
-              : 'text-slate-800'
-          }
-        >
-          {formatTime(row.checkOut)}
-        </span>
-      ),
-    },
-    {
-      key: 'totalHours',
-      label: 'Giờ công',
-      minWidth: '100px',
-      cell: (row) =>
-        (row.totalHours ?? 0) > 0
-          ? `${row.totalHours} h`
-          : '-',
-    },
-    {
-      key: 'violation',
-      label: 'Đi muộn / Về sớm',
+      label: 'Ngày chấm công',
       minWidth: '150px',
+      cell: (row) => {
+        const day = getDayOfWeek(row.workDate);
+        const dayLabel = day === 'CN' ? 'CN' : `Thứ ${day}`;
+        return (
+          <span className="font-medium text-slate-600 text-sm">
+            {dayLabel}, {formatWorkDate(row.workDate)}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'timekeeping',
+      label: 'Thời gian',
+      minWidth: '200px',
       cell: (row) => {
         const lateMinutes = row.lateMinutes ?? 0;
         const earlyLeaveMinutes = row.earlyLeaveMinutes ?? 0;
-
-        if (lateMinutes === 0 && earlyLeaveMinutes === 0) {
-          return '-';
-        }
+        return (
+          <div className="flex flex-col gap-0.5 py-1">
+            <div className="flex items-center gap-1.5 text-sm flex-wrap">
+              <span className="font-medium text-slate-700">{formatTime(row.checkIn)}</span>
+              {lateMinutes > 0 && <span className="text-[10px] bg-red-50 text-red-600 px-1 py-0.5 rounded font-medium">M{lateMinutes}p</span>}
+              <span className="font-medium">-</span>
+              <span className="font-medium text-slate-700">{formatTime(row.checkOut)}</span>
+              {earlyLeaveMinutes > 0 && (
+                <span className="text-[10px] bg-amber-50 text-amber-600 px-1 py-0.5 rounded font-medium">S{earlyLeaveMinutes}p</span>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'photos',
+      label: 'Ảnh chấm công',
+      minWidth: '120px',
+      cell: (row) => {
+        const inImgPath = row.imgCheckinPath;
+        const outImgPath = row.imgCheckoutPath;
+        const inImgSrc = inImgPath ? (inImgPath.startsWith('http') ? inImgPath : `${BASE_MINIO_URL}${inImgPath}`) : null;
+        const outImgSrc = outImgPath ? (outImgPath.startsWith('http') ? outImgPath : `${BASE_MINIO_URL}${outImgPath}`) : null;
 
         return (
-          <div className="flex flex-col gap-0.5 text-[13px]">
-            {lateMinutes > 0 && (
-              <span className="font-medium whitespace-nowrap">
-                Đi muộn: {lateMinutes} phút
-              </span>
+          <div className="flex gap-2 items-center py-1">
+            {inImgSrc ? (
+              <a
+                href={inImgSrc}
+                target="_blank"
+                rel="noreferrer"
+                className="block relative w-9 h-9 rounded-full border border-slate-200 overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                title="Ảnh check-in"
+              >
+                <img src={inImgSrc} alt="Check In" className="object-cover w-full h-full" />
+              </a>
+            ) : (
+              <div
+                className="w-9 h-9 rounded-full bg-slate-50 border border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-xs"
+                title="Không có ảnh check-in"
+              >
+                -
+              </div>
             )}
-            {earlyLeaveMinutes > 0 && (
-              <span className="font-medium whitespace-nowrap">
-                Về sớm: {earlyLeaveMinutes} phút
-              </span>
+            {outImgSrc ? (
+              <a
+                href={outImgSrc}
+                target="_blank"
+                rel="noreferrer"
+                className="block relative w-9 h-9 rounded-full border border-slate-200 overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                title="Ảnh check-out"
+              >
+                <img src={outImgSrc} alt="Check Out" className="object-cover w-full h-full" />
+              </a>
+            ) : (
+              <div
+                className="w-9 h-9 rounded-full bg-slate-50 border border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-xs"
+                title="Không có ảnh check-out"
+              >
+                -
+              </div>
             )}
           </div>
         );
@@ -279,11 +254,7 @@ export default function PayrollDataPage() {
       key: 'status',
       label: 'Trạng thái',
       minWidth: '120px',
-      cell: (row) => (
-        <Badge variant={getAttendanceStatusVariant(row.status)}>
-          {getAttendanceStatusLabel(row.status)}
-        </Badge>
-      ),
+      cell: (row) => <Badge variant={getAttendanceStatusVariant(row.status)}>{getAttendanceStatusLabel(row.status)}</Badge>,
     },
     {
       key: 'note',
@@ -322,95 +293,107 @@ export default function PayrollDataPage() {
     },
   ];
 
-  const renderAttendanceCard = (row: Attendance, index: number) => (
-    <div
-      key={row.id ?? index}
-      className="rounded-2xl border border-primary/10 bg-white p-4 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 space-y-3"
-    >
-      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-        <div>
-          <p className="font-bold text-slate-900 text-sm">
-            {formatWorkDate(row.workDate)}
-          </p>
-          <p className="text-[11px] text-slate-400 font-medium">
-            {getDayOfWeek(row.workDate)}
-          </p>
+  const renderAttendanceCard = (row: Attendance, index: number) => {
+    const inImgPath = row.imgCheckinPath;
+    const outImgPath = row.imgCheckoutPath;
+    const inImgSrc = inImgPath ? (inImgPath.startsWith('http') ? inImgPath : `${BASE_MINIO_URL}${inImgPath}`) : null;
+    const outImgSrc = outImgPath ? (outImgPath.startsWith('http') ? outImgPath : `${BASE_MINIO_URL}${outImgPath}`) : null;
+
+    return (
+      <div
+        key={row.id ?? index}
+        className="rounded-2xl border border-primary/10 bg-white p-4 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 space-y-3"
+      >
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div>
+            <p className="font-bold text-slate-900 text-sm">{formatWorkDate(row.workDate)}</p>
+            <p className="text-[11px] text-slate-400 font-medium">
+              {getDayOfWeek(row.workDate) === 'CN' ? 'Chủ nhật' : `Thứ ${getDayOfWeek(row.workDate)}`}
+            </p>
+          </div>
+          <Badge variant={getAttendanceStatusVariant(row.status)} pill>
+            {getAttendanceStatusLabel(row.status)}
+          </Badge>
         </div>
-        <Badge variant={getAttendanceStatusVariant(row.status)} pill>
-          {getAttendanceStatusLabel(row.status)}
-        </Badge>
+
+        <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+          <div className="flex gap-2">
+            {inImgSrc ? (
+              <a
+                href={inImgSrc}
+                target="_blank"
+                rel="noreferrer"
+                className="block relative w-8 h-8 rounded-full border border-slate-200 overflow-hidden shrink-0 mt-0.5"
+              >
+                <img src={inImgSrc} alt="Check In" className="object-cover w-full h-full" />
+              </a>
+            ) : null}
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase block">Check In</span>
+              <span className="font-semibold text-slate-800">{formatTime(row.checkIn)}</span>
+              {(row.lateMinutes ?? 0) > 0 && <span className="text-[10px] text-red-600 font-medium block">Muộn {row.lateMinutes}p</span>}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {outImgSrc ? (
+              <a
+                href={outImgSrc}
+                target="_blank"
+                rel="noreferrer"
+                className="block relative w-8 h-8 rounded-full border border-slate-200 overflow-hidden shrink-0 mt-0.5"
+              >
+                <img src={outImgSrc} alt="Check Out" className="object-cover w-full h-full" />
+              </a>
+            ) : null}
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase block">Check Out</span>
+              <span className="font-semibold text-slate-800">{formatTime(row.checkOut)}</span>
+              {(row.earlyLeaveMinutes ?? 0) > 0 && (
+                <span className="text-[10px] text-amber-600 font-medium block">Về sớm {row.earlyLeaveMinutes}p</span>
+              )}
+            </div>
+          </div>
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase block">Giờ công</span>
+            <span className="font-bold text-teal-700">{row.totalHours?.toFixed(1) ?? '0'}h</span>
+          </div>
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase block">Tăng ca</span>
+            <span className="font-bold text-slate-700">0h</span>
+          </div>
+        </div>
+
+        {row.note && (
+          <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200">Ghi chú: {row.note}</p>
+        )}
+
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-2.5" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedRow(row);
+              setShowAdjustmentModal(true);
+            }}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <FileEdit size={12} />
+            Khiếu nại
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedRow(row);
+              setShowDetailModal(true);
+            }}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <Eye size={12} />
+            Chi tiết
+          </button>
+        </div>
       </div>
-
-      <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-        <div>
-          <span className="text-[10px] font-bold text-slate-400 uppercase block">Check In</span>
-          <span className="font-semibold text-slate-800">{formatTime(row.checkIn)}</span>
-          {(row.lateMinutes ?? 0) > 0 && (
-            <span className="text-[10px] text-amber-600 font-medium block">Muộn {row.lateMinutes}p</span>
-          )}
-        </div>
-        <div>
-          <span className="text-[10px] font-bold text-slate-400 uppercase block">Check Out</span>
-          <span className="font-semibold text-slate-800">{formatTime(row.checkOut)}</span>
-          {(row.earlyLeaveMinutes ?? 0) > 0 && (
-            <span className="text-[10px] text-amber-600 font-medium block">Về sớm {row.earlyLeaveMinutes}p</span>
-          )}
-        </div>
-        <div>
-          <span className="text-[10px] font-bold text-slate-400 uppercase block">Giờ công</span>
-          <span className="font-bold text-teal-700">{row.totalHours?.toFixed(1) ?? '0'}h</span>
-        </div>
-        <div>
-          <span className="text-[10px] font-bold text-slate-400 uppercase block">Tăng ca</span>
-          <span className="font-bold text-slate-700">0h</span>
-        </div>
-      </div>
-
-      {row.note && (
-        <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200">
-          Ghi chú: {row.note}
-        </p>
-      )}
-    </div>
-  );
-
-  const payrollStats = [
-    {
-      title: 'Tổng ngày công',
-      value: getTotalWorkingDay(),
-      icon: <Calendar />,
-      trend: getTotalWorkingDay(),
-      trendDirection: getTotalWorkingDay() > 0 ? 1 : -1,
-    },
-    {
-      title: 'Tổng ngày phép',
-      value: getTotalLeaveDays(),
-      icon: <Briefcase />,
-      trend: getTotalLeaveDays(),
-      trendDirection: getTotalLeaveDays() > 0 ? 1 : -1,
-    },
-    {
-      title: 'Ngày nghỉ',
-      value: getTotalAbsenceDays(),
-      icon: <Users />,
-      trend: getTotalAbsenceDays(),
-      trendDirection: getTotalAbsenceDays() > 0 ? 1 : -1,
-    },
-    {
-      title: 'Tăng ca (OT)',
-      value: getTotalOvertime(),
-      icon: <Clock />,
-      trend: getTotalOvertime(),
-      trendDirection: getTotalOvertime() > 0 ? 1 : -1,
-    },
-    {
-      title: 'Tổng số lần đi muộn/về sớm',
-      value: `${getLatePolicy()}`,
-      icon: <AlertCircle />,
-      trend: getLatePolicy(),
-      trendDirection: getLatePolicy() > 0 ? 1 : -1,
-    },
-  ];
+    );
+  };
 
   return (
     <div className="w-full flex flex-col gap-4">
@@ -463,12 +446,10 @@ export default function PayrollDataPage() {
         </div>
 
         {isLoadingAttendances ? (
-          <div className="py-10 text-center text-sm text-slate-500">
-            Đang tải dữ liệu...
-          </div>
+          <div className="py-10 text-center text-sm text-slate-500">Đang tải dữ liệu...</div>
         ) : (
           <TableData<Attendance>
-            queryKey={['payroll-daily-logs', user?.id, searchQuery, filterStatus, filterStartDate, filterEndDate]}
+            queryKey={['payroll-daily-logs', user?.id, searchQuery, filterStatus]}
             fetcher={fetcher}
             columns={attendanceColumns}
             search={{
@@ -510,11 +491,7 @@ export default function PayrollDataPage() {
         data={selectedRow}
       />
 
-      <AttendanceDetailModal
-        open={showDetailModal}
-        data={selectedRow}
-        onClose={() => setShowDetailModal(false)}
-      />
+      <AttendanceDetailModal open={showDetailModal} data={selectedRow} onClose={() => setShowDetailModal(false)} />
 
       <AutoTimekeepingModal
         open={showTimekeepingModal}

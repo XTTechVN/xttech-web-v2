@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, X, Check } from 'lucide-react';
@@ -228,9 +229,13 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
         {filteredItems.length > 0 ? (
           filteredItems.map((item) => {
             const isSelected = item.id === selectedValue;
+            const itemTitle = item.name
+              ? `${item.name}${item.code ? ` (${item.code})` : ''}${(item.price !== undefined && item.price !== null) ? ` - ${Number(item.price).toLocaleString('vi-VN')}đ` : ''}`
+              : '';
             return (
               <div
                 key={item.id}
+                title={itemTitle}
                 onClick={() => {
                   onSelect(item);
                   onClose();
@@ -246,7 +251,7 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
                     renderItem(item)
                   ) : (
                     <div className="relative flex items-center justify-between w-full min-w-0 pr-8">
-                      <div className="truncate pr-12 font-medium flex-1">
+                      <div className="truncate pr-12 font-medium flex-1" title={item.name || ''}>
                         {item.name || '—'}
                       </div>
                       {item.code && (
