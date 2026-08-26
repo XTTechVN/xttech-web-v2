@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Modal, Button, Badge, Textarea } from '@/components';
-import { Clock, Calendar, User, FileText, AlertCircle } from 'lucide-react';
+import { getRequestTypeLabel } from '@/types';
 import type { AttendanceAdjustmentRequest } from '@/types';
+import { Clock, Calendar, User, FileText, AlertCircle } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -13,13 +14,6 @@ interface Props {
   onConfirm: (id: number, action: 'approved' | 'rejected', reviewNote: string) => Promise<void>;
   isLoading?: boolean;
 }
-
-const REQUEST_TYPE_LABEL: Record<string, string> = {
-  check_in: 'Điều chỉnh Check In',
-  check_out: 'Điều chỉnh Check Out',
-  forgot_attendance: 'Quên điểm danh',
-  both: 'Điều chỉnh Check In & Out',
-};
 
 export default function ReviewAdjustmentModal({ open, data, action, onClose, onConfirm, isLoading = false }: Props) {
   const [reviewNote, setReviewNote] = useState('');
@@ -100,7 +94,7 @@ export default function ReviewAdjustmentModal({ open, data, action, onClose, onC
             <span className="font-semibold text-slate-500 flex items-center gap-1.5">
               <FileText size={13} className="text-slate-400" /> Loại khiếu nại:
             </span>
-            <Badge variant="info">{REQUEST_TYPE_LABEL[data.requestType] || data.requestType}</Badge>
+            <Badge variant="info">{getRequestTypeLabel(data.requestType)}</Badge>
           </div>
         </div>
 

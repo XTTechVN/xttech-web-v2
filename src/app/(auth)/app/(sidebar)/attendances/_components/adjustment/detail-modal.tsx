@@ -1,7 +1,8 @@
 'use client';
 
 import { Modal, Button, Badge } from '@/components';
-import { Clock, Calendar, User, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, Calendar, User, FileText } from 'lucide-react';
+import { getRequestTypeLabel } from '@/types';
 import type { AttendanceAdjustmentRequest } from '@/types';
 
 interface Props {
@@ -12,13 +13,6 @@ interface Props {
   onReject?: (id: number) => void;
   canReview?: boolean;
 }
-
-const REQUEST_TYPE_LABEL: Record<string, string> = {
-  check_in: 'Điều chỉnh Check In',
-  check_out: 'Điều chỉnh Check Out',
-  forgot_attendance: 'Quên điểm danh',
-  both: 'Điều chỉnh cả hai',
-};
 
 const STATUS_CONFIG: Record<string, { label: string; variant: 'warning' | 'success' | 'danger' }> = {
   pending: { label: 'Chờ duyệt', variant: 'warning' },
@@ -90,7 +84,7 @@ export default function AdjustmentDetailModal({ open, data, onClose, onApprove, 
           />
           <InfoRow
             label={<><FileText size={13} className="inline mr-1" />Loại yêu cầu</>}
-            value={REQUEST_TYPE_LABEL[data.requestType] ?? data.requestType}
+            value={getRequestTypeLabel(data.requestType)}
           />
           {data.attendanceId && (
             <InfoRow label="Mã chấm công" value={`#${data.attendanceId}`} />

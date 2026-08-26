@@ -5,6 +5,7 @@ import { TableAction, Button, TableData, Badge, ITableColumn, ITableFilterProps,
 import { toast } from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye, CheckCircle2, FileEdit, Clock, AlertCircle, Info, FileCheck, Calendar, SquareCheck, Check } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getRequestTypeLabel } from '@/types';
 import type { AttendanceAdjustmentRequest, AdjustmentStatus, RequestType } from '@/types';
 import AddAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/add-modal';
 import EditAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/adjustment/edit-modal';
@@ -28,12 +29,7 @@ const STATUS_CONFIG: Record<AdjustmentStatus, { label: string; variant: 'warning
   rejected: { label: 'Từ chối', variant: 'danger' },
 };
 
-const REQUEST_TYPE_LABEL: Record<string, string> = {
-  check_in: 'Điều chỉnh Check In',
-  check_out: 'Điều chỉnh Check Out',
-  forgot_attendance: 'Quên điểm danh',
-  both: 'Điều chỉnh Check In & Out',
-};
+// Sử dụng helper getRequestTypeLabel từ @/types để hiển thị loại khiếu nại
 const ROLE_ALLOW_REVIEW = ['admin', 'super', 'hr'];
 export default function AdjustmentsSidebarPage() {
   const queryClient = useQueryClient();
@@ -136,7 +132,7 @@ export default function AdjustmentsSidebarPage() {
   const typeOptions = useMemo(() => {
     const types = Array.from(new Set(allAdjustments.map((item) => item.requestType).filter((type): type is RequestType => Boolean(type))));
     return types.map((type) => ({
-      label: String(REQUEST_TYPE_LABEL[type] ?? type ?? 'Không xác định'),
+      label: getRequestTypeLabel(type) || 'Không xác định',
       value: String(type),
     }));
   }, [allAdjustments]);
@@ -296,7 +292,7 @@ export default function AdjustmentsSidebarPage() {
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-400 font-medium">Loại khiếu nại:</span>
           <Badge variant="info" className="text-[11px] font-semibold">
-            {REQUEST_TYPE_LABEL[row.requestType] || row.requestType}
+            {getRequestTypeLabel(row.requestType)}
           </Badge>
         </div>
 
@@ -379,12 +375,6 @@ export default function AdjustmentsSidebarPage() {
   };
 
   const columns: ITableColumn<AdjustmentRecord>[] = [
-    // {
-    //   key: 'id',
-    //   label: '#',
-    //   minWidth: '60px',
-    //   cell: (row) => <span className="text-slate-400 font-bold text-xs">#{row.id}</span>,
-    // },
     {
       key: 'employee',
       label: 'Nhân sự',
@@ -403,7 +393,7 @@ export default function AdjustmentsSidebarPage() {
       minWidth: '170px',
       cell: (row) => (
         <Badge variant="info" className="text-[11px] font-semibold">
-          {REQUEST_TYPE_LABEL[row.requestType] || row.requestType}
+          {getRequestTypeLabel(row.requestType)}
         </Badge>
       ),
     },
@@ -511,65 +501,6 @@ export default function AdjustmentsSidebarPage() {
   return (
     <div className="w-full flex flex-col gap-4">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1 */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">TỔNG KHIẾU NẠI</span>
-            <div className="rounded-xl bg-slate-100 p-2.5 text-slate-700">
-              <FileEdit size={20} />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-900">
-            {totalRequestsCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
-          </div>
-        </div> */}
-
-        {/* Card 2 */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">CHỜ PHÊ DUYỆT</span>
-            <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600">
-              <Clock size={20} />
-            </div>
-            {pendingCount > 0 && (
-              <Badge variant="warning" pill className="font-extrabold text-[10px]">
-                {isAdmin ? 'CẦN XỬ LÝ' : 'ĐANG CHỜ'}
-              </Badge>
-            )}
-          </div>
-          <div className="text-3xl font-black text-slate-700">
-            {pendingCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
-          </div>
-        </div> */}
-
-        {/* Card 3 */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">ĐÃ PHÊ DUYỆT</span>
-            <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-600">
-              <CheckCircle2 size={20} />
-            </div>
-            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-              {approvedPercentage}%
-            </span>
-          </div>
-          <div className="text-3xl font-black text-slate-700">
-            {approvedCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
-          </div>
-        </div> */}
-
-        {/* Card 4 */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">TỪ CHỐI</span>
-            <div className="rounded-xl bg-red-50 p-2.5 text-red-500">
-              <AlertCircle size={20} />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-700">
-            {rejectedCount} <span className="text-xs font-normal text-slate-500">yêu cầu</span>
-          </div>
-        </div> */}
         {adjustmentsStats.map((stat, index) => (
           <StatCart
             key={index}
