@@ -1,20 +1,31 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+
+// Icons trong lucide react
 import { User, Pencil, Trash2, Eye, Plus, MapPin } from 'lucide-react';
 
+// Thành phần dùng chung trong hệ thống
 import { TableData, TableAction, ITableFilterProps } from '@/components';
-
 import { Button } from '@/components';
+
 import { useQueryParam } from '@/hooks';
+
 import type { Customer } from '@/types';
+
 import { getCustomerTypeLabel, getCustomerTypeColor, CUSTOMER_TYPE_OPTIONS } from '../config';
+
 import { getCustomers, getUsers } from '@/actions';
+
 import { useQuery } from '@tanstack/react-query';
+
 import toast from 'react-hot-toast';
-import { useSearchParams, useRouter } from 'next/navigation';
+
+import { useRouter } from 'next/navigation';
+
 import { useAuthStore } from '@/stores';
 
+// Định nghĩa props cho component Table
 interface TableProps {
   onEditClick: (customer: Customer) => void;
   onDeleteClick: (customer: Customer) => void;
@@ -29,26 +40,34 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const [filterStaffId, setFilterStaffId] = useState<string | undefined>();
   const user = useAuthStore((state) => state.user);
 
+  // Kiểm tra role có toàn quyền xem hay không
   const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
 
+  // Lấy danh sách nhân viên
   const { data: usersData } = useQuery({
     queryKey: ['users', 'all'],
     queryFn: () => getUsers({ limit: 1000 }),
   });
 
+  // Options cho filter loại khách hàng
   const typeOptions = useMemo(() => {
     return [{ label: 'Tất cả loại khách hàng', value: undefined }, ...CUSTOMER_TYPE_OPTIONS];
   }, []);
 
+  // Options cho filter nhân viên phụ trách
   const staffOptions = useMemo(() => {
-    const list = (usersData?.items || []).map((u: any) => ({
-      label: u.fullName || u.username || u.email,
-      value: u.id,
-    }));
+    const list = (usersData?.items || [])
+      .filter((u: any) => u.roles?.some((r: any) => r.code === 'sale'))
+      .map((u: any) => ({
+        label: u.fullName || u.username || u.email,
+        value: u.id,
+      }));
     return [{ label: 'Tất cả nhân viên', value: undefined }, ...list];
   }, [usersData]);
 
+  // Cấu hình các bộ lọc cho bảng khách hàng
   const tableFilters = useMemo(() => {
+    // Mặc định luôn có bộ lọc "Loại khách hàng"
     const filters: ITableFilterProps[] = [
       {
         label: 'Loại khách hàng',
@@ -58,6 +77,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       },
     ];
 
+    // Chỉ hiển thị bộ lọc "Nhân viên phụ trách" nếu user có quyền quản lý cấp cao
     if (hasFullViewRole) {
       filters.push({
         label: 'Nhân viên phụ trách',
@@ -70,6 +90,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     return filters;
   }, [filterType, filterStaffId, typeOptions, staffOptions, hasFullViewRole]);
 
+  // Fetch dữ liệu bảng khách hàng
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
     const staffId = !hasFullViewRole && user ? user.id : (filterStaffId || undefined);
 
