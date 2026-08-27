@@ -2,11 +2,17 @@ import React from 'react';
 import type { Material, Door, PreviewFloor } from '@/types';
 import { BASE_MINIO_URL } from '@/config/app';
 import { PREVIEW_TABLE_FONT_SIZE } from './config';
+import { readVietnameseNumber } from '../editor/utils';
 
 interface QuotationTableProps {
   floors: PreviewFloor[];
   materialsList: Material[];
   doorsList: Door[];
+  subtotalPrice?: number;
+  discountPercentage?: number;
+  totalPrice?: number;
+  totalQuantity?: number;
+  totalArea?: number;
 }
 
 const toRoman = (num: number): string => {
@@ -42,7 +48,16 @@ const fmt = (n?: number | null) => new Intl.NumberFormat('vi-VN').format(n || 0)
 const SUB_ROW_CLS = 'hover:bg-gray-50';
 const SUB_TD_CLS = 'border border-gray-400 py-1';
 
-export const QuotationTable = ({ floors, materialsList, doorsList }: QuotationTableProps) => {
+export const QuotationTable = ({
+  floors,
+  materialsList,
+  doorsList,
+  subtotalPrice = 0,
+  discountPercentage = 0,
+  totalPrice = 0,
+  totalQuantity = 0,
+  totalArea = 0,
+}: QuotationTableProps) => {
   return (
     <div className="overflow-x-auto">
       <table className={`w-full min-w-200 border-collapse border border-gray-400 ${PREVIEW_TABLE_FONT_SIZE} font-normal not-italic`}>
@@ -339,6 +354,66 @@ export const QuotationTable = ({ floors, materialsList, doorsList }: QuotationTa
                 Báo giá chưa có chi tiết cấu trúc và hạng mục.
               </td>
             </tr>
+          )}
+          {floors.length > 0 && (
+            <>
+              {/* Row 1: TỔNG */}
+              <tr className="font-bold bg-slate-100/70 text-slate-800">
+                <td colSpan={7} className="border border-gray-400 py-1.5 px-2 text-center uppercase tracking-wider">
+                  TỔNG
+                </td>
+                <td className="border border-gray-400 py-1.5 px-1 text-center">
+                  {totalQuantity}
+                </td>
+                <td className="border border-gray-400 py-1.5 px-2 text-center">
+                  {totalArea ? totalArea.toFixed(2) : '0.00'}
+                </td>
+                <td className="border border-gray-400 py-1.5 px-2"></td>
+                <td className="border border-gray-400 py-1.5 px-2 text-right">
+                  {fmt(subtotalPrice)}
+                </td>
+              </tr>
+
+              {/* Row 2: CHIẾT KHẤU */}
+              {discountPercentage > 0 && (
+                <tr className="font-bold text-slate-800">
+                  <td colSpan={7} className="border border-gray-400 py-1.5 px-2 text-center uppercase tracking-wider">
+                    CHIẾT KHẤU
+                  </td>
+                  <td className="border border-gray-400 py-1.5 px-1"></td>
+                  <td className="border border-gray-400 py-1.5 px-2"></td>
+                  <td className="border border-gray-400 py-1.5 px-2 text-center">
+                    {discountPercentage}%
+                  </td>
+                  <td className="border border-gray-400 py-1.5 px-2 text-right">
+                    -{fmt(subtotalPrice - totalPrice)}
+                  </td>
+                </tr>
+              )}
+
+              {/* Row 3: TỔNG THANH TOÁN */}
+              <tr className="font-bold text-red-600 bg-red-50/20">
+                <td colSpan={7} className="border border-gray-400 py-1.5 px-2 text-center uppercase tracking-wider">
+                  TỔNG THANH TOÁN
+                </td>
+                <td className="border border-gray-400 py-1.5 px-1"></td>
+                <td className="border border-gray-400 py-1.5 px-2"></td>
+                <td className="border border-gray-400 py-1.5 px-2"></td>
+                <td className="border border-gray-400 py-1.5 px-2 text-right">
+                  {fmt(totalPrice)}
+                </td>
+              </tr>
+
+              {/* Row 4: Bằng chữ */}
+              <tr className="font-semibold italic bg-[#d0eef7]/40 text-slate-800">
+                <td colSpan={3} className="border border-gray-400 py-1.5 px-2 text-center">
+                  Bằng chữ:
+                </td>
+                <td colSpan={8} className="border border-gray-400 py-1.5 px-3 text-left">
+                  {readVietnameseNumber(totalPrice)}
+                </td>
+              </tr>
+            </>
           )}
         </tbody>
       </table>

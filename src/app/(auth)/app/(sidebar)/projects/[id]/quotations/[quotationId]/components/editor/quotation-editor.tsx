@@ -11,7 +11,7 @@ import type { Accessory, ExtraOption, Material, Door, Formula } from '@/types';
 
 import { QuotationInfo } from './quotation-info';
 import { QuotationFloor } from './quotation-floor';
-import { QuotationTermsEditor } from './quotation-terms-editor';
+
 
 interface QuotationEditorProps {
   quotationId: number;
@@ -160,8 +160,6 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
         )}
       </div>
 
-      {/* 3. Ghi chú & Điều khoản (Rich Text) */}
-      <QuotationTermsEditor />
     </div>
   );
 };
