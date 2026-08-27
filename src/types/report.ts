@@ -51,6 +51,10 @@ export interface AttendanceReportItem {
   total_attendances?: number;
   workDays?: number | null; // null đối với part_time
   work_days?: number | null;
+  weekdayWorkDays?: number | null;
+  weekday_work_days?: number | null;
+  sundayWorkDays?: number | null;
+  sunday_work_days?: number | null;
   totalHours: number;
   total_hours?: number;
   lateDays: number;
@@ -65,6 +69,10 @@ export interface AttendanceReportItem {
   overtime_days?: number;
   overtimeHours: number;
   overtime_hours?: number;
+  weekdayOvertimeHours?: number;
+  weekday_overtime_hours?: number;
+  sundayOvertimeHours?: number;
+  sunday_overtime_hours?: number;
 }
 
 export interface AttendanceReportSummary {
@@ -76,6 +84,10 @@ export interface AttendanceReportSummary {
   total_employees?: number;
   totalWorkDays: number;
   total_work_days?: number;
+  totalWeekdayWorkDays?: number;
+  total_weekday_work_days?: number;
+  totalSundayWorkDays?: number;
+  total_sunday_work_days?: number;
   totalHours: number;
   total_hours?: number;
   totalLateDays: number;
@@ -84,6 +96,12 @@ export interface AttendanceReportSummary {
   total_early_leave_days?: number;
   totalOvertimeDays: number;
   total_overtime_days?: number;
+  totalOvertimeHours?: number;
+  total_overtime_hours?: number;
+  totalWeekdayOvertimeHours?: number;
+  total_weekday_overtime_hours?: number;
+  totalSundayOvertimeHours?: number;
+  total_sunday_overtime_hours?: number;
 }
 
 export interface AttendanceReportResponse {
