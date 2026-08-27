@@ -8,8 +8,9 @@ import { User, Pencil, Trash2, Eye, Plus, MapPin } from 'lucide-react';
 // Thành phần dùng chung trong hệ thống
 import { TableData, TableAction, ITableFilterProps } from '@/components';
 import { Button } from '@/components';
+import { useRouter } from 'next/navigation';
 
-import { useQueryParam } from '@/hooks';
+import { useQueryParam, usePermission } from '@/hooks';
 
 import type { Customer } from '@/types';
 
@@ -21,9 +22,6 @@ import { useQuery } from '@tanstack/react-query';
 
 import toast from 'react-hot-toast';
 
-import { useRouter } from 'next/navigation';
-
-import { useAuthStore } from '@/stores';
 
 // Định nghĩa props cho component Table
 interface TableProps {
@@ -38,10 +36,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
   const [filterType, setFilterType] = useState<string | undefined>();
   const [filterStaffId, setFilterStaffId] = useState<string | undefined>();
-  const user = useAuthStore((state) => state.user);
-
-  // Kiểm tra role có toàn quyền xem hay không
-  const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
+  const { user, canViewAll } = usePermission();
 
   // Lấy danh sách nhân viên
   const { data: usersData } = useQuery({
@@ -78,7 +73,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     ];
 
     // Chỉ hiển thị bộ lọc "Nhân viên phụ trách" nếu user có quyền quản lý cấp cao
-    if (hasFullViewRole) {
+    if (canViewAll) {
       filters.push({
         label: 'Nhân viên phụ trách',
         value: filterStaffId,
@@ -88,11 +83,11 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     }
 
     return filters;
-  }, [filterType, filterStaffId, typeOptions, staffOptions, hasFullViewRole]);
+  }, [filterType, filterStaffId, typeOptions, staffOptions, canViewAll]);
 
   // Fetch dữ liệu bảng khách hàng
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const staffId = !hasFullViewRole && user ? user.id : (filterStaffId || undefined);
+    const staffId = !canViewAll && user ? user.id : (filterStaffId || undefined);
 
     const res = await getCustomers({
       offset,

@@ -30,18 +30,17 @@ import queryClient from '@/utils/query';
 // Lấy các component Modals từ thư mục local ngay bên trong (src/app/(auth)/app/(sidebar)/customers/_components/modals/)
 import { CustomerFormModal, CustomerDeleteModal } from './_components/modals';
 
-// Lấy hook quản lý state toàn cục từ thư mục stores của dự án (src/stores/)
-import { useAuthStore } from '@/stores';
+// Lấy hook quản lý phân quyền
+import { usePermission } from '@/hooks';
 
 const Page = () => {
-  const user = useAuthStore((state) => state.user);
+  const { user, canViewAll } = usePermission();
 
   // Sử dụng React Query để fetch dữ liệu danh sách khách hàng nhằm mục đích tính toán thống kê (stats)
   const { data: customerData } = useQuery({
-    queryKey: ['customers', 'stats', user?.id],
+    queryKey: ['customers', 'stats', user?.id, canViewAll],
     queryFn: async () => {
-      const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
-      const staffId = !hasFullViewRole && user ? user.id : undefined;
+      const staffId = !canViewAll && user ? user.id : undefined;
       const res = await getCustomers({ limit: 9999, staffId });
       return res.items;
     },

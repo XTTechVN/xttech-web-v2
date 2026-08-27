@@ -29,6 +29,7 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<AccessoryCreateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -55,7 +56,7 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
       setSelectedFile(null);
       setPreviewUrl(null);
     }
-  }, [isOpen]);
+  }, [isOpen, reset]);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -94,7 +95,7 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
           {/* Cột trái: Ảnh & Preview */}
           <div className="md:col-span-4 flex flex-col items-center gap-3">
             <span className="text-xs font-semibold text-gray-700 select-none self-start">Ảnh minh họa</span>
-            <div className="w-full aspect-square max-w-[200px] rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
+            <div className="w-full aspect-square max-w-50 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
@@ -139,6 +140,7 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
                 label="Đơn vị tính *"
                 placeholder="Chọn ĐVT"
                 fullWidth
+                value={watch('unit') || ''}
                 {...register('unit', { required: true })}
                 options={[
                   { value: 'set', label: 'Bộ' },
@@ -206,6 +208,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<AccessoryUpdateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -244,7 +247,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
           : null,
       );
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, reset]);
 
   useEffect(() => {
     if (!selectedFile) return;
@@ -280,7 +283,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
           {/* Cột trái: Ảnh & Preview */}
           <div className="md:col-span-4 flex flex-col items-center gap-3">
             <span className="text-gray-700 text-sm font-medium self-start">Ảnh minh họa</span>
-            <div className="w-full aspect-square max-w-[200px] rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
+            <div className="w-full aspect-square max-w-50 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
@@ -325,6 +328,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
                 label="Đơn vị tính *"
                 placeholder="Chọn ĐVT"
                 fullWidth
+                value={watch('unit') || ''}
                 {...register('unit', { required: true })}
                 options={[
                   { value: 'set', label: 'Bộ' },

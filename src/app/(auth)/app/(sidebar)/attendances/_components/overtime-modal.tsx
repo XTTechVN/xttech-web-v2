@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Modal, Button, Input, Textarea, Select } from '@/components';
 import { Clock, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAuthStore } from '@/stores';
+import { usePermission } from '@/hooks';
 import { createAdjustmentRequest, getUsers } from '@/actions';
 import { useQuery } from '@tanstack/react-query';
 import type { AttendanceAdjustmentRequestCreate } from '@/types';
@@ -16,18 +16,8 @@ interface OvertimeModalProps {
 }
 
 export function OvertimeModal({ open, onClose, onSuccess }: OvertimeModalProps) {
-  const currentUser = useAuthStore((state) => state.user);
-
   // Chỉ cho phép admin, super, hr chọn nhân viên khác; các role khác chỉ được đăng ký cho chính mình
-  const canSelectOtherUser = useMemo(
-    () =>
-      currentUser?.roles?.some((r) => {
-        const code = r.code?.toLowerCase();
-        const name = r.name?.toLowerCase();
-        return code === 'admin' || name === 'admin' || code === 'super' || code === 'hr' || name === 'hr';
-      }),
-    [currentUser]
-  );
+  const { user: currentUser, isManager: canSelectOtherUser } = usePermission();
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 

@@ -73,7 +73,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       key: 'specification',
       label: 'Thông số kỹ thuật',
       minWidth: '220px',
-      cell: (row: Door) => <span className="text-gray-500 text-sm truncate max-w-[200px] block">{row.specification || '—'}</span>,
+      cell: (row: Door) => <span className="text-gray-500 text-sm truncate max-w-50 block">{row.specification || '—'}</span>,
     },
     {
       key: 'actions',

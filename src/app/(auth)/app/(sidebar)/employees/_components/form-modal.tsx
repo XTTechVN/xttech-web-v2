@@ -318,6 +318,7 @@ export default function EmployeeFormModal({
 
             <Select
               label="Giới tính"
+              value={watch('gender') || 'male'}
               {...register('gender')}
               options={[
                 { value: 'male', label: 'Nam' },
@@ -329,6 +330,7 @@ export default function EmployeeFormModal({
             <Input label="Ngày gia nhập" type="date" fullWidth {...register('joinedAt')} error={errors.joinedAt?.message} />
             <Select
               label="Chính sách chấm công"
+              value={watch('attendancePolicy') || 'administrative'}
               {...register('attendancePolicy')}
               options={[
                 { value: 'administrative', label: 'Hành chính' },

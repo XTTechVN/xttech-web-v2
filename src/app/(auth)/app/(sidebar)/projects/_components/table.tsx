@@ -7,8 +7,8 @@ import { FolderOpen, Plus, Pencil, Trash2 } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData, TableAction } from '@/components/table';
-import { Heading, Button } from '@/components';
-import { useQueryParam } from '@/hooks';
+import { Button } from '@/components';
+import { useQueryParam, usePermission } from '@/hooks';
 
 // Kiểu dữ liệu dự án
 import type { Project } from '@/types';
@@ -19,10 +19,7 @@ import { getProjects } from '@/actions';
 // toast
 import toast from 'react-hot-toast';
 
-import { useSearchParams } from 'next/navigation';
-
 import type { Customer } from '@/types';
-import { useAuthStore } from '@/stores';
 
 interface TableProps {
   customers?: Pick<Customer, 'id' | 'name'>[];
@@ -35,10 +32,7 @@ interface TableProps {
 const Table = ({ customers = [], onViewClick, onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const [search, setSearch] = useQueryParam('search');
 
-
-  const { user } = useAuthStore();
-  const isSaleOnly = user?.roles?.some((role) => role.code === 'sale') &&
-    !user?.roles?.some((role) => role.code === 'super' || role.code === 'admin');
+  const { user, isSaleOnly } = usePermission();
 
   // Fetcher gọi thẳng action, không qua store
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
@@ -79,7 +73,7 @@ const Table = ({ customers = [], onViewClick, onEditClick, onDeleteClick, onAddC
       key: 'note',
       label: 'Ghi chú',
       minWidth: '180px',
-      cell: (row: Project) => <span className="text-gray-500 text-sm truncate max-w-[200px] block">{row.note || '—'}</span>,
+      cell: (row: Project) => <span className="text-gray-500 text-sm truncate max-w-50 block">{row.note || '—'}</span>,
     },
     {
       key: 'createdAt',
@@ -127,7 +121,7 @@ const Table = ({ customers = [], onViewClick, onEditClick, onDeleteClick, onAddC
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-xs text-gray-400 font-medium">ID: {row.id}</span>
             {row.address && <span className="text-xs text-gray-300 select-none">•</span>}
-            {row.address && <span className="text-xs text-gray-500 truncate max-w-[180px]">{row.address}</span>}
+            {row.address && <span className="text-xs text-gray-500 truncate max-w-45">{row.address}</span>}
           </div>
         </div>
       </div>
