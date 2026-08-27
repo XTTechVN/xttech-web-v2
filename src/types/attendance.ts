@@ -75,7 +75,8 @@ export type AttendanceStatus =
     | "late_and_early_leave"
     | "absent"
     | "overtime"
-    | "half_day";
+    | "half_day"
+    | "missing_checkout";
 
 export type AttendanceStatusVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
 
@@ -89,6 +90,7 @@ export const ATTENDANCE_STATUS_LABELS: Record<string, string> = {
   early_checkout: 'Về sớm',
   late_and_early_leave: 'Đi muộn & Về sớm',
   overtime: 'Tăng ca',
+  missing_checkout: 'Quên check-out',
 };
 
 export const ATTENDANCE_STATUS_VARIANTS: Record<string, AttendanceStatusVariant> = {
@@ -101,6 +103,7 @@ export const ATTENDANCE_STATUS_VARIANTS: Record<string, AttendanceStatusVariant>
   early_checkout: 'warning',
   late_and_early_leave: 'warning',
   overtime: 'success',
+  missing_checkout: 'warning',
 };
 
 export const ADJUSTMENT_STATUS_LABELS: Record<string, string> = {
