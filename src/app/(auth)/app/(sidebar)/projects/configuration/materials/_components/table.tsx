@@ -118,6 +118,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
           </div>
           <div className="flex flex-col flex-1 min-w-0">
             <span className="font-semibold text-gray-900 wrap-break-word text-sm sm:text-base leading-snug">{row.name}</span>
+<<<<<<< HEAD
             <div className="flex flex-col gap-0.5 mt-1 text-xs text-gray-500">
               <div className="flex gap-2 flex-wrap">
                 <span>Vốn: {formatCurrency(row.costPrice)}</span>
@@ -127,6 +128,12 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
                 <span>Sỉ: {formatCurrency(row.salePrice)}</span>
               </div>
               {row.unit && <span className="mt-0.5">ĐVT: {formatMaterialUnit(row.unit)}</span>}
+=======
+            <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-gray-400">
+              <span>Đơn giá: {formatCurrency(row.price)}</span>
+              {row.unit && <span className="select-none">•</span>}
+              {row.unit && <span>ĐVT: {formatMaterialUnit(row.unit)}</span>}
+>>>>>>> dev
             </div>
           </div>
         </div>
