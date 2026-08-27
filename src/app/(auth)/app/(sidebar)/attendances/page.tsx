@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 // Cập nhật code trang attendanceModule
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Button,
   TableData,
@@ -31,12 +31,11 @@ import {
 import AddAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/add-modal";
 import EditAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/edit-modal";
 import AttendanceDetailModal from "@/app/(auth)/app/(sidebar)/attendances/_components/attendance-modal";
-import AddUserModal from "@/app/(auth)/app/(sidebar)/attendances/_components/users/add-modal";
 import AutoTimekeepingModal from "@/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal";
 import { useQueryParam } from '@/hooks';
 import Loading from '../../loading';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteAttendance, getAttendances, getDepartments, getUsers, getAdjustmentRequests, updateAdjustmentRequest } from '@/actions';
 import { Attendance, AttendanceAdjustmentRequest, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
@@ -784,18 +783,6 @@ export default function AttendancesPage() {
         data={selectedRow}
         onClose={() => setShowDetailModal(false)}
       />
-
-      <AddUserModal
-        open={showAddUserModal}
-        onClose={() => setShowAddUserModal(false)}
-        onSuccess={() => {
-          queryClient.invalidateQueries({
-            queryKey: ['users']
-          });
-          toast.success('Thêm User mới thành công')
-        }}
-      />
-
       {/* Modal điểm danh tự động: Camera + GPS + Maps */}
       <AutoTimekeepingModal
         open={showTimekeepingModal}
