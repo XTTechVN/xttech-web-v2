@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Breadcrumb } from '@/components';
 import { CustomerInfo } from './_components/customer-info';
 import { InteractionLogs } from './_components/interaction-logs';
 import { useQuery } from '@tanstack/react-query';
@@ -14,12 +13,6 @@ const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
     queryKey: ['customer', id],
     queryFn: () => getCustomer(Number(id)),
   });
-
-  const breadcrumbs = [
-    { label: 'Trang chủ', href: '/app/dashboard' },
-    { label: 'Khách hàng', href: '/app/customers' },
-    { label: `Chi tiết khách hàng #${id}`, href: '#' },
-  ];
 
   if (isLoading) {
     return <div className="p-8 text-center text-gray-500 font-medium">Đang tải dữ liệu khách hàng...</div>;
