@@ -39,7 +39,9 @@ export function ExtraOptionCreateModal({
     defaultValues: {
       name: '',
       code: '',
-      price: 0,
+      costPrice: 0,
+      retailPrice: 0,
+      salePrice: 0,
       unit: 'set',
     },
   });
@@ -59,7 +61,7 @@ export function ExtraOptionCreateModal({
 
   useEffect(() => {
     if (isOpen) {
-      reset({ name: '', code: '', price: 0, unit: 'set' });
+      reset({ name: '', code: '', costPrice: 0, retailPrice: 0, salePrice: 0, unit: 'set' });
     }
   }, [isOpen]);
 
@@ -67,7 +69,9 @@ export function ExtraOptionCreateModal({
     createMutation({
       name: data.name,
       code: data.code,
-      price: data.price || 0,
+      costPrice: data.costPrice || 0,
+      retailPrice: data.retailPrice || 0,
+      salePrice: data.salePrice || 0,
       unit: data.unit,
     });
   };
@@ -102,24 +106,68 @@ export function ExtraOptionCreateModal({
             error={errors.unit?.message}
           />
           <Controller
-            name="price"
+            name="costPrice"
             control={control}
             rules={{
-              required: 'Đơn giá không được để trống',
+              required: 'Giá vốn không được để trống',
               validate: (val) => {
                 const num = Number(val);
-                if (isNaN(num) || num < 0) return 'Đơn giá phải lớn hơn hoặc bằng 0';
+                if (isNaN(num) || num < 0) return 'Giá vốn phải lớn hơn hoặc bằng 0';
                 return true;
               },
             }}
             render={({ field }) => (
               <CurrencyInput
-                label="Đơn giá (VNĐ) *"
-                placeholder="Nhập đơn giá"
+                label="Giá vốn (VNĐ) *"
+                placeholder="Nhập giá vốn"
                 fullWidth
                 value={field.value}
                 onChange={field.onChange}
-                error={errors.price?.message}
+                error={errors.costPrice?.message}
+              />
+            )}
+          />
+          <Controller
+            name="retailPrice"
+            control={control}
+            rules={{
+              required: 'Giá bán lẻ không được để trống',
+              validate: (val) => {
+                const num = Number(val);
+                if (isNaN(num) || num < 0) return 'Giá bán lẻ phải lớn hơn hoặc bằng 0';
+                return true;
+              },
+            }}
+            render={({ field }) => (
+              <CurrencyInput
+                label="Giá bán lẻ (VNĐ) *"
+                placeholder="Nhập giá bán lẻ"
+                fullWidth
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.retailPrice?.message}
+              />
+            )}
+          />
+          <Controller
+            name="salePrice"
+            control={control}
+            rules={{
+              required: 'Giá đại lý không được để trống',
+              validate: (val) => {
+                const num = Number(val);
+                if (isNaN(num) || num < 0) return 'Giá đại lý phải lớn hơn hoặc bằng 0';
+                return true;
+              },
+            }}
+            render={({ field }) => (
+              <CurrencyInput
+                label="Giá đại lý (VNĐ) *"
+                placeholder="Nhập giá đại lý"
+                fullWidth
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.salePrice?.message}
               />
             )}
           />
@@ -152,7 +200,7 @@ interface ExtraOptionUpdateModalProps {
   onClose: () => void;
   title: string;
   submitText?: string;
-  initialData?: Pick<ExtraOption, 'id' | 'name' | 'code' | 'price' | 'unit'>;
+  initialData?: Pick<ExtraOption, 'id' | 'name' | 'code' | 'costPrice' | 'retailPrice' | 'salePrice' | 'unit'>;
 }
 
 type ExtraOptionUpdateFormValues = ExtraOptionUpdate;
@@ -191,11 +239,13 @@ export function ExtraOptionUpdateModal({
       reset({
         name: initialData.name || '',
         code: initialData.code || '',
-        price: initialData.price !== undefined ? initialData.price : undefined,
+        costPrice: initialData.costPrice !== undefined ? initialData.costPrice : undefined,
+        retailPrice: initialData.retailPrice !== undefined ? initialData.retailPrice : undefined,
+        salePrice: initialData.salePrice !== undefined ? initialData.salePrice : undefined,
         unit: initialData.unit || 'set',
       });
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, reset]);
 
   const handleConfirm = (data: ExtraOptionUpdateFormValues) => {
     if (!initialData) return;
@@ -232,24 +282,68 @@ export function ExtraOptionUpdateModal({
             error={errors.unit?.message}
           />
           <Controller
-            name="price"
+            name="costPrice"
             control={control}
             rules={{
-              required: 'Đơn giá không được để trống',
+              required: 'Giá vốn không được để trống',
               validate: (val) => {
                 const num = Number(val);
-                if (isNaN(num) || num <= 0) return 'Đơn giá phải lớn hơn 0';
+                if (isNaN(num) || num < 0) return 'Giá vốn phải lớn hơn hoặc bằng 0';
                 return true;
               },
             }}
             render={({ field }) => (
               <CurrencyInput
-                label="Đơn giá (VNĐ) *"
-                placeholder="Nhập đơn giá"
+                label="Giá vốn (VNĐ) *"
+                placeholder="Nhập giá vốn"
                 fullWidth
                 value={field.value}
                 onChange={field.onChange}
-                error={errors.price?.message}
+                error={errors.costPrice?.message}
+              />
+            )}
+          />
+          <Controller
+            name="retailPrice"
+            control={control}
+            rules={{
+              required: 'Giá bán lẻ không được để trống',
+              validate: (val) => {
+                const num = Number(val);
+                if (isNaN(num) || num < 0) return 'Giá bán lẻ phải lớn hơn hoặc bằng 0';
+                return true;
+              },
+            }}
+            render={({ field }) => (
+              <CurrencyInput
+                label="Giá bán lẻ (VNĐ) *"
+                placeholder="Nhập giá bán lẻ"
+                fullWidth
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.retailPrice?.message}
+              />
+            )}
+          />
+          <Controller
+            name="salePrice"
+            control={control}
+            rules={{
+              required: 'Giá đại lý không được để trống',
+              validate: (val) => {
+                const num = Number(val);
+                if (isNaN(num) || num < 0) return 'Giá đại lý phải lớn hơn hoặc bằng 0';
+                return true;
+              },
+            }}
+            render={({ field }) => (
+              <CurrencyInput
+                label="Giá đại lý (VNĐ) *"
+                placeholder="Nhập giá đại lý"
+                fullWidth
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.salePrice?.message}
               />
             )}
           />

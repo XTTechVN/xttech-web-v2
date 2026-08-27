@@ -28,3 +28,23 @@ export async function fetchDefaultAccessories(
     return [];
   }
 }
+
+/**
+ * Tính toán đơn giá của vật tư (hệ nhôm, phụ kiện, tùy chọn phát sinh) dựa trên loại giá.
+ * @param item Đối tượng vật tư chứa các thuộc tính giá (retailPrice, salePrice, costPrice)
+ * @param priceType Loại giá áp dụng ('retail' | 'sale' | 'cost')
+ * @returns Đơn giá tương ứng hoặc giá trị mặc định là 0
+ */
+export function getResolvedPrice(
+  item?: { retailPrice?: number | null; salePrice?: number | null; costPrice?: number | null } | null,
+  priceType?: 'retail' | 'sale' | 'cost',
+): number {
+  if (!item) return 0;
+  const type = priceType || 'retail';
+  const pKey = type === 'retail' ? 'retailPrice' : (type === 'sale' ? 'salePrice' : 'costPrice');
+  const price = item[pKey];
+  if (price !== undefined && price !== null) {
+    return price;
+  }
+  return item.retailPrice || item.salePrice || item.costPrice || 0;
+}

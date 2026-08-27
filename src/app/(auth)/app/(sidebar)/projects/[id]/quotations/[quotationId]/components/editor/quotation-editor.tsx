@@ -32,7 +32,7 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
 
   const { mutate: updateQuotationMutate, isPending } = useMutation({
     mutationFn: () => {
-      const payload = store.getPayload();
+      const payload = store.getPayload(accessoriesList, extraOptionsList);
       return updateQuotation(quotationId, payload);
     },
     onSuccess: () => {
@@ -99,6 +99,7 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
           </Tooltip>
         </div>
         <div className="flex items-center gap-2">
+          
           <Button
             variant="outline"
             size="sm"
@@ -125,7 +126,7 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
       </div>
 
       {/* 1. Thông tin chung */}
-      <QuotationInfo />
+      <QuotationInfo materialsList={materialsList} />
 
       {/* 2. Cấu trúc các tầng */}
       <div className="flex flex-col gap-3">

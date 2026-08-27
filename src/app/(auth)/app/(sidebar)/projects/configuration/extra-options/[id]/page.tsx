@@ -131,9 +131,19 @@ export default function ExtraOptionDetailPage({ params }: ExtraOptionDetailPageP
               {EXTRA_OPTION_UNIT_MAP[extraOption.unit as ExtraOptionUnit] || extraOption.unit || '—'}
             </span>
           </div>
-          <div>
-            <span className="font-semibold text-slate-500">Đơn giá: </span>
-            <span className="text-slate-805 font-semibold text-primary">{formatCurrency(extraOption.price)}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-b border-slate-100 py-3.5 my-1">
+            <div>
+              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá vốn</span>
+              <span className="text-slate-700 font-semibold">{formatCurrency(extraOption.costPrice)}</span>
+            </div>
+            <div>
+              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá bán lẻ</span>
+              <span className="text-primary font-bold">{formatCurrency(extraOption.retailPrice)}</span>
+            </div>
+            <div>
+              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá đại lý</span>
+              <span className="text-teal-655 font-bold">{formatCurrency(extraOption.salePrice)}</span>
+            </div>
           </div>
         </div>
       </div>

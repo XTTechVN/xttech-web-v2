@@ -11,6 +11,7 @@ export interface Quotation {
   termsAndConditions?: string | null;
   createdAt: string;
   updatedAt: string;
+  priceType?: 'retail' | 'sale' | 'cost';
 }
 
 export interface QuotationCreate {
@@ -19,6 +20,7 @@ export interface QuotationCreate {
   code?: string;
   discountPercentage?: number;
   termsAndConditions?: string;
+  priceType?: 'retail' | 'sale' | 'cost';
 }
 
 export interface QuotationUpdate {
@@ -29,6 +31,7 @@ export interface QuotationUpdate {
   projectId?: number;
   termsAndConditions?: string;
   floors?: QuotationFloorCreate[];
+  priceType?: 'retail' | 'sale' | 'cost';
 }
 
 export interface QuotationAccessoryCreate {

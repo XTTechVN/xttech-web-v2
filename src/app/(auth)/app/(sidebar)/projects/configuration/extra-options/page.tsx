@@ -132,7 +132,9 @@ const Page = () => {
                 id: selectedOption.id,
                 name: selectedOption.name,
                 code: selectedOption.code,
-                price: selectedOption.price,
+                costPrice: selectedOption.costPrice,
+                retailPrice: selectedOption.retailPrice,
+                salePrice: selectedOption.salePrice,
                 unit: selectedOption.unit,
               }
             : undefined

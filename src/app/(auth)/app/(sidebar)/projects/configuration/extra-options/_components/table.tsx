@@ -62,12 +62,32 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       ),
     },
     {
-      key: 'price',
-      label: 'Đơn giá',
-      minWidth: '150px',
+      key: 'costPrice',
+      label: 'Giá vốn',
+      minWidth: '110px',
       cell: (row: ExtraOption) => (
-        <span className="text-gray-900 font-medium">
-          {formatCurrency(row.price)}
+        <span className="text-gray-500 font-medium">
+          {formatCurrency(row.costPrice)}
+        </span>
+      ),
+    },
+    {
+      key: 'retailPrice',
+      label: 'Giá bán lẻ',
+      minWidth: '110px',
+      cell: (row: ExtraOption) => (
+        <span className="text-gray-900 font-semibold text-primary">
+          {formatCurrency(row.retailPrice)}
+        </span>
+      ),
+    },
+    {
+      key: 'salePrice',
+      label: 'Giá đại lý',
+      minWidth: '110px',
+      cell: (row: ExtraOption) => (
+        <span className="text-gray-900 font-semibold text-teal-650">
+          {formatCurrency(row.salePrice)}
         </span>
       ),
     },
@@ -97,10 +117,19 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         </div>
         <div className="flex flex-col flex-1 min-w-0">
           <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
-          <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-gray-400">
-            <span>Mã: {row.code || '—'}</span>
-            <span className="select-none">•</span>
-            <span>Đơn giá: {formatCurrency(row.price)} / {EXTRA_OPTION_UNIT_MAP[row.unit as ExtraOptionUnit] || row.unit || 'Bộ'}</span>
+          <div className="flex flex-col gap-0.5 mt-1 text-xs text-gray-500">
+            <div className="flex gap-2 flex-wrap">
+              <span>Mã: {row.code || '—'}</span>
+              <span>•</span>
+              {row.unit && <span>ĐVT: {EXTRA_OPTION_UNIT_MAP[row.unit as ExtraOptionUnit] || row.unit}</span>}
+            </div>
+            <div className="flex gap-2 flex-wrap mt-0.5">
+              <span>Vốn: {formatCurrency(row.costPrice)}</span>
+              <span>•</span>
+              <span>Lẻ: {formatCurrency(row.retailPrice)}</span>
+              <span>•</span>
+              <span>Sỉ: {formatCurrency(row.salePrice)}</span>
+            </div>
           </div>
         </div>
       </div>

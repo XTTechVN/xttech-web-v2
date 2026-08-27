@@ -134,7 +134,9 @@ const Page = () => {
                 code: selectedAccessory.code,
                 specification: selectedAccessory.specification,
                 unit: selectedAccessory.unit,
-                price: selectedAccessory.price,
+                costPrice: selectedAccessory.costPrice,
+                retailPrice: selectedAccessory.retailPrice,
+                salePrice: selectedAccessory.salePrice,
                 imagePath: selectedAccessory.imagePath,
               }
             : undefined

@@ -47,7 +47,7 @@ export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác
 
   useEffect(() => {
     if (isOpen) {
-      reset({ name: '', code: '', specification: '', description: '', price: 0, unit: 'set' });
+      reset({ name: '', code: '', specification: '', description: '', costPrice: 0, retailPrice: 0, salePrice: 0, unit: 'set' });
     }
   }, [isOpen]);
 
@@ -55,7 +55,9 @@ export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác
     const payload: any = {
       name: data.name,
       code: data.code,
-      price: data.price || 0,
+      costPrice: data.costPrice || 0,
+      retailPrice: data.retailPrice || 0,
+      salePrice: data.salePrice || 0,
       unit: data.unit,
     };
     if (data.specification && data.specification.trim() !== '') {
@@ -113,24 +115,68 @@ export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác
             error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
           />
           <Controller
-            name="price"
+            name="costPrice"
             control={control}
             rules={{
-              required: 'Đơn giá không được để trống',
+              required: 'Giá vốn không được để trống',
               validate: (val) => {
                 const num = Number(val);
-                if (isNaN(num) || num <= 0) return 'Đơn giá phải lớn hơn 0';
+                if (isNaN(num) || num < 0) return 'Giá vốn phải lớn hơn hoặc bằng 0';
                 return true;
               },
             }}
             render={({ field }) => (
               <CurrencyInput
-                label="Đơn giá (VNĐ) *"
-                placeholder="Nhập đơn giá"
+                label="Giá vốn (VNĐ) *"
+                placeholder="Nhập giá vốn"
                 fullWidth
                 value={field.value}
                 onChange={field.onChange}
-                error={errors.price?.message}
+                error={errors.costPrice?.message}
+              />
+            )}
+          />
+          <Controller
+            name="retailPrice"
+            control={control}
+            rules={{
+              required: 'Giá bán lẻ không được để trống',
+              validate: (val) => {
+                const num = Number(val);
+                if (isNaN(num) || num < 0) return 'Giá bán lẻ phải lớn hơn hoặc bằng 0';
+                return true;
+              },
+            }}
+            render={({ field }) => (
+              <CurrencyInput
+                label="Giá bán lẻ (VNĐ) *"
+                placeholder="Nhập giá bán lẻ"
+                fullWidth
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.retailPrice?.message}
+              />
+            )}
+          />
+          <Controller
+            name="salePrice"
+            control={control}
+            rules={{
+              required: 'Giá đại lý không được để trống',
+              validate: (val) => {
+                const num = Number(val);
+                if (isNaN(num) || num < 0) return 'Giá đại lý phải lớn hơn hoặc bằng 0';
+                return true;
+              },
+            }}
+            render={({ field }) => (
+              <CurrencyInput
+                label="Giá đại lý (VNĐ) *"
+                placeholder="Nhập giá đại lý"
+                fullWidth
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.salePrice?.message}
               />
             )}
           />
@@ -156,7 +202,7 @@ interface MaterialUpdateModalProps {
   onClose: () => void;
   title: string;
   submitText?: string;
-  initialData?: Pick<Material, 'id' | 'name' | 'code' | 'specification' | 'description' | 'price' | 'unit'>;
+  initialData?: Pick<Material, 'id' | 'name' | 'code' | 'specification' | 'description' | 'costPrice' | 'retailPrice' | 'salePrice' | 'unit'>;
 }
 
 type MaterialUpdateFormValues = Omit<MaterialUpdate, 'imagePath'>;
@@ -191,18 +237,22 @@ export function MaterialUpdateModal({ isOpen, onClose, title, submitText = 'Xác
         code: initialData.code || '',
         specification: initialData.specification || '',
         description: initialData.description || '',
-        price: initialData.price !== undefined ? initialData.price : undefined,
+        costPrice: initialData.costPrice !== undefined ? initialData.costPrice : undefined,
+        retailPrice: initialData.retailPrice !== undefined ? initialData.retailPrice : undefined,
+        salePrice: initialData.salePrice !== undefined ? initialData.salePrice : undefined,
         unit: initialData.unit || undefined,
       });
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, reset]);
 
   const handleConfirm = (data: MaterialUpdateFormValues) => {
     if (!initialData) return;
     const payload: any = {
       name: data.name,
       code: data.code,
-      price: data.price !== undefined ? data.price : undefined,
+      costPrice: data.costPrice !== undefined ? data.costPrice : undefined,
+      retailPrice: data.retailPrice !== undefined ? data.retailPrice : undefined,
+      salePrice: data.salePrice !== undefined ? data.salePrice : undefined,
       unit: data.unit,
     };
     if (data.specification && data.specification.trim() !== '') {
@@ -260,24 +310,68 @@ export function MaterialUpdateModal({ isOpen, onClose, title, submitText = 'Xác
             error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
           />
           <Controller
-            name="price"
+            name="costPrice"
             control={control}
             rules={{
-              required: 'Đơn giá không được để trống',
+              required: 'Giá vốn không được để trống',
               validate: (val) => {
                 const num = Number(val);
-                if (isNaN(num) || num <= 0) return 'Đơn giá phải lớn hơn 0';
+                if (isNaN(num) || num < 0) return 'Giá vốn phải lớn hơn hoặc bằng 0';
                 return true;
               },
             }}
             render={({ field }) => (
               <CurrencyInput
-                label="Đơn giá (VNĐ) *"
-                placeholder="Nhập đơn giá"
+                label="Giá vốn (VNĐ) *"
+                placeholder="Nhập giá vốn"
                 fullWidth
                 value={field.value}
                 onChange={field.onChange}
-                error={errors.price?.message}
+                error={errors.costPrice?.message}
+              />
+            )}
+          />
+          <Controller
+            name="retailPrice"
+            control={control}
+            rules={{
+              required: 'Giá bán lẻ không được để trống',
+              validate: (val) => {
+                const num = Number(val);
+                if (isNaN(num) || num < 0) return 'Giá bán lẻ phải lớn hơn hoặc bằng 0';
+                return true;
+              },
+            }}
+            render={({ field }) => (
+              <CurrencyInput
+                label="Giá bán lẻ (VNĐ) *"
+                placeholder="Nhập giá bán lẻ"
+                fullWidth
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.retailPrice?.message}
+              />
+            )}
+          />
+          <Controller
+            name="salePrice"
+            control={control}
+            rules={{
+              required: 'Giá đại lý không được để trống',
+              validate: (val) => {
+                const num = Number(val);
+                if (isNaN(num) || num < 0) return 'Giá đại lý phải lớn hơn hoặc bằng 0';
+                return true;
+              },
+            }}
+            render={({ field }) => (
+              <CurrencyInput
+                label="Giá đại lý (VNĐ) *"
+                placeholder="Nhập giá đại lý"
+                fullWidth
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.salePrice?.message}
               />
             )}
           />

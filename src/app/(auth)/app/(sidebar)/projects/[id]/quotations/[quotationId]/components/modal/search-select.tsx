@@ -14,9 +14,10 @@ interface SearchSelectProps<T> {
   searchKeys?: (keyof T)[];
   renderItem?: (item: T) => React.ReactNode;
   triggerRef: React.RefObject<HTMLDivElement | null>;
+  width?: number;
 }
 
-export function SearchSelect<T extends { id: string | number; name?: string | null; code?: string | null; price?: number | null; unit?: string | null }>({
+export function SearchSelect<T extends { id: string | number; name?: string | null; code?: string | null; costPrice?: number | null; retailPrice?: number | null; salePrice?: number | null; price?: number | null; unit?: string | null }>({
   isOpen,
   onClose,
   title,
@@ -26,10 +27,12 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
   searchKeys = ['name', 'code'],
   renderItem,
   triggerRef,
+  width,
 }: SearchSelectProps<T>) {
   const [searchTerm, setSearchTerm] = useState('');
   const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const showSearch = items.length > 10;
 
   // Theo dõi width của window để xác định thiết bị di động
   useEffect(() => {
@@ -114,33 +117,44 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
       <Modal isOpen={isOpen} onClose={onClose} title={title} size="full" className="h-full max-h-screen rounded-none">
         <div className="flex flex-col h-full text-slate-800 -mx-6 -my-4">
           {/* Search Input */}
-          <div className="p-3 border-b border-slate-100 shrink-0">
-            <div className="relative flex items-center">
-              <Search className="absolute left-3 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 text-base bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-primary focus:bg-white transition-all text-slate-800 font-normal"
-                autoFocus
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-3 p-1 rounded-full text-slate-400 hover:text-slate-600 bg-slate-200/50 hover:bg-slate-200 transition-all cursor-pointer border-0"
-                >
-                  <X size={12} />
-                </button>
-              )}
+          {showSearch && (
+            <div className="p-3 border-b border-slate-100 shrink-0">
+              <div className="relative flex items-center">
+                <Search className="absolute left-3 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-8 py-2 text-base bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-primary focus:bg-white transition-all text-slate-800 font-normal"
+                  autoFocus
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 p-1 rounded-full text-slate-400 hover:text-slate-600 bg-slate-200/50 hover:bg-slate-200 transition-all cursor-pointer border-0"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Content list */}
           <div className="flex-1 overflow-y-auto p-4 space-y-2.5 min-h-0 text-xs pb-20">
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => {
                 const isSelected = item.id === selectedValue;
+                const resolvedPrice = item.price !== undefined && item.price !== null
+                  ? item.price
+                  : (item.retailPrice !== undefined && item.retailPrice !== null
+                    ? item.retailPrice
+                    : (item.salePrice !== undefined && item.salePrice !== null
+                      ? item.salePrice
+                      : (item.costPrice !== undefined && item.costPrice !== null
+                        ? item.costPrice
+                        : null)));
                 return (
                   <div
                     key={item.id}
@@ -165,9 +179,9 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
                               {item.code}
                             </span>
                           )}
-                          {(item.price !== undefined && item.price !== null) && (
+                          {(resolvedPrice !== undefined && resolvedPrice !== null) && (
                             <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-2 py-0.5 rounded font-extrabold select-none">
-                              {Number(item.price).toLocaleString('vi-VN')}đ{item.unit ? `/${item.unit}` : ''}
+                              {Number(resolvedPrice).toLocaleString('vi-VN')}đ{item.unit ? `/${item.unit}` : ''}
                             </span>
                           )}
                         </div>
@@ -196,41 +210,52 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
         position: 'absolute',
         top: coords.top + 4,
         left: coords.left,
-        width: Math.max(coords.width, 280),
+        width: width ?? Math.max(coords.width, 280),
         zIndex: 99999,
       }}
       className="bg-white rounded-lg shadow-xl border border-slate-200 flex flex-col max-h-[300px] text-slate-800 focus:outline-none overflow-hidden animate-in fade-in slide-in-from-top-1 duration-100"
     >
       {/* Search Input */}
-      <div className="p-2 border-b border-slate-100/60 shrink-0">
-        <div className="relative flex items-center">
-          <Search className="absolute left-2.5 w-3.5 h-3.5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 pr-6 py-1 text-base md:text-sm bg-slate-50 border border-slate-200 rounded focus:outline-none focus:border-primary focus:bg-white transition-all text-slate-800 font-normal"
-            autoFocus
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-2 p-0.5 rounded-full text-slate-400 hover:text-slate-600 bg-slate-200/50 hover:bg-slate-200 transition-all cursor-pointer border-0"
-            >
-              <X size={10} />
-            </button>
-          )}
+      {showSearch && (
+        <div className="p-2 border-b border-slate-100/60 shrink-0">
+          <div className="relative flex items-center">
+            <Search className="absolute left-2.5 w-3.5 h-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-8 pr-6 py-1 text-base md:text-sm bg-slate-50 border border-slate-200 rounded focus:outline-none focus:border-primary focus:bg-white transition-all text-slate-800 font-normal"
+              autoFocus
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2 p-0.5 rounded-full text-slate-400 hover:text-slate-600 bg-slate-200/50 hover:bg-slate-200 transition-all cursor-pointer border-0"
+              >
+                <X size={10} />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Content list */}
       <div className="flex-1 overflow-y-auto p-1 space-y-0.5 min-h-0 text-[11px]">
         {filteredItems.length > 0 ? (
           filteredItems.map((item) => {
             const isSelected = item.id === selectedValue;
+            const resolvedPrice = item.price !== undefined && item.price !== null
+              ? item.price
+              : (item.retailPrice !== undefined && item.retailPrice !== null
+                ? item.retailPrice
+                : (item.salePrice !== undefined && item.salePrice !== null
+                  ? item.salePrice
+                  : (item.costPrice !== undefined && item.costPrice !== null
+                    ? item.costPrice
+                    : null)));
             const itemTitle = item.name
-              ? `${item.name}${item.code ? ` (${item.code})` : ''}${(item.price !== undefined && item.price !== null) ? ` - ${Number(item.price).toLocaleString('vi-VN')}đ` : ''}`
+              ? `${item.name}${item.code ? ` (${item.code})` : ''}${(resolvedPrice !== undefined && resolvedPrice !== null) ? ` - ${Number(resolvedPrice).toLocaleString('vi-VN')}đ` : ''}`
               : '';
             return (
               <div

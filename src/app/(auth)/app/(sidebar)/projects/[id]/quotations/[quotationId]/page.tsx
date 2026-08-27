@@ -100,13 +100,14 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
   const { data: previewData, isFetching: isPreviewFetching } = useQuery({
     queryKey: ['quotation-preview', quotationId, debouncedFloors, debouncedTitle, debouncedDiscount],
     queryFn: () => {
-      const payload = store.getPayload();
+      const payload = store.getPayload(accessoriesList, extraOptionsList);
       return getQuotationPreview({
         title: debouncedTitle,
         code: store.code,
         discountPercentage: debouncedDiscount,
         projectId: store.projectId,
         floors: payload.floors,
+        priceType: payload.priceType,
       });
     },
     enabled: initialized && debouncedFloors.length > 0,
