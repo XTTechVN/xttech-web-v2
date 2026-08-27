@@ -5,7 +5,8 @@ import { Modal, Button, Select, Input, Textarea } from '@/components';
 import toast from 'react-hot-toast';
 import { createAdjustmentRequest, getUsers } from '@/actions';
 import type { RequestType, AttendanceAdjustmentRequestCreate, Attendance, AdjustmentForm } from '@/types';
-import { useAttendances, useAuthStore } from '@/stores';
+import { useAttendances } from '@/stores';
+import { usePermission } from '@/hooks';
 import { useQuery } from '@tanstack/react-query';
 
 interface Props {
@@ -16,14 +17,7 @@ interface Props {
 }
 
 export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: Props) {
-  const currentUser = useAuthStore((state) => state.user);
-  const isAdmin = useMemo(
-    () =>
-      currentUser?.roles?.some(
-        (r) => ['admin', 'super', 'hr'].includes(r.code?.toLowerCase() || '') || ['admin', 'super', 'hr'].includes(r.name?.toLowerCase() || ''),
-      ),
-    [currentUser],
-  );
+  const { user: currentUser, isManager: isAdmin } = usePermission();
 
   const [form, setForm] = useState<AdjustmentForm>({
     userId: '',

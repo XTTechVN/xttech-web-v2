@@ -33,6 +33,7 @@ export function ExtraOptionCreateModal({
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<ExtraOptionCreateFormValues>({
     defaultValues: {
@@ -92,6 +93,7 @@ export function ExtraOptionCreateModal({
           <Select
             label="Đơn vị tính *"
             fullWidth
+            value={watch('unit') || ''}
             {...register('unit', { required: 'Vui lòng chọn đơn vị tính' })}
             options={Object.entries(EXTRA_OPTION_UNIT_MAP).map(([value, label]) => ({
               value,
@@ -167,6 +169,7 @@ export function ExtraOptionUpdateModal({
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<ExtraOptionUpdateFormValues>();
 
@@ -220,6 +223,7 @@ export function ExtraOptionUpdateModal({
           <Select
             label="Đơn vị tính *"
             fullWidth
+            value={watch('unit') || ''}
             {...register('unit', { required: 'Vui lòng chọn đơn vị tính' })}
             options={Object.entries(EXTRA_OPTION_UNIT_MAP).map(([value, label]) => ({
               value,

@@ -28,6 +28,7 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<DoorCreateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -92,7 +93,7 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
           {/* Cột trái: Ảnh & Preview */}
           <div className="md:col-span-4 flex flex-col items-center gap-3">
             <span className="text-xs font-semibold text-gray-700 select-none self-start">Ảnh minh họa</span>
-            <div className="w-full aspect-square max-w-[200px] rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
+            <div className="w-full aspect-square max-w-50 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
@@ -129,6 +130,7 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
               label="Phân loại *"
               placeholder="Chọn phân loại"
               fullWidth
+              value={watch('type') || ''}
               {...register('type', { required: true })}
               options={[
                 { value: 'cd', label: 'Cửa đi' },
@@ -178,6 +180,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<DoorUpdateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -248,7 +251,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
           {/* Cột trái: Ảnh & Preview */}
           <div className="md:col-span-4 flex flex-col items-center gap-3">
             <span className="text-gray-700 text-sm font-medium self-start">Ảnh minh họa</span>
-            <div className="w-full aspect-square max-w-[200px] rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
+            <div className="w-full aspect-square max-w-50 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
@@ -285,6 +288,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
               label="Phân loại *"
               placeholder="Chọn phân loại"
               fullWidth
+              value={watch('type') || ''}
               {...register('type', { required: true })}
               options={[
                 { value: 'cd', label: 'Cửa đi' },

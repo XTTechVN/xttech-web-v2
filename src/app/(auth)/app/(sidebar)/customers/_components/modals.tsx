@@ -23,7 +23,7 @@ import toast from 'react-hot-toast';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import queryClient from '@/utils/query';
-import { useAuthStore } from '@/stores';
+import { usePermission } from '@/hooks';
 
 import type { CustomerCreate, CustomerUpdate } from '@/types';
 
@@ -50,16 +50,9 @@ interface CustomerFormModalProps {
 
 type CustomerFormValues = CustomerCreate & { type?: string };
 export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác nhận tạo', initialData }: CustomerFormModalProps) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm<CustomerFormValues>();
-  
-  const user = useAuthStore((state) => state.user);
-  const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
+  const { register, handleSubmit, reset, setValue, formState: { errors }, watch, } = useForm<CustomerFormValues>();
+
+  const { user, canAssignStaff } = usePermission();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImages, setSelectedImages] = useState<{ id: string; file: File; preview: string }[]>([]);
@@ -121,7 +114,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
         label: u.fullName || u.username || u.email,
       })) || [];
     
-  if (!hasFullViewRole && user) {
+  if (!canAssignStaff && user) {
     const isExist = staffOptions.some(opt => opt.value === user.id);
     if (!isExist) {
       staffOptions.push({
@@ -219,7 +212,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
         identifyCode: initialData?.identifyCode || '',
         email: initialData?.email || '',
         phone: initialData?.phone || '',
-        staffId: initialData?.staffId || (!hasFullViewRole && user ? user.id : ''),
+        staffId: initialData?.staffId || (!canAssignStaff && user ? user.id : ''),
         type: initialData?.type || '',
       });
        
@@ -404,15 +397,18 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
               />
             </div>
           </div>
-          <Select
-            label="Nhân viên phụ trách"
-            options={staffOptions}
-            placeholder={isLoadingUsers ? 'Đang tải danh sách nhân viên...' : 'Chọn nhân viên phụ trách'}
-            fullWidth
-            disabled={isLoadingUsers || !hasFullViewRole}
-            {...register('staffId')}
-            error={errors.staffId?.message}
-          />
+          {canAssignStaff && (
+            <Select
+              label="Nhân viên phụ trách"
+              options={staffOptions}
+              placeholder={isLoadingUsers ? 'Đang tải danh sách nhân viên...' : 'Chọn nhân viên phụ trách'}
+              fullWidth
+              disabled={isLoadingUsers}
+              value={watch('staffId') || ''}
+              {...register('staffId')}
+              error={errors.staffId?.message}
+            />
+          )}
           {initialData && (
             <Select
               label="Loại khách hàng"
@@ -420,6 +416,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
               placeholder="Chọn loại khách hàng"
               fullWidth
               disabled={updateIsPending}
+              value={watch('type') || ''}
               {...register('type')}
               error={errors.type?.message}
             />
