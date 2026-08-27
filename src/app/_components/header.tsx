@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Settings } from 'lucide-react';
 
 // Thành phần dùng chung cho components
-import { Button, Heading, Avatar } from '@/components';
+import { Button, Heading, Avatar, XTLogo } from '@/components';
 import { BASE_MINIO_URL } from '@/config';
 import useAuthStore from '@/stores/useAuthStore';
 
@@ -22,11 +22,9 @@ export const Header = () => {
   return (
     <header className="w-full border-b border-gray-200 bg-white/80 backdrop-blur-md sticky top-0 z-50 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-primary/20 rounded-lg">
-            <Settings className="w-5 h-5 text-primary" />
-          </div>
-          <Heading size="h1" className="text-primary">
+        <div className="flex items-center gap-2.5">
+          <XTLogo className="w-8 h-8 drop-shadow-[0_2px_5px_rgba(4,88,99,0.35)]" />
+          <Heading size="h1" className="text-primary tracking-tight">
             XTTECH
           </Heading>
         </div>
