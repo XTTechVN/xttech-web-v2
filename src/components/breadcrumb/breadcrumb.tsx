@@ -38,7 +38,7 @@ const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
 
                 {isLast ? (
                   <span
-                    className="text-primary font-semibold truncate max-w-[200px]"
+                    className="text-primary font-semibold truncate max-w-50"
                     aria-current="page"
                   >
                     {item.icon && <span className="inline-flex mr-1 align-text-bottom">{item.icon}</span>}

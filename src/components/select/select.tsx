@@ -1,6 +1,8 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useId, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/utils/cn';
 import { ChevronDown, Check } from 'lucide-react';
 
@@ -37,10 +39,17 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     },
     ref,
   ) => {
-    const selectId = id || React.useId();
+    const generatedId = useId();
+    const selectId = id || generatedId;
     const containerRef = useRef<HTMLDivElement>(null);
     const hiddenSelectRef = useRef<HTMLSelectElement>(null);
     const visibleInputRef = useRef<HTMLInputElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+      setMounted(true);
+    }, []);
 
     // Sync ref
     React.useImperativeHandle(ref, () => hiddenSelectRef.current!);
@@ -53,41 +62,42 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     });
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [openUpward, setOpenUpward] = useState(false);
+    const [dropdownPos, setDropdownPos] = useState({
+      top: 0,
+      left: 0,
+      width: 0,
+      openUpward: false,
+    });
 
     const canSearch = options.length > 10;
 
-    // Detect position and flip upward if there is not enough space below
+    // Calculate fixed coordinates for Portal Dropdown
+    const updatePosition = useCallback(() => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const dropdownHeight = 220;
+      const openUpward = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+
+      setDropdownPos({
+        top: openUpward ? rect.top - 4 : rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+        openUpward,
+      });
+    }, []);
+
     useEffect(() => {
-      if (isOpen && containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        
-        // Find closest scroll parent to get accurate bottom bounds
-        let scrollParent: HTMLElement | null = null;
-        let parent = containerRef.current.parentElement;
-        while (parent) {
-          const overflowY = window.getComputedStyle(parent).overflowY;
-          if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'hidden') {
-            scrollParent = parent;
-            break;
-          }
-          parent = parent.parentElement;
-        }
-
-        let spaceBelow = window.innerHeight - rect.bottom;
-        if (scrollParent) {
-          const parentRect = scrollParent.getBoundingClientRect();
-          spaceBelow = parentRect.bottom - rect.bottom;
-        }
-
-        const dropdownHeight = 220; // Maximum expected height of the dropdown
-        if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
-          setOpenUpward(true);
-        } else {
-          setOpenUpward(false);
-        }
+      if (isOpen) {
+        updatePosition();
+        window.addEventListener('resize', updatePosition);
+        window.addEventListener('scroll', updatePosition, true);
+        return () => {
+          window.removeEventListener('resize', updatePosition);
+          window.removeEventListener('scroll', updatePosition, true);
+        };
       }
-    }, [isOpen]);
+    }, [isOpen, updatePosition]);
 
     // Update internal state when controlled value changes
     useEffect(() => {
@@ -96,16 +106,23 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       }
     }, [value]);
 
-    // Close on click outside
+    // Close on click outside (check both container and portal dropdown)
     useEffect(() => {
+      if (!isOpen) return;
       const handleClickOutside = (event: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        const target = event.target as Node;
+        if (
+          containerRef.current &&
+          !containerRef.current.contains(target) &&
+          dropdownRef.current &&
+          !dropdownRef.current.contains(target)
+        ) {
           setIsOpen(false);
         }
       };
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [isOpen]);
 
     // Auto-focus and select visible input when open
     useEffect(() => {
@@ -257,49 +274,58 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
               className={cn('transition-transform duration-200 shrink-0', isOpen && 'transform rotate-180')}
             />
           </button>
-
-          {/* Custom Dropdown Menu Options list */}
-          {isOpen && (
-            <div
-              className={cn(
-                "absolute z-50 w-full bg-white border border-gray-100 rounded-lg shadow-xl p-1 max-h-52 overflow-y-auto select-none animate-in fade-in duration-150 flex flex-col gap-0.5 pr-0.5",
-                openUpward
-                  ? "bottom-full mb-1 slide-in-from-bottom-1"
-                  : "top-full mt-1 slide-in-from-top-1"
-              )}
-            >
-              {filteredOptions.length === 0 ? (
-                <div className="px-3 py-4 text-xs text-gray-400 text-center">
-                  Không tìm thấy kết quả
-                </div>
-              ) : (
-                filteredOptions.map((opt) => {
-                  const isSelected = String(opt.value) === String(selectedValue);
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      disabled={opt.disabled}
-                      onClick={() => handleSelectOption(opt.value)}
-                      className={cn(
-                        'px-3 py-2 text-left text-sm flex items-center justify-between transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer rounded-md shrink-0',
-                        isSelected
-                          ? 'bg-primary/5 text-primary font-medium'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      )}
-                    >
-                      <span className="truncate">{opt.label}</span>
-                      {isSelected && <Check size={14} className="text-primary shrink-0 ml-2" />}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          )}
         </div>
 
         {/* Error message */}
         {error && <span className="text-xs text-red-500">{error}</span>}
+
+        {/* Portal Dropdown Menu Options list */}
+        {mounted && isOpen && dropdownPos.width > 0 && createPortal(
+          <div
+            ref={dropdownRef}
+            style={{
+              position: 'fixed',
+              left: `${dropdownPos.left}px`,
+              width: `${dropdownPos.width}px`,
+              ...(dropdownPos.openUpward
+                ? { bottom: `${window.innerHeight - dropdownPos.top}px` }
+                : { top: `${dropdownPos.top}px` }),
+              zIndex: 99999,
+            }}
+            className={cn(
+              "bg-white border border-gray-200 rounded-lg shadow-2xl p-1 max-h-52 overflow-y-auto select-none animate-in fade-in duration-150 flex flex-col gap-0.5 pr-0.5",
+              dropdownPos.openUpward ? "slide-in-from-bottom-1" : "slide-in-from-top-1"
+            )}
+          >
+            {filteredOptions.length === 0 ? (
+              <div className="px-3 py-4 text-xs text-gray-400 text-center">
+                Không tìm thấy kết quả
+              </div>
+            ) : (
+              filteredOptions.map((opt) => {
+                const isSelected = String(opt.value) === String(selectedValue);
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    disabled={opt.disabled}
+                    onClick={() => handleSelectOption(opt.value)}
+                    className={cn(
+                      'px-3 py-2 text-left text-sm flex items-center justify-between transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer rounded-md shrink-0',
+                      isSelected
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    )}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                    {isSelected && <Check size={14} className="text-primary shrink-0 ml-2" />}
+                  </button>
+                );
+              })
+            )}
+          </div>,
+          document.body
+        )}
       </div>
     );
   }

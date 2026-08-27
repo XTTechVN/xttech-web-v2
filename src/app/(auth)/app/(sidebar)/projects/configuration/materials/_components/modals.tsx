@@ -28,6 +28,7 @@ export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<MaterialCreateFormValues>();
 
@@ -102,6 +103,7 @@ export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác
             label="Đơn vị tính *"
             placeholder="Chọn đơn vị tính"
             fullWidth
+            value={watch('unit') || ''}
             {...register('unit', { required: true })}
             options={[
               { value: 'set', label: 'Bộ' },
@@ -165,6 +167,7 @@ export function MaterialUpdateModal({ isOpen, onClose, title, submitText = 'Xác
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<MaterialUpdateFormValues>();
 
@@ -247,6 +250,7 @@ export function MaterialUpdateModal({ isOpen, onClose, title, submitText = 'Xác
             label="Đơn vị tính *"
             placeholder="Chọn đơn vị tính"
             fullWidth
+            value={watch('unit') || ''}
             {...register('unit', { required: true })}
             options={[
               { value: 'set', label: 'Bộ' },

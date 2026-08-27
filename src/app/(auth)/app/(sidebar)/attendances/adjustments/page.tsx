@@ -13,7 +13,7 @@ import AdjustmentDetailModal from './_components/detail-modal';
 import ReviewAdjustmentModal from './_components/review-modal';
 import DeleteAdjustmentModal from '@/app/(auth)/app/(sidebar)/attendances/_components/delete-modal';
 import { getAdjustmentRequests, updateAdjustmentRequest, deleteAdjustmentRequest, getUsers } from '@/actions';
-import { useAuthStore } from '@/stores';
+import { usePermission } from '@/hooks';
 import StatCart from '../../dashboard/_components/stats-card';
 
 // ===================== Types =====================
@@ -30,15 +30,9 @@ const STATUS_CONFIG: Record<AdjustmentStatus, { label: string; variant: 'warning
 };
 
 // Sử dụng helper getRequestTypeLabel từ @/types để hiển thị loại khiếu nại
-const ROLE_ALLOW_REVIEW = ['admin', 'super', 'hr'];
 export default function AdjustmentsSidebarPage() {
   const queryClient = useQueryClient();
-  const currentUser = useAuthStore((state) => state.user);
-
-  const isAdmin = useMemo(
-    () => Boolean(currentUser?.roles?.some((role) => ROLE_ALLOW_REVIEW.includes(role.code?.toLowerCase() || ''))),
-    [currentUser],
-  );
+  const { user: currentUser, isManager: isAdmin } = usePermission();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<AdjustmentStatus | undefined>();
