@@ -66,6 +66,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
   const [existingImages, setExistingImages] = useState<any[]>([]);
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const [showAllImages, setShowAllImages] = useState(false);
+  const [showAllExistingImages, setShowAllExistingImages] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
   // Lấy vị trí GPS hiện tại
@@ -243,6 +244,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
 
       setDeletedImageIds([]);
       setShowAllImages(false);
+      setShowAllExistingImages(false);
     } else {
       reset({ name: '', address: '', latitude: null, longitude: null, identifyCode: '', email: '', phone: '', staffId: '', type: '' });
       setSelectedImages((prev) => {
@@ -252,6 +254,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
       setExistingImages([]);
       setDeletedImageIds([]);
       setShowAllImages(false);
+      setShowAllExistingImages(false);
     }
   }, [isOpen, initialData, reset]);
 
@@ -449,28 +452,75 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
 
               {existingImages.length > 0 && (
                 <div className="flex flex-col gap-2 w-full mt-2">
-                  <span className="text-xs font-semibold text-slate-500 select-none">Hình ảnh đã tải lên ({existingImages.length})</span>
-                  <div className="flex flex-wrap gap-3">
-                    {existingImages.map((img) => (
-                      <div key={img.id} className="relative w-16 h-16 rounded-lg border border-slate-200 group shrink-0">
-                        <div className="w-full h-full rounded-lg overflow-hidden relative bg-gray-50">
-                          <img src={img.url || img.preview || undefined} alt="Preview" className="w-full h-full object-cover" />
-                        </div>
-                        <Button
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-500 select-none">Hình ảnh đã tải lên ({existingImages.length})</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        disabled={isPending || updateIsPending}
+                        onClick={() => {
+                          const allExistingIds = existingImages.map((img) => img.id);
+                          setDeletedImageIds((prev) => [...prev, ...allExistingIds]);
+                          setExistingImages([]);
+                          setShowAllExistingImages(false);
+                        }}
+                        className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline disabled:text-rose-350 disabled:no-underline cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        Xóa toàn bộ hình ảnh
+                      </button>
+                      {showAllExistingImages && existingImages.length > 4 && (
+                        <button
                           type="button"
-                          variant="ghost"
-                          disabled={isPending || updateIsPending}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveExistingImage(img.id);
-                          }}
-                          className="absolute -top-1.5 -right-1.5 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-full w-5 h-5 p-0 flex items-center justify-center transition-colors cursor-pointer shadow-xs z-10 min-w-0 disabled:cursor-not-allowed"
-                          title="Xóa ảnh"
+                          onClick={() => setShowAllExistingImages(false)}
+                          className="text-[11px] font-bold text-cyan-700 hover:text-cyan-800 hover:underline cursor-pointer"
                         >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
+                          Thu gọn
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {(showAllExistingImages ? existingImages : existingImages.slice(0, 4)).map((img, index) => {
+                      const isLastItemAndHasMore = !showAllExistingImages && existingImages.length > 4 && index === 3;
+                      if (isLastItemAndHasMore) {
+                        return (
+                          <div
+                            key={img.id}
+                            onClick={() => setShowAllExistingImages(true)}
+                            className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer group shrink-0"
+                          >
+                            <img
+                              src={img.url || img.preview || undefined}
+                              alt="Preview"
+                              className="w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-200 bg-gray-50"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-bold text-sm">
+                              +{existingImages.length - 3}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={img.id} className="relative w-16 h-16 rounded-lg border border-slate-200 group shrink-0">
+                          <div className="w-full h-full rounded-lg overflow-hidden relative bg-gray-50">
+                            <img src={img.url || img.preview || undefined} alt="Preview" className="w-full h-full object-cover" />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            disabled={isPending || updateIsPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveExistingImage(img.id);
+                            }}
+                            className="absolute -top-1.5 -right-1.5 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-full w-5 h-5 p-0 flex items-center justify-center transition-colors cursor-pointer shadow-xs z-10 min-w-0 disabled:cursor-not-allowed"
+                            title="Xóa ảnh"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
