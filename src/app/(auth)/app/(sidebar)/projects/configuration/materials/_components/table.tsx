@@ -1,16 +1,12 @@
 'use client';
-
-import React from 'react';
 import { PackageOpen, Plus, Pencil, Trash2 } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
-import { Heading, Button } from '@/components';
+import { Button } from '@/components';
 import { useQueryParam } from '@/hooks';
 import { Material, formatMaterialUnit } from '@/types';
 import { getMaterials } from '@/actions';
 import toast from 'react-hot-toast';
-import { useSearchParams, useRouter } from 'next/navigation';
-
-import { BASE_MINIO_URL } from '@/config/app';
+import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/utils';
 
 interface TableProps {
@@ -21,9 +17,8 @@ interface TableProps {
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
+
 
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
     const res = await getMaterials({ offset, limit, search: search || undefined });
@@ -51,14 +46,12 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     {
       key: 'name',
       label: 'Tên hệ nhôm',
-      minWidth: '200px',
-      cell: (row: Material) => <span className="font-medium text-gray-700">{row.name}</span>,
-    },
-    {
-      key: 'specification',
-      label: 'Thông số kỹ thuật',
-      minWidth: '200px',
-      cell: (row: Material) => <span className="text-gray-500 text-sm truncate max-w-[200px] block">{row.specification || '—'}</span>,
+      minWidth: '220px',
+      cell: (row: Material) => (
+        <span className="font-medium text-gray-700 truncate max-w-[280px] block" title={row.name}>
+          {row.name}
+        </span>
+      ),
     },
     {
       key: 'unit',
@@ -69,12 +62,32 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       },
     },
     {
-      key: 'price',
-      label: 'Đơn giá',
-      minWidth: '130px',
+      key: 'costPrice',
+      label: 'Giá vốn',
+      minWidth: '110px',
       cell: (row: Material) => (
-        <span className="text-gray-900 font-medium">
-          {formatCurrency(row.price)}
+        <span className="text-gray-500 font-medium">
+          {formatCurrency(row.costPrice)}
+        </span>
+      ),
+    },
+    {
+      key: 'retailPrice',
+      label: 'Giá bán lẻ',
+      minWidth: '110px',
+      cell: (row: Material) => (
+        <span className="text-gray-900 font-semibold text-primary">
+          {formatCurrency(row.retailPrice)}
+        </span>
+      ),
+    },
+    {
+      key: 'salePrice',
+      label: 'Giá đại lý',
+      minWidth: '110px',
+      cell: (row: Material) => (
+        <span className="text-gray-900 font-semibold text-teal-650">
+          {formatCurrency(row.salePrice)}
         </span>
       ),
     },
@@ -104,11 +117,16 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             <PackageOpen size={18} />
           </div>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
-            <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-gray-400">
-              <span>Đơn giá: {formatCurrency(row.price)}</span>
-              {row.unit && <span className="select-none">•</span>}
-              {row.unit && <span>ĐVT: {formatMaterialUnit(row.unit)}</span>}
+            <span className="font-semibold text-gray-900 wrap-break-word text-sm sm:text-base leading-snug">{row.name}</span>
+            <div className="flex flex-col gap-0.5 mt-1 text-xs text-gray-500">
+              <div className="flex gap-2 flex-wrap">
+                <span>Vốn: {formatCurrency(row.costPrice)}</span>
+                <span>•</span>
+                <span>Lẻ: {formatCurrency(row.retailPrice)}</span>
+                <span>•</span>
+                <span>Sỉ: {formatCurrency(row.salePrice)}</span>
+              </div>
+              {row.unit && <span className="mt-0.5">ĐVT: {formatMaterialUnit(row.unit)}</span>}
             </div>
           </div>
         </div>
@@ -148,7 +166,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         </Button>
       </div>
       <TableData<Material>
-        queryKey={['materials', search, offset]}
+        queryKey={['materials', search]}
         fetcher={fetcher}
         columns={columns}
         renderCard={renderCard}

@@ -3,14 +3,13 @@
 import React, { useRef, useState, useEffect, Suspense } from 'react';
 import { Heading } from '@/components';
 import { StatCards, SuggestionTable, SuggestionModal } from './_components';
-import useAuthStore from '@/stores/useAuthStore';
+import { usePermission } from '@/hooks';
 
 function SuggestionsPageContent() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
 
-  const { user } = useAuthStore();
-  const isManager = user?.roles?.some((role) => role.code === 'admin' || role.code === 'hr' ||  role.code === 'super') ?? false;
+  const { user, isManager } = usePermission();
 
   useEffect(() => {
     if (!containerRef.current) return;

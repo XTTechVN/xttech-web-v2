@@ -6,7 +6,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { getQuotation, getDoors, getMaterials, getAccessories, getExtraOptions, getQuotationPreview, getFormulas } from '@/actions';
 import { useQuotationStore } from '@/stores';
 import { useDebounce } from '@/hooks';
-import { QuotationEditor, QuotationPreview } from './components';
+import { QuotationEditor, QuotationPreview, QuotationTermsEditor } from './components';
 
 interface QuotationDetailPageProps {
   params: Promise<{ id: string; quotationId: string }>;
@@ -98,18 +98,19 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
 
   // Gọi API preview để lấy báo giá chi tiết đã tính toán đầy đủ từ backend
   const { data: previewData, isFetching: isPreviewFetching } = useQuery({
-    queryKey: ['quotation-preview', quotationId, debouncedFloors, debouncedTitle, debouncedDiscount],
+    queryKey: ['quotation-preview', quotationId, debouncedFloors, debouncedTitle, debouncedDiscount, accessoriesList, extraOptionsList],
     queryFn: () => {
-      const payload = store.getPayload();
+      const payload = store.getPayload(accessoriesList, extraOptionsList);
       return getQuotationPreview({
         title: debouncedTitle,
         code: store.code,
         discountPercentage: debouncedDiscount,
         projectId: store.projectId,
         floors: payload.floors,
+        priceType: payload.priceType,
       });
     },
-    enabled: initialized && debouncedFloors.length > 0,
+    enabled: initialized && debouncedFloors.length > 0 && !!accessories && !!extraOptions,
     placeholderData: keepPreviousData,
   });
 
@@ -132,18 +133,25 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
       </div>
 
       {/* Cột phải: Live Preview */}
-      <div className="relative min-w-0">
+      <div className="min-w-0 flex flex-col gap-4">
         {previewData ? (
           <>
-            <QuotationPreview quotation={previewData} materialsList={materials || []} doorsList={doors || []} extraOptionsList={extraOptionsList} />
-            {isPreviewFetching && (
-              <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex justify-center items-center z-10 rounded">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#045863] border-t-transparent"></div>
-                  <span className="text-xs text-gray-500 font-medium">Đang cập nhật...</span>
+            <div className="relative bg-white rounded border border-gray-200">
+              <QuotationPreview quotation={previewData} materialsList={materials || []} doorsList={doors || []} extraOptionsList={extraOptionsList} />
+              {isPreviewFetching && (
+                <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex justify-center items-center z-10 rounded">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#045863] border-t-transparent"></div>
+                    <span className="text-xs text-gray-500 font-medium">Đang cập nhật...</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Trình biên soạn ghi chú & điều khoản nằm dưới preview */}
+            <div className="bg-white rounded border border-gray-200 p-4">
+              <QuotationTermsEditor />
+            </div>
           </>
         ) : (
           <div className="bg-gray-100 border border-dashed border-gray-300 rounded p-12 text-center text-gray-400 italic">

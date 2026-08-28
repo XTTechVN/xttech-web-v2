@@ -229,9 +229,19 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
             <span className="font-semibold text-slate-500">Đơn vị tính: </span>
             <span className="text-slate-800 font-medium">{formatMaterialUnit(material.unit) || '—'}</span>
           </div>
-          <div>
-            <span className="font-semibold text-slate-500">Đơn giá: </span>
-            <span className="text-slate-850 font-semibold text-primary">{formatCurrency(material.price)}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-b border-slate-100 py-3.5 my-1">
+            <div>
+              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá vốn</span>
+              <span className="text-slate-700 font-semibold">{formatCurrency(material.costPrice)}</span>
+            </div>
+            <div>
+              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá bán lẻ</span>
+              <span className="text-primary font-bold">{formatCurrency(material.retailPrice)}</span>
+            </div>
+            <div>
+              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá đại lý</span>
+              <span className="text-teal-655 font-bold">{formatCurrency(material.salePrice)}</span>
+            </div>
           </div>
           <div className="flex flex-col gap-1 mt-1 border-t border-slate-100 pt-3">
             <span className="font-semibold text-slate-500">Thông số kỹ thuật:</span>
@@ -287,7 +297,7 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
                     ĐVT: {formatAccessoryUnit(acc.unit)}
                   </span>
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/5 text-primary">
-                    {formatCurrency(acc.price)}
+                    {formatCurrency(acc.retailPrice)}
                   </span>
                 </div>
               </div>
@@ -337,7 +347,7 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
                     ĐVT: {EXTRA_OPTION_UNIT_MAP[opt.unit as ExtraOptionUnit] || opt.unit}
                   </span>
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/5 text-primary">
-                    {formatCurrency(opt.price)}
+                    {formatCurrency(opt.retailPrice)}
                   </span>
                 </div>
               </div>

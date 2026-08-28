@@ -1,11 +1,18 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
 import type { Customer } from '@/types';
+
 import { Image } from 'antd';
+
 import { MapPin, ExternalLink } from 'lucide-react';
+
 import toast from 'react-hot-toast';
 
 import { getCustomerTypeLabel, getCustomerTypeColor } from '@/app/(auth)/app/(sidebar)/customers/config';
 
-import { Heading, Button } from '@/components';
+import { Heading } from '@/components';
 
 import { BASE_MINIO_URL } from '@/config/app';
 
@@ -22,6 +29,26 @@ interface CustomerInfoProps {
 
 // Hiển thị thông tin khách hàng
 export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
+  const [maxImages, setMaxImages] = useState(18);
+  const [showAllImages, setShowAllImages] = useState(false);
+
+  // Xử lý hiển thị số lượng ảnh upload theo kích thước màn hình 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setMaxImages(5);
+      } else if (window.innerWidth < 1024) {
+        setMaxImages(10);
+      } else {
+        setMaxImages(18);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   if (!customer) return null;
 
   const hasCoordinates =
@@ -29,14 +56,6 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
     customer.latitude !== undefined &&
     customer.longitude !== null &&
     customer.longitude !== undefined;
-
-  const handleOpenGoogleMaps = () => {
-    if (hasCoordinates) {
-      window.open(`https://www.google.com/maps?q=${customer.latitude},${customer.longitude}`, '_blank', 'noopener,noreferrer');
-    } else {
-      toast.error('Chưa cập nhật tọa độ khách hàng');
-    }
-  };
 
   return (
     <div className="mb-2">
@@ -84,11 +103,11 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
                     href={`https://www.google.com/maps?q=${customer.latitude},${customer.longitude}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/80 hover:bg-blue-100 hover:text-blue-700 border border-blue-200/80 rounded-lg transition-all shadow-2xs group whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary border border-primary/20 rounded-lg transition-all shadow-2xs group whitespace-nowrap"
                   >
-                    <MapPin className="w-3.5 h-3.5 text-blue-500 shrink-0 group-hover:scale-110 transition-transform" />
+                    <MapPin className="w-3.5 h-3.5 text-primary shrink-0 group-hover:scale-110 transition-transform" />
                     <span>Mở Google Maps</span>
-                    <ExternalLink className="w-3 h-3 text-blue-400 shrink-0" />
+                    <ExternalLink className="w-3 h-3 text-primary shrink-0" />
                   </a>
                 ) : (
                   <button
@@ -106,7 +125,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold text-gray-400 uppercase">Nhân viên phụ trách</span>
               <span className="text-base font-semibold text-gray-900">
-                {(customer as any).staff?.fullName || (customer as any).staff?.username || customer.staffId || '—'}
+                {customer.staff?.fullName || customer.staff?.username || '—'}
               </span>
             </div>
 
@@ -123,15 +142,62 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
           {/* Hiển thị ảnh đã đính kèm */}
           {customer.images && customer.images.length > 0 && (
             <div className="mt-6 border-t border-gray-100 pt-5">
-              <span className="text-xs font-semibold text-gray-400 uppercase block mb-3">
-                Hình ảnh đính kèm ({customer.images.length})
-              </span>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-gray-400 uppercase block">
+                  Hình ảnh đính kèm ({customer.images.length})
+                </span>
+                {showAllImages && customer.images.length > maxImages && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllImages(false)}
+                    className="text-[11px] font-bold text-cyan-700 hover:text-cyan-800 hover:underline cursor-pointer"
+                  >
+                    Thu gọn
+                  </button>
+                )}
+              </div>
               <Image.PreviewGroup>
                 <div className="flex flex-wrap items-center gap-3">
                   {customer.images.map((img: any, idx: number) => {
                     const imgPath = typeof img === 'string' ? img : img.imagePath;
                     const src = getFullImageUrl(imgPath);
                     if (!src) return null;
+                    
+                    const isHidden = !showAllImages && idx >= maxImages;
+                    const isLastVisibleItemAndHasMore = !showAllImages && idx === maxImages - 1 && customer.images.length > maxImages;
+                    const remainingCount = customer.images.length - maxImages + 1;
+                    
+                    if (isHidden) {
+                      return (
+                        <div key={idx} className="hidden">
+                          <Image src={src} />
+                        </div>
+                      );
+                    }
+
+                    if (isLastVisibleItemAndHasMore) {
+                      return (
+                        <div key={idx} className="relative">
+                          <div className="hidden">
+                            <Image src={src} />
+                          </div>
+                          <div
+                            onClick={() => setShowAllImages(true)}
+                            className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shadow-xs hover:shadow-md transition-shadow cursor-pointer relative group flex items-center justify-center bg-gray-50"
+                          >
+                            <img
+                              src={src}
+                              alt={`customer-img-${idx}`}
+                              className="w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-300 rounded-lg"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-bold text-sm pointer-events-none">
+                              +{remainingCount}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
                     return (
                       <div
                         key={idx}

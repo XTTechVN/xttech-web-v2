@@ -28,10 +28,10 @@ export const QuotationFormula = ({
   const triggerRef = useRef<HTMLDivElement>(null);
 
   const selectedForm = formulasList.find((form) => form.id === formula.fomulaId);
-  const isArch =
-    selectedForm?.type === 'circle' ||
-    selectedForm?.type === 'semicircle' ||
-    selectedForm?.type === 'wall_cladding';
+  // Chỉ semicircle và circle mới cần nhập chiều rộng; các loại còn lại backend tự tính
+  const needsWidthInput =
+    selectedForm?.type === 'circle' || selectedForm?.type === 'semicircle';
+  const showExtraFields = selectedForm !== undefined;
 
   return (
     <div className="flex flex-col gap-1 py-1">
@@ -70,27 +70,29 @@ export const QuotationFormula = ({
           <Trash2 size={14} />
         </Button>
       </div>
-      {isArch && (
+      {showExtraFields && (
         <div className="grid grid-cols-2 gap-4 mt-1.5">
-          <div>
-            <span className={EDITOR_STYLES.label}>Rộng (mm)</span>
-            <Input
-              type="number"
-              placeholder="Mặc định"
-              value={formula.width ?? ''}
-              onChange={(e) =>
-                store.updateFormula(
-                  fIndex,
-                  mIndex,
-                  dIndex,
-                  foIndex,
-                  'width',
-                  parseFloat(e.target.value) || undefined
-                )
-              }
-              className={EDITOR_STYLES.input}
-            />
-          </div>
+          {needsWidthInput && (
+            <div>
+              <span className={EDITOR_STYLES.label}>Rộng (mm)</span>
+              <Input
+                type="number"
+                placeholder="Mặc định"
+                value={formula.width ?? ''}
+                onChange={(e) =>
+                  store.updateFormula(
+                    fIndex,
+                    mIndex,
+                    dIndex,
+                    foIndex,
+                    'width',
+                    parseFloat(e.target.value) || undefined
+                  )
+                }
+                className={EDITOR_STYLES.input}
+              />
+            </div>
+          )}
           <div>
             <span className={EDITOR_STYLES.label}>Tiền công</span>
             <Input

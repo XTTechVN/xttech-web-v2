@@ -5,6 +5,7 @@ import { useQuotationStore } from '@/stores';
 import { QuotationMaterial } from './quotation-material';
 import { EDITOR_STYLES } from './config';
 import type { Accessory, ExtraOption, Material, Door, Formula } from '@/types';
+import { getResolvedPrice } from './utils';
 
 interface QuotationFloorProps {
   fIndex: number;
@@ -35,7 +36,8 @@ export const QuotationFloor = ({
   const handleAddMaterial = () => {
     const defaultMat = materialsList[0];
     if (defaultMat) {
-      store.addMaterial(fIndex, defaultMat.id, defaultMat.price);
+      const price = getResolvedPrice(defaultMat, store.priceType);
+      store.addMaterial(fIndex, defaultMat.id, price);
     }
   };
 

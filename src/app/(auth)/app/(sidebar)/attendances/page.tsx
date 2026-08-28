@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 // Cập nhật code trang attendanceModule
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Button,
   TableData,
@@ -31,19 +31,18 @@ import {
 import AddAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/add-modal";
 import EditAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/edit-modal";
 import AttendanceDetailModal from "@/app/(auth)/app/(sidebar)/attendances/_components/attendance-modal";
-import AddUserModal from "@/app/(auth)/app/(sidebar)/attendances/_components/users/add-modal";
 import AutoTimekeepingModal from "@/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal";
 import { useQueryParam } from '@/hooks';
 import Loading from '../../loading';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteAttendance, getAttendances, getDepartments, getUsers, getAdjustmentRequests, updateAdjustmentRequest } from '@/actions';
 import { Attendance, AttendanceAdjustmentRequest, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 import StatCart from '../dashboard/_components/stats-card';
-import AddAdjustmentModal from './_components/adjustment/add-modal';
-import ReviewAdjustmentModal from './_components/adjustment/review-modal';
+import AddAdjustmentModal from './adjustments/_components/add-modal';
+import ReviewAdjustmentModal from './adjustments/_components/review-modal';
 
 type FilterOption = {
   value: string | undefined;
@@ -784,18 +783,6 @@ export default function AttendancesPage() {
         data={selectedRow}
         onClose={() => setShowDetailModal(false)}
       />
-
-      <AddUserModal
-        open={showAddUserModal}
-        onClose={() => setShowAddUserModal(false)}
-        onSuccess={() => {
-          queryClient.invalidateQueries({
-            queryKey: ['users']
-          });
-          toast.success('Thêm User mới thành công')
-        }}
-      />
-
       {/* Modal điểm danh tự động: Camera + GPS + Maps */}
       <AutoTimekeepingModal
         open={showTimekeepingModal}
@@ -809,11 +796,11 @@ export default function AttendancesPage() {
         open={reviewModalState.open}
         data={reviewModalState.data}
         action={reviewModalState.action}
-        employeeName={reviewModalState.data?.user?.fullName || 'Nhân sự'}
         onClose={() => setReviewModalState({ open: false, data: null, action: null })}
         onConfirm={handleConfirmReview}
         isLoading={isReviewing}
       />
+
 
       {/* Modal xác nhận xóa chấm công */}
       {selectedRow && (

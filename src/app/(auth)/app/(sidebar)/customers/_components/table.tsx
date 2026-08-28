@@ -1,19 +1,29 @@
 'use client';
 
+import { useState, useMemo } from 'react';
+
+// Icons trong lucide react
 import { User, Pencil, Trash2, Eye, Plus, MapPin } from 'lucide-react';
 
-import { TableData, TableAction } from '@/components/table';
-
+// Thành phần dùng chung trong hệ thống
+import { TableData, TableAction, ITableFilterProps } from '@/components';
 import { Button } from '@/components';
-import { useQueryParam } from '@/hooks';
-import type { Customer } from '@/types';
-import { getCustomerTypeLabel, getCustomerTypeColor } from '../config';
-import { getCustomers, getUsers } from '@/actions';
-import { useQuery } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/stores';
+import { useRouter } from 'next/navigation';
 
+import { useQueryParam, usePermission } from '@/hooks';
+
+import type { Customer } from '@/types';
+
+import { getCustomerTypeLabel, getCustomerTypeColor, CUSTOMER_TYPE_OPTIONS } from '../config';
+
+import { getCustomers, getUsers } from '@/actions';
+
+import { useQuery } from '@tanstack/react-query';
+
+import toast from 'react-hot-toast';
+
+
+// Định nghĩa props cho component Table
 interface TableProps {
   onEditClick: (customer: Customer) => void;
   onDeleteClick: (customer: Customer) => void;
@@ -21,22 +31,71 @@ interface TableProps {
 }
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
-  const user = useAuthStore((state) => state.user);
 
+  const [filterType, setFilterType] = useState<string | undefined>();
+  const [filterStaffId, setFilterStaffId] = useState<string | undefined>();
+  const { user, canViewAll } = usePermission();
+
+  // Lấy danh sách nhân viên
   const { data: usersData } = useQuery({
     queryKey: ['users', 'all'],
     queryFn: () => getUsers({ limit: 1000 }),
   });
 
-  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
-    const hasFullViewRole = user?.roles?.some((role) => ['admin', 'super', 'hr'].includes(role.code || ''));
-    const staffId = !hasFullViewRole && user ? user.id : undefined;
+  // Options cho filter loại khách hàng
+  const typeOptions = useMemo(() => {
+    return [{ label: 'Tất cả loại khách hàng', value: undefined }, ...CUSTOMER_TYPE_OPTIONS];
+  }, []);
 
-    const res = await getCustomers({ offset, limit, search: search || undefined, staffId });
+  // Options cho filter nhân viên phụ trách
+  const staffOptions = useMemo(() => {
+    const list = (usersData?.items || [])
+      .filter((u: any) => u.roles?.some((r: any) => r.code === 'sale'))
+      .map((u: any) => ({
+        label: u.fullName || u.username || u.email,
+        value: u.id,
+      }));
+    return [{ label: 'Tất cả nhân viên', value: undefined }, ...list];
+  }, [usersData]);
+
+  // Cấu hình các bộ lọc cho bảng khách hàng
+  const tableFilters = useMemo(() => {
+    // Mặc định luôn có bộ lọc "Loại khách hàng"
+    const filters: ITableFilterProps[] = [
+      {
+        label: 'Loại khách hàng',
+        value: filterType,
+        options: typeOptions,
+        onChange: (val: string | undefined) => setFilterType(val),
+      },
+    ];
+
+    // Chỉ hiển thị bộ lọc "Nhân viên phụ trách" nếu user có quyền quản lý cấp cao
+    if (canViewAll) {
+      filters.push({
+        label: 'Nhân viên phụ trách',
+        value: filterStaffId,
+        options: staffOptions,
+        onChange: (val: string | undefined) => setFilterStaffId(val),
+      });
+    }
+
+    return filters;
+  }, [filterType, filterStaffId, typeOptions, staffOptions, canViewAll]);
+
+  // Fetch dữ liệu bảng khách hàng
+  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
+    const staffId = !canViewAll && user ? user.id : (filterStaffId || undefined);
+
+    const res = await getCustomers({
+      offset,
+      limit,
+      search: search || undefined,
+      staffId,
+      type: filterType || undefined,
+    });
     if (!res) {
       toast.error('Lỗi khi tải danh sách khách hàng');
       throw new Error('Lỗi khi tải danh sách khách hàng');
@@ -78,7 +137,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             {row.phone || '—'}
           </span>
           {row.email && (
-            <span className="text-xs text-gray-400 truncate max-w-[180px]" title={row.email}>
+            <span className="text-xs text-gray-400 truncate max-w-45" title={row.email}>
               {row.email}
             </span>
           )}
@@ -98,7 +157,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
         return (
           <div className="flex flex-col gap-1 py-1">
-            <span className="text-sm text-gray-700 truncate max-w-[220px]" title={row.address || ''}>
+            <span className="text-sm text-gray-700 truncate max-w-55" title={row.address || ''}>
               {row.address || '—'}
             </span>
             {hasCoordinates && (
@@ -137,7 +196,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       minWidth: '120px',
       cell: (row: Customer) => (
         <TableAction
-          onView={() => router.push(`/app/customers/${row.id}/customer-logs`)}
+          onView={() => router.push(`/app/customers/${row.id}`)}
           onEdit={() => onEditClick(row)}
           onDelete={() => onDeleteClick(row)}
         />
@@ -163,7 +222,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             {row.phone && <span className="text-xs text-gray-500 truncate">{row.phone}</span>}
           </div>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {row.type && <span className={`text-xs font-medium px-2 py-1 rounded-md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>
+            {row.type && <span className={`text-xs font-medium px-2 py-1 rounded- md border whitespace-nowrap ${getCustomerTypeColor(row.type)}`}>
               {getCustomerTypeLabel(row.type)}
             </span>}
             <span className="text-xs text-gray-500 font-medium ml-1">
@@ -194,7 +253,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5">
         <button
           type="button"
-          onClick={() => router.push(`/app/customers/${row.id}/customer-logs`)}
+          onClick={() => router.push(`/app/customers/${row.id}`)}
           className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer"
         >
           <Eye size={12} />
@@ -234,13 +293,14 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         </Button>
       </div>
       <TableData<Customer>
-        queryKey={['customers', search, offset]}
+        queryKey={['customers', search, filterType, filterStaffId]}
         fetcher={fetcher}
         columns={columns}
+        filters={tableFilters}
         renderCard={renderCard}
         select={false}
         search={{
-          placeholder: 'Tìm kiếm khách hàng...',
+          placeholder: 'Tìm kiếm theo tên, SĐT, mã ĐD, email...',
           value: search,
           onChange: setSearch,
           className: 'w-80',

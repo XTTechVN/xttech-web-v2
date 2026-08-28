@@ -29,6 +29,7 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<AccessoryCreateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -51,11 +52,11 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
 
   useEffect(() => {
     if (isOpen) {
-      reset({ name: '', code: '', specification: '', unit: '', price: 0 });
+      reset({ name: '', code: '', specification: '', unit: '', costPrice: 0, retailPrice: 0, salePrice: 0 });
       setSelectedFile(null);
       setPreviewUrl(null);
     }
-  }, [isOpen]);
+  }, [isOpen, reset]);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -70,7 +71,9 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
   const handleConfirm = (data: AccessoryCreateFormValues) => {
     const payload: AccessoryCreate = {
       name: data.name,
-      price: data.price || 0,
+      costPrice: data.costPrice || 0,
+      retailPrice: data.retailPrice || 0,
+      salePrice: data.salePrice || 0,
     };
     if (data.code && data.code.trim() !== '') {
       payload.code = data.code;
@@ -94,7 +97,7 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
           {/* Cột trái: Ảnh & Preview */}
           <div className="md:col-span-4 flex flex-col items-center gap-3">
             <span className="text-xs font-semibold text-gray-700 select-none self-start">Ảnh minh họa</span>
-            <div className="w-full aspect-square max-w-[200px] rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
+            <div className="w-full aspect-square max-w-50 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
@@ -139,6 +142,7 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
                 label="Đơn vị tính *"
                 placeholder="Chọn ĐVT"
                 fullWidth
+                value={watch('unit') || ''}
                 {...register('unit', { required: true })}
                 options={[
                   { value: 'set', label: 'Bộ' },
@@ -149,24 +153,70 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
                 error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
               />
               <Controller
-                name="price"
+                name="costPrice"
                 control={control}
                 rules={{
-                  required: 'Đơn giá không được để trống',
+                  required: 'Giá vốn không được để trống',
                   validate: (val) => {
                     const num = Number(val);
-                    if (isNaN(num) || num <= 0) return 'Đơn giá phải lớn hơn 0';
+                    if (isNaN(num) || num < 0) return 'Giá vốn phải lớn hơn hoặc bằng 0';
                     return true;
                   },
                 }}
                 render={({ field }) => (
                   <CurrencyInput
-                    label="Đơn giá (VNĐ) *"
-                    placeholder="Nhập đơn giá"
+                    label="Giá vốn (VNĐ) *"
+                    placeholder="Nhập giá vốn"
                     fullWidth
                     value={field.value}
                     onChange={field.onChange}
-                    error={errors.price?.message}
+                    error={errors.costPrice?.message}
+                  />
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Controller
+                name="retailPrice"
+                control={control}
+                rules={{
+                  required: 'Giá bán lẻ không được để trống',
+                  validate: (val) => {
+                    const num = Number(val);
+                    if (isNaN(num) || num < 0) return 'Giá bán lẻ phải lớn hơn hoặc bằng 0';
+                    return true;
+                  },
+                }}
+                render={({ field }) => (
+                  <CurrencyInput
+                    label="Giá bán lẻ (VNĐ) *"
+                    placeholder="Nhập giá bán lẻ"
+                    fullWidth
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.retailPrice?.message}
+                  />
+                )}
+              />
+              <Controller
+                name="salePrice"
+                control={control}
+                rules={{
+                  required: 'Giá đại lý không được để trống',
+                  validate: (val) => {
+                    const num = Number(val);
+                    if (isNaN(num) || num < 0) return 'Giá đại lý phải lớn hơn hoặc bằng 0';
+                    return true;
+                  },
+                }}
+                render={({ field }) => (
+                  <CurrencyInput
+                    label="Giá đại lý (VNĐ) *"
+                    placeholder="Nhập giá đại lý"
+                    fullWidth
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.salePrice?.message}
                   />
                 )}
               />
@@ -195,7 +245,7 @@ interface AccessoryUpdateModalProps {
   onClose: () => void;
   title: string;
   submitText?: string;
-  initialData?: Pick<Accessory, 'id' | 'name' | 'code' | 'specification' | 'unit' | 'price' | 'imagePath'>;
+  initialData?: Pick<Accessory, 'id' | 'name' | 'code' | 'specification' | 'unit' | 'costPrice' | 'retailPrice' | 'salePrice' | 'imagePath'>;
 }
 
 type AccessoryUpdateFormValues = Omit<AccessoryUpdate, 'imagePath'>;
@@ -206,6 +256,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<AccessoryUpdateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -233,7 +284,9 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
         code: initialData.code || '',
         specification: initialData.specification || '',
         unit: initialData.unit || '',
-        price: initialData.price !== undefined ? initialData.price : undefined,
+        costPrice: initialData.costPrice !== undefined ? initialData.costPrice : undefined,
+        retailPrice: initialData.retailPrice !== undefined ? initialData.retailPrice : undefined,
+        salePrice: initialData.salePrice !== undefined ? initialData.salePrice : undefined,
       });
       setSelectedFile(null);
       setPreviewUrl(
@@ -244,7 +297,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
           : null,
       );
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, reset]);
 
   useEffect(() => {
     if (!selectedFile) return;
@@ -263,8 +316,14 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
     if (data.specification && data.specification.trim() !== '') {
       payload.specification = data.specification;
     }
-    if (data.price !== undefined) {
-      payload.price = data.price;
+    if (data.costPrice !== undefined) {
+      payload.costPrice = data.costPrice;
+    }
+    if (data.retailPrice !== undefined) {
+      payload.retailPrice = data.retailPrice;
+    }
+    if (data.salePrice !== undefined) {
+      payload.salePrice = data.salePrice;
     }
     updateMutation({
       id: initialData.id,
@@ -280,7 +339,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
           {/* Cột trái: Ảnh & Preview */}
           <div className="md:col-span-4 flex flex-col items-center gap-3">
             <span className="text-gray-700 text-sm font-medium self-start">Ảnh minh họa</span>
-            <div className="w-full aspect-square max-w-[200px] rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
+            <div className="w-full aspect-square max-w-50 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
@@ -325,6 +384,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
                 label="Đơn vị tính *"
                 placeholder="Chọn ĐVT"
                 fullWidth
+                value={watch('unit') || ''}
                 {...register('unit', { required: true })}
                 options={[
                   { value: 'set', label: 'Bộ' },
@@ -335,24 +395,70 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
                 error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
               />
               <Controller
-                name="price"
+                name="costPrice"
                 control={control}
                 rules={{
-                  required: 'Đơn giá không được để trống',
+                  required: 'Giá vốn không được để trống',
                   validate: (val) => {
                     const num = Number(val);
-                    if (isNaN(num) || num <= 0) return 'Đơn giá phải lớn hơn 0';
+                    if (isNaN(num) || num < 0) return 'Giá vốn phải lớn hơn hoặc bằng 0';
                     return true;
                   },
                 }}
                 render={({ field }) => (
                   <CurrencyInput
-                    label="Đơn giá (VNĐ) *"
-                    placeholder="Nhập đơn giá"
+                    label="Giá vốn (VNĐ) *"
+                    placeholder="Nhập giá vốn"
                     fullWidth
                     value={field.value}
                     onChange={field.onChange}
-                    error={errors.price?.message}
+                    error={errors.costPrice?.message}
+                  />
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Controller
+                name="retailPrice"
+                control={control}
+                rules={{
+                  required: 'Giá bán lẻ không được để trống',
+                  validate: (val) => {
+                    const num = Number(val);
+                    if (isNaN(num) || num < 0) return 'Giá bán lẻ phải lớn hơn hoặc bằng 0';
+                    return true;
+                  },
+                }}
+                render={({ field }) => (
+                  <CurrencyInput
+                    label="Giá bán lẻ (VNĐ) *"
+                    placeholder="Nhập giá bán lẻ"
+                    fullWidth
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.retailPrice?.message}
+                  />
+                )}
+              />
+              <Controller
+                name="salePrice"
+                control={control}
+                rules={{
+                  required: 'Giá đại lý không được để trống',
+                  validate: (val) => {
+                    const num = Number(val);
+                    if (isNaN(num) || num < 0) return 'Giá đại lý phải lớn hơn hoặc bằng 0';
+                    return true;
+                  },
+                }}
+                render={({ field }) => (
+                  <CurrencyInput
+                    label="Giá đại lý (VNĐ) *"
+                    placeholder="Nhập giá đại lý"
+                    fullWidth
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.salePrice?.message}
                   />
                 )}
               />
