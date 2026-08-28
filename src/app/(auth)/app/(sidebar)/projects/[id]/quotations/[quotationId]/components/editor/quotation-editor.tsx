@@ -11,7 +11,7 @@ import type { Accessory, ExtraOption, Material, Door, Formula } from '@/types';
 
 import { QuotationInfo } from './quotation-info';
 import { QuotationFloor } from './quotation-floor';
-import { QuotationTermsEditor } from './quotation-terms-editor';
+
 
 interface QuotationEditorProps {
   quotationId: number;
@@ -32,7 +32,7 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
 
   const { mutate: updateQuotationMutate, isPending } = useMutation({
     mutationFn: () => {
-      const payload = store.getPayload();
+      const payload = store.getPayload(accessoriesList, extraOptionsList);
       return updateQuotation(quotationId, payload);
     },
     onSuccess: () => {
@@ -99,6 +99,7 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
           </Tooltip>
         </div>
         <div className="flex items-center gap-2">
+          
           <Button
             variant="outline"
             size="sm"
@@ -125,12 +126,9 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
       </div>
 
       {/* 1. Thông tin chung */}
-      <QuotationInfo />
+      <QuotationInfo materialsList={materialsList} />
 
-      {/* 2. Ghi chú & Điều khoản (Rich Text) */}
-      <QuotationTermsEditor />
-
-      {/* 3. Cấu trúc các tầng */}
+      {/* 2. Cấu trúc các tầng */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center pb-1.5">
           <h3 className="text-base font-bold text-primary">Cấu trúc các tầng</h3>
@@ -161,6 +159,7 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
           </div>
         )}
       </div>
+
     </div>
   );
 };

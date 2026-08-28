@@ -3,5 +3,3 @@ export * from './quotation-header';
 export * from './quotation-title';
 export * from './customer-info';
 export * from './quotation-table';
-export * from './quotation-summary';
-export * from './quotation-terms-preview';

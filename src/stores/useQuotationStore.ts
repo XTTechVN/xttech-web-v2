@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createQuotation as apiCreateQuotation, updateQuotation as apiUpdateQuotation } from '@/actions';
-import type { QuotationDetail, Quotation, DraftFormula, DraftDoor, DraftMaterial, DraftFloor } from '@/types';
+import type { QuotationDetail, Quotation, DraftFormula, DraftDoor, DraftMaterial, DraftFloor, Material, Accessory, ExtraOption } from '@/types';
 
 
 interface QuotationState {
@@ -12,10 +12,12 @@ interface QuotationState {
   reviewBy: string | null;
   termsAndConditions: string;
   floors: DraftFloor[];
+  priceType: 'retail' | 'sale' | 'cost';
 
   initialize: (quotation: QuotationDetail) => void;
   setQuotationField: (field: string, value: any) => void;
   setTermsAndConditions: (content: string) => void;
+  setPriceType: (priceType: 'retail' | 'sale' | 'cost', materialsList: Material[]) => void;
 
   // Floor Actions
   addFloor: () => void;
@@ -52,7 +54,7 @@ interface QuotationState {
   removeFormula: (fIndex: number, mIndex: number, dIndex: number, foIndex: number) => void;
 
   // API Payload & Operations Helpers
-  getPayload: () => any;
+  getPayload: (accessoriesList?: Accessory[], extraOptionsList?: ExtraOption[]) => any;
   createQuotation: () => Promise<Quotation>;
   updateQuotation: (id: number) => Promise<Quotation>;
 }
@@ -68,6 +70,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
   reviewBy: null,
   termsAndConditions: DEFAULT_TERMS_AND_CONDITIONS,
   floors: [],
+  priceType: 'retail',
 
   initialize: (quotation) => {
     const mappedFloors = (quotation.floors || []).map((floor: any, fIndex: number) => ({
@@ -106,6 +109,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
       reviewBy: quotation.reviewBy || null,
       termsAndConditions: quotation.termsAndConditions ?? DEFAULT_TERMS_AND_CONDITIONS,
       floors: mappedFloors,
+      priceType: (quotation.priceType as any) || 'retail',
     });
   },
 
@@ -115,6 +119,28 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
 
   setTermsAndConditions: (content) => {
     set({ termsAndConditions: content });
+  },
+
+  setPriceType: (priceType, materialsList) => {
+    set((state) => {
+      const newFloors = state.floors.map((floor) => ({
+        ...floor,
+        materials: floor.materials.map((mat) => {
+          const master = materialsList.find((m) => m.id === mat.materialId);
+          const pKey = priceType === 'retail' ? 'retailPrice' : (priceType === 'sale' ? 'salePrice' : 'costPrice');
+          const newPrice = master 
+            ? (master[pKey] !== undefined && master[pKey] !== null 
+                ? master[pKey] 
+                : (master.retailPrice || master.salePrice || master.costPrice || 0))
+            : mat.initPrice;
+          return {
+            ...mat,
+            initPrice: newPrice,
+          };
+        }),
+      }));
+      return { priceType, floors: newFloors };
+    });
   },
 
   addFloor: () => {
@@ -496,8 +522,8 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
     });
   },
 
-  getPayload: () => {
-    const { title, code, discountPercentage, status, projectId, reviewBy, floors } = get();
+  getPayload: (accessoriesList, extraOptionsList) => {
+    const { title, code, discountPercentage, status, projectId, reviewBy, floors, priceType } = get();
 
     // Làm sạch dữ liệu cấu trúc tầng trước khi tạo payload
     const cleanedFloors = floors.map((floor) => ({
@@ -505,16 +531,49 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
       materials: floor.materials.map((mat) => ({
         materialId: mat.materialId,
         initPrice: (mat.initPrice as any) === '' || mat.initPrice === undefined || mat.initPrice === null ? undefined : Number(mat.initPrice),
-        doors: mat.doors.map((door) => ({
-          doorId: door.doorId,
-          code: door.code?.trim() || undefined,
-          width: (door.width as any) === '' ? 0 : Number(door.width) || 0,
-          height: (door.height as any) === '' ? 0 : Number(door.height) || 0,
-          quantity: (door.quantity as any) === '' ? 1 : Number(door.quantity) || 1,
-          accessories: (door.accessoryIds || []).map((id: number) => ({ accessoryId: id })),
-          extraOptionIds: door.extraOptionIds || [],
-          fomulas: door.fomulas || [],
-        })),
+        doors: mat.doors.map((door) => {
+          const accessories = (door.accessoryIds || []).map((id: number) => {
+            const acc = (accessoriesList || []).find((a) => a.id === id);
+            const pType = priceType || 'retail';
+            const pKey = pType === 'retail' ? 'retailPrice' : (pType === 'sale' ? 'salePrice' : 'costPrice');
+            const initPrice = acc
+              ? (acc[pKey] !== undefined && acc[pKey] !== null
+                ? acc[pKey]
+                : (acc.retailPrice || acc.salePrice || acc.costPrice || 0))
+              : 0;
+            return {
+              accessoryId: id,
+              initPrice: Number(initPrice) || 0,
+            };
+          });
+
+          const extraOptions = (door.extraOptionIds || []).map((id: number) => {
+            const opt = (extraOptionsList || []).find((o) => o.id === id);
+            const pType = priceType || 'retail';
+            const pKey = pType === 'retail' ? 'retailPrice' : (pType === 'sale' ? 'salePrice' : 'costPrice');
+            const initPrice = opt
+              ? (opt[pKey] !== undefined && opt[pKey] !== null
+                ? opt[pKey]
+                : (opt.retailPrice || opt.salePrice || opt.costPrice || 0))
+              : 0;
+            return {
+              optionId: id,
+              initPrice: Number(initPrice) || 0,
+            };
+          });
+
+          return {
+            doorId: door.doorId,
+            code: door.code?.trim() || undefined,
+            width: (door.width as any) === '' ? 0 : Number(door.width) || 0,
+            height: (door.height as any) === '' ? 0 : Number(door.height) || 0,
+            quantity: (door.quantity as any) === '' ? 1 : Number(door.quantity) || 1,
+            accessories,
+            extraOptions,
+            extraOptionIds: door.extraOptionIds || [],
+            fomulas: door.fomulas || [],
+          };
+        }),
       })),
     }));
 
@@ -527,16 +586,17 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
       reviewBy,
       termsAndConditions: get().termsAndConditions,
       floors: cleanedFloors,
+      priceType: priceType || 'retail',
     };
   },
 
   createQuotation: async () => {
-    const payload = get().getPayload();
+    const payload = get().getPayload([], []);
     return apiCreateQuotation(payload);
   },
 
   updateQuotation: async (id: number) => {
-    const payload = get().getPayload();
+    const payload = get().getPayload([], []);
     return apiUpdateQuotation(id, payload);
   },
 }));

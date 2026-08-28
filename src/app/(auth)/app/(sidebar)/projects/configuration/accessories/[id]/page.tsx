@@ -189,9 +189,19 @@ export default function AccessoryDetailPage({ params }: AccessoryDetailPageProps
             <span className="font-semibold text-slate-500">Đơn vị tính: </span>
             <span className="text-slate-800 font-medium">{formatAccessoryUnit(accessory.unit) || '—'}</span>
           </div>
-          <div>
-            <span className="font-semibold text-slate-500">Đơn giá: </span>
-            <span className="text-slate-805 font-semibold text-primary">{formatCurrency(accessory.price)}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-b border-slate-100 py-3.5 my-1">
+            <div>
+              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá vốn</span>
+              <span className="text-slate-700 font-semibold">{formatCurrency(accessory.costPrice)}</span>
+            </div>
+            <div>
+              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá bán lẻ</span>
+              <span className="text-primary font-bold">{formatCurrency(accessory.retailPrice)}</span>
+            </div>
+            <div>
+              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá đại lý</span>
+              <span className="text-teal-655 font-bold">{formatCurrency(accessory.salePrice)}</span>
+            </div>
           </div>
           <div className="flex flex-col gap-1 mt-1 border-t border-slate-100 pt-3">
             <span className="font-semibold text-slate-500">Thông số kỹ thuật:</span>

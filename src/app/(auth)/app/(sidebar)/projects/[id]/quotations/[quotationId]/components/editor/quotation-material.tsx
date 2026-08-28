@@ -6,7 +6,7 @@ import { useQuotationStore } from '@/stores';
 import { QuotationDoor } from './quotation-door';
 import { EDITOR_STYLES } from './config';
 import { SearchSelect } from '../modal/search-select';
-import { fetchDefaultAccessories } from './utils';
+import { fetchDefaultAccessories, getResolvedPrice } from './utils';
 import type { Accessory, ExtraOption, Material, Door, Formula } from '@/types';
 
 interface QuotationMaterialProps {
@@ -42,7 +42,8 @@ export const QuotationMaterial = ({
     const id = parseInt(materialIdStr, 10);
     const selectedMat = materialsList.find((m) => m.id === id);
     if (selectedMat) {
-      store.updateMaterial(fIndex, mIndex, id, selectedMat.price);
+      const price = getResolvedPrice(selectedMat, store.priceType);
+      store.updateMaterial(fIndex, mIndex, id, price);
     }
   };
 
@@ -96,16 +97,19 @@ export const QuotationMaterial = ({
                 selectedValue={material.materialId}
                 onSelect={(item) => handleUpdateMaterial(item.id.toString())}
                 searchKeys={['name', 'code']}
-                renderItem={(item) => (
-                  <div className="relative flex items-center justify-between w-full min-w-0 pr-8" title={item.name}>
-                    <div className="truncate pr-24 font-medium flex-1" title={item.name}>
-                      {item.name}
+                renderItem={(item) => {
+                  const displayPrice = getResolvedPrice(item, store.priceType);
+                  return (
+                    <div className="relative flex items-center justify-between w-full min-w-0 pr-8" title={item.name}>
+                      <div className="truncate pr-24 font-medium flex-1" title={item.name}>
+                        {item.name}
+                      </div>
+                      <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 absolute right-0 top-1/2 -translate-y-1/2 bg-inherit pl-2.5 z-10 select-none">
+                        {displayPrice.toLocaleString('vi-VN')}đ/m²
+                      </span>
                     </div>
-                    <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 absolute right-0 top-1/2 -translate-y-1/2 bg-inherit pl-2.5 z-10 select-none">
-                      {item.price.toLocaleString('vi-VN')}đ/m²
-                    </span>
-                  </div>
-                )}
+                  );
+                }}
                 triggerRef={triggerRef}
               />
             </div>
