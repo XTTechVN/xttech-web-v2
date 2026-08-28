@@ -54,3 +54,6 @@ export * from './report';
 
 // Audit Log
 export * from './audit-log';
+
+// Location Tracking
+export * from './location';

@@ -104,48 +104,20 @@ export const deleteAdjustmentRequest = async (id: number) => {
     );
 }
 
-// export const getUsers = async (params?: any) => {
-//     const res = await api.get<DataListResponse<UserResponse>>(
-//         `${baseVersion1}/users`,
-//         {
-//             params,
-//         }
-//     );
+// Location Tracking APIs
+export const sendLocationPing = async (payload: import('@/types').LocationPingPayload) => {
+  const response = await api.post(`${baseVersion1}/attendances/location-ping`, payload);
+  return response.data;
+};
 
-//     return res.data;
-// };
+export const getLiveLocations = async (): Promise<import('@/types').StaffLiveLocation[]> => {
+  const response = await api.get<import('@/types').StaffLiveLocation[]>(`${baseVersion1}/attendances/live-locations`);
+  return response.data;
+};
 
-// export const createUser = async (data: UserCreate, file?: File) => {
-//     const formData = new FormData();
-//     // BE yêu cầu data wrap trong field 'create_data' dạng FormData
-//     formData.append('create_data', JSON.stringify(data));
-//     // Thêm avatar file nếu có upload
-//     if (file) {
-//         formData.append('file', file);
-//     }
-
-//     const accessToken = useAuthStore.getState().accessToken;
-//     const response = await fetch(`${BASE_API_URL}${baseVersion1}/users`, {
-//         method: 'POST',
-//         headers: {
-//             ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-//         },
-//         credentials: 'include',
-//         body: formData,
-//     });
-
-//     if (!response.ok) {
-//         const errorData = await response.json().catch(() => ({}));
-//         throw { response: { data: errorData, status: response.status } };
-//     }
-
-//     return response.json() as Promise<UserResponse>;
-// };
-
-// export const getDepartments = async (params?: any) => {
-//     const res = await api.get<DataListResponse<Department>>(
-//         `${baseVersion1}/departments`,
-//         { params }
-//     );
-//     return res.data;
-// }
+export const getStaffRoute = async (userId: string, date?: string): Promise<import('@/types').StaffRouteResponse> => {
+  const response = await api.get<import('@/types').StaffRouteResponse>(`${baseVersion1}/attendances/routes/${userId}`, {
+    params: date ? { date } : {},
+  });
+  return response.data;
+};

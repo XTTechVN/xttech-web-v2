@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Button, Textarea, Badge } from '@/components';
 import { toast } from 'react-hot-toast';
-import { autoTimekeeping } from '@/actions';
+import { autoTimekeeping, sendLocationPing } from '@/actions';
 import { TimekeepingType } from '@/types';
 import {
   Camera,
@@ -92,7 +92,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     }
   }, []);
 
-  // Lấy GPS
+  // Lấy GPS với cơ chế Fallback thông minh 2 tầng
   const fetchLocation = useCallback(() => {
     setIsLocating(true);
     setLocationError(null);
@@ -101,6 +101,8 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
       setIsLocating(false);
       return;
     }
+
+    // Tầng 1: Thử GPS độ chính xác cao trong 5 giây
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocation({
@@ -111,10 +113,25 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         setIsLocating(false);
       },
       () => {
-        setLocationError('Không lấy được vị trí. Hãy bật GPS và cấp quyền truy cập.');
-        setIsLocating(false);
+        // Tầng 2: Tự động fallback sang định vị WiFi / IP mạng với timeout 15s và chấp nhận cache
+        navigator.geolocation.getCurrentPosition(
+          (fallbackPos) => {
+            setLocation({
+              lat: fallbackPos.coords.latitude,
+              lng: fallbackPos.coords.longitude,
+              accuracy: Math.round(fallbackPos.coords.accuracy),
+            });
+            setIsLocating(false);
+          },
+          (fallbackErr) => {
+            console.warn('[AutoTimekeeping] Fallback geolocation failed:', fallbackErr);
+            setLocationError('Không lấy được vị trí GPS/WiFi. Vui lòng kiểm tra lại quyền truy cập vị trí trên Windows/Trình duyệt.');
+            setIsLocating(false);
+          },
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 },
+        );
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 },
     );
   }, []);
 
@@ -197,6 +214,16 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         },
         capturedFile,
       );
+
+      // Kích hoạt ngay 1 ping định vị tức thì lên Live Map khi Check-in
+      if (type === 'check_in') {
+        sendLocationPing({
+          latitude: location.lat,
+          longitude: location.lng,
+          accuracy: location.accuracy || undefined,
+        }).catch((err) => console.warn('[AutoTimekeeping] Init ping error:', err));
+      }
+
       const label = type === 'check_in' ? 'Check-in' : 'Check-out';
       toast.success(`${label} thành công! 🎉`);
       onSuccess?.();
