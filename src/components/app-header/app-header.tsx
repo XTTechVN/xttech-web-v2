@@ -11,9 +11,10 @@ import { HeaderSearch } from './header-search';
 export interface AppHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   onMenuClick?: () => void;
   userRole?: UserRole;
+  setActive: (id: string) => void;
 }
 
-export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(({ onMenuClick, userRole, className, ...props }, ref) => {
+export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(({ onMenuClick, userRole, setActive, className, ...props }, ref) => {
   return (
     <header ref={ref} className={cn('flex flex-col w-full bg-white border-b border-slate-200 shrink-0', className)} {...props}>
       {/* Top Header Bar */}
@@ -29,7 +30,7 @@ export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(({ onM
             <Menu size={24} />
           </button>
 
-          <HeaderSearch userRole={userRole} />
+          <HeaderSearch setActive={setActive} userRole={userRole} />
         </div>
 
         {/* Right side: Notifications & User profile */}
