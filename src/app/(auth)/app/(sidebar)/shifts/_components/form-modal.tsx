@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { MapPin, Plus, Trash2, Clock } from 'lucide-react';
 
 import { Modal, Button, Input, Select, Switch } from '@/components';
-import { createWorkShift, updateWorkShift, getDepartments, getUsers } from '@/actions';
+import { createWorkShift, updateWorkShift, getDepartments, getEmployees } from '@/actions';
 import queryClient from '@/utils/query';
 import type { WorkShift, WorkShiftCreate, WorkShiftUpdate, Department } from '@/types';
 
@@ -86,21 +86,9 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
     return found?.name || `Phòng ban ID: ${defaultDepartmentId}`;
   }, [defaultDepartmentId, defaultDepartmentName, departmentsData]);
 
-  // Lấy danh sách nhân viên (để gán ngoại lệ)
-  const { data: usersData } = useQuery({
-    queryKey: ['users', 'all'],
-    queryFn: () => getUsers({ limit: 200 }),
-    enabled: isOpen,
-  });
-
   const departmentOptions = (departmentsData?.items || []).map((d: Department) => ({
     value: d.id,
     label: d.name,
-  }));
-
-  const userOptions = (usersData?.items || []).map((u: any) => ({
-    value: u.id,
-    label: `${u.fullName || u.email} (${u.code || u.username || 'NV'})`,
   }));
 
   const {
@@ -131,6 +119,27 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
     control,
     name: 'exceptions',
   });
+
+  const watchedDepartmentId = watch('department_id');
+  const activeDepartmentId = defaultDepartmentId || (watchedDepartmentId ? Number(watchedDepartmentId) : undefined);
+
+  // Lấy danh sách nhân viên theo phòng ban (để gán ngoại lệ)
+  const { data: employeesData } = useQuery({
+    queryKey: ['employees', 'by-department', activeDepartmentId],
+    queryFn: () =>
+      getEmployees({
+        departmentId: activeDepartmentId,
+        limit: 200,
+      }),
+    enabled: isOpen,
+  });
+
+  const userOptions = useMemo(() => {
+    return (employeesData?.items || []).map((u: any) => ({
+      value: u.id,
+      label: `${u.fullName || u.email} (${u.identifyCode || u.code || u.username || 'NV'})`,
+    }));
+  }, [employeesData]);
 
   const selectedDays = watch('work_days') || [];
   const shiftStatus = watch('status');
