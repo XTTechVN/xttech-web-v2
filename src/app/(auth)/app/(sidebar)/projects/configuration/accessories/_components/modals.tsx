@@ -312,10 +312,9 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
       name: data.name,
       code: data.code,
       unit: data.unit,
+      specification: data.specification?.trim() || "",
     };
-    if (data.specification && data.specification.trim() !== '') {
-      payload.specification = data.specification;
-    }
+
     if (data.costPrice !== undefined) {
       payload.costPrice = data.costPrice;
     }
