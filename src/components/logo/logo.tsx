@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 export interface XTLogoProps extends React.SVGProps<SVGSVGElement> {
   className?: string;
@@ -10,6 +10,11 @@ export const XTLogo: React.FC<XTLogoProps> = ({
   variant = 'glossy',
   ...props
 }) => {
+  const rawId = useId();
+  const cleanId = rawId.replace(/[^a-zA-Z0-9_-]/g, '');
+  const glossId = `xtLogoGloss_${cleanId}`;
+  const sheenId = `xtLogoSheen_${cleanId}`;
+
   const pathData =
     'M 196.93 127.16 L 196.51 141.41 L 200.29 141.41 L 200.29 139.31 L 201.54 135.54 L 205.31 131.77 L 206.57 131.35 L 213.28 131.35 L 214.11 132.19 L 214.11 148.95 L 213.7 149.37 L 214.11 149.79 L 214.11 170.74 L 213.7 172.0 L 212.02 173.68 L 207.83 174.1 L 207.41 174.51 L 207.41 177.03 L 230.88 177.03 L 230.88 174.51 L 230.46 174.1 L 227.94 174.1 L 225.85 173.26 L 224.59 172.0 L 224.59 170.74 L 224.17 170.32 L 224.17 132.19 L 225.01 131.35 L 231.3 131.35 L 234.23 132.61 L 237.16 136.38 L 238.0 139.31 L 238.0 140.99 L 238.42 141.41 L 241.35 141.41 L 241.77 140.99 L 241.77 138.48 L 241.35 138.06 L 240.93 127.16 L 233.39 127.16 L 232.97 127.58 L 222.91 127.58 L 222.5 127.16 L 201.96 127.58 L 201.54 127.16 Z ' +
     'M 137.43 127.58 L 137.85 130.51 L 140.36 130.51 L 142.04 131.35 L 145.39 134.7 L 157.12 152.72 L 144.55 170.32 L 140.36 173.68 L 136.59 174.1 L 136.59 177.03 L 155.45 177.03 L 155.45 174.1 L 153.35 174.1 L 151.26 173.26 L 150.42 172.42 L 150.42 170.74 L 160.06 156.91 L 169.7 171.58 L 169.7 172.42 L 168.44 173.68 L 165.5 174.1 L 165.5 177.03 L 189.39 177.03 L 189.39 174.1 L 185.62 173.68 L 182.27 171.16 L 168.02 150.21 L 168.02 149.37 L 178.08 135.12 L 181.85 131.35 L 186.88 130.1 L 186.46 127.16 L 169.28 127.16 L 168.86 130.1 L 172.63 130.93 L 173.47 131.77 L 173.47 133.45 L 165.09 145.6 L 163.83 144.76 L 156.7 133.45 L 156.7 131.77 L 157.54 130.93 L 161.31 130.1 L 160.9 127.16 L 145.39 127.16 L 144.97 127.58 L 137.85 127.16 Z ' +
@@ -39,13 +44,13 @@ export const XTLogo: React.FC<XTLogoProps> = ({
       {...props}
     >
       <defs>
-        <linearGradient id="xtLogoPrimaryGloss" x1="20%" y1="0%" x2="80%" y2="100%">
+        <linearGradient id={glossId} x1="20%" y1="0%" x2="80%" y2="100%">
           <stop offset="0%" stopColor="#0a7c8b" />
           <stop offset="45%" stopColor="#045863" />
           <stop offset="100%" stopColor="#02333a" />
         </linearGradient>
 
-        <linearGradient id="xtLogoPrimarySheen" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={sheenId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.75" />
           <stop offset="35%" stopColor="#38bdf8" stopOpacity="0.35" />
           <stop offset="100%" stopColor="#045863" stopOpacity="0" />
@@ -53,13 +58,13 @@ export const XTLogo: React.FC<XTLogoProps> = ({
       </defs>
 
       {/* Khối chính đổ màu gradient */}
-      <path fillRule="evenodd" d={pathData} fill="url(#xtLogoPrimaryGloss)" />
+      <path fillRule="evenodd" d={pathData} fill={`url(#${glossId})`} />
 
       {/* Viền sáng bóng bề mặt phản quang */}
       <path
         fillRule="evenodd"
         d={pathData}
-        stroke="url(#xtLogoPrimarySheen)"
+        stroke={`url(#${sheenId})`}
         strokeWidth="1.2"
         fill="none"
       />

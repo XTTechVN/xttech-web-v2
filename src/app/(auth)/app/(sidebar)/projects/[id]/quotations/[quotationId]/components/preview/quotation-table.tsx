@@ -241,7 +241,7 @@ export const QuotationTable = ({
                                   const accLength = doorAccessories.length;
                                   const optTT = `${currentTT}.${accLength + oIndex + 1}`;
                                   const unit = opt.unit || 'bộ';
-                                  const totalQuantity = (opt.calculatedQuantity || 1) * door.quantity;
+                                  const totalQuantity = opt.calculatedQuantity || 1;
                                   return (
                                     <tr key={`door-${dIndex}-opt-${opt.extraOptionId}-${oIndex}`} className={SUB_ROW_CLS}>
                                       <td className={`${SUB_TD_CLS} px-1 text-center text-[10px]`}>{optTT}</td>

@@ -30,7 +30,7 @@ export default function ExtraOptionDetailPage({ params }: ExtraOptionDetailPageP
 
   // Query Details
   const { data: extraOption, isLoading, error } = useQuery({
-    queryKey: ['extra-option', extraOptionId],
+    queryKey: ['extra-options', extraOptionId],
     queryFn: () => getExtraOption(extraOptionId),
     enabled: !isNaN(extraOptionId),
   });

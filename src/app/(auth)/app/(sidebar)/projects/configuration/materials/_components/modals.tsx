@@ -254,13 +254,9 @@ export function MaterialUpdateModal({ isOpen, onClose, title, submitText = 'Xác
       retailPrice: data.retailPrice !== undefined ? data.retailPrice : undefined,
       salePrice: data.salePrice !== undefined ? data.salePrice : undefined,
       unit: data.unit,
+      specification: data.specification?.trim() || "",
+      description: data.description?.trim() || "",
     };
-    if (data.specification && data.specification.trim() !== '') {
-      payload.specification = data.specification;
-    }
-    if (data.description && data.description.trim() !== '') {
-      payload.description = data.description;
-    }
     updateMutation({ id: initialData.id, data: payload });
   };
 
