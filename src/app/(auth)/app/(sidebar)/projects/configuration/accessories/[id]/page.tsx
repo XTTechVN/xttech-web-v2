@@ -37,7 +37,7 @@ export default function AccessoryDetailPage({ params }: AccessoryDetailPageProps
 
   // Query Accessory Details
   const { data: accessory, isLoading, error } = useQuery({
-    queryKey: ['accessory', accessoryId],
+    queryKey: ['accessories', accessoryId],
     queryFn: () => getAccessory(accessoryId),
     enabled: !isNaN(accessoryId),
   });

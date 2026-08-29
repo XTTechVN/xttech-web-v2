@@ -30,7 +30,7 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
     isLoading: isLoadingDoor,
     error,
   } = useQuery({
-    queryKey: ['door', doorId],
+    queryKey: ['doors', doorId],
     queryFn: () => getDoor(doorId),
     enabled: !isNaN(doorId),
   });
