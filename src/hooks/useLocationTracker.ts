@@ -8,10 +8,7 @@ interface LocationTrackerOptions {
   intervalMs?: number; // Mặc định 60 giây (60000ms)
 }
 
-export function useLocationTracker({
-  enabled = true,
-  intervalMs = 60000,
-}: LocationTrackerOptions = {}) {
+export function useLocationTracker({ enabled = true, intervalMs = 60000, }: LocationTrackerOptions = {}) {
   const [isTracking, setIsTracking] = useState(false);
   const [lastPingTime, setLastPingTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,19 +68,12 @@ export function useLocationTracker({
     }
 
     // Tầng 1: Thử GPS chính xác cao trong 6 giây
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        executePing(pos);
-      },
+    navigator.geolocation.getCurrentPosition( (pos) => { executePing(pos); },
       () => {
         // Tầng 2: Fallback sang định vị WiFi / IP mạng với timeout 15s và chấp nhận cache 1 phút
         navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            executePing(pos);
-          },
-          (err) => {
-            setError(err.message);
-          },
+          (pos) => { executePing(pos); },
+          (err) => { setError(err.message); },
           {
             enableHighAccuracy: false,
             timeout: 15000,

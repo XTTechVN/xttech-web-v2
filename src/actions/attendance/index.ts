@@ -7,12 +7,12 @@ import {
     DataListResponse,
     AttendanceQueryParams,
     AttendanceAdjustmentRequest,
-    AutoTimekeepingData,
-    UserResponse,
-    UserCreate, AttendanceAdjustmentRequestCreate,
+    AutoTimekeepingData,AttendanceAdjustmentRequestCreate,
     AdjustmentRequestQueryParams,
     AttendanceAdjustmentRequestUpdate,
-    Department,
+    LocationPingPayload,
+    StaffLiveLocation,
+    StaffRouteResponse,
 } from "@/types";
 
 
@@ -105,18 +105,18 @@ export const deleteAdjustmentRequest = async (id: number) => {
 }
 
 // Location Tracking APIs
-export const sendLocationPing = async (payload: import('@/types').LocationPingPayload) => {
+export const sendLocationPing = async (payload: LocationPingPayload) => {
   const response = await api.post(`${baseVersion1}/attendances/location-ping`, payload);
   return response.data;
 };
 
-export const getLiveLocations = async (): Promise<import('@/types').StaffLiveLocation[]> => {
-  const response = await api.get<import('@/types').StaffLiveLocation[]>(`${baseVersion1}/attendances/live-locations`);
+export const getLiveLocations = async (): Promise<StaffLiveLocation[]> => {
+  const response = await api.get<StaffLiveLocation[]>(`${baseVersion1}/attendances/live-locations`);
   return response.data;
 };
 
-export const getStaffRoute = async (userId: string, date?: string): Promise<import('@/types').StaffRouteResponse> => {
-  const response = await api.get<import('@/types').StaffRouteResponse>(`${baseVersion1}/attendances/routes/${userId}`, {
+export const getStaffRoute = async (userId: string, date?: string): Promise<StaffRouteResponse> => {
+  const response = await api.get<StaffRouteResponse>(`${baseVersion1}/attendances/routes/${userId}`, {
     params: date ? { date } : {},
   });
   return response.data;
