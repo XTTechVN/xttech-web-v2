@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 
 // Icons trong lucide react
-import { User, Pencil, Trash2, Eye, Plus, MapPin } from 'lucide-react';
+import { User, Pencil, Trash2, Eye, Plus, MapPin, FileSpreadsheet } from 'lucide-react';
 
 // Thành phần dùng chung trong hệ thống
 import { TableData, TableAction, ITableFilterProps } from '@/components';
@@ -28,9 +28,11 @@ interface TableProps {
   onEditClick: (customer: Customer) => void;
   onDeleteClick: (customer: Customer) => void;
   onAddClick: () => void;
+  onExportClick?: () => void;
 }
 
-const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
+const Table = ({ onEditClick, onDeleteClick, onAddClick, onExportClick }: TableProps) => {
+
   const router = useRouter();
   const [search, setSearch] = useQueryParam('search');
 
@@ -281,7 +283,18 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end items-center w-full pr-2 pt-2">
+      <div className="flex justify-end items-center gap-2 w-full pr-2 pt-2">
+        {onExportClick && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2.5 text-xs md:h-9 md:px-3 md:text-sm shrink-0 border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+            leftIcon={<FileSpreadsheet className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-600" />}
+            onClick={onExportClick}
+          >
+            Xuất Excel
+          </Button>
+        )}
         <Button
           variant="primary"
           size="sm"
@@ -292,6 +305,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
           Thêm khách hàng
         </Button>
       </div>
+
       <TableData<Customer>
         queryKey={['customers', search, filterType, filterStaffId]}
         fetcher={fetcher}

@@ -2,7 +2,16 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-08-30
+
+### Added
+- Bổ sung modal [`CustomerExportModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx) hỗ trợ xuất file Excel báo cáo khách hàng phân tầng đa Sheet theo nhân viên phụ trách.
+- Bổ sung các preset chọn nhanh thời gian thông minh (*Tuần này (mặc định)*, *Tuần trước*, *Tháng này*, *Tháng trước*, *Tùy chọn ngày*) cùng dropdown lọc nhân viên phụ trách dành cho Quản lý.
+- Thêm action [`exportCustomersExcel`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/customer/index.ts) và type [`CustomerExportQueryParams`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/customer.ts).
+- Tích hợp nút bấm **"Xuất Excel"** (`FileSpreadsheet`) trên thanh công cụ quản lý khách hàng tại [`customers/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx).
+
 ## [Unreleased] - 2026-08-26
+
 
 ### Added
 - Thêm action [`exportUserAttendanceDetailReport`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/report/index.ts) và type [`UserAttendanceDetailReportQueryParams`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/report.ts) để gọi API xuất file Excel chi tiết chấm công và bảng lương theo từng nhân sự.

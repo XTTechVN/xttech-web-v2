@@ -7,13 +7,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Input, Button, Modal, Select } from '@/components';
 
 // Icons
-import { CheckCircle2, Upload, X, LocateFixed } from 'lucide-react';
+import { CheckCircle2, Upload, X, LocateFixed, FileSpreadsheet, Calendar } from 'lucide-react';
 
 // Form sử dụng
 import { useForm } from 'react-hook-form';
 
 // Actions
-import { createCustomer, updateCustomer, getUsers } from '@/actions';
+import { createCustomer, updateCustomer, getUsers, exportCustomersExcel } from '@/actions';
+
 
 import { BASE_MINIO_URL } from '@/config/app';
 import { CUSTOMER_TYPE_OPTIONS } from '../config';
@@ -648,3 +649,215 @@ export function CustomerDeleteModal({ isOpen, onClose, customerName, onConfirm, 
     </Modal>
   );
 }
+
+// Modal Xuất Excel danh sách khách hàng theo tuần/thời gian
+interface CustomerExportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+type PresetType = 'this_week' | 'last_week' | 'this_month' | 'last_month' | 'all' | 'custom';
+
+export function CustomerExportModal({ isOpen, onClose }: CustomerExportModalProps) {
+  const { user, canViewAll } = usePermission();
+  const [preset, setPreset] = useState<PresetType>('this_week');
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
+  const [selectedStaffId, setSelectedStaffId] = useState<string>('');
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+
+  // Helper tính khoảng ngày theo preset
+  const calculatePresetDates = (p: PresetType) => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const format = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+    if (p === 'this_week') {
+      const day = now.getDay();
+      const diffToMon = (day === 0 ? -6 : 1) - day;
+      const mon = new Date(now);
+      mon.setDate(now.getDate() + diffToMon);
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+      return { from: format(mon), to: format(sun) };
+    }
+    if (p === 'last_week') {
+      const day = now.getDay();
+      const diffToMon = (day === 0 ? -6 : 1) - day - 7;
+      const mon = new Date(now);
+      mon.setDate(now.getDate() + diffToMon);
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+      return { from: format(mon), to: format(sun) };
+    }
+    if (p === 'this_month') {
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return { from: format(firstDay), to: format(lastDay) };
+    }
+    if (p === 'last_month') {
+      const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { from: format(firstDay), to: format(lastDay) };
+    }
+    return { from: '', to: '' };
+  };
+
+  // Áp dụng ngày mặc định khi mở modal hoặc đổi preset
+  useEffect(() => {
+    if (isOpen) {
+      if (preset !== 'custom') {
+        const { from, to } = calculatePresetDates(preset);
+        setFromDate(from);
+        setToDate(to);
+      }
+    }
+  }, [isOpen, preset]);
+
+  // Load danh sách nhân viên
+  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['users', 'all'],
+    queryFn: () => getUsers({ limit: 1000 }),
+    enabled: isOpen && canViewAll,
+  });
+
+  const staffOptions = [
+    { label: 'Tất cả nhân viên', value: '' },
+    ...((usersData?.items || [])
+      .filter((u: any) => u.roles?.some((r: any) => r.code === 'sale'))
+      .map((u: any) => ({
+        label: u.fullName || u.username || u.email,
+        value: u.id,
+      }))),
+  ];
+
+  const handleSelectPreset = (newPreset: PresetType) => {
+    setPreset(newPreset);
+    if (newPreset !== 'custom') {
+      const { from, to } = calculatePresetDates(newPreset);
+      setFromDate(from);
+      setToDate(to);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      await exportCustomersExcel({
+        fromDate: fromDate || undefined,
+        toDate: toDate || undefined,
+        staffId: canViewAll ? (selectedStaffId || undefined) : user?.id,
+      });
+      toast.success('Xuất file Excel thành công');
+      onClose();
+    } catch (error: any) {
+      toast.error(error?.message || 'Lỗi khi xuất file Excel');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const presetsList: { id: PresetType; label: string }[] = [
+    { id: 'this_week', label: 'Tuần này' },
+    { id: 'last_week', label: 'Tuần trước' },
+    { id: 'this_month', label: 'Tháng này' },
+    { id: 'last_month', label: 'Tháng trước' },
+    { id: 'all', label: 'Tất cả' },
+    { id: 'custom', label: 'Tùy chọn' },
+  ];
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Xuất Báo Cáo Khách Hàng (Excel)" className="m-2 max-w-md w-full">
+      <div className="flex flex-col gap-4 py-1">
+        <p className="text-xs text-gray-500 leading-relaxed">
+          File Excel sẽ được tạo gồm <strong className="text-gray-700">Sheet Tổng Hợp</strong> và các <strong className="text-gray-700">Sheet riêng biệt cho từng nhân viên phụ trách</strong>.
+        </p>
+
+        {/* Quick Presets */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5 text-primary" />
+            Chọn mốc thời gian gợi ý:
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {presetsList.map((p) => {
+              const isActive = preset === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handleSelectPreset(p.id)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Date Inputs */}
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <Input
+            label="Từ ngày"
+            type="date"
+            fullWidth
+            value={fromDate}
+            onChange={(e) => {
+              setFromDate(e.target.value);
+              setPreset('custom');
+            }}
+          />
+          <Input
+            label="Đến ngày"
+            type="date"
+            fullWidth
+            value={toDate}
+            onChange={(e) => {
+              setToDate(e.target.value);
+              setPreset('custom');
+            }}
+          />
+        </div>
+
+        {/* Staff Filter (if manager) */}
+        {canViewAll && (
+          <div className="flex flex-col gap-1">
+            <Select
+              label="Nhân viên phụ trách"
+              options={staffOptions}
+              placeholder={isLoadingUsers ? 'Đang tải nhân viên...' : 'Tất cả nhân viên'}
+              fullWidth
+              disabled={isLoadingUsers}
+              value={selectedStaffId}
+              onChange={(e) => setSelectedStaffId(e.target.value)}
+            />
+            <span className="text-[11px] text-gray-400">Mặc định sẽ xuất tất cả nhân viên thành các sheet riêng.</span>
+          </div>
+        )}
+
+        {/* Footer Actions */}
+        <div className="flex gap-2 justify-end w-full mt-4 pt-2 border-t border-gray-100">
+          <Button variant="outline" size="sm" onClick={onClose} disabled={isExporting}>
+            Hủy
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<FileSpreadsheet className="w-4 h-4" />}
+            onClick={handleExport}
+            loading={isExporting}
+            disabled={isExporting}
+          >
+            Xuất file Excel
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
