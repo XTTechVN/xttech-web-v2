@@ -767,18 +767,11 @@ export function CustomerExportModal({ isOpen, onClose }: CustomerExportModalProp
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Xuất Báo Cáo Khách Hàng (Excel)" className="m-2 max-w-md w-full">
-      <div className="flex flex-col gap-4 py-1">
-        <p className="text-xs text-gray-500 leading-relaxed">
-          File Excel sẽ được tạo gồm <strong className="text-gray-700">Sheet Tổng Hợp</strong> và các <strong className="text-gray-700">Sheet riêng biệt cho từng nhân viên phụ trách</strong>.
-        </p>
-
+    <Modal isOpen={isOpen} onClose={onClose} title="Xuất báo cáo khách hàng" className="m-2 max-w-md w-full">
+      <div className="flex flex-col gap-4 py-2">
         {/* Quick Presets */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-semibold text-gray-700 flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5 text-primary" />
-            Chọn mốc thời gian gợi ý:
-          </span>
+          <span className="text-xs font-semibold text-slate-700">Khoảng thời gian</span>
           <div className="flex flex-wrap gap-1.5">
             {presetsList.map((p) => {
               const isActive = preset === p.id;
@@ -787,10 +780,10 @@ export function CustomerExportModal({ isOpen, onClose }: CustomerExportModalProp
                   key={p.id}
                   type="button"
                   onClick={() => handleSelectPreset(p.id)}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md border transition-all cursor-pointer ${
                     isActive
                       ? 'bg-primary text-white border-primary shadow-xs'
-                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
                   {p.label}
@@ -801,32 +794,36 @@ export function CustomerExportModal({ isOpen, onClose }: CustomerExportModalProp
         </div>
 
         {/* Date Inputs */}
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <Input
-            label="Từ ngày"
-            type="date"
-            fullWidth
-            value={fromDate}
-            onChange={(e) => {
-              setFromDate(e.target.value);
-              setPreset('custom');
-            }}
-          />
-          <Input
-            label="Đến ngày"
-            type="date"
-            fullWidth
-            value={toDate}
-            onChange={(e) => {
-              setToDate(e.target.value);
-              setPreset('custom');
-            }}
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Input
+              label="Từ ngày"
+              type="date"
+              fullWidth
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setPreset('custom');
+              }}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Input
+              label="Đến ngày"
+              type="date"
+              fullWidth
+              value={toDate}
+              onChange={(e) => {
+                setToDate(e.target.value);
+                setPreset('custom');
+              }}
+            />
+          </div>
         </div>
 
         {/* Staff Filter (if manager) */}
         {canViewAll && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1.5">
             <Select
               label="Nhân viên phụ trách"
               options={staffOptions}
@@ -836,19 +833,18 @@ export function CustomerExportModal({ isOpen, onClose }: CustomerExportModalProp
               value={selectedStaffId}
               onChange={(e) => setSelectedStaffId(e.target.value)}
             />
-            <span className="text-[11px] text-gray-400">Mặc định sẽ xuất tất cả nhân viên thành các sheet riêng.</span>
           </div>
         )}
 
         {/* Footer Actions */}
-        <div className="flex gap-2 justify-end w-full mt-4 pt-2 border-t border-gray-100">
+        <div className="flex gap-3 justify-end w-full mt-2">
           <Button variant="outline" size="sm" onClick={onClose} disabled={isExporting}>
             Hủy
           </Button>
           <Button
             variant="primary"
             size="sm"
-            leftIcon={<FileSpreadsheet className="w-4 h-4" />}
+            leftIcon={<FileSpreadsheet size={16} />}
             onClick={handleExport}
             loading={isExporting}
             disabled={isExporting}
@@ -860,4 +856,5 @@ export function CustomerExportModal({ isOpen, onClose }: CustomerExportModalProp
     </Modal>
   );
 }
+
 
