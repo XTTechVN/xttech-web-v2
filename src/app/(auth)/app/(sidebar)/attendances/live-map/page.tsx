@@ -17,11 +17,7 @@ export default function AttendanceLiveMapPage() {
   const [isWsConnected, setIsWsConnected] = useState(false);
 
   // Modal xem lộ trình
-  const [routeModalState, setRouteModalState] = useState<{
-    isOpen: boolean;
-    userId: string;
-    userName: string;
-  }>({
+  const [routeModalState, setRouteModalState] = useState<{ isOpen: boolean; userId: string; userName: string; }>({
     isOpen: false,
     userId: '',
     userName: '',

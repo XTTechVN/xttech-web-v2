@@ -1,48 +1,23 @@
 /* eslint-disable @next/next/no-img-element */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
-// Cập nhật code trang attendanceModule
+'use client';
+
 import { useState, useMemo } from 'react';
-import {
-  Button,
-  TableData,
-  TableAction,
-  Badge,
-  Heading,
-  ITableColumn,
-  ITableFilterProps,
-  Avatar,
-  Modal,
-} from '@/components';
-import { toast } from 'react-hot-toast';
-import {
-  Pencil,
-  Trash2,
-  Eye,
-  Clock,
-  FileEdit,
-  Calendar,
-  UserCheck,
-  Users,
-  UserCheck2,
-  Plus,
-  MessageSquareWarning
-} from 'lucide-react';
-import AddAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/add-modal";
-import EditAttendanceModal from "@/app/(auth)/app/(sidebar)/attendances/_components/edit-modal";
-import AttendanceDetailModal from "@/app/(auth)/app/(sidebar)/attendances/_components/attendance-modal";
-import AutoTimekeepingModal from "@/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal";
-import { useQueryParam } from '@/hooks';
-import Loading from '../../loading';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { deleteAttendance, getAttendances, getDepartments, getUsers, getAdjustmentRequests, updateAdjustmentRequest } from '@/actions';
-import { Attendance, AttendanceAdjustmentRequest, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
+import { Pencil, Trash2, Eye, Clock, FileEdit, Calendar, UserCheck, Users, UserCheck2, Plus, MessageSquareWarning, } from 'lucide-react';
+
+import { Button, TableData, TableAction, Badge, Heading, ITableColumn, ITableFilterProps, Avatar, Modal, } from '@/components';
+import { useQueryParam } from '@/hooks';
+import { deleteAttendance, getAttendances, getDepartments, getAdjustmentRequests, } from '@/actions';
+import { Attendance, AttendanceStatus, Department, getAttendanceStatusLabel, getAttendanceStatusVariant, } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
+
 import StatCart from '../dashboard/_components/stats-card';
+import AddAttendanceModal from './_components/add-modal';
+import EditAttendanceModal from './_components/edit-modal';
+import AttendanceDetailModal from './_components/attendance-modal';
 import AddAdjustmentModal from './adjustments/_components/add-modal';
-import ReviewAdjustmentModal from './adjustments/_components/review-modal';
 
 type FilterOption = {
   value: string | undefined;
@@ -52,43 +27,27 @@ type FilterOption = {
 export default function AttendancesPage() {
   const [searchQuery, setSearchQuery] = useQueryParam('search', '');
 
-  // Filter states khớp với ITableFilterProps
-  const [filterEmployeeId, setFilterEmployeeId] = useState<string | undefined>();
-  const [filterStatus, setFilterStatus] = useState<string | undefined>();
-  const [filterStartDate, setFilterStartDate] = useState<string>();
-  const [filterEndDate, setFilterEndDate] = useState<string>();
-  const [filterDate, setFilterDate] = useState<string>();
+  // Filter states
   const [filterDepartment, setFilterDepartment] = useState<string | undefined>();
-  const [filterShift, setFilterShift] = useState<string | undefined>();
+  const [filterStatus, setFilterStatus] = useState<AttendanceStatus | undefined>();
 
+  // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<Attendance | null>(null);
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [showTimekeepingModal, setShowTimekeepingModal] = useState(false);
   const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<Attendance | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-
-  const pathname = usePathname();
-  const isAdjustmentPage = pathname.includes('/attendances/adjustments');
-
-
   const queryClient = useQueryClient();
-  const [isLoading, setIsLoading] = useState(false);
 
-
-  const { data: departments, isLoading: loadingDepartments } = useQuery({
+  const { data: departments } = useQuery({
     queryKey: ['departments'],
     queryFn: () => getDepartments(),
-  })
-  const { data: users, isLoading: loadingUsers } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => getUsers(),
   });
-  const { data: adjustmentRequestsData, refetch: refetchAdjustmentRequests } = useQuery({
+
+  const { data: adjustmentRequestsData } = useQuery({
     queryKey: ['adjustment-requests'],
     queryFn: () => getAdjustmentRequests(),
   });
@@ -107,7 +66,7 @@ export default function AttendancesPage() {
     queryKey: ['attendances-stats', todayStr, yesterdayStr],
     queryFn: () => getAttendances({ startDate: yesterdayStr, endDate: todayStr, limit: 1000 }),
   });
-  const statsAttendances = statsData?.items ?? [];
+  const statsAttendances = useMemo(() => statsData?.items ?? [], [statsData]);
 
   // 1.1. Tổng số có mặt (records status != 'absent')
   const presentCount = useMemo(() => {
@@ -115,13 +74,6 @@ export default function AttendancesPage() {
       (r) => r.workDate === todayStr && r.status && r.status.toLowerCase() !== 'absent' && r.status.toLowerCase() !== 'vắng mặt'
     ).length;
   }, [statsAttendances, todayStr]);
-
-  const userList = users?.items ?? [];
-  const totalUsersCount = userList.length || statsAttendances.length || 150;
-  const presentPercentage = useMemo(() => {
-    if (!totalUsersCount) return 0;
-    return Math.round((presentCount / totalUsersCount) * 100 * 10) / 10;
-  }, [presentCount, totalUsersCount]);
 
   // 1.2. Vắng mặt hôm nay & so sánh hôm qua
   const todayAbsentCount = useMemo(() => {
@@ -172,46 +124,13 @@ export default function AttendancesPage() {
     return (adjustmentRequestsData?.items ?? []).filter((item) => item.status === 'pending');
   }, [adjustmentRequestsData]);
 
-  const [reviewModalState, setReviewModalState] = useState<{
-    open: boolean;
-    data: AttendanceAdjustmentRequest | null;
-    action: 'approved' | 'rejected' | null;
-  }>({
-    open: false,
-    data: null,
-    action: null,
-  });
-  const [isReviewing, setIsReviewing] = useState(false);
-
-  const handleConfirmReview = async (id: number, action: 'approved' | 'rejected', reviewNote: string) => {
-    setIsReviewing(true);
-    try {
-      await updateAdjustmentRequest(id, {
-        status: action,
-        reviewNote,
-      });
-      toast.success(action === 'approved' ? 'Đã phê duyệt khiếu nại thành công' : 'Đã từ chối khiếu nại');
-      setReviewModalState({ open: false, data: null, action: null });
-      refetchAdjustmentRequests();
-      queryClient.invalidateQueries({ queryKey: ['attendances'] });
-    } catch {
-      toast.error('Có lỗi xảy ra khi xử lý khiếu nại');
-    } finally {
-      setIsReviewing(false);
-    }
-  };
-
-  const departmentOptions: FilterOption[] = Array.from(
-    new Map(
-      ((departments as any)?.items ?? []).map((item: any) => [
-        item.id,
-        {
-          label: item.name ?? 'Không xác định',
-          value: String(item.id),
-        },
-      ])
-    ).values()
-  ) as any;
+  const departmentOptions: FilterOption[] = useMemo(() => {
+    const items = (departments?.items as Department[]) ?? [];
+    return items.map((item) => ({
+      label: item.name ?? 'Không xác định',
+      value: String(item.id),
+    }));
+  }, [departments]);
 
   const statusOptions: FilterOption[] = [
     { value: undefined, label: 'Tất cả trạng thái' },
@@ -235,7 +154,7 @@ export default function AttendancesPage() {
     },
     {
       label: 'Trạng thái',
-      value: filterStatus as string | undefined,
+      value: filterStatus,
       options: statusOptions,
       onChange: (val: string | undefined) => {
         setFilterStatus(val as AttendanceStatus | undefined);
@@ -254,11 +173,8 @@ export default function AttendancesPage() {
       offset,
       limit,
       search: searchQuery || undefined,
-      startDate: filterStartDate || undefined,
-      endDate: filterEndDate || undefined,
-      userId: filterEmployeeId || undefined,
       departmentId: filterDepartment ? Number(filterDepartment) : undefined,
-      status: (filterStatus as AttendanceStatus) || undefined,
+      status: filterStatus || undefined,
     });
 
     return {
@@ -580,121 +496,49 @@ export default function AttendancesPage() {
 
   const attendanceStats = [
     {
-      title: "Tổng số có mặt",
+      title: 'Tổng số có mặt',
       value: presentCount,
       icon: <Users />,
       trend: presentCount,
-      trendDirection: "up" as const,
+      trendDirection: 'up' as const,
     },
     {
-      title: "Vắng mặt hôm nay",
+      title: 'Vắng mặt hôm nay',
       value: todayAbsentCount,
       icon: <UserCheck />,
       trend: absentDiff,
-      trendDirection: "up" as const,
+      trendDirection: absentDiff >= 0 ? ('up' as const) : ('down' as const),
     },
     {
-      title: "Đi muộn / về sớm",
+      title: 'Đi muộn / về sớm',
       value: todayLateCount,
       icon: <UserCheck2 />,
       trend: lateDiff,
-      trendDirection: lateDiff >= 0 ? "up" : "down" as const,
+      trendDirection: lateDiff >= 0 ? ('up' as const) : ('down' as const),
     },
     {
-      title: "Số khiếu nại chờ duyệt",
+      title: 'Số khiếu nại chờ duyệt',
       value: pendingAdjustmentRequests.length,
       icon: <MessageSquareWarning />,
-      trend: lateDiff,
-      trendDirection: lateDiff >= 0 ? "up" : "down" as const,
+      trend: 0,
+      trendDirection: 'up' as const,
     },
-  ]
-
-  if (isLoading) return <Loading />;
+  ];
 
   return (
     <div className="w-full flex flex-col gap-4">
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Tổng số có mặt */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-600">Tổng số có mặt</span>
-            <div className="rounded-lg bg-teal-50 p-2.5 text-teal-600">
-              <Users size={20} />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-bold text-slate-900">{presentCount}/{totalUsersCount}</div>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-              <div
-                className="h-full rounded-full bg-teal-600"
-                style={{ width: `${Math.min(presentPercentage, 100)}%` }}
-              />
-            </div>
-            <div className="mt-2 text-xs font-medium text-slate-500">
-              {presentPercentage}% Nhân sự đang làm việc
-            </div>
-          </div>
-        </div> */}
         {attendanceStats.map((stat, index) => (
-          <StatCart key={index} title={stat.title} value={String(stat.value)} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection as any} />
+          <StatCart
+            key={index}
+            title={stat.title}
+            value={String(stat.value)}
+            icon={stat.icon}
+            trend={stat.trend}
+            trendDirection={stat.trendDirection}
+          />
         ))}
-        {/* Card 2: Vắng mặt hôm nay */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-600">Vắng mặt hôm nay</span>
-            <div className="rounded-lg bg-red-50 p-2.5 text-red-500">
-              <UserX size={20} />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-bold text-slate-900">{todayAbsentCount}</div>
-            <div className={`mt-4 flex items-center text-xs font-semibold ${absentDiff >= 0 ? 'text-red-600' : 'text-teal-600'}`}>
-              {absentDiff >= 0 ? (
-                <TrendingUp size={15} className="mr-1 shrink-0" />
-              ) : (
-                <TrendingDown size={15} className="mr-1 shrink-0" />
-              )}
-              {absentDiff >= 0 ? `+${absentDiff}` : absentDiff} so với hôm qua
-            </div>
-          </div>
-        </div> */}
-
-        {/* Card 3: Đi muộn / Về sớm */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-600">Đi muộn / Về sớm</span>
-            <div className="rounded-lg bg-blue-50 p-2.5 text-blue-500">
-              <Clock size={20} />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-bold text-slate-900">{todayLateCount}</div>
-            <div className={`mt-4 flex items-center text-xs font-semibold ${lateDiff <= 0 ? 'text-teal-600' : 'text-red-600'}`}>
-              {lateDiff <= 0 ? (
-                <TrendingDown size={15} className="mr-1 shrink-0" />
-              ) : (
-                <TrendingUp size={15} className="mr-1 shrink-0" />
-              )}
-              {lateDiff >= 0 ? `+${lateDiff}` : lateDiff} so với hôm qua
-            </div>
-          </div>
-        </div> */}
-
-        {/* Card 4: Đi công tác */}
-        {/* <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-600">Đi công tác</span>
-            <div className="rounded-lg bg-slate-100 p-2.5 text-slate-600">
-              <Briefcase size={20} />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-bold text-slate-900">12</div>
-            <div className="mt-4 text-xs font-medium text-slate-500">
-              8 người trở lại ngày mai
-            </div>
-          </div>
-        </div> */}
       </div>
 
       {/* Table Section */}
@@ -729,7 +573,7 @@ export default function AttendancesPage() {
         </div>
 
         <TableData<Attendance>
-          queryKey={['attendances', searchQuery, filterEmployeeId, filterStartDate, filterEndDate, filterStatus, filterDepartment, filterShift]}
+          queryKey={['attendances', searchQuery, filterDepartment, filterStatus]}
           fetcher={fetcher}
           columns={columns}
           search={{
@@ -743,64 +587,52 @@ export default function AttendancesPage() {
         />
       </div>
 
+      {/* Modal tạo khiếu nại */}
       <AddAdjustmentModal
         open={showAdjustmentModal}
         onClose={() => setShowAdjustmentModal(false)}
         onSuccess={() => {
           queryClient.invalidateQueries({
-            queryKey: ['attendances']
+            queryKey: ['attendances'],
           });
-          toast.success('Thêm thành công');
+          queryClient.invalidateQueries({
+            queryKey: ['adjustment-requests'],
+          });
+          toast.success('Gửi khiếu nại thành công');
         }}
         data={selectedRow}
       />
 
+      {/* Modal thêm chấm công thủ công */}
       <AddAttendanceModal
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSuccess={() => {
-          // await refetch();
           queryClient.invalidateQueries({
-            queryKey: ['attendances']
+            queryKey: ['attendances'],
           });
-          toast.success('Thêm thành công')
+          toast.success('Thêm chấm công thành công');
         }}
       />
 
+      {/* Modal chỉnh sửa chấm công */}
       <EditAttendanceModal
         open={showEditModal}
         data={selectedRow}
         onClose={() => setShowEditModal(false)}
         onSuccess={() => {
           queryClient.invalidateQueries({
-            queryKey: ['attendances']
+            queryKey: ['attendances'],
           });
         }}
       />
 
+      {/* Modal chi tiết chấm công */}
       <AttendanceDetailModal
         open={showDetailModal}
         data={selectedRow}
         onClose={() => setShowDetailModal(false)}
       />
-      {/* Modal điểm danh tự động: Camera + GPS + Maps */}
-      <AutoTimekeepingModal
-        open={showTimekeepingModal}
-        onClose={() => setShowTimekeepingModal(false)}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['attendances'] });
-        }}
-      />
-
-      <ReviewAdjustmentModal
-        open={reviewModalState.open}
-        data={reviewModalState.data}
-        action={reviewModalState.action}
-        onClose={() => setReviewModalState({ open: false, data: null, action: null })}
-        onConfirm={handleConfirmReview}
-        isLoading={isReviewing}
-      />
-
 
       {/* Modal xác nhận xóa chấm công */}
       {selectedRow && (

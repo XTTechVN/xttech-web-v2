@@ -33,12 +33,7 @@ interface LiveMapProps {
   onViewRoute: (staff: StaffLiveLocation) => void;
 }
 
-export function LiveMap({
-  staffLocations,
-  selectedStaff,
-  onSelectStaff,
-  onViewRoute,
-}: LiveMapProps) {
+export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRoute, }: LiveMapProps) {
   // Tạo custom HTML Marker cho nhân viên
   const createCustomStaffIcon = (staff: StaffLiveLocation) => {
     const isSelected = selectedStaff?.user_id === staff.user_id;

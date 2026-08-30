@@ -13,14 +13,15 @@ import toast from 'react-hot-toast';
 import { AppHeader, Sidebar, SidebarItemProps, XTLogo } from '@/components';
 
 // Hooks & Actions
-import { useLocationTracker } from '@/hooks/useLocationTracker';
+import { useLocationTracker, useMyTodayAttendance } from '@/hooks';
 
 // Config
 import { getSidebarSectionsForRole, UserRole, acceptedSections } from '@/config';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  // Tự động thu thập GPS và gửi ping định kỳ khi nhân viên đang trong ca làm việc
-  useLocationTracker({ enabled: true, intervalMs: 60000 });
+  // Chỉ tự động thu thập GPS và gửi ping định kỳ khi nhân viên ĐÃ CHECK-IN và CHƯA CHECK-OUT (đang trong ca làm)
+  const { isWorkingShift } = useMyTodayAttendance();
+  useLocationTracker({ enabled: isWorkingShift, intervalMs: 60000 });
 
   const path = usePathname();
   const pathSegments = path.split('/');
