@@ -167,7 +167,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
             id: 'configurations',
             label: 'Cấu hình dự án',
             href: '/app/projects/configuration',
-            roles: ['super', 'admin', 'accountant', 'hr'],
+            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
           },
         ],
       },

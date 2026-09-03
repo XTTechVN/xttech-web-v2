@@ -46,7 +46,7 @@ export const adaptQuotationPreview = (data: QuotationDetail): PreviewFloor[] => 
         initPrice: mat.initPrice ?? 0,
         quantity: mat.quantity ?? 0,
         totalArea: mat.totalArea ?? 0,
-        totalAmount: mat.totalAmount ?? 0,
+        totalPrice: mat.totalPrice ?? 0,
         doors: (mat.doors || []).map(
           (door: QuotationDoorResponse): PreviewDoor => ({
             id: door.id,

@@ -16,6 +16,10 @@ import {
   AlertCircle,
   CheckCircle2,
   Navigation,
+  Lock,
+  Laptop,
+  Smartphone,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface Props {
@@ -44,12 +48,29 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
   const [capturedFile, setCapturedFile] = useState<File | null>(null);
   const [location, setLocation] = useState<GpsCoords | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [guidePlatform, setGuidePlatform] = useState<'android' | 'ios' | 'desktop'>('android');
   const [isLocating, setIsLocating] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [note, setNote] = useState('');
   const [cameraError, setCameraError] = useState<string | null>(null);
+
+  // Phát hiện thiết bị người dùng (Android / iOS / Desktop)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const ua = navigator.userAgent || '';
+      if (/iphone|ipad|ipod/i.test(ua)) {
+        setGuidePlatform('ios');
+      } else if (/android/i.test(ua)) {
+        setGuidePlatform('android');
+      } else {
+        setGuidePlatform('desktop');
+      }
+    }
+  }, []);
+
 
   // Đồng hồ thời gian thực
   useEffect(() => {
@@ -92,31 +113,86 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     }
   }, []);
 
-  // Lấy GPS
+  // Lấy GPS với fallback 2 tầng (High Accuracy -> Standard Network)
   const fetchLocation = useCallback(() => {
     setIsLocating(true);
     setLocationError(null);
+    setPermissionDenied(false);
+
     if (!navigator.geolocation) {
       setLocationError('Trình duyệt không hỗ trợ định vị GPS.');
       setIsLocating(false);
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: Math.round(pos.coords.accuracy),
-        });
-        setIsLocating(false);
-      },
-      () => {
-        setLocationError('Không lấy được vị trí. Hãy bật GPS và cấp quyền truy cập.');
-        setIsLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
+
+    const requestPosition = (enableHighAccuracy: boolean, isRetry = false) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocation({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: Math.round(pos.coords.accuracy),
+          });
+          setLocationError(null);
+          setPermissionDenied(false);
+          setIsLocating(false);
+        },
+        (err) => {
+          if (err.code === err.PERMISSION_DENIED) {
+            setPermissionDenied(true);
+            setLocationError('Quyền truy cập vị trí đã bị từ chối.');
+            setIsLocating(false);
+          } else if (!isRetry && (err.code === err.TIMEOUT || err.code === err.POSITION_UNAVAILABLE)) {
+            // Thử lại tầng 2 với độ chính xác mạng nếu GPS yếu
+            requestPosition(false, true);
+          } else {
+            setPermissionDenied(false);
+            setLocationError(
+              err.code === err.TIMEOUT
+                ? 'Quá thời gian lấy vị trí GPS. Hãy kiểm tra kết nối mạng và thử lại.'
+                : 'Không thể xác định vị trí. Hãy bật GPS trên thiết bị và thử lại.',
+            );
+            setIsLocating(false);
+          }
+        },
+        {
+          enableHighAccuracy,
+          timeout: enableHighAccuracy ? 8000 : 12000,
+          maximumAge: 0,
+        },
+      );
+    };
+
+    requestPosition(true, false);
   }, []);
+
+  // Tự động lắng nghe khi người dùng bật lại quyền trên thanh địa chỉ URL
+  useEffect(() => {
+    if (!open || typeof navigator === 'undefined' || !navigator.permissions) return;
+
+    let permStatus: PermissionStatus | null = null;
+    navigator.permissions
+      .query({ name: 'geolocation' as PermissionName })
+      .then((status) => {
+        permStatus = status;
+        const handlePermissionChange = () => {
+          if (status.state === 'granted') {
+            setPermissionDenied(false);
+            fetchLocation();
+          } else if (status.state === 'denied') {
+            setPermissionDenied(true);
+          }
+        };
+        status.addEventListener('change', handlePermissionChange);
+      })
+      .catch(() => {});
+
+    return () => {
+      if (permStatus) {
+        permStatus.onchange = null;
+      }
+    };
+  }, [open, fetchLocation]);
 
   // Khởi động khi modal mở
   useEffect(() => {
@@ -220,7 +296,9 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
   return (
     <Modal
       isOpen={open}
-      onClose={() => { if (!isSubmitting) onClose(); }}
+      onClose={() => {
+        if (!isSubmitting) onClose();
+      }}
       title="Chấm công tự động"
       size="xl"
     >
@@ -351,7 +429,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
             </div>
           </div>
 
-          {/* Map GPS */}
+          {/* Map GPS & Hướng dẫn cấp quyền */}
           <div className="flex flex-col gap-3">
             <div
               className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow"
@@ -368,6 +446,136 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
                   referrerPolicy="no-referrer-when-downgrade"
                   className="h-full w-full"
                 />
+              ) : permissionDenied ? (
+                /* Khối Hướng Dẫn Trực Quan Cấp Lại Quyền Vị Trí */
+                <div className="flex h-full flex-col justify-between p-4 bg-gradient-to-b from-amber-50/90 to-white text-slate-800 text-left overflow-y-auto">
+                  <div>
+                    <div className="flex items-center justify-between pb-2 border-b border-amber-200">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-amber-500 text-white rounded-lg">
+                          <Lock size={15} />
+                        </div>
+                        <span className="font-bold text-xs text-amber-900">
+                          Quyền vị trí đang bị chặn
+                        </span>
+                      </div>
+                      {/* Chuyển đổi nền tảng Android / iPhone / Máy tính */}
+                      <div className="flex bg-slate-200/80 p-0.5 rounded-lg text-[10px] font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setGuidePlatform('android')}
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-md transition ${
+                            guidePlatform === 'android'
+                              ? 'bg-white text-primary shadow-xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Smartphone size={11} /> Android
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setGuidePlatform('ios')}
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-md transition ${
+                            guidePlatform === 'ios'
+                              ? 'bg-white text-primary shadow-xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Smartphone size={11} /> iPhone
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setGuidePlatform('desktop')}
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-md transition ${
+                            guidePlatform === 'desktop'
+                              ? 'bg-white text-primary shadow-xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Laptop size={11} /> Máy tính
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Hướng dẫn chi tiết theo nền tảng */}
+                    <div className="mt-2.5 space-y-1.5 text-xs text-slate-700">
+                      {guidePlatform === 'android' && (
+                        <ol className="space-y-1 list-decimal list-inside pl-0.5 text-[11px] leading-relaxed">
+                          <li>
+                            Ra màn hình chính điện thoại, <strong>nhấn giữ icon App</strong>.
+                          </li>
+                          <li>
+                            Chọn <strong>Thông tin ứng dụng (ℹ️)</strong> &rarr; Chọn{' '}
+                            <strong>Quyền</strong>.
+                          </li>
+                          <li>
+                            Chọn <strong>Vị trí</strong> &rarr; Bật{' '}
+                            <strong className="text-emerald-700">Cho phép khi dùng</strong>.
+                          </li>
+                          <li>Mở lại App và bấm <strong>&quot;Thử lại ngay&quot;</strong> bên dưới.</li>
+                        </ol>
+                      )}
+
+                      {guidePlatform === 'ios' && (
+                        <ol className="space-y-1 list-decimal list-inside pl-0.5 text-[11px] leading-relaxed">
+                          <li>
+                            Mở <strong>Cài đặt (Settings)</strong> trên iPhone.
+                          </li>
+                          <li>
+                            Chọn <strong>Quyền riêng tư & Bảo mật</strong> &rarr;{' '}
+                            <strong>Dịch vụ định vị</strong> (Bật ON).
+                          </li>
+                          <li>
+                            Tìm mục <strong>Safari / XTTech</strong> &rarr; Chọn{' '}
+                            <strong className="text-emerald-700">Khi dùng ứng dụng</strong>.
+                          </li>
+                          <li>Mở lại App và bấm <strong>&quot;Thử lại ngay&quot;</strong> bên dưới.</li>
+                        </ol>
+                      )}
+
+                      {guidePlatform === 'desktop' && (
+                        <ol className="space-y-1 list-decimal list-inside pl-0.5 text-[11px] leading-relaxed">
+                          <li>
+                            Bấm vào biểu tượng{' '}
+                            <span className="inline-flex items-center gap-0.5 bg-slate-200 px-1 py-0.2 rounded font-mono font-semibold text-slate-900">
+                              <Lock size={10} /> Ổ khóa
+                            </span>{' '}
+                            ở góc trái thanh URL.
+                          </li>
+                          <li>
+                            Tìm mục <strong>Vị trí (Location)</strong> &rarr; Chọn{' '}
+                            <strong className="text-emerald-700">Cho phép (Allow)</strong>.
+                          </li>
+                          <li>Bấm nút <strong>&quot;Thử lại ngay&quot;</strong> bên dưới.</li>
+                        </ol>
+                      )}
+                    </div>
+                  </div>
+
+
+                  {/* Nút bấm Thử lại */}
+                  <div className="pt-2 border-t border-amber-100 flex items-center justify-between">
+                    <span className="text-[11px] text-slate-500 italic">
+                      Hệ thống tự nhận khi bạn bật
+                    </span>
+                    <Button
+                      variant="primary"
+                      size="xs"
+                      onClick={fetchLocation}
+                      disabled={isLocating}
+                      leftIcon={
+                        isLocating ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <RefreshCw size={12} />
+                        )
+                      }
+                      className="px-3 py-1.5 font-semibold"
+                    >
+                      {isLocating ? 'Đang kiểm tra...' : 'Thử lại ngay'}
+                    </Button>
+                  </div>
+                </div>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
                   <div className="rounded-full bg-slate-200 p-4">
