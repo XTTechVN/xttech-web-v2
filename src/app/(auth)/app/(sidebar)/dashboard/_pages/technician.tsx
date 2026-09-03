@@ -8,28 +8,28 @@ import { CalendarRange, ClipboardList, CheckSquare, Clock } from 'lucide-react';
 const statsMockupData = [
   {
     title: 'Ca trực hôm nay',
-    value: 'Ca Sáng (08:00 - 12:00)',
+    value: '_',
     icon: <Clock size={18} />,
     trend: 0,
     trendDirection: 'up' as const,
   },
   {
     title: 'Công việc cần làm',
-    value: '4',
+    value: '_',
     icon: <ClipboardList size={18} />,
     trend: 2,
     trendDirection: 'up' as const,
   },
   {
     title: 'Công việc hoàn thành',
-    value: '18',
+    value: '_',
     icon: <CheckSquare size={18} />,
     trend: 5,
     trendDirection: 'up' as const,
   },
   {
     title: 'Ngày công tháng này',
-    value: '22.5',
+    value: '_',
     icon: <CalendarRange size={18} />,
     trend: 4,
     trendDirection: 'up' as const,
