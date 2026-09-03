@@ -24,6 +24,7 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, }: Loca
       if ('getBattery' in navigator) {
         const nav = navigator as unknown as { getBattery: () => Promise<{ level: number }> };
         const battery = await nav.getBattery();
+        console.log("bateri:", battery)
         return Math.round(battery.level * 100);
       }
     } catch {
