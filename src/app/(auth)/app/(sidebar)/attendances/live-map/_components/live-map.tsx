@@ -36,7 +36,7 @@ interface LiveMapProps {
 export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRoute, }: LiveMapProps) {
   // Tạo custom HTML Marker cho nhân viên
   const createCustomStaffIcon = (staff: StaffLiveLocation) => {
-    const isSelected = selectedStaff?.user_id === staff.user_id;
+    const isSelected = selectedStaff?.userId === staff.userId;
     const isMoving = staff.status === 'moving';
     const isOffline = staff.status === 'offline';
 
@@ -49,8 +49,8 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
     const pulseEffect = isMoving
       ? '<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span></span>'
       : '';
-
-    const safeName = staff.user_name || 'Nhân viên';
+    console.log(staff)
+    const safeName = staff.userName || 'Nhân viên';
     const shortName = safeName.split(' ').slice(-2).join(' ');
 
     const avatarHtml = staff.avatar
@@ -109,7 +109,7 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
         />
 
         {staffLocations.map((staff, index) => {
-          const markerKey = staff.user_id ? `${staff.user_id}-${index}` : `marker-${index}`;
+          const markerKey = staff.userId ? `${staff.userId}-${index}` : `marker-${index}`;
           return (
             <Marker
               key={markerKey}
@@ -125,15 +125,15 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
                   <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100">
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs overflow-hidden shrink-0">
                       {staff.avatar ? (
-                        <img src={staff.avatar} alt={staff.user_name || 'Nhân viên'} className="w-full h-full object-cover" />
+                        <img src={staff.avatar} alt={staff.userName || 'Nhân viên'} className="w-full h-full object-cover" />
                       ) : (
-                        (staff.user_name || 'N').charAt(0).toUpperCase()
+                        (staff.userName || 'N').charAt(0).toUpperCase()
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-xs font-bold text-slate-800 truncate">{staff.user_name || 'Nhân viên'}</h4>
+                      <h4 className="text-xs font-bold text-slate-800 truncate">{staff.userName || 'Nhân viên'}</h4>
                       <p className="text-[10px] text-slate-500 truncate">
-                        {staff.position_name || staff.department_name || 'Nhân viên'}
+                        {staff.positionName || staff.departmentName || 'Nhân viên'}
                       </p>
                     </div>
                   </div>
@@ -146,11 +146,11 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
                     </div>
                     <div className="flex items-center gap-1">
                       <Battery size={12} className="text-amber-500" />
-                      <span>{staff.battery_level !== undefined ? `${staff.battery_level}%` : '--'}</span>
+                      <span>{staff.batteryLevel !== undefined ? `${staff.batteryLevel}%` : '--'}</span>
                     </div>
                     <div className="flex items-center gap-1 col-span-2">
                       <Clock size={12} className="text-slate-400" />
-                      <span>Cập nhật: {dayjs(staff.updated_at).format('HH:mm:ss')}</span>
+                      <span>Cập nhật: {dayjs(staff.updatedAt).format('HH:mm:ss')}</span>
                     </div>
                   </div>
 

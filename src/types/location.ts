@@ -8,21 +8,21 @@ export interface LocationPingPayload {
 }
 
 export interface StaffLiveLocation {
-  user_id: string;
-  user_name: string;
+  userId: string;
+  userName: string;
   avatar?: string;
-  department_name?: string;
-  position_name?: string;
-  attendance_id?: number;
+  departmentName?: string;
+  positionName?: string;
+  attendanceId?: number;
   latitude: number;
   longitude: number;
   accuracy?: number;
   speed?: number;
   heading?: number;
-  battery_level?: number;
-  check_in_time?: string;
+  batteryLevel?: number;
+  checkInTime?: string;
   status: 'moving' | 'stationary' | 'offline';
-  updated_at: string;
+  updatedAt: string;
 }
 
 export interface StaffRoutePoint {

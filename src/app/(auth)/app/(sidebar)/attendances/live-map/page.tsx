@@ -60,7 +60,7 @@ export default function AttendanceLiveMapPage() {
           const updatedStaff: StaffLiveLocation = payload.data;
 
           setStaffLocations((prev) => {
-            const index = prev.findIndex((s) => s.user_id === updatedStaff.user_id);
+            const index = prev.findIndex((s) => s.userId === updatedStaff.userId);
             if (index >= 0) {
               const clone = [...prev];
               clone[index] = updatedStaff;
@@ -72,7 +72,7 @@ export default function AttendanceLiveMapPage() {
 
           // Cập nhật selectedStaff nếu đang xem nhân viên này
           setSelectedStaff((current) =>
-            current?.user_id === updatedStaff.user_id ? updatedStaff : current
+            current?.userId === updatedStaff.userId ? updatedStaff : current
           );
         }
       } catch (e) {
@@ -104,8 +104,8 @@ export default function AttendanceLiveMapPage() {
   const handleOpenRoute = (staff: StaffLiveLocation) => {
     setRouteModalState({
       isOpen: true,
-      userId: staff.user_id,
-      userName: staff.user_name,
+      userId: staff.userId,
+      userName: staff.userName,
     });
   };
 
