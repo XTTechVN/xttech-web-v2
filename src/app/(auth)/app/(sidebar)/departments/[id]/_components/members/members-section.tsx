@@ -1,25 +1,29 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useParams } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { UserPlus, Briefcase, UserMinus, ShieldAlert } from 'lucide-react';
-
+import { UserPlus, Briefcase, UserMinus, ShieldAlert, Users, Loader2 } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
-import { Modal, Button, Badge, Avatar } from '@/components';
-import { getEmployees, revokePositions, getUsers, setUserPositions } from '@/actions';
-import { useQueryParam } from '@/hooks';
+import { Modal, Button, Badge, Avatar, Input } from '@/components';
+import { getEmployees, revokePositions, getUsers } from '@/actions';
+import { useQueryParam, useDebounce } from '@/hooks';
 import type { Employee, User } from '@/types';
 import queryClient from '@/utils/query';
 import { BASE_MINIO_URL } from '@/config';
 
 import PositionModal from '@/app/(auth)/app/(sidebar)/employees/_components/position-modal';
 
-export default function DepartmentMembersPage() {
-  const params = useParams();
-  const departmentId = Number(params.id);
-  const [search, setSearch] = useQueryParam('search');
+interface DepartmentMembersSectionProps {
+  departmentId: number;
+  onCountChange?: (count: number) => void;
+}
+
+export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
+  departmentId,
+  onCountChange,
+}) => {
+  const [search, setSearch] = useQueryParam('member_search');
 
   // Modal đổi vị trí nhân sự
   const [isPositionModalOpen, setIsPositionModalOpen] = useState(false);
@@ -32,6 +36,8 @@ export default function DepartmentMembersPage() {
   // Modal Thêm nhân sự vào phòng ban
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [selectedUserToAdd, setSelectedUserToAdd] = useState<User | null>(null);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const debouncedUserSearch = useDebounce(userSearchTerm, 350);
 
   // Fetcher lấy danh sách nhân sự của phòng ban hiện tại
   const fetcher = async (queryParam: { offset: number; limit: number }) => {
@@ -46,6 +52,11 @@ export default function DepartmentMembersPage() {
       throw new Error('Lỗi khi tải danh sách nhân sự');
     }
 
+    const total = res.meta?.total || 0;
+    if (onCountChange) {
+      onCountChange(total);
+    }
+
     return {
       items: res.items || [],
       meta: {
@@ -57,10 +68,14 @@ export default function DepartmentMembersPage() {
     };
   };
 
-  // Lấy danh sách toàn bộ người dùng để thêm vào phòng ban
+  // Lấy danh sách toàn bộ người dùng để thêm vào phòng ban (hỗ trợ tìm kiếm theo API)
   const { data: allUsersData, isLoading: isLoadingAllUsers } = useQuery({
-    queryKey: ['users', 'all-for-department-add'],
-    queryFn: () => getUsers({ limit: 200 }),
+    queryKey: ['users', 'all-for-department-add', debouncedUserSearch],
+    queryFn: () =>
+      getUsers({
+        limit: 100,
+        search: debouncedUserSearch ? debouncedUserSearch.trim() : undefined,
+      }),
     enabled: isAddMemberOpen,
   });
 
@@ -148,7 +163,7 @@ export default function DepartmentMembersPage() {
         return (
           <div className="flex flex-wrap gap-1">
             {deptPositions.map((pos: any) => (
-              <Badge key={pos.id} variant="info" size="sm">
+              <Badge key={pos.id} variant="primary" size="sm">
                 {pos.name}
               </Badge>
             ))}
@@ -175,7 +190,7 @@ export default function DepartmentMembersPage() {
               title: 'Đổi chức vụ / vị trí',
               icon: Briefcase,
               size: 18,
-              className: 'hover:text-blue-600 hover:bg-blue-50',
+              className: 'hover:text-primary hover:bg-primary/5',
               onClick: () => {
                 setSelectedEmpForPos(row);
                 setIsPositionModalOpen(true);
@@ -214,8 +229,8 @@ export default function DepartmentMembersPage() {
               src={
                 row.avatar
                   ? row.avatar.startsWith('http')
-                    ? row.avatar
-                    : `${BASE_MINIO_URL}${row.avatar}`
+                  ? row.avatar
+                  : `${BASE_MINIO_URL}${row.avatar}`
                   : undefined
               }
               name={row.fullName || row.username}
@@ -242,7 +257,7 @@ export default function DepartmentMembersPage() {
             <div className="flex flex-wrap gap-1">
               {deptPositions.length > 0 ? (
                 deptPositions.map((pos: any) => (
-                  <Badge key={pos.id} variant="info" size="sm">
+                  <Badge key={pos.id} variant="primary" size="sm">
                     {pos.name}
                   </Badge>
                 ))
@@ -282,13 +297,21 @@ export default function DepartmentMembersPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Header Action */}
-      <div className="flex items-center justify-end">
+    <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs flex flex-col gap-4">
+      {/* Header Section */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+            <Users size={18} />
+          </div>
+          <h2 className="text-base font-bold text-slate-900">Nhân sự phòng ban</h2>
+        </div>
+
         <Button
           variant="primary"
           size="sm"
-          leftIcon={<UserPlus size={16} />}
+          className="h-8 px-3 text-xs shrink-0"
+          leftIcon={<UserPlus size={14} />}
           onClick={() => setIsAddMemberOpen(true)}
         >
           Thêm nhân sự vào phòng ban
@@ -306,7 +329,7 @@ export default function DepartmentMembersPage() {
           placeholder: 'Tìm kiếm nhân sự theo tên, mã, email...',
           value: search,
           onChange: setSearch,
-          className: 'w-80',
+          className: 'w-72 sm:w-80',
         }}
       />
 
@@ -327,20 +350,37 @@ export default function DepartmentMembersPage() {
         onClose={() => {
           setIsAddMemberOpen(false);
           setSelectedUserToAdd(null);
+          setUserSearchTerm('');
         }}
         title="Thêm nhân sự vào phòng ban"
         className="m-2 max-w-lg w-full"
       >
-        <div className="space-y-4 py-2">
+        <div className="space-y-3.5 py-2">
           <p className="text-xs text-slate-500">
             Chọn một nhân sự trong công ty để gán vào vị trí của phòng ban này:
           </p>
 
-          <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100 bg-white">
+          {/* Ô tìm kiếm nhân sự gọi API */}
+          <Input
+            placeholder="Tìm kiếm nhân sự theo tên, email, CCCD..."
+            value={userSearchTerm}
+            onChange={(e) => setUserSearchTerm(e.target.value)}
+            className="h-9 text-xs"
+            fullWidth
+          />
+
+          <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100 bg-white">
             {isLoadingAllUsers ? (
-              <div className="p-4 text-center text-xs text-gray-400">Đang tải danh sách nhân sự...</div>
+              <div className="p-6 flex flex-col items-center justify-center gap-2 text-xs text-slate-400">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <span>Đang tìm kiếm nhân sự...</span>
+              </div>
             ) : allCompanyUsers.length === 0 ? (
-              <div className="p-4 text-center text-xs text-gray-400">Không có nhân sự nào</div>
+              <div className="p-6 text-center text-xs text-slate-400">
+                {debouncedUserSearch
+                  ? `Không tìm thấy nhân sự phù hợp với "${debouncedUserSearch}"`
+                  : 'Không có nhân sự nào trong hệ thống'}
+              </div>
             ) : (
               allCompanyUsers.map((u) => {
                 const isSelected = selectedUserToAdd?.id === u.id;
@@ -352,7 +392,7 @@ export default function DepartmentMembersPage() {
                       isSelected ? 'bg-primary/5 border-l-4 border-primary' : 'hover:bg-gray-50'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0 pr-2">
                       <Avatar
                         src={
                           u.avatar
@@ -364,18 +404,18 @@ export default function DepartmentMembersPage() {
                         name={u.fullName || u.username}
                         size="sm"
                       />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-slate-900">
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-semibold text-slate-900 truncate">
                           {u.fullName || u.username}
                         </span>
-                        <span className="text-xs text-slate-400">{u.email}</span>
+                        <span className="text-xs text-slate-400 truncate">{u.email}</span>
                       </div>
                     </div>
 
                     <Button
                       variant={isSelected ? 'primary' : 'outline'}
                       size="sm"
-                      className="text-xs h-7 px-2.5"
+                      className="text-xs h-7 px-2.5 shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsAddMemberOpen(false);
@@ -441,4 +481,6 @@ export default function DepartmentMembersPage() {
       </Modal>
     </div>
   );
-}
+};
+
+export default DepartmentMembersSection;
