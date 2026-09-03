@@ -49,7 +49,6 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
     const pulseEffect = isMoving
       ? '<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span></span>'
       : '';
-    console.log(staff)
     const safeName = staff.userName || 'Nhân viên';
     const shortName = safeName.split(' ').slice(-2).join(' ');
 

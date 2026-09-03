@@ -4,7 +4,7 @@ export interface LocationPingPayload {
   accuracy?: number;
   speed?: number;
   heading?: number;
-  battery_level?: number;
+  batteryLevel?: number;
 }
 
 export interface StaffLiveLocation {
@@ -31,13 +31,17 @@ export interface StaffRoutePoint {
   longitude: number;
   accuracy?: number;
   speed?: number;
-  recorded_at: string;
+  recordedAt?: string;
+  recorded_at?: string;
 }
 
 export interface StaffRouteResponse {
-  user_id: string;
-  user_name: string;
+  userId?: string;
+  user_id?: string;
+  userName?: string;
+  user_name?: string;
   date: string;
-  total_distance_km: number;
+  totalDistanceKm?: number;
+  total_distance_km?: number;
   points: StaffRoutePoint[];
 }

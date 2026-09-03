@@ -7,7 +7,6 @@ import { BASE_WS_URL } from '@/config';
 import { LiveMap } from './_components/live-map';
 import { StaffList } from './_components/staff-list';
 import { RoutePlaybackModal } from './_components/route-playback-modal';
-import { Radio, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AttendanceLiveMapPage() {
@@ -29,6 +28,7 @@ export default function AttendanceLiveMapPage() {
     setIsLoading(true);
     try {
       const data = await getLiveLocations();
+      console.log("data: ", data)
       setStaffLocations(data);
     } catch (err) {
       console.error('Lỗi khi tải danh sách vị trí:', err);
@@ -57,13 +57,30 @@ export default function AttendanceLiveMapPage() {
       try {
         const payload = JSON.parse(event.data);
         if (payload.type === 'STAFF_LOCATION_UPDATE' && payload.data) {
-          const updatedStaff: StaffLiveLocation = payload.data;
+          const rawData = payload.data;
+          const targetUserId: string = rawData.userId || rawData.user_id;
+          if (!targetUserId) return;
+
+          const updatedStaff: StaffLiveLocation = {
+            ...rawData,
+            userId: targetUserId,
+            userName: rawData.userName || rawData.user_name || 'Nhân viên',
+            avatar: rawData.avatar,
+            departmentName: rawData.departmentName || rawData.department_name,
+            positionName: rawData.positionName || rawData.position_name,
+            attendanceId: rawData.attendanceId ?? rawData.attendance_id,
+            batteryLevel: rawData.batteryLevel ?? rawData.battery_level,
+            checkInTime: rawData.checkInTime || rawData.check_in_time,
+            updatedAt: rawData.updatedAt || rawData.updated_at,
+          };
 
           setStaffLocations((prev) => {
-            const index = prev.findIndex((s) => s.userId === updatedStaff.userId);
+            const index = prev.findIndex(
+              (s) => (s.userId || (s as any).user_id) === targetUserId
+            );
             if (index >= 0) {
               const clone = [...prev];
-              clone[index] = updatedStaff;
+              clone[index] = { ...clone[index], ...updatedStaff };
               return clone;
             } else {
               return [updatedStaff, ...prev];
@@ -71,9 +88,12 @@ export default function AttendanceLiveMapPage() {
           });
 
           // Cập nhật selectedStaff nếu đang xem nhân viên này
-          setSelectedStaff((current) =>
-            current?.userId === updatedStaff.userId ? updatedStaff : current
-          );
+          setSelectedStaff((current) => {
+            const currentId = current?.userId || (current as any)?.user_id;
+            return currentId === targetUserId
+              ? { ...current, ...updatedStaff }
+              : current;
+          });
         }
       } catch (e) {
         console.warn('Lỗi parse WebSocket message:', e);
@@ -112,32 +132,7 @@ export default function AttendanceLiveMapPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-100px)] gap-3">
       {/* Header Bar */}
-      <div className="flex items-center justify-between px-2 shrink-0">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
-            Giám sát Vị trí Nhân sự Trực tiếp
-          </h2>
-          <span
-            className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border ${
-              isWsConnected
-                ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                : 'bg-amber-50 text-amber-600 border-amber-200'
-            }`}
-          >
-            <Radio size={12} className={isWsConnected ? 'animate-pulse' : ''} />
-            <span>{isWsConnected ? 'Realtime Live' : 'Đang kết nối lại'}</span>
-          </span>
-        </div>
 
-        <button
-          onClick={fetchInitialLocations}
-          disabled={isLoading}
-          className="h-8 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-medium text-slate-600 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-        >
-          <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
-          <span>Làm mới</span>
-        </button>
-      </div>
 
       {/* Main Content: Sidebar List + Map View */}
       <div className="flex-1 flex flex-col md:flex-row gap-3 min-h-0">

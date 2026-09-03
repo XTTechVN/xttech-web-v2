@@ -24,7 +24,6 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, }: Loca
       if ('getBattery' in navigator) {
         const nav = navigator as unknown as { getBattery: () => Promise<{ level: number }> };
         const battery = await nav.getBattery();
-        console.log("bateri:", battery)
         return Math.round(battery.level * 100);
       }
     } catch {
@@ -50,7 +49,7 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, }: Loca
         accuracy: pos.coords.accuracy || undefined,
         speed: pos.coords.speed || undefined,
         heading: pos.coords.heading || undefined,
-        battery_level: battery,
+        batteryLevel: battery,
       });
 
       setLastPingTime(new Date());

@@ -150,7 +150,6 @@ export const generateMockDailyLogs = (empCode: string): DailyAttendanceRecord[] 
       });
     }
   }
-  console.log(records);
   return records;
 };
 

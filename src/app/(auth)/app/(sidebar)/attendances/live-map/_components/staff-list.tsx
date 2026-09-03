@@ -5,6 +5,7 @@ import { StaffLiveLocation } from '@/types';
 import { Search, Navigation, Battery, Gauge, Clock, Users } from 'lucide-react';
 import { Input } from '@/components';
 import dayjs from 'dayjs';
+import { BASE_MINIO_URL } from '@/config';
 
 interface StaffListProps {
   staffLocations: StaffLiveLocation[];
@@ -23,10 +24,10 @@ export function StaffList({
 }: StaffListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'moving' | 'stationary' | 'offline'>('all');
-
+  console.log("staffLocations: ", staffLocations)
   const filteredStaff = staffLocations.filter((staff) => {
-    const name = staff.user_name || '';
-    const dept = staff.department_name || '';
+    const name = staff.userName || '';
+    const dept = staff.departmentName || '';
     const query = searchQuery.toLowerCase();
 
     const matchesSearch =
@@ -111,10 +112,10 @@ export function StaffList({
           <div className="p-8 text-center text-xs text-slate-400">Không tìm thấy nhân sự phù hợp.</div>
         ) : (
           filteredStaff.map((staff, index) => {
-            const isSelected = selectedStaff?.user_id === staff.user_id;
+            const isSelected = selectedStaff?.userId === staff.userId;
             const isMoving = staff.status === 'moving';
             const isOffline = staff.status === 'offline';
-            const uniqueKey = staff.user_id ? `${staff.user_id}-${index}` : `staff-${index}`;
+            const uniqueKey = staff.userId ? `${staff.userId}-${index}` : `staff-${index}`;
 
             return (
               <div
@@ -129,9 +130,9 @@ export function StaffList({
                 <div className="flex items-center gap-2.5">
                   <div className="relative w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-700 overflow-hidden shrink-0">
                     {staff.avatar ? (
-                      <img src={staff.avatar} alt={staff.user_name || 'Nhân viên'} className="w-full h-full object-cover" />
+                      <img src={BASE_MINIO_URL + staff.avatar} alt={staff.userName || 'Nhân viên'} className="w-full h-full object-cover" />
                     ) : (
-                      (staff.user_name || 'N').charAt(0).toUpperCase()
+                      (staff.userName || 'N').charAt(0).toUpperCase()
                     )}
                     <span
                       className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-white ${
@@ -142,16 +143,16 @@ export function StaffList({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
-                      <h4 className="text-xs font-bold text-slate-800 truncate">{staff.user_name || 'Nhân viên'}</h4>
-                      {staff.battery_level !== undefined && (
+                      <h4 className="text-xs font-bold text-slate-800 truncate">{staff.userName || 'Nhân viên'}</h4>
+                      {staff.batteryLevel !== undefined && (
                         <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
-                          <Battery size={11} className={staff.battery_level < 20 ? 'text-rose-500' : 'text-slate-400'} />
-                          {staff.battery_level}%
+                          <Battery size={11} className={staff.batteryLevel < 20 ? 'text-rose-500' : 'text-slate-400'} />
+                          {staff.batteryLevel}%
                         </span>
                       )}
                     </div>
                     <p className="text-[10px] text-slate-500 truncate">
-                      {staff.position_name || staff.department_name || 'Nhân viên'}
+                      {staff.positionName || staff.departmentName || 'Nhân viên'}
                     </p>
                   </div>
                 </div>
@@ -164,7 +165,7 @@ export function StaffList({
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock size={11} className="text-slate-400" />
-                      {dayjs(staff.updated_at).format('HH:mm:ss')}
+                      {dayjs(staff.updatedAt).format('HH:mm:ss')}
                     </span>
                   </div>
 

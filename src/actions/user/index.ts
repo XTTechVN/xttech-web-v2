@@ -17,7 +17,6 @@ export const getUsers = async (params?: UserQueryParams): Promise<GetUsersRespon
     const res = await api.get<GetUsersResponse>(`/api/v1/users`, { params });
     return res.data;
   } catch (error) {
-    console.log('Lỗi khi lấy dữ liệu danh sách người dùng:', error);
     throw new Error('Lỗi khi lấy dữ liệu danh sách người dùng');
   }
 };

@@ -154,7 +154,7 @@ export function RoutePlaybackModal({
               <Navigation size={12} className="text-primary" /> Tổng quãng đường
             </span>
             <p className="text-sm font-bold text-slate-800">
-              {routeData?.total_distance_km || 0} km
+              {routeData?.totalDistanceKm ?? routeData?.total_distance_km ?? 0} km
             </p>
           </div>
           <div className="space-y-0.5">
@@ -171,7 +171,7 @@ export function RoutePlaybackModal({
             </span>
             <p className="text-sm font-bold text-slate-800">
               {points.length > 0
-                ? dayjs(points[0].recorded_at).format('HH:mm:ss')
+                ? dayjs(points[0].recordedAt || points[0].recorded_at).format('HH:mm:ss')
                 : '--:--'}
             </p>
           </div>
@@ -181,7 +181,10 @@ export function RoutePlaybackModal({
             </span>
             <p className="text-sm font-bold text-slate-800">
               {points.length > 0
-                ? dayjs(points[points.length - 1].recorded_at).format('HH:mm:ss')
+                ? dayjs(
+                    points[points.length - 1].recordedAt ||
+                    points[points.length - 1].recorded_at
+                  ).format('HH:mm:ss')
                 : '--:--'}
             </p>
           </div>
