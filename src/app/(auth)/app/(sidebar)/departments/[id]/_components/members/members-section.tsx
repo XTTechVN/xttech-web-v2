@@ -3,12 +3,11 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { UserPlus, Briefcase, UserMinus, ShieldAlert, Users } from 'lucide-react';
-
+import { UserPlus, Briefcase, UserMinus, ShieldAlert, Users, Loader2 } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
-import { Modal, Button, Badge, Avatar } from '@/components';
+import { Modal, Button, Badge, Avatar, Input } from '@/components';
 import { getEmployees, revokePositions, getUsers } from '@/actions';
-import { useQueryParam } from '@/hooks';
+import { useQueryParam, useDebounce } from '@/hooks';
 import type { Employee, User } from '@/types';
 import queryClient from '@/utils/query';
 import { BASE_MINIO_URL } from '@/config';
@@ -37,6 +36,8 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
   // Modal Thêm nhân sự vào phòng ban
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [selectedUserToAdd, setSelectedUserToAdd] = useState<User | null>(null);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const debouncedUserSearch = useDebounce(userSearchTerm, 350);
 
   // Fetcher lấy danh sách nhân sự của phòng ban hiện tại
   const fetcher = async (queryParam: { offset: number; limit: number }) => {
@@ -67,10 +68,14 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
     };
   };
 
-  // Lấy danh sách toàn bộ người dùng để thêm vào phòng ban
+  // Lấy danh sách toàn bộ người dùng để thêm vào phòng ban (hỗ trợ tìm kiếm theo API)
   const { data: allUsersData, isLoading: isLoadingAllUsers } = useQuery({
-    queryKey: ['users', 'all-for-department-add'],
-    queryFn: () => getUsers({ limit: 200 }),
+    queryKey: ['users', 'all-for-department-add', debouncedUserSearch],
+    queryFn: () =>
+      getUsers({
+        limit: 100,
+        search: debouncedUserSearch ? debouncedUserSearch.trim() : undefined,
+      }),
     enabled: isAddMemberOpen,
   });
 
@@ -345,20 +350,37 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
         onClose={() => {
           setIsAddMemberOpen(false);
           setSelectedUserToAdd(null);
+          setUserSearchTerm('');
         }}
         title="Thêm nhân sự vào phòng ban"
         className="m-2 max-w-lg w-full"
       >
-        <div className="space-y-4 py-2">
+        <div className="space-y-3.5 py-2">
           <p className="text-xs text-slate-500">
             Chọn một nhân sự trong công ty để gán vào vị trí của phòng ban này:
           </p>
 
-          <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100 bg-white">
+          {/* Ô tìm kiếm nhân sự gọi API */}
+          <Input
+            placeholder="Tìm kiếm nhân sự theo tên, email, CCCD..."
+            value={userSearchTerm}
+            onChange={(e) => setUserSearchTerm(e.target.value)}
+            className="h-9 text-xs"
+            fullWidth
+          />
+
+          <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100 bg-white">
             {isLoadingAllUsers ? (
-              <div className="p-4 text-center text-xs text-gray-400">Đang tải danh sách nhân sự...</div>
+              <div className="p-6 flex flex-col items-center justify-center gap-2 text-xs text-slate-400">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <span>Đang tìm kiếm nhân sự...</span>
+              </div>
             ) : allCompanyUsers.length === 0 ? (
-              <div className="p-4 text-center text-xs text-gray-400">Không có nhân sự nào</div>
+              <div className="p-6 text-center text-xs text-slate-400">
+                {debouncedUserSearch
+                  ? `Không tìm thấy nhân sự phù hợp với "${debouncedUserSearch}"`
+                  : 'Không có nhân sự nào trong hệ thống'}
+              </div>
             ) : (
               allCompanyUsers.map((u) => {
                 const isSelected = selectedUserToAdd?.id === u.id;
@@ -370,7 +392,7 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
                       isSelected ? 'bg-primary/5 border-l-4 border-primary' : 'hover:bg-gray-50'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0 pr-2">
                       <Avatar
                         src={
                           u.avatar
@@ -382,18 +404,18 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
                         name={u.fullName || u.username}
                         size="sm"
                       />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-slate-900">
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-semibold text-slate-900 truncate">
                           {u.fullName || u.username}
                         </span>
-                        <span className="text-xs text-slate-400">{u.email}</span>
+                        <span className="text-xs text-slate-400 truncate">{u.email}</span>
                       </div>
                     </div>
 
                     <Button
                       variant={isSelected ? 'primary' : 'outline'}
                       size="sm"
-                      className="text-xs h-7 px-2.5"
+                      className="text-xs h-7 px-2.5 shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsAddMemberOpen(false);
