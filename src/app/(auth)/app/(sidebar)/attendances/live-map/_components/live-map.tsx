@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { StaffLiveLocation } from '@/types';
 import { Battery, Gauge, Clock, Navigation } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
+import { BASE_MINIO_URL } from '@/config';
 
 // Dynamic import Leaflet components for SSR safety
 const MapContainer = dynamic(
@@ -53,7 +54,7 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
     const shortName = safeName.split(' ').slice(-2).join(' ');
 
     const avatarHtml = staff.avatar
-      ? `<img src="${staff.avatar}" alt="${safeName}" class="w-full h-full object-cover rounded-full" />`
+      ? `<img src="${BASE_MINIO_URL + staff.avatar}" alt="${safeName}" class="w-full h-full object-cover rounded-full" />`
       : `<span class="text-xs font-bold text-slate-700">${safeName.charAt(0).toUpperCase()}</span>`;
 
     const html = `
@@ -124,7 +125,7 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
                   <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100">
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs overflow-hidden shrink-0">
                       {staff.avatar ? (
-                        <img src={staff.avatar} alt={staff.userName || 'Nhân viên'} className="w-full h-full object-cover" />
+                        <img src={ BASE_MINIO_URL + staff.avatar} alt={staff.userName || 'Nhân viên'} className="w-full h-full object-cover" />
                       ) : (
                         (staff.userName || 'N').charAt(0).toUpperCase()
                       )}
