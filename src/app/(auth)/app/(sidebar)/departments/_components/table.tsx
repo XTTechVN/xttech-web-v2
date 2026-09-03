@@ -105,11 +105,11 @@ const Table = () => {
         <TableAction
           items={[
             {
-              title: 'Quản lý vị trí',
+              title: 'Xem chi tiết',
               icon: Eye,
               size: 18,
               onClick: () => {
-                router.push(`/app/departments/${row.id}/positions`);
+                router.push(`/app/departments/${row.id}`);
               },
             },
             {
@@ -142,7 +142,7 @@ const Table = () => {
   const renderCard = (row: Department, index: number) => (
     <div
       key={row.id || index}
-      onClick={() => router.push(`/app/departments/${row.id}/positions`)}
+      onClick={() => router.push(`/app/departments/${row.id}`)}
       className="p-4 rounded-xl border border-primary/10 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 cursor-pointer"
     >
       <div className="flex items-start gap-3">

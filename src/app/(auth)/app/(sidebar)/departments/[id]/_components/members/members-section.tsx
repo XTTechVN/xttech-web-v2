@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useParams } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { UserPlus, Briefcase, UserMinus, ShieldAlert } from 'lucide-react';
+import { UserPlus, Briefcase, UserMinus, ShieldAlert, Users } from 'lucide-react';
 
 import { TableData, TableAction } from '@/components/table';
 import { Modal, Button, Badge, Avatar } from '@/components';
-import { getEmployees, revokePositions, getUsers, setUserPositions } from '@/actions';
+import { getEmployees, revokePositions, getUsers } from '@/actions';
 import { useQueryParam } from '@/hooks';
 import type { Employee, User } from '@/types';
 import queryClient from '@/utils/query';
@@ -16,10 +15,16 @@ import { BASE_MINIO_URL } from '@/config';
 
 import PositionModal from '@/app/(auth)/app/(sidebar)/employees/_components/position-modal';
 
-export default function DepartmentMembersPage() {
-  const params = useParams();
-  const departmentId = Number(params.id);
-  const [search, setSearch] = useQueryParam('search');
+interface DepartmentMembersSectionProps {
+  departmentId: number;
+  onCountChange?: (count: number) => void;
+}
+
+export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
+  departmentId,
+  onCountChange,
+}) => {
+  const [search, setSearch] = useQueryParam('member_search');
 
   // Modal đổi vị trí nhân sự
   const [isPositionModalOpen, setIsPositionModalOpen] = useState(false);
@@ -44,6 +49,11 @@ export default function DepartmentMembersPage() {
     if (!res) {
       toast.error('Lỗi khi tải danh sách nhân sự');
       throw new Error('Lỗi khi tải danh sách nhân sự');
+    }
+
+    const total = res.meta?.total || 0;
+    if (onCountChange) {
+      onCountChange(total);
     }
 
     return {
@@ -148,7 +158,7 @@ export default function DepartmentMembersPage() {
         return (
           <div className="flex flex-wrap gap-1">
             {deptPositions.map((pos: any) => (
-              <Badge key={pos.id} variant="info" size="sm">
+              <Badge key={pos.id} variant="primary" size="sm">
                 {pos.name}
               </Badge>
             ))}
@@ -175,7 +185,7 @@ export default function DepartmentMembersPage() {
               title: 'Đổi chức vụ / vị trí',
               icon: Briefcase,
               size: 18,
-              className: 'hover:text-blue-600 hover:bg-blue-50',
+              className: 'hover:text-primary hover:bg-primary/5',
               onClick: () => {
                 setSelectedEmpForPos(row);
                 setIsPositionModalOpen(true);
@@ -214,8 +224,8 @@ export default function DepartmentMembersPage() {
               src={
                 row.avatar
                   ? row.avatar.startsWith('http')
-                    ? row.avatar
-                    : `${BASE_MINIO_URL}${row.avatar}`
+                  ? row.avatar
+                  : `${BASE_MINIO_URL}${row.avatar}`
                   : undefined
               }
               name={row.fullName || row.username}
@@ -242,7 +252,7 @@ export default function DepartmentMembersPage() {
             <div className="flex flex-wrap gap-1">
               {deptPositions.length > 0 ? (
                 deptPositions.map((pos: any) => (
-                  <Badge key={pos.id} variant="info" size="sm">
+                  <Badge key={pos.id} variant="primary" size="sm">
                     {pos.name}
                   </Badge>
                 ))
@@ -282,13 +292,21 @@ export default function DepartmentMembersPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Header Action */}
-      <div className="flex items-center justify-end">
+    <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs flex flex-col gap-4">
+      {/* Header Section */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+            <Users size={18} />
+          </div>
+          <h2 className="text-base font-bold text-slate-900">Nhân sự phòng ban</h2>
+        </div>
+
         <Button
           variant="primary"
           size="sm"
-          leftIcon={<UserPlus size={16} />}
+          className="h-8 px-3 text-xs shrink-0"
+          leftIcon={<UserPlus size={14} />}
           onClick={() => setIsAddMemberOpen(true)}
         >
           Thêm nhân sự vào phòng ban
@@ -306,7 +324,7 @@ export default function DepartmentMembersPage() {
           placeholder: 'Tìm kiếm nhân sự theo tên, mã, email...',
           value: search,
           onChange: setSearch,
-          className: 'w-80',
+          className: 'w-72 sm:w-80',
         }}
       />
 
@@ -441,4 +459,6 @@ export default function DepartmentMembersPage() {
       </Modal>
     </div>
   );
-}
+};
+
+export default DepartmentMembersSection;
