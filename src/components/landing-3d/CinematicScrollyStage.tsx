@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { motion, useScroll, useSpring, useTransform } from 'motion/react';
+import { motion, useScroll, useSpring, useTransform, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
-import { ArrowUpRight, Radio, Shield, Cpu, Activity, Zap, Lock, MapPin, Database, CheckCircle2 } from 'lucide-react';
+import { ArrowUpRight, Radio, Shield, Activity, Zap, Lock, MapPin, Database, CheckCircle2, Users, Layers } from 'lucide-react';
 import { CinematicScrollyCanvas } from './CinematicScrollyCanvas';
 
 export function CinematicScrollyStage() {
@@ -35,15 +35,15 @@ export function CinematicScrollyStage() {
   const c1Opacity = useTransform(smoothProgress, [0, 0.05, 0.18, 0.25], [1, 1, 1, 0]);
   const c1Y = useTransform(smoothProgress, [0, 0.25], [0, -40]);
 
-  // Phân cảnh 2 (0.25 -> 0.55) - Concept 1: Server Vault
+  // Phân cảnh 2 (0.25 -> 0.55) - Concept 1: Datacenter & Vault
   const c2Opacity = useTransform(smoothProgress, [0.23, 0.29, 0.49, 0.55], [0, 1, 1, 0]);
   const c2Y = useTransform(smoothProgress, [0.23, 0.29, 0.49, 0.55], [40, 0, 0, -40]);
 
-  // Phân cảnh 3 (0.55 -> 0.80) - Concept 2: Command Bunker
+  // Phân cảnh 3 (0.55 -> 0.80) - Concept 2: Earth Globe GPS
   const c3Opacity = useTransform(smoothProgress, [0.53, 0.59, 0.74, 0.80], [0, 1, 1, 0]);
   const c3Y = useTransform(smoothProgress, [0.53, 0.59, 0.74, 0.80], [40, 0, 0, -40]);
 
-  // Phân cảnh 4 (0.80 -> 1.00) - Concept 3: Reactor Core
+  // Phân cảnh 4 (0.80 -> 1.00) - Concept 3: Matrix Staff Network
   const c4Opacity = useTransform(smoothProgress, [0.78, 0.84, 0.96, 1.0], [0, 1, 1, 1]);
   const c4Y = useTransform(smoothProgress, [0.78, 0.84], [40, 0]);
 
@@ -55,27 +55,49 @@ export function CinematicScrollyStage() {
     <div
       ref={containerRef}
       id="cinematic-experience"
-      className="relative h-[480vh] w-full bg-[#020617]"
+      className="relative h-[480vh] w-full bg-[#020714]"
     >
       {/* Khung nhìn ghim chặt toàn màn hình (Sticky Pinned Viewport) */}
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* Lớp nền Three.js 3D WebGL Canvas */}
+        {/* Lớp nền Three.js 3D WebGL Canvas (Tâm 3D nằm gọn ở nửa phải màn hình) */}
         <div className="absolute inset-0 z-0">
           <CinematicScrollyCanvas scrollProgress={currentProgress} />
         </div>
 
-        {/* Lớp phủ điện tử công nghệ */}
-        <div className="pointer-events-none absolute inset-0 z-0 opacity-20 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:28px_28px]" />
+        {/* =========================================================================
+            HỆ SINH THÁI NỀN KHÔNG GIAN MẠNG (CYBERSPACE MATRIX OVERLAY)
+        ========================================================================= */}
+        {/* 1. Luồng Cực Quang Số Cyber Aurora (Gradient Mesh mờ ảo sâu thẳm) */}
+        <div className="pointer-events-none absolute -top-24 -right-24 h-[650px] w-[650px] rounded-full bg-cyan-500/10 blur-[140px]" />
+        <div className="pointer-events-none absolute -bottom-32 -left-24 h-[550px] w-[550px] rounded-full bg-indigo-600/15 blur-[150px]" />
+        <div className="pointer-events-none absolute top-1/2 left-1/4 h-[400px] w-[400px] rounded-full bg-emerald-500/8 blur-[130px]" />
+
+        {/* 2. Lưới Điểm Vi Mạch Điện Tử (Digital Circuit Dot Grid) */}
+        <div className="pointer-events-none absolute inset-0 z-0 opacity-20 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:36px_36px]" />
+
+        {/* 3. Tia Quét Laser Radar Không Gian Mạng (Cathode Scanline Beam) */}
+        <div className="pointer-events-none absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent animate-scanline z-10 shadow-[0_0_12px_rgba(6,182,212,0.4)]" />
+
+        {/* 4. Dải Tọa Độ & Mã Nhị Phân Biên Trái (Telemetry Border Stream) */}
+        <div className="pointer-events-none absolute left-3 top-1/3 -translate-y-1/2 z-10 hidden xl:flex flex-col gap-2 font-mono text-[9px] text-cyan-500/25 tracking-widest select-none">
+          <span>01001101</span>
+          <span>LAT:16.05</span>
+          <span>LON:108.2</span>
+          <span>PING:1ms</span>
+          <span>NET:SECURE</span>
+          <span>SYS:ONLINE</span>
+          <span>01010100</span>
+        </div>
 
         {/* =========================================================================
-            BỘ ĐIỀU HƯỚNG CHỈ MỤC BÊN PHẢI (SIDE CHAPTER INDICATOR)
+            BỘ ĐIỀU HƯỚNG CHỈ MỤC BÊN PHẢI (SIDE CHAPTER INDICATOR - SAFFRON STYLE)
         ========================================================================= */}
-        <div className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 z-20 hidden md:flex flex-col gap-6">
+        <div className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 z-20 hidden lg:flex flex-col gap-6">
           {[
-            { num: '01', title: 'GEARS OF ENTERPRISE' },
-            { num: '02', title: 'DATA CORE VAULT' },
-            { num: '03', title: 'COMMAND BUNKER GPS' },
-            { num: '04', title: 'REACTOR CORE ENGINE' },
+            { num: '01', title: 'TỐI ƯU VẬT TƯ' },
+            { num: '02', title: 'BẢO TOÀN DÒNG TIỀN' },
+            { num: '03', title: 'QUẢN TRỊ TOÀN QUỐC' },
+            { num: '04', title: 'HIỆU SUẤT ĐỘI NGŨ' },
           ].map((item, idx) => {
             const isActive = activeChapter === idx + 1;
             return (
@@ -111,166 +133,236 @@ export function CinematicScrollyStage() {
             <span>TIẾN TRÌNH KHÔNG GIAN: {Math.round(currentProgress * 100)}%</span>
           </div>
           <div>
-            <span>[ LĂN CHUỘT ĐỂ KHÁM PHÁ 3 CONCEPT ]</span>
+            <span>[ LĂN CHUỘT ĐỂ KHÁM PHÁ DỰ ÁN ]</span>
           </div>
         </div>
 
         {/* =========================================================================
-            NỘI DUNG 3 CONCEPT TRÌNH DIỄN KÍNH MỜ (GLASSMORPHISM HUD OVERLAYS)
+            BỐ CỤC ASYMMETRIC SPLIT-SCREEN: TOÀN BỘ TEXT NẰM Ở NỬA TRÁI (LEFT 40%)
+            HOÀN TOÀN KHÔNG CHỒNG ĐÈ LÊN MÔ HÌNH 3D Ở NỬA PHẢI
         ========================================================================= */}
 
-        {/* PHÂN CẢNH 1: BÁNH RĂNG LOGO XTTECH */}
+        {/* PHÂN CẢNH 1: CÔNG NGHỆ BÓC TÁCH & TỐI ƯU HÓA BIÊN LỢI NHUẬN */}
         <motion.div
           style={{ opacity: c1Opacity, y: c1Y }}
-          className="pointer-events-none absolute inset-y-0 left-6 md:left-16 z-10 flex flex-col justify-center max-w-xl"
+          className="pointer-events-none absolute inset-y-0 left-6 sm:left-12 lg:left-20 z-10 flex flex-col justify-center max-w-lg"
         >
-          <div className="rounded-3xl border border-cyan-500/30 bg-slate-950/75 p-6 md:p-8 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-950/50 px-3.5 py-1 font-mono text-xs text-cyan-300">
-              <Cpu className="h-3.5 w-3.5 text-cyan-400" />
-              <span>01 // NỀN TẢNG ĐỒNG BỘ DOANH NGHIỆP</span>
+          <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-6 sm:p-8 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-950/40 px-3.5 py-1 font-mono text-xs text-cyan-300">
+              <Layers className="h-3.5 w-3.5 text-cyan-400" />
+              <span>01 // GIẢI PHÁP CÔNG NGHỆ LÕI TIÊN PHONG</span>
             </div>
-            <h1 className="mt-4 font-black text-3xl sm:text-5xl uppercase tracking-tight text-white leading-tight">
-              Cỗ Máy Bánh Răng <br />
+
+            <h2 className="mt-4 font-black text-3xl sm:text-5xl uppercase tracking-tight text-white leading-tight">
+              Đột Phá Năng Suất <br />
               <span className="bg-gradient-to-r from-cyan-400 via-teal-200 to-indigo-400 bg-clip-text text-transparent">
-                Vận Hành Số
+                Tối Ưu Chi Phí Vật Tư
               </span>
-            </h1>
+            </h2>
+
             <p className="mt-3 text-sm text-slate-300 font-light leading-relaxed">
-              Biểu trưng bánh răng XTTech cơ khí đùn khối 3D. Mỗi nhịp xoay đồng bộ toàn bộ dòng chảy tài nguyên: từ nhân sự hiện trường, định mức nhôm kính đến báo cáo tài chính doanh nghiệp.
+              Giải quyết triệt để nỗi đau lớn nhất của ngành nhôm kính: Thuật toán tự động hóa bóc tách bản vẽ kỹ thuật CAD, trừ độ hở và xếp cây cắt nhôm chính xác, giảm thiểu phôi thừa từ 18% xuống dưới 1.5%, trực tiếp gia tăng biên lợi nhuận ròng cho doanh nghiệp.
             </p>
-            <div className="mt-5 grid grid-cols-2 gap-3 font-mono text-xs text-slate-300">
-              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2.5">
+
+            <div className="mt-5 space-y-2 font-mono text-xs text-slate-300">
+              <div className="flex items-center gap-2.5 rounded-xl border border-white/5 bg-white/5 p-2.5">
                 <CheckCircle2 className="h-4 w-4 text-cyan-400 shrink-0" />
-                <span>Đồng Bộ Đa Chiều</span>
+                <span><strong>Tối Ưu Phôi Nhôm 98.5%:</strong> Tiết kiệm hàng trăm triệu đồng chi phí nguyên vật liệu mỗi tháng cho từng xưởng.</span>
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2.5">
+              <div className="flex items-center gap-2.5 rounded-xl border border-white/5 bg-white/5 p-2.5">
+                <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0" />
+                <span><strong>Tăng Tốc Báo Giá Gấp 10 Lần:</strong> Tự động xuất 2 bảng Excel chiết tính giá vốn và giá bán trong 30 giây.</span>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-xl border border-white/5 bg-white/5 p-2.5">
                 <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span>Chuẩn Hóa Quy Trình</span>
+                <span><strong>Chuẩn Hóa Quy Trình:</strong> Loại bỏ hoàn toàn sai số thủ công, đồng bộ hóa dây chuyền sản xuất đồng loạt.</span>
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* PHÂN CẢNH 2: CONCEPT 1 - HẦM TRUNG TÂM DỮ LIỆU & CỬA HẦM BẢO MẬT */}
+        {/* =========================================================================
+            POP-UP THÔNG TIN KỸ THUẬT HỆ NHÔM SLIM COVER (HIỆN RA KHI LẮP RÁP XONG)
+        ========================================================================= */}
+        <AnimatePresence>
+          {currentProgress >= 0.04 && currentProgress <= 0.23 && (
+            <motion.div
+              initial={{ opacity: 0, y: 25, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
+              className="pointer-events-auto absolute right-6 sm:right-10 lg:right-16 bottom-14 z-30 w-80 sm:w-96 rounded-2xl border border-amber-500/40 bg-slate-950/85 p-5 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.7),0_0_30px_rgba(217,119,6,0.15)]"
+            >
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] text-amber-300 font-semibold uppercase">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-ping" />
+                  Hệ Cửa Kiến Trúc Cao Cấp
+                </div>
+                <span className="font-mono text-[10px] text-cyan-400 tracking-wider">XT-SLIM 2026</span>
+              </div>
+
+              <h3 className="font-black text-base sm:text-lg text-white tracking-wide uppercase leading-snug">
+                PROFILE MẶT CẮT NHÔM SLIM COVER
+              </h3>
+              <p className="text-xs text-slate-300 font-light mt-1 mb-3">
+                Hệ cửa lùa 3 ray treo siêu hẹp • 3 cánh kính cường lực lồng tầng giật cấp
+              </p>
+
+              <div className="space-y-1.5 border-t border-white/10 pt-2.5 mb-3.5 text-xs font-mono">
+                <div className="flex justify-between items-center text-slate-300">
+                  <span className="text-slate-400">Bản nhôm nhìn thấy:</span>
+                  <span className="font-bold text-amber-300">16 mm (Siêu mỏng)</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-300">
+                  <span className="text-slate-400">Xử lý bề mặt:</span>
+                  <span className="font-bold text-slate-100">Champagne Metallic</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-300">
+                  <span className="text-slate-400">Hệ ray & Kính:</span>
+                  <span className="font-bold text-cyan-300">3 Ray treo • Kính 8-10mm</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-300">
+                  <span className="text-slate-400">Thuật toán bóc tách:</span>
+                  <span className="font-bold text-emerald-400">Sai số CAD &lt; 0.1mm</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-white/5 pt-2.5">
+                <span className="font-mono text-[10px] text-slate-400">BẢO HÀNH 10 NĂM</span>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 font-mono text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors"
+                >
+                  Xem chi tiết <ArrowUpRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* PHÂN CẢNH 2: NỀN TẢNG ĐIỀU HÀNH & BẢO TOÀN DÒNG TIỀN DOANH NGHIỆP */}
         <motion.div
           style={{ opacity: c2Opacity, y: c2Y }}
-          className="pointer-events-none absolute inset-y-0 left-6 md:left-16 z-10 flex flex-col justify-center max-w-xl"
+          className="pointer-events-none absolute inset-y-0 left-6 sm:left-12 lg:left-20 z-10 flex flex-col justify-center max-w-lg"
         >
-          <div className="rounded-3xl border border-amber-500/30 bg-slate-950/75 p-6 md:p-8 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-950/50 px-3.5 py-1 font-mono text-xs text-amber-300">
+          <div className="rounded-3xl border border-amber-500/20 bg-slate-950/60 p-6 sm:p-8 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-950/40 px-3.5 py-1 font-mono text-xs text-amber-300">
               <Shield className="h-3.5 w-3.5 text-amber-400" />
-              <span>CONCEPT 01 // HẦM TRUNG TÂM DỮ LIỆU</span>
+              <span>02 // QUẢN TRỊ TÀI CHÍNH & KIỂM SOÁT THẤT THOÁT</span>
             </div>
+
             <h2 className="mt-4 font-black text-3xl sm:text-5xl uppercase tracking-tight text-white leading-tight">
-              Cửa Hầm Bảo Mật <br />
-              <span className="bg-gradient-to-r from-amber-400 via-orange-300 to-red-400 bg-clip-text text-transparent">
-                Cấp Ngân Hàng
+              Bảo Vệ Dòng Tiền <br />
+              <span className="bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-200 bg-clip-text text-transparent">
+                Tự Động Hóa Vận Hành
               </span>
             </h2>
+
             <p className="mt-3 text-sm text-slate-300 font-light leading-relaxed">
-              Camera trượt sâu vào đường hầm tủ Rack máy chủ với dải LED nhấp nháy hai bên. Cánh cửa Air-lock Vault cơ học 8 chốt xoay mở, bảo vệ tuyệt đối dữ liệu lương thưởng, nhân sự và tài liệu nội bộ.
+              Đóng vai trò như chiếc két sắt kỹ thuật số của tổ chức: Giám sát minh bạch mọi dòng tiền thu - chi, công nợ dự án và lịch sử xuất nhập vật tư theo thời gian thực. Ngăn chặn triệt để thất thoát tài chính và bảo vệ tài sản dữ liệu cốt lõi.
             </p>
-            <div className="mt-5 space-y-2.5 font-mono text-xs">
-              <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-950/20 p-2.5 text-slate-300">
+
+            <div className="mt-5 space-y-2 font-mono text-xs text-slate-300">
+              <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/10 bg-amber-950/20 p-2.5">
                 <Lock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-                <span><strong>JWT Blacklist Tức Thì:</strong> Thu hồi phiên làm việc qua Redis khi nhân viên nghỉ việc hoặc đổi mật khẩu.</span>
+                <span><strong>Chống Thất Thoát Tuyệt Đối:</strong> Phê duyệt thanh toán đa tầng, kiểm soát chặt chẽ từng đồng chi phí và dòng tiền hợp đồng.</span>
               </div>
-              <div className="flex items-start gap-2.5 rounded-xl border border-purple-500/20 bg-purple-950/20 p-2.5 text-slate-300">
+              <div className="flex items-start gap-2.5 rounded-xl border border-purple-500/10 bg-purple-950/20 p-2.5">
                 <Database className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
-                <span><strong>Audit Trail Bất Biến:</strong> Ghi nhận vết lịch sử mọi thao tác sửa, xóa, duyệt đơn chống gian lận dữ liệu.</span>
+                <span><strong>Báo Cáo Quản Trị Tức Thì:</strong> Bức tranh tài chính và tiến độ thực tế, giúp ban lãnh đạo ra quyết định kinh doanh chuẩn xác.</span>
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* PHÂN CẢNH 3: CONCEPT 2 - PHÒNG CHỈ HUY TÁC CHIẾN GPS RADAR */}
+        {/* PHÂN CẢNH 3: KHẢ NĂNG MỞ RỘNG QUY MÔ & PHỦ SÓNG TOÀN QUỐC */}
         <motion.div
           style={{ opacity: c3Opacity, y: c3Y }}
-          className="pointer-events-none absolute inset-y-0 right-6 md:right-16 z-10 flex flex-col justify-center max-w-xl text-left"
+          className="pointer-events-none absolute inset-y-0 left-6 sm:left-12 lg:left-20 z-10 flex flex-col justify-center max-w-lg"
         >
-          <div className="rounded-3xl border border-emerald-500/30 bg-slate-950/75 p-6 md:p-8 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-950/50 px-3.5 py-1 font-mono text-xs text-emerald-300">
+          <div className="rounded-3xl border border-emerald-500/20 bg-slate-950/60 p-6 sm:p-8 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-950/40 px-3.5 py-1 font-mono text-xs text-emerald-300">
               <Radio className="h-3.5 w-3.5 animate-pulse text-emerald-400" />
-              <span>CONCEPT 02 // PHÒNG CHỈ HUY TÁC CHIẾN</span>
+              <span>03 // MỞ RỘNG THỊ TRƯỜNG & QUY MÔ DỰ ÁN</span>
             </div>
+
             <h2 className="mt-4 font-black text-3xl sm:text-5xl uppercase tracking-tight text-white leading-tight">
-              Chỉ Huy Toàn Cảnh <br />
+              Quản Trị Toàn Quốc <br />
               <span className="bg-gradient-to-r from-emerald-400 via-teal-200 to-cyan-400 bg-clip-text text-transparent">
-                Hiện Trường GPS
+                Mở Rộng Không Giới Hạn
               </span>
             </h2>
+
             <p className="mt-3 text-sm text-slate-300 font-light leading-relaxed">
-              Boong-ke chỉ huy ngầm bừng sáng với Quả cầu Trái Đất 3D Hologram, tia quét sóng radar 360° và các chùm tia laser định vị trực tiếp các trạm công trình trên toàn quốc.
+              Xóa nhòa khoảng cách địa lý: Cho phép một tổng công ty làm chủ hàng trăm công trình trải dài từ Bắc chí Nam trên cùng một màn hình chỉ huy. Định vị chính xác từng trạm thi công, sẵn sàng mở rộng quy mô thần tốc mà không cần phình to bộ máy quản lý.
             </p>
-            <div className="mt-5 space-y-2.5 font-mono text-xs">
-              <div className="flex items-start gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-2.5 text-slate-300">
+
+            <div className="mt-5 space-y-2 font-mono text-xs text-slate-300">
+              <div className="flex items-start gap-2.5 rounded-xl border border-emerald-500/10 bg-emerald-950/20 p-2.5">
                 <MapPin className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong>Redis GEO Engine:</strong> Đo cự ly Haversine sai số &lt; 5m, tự động kiểm tra bán kính Geofence công trình.</span>
+                <span><strong>Nhân Bản Quy Mô Thần Tốc:</strong> Dễ dàng mở rộng cho hàng chục nhà máy, đại lý và công trình vệ tinh trên toàn quốc.</span>
               </div>
-              <div className="flex items-start gap-2.5 rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-2.5 text-slate-300">
+              <div className="flex items-start gap-2.5 rounded-xl border border-cyan-500/10 bg-cyan-950/20 p-2.5">
                 <Activity className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-                <span><strong>WebSocket Full-Duplex:</strong> Đồng bộ tọa độ 1s/lần, nhận diện Di chuyển / Dừng đỗ và mức pin thiết bị.</span>
+                <span><strong>Định Vị Hiện Trường Tự Động:</strong> Chấm công và kiểm soát ca trực theo bán kính công trình thông minh, xóa bỏ 100% gian lận ngày công.</span>
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* PHÂN CẢNH 4: CONCEPT 3 - LÕI LÒ PHẢN ỨNG SỐ (THE ENGINE) */}
+        {/* PHÂN CẢNH 4: TỐI ƯU HIỆU SUẤT ĐỘI NGŨ & BỨT PHÁ TĂNG TRƯỞNG */}
         <motion.div
           style={{ opacity: c4Opacity, y: c4Y }}
-          className="pointer-events-none absolute inset-y-0 inset-x-6 md:inset-x-24 z-10 flex flex-col justify-center items-center text-center"
+          className="pointer-events-none absolute inset-y-0 left-6 sm:left-12 lg:left-20 z-10 flex flex-col justify-center max-w-lg"
         >
-          <div className="max-w-2xl rounded-3xl border border-cyan-500/40 bg-slate-950/80 p-8 md:p-10 backdrop-blur-2xl shadow-[0_0_80px_rgba(6,182,212,0.25)]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-950/50 px-3.5 py-1 font-mono text-xs text-cyan-300">
-              <Zap className="h-3.5 w-3.5 text-cyan-400" />
-              <span>CONCEPT 03 // LÕI LÒ PHẢN ỨNG NĂNG LƯỢNG SỐ</span>
+          <div className="rounded-3xl border border-cyan-500/30 bg-slate-950/60 p-6 sm:p-8 backdrop-blur-2xl shadow-[0_0_60px_rgba(6,182,212,0.2)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-950/40 px-3.5 py-1 font-mono text-xs text-cyan-300">
+              <Users className="h-3.5 w-3.5 text-cyan-400" />
+              <span>04 // TỐI ƯU NGUỒN LỰC & NĂNG SUẤT LAO ĐỘNG</span>
             </div>
-            <h2 className="mt-4 font-black text-3xl sm:text-6xl uppercase tracking-tight text-white leading-tight">
-              Trái Tim Năng Lượng <br />
+
+            <h2 className="mt-4 font-black text-3xl sm:text-5xl uppercase tracking-tight text-white leading-tight">
+              Kết Nối Đội Ngũ <br />
               <span className="bg-gradient-to-r from-cyan-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
-                Tự Động Hóa Số
+                Tăng Tốc Bàn Giao Dự Án
               </span>
             </h2>
-            <p className="mt-4 text-sm sm:text-base text-slate-300 font-light leading-relaxed">
-              Khối cầu năng lượng Plasma 3D đập theo nhịp thở với hàng nghìn hạt dữ liệu từ các mắt xích bánh răng chảy dồn về tâm, tiếp sức mạnh tính toán tức thời cho toàn hệ sinh thái.
+
+            <p className="mt-3 text-sm text-slate-300 font-light leading-relaxed">
+              Chuyển đổi tổ chức thành một cỗ máy vận hành tinh gọn: Kết nối liền mạch từ kỹ sư văn phòng đến ban chỉ huy hiện trường. Nâng cao 40% hiệu suất làm việc thực tế, đảm bảo tiến độ bàn giao dự án và tối đa hóa chỉ số sinh lời trên vốn đầu tư (ROI).
             </p>
 
-            {/* Chi tiết thông số động cơ */}
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs text-left">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                <span className="text-cyan-400 font-bold block">FASTAPI ASYNC</span>
-                <span className="text-slate-400 text-[11px]">100k req/s xử lý luồng song song</span>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-xs">
+              <div className="rounded-xl border border-white/5 bg-white/5 p-2.5">
+                <span className="text-cyan-400 font-bold block">ĐIỀU PHỐI TINH GỌN</span>
+                <span className="text-slate-400 text-[11px]">Tự động phân bổ nguồn lực & công việc</span>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                <span className="text-purple-400 font-bold block">CACHE PHÂN TẦNG</span>
-                <span className="text-slate-400 text-[11px]">Query DB tối ưu &lt; 5ms</span>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                <span className="text-emerald-400 font-bold block">BOM NHÔM KÍNH</span>
-                <span className="text-slate-400 text-[11px]">Loại trừ phôi dư và tính lãi tức thì</span>
+              <div className="rounded-xl border border-white/5 bg-white/5 p-2.5">
+                <span className="text-emerald-400 font-bold block">HIỆU SUẤT TỐI ĐA</span>
+                <span className="text-slate-400 text-[11px]">Báo cáo tiến độ & năng suất tức thời</span>
               </div>
             </div>
 
             {/* Nút hành động trực tiếp */}
-            <div className="pointer-events-auto mt-8 flex flex-wrap items-center justify-center gap-4">
+            <div className="pointer-events-auto mt-6 flex flex-wrap items-center gap-3">
               <Link
                 href="/app/dashboard"
-                className="group inline-flex items-center gap-2 rounded-full bg-cyan-400 px-8 py-4 font-mono text-xs font-bold uppercase tracking-wider text-slate-950 shadow-[0_0_35px_rgba(6,182,212,0.6)] transition-all duration-300 hover:scale-105 hover:bg-cyan-300"
+                className="group relative flex items-center gap-2 overflow-hidden rounded-xl bg-cyan-500 px-5 py-2.5 font-sans text-xs font-bold uppercase tracking-wider text-slate-950 shadow-[0_0_24px_rgba(6,182,212,0.5)] transition-all hover:bg-cyan-400"
               >
-                <span>VÀO BẢNG ĐIỀU HÀNH</span>
+                <span>Tìm Hiểu Cơ Hội Đầu Tư</span>
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
-
               <Link
-                href="/app/attendances/live-map"
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-slate-900/80 px-8 py-4 font-mono text-xs font-bold text-slate-200 backdrop-blur-xl transition-all hover:border-white/40 hover:bg-slate-800"
+                href="/app/attendances"
+                className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 font-sans text-xs font-semibold text-white backdrop-blur-md transition-all hover:border-cyan-400/50 hover:bg-white/10"
               >
-                <Activity className="h-4 w-4 text-emerald-400" />
-                <span>MỞ BẢN ĐỒ LIVE MAP GPS</span>
+                <Activity className="h-4 w-4 text-cyan-400" />
+                <span>Xem Năng Lực Dự Án</span>
               </Link>
             </div>
           </div>
         </motion.div>
+
       </div>
     </div>
   );

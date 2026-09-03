@@ -2,43 +2,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useSpring,
-  AnimatePresence,
-} from 'motion/react';
-import {
-  ArrowUpRight,
-  Sparkles,
-  Shield,
-  Layers,
-  Cpu,
-  BarChart3,
-  Globe,
-  Database,
-  Briefcase,
-  Radio,
-  Zap,
-  Boxes,
-  Users,
-  Compass,
-  Lock,
-  ChevronDown,
-  Activity,
-  CheckCircle2,
-  TrendingUp,
-  RotateCcw,
-  Eye,
-  Maximize2,
-  Workflow,
-  Server,
-  MapPin,
-  FileSpreadsheet,
-  Factory,
-} from 'lucide-react';
-import { CinematicScrollyStage, InteractiveLogo3D } from '@/components/landing-3d';
+import { motion, useScroll, useTransform, useSpring, AnimatePresence, } from 'motion/react';
+import { ArrowUpRight, Layers, Cpu, BarChart3, Briefcase, Radio, Zap, Users, Compass, Lock, TrendingUp, RotateCcw, } from 'lucide-react'; import { CinematicScrollyStage, InteractiveLogo3D } from '@/components/landing-3d';
+import { XTLogo } from '@/components';
 
 // ==========================================
 // 1. CON TRỎ CHUỘT TƯƠNG TÁC SIÊU TỐC (ZERO DELAY)
@@ -191,11 +157,11 @@ function Fullscreen3DBackground({ scrollYProgress }: { scrollYProgress: any }) {
 
       for (let i = 0; i < nodeCount; i++) {
         const n = nodes[i];
-        let x1 = n.x3d * cosY - n.z3d * sinY;
-        let z1 = n.z3d * cosY + n.x3d * sinY;
+        const x1 = n.x3d * cosY - n.z3d * sinY;
+        const z1 = n.z3d * cosY + n.x3d * sinY;
 
-        let y2 = n.y3d * cosX - z1 * sinX;
-        let z2 = z1 * cosX + n.y3d * sinX;
+        const y2 = n.y3d * cosX - z1 * sinX;
+        const z2 = z1 * cosX + n.y3d * sinX;
 
         const depth = z2 + 500;
         if (depth > 0) {
@@ -455,11 +421,11 @@ function Clean3DErpMonolith() {
       const sinX = Math.sin(rotX);
 
       const project3D = (x: number, y: number, z: number) => {
-        let x1 = x * cosY - z * sinY;
-        let z1 = z * cosY + x * sinY;
+        const x1 = x * cosY - z * sinY;
+        const z1 = z * cosY + x * sinY;
 
-        let y2 = y * cosX - z1 * sinX;
-        let z2 = z1 * cosX + y * sinX;
+        const y2 = y * cosX - z1 * sinX;
+        const z2 = z1 * cosX + y * sinX;
 
         const depth = z2 + 580;
         const scale = (fov / Math.max(10, depth)) * dpr;
@@ -816,7 +782,7 @@ export default function LuxuryLandingPage() {
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-600 p-[1px]">
               <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-950">
-                <Boxes className="h-4 w-4 text-cyan-400" />
+                <XTLogo className="h-5 w-5" variant="glossy" />
               </div>
             </div>
             <div className="flex flex-col">
