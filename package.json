@@ -13,6 +13,7 @@
     "@cycjimmy/jsmpeg-player": "^6.1.2",
     "@hookform/resolvers": "^5.5.7",
     "@tanstack/react-query": "^5.95.2",
+    "@types/three": "^0.185.4",
     "antd": "^6.3.5",
     "axios": "^1.13.6",
     "clsx": "^2.1.1",
@@ -32,6 +33,7 @@
     "react-tooltip": "^5.30.0",
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.5.0",
+    "three": "^0.185.1",
     "zod": "^4.4.3",
     "zustand": "^5.0.12"
   },

@@ -38,6 +38,7 @@ import {
   FileSpreadsheet,
   Factory,
 } from 'lucide-react';
+import { CinematicScrollyStage, InteractiveLogo3D } from '@/components/landing-3d';
 
 // ==========================================
 // 1. CON TRỎ CHUỘT TƯƠNG TÁC SIÊU TỐC (ZERO DELAY)
@@ -828,11 +829,12 @@ export default function LuxuryLandingPage() {
             </div>
           </div>
 
-          <nav className="hidden items-center gap-8 text-xs font-mono tracking-wider text-slate-300 md:flex">
+          <nav className="hidden items-center gap-6 text-xs font-mono tracking-wider text-slate-300 md:flex">
             <a href="#hero" className="transition-colors hover:text-cyan-400">[ 01 ] TỔNG QUAN</a>
-            <a href="#showcase-3d" className="transition-colors hover:text-cyan-400">[ 02 ] MÔ HÌNH 3D</a>
-            <a href="#pillars" className="transition-colors hover:text-cyan-400">[ 03 ] KIẾN TRÚC</a>
-            <a href="#features-grid" className="transition-colors hover:text-cyan-400">[ 04 ] PHÂN HỆ</a>
+            <a href="#cinematic-experience" className="transition-colors hover:text-cyan-400">[ 02 ] HÀNH TRÌNH 3D</a>
+            <a href="#showcase-3d" className="transition-colors hover:text-cyan-400">[ 03 ] THÁP KIẾN TRÚC</a>
+            <a href="#pillars" className="transition-colors hover:text-cyan-400">[ 04 ] 5 TRỤ CỘT</a>
+            <a href="#features-grid" className="transition-colors hover:text-cyan-400">[ 05 ] NĂNG LỰC</a>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -875,54 +877,61 @@ export default function LuxuryLandingPage() {
             </div>
           </div>
 
-          {/* Tiêu đề chính khổ lớn */}
-          <div className="my-auto py-12">
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-4"
-            >
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-950/40 px-4 py-1 font-mono text-xs text-cyan-300 backdrop-blur-xl">
-                <Radio className="h-3.5 w-3.5 animate-pulse text-cyan-400" />
-                <span>TƯƠNG LAI CỦA VẬN HÀNH DOANH NGHIỆP SỐ</span>
-              </div>
-
-              <h1 className="text-5xl font-black uppercase tracking-tight text-white sm:text-7xl lg:text-9xl leading-[0.95]">
-                XTTECH <br />
-                <span className="bg-gradient-to-r from-cyan-400 via-teal-200 to-indigo-400 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(6,182,212,0.45)]">
-                  DOANH NGHIỆP
-                </span>
-              </h1>
-
-              <p className="max-w-2xl text-base text-slate-300 sm:text-xl font-light leading-relaxed pt-4">
-                Nền tảng quản trị hợp nhất dành cho doanh nghiệp sản xuất, kỹ thuật và xây dựng. Kết nối toàn diện từ Nhân sự GPS, Sản xuất Nhôm Kính đến Báo giá & Báo cáo Tài chính theo thời gian thực.
-              </p>
-            </motion.div>
-
-            {/* Hàng nút hành động */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="mt-10 flex flex-wrap items-center gap-5"
-            >
-              <Link
-                href="/app/dashboard"
-                className="group relative inline-flex items-center gap-3 rounded-full bg-cyan-400 px-8 py-4 text-sm font-bold uppercase tracking-wider text-slate-950 shadow-[0_0_35px_rgba(6,182,212,0.6)] transition-all duration-300 hover:scale-105 hover:bg-cyan-300 hover:shadow-[0_0_50px_rgba(6,182,212,0.8)]"
+          {/* Tiêu đề chính khổ lớn kết hợp Logo 3D xoay 360 độ tương tác */}
+          <div className="my-auto py-8">
+            <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12">
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-4 lg:col-span-7"
               >
-                <span>Truy cập Bảng Điều Khiển</span>
-                <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
-              </Link>
+                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-950/40 px-4 py-1 font-mono text-xs text-cyan-300 backdrop-blur-xl">
+                  <Radio className="h-3.5 w-3.5 animate-pulse text-cyan-400" />
+                  <span>TƯƠNG LAI CỦA VẬN HÀNH DOANH NGHIỆP SỐ</span>
+                </div>
 
-              <a
-                href="#showcase-3d"
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-7 py-4 text-sm font-mono text-slate-200 backdrop-blur-xl transition-all duration-300 hover:border-white/40 hover:bg-white/10 hover:text-white"
+                <h1 className="text-4xl font-black uppercase tracking-tight text-white sm:text-6xl lg:text-8xl leading-[0.95]">
+                  XTTECH <br />
+                  <span className="bg-gradient-to-r from-cyan-400 via-teal-200 to-indigo-400 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(6,182,212,0.45)]">
+                    DOANH NGHIỆP
+                  </span>
+                </h1>
+
+                <p className="max-w-xl text-sm text-slate-300 sm:text-base font-light leading-relaxed pt-2">
+                  Nền tảng quản trị hợp nhất dành cho doanh nghiệp sản xuất, kỹ thuật và xây dựng. Kết nối toàn diện từ Nhân sự GPS, Sản xuất Nhôm Kính đến Báo giá & Báo cáo Tài chính theo thời gian thực.
+                </p>
+
+                {/* Hàng nút hành động */}
+                <div className="pt-6 flex flex-wrap items-center gap-4">
+                  <Link
+                    href="/app/dashboard"
+                    className="group relative inline-flex items-center gap-3 rounded-full bg-cyan-400 px-8 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-950 shadow-[0_0_35px_rgba(6,182,212,0.6)] transition-all duration-300 hover:scale-105 hover:bg-cyan-300 hover:shadow-[0_0_50px_rgba(6,182,212,0.8)]"
+                  >
+                    <span>Truy cập Bảng Điều Khiển</span>
+                    <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
+                  </Link>
+
+                  <a
+                    href="#cinematic-experience"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3.5 text-xs font-mono text-slate-200 backdrop-blur-xl transition-all duration-300 hover:border-white/40 hover:bg-white/10 hover:text-white"
+                  >
+                    <Compass className="h-4 w-4 text-cyan-400" />
+                    <span>KHÁM PHÁ HÀNH TRÌNH 3D</span>
+                  </a>
+                </div>
+              </motion.div>
+
+              {/* Cột phải: Logo 3D Tương tác xoay 360 độ */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1, delay: 0.2 }}
+                className="flex items-center justify-center lg:col-span-5"
               >
-                <Compass className="h-4 w-4 text-cyan-400" />
-                <span>KHÁM PHÁ MÔ HÌNH HỆ THỐNG 3D</span>
-              </a>
-            </motion.div>
+                <InteractiveLogo3D />
+              </motion.div>
+            </div>
           </div>
 
           {/* Thanh chân trang Hero */}
@@ -961,12 +970,17 @@ export default function LuxuryLandingPage() {
       </div>
 
       {/* ==========================================
+          HÀNH TRÌNH 3D SCROLLYTELLING GHIM TOÀN MÀN HÌNH (KIỂU GRIFLAN / SAFFRON)
+      ========================================== */}
+      <CinematicScrollyStage />
+
+      {/* ==========================================
           2. MÔ HÌNH 3D KIẾN TRÚC PHA LÊ
       ========================================== */}
       <section
         ref={showcaseRef}
         id="showcase-3d"
-        className="relative z-10 py-32 px-6 md:px-16"
+        className="relative z-10 py-32 px-6 md:px-16 border-t border-white/10"
       >
         <div className="mx-auto max-w-7xl">
           <motion.div
@@ -981,7 +995,7 @@ export default function LuxuryLandingPage() {
             <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
               <div>
                 <span className="font-mono text-xs font-bold tracking-widest text-cyan-400 uppercase">
-                  [ 02 / KHỐI KIẾN TRÚC 3D PHA LÊ ]
+                  [ 03 / KHỐI KIẾN TRÚC 3D PHA LÊ ]
                 </span>
                 <h2 className="mt-2 text-4xl font-extrabold tracking-tight text-white sm:text-6xl uppercase">
                   Kiến Trúc Tầng{' '}
