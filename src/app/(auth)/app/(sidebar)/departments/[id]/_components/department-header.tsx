@@ -26,15 +26,7 @@ export const DepartmentHeader: React.FC<DepartmentHeaderProps> = ({
   return (
     <div className="bg-white rounded-lg border border-slate-200/80 p-3.5 md:p-3 lg:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-3 lg:gap-4">
       <div className="flex items-center gap-2.5 md:gap-3 lg:gap-3.5 min-w-0">
-        <button
-          type="button"
-          onClick={() => router.push('/app/departments')}
-          className="p-1.5 md:p-1.5 lg:p-2 rounded-lg text-slate-600 hover:text-slate-900 transition-colors cursor-pointer shrink-0"
-          title="Quay lại danh sách phòng ban"
-        >
-          <ArrowLeft className="w-4 h-4 md:w-4 md:h-4 lg:w-[18px] lg:h-[18px]" />
-        </button>
-
+       
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
             <h1 className="text-base md:text-base lg:text-xl font-bold text-slate-900 truncate">

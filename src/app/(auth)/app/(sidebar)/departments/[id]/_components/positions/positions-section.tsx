@@ -82,13 +82,7 @@ export const DepartmentPositionsSection: React.FC<DepartmentPositionsSectionProp
       {/* Header */}
       <div className="flex items-center justify-between gap-2 flex-wrap shrink-0">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-            <Briefcase size={18} />
-          </div>
-          <h2 className="text-base font-bold text-slate-900">Vị trí & Chức danh</h2>
-          <Badge variant="primary" size="sm" className="font-semibold">
-            {totalCount}
-          </Badge>
+          <h2 className="text-base font-bold text-slate-900">Vị trí</h2>
         </div>
 
         <Button
@@ -147,25 +141,15 @@ export const DepartmentPositionsSection: React.FC<DepartmentPositionsSectionProp
             return (
               <div
                 key={pos.id}
-                className="group p-3 rounded-xl border border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-2xs transition-all duration-200 flex items-center justify-between gap-3"
+                className="group p-2 rounded-xl border border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-2xs transition-all duration-200 flex items-center justify-between gap-3"
               >
                 <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                  <div className="p-2 rounded-lg bg-slate-100 text-slate-600 shrink-0 mt-0.5">
-                    <Briefcase size={16} />
-                  </div>
                   <div className="flex flex-col min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-sm text-slate-900 break-words">
                         {pos.name}
                       </span>
                     </div>
-
-                    {formattedDate && (
-                      <div className="flex items-center gap-1 mt-1 text-xs text-slate-500">
-                        <Calendar size={12} className="text-slate-400" />
-                        <span>{formattedDate}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
 

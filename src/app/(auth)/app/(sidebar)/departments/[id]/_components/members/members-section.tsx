@@ -301,9 +301,6 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
       {/* Header Section */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-            <Users size={18} />
-          </div>
           <h2 className="text-base font-bold text-slate-900">Nhân sự phòng ban</h2>
         </div>
 
