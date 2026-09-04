@@ -5,6 +5,18 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-08-26
 
 ### Added
+- Thêm component [`AppLauncherRedirect`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/_components/AppLauncherRedirect.tsx) vào trang chủ [`src/app/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/page.tsx):
+  - Tự động nhận diện môi trường ứng dụng di động qua `Capacitor.isNativePlatform()`.
+  - Đưa người dùng vào thẳng `/app/dashboard` nếu đã đăng nhập hoặc `/signin` nếu chưa đăng nhập, loại bỏ việc người dùng bị kẹt tại trang landing page khi mở app Android.
+- Bổ sung cơ chế tự động khôi phục cookie phiên `onRehydrateStorage` trong [`useAuthStore.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/stores/useAuthStore.ts):
+  - Tự động đồng bộ lại `document.cookie = xt-auth=...` ngay khi Zustand đọc dữ liệu từ `localStorage`, bảo đảm Next.js Server luôn nhận được cookie xác thực.
+
+### Fixed
+- Sửa dứt điểm lỗi bị văng ra trang đăng nhập (`/signin`) mỗi khi thoát và mở lại ứng dụng Android:
+  - Khắc phục Race Condition trong [`src/app/(auth)/layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/layout.tsx): Chờ `useAuthStore.persist.hasHydrated()` hoàn tất trước khi kiểm tra `isAuthenticated`, ngăn chặn hành vi redirect sớm khi Zustand đang đọc dữ liệu từ storage.
+  - Thêm cơ chế Auto-Redirect trên trang [`src/app/(public)/signin/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(public)/signin/page.tsx): Tự động chuyển hướng vào `/app/dashboard` nếu người dùng đã có phiên đăng nhập hợp lệ.
+  - Sửa lỗi bắt mã HTTP 401 trong Axios response interceptor tại [`src/utils/api.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/api.ts): Sử dụng `error.response?.status ?? error.status`, gán `Authorization` header mới vào request retry và dọn dẹp state sạch sẽ nếu refresh token thất bại.
+  - Cập nhật [`MainActivity.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/MainActivity.java): Bật `CookieManager.getInstance().setAcceptCookie(true)` và gọi `CookieManager.getInstance().flush()` trong `onPause()` / `onStop()` để lưu trữ cookie xuống flash storage của điện thoại.
 - Tính năng **Giám sát Vị trí Nhân sự Trực tiếp & Lịch sử Lộ trình** ([`attendances/live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):
   - Trang Bản đồ Admin kết hợp bản đồ Leaflet mượt mà và danh sách nhân sự trực tuyến ([`LiveMap`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx), [`StaffList`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/staff-list.tsx)).
   - Kết nối Realtime **WebSocket** nhận cập nhật tọa độ tức thời với trạng thái di chuyển (Moving / Stationary / Offline), mức pin và vận tốc.

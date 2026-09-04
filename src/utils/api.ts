@@ -31,11 +31,15 @@ api.interceptors.response.use(
     // Lưu lại request lỗi
     const originalRequest = error.config;
 
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
     // bỏ qua những api không cần kiểm tra
     if (
-      originalRequest.url.includes('/auth/signin') ||
-      originalRequest.url.includes('/auth/signup') ||
-      originalRequest.url.includes('/auth/refresh')
+      originalRequest.url?.includes('/auth/signin') ||
+      originalRequest.url?.includes('/auth/signup') ||
+      originalRequest.url?.includes('/auth/refresh')
     ) {
       return Promise.reject(error);
     }
@@ -43,23 +47,46 @@ api.interceptors.response.use(
     // đặt limit thử lại
     originalRequest._retryCount = originalRequest._retryCount || 0;
 
-    if (error.status === 401 && originalRequest._retryCount < 3) {
+    const statusCode = error.response?.status ?? error.status;
+
+    if (statusCode === 401 && originalRequest._retryCount < 3) {
       originalRequest._retryCount++;
 
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
-        // call api refresh, api này sẽ tự cấp phát vào cookie
+        if (!refreshToken) {
+          throw new Error('Không có refresh token');
+        }
+
+        // call api refresh
         const response = await axios.post(`${BASE_API_URL}/api/v1/auth/refresh`, {
           refreshToken: refreshToken,
         });
 
-        // Lưu access token mới nếu API trả về token mới (nếu có cập nhật trong store)
-        const newAccessToken = response.data.accessToken;
-        useAuthStore.getState().setAccessToken(newAccessToken);
+        // Lưu access token mới nếu API trả về token mới (hỗ trợ cả camelCase và snake_case)
+        const newAccessToken = response.data?.accessToken || response.data?.access_token;
+        if (newAccessToken) {
+          useAuthStore.getState().setAccessToken(newAccessToken);
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        }
 
         // call lại api đã lỗi với access token mới
         return api(originalRequest);
       } catch (refreshError) {
+        // Nếu refresh thất bại -> Xóa phiên và đưa về /signin
+        useAuthStore.setState({
+          isAuthenticated: false,
+          accessToken: '',
+          refreshToken: '',
+          user: null,
+        });
+        if (typeof document !== 'undefined') {
+          document.cookie = 'xt-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
+        }
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/signin')) {
+          window.location.href = '/signin';
+        }
         return Promise.reject(refreshError);
       }
     }
