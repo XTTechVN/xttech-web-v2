@@ -357,7 +357,14 @@ export default function AttendancesPage() {
       key: 'note',
       label: 'Ghi chú',
       minWidth: '100px',
-      cell: (row) => <span className="text-xs">{row.note || '-'}</span>,
+      cell: (row) => (
+        <span
+          className="text-xs max-w-[250px] truncate block"
+          title={row.note || undefined}
+        >
+          {row.note || '-'}
+        </span>
+      ),
     },
     {
       key: 'status',
@@ -508,7 +515,10 @@ export default function AttendancesPage() {
 
         {/* Note if any */}
         {row.note && (
-          <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 line-clamp-2">
+          <p
+            className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 truncate"
+            title={row.note}
+          >
             Ghi chú: {row.note}
           </p>
         )}
