@@ -14,9 +14,9 @@ export const AppLauncherRedirect = () => {
       const checkAndRedirect = () => {
         const { isAuthenticated } = useAuthStore.getState();
         if (isAuthenticated) {
-          router.replace('/app/dashboard');
+          window.location.replace('/app/dashboard');
         } else {
-          router.replace('/signin');
+          window.location.replace('/signin');
         }
       };
 

@@ -23,6 +23,19 @@ const nextConfig: NextConfig = {
       'dayjs',
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Vary',
+            value: 'RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

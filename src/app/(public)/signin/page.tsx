@@ -29,9 +29,9 @@ const Signin = () => {
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated) {
-      router.replace('/app/dashboard');
+      window.location.replace('/app/dashboard');
     }
-  }, [hasHydrated, isAuthenticated, router]);
+  }, [hasHydrated, isAuthenticated]);
 
   if (hasHydrated && isAuthenticated) {
     return (

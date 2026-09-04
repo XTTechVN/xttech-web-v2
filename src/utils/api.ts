@@ -85,7 +85,7 @@ api.interceptors.response.use(
           document.cookie = 'xt-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
         }
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/signin')) {
-          window.location.href = '/signin';
+          window.location.replace('/signin');
         }
         return Promise.reject(refreshError);
       }

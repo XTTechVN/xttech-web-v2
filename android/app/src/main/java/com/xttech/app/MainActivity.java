@@ -1,5 +1,6 @@
 package com.xttech.app;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.webkit.CookieManager;
 import com.getcapacitor.BridgeActivity;
@@ -10,6 +11,15 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && getBridge() != null && getBridge().getWebView() != null) {
+            cookieManager.setAcceptThirdPartyCookies(getBridge().getWebView(), true);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        CookieManager.getInstance().flush();
     }
 
     @Override

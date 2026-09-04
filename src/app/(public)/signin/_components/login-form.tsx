@@ -46,7 +46,7 @@ const LoginForm = () => {
       const success = await useAuthStore.getState().signin(data.username, data.password);
       if (success) {
         toast.success('Đăng nhập thành công!');
-        router.push('/app/dashboard');
+        window.location.replace('/app/dashboard');
       } else {
         const errorMsg = 'Tên đăng nhập hoặc mật khẩu không chính xác';
         setError(errorMsg);
