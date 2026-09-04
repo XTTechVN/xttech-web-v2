@@ -70,7 +70,13 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  if (pathname.startsWith('/app')) {
+    res.headers.set('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');
+    res.headers.set('CDN-Cache-Control', 'no-store');
+    res.headers.set('Surrogate-Control', 'no-store');
+  }
+  return res;
 }
 
 export const config = {
