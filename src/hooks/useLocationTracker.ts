@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -8,18 +9,27 @@ const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>('Backg
 
 interface LocationTrackerOptions {
   enabled?: boolean;
-  intervalMs?: number; // Mặc định 60 giây (60000ms)
+  intervalMs?: number; // Mặc định 60 giây (60000ms) khi di chuyển trên Web
+  heartbeatMs?: number; // Mặc định 3 phút (180000ms) gửi nhịp tim khi đứng yên
 }
 
 export function useLocationTracker({
   enabled = true,
   intervalMs = 60000,
+  heartbeatMs = 180000,
 }: LocationTrackerOptions = {}) {
   const [isTracking, setIsTracking] = useState(false);
   const [lastPingTime, setLastPingTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const lastPingRef = useRef<number>(0);
+  const lastKnownCoordsRef = useRef<{
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+    speed?: number;
+    heading?: number;
+  } | null>(null);
   const lastBatteryRef = useRef<number | undefined>(undefined);
   const workerRef = useRef<Worker | null>(null);
   const watchIdRef = useRef<number | null>(null);
@@ -56,6 +66,7 @@ export function useLocationTracker({
       return;
     }
     lastPingRef.current = now;
+    lastKnownCoordsRef.current = pos;
 
     try {
       const battery = await getBatteryLevel();
@@ -122,6 +133,20 @@ export function useLocationTracker({
     );
   }, [executePing]);
 
+  const sendHeartbeat = useCallback(async () => {
+    const elapsed = Date.now() - lastPingRef.current;
+    if (elapsed >= heartbeatMs) {
+      if (lastKnownCoordsRef.current) {
+        await executePing({
+          ...lastKnownCoordsRef.current,
+          speed: 0,
+        });
+      } else {
+        pingCurrentLocation();
+      }
+    }
+  }, [executePing, heartbeatMs, pingCurrentLocation]);
+
   // Yêu cầu Screen WakeLock để giữ luồng định vị không bị ngủ sâu trên Web
   const requestWakeLock = async () => {
     try {
@@ -136,6 +161,7 @@ export function useLocationTracker({
 
   useEffect(() => {
     if (!enabled) {
+      setIsTracking(false);
       if (nativeWatcherIdRef.current) {
         BackgroundGeolocation.removeWatcher({ id: nativeWatcherIdRef.current }).catch(() => {});
         nativeWatcherIdRef.current = null;
@@ -156,8 +182,16 @@ export function useLocationTracker({
       return;
     }
 
-    // 1. NẾU LÀ ỨNG DỤNG NATIVE ANDROID / IOS: DÙNG BACKGROUND GEOLOCATION CHẠY NGẦM
-    if (Capacitor.isNativePlatform()) {
+    const isNative = Capacitor.isNativePlatform();
+
+    // Lấy vị trí ban đầu (Initial fix) và bật WakeLock
+    const initTimer = setTimeout(() => {
+      pingCurrentLocation();
+      requestWakeLock();
+    }, 100);
+
+    // 1. NẾU LÀ NATIVE ANDROID / IOS: DÙNG BACKGROUND GEOLOCATION THEO DÕI DI CHUYỂN
+    if (isNative) {
       BackgroundGeolocation.addWatcher(
         {
           backgroundTitle: 'XTTech đang hoạt động',
@@ -184,32 +218,47 @@ export function useLocationTracker({
             });
           }
         }
-      ).then((watcherId) => {
-        nativeWatcherIdRef.current = watcherId;
-      }).catch((e) => {
-        console.warn('[BackgroundGeolocation] Init failed:', e);
-      });
-
-      return () => {
-        if (nativeWatcherIdRef.current) {
-          BackgroundGeolocation.removeWatcher({ id: nativeWatcherIdRef.current }).catch(() => {});
-          nativeWatcherIdRef.current = null;
-        }
-      };
+      )
+        .then((watcherId) => {
+          nativeWatcherIdRef.current = watcherId;
+        })
+        .catch((e) => {
+          console.warn('[BackgroundGeolocation] Init failed:', e);
+        });
+    } else {
+      // 2. NẾU LÀ TRÌNH DUYỆT WEB: DÙNG WATCH POSITION CỦA HTML5
+      if (navigator.geolocation) {
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          (pos) => {
+            const elapsed = Date.now() - lastPingRef.current;
+            if (elapsed >= 30000) {
+              executePing({
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude,
+                accuracy: pos.coords.accuracy || undefined,
+                speed: pos.coords.speed || undefined,
+                heading: pos.coords.heading || undefined,
+              });
+            }
+          },
+          () => {},
+          {
+            enableHighAccuracy: true,
+            maximumAge: 10000,
+            timeout: 20000,
+          }
+        );
+      }
     }
 
-    // 2. NẾU LÀ TRÌNH DUYỆT WEB: DÙNG WEB WORKER + WATCH POSITION + WAKELOCK
-    const initTimer = setTimeout(() => {
-      pingCurrentLocation();
-      requestWakeLock();
-    }, 100);
-
-    // 2. Sử dụng Web Worker Timer chạy nền (Không bao giờ bị trình duyệt đóng băng / throttle khi tab ẩn)
+    // 3. WEB WORKER TIMER: ĐẢM NHIỆM HEARTBEAT KHI ĐỨNG YÊN (HOẠT ĐỘNG CHO CẢ NATIVE VÀ WEB)
+    // Tần suất kiểm tra: Mỗi 30 giây kiểm tra một lần
+    const checkIntervalMs = Math.min(30000, intervalMs);
     try {
       const blob = new Blob(
         [
           `
-          let interval = ${intervalMs};
+          let interval = ${checkIntervalMs};
           let timer = setInterval(() => {
             postMessage('tick');
           }, interval);
@@ -226,46 +275,41 @@ export function useLocationTracker({
 
       worker.onmessage = (e) => {
         if (e.data === 'tick') {
-          pingCurrentLocation();
+          if (isNative) {
+            sendHeartbeat();
+          } else {
+            const elapsed = Date.now() - lastPingRef.current;
+            if (elapsed >= intervalMs) {
+              pingCurrentLocation();
+            }
+          }
         }
       };
     } catch (e) {
       console.warn('[LocationTracker] Fallback to standard timer:', e);
-      const fallbackTimer = setInterval(pingCurrentLocation, intervalMs);
+      const fallbackTimer = setInterval(() => {
+        if (isNative) {
+          sendHeartbeat();
+        } else {
+          const elapsed = Date.now() - lastPingRef.current;
+          if (elapsed >= intervalMs) {
+            pingCurrentLocation();
+          }
+        }
+      }, checkIntervalMs);
       return () => clearInterval(fallbackTimer);
     }
 
-    // 3. Sử dụng watchPosition để lắng nghe trực tiếp từ phần cứng GPS của hệ điều hành
-    if (navigator.geolocation) {
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        (pos) => {
-          const elapsed = Date.now() - lastPingRef.current;
-          // Nếu đã quá 30 giây kể từ lần ping trước hoặc vị trí di chuyển có độ chính xác cao
-          if (elapsed >= 30000) {
-            executePing({
-              latitude: pos.coords.latitude,
-              longitude: pos.coords.longitude,
-              accuracy: pos.coords.accuracy || undefined,
-              speed: pos.coords.speed || undefined,
-              heading: pos.coords.heading || undefined,
-            });
-          }
-        },
-        () => {},
-        {
-          enableHighAccuracy: true,
-          maximumAge: 10000,
-          timeout: 20000,
-        }
-      );
-    }
-
-    // 4. Lắng nghe sự kiện người dùng bật lại màn hình hoặc focus vào tab để chống ngủ đông
+    // 4. LẮNG NGHE SỰ KIỆN BẬT MÀN HÌNH HOẶC FOCUS LẠI VÀO APP
     const handleVisibilityOrFocus = () => {
       if (document.visibilityState === 'visible') {
         const elapsed = Date.now() - lastPingRef.current;
-        if (elapsed > intervalMs) {
-          pingCurrentLocation();
+        if (elapsed >= (isNative ? heartbeatMs : intervalMs)) {
+          if (isNative) {
+            sendHeartbeat();
+          } else {
+            pingCurrentLocation();
+          }
         }
         requestWakeLock();
       }
@@ -276,6 +320,10 @@ export function useLocationTracker({
 
     return () => {
       clearTimeout(initTimer);
+      if (nativeWatcherIdRef.current) {
+        BackgroundGeolocation.removeWatcher({ id: nativeWatcherIdRef.current }).catch(() => {});
+        nativeWatcherIdRef.current = null;
+      }
       if (workerRef.current) {
         workerRef.current.terminate();
         workerRef.current = null;
@@ -292,7 +340,7 @@ export function useLocationTracker({
       document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
       window.removeEventListener('focus', handleVisibilityOrFocus);
     };
-  }, [enabled, intervalMs, pingCurrentLocation, executePing]);
+  }, [enabled, intervalMs, heartbeatMs, pingCurrentLocation, executePing, sendHeartbeat]);
 
   return {
     isTracking,

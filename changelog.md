@@ -8,8 +8,10 @@ All notable changes to the frontend project will be documented in this file.
 - Thêm component [`AppLauncherRedirect`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/_components/AppLauncherRedirect.tsx) vào trang chủ [`src/app/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/page.tsx):
   - Tự động nhận diện môi trường ứng dụng di động qua `Capacitor.isNativePlatform()`.
   - Đưa người dùng vào thẳng `/app/dashboard` nếu đã đăng nhập hoặc `/signin` nếu chưa đăng nhập, loại bỏ việc người dùng bị kẹt tại trang landing page khi mở app Android.
-- Bổ sung cơ chế tự động khôi phục cookie phiên `onRehydrateStorage` trong [`useAuthStore.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/stores/useAuthStore.ts):
-  - Tự động đồng bộ lại `document.cookie = xt-auth=...` ngay khi Zustand đọc dữ liệu từ `localStorage`, bảo đảm Next.js Server luôn nhận được cookie xác thực.
+- Bổ sung cơ chế **Heartbeat (Nhịp tim định kỳ)** trong hook [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts):
+  - Tự động gửi gói tin nhịp tim mỗi 3 phút (`heartbeatMs = 180000`) khi thiết bị đứng yên một chỗ, duy trì trạng thái 🟢 Trực tuyến (`stationary`) trên Bản đồ Giám sát Admin, tránh bị Backend đánh dấu `offline` sau 10 phút.
+  - Lưu cache tọa độ đã biết gần nhất `lastKnownCoordsRef`, gửi ping với vận tốc 0 khi đứng yên mà không cần ép chip GPS bật quét liên tục, tối ưu thời lượng pin.
+  - Đồng bộ cơ chế kích hoạt lại nhịp tim khi người dùng bật lại màn hình hoặc focus vào ứng dụng.
 
 ### Fixed
 - Sửa dứt điểm lỗi hiển thị chuỗi văn bản thô (RSC Flight Payload `:HL... 0:{"tree":...}`) trên ứng dụng Android khi đăng xuất hoặc đăng nhập lại:
