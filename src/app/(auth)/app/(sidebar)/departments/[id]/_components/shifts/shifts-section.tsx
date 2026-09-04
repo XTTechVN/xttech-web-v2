@@ -135,7 +135,7 @@ export const DepartmentShiftsSection: React.FC<DepartmentShiftsSectionProps> = (
       </div>
 
       {/* List of Shifts Cards with 200px scroll area */}
-      <div className="flex flex-col gap-2.5 h-[200px] overflow-y-auto pr-1.5 scrollbar-thin">
+      <div className="flex flex-col gap-2.5 h-[200px] overflow-y-auto scrollbar-hide">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
             {[1, 2].map((i) => (

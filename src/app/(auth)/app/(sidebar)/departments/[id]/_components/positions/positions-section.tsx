@@ -109,7 +109,7 @@ export const DepartmentPositionsSection: React.FC<DepartmentPositionsSectionProp
       </div>
 
       {/* List of Position Cards with 200px scroll area */}
-      <div className="flex flex-col gap-2.5 h-[200px] overflow-y-auto pr-1.5 scrollbar-thin">
+      <div className="flex flex-col gap-2.5 h-[200px] overflow-y-auto scrollbar-hide">
         {isLoading ? (
           <div className="flex flex-col gap-2 py-4">
             {[1, 2, 3].map((i) => (
