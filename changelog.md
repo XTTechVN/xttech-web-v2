@@ -17,6 +17,9 @@ All notable changes to the frontend project will be documented in this file.
 - Tích hợp trạng thái `exportingUserId` để hiển thị spinner loading xoay tròn (`Loader2`) khi tải file và thông báo tiến trình bằng `react-hot-toast`.
 
 ### Fixed
+- Sửa dứt điểm lỗi hiển thị phần trăm pin `null%` và icon pin màu đỏ khi thiết bị không cung cấp thông số pin:
+  - Cập nhật [`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx) và [`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/staff-list.tsx) kiểm tra chặt chẽ `typeof batteryLevel === 'number'`, hiển thị `--` hoặc ẩn icon pin khi không có dữ liệu.
+  - Bổ sung cơ chế cache giữ lại mức pin đọc được gần nhất trong [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts).
 - Sửa lỗi mảng `staffLocations` bị nhân đôi 2 phần tử của cùng 1 nhân sự trên trang Giám sát Vị trí ([`attendances/live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):
   - Chuẩn hóa hàm nhận WebSocket `onmessage` với cơ chế phòng thủ 2 lớp (hỗ trợ cả `userId` và `user_id`), tự động map các thuộc tính về `StaffLiveLocation` và merge state an toàn.
 - Cập nhật [`src/types/location.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/location.ts) và [`RoutePlaybackModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/route-playback-modal.tsx):

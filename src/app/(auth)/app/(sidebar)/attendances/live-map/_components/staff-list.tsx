@@ -144,7 +144,7 @@ export function StaffList({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
                       <h4 className="text-xs font-bold text-slate-800 truncate">{staff.userName || 'Nhân viên'}</h4>
-                      {staff.batteryLevel !== undefined && (
+                      {typeof staff.batteryLevel === 'number' && (
                         <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
                           <Battery size={11} className={staff.batteryLevel < 20 ? 'text-rose-500' : 'text-slate-400'} />
                           {staff.batteryLevel}%

@@ -145,8 +145,8 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
                       <span>{staff.speed ? `${Math.round(staff.speed * 3.6)} km/h` : 'Đứng yên'}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Battery size={12} className="text-amber-500" />
-                      <span>{staff.batteryLevel !== undefined ? `${staff.batteryLevel}%` : '--'}</span>
+                      <Battery size={12} className={typeof staff.batteryLevel === 'number' && staff.batteryLevel < 20 ? 'text-rose-500' : 'text-amber-500'} />
+                      <span>{typeof staff.batteryLevel === 'number' ? `${staff.batteryLevel}%` : '--'}</span>
                     </div>
                     <div className="flex items-center gap-1 col-span-2">
                       <Clock size={12} className="text-slate-400" />
