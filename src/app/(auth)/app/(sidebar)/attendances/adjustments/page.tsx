@@ -367,7 +367,7 @@ export default function AdjustmentsSidebarPage() {
     {
       key: 'user',
       label: 'Nhân sự',
-      minWidth: '200px',
+      minWidth: '180px',
       cell: (row) => {
         const avatarSrc = row.user?.avatar
           ? row.user.avatar.startsWith('http')
@@ -378,10 +378,9 @@ export default function AdjustmentsSidebarPage() {
         return (
           <div className="flex items-center gap-3">
             <Avatar name={row.user?.fullName || 'NV'} src={avatarSrc} size="sm" />
-            <div className="flex flex-col min-w-0">
-              <span className="font-semibold text-gray-900 text-sm truncate">{row.user?.fullName || 'Nhân viên'}</span>
-              <span className="text-xs text-gray-400 truncate">{row.user?.email || 'Chưa cập nhật email'}</span>
-            </div>
+            <span className="font-semibold text-gray-900 text-sm truncate">
+              {row.user?.fullName || 'Nhân viên'}
+            </span>
           </div>
         );
       },

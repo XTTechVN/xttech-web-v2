@@ -130,10 +130,7 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
             name={row.fullName || row.username}
             size="sm"
           />
-          <div className="flex flex-col">
-            <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
-            <span className="text-xs text-gray-400">{row.email}</span>
-          </div>
+          <span className="font-semibold text-gray-900 text-sm truncate">{row.fullName || row.username}</span>
         </div>
       ),
     },
@@ -240,10 +237,6 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
               <span className="font-semibold text-gray-900 text-sm truncate">
                 {row.fullName || row.username}
               </span>
-              <span className="text-xs text-gray-400 truncate">{row.email}</span>
-              {row.phoneNumber && (
-                <span className="text-xs text-slate-500 mt-0.5">{row.phoneNumber}</span>
-              )}
             </div>
           </div>
         </div>

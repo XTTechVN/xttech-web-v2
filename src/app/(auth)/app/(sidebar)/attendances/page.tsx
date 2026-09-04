@@ -251,14 +251,9 @@ export default function AttendancesPage() {
               name={row.user?.fullName || 'NV'}
               size="sm"
             />
-            <div className="flex flex-col min-w-0">
-              <div className="font-semibold text-slate-800 text-sm truncate">
-                {row.user?.fullName || '-'}
-              </div>
-              <div className="text-xs text-slate-500 truncate">
-                {row.user?.email || '-'}
-              </div>
-            </div>
+            <span className="font-semibold text-slate-800 text-sm truncate">
+              {row.user?.fullName || '-'}
+            </span>
           </div>
         );
       },
@@ -469,7 +464,6 @@ export default function AttendancesPage() {
               <p className="font-bold text-slate-900 text-sm">
                 {row.user?.fullName || 'Nhân viên'}
               </p>
-              <p className="text-[11px] text-slate-400">{row.user?.email || '-'}</p>
             </div>
           </div>
           <Badge variant={statusInfo.variant} pill>
