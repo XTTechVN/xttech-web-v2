@@ -3,7 +3,7 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { RotateCw, User, Plus, EyeOff, Download, Eye, Pencil, Trash2 } from 'lucide-react';
+import { RotateCw, Plus, Download, Eye, Pencil, Trash2 } from 'lucide-react';
 import { useSuggestionStore } from '@/stores/useSuggestionStore';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -11,7 +11,6 @@ import { useDebounce } from '@/hooks';
 import { TableData, TableAction, Button, Heading } from '@/components';
 import { getSuggestions } from '@/actions/suggestion';
 import { Suggestion } from '@/types';
-import { BASE_MINIO_URL } from '@/config';
 
 // Hàm bổ trợ phân loại chủ đề linh hoạt từ type hoặc content
 const getSuggestionType = (p: Suggestion) => {
@@ -143,8 +142,6 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
         const cat = getSuggestionType(row);
         const catInfo = typeLabels[cat] || typeLabels.other;
         const senderName = row.anonymous ? 'Ẩn danh' : `${row.user?.fullName} (${row.user?.email})` || 'Ẩn danh';
-        const senderAvatar = row.anonymous ? null : row.user?.avatar;
-
         return (
           <div className="flex flex-col gap-1 cursor-default w-full max-w-150">
             {/* Title & Tag */}
@@ -159,29 +156,8 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
             <span className="text-[12px] text-[#5E858D] font-normal truncate leading-normal block w-full">{row.content}</span>
 
             {/* Sender / Người dùng nằm dưới */}
-            <div className="flex items-center gap-2 select-none">
-              {row.anonymous ? (
-                <div className="w-6 h-6 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-500 border border-slate-200/60">
-                  <EyeOff className="w-3 h-3" />
-                </div>
-              ) : senderAvatar ? (
-                <div className="relative w-6 h-6 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                  <img
-                    src={senderAvatar.startsWith('http') ? senderAvatar : `${BASE_MINIO_URL}${senderAvatar}`}
-                    alt={senderName}
-                    width={24}
-                    height={24}
-                    className="object-cover w-full h-full"
-                  />
-                </div>
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-cyan-50 shrink-0 flex items-center justify-center text-cyan-700 border border-cyan-100/50">
-                  <User className="w-3.5 h-3.5" />
-                </div>
-              )}
-              <div className="flex items-center gap-1.5 min-w-0 text-[11px]">
-                <span className="font-semibold text-slate-700 truncate">{senderName}</span>
-              </div>
+            <div className="flex items-center min-w-0 text-[11px] select-none">
+              <span className="font-semibold text-slate-700 truncate">{senderName}</span>
             </div>
           </div>
         );
