@@ -308,7 +308,7 @@ export function useLocationTracker({
       clearTimeout(initTimer);
       // KHÔNG gọi NativeTracking.stopTracking() ở đây!
       // Vì khi người dùng vuốt đóng app, React sẽ unmount và chạy cleanup này.
-      // Nếu gọi stopTracking ở đây, Service Native sẽ bị tắt ngay khi đóng app (mất tính năng chạy ngầm như Zalo).
+      // Nếu gọi stopTracking ở đây, Service Native sẽ bị tắt ngay khi đóng app.
       if (nativeWatcherIdRef.current) {
         BackgroundGeolocation.removeWatcher({ id: nativeWatcherIdRef.current }).catch(() => {});
         nativeWatcherIdRef.current = null;
