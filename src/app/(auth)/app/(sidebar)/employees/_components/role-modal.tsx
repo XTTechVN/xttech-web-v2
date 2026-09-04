@@ -167,7 +167,6 @@ export default function RoleModal({ isOpen, onClose, employee }: RoleModalProps)
           </Button>
           <Button
             variant="primary"
-            leftIcon={<UserCog size={16} />}
             onClick={() => handleAssignRoles()}
             loading={isPending}
           >
