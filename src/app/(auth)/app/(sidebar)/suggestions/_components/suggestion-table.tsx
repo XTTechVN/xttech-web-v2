@@ -239,39 +239,52 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
-      cell: (row: Suggestion) => (
-        <TableAction
-          items={[
-            {
-              title: 'Xem chi tiết',
-              icon: Eye,
-              size: 18,
-              onClick: () => handleViewDetails(row),
-            },
-            row.status === 'pending' && {
-              title: 'Chỉnh sửa',
-              icon: Pencil,
-              size: 18,
-              onClick: () => {
-                setSelectedSuggestion(row);
-                setIsEditing(true);
-                setDetailModalOpen(true);
+      cell: (row: Suggestion) => {
+        const isProcessed = row.status !== 'pending';
+        const canDelete = isManager || row.userId === currentUserId;
+
+        return (
+          <TableAction
+            items={[
+              {
+                title: 'Xem chi tiết',
+                icon: Eye,
+                size: 18,
+                onClick: () => handleViewDetails(row),
               },
-            },
-            row.status === 'pending' &&
-              (isManager || row.userId === currentUserId) && {
-                title: 'Xóa',
+              {
+                title: isProcessed ? 'Đề xuất đã xử lý (Không thể sửa)' : 'Chỉnh sửa',
+                icon: Pencil,
+                size: 18,
+                disabled: isProcessed,
+                className: isProcessed
+                  ? 'text-gray-400 dark:text-gray-600 hover:text-gray-400 hover:bg-transparent cursor-not-allowed opacity-35 disabled:opacity-35'
+                  : undefined,
+                onClick: () => {
+                  if (isProcessed) return;
+                  setSelectedSuggestion(row);
+                  setIsEditing(true);
+                  setDetailModalOpen(true);
+                },
+              },
+              (canDelete || isProcessed) && {
+                title: isProcessed ? 'Đề xuất đã xử lý (Không thể xóa)' : 'Xóa',
                 icon: Trash2,
                 size: 18,
-                className: 'hover:text-red-600 hover:bg-red-50',
+                disabled: isProcessed,
+                className: isProcessed
+                  ? 'text-gray-400 dark:text-gray-600 hover:text-gray-400 hover:bg-transparent cursor-not-allowed opacity-35 disabled:opacity-35'
+                  : 'hover:text-red-600 hover:bg-red-50',
                 onClick: () => {
+                  if (isProcessed) return;
                   setSelectedSuggestion(row);
                   setIsDeleteConfirmOpen(true);
                 },
               },
-          ]}
-        />
-      ),
+            ]}
+          />
+        );
+      },
     },
   ];
 
@@ -349,32 +362,57 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
 
           {/* Các nút hành động */}
           <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-            {row.status === 'pending' && row.userId === currentUserId && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSuggestion(row);
-                  setIsEditing(true);
-                  setDetailModalOpen(true);
-                }}
-                className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <Pencil size={12} />
-                Sửa
-              </button>
-            )}
-            {row.status === 'pending' && (isManager || row.userId === currentUserId) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSuggestion(row);
-                  setIsDeleteConfirmOpen(true);
-                }}
-                className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <Trash2 size={12} />
-                Xóa
-              </button>
+            {row.status !== 'pending' ? (
+              <>
+                <button
+                  type="button"
+                  disabled
+                  className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 text-gray-400 border border-gray-200 flex items-center gap-1 cursor-not-allowed opacity-40"
+                  title="Đề xuất đã xử lý (Không thể sửa)"
+                >
+                  <Pencil size={12} />
+                  Sửa
+                </button>
+                <button
+                  type="button"
+                  disabled
+                  className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 text-gray-400 border border-gray-200 flex items-center gap-1 cursor-not-allowed opacity-40"
+                  title="Đề xuất đã xử lý (Không thể xóa)"
+                >
+                  <Trash2 size={12} />
+                  Xóa
+                </button>
+              </>
+            ) : (
+              <>
+                {row.userId === currentUserId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSuggestion(row);
+                      setIsEditing(true);
+                      setDetailModalOpen(true);
+                    }}
+                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <Pencil size={12} />
+                    Sửa
+                  </button>
+                )}
+                {(isManager || row.userId === currentUserId) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSuggestion(row);
+                      setIsDeleteConfirmOpen(true);
+                    }}
+                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 size={12} />
+                    Xóa
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
