@@ -272,7 +272,6 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
     const senderName = row.anonymous
       ? 'Ẩn danh'
       : `${row.user?.fullName || 'Người dùng'} ${row.user?.email ? `(${row.user.email})` : ''}`.trim() || 'Ẩn danh';
-    const senderAvatar = row.anonymous ? null : row.user?.avatar;
 
     const date = row.createdAt ? new Date(row.createdAt) : null;
     const timeStr = date ? date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
@@ -309,25 +308,6 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
         {/* Footer: Thông tin người gửi, Thời gian & Các nút thao tác */}
         <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100/50">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {row.anonymous ? (
-              <div className="w-6 h-6 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-500 border border-slate-200/60">
-                <EyeOff className="w-3 h-3" />
-              </div>
-            ) : senderAvatar ? (
-              <div className="relative w-6 h-6 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                <img
-                  src={senderAvatar.startsWith('http') ? senderAvatar : `${BASE_MINIO_URL}${senderAvatar}`}
-                  alt={senderName}
-                  width={24}
-                  height={24}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-cyan-50 shrink-0 flex items-center justify-center text-cyan-700 border border-cyan-100/50">
-                <User className="w-3.5 h-3.5" />
-              </div>
-            )}
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-slate-700 text-[11px] truncate">{senderName}</span>
               <span className="text-[10px] text-[#5E858D]">
