@@ -33,6 +33,14 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+
+        <!-- Dịch vụ định vị chạy ngầm liên tục chuẩn như Zalo/Grab (kể cả khi vuốt tắt app) -->
+        <service
+            android:name=".TrackingLocationService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location"
+            android:stopWithTask="false" />
     </application>
 
     <!-- Permissions -->

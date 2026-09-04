@@ -3,9 +3,17 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { sendLocationPing } from '@/actions';
+import { useAuthStore } from '@/stores';
+import { BASE_API_URL } from '@/config';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import type { BackgroundGeolocationPlugin } from '@capacitor-community/background-geolocation';
 const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>('BackgroundGeolocation');
+
+interface NativeTrackingPlugin {
+  startTracking(options: { token: string; apiUrl: string }): Promise<{ success: boolean }>;
+  stopTracking(): Promise<{ success: boolean }>;
+}
+const NativeTracking = registerPlugin<NativeTrackingPlugin>('NativeTracking');
 
 interface LocationTrackerOptions {
   enabled?: boolean;
@@ -160,8 +168,13 @@ export function useLocationTracker({
   };
 
   useEffect(() => {
+    const isNative = Capacitor.isNativePlatform();
+
     if (!enabled) {
       setIsTracking(false);
+      if (isNative) {
+        NativeTracking.stopTracking().catch(() => {});
+      }
       if (nativeWatcherIdRef.current) {
         BackgroundGeolocation.removeWatcher({ id: nativeWatcherIdRef.current }).catch(() => {});
         nativeWatcherIdRef.current = null;
@@ -182,49 +195,22 @@ export function useLocationTracker({
       return;
     }
 
-    const isNative = Capacitor.isNativePlatform();
-
     // Lấy vị trí ban đầu (Initial fix) và bật WakeLock
     const initTimer = setTimeout(() => {
       pingCurrentLocation();
       requestWakeLock();
     }, 100);
 
-    // 1. NẾU LÀ NATIVE ANDROID / IOS: DÙNG BACKGROUND GEOLOCATION THEO DÕI DI CHUYỂN
+    // 1. NẾU LÀ NATIVE ANDROID / IOS: KHỞI CHẠY NATIVE FOREGROUND SERVICE ĐỘC LẬP
+    // Chạy ngầm 100% bằng Java Native (chuẩn như Zalo/Grab), duy trì liên tục kể cả khi vuốt tắt app
     if (isNative) {
-      BackgroundGeolocation.addWatcher(
-        {
-          backgroundTitle: 'XTTech đang hoạt động',
-          backgroundMessage: 'Hệ thống đang ghi nhận vị trí trong ca làm việc...',
-          requestPermissions: true,
-          stale: false,
-          distanceFilter: 10,
-        },
-        (location, err) => {
-          if (err) {
-            if (err.code === 'NOT_AUTHORIZED') {
-              BackgroundGeolocation.openSettings();
-            }
-            console.warn('[BackgroundGeolocation] Error:', err);
-            return;
-          }
-          if (location) {
-            executePing({
-              latitude: location.latitude,
-              longitude: location.longitude,
-              accuracy: location.accuracy || undefined,
-              speed: location.speed || undefined,
-              heading: location.bearing || undefined,
-            });
-          }
-        }
-      )
-        .then((watcherId) => {
-          nativeWatcherIdRef.current = watcherId;
-        })
-        .catch((e) => {
-          console.warn('[BackgroundGeolocation] Init failed:', e);
-        });
+      const token = useAuthStore.getState().accessToken;
+      NativeTracking.startTracking({
+        token,
+        apiUrl: BASE_API_URL,
+      }).catch((e) => {
+        console.warn('[NativeTracking] Start native tracking failed:', e);
+      });
     } else {
       // 2. NẾU LÀ TRÌNH DUYỆT WEB: DÙNG WATCH POSITION CỦA HTML5
       if (navigator.geolocation) {
@@ -320,6 +306,9 @@ export function useLocationTracker({
 
     return () => {
       clearTimeout(initTimer);
+      // KHÔNG gọi NativeTracking.stopTracking() ở đây!
+      // Vì khi người dùng vuốt đóng app, React sẽ unmount và chạy cleanup này.
+      // Nếu gọi stopTracking ở đây, Service Native sẽ bị tắt ngay khi đóng app (mất tính năng chạy ngầm như Zalo).
       if (nativeWatcherIdRef.current) {
         BackgroundGeolocation.removeWatcher({ id: nativeWatcherIdRef.current }).catch(() => {});
         nativeWatcherIdRef.current = null;

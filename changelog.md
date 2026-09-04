@@ -4,7 +4,10 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-08-26
 
-### Added
+- Xây dựng **Android Native Foreground Service (`TrackingLocationService.java`)** độc lập chạy ngầm liên tục chuẩn như Zalo/Grab:
+  - Khởi tạo tiến trình nền độc lập dưới tầng Android OS với `START_STICKY`, Notification Channel cố định (*"XTTech đang hoạt động"*) và gắn cờ `android:stopWithTask="false"` trong `AndroidManifest.xml`.
+  - Bắt sự kiện `onTaskRemoved()`: Khi người dùng vuốt đóng app hoàn toàn khỏi màn hình đa nhiệm (Recent Apps), tầng Java Native tiếp tục duy trì hoạt động, lắng nghe `LocationManager` và gửi HTTP POST trực tiếp lên endpoint `/api/v1/attendances/location-ping` bằng `HttpURLConnection` mà không cần WebView hay JavaScript phải thức.
+  - Tích hợp cầu nối `NativeTrackingPlugin.java` đăng ký trong `MainActivity.java` và kết nối với hook [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts) để kích hoạt tự động theo ca làm việc.
 - Thêm component [`AppLauncherRedirect`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/_components/AppLauncherRedirect.tsx) vào trang chủ [`src/app/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/page.tsx):
   - Tự động nhận diện môi trường ứng dụng di động qua `Capacitor.isNativePlatform()`.
   - Đưa người dùng vào thẳng `/app/dashboard` nếu đã đăng nhập hoặc `/signin` nếu chưa đăng nhập, loại bỏ việc người dùng bị kẹt tại trang landing page khi mở app Android.
