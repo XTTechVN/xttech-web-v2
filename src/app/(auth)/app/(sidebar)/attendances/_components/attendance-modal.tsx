@@ -83,7 +83,7 @@ export default function AttendanceDetailModal({
                 className="shrink-0"
               />
               <div className="min-w-0 space-y-0.5">
-                <h3 className="text-sm font-semibold text-slate-900 truncate">
+                <h3 className="text-sm font-semibold text-primary truncate">
                   {data.user?.fullName || "Nhân viên"}
                 </h3>
                 <div className="flex items-center gap-1.5 text-xs text-slate-500 truncate">
@@ -118,13 +118,13 @@ export default function AttendanceDetailModal({
               <div className="flex items-center gap-2 min-w-0">
                 <LogIn size={16} className="text-primary shrink-0" />
                 <div className="flex flex-col min-w-0">
-                  <h4 className="font-bold text-sm tracking-tight whitespace-nowrap">Check in</h4>
+                  <h4 className="font-bold text-sm text-primary">Check in</h4>
                   {data.isLate ? (
-                    <span className="text-[11px] font-semibold text-rose-600">
+                    <span className="text-xs font-semibold text-rose-600">
                       Muộn {data.lateMinutes ?? 0} phút
                     </span>
                   ) : (
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-xs text-black text-slate-500">
                       {data.checkIn ? "Đúng giờ" : "Chưa vào ca"}
                     </span>
                   )}
@@ -175,13 +175,13 @@ export default function AttendanceDetailModal({
               <div className="flex items-center gap-2 min-w-0">
                 <LogOut size={16} className="text-primary shrink-0" />
                 <div className="flex flex-col min-w-0">
-                  <h4 className="font-bold text-sm tracking-tight whitespace-nowrap">Check out</h4>
+                  <h4 className="font-bold text-sm text-primary">Check out</h4>
                   {data.isEarlyLeave ? (
-                    <span className="text-[11px] font-semibold text-amber-600">
+                    <span className="text-xs font-semibold text-amber-600">
                       Về sớm {data.earlyLeaveMinutes ?? 0} phút
                     </span>
                   ) : (
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-xs text-slate-500">
                       {data.checkOut ? "Đúng giờ" : "Chưa ra ca"}
                     </span>
                   )}

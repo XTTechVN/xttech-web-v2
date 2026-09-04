@@ -3,13 +3,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
-import { MapPin, Plus, Trash2, Clock } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 import { Modal, Button, Input, Select, Switch } from '@/components';
 import { createWorkShift, updateWorkShift, getDepartments, getEmployees } from '@/actions';
 import queryClient from '@/utils/query';
 import type { WorkShift, WorkShiftCreate, WorkShiftUpdate, Department } from '@/types';
+import toast from 'react-hot-toast';
 
 const DAYS_OF_WEEK = [
   { value: '2', label: 'T2' },
@@ -419,8 +419,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
         {/* Cấu hình GPS Chấm công */}
         <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-slate-800 font-semibold text-sm">
-              <MapPin className="w-4 h-4 text-primary" />
+            <div className="text-slate-800 font-semibold text-sm">
               <span>Tọa độ GPS & Bán kính Chấm công</span>
             </div>
             <Button
@@ -462,8 +461,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
         {/* Ngoại lệ ca làm việc (WorkShiftException) */}
         <div className="border border-slate-200 rounded-xl p-4 bg-white flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-slate-800 font-semibold text-sm">
-              <Clock className="w-4 h-4 text-amber-600" />
+            <div className="text-slate-800 font-semibold text-sm">
               <span>Ngoại lệ nhân viên (Giờ làm riêng biệt)</span>
             </div>
             <Button

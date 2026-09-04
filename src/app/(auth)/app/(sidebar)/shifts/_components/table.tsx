@@ -237,10 +237,9 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
         const deptId = getDepartmentId(row);
         const deptName = row.department?.name || (deptId ? departmentMap.get(deptId) : null);
         return (
-          <div className="flex items-center gap-1.5 text-slate-700 text-sm">
-            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>{deptName || <span className="text-gray-400 italic">Toàn công ty</span>}</span>
-          </div>
+          <span className="text-slate-700 text-sm">
+            {deptName || <span className="text-gray-400 italic">Toàn công ty</span>}
+          </span>
         );
       },
     });
