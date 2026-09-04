@@ -125,7 +125,7 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
                   <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100">
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs overflow-hidden shrink-0">
                       {staff.avatar ? (
-                        <img src={ BASE_MINIO_URL + staff.avatar} alt={staff.userName || 'Nhân viên'} className="w-full h-full object-cover" />
+                        <img src={BASE_MINIO_URL + staff.avatar} alt={staff.userName || 'Nhân viên'} className="w-full h-full object-cover" />
                       ) : (
                         (staff.userName || 'N').charAt(0).toUpperCase()
                       )}
