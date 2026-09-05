@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { ReactNode, useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
@@ -9,7 +9,7 @@ import { TableHeader } from './table-header';
 import { TableBody } from './table-body';
 import { TablePagination } from './table-pagination';
 
-import { TableDataDesktopProps, ITableColumn, BaseResponseWithPagination } from './types';
+import { TableDataDesktopProps, BaseResponseWithPagination } from './types';
 
 export function TableDataDesktop<T>({
   fetcher,
@@ -83,12 +83,7 @@ export function TableDataDesktop<T>({
   }, [queryKeySerialized, syncToUrl, searchParams, pathname, router]);
 
   // Sử dụng fetcher để lấy dữ liệu với offset và limit động
-  const {
-    data: res,
-    isLoading,
-    isPlaceholderData,
-    error,
-  } = useQuery<BaseResponseWithPagination<T>>({
+  const { data: res, isPlaceholderData } = useQuery<BaseResponseWithPagination<T>>({
     queryKey: [...queryKey, offset, limit],
     queryFn: () => fetcher({ offset, limit }),
     placeholderData: keepPreviousData,
