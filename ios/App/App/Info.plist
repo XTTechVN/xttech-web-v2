@@ -70,6 +70,12 @@
 	<string>Ứng dụng cần quyền vị trí để hỗ trợ chấm công và định vị khi làm việc.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Ứng dụng cần quyền vị trí nền để cập nhật vị trí trong ca làm việc.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Ứng dụng cần quyền truy cập máy ảnh để chụp ảnh selfie nhận diện chấm công.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Ứng dụng cần truy cập thư viện ảnh để tải lên ảnh đại diện và chứng từ công việc.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Ứng dụng cần quyền lưu ảnh vào thư viện thiết bị.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

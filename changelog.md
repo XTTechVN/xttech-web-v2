@@ -13,7 +13,7 @@ All notable changes to the frontend project will be documented in this file.
 ### Added
 - Khởi tạo nền tảng **iOS Native (`@capacitor/ios`)** cho ứng dụng di động:
   - Cài đặt `@capacitor/ios` và chạy `npx cap add ios` sinh khung dự án Xcode `ios/App/App.xcworkspace`.
-  - Cấu hình các quyền riêng tư vị trí trong [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist): `NSLocationWhenInUseUsageDescription`, `NSLocationAlwaysAndWhenInUseUsageDescription` và `UIBackgroundModes` (`location`) hỗ trợ định vị chấm công.
+  - Cấu hình các quyền riêng tư trong [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist): `NSLocationWhenInUseUsageDescription`, `NSLocationAlwaysAndWhenInUseUsageDescription`, `UIBackgroundModes` (`location`) hỗ trợ định vị, cùng `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`, `NSPhotoLibraryAddUsageDescription` hỗ trợ chụp ảnh selfie chấm công khuôn mặt và đính kèm chứng từ.
 - Thiết lập quy trình **CI/CD tự động đóng gói file iOS IPA ([`.github/workflows/build-ios-unsigned.yml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/.github/workflows/build-ios-unsigned.yml))** trên GitHub Actions:
   - Tự động chạy trên môi trường macOS M1/M2 ảo (`macos-14`) của GitHub.
   - Biên dịch dự án thành bản lưu trữ Release không yêu cầu chứng chỉ trả phí (`CODE_SIGNING_ALLOWED=NO`).
