@@ -37,7 +37,7 @@ export function useQueryParams() {
       params.set('offset', '0');
     }
 
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
   };
 
   return { setQueryParams };
