@@ -11,6 +11,11 @@ All notable changes to the frontend project will be documented in this file.
   - **Chống Android Doze Mode & CPU Sleep:** Khai báo quyền `WAKE_LOCK` và `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` trong [`AndroidManifest.xml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/AndroidManifest.xml). Sử dụng `PARTIAL_WAKE_LOCK` ngắn (tối đa 15s) trong `TrackingLocationService` để giữ CPU hoạt động trọn vẹn trong quá trình gửi gói tin mạng HTTP khi thiết bị tắt màn hình và để yên.
 
 ### Added
+- **Xây dựng module iOS Native Swift Background Tracking Service ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift) & [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m)):**
+  - Tích hợp trực tiếp `CoreLocation` (`CLLocationManager`) chạy ngầm dưới tầng Swift Native của Apple với `allowsBackgroundLocationUpdates = true`, `pausesLocationUpdatesAutomatically = false` và `showsBackgroundLocationIndicator = true` (hiển thị biểu tượng mũi tên xanh chuẩn Apple trên thanh trạng thái / Dynamic Island).
+  - Tự động gửi tọa độ lên endpoint `/api/v1/attendances/location-ping` bằng `URLSession` độc lập, duy trì định vị liên tục và ổn định ngay cả khi tắt màn hình đút túi quần.
+  - Tự động bắt mã `HTTP 401` để refresh access token bằng `refreshToken` độc lập dưới tầng Native.
+  - Bổ sung cơ chế Fallback mượt mà trong [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts) tự động chuyển sang Web Geolocation nếu module Native gặp sự cố.
 - Khởi tạo nền tảng **iOS Native (`@capacitor/ios`)** cho ứng dụng di động:
   - Cài đặt `@capacitor/ios` và chạy `npx cap add ios` sinh khung dự án Xcode `ios/App/App.xcworkspace`.
   - Cấu hình các quyền riêng tư trong [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist): `NSLocationWhenInUseUsageDescription`, `NSLocationAlwaysAndWhenInUseUsageDescription`, `UIBackgroundModes` (`location`) hỗ trợ định vị, cùng `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`, `NSPhotoLibraryAddUsageDescription` hỗ trợ chụp ảnh selfie chấm công khuôn mặt và đính kèm chứng từ.

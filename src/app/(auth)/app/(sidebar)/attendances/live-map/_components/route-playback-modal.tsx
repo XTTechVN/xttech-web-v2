@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import dayjs from 'dayjs';
 import L from 'leaflet';
-import { Modal, DatePicker } from 'antd';
-import { Loader2, Navigation, MapPin, Gauge } from 'lucide-react';
+import { Modal, DatePicker, Switch } from 'antd';
+import { Loader2, Navigation, MapPin, Gauge, Route } from 'lucide-react';
 import { getStaffRoute } from '@/actions';
-import { StaffRouteResponse } from '@/types';
+import { StaffRoutePoint, StaffRouteResponse } from '@/types';
 import 'leaflet/dist/leaflet.css';
 
 // Dynamic import Leaflet components for SSR safety
@@ -31,6 +31,83 @@ const Polyline = dynamic(
   () => import('react-leaflet').then((mod) => mod.Polyline),
   { ssr: false }
 );
+
+/**
+ * Lọc bớt các điểm quá gần nhau (< 10m) để chống rung giật khi dừng xe
+ */
+function filterPointsForMatching(points: StaffRoutePoint[]): StaffRoutePoint[] {
+  if (points.length <= 2) return points;
+  const filtered: StaffRoutePoint[] = [points[0]];
+
+  for (let i = 1; i < points.length; i++) {
+    const prev = filtered[filtered.length - 1];
+    const curr = points[i];
+
+    const dLat = (curr.latitude - prev.latitude) * 111320;
+    const dLon =
+      (curr.longitude - prev.longitude) *
+      111320 *
+      Math.cos((curr.latitude * Math.PI) / 180);
+    const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+
+    // Bỏ qua các điểm quá sát nhau (< 12m) trừ điểm cuối cùng
+    if (dist >= 12 || i === points.length - 1) {
+      filtered.push(curr);
+    }
+  }
+  return filtered;
+}
+
+/**
+ * Thuật toán Map Matching: Sử dụng OSRM để nắn các điểm GPS bám khít 100% vào tim đường nhựa
+ */
+async function matchRouteWithOSRM(
+  points: StaffRoutePoint[]
+): Promise<[number, number][]> {
+  const cleanPoints = filterPointsForMatching(points);
+  if (cleanPoints.length < 2) return [];
+
+  // OSRM Public API tối ưu cho chuỗi dưới 80 điểm; nếu nhiều hơn thì lấy mẫu đều
+  let samplePoints = cleanPoints;
+  if (cleanPoints.length > 80) {
+    const step = Math.ceil(cleanPoints.length / 80);
+    samplePoints = cleanPoints.filter(
+      (_, idx) => idx % step === 0 || idx === cleanPoints.length - 1
+    );
+  }
+
+  const coordsStr = samplePoints
+    .map((p) => `${p.longitude.toFixed(6)},${p.latitude.toFixed(6)}`)
+    .join(';');
+
+  const url = `https://router.project-osrm.org/match/v1/driving/${coordsStr}?overview=full&geometries=geojson`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    if (data.code === 'Ok' && data.matchings && data.matchings.length > 0) {
+      const snappedCoords: [number, number][] = [];
+      for (const match of data.matchings) {
+        if (match.geometry && match.geometry.coordinates) {
+          for (const coord of match.geometry.coordinates) {
+            snappedCoords.push([coord[1], coord[0]]);
+          }
+        }
+      }
+      return snappedCoords;
+    }
+  } catch (err) {
+    console.warn('[OSRM Map Matching] Error or timeout, fallback to raw GPS:', err);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+  return [];
+}
 
 // Tạo icon bắt đầu và kết thúc tùy chỉnh
 const createRouteMarkerIcon = (type: 'start' | 'end') => {
@@ -77,6 +154,9 @@ export function RoutePlaybackModal({
     dayjs().format('YYYY-MM-DD')
   );
   const [routeData, setRouteData] = useState<StaffRouteResponse | null>(null);
+  const [matchedCoords, setMatchedCoords] = useState<[number, number][]>([]);
+  const [isSnapToRoad, setIsSnapToRoad] = useState<boolean>(true);
+  const [isMatchingRoad, setIsMatchingRoad] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -84,13 +164,22 @@ export function RoutePlaybackModal({
 
     const fetchRoute = async () => {
       setIsLoading(true);
+      setMatchedCoords([]);
       try {
         const data = await getStaffRoute(userId, selectedDate);
         setRouteData(data);
+
+        const pts = data?.points || [];
+        if (pts.length >= 2) {
+          setIsMatchingRoad(true);
+          const snapped = await matchRouteWithOSRM(pts);
+          setMatchedCoords(snapped);
+        }
       } catch (err) {
         console.error('Lỗi khi tải lộ trình:', err);
       } finally {
         setIsLoading(false);
+        setIsMatchingRoad(false);
       }
     };
 
@@ -102,6 +191,10 @@ export function RoutePlaybackModal({
     p.latitude,
     p.longitude,
   ]);
+
+  // Chọn tọa độ hiển thị: ưu tiên đường đã nắn bám tim đường nếu người dùng bật
+  const displayedCoords =
+    isSnapToRoad && matchedCoords.length > 0 ? matchedCoords : polylineCoords;
 
   const defaultCenter: [number, number] =
     points.length > 0
@@ -130,17 +223,43 @@ export function RoutePlaybackModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-600 font-medium">Chọn ngày:</span>
-            <DatePicker
-              value={dayjs(selectedDate)}
-              onChange={(d) => {
-                if (d) setSelectedDate(d.format('YYYY-MM-DD'));
-              }}
-              allowClear={false}
-              format="DD/MM/YYYY"
-              className="w-36 rounded-lg text-xs"
-            />
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Nút bật/tắt bám tim đường */}
+            <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+              <Route
+                size={14}
+                className={
+                  isSnapToRoad && matchedCoords.length > 0
+                    ? 'text-emerald-600'
+                    : 'text-slate-400'
+                }
+              />
+              <span className="text-xs text-slate-600 font-medium">
+                Bám tim đường:
+              </span>
+              <Switch
+                size="small"
+                checked={isSnapToRoad}
+                onChange={setIsSnapToRoad}
+                disabled={matchedCoords.length === 0 && !isMatchingRoad}
+              />
+              {isMatchingRoad && (
+                <Loader2 size={12} className="animate-spin text-primary" />
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-slate-600 font-medium">Chọn ngày:</span>
+              <DatePicker
+                value={dayjs(selectedDate)}
+                onChange={(d) => {
+                  if (d) setSelectedDate(d.format('YYYY-MM-DD'));
+                }}
+                allowClear={false}
+                format="DD/MM/YYYY"
+                className="w-32 rounded-lg text-xs"
+              />
+            </div>
           </div>
         </div>
       }
@@ -216,10 +335,19 @@ export function RoutePlaybackModal({
                 url="https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_2twi_1_650da3cf662548463efcc8fb"
               />
 
-              {/* Vẽ đường đi Polyline */}
+              {/* Vẽ đường đi Polyline (bám tim đường xanh ngọc lục bảo đẹp mắt, hoặc lam cho GPS gốc) */}
               <Polyline
-                positions={polylineCoords}
-                pathOptions={{ color: '#045863', weight: 4, opacity: 0.8 }}
+                positions={displayedCoords}
+                pathOptions={{
+                  color:
+                    isSnapToRoad && matchedCoords.length > 0
+                      ? '#059669'
+                      : '#2563eb',
+                  weight: isSnapToRoad && matchedCoords.length > 0 ? 5 : 4,
+                  opacity: 0.85,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                }}
               />
 
               {/* Điểm xuất phát (Điểm đầu) */}

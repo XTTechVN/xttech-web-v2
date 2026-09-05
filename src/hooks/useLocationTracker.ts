@@ -195,20 +195,8 @@ export function useLocationTracker({
       requestWakeLock();
     }, 100);
 
-    // 1. NẾU LÀ NATIVE ANDROID / IOS: KHỞI CHẠY NATIVE FOREGROUND SERVICE ĐỘC LẬP
-    // Chạy ngầm 100% bằng Java Native (chuẩn như Zalo/Grab), duy trì liên tục kể cả khi vuốt tắt app
-    if (isNative) {
-      const authState = useAuthStore.getState();
-      NativeTracking.startTracking({
-        token: authState.accessToken,
-        refreshToken: authState.refreshToken,
-        apiUrl: BASE_API_URL,
-      }).catch((e) => {
-        console.warn('[NativeTracking] Start native tracking failed:', e);
-      });
-    } else {
-      // 2. NẾU LÀ TRÌNH DUYỆT WEB: DÙNG WATCH POSITION CỦA HTML5
-      if (navigator.geolocation) {
+    const startWebWatchPosition = () => {
+      if (navigator.geolocation && watchIdRef.current === null) {
         watchIdRef.current = navigator.geolocation.watchPosition(
           (pos) => {
             const elapsed = Date.now() - lastPingRef.current;
@@ -230,6 +218,23 @@ export function useLocationTracker({
           }
         );
       }
+    };
+
+    // 1. NẾU LÀ NATIVE ANDROID / IOS: KHỞI CHẠY NATIVE FOREGROUND SERVICE ĐỘC LẬP
+    // Chạy ngầm 100% bằng Java/Swift Native, duy trì liên tục kể cả khi khóa màn hình
+    if (isNative) {
+      const authState = useAuthStore.getState();
+      NativeTracking.startTracking({
+        token: authState.accessToken,
+        refreshToken: authState.refreshToken,
+        apiUrl: BASE_API_URL,
+      }).catch((e) => {
+        console.warn('[NativeTracking] Start native tracking failed, falling back to Web Geolocation:', e);
+        startWebWatchPosition();
+      });
+    } else {
+      // 2. NẾU LÀ TRÌNH DUYỆT WEB: DÙNG WATCH POSITION CỦA HTML5
+      startWebWatchPosition();
     }
 
     // 3. WEB WORKER TIMER: ĐẢM NHIỆM HEARTBEAT KHI ĐỨNG YÊN (HOẠT ĐỘNG CHO CẢ NATIVE VÀ WEB)

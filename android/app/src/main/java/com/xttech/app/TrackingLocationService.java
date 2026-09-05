@@ -97,12 +97,21 @@ public class TrackingLocationService extends Service implements LocationListener
             }
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, buildNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
-        } else {
-            startForeground(NOTIFICATION_ID, buildNotification());
+        try {
+            boolean fineLoc = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+            boolean coarseLoc = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && (fineLoc || coarseLoc)) {
+                startForeground(NOTIFICATION_ID, buildNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+            } else {
+                startForeground(NOTIFICATION_ID, buildNotification());
+            }
+            startTracking();
+        } catch (SecurityException se) {
+            Log.e(TAG, "SecurityException starting foreground service (location permission not granted yet)", se);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception starting foreground service", e);
         }
-        startTracking();
 
         // START_STICKY yêu cầu Android OS tự khởi động lại Service nếu bị hệ điều hành tắt tạm thời
         return START_STICKY;
@@ -209,6 +218,12 @@ public class TrackingLocationService extends Service implements LocationListener
     @Override
     public void onLocationChanged(Location location) {
         if (location == null) return;
+
+        // Bỏ qua các điểm có sai số lớn (accuracy > 35m) để chống hiện tượng giật văng tọa độ
+        if (location.hasAccuracy() && location.getAccuracy() > 35.0f) {
+            Log.d(TAG, "Ignoring inaccurate location point: accuracy = " + location.getAccuracy() + "m");
+            return;
+        }
 
         long now = System.currentTimeMillis();
         // Giới hạn tối thiểu 10 giây giữa 2 lần ping liên tiếp để chống nghẽn mạng
