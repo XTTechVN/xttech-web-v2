@@ -115,9 +115,13 @@ export const getLiveLocations = async (): Promise<StaffLiveLocation[]> => {
   return response.data;
 };
 
-export const getStaffRoute = async (userId: string, date?: string): Promise<StaffRouteResponse> => {
+export const getStaffRoute = async (userId: string, date?: string, attendanceId?: number): Promise<StaffRouteResponse> => {
+  const params: Record<string, any> = {};
+  if (date) params.date = date;
+  if (attendanceId) params.attendanceId = attendanceId;
+
   const response = await api.get<StaffRouteResponse>(`${baseVersion1}/attendances/routes/${userId}`, {
-    params: date ? { date } : {},
+    params,
   });
   return response.data;
 };

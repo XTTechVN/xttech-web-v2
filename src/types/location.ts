@@ -41,6 +41,8 @@ export interface StaffRouteResponse {
   userName?: string;
   user_name?: string;
   date: string;
+  attendanceId?: number;
+  attendance_id?: number;
   totalDistanceKm?: number;
   total_distance_km?: number;
   points: StaffRoutePoint[];

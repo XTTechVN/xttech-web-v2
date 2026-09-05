@@ -13,6 +13,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     private var lastPingTime: Date = Date.distantPast
     private var lastLocation: CLLocation?
     private var heartbeatTimer: Timer?
+    private var lastBatteryLevel: Double = -1.0
 
     private let prefsKeyToken = "xttech_ios_access_token"
     private let prefsKeyRefreshToken = "xttech_ios_refresh_token"
@@ -24,6 +25,23 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         self.accessToken = defaults.string(forKey: prefsKeyToken)
         self.refreshToken = defaults.string(forKey: prefsKeyRefreshToken)
         self.apiUrl = defaults.string(forKey: prefsKeyApiUrl)
+
+        // Bật giám sát pin từ sớm và đăng ký lắng nghe thay đổi mức pin
+        UIDevice.current.isBatteryMonitoringEnabled = true
+        let initialLevel = UIDevice.current.batteryLevel
+        if initialLevel >= 0 {
+            self.lastBatteryLevel = Double(initialLevel * 100.0)
+        }
+        NotificationCenter.default.addObserver(
+            forName: UIDevice.batteryLevelDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            let lvl = UIDevice.current.batteryLevel
+            if lvl >= 0 {
+                self?.lastBatteryLevel = Double(lvl * 100.0)
+            }
+        }
     }
 
     @objc func startTracking(_ call: CAPPluginCall) {
@@ -82,7 +100,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             locationManager = CLLocationManager()
             locationManager?.delegate = self
             locationManager?.desiredAccuracy = kCLLocationAccuracyBest
-            locationManager?.distanceFilter = 15.0 // Cập nhật khi di chuyển tối thiểu 15 mét
+            locationManager?.distanceFilter = 5.0 // Cập nhật khi di chuyển tối thiểu 5 mét
             
             // Cấu hình định vị chạy ngầm liên tục chuẩn iOS
             locationManager?.allowsBackgroundLocationUpdates = true
@@ -129,8 +147,24 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
 
         let now = Date()
-        if now.timeIntervalSince(lastPingTime) < 10.0 {
-            return
+        let elapsed = now.timeIntervalSince(lastPingTime)
+
+        let speed = max(0.0, location.speed)
+        let distance = lastLocation != nil ? location.distance(from: lastLocation!) : 999.0
+
+        // Smart Adaptive: Xác định có đang di chuyển (speed >= 1.0 m/s hoặc di dời >= 5m)
+        let isMoving = speed >= 1.0 || distance >= 5.0
+
+        if isMoving {
+            // Khi đang di chuyển: throttle 3.0 giây / lần để Live-Map mượt mà
+            if elapsed < 3.0 {
+                return
+            }
+        } else {
+            // Khi dừng lại: tạm ngưng gửi dồn 3s để tiết kiệm pin
+            if elapsed < 15.0 {
+                return
+            }
         }
 
         self.lastLocation = location
@@ -160,8 +194,11 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        UIDevice.current.isBatteryMonitoringEnabled = true
-        let batteryLevel = UIDevice.current.batteryLevel >= 0 ? Double(UIDevice.current.batteryLevel * 100.0) : -1.0
+        let rawBattery = UIDevice.current.batteryLevel
+        if rawBattery >= 0 {
+            self.lastBatteryLevel = Double(rawBattery * 100.0)
+        }
+        let batteryLevel = self.lastBatteryLevel
         let speed = isHeartbeat ? 0.0 : max(0.0, location.speed)
         let heading = location.course >= 0 ? location.course : 0.0
 

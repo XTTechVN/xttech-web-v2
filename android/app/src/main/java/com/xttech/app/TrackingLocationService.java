@@ -162,8 +162,8 @@ public class TrackingLocationService extends Service implements LocationListener
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 locationManager.requestLocationUpdates(
                         LocationManager.GPS_PROVIDER,
-                        10000, // 10 giây
-                        10.0f, // 10 mét
+                        3000, // 3 giây khi di chuyển
+                        5.0f, // 5 mét
                         this
                 );
             }
@@ -172,8 +172,8 @@ public class TrackingLocationService extends Service implements LocationListener
             if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                 locationManager.requestLocationUpdates(
                         LocationManager.NETWORK_PROVIDER,
-                        15000,
-                        15.0f,
+                        10000,
+                        10.0f,
                         this
                 );
             }
@@ -226,9 +226,24 @@ public class TrackingLocationService extends Service implements LocationListener
         }
 
         long now = System.currentTimeMillis();
-        // Giới hạn tối thiểu 10 giây giữa 2 lần ping liên tiếp để chống nghẽn mạng
-        if (now - lastPingTime < 10000) {
-            return;
+        long elapsed = now - lastPingTime;
+
+        float speed = location.hasSpeed() ? location.getSpeed() : 0.0f;
+        float distance = (lastLocation != null) ? location.distanceTo(lastLocation) : Float.MAX_VALUE;
+
+        // Smart Adaptive: Xác định có đang di chuyển (speed >= 1.0 m/s hoặc di dời >= 5m)
+        boolean isMoving = speed >= 1.0f || distance >= 5.0f;
+
+        if (isMoving) {
+            // Khi đang di chuyển: throttle 3 giây / lần để Live-Map mượt mà
+            if (elapsed < 3000) {
+                return;
+            }
+        } else {
+            // Khi dừng lại (đèn đỏ, ngồi yên): tạm dừng gửi dồn 3s để tiết kiệm pin
+            if (elapsed < 15000) {
+                return;
+            }
         }
 
         lastLocation = location;
@@ -414,21 +429,39 @@ public class TrackingLocationService extends Service implements LocationListener
         });
     }
 
+    private float lastValidBatteryLevel = -1.0f;
+
     private float getDeviceBatteryLevel() {
         try {
+            // Cách 1: Qua BatteryManager System Service (Lollipop 5.0+): Đọc trực tiếp từ IC quản lý nguồn,
+            // không bị các ROM như Xiaomi/Oppo chặn broadcast khi màn hình tắt.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                BatteryManager bm = (BatteryManager) getSystemService(BATTERY_SERVICE);
+                if (bm != null) {
+                    int capacity = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+                    if (capacity >= 0 && capacity <= 100) {
+                        lastValidBatteryLevel = (float) capacity;
+                        return (float) capacity;
+                    }
+                }
+            }
+
+            // Cách 2: Qua Intent.ACTION_BATTERY_CHANGED
             IntentFilter iFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
             Intent batteryStatus = registerReceiver(null, iFilter);
             if (batteryStatus != null) {
                 int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
                 int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
                 if (level >= 0 && scale > 0) {
-                    return (level * 100.0f) / scale;
+                    float pct = (level * 100.0f) / scale;
+                    lastValidBatteryLevel = pct;
+                    return pct;
                 }
             }
         } catch (Exception e) {
             Log.w(TAG, "Could not read battery level", e);
         }
-        return -1.0f;
+        return lastValidBatteryLevel;
     }
 
     private Notification buildNotification() {

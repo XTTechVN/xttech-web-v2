@@ -67,10 +67,36 @@ export function useLocationTracker({
     heading?: number;
   }) => {
     const now = Date.now();
-    // Giới hạn tối thiểu 10 giây giữa 2 lần ping để tránh gửi dồn dập
-    if (now - lastPingRef.current < 10000) {
-      return;
+    const elapsed = now - lastPingRef.current;
+    const speed = pos.speed ?? 0;
+
+    let distance = 999;
+    if (lastKnownCoordsRef.current) {
+      const lat1 = lastKnownCoordsRef.current.latitude;
+      const lon1 = lastKnownCoordsRef.current.longitude;
+      const lat2 = pos.latitude;
+      const lon2 = pos.longitude;
+      const R = 6371000;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      distance = R * c;
     }
+
+    // Smart Adaptive: 3s khi di chuyển, tạm dừng khi đứng yên
+    const isMoving = speed >= 1.0 || distance >= 5.0;
+    if (isMoving) {
+      if (elapsed < 3000) return;
+    } else {
+      if (elapsed < 15000) return;
+    }
+
     lastPingRef.current = now;
     lastKnownCoordsRef.current = pos;
 

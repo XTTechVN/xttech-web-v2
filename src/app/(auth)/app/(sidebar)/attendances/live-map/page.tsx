@@ -18,7 +18,12 @@ export default function AttendanceLiveMapPage() {
   const [isMobileStaffListOpen, setIsMobileStaffListOpen] = useState(false);
 
   // Modal xem lộ trình
-  const [routeModalState, setRouteModalState] = useState<{ isOpen: boolean; userId: string; userName: string; }>({
+  const [routeModalState, setRouteModalState] = useState<{
+    isOpen: boolean;
+    userId: string;
+    userName: string;
+    attendanceId?: number;
+  }>({
     isOpen: false,
     userId: '',
     userName: '',
@@ -128,6 +133,7 @@ export default function AttendanceLiveMapPage() {
       isOpen: true,
       userId: staff.userId,
       userName: staff.userName,
+      attendanceId: staff.attendanceId,
     });
   };
 
@@ -288,6 +294,7 @@ export default function AttendanceLiveMapPage() {
           }
           userId={routeModalState.userId}
           userName={routeModalState.userName}
+          attendanceId={routeModalState.attendanceId}
         />
       )}
     </div>
