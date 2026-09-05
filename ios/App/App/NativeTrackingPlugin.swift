@@ -100,7 +100,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             locationManager = CLLocationManager()
             locationManager?.delegate = self
             locationManager?.desiredAccuracy = kCLLocationAccuracyBest
-            locationManager?.distanceFilter = 5.0 // Cập nhật khi di chuyển tối thiểu 5 mét
+            locationManager?.distanceFilter = kCLDistanceFilterNone // Đảm bảo phần cứng giữ nhịp định vị ngay cả khi đứng yên
             
             // Cấu hình định vị chạy ngầm liên tục chuẩn iOS
             locationManager?.allowsBackgroundLocationUpdates = true
@@ -127,11 +127,11 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
     private func startHeartbeat() {
         heartbeatTimer?.invalidate()
-        // Mỗi 60 giây kiểm tra: nếu quá 3 phút không có ping di chuyển -> gửi heartbeat đứng yên
+        // Mỗi 60 giây kiểm tra: nếu quá 2 phút không có ping di chuyển -> gửi heartbeat đứng yên (khi app ở tiền cảnh)
         heartbeatTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
             guard let self = self, self.isTracking else { return }
             let elapsed = Date().timeIntervalSince(self.lastPingTime)
-            if elapsed >= 180.0, let loc = self.lastLocation {
+            if elapsed >= 120.0, let loc = self.lastLocation {
                 self.sendPing(location: loc, isHeartbeat: true)
             }
         }
@@ -161,14 +161,15 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
                 return
             }
         } else {
-            // Khi dừng lại: tạm ngưng gửi dồn 3s để tiết kiệm pin
-            if elapsed < 15.0 {
+            // Khi dừng lại / khóa màn hình: Giữ nhịp gửi ping đứng yên mỗi 2 phút (120s)
+            // để đảm bảo Backend không đánh dấu Offline sau 10 phút
+            if elapsed < 120.0 {
                 return
             }
         }
 
         self.lastLocation = location
-        sendPing(location: location, isHeartbeat: false)
+        sendPing(location: location, isHeartbeat: !isMoving)
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -216,7 +217,22 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         guard let httpBody = try? JSONSerialization.data(withJSONObject: payload, options: []) else { return }
         request.httpBody = httpBody
 
+        // Yêu cầu iOS cấp quyền CPU chạy nền để hoàn tất gửi gói tin mạng khi màn hình khóa
+        var bgTask: UIBackgroundTaskIdentifier = .invalid
+        bgTask = UIApplication.shared.beginBackgroundTask(withName: "XTTechLocationPing") {
+            if bgTask != .invalid {
+                UIApplication.shared.endBackgroundTask(bgTask)
+                bgTask = .invalid
+            }
+        }
+
         let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            defer {
+                if bgTask != .invalid {
+                    UIApplication.shared.endBackgroundTask(bgTask)
+                    bgTask = .invalid
+                }
+            }
             guard let self = self else { return }
             if let httpResponse = response as? HTTPURLResponse {
                 if (200...299).contains(httpResponse.statusCode) {
@@ -262,7 +278,21 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
         request.httpBody = httpBody
 
+        var bgTask: UIBackgroundTaskIdentifier = .invalid
+        bgTask = UIApplication.shared.beginBackgroundTask(withName: "XTTechRefreshToken") {
+            if bgTask != .invalid {
+                UIApplication.shared.endBackgroundTask(bgTask)
+                bgTask = .invalid
+            }
+        }
+
         let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            defer {
+                if bgTask != .invalid {
+                    UIApplication.shared.endBackgroundTask(bgTask)
+                    bgTask = .invalid
+                }
+            }
             guard let self = self, let data = data, let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
                 completion(false)
                 return
