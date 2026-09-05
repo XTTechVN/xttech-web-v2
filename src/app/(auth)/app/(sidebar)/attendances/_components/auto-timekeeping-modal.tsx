@@ -5,18 +5,7 @@ import { Modal, Button, Textarea, Badge } from '@/components';
 import { toast } from 'react-hot-toast';
 import { autoTimekeeping, sendLocationPing } from '@/actions';
 import { TimekeepingType } from '@/types';
-import {
-  Camera,
-  RefreshCw,
-  MapPin,
-  Clock,
-  LogIn,
-  LogOut,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-  Navigation,
-} from 'lucide-react';
+import { Camera, RefreshCw, MapPin, Clock, LogIn, LogOut, Loader2, AlertCircle, CheckCircle2, Navigation } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -55,9 +44,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
   useEffect(() => {
     const tick = () => {
       const now = new Date();
-      setCurrentTime(
-        now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-      );
+      setCurrentTime(now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
       setCurrentDate(
         now.toLocaleDateString('vi-VN', {
           weekday: 'long',
@@ -236,18 +223,16 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     }
   };
 
-  const mapsEmbedUrl = location
-    ? `https://maps.google.com/maps?q=${location.lat},${location.lng}&z=16&output=embed`
-    : null;
+  const mapsEmbedUrl = location ? `https://maps.google.com/maps?q=${location.lat},${location.lng}&z=16&output=embed` : null;
 
-  const mapsLinkUrl = location
-    ? `https://www.google.com/maps?q=${location.lat},${location.lng}`
-    : null;
+  const mapsLinkUrl = location ? `https://www.google.com/maps?q=${location.lat},${location.lng}` : null;
 
   return (
     <Modal
       isOpen={open}
-      onClose={() => { if (!isSubmitting) onClose(); }}
+      onClose={() => {
+        if (!isSubmitting) onClose();
+      }}
       title="Chấm công tự động"
       size="xl"
     >
@@ -259,9 +244,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
               <Clock size={22} className="text-white" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/70">
-                Thời gian hiện tại
-              </p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/70">Thời gian hiện tại</p>
               <p className="text-2xl font-bold tracking-normal">{currentTime}</p>
               <p className="mt-0.5 text-xs capitalize text-white/80">{currentDate}</p>
             </div>
@@ -296,27 +279,11 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Camera / Preview */}
           <div className="flex flex-col gap-3">
-            <div
-              className="relative overflow-hidden rounded-2xl bg-slate-900 shadow-lg"
-              style={{ aspectRatio: '4/3' }}
-            >
+            <div className="relative overflow-hidden rounded-2xl bg-slate-900 shadow-lg" style={{ aspectRatio: '4/3' }}>
               {step === 'camera' && !cameraError && (
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="h-full w-full object-cover"
-                  style={{ transform: 'scaleX(-1)' }}
-                />
+                <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" style={{ transform: 'scaleX(-1)' }} />
               )}
-              {step === 'preview' && previewUrl && (
-                <img
-                  src={previewUrl}
-                  alt="Ảnh chụp chấm công"
-                  className="h-full w-full object-cover"
-                />
-              )}
+              {step === 'preview' && previewUrl && <img src={previewUrl} alt="Ảnh chụp chấm công" className="h-full w-full object-cover" />}
               {cameraError && (
                 <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
                   <div className="rounded-full bg-red-500/20 p-4">
@@ -354,24 +321,12 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
 
             <div className="flex gap-2">
               {step === 'camera' && (
-                <Button
-                  variant="primary"
-                  onClick={handleCapture}
-                  disabled={!!cameraError || isSubmitting}
-                  leftIcon={<Camera size={16} />}
-                  fullWidth
-                >
+                <Button variant="primary" onClick={handleCapture} disabled={!!cameraError || isSubmitting} leftIcon={<Camera size={16} />} fullWidth>
                   Chụp ảnh
                 </Button>
               )}
               {step === 'preview' && (
-                <Button
-                  variant="outline"
-                  onClick={handleRetake}
-                  disabled={isSubmitting}
-                  leftIcon={<RefreshCw size={15} />}
-                  fullWidth
-                >
+                <Button variant="outline" onClick={handleRetake} disabled={isSubmitting} leftIcon={<RefreshCw size={15} />} fullWidth>
                   Chụp lại
                 </Button>
               )}
@@ -380,10 +335,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
 
           {/* Map GPS */}
           <div className="flex flex-col gap-3">
-            <div
-              className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow"
-              style={{ aspectRatio: '4/3' }}
-            >
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow" style={{ aspectRatio: '4/3' }}>
               {mapsEmbedUrl ? (
                 <iframe
                   src={mapsEmbedUrl}
@@ -408,12 +360,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
                   ) : locationError ? (
                     <div className="space-y-2">
                       <p className="text-xs text-red-500">{locationError}</p>
-                      <Button
-                        variant="outline"
-                        size="xs"
-                        onClick={fetchLocation}
-                        leftIcon={<RefreshCw size={12} />}
-                      >
+                      <Button variant="outline" size="xs" onClick={fetchLocation} leftIcon={<RefreshCw size={12} />}>
                         Thử lại
                       </Button>
                     </div>
@@ -471,9 +418,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         </div>
 
         {step !== 'preview' && (
-          <p className="text-center text-xs text-slate-400">
-            ⬆ Chụp ảnh trước để kích hoạt nút {hasCheckedIn ? 'Check-out' : 'Check-in'}
-          </p>
+          <p className="text-center text-xs text-slate-400">⬆ Chụp ảnh trước để kích hoạt nút {hasCheckedIn ? 'Check-out' : 'Check-in'}</p>
         )}
       </div>
     </Modal>
