@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { Modal, Textarea, Button } from '@/components';
-import { SendHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface SuggestionFeedbackModalProps {
@@ -53,7 +52,6 @@ export default function SuggestionFeedbackModal({ isOpen, onClose, type, onSubmi
         onClick={handleSubmit}
         loading={isPending}
         disabled={isPending}
-        leftIcon={<SendHorizontal className="w-4 h-4" />}
       >
         Gửi phản hồi
       </Button>

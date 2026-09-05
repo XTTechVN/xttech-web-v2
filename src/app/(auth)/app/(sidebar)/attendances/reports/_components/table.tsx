@@ -118,17 +118,9 @@ export function ReportTable() {
               name={row.fullName || row.username || 'NV'}
               size="sm"
             />
-            <div className="flex flex-col min-w-0">
-              <span className="font-semibold text-gray-900 truncate">
-                {row.fullName || row.username}
-              </span>
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                <span className="font-mono text-slate-500 bg-slate-100 px-1 py-0.2 rounded text-[10px]">
-                  {row.identifyCode || 'NV'}
-                </span>
-                <span className="truncate">{row.email}</span>
-              </div>
-            </div>
+            <span className="font-semibold text-gray-900 text-sm truncate">
+              {row.fullName || row.username}
+            </span>
           </div>
         ),
       },
@@ -138,8 +130,7 @@ export function ReportTable() {
         minWidth: '150px',
         cell: (row) =>
           row.departmentName ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-              <Building2 className="w-3 h-3 text-slate-400" />
+            <span className="text-sm text-slate-700">
               {row.departmentName}
             </span>
           ) : (
@@ -290,11 +281,7 @@ export function ReportTable() {
               <span className="font-semibold text-gray-900 text-sm truncate">
                 {row.fullName || row.username}
               </span>
-              <span className="text-xs text-gray-400 truncate">{row.email}</span>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                  {row.identifyCode || 'NV'}
-                </span>
                 <Badge variant={policyInfo.variant} size="sm">
                   {policyInfo.label}
                 </Badge>

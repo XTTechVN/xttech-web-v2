@@ -130,10 +130,7 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
             name={row.fullName || row.username}
             size="sm"
           />
-          <div className="flex flex-col">
-            <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
-            <span className="text-xs text-gray-400">{row.email}</span>
-          </div>
+          <span className="font-semibold text-gray-900 text-sm truncate">{row.fullName || row.username}</span>
         </div>
       ),
     },
@@ -240,10 +237,6 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
               <span className="font-semibold text-gray-900 text-sm truncate">
                 {row.fullName || row.username}
               </span>
-              <span className="text-xs text-gray-400 truncate">{row.email}</span>
-              {row.phoneNumber && (
-                <span className="text-xs text-slate-500 mt-0.5">{row.phoneNumber}</span>
-              )}
             </div>
           </div>
         </div>
@@ -301,9 +294,6 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
       {/* Header Section */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-            <Users size={18} />
-          </div>
           <h2 className="text-base font-bold text-slate-900">Nhân sự phòng ban</h2>
         </div>
 

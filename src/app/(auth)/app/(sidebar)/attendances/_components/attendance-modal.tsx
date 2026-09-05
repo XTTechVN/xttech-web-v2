@@ -11,7 +11,6 @@ import {
   LogOut,
   Camera,
   Timer,
-  ShieldCheck,
   Mail,
 } from "lucide-react";
 
@@ -55,15 +54,9 @@ export default function AttendanceDetailModal({
     : null;
 
   const footer = (
-    <div className="flex items-center justify-between w-full text-xs text-slate-400">
-      <div className="flex items-center gap-1.5">
-        <ShieldCheck size={14} className="text-emerald-500" />
-        <span>Dữ liệu chấm công thời gian thực</span>
-      </div>
-      <Button variant="outline" onClick={onClose} className="px-5 hover:bg-[#ececf27d]">
-        Đóng
-      </Button>
-    </div>
+    <Button variant="outline" onClick={onClose} className="hover:bg-[#ececf27d]">
+      Đóng
+    </Button>
   );
 
   return (
@@ -73,11 +66,12 @@ export default function AttendanceDetailModal({
       title="Chi tiết chấm công ngày làm việc"
       size="lg"
       footer={footer}
+      bodyClassName="p-2 sm:p-3"
     >
       <div className="space-y-4 text-sm text-slate-700 py-1">
 
         {/* 1. Header Profile Banner */}
-        <div className="rounded-2xl border border-slate-200/90 bg-slate-50/80 p-4 shadow-xs">
+        <div className="rounded-lg border border-slate-200/60 p-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 
             {/* Left: Avatar & User Details */}
@@ -85,11 +79,11 @@ export default function AttendanceDetailModal({
               <Avatar
                 src={avatarSrc}
                 name={data.user?.fullName || "NV"}
-                size="lg"
-                className="ring-2 ring-primary/20 border-2 border-white shadow-xs shrink-0"
+                size="sm"
+                className="shrink-0"
               />
               <div className="min-w-0 space-y-0.5">
-                <h3 className="text-base font-bold text-slate-900 truncate">
+                <h3 className="text-sm font-semibold text-primary truncate">
                   {data.user?.fullName || "Nhân viên"}
                 </h3>
                 <div className="flex items-center gap-1.5 text-xs text-slate-500 truncate">
@@ -100,16 +94,14 @@ export default function AttendanceDetailModal({
             </div>
 
             {/* Right: Date, Status, Total Hours */}
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0 border-t sm:border-t-0 pt-2.5 sm:pt-0 border-slate-200/60 justify-between sm:justify-end">
-              <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 shadow-2xs">
-                <Calendar size={13} className="text-primary" />
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0 border-t sm:border-t-0 pt-2.5 sm:pt-0 border-slate-100 justify-between sm:justify-end">
+              <div className="flex items-center px-2.5 py-1 rounded-md border border-slate-200/60 text-xs font-medium text-slate-600">
                 <span>{data.workDate || "-"}</span>
               </div>
-              <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 shadow-2xs">
-                <Timer size={13} className="text-primary" />
+              <div className="flex items-center px-2.5 py-1 rounded-md border border-slate-200/60 text-xs font-medium text-slate-600">
                 <span>{data.totalHours ?? 0} giờ</span>
               </div>
-              <Badge variant={statusInfo.variant} pill className="px-3 py-1.5 text-xs font-bold shadow-2xs">
+              <Badge variant={statusInfo.variant} size="sm" className="font-semibold">
                 {statusInfo.label}
               </Badge>
             </div>
@@ -118,40 +110,38 @@ export default function AttendanceDetailModal({
         </div>
 
         {/* 2. Check-In & Check-Out Detail Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
           {/* Check In Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
-            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="rounded-lg bg-primary/10 p-2 text-primary shrink-0">
-                  <LogIn size={18} />
-                </div>
+          <div className="rounded-lg border border-slate-200/60 bg-white p-2.5 sm:p-3 shadow-2xs space-y-2.5">
+            <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2 min-w-0">
+                <LogIn size={16} className="text-primary shrink-0" />
                 <div className="flex flex-col min-w-0">
-                  <h4 className="font-bold text-slate-900 text-sm tracking-tight whitespace-nowrap">CHECK IN</h4>
+                  <h4 className="font-bold text-sm text-primary">Check in</h4>
                   {data.isLate ? (
-                    <span className="text-[11px] font-semibold text-rose-600">
+                    <span className="text-xs font-semibold text-rose-600">
                       Muộn {data.lateMinutes ?? 0} phút
                     </span>
                   ) : (
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-xs text-black text-slate-500">
                       {data.checkIn ? "Đúng giờ" : "Chưa vào ca"}
                     </span>
                   )}
                 </div>
               </div>
-              <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-xl border border-primary/20 shrink-0 font-mono">
+              <span className="text-xs font-semibold text-primary rounded-md border px-2 py-0.5 border-primary/20 bg-primary/5 shrink-0 font-mono">
                 {formatTime(data.checkIn)}
               </span>
             </div>
 
             {/* Check In Photo */}
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                <Camera size={13} className="text-slate-400" /> Ảnh chụp Check In
+              <p className="text-xs font-semibold text-slate-500">
+                Ảnh chụp Check In
               </p>
               {checkInImgSrc ? (
-                <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 group">
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-slate-200/60 bg-slate-100 group">
                   <img
                     src={checkInImgSrc}
                     alt="Check In Photo"
@@ -159,17 +149,17 @@ export default function AttendanceDetailModal({
                   />
                 </div>
               ) : (
-                <div className="flex h-32 w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-slate-400">
-                  <Camera size={22} className="mb-1 text-slate-300" />
+                <div className="flex h-28 w-full flex-col items-center justify-center rounded-lg border border-dashed border-slate-200/60 bg-slate-50 text-slate-400">
+                  <Camera size={20} className="mb-1 text-slate-300" />
                   <span className="text-xs">Chưa có ảnh</span>
                 </div>
               )}
             </div>
 
             {/* Check In Location */}
-            <div className="rounded-xl bg-slate-50 p-2.5 border border-slate-100 flex items-center justify-between text-xs text-slate-600">
-              <span className="flex items-center gap-1 font-medium text-slate-400">
-                <MapPin size={13} className="text-slate-400" /> Vị trí GPS:
+            <div className="rounded-lg bg-slate-50 px-2.5 py-1.5 border border-slate-100 flex items-center justify-between text-xs text-slate-600">
+              <span className="font-medium text-slate-400">
+                Vị trí GPS:
               </span>
               <span className="font-mono text-slate-700 font-medium">
                 {data.checkInLatitude != null && data.checkInLongitude != null
@@ -180,37 +170,35 @@ export default function AttendanceDetailModal({
           </div>
 
           {/* Check Out Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
-            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="rounded-lg bg-primary/10 p-2 text-primary shrink-0">
-                  <LogOut size={18} />
-                </div>
+          <div className="rounded-lg border border-slate-200/60 bg-white p-2.5 sm:p-3 shadow-2xs space-y-2.5">
+            <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2 min-w-0">
+                <LogOut size={16} className="text-primary shrink-0" />
                 <div className="flex flex-col min-w-0">
-                  <h4 className="font-bold text-slate-900 text-sm tracking-tight whitespace-nowrap">CHECK OUT</h4>
+                  <h4 className="font-bold text-sm text-primary">Check out</h4>
                   {data.isEarlyLeave ? (
-                    <span className="text-[11px] font-semibold text-amber-600">
+                    <span className="text-xs font-semibold text-amber-600">
                       Về sớm {data.earlyLeaveMinutes ?? 0} phút
                     </span>
                   ) : (
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-xs text-slate-500">
                       {data.checkOut ? "Đúng giờ" : "Chưa ra ca"}
                     </span>
                   )}
                 </div>
               </div>
-              <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-xl border border-primary/20 shrink-0 font-mono">
+              <span className="text-xs font-semibold text-primary rounded-md border px-2 py-0.5 border-primary/20 bg-primary/5 shrink-0 font-mono">
                 {formatTime(data.checkOut)}
               </span>
             </div>
 
             {/* Check Out Photo */}
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                <Camera size={13} className="text-slate-400" /> Ảnh chụp Check Out
+              <p className="text-xs font-semibold text-slate-500">
+                Ảnh chụp Check Out
               </p>
               {checkOutImgSrc ? (
-                <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 group">
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-slate-200/60 bg-slate-100 group">
                   <img
                     src={checkOutImgSrc}
                     alt="Check Out Photo"
@@ -218,17 +206,17 @@ export default function AttendanceDetailModal({
                   />
                 </div>
               ) : (
-                <div className="flex h-32 w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-slate-400">
-                  <Camera size={22} className="mb-1 text-slate-300" />
+                <div className="flex h-28 w-full flex-col items-center justify-center rounded-lg border border-dashed border-slate-200/60 bg-slate-50 text-slate-400">
+                  <Camera size={20} className="mb-1 text-slate-300" />
                   <span className="text-xs">Chưa có ảnh</span>
                 </div>
               )}
             </div>
 
             {/* Check Out Location */}
-            <div className="rounded-xl bg-slate-50 p-2.5 border border-slate-100 flex items-center justify-between text-xs text-slate-600">
-              <span className="flex items-center gap-1 font-medium text-slate-400">
-                <MapPin size={13} className="text-slate-400" /> Vị trí GPS:
+            <div className="rounded-lg bg-slate-50 px-2.5 py-1.5 border border-slate-100 flex items-center justify-between text-xs text-slate-600">
+              <span className="font-medium text-slate-400">
+                Vị trí GPS:
               </span>
               <span className="font-mono text-slate-700 font-medium">
                 {data.checkOutLatitude != null && data.checkOutLongitude != null
@@ -242,12 +230,12 @@ export default function AttendanceDetailModal({
 
         {/* 3. Notes Section */}
         {data.note && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-1">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <FileText size={13} className="text-slate-400" /> Ghi chú
+          <div className="rounded-lg border border-slate-200/60 p-2.5 sm:p-3 space-y-1">
+            <p className="text-xs font-semibold text-slate-500">
+              Ghi chú
             </p>
-            <p className="text-xs text-slate-700 leading-relaxed bg-white p-2.5 rounded-lg border border-slate-200/80 italic">
-              &quot;{data.note}&quot;
+            <p className="text-xs text-slate-700 leading-relaxed">
+              {data.note}
             </p>
           </div>
         )}

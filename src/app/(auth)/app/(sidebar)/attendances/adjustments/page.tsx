@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { TableAction, Button, TableData, Badge, ITableColumn, ITableFilterProps, Heading, Alert } from '@/components';
+import { TableAction, Button, TableData, Badge, ITableColumn, ITableFilterProps, Heading, Alert, Avatar } from '@/components';
 import { toast } from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye, CheckCircle2, FileEdit, Clock, AlertCircle, Info, FileCheck, Calendar, SquareCheck, Check } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { BASE_MINIO_URL } from '@/config';
 import { getRequestTypeLabel } from '@/types';
 import type { AttendanceAdjustmentRequest, AdjustmentStatus, RequestType } from '@/types';
 import AddAdjustmentModal from './_components/add-modal';
@@ -320,23 +321,16 @@ export default function AdjustmentsSidebarPage() {
 
         {/* Reason Quote */}
         {row.reason && (
-          <p className="text-xs text-slate-600 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 line-clamp-2">
-            &quot;{row.reason}&quot;
+          <p
+            className="text-xs text-slate-600 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 truncate"
+            title={row.reason}
+          >
+            {row.reason}
           </p>
         )}
 
         {/* Actions Bar */}
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100/50" onClick={(e) => e.stopPropagation()}>
-          {isAdmin && isPending && (
-            <button
-              type="button"
-              onClick={() => openReviewModal(row, 'approved')}
-              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors flex items-center gap-1 cursor-pointer"
-            >
-              <Check size={12} />
-              Duyệt
-            </button>
-          )}
           {canManageThisRow && (
             <button
               type="button"
@@ -368,23 +362,39 @@ export default function AdjustmentsSidebarPage() {
     );
   };
 
+  // Cấu hình các cột hiển thị trong TableData
   const columns: ITableColumn<AdjustmentRecord>[] = [
     {
-      key: 'employee',
+      key: 'user',
       label: 'Nhân sự',
-      minWidth: '160px',
-      cell: (row) => <div className="font-bold text-slate-900 text-sm">{row?.user?.fullName}</div>,
+      minWidth: '180px',
+      cell: (row) => {
+        const avatarSrc = row.user?.avatar
+          ? row.user.avatar.startsWith('http')
+            ? row.user.avatar
+            : `${BASE_MINIO_URL}${row.user.avatar}`
+          : undefined;
+
+        return (
+          <div className="flex items-center gap-3">
+            <Avatar name={row.user?.fullName || 'NV'} src={avatarSrc} size="sm" />
+            <span className="font-semibold text-gray-900 text-sm truncate">
+              {row.user?.fullName || 'Nhân viên'}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: 'workDate',
       label: 'Ngày làm việc',
       minWidth: '130px',
-      cell: (row) => <span className="text-xs font-semibold text-slate-700">{row.workDate}</span>,
+      cell: (row) => <span className="font-medium text-slate-700">{row.workDate || '-'}</span>,
     },
     {
       key: 'requestType',
       label: 'Loại khiếu nại',
-      minWidth: '170px',
+      minWidth: '160px',
       cell: (row) => (
         <Badge variant="info" className="text-[11px] font-semibold">
           {getRequestTypeLabel(row.requestType)}
@@ -394,13 +404,13 @@ export default function AdjustmentsSidebarPage() {
     {
       key: 'checkIn',
       label: 'Check In (Cũ → Mới)',
-      minWidth: '180px',
+      minWidth: '160px',
       cell: (row) =>
-        row.requestType !== 'check_out' ? (
+        row.requestedCheckIn ? (
           <div className="text-xs">
             <span className="text-slate-400 line-through font-medium">{row.oldCheckIn || '-'}</span>
             <span className="mx-1 text-slate-400">→</span>
-            <span className="font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{row.requestedCheckIn || '-'}</span>
+            <span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">{row.requestedCheckIn || '-'}</span>
           </div>
         ) : (
           <span className="text-slate-300">—</span>
@@ -409,9 +419,9 @@ export default function AdjustmentsSidebarPage() {
     {
       key: 'checkOut',
       label: 'Check Out (Cũ → Mới)',
-      minWidth: '180px',
+      minWidth: '160px',
       cell: (row) =>
-        row.requestType !== 'check_in' ? (
+        row.requestedCheckOut ? (
           <div className="text-xs">
             <span className="text-slate-400 line-through font-medium">{row.oldCheckOut || '-'}</span>
             <span className="mx-1 text-slate-400">→</span>
@@ -426,8 +436,11 @@ export default function AdjustmentsSidebarPage() {
       label: 'Lý do khiếu nại',
       minWidth: '155px',
       cell: (row) => (
-        <span className="text-xs text-slate-600 line-clamp-2 max-w-[220px] block italic" title={row.reason}>
-          &quot;{row.reason}&quot;
+        <span
+          className="text-xs text-slate-600 truncate max-w-[250px] block"
+          title={row.reason || ''}
+        >
+          {row.reason || '-'}
         </span>
       ),
     },
@@ -443,7 +456,7 @@ export default function AdjustmentsSidebarPage() {
     {
       key: 'actions',
       label: 'Thao tác',
-      minWidth: '160px',
+      minWidth: '120px',
       cell: (row) => {
         const canManageThisRow = isAdmin || row.userId === currentUser?.id;
         return (
@@ -458,14 +471,6 @@ export default function AdjustmentsSidebarPage() {
                   setShowDetailModal(true);
                 },
               },
-              isAdmin &&
-                row.status === 'pending' && {
-                  title: 'Xét duyệt khiếu nại',
-                  icon: Check,
-                  size: 18,
-                  // className: 'text-teal-600 hover:bg-teal-50 hover:text-teal-700',
-                  onClick: () => openReviewModal(row, 'approved'),
-                },
               canManageThisRow && {
                 title: 'Chỉnh sửa',
                 icon: Pencil,
@@ -547,7 +552,13 @@ export default function AdjustmentsSidebarPage() {
 
       <EditAdjustmentModal open={showEditModal} data={selectedRow} onClose={() => setShowEditModal(false)} onSuccess={refreshData} />
 
-      <AdjustmentDetailModal open={showDetailModal} data={selectedRow} onClose={() => setShowDetailModal(false)} />
+      <AdjustmentDetailModal
+        open={showDetailModal}
+        data={selectedRow}
+        onClose={() => setShowDetailModal(false)}
+        isAdmin={isAdmin}
+        onReview={openReviewModal}
+      />
 
       {/* Review Modal (Popup Preview Phê duyệt / Từ chối) */}
       <ReviewAdjustmentModal

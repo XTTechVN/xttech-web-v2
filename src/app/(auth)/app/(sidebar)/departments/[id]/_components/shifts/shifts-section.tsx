@@ -22,7 +22,7 @@ import type { WorkShift } from '@/types';
 import { ShiftFormModal } from '@/app/(auth)/app/(sidebar)/shifts/_components/form-modal';
 
 interface DepartmentShiftsSectionProps {
-  departmentId: number;
+  departmentId: number; 
   onCountChange?: (count: number) => void;
 }
 
@@ -108,13 +108,7 @@ export const DepartmentShiftsSection: React.FC<DepartmentShiftsSectionProps> = (
       {/* Header */}
       <div className="flex items-center justify-between gap-2 flex-wrap shrink-0">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-            <CalendarClock size={18} />
-          </div>
           <h2 className="text-base font-bold text-slate-900">Ca làm việc</h2>
-          <Badge variant="primary" size="sm" className="font-semibold">
-            {totalCount}
-          </Badge>
         </div>
 
         <Button
@@ -141,7 +135,7 @@ export const DepartmentShiftsSection: React.FC<DepartmentShiftsSectionProps> = (
       </div>
 
       {/* List of Shifts Cards with 200px scroll area */}
-      <div className="flex flex-col gap-2.5 h-[200px] overflow-y-auto pr-1.5 scrollbar-thin">
+      <div className="flex flex-col gap-2.5 h-[200px] overflow-y-auto scrollbar-hide">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
             {[1, 2].map((i) => (
