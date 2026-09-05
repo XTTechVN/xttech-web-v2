@@ -86,9 +86,6 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
 
   const employeeOptions = useMemo(() => {
     const list = [...employees] as any[];
-    console.log('--- employeeOptions ---');
-    console.log('currentUser:', currentUser);
-    console.log('employees list:', list);
 
     if (data?.user && !list.some((u) => u.id === data.user?.id)) {
       list.unshift(data.user);
@@ -104,9 +101,6 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
         return 0;
       });
     }
-
-    console.log('sorted list:', list);
-
     return [
       {
         value: '',
@@ -368,8 +362,7 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
 
     setIsSubmitting(true);
     try {
-      const res = await createAdjustmentRequest(payload);
-      // console.log(res);
+      await createAdjustmentRequest(payload);
       toast.success('Tạo khiếu nại thành công');
       resetForm();
       onSuccess?.();

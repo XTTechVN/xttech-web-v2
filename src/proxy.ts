@@ -39,10 +39,6 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  console.log(`[Proxy] Pathname: ${pathname}`);
-  console.log(`[Proxy] Raw Cookie: ${xtAuthCookie}`);
-  console.log(`[Proxy] parsed userRoles:`, userRoles);
-
   // 1. Nếu đã đăng nhập mà cố tình vào lại trang /signin -> redirect về trang mặc định của role
   if (pathname === '/signin') {
     if (userRoles.length > 0) {
