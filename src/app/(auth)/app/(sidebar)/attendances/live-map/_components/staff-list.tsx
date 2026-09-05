@@ -57,8 +57,8 @@ export function StaffList({
           </div>
 
           <div className="flex items-center gap-1.5 text-xs font-semibold">
-            <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
               {movingCount} di chuyển
             </span>
           </div>
@@ -88,7 +88,7 @@ export function StaffList({
           <button
             onClick={() => setStatusFilter('moving')}
             className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-              statusFilter === 'moving' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              statusFilter === 'moving' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             Di chuyển ({movingCount})
@@ -96,7 +96,7 @@ export function StaffList({
           <button
             onClick={() => setStatusFilter('stationary')}
             className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-              statusFilter === 'stationary' ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              statusFilter === 'stationary' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             Đứng yên ({stationaryCount})
@@ -124,43 +124,74 @@ export function StaffList({
                 className={`p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 ${
                   isSelected
                     ? 'border-primary bg-primary/5 shadow-xs'
+                    : isOffline
+                    ? 'border-slate-100 bg-slate-50/70 opacity-75 hover:opacity-100 hover:bg-slate-100/80'
                     : 'border-slate-100 bg-white hover:bg-slate-50 hover:border-slate-200'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="relative w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-700 overflow-hidden shrink-0">
+                  <div className="relative w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">
                     {staff.avatar ? (
-                      <img src={BASE_MINIO_URL + staff.avatar} alt={staff.userName || 'Nhân viên'} className="w-full h-full object-cover" />
+                      <img
+                        src={BASE_MINIO_URL + staff.avatar}
+                        alt={staff.userName || 'Nhân viên'}
+                        className={`w-full h-full object-cover overflow-hidden rounded-full ${isOffline ? 'grayscale opacity-60' : ''}`}
+                      />
                     ) : (
                       (staff.userName || 'N').charAt(0).toUpperCase()
                     )}
                     <span
                       className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-white ${
-                        isOffline ? 'bg-slate-400' : isMoving ? 'bg-emerald-500' : 'bg-primary'
+                        isOffline
+                          ? 'bg-slate-400'
+                          : isMoving
+                          ? 'bg-amber-500 animate-pulse'
+                          : 'bg-emerald-500'
                       }`}
                     />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
-                      <h4 className="text-xs font-bold text-slate-800 truncate">{staff.userName || 'Nhân viên'}</h4>
+                      <h4 className={`text-xs font-bold truncate ${isOffline ? 'text-slate-500' : 'text-slate-800'}`}>
+                        {staff.userName || 'Nhân viên'}
+                      </h4>
+
+                      {/* Badge trạng thái trực quan */}
+                      {isOffline ? (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 shrink-0">
+                          Ngoại tuyến
+                        </span>
+                      ) : isMoving ? (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 shrink-0 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                          Di chuyển
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Đứng yên
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-1 mt-0.5">
+                      <p className="text-[10px] text-slate-500 truncate">
+                        {staff.positionName || staff.departmentName || 'Nhân viên'}
+                      </p>
                       {typeof staff.batteryLevel === 'number' && (
-                        <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                        <span className="text-[10px] text-slate-400 flex items-center gap-0.5 shrink-0">
                           <Battery size={11} className={staff.batteryLevel < 20 ? 'text-rose-500' : 'text-slate-400'} />
                           {staff.batteryLevel}%
                         </span>
                       )}
                     </div>
-                    <p className="text-[10px] text-slate-500 truncate">
-                      {staff.positionName || staff.departmentName || 'Nhân viên'}
-                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-1 border-t border-slate-100/80 text-[10px] text-slate-500">
                   <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1">
-                      <Gauge size={11} className={isMoving ? 'text-emerald-500' : 'text-slate-400'} />
+                      <Gauge size={11} className={isMoving ? 'text-amber-500 font-semibold' : 'text-slate-400'} />
                       {staff.speed ? `${Math.round(staff.speed * 3.6)} km/h` : '0 km/h'}
                     </span>
                     <span className="flex items-center gap-1">

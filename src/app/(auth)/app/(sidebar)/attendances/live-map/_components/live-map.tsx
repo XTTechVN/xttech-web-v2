@@ -41,29 +41,42 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
     const isMoving = staff.status === 'moving';
     const isOffline = staff.status === 'offline';
 
-    const statusBorderColor = isOffline
-      ? 'border-slate-400 bg-slate-100'
+    // 1. Phân loại màu sắc theo yêu cầu: Đứng yên = Xanh lá, Di chuyển = Vàng, Offline = Xám
+    const ringColor = isOffline
+      ? 'ring-2 ring-slate-400 bg-slate-200'
       : isMoving
-      ? 'border-emerald-500 bg-emerald-50'
-      : 'border-primary bg-primary/10';
+      ? 'ring-3 ring-amber-500 shadow-amber-500/30'
+      : 'ring-3 ring-emerald-500 shadow-emerald-500/30';
 
-    const pulseEffect = isMoving
-      ? '<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span></span>'
-      : '';
+    // 2. Chấm huy hiệu trạng thái góc avatar
+    const badgeDot = isOffline
+      ? '<span class="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-slate-500 border-2 border-white rounded-full flex items-center justify-center text-[8px] text-white font-bold">✕</span>'
+      : isMoving
+      ? '<span class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500 border-2 border-white"></span></span>'
+      : '<span class="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>';
+
     const safeName = staff.userName || 'Nhân viên';
     const shortName = safeName.split(' ').slice(-2).join(' ');
 
+    // 3. Avatar: Cắt tròn chuẩn, làm mờ đen trắng nếu Offline
+    const avatarFilter = isOffline ? 'grayscale opacity-60' : '';
     const avatarHtml = staff.avatar
-      ? `<img src="${BASE_MINIO_URL + staff.avatar}" alt="${safeName}" class="w-full h-full object-cover rounded-full" />`
-      : `<span class="text-xs font-bold text-slate-700">${safeName.charAt(0).toUpperCase()}</span>`;
+      ? `<img src="${BASE_MINIO_URL + staff.avatar}" alt="${safeName}" class="w-full h-full object-cover shrink-0 ${avatarFilter}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 9999px;" />`
+      : `<span class="text-xs font-bold ${isOffline ? 'text-slate-400' : 'text-slate-700'}">${safeName.charAt(0).toUpperCase()}</span>`;
+
+    // 4. Chấm màu đồng bộ trên nhãn tên
+    const dotColor = isOffline ? 'bg-slate-400' : isMoving ? 'bg-amber-400' : 'bg-emerald-400';
 
     const html = `
-      <div class="relative flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-110 ${isSelected ? 'scale-125 z-50' : ''}">
-        <div class="w-10 h-10 rounded-full border-2 ${statusBorderColor} shadow-lg flex items-center justify-center bg-white overflow-hidden p-0.5">
-          ${avatarHtml}
+      <div class="relative flex flex-col items-center cursor-pointer select-none transition-transform duration-200 hover:scale-110 ${isSelected ? 'scale-125 z-50' : ''}">
+        <div class="relative w-10 h-10 rounded-full ${ringColor} shadow-md bg-white p-0.5 shrink-0 flex items-center justify-center">
+          <div class="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-slate-100">
+            ${avatarHtml}
+          </div>
+          ${badgeDot}
         </div>
-        ${pulseEffect}
-        <div class="absolute -bottom-5 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] px-1.5 py-0.2 rounded-md whitespace-nowrap shadow-sm font-medium">
+        <div class="mt-1 bg-slate-900/90 backdrop-blur-xs text-white text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm font-medium flex items-center gap-1 pointer-events-none">
+          <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
           ${shortName}
         </div>
       </div>
@@ -71,7 +84,7 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
 
     return L.divIcon({
       html,
-      className: 'custom-staff-marker',
+      className: 'custom-staff-marker !bg-transparent !border-0',
       iconSize: [40, 40],
       iconAnchor: [20, 20],
       popupAnchor: [0, -20],

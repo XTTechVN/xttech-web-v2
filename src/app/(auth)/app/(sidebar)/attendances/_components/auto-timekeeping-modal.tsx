@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import { autoTimekeeping, sendLocationPing } from '@/actions';
 import { TimekeepingType } from '@/types';
 import { Camera, RefreshCw, MapPin, Clock, LogIn, LogOut, Loader2, AlertCircle, CheckCircle2, Navigation } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Props {
   open: boolean;
@@ -23,6 +24,7 @@ interface GpsCoords {
 }
 
 export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasCheckedIn = false }: Props) {
+  const queryClient = useQueryClient()
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -202,6 +204,8 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         capturedFile,
       );
 
+      await queryClient.invalidateQueries({ queryKey: ['my-today-attendance'] });
+      await queryClient.invalidateQueries({ queryKey: ['attendances'] });
       // Kích hoạt ngay 1 ping định vị tức thì lên Live Map khi Check-in
       if (type === 'check_in') {
         sendLocationPing({
