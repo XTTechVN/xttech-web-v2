@@ -27,15 +27,18 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     }
 
     @objc func startTracking(_ call: CAPPluginCall) {
-        if let token = call.getString("token"), !token.isEmpty {
+        let token = call.getString("token", "")
+        if !token.isEmpty {
             self.accessToken = token
             UserDefaults.standard.set(token, forKey: prefsKeyToken)
         }
-        if let refreshToken = call.getString("refreshToken"), !refreshToken.isEmpty {
+        let refreshToken = call.getString("refreshToken", "")
+        if !refreshToken.isEmpty {
             self.refreshToken = refreshToken
             UserDefaults.standard.set(refreshToken, forKey: prefsKeyRefreshToken)
         }
-        if let apiUrl = call.getString("apiUrl"), !apiUrl.isEmpty {
+        let apiUrl = call.getString("apiUrl", "")
+        if !apiUrl.isEmpty {
             self.apiUrl = apiUrl
             UserDefaults.standard.set(apiUrl, forKey: prefsKeyApiUrl)
         }
@@ -50,11 +53,13 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     }
 
     @objc func updateToken(_ call: CAPPluginCall) {
-        if let token = call.getString("token"), !token.isEmpty {
+        let token = call.getString("token", "")
+        if !token.isEmpty {
             self.accessToken = token
             UserDefaults.standard.set(token, forKey: prefsKeyToken)
         }
-        if let refreshToken = call.getString("refreshToken"), !refreshToken.isEmpty {
+        let refreshToken = call.getString("refreshToken", "")
+        if !refreshToken.isEmpty {
             self.refreshToken = refreshToken
             UserDefaults.standard.set(refreshToken, forKey: prefsKeyRefreshToken)
         }
