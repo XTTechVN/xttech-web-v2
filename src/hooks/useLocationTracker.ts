@@ -6,8 +6,6 @@ import { sendLocationPing } from '@/actions';
 import { useAuthStore } from '@/stores';
 import { BASE_API_URL } from '@/config';
 import { Capacitor, registerPlugin } from '@capacitor/core';
-import type { BackgroundGeolocationPlugin } from '@capacitor-community/background-geolocation';
-const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>('BackgroundGeolocation');
 
 interface NativeTrackingPlugin {
   startTracking(options: { token: string; apiUrl: string }): Promise<{ success: boolean }>;
@@ -42,7 +40,6 @@ export function useLocationTracker({
   const workerRef = useRef<Worker | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const wakeLockRef = useRef<unknown>(null);
-  const nativeWatcherIdRef = useRef<string | null>(null);
 
   // Đọc mức pin thiết bị nếu được hỗ trợ (có cache lại mức pin gần nhất)
   const getBatteryLevel = async (): Promise<number | undefined> => {
@@ -175,10 +172,6 @@ export function useLocationTracker({
       if (isNative) {
         NativeTracking.stopTracking().catch(() => {});
       }
-      if (nativeWatcherIdRef.current) {
-        BackgroundGeolocation.removeWatcher({ id: nativeWatcherIdRef.current }).catch(() => {});
-        nativeWatcherIdRef.current = null;
-      }
       if (workerRef.current) {
         workerRef.current.terminate();
         workerRef.current = null;
@@ -309,10 +302,6 @@ export function useLocationTracker({
       // KHÔNG gọi NativeTracking.stopTracking() ở đây!
       // Vì khi người dùng vuốt đóng app, React sẽ unmount và chạy cleanup này.
       // Nếu gọi stopTracking ở đây, Service Native sẽ bị tắt ngay khi đóng app.
-      if (nativeWatcherIdRef.current) {
-        BackgroundGeolocation.removeWatcher({ id: nativeWatcherIdRef.current }).catch(() => {});
-        nativeWatcherIdRef.current = null;
-      }
       if (workerRef.current) {
         workerRef.current.terminate();
         workerRef.current = null;
