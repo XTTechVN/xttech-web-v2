@@ -60,6 +60,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 5. Quyền giữ CPU thức tạm thời khi gửi gói tin và xin miễn trừ tiết kiệm pin -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- Quyền Camera chụp ảnh chấm công khuôn mặt -->
     <uses-permission android:name="android.permission.CAMERA" />

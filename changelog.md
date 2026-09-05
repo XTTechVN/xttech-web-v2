@@ -4,6 +4,12 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-05
 
+### Fixed
+- **Khắc phục lỗi app Android bị chuyển về trạng thái `offline` sau khoảng 40 - 60 phút (Background Tracking):**
+  - **Tự động Refresh Token trong Background Service:** Bổ sung việc lưu trữ `refreshToken` trong [`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java). Khi Access Token hết hạn (mặc định 30 phút theo cấu hình backend) và API trả về `HTTP 401 Unauthorized`, Service tầng Native sẽ tự động gọi endpoint `/api/v1/auth/refresh`, lưu Access Token mới và retry ping ngay lập tức mà không làm gián đoạn luồng định vị.
+  - **Đồng bộ Token thời gian thực:** Cập nhật [`NativeTrackingPlugin.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/NativeTrackingPlugin.java) với method `updateToken` và hook [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts) lắng nghe sự kiện cập nhật token từ `useAuthStore` để đồng bộ tức thời xuống Service nền.
+  - **Chống Android Doze Mode & CPU Sleep:** Khai báo quyền `WAKE_LOCK` và `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` trong [`AndroidManifest.xml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/AndroidManifest.xml). Sử dụng `PARTIAL_WAKE_LOCK` ngắn (tối đa 15s) trong `TrackingLocationService` để giữ CPU hoạt động trọn vẹn trong quá trình gửi gói tin mạng HTTP khi thiết bị tắt màn hình và để yên.
+
 ### Added
 - Khởi tạo nền tảng **iOS Native (`@capacitor/ios`)** cho ứng dụng di động:
   - Cài đặt `@capacitor/ios` và chạy `npx cap add ios` sinh khung dự án Xcode `ios/App/App.xcworkspace`.

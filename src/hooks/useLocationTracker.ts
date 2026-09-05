@@ -8,7 +8,8 @@ import { BASE_API_URL } from '@/config';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 
 interface NativeTrackingPlugin {
-  startTracking(options: { token: string; apiUrl: string }): Promise<{ success: boolean }>;
+  startTracking(options: { token: string; refreshToken?: string; apiUrl: string }): Promise<{ success: boolean }>;
+  updateToken(options: { token: string; refreshToken?: string }): Promise<{ success: boolean }>;
   stopTracking(): Promise<{ success: boolean }>;
 }
 const NativeTracking = registerPlugin<NativeTrackingPlugin>('NativeTracking');
@@ -197,9 +198,10 @@ export function useLocationTracker({
     // 1. NẾU LÀ NATIVE ANDROID / IOS: KHỞI CHẠY NATIVE FOREGROUND SERVICE ĐỘC LẬP
     // Chạy ngầm 100% bằng Java Native (chuẩn như Zalo/Grab), duy trì liên tục kể cả khi vuốt tắt app
     if (isNative) {
-      const token = useAuthStore.getState().accessToken;
+      const authState = useAuthStore.getState();
       NativeTracking.startTracking({
-        token,
+        token: authState.accessToken,
+        refreshToken: authState.refreshToken,
         apiUrl: BASE_API_URL,
       }).catch((e) => {
         console.warn('[NativeTracking] Start native tracking failed:', e);
@@ -319,6 +321,21 @@ export function useLocationTracker({
       window.removeEventListener('focus', handleVisibilityOrFocus);
     };
   }, [enabled, intervalMs, heartbeatMs, pingCurrentLocation, executePing, sendHeartbeat]);
+
+  // Đồng bộ tức thời khi AccessToken / RefreshToken được cập nhật từ Web sang Native Service
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform() && enabled && (accessToken || refreshToken)) {
+      NativeTracking.updateToken({
+        token: accessToken,
+        refreshToken: refreshToken,
+      }).catch((e) => {
+        console.warn('[NativeTracking] Update token failed:', e);
+      });
+    }
+  }, [accessToken, refreshToken, enabled]);
 
   return {
     isTracking,

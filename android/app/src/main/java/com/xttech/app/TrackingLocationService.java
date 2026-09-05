@@ -16,7 +16,7 @@ import android.location.LocationManager;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -40,9 +40,11 @@ public class TrackingLocationService extends Service implements LocationListener
 
     public static final String ACTION_START = "com.xttech.app.ACTION_START_TRACKING";
     public static final String ACTION_STOP = "com.xttech.app.ACTION_STOP_TRACKING";
+    public static final String ACTION_UPDATE_TOKEN = "com.xttech.app.ACTION_UPDATE_TOKEN";
 
     public static final String PREFS_NAME = "xttech_native_tracking_prefs";
     public static final String KEY_TOKEN = "access_token";
+    public static final String KEY_REFRESH_TOKEN = "refresh_token";
     public static final String KEY_API_URL = "api_url";
 
     private LocationManager locationManager;
@@ -67,13 +69,27 @@ public class TrackingLocationService extends Service implements LocationListener
             if (ACTION_STOP.equals(action)) {
                 stopTracking();
                 return START_NOT_STICKY;
-            } else if (ACTION_START.equals(action)) {
+            } else if (ACTION_UPDATE_TOKEN.equals(action)) {
                 String token = intent.getStringExtra(KEY_TOKEN);
-                String apiUrl = intent.getStringExtra(KEY_API_URL);
-                if (token != null || apiUrl != null) {
+                String refreshToken = intent.getStringExtra(KEY_REFRESH_TOKEN);
+                if (token != null || refreshToken != null) {
                     SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
                     SharedPreferences.Editor editor = prefs.edit();
                     if (token != null) editor.putString(KEY_TOKEN, token);
+                    if (refreshToken != null) editor.putString(KEY_REFRESH_TOKEN, refreshToken);
+                    editor.apply();
+                    Log.i(TAG, "Native tokens updated via ACTION_UPDATE_TOKEN");
+                }
+                return START_STICKY;
+            } else if (ACTION_START.equals(action)) {
+                String token = intent.getStringExtra(KEY_TOKEN);
+                String refreshToken = intent.getStringExtra(KEY_REFRESH_TOKEN);
+                String apiUrl = intent.getStringExtra(KEY_API_URL);
+                if (token != null || refreshToken != null || apiUrl != null) {
+                    SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    if (token != null) editor.putString(KEY_TOKEN, token);
+                    if (refreshToken != null) editor.putString(KEY_REFRESH_TOKEN, refreshToken);
                     if (apiUrl != null) editor.putString(KEY_API_URL, apiUrl);
                     editor.apply();
                 }
@@ -203,9 +219,147 @@ public class TrackingLocationService extends Service implements LocationListener
         sendPingToBackend(location, false);
     }
 
+    private int performHttpPing(Location loc, boolean isHeartbeat, String apiUrl, String token) {
+        HttpURLConnection conn = null;
+        try {
+            String endpoint = apiUrl;
+            if (endpoint.endsWith("/")) {
+                endpoint = endpoint.substring(0, endpoint.length() - 1);
+            }
+            endpoint += "/api/v1/attendances/location-ping";
+
+            URL url = new URL(endpoint);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setConnectTimeout(15000);
+            conn.setReadTimeout(15000);
+            conn.setDoOutput(true);
+
+            if (token != null && !token.isEmpty()) {
+                conn.setRequestProperty("Authorization", "Bearer " + token);
+            }
+
+            float batteryLevel = getDeviceBatteryLevel();
+            float speed = isHeartbeat ? 0.0f : (loc.hasSpeed() ? loc.getSpeed() : 0.0f);
+
+            JSONObject payload = new JSONObject();
+            payload.put("latitude", loc.getLatitude());
+            payload.put("longitude", loc.getLongitude());
+            if (loc.hasAccuracy()) payload.put("accuracy", (double) loc.getAccuracy());
+            payload.put("speed", (double) speed);
+            if (loc.hasBearing()) payload.put("heading", (double) loc.getBearing());
+            if (batteryLevel >= 0) payload.put("battery_level", (double) batteryLevel);
+
+            byte[] postData = payload.toString().getBytes(StandardCharsets.UTF_8);
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(postData);
+                os.flush();
+            }
+
+            return conn.getResponseCode();
+        } catch (Exception e) {
+            Log.e(TAG, "performHttpPing error", e);
+            return -1;
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+    }
+
+    private synchronized boolean refreshAccessToken() {
+        HttpURLConnection conn = null;
+        try {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            String apiUrl = prefs.getString(KEY_API_URL, null);
+            String refreshToken = prefs.getString(KEY_REFRESH_TOKEN, null);
+
+            if (apiUrl == null || refreshToken == null || refreshToken.isEmpty()) {
+                Log.w(TAG, "Cannot refresh token: apiUrl or refreshToken is missing");
+                return false;
+            }
+
+            String endpoint = apiUrl;
+            if (endpoint.endsWith("/")) {
+                endpoint = endpoint.substring(0, endpoint.length() - 1);
+            }
+            endpoint += "/api/v1/auth/refresh";
+
+            URL url = new URL(endpoint);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setConnectTimeout(15000);
+            conn.setReadTimeout(15000);
+            conn.setDoOutput(true);
+
+            JSONObject payload = new JSONObject();
+            payload.put("refreshToken", refreshToken);
+
+            byte[] postData = payload.toString().getBytes(StandardCharsets.UTF_8);
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(postData);
+                os.flush();
+            }
+
+            int responseCode = conn.getResponseCode();
+            if (responseCode >= 200 && responseCode < 300) {
+                java.io.InputStream in = conn.getInputStream();
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, len);
+                }
+                String respStr = out.toString(StandardCharsets.UTF_8.name());
+                JSONObject resJson = new JSONObject(respStr);
+
+                String newAccessToken = null;
+                if (resJson.has("accessToken")) {
+                    newAccessToken = resJson.getString("accessToken");
+                } else if (resJson.has("access_token")) {
+                    newAccessToken = resJson.getString("access_token");
+                } else if (resJson.has("data")) {
+                    JSONObject dataObj = resJson.getJSONObject("data");
+                    if (dataObj.has("accessToken")) {
+                        newAccessToken = dataObj.getString("accessToken");
+                    } else if (dataObj.has("access_token")) {
+                        newAccessToken = dataObj.getString("access_token");
+                    }
+                }
+
+                if (newAccessToken != null && !newAccessToken.isEmpty()) {
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putString(KEY_TOKEN, newAccessToken);
+                    editor.apply();
+                    Log.i(TAG, "Access token refreshed successfully in Native Service!");
+                    return true;
+                }
+            } else {
+                Log.w(TAG, "Token refresh request failed with HTTP " + responseCode);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Exception during token refresh", e);
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+        return false;
+    }
+
     private void sendPingToBackend(Location loc, boolean isHeartbeat) {
         networkExecutor.execute(() -> {
-            HttpURLConnection conn = null;
+            PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wakeLock = null;
+            if (powerManager != null) {
+                wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "XTTech::TrackingPingWakeLock");
+                wakeLock.acquire(15000);
+            }
+
             try {
                 SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
                 String apiUrl = prefs.getString(KEY_API_URL, null);
@@ -216,44 +370,16 @@ public class TrackingLocationService extends Service implements LocationListener
                     return;
                 }
 
-                // Chuẩn hóa đường dẫn endpoint
-                String endpoint = apiUrl;
-                if (endpoint.endsWith("/")) {
-                    endpoint = endpoint.substring(0, endpoint.length() - 1);
-                }
-                endpoint += "/api/v1/attendances/location-ping";
-
-                URL url = new URL(endpoint);
-                conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                conn.setRequestProperty("Accept", "application/json");
-                conn.setConnectTimeout(15000);
-                conn.setReadTimeout(15000);
-                conn.setDoOutput(true);
-
-                if (token != null && !token.isEmpty()) {
-                    conn.setRequestProperty("Authorization", "Bearer " + token);
+                int responseCode = performHttpPing(loc, isHeartbeat, apiUrl, token);
+                if (responseCode == 401) {
+                    Log.w(TAG, "Received 401 Unauthorized. Attempting to refresh access token in background...");
+                    boolean refreshed = refreshAccessToken();
+                    if (refreshed) {
+                        String newToken = prefs.getString(KEY_TOKEN, null);
+                        responseCode = performHttpPing(loc, isHeartbeat, apiUrl, newToken);
+                    }
                 }
 
-                float batteryLevel = getDeviceBatteryLevel();
-                float speed = isHeartbeat ? 0.0f : (loc.hasSpeed() ? loc.getSpeed() : 0.0f);
-
-                JSONObject payload = new JSONObject();
-                payload.put("latitude", loc.getLatitude());
-                payload.put("longitude", loc.getLongitude());
-                if (loc.hasAccuracy()) payload.put("accuracy", (double) loc.getAccuracy());
-                payload.put("speed", (double) speed);
-                if (loc.hasBearing()) payload.put("heading", (double) loc.getBearing());
-                if (batteryLevel >= 0) payload.put("battery_level", (double) batteryLevel);
-
-                byte[] postData = payload.toString().getBytes(StandardCharsets.UTF_8);
-                try (OutputStream os = conn.getOutputStream()) {
-                    os.write(postData);
-                    os.flush();
-                }
-
-                int responseCode = conn.getResponseCode();
                 if (responseCode >= 200 && responseCode < 300) {
                     lastPingTime = System.currentTimeMillis();
                     Log.i(TAG, "Native ping sent successfully (" + (isHeartbeat ? "Heartbeat" : "Movement") + "): HTTP " + responseCode);
@@ -263,8 +389,10 @@ public class TrackingLocationService extends Service implements LocationListener
             } catch (Exception e) {
                 Log.e(TAG, "Exception while sending native ping to backend", e);
             } finally {
-                if (conn != null) {
-                    conn.disconnect();
+                if (wakeLock != null && wakeLock.isHeld()) {
+                    try {
+                        wakeLock.release();
+                    } catch (Exception ignored) {}
                 }
             }
         });
