@@ -69,7 +69,7 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
 
     const html = `
       <div class="relative flex flex-col items-center cursor-pointer select-none transition-transform duration-200 hover:scale-110 ${isSelected ? 'scale-125 z-50' : ''}">
-        <div class="relative w-10 h-10 rounded-full ${ringColor} shadow-md bg-white p-0.5 shrink-0 flex items-center justify-center">
+        <div class="relative w-8 h-8 rounded-full ${ringColor} shadow-md bg-white p-0.5 shrink-0 flex items-center justify-center">
           <div class="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-slate-100">
             ${avatarHtml}
           </div>
@@ -85,9 +85,9 @@ export function LiveMap({ staffLocations, selectedStaff, onSelectStaff, onViewRo
     return L.divIcon({
       html,
       className: 'custom-staff-marker !bg-transparent !border-0',
-      iconSize: [40, 40],
-      iconAnchor: [20, 20],
-      popupAnchor: [0, -20],
+      iconSize: [60, 52], 
+      iconAnchor: [30, 16], 
+      popupAnchor: [0, -18],  
     });
   };
 
