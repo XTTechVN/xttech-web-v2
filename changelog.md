@@ -2,6 +2,16 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-07
+
+### Fixed
+- **Triệt tiêu hiện tượng lộ trình bị giật loằng ngoằng do Fallback trạm phát sóng di động (Cellular BTS) và thiếu bộ lọc điểm rác:**
+  - **Web Geolocation Tracker (`useLocationTracker.ts`):** Loại bỏ hoàn toàn cơ chế fallback gọi lại `getCurrentPosition` với `enableHighAccuracy: false` (nguyên nhân gây lấy vị trí cột sóng BTS/IP sai số 500m - 1000m). Tăng thời gian chờ định vị `timeout` lên 12s và siết `maximumAge: 5000` để đảm bảo luôn nhận tín hiệu vệ tinh phần cứng.
+  - **Chốt chặn độ chính xác Client (`useLocationTracker.ts`):** Lọc cứng toàn bộ điểm có `accuracy > 30m` hoặc bước nhảy dị biệt $> 200m$ trong thời gian $< 6s$, không gửi điểm rác lên backend.
+  - **Android Native Tracking Service (`TrackingLocationService.java`):** Chuyển sang ưu tiên độc quyền `GPS_PROVIDER`, chỉ kích hoạt `NETWORK_PROVIDER` khi chip GPS bị tắt hoàn toàn trong cài đặt; bổ sung bộ lọc `accuracy > 30.0f` và kiểm tra bước nhảy dị biệt.
+  - **iOS Native Tracking Plugin (`NativeTrackingPlugin.swift`):** Siết ngưỡng sai số `horizontalAccuracy > 30.0` và tích hợp bộ lọc bước nhảy dị biệt (Jump Outlier Filter $> 200m$ trong $< 6s$) ngay tại tầng Native CoreLocation của iOS.
+  - **Lọc lộ trình thông minh trên bản đồ (`route-playback-modal.tsx`):** Bổ sung thuật toán loại bỏ điểm văng gai nhọn (Outlier Spike Filter) trước khi đưa vào OSRM Map Matching hoặc vẽ Polyline, đảm bảo đường đi luôn mượt mà và bám sát tim đường giao thông thực tế.
+
 ## [Unreleased] - 2026-09-05
 
 ### Fixed

@@ -33,15 +33,60 @@ const Polyline = dynamic(
 );
 
 /**
- * Lọc bớt các điểm quá gần nhau (< 10m) để chống rung giật khi dừng xe
+ * Lọc bớt các điểm nhiễu, điểm văng ảo (Outlier Spike) và điểm quá gần (< 12m)
  */
 function filterPointsForMatching(points: StaffRoutePoint[]): StaffRoutePoint[] {
   if (points.length <= 2) return points;
-  const filtered: StaffRoutePoint[] = [points[0]];
 
-  for (let i = 1; i < points.length; i++) {
+  // 1. Lọc bỏ các điểm có sai số lớn (> 30m)
+  const accuratePoints = points.filter(
+    (p) => p.accuracy === undefined || p.accuracy === null || p.accuracy <= 30
+  );
+  if (accuratePoints.length <= 2) return accuratePoints;
+
+  // 2. Lọc bỏ điểm văng ảo dạng gai nhọn (nhảy xa > 150m rồi lập tức quay về tim đường cũ)
+  const nonSpikePoints: StaffRoutePoint[] = [accuratePoints[0]];
+  for (let i = 1; i < accuratePoints.length; i++) {
+    const prev = nonSpikePoints[nonSpikePoints.length - 1];
+    const curr = accuratePoints[i];
+    const next = i + 1 < accuratePoints.length ? accuratePoints[i + 1] : null;
+
+    const dLat = (curr.latitude - prev.latitude) * 111320;
+    const dLon =
+      (curr.longitude - prev.longitude) *
+      111320 *
+      Math.cos((curr.latitude * Math.PI) / 180);
+    const distToPrev = Math.sqrt(dLat * dLat + dLon * dLon);
+
+    // Nếu có điểm tiếp theo, kiểm tra xem curr có phải gai nhọn bất thường không
+    if (next) {
+      const dLatNext = (next.latitude - curr.latitude) * 111320;
+      const dLonNext =
+        (next.longitude - curr.longitude) *
+        111320 *
+        Math.cos((curr.latitude * Math.PI) / 180);
+      const distToNext = Math.sqrt(dLatNext * dLatNext + dLonNext * dLonNext);
+
+      const dLatBase = (next.latitude - prev.latitude) * 111320;
+      const dLonBase =
+        (next.longitude - prev.longitude) *
+        111320 *
+        Math.cos((next.latitude * Math.PI) / 180);
+      const distBase = Math.sqrt(dLatBase * dLatBase + dLonBase * dLonBase);
+
+      if (distToPrev > 150 && distToNext > 150 && distBase < 100) {
+        continue; // Bỏ qua điểm văng ảo gai nhọn này
+      }
+    }
+
+    nonSpikePoints.push(curr);
+  }
+
+  // 3. Lọc bỏ các điểm quá sát nhau (< 12m) để chống rung giật khi dừng xe
+  const filtered: StaffRoutePoint[] = [nonSpikePoints[0]];
+  for (let i = 1; i < nonSpikePoints.length; i++) {
     const prev = filtered[filtered.length - 1];
-    const curr = points[i];
+    const curr = nonSpikePoints[i];
 
     const dLat = (curr.latitude - prev.latitude) * 111320;
     const dLon =
@@ -50,8 +95,7 @@ function filterPointsForMatching(points: StaffRoutePoint[]): StaffRoutePoint[] {
       Math.cos((curr.latitude * Math.PI) / 180);
     const dist = Math.sqrt(dLat * dLat + dLon * dLon);
 
-    // Bỏ qua các điểm quá sát nhau (< 12m) trừ điểm cuối cùng
-    if (dist >= 12 || i === points.length - 1) {
+    if (dist >= 12 || i === nonSpikePoints.length - 1) {
       filtered.push(curr);
     }
   }
@@ -192,7 +236,8 @@ export function RoutePlaybackModal({
     fetchRoute();
   }, [isOpen, userId, selectedDate, attendanceId, filterMode]);
 
-  const points = routeData?.points || [];
+  const rawPoints = routeData?.points || [];
+  const points = filterPointsForMatching(rawPoints);
   const polylineCoords: [number, number][] = points.map((p) => [
     p.latitude,
     p.longitude,

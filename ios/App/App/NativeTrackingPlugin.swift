@@ -141,8 +141,8 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         
-        // Bỏ qua các điểm có sai số lớn (accuracy > 35m)
-        if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 35.0 {
+        // 1. Chốt chặn độ chính xác: Bỏ qua các điểm có sai số lớn (> 30m)
+        if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 30.0 {
             return
         }
 
@@ -151,6 +151,13 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         let speed = max(0.0, location.speed)
         let distance = lastLocation != nil ? location.distance(from: lastLocation!) : 999.0
+
+        // 2. Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
+        // Nếu khoảng cách nhảy vọt > 200m trong thời gian ngắn < 6s (v > 33 m/s ~ 120 km/h) -> điểm văng ảo do trạm sóng BTS
+        if let _ = self.lastLocation, elapsed > 0 && elapsed < 6.0 && distance > 200.0 {
+            print("[NativeTracking iOS] Discarding outlier jump point: \(distance)m in \(elapsed)s")
+            return
+        }
 
         // Smart Adaptive: Xác định có đang di chuyển (speed >= 1.0 m/s hoặc di dời >= 5m)
         let isMoving = speed >= 1.0 || distance >= 5.0

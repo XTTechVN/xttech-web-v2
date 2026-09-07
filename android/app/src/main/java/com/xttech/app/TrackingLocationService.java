@@ -158,7 +158,8 @@ public class TrackingLocationService extends Service implements LocationListener
         }
 
         try {
-            // Đăng ký GPS Provider (vệ tinh, độ chính xác cao)
+            // Ưu tiên độc quyền GPS Provider (vệ tinh, độ chính xác cao)
+            // Không đăng ký song song NETWORK_PROVIDER để tránh hiện tượng bóng bàn giữa 2 nguồn toạ độ
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 locationManager.requestLocationUpdates(
                         LocationManager.GPS_PROVIDER,
@@ -166,24 +167,24 @@ public class TrackingLocationService extends Service implements LocationListener
                         5.0f, // 5 mét
                         this
                 );
-            }
-
-            // Đăng ký Network Provider (trạm sóng di động, wifi) làm kênh dự phòng
-            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                Log.i(TAG, "Registered GPS_PROVIDER for high-accuracy tracking.");
+            } else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                // CHỈ kích hoạt Network Provider khi thiết bị tắt hoàn toàn chip GPS
                 locationManager.requestLocationUpdates(
                         LocationManager.NETWORK_PROVIDER,
                         10000,
                         10.0f,
                         this
                 );
+                Log.w(TAG, "GPS_PROVIDER disabled. Fallback to NETWORK_PROVIDER.");
             }
 
-            // Lấy vị trí gần nhất ngay khi khởi động
+            // Lấy vị trí gần nhất ngay khi khởi động (ưu tiên GPS)
             Location lastKnown = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if (lastKnown == null) {
+            if (lastKnown == null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                 lastKnown = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             }
-            if (lastKnown != null) {
+            if (lastKnown != null && (!lastKnown.hasAccuracy() || lastKnown.getAccuracy() <= 30.0f)) {
                 onLocationChanged(lastKnown);
             }
         } catch (SecurityException se) {
@@ -219,8 +220,8 @@ public class TrackingLocationService extends Service implements LocationListener
     public void onLocationChanged(Location location) {
         if (location == null) return;
 
-        // Bỏ qua các điểm có sai số lớn (accuracy > 35m) để chống hiện tượng giật văng tọa độ
-        if (location.hasAccuracy() && location.getAccuracy() > 35.0f) {
+        // Bỏ qua các điểm có sai số lớn (accuracy > 30m) để chống hiện tượng giật văng tọa độ
+        if (location.hasAccuracy() && location.getAccuracy() > 30.0f) {
             Log.d(TAG, "Ignoring inaccurate location point: accuracy = " + location.getAccuracy() + "m");
             return;
         }
@@ -230,6 +231,13 @@ public class TrackingLocationService extends Service implements LocationListener
 
         float speed = location.hasSpeed() ? location.getSpeed() : 0.0f;
         float distance = (lastLocation != null) ? location.distanceTo(lastLocation) : Float.MAX_VALUE;
+
+        // Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
+        // Nếu khoảng cách nhảy vọt > 200m trong thời gian ngắn < 6s (v > 33 m/s ~ 120 km/h) -> điểm văng ảo do trạm sóng BTS
+        if (lastLocation != null && elapsed > 0 && elapsed < 6000 && distance > 200.0f) {
+            Log.w(TAG, "Discarding outlier jump point: distance=" + distance + "m in " + elapsed + "ms");
+            return;
+        }
 
         // Smart Adaptive: Xác định có đang di chuyển (speed >= 1.0 m/s hoặc di dời >= 5m)
         boolean isMoving = speed >= 1.0f || distance >= 5.0f;
