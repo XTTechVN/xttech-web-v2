@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -206,12 +207,13 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
 
       await queryClient.invalidateQueries({ queryKey: ['my-today-attendance'] });
       await queryClient.invalidateQueries({ queryKey: ['attendances'] });
-      // Kích hoạt ngay 1 ping định vị tức thì lên Live Map khi Check-in
+      // Kích hoạt ngay 1 ping định vị tức thì lên Live Map khi Check-in (chốt cứng speed: 0 để Live Map nhận điểm văn phòng)
       if (type === 'check_in') {
         sendLocationPing({
           latitude: location.lat,
           longitude: location.lng,
           accuracy: location.accuracy || undefined,
+          speed: 0,
         }).catch((err) => console.warn('[AutoTimekeeping] Init ping error:', err));
       }
 

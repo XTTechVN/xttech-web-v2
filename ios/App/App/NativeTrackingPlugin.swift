@@ -141,15 +141,22 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         
-        // 1. Chốt chặn độ chính xác: Bỏ qua các điểm có sai số lớn (> 30m)
-        if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 30.0 {
+        // Bỏ qua nếu điểm cache đã quá 60 giây (loại bỏ stale cache từ quá khứ)
+        if abs(location.timestamp.timeIntervalSinceNow) > 60.0 {
+            return
+        }
+
+        let rawSpeed = max(0.0, location.speed)
+        let speed = rawSpeed >= 0.8 ? rawSpeed : 0.0
+        let maxAllowedAccuracy = speed >= 1.0 ? 30.0 : 80.0
+
+        // 1. Chốt chặn độ chính xác thích ứng: 30m khi di chuyển, 80m khi đứng yên trong phòng
+        if location.horizontalAccuracy < 0 || location.horizontalAccuracy > maxAllowedAccuracy {
             return
         }
 
         let now = Date()
         let elapsed = now.timeIntervalSince(lastPingTime)
-
-        let speed = max(0.0, location.speed)
         let distance = lastLocation != nil ? location.distance(from: lastLocation!) : 999.0
 
         // 2. Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):

@@ -158,8 +158,7 @@ public class TrackingLocationService extends Service implements LocationListener
         }
 
         try {
-            // Ưu tiên độc quyền GPS Provider (vệ tinh, độ chính xác cao)
-            // Không đăng ký song song NETWORK_PROVIDER để tránh hiện tượng bóng bàn giữa 2 nguồn toạ độ
+            // 1. Đăng ký GPS Provider (3s / 5m) cho độ chính xác cao ngoài trời
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 locationManager.requestLocationUpdates(
                         LocationManager.GPS_PROVIDER,
@@ -168,24 +167,39 @@ public class TrackingLocationService extends Service implements LocationListener
                         this
                 );
                 Log.i(TAG, "Registered GPS_PROVIDER for high-accuracy tracking.");
-            } else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                // CHỈ kích hoạt Network Provider khi thiết bị tắt hoàn toàn chip GPS
+            }
+
+            // 2. Đăng ký song song NETWORK_PROVIDER (10s / 10m) làm dự phòng cho trong nhà / văn phòng
+            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                 locationManager.requestLocationUpdates(
                         LocationManager.NETWORK_PROVIDER,
                         10000,
                         10.0f,
                         this
                 );
-                Log.w(TAG, "GPS_PROVIDER disabled. Fallback to NETWORK_PROVIDER.");
+                Log.i(TAG, "Registered NETWORK_PROVIDER for indoor/office fallback.");
             }
 
-            // Lấy vị trí gần nhất ngay khi khởi động (ưu tiên GPS)
-            Location lastKnown = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            // 3. Lấy vị trí gần nhất ngay khi khởi động (CHỈ chấp nhận nếu mới trong vòng 60 giây)
+            Location lastKnown = null;
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                lastKnown = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            }
             if (lastKnown == null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                 lastKnown = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             }
-            if (lastKnown != null && (!lastKnown.hasAccuracy() || lastKnown.getAccuracy() <= 30.0f)) {
-                onLocationChanged(lastKnown);
+            if (lastKnown != null) {
+                long cacheAgeMs = System.currentTimeMillis() - lastKnown.getTime();
+                // Triệt tiêu Stale Cache: Nếu điểm cache đã quá 60 giây -> bỏ qua hoàn toàn
+                if (cacheAgeMs >= 0 && cacheAgeMs <= 60000L) {
+                    float speed = lastKnown.hasSpeed() ? lastKnown.getSpeed() : 0.0f;
+                    float maxAcc = speed >= 1.0f ? 30.0f : 80.0f;
+                    if (!lastKnown.hasAccuracy() || lastKnown.getAccuracy() <= maxAcc) {
+                        onLocationChanged(lastKnown);
+                    }
+                } else {
+                    Log.i(TAG, "Ignoring stale lastKnown location (age: " + (cacheAgeMs / 1000) + "s)");
+                }
             }
         } catch (SecurityException se) {
             Log.e(TAG, "SecurityException requesting location updates", se);
@@ -220,16 +234,27 @@ public class TrackingLocationService extends Service implements LocationListener
     public void onLocationChanged(Location location) {
         if (location == null) return;
 
-        // Bỏ qua các điểm có sai số lớn (accuracy > 30m) để chống hiện tượng giật văng tọa độ
-        if (location.hasAccuracy() && location.getAccuracy() > 30.0f) {
-            Log.d(TAG, "Ignoring inaccurate location point: accuracy = " + location.getAccuracy() + "m");
+        float speed = location.hasSpeed() ? location.getSpeed() : 0.0f;
+
+        // Bộ lọc độ chính xác thích ứng (Adaptive Accuracy Filter):
+        // Khi di chuyển ngoài đường (speed >= 1.0 m/s): yêu cầu accuracy <= 30m
+        // Khi đứng yên / trong phòng (speed < 1.0 m/s): chấp nhận accuracy <= 80m (phù hợp Wi-Fi văn phòng)
+        float maxAllowedAccuracy = (speed >= 1.0f) ? 30.0f : 80.0f;
+        if (location.hasAccuracy() && location.getAccuracy() > maxAllowedAccuracy) {
+            Log.d(TAG, "Ignoring inaccurate location point: accuracy = " + location.getAccuracy() + "m (max: " + maxAllowedAccuracy + "m)");
             return;
+        }
+
+        // Nếu điểm từ NETWORK_PROVIDER mà GPS đang hoạt động tốt với độ chính xác cao ngoài trời (< 15m), bỏ qua Network Provider
+        if (LocationManager.NETWORK_PROVIDER.equals(location.getProvider()) && lastLocation != null) {
+            long lastGpsAge = System.currentTimeMillis() - lastLocation.getTime();
+            if (LocationManager.GPS_PROVIDER.equals(lastLocation.getProvider()) && lastGpsAge < 10000L && lastLocation.getAccuracy() <= 15.0f) {
+                return;
+            }
         }
 
         long now = System.currentTimeMillis();
         long elapsed = now - lastPingTime;
-
-        float speed = location.hasSpeed() ? location.getSpeed() : 0.0f;
         float distance = (lastLocation != null) ? location.distanceTo(lastLocation) : Float.MAX_VALUE;
 
         // Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
@@ -281,7 +306,8 @@ public class TrackingLocationService extends Service implements LocationListener
             }
 
             float batteryLevel = getDeviceBatteryLevel();
-            float speed = isHeartbeat ? 0.0f : (loc.hasSpeed() ? loc.getSpeed() : 0.0f);
+            float rawSpeed = isHeartbeat ? 0.0f : (loc.hasSpeed() ? loc.getSpeed() : 0.0f);
+            float speed = rawSpeed >= 0.8f ? rawSpeed : 0.0f;
 
             JSONObject payload = new JSONObject();
             payload.put("latitude", loc.getLatitude());

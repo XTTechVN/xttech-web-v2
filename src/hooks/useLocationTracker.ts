@@ -66,14 +66,16 @@ export function useLocationTracker({
     speed?: number;
     heading?: number;
   }) => {
-    // 1. Chốt chặn độ chính xác: Bỏ qua các điểm có sai số lớn (> 30m) từ trạm sóng BTS hoặc Wi-Fi
-    if (pos.accuracy !== undefined && pos.accuracy > 30) {
+    // 1. Chốt chặn độ chính xác thích ứng: 30m khi di chuyển ngoài đường, 80m khi đứng yên / trong phòng
+    const rawSpeed = pos.speed ?? 0;
+    const speed = rawSpeed >= 0.8 ? rawSpeed : 0;
+    const maxAccuracy = speed >= 1.0 ? 30 : 80;
+    if (pos.accuracy !== undefined && pos.accuracy > maxAccuracy) {
       return;
     }
 
     const now = Date.now();
     const elapsed = now - lastPingRef.current;
-    const speed = pos.speed ?? 0;
 
     let distance = 999;
     if (lastKnownCoordsRef.current) {
@@ -109,7 +111,7 @@ export function useLocationTracker({
     }
 
     lastPingRef.current = now;
-    lastKnownCoordsRef.current = pos;
+    lastKnownCoordsRef.current = { ...pos, speed };
 
     try {
       const battery = await getBatteryLevel();
@@ -117,7 +119,7 @@ export function useLocationTracker({
         latitude: pos.latitude,
         longitude: pos.longitude,
         accuracy: pos.accuracy,
-        speed: pos.speed,
+        speed: speed,
         heading: pos.heading,
         batteryLevel: battery,
       });
@@ -130,7 +132,7 @@ export function useLocationTracker({
     }
   }, []);
 
-  // Lấy vị trí tức thời 1 lần với GPS vệ tinh phần cứng (loại bỏ hoàn toàn fallback trạm BTS)
+  // Lấy vị trí tức thời 1 lần với cơ chế fallback 2 tầng cho Web/Desktop
   const pingCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setError('Thiết bị không hỗ trợ định vị GPS');
@@ -147,15 +149,28 @@ export function useLocationTracker({
           heading: pos.coords.heading || undefined,
         });
       },
-      (err) => {
-        // Tuyệt đối KHÔNG fallback sang enableHighAccuracy: false (sóng BTS/IP).
-        // Chấp nhận bỏ qua nhịp này để nhịp tiếp theo chờ GPS vệ tinh lock lại.
-        console.debug('[LocationTracker] GPS signal weak, waiting for next cycle:', err.message);
+      () => {
+        // Khi ở trong nhà/phòng kín hoặc trên Web desktop: Fallback nhẹ sang WiFi/mạng
+        navigator.geolocation.getCurrentPosition(
+          (fallbackPos) => {
+            executePing({
+              latitude: fallbackPos.coords.latitude,
+              longitude: fallbackPos.coords.longitude,
+              accuracy: fallbackPos.coords.accuracy || undefined,
+              speed: 0,
+              heading: undefined,
+            });
+          },
+          (err) => {
+            console.debug('[LocationTracker] Location unavailable:', err.message);
+          },
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
+        );
       },
       {
         enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 5000,
+        timeout: 8000,
+        maximumAge: 10000,
       }
     );
   }, [executePing]);
@@ -220,8 +235,10 @@ export function useLocationTracker({
       if (navigator.geolocation && watchIdRef.current === null) {
         watchIdRef.current = navigator.geolocation.watchPosition(
           (pos) => {
-            // Lọc sớm nếu tọa độ không đạt chuẩn chính xác
-            if (pos.coords.accuracy !== undefined && pos.coords.accuracy > 30) {
+            // Lọc sớm nếu tọa độ không đạt chuẩn chính xác theo vận tốc
+            const rawSpeed = pos.coords.speed ?? 0;
+            const maxAcc = rawSpeed >= 1.0 ? 30 : 80;
+            if (pos.coords.accuracy !== undefined && pos.coords.accuracy > maxAcc) {
               return;
             }
             const elapsed = Date.now() - lastPingRef.current;
