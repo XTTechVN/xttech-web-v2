@@ -6,7 +6,9 @@ All notable changes to the frontend project will be documented in this file.
 
 ### Added
 - **Tính năng Marker Clustering & Spiderfy (Gom cụm và Xòe nan hoa) trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
-  - **Thuật toán Gom cụm theo khoảng cách Pixel:** Tự động gom các nhân sự có tọa độ trùng lặp hoặc đứng gần nhau trong cùng văn phòng/nhà xưởng ($< 36\text{px}$) thành **Marker Cụm (Cluster Marker)** hiển thị số lượng nhân viên và chấm trạng thái hoạt động.
+  - **Thuật toán Gom cụm theo khoảng cách Pixel thích ứng theo mức Zoom (Zoom-Adaptive Clustering):** Khi zoom xa (zoom $< 11$: $65\text{px}$, zoom $< 13$: $55\text{px}$), tự động gom các nhân sự trong cùng thành phố/tỉnh thành 1 Marker Cụm duy nhất; khi zoom gần (zoom $\ge 13$: $38\text{px}$), tách ra từng phòng/tòa nhà riêng biệt.
+  - **Hiển thị thông minh theo mức Zoom (Clean Map UI):** Khi zoom xa ($< 14$), tự động ẩn nhãn tên để bản đồ thoáng đãng, chỉ giữ Avatar tròn mini ($32\text{px}$) kèm viền màu trạng thái, nhãn tên tự động hiện lên khi rê chuột `hover` hoặc khi click chọn; khi zoom gần ($\ge 14$), hiển thị nhãn tên đầy đủ.
+  - **Rút gọn tên nhân viên thông minh (`formatShortStaffName`):** Tự động chuyển `System Administrator` thành `Admin`, giới hạn độ dài tên tránh hiện tượng chữ quá dài đè lên marker khác.
   - **Hiệu ứng Spiderfy xòe nan hoa:** Khi click vào Cụm, bản đồ bung các nhân sự ra thành một vòng tròn đều xung quanh tâm với đường chỉ nối nan hoa tinh tế. Cho phép click chọn từng nhân sự riêng biệt, xem chi tiết và lộ trình mà không bao giờ bị đè lấp lẫn nhau. Tự động thu gọn khi click ra ngoài bản đồ.
   - **Auto-Spiderfy khi chọn từ Sidebar:** Khi Admin click vào nhân sự ở danh sách bên trái, bản đồ tự động bay tới và bung xòe cụm chứa nhân sự đó.
 

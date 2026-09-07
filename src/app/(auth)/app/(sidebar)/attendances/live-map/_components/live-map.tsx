@@ -52,14 +52,26 @@ export function LiveMap({
   onViewRoute,
 }: LiveMapProps) {
   const [map, setMap] = React.useState<L.Map | null>(null);
+  const [currentZoom, setCurrentZoom] = React.useState<number>(13);
   const [, setMapVersion] = React.useState(0);
   const [activeSpiderfyClusterId, setActiveSpiderfyClusterId] = React.useState<string | null>(null);
+
+  // Rút gọn tên nhân viên thông minh, cắt bỏ text quá dài
+  const formatShortStaffName = (name?: string) => {
+    if (!name) return 'Nhân viên';
+    const trimmed = name.trim();
+    if (trimmed.toLowerCase() === 'system administrator') return 'Admin';
+    const parts = trimmed.split(' ').filter(Boolean);
+    if (parts.length <= 2) return trimmed.slice(0, 14);
+    return parts.slice(-2).join(' ').slice(0, 14);
+  };
 
   // Tạo custom HTML Marker cho 1 nhân viên
   const createCustomStaffIcon = (staff: StaffLiveLocation) => {
     const isSelected = selectedStaff?.userId === staff.userId;
     const isMoving = staff.status === 'moving';
     const isOffline = staff.status === 'offline';
+    const isCloseZoom = currentZoom >= 13;
 
     const ringColor = isOffline
       ? 'ring-2 ring-slate-400 bg-slate-200'
@@ -74,7 +86,7 @@ export function LiveMap({
       : '<span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>';
 
     const safeName = staff.userName || 'Nhân viên';
-    const shortName = safeName.split(' ').slice(-2).join(' ');
+    const shortName = formatShortStaffName(safeName);
 
     const avatarFilter = isOffline ? 'grayscale opacity-60' : '';
     const avatarHtml = staff.avatar
@@ -83,15 +95,20 @@ export function LiveMap({
 
     const dotColor = isOffline ? 'bg-slate-400' : isMoving ? 'bg-amber-400' : 'bg-emerald-400';
 
+    // Khi zoom xa (< 13): ẩn nhãn tên, chỉ hiện khi rê chuột hover hoặc khi đang chọn nhân sự đó
+    const nameVisibilityClass = isCloseZoom || isSelected
+      ? 'opacity-100'
+      : 'opacity-0 group-hover:opacity-100 transition-opacity duration-200';
+
     const html = `
-      <div class="relative flex flex-col items-center cursor-pointer select-none transition-transform duration-200 hover:scale-110 ${isSelected ? 'scale-120 z-50' : ''}">
+      <div class="group relative flex flex-col items-center cursor-pointer select-none transition-transform duration-200 hover:scale-110 ${isSelected ? 'scale-120 z-50' : ''}">
         <div class="relative w-8 h-8 rounded-full ${ringColor} shadow-md bg-white p-0.5 shrink-0 flex items-center justify-center">
           <div class="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-slate-100">
             ${avatarHtml}
           </div>
           ${badgeDot}
         </div>
-        <div class="mt-0.5 bg-slate-900/90 backdrop-blur-xs text-white text-[9px] px-1.5 py-0.2 rounded-full whitespace-nowrap shadow-sm font-medium flex items-center gap-1 pointer-events-none">
+        <div class="mt-0.5 bg-slate-900/90 backdrop-blur-xs text-white text-[9px] px-1.5 py-0.2 rounded-full whitespace-nowrap shadow-sm font-medium flex items-center gap-1 pointer-events-none ${nameVisibilityClass}">
           <span class="w-1 h-1 rounded-full ${dotColor}"></span>
           ${shortName}
         </div>
@@ -173,13 +190,16 @@ export function LiveMap({
     });
   };
 
-  // Lắng nghe sự kiện click ngoài và di chuyển bản đồ
+  // Lắng nghe sự kiện click ngoài và di chuyển / zoom bản đồ
   React.useEffect(() => {
     if (!map) return;
+    setCurrentZoom(map.getZoom());
+
     const handleMapClick = () => {
       setActiveSpiderfyClusterId(null);
     };
     const handleMapMove = () => {
+      setCurrentZoom(map.getZoom());
       setMapVersion((v) => v + 1);
     };
     map.on('click', handleMapClick);
@@ -202,7 +222,7 @@ export function LiveMap({
     }
   }, [selectedStaff, map]);
 
-  // Thuật toán Gom cụm nhân sự theo khoảng cách Pixel trên màn hình (< 35px)
+  // Thuật toán Gom cụm nhân sự theo khoảng cách Pixel thích ứng theo mức Zoom
   const clusters = React.useMemo(() => {
     if (!map || staffLocations.length === 0) {
       return staffLocations.map((staff, idx) => ({
@@ -213,7 +233,8 @@ export function LiveMap({
     }
 
     const groups: StaffCluster[] = [];
-    const CLUSTER_PIXEL_THRESHOLD = 36; // Bán kính pixel để gom cụm
+    // Ngưỡng pixel thích ứng: Khi zoom xa nhìn miền/tỉnh (zoom < 11: 65px, zoom < 13: 55px), khi zoom gần vào phố (38px)
+    const CLUSTER_PIXEL_THRESHOLD = currentZoom < 11 ? 65 : currentZoom < 13 ? 55 : 38;
 
     staffLocations.forEach((staff, index) => {
       const staffLatLng: [number, number] = [staff.latitude, staff.longitude];
@@ -241,7 +262,7 @@ export function LiveMap({
     });
 
     return groups;
-  }, [staffLocations, map]);
+  }, [staffLocations, map, currentZoom]);
 
   // Nếu nhân sự được chọn thuộc 1 cụm > 1 người, tự động mở Spiderfy cụm đó
   React.useEffect(() => {
