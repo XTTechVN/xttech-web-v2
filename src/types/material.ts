@@ -15,7 +15,9 @@ export interface Material {
   name: string;
   specification: string | null;
   description: string | null;
-  price: number;
+  costPrice: number;
+  retailPrice: number;
+  salePrice: number;
   unit: string | null;
   createdAt: string;
   updatedAt: string;
@@ -26,7 +28,9 @@ export interface MaterialCreate {
   code?: string;
   specification?: string;
   description?: string;
-  price?: number;
+  costPrice?: number;
+  retailPrice?: number;
+  salePrice?: number;
   unit?: string;
 }
 
@@ -35,7 +39,9 @@ export interface MaterialUpdate {
   code?: string;
   specification?: string;
   description?: string;
-  price?: number;
+  costPrice?: number;
+  retailPrice?: number;
+  salePrice?: number;
   unit?: string;
 }
 

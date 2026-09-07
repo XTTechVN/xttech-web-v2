@@ -3,8 +3,9 @@ import { Trash2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { EDITOR_STYLES } from './config';
-import { SearchSelect } from '../modal';
+import { SearchSelect } from '../modal/search-select';
 import { ExtraOption, EXTRA_OPTION_UNIT_MAP } from '@/types';
+import { getResolvedPrice } from './utils';
 
 interface QuotationExtraOptionProps {
   fIndex: number;
@@ -43,7 +44,7 @@ export const QuotationExtraOption = ({
           <ChevronDown size={14} className="text-slate-400 shrink-0" />
         </div>
 
-        <SearchSelect
+        <SearchSelect<ExtraOption>
           isOpen={isSelectOpen}
           onClose={() => setIsSelectOpen(false)}
           title="Chọn tùy chọn phát sinh"
@@ -53,13 +54,14 @@ export const QuotationExtraOption = ({
           searchKeys={['name', 'code']}
           renderItem={(item) => {
             const unitText = item.unit ? (EXTRA_OPTION_UNIT_MAP[item.unit] || item.unit) : '';
+            const displayPrice = getResolvedPrice(item, store.priceType);
             return (
-              <div className="flex items-center justify-between gap-2 w-full">
-                <span className="line-clamp-2 whitespace-normal break-words pr-2 font-medium">
+              <div className="relative flex items-center justify-between w-full min-w-0 pr-8" title={item.name}>
+                <div className="truncate pr-24 font-medium flex-1" title={item.name}>
                   {item.name}
-                </span>
-                <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0">
-                  {item.price.toLocaleString('vi-VN')}đ{unitText ? `/${unitText}` : ''}
+                </div>
+                <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 absolute right-0 top-1/2 -translate-y-1/2 bg-inherit pl-2.5 z-10 select-none">
+                  {displayPrice.toLocaleString('vi-VN')}đ{unitText ? `/${unitText}` : ''}
                 </span>
               </div>
             );

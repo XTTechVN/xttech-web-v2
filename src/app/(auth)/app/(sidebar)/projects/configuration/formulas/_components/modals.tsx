@@ -147,6 +147,7 @@ export function FormulaCreateModal({ isOpen, onClose, title, submitText = 'Xác 
           <Select
             label="Phân loại *"
             fullWidth
+            value={watch('type') || ''}
             {...register('type', { required: true })}
             options={Object.entries(FORMULA_TYPE_MAP).map(([value, label]) => ({ value, label }))}
           />
@@ -165,6 +166,7 @@ export function FormulaCreateModal({ isOpen, onClose, title, submitText = 'Xác 
               label="Loại cửa áp dụng"
               placeholder="Chọn loại cửa"
               fullWidth
+              value={watch('doorType') || ''}
               {...register('doorType')}
               options={[
                 { value: '', label: 'Tất cả' },
@@ -456,6 +458,7 @@ export function FormulaUpdateModal({ isOpen, onClose, title, submitText = 'Xác 
           <Select
             label="Phân loại *"
             fullWidth
+            value={watch('type') || ''}
             {...register('type', { required: true })}
             options={Object.entries(FORMULA_TYPE_MAP).map(([value, label]) => ({ value, label }))}
           />
@@ -474,6 +477,7 @@ export function FormulaUpdateModal({ isOpen, onClose, title, submitText = 'Xác 
               label="Loại cửa áp dụng"
               placeholder="Chọn loại cửa"
               fullWidth
+              value={watch('doorType') || ''}
               {...register('doorType')}
               options={[
                 { value: '', label: 'Tất cả' },

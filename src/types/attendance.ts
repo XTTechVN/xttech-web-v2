@@ -11,7 +11,7 @@ export interface Pagination {
 
 export interface DataListResponse<T> {
     items: T[];
-    pagination: Pagination;
+    meta?: Pagination;
 }
 
 
@@ -67,11 +67,87 @@ export interface UserResponse {
 
 
 export type AttendanceStatus =
+    | "normal"
+    | "present"
     | "late"
     | "early_leave"
+    | "early_checkout"
+    | "late_and_early_leave"
     | "absent"
+    | "overtime"
     | "half_day"
-    | "normal";
+    | "missing_checkout";
+
+export type AttendanceStatusVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
+
+export const ATTENDANCE_STATUS_LABELS: Record<string, string> = {
+  normal: 'Đúng giờ',
+  present: 'Đúng giờ',
+  late: 'Đi muộn',
+  absent: 'Vắng mặt',
+  half_day: 'Nghỉ nửa ngày',
+  early_leave: 'Về sớm',
+  early_checkout: 'Về sớm',
+  late_and_early_leave: 'Đi muộn & Về sớm',
+  overtime: 'Tăng ca',
+  missing_checkout: 'Quên check-out',
+};
+
+export const ATTENDANCE_STATUS_VARIANTS: Record<string, AttendanceStatusVariant> = {
+  normal: 'success',
+  present: 'success',
+  late: 'warning',
+  absent: 'danger',
+  half_day: 'warning',
+  early_leave: 'warning',
+  early_checkout: 'warning',
+  late_and_early_leave: 'warning',
+  overtime: 'success',
+  missing_checkout: 'warning',
+};
+
+export const ADJUSTMENT_STATUS_LABELS: Record<string, string> = {
+  pending: 'Chờ duyệt',
+  approved: 'Đã duyệt',
+  rejected: 'Từ chối',
+};
+
+export const REQUEST_TYPE_LABELS: Record<string, string> = {
+  check_in: 'Bổ sung check-in',
+  check_out: 'Bổ sung check-out',
+  forgot_attendance: 'Quên chấm công',
+  forget_checkin: 'Quên check-in',
+  forget_checkout: 'Quên check-out',
+  overtime: 'Tăng ca',
+  both: 'Cả hai',
+};
+
+export const getAttendanceStatusLabel = (status: string | null | undefined): string => {
+  if (!status) return 'Không xác định';
+  return ATTENDANCE_STATUS_LABELS[status.toLowerCase()] || status;
+};
+
+export const getAttendanceStatusVariant = (status: string | null | undefined): AttendanceStatusVariant => {
+  if (!status) return 'danger';
+  return ATTENDANCE_STATUS_VARIANTS[status.toLowerCase()] ?? 'danger';
+};
+
+export const getAttendanceStatusInfo = (status: string | null | undefined): { label: string; variant: AttendanceStatusVariant } => {
+  return {
+    label: getAttendanceStatusLabel(status),
+    variant: getAttendanceStatusVariant(status),
+  };
+};
+
+export const getAdjustmentStatusLabel = (status: string | null | undefined): string => {
+  if (!status) return 'Chờ duyệt';
+  return ADJUSTMENT_STATUS_LABELS[status.toLowerCase()] || status;
+};
+
+export const getRequestTypeLabel = (type: string | null | undefined): string => {
+  if (!type) return '';
+  return REQUEST_TYPE_LABELS[type.toLowerCase()] || type;
+};
 
 
 
@@ -119,6 +195,7 @@ export interface AttendanceQueryParams {
     workDate?: string;
     startDate?: string;
     endDate?: string;
+    departmentId?: number;
     status?: AttendanceStatus;
 }
 
@@ -133,8 +210,8 @@ export interface AttendanceCreate {
     userId: string;
     workShiftId?: number;
     workDate: string;
-    checkIn?: string;
-    checkOut?: string;
+    checkIn?: string | null;
+    checkOut?: string | null;
     checkInLatitude?: number;
     checkInLongitude?: number;
     checkOutLatitude?: number;
@@ -176,6 +253,7 @@ export type RequestType =
     | "check_in"
     | "check_out"
     | "forgot_attendance"
+    | "overtime"
     | "both";
 
 export interface AdjustmentRequestQueryParams {

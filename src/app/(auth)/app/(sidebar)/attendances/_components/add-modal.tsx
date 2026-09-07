@@ -22,8 +22,8 @@ export default function AddAttendanceModal({
         userId: "",
         workShiftId: undefined,
         workDate: "",
-        checkIn: "",
-        checkOut: "",
+        checkIn: null,
+        checkOut: null,
         checkInLatitude: undefined,
         checkInLongitude: undefined,
         checkOutLatitude: undefined,
@@ -122,6 +122,8 @@ export default function AddAttendanceModal({
 
         const payload: AttendanceCreate = {
             ...form,
+            checkIn: form.checkIn?.trim() ? form.checkIn : null,
+            checkOut: form.checkOut?.trim() ? form.checkOut : null,
             workDate: form.workDate,
         };
 
@@ -178,7 +180,7 @@ export default function AddAttendanceModal({
                     <Input
                         label="Check in"
                         type="time"
-                        value={form.checkIn}
+                        value={form.checkIn || ""}
                         onChange={(e) => updateField("checkIn", e.target.value)}
                         fullWidth
                     />
@@ -187,7 +189,7 @@ export default function AddAttendanceModal({
                     <Input
                         label="Check out"
                         type="time"
-                        value={form.checkOut}
+                        value={form.checkOut || ""}
                         onChange={(e) => updateField("checkOut", e.target.value)}
                         fullWidth
                     />

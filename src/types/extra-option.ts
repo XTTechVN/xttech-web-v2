@@ -14,7 +14,9 @@ export interface ExtraOption {
   id: number;
   code: string;
   name: string;
-  price: number;
+  costPrice: number;
+  retailPrice: number;
+  salePrice: number;
   unit?: ExtraOptionUnit;
   createdAt: string;
   updatedAt: string;
@@ -27,14 +29,18 @@ export interface ExtraOptionDetail extends ExtraOption {
 export interface ExtraOptionCreate {
   code: string;
   name: string;
-  price: number;
+  costPrice?: number;
+  retailPrice?: number;
+  salePrice?: number;
   unit?: ExtraOptionUnit;
 }
 
 export interface ExtraOptionUpdate {
   code?: string;
   name?: string;
-  price?: number;
+  costPrice?: number;
+  retailPrice?: number;
+  salePrice?: number;
   unit?: ExtraOptionUnit;
 }
 

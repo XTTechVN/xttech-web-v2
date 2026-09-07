@@ -1,8 +1,8 @@
 import React from 'react';
-import { Layout, CalendarCheck, Clock, FileText, ShieldCheck, ListChecks, User, Settings, Calculator } from 'lucide-react';
+import { Layout, CalendarCheck, Clock, FileText, ShieldCheck, ListChecks, User } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
-export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician';
+export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician' | 'accountant' | 'employee';
 
 export const acceptedSections = [
   'dashboard',
@@ -25,7 +25,8 @@ export const acceptedSections = [
   'quotations',
   'extra-options',
   'formulas',
-  "shifts"
+  'shifts',
+  'attendances-reports',
 ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
@@ -40,14 +41,14 @@ export interface SidebarSectionWithRoles extends Omit<SidebarSectionType, 'items
 export const rawSidebarSections: SidebarSectionWithRoles[] = [
   // Điều hành
   {
-    title: 'Điều hành doanh nghiệp',
+    title: 'Doanh nghiệp',
     items: [
       {
         id: 'dashboard',
         label: 'Tổng quan',
         icon: React.createElement(Layout, { size: 18 }),
         href: '/app/dashboard',
-        roles: ['super', 'admin'],
+        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
       },
     ],
   },
@@ -60,64 +61,58 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Nhân viên',
         icon: React.createElement(User, { size: 18 }),
         href: '/app/employees',
-        roles: ['super', 'admin', 'hr'],
+        roles: ['super', 'admin', 'hr', 'accountant'],
         subItems: [
           {
             id: 'departments',
             label: 'Danh sách phòng ban',
             href: '/app/departments',
-            roles: ['admin', 'hr'],
+            roles: ['super', 'admin', 'hr'],
           },
           {
             id: 'employees',
             label: 'Danh sách nhân viên',
             href: '/app/employees',
-            roles: ['admin', 'hr'],
+            roles: ['super', 'admin', 'hr'],
           },
           {
             id: 'roles',
             label: 'Danh sách vai trò',
             href: '/app/roles',
-            roles: ['admin'],
+            roles: ['super'],
           },
         ],
       },
       {
         id: 'attendances-root',
-        label: 'Chấm công & Thời gian',
+        label: 'Chấm công',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/attendances',
-        roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
         subItems: [
           {
             id: 'attendances',
-            label: 'Bảng công tháng (Admin)',
+            label: 'Quản lý chấm công',
             href: '/app/attendances',
             roles: ['super', 'admin', 'hr'],
           },
-          // {
-          //   id: 'attendances-policy',
-          //   label: 'Chính sách chấm công',
-          //   href: '/app/attendances/policy',
-          //   roles: ['super', 'admin', 'hr'],
-          // },
-          // {
-          //   id: 'shifts',
-          //   label: 'Ca làm việc',
-          //   href: '/app/shifts',
-          //   roles: ['super', 'admin', 'hr', 'sale', 'technician'],
-          // },
+          {
+            id: 'attendances-reports',
+            label: 'Báo cáo thống kê',
+            href: '/app/attendances/reports',
+            roles: ['super', 'admin', 'hr'],
+          },
           {
             id: 'attendances-payroll',
-            label: 'Tính công & Dữ liệu lương',
+            label: 'Lịch sử chấm công',
             href: '/app/attendances/payroll',
-            roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
           },
           {
             id: 'attendances-adjustments',
             label: 'Danh sách khiếu nại',
             href: '/app/attendances/adjustments',
-            roles: ['super', 'admin', 'hr', 'sale', 'technician'],
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
           },
         ],
       },
@@ -126,28 +121,28 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Ca làm việc',
         icon: React.createElement(Clock, { size: 18 }),
         href: '/app/shifts',
-        roles: ['admin', 'hr', 'technician'],
+        roles: ['super', 'admin', 'hr'],
       },
       {
         id: 'leave-request',
         label: 'Nghỉ phép & Đơn từ',
         icon: React.createElement(FileText, { size: 18 }),
         href: '/app/leave-requests',
-        roles: ['admin', 'hr'],
+        roles: ['super', 'admin', 'hr'],
       },
       {
         id: 'attendances-policy',
         label: 'Chính sách chấm công',
         icon: React.createElement(ShieldCheck, { size: 18 }),
         href: '/app/attendances-policy',
-        roles: ['admin', 'hr'],
+        roles: ['super', 'admin', 'hr'],
       },
       {
         id: 'attendances-summary',
         label: 'Bảng tổng hợp',
         icon: React.createElement(ListChecks, { size: 18 }),
         href: '/app/attendances-summary',
-        roles: ['admin', 'hr'],
+        roles: ['super', 'admin', 'hr'],
       },
     ],
   },
@@ -160,19 +155,19 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Quản lý dự án',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/projects',
-        roles: ['admin', 'sale'],
+        roles: ['super', 'admin', 'sale', 'accountant', 'hr'],
         subItems: [
           {
             id: 'projects',
             label: 'Danh sách dự án',
             href: '/app/projects',
-            roles: ['admin', 'sale'],
+            roles: ['super', 'admin', 'sale', 'accountant', 'hr'],
           },
           {
             id: 'configurations',
             label: 'Cấu hình dự án',
             href: '/app/projects/configuration',
-            roles: ['admin', 'sale'],
+            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
           },
         ],
       },
@@ -181,14 +176,14 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Khách hàng',
         icon: React.createElement(User, { size: 18 }),
         href: '/app/customers',
-        roles: ['admin', 'sale'],
+        roles: ['super', 'admin', 'sale', 'hr'],
       },
       {
         id: 'project-tasks',
         label: 'Công việc',
         icon: React.createElement(Clock, { size: 18 }),
         href: '/app/project-tasks',
-        roles: ['admin', 'sale', 'technician'],
+        roles: ['super', 'admin', 'sale', 'technician', 'accountant'],
       },
     ],
   },
@@ -201,7 +196,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Danh sách góp ý',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/suggestions',
-        roles: ['admin', 'hr', 'sale', 'technician'],
+        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
       },
     ],
   },

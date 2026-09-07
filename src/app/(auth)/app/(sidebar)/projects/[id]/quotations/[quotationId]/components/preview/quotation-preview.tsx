@@ -3,7 +3,6 @@ import { QuotationHeader } from './quotation-header';
 import { QuotationTitle } from './quotation-title';
 import { CustomerInfo } from './customer-info';
 import { QuotationTable } from './quotation-table';
-import { QuotationSummary } from './quotation-summary';
 import { adaptQuotationPreview } from './adapter';
 import { PREVIEW_FONT_SIZE } from './config';
 import type { QuotationDetail, PreviewFloor, Material, Door, ExtraOption } from '@/types';
@@ -17,7 +16,6 @@ interface QuotationPreviewProps {
 
 export const QuotationPreview = ({ quotation, materialsList, doorsList, extraOptionsList }: QuotationPreviewProps) => {
   const adaptedFloors = adaptQuotationPreview(quotation);
-  console.log('--- ADAPTED PREVIEW DATA ---', adaptedFloors);
 
   const subtotal = quotation.subtotalPrice ?? 0;
   const finalAmount = quotation.totalPrice ?? 0;
@@ -34,16 +32,17 @@ export const QuotationPreview = ({ quotation, materialsList, doorsList, extraOpt
       {/* Customer Info */}
       <CustomerInfo customer={quotation.customer} />
 
-      {/* Main Table */}
-      <QuotationTable floors={adaptedFloors} materialsList={materialsList} doorsList={doorsList} />
-
-      {/* Document Footer / Summary */}
-      <QuotationSummary
-        subtotal={subtotal}
+      <QuotationTable
+        floors={adaptedFloors}
+        materialsList={materialsList}
+        doorsList={doorsList}
+        subtotalPrice={quotation.subtotalPrice}
         discountPercentage={quotation.discountPercentage}
-        discountAmount={discountAmount}
-        finalAmount={finalAmount}
+        totalPrice={quotation.totalPrice}
+        totalQuantity={quotation.totalQuantity}
+        totalArea={quotation.totalArea}
       />
+
     </div>
   );
 };

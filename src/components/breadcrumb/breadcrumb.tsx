@@ -20,10 +20,10 @@ const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
       <nav
         ref={ref}
         aria-label="Breadcrumb"
-        className={cn('flex items-center text-xs text-gray-600 font-medium', className)}
+        className={cn('flex items-center text-xs text-gray-600 font-medium w-full overflow-x-auto scrollbar-hide', className)}
         {...props}
       >
-        <ol className="flex items-center flex-wrap gap-2"> {/* Sử dụng spacing-xs (8px) */}
+        <ol className="flex items-center flex-nowrap whitespace-nowrap gap-2"> {/* Sử dụng spacing-xs (8px) */}
           {items.map((item, index) => {
             const isLast = index === items.length - 1;
 
@@ -38,7 +38,7 @@ const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
 
                 {isLast ? (
                   <span
-                    className="text-primary font-semibold truncate max-w-[200px]"
+                    className="text-primary font-semibold truncate max-w-50"
                     aria-current="page"
                   >
                     {item.icon && <span className="inline-flex mr-1 align-text-bottom">{item.icon}</span>}

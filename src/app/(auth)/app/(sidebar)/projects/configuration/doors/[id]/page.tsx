@@ -30,7 +30,7 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
     isLoading: isLoadingDoor,
     error,
   } = useQuery({
-    queryKey: ['door', doorId],
+    queryKey: ['doors', doorId],
     queryFn: () => getDoor(doorId),
     enabled: !isNaN(doorId),
   });
@@ -201,7 +201,7 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
                     ĐVT: {formatAccessoryUnit(acc.unit)}
                   </span>
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/5 text-primary">
-                    {formatCurrency(acc.price)}
+                    {formatCurrency(acc.retailPrice)}
                   </span>
                 </div>
               </div>

@@ -142,7 +142,7 @@ export default function RoleFormModal({ isOpen, onClose, initialData }: RoleForm
             placeholder="Ví dụ: admin, hr, accountant..."
             {...register('code')}
             error={errors.code?.message}
-            disabled={isPending}
+            disabled={isPending || isEditMode}
             fullWidth
           />
 

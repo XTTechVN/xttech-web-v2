@@ -89,8 +89,8 @@ const LoginForm = () => {
 
       {/* Ghi nhớ đăng nhập và quên mật khẩu */}
       <div className="flex items-center justify-between mt-1">
-        <Checkbox label="Ghi nhớ đăng nhập" className="text-xs" />
-        <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+        <Checkbox label="Ghi nhớ đăng nhập" labelClassName="text-xs sm:text-sm" />
+        <Link href="/forgot-password" className="text-xs sm:text-sm font-medium text-primary hover:underline">
           Quên mật khẩu?
         </Link>
       </div>

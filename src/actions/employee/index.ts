@@ -2,9 +2,25 @@ import type { Employee, GetEmployeesResponse } from '@/types';
 import api from '@/utils/api';
 
 // Lấy danh sách nhân viên
-export const getEmployees = async (params?: { offset?: number; limit?: number; search?: string }): Promise<GetEmployeesResponse> => {
+export const getEmployees = async (params?: {
+  offset?: number;
+  limit?: number;
+  search?: string;
+  departmentId?: number;
+  department_id?: number;
+  positionId?: number;
+  position_id?: number;
+  [key: string]: any;
+}): Promise<GetEmployeesResponse> => {
   try {
-    const res = await api.get<GetEmployeesResponse>(`/api/v1/users`, { params });
+    const formattedParams: Record<string, any> = { ...params };
+    if (params?.departmentId !== undefined) {
+      formattedParams.department_id = params.departmentId;
+    }
+    if (params?.positionId !== undefined) {
+      formattedParams.position_id = params.positionId;
+    }
+    const res = await api.get<GetEmployeesResponse>(`/api/v1/users`, { params: formattedParams });
     return res.data;
   } catch (error) {
     throw new Error('Lỗi khi lấy dữ liệu danh sách nhân viên');
@@ -61,5 +77,26 @@ export const updateEmployee = async (id: string | number, data: Partial<Omit<Emp
     return res.data;
   } catch (error) {
     throw new Error('Lỗi khi cập nhật thông tin nhân viên');
+  }
+};
+
+// Kiểm tra sự tồn tại của người dùng qua email hoặc CCCD
+export const checkUserExists = async (params: {
+  email?: string;
+  identifyCode?: string;
+  uniqueQuery?: string;
+}): Promise<Employee | null> => {
+  try {
+    const res = await api.get<Employee | null>(`/api/v1/users/exists`, {
+      params: {
+        email: params.email,
+        identify_code: params.identifyCode,
+        uniqueQuery: params.uniqueQuery,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Lỗi khi kiểm tra tồn tại người dùng:', error);
+    return null;
   }
 };

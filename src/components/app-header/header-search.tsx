@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { rawSidebarSections, UserRole } from '@/config';
@@ -8,9 +8,11 @@ import { Input } from '@/components';
 
 export interface HeaderSearchProps {
   userRole?: UserRole;
+  setActive: (id: string) => void;
 }
 
 interface SearchResultItem {
+  id: string;
   title: string;
   href?: string;
   section?: string;
@@ -26,14 +28,14 @@ const removeAccents = (str: string) => {
     .replace(/Đ/g, 'D');
 };
 
-export function HeaderSearch({ userRole }: HeaderSearchProps) {
+export function HeaderSearch({ userRole, setActive }: HeaderSearchProps) {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [searchResults, setSearchResults] = React.useState<SearchResultItem[]>([]);
-  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
-  const searchRef = React.useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setIsSearchOpen(false);
@@ -62,8 +64,9 @@ export function HeaderSearch({ userRole }: HeaderSearchProps) {
         if (!hasAccess && userRole !== 'admin') return;
 
         const normalizedItemLabel = removeAccents(item.label).toLowerCase();
-        if (normalizedItemLabel.includes(lowerQuery)) {
+        if (normalizedItemLabel.includes(lowerQuery) && !item.subItems) {
           results.push({
+            id: item.id,
             title: item.label,
             href: item.href,
             section: section.title,
@@ -79,6 +82,7 @@ export function HeaderSearch({ userRole }: HeaderSearchProps) {
             const normalizedSubLabel = removeAccents(sub.label).toLowerCase();
             if (normalizedSubLabel.includes(lowerQuery)) {
               results.push({
+                id: sub.id,
                 title: sub.label,
                 href: sub.href,
                 section: section.title,
@@ -89,7 +93,6 @@ export function HeaderSearch({ userRole }: HeaderSearchProps) {
         }
       });
     });
-
     setSearchResults(results);
     setIsSearchOpen(true);
   };
@@ -120,6 +123,7 @@ export function HeaderSearch({ userRole }: HeaderSearchProps) {
                   if (result.href) {
                     router.push(result.href);
                     setIsSearchOpen(false);
+                    setActive(result.id);
                     setSearchQuery('');
                   }
                 }}

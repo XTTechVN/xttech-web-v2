@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, Plus, Pencil, Trash2 } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
 import { Heading, Button } from '@/components';
-import { Plus } from 'lucide-react';
 import { useQueryParam } from '@/hooks';
 import { EXTRA_OPTION_UNIT_MAP, type ExtraOption, type ExtraOptionUnit } from '@/types';
 import { getExtraOptions } from '@/actions';
@@ -20,9 +19,8 @@ interface TableProps {
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const offset = Number(searchParams.get('offset') || 0);
   const [search, setSearch] = useQueryParam('search');
+
 
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
     const res = await getExtraOptions({ offset, limit, search: search || undefined });
@@ -64,12 +62,32 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       ),
     },
     {
-      key: 'price',
-      label: 'Đơn giá',
-      minWidth: '150px',
+      key: 'costPrice',
+      label: 'Giá vốn',
+      minWidth: '110px',
       cell: (row: ExtraOption) => (
-        <span className="text-gray-900 font-medium">
-          {formatCurrency(row.price)}
+        <span className="text-gray-500 font-medium">
+          {formatCurrency(row.costPrice)}
+        </span>
+      ),
+    },
+    {
+      key: 'retailPrice',
+      label: 'Giá bán lẻ',
+      minWidth: '110px',
+      cell: (row: ExtraOption) => (
+        <span className="text-gray-900 font-semibold text-primary">
+          {formatCurrency(row.retailPrice)}
+        </span>
+      ),
+    },
+    {
+      key: 'salePrice',
+      label: 'Giá đại lý',
+      minWidth: '110px',
+      cell: (row: ExtraOption) => (
+        <span className="text-gray-900 font-semibold text-teal-650">
+          {formatCurrency(row.salePrice)}
         </span>
       ),
     },
@@ -90,25 +108,49 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const renderCard = (row: ExtraOption, index: number) => (
     <div
       key={row.id || index}
-      className="p-4 rounded-xl border border-gray-150 bg-white flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+      onClick={() => router.push(`/app/projects/configuration/extra-options/${row.id}`)}
+      className="p-4 rounded-xl border border-primary/10 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 cursor-pointer"
     >
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-primary/5 text-primary border border-primary/10">
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-primary/5 text-primary border border-primary/10 shrink-0 mt-0.5">
           <Settings size={18} />
         </div>
-        <div className="flex flex-col">
-          <span className="font-semibold text-gray-900">{row.name}</span>
-          <span className="text-xs text-gray-400">Mã: {row.code || '—'}</span>
-          <span className="text-xs text-gray-500 mt-0.5">
-            Đơn giá: {formatCurrency(row.price)} / {EXTRA_OPTION_UNIT_MAP[row.unit as ExtraOptionUnit] || row.unit || 'Bộ'}
-          </span>
+        <div className="flex flex-col flex-1 min-w-0">
+          <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
+          <div className="flex flex-col gap-0.5 mt-1 text-xs text-gray-500">
+            <div className="flex gap-2 flex-wrap">
+              <span>Mã: {row.code || '—'}</span>
+              <span>•</span>
+              {row.unit && <span>ĐVT: {EXTRA_OPTION_UNIT_MAP[row.unit as ExtraOptionUnit] || row.unit}</span>}
+            </div>
+            <div className="flex gap-2 flex-wrap mt-0.5">
+              <span>Vốn: {formatCurrency(row.costPrice)}</span>
+              <span>•</span>
+              <span>Lẻ: {formatCurrency(row.retailPrice)}</span>
+              <span>•</span>
+              <span>Sỉ: {formatCurrency(row.salePrice)}</span>
+            </div>
+          </div>
         </div>
       </div>
-      <TableAction
-        onView={() => router.push(`/app/projects/configuration/extra-options/${row.id}`)}
-        onEdit={() => onEditClick(row)}
-        onDelete={() => onDeleteClick(row)}
-      />
+      <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          onClick={() => onEditClick(row)}
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+        >
+          <Pencil size={12} />
+          Sửa
+        </button>
+        <button
+          type="button"
+          onClick={() => onDeleteClick(row)}
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
+        >
+          <Trash2 size={12} />
+          Xóa
+        </button>
+      </div>
     </div>
   );
 
@@ -126,7 +168,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
         </Button>
       </div>
       <TableData<ExtraOption>
-        queryKey={['extra-options', search, offset]}
+        queryKey={['extra-options', search]}
         fetcher={fetcher}
         columns={columns}
         renderCard={renderCard}

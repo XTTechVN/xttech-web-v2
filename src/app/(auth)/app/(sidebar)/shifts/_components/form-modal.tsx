@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { MapPin, Plus, Trash2, Clock } from 'lucide-react';
 
 import { Modal, Button, Input, Select, Switch } from '@/components';
-import { createWorkShift, updateWorkShift, getDepartments, getUsers } from '@/actions';
+import { createWorkShift, updateWorkShift, getDepartments, getEmployees } from '@/actions';
 import queryClient from '@/utils/query';
 import type { WorkShift, WorkShiftCreate, WorkShiftUpdate, Department } from '@/types';
 
@@ -35,6 +35,7 @@ interface ShiftFormModalProps {
   submitText?: string;
   initialData?: WorkShift | null;
   defaultDepartmentId?: number;
+  defaultDepartmentName?: string;
 }
 
 interface FormValues {
@@ -64,6 +65,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
   submitText = 'Lưu thông tin',
   initialData,
   defaultDepartmentId,
+  defaultDepartmentName,
 }) => {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
@@ -71,24 +73,22 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
   const { data: departmentsData } = useQuery({
     queryKey: ['departments', 'all'],
     queryFn: () => getDepartments({ limit: 100 }),
-    enabled: isOpen && !defaultDepartmentId,
+    enabled: isOpen && !defaultDepartmentName,
   });
 
-  // Lấy danh sách nhân viên (để gán ngoại lệ)
-  const { data: usersData } = useQuery({
-    queryKey: ['users', 'all'],
-    queryFn: () => getUsers({ limit: 200 }),
-    enabled: isOpen,
-  });
+  // Tên phòng ban hiện tại
+  const currentDepartmentName = useMemo(() => {
+    if (defaultDepartmentName) return defaultDepartmentName;
+    if (!defaultDepartmentId) return '';
+    const found = departmentsData?.items?.find(
+      (d: Department) => String(d.id) === String(defaultDepartmentId)
+    );
+    return found?.name || `Phòng ban ID: ${defaultDepartmentId}`;
+  }, [defaultDepartmentId, defaultDepartmentName, departmentsData]);
 
   const departmentOptions = (departmentsData?.items || []).map((d: Department) => ({
     value: d.id,
     label: d.name,
-  }));
-
-  const userOptions = (usersData?.items || []).map((u: any) => ({
-    value: u.id,
-    label: `${u.fullName || u.email} (${u.code || u.username || 'NV'})`,
   }));
 
   const {
@@ -119,6 +119,27 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
     control,
     name: 'exceptions',
   });
+
+  const watchedDepartmentId = watch('department_id');
+  const activeDepartmentId = defaultDepartmentId || (watchedDepartmentId ? Number(watchedDepartmentId) : undefined);
+
+  // Lấy danh sách nhân viên theo phòng ban (để gán ngoại lệ)
+  const { data: employeesData } = useQuery({
+    queryKey: ['employees', 'by-department', activeDepartmentId],
+    queryFn: () =>
+      getEmployees({
+        departmentId: activeDepartmentId,
+        limit: 200,
+      }),
+    enabled: isOpen,
+  });
+
+  const userOptions = useMemo(() => {
+    return (employeesData?.items || []).map((u: any) => ({
+      value: u.id,
+      label: `${u.fullName || u.email} (${u.identifyCode || u.code || u.username || 'NV'})`,
+    }));
+  }, [employeesData]);
 
   const selectedDays = watch('work_days') || [];
   const shiftStatus = watch('status');
@@ -342,9 +363,9 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
           ) : (
             <Input
               label="Phòng ban"
-              value={`Phòng ban ID: ${defaultDepartmentId}`}
+              value={currentDepartmentName}
               disabled
-              className="bg-gray-100 cursor-not-allowed"
+              className="bg-gray-100 cursor-not-allowed font-medium text-slate-700"
             />
           )}
 

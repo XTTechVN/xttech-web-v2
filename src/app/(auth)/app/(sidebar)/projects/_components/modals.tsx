@@ -34,6 +34,7 @@ export function ProjectFormModal({
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<ProjectFormValues>();
 
@@ -76,7 +77,7 @@ export function ProjectFormModal({
     } else {
       reset({ name: '', customerId: undefined, address: '', note: '' });
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, reset]);
 
   const handleConfirm = (data: ProjectFormValues) => {
     const formattedData = {
@@ -106,6 +107,7 @@ export function ProjectFormModal({
             label="Khách hàng *"
             placeholder="Chọn khách hàng"
             fullWidth
+            value={watch('customerId') || ''}
             {...register('customerId', { required: true })}
             options={customers.map((c) => ({ value: c.id, label: c.name }))}
             error={errors.customerId ? 'Vui lòng chọn khách hàng' : undefined}

@@ -28,6 +28,7 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<DoorCreateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -92,7 +93,7 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
           {/* Cột trái: Ảnh & Preview */}
           <div className="md:col-span-4 flex flex-col items-center gap-3">
             <span className="text-xs font-semibold text-gray-700 select-none self-start">Ảnh minh họa</span>
-            <div className="w-full aspect-square max-w-[200px] rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
+            <div className="w-full aspect-square max-w-50 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
@@ -129,6 +130,7 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
               label="Phân loại *"
               placeholder="Chọn phân loại"
               fullWidth
+              value={watch('type') || ''}
               {...register('type', { required: true })}
               options={[
                 { value: 'cd', label: 'Cửa đi' },
@@ -174,12 +176,7 @@ interface DoorUpdateModalProps {
 type DoorUpdateFormValues = Omit<DoorUpdate, 'imagePath'>;
 
 export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nhận lưu', initialData }: DoorUpdateModalProps) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<DoorUpdateFormValues>();
+  const { register, handleSubmit, reset, watch, formState: { errors }, } = useForm<DoorUpdateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -215,7 +212,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
           : null,
       );
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, reset]);
 
   useEffect(() => {
     if (!selectedFile) return;
@@ -230,10 +227,8 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
       name: data.name,
       type: data.type,
       code: data.code,
+      specification: data.specification?.trim() || "",
     };
-    if (data.specification && data.specification.trim() !== '') {
-      payload.specification = data.specification;
-    }
     updateMutation({
       id: initialData.id,
       data: payload,
@@ -248,7 +243,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
           {/* Cột trái: Ảnh & Preview */}
           <div className="md:col-span-4 flex flex-col items-center gap-3">
             <span className="text-gray-700 text-sm font-medium self-start">Ảnh minh họa</span>
-            <div className="w-full aspect-square max-w-[200px] rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
+            <div className="w-full aspect-square max-w-50 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
@@ -285,6 +280,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
               label="Phân loại *"
               placeholder="Chọn phân loại"
               fullWidth
+              value={watch('type') || ''}
               {...register('type', { required: true })}
               options={[
                 { value: 'cd', label: 'Cửa đi' },

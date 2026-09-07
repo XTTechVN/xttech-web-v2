@@ -1,6 +1,6 @@
 'use client';
 
-import { Heading, StatsCard } from '@/components';
+import { StatsCard } from '@/components';
 
 // Các thành phần dùng riêng cho dự án
 import Table from './_components/table';
@@ -19,6 +19,7 @@ import queryClient from '@/utils/query';
 
 const Page = () => {
   const router = useRouter();
+
   // Lấy danh sách khách hàng
   const { data: customerData } = useQuery({
     queryKey: ['customers'],

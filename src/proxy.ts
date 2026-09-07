@@ -18,12 +18,7 @@ for (const section of rawSidebarSections) {
   }
 }
 
-const DEFAULT_PAGES: Record<string, string> = {
-  admin: '/app/dashboard',
-  hr: '/app/departments',
-  sale: '/app/projects',
-  technician: '/app/shifts',
-};
+
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -36,8 +31,7 @@ export function proxy(request: NextRequest) {
       const parsed = JSON.parse(decodeURIComponent(xtAuthCookie));
       if (Array.isArray(parsed.roles)) {
         userRoles = parsed.roles.map((r: any) => {
-          const code = typeof r === 'string' ? r : r?.code;
-          return code === 'super' ? 'admin' : code;
+          return typeof r === 'string' ? r : r?.code;
         });
       }
     } catch (e) {
@@ -52,8 +46,7 @@ export function proxy(request: NextRequest) {
   // 1. Nếu đã đăng nhập mà cố tình vào lại trang /signin -> redirect về trang mặc định của role
   if (pathname === '/signin') {
     if (userRoles.length > 0) {
-      const primaryRole = userRoles[0];
-      const redirectUrl = DEFAULT_PAGES[primaryRole] || '/app/dashboard';
+      const redirectUrl = '/app/dashboard';
       return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
     return NextResponse.next();
@@ -71,8 +64,7 @@ export function proxy(request: NextRequest) {
     if (allowedRoles) {
       const hasPermission = userRoles.some((role) => allowedRoles.includes(role));
       if (!hasPermission) {
-        const primaryRole = userRoles[0];
-        const redirectUrl = DEFAULT_PAGES[primaryRole] || '/app/dashboard';
+        const redirectUrl = '/app/dashboard';
         return NextResponse.redirect(new URL(redirectUrl, request.url));
       }
     }

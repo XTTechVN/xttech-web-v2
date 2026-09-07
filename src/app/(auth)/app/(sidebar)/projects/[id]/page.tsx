@@ -84,7 +84,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] p-6 text-center">
+      <div className="flex flex-col items-center justify-center min-h-100 p-6 text-center">
         <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
         <p className="text-slate-500 text-sm">Đang tải thông tin dự án...</p>
       </div>
@@ -93,7 +93,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
 
   if (error || !project) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] p-6 text-center">
+      <div className="flex flex-col items-center justify-center min-h-100 p-6 text-center">
         <div className="p-4 rounded-full bg-red-50 text-red-500 mb-4">
           <FolderOpen size={48} />
         </div>

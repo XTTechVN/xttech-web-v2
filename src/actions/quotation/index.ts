@@ -72,3 +72,34 @@ export const getQuotationPreview = async (data: QuotationUpdate): Promise<Quotat
     throw error;
   }
 };
+
+export const exportQuotation = async (id: number): Promise<void> => {
+  try {
+    const response = await api.get(`/api/v1/quotations/${id}/export`, {
+      responseType: 'blob',
+    });
+    
+    // Lấy Content-Disposition để parse filename
+    const disposition = response.headers['content-disposition'];
+    let filename = `bao_gia_${id}.xlsx`;
+    if (disposition && disposition.indexOf('attachment') !== -1) {
+      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+      const matches = filenameRegex.exec(disposition);
+      if (matches != null && matches[1]) {
+        filename = decodeURIComponent(matches[1].replace(/['"]/g, ''));
+      }
+    }
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: unknown) {
+    console.warn('API error exportQuotation', error);
+    throw error;
+  }
+};

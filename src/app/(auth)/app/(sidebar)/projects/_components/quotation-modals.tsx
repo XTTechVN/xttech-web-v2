@@ -39,6 +39,7 @@ export function QuotationCreateModal({
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<QuotationCreateFormValues>();
 
@@ -67,7 +68,7 @@ export function QuotationCreateModal({
         projectId: defaultProjectId || '' 
       });
     }
-  }, [isOpen, defaultProjectId]);
+  }, [isOpen, defaultProjectId, reset]);
 
   const handleConfirm = (data: QuotationCreateFormValues) => {
     const formattedData: QuotationCreate = {
@@ -97,6 +98,7 @@ export function QuotationCreateModal({
               label="Dự án áp dụng *"
               placeholder="Chọn dự án"
               fullWidth
+              value={watch('projectId') || ''}
               {...register('projectId', { required: true })}
               options={projects.map((p) => ({ value: p.id, label: p.name }))}
               error={errors.projectId ? 'Vui lòng chọn dự án' : undefined}
@@ -169,6 +171,7 @@ export function QuotationUpdateModal({
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<QuotationUpdateFormValues>();
 
@@ -195,7 +198,7 @@ export function QuotationUpdateModal({
         status: initialData.status || '',
       });
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, reset]);
 
   const handleConfirm = (data: QuotationUpdateFormValues) => {
     if (!initialData) return;
@@ -234,6 +237,7 @@ export function QuotationUpdateModal({
             label="Dự án áp dụng *"
             placeholder="Chọn dự án"
             fullWidth
+            value={watch('projectId') || ''}
             {...register('projectId', { required: true })}
             options={projects.map((p) => ({ value: p.id, label: p.name }))}
             error={errors.projectId ? 'Vui lòng chọn dự án' : undefined}
@@ -259,6 +263,7 @@ export function QuotationUpdateModal({
             label="Trạng thái"
             placeholder="Chọn trạng thái"
             fullWidth
+            value={watch('status') || ''}
             {...register('status')}
             options={statusOptions}
             error={errors.status ? 'Trạng thái không hợp lệ' : undefined}

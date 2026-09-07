@@ -3,8 +3,9 @@ import { Trash2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components';
 import { useQuotationStore } from '@/stores';
 import { EDITOR_STYLES } from './config';
-import { SearchSelect } from '../modal';
+import { SearchSelect } from '../modal/search-select';
 import { Accessory, formatAccessoryUnit } from '@/types';
+import { getResolvedPrice } from './utils';
 
 interface QuotationAccessoryProps {
   fIndex: number;
@@ -43,7 +44,7 @@ export const QuotationAccessory = ({
           <ChevronDown size={14} className="text-slate-400 shrink-0" />
         </div>
 
-        <SearchSelect
+        <SearchSelect<Accessory>
           isOpen={isSelectOpen}
           onClose={() => setIsSelectOpen(false)}
           title="Chọn phụ kiện"
@@ -51,16 +52,19 @@ export const QuotationAccessory = ({
           selectedValue={selectedAccId}
           onSelect={(item) => store.updateAccessory(fIndex, mIndex, dIndex, aIndex, item.id)}
           searchKeys={['name', 'code']}
-          renderItem={(item) => (
-            <div className="flex items-center justify-between gap-2 w-full">
-              <span className="line-clamp-2 whitespace-normal break-words pr-2 font-medium">
-                {item.name}
-              </span>
-              <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0">
-                {item.price.toLocaleString('vi-VN')}đ{item.unit ? `/${formatAccessoryUnit(item.unit)}` : ''}
-              </span>
-            </div>
-          )}
+          renderItem={(item) => {
+            const displayPrice = getResolvedPrice(item, store.priceType);
+            return (
+              <div className="relative flex items-center justify-between w-full min-w-0 pr-8" title={item.name}>
+                <div className="truncate pr-24 font-medium flex-1" title={item.name}>
+                  {item.name}
+                </div>
+                <span className="text-[10px] text-[#045863] bg-[#045863]/5 px-1.5 py-0.5 rounded font-bold shrink-0 absolute right-0 top-1/2 -translate-y-1/2 bg-inherit pl-2.5 z-10 select-none">
+                  {displayPrice.toLocaleString('vi-VN')}đ{item.unit ? `/${formatAccessoryUnit(item.unit)}` : ''}
+                </span>
+              </div>
+            );
+          }}
           triggerRef={triggerRef}
         />
       </div>

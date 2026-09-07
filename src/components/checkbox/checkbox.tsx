@@ -4,10 +4,11 @@ import { cn } from '@/utils/cn';
 export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  labelClassName?: string;
 }
 
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ className, label, error, id, disabled, ...props }, ref) => {
+  ({ className, label, error, id, disabled, labelClassName, ...props }, ref) => {
     const checkboxId = id || React.useId();
 
     return (
@@ -16,7 +17,8 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           htmlFor={checkboxId}
           className={cn(
             'inline-flex items-center gap-2 text-sm text-gray-700 select-none cursor-pointer',
-            disabled && 'text-gray-400 cursor-not-allowed'
+            disabled && 'text-gray-400 cursor-not-allowed',
+            labelClassName
           )}
         >
           <input

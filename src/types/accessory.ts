@@ -16,7 +16,9 @@ export interface Accessory {
   name: string;
   specification: string | null;
   unit: string | null;
-  price: number;
+  costPrice: number;
+  retailPrice: number;
+  salePrice: number;
   imagePath: string | null;
   createdAt: string;
   updatedAt: string;
@@ -27,7 +29,9 @@ export interface AccessoryCreate {
   code?: string;
   specification?: string;
   unit?: string;
-  price?: number;
+  costPrice?: number;
+  retailPrice?: number;
+  salePrice?: number;
   imagePath?: string;
 }
 
@@ -36,7 +40,9 @@ export interface AccessoryUpdate {
   code?: string;
   specification?: string;
   unit?: string;
-  price?: number;
+  costPrice?: number;
+  retailPrice?: number;
+  salePrice?: number;
   imagePath?: string;
 }
 
@@ -46,6 +52,9 @@ export interface AccessoryQueryParams {
   unit?: string;
   offset?: number;
   limit?: number;
+  allowDeleted?: boolean;
+  materialId?: number;
+  doorId?: number;
 }
 
 export interface AccessoryAssignDoors {

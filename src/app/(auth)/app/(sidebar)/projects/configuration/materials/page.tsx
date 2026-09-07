@@ -134,7 +134,9 @@ const Page = () => {
                 code: selectedMaterial.code,
                 specification: selectedMaterial.specification,
                 description: selectedMaterial.description,
-                price: selectedMaterial.price,
+                costPrice: selectedMaterial.costPrice,
+                retailPrice: selectedMaterial.retailPrice,
+                salePrice: selectedMaterial.salePrice,
                 unit: selectedMaterial.unit,
               }
             : undefined
