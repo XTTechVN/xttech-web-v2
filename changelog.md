@@ -4,6 +4,12 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-07
 
+### Added
+- **Tính năng Marker Clustering & Spiderfy (Gom cụm và Xòe nan hoa) trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+  - **Thuật toán Gom cụm theo khoảng cách Pixel:** Tự động gom các nhân sự có tọa độ trùng lặp hoặc đứng gần nhau trong cùng văn phòng/nhà xưởng ($< 36\text{px}$) thành **Marker Cụm (Cluster Marker)** hiển thị số lượng nhân viên và chấm trạng thái hoạt động.
+  - **Hiệu ứng Spiderfy xòe nan hoa:** Khi click vào Cụm, bản đồ bung các nhân sự ra thành một vòng tròn đều xung quanh tâm với đường chỉ nối nan hoa tinh tế. Cho phép click chọn từng nhân sự riêng biệt, xem chi tiết và lộ trình mà không bao giờ bị đè lấp lẫn nhau. Tự động thu gọn khi click ra ngoài bản đồ.
+  - **Auto-Spiderfy khi chọn từ Sidebar:** Khi Admin click vào nhân sự ở danh sách bên trái, bản đồ tự động bay tới và bung xòe cụm chứa nhân sự đó.
+
 ### Fixed
 - **Khắc phục triệt để lỗi sai lệch vị trí giữa Chấm công và Live Map, loại bỏ Stale Cache quá khứ và hỗ trợ định vị trong nhà:**
   - **Triệt tiêu Stale Cache Android ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java)):** Kiểm tra thời gian ghi nhận của `lastKnownLocation`. Nếu điểm lưu quá $60$ giây từ quá khứ, vứt bỏ ngay lập tức, chấm dứt triệt để lỗi vừa khởi động app đã bắn tọa độ cũ đi xe ngoài đường (kèm tốc độ cũ $48\text{ km/h}$) lên Live Map.
