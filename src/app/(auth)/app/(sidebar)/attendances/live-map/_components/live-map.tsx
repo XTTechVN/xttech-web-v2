@@ -199,8 +199,13 @@ export function LiveMap({
       setActiveSpiderfyClusterId(null);
     };
     const handleMapMove = () => {
-      setCurrentZoom(map.getZoom());
+      const zoom = map.getZoom();
+      setCurrentZoom(zoom);
       setMapVersion((v) => v + 1);
+      // Khi zoom xa (< 14), tự động thu nan hoa lại để tránh rối mắt
+      if (zoom < 14) {
+        setActiveSpiderfyClusterId(null);
+      }
     };
     map.on('click', handleMapClick);
     map.on('zoomend', handleMapMove);
@@ -213,16 +218,10 @@ export function LiveMap({
     };
   }, [map]);
 
-  // Tự động bay tới nhân sự được chọn và xòe cụm nếu nhân sự đó nằm trong cụm
-  React.useEffect(() => {
-    if (selectedStaff && map) {
-      map.flyTo([selectedStaff.latitude, selectedStaff.longitude], 16, {
-        duration: 1.2,
-      });
-    }
-  }, [selectedStaff, map]);
+  // Khoảng cách địa lý tối đa (mét) để coi là cùng một địa điểm / văn phòng
+  const MAX_CLUSTER_GEO_DISTANCE_METERS = 150; // 150 mét
 
-  // Thuật toán Gom cụm nhân sự theo khoảng cách Pixel thích ứng theo mức Zoom
+  // Thuật toán Gom cụm nhân sự: Chỉ gộp khi CÙNG địa điểm thực tế (<= 150m) VÀ bị đè pixel lên nhau
   const clusters = React.useMemo(() => {
     if (!map || staffLocations.length === 0) {
       return staffLocations.map((staff, idx) => ({
@@ -233,18 +232,25 @@ export function LiveMap({
     }
 
     const groups: StaffCluster[] = [];
-    // Ngưỡng pixel thích ứng: Khi zoom xa nhìn miền/tỉnh (zoom < 11: 65px, zoom < 13: 55px), khi zoom gần vào phố (38px)
-    const CLUSTER_PIXEL_THRESHOLD = currentZoom < 11 ? 65 : currentZoom < 13 ? 55 : 38;
+    const CLUSTER_PIXEL_THRESHOLD = currentZoom < 14 ? 42 : 36;
 
     staffLocations.forEach((staff, index) => {
-      const staffLatLng: [number, number] = [staff.latitude, staff.longitude];
+      const staffLatLng = L.latLng(staff.latitude, staff.longitude);
       const staffPoint = map.latLngToLayerPoint(staffLatLng);
 
       let matchedGroup: StaffCluster | null = null;
       for (const group of groups) {
+        // 1. Kiểm tra khoảng cách địa lý thực tế (không được gom người ở xa / khác tỉnh)
+        const groupLatLng = L.latLng(group.center[0], group.center[1]);
+        const geoDistance = map.distance(staffLatLng, groupLatLng);
+        if (geoDistance > MAX_CLUSTER_GEO_DISTANCE_METERS) {
+          continue;
+        }
+
+        // 2. Kiểm tra khoảng cách pixel trên màn hình
         const groupPoint = map.latLngToLayerPoint(group.center);
-        const distance = staffPoint.distanceTo(groupPoint);
-        if (distance <= CLUSTER_PIXEL_THRESHOLD) {
+        const pixelDistance = staffPoint.distanceTo(groupPoint);
+        if (pixelDistance <= CLUSTER_PIXEL_THRESHOLD) {
           matchedGroup = group;
           break;
         }
@@ -255,7 +261,7 @@ export function LiveMap({
       } else {
         groups.push({
           id: `cluster-${staff.userId || index}`,
-          center: staffLatLng,
+          center: [staff.latitude, staff.longitude],
           staffList: [staff],
         });
       }
@@ -264,19 +270,32 @@ export function LiveMap({
     return groups;
   }, [staffLocations, map, currentZoom]);
 
-  // Nếu nhân sự được chọn thuộc 1 cụm > 1 người, tự động mở Spiderfy cụm đó
+  // Ref theo dõi nhân sự đã được chọn để tránh lặp mở nan hoa khi zoom
+  const prevSelectedStaffIdRef = React.useRef<string | null>(null);
+
+  // Tự động bay tới nhân sự được chọn khi người dùng click từ danh sách bên ngoài
   React.useEffect(() => {
-    if (selectedStaff) {
-      const targetCluster = clusters.find(
-        (c) =>
-          c.staffList.length > 1 &&
-          c.staffList.some((s) => s.userId === selectedStaff.userId)
-      );
-      if (targetCluster) {
-        setActiveSpiderfyClusterId(targetCluster.id);
+    if (selectedStaff && map) {
+      map.flyTo([selectedStaff.latitude, selectedStaff.longitude], 16, {
+        duration: 1.2,
+      });
+
+      // Chỉ kích hoạt mở spiderfy khi người dùng MỚI CHỦ ĐỘNG click chọn nhân viên từ sidebar
+      if (selectedStaff.userId !== prevSelectedStaffIdRef.current) {
+        prevSelectedStaffIdRef.current = selectedStaff.userId;
+        const targetCluster = clusters.find(
+          (c) =>
+            c.staffList.length > 1 &&
+            c.staffList.some((s) => s.userId === selectedStaff.userId)
+        );
+        if (targetCluster) {
+          setActiveSpiderfyClusterId(targetCluster.id);
+        }
       }
+    } else if (!selectedStaff) {
+      prevSelectedStaffIdRef.current = null;
     }
-  }, [selectedStaff, clusters]);
+  }, [selectedStaff, map, clusters]);
 
   const defaultCenter: [number, number] =
     staffLocations.length > 0

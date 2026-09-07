@@ -13,6 +13,12 @@ All notable changes to the frontend project will be documented in this file.
   - **Auto-Spiderfy khi chọn từ Sidebar:** Khi Admin click vào nhân sự ở danh sách bên trái, bản đồ tự động bay tới và bung xòe cụm chứa nhân sự đó.
 
 ### Fixed
+- **Khắc phục vòng lặp tự bung xòe nan hoa (Spiderfy Loop) và gom nhầm nhân sự ở xa trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+  - **Khắc phục lỗi tự động mở nan hoa liên tục khi zoom (Zoom Loop):** Loại bỏ việc re-trigger `useEffect` mở Spiderfy phụ thuộc vào `clusters`. Sử dụng `prevSelectedStaffIdRef` đảm bảo Spiderfy chỉ kích hoạt khi người dùng chủ động click chọn cụm trên bản đồ hoặc click chọn nhân sự mới từ Sidebar.
+  - **Tự động thu gọn nan hoa khi Zoom xa:** Bổ sung cơ chế tự động reset `activeSpiderfyClusterId = null` khi mức zoom $< 14$, ngăn ngừa nan hoa bị giãn/nhảy rối mắt khi quan sát ở phạm vi thành phố/toàn quốc.
+  - **Ràng buộc khoảng cách địa lý thực tế ($\le 150\text{m}$):** Bổ sung điều kiện kiểm tra khoảng cách thực tế bằng `map.distance` trước khi gộp marker theo khoảng cách pixel màn hình. Tuyệt đối không gom nhân sự ở khác quận, tỉnh (ví dụ Nam Định với Hải Phòng) vào chung một cụm văn phòng khi zoom xa.
+
+### Added
 - **Khắc phục triệt để lỗi sai lệch vị trí giữa Chấm công và Live Map, loại bỏ Stale Cache quá khứ và hỗ trợ định vị trong nhà:**
   - **Triệt tiêu Stale Cache Android ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java)):** Kiểm tra thời gian ghi nhận của `lastKnownLocation`. Nếu điểm lưu quá $60$ giây từ quá khứ, vứt bỏ ngay lập tức, chấm dứt triệt để lỗi vừa khởi động app đã bắn tọa độ cũ đi xe ngoài đường (kèm tốc độ cũ $48\text{ km/h}$) lên Live Map.
   - **Hỗ trợ định vị đa tầng trong nhà (Dual Provider):** Đăng ký song song cả `GPS_PROVIDER` (cho ngoài trời) và `NETWORK_PROVIDER` (cho trong phòng / văn phòng qua Wi-Fi) kèm bộ lọc ưu tiên, đảm bảo khi nhân viên ngồi trong văn phòng mất sóng vệ tinh thì hệ thống vẫn cập nhật vị trí văn phòng chuẩn xác.
