@@ -270,19 +270,20 @@ export function LiveMap({
     return groups;
   }, [staffLocations, map, currentZoom]);
 
-  // Ref theo dõi nhân sự đã được chọn để tránh lặp mở nan hoa khi zoom
+  // Ref theo dõi nhân sự đã được chọn để tránh lặp mở nan hoa và lặp zoom khi di chuyển bản đồ
   const prevSelectedStaffIdRef = React.useRef<string | null>(null);
 
   // Tự động bay tới nhân sự được chọn khi người dùng click từ danh sách bên ngoài
   React.useEffect(() => {
     if (selectedStaff && map) {
-      map.flyTo([selectedStaff.latitude, selectedStaff.longitude], 16, {
-        duration: 1.2,
-      });
-
-      // Chỉ kích hoạt mở spiderfy khi người dùng MỚI CHỦ ĐỘNG click chọn nhân viên từ sidebar
+      // Chỉ kích hoạt bay tới và mở spiderfy khi người dùng MỚI CHỦ ĐỘNG click chọn nhân viên từ sidebar
       if (selectedStaff.userId !== prevSelectedStaffIdRef.current) {
         prevSelectedStaffIdRef.current = selectedStaff.userId;
+
+        map.flyTo([selectedStaff.latitude, selectedStaff.longitude], 16, {
+          duration: 1.2,
+        });
+
         const targetCluster = clusters.find(
           (c) =>
             c.staffList.length > 1 &&

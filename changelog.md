@@ -13,7 +13,8 @@ All notable changes to the frontend project will be documented in this file.
   - **Auto-Spiderfy khi chọn từ Sidebar:** Khi Admin click vào nhân sự ở danh sách bên trái, bản đồ tự động bay tới và bung xòe cụm chứa nhân sự đó.
 
 ### Fixed
-- **Khắc phục vòng lặp tự bung xòe nan hoa (Spiderfy Loop) và gom nhầm nhân sự ở xa trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+- **Khắc phục vòng lặp tự bung xòe nan hoa (Spiderfy Loop), tự zoom gần lại và gom nhầm nhân sự ở xa trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+  - **Khắc phục lỗi tự động phóng to lại mức 16 khi vừa zoom xa (Auto Zoom-In Loop):** Di chuyển lệnh `map.flyTo(..., 16)` vào bên trong guard `selectedStaff.userId !== prevSelectedStaffIdRef.current`. Chỉ bay tới nhân viên khi người dùng mới chủ động click chọn từ Sidebar, không tự động flyTo lại khi zoom xa hoặc re-render bản đồ.
   - **Khắc phục lỗi tự động mở nan hoa liên tục khi zoom (Zoom Loop):** Loại bỏ việc re-trigger `useEffect` mở Spiderfy phụ thuộc vào `clusters`. Sử dụng `prevSelectedStaffIdRef` đảm bảo Spiderfy chỉ kích hoạt khi người dùng chủ động click chọn cụm trên bản đồ hoặc click chọn nhân sự mới từ Sidebar.
   - **Tự động thu gọn nan hoa khi Zoom xa:** Bổ sung cơ chế tự động reset `activeSpiderfyClusterId = null` khi mức zoom $< 14$, ngăn ngừa nan hoa bị giãn/nhảy rối mắt khi quan sát ở phạm vi thành phố/toàn quốc.
   - **Ràng buộc khoảng cách địa lý thực tế ($\le 150\text{m}$):** Bổ sung điều kiện kiểm tra khoảng cách thực tế bằng `map.distance` trước khi gộp marker theo khoảng cách pixel màn hình. Tuyệt đối không gom nhân sự ở khác quận, tỉnh (ví dụ Nam Định với Hải Phòng) vào chung một cụm văn phòng khi zoom xa.
