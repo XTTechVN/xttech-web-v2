@@ -4,6 +4,14 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-08
 
+### Added
+- **Tính năng Tự động Cập nhật APK Nội bộ (In-App APK Auto-Updater) cho Android:**
+  - **Native Plugin (`AppUpdatePlugin.java` & `MainActivity.java`):** Tích hợp plugin Capacitor Native đọc `versionCode`/`versionName` từ Android `PackageInfo`, sử dụng luồng tải ngầm đa luồng truyền thẳng file APK vào bộ nhớ cache, phát sự kiện tiến trình tải theo thời gian thực (`downloadProgress`).
+  - **Tự động kích hoạt cài đặt (`FileProvider` & `ACTION_VIEW`):** Cấp quyền `REQUEST_INSTALL_PACKAGES` trong `AndroidManifest.xml` và cấu hình `file_paths.xml`. Tự động kích hoạt Intent cài đặt hệ thống của Android với cờ `FLAG_GRANT_READ_URI_PERMISSION`. Hỗ trợ mở cài đặt cấp quyền cài app không rõ nguồn gốc nếu Android 8.0+ yêu cầu.
+  - **Tự động hóa Phiên bản trong Gradle ([`build.gradle`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/build.gradle)):** Tự động đồng bộ `versionName` từ `package.json` và tự động tính `versionCode` theo số lượng commit Git (`git rev-list --count HEAD`), loại bỏ hoàn toàn việc gõ tay số phiên bản.
+  - **Kết nối Backend FastAPI ([`AppUpdateModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/app-update-modal/index.tsx)):** Gọi trực tiếp endpoint `/api/v1/system/app-versions/latest?platform=android` từ Backend Railway thay vì lưu file tĩnh trên frontend.
+  - **Giao diện Modal Thông báo Cập nhật ([`AppUpdateModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/app-update-modal/index.tsx)):** Tự động phát hiện khi mở ứng dụng trên Android, hiển thị popup thân thiện với danh sách tính năng mới, thanh tiến trình % tải xuống trực quan và các nút điều hướng cài đặt 1 chạm.
+
 ### Changed
 - **Tối ưu hóa luồng Check-in & Loại bỏ Ping thủ công ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx)):**
   - Lược bỏ hoàn toàn lệnh gọi `sendLocationPing` thủ công sau khi Check-in thành công. Toàn bộ việc khởi tạo Live Location và broadcast WebSocket hiện được Backend tự động thực hiện từ chính toạ độ của form chấm công.

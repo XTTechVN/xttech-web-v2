@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist_Mono, Lexend } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
+import { AppUpdateModal } from '@/components';
 
 import './globals.css';
 
@@ -54,6 +55,7 @@ export default function RootLayout({
       <body className="bg-white antialiased min-h-screen" suppressHydrationWarning>
         {children}
         <Toaster position="top-center" />
+        <AppUpdateModal />
       </body>
     </html>
   );
