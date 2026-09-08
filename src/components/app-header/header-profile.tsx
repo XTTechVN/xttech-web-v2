@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -40,7 +41,7 @@ export function HeaderProfile({ userRole }: HeaderProfileProps) {
   const handleLogout = () => {
     localStorage.clear();
     document.cookie = 'xt-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
-    window.location.href = '/signin';
+    window.location.replace('/signin');
   };
 
   const roleName =

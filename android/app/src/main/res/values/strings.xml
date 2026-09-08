@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">XTTech</string>
+    <string name="title_activity_main">XTTech</string>
+    <string name="package_name">com.xttech.app</string>
+    <string name="custom_url_scheme">com.xttech.app</string>
+</resources>

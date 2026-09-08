@@ -31,7 +31,7 @@ export function QuotationsList({ projectId, quotations, isLoadingQuotations, onA
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
-        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Danh sách báo giá ({quotations.length})</h2>
+        <h2 className="text-xs font-bold text-slate-500">Danh sách báo giá ({quotations.length})</h2>
         <button 
           onClick={onAddClick}
           className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-0.5 cursor-pointer bg-transparent border-0 p-0"
@@ -39,7 +39,7 @@ export function QuotationsList({ projectId, quotations, isLoadingQuotations, onA
           <Plus size={14} /> Tạo báo giá
         </button>
       </div>
-      <div className="bg-white rounded-lg border border-slate-200/80 p-5 shadow-xs">
+      <div className="bg-white rounded-lg border border-slate-200/60 p-5 shadow-xs">
         {isLoadingQuotations ? (
           <div className="py-4 flex justify-center"><Loader2 className="w-5 h-5 text-primary animate-spin" /></div>
         ) : quotations.length > 0 ? (
@@ -51,11 +51,11 @@ export function QuotationsList({ projectId, quotations, isLoadingQuotations, onA
               >
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 flex-1 w-full">
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mã báo giá</span>
+                    <span className="text-[10px] font-bold text-slate-400 block">Mã báo giá</span>
                     <span className="text-sm font-semibold text-slate-800 mt-0.5 block">{quotation.code || '—'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tên báo giá</span>
+                    <span className="text-[10px] font-bold text-slate-400 block">Tên báo giá</span>
                     <Link 
                       href={`/app/projects/${projectId}/quotations/${quotation.id}`}
                       className="text-sm font-bold text-slate-800 hover:text-primary transition-colors mt-0.5 block truncate max-w-[140px] sm:max-w-[180px]"
@@ -64,11 +64,11 @@ export function QuotationsList({ projectId, quotations, isLoadingQuotations, onA
                     </Link>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Ngày tạo</span>
+                    <span className="text-[10px] font-bold text-slate-400 block">Ngày tạo</span>
                     <span className="text-sm text-slate-600 mt-0.5 block">{new Date(quotation.createdAt).toLocaleDateString('vi-VN')}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chiết khấu</span>
+                    <span className="text-[10px] font-bold text-slate-400 block">Chiết khấu</span>
                     <span className="text-sm font-bold text-primary mt-0.5 block">{quotation.discountPercentage}%</span>
                   </div>
                 </div>

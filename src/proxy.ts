@@ -39,10 +39,6 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  console.log(`[Proxy] Pathname: ${pathname}`);
-  console.log(`[Proxy] Raw Cookie: ${xtAuthCookie}`);
-  console.log(`[Proxy] parsed userRoles:`, userRoles);
-
   // 1. Nếu đã đăng nhập mà cố tình vào lại trang /signin -> redirect về trang mặc định của role
   if (pathname === '/signin') {
     if (userRoles.length > 0) {
@@ -70,7 +66,13 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  if (pathname.startsWith('/app')) {
+    res.headers.set('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');
+    res.headers.set('CDN-Cache-Control', 'no-store');
+    res.headers.set('Surrogate-Control', 'no-store');
+  }
+  return res;
 }
 
 export const config = {

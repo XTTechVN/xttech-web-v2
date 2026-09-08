@@ -87,8 +87,7 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
 
   // Log dữ liệu hiện tại của store ra console khi có thay đổi
   useEffect(() => {
-    console.log('--- ZUSTAND STORE CURRENT STATE ---');
-    console.log('Floors:', store.floors);
+
   }, [store.title, store.code, store.discountPercentage, store.floors]);
 
   // Debounce dữ liệu từ store để giảm số lần gọi API preview khi người dùng nhập liệu nhanh

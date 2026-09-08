@@ -59,6 +59,11 @@ const useAuthStore = create<AuthState>()(
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.user && state.user.roles && typeof document !== 'undefined') {
+          document.cookie = `xt-auth=${encodeURIComponent(JSON.stringify({ roles: state.user.roles }))}; path=/; max-age=604800; SameSite=Lax`;
+        }
+      },
     },
   ),
 );

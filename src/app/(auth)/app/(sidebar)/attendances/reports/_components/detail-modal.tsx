@@ -43,7 +43,12 @@ export function ReportDetailModal({
       isOpen={isOpen}
       onClose={onClose}
       title={`Chi tiết chấm công - ${employee?.fullName || employee?.username || ''}`}
-      className="m-2 max-w-2xl w-full max-h-[85vh] overflow-y-auto"
+      size="lg"
+      footer={
+        <Button variant="outline" size="sm" onClick={onClose}>
+          Đóng
+        </Button>
+      }
     >
       <div className="space-y-4 py-2">
         {/* Thông tin nhân sự */}
@@ -64,8 +69,7 @@ export function ReportDetailModal({
               <span className="font-bold text-gray-900 block text-sm">
                 {employee?.fullName || employee?.username}
               </span>
-              <span className="text-xs text-gray-500">
-                Mã: {employee?.identifyCode || 'NV'} | Phòng ban:{' '}
+              <span className="text-xs font-medium text-primary block">
                 {employee?.departmentName || 'Chưa gán'}
               </span>
             </div>
@@ -81,8 +85,8 @@ export function ReportDetailModal({
 
         {/* Danh sách các ngày chấm công */}
         <div className="space-y-2">
-          <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-            Lịch sử các ngày chấm công ({attendances.length})
+          <h4 className="text-sm font-bold text-gray-800">
+            Lịch sử các ngày chấm công
           </h4>
 
           {isLoading ? (
@@ -126,12 +130,6 @@ export function ReportDetailModal({
               ))}
             </div>
           )}
-        </div>
-
-        <div className="flex justify-end pt-2">
-          <Button variant="outline" size="sm" onClick={onClose}>
-            Đóng
-          </Button>
         </div>
       </div>
     </Modal>

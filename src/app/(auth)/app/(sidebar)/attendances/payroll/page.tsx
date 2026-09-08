@@ -260,7 +260,14 @@ export default function PayrollDataPage() {
       key: 'note',
       label: 'Ghi chú',
       minWidth: '100px',
-      cell: (row) => row.note || '-',
+      cell: (row) => (
+        <span
+          className="text-xs max-w-[90px] truncate block"
+          title={row.note || undefined}
+        >
+          {row.note || '-'}
+        </span>
+      ),
     },
     {
       key: 'actions',
@@ -364,7 +371,9 @@ export default function PayrollDataPage() {
         </div>
 
         {row.note && (
-          <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200">Ghi chú: {row.note}</p>
+          <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 truncate" title={row.note}>
+            Ghi chú: {row.note}
+          </p>
         )}
 
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-2.5" onClick={(e) => e.stopPropagation()}>

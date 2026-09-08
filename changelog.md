@@ -2,6 +2,89 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-08
+
+### Changed
+- **Tối ưu hóa luồng Check-in & Loại bỏ Ping thủ công ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx)):**
+  - Lược bỏ hoàn toàn lệnh gọi `sendLocationPing` thủ công sau khi Check-in thành công. Toàn bộ việc khởi tạo Live Location và broadcast WebSocket hiện được Backend tự động thực hiện từ chính toạ độ của form chấm công.
+
+### Fixed
+- **Chuẩn hóa cơ chế tự động bay về nhân sự tuân thủ React 19 Compiler ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx) & [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):**
+  - Bổ sung timestamp `_selectedAt` mỗi khi click chọn nhân sự ở Sidebar.
+  - Sử dụng duy nhất một `lastSelectedAtRef` khai báo chuẩn ở đầu component, loại bỏ hoàn toàn các ref mutate trong render body và các hook vi phạm thứ tự của React 19 Compiler.
+  - Xóa bỏ lỗi `Error: This value cannot be modified` và đảm bảo click lại vào nhân viên bất kỳ lúc nào thì bản đồ đều bay về đúng vị trí tức thì.
+- **Triệt tiêu lỗi vòng lặp render vô hạn `Maximum update depth exceeded` trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+  - Xóa bỏ state rác `mapVersion` liên tục ép re-render trong sự kiện di chuyển bản đồ.
+  - Bỏ listener `moveend`, chỉ cập nhật `currentZoom` khi giá trị thực tế thay đổi (`zoomend`) và có guard `prev !== newZoom`.
+  - Chuẩn hóa callback ref cho `<MapContainer ref={handleMapRef}>` qua `React.useCallback` ngăn React gọi lại inline ref liên tục.
+  - Tách `clustersRef` khỏi dependency array của `useEffect` bay tới nhân sự, chấm dứt triệt để chuỗi domino kích hoạt re-render lặp.
+- **Hỗ trợ định vị Wi-Fi / IP trên Laptop & Môi trường Web ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
+  - Đồng bộ chuẩn hóa các ngưỡng lọc định vị trên thiết bị.
+
+
+## [Unreleased] - 2026-09-07
+
+
+### Added
+- **Tính năng Marker Clustering & Spiderfy (Gom cụm và Xòe nan hoa) trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+  - **Thuật toán Gom cụm theo khoảng cách Pixel thích ứng theo mức Zoom (Zoom-Adaptive Clustering):** Khi zoom xa (zoom $< 11$: $65\text{px}$, zoom $< 13$: $55\text{px}$), tự động gom các nhân sự trong cùng thành phố/tỉnh thành 1 Marker Cụm duy nhất; khi zoom gần (zoom $\ge 13$: $38\text{px}$), tách ra từng phòng/tòa nhà riêng biệt.
+  - **Hiển thị thông minh theo mức Zoom (Clean Map UI):** Khi zoom xa ($< 14$), tự động ẩn nhãn tên để bản đồ thoáng đãng, chỉ giữ Avatar tròn mini ($32\text{px}$) kèm viền màu trạng thái, nhãn tên tự động hiện lên khi rê chuột `hover` hoặc khi click chọn; khi zoom gần ($\ge 14$), hiển thị nhãn tên đầy đủ.
+  - **Rút gọn tên nhân viên thông minh (`formatShortStaffName`):** Tự động chuyển `System Administrator` thành `Admin`, giới hạn độ dài tên tránh hiện tượng chữ quá dài đè lên marker khác.
+  - **Hiệu ứng Spiderfy xòe nan hoa:** Khi click vào Cụm, bản đồ bung các nhân sự ra thành một vòng tròn đều xung quanh tâm với đường chỉ nối nan hoa tinh tế. Cho phép click chọn từng nhân sự riêng biệt, xem chi tiết và lộ trình mà không bao giờ bị đè lấp lẫn nhau. Tự động thu gọn khi click ra ngoài bản đồ.
+  - **Auto-Spiderfy khi chọn từ Sidebar:** Khi Admin click vào nhân sự ở danh sách bên trái, bản đồ tự động bay tới và bung xòe cụm chứa nhân sự đó.
+
+### Fixed
+- **Khắc phục vòng lặp tự bung xòe nan hoa (Spiderfy Loop), tự zoom gần lại và gom nhầm nhân sự ở xa trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+  - **Khắc phục lỗi tự động phóng to lại mức 16 khi vừa zoom xa (Auto Zoom-In Loop):** Di chuyển lệnh `map.flyTo(..., 16)` vào bên trong guard `selectedStaff.userId !== prevSelectedStaffIdRef.current`. Chỉ bay tới nhân viên khi người dùng mới chủ động click chọn từ Sidebar, không tự động flyTo lại khi zoom xa hoặc re-render bản đồ.
+  - **Khắc phục lỗi tự động mở nan hoa liên tục khi zoom (Zoom Loop):** Loại bỏ việc re-trigger `useEffect` mở Spiderfy phụ thuộc vào `clusters`. Sử dụng `prevSelectedStaffIdRef` đảm bảo Spiderfy chỉ kích hoạt khi người dùng chủ động click chọn cụm trên bản đồ hoặc click chọn nhân sự mới từ Sidebar.
+  - **Tự động thu gọn nan hoa khi Zoom xa:** Bổ sung cơ chế tự động reset `activeSpiderfyClusterId = null` khi mức zoom $< 14$, ngăn ngừa nan hoa bị giãn/nhảy rối mắt khi quan sát ở phạm vi thành phố/toàn quốc.
+  - **Ràng buộc khoảng cách địa lý thực tế ($\le 150\text{m}$):** Bổ sung điều kiện kiểm tra khoảng cách thực tế bằng `map.distance` trước khi gộp marker theo khoảng cách pixel màn hình. Tuyệt đối không gom nhân sự ở khác quận, tỉnh (ví dụ Nam Định với Hải Phòng) vào chung một cụm văn phòng khi zoom xa.
+
+### Added
+- **Khắc phục triệt để lỗi sai lệch vị trí giữa Chấm công và Live Map, loại bỏ Stale Cache quá khứ và hỗ trợ định vị trong nhà:**
+  - **Triệt tiêu Stale Cache Android ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java)):** Kiểm tra thời gian ghi nhận của `lastKnownLocation`. Nếu điểm lưu quá $60$ giây từ quá khứ, vứt bỏ ngay lập tức, chấm dứt triệt để lỗi vừa khởi động app đã bắn tọa độ cũ đi xe ngoài đường (kèm tốc độ cũ $48\text{ km/h}$) lên Live Map.
+  - **Hỗ trợ định vị đa tầng trong nhà (Dual Provider):** Đăng ký song song cả `GPS_PROVIDER` (cho ngoài trời) và `NETWORK_PROVIDER` (cho trong phòng / văn phòng qua Wi-Fi) kèm bộ lọc ưu tiên, đảm bảo khi nhân viên ngồi trong văn phòng mất sóng vệ tinh thì hệ thống vẫn cập nhật vị trí văn phòng chuẩn xác.
+  - **Bộ lọc sai số thích ứng (Adaptive Accuracy):** Áp dụng đồng bộ trên cả 3 nền tảng ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java), [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)): siết chặt `accuracy <= 30m` khi di chuyển ngoài đường, nới lỏng `accuracy <= 80m` khi đứng yên trong phòng (chuẩn hóa `speed = 0`).
+  - **Đồng bộ khởi tạo tức thì khi Check-in ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx)):** Tự động gửi ping khởi tạo với `speed = 0` ngay khi bấm Chấm công thành công, đồng bộ ngay lập tức điểm chấm công lên Redis Live Map.
+- **Triệt tiêu hiện tượng lộ trình bị giật loằng ngoằng do Fallback trạm phát sóng di động (Cellular BTS) và thiếu bộ lọc điểm rác:**
+  - **Web Geolocation Tracker (`useLocationTracker.ts`):** Loại bỏ hoàn toàn cơ chế fallback gọi lại `getCurrentPosition` với `enableHighAccuracy: false` (nguyên nhân gây lấy vị trí cột sóng BTS/IP sai số 500m - 1000m). Tăng thời gian chờ định vị `timeout` lên 12s và siết `maximumAge: 5000` để đảm bảo luôn nhận tín hiệu vệ tinh phần cứng.
+  - **Chốt chặn độ chính xác Client (`useLocationTracker.ts`):** Lọc cứng toàn bộ điểm có `accuracy > 30m` hoặc bước nhảy dị biệt $> 200m$ trong thời gian $< 6s$, không gửi điểm rác lên backend.
+  - **Android Native Tracking Service (`TrackingLocationService.java`):** Chuyển sang ưu tiên độc quyền `GPS_PROVIDER`, chỉ kích hoạt `NETWORK_PROVIDER` khi chip GPS bị tắt hoàn toàn trong cài đặt; bổ sung bộ lọc `accuracy > 30.0f` và kiểm tra bước nhảy dị biệt.
+  - **iOS Native Tracking Plugin (`NativeTrackingPlugin.swift`):** Siết ngưỡng sai số `horizontalAccuracy > 30.0` và tích hợp bộ lọc bước nhảy dị biệt (Jump Outlier Filter $> 200m$ trong $< 6s$) ngay tại tầng Native CoreLocation của iOS.
+  - **Lọc lộ trình thông minh trên bản đồ (`route-playback-modal.tsx`):** Bổ sung thuật toán loại bỏ điểm văng gai nhọn (Outlier Spike Filter) trước khi đưa vào OSRM Map Matching hoặc vẽ Polyline, đảm bảo đường đi luôn mượt mà và bám sát tim đường giao thông thực tế.
+
+## [Unreleased] - 2026-09-05
+
+### Fixed
+- **Khắc phục lỗi app Android bị chuyển về trạng thái `offline` sau khoảng 40 - 60 phút (Background Tracking):**
+  - **Tự động Refresh Token trong Background Service:** Bổ sung việc lưu trữ `refreshToken` trong [`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java). Khi Access Token hết hạn (mặc định 30 phút theo cấu hình backend) và API trả về `HTTP 401 Unauthorized`, Service tầng Native sẽ tự động gọi endpoint `/api/v1/auth/refresh`, lưu Access Token mới và retry ping ngay lập tức mà không làm gián đoạn luồng định vị.
+  - **Đồng bộ Token thời gian thực:** Cập nhật [`NativeTrackingPlugin.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/NativeTrackingPlugin.java) với method `updateToken` và hook [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts) lắng nghe sự kiện cập nhật token từ `useAuthStore` để đồng bộ tức thời xuống Service nền.
+  - **Chống Android Doze Mode & CPU Sleep:** Khai báo quyền `WAKE_LOCK` và `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` trong [`AndroidManifest.xml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/AndroidManifest.xml). Sử dụng `PARTIAL_WAKE_LOCK` ngắn (tối đa 15s) trong `TrackingLocationService` để giữ CPU hoạt động trọn vẹn trong quá trình gửi gói tin mạng HTTP khi thiết bị tắt màn hình và để yên.
+- **Khắc phục lỗi iOS bị chuyển về trạng thái `offline` khi khóa màn hình ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift) & [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist)):**
+  - **Giữ nhịp CoreLocation liên tục (`kCLDistanceFilterNone`):** Loại bỏ khoảng cách 5m tĩnh của phần cứng, chuyển sang dùng `kCLDistanceFilterNone` để CoreLocation luôn đánh thức (wake up) ứng dụng theo chu kỳ định vị ngầm ngay cả khi người dùng ngồi yên hoặc khóa màn hình, duy trì gửi heartbeat mỗi 2 phút để không bao giờ bị Backend chuyển sang `offline` sau 10 phút.
+  - **Bảo toàn gói tin mạng khi màn hình tắt (`beginBackgroundTask`):** Bọc các yêu cầu mạng qua `URLSession` (`sendPing` và `refreshAccessToken`) bằng `UIApplication.shared.beginBackgroundTask` để iOS cấp đủ thời gian CPU nền hoàn tất 100% việc gửi dữ liệu trước khi đưa ứng dụng vào trạng thái ngủ.
+  - **Bổ sung quyền `NSLocationAlwaysUsageDescription`:** Đảm bảo tương thích toàn diện với cơ chế cấp quyền "Luôn luôn" (Always) trên các phiên bản iOS.
+
+### Added
+- **Xem Lộ trình theo đúng Ca Chấm công ([`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/route-playback-modal.tsx) & [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):**
+  - Khi bấm xem "Lộ trình" của nhân viên trên Live-Map, modal tự động lọc chính xác chuỗi tọa độ GPS gắn liền với bản ghi chấm công đó (`attendanceId`), không bị vẽ nối hoặc lẫn lộn với các ca làm việc khác trong ngày.
+  - Bổ sung nút chuyển đổi linh hoạt `[Theo ca #ID]` và `[Cả ngày]` ngay trên thanh điều khiển của modal để người quản trị dễ dàng so sánh lộ trình ca hiện tại hoặc toàn bộ hành trình trong ngày.
+- **Nâng cấp cơ chế 'Ping 3s Thông minh (Smart Adaptive Location Tracking)' trên Android, iOS và Web:**
+  - **Tần suất 3 giây khi di chuyển:** Khi nhân viên thực sự di chuyển (`speed >= 1.0 m/s` hoặc khoảng cách $\ge 5$m), tần suất gửi ping được rút ngắn từ 10s xuống còn **3 giây/lần** trên cả 3 nền tảng ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java), [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)), mang lại trải nghiệm Live-Map mượt mà tức thời theo thời gian thực.
+  - **Tự động tiết kiệm Pin khi dừng lại:** Khi nhân viên dừng lại (đèn đỏ, dừng xe, ngồi yên một chỗ với `speed < 0.5 m/s` và khoảng cách $< 5$m), thiết bị tự động hoãn gửi ping 3s dồn dập, chuyển sang cơ chế giữ nhịp tim Heartbeat để tối ưu hóa thời lượng pin và dung lượng 4G của điện thoại.
+  - **Bảo toàn Cơ sở dữ liệu:** Bộ lọc Smart GPS Filter tại backend giữ nguyên cơ chế chỉ ghi vào PostgreSQL khi di chuyển $\ge 25$m, ngăn ngừa triệt để nguy cơ phình to database.
+- **Xây dựng module iOS Native Swift Background Tracking Service ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift) & [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m)):**
+  - Tích hợp trực tiếp `CoreLocation` (`CLLocationManager`) chạy ngầm dưới tầng Swift Native của Apple với `allowsBackgroundLocationUpdates = true`, `pausesLocationUpdatesAutomatically = false` và `showsBackgroundLocationIndicator = true` (hiển thị biểu tượng mũi tên xanh chuẩn Apple trên thanh trạng thái / Dynamic Island).
+  - Tự động gửi tọa độ lên endpoint `/api/v1/attendances/location-ping` bằng `URLSession` độc lập, duy trì định vị liên tục và ổn định ngay cả khi tắt màn hình đút túi quần.
+  - Tự động bắt mã `HTTP 401` để refresh access token bằng `refreshToken` độc lập dưới tầng Native.
+  - Bổ sung cơ chế Fallback mượt mà trong [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts) tự động chuyển sang Web Geolocation nếu module Native gặp sự cố.
+- Khởi tạo nền tảng **iOS Native (`@capacitor/ios`)** cho ứng dụng di động:
+  - Cài đặt `@capacitor/ios` và chạy `npx cap add ios` sinh khung dự án Xcode `ios/App/App.xcworkspace`.
+  - Cấu hình các quyền riêng tư trong [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist): `NSLocationWhenInUseUsageDescription`, `NSLocationAlwaysAndWhenInUseUsageDescription`, `UIBackgroundModes` (`location`) hỗ trợ định vị, cùng `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`, `NSPhotoLibraryAddUsageDescription` hỗ trợ chụp ảnh selfie chấm công khuôn mặt và đính kèm chứng từ.
+- Thiết lập quy trình **CI/CD tự động đóng gói file iOS IPA ([`.github/workflows/build-ios-unsigned.yml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/.github/workflows/build-ios-unsigned.yml))** trên GitHub Actions:
+  - Tự động chạy trên môi trường macOS M1/M2 ảo (`macos-14`) của GitHub.
+  - Biên dịch dự án thành bản lưu trữ Release không yêu cầu chứng chỉ trả phí (`CODE_SIGNING_ALLOWED=NO`).
+  - Đóng gói ứng dụng thành file `App-unsigned.ipa` đẩy lên mục Artifacts để tải về máy tính Windows và ký qua 3uTools bằng tài khoản Apple ID cá nhân (sử dụng 7 ngày).
 ## [Unreleased] - 2026-08-30
 
 ### Added
@@ -11,27 +94,56 @@ All notable changes to the frontend project will be documented in this file.
 - Tích hợp nút bấm **"Xuất Excel"** (`FileSpreadsheet`) trên thanh công cụ quản lý khách hàng tại [`customers/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx).
 - Tích hợp giao diện **Hướng dẫn cấp lại quyền vị trí trực quan (Visual Permission Guide)** và cơ chế **Tự động bắt quyền (Auto-Permission Recovery)** trong [`AutoTimekeepingModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx): Hướng dẫn chi tiết từng bước cho cả 3 nền tảng (🤖 Android App / PWA cài đặt, 🍏 iPhone iOS Safari / Standalone, 💻 Máy tính Chrome/Edge), kèm lắng nghe sự kiện `navigator.permissions` tự động kích hoạt lấy vị trí ngay khi người dùng vừa bật lại quyền.
 
-
-
-
 ### Fixed
 - Chuẩn hóa thiết kế giao diện [`CustomerExportModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx) đồng bộ 100% với hệ thống Modal của dự án: cấu trúc container `flex flex-col gap-4 py-2`, spacing `gap-3`, tiêu đề súc tích, bộ chọn mốc thời gian chip và nút bấm `Button` chuẩn Design System.
 - Sửa lỗi cảnh báo React render phase *"Cannot access refs during render"* tại [`quotation-info.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/quotations/[quotationId]/components/editor/quotation-info.tsx) khi truyền thuộc tính `width` chứa `ref.current`.
+
 ### Changed / Refactored
 - Tối ưu hóa và tái cấu trúc toàn diện trang Quản lý chấm công [`attendances/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx): loại bỏ hơn 350 dòng code rác, các state mồ côi (`filterEmployeeId`, `filterStartDate`, `filterEndDate`, `filterShift`, `isLoading`, `showTimekeepingModal`, `reviewModalState`), các modal không sử dụng (`ReviewAdjustmentModal`, `AutoTimekeepingModal`) và các khối JSX comment cũ; chuẩn hóa bộ lọc `TableData` và tối ưu hiệu năng render.
+
 ### Removed
 - Loại bỏ nút xuất lẻ Excel theo từng nhân sự tại Bảng báo cáo chấm công [`attendances/reports/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/table.tsx), action `exportUserAttendanceDetailReport` và type `UserAttendanceDetailReportQueryParams`.
 
+## [0.1.0] - 2026-08-26
 
-## [Unreleased] - 2026-08-26
+- Xây dựng **Android Native Foreground Service (`TrackingLocationService.java`)** độc lập chạy ngầm liên tục chuẩn như Zalo/Grab:
+  - Khởi tạo tiến trình nền độc lập dưới tầng Android OS với `START_STICKY`, Notification Channel cố định (*"XTTech đang hoạt động"*) và gắn cờ `android:stopWithTask="false"` trong `AndroidManifest.xml`.
+  - Bắt sự kiện `onTaskRemoved()`: Khi người dùng vuốt đóng app hoàn toàn khỏi màn hình đa nhiệm (Recent Apps), tầng Java Native tiếp tục duy trì hoạt động, lắng nghe `LocationManager` và gửi HTTP POST trực tiếp lên endpoint `/api/v1/attendances/location-ping` bằng `HttpURLConnection` mà không cần WebView hay JavaScript phải thức.
+  - Tích hợp cầu nối `NativeTrackingPlugin.java` đăng ký trong `MainActivity.java` và kết nối với hook [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts) để kích hoạt tự động theo ca làm việc.
+- Thêm component [`AppLauncherRedirect`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/_components/AppLauncherRedirect.tsx) vào trang chủ [`src/app/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/page.tsx):
+  - Tự động nhận diện môi trường ứng dụng di động qua `Capacitor.isNativePlatform()`.
+  - Đưa người dùng vào thẳng `/app/dashboard` nếu đã đăng nhập hoặc `/signin` nếu chưa đăng nhập, loại bỏ việc người dùng bị kẹt tại trang landing page khi mở app Android.
+- Bổ sung cơ chế **Heartbeat (Nhịp tim định kỳ)** trong hook [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts):
+  - Tự động gửi gói tin nhịp tim mỗi 3 phút (`heartbeatMs = 180000`) khi thiết bị đứng yên một chỗ, duy trì trạng thái 🟢 Trực tuyến (`stationary`) trên Bản đồ Giám sát Admin, tránh bị Backend đánh dấu `offline` sau 10 phút.
+  - Lưu cache tọa độ đã biết gần nhất `lastKnownCoordsRef`, gửi ping với vận tốc 0 khi đứng yên mà không cần ép chip GPS bật quét liên tục, tối ưu thời lượng pin.
+  - Đồng bộ cơ chế kích hoạt lại nhịp tim khi người dùng bật lại màn hình hoặc focus vào ứng dụng.
 
-
-### Added
+### Fixed
+- Sửa dứt điểm lỗi hiển thị chuỗi văn bản thô (RSC Flight Payload `:HL... 0:{"tree":...}`) trên ứng dụng Android khi đăng xuất hoặc đăng nhập lại:
+  - Chuẩn hóa kiến trúc Server Layout tại [`src/app/(auth)/layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/layout.tsx) với `export const dynamic = 'force-dynamic'` và `revalidate = 0`, ngăn chặn Next.js tự động prerender tĩnh khu vực authenticated routes và loại bỏ hoàn toàn header `s-maxage=31536000`.
+  - Tách riêng component guard phía client [`AuthClientLayout`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/_components/auth-client-layout.tsx) để xử lý hydrate Zustand và bảo vệ phân quyền.
+  - Bổ sung cấu hình `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate` và `CDN-Cache-Control: no-store` cho toàn bộ route `/app/:path*` trong [`next.config.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/next.config.ts) và Middleware [`src/proxy.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/proxy.ts), ngăn chặn hoàn toàn Edge CDN của Railway lưu cache nhầm response dạng `text/x-component`.
+  - Giữ nguyên URL điều hướng sạch đẹp (`/app/dashboard`) bằng `window.location.replace` mà không cần dùng query param tạm thời (`?_t=...`).
+  - Tối ưu [`MainActivity.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/MainActivity.java): Bật `setAcceptThirdPartyCookies`, đồng thời gọi `CookieManager.getInstance().flush()` ngay trong sự kiện vòng đời `onResume()` để đồng bộ cookie tức thời.
+- Tính năng **Giám sát Vị trí Nhân sự Trực tiếp & Lịch sử Lộ trình** ([`attendances/live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):
+  - Trang Bản đồ Admin kết hợp bản đồ Leaflet mượt mà và danh sách nhân sự trực tuyến ([`LiveMap`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx), [`StaffList`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/staff-list.tsx)).
+  - Kết nối Realtime **WebSocket** nhận cập nhật tọa độ tức thời với trạng thái di chuyển (Moving / Stationary / Offline), mức pin và vận tốc.
+  - Modal xem lại lộ trình di chuyển theo ngày ([`RoutePlaybackModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/route-playback-modal.tsx)) vẽ đường đi Polyline, tổng km đã đi và mốc thời gian.
+    - Hook định vị thông minh [`useLocationTracker`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts) tích hợp cơ chế chống đóng băng toàn diện (**Web Worker Timer** chạy độc lập không bị throttle khi ẩn tab, **`watchPosition`** lắng nghe phần cứng GPS, **Screen WakeLock API**, và tự động ping bù khi bật màn hình / focus tab).
+  - Tích hợp `useLocationTracker` trực tiếp vào layout toàn cục [`layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/layout.tsx) tự động kích hoạt định vị khi đăng nhập.
+  - Bổ sung cơ chế kích hoạt gửi ping vị trí tức thời ngay khi nhân viên bấm Check-in thành công trong [`AutoTimekeepingModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx).
 - Thêm action [`exportUserAttendanceDetailReport`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/report/index.ts) và type [`UserAttendanceDetailReportQueryParams`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/report.ts) để gọi API xuất file Excel chi tiết chấm công và bảng lương theo từng nhân sự.
 - Bổ sung nút bấm 📊 **"Xuất chi tiết Excel"** (`FileSpreadsheet`) vào cột Thao tác (`actions`) và giao diện Mobile Card trong Bảng báo cáo chấm công ([`attendances/reports/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/table.tsx)).
 - Tích hợp trạng thái `exportingUserId` để hiển thị spinner loading xoay tròn (`Loader2`) khi tải file và thông báo tiến trình bằng `react-hot-toast`.
 
 ### Fixed
+- Sửa dứt điểm lỗi hiển thị phần trăm pin `null%` và icon pin màu đỏ khi thiết bị không cung cấp thông số pin:
+  - Cập nhật [`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx) và [`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/staff-list.tsx) kiểm tra chặt chẽ `typeof batteryLevel === 'number'`, hiển thị `--` hoặc ẩn icon pin khi không có dữ liệu.
+  - Bổ sung cơ chế cache giữ lại mức pin đọc được gần nhất trong [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts).
+- Sửa lỗi mảng `staffLocations` bị nhân đôi 2 phần tử của cùng 1 nhân sự trên trang Giám sát Vị trí ([`attendances/live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):
+  - Chuẩn hóa hàm nhận WebSocket `onmessage` với cơ chế phòng thủ 2 lớp (hỗ trợ cả `userId` và `user_id`), tự động map các thuộc tính về `StaffLiveLocation` và merge state an toàn.
+- Cập nhật [`src/types/location.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/location.ts) và [`RoutePlaybackModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/route-playback-modal.tsx):
+  - Đồng bộ hỗ trợ cả `camelCase` (`totalDistanceKm`, `recordedAt`) và `snake_case` tránh lỗi hiển thị tổng quãng đường `0 km` hoặc thời gian không xác định khi xem lộ trình.
 - Sửa lỗi logo hệ thống (`XTLogo`) bị tàng hình / biến mất trên giao diện Sidebar Mobile do xung đột ID `<linearGradient>` tĩnh với Sidebar Desktop (`display: none`):
   - Áp dụng `React.useId()` trong [`XTLogo`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/logo/logo.tsx) để sinh ID động duy nhất cho từng thể hiện SVG, tránh xung đột CSS Paint Server trong DOM.
 - Sửa lỗi phân trang tự động reset về trang 1 khi chuyển sang trang 2, 3, 4 trên toàn bộ các trang bảng dữ liệu:

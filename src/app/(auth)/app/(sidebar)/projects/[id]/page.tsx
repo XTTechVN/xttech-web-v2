@@ -128,7 +128,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       {/* Header & Breadcrumb & Action Buttons */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between pb-5 border-b border-slate-200/80">
         <div className="flex flex-col gap-1">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quản lý dự án</span>
+          <span className="text-[10px] font-bold text-slate-400">Quản lý dự án</span>
           <Heading size="h1" className="text-primary text-2xl md:text-3xl font-bold mt-0.5">
             {project.name}
           </Heading>

@@ -43,7 +43,6 @@ export const getProjectQuotations = async (projectId: number, params?: Quotation
 export const getProject = async (id: number): Promise<ProjectDetail> => {
   try {
     const response = await api.get(`/api/v1/projects/${id}`);
-    console.log('Project API Response:', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error: unknown) {
     const axiosError = error as any;

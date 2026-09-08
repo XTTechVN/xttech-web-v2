@@ -30,8 +30,9 @@ export default function AttendancesPage() {
 
   // Search & Filter states
   const [searchQuery, setSearchQuery] = useQueryParam('search', '');
+  // Filter states
   const [filterDepartment, setFilterDepartment] = useState<string | undefined>();
-  const [filterStatus, setFilterStatus] = useState<string | undefined>();
+  const [filterStatus, setFilterStatus] = useState<AttendanceStatus | undefined>();
 
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -68,7 +69,7 @@ export default function AttendancesPage() {
     queryKey: ['attendances-stats', todayStr, yesterdayStr],
     queryFn: () => getAttendances({ startDate: yesterdayStr, endDate: todayStr, limit: 1000 }),
   });
-  const statsAttendances = useMemo(()=> statsData?.items ?? [], [statsData]);
+  const statsAttendances = useMemo(() => statsData?.items ?? [], [statsData]);
 
   // 1. Thống kê có mặt hôm nay
   const presentCount = useMemo(() => {
@@ -168,7 +169,7 @@ export default function AttendancesPage() {
     },
     {
       label: 'Trạng thái',
-      value: filterStatus as string | undefined,
+      value: filterStatus,
       options: statusOptions,
       onChange: (val: string | undefined) => {
         setFilterStatus(val as AttendanceStatus | undefined);
@@ -188,7 +189,7 @@ export default function AttendancesPage() {
       limit,
       search: searchQuery || undefined,
       departmentId: filterDepartment ? Number(filterDepartment) : undefined,
-      status: (filterStatus as AttendanceStatus) || undefined,
+      status: filterStatus || undefined,
     });
 
     return {
@@ -251,14 +252,9 @@ export default function AttendancesPage() {
               name={row.user?.fullName || 'NV'}
               size="sm"
             />
-            <div className="flex flex-col min-w-0">
-              <div className="font-semibold text-slate-800 text-sm truncate">
-                {row.user?.fullName || '-'}
-              </div>
-              <div className="text-xs text-slate-500 truncate">
-                {row.user?.email || '-'}
-              </div>
-            </div>
+            <span className="font-semibold text-slate-800 text-sm truncate">
+              {row.user?.fullName || '-'}
+            </span>
           </div>
         );
       },
@@ -357,7 +353,14 @@ export default function AttendancesPage() {
       key: 'note',
       label: 'Ghi chú',
       minWidth: '100px',
-      cell: (row) => <span className="text-xs">{row.note || '-'}</span>,
+      cell: (row) => (
+        <span
+          className="text-xs max-w-[250px] truncate block"
+          title={row.note || undefined}
+        >
+          {row.note || '-'}
+        </span>
+      ),
     },
     {
       key: 'status',
@@ -462,7 +465,6 @@ export default function AttendancesPage() {
               <p className="font-bold text-slate-900 text-sm">
                 {row.user?.fullName || 'Nhân viên'}
               </p>
-              <p className="text-[11px] text-slate-400">{row.user?.email || '-'}</p>
             </div>
           </div>
           <Badge variant={statusInfo.variant} pill>
@@ -508,7 +510,10 @@ export default function AttendancesPage() {
 
         {/* Note if any */}
         {row.note && (
-          <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 line-clamp-2">
+          <p
+            className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 truncate"
+            title={row.note}
+          >
             Ghi chú: {row.note}
           </p>
         )}
@@ -584,7 +589,6 @@ export default function AttendancesPage() {
     },
   ];
 
-
   return (
     <div className="w-full flex flex-col gap-4">
       {/* 4 Thẻ Thống Kê Nhanh */}
@@ -658,6 +662,7 @@ export default function AttendancesPage() {
         }}
       />
 
+      {/* Modal chỉnh sửa chấm công */}
       <EditAttendanceModal
         open={showEditModal}
         data={selectedRow}
@@ -668,6 +673,7 @@ export default function AttendancesPage() {
         }}
       />
 
+      {/* Modal chi tiết chấm công */}
       <AttendanceDetailModal
         open={showDetailModal}
         data={selectedRow}
@@ -684,7 +690,6 @@ export default function AttendancesPage() {
         }}
         data={selectedRow}
       />
-
       {/* Modal xác nhận xóa chấm công */}
       {selectedRow && (
         <Modal

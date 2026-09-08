@@ -253,7 +253,6 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
         </Button>
         <Button
           variant="primary"
-          leftIcon={<Briefcase size={16} />}
           onClick={() => handleSavePositions()}
           loading={isPending}
           disabled={isPending || !selectedPositionId}

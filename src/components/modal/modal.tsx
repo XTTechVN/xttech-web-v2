@@ -17,6 +17,7 @@ export interface ModalProps {
   closeOnOverlayClick?: boolean;
   disabled?: boolean;
   className?: string;
+  bodyClassName?: string;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -29,6 +30,7 @@ const Modal: React.FC<ModalProps> = ({
   closeOnOverlayClick = true,
   disabled = false,
   className,
+  bodyClassName,
 }) => {
   const [mounted, setMounted] = useState(false);
 
@@ -117,7 +119,7 @@ const Modal: React.FC<ModalProps> = ({
             </div>
 
             {/* Content (Body) */}
-            <div className="flex-1 overflow-y-auto p-4 text-sm text-gray-600 leading-relaxed">
+            <div className={cn("flex-1 overflow-y-auto p-4 text-sm text-gray-600 leading-relaxed", bodyClassName)}>
               {children}
             </div>
 
