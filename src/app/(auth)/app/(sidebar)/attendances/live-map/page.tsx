@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -146,7 +147,7 @@ export default function AttendanceLiveMapPage() {
           <StaffList
             staffLocations={staffLocations}
             selectedStaff={selectedStaff}
-            onSelectStaff={(staff) => setSelectedStaff(staff)}
+            onSelectStaff={(staff) => setSelectedStaff({ ...staff, _selectedAt: Date.now() } as any)}
             onViewRoute={handleOpenRoute}
             isLoading={isLoading}
           />

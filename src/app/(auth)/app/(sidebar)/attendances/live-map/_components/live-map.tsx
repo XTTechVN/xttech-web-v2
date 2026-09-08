@@ -34,7 +34,7 @@ const Polyline = dynamic(
 
 interface LiveMapProps {
   staffLocations: StaffLiveLocation[];
-  selectedStaff: StaffLiveLocation | null;
+  selectedStaff: (StaffLiveLocation & { _selectedAt?: number }) | null;
   onSelectStaff: (staff: StaffLiveLocation) => void;
   onViewRoute: (staff: StaffLiveLocation) => void;
 }
@@ -53,8 +53,17 @@ export function LiveMap({
 }: LiveMapProps) {
   const [map, setMap] = React.useState<L.Map | null>(null);
   const [currentZoom, setCurrentZoom] = React.useState<number>(13);
-  const [, setMapVersion] = React.useState(0);
   const [activeSpiderfyClusterId, setActiveSpiderfyClusterId] = React.useState<string | null>(null);
+
+  // Ref lưu mốc thời gian click gần nhất để chỉ bay tới khi người dùng click từ sidebar
+  const lastSelectedAtRef = React.useRef<number>(0);
+
+  // Callback ref ổn định cho MapContainer, chống việc kích hoạt re-render lặp
+  const handleMapRef = React.useCallback((mapInstance: L.Map | null) => {
+    if (mapInstance) {
+      setMap((prev) => (prev !== mapInstance ? mapInstance : prev));
+    }
+  }, []);
 
   // Rút gọn tên nhân viên thông minh, cắt bỏ text quá dài
   const formatShortStaffName = (name?: string) => {
@@ -190,31 +199,32 @@ export function LiveMap({
     });
   };
 
-  // Lắng nghe sự kiện click ngoài và di chuyển / zoom bản đồ
+  // Lắng nghe sự kiện click ngoài và zoom bản đồ (chỉ cập nhật khi zoom thực sự thay đổi)
   React.useEffect(() => {
     if (!map) return;
-    setCurrentZoom(map.getZoom());
+
+    const initialZoom = map.getZoom();
+    setCurrentZoom((prev) => (prev !== initialZoom ? initialZoom : prev));
 
     const handleMapClick = () => {
       setActiveSpiderfyClusterId(null);
     };
-    const handleMapMove = () => {
-      const zoom = map.getZoom();
-      setCurrentZoom(zoom);
-      setMapVersion((v) => v + 1);
+
+    const handleZoomEnd = () => {
+      const newZoom = map.getZoom();
+      setCurrentZoom((prev) => (prev !== newZoom ? newZoom : prev));
       // Khi zoom xa (< 14), tự động thu nan hoa lại để tránh rối mắt
-      if (zoom < 14) {
+      if (newZoom < 14) {
         setActiveSpiderfyClusterId(null);
       }
     };
+
     map.on('click', handleMapClick);
-    map.on('zoomend', handleMapMove);
-    map.on('moveend', handleMapMove);
+    map.on('zoomend', handleZoomEnd);
 
     return () => {
       map.off('click', handleMapClick);
-      map.off('zoomend', handleMapMove);
-      map.off('moveend', handleMapMove);
+      map.off('zoomend', handleZoomEnd);
     };
   }, [map]);
 
@@ -270,31 +280,27 @@ export function LiveMap({
     return groups;
   }, [staffLocations, map, currentZoom]);
 
-  // Ref theo dõi nhân sự đã được chọn để tránh lặp mở nan hoa và lặp zoom khi di chuyển bản đồ
-  const prevSelectedStaffIdRef = React.useRef<string | null>(null);
-
   // Tự động bay tới nhân sự được chọn khi người dùng click từ danh sách bên ngoài
   React.useEffect(() => {
-    if (selectedStaff && map) {
-      // Chỉ kích hoạt bay tới và mở spiderfy khi người dùng MỚI CHỦ ĐỘNG click chọn nhân viên từ sidebar
-      if (selectedStaff.userId !== prevSelectedStaffIdRef.current) {
-        prevSelectedStaffIdRef.current = selectedStaff.userId;
+    if (!map || !selectedStaff) return;
 
-        map.flyTo([selectedStaff.latitude, selectedStaff.longitude], 16, {
-          duration: 1.2,
-        });
+    const currentClickTime = selectedStaff._selectedAt;
+    // Chỉ kích hoạt bay tới khi có cú click mới từ Sidebar
+    if (currentClickTime && currentClickTime !== lastSelectedAtRef.current) {
+      lastSelectedAtRef.current = currentClickTime;
 
-        const targetCluster = clusters.find(
-          (c) =>
-            c.staffList.length > 1 &&
-            c.staffList.some((s) => s.userId === selectedStaff.userId)
-        );
-        if (targetCluster) {
-          setActiveSpiderfyClusterId(targetCluster.id);
-        }
+      map.flyTo([selectedStaff.latitude, selectedStaff.longitude], 16, {
+        duration: 1.2,
+      });
+
+      const targetCluster = clusters.find(
+        (c) =>
+          c.staffList.length > 1 &&
+          c.staffList.some((s) => s.userId === selectedStaff.userId)
+      );
+      if (targetCluster) {
+        setActiveSpiderfyClusterId(targetCluster.id);
       }
-    } else if (!selectedStaff) {
-      prevSelectedStaffIdRef.current = null;
     }
   }, [selectedStaff, map, clusters]);
 
@@ -306,7 +312,7 @@ export function LiveMap({
   return (
     <div className="relative h-full w-full rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
       <MapContainer
-        ref={setMap as unknown as React.Ref<L.Map>}
+        ref={handleMapRef as unknown as React.Ref<L.Map>}
         center={defaultCenter}
         zoom={13}
         scrollWheelZoom={true}

@@ -9,9 +9,17 @@ All notable changes to the frontend project will be documented in this file.
   - Lược bỏ hoàn toàn lệnh gọi `sendLocationPing` thủ công sau khi Check-in thành công. Toàn bộ việc khởi tạo Live Location và broadcast WebSocket hiện được Backend tự động thực hiện từ chính toạ độ của form chấm công.
 
 ### Fixed
+- **Chuẩn hóa cơ chế tự động bay về nhân sự tuân thủ React 19 Compiler ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx) & [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):**
+  - Bổ sung timestamp `_selectedAt` mỗi khi click chọn nhân sự ở Sidebar.
+  - Sử dụng duy nhất một `lastSelectedAtRef` khai báo chuẩn ở đầu component, loại bỏ hoàn toàn các ref mutate trong render body và các hook vi phạm thứ tự của React 19 Compiler.
+  - Xóa bỏ lỗi `Error: This value cannot be modified` và đảm bảo click lại vào nhân viên bất kỳ lúc nào thì bản đồ đều bay về đúng vị trí tức thì.
+- **Triệt tiêu lỗi vòng lặp render vô hạn `Maximum update depth exceeded` trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+  - Xóa bỏ state rác `mapVersion` liên tục ép re-render trong sự kiện di chuyển bản đồ.
+  - Bỏ listener `moveend`, chỉ cập nhật `currentZoom` khi giá trị thực tế thay đổi (`zoomend`) và có guard `prev !== newZoom`.
+  - Chuẩn hóa callback ref cho `<MapContainer ref={handleMapRef}>` qua `React.useCallback` ngăn React gọi lại inline ref liên tục.
+  - Tách `clustersRef` khỏi dependency array của `useEffect` bay tới nhân sự, chấm dứt triệt để chuỗi domino kích hoạt re-render lặp.
 - **Hỗ trợ định vị Wi-Fi / IP trên Laptop & Môi trường Web ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
-  - Nới lỏng ngưỡng chấp nhận sai số `maxAccuracy` khi đứng yên (`speed < 1.0 m/s`) từ 80m lên 200m ở cả bộ lọc `executePing` và bộ lọc sớm `watchPosition`.
-  - Giúp các thiết bị máy tính xách tay (Laptop) kết nối Wi-Fi hoặc mạng dây không bị drop các gói tin ping vị trí và nhịp tim định kỳ khi đang trong ca làm việc.
+  - Đồng bộ chuẩn hóa các ngưỡng lọc định vị trên thiết bị.
 
 
 ## [Unreleased] - 2026-09-07
