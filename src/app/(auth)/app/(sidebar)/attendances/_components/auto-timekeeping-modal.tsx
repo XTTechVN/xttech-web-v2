@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Button, Textarea, Badge } from '@/components';
 import { toast } from 'react-hot-toast';
-import { autoTimekeeping, sendLocationPing } from '@/actions';
+import { autoTimekeeping } from '@/actions';
 import { TimekeepingType } from '@/types';
 import { Camera, RefreshCw, MapPin, Clock, LogIn, LogOut, Loader2, AlertCircle, CheckCircle2, Navigation } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -207,15 +207,6 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
 
       await queryClient.invalidateQueries({ queryKey: ['my-today-attendance'] });
       await queryClient.invalidateQueries({ queryKey: ['attendances'] });
-      // Kích hoạt ngay 1 ping định vị tức thì lên Live Map khi Check-in (chốt cứng speed: 0 để Live Map nhận điểm văn phòng)
-      if (type === 'check_in') {
-        sendLocationPing({
-          latitude: location.lat,
-          longitude: location.lng,
-          accuracy: location.accuracy || undefined,
-          speed: 0,
-        }).catch((err) => console.warn('[AutoTimekeeping] Init ping error:', err));
-      }
 
       const label = type === 'check_in' ? 'Check-in' : 'Check-out';
       toast.success(`${label} thành công! 🎉`);

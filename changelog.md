@@ -2,6 +2,18 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-08
+
+### Changed
+- **Tối ưu hóa luồng Check-in & Loại bỏ Ping thủ công ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx)):**
+  - Lược bỏ hoàn toàn lệnh gọi `sendLocationPing` thủ công sau khi Check-in thành công. Toàn bộ việc khởi tạo Live Location và broadcast WebSocket hiện được Backend tự động thực hiện từ chính toạ độ của form chấm công.
+
+### Fixed
+- **Hỗ trợ định vị Wi-Fi / IP trên Laptop & Môi trường Web ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
+  - Nới lỏng ngưỡng chấp nhận sai số `maxAccuracy` khi đứng yên (`speed < 1.0 m/s`) từ 80m lên 200m ở cả bộ lọc `executePing` và bộ lọc sớm `watchPosition`.
+  - Giúp các thiết bị máy tính xách tay (Laptop) kết nối Wi-Fi hoặc mạng dây không bị drop các gói tin ping vị trí và nhịp tim định kỳ khi đang trong ca làm việc.
+
+
 ## [Unreleased] - 2026-09-07
 
 ### Added
