@@ -4,32 +4,7 @@ import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSect
 
 export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician' | 'accountant' | 'employee';
 
-export const acceptedSections = [
-  'dashboard',
-  'attendances',
-  'attendances-root',
-  'attendances-adjustments',
-  'attendances-payroll',
-  'adjustments',
-  'employees',
-  'employees-root',
-  'roles',
-  'suggestions',
-  'departments',
-  'projects',
-  'customers',
-  'configurations',
-  'doors',
-  'accessories',
-  'materials',
-  'quotations',
-  'extra-options',
-  'formulas',
-  'shifts',
-  'attendances-reports',
-  'attendances-live-map',
-  'app-versions',
-];
+export const acceptedSections = [ 'dashboard', 'attendances', 'attendances-root', 'attendances-adjustments', 'attendances-payroll', 'adjustments', 'employees', 'employees-root', 'roles', 'suggestions', 'departments', 'projects', 'customers', 'configurations', 'doors', 'accessories', 'materials', 'quotations', 'extra-options', 'formulas', 'shifts', 'attendances-reports', 'attendances-live-map', 'app-versions', ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
   roles?: UserRole[];
@@ -102,7 +77,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
             id: 'attendances-live-map',
             label: 'Bản đồ trực tiếp',
             href: '/app/attendances/live-map',
-            roles: ['super', 'admin', 'hr'],
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
           },
           {
             id: 'attendances-reports',
