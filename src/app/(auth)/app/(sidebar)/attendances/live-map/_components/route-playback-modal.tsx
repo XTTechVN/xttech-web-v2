@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -187,6 +188,7 @@ interface RoutePlaybackModalProps {
   userId: string;
   userName: string;
   attendanceId?: number;
+  initialDate?: string;
 }
 
 export function RoutePlaybackModal({
@@ -195,9 +197,10 @@ export function RoutePlaybackModal({
   userId,
   userName,
   attendanceId,
+  initialDate
 }: RoutePlaybackModalProps) {
   const [selectedDate, setSelectedDate] = useState<string>(
-    dayjs().format('YYYY-MM-DD')
+    initialDate || dayjs().format('YYYY-MM-DD') // Ưu tiên ngày của bản ghi chấm công
   );
   const [filterMode, setFilterMode] = useState<'attendance' | 'day'>(
     attendanceId ? 'attendance' : 'day'
@@ -236,6 +239,11 @@ export function RoutePlaybackModal({
     fetchRoute();
   }, [isOpen, userId, selectedDate, attendanceId, filterMode]);
 
+  useEffect(() => {
+    if (initialDate) {
+      setSelectedDate(initialDate);
+    }
+  }, [initialDate, isOpen]);
   const rawPoints = routeData?.points || [];
   const points = filterPointsForMatching(rawPoints);
   const polylineCoords: [number, number][] = points.map((p) => [

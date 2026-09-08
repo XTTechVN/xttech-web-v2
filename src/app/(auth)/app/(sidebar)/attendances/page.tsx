@@ -19,7 +19,8 @@ import AddAttendanceModal from '@/app/(auth)/app/(sidebar)/attendances/_componen
 import EditAttendanceModal from '@/app/(auth)/app/(sidebar)/attendances/_components/edit-modal';
 import AttendanceDetailModal from '@/app/(auth)/app/(sidebar)/attendances/_components/attendance-modal';
 import AddAdjustmentModal from './adjustments/_components/add-modal';
-
+import { Route } from 'lucide-react';
+import { RoutePlaybackModal } from './live-map/_components/route-playback-modal';
 type FilterOption = {
   value: string | undefined;
   label: string;
@@ -33,7 +34,17 @@ export default function AttendancesPage() {
   // Filter states
   const [filterDepartment, setFilterDepartment] = useState<string | undefined>();
   const [filterStatus, setFilterStatus] = useState<AttendanceStatus | undefined>();
-
+  const [routeModalState, setRouteModalState] = useState<{
+    isOpen: boolean;
+    userId: string;
+    userName: string;
+    attendanceId?: number;
+    initialDate?: string;
+  }>({
+    isOpen: false,
+    userId: '',
+    userName: '',
+  });
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -378,42 +389,57 @@ export default function AttendancesPage() {
       minWidth: '120px',
       cell: (row) => (
         <TableAction
-          items={[
-            {
-              title: 'Khiếu nại',
-              icon: FileEdit,
-              size: 18,
-              onClick: () => {
-                setSelectedRow(row);
-                setShowAdjustmentModal(true);
-              },
+                items={[
+          {
+            title: 'Khiếu nại',
+            icon: FileEdit,
+            size: 18,
+            onClick: () => {
+              setSelectedRow(row);
+              setShowAdjustmentModal(true);
             },
-            {
-              title: 'Xem chi tiết',
-              icon: Eye,
-              size: 18,
-              onClick: () => {
-                setSelectedRow(row);
-                setShowDetailModal(true);
-              },
+          },
+          {
+            title: 'Xem lộ trình', // 👈 Nút mới thêm
+            icon: Route,
+            size: 18,
+            className: 'hover:text-emerald-600 hover:bg-emerald-50',
+            onClick: () => {
+              setRouteModalState({
+                isOpen: true,
+                userId: row.userId,
+                userName: row.user?.fullName || row.user?.username || 'Nhân sự',
+                attendanceId: row.id,
+                initialDate: row.workDate,
+              });
             },
-            {
-              title: 'Chỉnh sửa',
-              icon: Pencil,
-              size: 18,
-              onClick: () => {
-                setSelectedRow(row);
-                setShowEditModal(true);
-              },
+          },
+          {
+            title: 'Xem chi tiết',
+            icon: Eye,
+            size: 18,
+            onClick: () => {
+              setSelectedRow(row);
+              setShowDetailModal(true);
             },
-            {
-              title: 'Xóa',
-              icon: Trash2,
-              size: 18,
-              className: 'hover:text-red-600 hover:bg-red-50',
-              onClick: () => handleDelete(row),
+          },
+          {
+            title: 'Chỉnh sửa',
+            icon: Pencil,
+            size: 18,
+            onClick: () => {
+              setSelectedRow(row);
+              setShowEditModal(true);
             },
-          ]}
+          },
+          {
+            title: 'Xóa',
+            icon: Trash2,
+            size: 18,
+            className: 'hover:text-red-600 hover:bg-red-50',
+            onClick: () => handleDelete(row),
+          },
+        ]}
         />
       ),
     },
@@ -727,6 +753,17 @@ export default function AttendancesPage() {
             Bạn có chắc chắn muốn xóa bản ghi chấm công này? Hành động này không thể hoàn tác.
           </p>
         </Modal>
+      )}
+      {/* Modal xem lộ trình chấm công */}
+      {routeModalState.isOpen && (
+        <RoutePlaybackModal
+          isOpen={routeModalState.isOpen}
+          onClose={() => setRouteModalState((prev) => ({ ...prev, isOpen: false }))}
+          userId={routeModalState.userId}
+          userName={routeModalState.userName}
+          attendanceId={routeModalState.attendanceId}
+          initialDate={routeModalState.initialDate}
+        />
       )}
     </div>
   );
