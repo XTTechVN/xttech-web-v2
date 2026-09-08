@@ -16,6 +16,7 @@ const lexend = Lexend({
   weight: ['400', '500', '600', '700', '800', '900'],
 });
 
+
 // 1. Cấu hình Viewport để màn hình không bị phóng to thu nhỏ lung tung
 export const viewport: Viewport = {
   width: 'device-width',
