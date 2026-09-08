@@ -55,7 +55,7 @@ export function AppUpdateModal() {
         setCurrentVersion(current);
 
         // Lấy version mới nhất từ Server Backend (FastAPI / Railway)
-        const res = await fetch(`${BASE_API_URL}/api/v1/system/app-versions/latest?platform=android&_t=` + Date.now());
+        const res = await fetch(`${BASE_API_URL}/api/v1/app-versions/latest?platform=android&_t=` + Date.now());
         if (!res.ok) return;
         const serverData: AppVersionResponse = await res.json();
 

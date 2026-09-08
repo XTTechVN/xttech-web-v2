@@ -11,6 +11,13 @@ All notable changes to the frontend project will be documented in this file.
   - **Tự động hóa Phiên bản trong Gradle ([`build.gradle`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/build.gradle)):** Tự động đồng bộ `versionName` từ `package.json` và tự động tính `versionCode` theo số lượng commit Git (`git rev-list --count HEAD`), loại bỏ hoàn toàn việc gõ tay số phiên bản.
   - **Kết nối Backend FastAPI ([`AppUpdateModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/app-update-modal/index.tsx)):** Gọi trực tiếp endpoint `/api/v1/system/app-versions/latest?platform=android` từ Backend Railway thay vì lưu file tĩnh trên frontend.
   - **Giao diện Modal Thông báo Cập nhật ([`AppUpdateModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/app-update-modal/index.tsx)):** Tự động phát hiện khi mở ứng dụng trên Android, hiển thị popup thân thiện với danh sách tính năng mới, thanh tiến trình % tải xuống trực quan và các nút điều hướng cài đặt 1 chạm.
+  - **Trang Quản lý Phiên bản Ứng dụng Di động ([`app-versions/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/page.tsx)):**
+    - Bổ sung nhóm mục **"Hệ thống"** trên Sidebar (`/app/app-versions`, phân quyền `super`, `admin`).
+    - Tái cấu trúc layout đồng bộ 100% với các trang chuẩn (`customers`, `departments`, `shifts`):
+      - Khối thống kê 4 thẻ chuẩn [`StatsCard`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/stats-card.tsx) (Bản mới nhất, Tổng bản phát hành, Yêu cầu bắt buộc, Nền tảng hỗ trợ).
+      - Bỏ box header dư thừa ở đầu trang, đưa nút hành động "Phát hành bản mới" lên Action Bar chuẩn.
+      - Tích hợp ô tìm kiếm và bộ lọc Nền tảng (Android / iOS) trực tiếp vào [`TableData`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/table.tsx).
+      - Chuẩn hóa form modal phát hành [`ReleaseModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/release-modal.tsx) đồng bộ styling với các form modal trong hệ thống.
 
 ### Changed
 - **Tối ưu hóa luồng Check-in & Loại bỏ Ping thủ công ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx)):**
