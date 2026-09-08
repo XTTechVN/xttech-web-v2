@@ -15,8 +15,8 @@ export function ProjectSummary({ quotations, formattedDate }: ProjectSummaryProp
 
   return (
     <div className="space-y-3">
-      <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tóm tắt thông tin</h2>
-      <div className="bg-white rounded-lg border border-slate-200/80 p-5 shadow-xs divide-y divide-slate-100 text-sm">
+      <h2 className="text-xs font-bold text-slate-500">Tóm tắt thông tin</h2>
+      <div className="bg-white rounded-lg border border-slate-200/60 p-5 shadow-xs divide-y divide-slate-100 text-sm">
         <div className="flex justify-between py-2.5 first:pt-0">
           <span className="text-slate-500">Trạng thái chung</span>
           <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded text-xs">Đang hoạt động</span>

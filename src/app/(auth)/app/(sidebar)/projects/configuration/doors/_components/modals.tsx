@@ -176,13 +176,7 @@ interface DoorUpdateModalProps {
 type DoorUpdateFormValues = Omit<DoorUpdate, 'imagePath'>;
 
 export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nhận lưu', initialData }: DoorUpdateModalProps) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    formState: { errors },
-  } = useForm<DoorUpdateFormValues>();
+  const { register, handleSubmit, reset, watch, formState: { errors }, } = useForm<DoorUpdateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -218,7 +212,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
           : null,
       );
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, reset]);
 
   useEffect(() => {
     if (!selectedFile) return;
@@ -233,10 +227,8 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
       name: data.name,
       type: data.type,
       code: data.code,
+      specification: data.specification?.trim() || "",
     };
-    if (data.specification && data.specification.trim() !== '') {
-      payload.specification = data.specification;
-    }
     updateMutation({
       id: initialData.id,
       data: payload,

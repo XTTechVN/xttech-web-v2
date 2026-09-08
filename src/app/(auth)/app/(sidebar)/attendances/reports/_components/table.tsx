@@ -2,16 +2,16 @@
 
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, Eye, ShieldCheck, Calendar, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { Building2, Eye, ShieldCheck, Calendar } from 'lucide-react';
 import { TableData, type ITableColumn } from '@/components/table';
 import type { ITableFilterProps } from '@/components/table/types';
 import { Badge, Avatar } from '@/components';
 import { BASE_MINIO_URL } from '@/config';
-import { useQueryParam } from '@/hooks';
-import { getAttendanceReport, getDepartments, exportUserAttendanceDetailReport } from '@/actions';
+import { getAttendanceReport, getDepartments } from '@/actions';
 import type { AttendanceReportItem, Department } from '@/types';
 import { ReportDetailModal } from './detail-modal';
-import toast from 'react-hot-toast';
+import { useQueryParams, useQueryParam } from '@/hooks';
+
 
 
 // Helper format date YYYY-MM-DD
@@ -43,44 +43,15 @@ const POLICY_BADGES: Record<
 
 export function ReportTable() {
   const defaultRange = useMemo(() => getDefaultDateRange(), []);
-
-  const [fromDate, setFromDate] = useQueryParam('fromDate', defaultRange.from);
-  const [toDate, setToDate] = useQueryParam('toDate', defaultRange.to);
+  const [fromDate] = useQueryParam('fromDate', defaultRange.from);
+  const [toDate] = useQueryParam('toDate', defaultRange.to);
   const [departmentId, setDepartmentId] = useQueryParam('departmentId', '');
   const [attendancePolicy, setAttendancePolicy] = useQueryParam('attendancePolicy', '');
   const [search, setSearch] = useQueryParam('search', '');
-
+  const { setQueryParams } = useQueryParams();
   // Modal Chi tiết chấm công
   const [selectedEmployee, setSelectedEmployee] = useState<AttendanceReportItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [exportingUserId, setExportingUserId] = useState<string | null>(null);
-
-  const handleExportUserDetail = async (row: AttendanceReportItem) => {
-    const userId = row.userId || row.user_id;
-    if (!userId || !fromDate || !toDate) {
-      toast.error('Thiếu thông tin để xuất báo cáo');
-      return;
-    }
-
-    setExportingUserId(userId);
-    const toastId = toast.loading(`Đang xuất bảng công & lương của ${row.fullName || row.username}...`);
-    try {
-      await exportUserAttendanceDetailReport(
-        {
-          userId,
-          fromDate,
-          toDate,
-        },
-        row.identifyCode || row.username || 'nhan_vien'
-      );
-      toast.success('Xuất file Excel chi tiết thành công', { id: toastId });
-    } catch (err: any) {
-      toast.error(err?.message || 'Có lỗi xảy ra khi xuất file Excel chi tiết', { id: toastId });
-    } finally {
-      setExportingUserId(null);
-    }
-  };
-
 
   // Lấy danh sách phòng ban cho bộ lọc có sẵn của Table
   const { data: departmentsData } = useQuery({
@@ -146,17 +117,9 @@ export function ReportTable() {
               name={row.fullName || row.username || 'NV'}
               size="sm"
             />
-            <div className="flex flex-col min-w-0">
-              <span className="font-semibold text-gray-900 truncate">
-                {row.fullName || row.username}
-              </span>
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                <span className="font-mono text-slate-500 bg-slate-100 px-1 py-0.2 rounded text-[10px]">
-                  {row.identifyCode || 'NV'}
-                </span>
-                <span className="truncate">{row.email}</span>
-              </div>
-            </div>
+            <span className="font-semibold text-gray-900 text-sm truncate">
+              {row.fullName || row.username}
+            </span>
           </div>
         ),
       },
@@ -166,8 +129,7 @@ export function ReportTable() {
         minWidth: '150px',
         cell: (row) =>
           row.departmentName ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-              <Building2 className="w-3 h-3 text-slate-400" />
+            <span className="text-sm text-slate-700">
               {row.departmentName}
             </span>
           ) : (
@@ -253,7 +215,7 @@ export function ReportTable() {
           row.overtimeDays && row.overtimeDays > 0 ? (
             <div className="flex flex-col items-center">
               <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                {row.overtimeDays} lần
+                {row.overtimeDays} buổi
               </span>
               {row.overtimeHours ? (
                 <span className="text-[10px] text-blue-600 mt-0.5">
@@ -268,11 +230,8 @@ export function ReportTable() {
       {
         key: 'actions',
         label: 'Thao tác',
-        minWidth: '95px',
+        minWidth: '70px',
         cell: (row) => {
-          const uId = row.userId || row.user_id;
-          const isCurrentExporting = exportingUserId === uId;
-
           return (
             <div className="flex items-center gap-1">
               <button
@@ -286,25 +245,12 @@ export function ReportTable() {
               >
                 <Eye size={17} />
               </button>
-              <button
-                type="button"
-                onClick={() => handleExportUserDetail(row)}
-                disabled={isCurrentExporting}
-                title="Xuất chi tiết công & bảng lương ra Excel"
-                className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {isCurrentExporting ? (
-                  <Loader2 size={17} className="animate-spin text-emerald-600" />
-                ) : (
-                  <FileSpreadsheet size={17} />
-                )}
-              </button>
             </div>
           );
         },
       },
     ],
-    [exportingUserId, fromDate, toDate]
+    []
   );
 
   // Render Card cho thiết bị di động
@@ -314,8 +260,6 @@ export function ReportTable() {
       variant: 'default',
     };
     const isPartTime = row.attendancePolicy === 'part_time';
-    const uId = row.userId || row.user_id;
-    const isCurrentExporting = exportingUserId === uId;
 
     return (
       <div key={row.userId || index} className="p-4 rounded-xl border border-gray-200 bg-white flex flex-col gap-3 shadow-xs">
@@ -336,11 +280,7 @@ export function ReportTable() {
               <span className="font-semibold text-gray-900 text-sm truncate">
                 {row.fullName || row.username}
               </span>
-              <span className="text-xs text-gray-400 truncate">{row.email}</span>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                  {row.identifyCode || 'NV'}
-                </span>
                 <Badge variant={policyInfo.variant} size="sm">
                   {policyInfo.label}
                 </Badge>
@@ -360,22 +300,8 @@ export function ReportTable() {
             >
               <Eye size={18} />
             </button>
-            <button
-              type="button"
-              onClick={() => handleExportUserDetail(row)}
-              disabled={isCurrentExporting}
-              className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg border border-emerald-200 cursor-pointer disabled:opacity-50"
-              title="Xuất chi tiết công lương ra Excel"
-            >
-              {isCurrentExporting ? (
-                <Loader2 size={18} className="animate-spin text-emerald-600" />
-              ) : (
-                <FileSpreadsheet size={18} />
-              )}
-            </button>
           </div>
         </div>
-
 
         <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100 text-center">
           <div className="bg-slate-50 p-2 rounded-lg">
@@ -431,8 +357,10 @@ export function ReportTable() {
       endDate: toDate,
       icon: <Calendar className="w-4 h-4" />,
       onDateRangeChange: (start, end) => {
-        setFromDate(start || defaultRange.from);
-        setToDate(end || defaultRange.to);
+        setQueryParams({
+          fromDate: start || defaultRange.from,
+          toDate: end || defaultRange.to,
+        });
       },
     },
     {

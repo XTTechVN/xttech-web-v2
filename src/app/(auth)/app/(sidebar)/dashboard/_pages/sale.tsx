@@ -9,28 +9,28 @@ import { Briefcase, FolderKanban, Receipt, Users } from 'lucide-react';
 const statsMockupData = [
   {
     title: 'Dự án đang theo dõi',
-    value: '6',
+    value: '_',
     icon: <FolderKanban size={18} />,
     trend: 1,
     trendDirection: 'up' as const,
   },
   {
     title: 'Khách hàng quản lý',
-    value: '12',
+    value: '_',
     icon: <Users size={18} />,
     trend: 3,
     trendDirection: 'up' as const,
   },
   {
     title: 'Báo giá đã gửi',
-    value: '24',
+    value: '_',
     icon: <Receipt size={18} />,
     trend: 8,
     trendDirection: 'up' as const,
   },
   {
     title: 'Hợp đồng mới',
-    value: '2',
+    value: '_',
     icon: <Briefcase size={18} />,
     trend: 0,
     trendDirection: 'up' as const,

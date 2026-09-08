@@ -24,6 +24,7 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-07
 
+
 ### Added
 - **Tính năng Marker Clustering & Spiderfy (Gom cụm và Xòe nan hoa) trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
   - **Thuật toán Gom cụm theo khoảng cách Pixel thích ứng theo mức Zoom (Zoom-Adaptive Clustering):** Khi zoom xa (zoom $< 11$: $65\text{px}$, zoom $< 13$: $55\text{px}$), tự động gom các nhân sự trong cùng thành phố/tỉnh thành 1 Marker Cụm duy nhất; khi zoom gần (zoom $\ge 13$: $38\text{px}$), tách ra từng phòng/tòa nhà riêng biệt.
@@ -84,6 +85,24 @@ All notable changes to the frontend project will be documented in this file.
   - Tự động chạy trên môi trường macOS M1/M2 ảo (`macos-14`) của GitHub.
   - Biên dịch dự án thành bản lưu trữ Release không yêu cầu chứng chỉ trả phí (`CODE_SIGNING_ALLOWED=NO`).
   - Đóng gói ứng dụng thành file `App-unsigned.ipa` đẩy lên mục Artifacts để tải về máy tính Windows và ký qua 3uTools bằng tài khoản Apple ID cá nhân (sử dụng 7 ngày).
+## [Unreleased] - 2026-08-30
+
+### Added
+- Bổ sung modal [`CustomerExportModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx) hỗ trợ xuất file Excel báo cáo khách hàng phân tầng đa Sheet theo nhân viên phụ trách.
+- Bổ sung các preset chọn nhanh thời gian thông minh (*Tuần này (mặc định)*, *Tuần trước*, *Tháng này*, *Tháng trước*, *Tùy chọn ngày*) cùng dropdown lọc nhân viên phụ trách dành cho Quản lý.
+- Thêm action [`exportCustomersExcel`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/customer/index.ts) và type [`CustomerExportQueryParams`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/customer.ts).
+- Tích hợp nút bấm **"Xuất Excel"** (`FileSpreadsheet`) trên thanh công cụ quản lý khách hàng tại [`customers/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx).
+- Tích hợp giao diện **Hướng dẫn cấp lại quyền vị trí trực quan (Visual Permission Guide)** và cơ chế **Tự động bắt quyền (Auto-Permission Recovery)** trong [`AutoTimekeepingModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx): Hướng dẫn chi tiết từng bước cho cả 3 nền tảng (🤖 Android App / PWA cài đặt, 🍏 iPhone iOS Safari / Standalone, 💻 Máy tính Chrome/Edge), kèm lắng nghe sự kiện `navigator.permissions` tự động kích hoạt lấy vị trí ngay khi người dùng vừa bật lại quyền.
+
+### Fixed
+- Chuẩn hóa thiết kế giao diện [`CustomerExportModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx) đồng bộ 100% với hệ thống Modal của dự án: cấu trúc container `flex flex-col gap-4 py-2`, spacing `gap-3`, tiêu đề súc tích, bộ chọn mốc thời gian chip và nút bấm `Button` chuẩn Design System.
+- Sửa lỗi cảnh báo React render phase *"Cannot access refs during render"* tại [`quotation-info.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/quotations/[quotationId]/components/editor/quotation-info.tsx) khi truyền thuộc tính `width` chứa `ref.current`.
+
+### Changed / Refactored
+- Tối ưu hóa và tái cấu trúc toàn diện trang Quản lý chấm công [`attendances/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx): loại bỏ hơn 350 dòng code rác, các state mồ côi (`filterEmployeeId`, `filterStartDate`, `filterEndDate`, `filterShift`, `isLoading`, `showTimekeepingModal`, `reviewModalState`), các modal không sử dụng (`ReviewAdjustmentModal`, `AutoTimekeepingModal`) và các khối JSX comment cũ; chuẩn hóa bộ lọc `TableData` và tối ưu hiệu năng render.
+
+### Removed
+- Loại bỏ nút xuất lẻ Excel theo từng nhân sự tại Bảng báo cáo chấm công [`attendances/reports/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/table.tsx), action `exportUserAttendanceDetailReport` và type `UserAttendanceDetailReportQueryParams`.
 
 ## [0.1.0] - 2026-08-26
 

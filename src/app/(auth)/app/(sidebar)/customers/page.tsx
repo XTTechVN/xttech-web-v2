@@ -28,7 +28,8 @@ import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 
 // Lấy các component Modals từ thư mục local ngay bên trong (src/app/(auth)/app/(sidebar)/customers/_components/modals/)
-import { CustomerFormModal, CustomerDeleteModal } from './_components/modals';
+import { CustomerFormModal, CustomerDeleteModal, CustomerExportModal } from './_components/modals';
+
 
 // Lấy hook quản lý phân quyền
 import { usePermission } from '@/hooks';
@@ -52,6 +53,9 @@ const Page = () => {
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+
+  const [isExportOpen, setIsExportOpen] = useState(false);
+
 
   // Mutation xóa khách hàng
   const { mutate: deleteCustomerMutation, isPending: isDeleting } = useMutation({
@@ -129,7 +133,12 @@ const Page = () => {
       </div>
 
       {/* Bảng Danh Sách Khách Hàng */}
-      <Table onEditClick={handleOpenEditModal} onDeleteClick={handleOpenDeleteModal} onAddClick={handleOpenCreateModal} />
+      <Table
+        onEditClick={handleOpenEditModal}
+        onDeleteClick={handleOpenDeleteModal}
+        onAddClick={handleOpenCreateModal}
+        onExportClick={() => setIsExportOpen(true)}
+      />
 
       {/* Form Modal */}
       <CustomerFormModal
@@ -172,8 +181,15 @@ const Page = () => {
         }}
         isPending={isDeleting}
       />
+
+      {/* Modal Xuất Báo Cáo Excel */}
+      <CustomerExportModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+      />
     </div>
   );
 };
 
 export default Page;
+

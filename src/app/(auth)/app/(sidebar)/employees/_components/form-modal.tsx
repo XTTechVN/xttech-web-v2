@@ -346,7 +346,7 @@ export default function EmployeeFormModal({
             <Button variant="outline" size="sm" type="button" onClick={onClose} disabled={isPending}>
               Hủy
             </Button>
-            <Button variant="primary" type="submit" size="sm" leftIcon={<CheckCircle2 size={16} />} disabled={isPending} loading={isPending}>
+            <Button variant="primary" type="submit" size="sm" disabled={isPending} loading={isPending}>
               {submitText}
             </Button>
           </div>

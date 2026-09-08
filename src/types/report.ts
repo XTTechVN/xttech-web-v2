@@ -12,24 +12,6 @@ export interface AttendanceReportQueryParams {
   search?: string;
 }
 
-export interface UserAttendanceDetailReportQueryParams {
-  userId?: string;
-  user_id?: string;
-  fromDate?: string;
-  from_date?: string;
-  toDate?: string;
-  to_date?: string;
-  hourlyRate?: number;
-  hourly_rate?: number;
-  mealAllowanceRate?: number;
-  meal_allowance_rate?: number;
-  distance10kmRate?: number;
-  distance_10km_rate?: number;
-  distance33kmRate?: number;
-  distance_33km_rate?: number;
-}
-
-
 export interface AttendanceReportItem {
   userId: string;
   user_id?: string;

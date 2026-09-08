@@ -114,7 +114,7 @@ export const QuotationTable = ({
                   <td className="border border-gray-400 py-1 px-1 text-center">{floor.quantity || 0}</td>
                   <td className="border border-gray-400 py-1 px-2 text-center">{floor.totalArea ? floor.totalArea.toFixed(2) : '0.00'}</td>
                   <td className="border border-gray-400 py-1 px-2 text-right"></td>
-                  <td className="border border-gray-400 py-1 px-2 text-right">{fmt(floor.totalAmount)}</td>
+                  <td className="border border-gray-400 py-1 px-2 text-right">{fmt(floor.totalPrice)}</td>
                 </tr>
 
                 {floor.materials &&
@@ -174,7 +174,7 @@ export const QuotationTable = ({
                             {material.totalArea ? material.totalArea.toFixed(2) : '0.00'}
                           </td>
                           <td className="border border-gray-400 py-1 px-2 text-right"></td>
-                          <td className="border border-gray-400 py-1 px-2 text-right">{fmt(material.totalAmount)}</td>
+                          <td className="border border-gray-400 py-1 px-2 text-right">{fmt(material.totalPrice || 0)}</td>
                         </tr>
 
                         {/* Door Rows */}
@@ -241,7 +241,7 @@ export const QuotationTable = ({
                                   const accLength = doorAccessories.length;
                                   const optTT = `${currentTT}.${accLength + oIndex + 1}`;
                                   const unit = opt.unit || 'bộ';
-                                  const totalQuantity = (opt.calculatedQuantity || 1) * door.quantity;
+                                  const totalQuantity = opt.calculatedQuantity || 1;
                                   return (
                                     <tr key={`door-${dIndex}-opt-${opt.extraOptionId}-${oIndex}`} className={SUB_ROW_CLS}>
                                       <td className={`${SUB_TD_CLS} px-1 text-center text-[10px]`}>{optTT}</td>

@@ -1,6 +1,7 @@
 import api from '@/utils/api';
 import type { BaseResponseWithPagination } from '@/components';
-import type { Customer, CustomerCreate, CustomerQueryParams, CustomerUpdate, CustomerLog, CustomerLogCreate } from '@/types';
+import type { Customer, CustomerCreate, CustomerQueryParams, CustomerExportQueryParams, CustomerUpdate, CustomerLog, CustomerLogCreate } from '@/types';
+
 
 export const getCustomers = async (params?: CustomerQueryParams): Promise<BaseResponseWithPagination<Customer>> => {
   try {
@@ -113,3 +114,35 @@ export const updateCustomerLog = async ({ customerId, logId, data }: { customerI
     throw error;
   }
 };
+
+export const exportCustomersExcel = async (params: CustomerExportQueryParams): Promise<void> => {
+  try {
+    const response = await api.get('/api/v1/customers/export', {
+      params: {
+        from_date: params.fromDate || params.from_date || undefined,
+        to_date: params.toDate || params.to_date || undefined,
+        staff_id: params.staffId || params.staff_id || undefined,
+      },
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const from = params.fromDate || params.from_date || 'all';
+    const to = params.toDate || params.to_date || 'all';
+    const fileName = `bao_cao_khach_hang_${from}_${to}.xlsx`;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: unknown) {
+    console.warn('API error exportCustomersExcel', error);
+    throw error;
+  }
+};
+

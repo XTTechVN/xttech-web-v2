@@ -3,13 +3,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
-import { MapPin, Plus, Trash2, Clock } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 import { Modal, Button, Input, Select, Switch } from '@/components';
-import { createWorkShift, updateWorkShift, getDepartments, getUsers } from '@/actions';
+import { createWorkShift, updateWorkShift, getDepartments, getEmployees } from '@/actions';
 import queryClient from '@/utils/query';
 import type { WorkShift, WorkShiftCreate, WorkShiftUpdate, Department } from '@/types';
+import toast from 'react-hot-toast';
 
 const DAYS_OF_WEEK = [
   { value: '2', label: 'T2' },
@@ -86,21 +86,9 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
     return found?.name || `Phòng ban ID: ${defaultDepartmentId}`;
   }, [defaultDepartmentId, defaultDepartmentName, departmentsData]);
 
-  // Lấy danh sách nhân viên (để gán ngoại lệ)
-  const { data: usersData } = useQuery({
-    queryKey: ['users', 'all'],
-    queryFn: () => getUsers({ limit: 200 }),
-    enabled: isOpen,
-  });
-
   const departmentOptions = (departmentsData?.items || []).map((d: Department) => ({
     value: d.id,
     label: d.name,
-  }));
-
-  const userOptions = (usersData?.items || []).map((u: any) => ({
-    value: u.id,
-    label: `${u.fullName || u.email} (${u.code || u.username || 'NV'})`,
   }));
 
   const {
@@ -131,6 +119,27 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
     control,
     name: 'exceptions',
   });
+
+  const watchedDepartmentId = watch('department_id');
+  const activeDepartmentId = defaultDepartmentId || (watchedDepartmentId ? Number(watchedDepartmentId) : undefined);
+
+  // Lấy danh sách nhân viên theo phòng ban (để gán ngoại lệ)
+  const { data: employeesData } = useQuery({
+    queryKey: ['employees', 'by-department', activeDepartmentId],
+    queryFn: () =>
+      getEmployees({
+        departmentId: activeDepartmentId,
+        limit: 200,
+      }),
+    enabled: isOpen,
+  });
+
+  const userOptions = useMemo(() => {
+    return (employeesData?.items || []).map((u: any) => ({
+      value: u.id,
+      label: `${u.fullName || u.email} (${u.identifyCode || u.code || u.username || 'NV'})`,
+    }));
+  }, [employeesData]);
 
   const selectedDays = watch('work_days') || [];
   const shiftStatus = watch('status');
@@ -410,8 +419,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
         {/* Cấu hình GPS Chấm công */}
         <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-slate-800 font-semibold text-sm">
-              <MapPin className="w-4 h-4 text-primary" />
+            <div className="text-slate-800 font-semibold text-sm">
               <span>Tọa độ GPS & Bán kính Chấm công</span>
             </div>
             <Button
@@ -453,8 +461,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
         {/* Ngoại lệ ca làm việc (WorkShiftException) */}
         <div className="border border-slate-200 rounded-xl p-4 bg-white flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-slate-800 font-semibold text-sm">
-              <Clock className="w-4 h-4 text-amber-600" />
+            <div className="text-slate-800 font-semibold text-sm">
               <span>Ngoại lệ nhân viên (Giờ làm riêng biệt)</span>
             </div>
             <Button

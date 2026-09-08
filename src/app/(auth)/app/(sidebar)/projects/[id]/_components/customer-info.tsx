@@ -10,20 +10,14 @@ interface CustomerInfoProps {
 export function CustomerInfo({ customer }: CustomerInfoProps) {
   return (
     <div className="space-y-3">
-      <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Khách hàng</h2>
-      <div className="bg-white rounded-lg border border-slate-200/80 p-5 shadow-xs space-y-4">
+      <h2 className="text-xs font-bold text-slate-500">Khách hàng</h2>
+      <div className="bg-white rounded-lg border border-slate-200/60 p-5 shadow-xs space-y-4">
         {customer ? (
           <>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-250 text-slate-750 flex items-center justify-center font-bold text-sm shrink-0">
-                {customer.name?.charAt(0).toUpperCase() || 'C'}
-              </div>
-              <div className="flex flex-col">
-                <h3 className="font-bold text-slate-800 text-sm leading-tight">{customer.name}</h3>
-                <span className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">Khách hàng liên kết</span>
-              </div>
+            <div>
+              <h3 className="font-bold text-primary text-sm leading-tight">{customer.name}</h3>
             </div>
-            <div className="divide-y divide-slate-100 text-sm pt-2">
+            <div className="divide-y divide-slate-100 text-sm pt-1">
               <div className="flex justify-between py-2.5">
                 <span className="text-slate-500">Số điện thoại</span>
                 <span className="font-semibold text-slate-800">{customer.phone || '—'}</span>

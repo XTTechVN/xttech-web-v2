@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import StatCard from '../_components/stats-card';
 import Schedule from '../_components/schedule';
 import Document from '../_components/document';
@@ -9,28 +8,28 @@ import { Clock, CalendarCheck, FileText, Sparkles } from 'lucide-react';
 const statsMockupData = [
   {
     title: 'Ca làm việc hôm nay',
-    value: '08:00 - 17:30',
+    value: '_',
     icon: <Clock size={18} />,
     trend: 0,
     trendDirection: 'up' as const,
   },
   {
     title: 'Ngày công tháng này',
-    value: '22 / 24',
+    value: '_',
     icon: <CalendarCheck size={18} />,
     trend: 3,
     trendDirection: 'up' as const,
   },
   {
     title: 'Đơn từ & Khiếu nại',
-    value: '1 Chờ duyệt',
+    value: '_',
     icon: <FileText size={18} />,
     trend: 0,
     trendDirection: 'up' as const,
   },
   {
     title: 'Đề xuất & Đóng góp',
-    value: '2 Đã gửi',
+    value: '_',
     icon: <Sparkles size={18} />,
     trend: 1,
     trendDirection: 'up' as const,

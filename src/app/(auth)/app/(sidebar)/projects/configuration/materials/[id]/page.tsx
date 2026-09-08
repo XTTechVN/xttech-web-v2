@@ -46,15 +46,9 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
   const [isSavingExtraOptions, setIsSavingExtraOptions] = useState(false);
   const [isSavingFormulas, setIsSavingFormulas] = useState(false);
 
-  const queryClient = useQueryClient();
-
   // 1. Fetch Material Info
-  const {
-    data: material,
-    isLoading: isLoadingMaterial,
-    error,
-  } = useQuery({
-    queryKey: ['material', materialId],
+  const { data: material, isLoading: isLoadingMaterial, error, } = useQuery({
+    queryKey: ['materials', materialId],
     queryFn: () => getMaterial(materialId),
     enabled: !isNaN(materialId),
   });

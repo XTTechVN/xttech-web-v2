@@ -244,7 +244,7 @@ export interface PreviewMaterial {
   initPrice: number;
   quantity?: number;
   totalArea?: number;
-  totalAmount?: number;
+  totalPrice?: number;
   doors: PreviewDoor[];
   accessories?: {
     accessoryId: number;

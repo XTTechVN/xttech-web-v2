@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getEmployees } from '@/actions';
 import StatCard from '../_components/stats-card';
 import SystemHistory from '../_components/system-history';
 import AnalyticsChart from '../_components/analytics-chart';
@@ -8,43 +9,52 @@ import Schedule from '../_components/schedule';
 import Document from '../_components/document';
 import { Users, UserPlus, Briefcase, LayoutGrid } from 'lucide-react';
 
-const statsMockupData = [
-  {
-    title: 'Số lượng nhân viên',
-    value: '10',
-    icon: <Users size={18} />,
-    trend: 5,
-    trendDirection: 'up' as const,
-  },
-  {
-    title: 'Số lượng ứng viên',
-    value: '45',
-    icon: <UserPlus size={18} />,
-    trend: 12,
-    trendDirection: 'up' as const,
-  },
-  {
-    title: 'Số người đã chấm công',
-    value: '8',
-    icon: <Briefcase size={18} />,
-    trend: 2,
-    trendDirection: 'up' as const,
-  },
-  {
-    title: 'Số buổi đào tạo',
-    value: '8',
-    icon: <LayoutGrid size={18} />,
-    trend: 2,
-    trendDirection: 'up' as const,
-  },
-];
-
 export const AdminDashboard = () => {
+
+  // Lấy tổng số lượng nhân viên
+  const { data: employeesData, isLoading: isLoadingEmployees } = useQuery({
+    queryKey: ['admin-dashboard-employees-count'],
+    queryFn: () => getEmployees({ limit: 1 }),
+  });
+
+  const totalEmployees = isLoadingEmployees ? '...' : String(employeesData?.meta?.total ?? 0);
+
+  const statsData = [
+    {
+      title: 'Số lượng nhân viên',
+      value: totalEmployees,
+      icon: <Users size={18} />,
+      trend: 5,
+      trendDirection: 'up' as const,
+    },
+    {
+      title: 'Số lượng ứng viên',
+      value: '_',
+      icon: <UserPlus size={18} />,
+      trend: 12,
+      trendDirection: 'up' as const,
+    },
+    {
+      title: 'Số người đã chấm công',
+      value: '_',
+      icon: <Briefcase size={18} />,
+      trend: 2,
+      trendDirection: 'up' as const,
+    },
+    {
+      title: 'Số buổi đào tạo',
+      value: '_',
+      icon: <LayoutGrid size={18} />,
+      trend: 2,
+      trendDirection: 'up' as const,
+    },
+  ];
+
   return (
     <div className="flex relative">
       <div className="flex-1 min-w-0 flex flex-col p-1 gap-4">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
-          {statsMockupData.map((stat, index) => (
+          {statsData.map((stat, index) => (
             <StatCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection} />
           ))}
         </div>

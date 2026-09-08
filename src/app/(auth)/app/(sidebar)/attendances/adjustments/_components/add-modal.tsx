@@ -101,7 +101,6 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
         return 0;
       });
     }
-
     return [
       {
         value: '',
@@ -363,7 +362,7 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
 
     setIsSubmitting(true);
     try {
-      const res = await createAdjustmentRequest(payload);
+      await createAdjustmentRequest(payload);
       toast.success('Tạo khiếu nại thành công');
       resetForm();
       onSuccess?.();

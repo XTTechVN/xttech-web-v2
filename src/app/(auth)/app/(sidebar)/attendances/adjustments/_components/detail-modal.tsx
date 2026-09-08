@@ -1,7 +1,6 @@
 'use client';
 
 import { Modal, Button, Badge, Input, Textarea } from '@/components';
-import { User } from 'lucide-react';
 import { getRequestTypeLabel } from '@/types';
 import type { AttendanceAdjustmentRequest } from '@/types';
 
@@ -9,6 +8,8 @@ interface Props {
   open: boolean;
   data: AttendanceAdjustmentRequest | null;
   onClose: () => void;
+  isAdmin?: boolean;
+  onReview?: (data: AttendanceAdjustmentRequest, action: 'approved' | 'rejected') => void;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; variant: 'warning' | 'success' | 'danger' }> = {
@@ -17,7 +18,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'warning' | 'succe
   rejected: { label: 'Từ chối', variant: 'danger' },
 };
 
-export default function AdjustmentDetailModal({ open, data, onClose }: Props) {
+export default function AdjustmentDetailModal({ open, data, onClose, isAdmin = false, onReview }: Props) {
   if (!data) return null;
 
   const statusConfig = STATUS_CONFIG[data.status] ?? STATUS_CONFIG['pending'];
@@ -33,11 +34,23 @@ export default function AdjustmentDetailModal({ open, data, onClose }: Props) {
     data.requestType === 'forgot_attendance' ||
     (data.requestType as string) === 'forget_checkout';
 
+  const isPending = data.status === 'pending';
+
   const footer = (
-    <div className="flex items-center justify-end gap-3 w-full">
+    <div className="flex items-center justify-end gap-2.5 w-full">
       <Button variant="outline" onClick={onClose}>
         Đóng
       </Button>
+      {isAdmin && isPending && onReview && (
+        <>
+          <Button variant="danger" onClick={() => onReview(data, 'rejected')}>
+            Từ chối
+          </Button>
+          <Button variant="primary" onClick={() => onReview(data, 'approved')}>
+            Duyệt khiếu nại
+          </Button>
+        </>
+      )}
     </div>
   );
 
@@ -75,10 +88,7 @@ export default function AdjustmentDetailModal({ open, data, onClose }: Props) {
 
         {/* Thông tin duyệt (nếu đã xử lý) */}
         {(data.reviewedBy || data.reviewNote) && (
-          <div className="pt-4 border-t border-slate-100 space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 flex items-center gap-1.5">
-              <User size={13} className="text-slate-400" /> Thông tin xét duyệt
-            </p>
+          <div className="">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {data.reviewedBy && <Input label="Người duyệt" value={data.reviewedBy} readOnly fullWidth />}
               {data.reviewedAt && <Input label="Thời điểm duyệt" value={new Date(data.reviewedAt).toLocaleString('vi-VN')} readOnly fullWidth />}
@@ -86,13 +96,6 @@ export default function AdjustmentDetailModal({ open, data, onClose }: Props) {
             {data.reviewNote && <Textarea label="Ghi chú xét duyệt" value={data.reviewNote} readOnly rows={2} fullWidth />}
           </div>
         )}
-
-        {/* Timestamps */}
-        <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100/60 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-medium">
-          {data.createdAt && <span>Tạo lúc: {new Date(data.createdAt).toLocaleString('vi-VN')}</span>}
-          {data.createdAt && data.updatedAt && <span className="text-slate-300 select-none">•</span>}
-          {data.updatedAt && <span>Cập nhật: {new Date(data.updatedAt).toLocaleString('vi-VN')}</span>}
-        </div>
       </div>
     </Modal>
   );

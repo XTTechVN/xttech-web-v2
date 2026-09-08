@@ -100,10 +100,7 @@ const Table = () => {
             name={row.fullName || row.username} 
             size="sm" 
           />
-          <div className="flex flex-col">
-            <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
-            <span className="text-xs text-gray-500">{row.email}</span>
-          </div>
+          <span className="font-semibold text-gray-900 text-sm truncate">{row.fullName || row.username}</span>
         </div>
       ),
     },
@@ -235,9 +232,7 @@ const Table = () => {
         />
         <div className="flex flex-col flex-1 min-w-0">
           <span className="font-semibold text-gray-900 truncate text-sm sm:text-base leading-snug">{row.fullName || row.username}</span>
-          <span className="text-xs text-gray-400 truncate">{row.email}</span>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="text-xs text-gray-500">Mã: {row.identifyCode || 'N/A'}</span>
             {row.roles && row.roles.length > 0 && (
               <Badge variant={getRoleVariant(row.roles[0].code)} size="sm">
                 {row.roles[0].name}
