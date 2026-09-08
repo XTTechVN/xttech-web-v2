@@ -28,6 +28,7 @@ export const acceptedSections = [
   'shifts',
   'attendances-reports',
   'attendances-live-map',
+  'leave-request',
 ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
@@ -135,7 +136,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Nghỉ phép & Đơn từ',
         icon: React.createElement(FileText, { size: 18 }),
         href: '/app/leave-requests',
-        roles: ['super', 'admin', 'hr'],
+        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
       },
       {
         id: 'attendances-policy',

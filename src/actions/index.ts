@@ -63,3 +63,6 @@ export * from './report';
 
 // Audit Log
 export * from './audit-log';
+
+// Leave Request
+export * from './leave-request';
