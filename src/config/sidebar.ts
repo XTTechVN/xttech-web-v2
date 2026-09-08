@@ -27,6 +27,7 @@ export const acceptedSections = [
   'formulas',
   'shifts',
   'attendances-reports',
+  'attendances-live-map',
 ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
@@ -94,6 +95,12 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
             id: 'attendances',
             label: 'Quản lý chấm công',
             href: '/app/attendances',
+            roles: ['super', 'admin', 'hr'],
+          },
+          {
+            id: 'attendances-live-map',
+            label: 'Bản đồ trực tiếp',
+            href: '/app/attendances/live-map',
             roles: ['super', 'admin', 'hr'],
           },
           {

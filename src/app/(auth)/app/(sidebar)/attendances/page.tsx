@@ -30,8 +30,9 @@ export default function AttendancesPage() {
 
   // Search & Filter states
   const [searchQuery, setSearchQuery] = useQueryParam('search', '');
+  // Filter states
   const [filterDepartment, setFilterDepartment] = useState<string | undefined>();
-  const [filterStatus, setFilterStatus] = useState<string | undefined>();
+  const [filterStatus, setFilterStatus] = useState<AttendanceStatus | undefined>();
 
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -68,7 +69,7 @@ export default function AttendancesPage() {
     queryKey: ['attendances-stats', todayStr, yesterdayStr],
     queryFn: () => getAttendances({ startDate: yesterdayStr, endDate: todayStr, limit: 1000 }),
   });
-  const statsAttendances = useMemo(()=> statsData?.items ?? [], [statsData]);
+  const statsAttendances = useMemo(() => statsData?.items ?? [], [statsData]);
 
   // 1. Thống kê có mặt hôm nay
   const presentCount = useMemo(() => {
@@ -168,7 +169,7 @@ export default function AttendancesPage() {
     },
     {
       label: 'Trạng thái',
-      value: filterStatus as string | undefined,
+      value: filterStatus,
       options: statusOptions,
       onChange: (val: string | undefined) => {
         setFilterStatus(val as AttendanceStatus | undefined);
@@ -188,7 +189,7 @@ export default function AttendancesPage() {
       limit,
       search: searchQuery || undefined,
       departmentId: filterDepartment ? Number(filterDepartment) : undefined,
-      status: (filterStatus as AttendanceStatus) || undefined,
+      status: filterStatus || undefined,
     });
 
     return {
@@ -588,7 +589,6 @@ export default function AttendancesPage() {
     },
   ];
 
-
   return (
     <div className="w-full flex flex-col gap-4">
       {/* 4 Thẻ Thống Kê Nhanh */}
@@ -662,6 +662,7 @@ export default function AttendancesPage() {
         }}
       />
 
+      {/* Modal chỉnh sửa chấm công */}
       <EditAttendanceModal
         open={showEditModal}
         data={selectedRow}
@@ -672,6 +673,7 @@ export default function AttendancesPage() {
         }}
       />
 
+      {/* Modal chi tiết chấm công */}
       <AttendanceDetailModal
         open={showDetailModal}
         data={selectedRow}
@@ -688,7 +690,6 @@ export default function AttendancesPage() {
         }}
         data={selectedRow}
       />
-
       {/* Modal xác nhận xóa chấm công */}
       {selectedRow && (
         <Modal

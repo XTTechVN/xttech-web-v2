@@ -23,6 +23,40 @@ const nextConfig: NextConfig = {
       'dayjs',
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/app/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-cache, no-store, max-age=0, must-revalidate',
+          },
+          {
+            key: 'CDN-Cache-Control',
+            value: 'no-store',
+          },
+          {
+            key: 'Surrogate-Control',
+            value: 'no-store',
+          },
+          {
+            key: 'Vary',
+            value: 'RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept',
+          },
+        ],
+      },
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Vary',
+            value: 'RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
