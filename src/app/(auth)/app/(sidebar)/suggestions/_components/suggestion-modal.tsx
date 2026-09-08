@@ -660,12 +660,12 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
 
   const modalTitle =
     mode === 'create' ? (
-      'TẠO ĐỀ XUẤT & SÁNG KIẾN MỚI'
+      'Tạo đề xuất và sáng kiến mới'
     ) : mode === 'edit' ? (
-      'CHỈNH SỬA ĐỀ XUẤT'
+      'Chỉnh sửa đề xuất và sáng kiến'
     ) : (
       <div className="flex items-center gap-2.5">
-        <span>CHI TIẾT ĐỀ XUẤT</span>
+        <span>Chi tiết đề xuất và sáng kiến</span>
         {selectedSuggestion && (
           <span
             className={`inline-block px-2.5 py-0.5 rounded-full text-[12px] font-bold border ${getStatusDetails(selectedSuggestion.status).class}`}
@@ -689,7 +689,7 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {/* Title */}
             <Input
-              label="Chủ đề đề xuất"
+              label="Chủ đề đề xuất *"
               placeholder="Nhập tên đề xuất (Ví dụ: Đề xuất cải tạo khu pantry...)"
               value={title}
               onChange={(e) => {
@@ -702,7 +702,7 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
             />
 
             <Select
-              label="Loại đề xuất"
+              label="Loại đề xuất *"
               value={type}
               onChange={(e) => setType(e.target.value)}
               options={[

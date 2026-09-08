@@ -6,8 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 // Thành phần dùng chung cho toàn trang
 import { Input, Button, Modal, Select } from '@/components';
 
-// Icons
-import { CheckCircle2, Upload, X, LocateFixed, FileSpreadsheet, Calendar } from 'lucide-react';
+import { CheckCircle2, Upload, X, LocateFixed, Calendar } from 'lucide-react';
 
 // Form sử dụng
 import { useForm } from 'react-hook-form';
@@ -844,7 +843,6 @@ export function CustomerExportModal({ isOpen, onClose }: CustomerExportModalProp
           <Button
             variant="primary"
             size="sm"
-            leftIcon={<FileSpreadsheet size={16} />}
             onClick={handleExport}
             loading={isExporting}
             disabled={isExporting}
