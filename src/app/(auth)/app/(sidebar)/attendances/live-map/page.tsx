@@ -150,6 +150,7 @@ export default function AttendanceLiveMapPage() {
             onSelectStaff={(staff) => setSelectedStaff({ ...staff, _selectedAt: Date.now() } as any)}
             onViewRoute={handleOpenRoute}
             isLoading={isLoading}
+            onRefresh={fetchInitialLocations} 
           />
         </div>
 
