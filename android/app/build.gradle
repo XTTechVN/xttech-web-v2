@@ -48,6 +48,23 @@ android {
     }
 }
 
+// Tự động chuyển đổi server URL trong capacitor.config.json theo loại build (Debug vs Release)
+gradle.taskGraph.whenReady { taskGraph ->
+    def isRelease = taskGraph.allTasks.any { it.name.toLowerCase().contains("release") }
+    def isDebug = taskGraph.allTasks.any { it.name.toLowerCase().contains("debug") }
+
+    def targetUrl = isRelease ? "https://xttech.vn" : (isDebug ? "https://dev-xt-web-v2.up.railway.app" : null)
+    if (targetUrl != null) {
+        def configFile = file('src/main/assets/capacitor.config.json')
+        if (configFile.exists()) {
+            def text = configFile.text
+            text = text.replaceAll(/"url":\s*"[^"]*"/, "\"url\": \"${targetUrl}\"")
+            configFile.text = text
+            println ">> [XTTech Auto-Config] Detected build task -> Switched server.url to: ${targetUrl}"
+        }
+    }
+}
+
 repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
