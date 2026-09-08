@@ -273,7 +273,8 @@ export default function AttendanceLiveMapPage() {
                 staffLocations={staffLocations}
                 selectedStaff={selectedStaff}
                 onSelectStaff={(staff) => {
-                  setSelectedStaff(staff);
+                  // Thêm _selectedAt: Date.now() để kích hoạt hiệu ứng bay camera
+                  setSelectedStaff({ ...staff, _selectedAt: Date.now() } as any);
                   setIsMobileStaffListOpen(false);
                 }}
                 onViewRoute={(staff) => {

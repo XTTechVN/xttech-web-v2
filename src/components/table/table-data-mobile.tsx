@@ -84,8 +84,13 @@ export function TableDataMobile<T>({
         <>
           {/* Danh sách các Cards */}
           <div className="flex flex-col gap-3">
-            {items.map((item, index) => renderCard(item, index))}
+            {items.map((item, index) => (
+              <div key={(item as any)?.id ?? index} className="w-full">
+                {renderCard(item, index)}
+              </div>
+            ))}
           </div>
+
 
           {/* Indicator khi đang tải thêm trang tiếp theo */}
           {isFetchingNextPage && (
