@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'public',
   server: {
     // Thay bằng domain web app thực tế của bạn trên Railway
-    url: 'https://supportive-fulfillment-production-ff53.up.railway.app',
+    url: 'https://dev-xt-web-v2.up.railway.app',
     cleartext: true,
   },
 };
