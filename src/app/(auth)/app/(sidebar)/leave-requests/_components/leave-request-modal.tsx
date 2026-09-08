@@ -523,16 +523,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
 
         {mode === 'edit' && (
           <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsEditing(false);
-                if (selectedLeaveRequest) {
-                  initEditForm(selectedLeaveRequest);
-                }
-              }}
-              disabled={isFormLoading}
-            >
+            <Button variant="outline" onClick={handleClose} disabled={isFormLoading}>
               Hủy
             </Button>
             <Button variant="primary" onClick={handleSubmitForm} loading={isFormLoading} disabled={isFormLoading}>
