@@ -19,10 +19,7 @@ interface DepartmentMembersSectionProps {
   onCountChange?: (count: number) => void;
 }
 
-export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
-  departmentId,
-  onCountChange,
-}) => {
+export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ departmentId, onCountChange, }) => {
   const [search, setSearch] = useQueryParam('member_search');
 
   // Modal đổi vị trí nhân sự

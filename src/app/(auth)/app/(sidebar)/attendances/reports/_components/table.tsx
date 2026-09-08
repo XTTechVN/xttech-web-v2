@@ -7,10 +7,10 @@ import { TableData, type ITableColumn } from '@/components/table';
 import type { ITableFilterProps } from '@/components/table/types';
 import { Badge, Avatar } from '@/components';
 import { BASE_MINIO_URL } from '@/config';
-import { useQueryParam } from '@/hooks';
 import { getAttendanceReport, getDepartments } from '@/actions';
 import type { AttendanceReportItem, Department } from '@/types';
 import { ReportDetailModal } from './detail-modal';
+import { useQueryParams, useQueryParam } from '@/hooks';
 
 
 
@@ -43,13 +43,12 @@ const POLICY_BADGES: Record<
 
 export function ReportTable() {
   const defaultRange = useMemo(() => getDefaultDateRange(), []);
-
-  const [fromDate, setFromDate] = useQueryParam('fromDate', defaultRange.from);
-  const [toDate, setToDate] = useQueryParam('toDate', defaultRange.to);
+  const [fromDate] = useQueryParam('fromDate', defaultRange.from);
+  const [toDate] = useQueryParam('toDate', defaultRange.to);
   const [departmentId, setDepartmentId] = useQueryParam('departmentId', '');
   const [attendancePolicy, setAttendancePolicy] = useQueryParam('attendancePolicy', '');
   const [search, setSearch] = useQueryParam('search', '');
-
+  const { setQueryParams } = useQueryParams();
   // Modal Chi tiết chấm công
   const [selectedEmployee, setSelectedEmployee] = useState<AttendanceReportItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -371,8 +370,10 @@ export function ReportTable() {
       endDate: toDate,
       icon: <Calendar className="w-4 h-4" />,
       onDateRangeChange: (start, end) => {
-        setFromDate(start || defaultRange.from);
-        setToDate(end || defaultRange.to);
+        setQueryParams({
+          fromDate: start || defaultRange.from,
+          toDate: end || defaultRange.to,
+        });
       },
     },
     {

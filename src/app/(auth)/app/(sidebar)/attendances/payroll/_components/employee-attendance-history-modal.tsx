@@ -150,12 +150,10 @@ export const generateMockDailyLogs = (empCode: string): DailyAttendanceRecord[] 
       });
     }
   }
-  console.log(records);
   return records;
 };
 
 export default function EmployeeAttendanceHistoryModal({ open, employee, onClose }: Props) {
-  const [selectedMonth, setSelectedMonth] = useState('2024-11');
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
 
