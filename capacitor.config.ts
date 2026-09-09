@@ -10,7 +10,7 @@ const serverUrl =
   'https://xttech.vn'; // Fallback mặc định nếu chưa cấu hình env
 
 const config: CapacitorConfig = {
-  appId: 'com.xttech.app',
+  appId: 'com.xttech.app2',
   appName: 'XTTech',
   webDir: 'public',
   server: {
