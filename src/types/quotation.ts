@@ -45,6 +45,7 @@ export interface QuotationDoorCreate {
   width?: number;
   height?: number;
   quantity: number;
+  initPrice?: number;
   accessories?: QuotationAccessoryCreate[];
   extraOptionIds?: number[];
   fomulas?: {
@@ -302,6 +303,7 @@ export interface DraftDoor {
   width: number;
   height: number;
   quantity: number;
+  initPrice?: number;
   accessoryIds: number[];
   extraOptionIds: number[];
   fomulas: DraftFormula[];

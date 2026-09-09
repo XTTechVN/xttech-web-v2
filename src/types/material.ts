@@ -9,6 +9,22 @@ export const formatMaterialUnit = (unit: string | null | undefined): string => {
   return MATERIAL_UNIT_MAP[unit.toLowerCase()] || unit;
 };
 
+export interface MaterialPrice {
+  id?: number;
+  materialId?: number;
+  width: number;
+  height: number;
+  price: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MaterialPriceCreate {
+  width: number;
+  height: number;
+  price: number;
+}
+
 export interface Material {
   id: number;
   code: string | null;
@@ -19,6 +35,7 @@ export interface Material {
   retailPrice: number;
   salePrice: number;
   unit: string | null;
+  prices?: MaterialPrice[];
   createdAt: string;
   updatedAt: string;
 }
@@ -32,6 +49,7 @@ export interface MaterialCreate {
   retailPrice?: number;
   salePrice?: number;
   unit?: string;
+  prices?: MaterialPriceCreate[];
 }
 
 export interface MaterialUpdate {
@@ -43,6 +61,7 @@ export interface MaterialUpdate {
   retailPrice?: number;
   salePrice?: number;
   unit?: string;
+  prices?: MaterialPriceCreate[];
 }
 
 export interface MaterialQueryParams {
