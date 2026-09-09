@@ -31,97 +31,163 @@ export default function AttendanceLiveMapPage() {
   });
 
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef<boolean>(true);
 
-  const fetchInitialLocations = async () => {
-    setIsLoading(true);
+  // Tải danh sách vị trí tức thời từ API
+  const fetchLocations = async (isBackground = false) => {
+    if (!isBackground) setIsLoading(true);
     try {
       const data = await getLiveLocations();
-      console.log('data: ', data);
       setStaffLocations(data);
+
+      // Đồng bộ selectedStaff nếu đang theo dõi 1 nhân sự
+      setSelectedStaff((current) => {
+        if (!current) return null;
+        const currentId = current.userId || (current as any).user_id;
+        const fresh = data.find((s) => (s.userId || (s as any).user_id) === currentId);
+        return fresh ? { ...current, ...fresh } : current;
+      });
     } catch (err) {
-      console.error('Lỗi khi tải danh sách vị trí:', err);
-      toast.error('Không thể tải dữ liệu định vị nhân viên');
+      if (!isBackground) {
+        console.error('Lỗi khi tải danh sách vị trí:', err);
+        toast.error('Không thể tải dữ liệu định vị nhân viên');
+      }
     } finally {
-      setIsLoading(false);
+      if (!isBackground) setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInitialLocations();
+    isMountedRef.current = true;
+    fetchLocations(false);
 
-    // Kết nối WebSocket Realtime
-    const wsUrl = `${BASE_WS_URL}/api/v1/ws/live-tracking`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    let pingInterval: NodeJS.Timeout | null = null;
 
-    ws.onopen = () => {
-      setIsWsConnected(true);
-    };
-
-    ws.onmessage = (event) => {
-      // Bỏ qua gói tin phản hồi nhịp tim pong
-      if (event.data === 'pong') return;
+    // Hàm kết nối WebSocket với cơ chế Auto-Reconnect thông minh
+    const connectWebSocket = () => {
+      if (!isMountedRef.current) return;
 
       try {
-        const payload = JSON.parse(event.data);
-        if (payload.type === 'STAFF_LOCATION_UPDATE' && payload.data) {
-          const rawData = payload.data;
-          const targetUserId: string = rawData.userId || rawData.user_id;
-          if (!targetUserId) return;
+        const wsUrl = `${BASE_WS_URL}/api/v1/ws/live-tracking`;
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
 
-          const updatedStaff: StaffLiveLocation = {
-            ...rawData,
-            userId: targetUserId,
-            userName: rawData.userName || rawData.user_name || 'Nhân viên',
-            avatar: rawData.avatar,
-            departmentName: rawData.departmentName || rawData.department_name,
-            positionName: rawData.positionName || rawData.position_name,
-            attendanceId: rawData.attendanceId ?? rawData.attendance_id,
-            batteryLevel: rawData.batteryLevel ?? rawData.battery_level,
-            checkInTime: rawData.checkInTime || rawData.check_in_time,
-            updatedAt: rawData.updatedAt || rawData.updated_at,
-          };
+        ws.onopen = () => {
+          if (!isMountedRef.current) return;
+          setIsWsConnected(true);
+          if (reconnectTimerRef.current) {
+            clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+          }
+        };
 
-          setStaffLocations((prev) => {
-            const index = prev.findIndex((s) => (s.userId || (s as any).user_id) === targetUserId);
-            if (index >= 0) {
-              const clone = [...prev];
-              clone[index] = { ...clone[index], ...updatedStaff };
-              return clone;
-            } else {
-              return [updatedStaff, ...prev];
+        ws.onmessage = (event) => {
+          if (event.data === 'pong') return;
+
+          try {
+            const payload = JSON.parse(event.data);
+            if (payload.type === 'STAFF_LOCATION_UPDATE' && payload.data) {
+              const rawData = payload.data;
+              const targetUserId: string = rawData.userId || rawData.user_id;
+              if (!targetUserId) return;
+
+              const updatedStaff: StaffLiveLocation = {
+                ...rawData,
+                userId: targetUserId,
+                userName: rawData.userName || rawData.user_name || 'Nhân viên',
+                avatar: rawData.avatar,
+                departmentName: rawData.departmentName || rawData.department_name,
+                positionName: rawData.positionName || rawData.position_name,
+                attendanceId: rawData.attendanceId ?? rawData.attendance_id,
+                batteryLevel: rawData.batteryLevel ?? rawData.battery_level,
+                checkInTime: rawData.checkInTime || rawData.check_in_time,
+                updatedAt: rawData.updatedAt || rawData.updated_at,
+              };
+
+              setStaffLocations((prev) => {
+                const index = prev.findIndex((s) => (s.userId || (s as any).user_id) === targetUserId);
+                if (index >= 0) {
+                  const clone = [...prev];
+                  clone[index] = { ...clone[index], ...updatedStaff };
+                  return clone;
+                } else {
+                  return [updatedStaff, ...prev];
+                }
+              });
+
+              // Tự động cập nhật selectedStaff khi nhân viên này di chuyển
+              setSelectedStaff((current) => {
+                const currentId = current?.userId || (current as any)?.user_id;
+                return currentId === targetUserId ? { ...current, ...updatedStaff } : current;
+              });
             }
-          });
+          } catch (e) {
+            console.warn('Lỗi parse WebSocket message:', e);
+          }
+        };
 
-          // Cập nhật selectedStaff nếu đang xem nhân viên này
-          setSelectedStaff((current) => {
-            const currentId = current?.userId || (current as any)?.user_id;
-            return currentId === targetUserId ? { ...current, ...updatedStaff } : current;
-          });
+        ws.onclose = () => {
+          if (!isMountedRef.current) return;
+          setIsWsConnected(false);
+          // Tự động kết nối lại sau 3 giây (Auto-Reconnect)
+          if (!reconnectTimerRef.current) {
+            reconnectTimerRef.current = setTimeout(() => {
+              reconnectTimerRef.current = null;
+              connectWebSocket();
+            }, 3000);
+          }
+        };
+
+        ws.onerror = () => {
+          setIsWsConnected(false);
+          ws.close();
+        };
+      } catch (err) {
+        console.warn('Khởi tạo WebSocket thất bại:', err);
+        if (isMountedRef.current && !reconnectTimerRef.current) {
+          reconnectTimerRef.current = setTimeout(() => {
+            reconnectTimerRef.current = null;
+            connectWebSocket();
+          }, 4000);
         }
-      } catch (e) {
-        console.warn('Lỗi parse WebSocket message:', e);
       }
     };
 
-    ws.onclose = () => {
-      setIsWsConnected(false);
-    };
+    connectWebSocket();
 
-    ws.onerror = () => {
-      setIsWsConnected(false);
-    };
-
-    // Heartbeat ping 30s
-    const pingInterval = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send('ping');
+    // Heartbeat ping WebSocket mỗi 25s
+    pingInterval = setInterval(() => {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send('ping');
       }
-    }, 30000);
+    }, 25000);
+
+    // Fallback Polling định kỳ: Cứ mỗi 10 giây nếu mất kết nối WebSocket (hoặc mỗi 60 giây dự phòng)
+    // sẽ tự động đồng bộ vị trí ngầm, đảm bảo Live Map không bao giờ bị đơ hay phải F5!
+    let tickCount = 0;
+    const pollingInterval = setInterval(() => {
+      if (!isMountedRef.current) return;
+      tickCount++;
+      const isWsAlive = wsRef.current && wsRef.current.readyState === WebSocket.OPEN;
+      // Nếu mất kết nối WS: poll mỗi 10s. Nếu WS vẫn sống: poll dự phòng mỗi 60s
+      if (!isWsAlive || tickCount % 6 === 0) {
+        fetchLocations(true);
+      }
+    }, 10000);
 
     return () => {
-      clearInterval(pingInterval);
-      ws.close();
+      isMountedRef.current = false;
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+      }
+      if (pingInterval) {
+        clearInterval(pingInterval);
+      }
+      clearInterval(pollingInterval);
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
     };
   }, []);
 
@@ -146,7 +212,7 @@ export default function AttendanceLiveMapPage() {
             onSelectStaff={(staff) => setSelectedStaff({ ...staff, _selectedAt: Date.now() } as any)}
             onViewRoute={handleOpenRoute}
             isLoading={isLoading}
-            onRefresh={fetchInitialLocations}
+            onRefresh={() => fetchLocations(false)}
           />
         </div>
 
@@ -155,7 +221,7 @@ export default function AttendanceLiveMapPage() {
           <LiveMap
             staffLocations={staffLocations}
             selectedStaff={selectedStaff}
-            onSelectStaff={(staff) => setSelectedStaff(staff)}
+            onSelectStaff={(staff) => setSelectedStaff({ ...staff, _selectedAt: Date.now() } as any)}
             onViewRoute={handleOpenRoute}
           />
 

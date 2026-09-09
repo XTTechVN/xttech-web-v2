@@ -54,96 +54,42 @@ function getPointTimeSec(p: StaffRoutePoint): number | null {
 }
 
 /**
- * Lọc bớt các điểm nhiễu, cụm điểm văng ảo (Multi-point Outlier Spikes) và điểm quá gần (< 12m)
+ * Lọc bớt các điểm nhiễu, điểm văng trạm sóng BTS và điểm quá gần (< 6m)
  */
 function filterPointsForMatching(points: StaffRoutePoint[]): StaffRoutePoint[] {
   if (points.length <= 2) return points;
 
-  // 1. Lọc bỏ các điểm có sai số lớn (> 70m)
+  // 1. Lọc bỏ các điểm có sai số lớn (> 50m) nếu có accuracy
   const accuratePoints = points.filter(
-    (p) => p.accuracy === undefined || p.accuracy === null || p.accuracy <= 70
+    (p) => p.accuracy === undefined || p.accuracy === null || p.accuracy <= 50
   );
-  if (accuratePoints.length <= 2) return accuratePoints;
+  const basePoints = accuratePoints.length >= 2 ? accuratePoints : points;
 
-  // 2. Lọc bỏ chuỗi/cụm điểm văng ảo dạng gai nhọn (nhảy xa > 200m rồi lập tức quay về vị trí ban đầu)
-  // Quét cửa sổ trượt: hỗ trợ triệt tiêu cả cụm văng từ 1 đến 4 điểm liên tiếp
-  const nonSpikePoints: StaffRoutePoint[] = [accuratePoints[0]];
-  let i = 1;
+  // 2. Lọc điểm văng nảy con thoi (Ping-Pong Spike / BTS bounce):
+  // Nếu điểm B văng xa khỏi A (>= 50m) nhưng điểm C ngay sau đó lại quay về gần A (<= 35m)
+  // -> B là điểm văng ảo do trạm sóng BTS -> loại bỏ B
+  const nonSpikePoints: StaffRoutePoint[] = [];
+  const n = basePoints.length;
+  let i = 0;
 
-  while (i < accuratePoints.length) {
-    const prev = nonSpikePoints[nonSpikePoints.length - 1];
-    const prevTime = getPointTimeSec(prev);
+  while (i < n) {
+    const curr = basePoints[i];
+    if (nonSpikePoints.length > 0 && i + 1 < n) {
+      const prev = nonSpikePoints[nonSpikePoints.length - 1];
+      const next = basePoints[i + 1];
 
-    let isSpikeCluster = false;
-    let clusterLength = 0;
+      const dPrevCurr = getPointDistance(prev, curr);
+      const dCurrNext = getPointDistance(curr, next);
+      const dPrevNext = getPointDistance(prev, next);
 
-    // Kiểm tra các độ dài cụm văng k từ 1 đến 4 điểm
-    for (let k = 1; k <= 4; k++) {
-      const returnIndex = i + k;
-      if (returnIndex >= accuratePoints.length) break;
+      const isBounceSpike =
+        dPrevCurr >= 50 &&
+        dCurrNext >= 50 &&
+        (dPrevNext <= 35 || dPrevNext < dPrevCurr * 0.35);
 
-      const returnPoint = accuratePoints[returnIndex];
-      const distBase = getPointDistance(prev, returnPoint);
-      const returnTime = getPointTimeSec(returnPoint);
-      const elapsedBase =
-        prevTime !== null && returnTime !== null ? Math.abs(returnTime - prevTime) : null;
-
-      // Điểm trước khi văng và điểm trở về phải ở cùng khu vực hoặc di chuyển với vận tốc xe máy hợp lý
-      const isBasePlausible =
-        distBase < 250 ||
-        (elapsedBase !== null && elapsedBase > 0 && distBase / elapsedBase <= 35); // <= 126 km/h
-
-      if (!isBasePlausible) continue;
-
-      // Kiểm tra xem tất cả các điểm trong cụm [i ... i + k - 1] có cùng nhảy vọt ra xa không
-      let allPointsFar = true;
-      for (let m = 0; m < k; m++) {
-        const clusterPoint = accuratePoints[i + m];
-        const distFromPrev = getPointDistance(prev, clusterPoint);
-        const distToReturn = getPointDistance(clusterPoint, returnPoint);
-
-        // Điểm văng phải cách xa điểm xuất phát và điểm trở về (> 200m)
-        if (distFromPrev < 200 || distToReturn < 200) {
-          allPointsFar = false;
-          break;
-        }
-
-        // Nếu có mốc thời gian, kiểm tra thêm vận tốc nhảy ảo
-        const clusterTime = getPointTimeSec(clusterPoint);
-        if (prevTime !== null && clusterTime !== null) {
-          const dt = Math.abs(clusterTime - prevTime);
-          if (dt > 0 && distFromPrev / dt > 35 && distFromPrev > 300) {
-            continue;
-          }
-        }
-      }
-
-      if (allPointsFar) {
-        isSpikeCluster = true;
-        clusterLength = k;
-        break;
-      }
-    }
-
-    if (isSpikeCluster) {
-      // Bỏ qua toàn bộ cụm điểm văng ảo này
-      i += clusterLength;
-      continue;
-    }
-
-    // Kiểm tra điểm văng ở đuôi lộ trình (Tail Outlier không có return point)
-    const curr = accuratePoints[i];
-    const distToPrev = getPointDistance(prev, curr);
-    const currTime = getPointTimeSec(curr);
-
-    if (i === accuratePoints.length - 1 && distToPrev > 300) {
-      if (prevTime !== null && currTime !== null) {
-        const dt = Math.abs(currTime - prevTime);
-        if (dt > 0 && distToPrev / dt > 35) {
-          break; // Bỏ qua điểm đuôi văng ảo
-        }
-      } else if (distToPrev > 1000) {
-        break; // Nhảy xa > 1km ở điểm cuối cùng không có thời gian
+      if (isBounceSpike) {
+        i++;
+        continue;
       }
     }
 
@@ -151,14 +97,14 @@ function filterPointsForMatching(points: StaffRoutePoint[]): StaffRoutePoint[] {
     i++;
   }
 
-  // 3. Lọc bỏ các điểm quá sát nhau (< 12m) để chống rung giật khi dừng xe
+  // 3. Lọc bỏ các điểm quá sát nhau khi dừng xe / đứng yên (< 6m)
   const filtered: StaffRoutePoint[] = [nonSpikePoints[0]];
   for (let j = 1; j < nonSpikePoints.length; j++) {
     const prev = filtered[filtered.length - 1];
     const curr = nonSpikePoints[j];
     const dist = getPointDistance(prev, curr);
 
-    if (dist >= 12 || j === nonSpikePoints.length - 1) {
+    if (dist >= 6 || j === nonSpikePoints.length - 1) {
       filtered.push(curr);
     }
   }
@@ -270,7 +216,7 @@ export function RoutePlaybackModal({
   );
   const [routeData, setRouteData] = useState<StaffRouteResponse | null>(null);
   const [matchedCoords, setMatchedCoords] = useState<[number, number][]>([]);
-  const [isSnapToRoad, setIsSnapToRoad] = useState<boolean>(true);
+  const [isSnapToRoad, setIsSnapToRoad] = useState<boolean>(false);
   const [isMatchingRoad, setIsMatchingRoad] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
 

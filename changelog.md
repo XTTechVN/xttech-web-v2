@@ -5,15 +5,23 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-09-09
 
 ### Fixed
-- **Nâng cấp Bộ Lọc GPS Outlier & Triệt tiêu Điểm văng ảo Lộ trình hình nan hoa (Spiderweb Spikes):**
-  - **Khử cụm gai nhọn đa điểm trên Polyline ([`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx)):**
-    - Điều chỉnh ngưỡng lọc sai số `accuracy` từ 30m lên `70m` phù hợp môi trường thực tế ngoài trời/đô thị.
-    - Cải tiến thuật toán `filterPointsForMatching` với cửa sổ trượt: triệt tiêu triệt để các cụm điểm văng ảo từ 1 đến 4 điểm liên tiếp (do thiết bị bắt nhầm trạm BTS hoặc trôi dạt Wi-Fi nhảy xa hàng chục km rồi quay lại vị trí ban đầu).
-    - Bổ sung bộ lọc điểm đuôi văng ảo (Tail Outlier) ở cuối lộ trình.
-  - **Bộ lọc Bước nhảy theo Vận tốc Thực tế (Velocity Jump Filter):**
-    - Cập nhật đồng bộ trên Web Tracker ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)), Android Native ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java)) và iOS Native ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):
-    - Loại bỏ điều kiện giới hạn thời gian cứng `elapsed < 6s`. Thay bằng kiểm tra vận tốc bước nhảy thực tế $(\text{distance} / \Delta t > 35\text{ m/s} \sim 126\text{ km/h})$, chặn đứng các điểm nhảy dị biệt do bắt trạm BTS kể cả sau chu kỳ nghỉ 15s - 60s.
-    - Đồng bộ `maxAccuracy = 70` khi di chuyển ngoài đường.
+- **Tối ưu hóa Hệ thống Live Map Realtime & Triệt tiêu Lộ trình Zic Zac Con thoi:**
+  - **Khắc phục lỗi Live Map bị đơ / phải reload mới cập nhật ([`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):**
+    - Tích hợp cơ chế **WebSocket Auto-Reconnect** tự động kết nối lại sau 3s khi đứt mạng, đóng nắp máy hoặc đổi Wi-Fi.
+    - Bổ sung **Fallback Polling** định kỳ (10s/lần khi mất socket và 60s dự phòng) giúp dữ liệu bản đồ luôn cập nhật mượt mà, không bao giờ phải F5.
+  - **Tính năng Tự động Theo sát Nhân viên (Auto-Follow Mode) ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+    - Tự động gọi `map.panTo()` mượt mà giữ nhân viên luôn ở tâm màn hình khi họ di chuyển.
+    - Thêm nút toggle nổi *"Đang theo sát"* / *"Bật theo sát"* ở góc phải bản đồ để admin chủ động kiểm soát.
+  - **Triệt tiêu hiện tượng lộ trình chạy ngược chạy xuôi zic zac trên đường ([`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx)):**
+    - Thuật toán **Ping-Pong Spike Filter** $O(n)$: phát hiện và loại bỏ các điểm nhảy sang trạm sóng BTS rồi quay về vị trí cũ.
+    - Đổi mặc định `isSnapToRoad = false` giúp hiển thị đường Polyline GPS tự nhiên, không bị OSRM bẻ ngoặt thành các vòng lặp quay đầu xe trên đường đôi.
+  - **Khắc phục xung đột trạm sóng BTS & GPS ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java) & [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+    - Ưu tiên tuyệt đối `GPS_PROVIDER`, tự động bỏ qua toàn bộ điểm từ `NETWORK_PROVIDER` khi GPS đang hoạt động trong vòng 25s.
+    - Chuẩn hóa ngưỡng sai số khi di chuyển về mức 45m.
+  - **Khắc phục trùng lặp luồng & trễ 30s trên Web Tracker ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
+    - Tắt Web Worker heartbeat khi chạy trong Native container để tránh bắn đè tọa độ cũ lên server.
+    - Bỏ rào chắn `elapsed >= 30000`, kích hoạt nhịp gửi 3 giây khi di chuyển ngoài đường.
+  - **Tài liệu kỹ thuật chi tiết:** Đã xuất bản file [`livemap-and-gps-fix-log.md`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/docs/location-tracking/livemap-and-gps-fix-log.md) ghi nhận đầy đủ nguyên nhân và cách xử lý.
 
 ## [Unreleased] - 2026-09-08
 
