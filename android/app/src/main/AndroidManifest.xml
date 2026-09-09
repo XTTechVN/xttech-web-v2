@@ -71,4 +71,7 @@
     <!-- Quyền đọc ảnh từ bộ nhớ (khi cần tải ảnh avatar/chứng từ) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Quyền tự động cài đặt bản cập nhật APK nội bộ (In-App APK Installer) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 </manifest>

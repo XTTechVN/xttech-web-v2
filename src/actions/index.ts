@@ -66,3 +66,7 @@ export * from './audit-log';
 
 // Leave Request
 export * from './leave-request';
+
+// App Version
+export * from './app-version';
+

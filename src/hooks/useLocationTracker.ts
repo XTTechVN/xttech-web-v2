@@ -69,7 +69,7 @@ export function useLocationTracker({
     // 1. Chốt chặn độ chính xác thích ứng: 30m khi di chuyển ngoài đường, 80m khi đứng yên / trong phòng
     const rawSpeed = pos.speed ?? 0;
     const speed = rawSpeed >= 0.8 ? rawSpeed : 0;
-    const maxAccuracy = speed >= 1.0 ? 30 : 80;
+    const maxAccuracy = speed >= 1.0 ? 65 : 80;
     if (pos.accuracy !== undefined && pos.accuracy > maxAccuracy) {
       return;
     }
@@ -237,7 +237,7 @@ export function useLocationTracker({
           (pos) => {
             // Lọc sớm nếu tọa độ không đạt chuẩn chính xác theo vận tốc
             const rawSpeed = pos.coords.speed ?? 0;
-            const maxAcc = rawSpeed >= 1.0 ? 30 : 80;
+            const maxAcc = rawSpeed >= 1.0 ? 65 : 80;
             if (pos.coords.accuracy !== undefined && pos.coords.accuracy > maxAcc) {
               return;
             }
