@@ -148,9 +148,9 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         let rawSpeed = max(0.0, location.speed)
         let speed = rawSpeed >= 0.8 ? rawSpeed : 0.0
-        let maxAllowedAccuracy = speed >= 1.0 ? 65.0 : 80.0
+        let maxAllowedAccuracy = speed >= 1.0 ? 70.0 : 80.0
 
-        // 1. Chốt chặn độ chính xác thích ứng: 30m khi di chuyển, 80m khi đứng yên trong phòng
+        // 1. Chốt chặn độ chính xác thích ứng: 70m khi di chuyển, 80m khi đứng yên trong phòng
         if location.horizontalAccuracy < 0 || location.horizontalAccuracy > maxAllowedAccuracy {
             return
         }
@@ -160,9 +160,10 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         let distance = lastLocation != nil ? location.distance(from: lastLocation!) : 999.0
 
         // 2. Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
-        // Nếu khoảng cách nhảy vọt > 200m trong thời gian ngắn < 6s (v > 33 m/s ~ 120 km/h) -> điểm văng ảo do trạm sóng BTS
-        if let _ = self.lastLocation, elapsed > 0 && elapsed < 6.0 && distance > 200.0 {
-            print("[NativeTracking iOS] Discarding outlier jump point: \(distance)m in \(elapsed)s")
+        // Nếu khoảng cách nhảy vọt > 200m với tốc độ bất thường > 35 m/s (~126 km/h) hoặc > 500m trong thời gian ngắn (< 30s) -> điểm văng ảo do trạm sóng BTS/Wi-Fi
+        let jumpSpeed = elapsed > 0 ? distance / elapsed : 999.0
+        if let _ = self.lastLocation, distance > 200.0 && (jumpSpeed > 35.0 || (distance > 500.0 && elapsed < 30.0)) {
+            print("[NativeTracking iOS] Discarding outlier jump point: \(distance)m, speed=\(jumpSpeed)m/s")
             return
         }
 

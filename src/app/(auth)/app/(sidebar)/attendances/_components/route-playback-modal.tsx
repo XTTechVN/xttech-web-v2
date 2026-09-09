@@ -34,72 +34,135 @@ const Polyline = dynamic(
 );
 
 /**
- * Lọc bớt các điểm nhiễu, điểm văng ảo (Outlier Spike) và điểm quá gần (< 12m)
+ * Tính khoảng cách xấp xỉ giữa 2 điểm tọa độ (mét)
+ */
+function getPointDistance(p1: StaffRoutePoint, p2: StaffRoutePoint): number {
+  const dLat = (p2.latitude - p1.latitude) * 111320;
+  const avgLat = (((p1.latitude + p2.latitude) / 2) * Math.PI) / 180;
+  const dLon = (p2.longitude - p1.longitude) * 111320 * Math.cos(avgLat);
+  return Math.sqrt(dLat * dLat + dLon * dLon);
+}
+
+/**
+ * Lấy timestamp tính theo giây từ điểm tọa độ
+ */
+function getPointTimeSec(p: StaffRoutePoint): number | null {
+  const timeStr = p.recorded_at || p.recordedAt;
+  if (!timeStr) return null;
+  const t = new Date(timeStr).getTime();
+  return isNaN(t) ? null : t / 1000;
+}
+
+/**
+ * Lọc bớt các điểm nhiễu, cụm điểm văng ảo (Multi-point Outlier Spikes) và điểm quá gần (< 12m)
  */
 function filterPointsForMatching(points: StaffRoutePoint[]): StaffRoutePoint[] {
   if (points.length <= 2) return points;
 
-  // 1. Lọc bỏ các điểm có sai số lớn (> 30m)
+  // 1. Lọc bỏ các điểm có sai số lớn (> 70m)
   const accuratePoints = points.filter(
-    (p) => p.accuracy === undefined || p.accuracy === null || p.accuracy <= 30
+    (p) => p.accuracy === undefined || p.accuracy === null || p.accuracy <= 70
   );
   if (accuratePoints.length <= 2) return accuratePoints;
 
-  // 2. Lọc bỏ điểm văng ảo dạng gai nhọn (nhảy xa > 150m rồi lập tức quay về tim đường cũ)
+  // 2. Lọc bỏ chuỗi/cụm điểm văng ảo dạng gai nhọn (nhảy xa > 200m rồi lập tức quay về vị trí ban đầu)
+  // Quét cửa sổ trượt: hỗ trợ triệt tiêu cả cụm văng từ 1 đến 4 điểm liên tiếp
   const nonSpikePoints: StaffRoutePoint[] = [accuratePoints[0]];
-  for (let i = 1; i < accuratePoints.length; i++) {
+  let i = 1;
+
+  while (i < accuratePoints.length) {
     const prev = nonSpikePoints[nonSpikePoints.length - 1];
+    const prevTime = getPointTimeSec(prev);
+
+    let isSpikeCluster = false;
+    let clusterLength = 0;
+
+    // Kiểm tra các độ dài cụm văng k từ 1 đến 4 điểm
+    for (let k = 1; k <= 4; k++) {
+      const returnIndex = i + k;
+      if (returnIndex >= accuratePoints.length) break;
+
+      const returnPoint = accuratePoints[returnIndex];
+      const distBase = getPointDistance(prev, returnPoint);
+      const returnTime = getPointTimeSec(returnPoint);
+      const elapsedBase =
+        prevTime !== null && returnTime !== null ? Math.abs(returnTime - prevTime) : null;
+
+      // Điểm trước khi văng và điểm trở về phải ở cùng khu vực hoặc di chuyển với vận tốc xe máy hợp lý
+      const isBasePlausible =
+        distBase < 250 ||
+        (elapsedBase !== null && elapsedBase > 0 && distBase / elapsedBase <= 35); // <= 126 km/h
+
+      if (!isBasePlausible) continue;
+
+      // Kiểm tra xem tất cả các điểm trong cụm [i ... i + k - 1] có cùng nhảy vọt ra xa không
+      let allPointsFar = true;
+      for (let m = 0; m < k; m++) {
+        const clusterPoint = accuratePoints[i + m];
+        const distFromPrev = getPointDistance(prev, clusterPoint);
+        const distToReturn = getPointDistance(clusterPoint, returnPoint);
+
+        // Điểm văng phải cách xa điểm xuất phát và điểm trở về (> 200m)
+        if (distFromPrev < 200 || distToReturn < 200) {
+          allPointsFar = false;
+          break;
+        }
+
+        // Nếu có mốc thời gian, kiểm tra thêm vận tốc nhảy ảo
+        const clusterTime = getPointTimeSec(clusterPoint);
+        if (prevTime !== null && clusterTime !== null) {
+          const dt = Math.abs(clusterTime - prevTime);
+          if (dt > 0 && distFromPrev / dt > 35 && distFromPrev > 300) {
+            continue;
+          }
+        }
+      }
+
+      if (allPointsFar) {
+        isSpikeCluster = true;
+        clusterLength = k;
+        break;
+      }
+    }
+
+    if (isSpikeCluster) {
+      // Bỏ qua toàn bộ cụm điểm văng ảo này
+      i += clusterLength;
+      continue;
+    }
+
+    // Kiểm tra điểm văng ở đuôi lộ trình (Tail Outlier không có return point)
     const curr = accuratePoints[i];
-    const next = i + 1 < accuratePoints.length ? accuratePoints[i + 1] : null;
+    const distToPrev = getPointDistance(prev, curr);
+    const currTime = getPointTimeSec(curr);
 
-    const dLat = (curr.latitude - prev.latitude) * 111320;
-    const dLon =
-      (curr.longitude - prev.longitude) *
-      111320 *
-      Math.cos((curr.latitude * Math.PI) / 180);
-    const distToPrev = Math.sqrt(dLat * dLat + dLon * dLon);
-
-    // Nếu có điểm tiếp theo, kiểm tra xem curr có phải gai nhọn bất thường không
-    if (next) {
-      const dLatNext = (next.latitude - curr.latitude) * 111320;
-      const dLonNext =
-        (next.longitude - curr.longitude) *
-        111320 *
-        Math.cos((curr.latitude * Math.PI) / 180);
-      const distToNext = Math.sqrt(dLatNext * dLatNext + dLonNext * dLonNext);
-
-      const dLatBase = (next.latitude - prev.latitude) * 111320;
-      const dLonBase =
-        (next.longitude - prev.longitude) *
-        111320 *
-        Math.cos((next.latitude * Math.PI) / 180);
-      const distBase = Math.sqrt(dLatBase * dLatBase + dLonBase * dLonBase);
-
-      if (distToPrev > 150 && distToNext > 150 && distBase < 100) {
-        continue; // Bỏ qua điểm văng ảo gai nhọn này
+    if (i === accuratePoints.length - 1 && distToPrev > 300) {
+      if (prevTime !== null && currTime !== null) {
+        const dt = Math.abs(currTime - prevTime);
+        if (dt > 0 && distToPrev / dt > 35) {
+          break; // Bỏ qua điểm đuôi văng ảo
+        }
+      } else if (distToPrev > 1000) {
+        break; // Nhảy xa > 1km ở điểm cuối cùng không có thời gian
       }
     }
 
     nonSpikePoints.push(curr);
+    i++;
   }
 
   // 3. Lọc bỏ các điểm quá sát nhau (< 12m) để chống rung giật khi dừng xe
   const filtered: StaffRoutePoint[] = [nonSpikePoints[0]];
-  for (let i = 1; i < nonSpikePoints.length; i++) {
+  for (let j = 1; j < nonSpikePoints.length; j++) {
     const prev = filtered[filtered.length - 1];
-    const curr = nonSpikePoints[i];
+    const curr = nonSpikePoints[j];
+    const dist = getPointDistance(prev, curr);
 
-    const dLat = (curr.latitude - prev.latitude) * 111320;
-    const dLon =
-      (curr.longitude - prev.longitude) *
-      111320 *
-      Math.cos((curr.latitude * Math.PI) / 180);
-    const dist = Math.sqrt(dLat * dLat + dLon * dLon);
-
-    if (dist >= 12 || i === nonSpikePoints.length - 1) {
+    if (dist >= 12 || j === nonSpikePoints.length - 1) {
       filtered.push(curr);
     }
   }
+
   return filtered;
 }
 
