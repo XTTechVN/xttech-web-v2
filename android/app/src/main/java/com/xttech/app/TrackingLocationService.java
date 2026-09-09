@@ -230,42 +230,51 @@ public class TrackingLocationService extends Service implements LocationListener
         }, 60, 60, TimeUnit.SECONDS);
     }
 
+    private long lastGpsFixTime = 0;
+
     @Override
     public void onLocationChanged(Location location) {
         if (location == null) return;
 
+        String provider = location.getProvider();
+        long now = System.currentTimeMillis();
+
+        // 1. Quản lý trạng thái nguồn định vị (Provider Priority):
+        // Nếu là GPS_PROVIDER: cập nhật mốc thời gian GPS hoạt động
+        if (LocationManager.GPS_PROVIDER.equals(provider)) {
+            lastGpsFixTime = now;
+        } else if (LocationManager.NETWORK_PROVIDER.equals(provider)) {
+            // Nếu là NETWORK_PROVIDER (trạm sóng BTS / Wi-Fi):
+            // Nếu GPS đã có tín hiệu trong vòng 25 giây qua, BỎ QUA hoàn toàn Network Provider
+            // để triệt tiêu hiện tượng nhảy cóc con thoi (zic zac) giữa trạm BTS và vệ tinh GPS!
+            if (now - lastGpsFixTime < 25000L) {
+                return;
+            }
+        }
+
         float speed = location.hasSpeed() ? location.getSpeed() : 0.0f;
 
-        // Bộ lọc độ chính xác thích ứng (Adaptive Accuracy Filter):
-        // Khi di chuyển ngoài đường (speed >= 1.0 m/s): yêu cầu accuracy <= 70m
+        // 2. Bộ lọc độ chính xác thích ứng (Adaptive Accuracy Filter):
+        // Khi di chuyển ngoài đường (speed >= 1.0 m/s): yêu cầu accuracy <= 45m (loại bỏ BTS lệch xa)
         // Khi đứng yên / trong phòng (speed < 1.0 m/s): chấp nhận accuracy <= 80m (phù hợp Wi-Fi văn phòng)
-        float maxAllowedAccuracy = (speed >= 1.0f) ? 70.0f : 80.0f;
+        float maxAllowedAccuracy = (speed >= 1.0f) ? 45.0f : 80.0f;
         if (location.hasAccuracy() && location.getAccuracy() > maxAllowedAccuracy) {
             Log.d(TAG, "Ignoring inaccurate location point: accuracy = " + location.getAccuracy() + "m (max: " + maxAllowedAccuracy + "m)");
             return;
         }
 
-        // Nếu điểm từ NETWORK_PROVIDER mà GPS đang hoạt động tốt với độ chính xác cao ngoài trời (< 15m), bỏ qua Network Provider
-        if (LocationManager.NETWORK_PROVIDER.equals(location.getProvider()) && lastLocation != null) {
-            long lastGpsAge = System.currentTimeMillis() - lastLocation.getTime();
-            if (LocationManager.GPS_PROVIDER.equals(lastLocation.getProvider()) && lastGpsAge < 10000L && lastLocation.getAccuracy() <= 15.0f) {
-                return;
-            }
-        }
-
-        long now = System.currentTimeMillis();
         long elapsed = now - lastPingTime;
         float distance = (lastLocation != null) ? location.distanceTo(lastLocation) : Float.MAX_VALUE;
 
-        // Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
-        // Nếu khoảng cách nhảy vọt > 200m với tốc độ bất thường > 35 m/s (~126 km/h) hoặc > 500m trong thời gian ngắn (< 30s) -> điểm văng ảo do trạm sóng BTS/Wi-Fi
+        // 3. Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
+        // Nếu khoảng cách nhảy vọt > 150m với tốc độ bất thường > 35 m/s (~126 km/h) hoặc > 400m trong thời gian ngắn (< 30s)
         float jumpSpeed = (elapsed > 0) ? (distance / (elapsed / 1000.0f)) : 999.0f;
-        if (lastLocation != null && distance > 200.0f && (jumpSpeed > 35.0f || (distance > 500.0f && elapsed < 30000L))) {
+        if (lastLocation != null && distance > 150.0f && (jumpSpeed > 35.0f || (distance > 400.0f && elapsed < 30000L))) {
             Log.w(TAG, "Discarding outlier jump point: distance=" + distance + "m, speed=" + jumpSpeed + "m/s");
             return;
         }
 
-        // Smart Adaptive: Xác định có đang di chuyển (speed >= 1.0 m/s hoặc di dời >= 5m)
+        // 4. Smart Adaptive: Xác định có đang di chuyển (speed >= 1.0 m/s hoặc di dời >= 5m)
         boolean isMoving = speed >= 1.0f || distance >= 5.0f;
 
         if (isMoving) {
