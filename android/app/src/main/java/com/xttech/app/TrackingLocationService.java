@@ -193,7 +193,7 @@ public class TrackingLocationService extends Service implements LocationListener
                 // Triệt tiêu Stale Cache: Nếu điểm cache đã quá 60 giây -> bỏ qua hoàn toàn
                 if (cacheAgeMs >= 0 && cacheAgeMs <= 60000L) {
                     float speed = lastKnown.hasSpeed() ? lastKnown.getSpeed() : 0.0f;
-                    float maxAcc = speed >= 1.0f ? 65.0f : 80.0f;
+                    float maxAcc = speed >= 1.0f ? 70.0f : 80.0f;
                     if (!lastKnown.hasAccuracy() || lastKnown.getAccuracy() <= maxAcc) {
                         onLocationChanged(lastKnown);
                     }
@@ -237,9 +237,9 @@ public class TrackingLocationService extends Service implements LocationListener
         float speed = location.hasSpeed() ? location.getSpeed() : 0.0f;
 
         // Bộ lọc độ chính xác thích ứng (Adaptive Accuracy Filter):
-        // Khi di chuyển ngoài đường (speed >= 1.0 m/s): yêu cầu accuracy <= 30m
+        // Khi di chuyển ngoài đường (speed >= 1.0 m/s): yêu cầu accuracy <= 70m
         // Khi đứng yên / trong phòng (speed < 1.0 m/s): chấp nhận accuracy <= 80m (phù hợp Wi-Fi văn phòng)
-        float maxAllowedAccuracy = (speed >= 1.0f) ? 65.0f : 80.0f;
+        float maxAllowedAccuracy = (speed >= 1.0f) ? 70.0f : 80.0f;
         if (location.hasAccuracy() && location.getAccuracy() > maxAllowedAccuracy) {
             Log.d(TAG, "Ignoring inaccurate location point: accuracy = " + location.getAccuracy() + "m (max: " + maxAllowedAccuracy + "m)");
             return;
@@ -258,9 +258,10 @@ public class TrackingLocationService extends Service implements LocationListener
         float distance = (lastLocation != null) ? location.distanceTo(lastLocation) : Float.MAX_VALUE;
 
         // Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
-        // Nếu khoảng cách nhảy vọt > 200m trong thời gian ngắn < 6s (v > 33 m/s ~ 120 km/h) -> điểm văng ảo do trạm sóng BTS
-        if (lastLocation != null && elapsed > 0 && elapsed < 6000 && distance > 200.0f) {
-            Log.w(TAG, "Discarding outlier jump point: distance=" + distance + "m in " + elapsed + "ms");
+        // Nếu khoảng cách nhảy vọt > 200m với tốc độ bất thường > 35 m/s (~126 km/h) hoặc > 500m trong thời gian ngắn (< 30s) -> điểm văng ảo do trạm sóng BTS/Wi-Fi
+        float jumpSpeed = (elapsed > 0) ? (distance / (elapsed / 1000.0f)) : 999.0f;
+        if (lastLocation != null && distance > 200.0f && (jumpSpeed > 35.0f || (distance > 500.0f && elapsed < 30000L))) {
+            Log.w(TAG, "Discarding outlier jump point: distance=" + distance + "m, speed=" + jumpSpeed + "m/s");
             return;
         }
 

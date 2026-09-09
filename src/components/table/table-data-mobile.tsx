@@ -91,7 +91,6 @@ export function TableDataMobile<T>({
             ))}
           </div>
 
-
           {/* Indicator khi đang tải thêm trang tiếp theo */}
           {isFetchingNextPage && (
             <div className="flex justify-center items-center py-4 text-primary/60 text-sm">

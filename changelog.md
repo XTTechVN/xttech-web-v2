@@ -2,6 +2,19 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-09
+
+### Fixed
+- **Nâng cấp Bộ Lọc GPS Outlier & Triệt tiêu Điểm văng ảo Lộ trình hình nan hoa (Spiderweb Spikes):**
+  - **Khử cụm gai nhọn đa điểm trên Polyline ([`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx)):**
+    - Điều chỉnh ngưỡng lọc sai số `accuracy` từ 30m lên `70m` phù hợp môi trường thực tế ngoài trời/đô thị.
+    - Cải tiến thuật toán `filterPointsForMatching` với cửa sổ trượt: triệt tiêu triệt để các cụm điểm văng ảo từ 1 đến 4 điểm liên tiếp (do thiết bị bắt nhầm trạm BTS hoặc trôi dạt Wi-Fi nhảy xa hàng chục km rồi quay lại vị trí ban đầu).
+    - Bổ sung bộ lọc điểm đuôi văng ảo (Tail Outlier) ở cuối lộ trình.
+  - **Bộ lọc Bước nhảy theo Vận tốc Thực tế (Velocity Jump Filter):**
+    - Cập nhật đồng bộ trên Web Tracker ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)), Android Native ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java)) và iOS Native ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):
+    - Loại bỏ điều kiện giới hạn thời gian cứng `elapsed < 6s`. Thay bằng kiểm tra vận tốc bước nhảy thực tế $(\text{distance} / \Delta t > 35\text{ m/s} \sim 126\text{ km/h})$, chặn đứng các điểm nhảy dị biệt do bắt trạm BTS kể cả sau chu kỳ nghỉ 15s - 60s.
+    - Đồng bộ `maxAccuracy = 70` khi di chuyển ngoài đường.
+
 ## [Unreleased] - 2026-09-08
 
 ### Added

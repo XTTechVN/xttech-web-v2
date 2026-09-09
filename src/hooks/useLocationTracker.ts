@@ -66,10 +66,10 @@ export function useLocationTracker({
     speed?: number;
     heading?: number;
   }) => {
-    // 1. Chốt chặn độ chính xác thích ứng: 30m khi di chuyển ngoài đường, 80m khi đứng yên / trong phòng
+    // 1. Chốt chặn độ chính xác thích ứng: 70m khi di chuyển ngoài đường, 80m khi đứng yên / trong phòng
     const rawSpeed = pos.speed ?? 0;
     const speed = rawSpeed >= 0.8 ? rawSpeed : 0;
-    const maxAccuracy = speed >= 1.0 ? 65 : 80;
+    const maxAccuracy = speed >= 1.0 ? 70 : 80;
     if (pos.accuracy !== undefined && pos.accuracy > maxAccuracy) {
       return;
     }
@@ -96,8 +96,9 @@ export function useLocationTracker({
       distance = R * c;
 
       // 2. Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
-      // Nếu khoảng cách nhảy vọt > 200m trong thời gian < 6s (v > 33 m/s ~ 120 km/h) -> điểm văng ảo do trạm sóng BTS
-      if (elapsed > 0 && elapsed < 6000 && distance > 200) {
+      // Nếu khoảng cách nhảy vọt > 200m với tốc độ bất thường > 35 m/s (~126 km/h) hoặc > 500m trong thời gian ngắn (< 30s)
+      const jumpSpeed = elapsed > 0 ? distance / (elapsed / 1000) : 999;
+      if (distance > 200 && (jumpSpeed > 35 || (distance > 500 && elapsed < 30000))) {
         return;
       }
     }
@@ -237,7 +238,7 @@ export function useLocationTracker({
           (pos) => {
             // Lọc sớm nếu tọa độ không đạt chuẩn chính xác theo vận tốc
             const rawSpeed = pos.coords.speed ?? 0;
-            const maxAcc = rawSpeed >= 1.0 ? 65 : 80;
+            const maxAcc = rawSpeed >= 1.0 ? 70 : 80;
             if (pos.coords.accuracy !== undefined && pos.coords.accuracy > maxAcc) {
               return;
             }
