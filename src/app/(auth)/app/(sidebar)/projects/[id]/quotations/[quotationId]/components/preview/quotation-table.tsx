@@ -42,7 +42,9 @@ const toRoman = (num: number): string => {
   return result;
 };
 
-const fmt = (n?: number | null) => new Intl.NumberFormat('vi-VN').format(n || 0);
+const fmt = (n?: number | null) => (n !== null && n !== undefined ? new Intl.NumberFormat('vi-VN').format(n) : '');
+const fmtNumber = (n?: number | null) => (n !== null && n !== undefined ? n.toString() : '');
+const fmtArea = (n?: number | null) => (n !== null && n !== undefined ? n.toFixed(2) : '');
 
 // CSS chung cho các dòng sub-item (phụ kiện, tùy chọn, công uốn)
 const SUB_ROW_CLS = 'hover:bg-gray-50';
@@ -52,11 +54,11 @@ export const QuotationTable = ({
   floors,
   materialsList,
   doorsList,
-  subtotalPrice = 0,
+  subtotalPrice,
   discountPercentage = 0,
-  totalPrice = 0,
-  totalQuantity = 0,
-  totalArea = 0,
+  totalPrice,
+  totalQuantity,
+  totalArea,
 }: QuotationTableProps) => {
   return (
     <div className="overflow-x-auto">
@@ -111,8 +113,8 @@ export const QuotationTable = ({
                   <td className="border border-gray-400 py-1 px-2" colSpan={6}>
                     {floor.name.toUpperCase()}
                   </td>
-                  <td className="border border-gray-400 py-1 px-1 text-center">{floor.quantity || 0}</td>
-                  <td className="border border-gray-400 py-1 px-2 text-center">{floor.totalArea ? floor.totalArea.toFixed(2) : '0.00'}</td>
+                  <td className="border border-gray-400 py-1 px-1 text-center">{fmtNumber(floor.quantity)}</td>
+                  <td className="border border-gray-400 py-1 px-2 text-center">{fmtArea(floor.totalArea)}</td>
                   <td className="border border-gray-400 py-1 px-2 text-right"></td>
                   <td className="border border-gray-400 py-1 px-2 text-right">{fmt(floor.totalPrice)}</td>
                 </tr>
@@ -169,12 +171,12 @@ export const QuotationTable = ({
                           <td className="border border-gray-400 py-1 px-2" colSpan={6}>
                             <span>{materialName}</span>
                           </td>
-                          <td className="border border-gray-400 py-1 px-1 text-center">{material.quantity || 0}</td>
+                          <td className="border border-gray-400 py-1 px-1 text-center">{fmtNumber(material.quantity)}</td>
                           <td className="border border-gray-400 py-1 px-2 text-center">
-                            {material.totalArea ? material.totalArea.toFixed(2) : '0.00'}
+                            {fmtArea(material.totalArea)}
                           </td>
                           <td className="border border-gray-400 py-1 px-2 text-right"></td>
-                          <td className="border border-gray-400 py-1 px-2 text-right">{fmt(material.totalPrice || 0)}</td>
+                          <td className="border border-gray-400 py-1 px-2 text-right">{fmt(material.totalPrice)}</td>
                         </tr>
 
                         {/* Door Rows */}
@@ -207,9 +209,9 @@ export const QuotationTable = ({
                                   <td className="border border-gray-400 py-1 px-1 text-center">{door.unit === 'set' ? 'Bộ' : 'm²'}</td>
                                   <td className="border border-gray-400 py-1 px-2 text-center">{door.effectiveWidth ?? door.width ?? ''}</td>
                                   <td className="border border-gray-400 py-1 px-2 text-center">{door.effectiveHeight ?? door.height ?? ''}</td>
-                                  <td className="border border-gray-400 py-1 px-1 text-center">{door.quantity}</td>
+                                  <td className="border border-gray-400 py-1 px-1 text-center">{fmtNumber(door.quantity)}</td>
                                   <td className="border border-gray-400 py-1 px-2 text-center">
-                                    {door.totalArea ? door.totalArea.toFixed(2) : '0.00'}
+                                    {fmtArea(door.totalArea)}
                                   </td>
                                   <td className="border border-gray-400 py-1 px-2 text-right">{fmt(door.initPrice)}</td>
                                   <td className="border border-gray-400 py-1 px-2 text-right">{fmt(door.totalPrice)}</td>
@@ -218,7 +220,13 @@ export const QuotationTable = ({
                                 {/* Door-level Accessories (chỉ hiện phụ kiện KHÔNG dùng chung tất cả cửa) */}
                                 {doorAccessories.map((acc, aIndex) => {
                                   const accTT = `${currentTT}.${aIndex + 1}`;
-                                  const totalQuantity = (acc.quantityPerDoor ?? 1) * door.quantity;
+                                  const doorQuantity = door.quantity ?? 1;
+                                  const totalQuantity =
+                                    acc.totalQuantity !== null && acc.totalQuantity !== undefined
+                                      ? acc.totalQuantity
+                                      : acc.quantityPerDoor !== null && acc.quantityPerDoor !== undefined
+                                        ? acc.quantityPerDoor * doorQuantity
+                                        : null;
                                   return (
                                     <tr key={`door-${dIndex}-acc-${acc.accessoryId}-${aIndex}`} className={SUB_ROW_CLS}>
                                       <td className={`${SUB_TD_CLS} px-1 text-center text-[10px]`}>{accTT}</td>
@@ -228,7 +236,7 @@ export const QuotationTable = ({
                                       <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{acc.unit || 'bộ'}</td>
                                       <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
                                       <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
-                                      <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{totalQuantity}</td>
+                                      <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{fmtNumber(totalQuantity)}</td>
                                       <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
                                       <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(acc.initPrice)}</td>
                                       <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(acc.totalPrice)}</td>
@@ -241,7 +249,7 @@ export const QuotationTable = ({
                                   const accLength = doorAccessories.length;
                                   const optTT = `${currentTT}.${accLength + oIndex + 1}`;
                                   const unit = opt.unit || 'bộ';
-                                  const totalQuantity = opt.calculatedQuantity || 1;
+                                  const totalQuantity = opt.calculatedQuantity ?? opt.totalQuantity ?? null;
                                   return (
                                     <tr key={`door-${dIndex}-opt-${opt.extraOptionId}-${oIndex}`} className={SUB_ROW_CLS}>
                                       <td className={`${SUB_TD_CLS} px-1 text-center text-[10px]`}>{optTT}</td>
@@ -251,9 +259,9 @@ export const QuotationTable = ({
                                       <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{unit}</td>
                                       <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
                                       <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
-                                      <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{unit === 'm2' ? '' : totalQuantity}</td>
+                                      <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{unit === 'm2' ? '' : fmtNumber(totalQuantity)}</td>
                                       <td className={`${SUB_TD_CLS} px-2 text-center text-xs`}>
-                                        {unit === 'm2' ? (opt.totalArea ? opt.totalArea.toFixed(2) : '0.00') : ''}
+                                        {unit === 'm2' ? fmtArea(opt.totalArea) : ''}
                                       </td>
                                       <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(opt.initPrice)}</td>
                                       <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(opt.totalPrice)}</td>
@@ -266,7 +274,10 @@ export const QuotationTable = ({
                                   const accLength = doorAccessories.length;
                                   const optLength = doorExtraOptions.length;
                                   const fTT = `${currentTT}.${accLength + optLength + fIdx + 1}`;
-                                  const totalArea = (formula.totalArea ?? 0) * door.quantity;
+                                  const totalArea =
+                                    formula.totalArea !== null && formula.totalArea !== undefined
+                                      ? formula.totalArea * (door.quantity ?? 1)
+                                      : null;
                                   return (
                                     <tr key={`door-${dIndex}-formula-${formula.formulaId}-${fIdx}`} className={SUB_ROW_CLS}>
                                       <td className={`${SUB_TD_CLS} px-1 text-center text-[10px]`}>{fTT}</td>
@@ -277,7 +288,7 @@ export const QuotationTable = ({
                                       <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
                                       <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
                                       <td className={`${SUB_TD_CLS} px-1 text-center`}></td>
-                                      <td className={`${SUB_TD_CLS} px-2 text-center text-xs`}>{totalArea ? totalArea.toFixed(2) : ''}</td>
+                                      <td className={`${SUB_TD_CLS} px-2 text-center text-xs`}>{fmtArea(totalArea)}</td>
                                       <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(formula.salary)}</td>
                                       <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(formula.totalPrice)}</td>
                                     </tr>
@@ -299,7 +310,7 @@ export const QuotationTable = ({
                               <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{acc.unit}</td>
                               <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
                               <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
-                              <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{acc.totalQuantity}</td>
+                              <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{fmtNumber(acc.totalQuantity)}</td>
                               <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
                               <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(acc.initPrice)}</td>
                               <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(acc.totalPrice)}</td>
@@ -318,8 +329,8 @@ export const QuotationTable = ({
                               <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{opt.unit}</td>
                               <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
                               <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
-                              <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{opt.calculatedQuantity}</td>
-                              <td className={`${SUB_TD_CLS} px-2 text-center text-xs`}>{opt.totalArea ? opt.totalArea.toFixed(2) : ''}</td>
+                              <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{fmtNumber(opt.calculatedQuantity ?? opt.totalQuantity)}</td>
+                              <td className={`${SUB_TD_CLS} px-2 text-center text-xs`}>{fmtArea(opt.totalArea)}</td>
                               <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(opt.initPrice)}</td>
                               <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(opt.totalPrice)}</td>
                             </tr>
@@ -337,8 +348,8 @@ export const QuotationTable = ({
                               <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{arch.unit}</td>
                               <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
                               <td className={`${SUB_TD_CLS} px-2 text-center`}></td>
-                              <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{arch.totalQuantity}</td>
-                              <td className={`${SUB_TD_CLS} px-2 text-center text-xs`}>{arch.totalArea ? arch.totalArea.toFixed(2) : ''}</td>
+                              <td className={`${SUB_TD_CLS} px-1 text-center text-xs`}>{fmtNumber(arch.totalQuantity)}</td>
+                              <td className={`${SUB_TD_CLS} px-2 text-center text-xs`}>{fmtArea(arch.totalArea)}</td>
                               <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(arch.salary)}</td>
                               <td className={`${SUB_TD_CLS} px-2 text-right text-xs`}>{fmt(arch.totalPrice)}</td>
                             </tr>
@@ -363,10 +374,10 @@ export const QuotationTable = ({
                   TỔNG
                 </td>
                 <td className="border border-gray-400 py-1.5 px-1 text-center">
-                  {totalQuantity}
+                  {fmtNumber(totalQuantity)}
                 </td>
                 <td className="border border-gray-400 py-1.5 px-2 text-center">
-                  {totalArea ? totalArea.toFixed(2) : '0.00'}
+                  {fmtArea(totalArea)}
                 </td>
                 <td className="border border-gray-400 py-1.5 px-2"></td>
                 <td className="border border-gray-400 py-1.5 px-2 text-right">
@@ -386,7 +397,7 @@ export const QuotationTable = ({
                     {discountPercentage}%
                   </td>
                   <td className="border border-gray-400 py-1.5 px-2 text-right">
-                    -{fmt(subtotalPrice - totalPrice)}
+                    {subtotalPrice !== undefined && totalPrice !== undefined ? `-${fmt(subtotalPrice - totalPrice)}` : ''}
                   </td>
                 </tr>
               )}
@@ -410,7 +421,7 @@ export const QuotationTable = ({
                   Bằng chữ:
                 </td>
                 <td colSpan={8} className="border border-gray-400 py-1.5 px-3 text-left">
-                  {readVietnameseNumber(totalPrice)}
+                  {totalPrice !== undefined && totalPrice !== null ? readVietnameseNumber(totalPrice) : ''}
                 </td>
               </tr>
             </>
