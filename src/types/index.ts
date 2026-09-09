@@ -58,5 +58,8 @@ export * from './audit-log';
 // Location Tracking
 export * from './location';
 
+// Leave Request
+export * from './leave-request';
+
 // App Versions
 export * from './app-version';

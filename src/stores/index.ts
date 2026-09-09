@@ -5,7 +5,8 @@ import useAuthStore from './useAuthStore';
 import useQuotationStore from './useQuotationStore';
 
 import { useAttendances } from './useAttendances';
+import { useLeaveRequestStore } from './useLeaveRequestStore';
+import { useSuggestionStore } from './useSuggestionStore';
 
-
-export { useAuthStore, useQuotationStore, useAttendances };
+export { useAuthStore, useQuotationStore, useAttendances, useLeaveRequestStore, useSuggestionStore };
 
