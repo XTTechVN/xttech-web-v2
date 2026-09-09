@@ -32,7 +32,7 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
   const [isTracking, setIsTracking] = useState(false);
   const [lastPingTime, setLastPingTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
-
+  
   const lastPingRef = useRef<number>(0);
   const lastKnownCoordsRef = useRef<{
     latitude: number;
