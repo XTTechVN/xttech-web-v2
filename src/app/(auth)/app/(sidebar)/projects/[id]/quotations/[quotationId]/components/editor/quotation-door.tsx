@@ -10,7 +10,7 @@ import { QuotationFormula } from './quotation-formula';
 import { SearchSelect } from '../modal/search-select';
 import { fetchDefaultAccessories } from './utils';
 import toast from 'react-hot-toast';
-import type { Accessory, ExtraOption, Door, Formula } from '@/types';
+import type { Accessory, ExtraOption, Door, Formula, Material } from '@/types';
 
 interface QuotationDoorProps {
   fIndex: number;
@@ -19,7 +19,9 @@ interface QuotationDoorProps {
   doorsList: Door[];
   accessoriesList: Accessory[];
   extraOptionsList: ExtraOption[];
+  allExtraOptionsList?: ExtraOption[];
   formulasList: Formula[];
+  materialsList?: Material[];
 }
 
 export const QuotationDoor = ({
@@ -29,7 +31,9 @@ export const QuotationDoor = ({
   doorsList,
   accessoriesList,
   extraOptionsList,
+  allExtraOptionsList,
   formulasList,
+  materialsList,
 }: QuotationDoorProps) => {
   const store = useQuotationStore();
   const floor = store.floors[fIndex];
@@ -42,6 +46,7 @@ export const QuotationDoor = ({
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
   const [isLoadingAutoFill, setIsLoadingAutoFill] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
+  const selectedMat = materialsList?.find((m) => m.id === material.materialId);
 
   const handleUpdateDoor = async (field: string, value: any) => {
     if (field === 'doorId') {
@@ -81,6 +86,8 @@ export const QuotationDoor = ({
     const firstOpt = extraOptionsList[0];
     if (firstOpt) {
       store.addExtraOption(fIndex, mIndex, dIndex, firstOpt.id);
+    } else {
+      toast.error('Hệ nhôm này chưa được gán tùy chọn phát sinh nào trong cấu hình');
     }
   };
 
@@ -123,40 +130,97 @@ export const QuotationDoor = ({
       {/* 2. Chi tiết cửa (thụt lề pl-4) */}
       {isOpen && (
         <div className="pl-4 flex flex-col gap-2.5">
-        {/* Biên dạng cửa */}
-        <div className="py-2 grid grid-cols-[1fr_auto] gap-2 items-end">
-          <div className="w-full min-w-0">
-            <span className={EDITOR_STYLES.label}>Biên dạng cửa</span>
-            <div 
-              ref={triggerRef}
-              onClick={() => setIsSelectModalOpen(true)}
-              className={EDITOR_STYLES.select + ' flex justify-between items-center w-full cursor-pointer'}
-              title={
-                doorsList.find((d) => d.id === door.doorId) 
-                  ? `${doorsList.find((d) => d.id === door.doorId)?.name} (${doorsList.find((d) => d.id === door.doorId)?.code})` 
-                  : 'Chọn cửa...'
-              }
-            >
-              <span className="truncate pr-4">
-                {doorsList.find((d) => d.id === door.doorId) 
-                  ? `${doorsList.find((d) => d.id === door.doorId)?.name} (${doorsList.find((d) => d.id === door.doorId)?.code})` 
-                  : 'Chọn cửa...'}
-              </span>
-              <ChevronDown size={14} className="text-slate-400 shrink-0" />
+        {/* Biên dạng cửa & Đơn giá bộ (nếu hệ nhôm là bộ) */}
+        {selectedMat?.unit === 'set' ? (
+          <div className="py-2 grid grid-cols-[1fr_120px] gap-2 items-end">
+            <div className="w-full min-w-0">
+              <span className={EDITOR_STYLES.label}>Biên dạng cửa</span>
+              <div 
+                ref={triggerRef}
+                onClick={() => setIsSelectModalOpen(true)}
+                className={EDITOR_STYLES.select + ' flex justify-between items-center w-full cursor-pointer'}
+                title={
+                  doorsList.find((d) => d.id === door.doorId) 
+                    ? `${doorsList.find((d) => d.id === door.doorId)?.name} (${doorsList.find((d) => d.id === door.doorId)?.code})` 
+                    : 'Chọn cửa...'
+                }
+              >
+                <span className="truncate pr-4">
+                  {doorsList.find((d) => d.id === door.doorId) 
+                    ? `${doorsList.find((d) => d.id === door.doorId)?.name} (${doorsList.find((d) => d.id === door.doorId)?.code})` 
+                    : 'Chọn cửa...'}
+                </span>
+                <ChevronDown size={14} className="text-slate-400 shrink-0" />
+              </div>
+
+              <SearchSelect
+                isOpen={isSelectModalOpen}
+                onClose={() => setIsSelectModalOpen(false)}
+                title="Chọn biên dạng cửa"
+                items={doorsList}
+                selectedValue={door.doorId}
+                onSelect={(item) => handleUpdateDoor('doorId', item.id)}
+                searchKeys={['name', 'code']}
+                triggerRef={triggerRef}
+              />
             </div>
 
-            <SearchSelect
-              isOpen={isSelectModalOpen}
-              onClose={() => setIsSelectModalOpen(false)}
-              title="Chọn biên dạng cửa"
-              items={doorsList}
-              selectedValue={door.doorId}
-              onSelect={(item) => handleUpdateDoor('doorId', item.id)}
-              searchKeys={['name', 'code']}
-              triggerRef={triggerRef}
-            />
+            <div className="relative min-w-0" title="Đơn giá bộ (VNĐ) - Bỏ trống để dùng giá ma trận theo kích thước">
+              <span className={EDITOR_STYLES.label}>Đơn giá bộ</span>
+              <div className="relative">
+                <Input
+                  type="number"
+                  value={door.initPrice ?? ''}
+                  placeholder="Theo ma trận"
+                  onChange={(e) =>
+                    handleUpdateDoor(
+                      'initPrice',
+                      e.target.value === '' ? undefined : parseFloat(e.target.value) || 0
+                    )
+                  }
+                  className={EDITOR_STYLES.input + ' text-right text-xs pr-7 font-medium'}
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none select-none">
+                  đ/bộ
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="py-2 grid grid-cols-[1fr_auto] gap-2 items-end">
+            <div className="w-full min-w-0">
+              <span className={EDITOR_STYLES.label}>Biên dạng cửa</span>
+              <div 
+                ref={triggerRef}
+                onClick={() => setIsSelectModalOpen(true)}
+                className={EDITOR_STYLES.select + ' flex justify-between items-center w-full cursor-pointer'}
+                title={
+                  doorsList.find((d) => d.id === door.doorId) 
+                    ? `${doorsList.find((d) => d.id === door.doorId)?.name} (${doorsList.find((d) => d.id === door.doorId)?.code})` 
+                    : 'Chọn cửa...'
+                }
+              >
+                <span className="truncate pr-4">
+                  {doorsList.find((d) => d.id === door.doorId) 
+                    ? `${doorsList.find((d) => d.id === door.doorId)?.name} (${doorsList.find((d) => d.id === door.doorId)?.code})` 
+                    : 'Chọn cửa...'}
+                </span>
+                <ChevronDown size={14} className="text-slate-400 shrink-0" />
+              </div>
+
+              <SearchSelect
+                isOpen={isSelectModalOpen}
+                onClose={() => setIsSelectModalOpen(false)}
+                title="Chọn biên dạng cửa"
+                items={doorsList}
+                selectedValue={door.doorId}
+                onSelect={(item) => handleUpdateDoor('doorId', item.id)}
+                searchKeys={['name', 'code']}
+                triggerRef={triggerRef}
+              />
+            </div>
+          </div>
+        )}
 
         {/* 3. Kích thước (Ký hiệu, Rộng, Cao, Số lượng) */}
         <div className="grid grid-cols-4 gap-2.5 py-2">
@@ -260,6 +324,7 @@ export const QuotationDoor = ({
                   oIndex={oIndex}
                   selectedOptId={selectedOptId}
                   extraOptionsList={extraOptionsList}
+                  allExtraOptionsList={allExtraOptionsList}
                 />
               ))
             )}

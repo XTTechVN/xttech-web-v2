@@ -32,7 +32,7 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
 
   const { mutate: updateQuotationMutate, isPending } = useMutation({
     mutationFn: () => {
-      const payload = store.getPayload(accessoriesList, extraOptionsList);
+      const payload = store.getPayload(accessoriesList, extraOptionsList, materialsList);
       return updateQuotation(quotationId, payload);
     },
     onSuccess: () => {

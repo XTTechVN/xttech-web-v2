@@ -6,20 +6,20 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { Pencil, Trash2, Eye, Clock, FileEdit, Calendar, UserCheck, Users, UserCheck2, Plus, MessageSquareWarning, } from 'lucide-react';
+import { Pencil, Trash2, Eye, Clock, FileEdit, Calendar, UserCheck, Users, UserCheck2, Plus, MessageSquareWarning, Route } from 'lucide-react';
 
-import { Button, TableData, TableAction, Badge, Heading, ITableColumn, ITableFilterProps, Avatar, Modal, } from '@/components';
+import { Button, TableData, TableAction, Badge, Heading, ITableColumn, ITableFilterProps, Avatar, Modal } from '@/components';
 import { BASE_MINIO_URL } from '@/config';
 import { useQueryParam } from '@/hooks';
-import { deleteAttendance, getAttendances, getDepartments, getAdjustmentRequests, } from '@/actions';
-import { Attendance, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant, } from '@/types';
+import { deleteAttendance, getAttendances, getDepartments, getAdjustmentRequests } from '@/actions';
+import { Attendance, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 
 import StatCart from '../dashboard/_components/stats-card';
 import AddAttendanceModal from '@/app/(auth)/app/(sidebar)/attendances/_components/add-modal';
 import EditAttendanceModal from '@/app/(auth)/app/(sidebar)/attendances/_components/edit-modal';
 import AttendanceDetailModal from '@/app/(auth)/app/(sidebar)/attendances/_components/attendance-modal';
 import AddAdjustmentModal from './adjustments/_components/add-modal';
-
+import { RoutePlaybackModal } from './_components/route-playback-modal';
 type FilterOption = {
   value: string | undefined;
   label: string;
@@ -33,7 +33,17 @@ export default function AttendancesPage() {
   // Filter states
   const [filterDepartment, setFilterDepartment] = useState<string | undefined>();
   const [filterStatus, setFilterStatus] = useState<AttendanceStatus | undefined>();
-
+  const [routeModalState, setRouteModalState] = useState<{
+    isOpen: boolean;
+    userId: string;
+    userName: string;
+    attendanceId?: number;
+    initialDate?: string;
+  }>({
+    isOpen: false,
+    userId: '',
+    userName: '',
+  });
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -74,28 +84,19 @@ export default function AttendancesPage() {
   // 1. Thống kê có mặt hôm nay
   const presentCount = useMemo(() => {
     return statsAttendances.filter(
-      (r) =>
-        r.workDate === todayStr &&
-        r.status &&
-        r.status.toLowerCase() !== 'absent' &&
-        r.status.toLowerCase() !== 'vắng mặt'
+      (r) => r.workDate === todayStr && r.status && r.status.toLowerCase() !== 'absent' && r.status.toLowerCase() !== 'vắng mặt',
     ).length;
   }, [statsAttendances, todayStr]);
 
   // 2. Thống kê vắng mặt hôm nay & so sánh hôm qua
   const todayAbsentCount = useMemo(() => {
-    return statsAttendances.filter(
-      (r) =>
-        r.workDate === todayStr &&
-        (r.status?.toLowerCase() === 'absent' || r.status?.toLowerCase() === 'vắng mặt')
-    ).length;
+    return statsAttendances.filter((r) => r.workDate === todayStr && (r.status?.toLowerCase() === 'absent' || r.status?.toLowerCase() === 'vắng mặt'))
+      .length;
   }, [statsAttendances, todayStr]);
 
   const yesterdayAbsentCount = useMemo(() => {
     return statsAttendances.filter(
-      (r) =>
-        r.workDate === yesterdayStr &&
-        (r.status?.toLowerCase() === 'absent' || r.status?.toLowerCase() === 'vắng mặt')
+      (r) => r.workDate === yesterdayStr && (r.status?.toLowerCase() === 'absent' || r.status?.toLowerCase() === 'vắng mặt'),
     ).length;
   }, [statsAttendances, yesterdayStr]);
 
@@ -111,7 +112,7 @@ export default function AttendancesPage() {
           r.status?.toLowerCase() === 'late' ||
           r.status?.toLowerCase() === 'early_leave' ||
           r.status?.toLowerCase() === 'đi muộn' ||
-          r.status?.toLowerCase() === 'về sớm')
+          r.status?.toLowerCase() === 'về sớm'),
     ).length;
   }, [statsAttendances, todayStr]);
 
@@ -124,7 +125,7 @@ export default function AttendancesPage() {
           r.status?.toLowerCase() === 'late' ||
           r.status?.toLowerCase() === 'early_leave' ||
           r.status?.toLowerCase() === 'đi muộn' ||
-          r.status?.toLowerCase() === 'về sớm')
+          r.status?.toLowerCase() === 'về sớm'),
     ).length;
   }, [statsAttendances, yesterdayStr]);
 
@@ -143,8 +144,8 @@ export default function AttendancesPage() {
           label: item.name ?? 'Không xác định',
           value: String(item.id),
         },
-      ])
-    ).values()
+      ]),
+    ).values(),
   ) as any;
 
   const statusOptions: FilterOption[] = [
@@ -177,13 +178,7 @@ export default function AttendancesPage() {
     },
   ];
 
-  const fetcher = async ({
-    offset,
-    limit,
-  }: {
-    offset: number;
-    limit: number;
-  }) => {
+  const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
     const response = await getAttendances({
       offset,
       limit,
@@ -230,9 +225,7 @@ export default function AttendancesPage() {
       key: 'workDate',
       label: 'Ngày làm việc',
       minWidth: '140px',
-      cell: (row) => (
-        <span className="font-medium text-slate-500">{row.workDate}</span>
-      ),
+      cell: (row) => <span className="font-medium text-slate-500">{row.workDate}</span>,
     },
     {
       key: 'employee',
@@ -240,21 +233,11 @@ export default function AttendancesPage() {
       minWidth: '180px',
       cell: (row) => {
         const avatar = row.user?.avatar;
-        const avatarSrc = avatar
-          ? avatar.startsWith('http')
-            ? avatar
-            : `${BASE_MINIO_URL}${avatar}`
-          : undefined;
+        const avatarSrc = avatar ? (avatar.startsWith('http') ? avatar : `${BASE_MINIO_URL}${avatar}`) : undefined;
         return (
           <div className="flex items-center gap-2.5 min-w-0">
-            <Avatar
-              src={avatarSrc}
-              name={row.user?.fullName || 'NV'}
-              size="sm"
-            />
-            <span className="font-semibold text-slate-800 text-sm truncate">
-              {row.user?.fullName || '-'}
-            </span>
+            <Avatar src={avatarSrc} name={row.user?.fullName || 'NV'} size="sm" />
+            <span className="font-semibold text-slate-800 text-sm truncate">{row.user?.fullName || '-'}</span>
           </div>
         );
       },
@@ -265,21 +248,13 @@ export default function AttendancesPage() {
       minWidth: '130px',
       cell: (row) => {
         const imgPath = row.imgCheckinPath;
-        const imgSrc = imgPath
-          ? imgPath.startsWith('http')
-            ? imgPath
-            : `${BASE_MINIO_URL}${imgPath}`
-          : null;
+        const imgSrc = imgPath ? (imgPath.startsWith('http') ? imgPath : `${BASE_MINIO_URL}${imgPath}`) : null;
 
         return (
           <div className="flex items-center gap-2">
             {imgSrc ? (
               <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                <img
-                  src={imgSrc}
-                  alt={row.user?.fullName || 'Check In'}
-                  className="object-cover w-full h-full"
-                />
+                <img src={imgSrc} alt={row.user?.fullName || 'Check In'} className="object-cover w-full h-full" />
               </div>
             ) : (
               <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
@@ -287,14 +262,8 @@ export default function AttendancesPage() {
               </div>
             )}
             <div className="flex flex-col">
-              <span className="font-medium text-slate-700 text-sm">
-                {row.checkIn ? row.checkIn.slice(0, 5) : '--:--'}
-              </span>
-              {row.isLate && (
-                <span className="text-[10px] text-slate-500 font-semibold">
-                  Muộn {row.lateMinutes ?? 0}p
-                </span>
-              )}
+              <span className="font-medium text-slate-700 text-sm">{row.checkIn ? row.checkIn.slice(0, 5) : '--:--'}</span>
+              {row.isLate && <span className="text-[10px] text-slate-500 font-semibold">Muộn {row.lateMinutes ?? 0}p</span>}
             </div>
           </div>
         );
@@ -306,21 +275,13 @@ export default function AttendancesPage() {
       minWidth: '130px',
       cell: (row) => {
         const imgPath = row.imgCheckoutPath;
-        const imgSrc = imgPath
-          ? imgPath.startsWith('http')
-            ? imgPath
-            : `${BASE_MINIO_URL}${imgPath}`
-          : null;
+        const imgSrc = imgPath ? (imgPath.startsWith('http') ? imgPath : `${BASE_MINIO_URL}${imgPath}`) : null;
 
         return (
           <div className="flex items-center gap-2">
             {imgSrc ? (
               <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                <img
-                  src={imgSrc}
-                  alt={row.user?.fullName || 'Check Out'}
-                  className="object-cover w-full h-full"
-                />
+                <img src={imgSrc} alt={row.user?.fullName || 'Check Out'} className="object-cover w-full h-full" />
               </div>
             ) : (
               <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
@@ -328,14 +289,8 @@ export default function AttendancesPage() {
               </div>
             )}
             <div className="flex flex-col">
-              <span className="font-medium text-slate-700 text-sm">
-                {row.checkOut ? row.checkOut.slice(0, 5) : '--:--'}
-              </span>
-              {row.isEarlyLeave && (
-                <span className="text-[10px] text-slate-500 font-semibold">
-                  Về sớm {row.earlyLeaveMinutes ?? 0}p
-                </span>
-              )}
+              <span className="font-medium text-slate-700 text-sm">{row.checkOut ? row.checkOut.slice(0, 5) : '--:--'}</span>
+              {row.isEarlyLeave && <span className="text-[10px] text-slate-500 font-semibold">Về sớm {row.earlyLeaveMinutes ?? 0}p</span>}
             </div>
           </div>
         );
@@ -345,19 +300,14 @@ export default function AttendancesPage() {
       key: 'totalHours',
       label: 'Tổng giờ',
       minWidth: '100px',
-      cell: (row) => (
-        <span className="font-medium">{row.totalHours ?? 0} giờ</span>
-      ),
+      cell: (row) => <span className="font-medium">{row.totalHours ?? 0} giờ</span>,
     },
     {
       key: 'note',
       label: 'Ghi chú',
       minWidth: '100px',
       cell: (row) => (
-        <span
-          className="text-xs max-w-[250px] truncate block"
-          title={row.note || undefined}
-        >
+        <span className="text-xs max-w-[250px] truncate block" title={row.note || undefined}>
           {row.note || '-'}
         </span>
       ),
@@ -366,11 +316,7 @@ export default function AttendancesPage() {
       key: 'status',
       label: 'Trạng thái',
       minWidth: '120px',
-      cell: (row) => (
-        <Badge variant={getAttendanceStatusVariant(row.status)}>
-          {getAttendanceStatusLabel(row.status)}
-        </Badge>
-      ),
+      cell: (row) => <Badge variant={getAttendanceStatusVariant(row.status)}>{getAttendanceStatusLabel(row.status)}</Badge>,
     },
     {
       key: 'actions',
@@ -386,6 +332,21 @@ export default function AttendancesPage() {
               onClick: () => {
                 setSelectedRow(row);
                 setShowAdjustmentModal(true);
+              },
+            },
+            {
+              title: 'Xem lộ trình', // 👈 Nút mới thêm
+              icon: Route,
+              size: 18,
+              className: 'hover:text-emerald-600 hover:bg-emerald-50',
+              onClick: () => {
+                setRouteModalState({
+                  isOpen: true,
+                  userId: row.userId,
+                  userName: row.user?.fullName || row.user?.username || 'Nhân sự',
+                  attendanceId: row.id,
+                  initialDate: row.workDate,
+                });
               },
             },
             {
@@ -451,20 +412,12 @@ export default function AttendancesPage() {
         <div className="flex items-center justify-between gap-3 pb-2 border-b border-gray-100/50">
           <div className="flex items-center gap-3">
             <Avatar
-              src={
-                row.user?.avatar
-                  ? row.user.avatar.startsWith('http')
-                    ? row.user.avatar
-                    : `${BASE_MINIO_URL}${row.user.avatar}`
-                  : undefined
-              }
+              src={row.user?.avatar ? (row.user.avatar.startsWith('http') ? row.user.avatar : `${BASE_MINIO_URL}${row.user.avatar}`) : undefined}
               name={row.user?.fullName || 'NV'}
               size="md"
             />
             <div>
-              <p className="font-bold text-slate-900 text-sm">
-                {row.user?.fullName || 'Nhân viên'}
-              </p>
+              <p className="font-bold text-slate-900 text-sm">{row.user?.fullName || 'Nhân viên'}</p>
             </div>
           </div>
           <Badge variant={statusInfo.variant} pill>
@@ -477,52 +430,32 @@ export default function AttendancesPage() {
           <span className="font-medium text-slate-500 flex items-center gap-1">
             <Calendar size={13} className="text-slate-400" /> {row.workDate}
           </span>
-          <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-full">
-            {row.totalHours ?? 0} giờ công
-          </span>
+          <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-full">{row.totalHours ?? 0} giờ công</span>
         </div>
 
         {/* Check In / Out Box */}
         <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-2.5 border border-slate-100 text-xs">
           <div className="space-y-0.5">
             <span className="text-[10px] font-bold text-slate-400 uppercase">Check In</span>
-            <p className="font-semibold text-slate-800">
-              {row.checkIn ? row.checkIn.slice(0, 5) : '--:--'}
-            </p>
-            {row.isLate && (
-              <span className="text-[10px] text-amber-600 font-medium block">
-                Muộn {row.lateMinutes ?? 0} phút
-              </span>
-            )}
+            <p className="font-semibold text-slate-800">{row.checkIn ? row.checkIn.slice(0, 5) : '--:--'}</p>
+            {row.isLate && <span className="text-[10px] text-amber-600 font-medium block">Muộn {row.lateMinutes ?? 0} phút</span>}
           </div>
           <div className="space-y-0.5">
             <span className="text-[10px] font-bold text-slate-400 uppercase">Check Out</span>
-            <p className="font-semibold text-slate-800">
-              {row.checkOut ? row.checkOut.slice(0, 5) : '--:--'}
-            </p>
-            {row.isEarlyLeave && (
-              <span className="text-[10px] text-amber-600 font-medium block">
-                Về sớm {row.earlyLeaveMinutes ?? 0} phút
-              </span>
-            )}
+            <p className="font-semibold text-slate-800">{row.checkOut ? row.checkOut.slice(0, 5) : '--:--'}</p>
+            {row.isEarlyLeave && <span className="text-[10px] text-amber-600 font-medium block">Về sớm {row.earlyLeaveMinutes ?? 0} phút</span>}
           </div>
         </div>
 
         {/* Note if any */}
         {row.note && (
-          <p
-            className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 truncate"
-            title={row.note}
-          >
+          <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 truncate" title={row.note}>
             Ghi chú: {row.note}
           </p>
         )}
 
         {/* Action Buttons */}
-        <div
-          className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100/50"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100/50" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             onClick={() => {
@@ -613,13 +546,7 @@ export default function AttendancesPage() {
           </Heading>
 
           <div className="flex items-center sm:justify-end gap-2 overflow-x-auto scrollbar-none max-w-full w-full sm:w-auto shrink-0 pb-1 sm:pb-0 flex-nowrap sm:flex-wrap">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowAddModal(true)}
-              leftIcon={<Plus size={16} />}
-              className="px-3 gap-1.5 shrink-0"
-            >
+            <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)} leftIcon={<Plus size={16} />} className="px-3 gap-1.5 shrink-0">
               Thêm chấm công
             </Button>
 
@@ -674,11 +601,7 @@ export default function AttendancesPage() {
       />
 
       {/* Modal chi tiết chấm công */}
-      <AttendanceDetailModal
-        open={showDetailModal}
-        data={selectedRow}
-        onClose={() => setShowDetailModal(false)}
-      />
+      <AttendanceDetailModal open={showDetailModal} data={selectedRow} onClose={() => setShowDetailModal(false)} />
 
       <AddAdjustmentModal
         open={showAdjustmentModal}
@@ -713,20 +636,25 @@ export default function AttendancesPage() {
               >
                 Hủy
               </Button>
-              <Button
-                variant="danger"
-                onClick={handleDeleteConfirm}
-                loading={isDeleting}
-              >
+              <Button variant="danger" onClick={handleDeleteConfirm} loading={isDeleting}>
                 Xác nhận
               </Button>
             </div>
           }
         >
-          <p className="text-gray-600 text-sm">
-            Bạn có chắc chắn muốn xóa bản ghi chấm công này? Hành động này không thể hoàn tác.
-          </p>
+          <p className="text-gray-600 text-sm">Bạn có chắc chắn muốn xóa bản ghi chấm công này? Hành động này không thể hoàn tác.</p>
         </Modal>
+      )}
+      {/* Modal xem lộ trình chấm công */}
+      {routeModalState.isOpen && (
+        <RoutePlaybackModal
+          isOpen={routeModalState.isOpen}
+          onClose={() => setRouteModalState((prev) => ({ ...prev, isOpen: false }))}
+          userId={routeModalState.userId}
+          userName={routeModalState.userName}
+          attendanceId={routeModalState.attendanceId}
+          initialDate={routeModalState.initialDate}
+        />
       )}
     </div>
   );

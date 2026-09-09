@@ -2,7 +2,43 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-09
+
+### Fixed
+- **Tối ưu hóa Hệ thống Live Map Realtime & Triệt tiêu Lộ trình Zic Zac Con thoi:**
+  - **Khắc phục lỗi Live Map bị đơ / phải reload mới cập nhật ([`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):**
+    - Tích hợp cơ chế **WebSocket Auto-Reconnect** tự động kết nối lại sau 3s khi đứt mạng, đóng nắp máy hoặc đổi Wi-Fi.
+    - Bổ sung **Fallback Polling** định kỳ (10s/lần khi mất socket và 60s dự phòng) giúp dữ liệu bản đồ luôn cập nhật mượt mà, không bao giờ phải F5.
+  - **Tính năng Tự động Theo sát Nhân viên (Auto-Follow Mode) ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+    - Tự động gọi `map.panTo()` mượt mà giữ nhân viên luôn ở tâm màn hình khi họ di chuyển.
+    - Thêm nút toggle nổi *"Đang theo sát"* / *"Bật theo sát"* ở góc phải bản đồ để admin chủ động kiểm soát.
+  - **Triệt tiêu hiện tượng lộ trình chạy ngược chạy xuôi zic zac trên đường ([`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx)):**
+    - Thuật toán **Ping-Pong Spike Filter** $O(n)$: phát hiện và loại bỏ các điểm nhảy sang trạm sóng BTS rồi quay về vị trí cũ.
+    - Đổi mặc định `isSnapToRoad = false` giúp hiển thị đường Polyline GPS tự nhiên, không bị OSRM bẻ ngoặt thành các vòng lặp quay đầu xe trên đường đôi.
+  - **Khắc phục xung đột trạm sóng BTS & GPS ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java) & [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+    - Ưu tiên tuyệt đối `GPS_PROVIDER`, tự động bỏ qua toàn bộ điểm từ `NETWORK_PROVIDER` khi GPS đang hoạt động trong vòng 25s.
+    - Chuẩn hóa ngưỡng sai số khi di chuyển về mức 45m.
+  - **Khắc phục trùng lặp luồng & trễ 30s trên Web Tracker ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
+    - Tắt Web Worker heartbeat khi chạy trong Native container để tránh bắn đè tọa độ cũ lên server.
+    - Bỏ rào chắn `elapsed >= 30000`, kích hoạt nhịp gửi 3 giây khi di chuyển ngoài đường.
+  - **Tài liệu kỹ thuật chi tiết:** Đã xuất bản file [`livemap-and-gps-fix-log.md`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/docs/location-tracking/livemap-and-gps-fix-log.md) ghi nhận đầy đủ nguyên nhân và cách xử lý.
+
 ## [Unreleased] - 2026-09-08
+
+### Added
+- **Tính năng Tự động Cập nhật APK Nội bộ (In-App APK Auto-Updater) cho Android:**
+  - **Native Plugin (`AppUpdatePlugin.java` & `MainActivity.java`):** Tích hợp plugin Capacitor Native đọc `versionCode`/`versionName` từ Android `PackageInfo`, sử dụng luồng tải ngầm đa luồng truyền thẳng file APK vào bộ nhớ cache, phát sự kiện tiến trình tải theo thời gian thực (`downloadProgress`).
+  - **Tự động kích hoạt cài đặt (`FileProvider` & `ACTION_VIEW`):** Cấp quyền `REQUEST_INSTALL_PACKAGES` trong `AndroidManifest.xml` và cấu hình `file_paths.xml`. Tự động kích hoạt Intent cài đặt hệ thống của Android với cờ `FLAG_GRANT_READ_URI_PERMISSION`. Hỗ trợ mở cài đặt cấp quyền cài app không rõ nguồn gốc nếu Android 8.0+ yêu cầu.
+  - **Tự động hóa Phiên bản trong Gradle ([`build.gradle`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/build.gradle)):** Tự động đồng bộ `versionName` từ `package.json` và tự động tính `versionCode` theo số lượng commit Git (`git rev-list --count HEAD`), loại bỏ hoàn toàn việc gõ tay số phiên bản.
+  - **Kết nối Backend FastAPI ([`AppUpdateModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/app-update-modal/index.tsx)):** Gọi trực tiếp endpoint `/api/v1/system/app-versions/latest?platform=android` từ Backend Railway thay vì lưu file tĩnh trên frontend.
+  - **Giao diện Modal Thông báo Cập nhật ([`AppUpdateModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/app-update-modal/index.tsx)):** Tự động phát hiện khi mở ứng dụng trên Android, hiển thị popup thân thiện với danh sách tính năng mới, thanh tiến trình % tải xuống trực quan và các nút điều hướng cài đặt 1 chạm.
+  - **Trang Quản lý Phiên bản Ứng dụng Di động ([`app-versions/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/page.tsx)):**
+    - Bổ sung nhóm mục **"Hệ thống"** trên Sidebar (`/app/app-versions`, phân quyền `super`, `admin`).
+    - Tái cấu trúc layout đồng bộ 100% với các trang chuẩn (`customers`, `departments`, `shifts`):
+      - Khối thống kê 4 thẻ chuẩn [`StatsCard`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/stats-card.tsx) (Bản mới nhất, Tổng bản phát hành, Yêu cầu bắt buộc, Nền tảng hỗ trợ).
+      - Bỏ box header dư thừa ở đầu trang, đưa nút hành động "Phát hành bản mới" lên Action Bar chuẩn.
+      - Tích hợp ô tìm kiếm và bộ lọc Nền tảng (Android / iOS) trực tiếp vào [`TableData`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/table.tsx).
+      - Chuẩn hóa form modal phát hành [`ReleaseModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/release-modal.tsx) đồng bộ styling với các form modal trong hệ thống.
 
 ### Changed
 - **Tối ưu hóa luồng Check-in & Loại bỏ Ping thủ công ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx)):**

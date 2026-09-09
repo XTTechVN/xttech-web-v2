@@ -20,11 +20,15 @@ interface LocationTrackerOptions {
   heartbeatMs?: number; // Mặc định 3 phút (180000ms) gửi nhịp tim khi đứng yên
 }
 
-export function useLocationTracker({
-  enabled = true,
-  intervalMs = 60000,
-  heartbeatMs = 180000,
-}: LocationTrackerOptions = {}) {
+export const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false;
+  if (Capacitor.isNativePlatform()) return true;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(
+    navigator.userAgent
+  );
+}
+
+export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbeatMs = 180000, }: LocationTrackerOptions = {}) {
   const [isTracking, setIsTracking] = useState(false);
   const [lastPingTime, setLastPingTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,10 +70,10 @@ export function useLocationTracker({
     speed?: number;
     heading?: number;
   }) => {
-    // 1. Chốt chặn độ chính xác thích ứng: 30m khi di chuyển ngoài đường, 80m khi đứng yên / trong phòng
+    // 1. Chốt chặn độ chính xác thích ứng: 45m khi di chuyển ngoài đường, 80m khi đứng yên / trong phòng
     const rawSpeed = pos.speed ?? 0;
     const speed = rawSpeed >= 0.8 ? rawSpeed : 0;
-    const maxAccuracy = speed >= 1.0 ? 30 : 80;
+    const maxAccuracy = speed >= 1.0 ? 45 : 80;
     if (pos.accuracy !== undefined && pos.accuracy > maxAccuracy) {
       return;
     }
@@ -96,8 +100,9 @@ export function useLocationTracker({
       distance = R * c;
 
       // 2. Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
-      // Nếu khoảng cách nhảy vọt > 200m trong thời gian < 6s (v > 33 m/s ~ 120 km/h) -> điểm văng ảo do trạm sóng BTS
-      if (elapsed > 0 && elapsed < 6000 && distance > 200) {
+      // Nếu khoảng cách nhảy vọt > 150m với tốc độ bất thường > 35 m/s (~126 km/h) hoặc > 400m trong thời gian ngắn (< 30s)
+      const jumpSpeed = elapsed > 0 ? distance / (elapsed / 1000) : 999;
+      if (distance > 150 && (jumpSpeed > 35 || (distance > 400 && elapsed < 30000))) {
         return;
       }
     }
@@ -203,11 +208,14 @@ export function useLocationTracker({
 
   useEffect(() => {
     const isNative = Capacitor.isNativePlatform();
+    if (!isMobileDevice()) {
+      return;
+    }
 
     if (!enabled) {
       setIsTracking(false);
       if (isNative) {
-        NativeTracking.stopTracking().catch(() => {});
+        NativeTracking.stopTracking().catch(() => { });
       }
       if (workerRef.current) {
         workerRef.current.terminate();
@@ -225,9 +233,11 @@ export function useLocationTracker({
       return;
     }
 
-    // Lấy vị trí ban đầu (Initial fix) và bật WakeLock
+    // Lấy vị trí ban đầu (Initial fix) và bật WakeLock (trên Web)
     const initTimer = setTimeout(() => {
-      pingCurrentLocation();
+      if (!isNative) {
+        pingCurrentLocation();
+      }
       requestWakeLock();
     }, 100);
 
@@ -237,20 +247,17 @@ export function useLocationTracker({
           (pos) => {
             // Lọc sớm nếu tọa độ không đạt chuẩn chính xác theo vận tốc
             const rawSpeed = pos.coords.speed ?? 0;
-            const maxAcc = rawSpeed >= 1.0 ? 30 : 80;
+            const maxAcc = rawSpeed >= 1.0 ? 45 : 80;
             if (pos.coords.accuracy !== undefined && pos.coords.accuracy > maxAcc) {
               return;
             }
-            const elapsed = Date.now() - lastPingRef.current;
-            if (elapsed >= 30000) {
-              executePing({
-                latitude: pos.coords.latitude,
-                longitude: pos.coords.longitude,
-                accuracy: pos.coords.accuracy || undefined,
-                speed: pos.coords.speed || undefined,
-                heading: pos.coords.heading || undefined,
-              });
-            }
+            executePing({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              accuracy: pos.coords.accuracy || undefined,
+              speed: pos.coords.speed || undefined,
+              heading: pos.coords.heading || undefined,
+            });
           },
           () => {},
           {
@@ -303,9 +310,8 @@ export function useLocationTracker({
 
       worker.onmessage = (e) => {
         if (e.data === 'tick') {
-          if (isNative) {
-            sendHeartbeat();
-          } else {
+          // Chỉ chạy worker heartbeat khi trên Web; Native app đã có Service nền độc lập
+          if (!isNative) {
             const elapsed = Date.now() - lastPingRef.current;
             if (elapsed >= intervalMs) {
               pingCurrentLocation();
@@ -316,9 +322,7 @@ export function useLocationTracker({
     } catch (e) {
       console.warn('[LocationTracker] Fallback to standard timer:', e);
       const fallbackTimer = setInterval(() => {
-        if (isNative) {
-          sendHeartbeat();
-        } else {
+        if (!isNative) {
           const elapsed = Date.now() - lastPingRef.current;
           if (elapsed >= intervalMs) {
             pingCurrentLocation();

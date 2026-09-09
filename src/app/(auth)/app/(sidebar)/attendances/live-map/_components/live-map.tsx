@@ -54,9 +54,11 @@ export function LiveMap({
   const [map, setMap] = React.useState<L.Map | null>(null);
   const [currentZoom, setCurrentZoom] = React.useState<number>(13);
   const [activeSpiderfyClusterId, setActiveSpiderfyClusterId] = React.useState<string | null>(null);
+  const [isFollowMode, setIsFollowMode] = React.useState<boolean>(true);
 
   // Ref lưu mốc thời gian click gần nhất để chỉ bay tới khi người dùng click từ sidebar
   const lastSelectedAtRef = React.useRef<number>(0);
+  const lastTrackedPosRef = React.useRef<{ lat: number; lng: number } | null>(null);
 
   // Callback ref ổn định cho MapContainer, chống việc kích hoạt re-render lặp
   const handleMapRef = React.useCallback((mapInstance: L.Map | null) => {
@@ -280,15 +282,16 @@ export function LiveMap({
     return groups;
   }, [staffLocations, map, currentZoom]);
 
-  // Tự động bay tới nhân sự được chọn khi người dùng click từ danh sách bên ngoài
+  // Tự động bay tới nhân sự được chọn khi người dùng click và trượt theo khi di chuyển
   React.useEffect(() => {
     if (!map || !selectedStaff) return;
 
     const currentClickTime = selectedStaff._selectedAt;
-    // Chỉ kích hoạt bay tới khi có cú click mới từ Sidebar
-    if (currentClickTime && currentClickTime !== lastSelectedAtRef.current) {
-      lastSelectedAtRef.current = currentClickTime;
+    const isNewClick = currentClickTime && currentClickTime !== lastSelectedAtRef.current;
 
+    if (isNewClick) {
+      lastSelectedAtRef.current = currentClickTime;
+      lastTrackedPosRef.current = { lat: selectedStaff.latitude, lng: selectedStaff.longitude };
       map.flyTo([selectedStaff.latitude, selectedStaff.longitude], 16, {
         duration: 1.2,
       });
@@ -301,13 +304,23 @@ export function LiveMap({
       if (targetCluster) {
         setActiveSpiderfyClusterId(targetCluster.id);
       }
+    } else if (isFollowMode) {
+      // Khi nhân viên được chọn di chuyển: Tự động trượt nhẹ màn hình theo sát nhân viên (Follow Mode)
+      const prevPos = lastTrackedPosRef.current;
+      if (!prevPos || prevPos.lat !== selectedStaff.latitude || prevPos.lng !== selectedStaff.longitude) {
+        lastTrackedPosRef.current = { lat: selectedStaff.latitude, lng: selectedStaff.longitude };
+        map.panTo([selectedStaff.latitude, selectedStaff.longitude], {
+          animate: true,
+          duration: 0.8,
+        });
+      }
     }
-  }, [selectedStaff, map, clusters]);
+  }, [selectedStaff, map, clusters, isFollowMode]);
 
   const defaultCenter: [number, number] =
     staffLocations.length > 0
       ? [staffLocations[0].latitude, staffLocations[0].longitude]
-      : [21.028511, 105.804817]; // Hà Nội default
+      : [20.770184, 106.734790]; // 941 Phạm văn đồng
 
   return (
     <div className="relative h-full w-full rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
@@ -319,8 +332,10 @@ export function LiveMap({
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; Google Maps"
+          url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+          maxZoom={20}
+          subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
         />
 
         {clusters.map((cluster) => {
@@ -429,6 +444,24 @@ export function LiveMap({
           );
         })}
       </MapContainer>
+
+      {/* Nút bật/tắt chế độ tự động theo sát nhân viên (Follow Mode) */}
+      {selectedStaff && (
+        <div className="absolute bottom-4 right-4 z-[900]">
+          <button
+            type="button"
+            onClick={() => setIsFollowMode((prev) => !prev)}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-lg backdrop-blur-md transition-all cursor-pointer select-none ${
+              isFollowMode
+                ? 'bg-primary text-white ring-2 ring-primary/30 active:scale-95'
+                : 'bg-white/95 text-slate-700 hover:bg-white border border-slate-200 active:scale-95'
+            }`}
+          >
+            <Navigation size={13} className={isFollowMode ? 'animate-pulse text-white' : 'text-slate-500'} />
+            <span>{isFollowMode ? `Theo sát: ${formatShortStaffName(selectedStaff.userName)}` : 'Bật theo sát'}</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

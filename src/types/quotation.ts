@@ -45,6 +45,7 @@ export interface QuotationDoorCreate {
   width?: number;
   height?: number;
   quantity: number;
+  initPrice?: number;
   accessories?: QuotationAccessoryCreate[];
   extraOptionIds?: number[];
   fomulas?: {
@@ -93,6 +94,7 @@ export interface QuotationExtraOptionResponse {
   code?: string;
   initPrice?: number;
   calculatedQuantity?: number;
+  totalQuantity?: number;
   totalPrice?: number;
   unit?: string;
   totalArea?: number;
@@ -194,46 +196,48 @@ export interface PreviewDoor {
   doorId: number;
   code?: string;
   unit?: string;
-  width?: number;
-  height?: number;
-  effectiveWidth?: number;
-  effectiveHeight?: number;
-  quantity: number;
-  totalArea?: number;
-  initPrice?: number;
-  totalPrice?: number;
+  width?: number | null;
+  height?: number | null;
+  effectiveWidth?: number | null;
+  effectiveHeight?: number | null;
+  quantity?: number | null;
+  totalArea?: number | null;
+  initPrice?: number | null;
+  totalPrice?: number | null;
   imagePath?: string | null;
   accessories?: {
     accessoryId: number;
     name: string;
     code?: string;
     unit: string;
-    initPrice: number;
-    quantityPerDoor: number;
-    totalPrice: number;
+    initPrice?: number | null;
+    quantityPerDoor?: number | null;
+    totalQuantity?: number | null;
+    totalPrice?: number | null;
   }[];
   extraOptions?: {
     extraOptionId: number;
     name: string;
     code?: string;
     unit?: string;
-    initPrice: number;
-    calculatedQuantity?: number;
-    totalArea?: number;
-    totalPrice: number;
+    initPrice?: number | null;
+    calculatedQuantity?: number | null;
+    totalQuantity?: number | null;
+    totalArea?: number | null;
+    totalPrice?: number | null;
   }[];
   formulas?: {
     formulaId: number;
     code?: string;
     name?: string;
     unit?: string;
-    salary?: number;
-    widthAdd?: number;
-    heightAdd?: number;
-    coefficientWidth?: number;
-    coefficientHeight?: number;
-    totalPrice?: number;
-    totalArea?: number;
+    salary?: number | null;
+    widthAdd?: number | null;
+    heightAdd?: number | null;
+    coefficientWidth?: number | null;
+    coefficientHeight?: number | null;
+    totalPrice?: number | null;
+    totalArea?: number | null;
   }[];
 }
 
@@ -241,29 +245,30 @@ export interface PreviewMaterial {
   id?: number;
   materialId: number;
   name?: string;
-  initPrice: number;
-  quantity?: number;
-  totalArea?: number;
-  totalPrice?: number;
+  initPrice?: number | null;
+  quantity?: number | null;
+  totalArea?: number | null;
+  totalPrice?: number | null;
   doors: PreviewDoor[];
   accessories?: {
     accessoryId: number;
     name: string;
     code: string;
     unit: string;
-    initPrice: number;
-    totalQuantity: number;
-    totalPrice: number;
+    initPrice?: number | null;
+    totalQuantity?: number | null;
+    totalPrice?: number | null;
   }[];
   extraOptions?: {
     optionId?: number;
     name: string;
     code: string;
     unit: string;
-    initPrice: number;
-    calculatedQuantity: number;
-    totalPrice: number;
-    totalArea: number;
+    initPrice?: number | null;
+    calculatedQuantity?: number | null;
+    totalQuantity?: number | null;
+    totalPrice?: number | null;
+    totalArea?: number | null;
   }[];
   archs?: {
     formulaId: number;
@@ -271,22 +276,22 @@ export interface PreviewMaterial {
     name: string;
     unit: string;
     type?: string;
-    salary: number;
-    totalQuantity: number;
-    totalPrice: number;
-    totalArea: number;
-    coefficientWidth?: number;
-    coefficientHeight?: number;
+    salary?: number | null;
+    totalQuantity?: number | null;
+    totalPrice?: number | null;
+    totalArea?: number | null;
+    coefficientWidth?: number | null;
+    coefficientHeight?: number | null;
   }[];
 }
 
 export interface PreviewFloor {
   id?: number;
   name: string;
-  quantity?: number;
-  totalArea?: number;
-  totalAmount?: number;
-  totalPrice?: number;
+  quantity?: number | null;
+  totalArea?: number | null;
+  totalAmount?: number | null;
+  totalPrice?: number | null;
   materials: PreviewMaterial[];
 }
 
@@ -302,6 +307,7 @@ export interface DraftDoor {
   width: number;
   height: number;
   quantity: number;
+  initPrice?: number;
   accessoryIds: number[];
   extraOptionIds: number[];
   fomulas: DraftFormula[];

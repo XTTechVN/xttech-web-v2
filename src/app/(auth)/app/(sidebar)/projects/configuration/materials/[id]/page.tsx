@@ -91,7 +91,7 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
     if (!activeAccessories) return;
     setIsSavingAccessories(true);
     try {
-      const initialIds = activeAccessories.items.map((a) => a.id);
+      const initialIds = (activeAccessories?.items || []).map((a) => a.id);
       const toAssign = selectedIds.filter((id) => !initialIds.includes(id));
       const toRevoke = initialIds.filter((id) => !selectedIds.includes(id));
 
@@ -115,7 +115,7 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
     if (!activeExtraOptions) return;
     setIsSavingExtraOptions(true);
     try {
-      const initialIds = activeExtraOptions.items.map((o) => o.id);
+      const initialIds = (activeExtraOptions?.items || []).map((o) => o.id);
       const toAssign = selectedIds.filter((id) => !initialIds.includes(id));
       const toRevoke = initialIds.filter((id) => !selectedIds.includes(id));
 
@@ -139,7 +139,7 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
     if (!activeFormulas) return;
     setIsSavingFormulas(true);
     try {
-      const initialIds = activeFormulas.items.map((f) => f.id);
+      const initialIds = (activeFormulas?.items || []).map((f) => f.id);
       const toAssign = selectedIds.filter((id) => !initialIds.includes(id));
       const toRevoke = initialIds.filter((id) => !selectedIds.includes(id));
 
@@ -186,9 +186,9 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
       })
     : '—';
 
-  const activeAccessoryIds = activeAccessories?.items.map((a) => a.id) || [];
-  const activeExtraOptionIds = activeExtraOptions?.items.map((o) => o.id) || [];
-  const activeFormulaIds = activeFormulas?.items.map((f) => f.id) || [];
+  const activeAccessoryIds = activeAccessories?.items?.map((a) => a.id) || [];
+  const activeExtraOptionIds = activeExtraOptions?.items?.map((o) => o.id) || [];
+  const activeFormulaIds = activeFormulas?.items?.map((f) => f.id) || [];
 
   return (
     <div className="w-full flex flex-col gap-6 text-slate-800 pb-12">
@@ -223,20 +223,59 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
             <span className="font-semibold text-slate-500">Đơn vị tính: </span>
             <span className="text-slate-800 font-medium">{formatMaterialUnit(material.unit) || '—'}</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-b border-slate-100 py-3.5 my-1">
-            <div>
-              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá vốn</span>
-              <span className="text-slate-700 font-semibold">{formatCurrency(material.costPrice)}</span>
+          {material.unit !== 'set' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-b border-slate-100 py-3.5 my-1">
+              <div>
+                <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá vốn</span>
+                <span className="text-slate-700 font-semibold">{formatCurrency(material.costPrice)}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá bán lẻ</span>
+                <span className="text-primary font-bold">{formatCurrency(material.retailPrice)}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá đại lý</span>
+                <span className="text-teal-655 font-bold">{formatCurrency(material.salePrice)}</span>
+              </div>
             </div>
-            <div>
-              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá bán lẻ</span>
-              <span className="text-primary font-bold">{formatCurrency(material.retailPrice)}</span>
+          ) : (
+            <div className="flex flex-col gap-2.5 border-t border-b border-slate-100 py-3.5 my-1">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-slate-700 text-xs">
+                  Bảng giá theo kích thước quy chuẩn:
+                </span>
+                <span className="text-[11px] text-primary font-medium">
+                  {material.prices?.length || 0} mốc giá
+                </span>
+              </div>
+              {material.prices && material.prices.length > 0 ? (
+                <div className="overflow-x-auto rounded-lg border border-slate-100">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
+                      <tr>
+                        <th className="py-2 px-3">Rộng tối đa</th>
+                        <th className="py-2 px-3">Cao tối đa</th>
+                        <th className="py-2 px-3 text-right">Đơn giá định mức</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {material.prices.map((p, idx) => (
+                        <tr key={p.id || idx} className="hover:bg-slate-50/50">
+                          <td className="py-2 px-3 text-slate-700">{p.width} mm</td>
+                          <td className="py-2 px-3 text-slate-700">{p.height} mm</td>
+                          <td className="py-2 px-3 text-right font-semibold text-primary">
+                            {formatCurrency(p.price)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 italic">Chưa có mốc kích thước nào được cấu hình</p>
+              )}
             </div>
-            <div>
-              <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá đại lý</span>
-              <span className="text-teal-655 font-bold">{formatCurrency(material.salePrice)}</span>
-            </div>
-          </div>
+          )}
           <div className="flex flex-col gap-1 mt-1 border-t border-slate-100 pt-3">
             <span className="font-semibold text-slate-500">Thông số kỹ thuật:</span>
             <p className="text-slate-800 leading-relaxed whitespace-pre-line">
