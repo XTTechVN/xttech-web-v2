@@ -7,7 +7,7 @@ import { StaffLiveLocation } from '@/types';
 import { BASE_WS_URL, BASE_MINIO_URL } from '@/config';
 import { LiveMap } from './_components/live-map';
 import { StaffList } from './_components/staff-list';
-import { RoutePlaybackModal } from './_components/route-playback-modal';
+import { RoutePlaybackModal } from '../_components/route-playback-modal';
 import toast from 'react-hot-toast';
 import { Users, X, Route } from 'lucide-react';
 
@@ -36,7 +36,7 @@ export default function AttendanceLiveMapPage() {
     setIsLoading(true);
     try {
       const data = await getLiveLocations();
-      console.log("data: ", data)
+      console.log('data: ', data);
       setStaffLocations(data);
     } catch (err) {
       console.error('Lỗi khi tải danh sách vị trí:', err);
@@ -83,9 +83,7 @@ export default function AttendanceLiveMapPage() {
           };
 
           setStaffLocations((prev) => {
-            const index = prev.findIndex(
-              (s) => (s.userId || (s as any).user_id) === targetUserId
-            );
+            const index = prev.findIndex((s) => (s.userId || (s as any).user_id) === targetUserId);
             if (index >= 0) {
               const clone = [...prev];
               clone[index] = { ...clone[index], ...updatedStaff };
@@ -98,9 +96,7 @@ export default function AttendanceLiveMapPage() {
           // Cập nhật selectedStaff nếu đang xem nhân viên này
           setSelectedStaff((current) => {
             const currentId = current?.userId || (current as any)?.user_id;
-            return currentId === targetUserId
-              ? { ...current, ...updatedStaff }
-              : current;
+            return currentId === targetUserId ? { ...current, ...updatedStaff } : current;
           });
         }
       } catch (e) {
@@ -150,6 +146,7 @@ export default function AttendanceLiveMapPage() {
             onSelectStaff={(staff) => setSelectedStaff({ ...staff, _selectedAt: Date.now() } as any)}
             onViewRoute={handleOpenRoute}
             isLoading={isLoading}
+            onRefresh={fetchInitialLocations}
           />
         </div>
 
@@ -179,10 +176,7 @@ export default function AttendanceLiveMapPage() {
           {/* Floating Selected Staff Card mini ở đáy trên Mobile khi chọn nhân viên */}
           {selectedStaff && (
             <div className="md:hidden absolute bottom-3 inset-x-3 z-[900] bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-xl border border-slate-200 flex items-center justify-between gap-2 animate-in slide-in-from-bottom duration-200">
-              <div
-                className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
-                onClick={() => handleOpenRoute(selectedStaff)}
-              >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer" onClick={() => handleOpenRoute(selectedStaff)}>
                 <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center font-bold text-xs text-slate-700">
                   {selectedStaff.avatar ? (
                     <img
@@ -196,23 +190,17 @@ export default function AttendanceLiveMapPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <h4 className="text-xs font-bold text-slate-800 truncate">
-                      {selectedStaff.userName || 'Nhân viên'}
-                    </h4>
+                    <h4 className="text-xs font-bold text-slate-800 truncate">{selectedStaff.userName || 'Nhân viên'}</h4>
                     <span
                       className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-md ${
                         selectedStaff.status === 'offline'
                           ? 'bg-slate-100 text-slate-500'
                           : selectedStaff.status === 'moving'
-                          ? 'bg-amber-50 text-amber-700'
-                          : 'bg-emerald-50 text-emerald-700'
+                            ? 'bg-amber-50 text-amber-700'
+                            : 'bg-emerald-50 text-emerald-700'
                       }`}
                     >
-                      {selectedStaff.status === 'offline'
-                        ? 'Ngoại tuyến'
-                        : selectedStaff.status === 'moving'
-                        ? 'Di chuyển'
-                        : 'Đứng yên'}
+                      {selectedStaff.status === 'offline' ? 'Ngoại tuyến' : selectedStaff.status === 'moving' ? 'Di chuyển' : 'Đứng yên'}
                     </span>
                   </div>
                   <p className="text-[10px] text-slate-500 truncate mt-0.5">
@@ -247,10 +235,7 @@ export default function AttendanceLiveMapPage() {
       {/* 3. Bottom Sheet danh sách nhân sự trên Mobile */}
       {isMobileStaffListOpen && (
         <div className="fixed inset-0 z-[1100] md:hidden flex flex-col justify-end bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <div
-            className="flex-1"
-            onClick={() => setIsMobileStaffListOpen(false)}
-          />
+          <div className="flex-1" onClick={() => setIsMobileStaffListOpen(false)} />
           <div className="w-full max-h-[82vh] bg-white rounded-t-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
             {/* Handle bar & Close */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-100 shrink-0">
@@ -272,7 +257,8 @@ export default function AttendanceLiveMapPage() {
                 staffLocations={staffLocations}
                 selectedStaff={selectedStaff}
                 onSelectStaff={(staff) => {
-                  setSelectedStaff(staff);
+                  // Thêm _selectedAt: Date.now() để kích hoạt hiệu ứng bay camera
+                  setSelectedStaff({ ...staff, _selectedAt: Date.now() } as any);
                   setIsMobileStaffListOpen(false);
                 }}
                 onViewRoute={(staff) => {
@@ -290,9 +276,7 @@ export default function AttendanceLiveMapPage() {
       {routeModalState.isOpen && (
         <RoutePlaybackModal
           isOpen={routeModalState.isOpen}
-          onClose={() =>
-            setRouteModalState((prev) => ({ ...prev, isOpen: false }))
-          }
+          onClose={() => setRouteModalState((prev) => ({ ...prev, isOpen: false }))}
           userId={routeModalState.userId}
           userName={routeModalState.userName}
           attendanceId={routeModalState.attendanceId}

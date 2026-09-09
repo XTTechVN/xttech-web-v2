@@ -1,34 +1,10 @@
 import React from 'react';
-import { Layout, CalendarCheck, Clock, FileText, ShieldCheck, ListChecks, User } from 'lucide-react';
+import { Layout, CalendarCheck, Clock, FileText, ShieldCheck, ListChecks, User, Smartphone } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
 export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician' | 'accountant' | 'employee';
 
-export const acceptedSections = [
-  'dashboard',
-  'attendances',
-  'attendances-root',
-  'attendances-adjustments',
-  'attendances-payroll',
-  'adjustments',
-  'employees',
-  'employees-root',
-  'roles',
-  'suggestions',
-  'departments',
-  'projects',
-  'customers',
-  'configurations',
-  'doors',
-  'accessories',
-  'materials',
-  'quotations',
-  'extra-options',
-  'formulas',
-  'shifts',
-  'attendances-reports',
-  'attendances-live-map',
-];
+export const acceptedSections = [ 'dashboard', 'attendances', 'attendances-root', 'attendances-adjustments', 'attendances-payroll', 'adjustments', 'employees', 'employees-root', 'roles', 'suggestions', 'departments', 'projects', 'customers', 'configurations', 'doors', 'accessories', 'materials', 'quotations', 'extra-options', 'formulas', 'shifts', 'attendances-reports', 'attendances-live-map', 'app-versions', ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
   roles?: UserRole[];
@@ -101,7 +77,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
             id: 'attendances-live-map',
             label: 'Bản đồ trực tiếp',
             href: '/app/attendances/live-map',
-            roles: ['super', 'admin', 'hr'],
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
           },
           {
             id: 'attendances-reports',
@@ -204,6 +180,19 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/suggestions',
         roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+      },
+    ],
+  },
+  // Cài đặt hệ thống
+  {
+    title: 'Hệ thống',
+    items: [
+      {
+        id: 'app-versions',
+        label: 'Quản trị hệ thống',
+        icon: React.createElement(Smartphone, { size: 18 }),
+        href: '/app/app-versions',
+        roles: ['super', 'admin'],
       },
     ],
   },

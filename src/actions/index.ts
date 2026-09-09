@@ -63,3 +63,7 @@ export * from './report';
 
 // Audit Log
 export * from './audit-log';
+
+// App Version
+export * from './app-version';
+

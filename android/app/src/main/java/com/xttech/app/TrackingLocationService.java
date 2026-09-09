@@ -193,7 +193,7 @@ public class TrackingLocationService extends Service implements LocationListener
                 // Triệt tiêu Stale Cache: Nếu điểm cache đã quá 60 giây -> bỏ qua hoàn toàn
                 if (cacheAgeMs >= 0 && cacheAgeMs <= 60000L) {
                     float speed = lastKnown.hasSpeed() ? lastKnown.getSpeed() : 0.0f;
-                    float maxAcc = speed >= 1.0f ? 30.0f : 80.0f;
+                    float maxAcc = speed >= 1.0f ? 65.0f : 80.0f;
                     if (!lastKnown.hasAccuracy() || lastKnown.getAccuracy() <= maxAcc) {
                         onLocationChanged(lastKnown);
                     }
@@ -239,7 +239,7 @@ public class TrackingLocationService extends Service implements LocationListener
         // Bộ lọc độ chính xác thích ứng (Adaptive Accuracy Filter):
         // Khi di chuyển ngoài đường (speed >= 1.0 m/s): yêu cầu accuracy <= 30m
         // Khi đứng yên / trong phòng (speed < 1.0 m/s): chấp nhận accuracy <= 80m (phù hợp Wi-Fi văn phòng)
-        float maxAllowedAccuracy = (speed >= 1.0f) ? 30.0f : 80.0f;
+        float maxAllowedAccuracy = (speed >= 1.0f) ? 65.0f : 80.0f;
         if (location.hasAccuracy() && location.getAccuracy() > maxAllowedAccuracy) {
             Log.d(TAG, "Ignoring inaccurate location point: accuracy = " + location.getAccuracy() + "m (max: " + maxAllowedAccuracy + "m)");
             return;

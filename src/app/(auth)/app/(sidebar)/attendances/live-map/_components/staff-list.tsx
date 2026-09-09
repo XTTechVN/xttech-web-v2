@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { StaffLiveLocation } from '@/types';
-import { Search, Navigation, Battery, Gauge, Clock, Users } from 'lucide-react';
+import { Search, Navigation, Battery, Gauge, Clock, Users, RefreshCw } from 'lucide-react';
 import { Input } from '@/components';
 import dayjs from 'dayjs';
 import { BASE_MINIO_URL } from '@/config';
@@ -13,15 +13,10 @@ interface StaffListProps {
   onSelectStaff: (staff: StaffLiveLocation) => void;
   onViewRoute: (staff: StaffLiveLocation) => void;
   isLoading?: boolean;
+  onRefresh?: () => void;
 }
 
-export function StaffList({
-  staffLocations,
-  selectedStaff,
-  onSelectStaff,
-  onViewRoute,
-  isLoading = false,
-}: StaffListProps) {
+export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onViewRoute, isLoading = false, onRefresh}: StaffListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'moving' | 'stationary' | 'offline'>('all');
   console.log("staffLocations: ", staffLocations)
@@ -101,7 +96,19 @@ export function StaffList({
           >
             Đứng yên ({stationaryCount})
           </button>
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isLoading}
+              title="Làm mới danh sách"
+              className="ml-auto p-1.5 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-100 active:scale-95 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+            >
+              <RefreshCw size={13} className={isLoading ? 'animate-spin text-primary' : ''} />
+            </button>
+          )}
         </div>
+        
       </div>
 
       {/* Danh sách nhân viên */}

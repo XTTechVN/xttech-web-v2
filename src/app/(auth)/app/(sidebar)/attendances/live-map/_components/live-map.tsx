@@ -307,7 +307,7 @@ export function LiveMap({
   const defaultCenter: [number, number] =
     staffLocations.length > 0
       ? [staffLocations[0].latitude, staffLocations[0].longitude]
-      : [21.028511, 105.804817]; // Hà Nội default
+      : [20.770184, 106.734790]; // 941 Phạm văn đồng
 
   return (
     <div className="relative h-full w-full rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">

@@ -148,7 +148,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         let rawSpeed = max(0.0, location.speed)
         let speed = rawSpeed >= 0.8 ? rawSpeed : 0.0
-        let maxAllowedAccuracy = speed >= 1.0 ? 30.0 : 80.0
+        let maxAllowedAccuracy = speed >= 1.0 ? 65.0 : 80.0
 
         // 1. Chốt chặn độ chính xác thích ứng: 30m khi di chuyển, 80m khi đứng yên trong phòng
         if location.horizontalAccuracy < 0 || location.horizontalAccuracy > maxAllowedAccuracy {
