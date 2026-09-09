@@ -7,6 +7,8 @@ import { QuotationDoor } from './quotation-door';
 import { EDITOR_STYLES } from './config';
 import { SearchSelect } from '../modal/search-select';
 import { fetchDefaultAccessories, getResolvedPrice } from './utils';
+import { useQuery } from '@tanstack/react-query';
+import { getMaterialExtraOptions } from '@/actions';
 import type { Accessory, ExtraOption, Material, Door, Formula } from '@/types';
 
 interface QuotationMaterialProps {
@@ -54,6 +56,19 @@ export const QuotationMaterial = ({
       store.addDoor(fIndex, mIndex, defaultDoor.id, defaultDoor.code || '', defaultAccIds);
     }
   };
+
+  // Query danh sách tùy chọn phát sinh thuộc hệ nhôm này
+  const { data: materialExtraOptionsData } = useQuery({
+    queryKey: ['material-extra-options', material.materialId],
+    queryFn: async () => {
+      if (!material.materialId) return [];
+      const res = await getMaterialExtraOptions(material.materialId, { limit: 1000 });
+      return res.items || [];
+    },
+    enabled: !!material.materialId,
+  });
+
+  const availableExtraOptions = materialExtraOptionsData || [];
 
   return (
     <div className="flex flex-col gap-2 py-2">
@@ -225,7 +240,8 @@ export const QuotationMaterial = ({
               dIndex={dIndex}
               doorsList={doorsList}
               accessoriesList={accessoriesList}
-              extraOptionsList={extraOptionsList}
+              extraOptionsList={availableExtraOptions}
+              allExtraOptionsList={extraOptionsList}
               formulasList={formulasList}
               materialsList={materialsList}
             />

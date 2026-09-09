@@ -91,7 +91,7 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
     if (!activeAccessories) return;
     setIsSavingAccessories(true);
     try {
-      const initialIds = activeAccessories.items.map((a) => a.id);
+      const initialIds = (activeAccessories?.items || []).map((a) => a.id);
       const toAssign = selectedIds.filter((id) => !initialIds.includes(id));
       const toRevoke = initialIds.filter((id) => !selectedIds.includes(id));
 
@@ -115,7 +115,7 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
     if (!activeExtraOptions) return;
     setIsSavingExtraOptions(true);
     try {
-      const initialIds = activeExtraOptions.items.map((o) => o.id);
+      const initialIds = (activeExtraOptions?.items || []).map((o) => o.id);
       const toAssign = selectedIds.filter((id) => !initialIds.includes(id));
       const toRevoke = initialIds.filter((id) => !selectedIds.includes(id));
 
@@ -139,7 +139,7 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
     if (!activeFormulas) return;
     setIsSavingFormulas(true);
     try {
-      const initialIds = activeFormulas.items.map((f) => f.id);
+      const initialIds = (activeFormulas?.items || []).map((f) => f.id);
       const toAssign = selectedIds.filter((id) => !initialIds.includes(id));
       const toRevoke = initialIds.filter((id) => !selectedIds.includes(id));
 
@@ -186,9 +186,9 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
       })
     : '—';
 
-  const activeAccessoryIds = activeAccessories?.items.map((a) => a.id) || [];
-  const activeExtraOptionIds = activeExtraOptions?.items.map((o) => o.id) || [];
-  const activeFormulaIds = activeFormulas?.items.map((f) => f.id) || [];
+  const activeAccessoryIds = activeAccessories?.items?.map((a) => a.id) || [];
+  const activeExtraOptionIds = activeExtraOptions?.items?.map((o) => o.id) || [];
+  const activeFormulaIds = activeFormulas?.items?.map((f) => f.id) || [];
 
   return (
     <div className="w-full flex flex-col gap-6 text-slate-800 pb-12">

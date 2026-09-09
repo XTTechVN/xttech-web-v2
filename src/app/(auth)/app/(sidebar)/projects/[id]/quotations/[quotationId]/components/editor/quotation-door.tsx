@@ -19,6 +19,7 @@ interface QuotationDoorProps {
   doorsList: Door[];
   accessoriesList: Accessory[];
   extraOptionsList: ExtraOption[];
+  allExtraOptionsList?: ExtraOption[];
   formulasList: Formula[];
   materialsList?: Material[];
 }
@@ -30,6 +31,7 @@ export const QuotationDoor = ({
   doorsList,
   accessoriesList,
   extraOptionsList,
+  allExtraOptionsList,
   formulasList,
   materialsList,
 }: QuotationDoorProps) => {
@@ -84,6 +86,8 @@ export const QuotationDoor = ({
     const firstOpt = extraOptionsList[0];
     if (firstOpt) {
       store.addExtraOption(fIndex, mIndex, dIndex, firstOpt.id);
+    } else {
+      toast.error('Hệ nhôm này chưa được gán tùy chọn phát sinh nào trong cấu hình');
     }
   };
 
@@ -320,6 +324,7 @@ export const QuotationDoor = ({
                   oIndex={oIndex}
                   selectedOptId={selectedOptId}
                   extraOptionsList={extraOptionsList}
+                  allExtraOptionsList={allExtraOptionsList}
                 />
               ))
             )}
