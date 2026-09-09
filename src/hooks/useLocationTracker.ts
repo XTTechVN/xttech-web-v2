@@ -20,11 +20,15 @@ interface LocationTrackerOptions {
   heartbeatMs?: number; // Mặc định 3 phút (180000ms) gửi nhịp tim khi đứng yên
 }
 
-export function useLocationTracker({
-  enabled = true,
-  intervalMs = 60000,
-  heartbeatMs = 180000,
-}: LocationTrackerOptions = {}) {
+export const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false;
+  if (Capacitor.isNativePlatform()) return true;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(
+    navigator.userAgent
+  );
+}
+
+export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbeatMs = 180000, }: LocationTrackerOptions = {}) {
   const [isTracking, setIsTracking] = useState(false);
   const [lastPingTime, setLastPingTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -204,11 +208,14 @@ export function useLocationTracker({
 
   useEffect(() => {
     const isNative = Capacitor.isNativePlatform();
+    if (!isMobileDevice()) {
+      return;
+    }
 
     if (!enabled) {
       setIsTracking(false);
       if (isNative) {
-        NativeTracking.stopTracking().catch(() => {});
+        NativeTracking.stopTracking().catch(() => { });
       }
       if (workerRef.current) {
         workerRef.current.terminate();
