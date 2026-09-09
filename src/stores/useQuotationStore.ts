@@ -54,7 +54,7 @@ interface QuotationState {
   removeFormula: (fIndex: number, mIndex: number, dIndex: number, foIndex: number) => void;
 
   // API Payload & Operations Helpers
-  getPayload: (accessoriesList?: Accessory[], extraOptionsList?: ExtraOption[]) => any;
+  getPayload: (accessoriesList?: Accessory[], extraOptionsList?: ExtraOption[], materialsList?: Material[]) => any;
   createQuotation: () => Promise<Quotation>;
   updateQuotation: (id: number) => Promise<Quotation>;
 }
@@ -85,6 +85,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
           width: door.width || 0,
           height: door.height || 0,
           quantity: door.quantity || 1,
+          initPrice: door.initPrice !== undefined && door.initPrice !== null ? Number(door.initPrice) : undefined,
           accessoryIds: door.accessoryIds || (door.accessories || []).map((a: any) => a.accessoryId),
           extraOptionIds: door.extraOptionIds || (door.extraOptions || []).map((o: any) => o.optionId),
           fomulas: door.fomulas || (door.formulas && door.formulas.length > 0
@@ -268,6 +269,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
           width: 1000,
           height: 2000,
           quantity: 1,
+          initPrice: undefined,
           accessoryIds: defaultAccessoryIds,
           extraOptionIds: [],
           fomulas: [],
@@ -522,59 +524,73 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
     });
   },
 
-  getPayload: (accessoriesList, extraOptionsList) => {
+  getPayload: (accessoriesList, extraOptionsList, materialsList) => {
     const { title, code, discountPercentage, status, projectId, reviewBy, floors, priceType } = get();
 
     // Làm sạch dữ liệu cấu trúc tầng trước khi tạo payload
     const cleanedFloors = floors.map((floor) => ({
       ...floor,
-      materials: floor.materials.map((mat) => ({
-        materialId: mat.materialId,
-        initPrice: (mat.initPrice as any) === '' || mat.initPrice === undefined || mat.initPrice === null ? undefined : Number(mat.initPrice),
-        doors: mat.doors.map((door) => {
-          const accessories = (door.accessoryIds || []).map((id: number) => {
-            const acc = (accessoriesList || []).find((a) => a.id === id);
-            const pType = priceType || 'retail';
-            const pKey = pType === 'retail' ? 'retailPrice' : (pType === 'sale' ? 'salePrice' : 'costPrice');
-            const initPrice = acc
-              ? (acc[pKey] !== undefined && acc[pKey] !== null
-                ? acc[pKey]
-                : (acc.retailPrice || acc.salePrice || acc.costPrice || 0))
-              : 0;
-            return {
-              accessoryId: id,
-              initPrice: Number(initPrice) || 0,
-            };
-          });
+      materials: floor.materials.map((mat) => {
+        const matInfo = materialsList?.find((m) => m.id === mat.materialId);
+        const isSetUnit = matInfo?.unit === 'set';
 
-          const extraOptions = (door.extraOptionIds || []).map((id: number) => {
-            const opt = (extraOptionsList || []).find((o) => o.id === id);
-            const pType = priceType || 'retail';
-            const pKey = pType === 'retail' ? 'retailPrice' : (pType === 'sale' ? 'salePrice' : 'costPrice');
-            const initPrice = opt
-              ? (opt[pKey] !== undefined && opt[pKey] !== null
-                ? opt[pKey]
-                : (opt.retailPrice || opt.salePrice || opt.costPrice || 0))
-              : 0;
-            return {
-              optionId: id,
-              initPrice: Number(initPrice) || 0,
-            };
-          });
+        return {
+          materialId: mat.materialId,
+          initPrice: isSetUnit
+            ? undefined
+            : (mat.initPrice as any) === '' || mat.initPrice === undefined || mat.initPrice === null
+            ? undefined
+            : Number(mat.initPrice),
+          doors: mat.doors.map((door) => {
+            const accessories = (door.accessoryIds || []).map((id: number) => {
+              const acc = (accessoriesList || []).find((a) => a.id === id);
+              const pType = priceType || 'retail';
+              const pKey = pType === 'retail' ? 'retailPrice' : (pType === 'sale' ? 'salePrice' : 'costPrice');
+              const initPrice = acc
+                ? (acc[pKey] !== undefined && acc[pKey] !== null
+                  ? acc[pKey]
+                  : (acc.retailPrice || acc.salePrice || acc.costPrice || 0))
+                : 0;
+              return {
+                accessoryId: id,
+                initPrice: Number(initPrice) || 0,
+              };
+            });
 
-          return {
-            doorId: door.doorId,
-            code: door.code?.trim() || undefined,
-            width: (door.width as any) === '' ? 0 : Number(door.width) || 0,
-            height: (door.height as any) === '' ? 0 : Number(door.height) || 0,
-            quantity: (door.quantity as any) === '' ? 1 : Number(door.quantity) || 1,
-            accessories,
-            extraOptions,
-            extraOptionIds: door.extraOptionIds || [],
-            fomulas: door.fomulas || [],
-          };
-        }),
-      })),
+            const extraOptions = (door.extraOptionIds || []).map((id: number) => {
+              const opt = (extraOptionsList || []).find((o) => o.id === id);
+              const pType = priceType || 'retail';
+              const pKey = pType === 'retail' ? 'retailPrice' : (pType === 'sale' ? 'salePrice' : 'costPrice');
+              const initPrice = opt
+                ? (opt[pKey] !== undefined && opt[pKey] !== null
+                  ? opt[pKey]
+                  : (opt.retailPrice || opt.salePrice || opt.costPrice || 0))
+                : 0;
+              return {
+                optionId: id,
+                initPrice: Number(initPrice) || 0,
+              };
+            });
+
+            return {
+              doorId: door.doorId,
+              code: door.code?.trim() || undefined,
+              width: (door.width as any) === '' ? 0 : Number(door.width) || 0,
+              height: (door.height as any) === '' ? 0 : Number(door.height) || 0,
+              quantity: (door.quantity as any) === '' ? 1 : Number(door.quantity) || 1,
+              initPrice: isSetUnit
+                ? (door.initPrice as any) === '' || door.initPrice === undefined || door.initPrice === null
+                  ? undefined
+                  : Number(door.initPrice)
+                : undefined,
+              accessories,
+              extraOptions,
+              extraOptionIds: door.extraOptionIds || [],
+              fomulas: door.fomulas || [],
+            };
+          }),
+        };
+      }),
     }));
 
     return {

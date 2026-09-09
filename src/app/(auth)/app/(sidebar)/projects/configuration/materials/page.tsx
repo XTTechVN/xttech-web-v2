@@ -138,6 +138,7 @@ const Page = () => {
                 retailPrice: selectedMaterial.retailPrice,
                 salePrice: selectedMaterial.salePrice,
                 unit: selectedMaterial.unit,
+                prices: selectedMaterial.prices,
               }
             : undefined
         }
