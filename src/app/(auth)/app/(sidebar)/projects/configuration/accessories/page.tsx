@@ -10,6 +10,7 @@ import type { Accessory } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { AccessoryCreateModal, AccessoryUpdateModal, AccessoryDeleteModal } from './_components/modals';
+import { AccessoryCategoryModal } from './_components/category-modal';
 
 const Page = () => {
   const { data: accessoryData } = useQuery({
@@ -20,6 +21,7 @@ const Page = () => {
     },
   });
 
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(null);
 
@@ -105,9 +107,15 @@ const Page = () => {
         onEditClick={handleOpenEditModal} 
         onDeleteClick={handleOpenDeleteModal} 
         onAddClick={handleOpenCreateModal}
+        onCategoryClick={() => setIsCategoryOpen(true)}
       />
 
       {/* Modal Zone */}
+      <AccessoryCategoryModal
+        isOpen={isCategoryOpen}
+        onClose={() => setIsCategoryOpen(false)}
+      />
+
       <AccessoryCreateModal
         isOpen={isFormOpen && !selectedAccessory}
         onClose={() => {
@@ -132,6 +140,7 @@ const Page = () => {
                 id: selectedAccessory.id,
                 name: selectedAccessory.name,
                 code: selectedAccessory.code,
+                categoryId: selectedAccessory.categoryId,
                 specification: selectedAccessory.specification,
                 unit: selectedAccessory.unit,
                 costPrice: selectedAccessory.costPrice,
