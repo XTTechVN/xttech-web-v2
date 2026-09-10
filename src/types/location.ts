@@ -32,7 +32,6 @@ export interface StaffRoutePoint {
   accuracy?: number;
   speed?: number;
   recordedAt?: string;
-  recorded_at?: string;
 }
 
 export interface StaffRouteResponse {

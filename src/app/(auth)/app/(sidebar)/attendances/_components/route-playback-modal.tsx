@@ -245,6 +245,7 @@ export function RoutePlaybackModal({
   }, [initialDate, isOpen]);
   const rawPoints = routeData?.points || [];
   const points = filterPointsForMatching(rawPoints);
+  console.log("point: ", points)
   const polylineCoords: [number, number][] = points.map((p) => [
     p.latitude,
     p.longitude,
@@ -385,7 +386,7 @@ export function RoutePlaybackModal({
             </span>
             <p className="text-sm font-bold text-slate-800">
               {points.length > 0
-                ? dayjs(points[0].recordedAt || points[0].recorded_at).format('HH:mm:ss')
+                ? dayjs(points[0].recordedAt).format('HH:mm:ss')
                 : '--:--'}
             </p>
           </div>
@@ -395,10 +396,7 @@ export function RoutePlaybackModal({
             </span>
             <p className="text-sm font-bold text-slate-800">
               {points.length > 0
-                ? dayjs(
-                    points[points.length - 1].recordedAt ||
-                    points[points.length - 1].recorded_at
-                  ).format('HH:mm:ss')
+                ? dayjs(points[points.length - 1].recordedAt).format('HH:mm:ss')
                 : '--:--'}
             </p>
           </div>
@@ -429,7 +427,6 @@ export function RoutePlaybackModal({
                 attribution="&copy; Google Maps"
                 url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
               />
-
               {/* Vẽ đường đi Polyline (bám tim đường xanh ngọc lục bảo đẹp mắt, hoặc lam cho GPS gốc) */}
               <Polyline
                 positions={displayedCoords}
@@ -456,7 +453,7 @@ export function RoutePlaybackModal({
                       <p className="font-bold text-emerald-700">📍 Điểm bắt đầu</p>
                       <p>
                         Thời gian:{' '}
-                        {dayjs(points[0].recorded_at).format('HH:mm:ss DD/MM')}
+                        {dayjs(points[0].recordedAt).format('HH:mm:ss DD/MM')}
                       </p>
                     </div>
                   </Popup>
@@ -478,7 +475,7 @@ export function RoutePlaybackModal({
                       <p>
                         Thời gian:{' '}
                         {dayjs(
-                          points[points.length - 1].recorded_at
+                          points[points.length - 1].recordedAt
                         ).format('HH:mm:ss DD/MM')}
                       </p>
                     </div>
