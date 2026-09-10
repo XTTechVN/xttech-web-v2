@@ -36,20 +36,23 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     {
       key: 'image',
       label: 'Ảnh minh họa',
-      minWidth: '50%',
-      cell: (row: Door) => (
-        <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
-          {row.imagePath ? (
-            <img
-              src={row.imagePath.startsWith('http') ? row.imagePath : `${BASE_MINIO_URL}${row.imagePath}`}
-              alt={row.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Columns className="w-5 h-5 text-gray-400" />
-          )}
-        </div>
-      ),
+      minWidth: '100px',
+      cell: (row: Door) => {
+        const primaryImg = row.images?.find((img) => img.isPrimary)?.imagePath || row.imagePath;
+        return (
+          <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
+            {primaryImg ? (
+              <img
+                src={primaryImg.startsWith('http') ? primaryImg : `${BASE_MINIO_URL}${primaryImg}`}
+                alt={row.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Columns className="w-5 h-5 text-gray-400" />
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'code',
@@ -91,6 +94,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
   // Cấu hình Card hiển thị trên thiết bị di động
   const renderCard = (row: Door, index: number) => {
+    const primaryImg = row.images?.find((img) => img.isPrimary)?.imagePath || row.imagePath;
     return (
       <div
         key={row.id || index}
@@ -99,9 +103,9 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       >
         <div className="flex items-start gap-3">
           <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0 mt-0.5">
-            {row.imagePath ? (
+            {primaryImg ? (
               <img
-                src={row.imagePath.startsWith('http') ? row.imagePath : `${BASE_MINIO_URL}/${row.imagePath}`}
+                src={primaryImg.startsWith('http') ? primaryImg : `${BASE_MINIO_URL}${primaryImg}`}
                 alt={row.name}
                 className="w-full h-full object-cover"
               />

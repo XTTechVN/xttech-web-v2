@@ -127,7 +127,17 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
         <div className="w-full md:w-72 flex flex-col gap-2 shrink-0">
           <span className="text-xs text-primary font-semibold select-none">Hình ảnh minh họa</span>
           <div className="w-full aspect-square md:h-64 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center">
-            {door.imagePath ? (
+            {door.images && door.images.length > 0 ? (
+              <img
+                src={
+                  (door.images.find((img) => img.isPrimary)?.imagePath || door.images[0].imagePath).startsWith('http')
+                    ? door.images.find((img) => img.isPrimary)?.imagePath || door.images[0].imagePath
+                    : `${BASE_MINIO_URL}${door.images.find((img) => img.isPrimary)?.imagePath || door.images[0].imagePath}`
+                }
+                alt={door.name}
+                className="w-full h-full object-cover"
+              />
+            ) : door.imagePath ? (
               <img
                 src={door.imagePath.startsWith('http') ? door.imagePath : `${BASE_MINIO_URL}${door.imagePath}`}
                 alt={door.name}
@@ -140,6 +150,24 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
               </div>
             )}
           </div>
+          {door.images && door.images.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto py-1">
+              {door.images.map((img) => (
+                <div
+                  key={img.id}
+                  className={`w-12 h-12 rounded-lg border overflow-hidden shrink-0 ${
+                    img.isPrimary ? 'border-primary ring-2 ring-primary/20' : 'border-slate-200 opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={img.imagePath.startsWith('http') ? img.imagePath : `${BASE_MINIO_URL}${img.imagePath}`}
+                    alt={img.name || door.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Side Text */}

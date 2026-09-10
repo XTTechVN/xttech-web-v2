@@ -5,12 +5,22 @@ export const formatDoorType = (type: string | null | undefined): string => {
   return (DOOR_TYPE_MAP as Record<string, string>)[type.toLowerCase()] || type;
 };
 
+export interface DoorImage {
+  id: number;
+  doorId: number;
+  imagePath: string;
+  name?: string | null;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
 export interface Door {
   id: number;
   type: string | null;
   code: string | null;
   name: string;
   imagePath: string | null;
+  images?: DoorImage[];
   specification: string | null;
   createdAt: string;
   updatedAt: string;
