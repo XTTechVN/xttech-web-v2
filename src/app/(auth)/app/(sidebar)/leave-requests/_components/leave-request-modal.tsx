@@ -138,7 +138,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
     }
     return null;
   }, [formUserId, currentUserId, selectedLeaveRequest, usersList, currentUser]);
-
+  console.log(targetUser)
   // Lấy departmentId dạng number từ position đầu tiên của targetUser
   const userDepartmentId = useMemo<number | undefined>(() => {
     if (!targetUser || !Array.isArray(targetUser.positions) || targetUser.positions.length === 0) {

@@ -5,6 +5,19 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-09-10
 
 ### Added
+- **Nâng cấp & Chuẩn hóa Modal Lộ trình Di chuyển theo chuẩn Google Maps ([`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx)):**
+  - **Nút Thumbnail Chuyển đổi Vệ tinh / Bản đồ (Góc dưới bên trái):**
+    - Thiết kế ô thumbnail vuông bo góc `w-14 h-14` chuẩn Google Maps với viền trắng nổi và nhãn chữ mờ dưới đáy.
+    - Hiển thị ảnh chụp vệ tinh thực tế thu nhỏ khi ở chế độ đường phố (Giao thông) và ảnh bản đồ khi ở chế độ Vệ tinh; click hoán đổi linh hoạt giữa Bản đồ và Vệ tinh Hybrid.
+  - **Nút Tròn Phóng to Toàn màn hình chuẩn Google Maps (Góc dưới bên phải):**
+    - Tích hợp nút tròn màu trắng có icon 4 góc phóng to kinh điển của Google Maps ở góc dưới bên phải bản đồ.
+    - Hỗ trợ phím tắt `Escape` để thu nhỏ nhanh.
+  - **Khắc phục Triệt để Lỗi Phóng to (True 100vw x 100vh Fullscreen):**
+    - Sử dụng `rootClassName="route-playback-fullscreen-root"` ghi đè toàn bộ padding/margin của Ant Design Modal, mở rộng modal tràn viền `100vw x 100vh`.
+    - Khóa chiều cao khung bản đồ bằng CSS calc (`calc(100vh - 185px)`), triệt tiêu hoàn toàn lỗi suy biến chiều cao về `0px`.
+    - Duy trì thẻ `<MapContainer>` luôn luôn được mount cố định; hiển thị banner nổi tinh gọn khi chưa có điểm GPS thay vì unmount bản đồ.
+    - Bổ sung `fitBounds` tự động căn chỉnh góc nhìn bao quát toàn bộ hành trình khi tải xong điểm GPS.
+
 - **Module Quản lý Nhà cung cấp (Customer Providers) & Tích hợp Quick-Create vào Khách hàng:**
   - **Trang Quản trị Danh mục Nhà cung cấp ([`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/providers/page.tsx)):**
     - Đường dẫn chuẩn: `/app/customers/providers` (sub-route bên trong module Khách hàng).

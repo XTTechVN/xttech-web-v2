@@ -81,9 +81,9 @@ export default function LeaveRequestTable({ isManager, currentUserId }: LeaveReq
           offset,
           limit,
           status: debouncedTab === 'all' ? undefined : debouncedTab,
-          leave_type: debouncedLeaveType || undefined,
-          from_date: debouncedFromDate || undefined,
-          to_date: debouncedToDate || undefined,
+          leaveType: debouncedLeaveType || undefined,
+          fromDate: debouncedFromDate || undefined,
+          toDate: debouncedToDate || undefined,
           search: debouncedSearch || undefined,
         });
         return response;
