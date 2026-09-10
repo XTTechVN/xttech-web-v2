@@ -70,3 +70,6 @@ export * from './leave-request';
 // App Version
 export * from './app-version';
 
+// Customer Provider
+export * from './customer-provider';
+

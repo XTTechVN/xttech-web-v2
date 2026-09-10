@@ -28,7 +28,7 @@ android {
     namespace = "com.xttech.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.xttech.app"
+        applicationId "com.xttech.app2"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode getGitCommitCount()

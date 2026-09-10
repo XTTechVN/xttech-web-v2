@@ -44,16 +44,6 @@ function getPointDistance(p1: StaffRoutePoint, p2: StaffRoutePoint): number {
 }
 
 /**
- * Lấy timestamp tính theo giây từ điểm tọa độ
- */
-function getPointTimeSec(p: StaffRoutePoint): number | null {
-  const timeStr = p.recorded_at || p.recordedAt;
-  if (!timeStr) return null;
-  const t = new Date(timeStr).getTime();
-  return isNaN(t) ? null : t / 1000;
-}
-
-/**
  * Lọc bớt các điểm nhiễu, điểm văng trạm sóng BTS và điểm quá gần (< 6m)
  */
 function filterPointsForMatching(points: StaffRoutePoint[]): StaffRoutePoint[] {
@@ -255,6 +245,7 @@ export function RoutePlaybackModal({
   }, [initialDate, isOpen]);
   const rawPoints = routeData?.points || [];
   const points = filterPointsForMatching(rawPoints);
+  console.log("point: ", points)
   const polylineCoords: [number, number][] = points.map((p) => [
     p.latitude,
     p.longitude,
@@ -395,7 +386,7 @@ export function RoutePlaybackModal({
             </span>
             <p className="text-sm font-bold text-slate-800">
               {points.length > 0
-                ? dayjs(points[0].recordedAt || points[0].recorded_at).format('HH:mm:ss')
+                ? dayjs(points[0].recordedAt).format('HH:mm:ss')
                 : '--:--'}
             </p>
           </div>
@@ -405,10 +396,7 @@ export function RoutePlaybackModal({
             </span>
             <p className="text-sm font-bold text-slate-800">
               {points.length > 0
-                ? dayjs(
-                    points[points.length - 1].recordedAt ||
-                    points[points.length - 1].recorded_at
-                  ).format('HH:mm:ss')
+                ? dayjs(points[points.length - 1].recordedAt).format('HH:mm:ss')
                 : '--:--'}
             </p>
           </div>
@@ -436,10 +424,9 @@ export function RoutePlaybackModal({
               style={{ height: '100%', width: '100%' }}
             >
               <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_2twi_1_650da3cf662548463efcc8fb"
+                attribution="&copy; Google Maps"
+                url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
               />
-
               {/* Vẽ đường đi Polyline (bám tim đường xanh ngọc lục bảo đẹp mắt, hoặc lam cho GPS gốc) */}
               <Polyline
                 positions={displayedCoords}
@@ -466,7 +453,7 @@ export function RoutePlaybackModal({
                       <p className="font-bold text-emerald-700">📍 Điểm bắt đầu</p>
                       <p>
                         Thời gian:{' '}
-                        {dayjs(points[0].recorded_at).format('HH:mm:ss DD/MM')}
+                        {dayjs(points[0].recordedAt).format('HH:mm:ss DD/MM')}
                       </p>
                     </div>
                   </Popup>
@@ -488,7 +475,7 @@ export function RoutePlaybackModal({
                       <p>
                         Thời gian:{' '}
                         {dayjs(
-                          points[points.length - 1].recorded_at
+                          points[points.length - 1].recordedAt
                         ).format('HH:mm:ss DD/MM')}
                       </p>
                     </div>

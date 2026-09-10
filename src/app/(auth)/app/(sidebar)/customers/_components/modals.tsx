@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
@@ -6,13 +7,14 @@ import { useEffect, useRef, useState } from 'react';
 // Thành phần dùng chung cho toàn trang
 import { Input, Button, Modal, Select } from '@/components';
 
-import { CheckCircle2, Upload, X, LocateFixed, Calendar } from 'lucide-react';
+import { CheckCircle2, Upload, X, LocateFixed, Calendar, Plus } from 'lucide-react';
 
 // Form sử dụng
 import { useForm } from 'react-hook-form';
 
 // Actions
-import { createCustomer, updateCustomer, getUsers, exportCustomersExcel } from '@/actions';
+import { createCustomer, updateCustomer, getUsers, exportCustomersExcel, getCustomerProviders } from '@/actions';
+import CustomerProviderFormModal from './provider-form-modal';
 
 
 import { BASE_MINIO_URL } from '@/config/app';
@@ -44,11 +46,12 @@ interface CustomerFormModalProps {
     phone?: string | null;
     staffId?: string | null;
     type?: string | null;
+    providerId?: number | null;
     images?: any[];
   };
 }
 
-type CustomerFormValues = CustomerCreate & { type?: string };
+type CustomerFormValues = CustomerCreate & { type?: string; providerId?: number | null };
 export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác nhận tạo', initialData }: CustomerFormModalProps) {
   const { register, handleSubmit, reset, setValue, formState: { errors }, watch, } = useForm<CustomerFormValues>();
 
@@ -123,6 +126,19 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
       });
     }
   }
+
+  const [isQuickCreateProviderOpen, setIsQuickCreateProviderOpen] = useState(false);
+
+  // Load danh sách nhà cung cấp
+  const { data: providersData, isLoading: isLoadingProviders } = useQuery({
+    queryKey: ['customer-providers', 'all'],
+    queryFn: () => getCustomerProviders({ limit: 1000 }),
+  });
+
+  const providerOptions = (providersData?.items || []).map((p) => ({
+    value: String(p.id),
+    label: `${p.name} (${p.code})`,
+  }));
 
   // Xử lý upload hình ảnh có thể tải lên đc nhiều hình ảnh
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -214,6 +230,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
         phone: initialData?.phone || '',
         staffId: initialData?.staffId || (!canAssignStaff && user ? user.id : ''),
         type: initialData?.type || '',
+        providerId: initialData?.providerId ?? null,
       });
        
       setSelectedImages([]);
@@ -239,7 +256,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
       setShowAllImages(false);
       setShowAllExistingImages(false);
     } else {
-      reset({ name: '', address: '', latitude: null, longitude: null, identifyCode: '', email: '', phone: '', staffId: '', type: '' });
+      reset({ name: '', address: '', latitude: null, longitude: null, identifyCode: '', email: '', phone: '', staffId: '', type: '', providerId: null });
       setSelectedImages((prev) => {
         prev.forEach((img) => URL.revokeObjectURL(img.preview));
         return [];
@@ -278,6 +295,11 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
     if (initialData && data.type && data.type.trim() !== '') {
       payload.type = data.type;
     }
+    if (data.providerId) {
+      payload.providerId = Number(data.providerId);
+    } else if (data.providerId === null || (data.providerId as any) === '') {
+      payload.providerId = null;
+    }
 
     if (initialData) {
       const updateFormData = new FormData();
@@ -304,7 +326,8 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-md w-full">
+    <>
+      <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-md w-full">
       <form onSubmit={handleSubmit(handleConfirm)}>
         <div className="flex flex-col space-y-4">
           <Input
@@ -421,6 +444,33 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
               error={errors.type?.message}
             />
           )}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-semibold text-gray-700 select-none">Nhà cung cấp / Đối tác</span>
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <Select
+                  options={[{ value: '', label: '-- Không chọn nhà cung cấp --' }, ...providerOptions]}
+                  placeholder={isLoadingProviders ? 'Đang tải nhà cung cấp...' : 'Chọn nhà cung cấp'}
+                  fullWidth
+                  disabled={isLoadingProviders}
+                  value={watch('providerId') ? String(watch('providerId')) : ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setValue('providerId', val ? Number(val) : null, { shouldDirty: true });
+                  }}
+                  error={errors.providerId?.message}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuickCreateProviderOpen(true)}
+                className="h-10 w-10 shrink-0 flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer shadow-2xs"
+                title="Thêm nhanh nhà cung cấp"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
           <div className="flex flex-col gap-2">
             <span className="text-xs font-semibold text-gray-700 select-none">Hình ảnh đính kèm (Cho phép chọn nhiều, tối đa 20MB/ảnh)</span>
             <div className="flex flex-col gap-3">
@@ -615,6 +665,17 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
         </div>
       </form>
     </Modal>
+
+    <CustomerProviderFormModal
+      isOpen={isQuickCreateProviderOpen}
+      onClose={() => setIsQuickCreateProviderOpen(false)}
+      title="Thêm nhanh nhà cung cấp"
+      submitText="Xác nhận tạo"
+      onSuccessCallback={(newProvider) => {
+        setValue('providerId', newProvider.id, { shouldValidate: true, shouldDirty: true });
+      }}
+    />
+    </>
   );
 }
 

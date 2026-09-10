@@ -1,3 +1,5 @@
+import type { CustomerProvider } from './customer-provider';
+
 export interface Customer {
   id: number;
   name: string;
@@ -15,6 +17,8 @@ export interface Customer {
     email?: string;
   } | null;
   type: string;
+  providerId?: number | null;
+  provider?: CustomerProvider | null;
   images: any[];
   createdAt: string;
   updatedAt: string;
@@ -30,6 +34,7 @@ export interface CustomerCreate {
   email?: string;
   phone?: string;
   staffId?: string;
+  providerId?: number | null;
 }
 
 export interface CustomerUpdate {
@@ -42,6 +47,7 @@ export interface CustomerUpdate {
   phone?: string;
   staffId?: string;
   type?: string;
+  providerId?: number | null;
 }
 
 export interface CustomerQueryParams {

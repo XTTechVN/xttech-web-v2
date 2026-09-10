@@ -475,17 +475,19 @@ export default function PayrollDataPage() {
         )}
       </div>
 
-      <OvertimeModal
-        open={showOvertimeModal}
-        onClose={() => setShowOvertimeModal(false)}
-        onSuccess={async () => {
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ['attendances'], refetchType: 'all' }),
-            queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'], refetchType: 'all' }),
-            queryClient.invalidateQueries({ queryKey: ['attendance-requests'], refetchType: 'all' }),
-          ]);
-        }}
-      />
+      {showOvertimeModal && (
+        <OvertimeModal
+          open={showOvertimeModal}
+          onClose={() => setShowOvertimeModal(false)}
+          onSuccess={async () => {
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: ['attendances'], refetchType: 'all' }),
+              queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'], refetchType: 'all' }),
+              queryClient.invalidateQueries({ queryKey: ['attendance-requests'], refetchType: 'all' }),
+            ]);
+          }}
+        />
+      )}
 
       <AddAdjustmentModal
         open={showAdjustmentModal}

@@ -2,7 +2,27 @@
 
 All notable changes to the frontend project will be documented in this file.
 
-## [Unreleased] - 2026-09-09
+## [Unreleased] - 2026-09-10
+
+### Added
+- **Module Quản lý Nhà cung cấp (Customer Providers) & Tích hợp Quick-Create vào Khách hàng:**
+  - **Trang Quản trị Danh mục Nhà cung cấp ([`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/providers/page.tsx)):**
+    - Đường dẫn chuẩn: `/app/customers/providers` (sub-route bên trong module Khách hàng).
+    - Thẻ thống kê 4 ô chuẩn hệ thống (`StatsCard`: Tổng số nhà cung cấp, Đang hoạt động, Nguồn đối tác, Mới cập nhật).
+    - Thanh tìm kiếm theo mã, tên nhà cung cấp (`useQueryParam('search')`).
+    - Bảng dữ liệu chuẩn `TableData` hỗ trợ đầy đủ Desktop & Mobile card view, định dạng ngày tháng và phân trang.
+    - Modal Thêm / Cập nhật nhà cung cấp ([`provider-form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/provider-form-modal.tsx)) dùng chung cho toàn bộ cụm `customers`, chuẩn DRY 100%, loại bỏ hoàn toàn việc import chéo.
+    - Modal Xác nhận xóa an toàn gọi API xóa mềm backend.
+  - **Tiện ích Quick-Create tại Form Khách hàng ([`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx)):**
+    - Tích hợp Selectbox "Nhà cung cấp / Đối tác" vào `CustomerFormModal`.
+    - Thêm nút `+` nằm ngay bên phải ô Selectbox: mở popup mini tạo nhanh tại chỗ, sau khi lưu sẽ tự động invalidate cache React Query và gán ngay ID vừa tạo vào form mà **không làm mất thông tin form đang nhập dở**.
+  - **Hiển thị thông tin Nhà cung cấp:**
+    - Cột "Nhà cung cấp" trong Bảng Khách hàng ([`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx)) cả trên giao diện Desktop lẫn thẻ Mobile.
+    - Trường "Nhà cung cấp / Đối tác" trong Thẻ chi tiết khách hàng ([`customer-info.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/[id]/_components/customer-info.tsx)).
+  - **API Actions & Type Safety:**
+    - Tạo `src/types/customer-provider.ts` và cập nhật `src/types/customer.ts` bổ sung `providerId`, `provider`.
+    - Tạo `src/actions/customer-provider/index.ts` kết nối đồng bộ với endpoint `/api/v1/customer-providers`.
+
 
 ### Fixed
 - **Tối ưu hóa Hệ thống Live Map Realtime & Triệt tiêu Lộ trình Zic Zac Con thoi:**
