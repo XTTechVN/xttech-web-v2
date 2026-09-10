@@ -137,6 +137,19 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
                 {customer.type ? getCustomerTypeLabel(customer.type) : '—'}
               </span>
             </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-gray-400 ">Nhà cung cấp / Đối tác</span>
+              <span className="text-base font-semibold text-gray-900">
+                {customer.provider ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200">
+                    {customer.provider.name} ({customer.provider.code})
+                  </span>
+                ) : (
+                  '—'
+                )}
+              </span>
+            </div>
           </div>
 
           {/* Hiển thị ảnh đã đính kèm */}

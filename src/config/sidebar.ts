@@ -18,6 +18,9 @@ export const acceptedSections = [
   'departments',
   'projects',
   'customers',
+  'customers-root',
+  'providers',
+  'customer-providers',
   'configurations',
   'doors',
   'accessories',
@@ -181,11 +184,25 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         ],
       },
       {
-        id: 'customers',
+        id: 'customers-root',
         label: 'Khách hàng',
         icon: React.createElement(User, { size: 18 }),
         href: '/app/customers',
         roles: ['super', 'admin', 'sale', 'hr'],
+        subItems: [
+          {
+            id: 'customers',
+            label: 'Danh sách khách hàng',
+            href: '/app/customers',
+            roles: ['super', 'admin', 'sale', 'hr'],
+          },
+          {
+            id: 'providers',
+            label: 'Nhà cung cấp',
+            href: '/app/customers/providers',
+            roles: ['super', 'admin', 'sale', 'hr'],
+          },
+        ],
       },
       {
         id: 'project-tasks',

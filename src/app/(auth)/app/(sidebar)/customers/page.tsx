@@ -162,6 +162,7 @@ const Page = () => {
                 phone: selectedCustomer.phone,
                 staffId: selectedCustomer.staffId,
                 type: selectedCustomer.type,
+                providerId: selectedCustomer.providerId || selectedCustomer.provider?.id || null,
                 images: selectedCustomer.images,
               }
             : undefined

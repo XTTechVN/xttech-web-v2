@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Modal, Button, Input, Textarea, Select } from '@/components';
 import { Clock, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -21,7 +21,7 @@ export function OvertimeModal({ open, onClose, onSuccess }: OvertimeModalProps) 
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
-  const [userId, setUserId] = useState<string>('');
+  const [userId, setUserId] = useState<string>(() => currentUser?.id || '');
   const [workDate, setWorkDate] = useState<string>(todayStr);
   const [startTime, setStartTime] = useState<string>('17:30');
   const [endTime, setEndTime] = useState<string>('20:30');
@@ -31,7 +31,7 @@ export function OvertimeModal({ open, onClose, onSuccess }: OvertimeModalProps) 
   // Danh sách nhân viên nếu có quyền chọn người khác (admin, super, hr)
   const { data: usersList } = useQuery({
     queryKey: ['users-list-for-overtime'],
-    queryFn: () => getUsers(),
+    queryFn: () => getUsers({ limit: 999, offset: 0 }),
     enabled: Boolean(canSelectOtherUser && open),
   });
 
@@ -45,17 +45,6 @@ export function OvertimeModal({ open, onClose, onSuccess }: OvertimeModalProps) 
       })),
     ];
   }, [usersList]);
-
-  // Reset form khi mở modal
-  useEffect(() => {
-    if (open) {
-      setUserId(currentUser?.id || '');
-      setWorkDate(new Date().toISOString().split('T')[0]);
-      setStartTime('17:30');
-      setEndTime('20:30');
-      setReason('');
-    }
-  }, [open, currentUser]);
 
   // Tính số giờ OT dự kiến
   const estimatedHours = useMemo(() => {

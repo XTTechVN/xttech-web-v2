@@ -193,6 +193,23 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, onExportClick }: TableP
       },
     },
     {
+      key: 'provider',
+      label: 'Nhà cung cấp',
+      minWidth: '160px',
+      cell: (row: Customer) => {
+        const provider = row.provider;
+        if (!provider) return <span className="text-gray-400 text-xs">—</span>;
+        return (
+          <span
+            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-50 text-cyan-800 border border-cyan-200"
+            title={`Mã: ${provider.code}`}
+          >
+            {provider.name}
+          </span>
+        );
+      },
+    },
+    {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
@@ -230,6 +247,11 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, onExportClick }: TableP
             <span className="text-xs text-gray-500 font-medium ml-1">
               • Phụ trách: {usersData?.items?.find((u: any) => u.id === row.staffId)?.fullName || (row as any).staff?.fullName || (row as any).staff?.username || row.staffId || '—'}
             </span>
+            {row.provider && (
+              <span className="text-xs text-cyan-700 font-medium ml-1">
+                • NCC: {row.provider.name}
+              </span>
+            )}
           </div>
           {row.images && row.images.length > 0 && (
             <div className="flex items-center gap-2 mt-2">
