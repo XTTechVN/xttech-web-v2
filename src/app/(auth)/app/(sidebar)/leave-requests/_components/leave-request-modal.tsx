@@ -6,8 +6,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Modal, Input, Select, Textarea, Button, Avatar, Badge } from '@/components';
 import { FileText, Upload, X, CheckCircle2, XCircle, Pencil, Trash2, Download, Eye } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLeaveRequestStore } from '@/stores/useLeaveRequestStore';
+import { useLeaveRequestStore, useAuthStore } from '@/stores';
 import { createLeaveRequest, updateLeaveRequest, deleteLeaveRequest, reviewLeaveRequest } from '@/actions/leave-request';
+import { getUsers } from '@/actions/user';
 import { getWorkShifts } from '@/actions/work-shift';
 import { LeaveType, DurationType, LeaveRequestStatus } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
@@ -61,6 +62,7 @@ interface LeaveRequestModalProps {
 
 export default function LeaveRequestModal({ isManager, currentUserId }: LeaveRequestModalProps) {
   const queryClient = useQueryClient();
+  const currentUser = useAuthStore((state) => state.user);
 
   const {
     selectedLeaveRequest,
@@ -69,6 +71,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
     isReviewModalOpen,
     isDeleteConfirmOpen,
     isEditing,
+    formUserId,
     formLeaveType,
     formDurationType,
     formWorkShiftId,
@@ -83,6 +86,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
     setReviewModalOpen,
     setIsDeleteConfirmOpen,
     setIsEditing,
+    setFormUserId,
     setFormLeaveType,
     setFormDurationType,
     setFormWorkShiftId,
@@ -99,6 +103,58 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
   const [reviewType, setReviewType] = useState<'approved' | 'rejected'>('approved');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const isOpen = isCreateModalOpen || isDetailModalOpen || isEditing;
+
+  // Query users list when isManager (admin, hr, super) to allow creating/editing for others
+  const { data: usersList } = useQuery({
+    queryKey: ['users-list-for-leave'],
+    queryFn: () => getUsers({ limit: 9999 }),
+    enabled: Boolean(isManager && isOpen),
+  });
+
+  const employeeOptions = useMemo(() => {
+    const items = usersList?.items ?? [];
+    return [
+      { value: '', label: '-- Chọn nhân sự làm đơn --' },
+      ...items.map((u: any) => ({
+        value: String(u.id),
+        label: `${u.fullName || u.username} (${u.email || u.id})`,
+      })),
+    ];
+  }, [usersList]);
+
+  // Xác định nhân sự đang được thao tác (targetUser) để lấy đúng departmentId
+  const targetUser = useMemo(() => {
+    const effectiveUserId = formUserId || currentUserId || selectedLeaveRequest?.userId;
+    if (!effectiveUserId) return currentUser;
+    const foundInList = usersList?.items?.find((u: any) => String(u.id) === String(effectiveUserId));
+    if (foundInList) return foundInList;
+    if (selectedLeaveRequest?.user && String(selectedLeaveRequest.user.id) === String(effectiveUserId)) {
+      return selectedLeaveRequest.user;
+    }
+    if (currentUser && String(currentUser.id) === String(effectiveUserId)) {
+      return currentUser;
+    }
+    return null;
+  }, [formUserId, currentUserId, selectedLeaveRequest, usersList, currentUser]);
+
+  // Lấy departmentId dạng number từ position đầu tiên của targetUser
+  const userDepartmentId = useMemo<number | undefined>(() => {
+    if (!targetUser || !Array.isArray(targetUser.positions) || targetUser.positions.length === 0) {
+      return undefined;
+    }
+    const pos = targetUser.positions[0] as any;
+    const dId = pos?.departmentId ?? pos?.department?.id ?? pos?.department_id;
+    return dId !== undefined && dId !== null ? Number(dId) : undefined;
+  }, [targetUser]);
+
+  // Set default formUserId to currentUserId when opening create modal
+  useEffect(() => {
+    if (isCreateModalOpen && !formUserId && currentUserId) {
+      setFormUserId(String(currentUserId));
+    }
+  }, [isCreateModalOpen, formUserId, currentUserId, setFormUserId]);
 
   // Keyboard escape handler for lightbox
   useEffect(() => {
@@ -132,10 +188,13 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
     };
   }, [localFilePreview]);
 
-  // Query work shifts for custom shift dropdown
+  // Query work shifts theo departmentId của user
   const { data: workShiftsData } = useQuery({
-    queryKey: ['work-shifts-list'],
-    queryFn: () => getWorkShifts({ limit: 100 }),
+    queryKey: ['work-shifts-list', userDepartmentId],
+    queryFn: () => {
+      if (!userDepartmentId) return [];
+      return getWorkShifts({ limit: 100, departmentId: userDepartmentId });
+    },
     enabled: isCreateModalOpen || isDetailModalOpen || isEditing,
   });
 
@@ -146,6 +205,16 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
       label: `${shift.name} (${shift.startTime || shift.start_time || ''} - ${shift.endTime || shift.end_time || ''})`,
     }));
   }, [workShiftsData]);
+
+  // Tự động reset formWorkShiftId nếu ca đã chọn không nằm trong danh sách ca hợp lệ của user
+  useEffect(() => {
+    if (formWorkShiftId && workShiftOptions.length > 0) {
+      const exists = workShiftOptions.some((opt: { value: string; }) => opt.value === String(formWorkShiftId));
+      if (!exists) {
+        setFormWorkShiftId(null);
+      }
+    }
+  }, [userDepartmentId, workShiftOptions, formWorkShiftId, setFormWorkShiftId]);
 
   // Calculate total days preview
   const calculatedDays = useMemo(() => {
@@ -267,8 +336,11 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
   // Create Mutation
   const createMutation = useMutation({
     mutationFn: async () => {
+      const targetUserId = isManager ? formUserId || currentUserId : currentUserId;
       return createLeaveRequest(
         {
+          userId: targetUserId,
+          user_id: targetUserId,
           leaveType: formLeaveType,
           durationType: formDurationType,
           workShiftId: formDurationType === DurationType.CUSTOM_SHIFT ? formWorkShiftId : null,
@@ -296,9 +368,12 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
   const updateMutation = useMutation({
     mutationFn: async () => {
       if (!selectedLeaveRequest) return;
+      const targetUserId = isManager ? formUserId || selectedLeaveRequest.userId : undefined;
       return updateLeaveRequest(
         String(selectedLeaveRequest.id),
         {
+          userId: targetUserId,
+          user_id: targetUserId,
           leaveType: formLeaveType,
           durationType: formDurationType,
           workShiftId: formDurationType === DurationType.CUSTOM_SHIFT ? formWorkShiftId : null,
@@ -328,14 +403,14 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
       return deleteLeaveRequest(String(id));
     },
     onSuccess: () => {
-      toast.success('Đã hủy đơn xin nghỉ phép!');
+      toast.success('Đã xóa đơn xin nghỉ phép!');
       queryClient.invalidateQueries({ queryKey: ['leave-requests'] });
       queryClient.invalidateQueries({ queryKey: ['leave-requests-stats'] });
       setIsDeleteConfirmOpen(false);
       setDetailModalOpen(false);
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || err.message || 'Không thể hủy đơn nghỉ phép.');
+      toast.error(err.response?.data?.message || err.message || 'Không thể xóa đơn nghỉ phép.');
     },
   });
 
@@ -389,6 +464,9 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
+    if (isManager && !formUserId && !currentUserId) {
+      errors.userId = 'Vui lòng chọn nhân viên làm đơn';
+    }
     if (!formReason.trim()) {
       errors.reason = 'Vui lòng nhập lý do xin nghỉ phép';
     }
@@ -426,6 +504,8 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
   // Sync form state when opening Detail mode
   useEffect(() => {
     if (selectedLeaveRequest && isDetailModalOpen && !isEditing) {
+      const uId = selectedLeaveRequest.userId || (selectedLeaveRequest.user?.id ? String(selectedLeaveRequest.user.id) : '');
+      setFormUserId(uId);
       setFormLeaveType(selectedLeaveRequest.leaveType);
       setFormDurationType(selectedLeaveRequest.durationType);
       const shiftId = selectedLeaveRequest.workShiftId ?? (selectedLeaveRequest as any).work_shift_id ?? null;
@@ -441,6 +521,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
     selectedLeaveRequest,
     isDetailModalOpen,
     isEditing,
+    setFormUserId,
     setFormLeaveType,
     setFormDurationType,
     setFormWorkShiftId,
@@ -463,12 +544,12 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
   const isFormLoading = createMutation.isPending || updateMutation.isPending;
 
   const isOwner = selectedLeaveRequest?.userId === currentUserId;
-  const canEdit = isOwner && selectedLeaveRequest?.status === LeaveRequestStatus.PENDING;
+  const canEdit = (isOwner || isManager) && selectedLeaveRequest?.status === LeaveRequestStatus.PENDING;
   const canDelete =
-    isOwner && (selectedLeaveRequest?.status === LeaveRequestStatus.PENDING || selectedLeaveRequest?.status === LeaveRequestStatus.CANCELLED);
+    (isOwner || isManager) &&
+    (selectedLeaveRequest?.status === LeaveRequestStatus.PENDING || selectedLeaveRequest?.status === LeaveRequestStatus.CANCELLED);
   const canReview = isManager && selectedLeaveRequest?.status === LeaveRequestStatus.PENDING;
 
-  const isOpen = isCreateModalOpen || isDetailModalOpen || isEditing;
   const mode = isCreateModalOpen ? 'create' : isEditing ? 'edit' : 'view';
 
   const modalTitle =
@@ -503,7 +584,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
             disabled={isFormLoading}
             leftIcon={<Trash2 className="w-4 h-4" />}
           >
-            Xóa đơn
+            Xóa
           </Button>
         )}
       </div>
@@ -527,7 +608,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
               Hủy
             </Button>
             <Button variant="primary" onClick={handleSubmitForm} loading={isFormLoading} disabled={isFormLoading}>
-              Lưu thay đổi
+              Lưu
             </Button>
           </>
         )}
@@ -601,6 +682,27 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
                       : '---'
                   }
                   disabled
+                  fullWidth
+                />
+              </div>
+            )}
+
+            {/* Create/Edit Mode: Chọn nhân viên làm đơn nếu là quản lý (admin, hr, super) */}
+            {mode !== 'view' && isManager && (
+              <div className="w-full">
+                <Select
+                  label="Nhân viên làm đơn"
+                  options={employeeOptions}
+                  value={formUserId || (currentUserId ? String(currentUserId) : '')}
+                  onChange={(e) => {
+                    setFormUserId(e.target.value);
+                    if (formErrors.userId) {
+                      setFormErrors((prev) => ({ ...prev, userId: '' }));
+                    }
+                  }}
+                  error={formErrors.userId}
+                  disabled={isFormLoading}
+                  required
                   fullWidth
                 />
               </div>
@@ -885,7 +987,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
         footer={
           <div className="flex items-center justify-end gap-3 w-full">
             <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)} disabled={deleteMutation.isPending}>
-              Hủy bỏ
+              Hủy
             </Button>
             <Button
               variant="primary"
@@ -898,14 +1000,12 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
               loading={deleteMutation.isPending}
               disabled={deleteMutation.isPending}
             >
-              Xác nhận xóa
+              Xác nhận
             </Button>
           </div>
         }
       >
-        <p className="text-sm text-slate-600">
-          Bạn có chắc chắn muốn xóa đơn nghỉ phép này? Hành động này không thể hoàn tác.
-        </p>
+        <p className="text-sm text-slate-600">Bạn có chắc chắn muốn xóa đơn nghỉ phép này? Hành động này không thể hoàn tác.</p>
       </Modal>
 
       {/* HR/ADMIN REVIEW MODAL */}

@@ -20,6 +20,7 @@ interface LeaveRequestState {
 
   // Form states (Create / Edit)
   isEditing: boolean;
+  formUserId: string;
   formLeaveType: LeaveType | string;
   formDurationType: DurationType | string;
   formWorkShiftId: string | null;
@@ -53,6 +54,7 @@ interface LeaveRequestState {
 
   // Form actions
   setIsEditing: (val: boolean) => void;
+  setFormUserId: (userId: string) => void;
   setFormLeaveType: (val: LeaveType | string) => void;
   setFormDurationType: (val: DurationType | string) => void;
   setFormWorkShiftId: (val: string | null) => void;
@@ -95,6 +97,7 @@ export const useLeaveRequestStore = create<LeaveRequestState>((set) => ({
 
   // Form state
   isEditing: false,
+  formUserId: '',
   formLeaveType: LeaveType.ANNUAL,
   formDurationType: DurationType.FULL_DAY,
   formWorkShiftId: null,
@@ -133,6 +136,7 @@ export const useLeaveRequestStore = create<LeaveRequestState>((set) => ({
     }),
 
   setIsEditing: (isEditing) => set({ isEditing }),
+  setFormUserId: (formUserId) => set({ formUserId }),
   setFormLeaveType: (formLeaveType) => set({ formLeaveType }),
   setFormDurationType: (formDurationType) => set({ formDurationType }),
   setFormWorkShiftId: (formWorkShiftId) => set({ formWorkShiftId }),
@@ -148,6 +152,7 @@ export const useLeaveRequestStore = create<LeaveRequestState>((set) => ({
   resetForm: () =>
     set({
       isEditing: false,
+      formUserId: '',
       formLeaveType: LeaveType.ANNUAL,
       formDurationType: DurationType.FULL_DAY,
       formWorkShiftId: null,
@@ -160,10 +165,12 @@ export const useLeaveRequestStore = create<LeaveRequestState>((set) => ({
     }),
   initEditForm: (request: LeaveRequest) => {
     const shiftId = request.workShiftId ?? (request as any).work_shift_id ?? null;
+    const uId = request.userId || (request.user?.id ? String(request.user.id) : '');
     set({
       isEditing: true,
       isDetailModalOpen: true,
       selectedLeaveRequest: request,
+      formUserId: uId,
       formLeaveType: request.leaveType,
       formDurationType: request.durationType,
       formWorkShiftId: shiftId ? String(shiftId) : null,
