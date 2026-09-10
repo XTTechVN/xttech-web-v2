@@ -211,12 +211,11 @@ export default function LeaveRequestTable({ isManager, currentUserId }: LeaveReq
     },
     {
       key: 'actions',
-      label: 'Thao tác',
-      minWidth: '110px',
+      label: 'Hành động',
+      minWidth: '160px',
       cell: (row: LeaveRequest) => {
-        const isOwner = row.userId === currentUserId;
-        const canEdit = isOwner && row.status === LeaveRequestStatus.PENDING;
-        const canDelete = isOwner && (row.status === LeaveRequestStatus.PENDING || row.status === LeaveRequestStatus.CANCELLED);
+        const isProcessed = row.status !== LeaveRequestStatus.PENDING;
+        const canDelete = isManager || row.userId === currentUserId;
 
         return (
           <TableAction
@@ -224,28 +223,37 @@ export default function LeaveRequestTable({ isManager, currentUserId }: LeaveReq
               {
                 title: 'Xem chi tiết',
                 icon: Eye,
-                size: 16,
+                size: 18,
                 onClick: () => handleViewDetails(row),
               },
-              canEdit && {
-                title: 'Chỉnh sửa',
+              {
+                title: isProcessed ? 'Đơn đã xử lý (Không thể sửa)' : 'Chỉnh sửa',
                 icon: Pencil,
-                size: 16,
+                size: 18,
+                disabled: isProcessed,
+                className: isProcessed
+                  ? 'text-gray-400 dark:text-gray-600 hover:text-gray-400 hover:bg-transparent cursor-not-allowed opacity-35 disabled:opacity-35'
+                  : undefined,
                 onClick: () => {
+                  if (isProcessed) return;
                   initEditForm(row);
                 },
               },
-              canDelete && {
-                title: 'Hủy đơn',
+              (canDelete || isProcessed) && {
+                title: isProcessed ? 'Đơn đã xử lý (Không thể xóa)' : 'Xóa',
                 icon: Trash2,
-                size: 16,
-                className: 'hover:text-red-600 hover:bg-red-50',
+                size: 18,
+                disabled: isProcessed,
+                className: isProcessed
+                  ? 'text-gray-400 dark:text-gray-600 hover:text-gray-400 hover:bg-transparent cursor-not-allowed opacity-35 disabled:opacity-35'
+                  : 'hover:text-red-600 hover:bg-red-50',
                 onClick: () => {
+                  if (isProcessed) return;
                   setSelectedLeaveRequest(row);
                   setIsDeleteConfirmOpen(true);
                 },
               },
-            ].filter(Boolean)}
+            ]}
           />
         );
       },
@@ -263,8 +271,8 @@ export default function LeaveRequestTable({ isManager, currentUserId }: LeaveReq
     const senderEmail = row.user?.email ? `(${row.user.email})` : '';
     const senderDisplayName = `${userName} ${senderEmail}`.trim();
     const isOwner = row.userId === currentUserId;
-    const canEdit = isOwner && row.status === LeaveRequestStatus.PENDING;
-    const canDelete = isOwner && (row.status === LeaveRequestStatus.PENDING || row.status === LeaveRequestStatus.CANCELLED);
+    const canEdit = (isOwner || isManager) && row.status === LeaveRequestStatus.PENDING;
+    const canDelete = (isOwner || isManager) && (row.status === LeaveRequestStatus.PENDING || row.status === LeaveRequestStatus.CANCELLED);
     const avatar = row.user?.avatar;
     const avatarSrc = avatar
       ? avatar.startsWith('http')

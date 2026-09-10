@@ -68,6 +68,8 @@ export interface LeaveRequestsQueryParams {
 
 // Dữ liệu tạo mới đơn xin nghỉ phép
 export interface LeaveRequestCreate {
+  userId?: string;
+  user_id?: string;
   leaveType: LeaveType | string;
   durationType: DurationType | string;
   workShiftId?: string | null;
@@ -79,6 +81,8 @@ export interface LeaveRequestCreate {
 
 // Dữ liệu cập nhật đơn xin nghỉ phép
 export interface LeaveRequestUpdate {
+  userId?: string;
+  user_id?: string;
   leaveType?: LeaveType | string;
   durationType?: DurationType | string;
   workShiftId?: string | null;
