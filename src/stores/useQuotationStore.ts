@@ -86,6 +86,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
           height: door.height || 0,
           quantity: door.quantity || 1,
           initPrice: door.initPrice !== undefined && door.initPrice !== null ? Number(door.initPrice) : undefined,
+          imagePath: door.imagePath || undefined,
           accessoryIds: door.accessoryIds || (door.accessories || []).map((a: any) => a.accessoryId),
           extraOptionIds: door.extraOptionIds || (door.extraOptions || []).map((o: any) => o.optionId),
           fomulas: door.fomulas || (door.formulas && door.formulas.length > 0
@@ -583,6 +584,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
                   ? undefined
                   : Number(door.initPrice)
                 : undefined,
+              imagePath: door.imagePath || undefined,
               accessories,
               extraOptions,
               extraOptionIds: door.extraOptionIds || [],

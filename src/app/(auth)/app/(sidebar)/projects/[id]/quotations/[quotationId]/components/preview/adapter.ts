@@ -61,6 +61,7 @@ export const adaptQuotationPreview = (data: QuotationDetail): PreviewFloor[] => 
             totalArea: door.totalArea ?? null,
             initPrice: door.initPrice ?? null,
             totalPrice: door.totalPrice ?? null,
+            imagePath: door.imagePath ?? null,
             accessories: (door.accessories || []).map((acc: QuotationAccessoryResponse) => ({
               accessoryId: acc.accessoryId,
               name: acc.name || '',
