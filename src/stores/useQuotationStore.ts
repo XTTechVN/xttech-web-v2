@@ -579,11 +579,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
               width: (door.width as any) === '' ? 0 : Number(door.width) || 0,
               height: (door.height as any) === '' ? 0 : Number(door.height) || 0,
               quantity: (door.quantity as any) === '' ? 1 : Number(door.quantity) || 1,
-              initPrice: isSetUnit
-                ? (door.initPrice as any) === '' || door.initPrice === undefined || door.initPrice === null
-                  ? undefined
-                  : Number(door.initPrice)
-                : undefined,
+              initPrice: isSetUnit ? null : undefined,
               imagePath: door.imagePath || undefined,
               accessories,
               extraOptions,

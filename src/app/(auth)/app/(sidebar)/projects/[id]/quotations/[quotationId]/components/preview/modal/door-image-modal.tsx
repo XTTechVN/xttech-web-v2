@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Modal, Button } from '@/components';
+import { createPortal } from 'react-dom';
 import { getDoor } from '@/actions';
 import { BASE_MINIO_URL } from '@/config/app';
 import type { Door, DoorImage } from '@/types';
-import { Loader2, Check } from 'lucide-react';
+import { Loader2, Check, X, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface DoorImageSelectModalProps {
   isOpen: boolean;
@@ -26,10 +27,40 @@ export const DoorImageSelectModal: React.FC<DoorImageSelectModalProps> = ({
 }) => {
   const [doorDetail, setDoorDetail] = useState<Door | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Khóa cuộn trang khi Modal mở
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  // Đóng khi nhấn phím Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (!isOpen || !doorId) {
       setDoorDetail(null);
+      setSelectedPath(null);
       return;
     }
 
@@ -40,6 +71,8 @@ export const DoorImageSelectModal: React.FC<DoorImageSelectModalProps> = ({
       .then((data) => {
         if (isMounted) {
           setDoorDetail(data);
+          const primaryImg = data?.images?.find((img) => img.isPrimary)?.imagePath || data?.imagePath;
+          setSelectedPath(currentImagePath || primaryImg || null);
         }
       })
       .catch((err) => {
@@ -54,7 +87,7 @@ export const DoorImageSelectModal: React.FC<DoorImageSelectModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, doorId]);
+  }, [isOpen, doorId, currentImagePath]);
 
   // Gom danh sách ảnh của cửa
   const images: Array<{ path: string; name?: string | null; isPrimary?: boolean }> = [];
@@ -75,86 +108,150 @@ export const DoorImageSelectModal: React.FC<DoorImageSelectModalProps> = ({
     });
   }
 
-  const handleSelect = (path: string) => {
-    onSelectImage(path);
+  // Active path hiện tại
+  const activeImage = images.find((img) => img.path === selectedPath) || images[0];
+  const activeFullUrl = activeImage?.path
+    ? (activeImage.path.startsWith('http') ? activeImage.path : `${BASE_MINIO_URL}${activeImage.path}`)
+    : null;
+
+  const handleApply = () => {
+    if (activeImage?.path) {
+      onSelectImage(activeImage.path);
+    }
     onClose();
   };
 
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={`Chọn ảnh cho ${doorName}`}
-      className="max-w-lg w-full"
-    >
-      <div className="py-2">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-2 text-slate-500">
-            <Loader2 className="w-7 h-7 text-primary animate-spin" />
-            <span className="text-xs">Đang tải danh sách ảnh...</span>
-          </div>
-        ) : images.length === 0 ? (
-          <div className="py-10 text-center text-slate-400 text-xs italic">
-            Mẫu cửa này chưa có hình ảnh nào trong thư viện
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <span className="text-xs text-slate-500">
-              Nhấn vào một ảnh để chọn làm ảnh hiển thị cho cửa này trong báo giá:
-            </span>
-            <div className="grid grid-cols-3 gap-3 max-h-80 overflow-y-auto p-1">
-              {images.map((img, idx) => {
-                const isSelected =
-                  currentImagePath === img.path ||
-                  (!currentImagePath && img.isPrimary);
-                const fullUrl = img.path.startsWith('http')
-                  ? img.path
-                  : `${BASE_MINIO_URL}${img.path}`;
+  if (!mounted) return null;
 
-                return (
-                  <div
-                    key={`${img.path}-${idx}`}
-                    onClick={() => handleSelect(img.path)}
-                    className={`relative aspect-square rounded-xl border-2 overflow-hidden cursor-pointer group transition-all ${
-                      isSelected
-                        ? 'border-primary ring-2 ring-primary/30 shadow-sm'
-                        : 'border-slate-200 hover:border-slate-400 opacity-85 hover:opacity-100'
-                    }`}
-                  >
-                    <img
-                      src={fullUrl}
-                      alt={img.name || `Ảnh ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+  return createPortal(
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          className="fixed inset-0 z-50 flex flex-col justify-between select-none"
+        >
+          {/* 1. OVERLAY MỜ TỐI GIẢN (MINIMALISTIC BACKDROP) */}
+          <div
+            onClick={onClose}
+            className="absolute inset-0 bg-black/45 backdrop-blur-xs transition-all cursor-pointer"
+          />
 
-                    {img.isPrimary && (
-                      <div className="absolute top-1.5 left-1.5 bg-primary text-white text-[9px] px-1.5 py-0.5 rounded font-medium shadow-xs">
-                        Gốc
-                      </div>
-                    )}
+          {/* 2. THANH TIÊU ĐỀ TRÊN CÙNG (TRONG SUỐT, TỐI GIẢN) */}
+          <div className="relative z-10 w-full flex items-center justify-between px-6 py-5 text-white">
+            <h3 className="text-lg font-bold text-white tracking-wide drop-shadow-sm">{doorName}</h3>
 
-                    {isSelected && (
-                      <div className="absolute top-1.5 right-1.5 bg-primary text-white p-0.5 rounded-full shadow-xs">
-                        <Check size={12} strokeWidth={3} />
-                      </div>
-                    )}
-
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-1.5 pt-4 text-white text-[10px] text-center font-medium truncate">
-                      {isSelected ? 'Đang chọn' : 'Chọn ảnh này'}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleApply}
+                disabled={!activeImage?.path || loading}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary hover:bg-primary-dark active:scale-95 text-white text-xs font-semibold shadow-lg shadow-primary/30 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <CheckCircle2 size={15} />
+                <span>Xác nhận</span>
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 text-white/80 hover:text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-xs"
+                title="Đóng (Esc)"
+              >
+                <X size={18} />
+              </button>
             </div>
           </div>
-        )}
 
-        <div className="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
-          <Button variant="outline" size="sm" onClick={onClose}>
-            Đóng
-          </Button>
-        </div>
-      </div>
-    </Modal>
+          {/* 3. KHU VỰC ẢNH CHÍNH Ở GIỮA MÀN HÌNH */}
+          <div className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-8 min-h-0 pointer-events-none">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center gap-3 text-white/80">
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+              </div>
+            ) : images.length === 0 ? (
+              <div className="text-center text-white/50 text-sm italic">
+                Mẫu cửa này chưa có hình ảnh nào trong thư viện
+              </div>
+            ) : (
+              <AnimatePresence mode="wait">
+                {activeFullUrl && (
+                  <motion.div
+                    key={activeImage?.path}
+                    initial={{ opacity: 0, y: 70, scale: 0.85 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -40, scale: 0.92 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 300,
+                      damping: 26,
+                      mass: 0.7,
+                    }}
+                    className="relative max-w-2xl max-h-[62vh] sm:max-h-[68vh] flex items-center justify-center pointer-events-auto"
+                  >
+                    <img
+                      src={activeFullUrl}
+                      alt="Ảnh chính"
+                      className="max-w-full max-h-[62vh] sm:max-h-[68vh] object-contain rounded-2xl shadow-2xl drop-shadow-[0_25px_35px_rgba(0,0,0,0.6)] select-none"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
+          </div>
+
+          {/* 4. DÃY ẢNH CON SÁT CHÂN MÀN HÌNH (KHÔNG CÓ KHUNG NỀN ĐEN) */}
+          {images.length > 0 && (
+            <div className="relative z-10 w-full flex items-center justify-center pb-6 pt-2 px-4">
+              <div className="flex items-center justify-center gap-3 overflow-x-auto py-2 px-2 scrollbar-none max-w-full">
+                {images.map((img, idx) => {
+                  const isSelected = activeImage?.path === img.path;
+                  const thumbUrl = img.path.startsWith('http')
+                    ? img.path
+                    : `${BASE_MINIO_URL}${img.path}`;
+
+                  return (
+                    <motion.button
+                      type="button"
+                      key={`${img.path}-${idx}`}
+                      whileHover={{ scale: 1.12, y: -4 }}
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => setSelectedPath(img.path)}
+                      className={`relative shrink-0 w-16 h-16 sm:w-18 sm:h-18 rounded-xl overflow-hidden transition-all cursor-pointer shadow-lg ${
+                        isSelected
+                          ? 'ring-2.5 ring-primary ring-offset-2 ring-offset-black/80 shadow-primary/40 scale-105'
+                          : 'opacity-40 hover:opacity-100 ring-1 ring-white/20'
+                      }`}
+                    >
+                      <img
+                        src={thumbUrl}
+                        alt={`Ảnh ${idx + 1}`}
+                        className="w-full h-full object-cover select-none"
+                      />
+
+                      {img.isPrimary && (
+                        <div className="absolute top-1 left-1 bg-primary text-white text-[8px] font-bold px-1.5 py-0.2 rounded shadow-xs">
+                          Gốc
+                        </div>
+                      )}
+
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                          <div className="bg-primary text-white p-1 rounded-full shadow-md">
+                            <Check size={12} strokeWidth={3} />
+                          </div>
+                        </div>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 };
