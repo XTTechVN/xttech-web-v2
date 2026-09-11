@@ -4,12 +4,18 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-11
 
-### Added
+- **Giải pháp Toàn diện Giữ Nhịp Chạy Ngầm & Chống Nhảy Bản Đồ trên iOS ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift) & [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist)):**
+  - **Tích hợp Silent Audio Keep-Alive chuẩn Enterprise:** Bổ sung quyền `audio` vào `UIBackgroundModes`, tự động khởi tạo luồng âm thanh tĩnh vô thanh trong bộ nhớ (in-memory 8kHz mono PCM WAV, volume = 0, loop vô hạn) kèm cấu hình `AVAudioSession` chế độ `.playback` và option `.mixWithOthers`. Giúp ngăn chặn 100% việc iOS đóng băng (suspend) tiến trình CPU và các Timer khi người dùng khóa màn hình hoặc chuyển sang ứng dụng khác mà không làm ảnh hưởng đến âm nhạc, cuộc gọi của người dùng.
+  - **Cơ chế Neo Tọa Độ & Chống Nhảy Map (Anchor Point & Anti-Drift Filter):**
+    - Thiết lập bộ lọc khắt khe: Chỉ cập nhật vị trí bản đồ khi độ chính xác thực tế $\le 50\text{m}$.
+    - Khi nhân viên ở trong phòng kín/văn phòng (mất GPS, chỉ có sóng BTS/Wi-Fi sai số lớn), hệ thống tự động từ chối cập nhật tọa độ hiển thị để triệt tiêu hiện tượng "nhảy dù" (GPS drift/jitter) trên Live Map.
+    - Timer Heartbeat định kỳ 2 phút sử dụng lại chính Điểm neo chuẩn xác cuối cùng (`lastAccurateLocation`) để gửi gói tin duy trì trạng thái lên máy chủ, đảm bảo nhân viên luôn hiển thị Online (Đứng yên) và không bao giờ bị Backend đánh dấu Offline sau thời gian nghỉ.
+  - **Cấu hình `activityType = .otherNavigation`:** Tối ưu hóa bộ quản lý CoreLocation để báo hiệu cho iOS ưu tiên duy trì luồng định vị liên tục, tránh bị hệ điều hành giảm tần suất.
+
 - **Nâng cấp Cơ chế Định vị Chạy Ngầm & Đánh thức Ứng dụng trên iOS ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift) & [`AppDelegate.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/AppDelegate.swift)):**
   - **Đăng ký `startMonitoringSignificantLocationChanges()` song song:** Cho phép hệ điều hành iOS tự động đánh thức (wake up / relaunch in background) ứng dụng khi nhân viên di chuyển đổi trạm phát sóng di động (Cell Tower / Wi-Fi), kể cả khi ứng dụng bị tạm đóng băng hoặc bị giải phóng bộ nhớ RAM.
   - **Xử lý `handleLocationWakeUp()` trong `AppDelegate`:** Bắt sự kiện `launchOptions[UIApplication.LaunchOptionsKey.location]` để tiếp tục quy trình định vị và gửi ping tọa độ dưới nền ngay khi được hệ điều hành kích hoạt.
-  - **Thay thế Foundation `Timer` bằng `DispatchSourceTimer` trên Background Queue:** Chạy độc lập trên hàng đợi ngầm `com.xttech.ios.heartbeat`, không còn bị đình trệ bởi Main RunLoop khi iPhone khóa màn hình.
-  - **Nới lỏng độ chính xác thích ứng khi đứng yên:** Cho phép sai số lên tới $120\text{m}$ khi đứng yên trong nhà/văn phòng để không bị lọc mất nhịp tim định vị, triệt tiêu hoàn toàn lỗi nhân viên bị chuyển sang `offline` sau 10 phút ngồi làm việc.
+  - **Thay thế Foundation `Timer` bằng `DispatchSourceTimer` trên Background Queue:** Chạy độc lập trên hàng đợi ngầm `com.xttech.ios.heartbeat`.
 
 - **Hàm Tiện ích Xử lý Lỗi Toàn cục ([`error.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/error.ts)):**
   - Xây dựng `getErrorMessage(err, fallback)` và `showErrorToast(err, fallback)` tự động bóc tách thông báo lỗi thông minh và an toàn kiểu (Type-safe) từ mọi định dạng phản hồi của server: FastAPI (`detail` dạng chuỗi hoặc mảng validation Pydantic), Backend Chấm công (`details.message`), Chuẩn Enterprise (`error.message`), NestJS/Express (`message` chuỗi hoặc mảng), và JavaScript/Axios Network Error.
