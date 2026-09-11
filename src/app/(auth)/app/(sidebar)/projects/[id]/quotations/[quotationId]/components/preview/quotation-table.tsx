@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Material, Door, PreviewFloor } from '@/types';
 import { BASE_MINIO_URL } from '@/config/app';
 import { PREVIEW_TABLE_FONT_SIZE } from './config';
 import { readVietnameseNumber } from '../editor/utils';
+import { DoorImageSelectModal } from './modal/door-image-modal';
+import { useQuotationStore } from '@/stores';
 
 interface QuotationTableProps {
   floors: PreviewFloor[];
@@ -60,6 +62,21 @@ export const QuotationTable = ({
   totalQuantity,
   totalArea,
 }: QuotationTableProps) => {
+  const store = useQuotationStore();
+  const [selectedDoorForImage, setSelectedDoorForImage] = useState<{
+    fIndex: number;
+    mIndex: number;
+    dIndex: number;
+    doorId: number;
+    doorName: string;
+    currentImagePath?: string | null;
+  } | null>(null);
+
+  const handleSelectImageForDoor = (imagePath: string) => {
+    if (!selectedDoorForImage) return;
+    const { fIndex, mIndex, dIndex } = selectedDoorForImage;
+    store.updateDoor(fIndex, mIndex, dIndex, 'imagePath', imagePath);
+  };
   return (
     <div className="overflow-x-auto">
       <table className={`w-full min-w-200 border-collapse border border-gray-400 ${PREVIEW_TABLE_FONT_SIZE} font-normal not-italic`}>
@@ -185,7 +202,8 @@ export const QuotationTable = ({
                             const selectedDoor = doorsList.find((d) => d.id === door.doorId);
                             const doorName = selectedDoor ? selectedDoor.name : `Cửa (ID: ${door.doorId})`;
                             const currentTT = itemCounter++;
-                            const doorImgUrl = selectedDoor?.imagePath ? `${BASE_MINIO_URL}${selectedDoor.imagePath}` : null;
+                            const finalDoorImgPath = door.imagePath || selectedDoor?.imagePath;
+                            const doorImgUrl = finalDoorImgPath ? `${BASE_MINIO_URL}${finalDoorImgPath}` : null;
 
                             // Lọc: chỉ hiện những phụ kiện/tùy chọn/công thức KHÔNG chung
                             const doorAccessories = (door.accessories || []).filter((acc) => !commonAccessoryIds.has(acc.accessoryId));
@@ -197,11 +215,28 @@ export const QuotationTable = ({
                                 {/* Door Main Row */}
                                 <tr className="hover:bg-gray-50">
                                   <td className="border border-gray-400 py-1 px-1 text-center font-medium">{currentTT}</td>
-                                  <td className="border border-gray-400 py-1 px-1 text-center">
+                                  <td
+                                    className="border border-gray-400 py-1 px-1 text-center cursor-pointer hover:bg-primary/10 transition-colors group relative"
+                                    title="Nhấn để đổi ảnh hiển thị cho cửa này"
+                                    onClick={() =>
+                                      setSelectedDoorForImage({
+                                        fIndex,
+                                        mIndex,
+                                        dIndex,
+                                        doorId: door.doorId,
+                                        doorName,
+                                        currentImagePath: finalDoorImgPath,
+                                      })
+                                    }
+                                  >
                                     {doorImgUrl ? (
-                                      <img src={doorImgUrl} alt={doorName} className="w-10 h-10 object-contain mx-auto" />
+                                      <img
+                                        src={doorImgUrl}
+                                        alt={doorName}
+                                        className="w-10 h-10 object-contain mx-auto group-hover:scale-105 transition-transform"
+                                      />
                                     ) : (
-                                      <span className="text-gray-400">img</span>
+                                      <span className="text-gray-400 text-xs underline group-hover:text-primary">chọn ảnh</span>
                                     )}
                                   </td>
                                   <td className="border border-gray-400 py-1 px-2 text-center">{door.code || ''}</td>
@@ -428,6 +463,16 @@ export const QuotationTable = ({
           )}
         </tbody>
       </table>
+
+      {/* Modal chọn ảnh cho cửa */}
+      <DoorImageSelectModal
+        isOpen={!!selectedDoorForImage}
+        onClose={() => setSelectedDoorForImage(null)}
+        doorId={selectedDoorForImage?.doorId}
+        doorName={selectedDoorForImage?.doorName}
+        currentImagePath={selectedDoorForImage?.currentImagePath}
+        onSelectImage={handleSelectImageForDoor}
+      />
     </div>
   );
 };

@@ -86,6 +86,7 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
           height: door.height || 0,
           quantity: door.quantity || 1,
           initPrice: door.initPrice !== undefined && door.initPrice !== null ? Number(door.initPrice) : undefined,
+          imagePath: door.imagePath || undefined,
           accessoryIds: door.accessoryIds || (door.accessories || []).map((a: any) => a.accessoryId),
           extraOptionIds: door.extraOptionIds || (door.extraOptions || []).map((o: any) => o.optionId),
           fomulas: door.fomulas || (door.formulas && door.formulas.length > 0
@@ -578,11 +579,8 @@ export const useQuotationStore = create<QuotationState>((set, get) => ({
               width: (door.width as any) === '' ? 0 : Number(door.width) || 0,
               height: (door.height as any) === '' ? 0 : Number(door.height) || 0,
               quantity: (door.quantity as any) === '' ? 1 : Number(door.quantity) || 1,
-              initPrice: isSetUnit
-                ? (door.initPrice as any) === '' || door.initPrice === undefined || door.initPrice === null
-                  ? undefined
-                  : Number(door.initPrice)
-                : undefined,
+              initPrice: isSetUnit ? null : undefined,
+              imagePath: door.imagePath || undefined,
               accessories,
               extraOptions,
               extraOptionIds: door.extraOptionIds || [],

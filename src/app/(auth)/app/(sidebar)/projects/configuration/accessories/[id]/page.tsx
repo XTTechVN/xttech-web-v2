@@ -13,7 +13,7 @@ import {
   revokeAccessoryMaterials 
 } from '@/actions';
 import { Loader2, Edit, Image, Plus } from 'lucide-react';
-import { formatAccessoryUnit, formatMaterialUnit, formatDoorType } from '@/types';
+import { formatAccessoryUnit, formatMaterialUnit, formatDoorType, getAccessoryUnitConfig } from '@/types';
 import { Button } from '@/components';
 import { AccessoryUpdateModal } from '../_components/modals';
 import { AssignDoorsModal, AssignMaterialsModal } from '../_components/relation-modals';
@@ -185,10 +185,28 @@ export default function AccessoryDetailPage({ params }: AccessoryDetailPageProps
               <span className="font-semibold text-slate-500">Mã phụ kiện: </span>
               <span className="text-slate-800 font-medium">{accessory.code || '—'}</span>
             </div>
-          <div>
-            <span className="font-semibold text-slate-500">Đơn vị tính: </span>
-            <span className="text-slate-800 font-medium">{formatAccessoryUnit(accessory.unit) || '—'}</span>
-          </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-slate-500">Loại phụ kiện: </span>
+              {accessory.category?.name ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-200/70">
+                  {accessory.category.name} ({accessory.category.code})
+                </span>
+              ) : (
+                <span className="text-slate-800 font-medium">—</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-slate-500">Đơn vị tính: </span>
+              {accessory.unit ? (
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${getAccessoryUnitConfig(accessory.unit).className}`}
+                >
+                  {getAccessoryUnitConfig(accessory.unit).label}
+                </span>
+              ) : (
+                <span className="text-slate-800 font-medium">—</span>
+              )}
+            </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-b border-slate-100 py-3.5 my-1">
             <div>
               <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá vốn</span>

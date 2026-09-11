@@ -5,7 +5,7 @@ import { Columns, Plus, Pencil, Trash2 } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
 import { Heading, Button } from '@/components';
 import { useQueryParam } from '@/hooks';
-import { Door, formatDoorType } from '@/types';
+import { Door, formatDoorType, getDoorTypeConfig } from '@/types';
 import { getDoors } from '@/actions';
 import toast from 'react-hot-toast';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -22,7 +22,6 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const router = useRouter();
   const [search, setSearch] = useQueryParam('search');
 
-
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
     const res = await getDoors({ offset, limit, search: search || undefined });
     if (!res) {
@@ -35,33 +34,42 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const columns = [
     {
       key: 'image',
-      label: 'Ảnh minh họa',
-      minWidth: '50%',
-      cell: (row: Door) => (
-        <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
-          {row.imagePath ? (
-            <img
-              src={row.imagePath.startsWith('http') ? row.imagePath : `${BASE_MINIO_URL}${row.imagePath}`}
-              alt={row.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Columns className="w-5 h-5 text-gray-400" />
-          )}
-        </div>
-      ),
+      label: 'Ảnh',
+      minWidth: '100px',
+      cell: (row: Door) => {
+        const primaryImg = row.images?.find((img) => img.isPrimary)?.imagePath || row.imagePath;
+        return (
+          <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
+            {primaryImg ? (
+              <img
+                src={primaryImg.startsWith('http') ? primaryImg : `${BASE_MINIO_URL}${primaryImg}`}
+                alt={row.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Columns className="w-5 h-5 text-gray-400" />
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'code',
-      label: 'Mã sản phẩm',
+      label: 'Mã cửa',
       minWidth: '150px',
       cell: (row: Door) => <span className="text-gray-600 text-sm">{row.code || '—'}</span>,
     },
     {
       key: 'type',
       label: 'Phân loại',
-      minWidth: '150px',
-      cell: (row: Door) => <span className="text-gray-600 text-sm">{formatDoorType(row.type) || '—'}</span>,
+      minWidth: '80px',
+      cell: (row: Door) => {
+        if (!row.type) return <span className="text-gray-400 text-sm">—</span>;
+        const config = getDoorTypeConfig(row.type);
+        return (
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${config.className}`}>{config.label}</span>
+        );
+      },
     },
     {
       key: 'name',
@@ -91,6 +99,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
   // Cấu hình Card hiển thị trên thiết bị di động
   const renderCard = (row: Door, index: number) => {
+    const primaryImg = row.images?.find((img) => img.isPrimary)?.imagePath || row.imagePath;
     return (
       <div
         key={row.id || index}
@@ -99,9 +108,9 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       >
         <div className="flex items-start gap-3">
           <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0 mt-0.5">
-            {row.imagePath ? (
+            {primaryImg ? (
               <img
-                src={row.imagePath.startsWith('http') ? row.imagePath : `${BASE_MINIO_URL}/${row.imagePath}`}
+                src={primaryImg.startsWith('http') ? primaryImg : `${BASE_MINIO_URL}${primaryImg}`}
                 alt={row.name}
                 className="w-full h-full object-cover"
               />
@@ -113,8 +122,13 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className="text-xs text-gray-400 font-medium">Code: {row.code || '—'}</span>
-              {row.type && <span className="text-xs text-gray-350 select-none">•</span>}
-              {row.type && <span className="text-xs text-gray-500">{formatDoorType(row.type)}</span>}
+              {row.type && (
+                <span
+                  className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold border ${getDoorTypeConfig(row.type).className}`}
+                >
+                  {getDoorTypeConfig(row.type).label}
+                </span>
+              )}
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { getDoor, getDoorAccessories, assignDoorAccessories, revokeDoorAccessories } from '@/actions';
 import { Loader2, Edit, Image, Plus } from 'lucide-react';
-import { formatDoorType, formatAccessoryUnit } from '@/types';
+import { formatDoorType, formatAccessoryUnit, getDoorTypeConfig } from '@/types';
 import { Button } from '@/components';
 import { DoorUpdateModal } from '../_components/modals';
 import { AssignDoorAccessoriesModal } from '../_components/relation-modals';
@@ -127,7 +127,17 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
         <div className="w-full md:w-72 flex flex-col gap-2 shrink-0">
           <span className="text-xs text-primary font-semibold select-none">Hình ảnh minh họa</span>
           <div className="w-full aspect-square md:h-64 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center">
-            {door.imagePath ? (
+            {door.images && door.images.length > 0 ? (
+              <img
+                src={
+                  (door.images.find((img) => img.isPrimary)?.imagePath || door.images[0].imagePath).startsWith('http')
+                    ? door.images.find((img) => img.isPrimary)?.imagePath || door.images[0].imagePath
+                    : `${BASE_MINIO_URL}${door.images.find((img) => img.isPrimary)?.imagePath || door.images[0].imagePath}`
+                }
+                alt={door.name}
+                className="w-full h-full object-cover"
+              />
+            ) : door.imagePath ? (
               <img
                 src={door.imagePath.startsWith('http') ? door.imagePath : `${BASE_MINIO_URL}${door.imagePath}`}
                 alt={door.name}
@@ -140,6 +150,24 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
               </div>
             )}
           </div>
+          {door.images && door.images.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto py-1">
+              {door.images.map((img) => (
+                <div
+                  key={img.id}
+                  className={`w-12 h-12 rounded-lg border overflow-hidden shrink-0 ${
+                    img.isPrimary ? 'border-primary ring-2 ring-primary/20' : 'border-slate-200 opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={img.imagePath.startsWith('http') ? img.imagePath : `${BASE_MINIO_URL}${img.imagePath}`}
+                    alt={img.name || door.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Side Text */}
@@ -150,9 +178,17 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
               <span className="font-semibold text-slate-500">Mã cửa: </span>
               <span className="text-slate-800 font-medium">{door.code || '—'}</span>
             </div>
-            <div>
+            <div className="flex items-center gap-2">
               <span className="font-semibold text-slate-500">Phân loại: </span>
-              <span className="text-slate-800 font-medium">{formatDoorType(door.type) || '—'}</span>
+              {door.type ? (
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${getDoorTypeConfig(door.type).className}`}
+                >
+                  {getDoorTypeConfig(door.type).label}
+                </span>
+              ) : (
+                <span className="text-slate-800 font-medium">—</span>
+              )}
             </div>
             <div className="flex flex-col gap-1 mt-1 border-t border-slate-100 pt-3">
               <span className="font-semibold text-slate-500">Thông số kỹ thuật:</span>

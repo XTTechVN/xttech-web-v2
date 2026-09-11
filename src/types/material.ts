@@ -1,12 +1,48 @@
+export interface MaterialUnitConfig {
+  label: string;
+  className: string;
+}
+
+export const MATERIAL_UNIT_CONFIG: Record<string, MaterialUnitConfig> = {
+  set: {
+    label: 'Bộ',
+    className: 'bg-teal-50 text-teal-700 border-teal-200/70',
+  },
+  area: {
+    label: 'm²',
+    className: 'bg-indigo-50 text-indigo-700 border-indigo-200/70',
+  },
+  m2: {
+    label: 'm²',
+    className: 'bg-indigo-50 text-indigo-700 border-indigo-200/70',
+  },
+};
+
 export const MATERIAL_UNIT_MAP: Record<string, string> = {
   set: 'Bộ',
-  area: 'Diện tích (m²)',
+  area: 'm²',
   m2: 'm²',
+};
+
+export const getMaterialUnitConfig = (unit: string | null | undefined): MaterialUnitConfig => {
+  if (!unit) {
+    return {
+      label: '—',
+      className: 'bg-gray-100 text-gray-500 border-gray-200',
+    };
+  }
+  const key = unit.toLowerCase().trim();
+  return (
+    MATERIAL_UNIT_CONFIG[key] || {
+      label: unit,
+      className: 'bg-gray-100 text-gray-700 border-gray-200',
+    }
+  );
 };
 
 export const formatMaterialUnit = (unit: string | null | undefined): string => {
   if (!unit) return '';
-  return MATERIAL_UNIT_MAP[unit.toLowerCase()] || unit;
+  return getMaterialUnitConfig(unit).label;
 };
 
 export interface MaterialPrice {

@@ -126,18 +126,7 @@ const Page = () => {
         }}
         title="Sửa thiết kế cửa"
         submitText="Xác nhận lưu"
-        initialData={
-          selectedDoor
-            ? {
-                id: selectedDoor.id,
-                name: selectedDoor.name,
-                type: selectedDoor.type,
-                code: selectedDoor.code,
-                imagePath: selectedDoor.imagePath,
-                specification: selectedDoor.specification,
-              }
-            : undefined
-        }
+        initialData={selectedDoor || undefined}
       />
 
       <DoorDeleteModal

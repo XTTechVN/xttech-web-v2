@@ -17,7 +17,7 @@ import {
 } from '@/actions';
 import { Loader2, Edit, Plus } from 'lucide-react';
 import { formatCurrency } from '@/utils';
-import { formatMaterialUnit, EXTRA_OPTION_UNIT_MAP, type ExtraOptionUnit, formatAccessoryUnit } from '@/types';
+import { formatMaterialUnit, getMaterialUnitConfig, EXTRA_OPTION_UNIT_MAP, type ExtraOptionUnit, formatAccessoryUnit } from '@/types';
 import { Button } from '@/components';
 import { MaterialUpdateModal } from '../_components/modals';
 import {
@@ -219,16 +219,20 @@ export default function MaterialDetailPage({ params }: MaterialDetailPageProps) 
             <span className="font-semibold text-slate-500">Mã hệ nhôm: </span>
             <span className="text-slate-800 font-medium">{material.code || '—'}</span>
           </div>
-          <div>
+          <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-500">Đơn vị tính: </span>
-            <span className="text-slate-800 font-medium">{formatMaterialUnit(material.unit) || '—'}</span>
+            {material.unit ? (
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${getMaterialUnitConfig(material.unit).className}`}
+              >
+                {getMaterialUnitConfig(material.unit).label}
+              </span>
+            ) : (
+              <span className="text-slate-800 font-medium">—</span>
+            )}
           </div>
           {material.unit !== 'set' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-b border-slate-100 py-3.5 my-1">
-              <div>
-                <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá vốn</span>
-                <span className="text-slate-700 font-semibold">{formatCurrency(material.costPrice)}</span>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-b border-slate-100 py-3.5 my-1">
               <div>
                 <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá bán lẻ</span>
                 <span className="text-primary font-bold">{formatCurrency(material.retailPrice)}</span>

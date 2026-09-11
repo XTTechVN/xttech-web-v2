@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Settings, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Settings, Plus, Pencil, Trash2, FolderTree } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
 import { Heading, Button } from '@/components';
 import { useQueryParam } from '@/hooks';
-import { Accessory, formatAccessoryUnit } from '@/types';
+import { Accessory, formatAccessoryUnit, getAccessoryUnitConfig } from '@/types';
 import { getAccessories } from '@/actions';
 import toast from 'react-hot-toast';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -17,12 +17,12 @@ interface TableProps {
   onEditClick: (accessory: Accessory) => void;
   onDeleteClick: (accessory: Accessory) => void;
   onAddClick: () => void;
+  onCategoryClick?: () => void;
 }
 
-const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
+const Table = ({ onEditClick, onDeleteClick, onAddClick, onCategoryClick }: TableProps) => {
   const router = useRouter();
   const [search, setSearch] = useQueryParam('search');
-
 
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
     const res = await getAccessories({ offset, limit, search: search || undefined });
@@ -36,10 +36,11 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
   const columns = [
     {
       key: 'image',
-      label: 'Ảnh minh họa',
-      minWidth: '100px',
+      label: 'Ảnh',
+      minWidth: '68px',
+      maxWidth: '68px',
       cell: (row: Accessory) => (
-        <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0">
           {row.imagePath ? (
             <img
               src={row.imagePath.startsWith('http') ? row.imagePath : `${BASE_MINIO_URL}${row.imagePath}`}
@@ -47,7 +48,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
               className="w-full h-full object-cover"
             />
           ) : (
-            <Settings className="w-5 h-5 text-gray-400" />
+            <Settings className="w-4 h-4 text-gray-400" />
           )}
         </div>
       ),
@@ -55,58 +56,58 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
     {
       key: 'code',
       label: 'Mã phụ kiện',
-      minWidth: '150px',
-      cell: (row: Accessory) => <span className="font-semibold text-gray-900">{row.code || '—'}</span>,
+      minWidth: '110px',
+      maxWidth: '130px',
+      cell: (row: Accessory) => (
+        <span className="font-semibold text-gray-900 truncate block" title={row.code || undefined}>
+          {row.code || '—'}
+        </span>
+      ),
     },
     {
       key: 'name',
       label: 'Tên phụ kiện',
-      minWidth: '200px',
+      minWidth: '240px',
       cell: (row: Accessory) => (
-        <span className="font-medium text-gray-700">{row.name}</span>
+        <div className="flex items-center gap-2 max-w-md" title={row.name}>
+          {row.category && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-200/70 shrink-0">
+              {row.category.name}
+            </span>
+          )}
+          <span className="font-medium text-gray-700 line-clamp-2 leading-snug">
+            {row.name}
+          </span>
+        </div>
       ),
-    },
-    {
-      key: 'specification',
-      label: 'Thông số kỹ thuật',
-      minWidth: '200px',
-      cell: (row: Accessory) => <span className="text-gray-500 text-sm truncate max-w-50 block">{row.specification || '—'}</span>,
     },
     {
       key: 'unit',
       label: 'ĐVT',
       minWidth: '100px',
-      cell: (row: Accessory) => <span className="text-gray-600 text-sm">{formatAccessoryUnit(row.unit) || '—'}</span>,
-    },
-    {
-      key: 'costPrice',
-      label: 'Giá vốn',
-      minWidth: '110px',
-      cell: (row: Accessory) => (
-        <span className="text-gray-500 font-medium">
-          {formatCurrency(row.costPrice)}
-        </span>
-      ),
+      cell: (row: Accessory) => {
+        if (!row.unit) return <span className="text-gray-400 text-sm">—</span>;
+        const config = getAccessoryUnitConfig(row.unit);
+        return (
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${config.className}`}
+          >
+            {config.label}
+          </span>
+        );
+      },
     },
     {
       key: 'retailPrice',
       label: 'Giá bán lẻ',
       minWidth: '110px',
-      cell: (row: Accessory) => (
-        <span className="text-gray-900 font-semibold text-primary">
-          {formatCurrency(row.retailPrice)}
-        </span>
-      ),
+      cell: (row: Accessory) => <span className="text-gray-900 font-semibold text-primary">{formatCurrency(row.retailPrice)}</span>,
     },
     {
       key: 'salePrice',
       label: 'Giá đại lý',
       minWidth: '110px',
-      cell: (row: Accessory) => (
-        <span className="text-gray-900 font-semibold text-teal-650">
-          {formatCurrency(row.salePrice)}
-        </span>
-      ),
+      cell: (row: Accessory) => <span className="text-gray-900 font-semibold text-teal-650">{formatCurrency(row.salePrice)}</span>,
     },
     {
       key: 'actions',
@@ -142,16 +143,30 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             )}
           </div>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {row.category && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-200/70 shrink-0">
+                  {row.category.name}
+                </span>
+              )}
+              <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
+            </div>
             <div className="flex flex-col gap-0.5 mt-1 text-xs text-gray-500">
               <div className="flex gap-2 flex-wrap">
-                <span>Vốn: {formatCurrency(row.costPrice)}</span>
-                <span>•</span>
                 <span>Lẻ: {formatCurrency(row.retailPrice)}</span>
                 <span>•</span>
                 <span>Sỉ: {formatCurrency(row.salePrice)}</span>
               </div>
-              {row.unit && <span className="mt-0.5">ĐVT: {formatAccessoryUnit(row.unit)}</span>}
+              {row.unit && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-[11px] text-gray-400">ĐVT:</span>
+                  <span
+                    className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold border ${getAccessoryUnitConfig(row.unit).className}`}
+                  >
+                    {getAccessoryUnitConfig(row.unit).label}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -179,7 +194,17 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end items-center w-full pr-2">
+      <div className="flex justify-end items-center gap-2 w-full pr-2">
+        {onCategoryClick && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2.5 text-xs md:h-9 md:px-3 md:text-sm shrink-0 border-gray-300 text-gray-700 hover:bg-gray-50"
+            onClick={onCategoryClick}
+          >
+            Loại phụ kiện
+          </Button>
+        )}
         <Button
           variant="primary"
           size="sm"

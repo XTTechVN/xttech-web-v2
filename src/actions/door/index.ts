@@ -42,12 +42,21 @@ export const getDoor = async (id: number): Promise<Door> => {
   }
 };
 
-export const createDoor = async (payload: { data: DoorCreate; file?: File }): Promise<Door> => {
+export const createDoor = async (payload: {
+  data: DoorCreate;
+  file?: File;
+  files?: File[];
+}): Promise<Door> => {
   try {
     const formData = new FormData();
     formData.append('data', JSON.stringify(payload.data));
     if (payload.file) {
       formData.append('file', payload.file);
+    }
+    if (payload.files && payload.files.length > 0) {
+      payload.files.forEach((file) => {
+        formData.append('files', file);
+      });
     }
     const response = await api.post('/api/v1/doors', formData, {
       headers: {
@@ -63,13 +72,26 @@ export const createDoor = async (payload: { data: DoorCreate; file?: File }): Pr
 
 export const updateDoor = async (
   id: number,
-  payload: { data: DoorUpdate; file?: File },
+  payload: {
+    data: DoorUpdate;
+    file?: File;
+    files?: File[];
+    deletedImageIds?: number[];
+  },
 ): Promise<Door> => {
   try {
     const formData = new FormData();
     formData.append('data', JSON.stringify(payload.data));
     if (payload.file) {
       formData.append('file', payload.file);
+    }
+    if (payload.files && payload.files.length > 0) {
+      payload.files.forEach((file) => {
+        formData.append('files', file);
+      });
+    }
+    if (payload.deletedImageIds && payload.deletedImageIds.length > 0) {
+      formData.append('deleted_image_ids', JSON.stringify(payload.deletedImageIds));
     }
     const response = await api.put(`/api/v1/doors/${id}`, formData, {
       headers: {
@@ -79,6 +101,24 @@ export const updateDoor = async (
     return response.data;
   } catch (error: unknown) {
     console.warn('API error updateDoor', error);
+    throw error;
+  }
+};
+
+export const setPrimaryDoorImage = async (doorId: number, imageId: number): Promise<void> => {
+  try {
+    await api.patch(`/api/v1/doors/${doorId}/images/${imageId}`);
+  } catch (error: unknown) {
+    console.warn('API error setPrimaryDoorImage', error);
+    throw error;
+  }
+};
+
+export const deleteDoorImage = async (doorId: number, imageId: number): Promise<void> => {
+  try {
+    await api.delete(`/api/v1/doors/${doorId}/images/${imageId}`);
+  } catch (error: unknown) {
+    console.warn('API error deleteDoorImage', error);
     throw error;
   }
 };

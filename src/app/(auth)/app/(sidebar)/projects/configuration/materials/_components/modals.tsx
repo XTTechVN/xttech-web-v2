@@ -145,7 +145,7 @@ export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác
               {...register('unit', { required: true })}
               options={[
                 { value: 'set', label: 'Bộ' },
-                { value: 'area', label: 'Diện tích (m²)' },
+                { value: 'area', label: 'm²' },
               ]}
               error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
             />
@@ -168,30 +168,7 @@ export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác
 
           {/* Nếu đơn vị tính KHÔNG PHẢI là bộ -> Hiển thị 3 đơn giá cố định */}
           {!isSetUnit && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-gray-100 pt-4">
-              <Controller
-                name="costPrice"
-                control={control}
-                rules={{
-                  required: !isSetUnit ? 'Giá vốn không được để trống' : false,
-                  validate: (val) => {
-                    if (isSetUnit) return true;
-                    const num = Number(val);
-                    if (isNaN(num) || num < 0) return 'Giá vốn phải >= 0';
-                    return true;
-                  },
-                }}
-                render={({ field }) => (
-                  <CurrencyInput
-                    label="Giá vốn (VNĐ) *"
-                    placeholder="Nhập giá vốn"
-                    fullWidth
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.costPrice?.message}
-                  />
-                )}
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
               <Controller
                 name="retailPrice"
                 control={control}
@@ -512,7 +489,7 @@ export function MaterialUpdateModal({
               {...register('unit', { required: true })}
               options={[
                 { value: 'set', label: 'Bộ' },
-                { value: 'area', label: 'Diện tích (m²)' },
+                { value: 'area', label: 'm²' },
               ]}
               error={errors.unit ? 'Vui lòng chọn đơn vị tính' : undefined}
             />
@@ -535,30 +512,7 @@ export function MaterialUpdateModal({
 
           {/* Nếu đơn vị tính KHÔNG PHẢI là bộ -> Hiển thị 3 đơn giá cố định */}
           {!isSetUnit && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-gray-100 pt-4">
-              <Controller
-                name="costPrice"
-                control={control}
-                rules={{
-                  required: !isSetUnit ? 'Giá vốn không được để trống' : false,
-                  validate: (val) => {
-                    if (isSetUnit) return true;
-                    const num = Number(val);
-                    if (isNaN(num) || num < 0) return 'Giá vốn phải >= 0';
-                    return true;
-                  },
-                }}
-                render={({ field }) => (
-                  <CurrencyInput
-                    label="Giá vốn (VNĐ) *"
-                    placeholder="Nhập giá vốn"
-                    fullWidth
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.costPrice?.message}
-                  />
-                )}
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
               <Controller
                 name="retailPrice"
                 control={control}
