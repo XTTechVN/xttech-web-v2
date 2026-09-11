@@ -162,9 +162,9 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         data.append(contentsOf: [0x57, 0x41, 0x56, 0x45]) // "WAVE"
 
         data.append(contentsOf: [0x66, 0x6D, 0x74, 0x20]) // "fmt "
-        var subchunk1SizeLE: UInt32 = 16.littleEndian
+        var subchunk1SizeLE: UInt32 = UInt32(16).littleEndian
         data.append(Data(bytes: &subchunk1SizeLE, count: 4))
-        var audioFormatLE: UInt16 = 1.littleEndian // PCM
+        var audioFormatLE: UInt16 = UInt16(1).littleEndian // PCM
         data.append(Data(bytes: &audioFormatLE, count: 2))
         var channelsLE = numChannels.littleEndian
         data.append(Data(bytes: &channelsLE, count: 2))
