@@ -3,8 +3,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Modal, Input, Select, Textarea, Button, Avatar, Badge } from '@/components';
-import { FileText, Upload, X, CheckCircle2, XCircle, Pencil, Trash2, Download, Eye } from 'lucide-react';
+import { Modal, Input, Select, Textarea, Button } from '@/components';
+import { Upload, X, Trash2, Eye } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLeaveRequestStore, useAuthStore } from '@/stores';
 import { createLeaveRequest, updateLeaveRequest, deleteLeaveRequest, reviewLeaveRequest } from '@/actions/leave-request';
@@ -13,6 +13,7 @@ import { getWorkShifts } from '@/actions/work-shift';
 import { LeaveType, DurationType, LeaveRequestStatus } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import LeaveRequestReviewModal from './leave-request-review-modal';
 
 export const leaveTypeOptions = [
@@ -138,7 +139,6 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
     }
     return null;
   }, [formUserId, currentUserId, selectedLeaveRequest, usersList, currentUser]);
-  console.log(targetUser)
   // Lấy departmentId dạng number từ position đầu tiên của targetUser
   const userDepartmentId = useMemo<number | undefined>(() => {
     if (!targetUser || !Array.isArray(targetUser.positions) || targetUser.positions.length === 0) {
@@ -359,8 +359,8 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
       setCreateModalOpen(false);
       resetForm();
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || err.message || 'Không thể tạo đơn xin nghỉ phép.');
+    onError: (err) => {
+      showErrorToast(err, 'Không thể tạo đơn xin nghỉ phép.');
     },
   });
 
@@ -392,8 +392,8 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
       setDetailModalOpen(false);
       resetForm();
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || err.message || 'Không thể cập nhật đơn xin nghỉ phép.');
+    onError: (err) => {
+      showErrorToast(err, 'Không thể cập nhật đơn xin nghỉ phép.');
     },
   });
 
@@ -409,8 +409,8 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
       setIsDeleteConfirmOpen(false);
       setDetailModalOpen(false);
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || err.message || 'Không thể xóa đơn nghỉ phép.');
+    onError: (err) => {
+      showErrorToast(err, 'Không thể xóa đơn nghỉ phép.');
     },
   });
 
@@ -429,8 +429,8 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
       setReviewModalOpen(false);
       setDetailModalOpen(false);
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || err.message || 'Lỗi khi duyệt đơn.');
+    onError: (err) => {
+      showErrorToast(err, 'Lỗi khi duyệt đơn.');
     },
   });
 

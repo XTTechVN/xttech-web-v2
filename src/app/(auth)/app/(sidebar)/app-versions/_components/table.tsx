@@ -8,6 +8,7 @@ import { useQueryParam } from '@/hooks';
 import type { AppVersionItem } from '@/types';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 
 interface TableProps {
   latestVersionCode?: number;
@@ -39,9 +40,9 @@ export function AppVersionTable({ latestVersionCode, onAddClick }: TableProps) {
         search: search || undefined,
         platform: platformFilter || undefined,
       });
-    } catch {
-      toast.error('Lỗi khi tải danh sách phiên bản ứng dụng');
-      throw new Error('Lỗi khi tải danh sách phiên bản ứng dụng');
+    } catch (err) {
+      showErrorToast(err, 'Lỗi khi tải danh sách phiên bản ứng dụng');
+      throw err;
     }
   };
 

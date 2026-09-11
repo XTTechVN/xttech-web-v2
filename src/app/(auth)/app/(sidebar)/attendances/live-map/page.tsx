@@ -9,6 +9,7 @@ import { LiveMap } from './_components/live-map';
 import { StaffList } from './_components/staff-list';
 import { RoutePlaybackModal } from '../_components/route-playback-modal';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { Users, X, Route } from 'lucide-react';
 
 export default function AttendanceLiveMapPage() {
@@ -51,7 +52,7 @@ export default function AttendanceLiveMapPage() {
     } catch (err) {
       if (!isBackground) {
         console.error('Lỗi khi tải danh sách vị trí:', err);
-        toast.error('Không thể tải dữ liệu định vị nhân viên');
+        showErrorToast(err, 'Không thể tải dữ liệu định vị nhân viên');
       }
     } finally {
       if (!isBackground) setIsLoading(false);

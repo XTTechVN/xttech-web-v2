@@ -6,6 +6,7 @@ import React, { useCallback } from 'react';
 import { RotateCw, Plus, Download, Eye, Pencil, Trash2 } from 'lucide-react';
 import { useSuggestionStore } from '@/stores/useSuggestionStore';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks';
 import { TableData, TableAction, Button, Heading } from '@/components';
@@ -90,8 +91,8 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
           limit: limit,
           offset: offset,
         });
-      } catch (err: any) {
-        toast.error('Không thể tải danh sách đề xuất.');
+      } catch (err) {
+        showErrorToast(err, 'Không thể tải danh sách đề xuất.');
         throw err;
       }
 

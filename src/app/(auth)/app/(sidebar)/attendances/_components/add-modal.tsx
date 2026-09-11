@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Modal, Button, Select, Input, Textarea } from "@/components";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { showErrorToast } from "@/utils";
 import { AttendanceCreate, AttendanceStatus } from "@/types";
 import { createAttendance, getUsers } from "@/actions";
 
@@ -87,11 +88,8 @@ export default function AddAttendanceModal({
                 note: "",
             });
         },
-        onError: (error: any) => {
-            console.error(error);
-            toast.error(
-                error?.response?.data?.message || "Không thể tạo chấm công"
-            );
+        onError: (error) => {
+            showErrorToast(error, "Không thể tạo chấm công");
         },
     });
 

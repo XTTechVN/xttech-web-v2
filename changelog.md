@@ -2,6 +2,44 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-11
+
+### Added
+- **Hàm Tiện ích Xử lý Lỗi Toàn cục ([`error.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/error.ts)):**
+  - Xây dựng `getErrorMessage(err, fallback)` và `showErrorToast(err, fallback)` tự động bóc tách thông báo lỗi thông minh và an toàn kiểu (Type-safe) từ mọi định dạng phản hồi của server: FastAPI (`detail` dạng chuỗi hoặc mảng validation Pydantic), Backend Chấm công (`details.message`), Chuẩn Enterprise (`error.message`), NestJS/Express (`message` chuỗi hoặc mảng), và JavaScript/Axios Network Error.
+  - Tích hợp và re-export tập trung qua [`src/utils/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/index.ts).
+
+### Changed / Refactored
+- **Chuẩn hóa Xử lý Lỗi Toàn cục (DRY Error Handling) trên toàn hệ thống:**
+  - **Module Chấm công (`attendances`):**
+    - [`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx): Rút gọn khối `catch` chấm công tự động sang `showErrorToast`.
+    - [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx): Khối `handleDeleteConfirm` dùng `showErrorToast`.
+    - [`overtime-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/overtime-modal.tsx): Thay thế toàn bộ 6 dòng bóc tách lỗi thủ công trong `catch` bằng `showErrorToast`.
+    - [`adjustments/_components/add-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/_components/add-modal.tsx): Loại bỏ hàm `handleCreateError` thủ công hơn 25 dòng, chuẩn hóa qua `showErrorToast`.
+    - [`adjustments/_components/edit-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/_components/edit-modal.tsx): Bắt lỗi qua `showErrorToast`.
+    - [`adjustments/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/page.tsx): Xử lý lỗi duyệt và xóa khiếu nại bằng `showErrorToast`.
+    - [`reports/_components/action-bar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/action-bar.tsx): Xuất Excel bắt lỗi chi tiết qua `getErrorMessage`.
+    - [`live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx): Bắt lỗi fetch vị trí qua `showErrorToast`.
+    - [`edit-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/edit-modal.tsx) & [`add-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/add-modal.tsx): Đồng bộ callback `onError` sử dụng `showErrorToast`.
+  - **Module Phiên bản Ứng dụng (`app-versions`):**
+    - [`release-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/release-modal.tsx): Đồng bộ `setErrorMsg` và `showErrorToast` cùng hiển thị message chi tiết từ server.
+    - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/table.tsx): Chuẩn hóa `fetcher` `catch (err)` dùng `showErrorToast`.
+  - **Module Nghỉ phép (`leave-requests`):**
+    - [`leave-request-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/leave-requests/_components/leave-request-modal.tsx): Thay thế toàn bộ 4 hàm `onError` của mutations (`create`, `update`, `delete`, `review`) sang `showErrorToast`.
+  - **Module Ca làm việc (`shifts`):**
+    - [`form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/shifts/_components/form-modal.tsx): Đồng bộ 2 callbacks `onError` (`createMutation`, `updateMutation`) sang `showErrorToast`.
+    - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/shifts/_components/table.tsx): Bắt lỗi `deleteMutation.onError` bằng `showErrorToast`.
+  - **Module Vai trò & Phân quyền (`roles`):**
+    - [`role-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/roles/_components/role-table.tsx): Chuẩn hóa `fetcher` và `handleDeleteRole.onError` sang `showErrorToast`.
+    - [`role-form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/roles/_components/role-form-modal.tsx): `onError` lưu vai trò dùng `showErrorToast`.
+  - **Module Đề xuất & Góp ý (`suggestions`):**
+    - [`suggestion-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/suggestions/_components/suggestion-modal.tsx): Cập nhật 4 callbacks `onError` (gửi, cập nhật, xóa, duyệt đề xuất) sang `showErrorToast`.
+    - [`suggestion-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/suggestions/_components/suggestion-table.tsx): `fetcher` bắt lỗi bằng `showErrorToast`.
+  - **Module Dự án (`projects`):**
+    - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/table.tsx): Bọc `fetcher` với try/catch gọi `showErrorToast`.
+    - [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/modals.tsx): Cập nhật `createMutation.onError` và `updateMutation.onError` sang `showErrorToast`.
+    - [`quotation-modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/quotation-modals.tsx): Cập nhật tạo và cập nhật báo giá `onError` sang `showErrorToast`.
+
 ## [Unreleased] - 2026-09-10
 
 ### Added

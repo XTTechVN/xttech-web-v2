@@ -19,7 +19,6 @@ interface StaffListProps {
 export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onViewRoute, isLoading = false, onRefresh}: StaffListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'moving' | 'stationary' | 'offline'>('all');
-  console.log("staffLocations: ", staffLocations)
   const filteredStaff = staffLocations.filter((staff) => {
     const name = staff.userName || '';
     const dept = staff.departmentName || '';

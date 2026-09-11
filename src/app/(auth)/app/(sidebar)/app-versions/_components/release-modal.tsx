@@ -5,6 +5,7 @@ import { UploadCloud, FileCheck, X, CheckCircle2, AlertCircle } from 'lucide-rea
 import { Modal, Button, Switch, Textarea } from '@/components';
 import { createAppVersion } from '@/actions';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 
 interface ReleaseModalProps {
   isOpen: boolean;
@@ -76,9 +77,8 @@ export function ReleaseModal({ isOpen, onClose, onSuccess }: ReleaseModalProps) 
       onSuccess();
       handleClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Đã xảy ra lỗi khi tải lên';
+      const msg = showErrorToast(err, 'Lỗi phát hành phiên bản mới');
       setErrorMsg(msg);
-      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }

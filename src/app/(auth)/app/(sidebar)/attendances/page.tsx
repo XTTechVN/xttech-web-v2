@@ -6,6 +6,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { Pencil, Trash2, Eye, Clock, FileEdit, Calendar, UserCheck, Users, UserCheck2, Plus, MessageSquareWarning, Route } from 'lucide-react';
 
 import { Button, TableData, TableAction, Badge, Heading, ITableColumn, ITableFilterProps, Avatar, Modal } from '@/components';
@@ -212,8 +213,8 @@ export default function AttendancesPage() {
       queryClient.invalidateQueries({ queryKey: ['attendances-stats'] });
       toast.success('Đã xóa chấm công thành công');
       setShowDeleteModal(false);
-    } catch {
-      toast.error('Có lỗi xảy ra khi xóa bản ghi chấm công');
+    } catch (err) {
+      showErrorToast(err, 'Có lỗi xảy ra khi xóa bản ghi chấm công');
     } finally {
       setIsDeleting(false);
     }

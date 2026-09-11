@@ -6,6 +6,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { createQuotation, updateQuotation } from '@/actions';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import type { Quotation, QuotationCreate, QuotationUpdate, Project } from '@/types';
@@ -55,7 +56,7 @@ export function QuotationCreateModal({
       reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Thêm báo giá thất bại');
     },
   });
 
@@ -184,7 +185,7 @@ export function QuotationUpdateModal({
       reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Cập nhật báo giá thất bại');
     },
   });
 
