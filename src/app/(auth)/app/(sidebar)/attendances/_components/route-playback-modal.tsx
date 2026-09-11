@@ -104,52 +104,47 @@ function filterPointsForMatching(points: StaffRoutePoint[]): StaffRoutePoint[] {
 }
 
 /**
- * Thuật toán Map Matching: Sử dụng OSRM để nắn các điểm GPS bám khít 100% vào tim đường nhựa
+ * Thuật toán nắn tim đường: Sử dụng OSRM Route API để vẽ tim đường nhựa bám khít qua các mốc tọa độ
+ * Service /route/ hỗ trợ tới 100 điểm/request và trả về đường liên tục, không bị giới hạn 10 điểm như /match/
  */
-async function matchRouteWithOSRM(
-  points: StaffRoutePoint[]
-): Promise<[number, number][]> {
+async function matchRouteWithOSRM(points: StaffRoutePoint[]): Promise<[number, number][]> {
   const cleanPoints = filterPointsForMatching(points);
   if (cleanPoints.length < 2) return [];
 
-  // OSRM Public API tối ưu cho chuỗi dưới 80 điểm; nếu nhiều hơn thì lấy mẫu đều
+  // OSRM Route API hỗ trợ tối đa 100 waypoints trong 1 request.
+  // Ta giới hạn lấy mẫu tối đa 70 mốc phân bố đều để đảm bảo an toàn tuyệt đối về độ dài URL.
+  const MAX_WAYPOINTS = 70;
   let samplePoints = cleanPoints;
-  if (cleanPoints.length > 80) {
-    const step = Math.ceil(cleanPoints.length / 80);
+  if (cleanPoints.length > MAX_WAYPOINTS) {
+    const step = Math.ceil(cleanPoints.length / MAX_WAYPOINTS);
     samplePoints = cleanPoints.filter(
       (_, idx) => idx % step === 0 || idx === cleanPoints.length - 1
     );
+    if (samplePoints.length > MAX_WAYPOINTS) {
+      samplePoints = samplePoints.slice(0, MAX_WAYPOINTS - 1).concat([cleanPoints[cleanPoints.length - 1]]);
+    }
   }
 
   const coordsStr = samplePoints
     .map((p) => `${p.longitude.toFixed(6)},${p.latitude.toFixed(6)}`)
     .join(';');
 
-  const url = `https://router.project-osrm.org/match/v1/driving/${coordsStr}?overview=full&geometries=geojson`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const url = `https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`;
 
   try {
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return [];
 
     const data = await res.json();
-    if (data.code === 'Ok' && data.matchings && data.matchings.length > 0) {
-      const snappedCoords: [number, number][] = [];
-      for (const match of data.matchings) {
-        if (match.geometry && match.geometry.coordinates) {
-          for (const coord of match.geometry.coordinates) {
-            snappedCoords.push([coord[1], coord[0]]);
-          }
-        }
+    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+      const coords = data.routes[0]?.geometry?.coordinates;
+      if (coords && Array.isArray(coords)) {
+        // GeoJSON trả về [longitude, latitude], Leaflet cần [latitude, longitude]
+        return coords.map((coord: [number, number]) => [coord[1], coord[0]]);
       }
-      return snappedCoords;
     }
   } catch (err) {
-    console.warn('[OSRM Map Matching] Error or timeout, fallback to raw GPS:', err);
-  } finally {
-    clearTimeout(timeoutId);
+    console.warn('[OSRM Route Matching] Error or timeout, fallback to raw GPS:', err);
   }
   return [];
 }
@@ -385,7 +380,7 @@ export function RoutePlaybackModal({
               </div>
             )}
 
-            {/* Nút bật/tắt bám tim đường
+            {/* Nút bật/tắt bám tim đường */}
             <div className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100/80 px-2.5 py-1.5 rounded-lg border border-slate-200 transition-colors">
               <Route
                 size={14}
@@ -407,7 +402,7 @@ export function RoutePlaybackModal({
               {isMatchingRoad && (
                 <Loader2 size={12} className="animate-spin text-primary" />
               )}
-            </div> */}
+            </div>
 
             {/* Chọn ngày */}
               <DatePicker
