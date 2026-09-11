@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createRole, updateRole } from '@/actions/role';
 import type { Role } from '@/types';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 
 const roleSchema = z.object({
   name: z.string().min(1, { message: 'Tên vai trò không được để trống' }),
@@ -80,8 +81,8 @@ export default function RoleFormModal({ isOpen, onClose, initialData }: RoleForm
       toast.success(isEditMode ? 'Cập nhật vai trò thành công' : 'Tạo vai trò mới thành công');
       onClose();
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Có lỗi xảy ra khi lưu thông tin vai trò');
+    onError: (error) => {
+      showErrorToast(error, 'Có lỗi xảy ra khi lưu thông tin vai trò');
     },
   });
 

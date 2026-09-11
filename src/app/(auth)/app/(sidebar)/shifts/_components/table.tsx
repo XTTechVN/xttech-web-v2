@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { Clock, MapPin, Building2, Layers, CheckCircle2, Pencil, Trash2 } from 'lucide-react';
 
 import { TableData, TableAction } from '@/components/table';
@@ -100,8 +101,8 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
       setIsDeleteOpen(false);
       setShiftToDelete(null);
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Lỗi khi xóa ca làm việc');
+    onError: (error) => {
+      showErrorToast(error, 'Lỗi khi xóa ca làm việc');
     },
   });
 

@@ -6,23 +6,9 @@ import { Modal, Button, Textarea, Badge } from '@/components';
 import { toast } from 'react-hot-toast';
 import { autoTimekeeping } from '@/actions';
 import { TimekeepingType } from '@/types';
-import {
-  Camera,
-  RefreshCw,
-  MapPin,
-  Clock,
-  LogIn,
-  LogOut,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-  Navigation,
-  Lock,
-  Laptop,
-  Smartphone,
-  ShieldAlert,
-} from 'lucide-react';
+import { Camera, RefreshCw, MapPin, Clock, LogIn, LogOut, Loader2, AlertCircle, CheckCircle2, Navigation, Lock, Laptop, Smartphone, } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { showErrorToast } from '@/utils';
 
 interface Props {
   open: boolean;
@@ -283,8 +269,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosErr?.response?.data?.message || 'Chấm công thất bại. Vui lòng thử lại.');
+      showErrorToast(err, 'Chấm công thất bại, vui lòng thử lại');
     } finally {
       setIsSubmitting(false);
     }

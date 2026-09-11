@@ -18,6 +18,7 @@ import { getProjects } from '@/actions';
 
 // toast
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 
 import type { Customer } from '@/types';
 
@@ -40,12 +41,17 @@ const Table = ({ customers = [], onViewClick, onEditClick, onDeleteClick, onAddC
     if (isSaleOnly && user?.id) {
       params.userId = user.id;
     }
-    const res = await getProjects(params);
-    if (!res) {
-      toast.error('Lỗi khi tải danh sách dự án');
-      throw new Error('Lỗi khi tải danh sách dự án');
+    try {
+      const res = await getProjects(params);
+      if (!res) {
+        showErrorToast(null, 'Lỗi khi tải danh sách dự án');
+        throw new Error('Lỗi khi tải danh sách dự án');
+      }
+      return res;
+    } catch (err) {
+      showErrorToast(err, 'Lỗi khi tải danh sách dự án');
+      throw err;
     }
-    return res;
   };
 
   // Cấu hình các cột cho Desktop

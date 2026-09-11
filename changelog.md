@@ -2,9 +2,60 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-11
+
+### Added
+- **Hàm Tiện ích Xử lý Lỗi Toàn cục ([`error.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/error.ts)):**
+  - Xây dựng `getErrorMessage(err, fallback)` và `showErrorToast(err, fallback)` tự động bóc tách thông báo lỗi thông minh và an toàn kiểu (Type-safe) từ mọi định dạng phản hồi của server: FastAPI (`detail` dạng chuỗi hoặc mảng validation Pydantic), Backend Chấm công (`details.message`), Chuẩn Enterprise (`error.message`), NestJS/Express (`message` chuỗi hoặc mảng), và JavaScript/Axios Network Error.
+  - Tích hợp và re-export tập trung qua [`src/utils/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/index.ts).
+
+### Changed / Refactored
+- **Chuẩn hóa Xử lý Lỗi Toàn cục (DRY Error Handling) trên toàn hệ thống:**
+  - **Module Chấm công (`attendances`):**
+    - [`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx): Rút gọn khối `catch` chấm công tự động sang `showErrorToast`.
+    - [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx): Khối `handleDeleteConfirm` dùng `showErrorToast`.
+    - [`overtime-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/overtime-modal.tsx): Thay thế toàn bộ 6 dòng bóc tách lỗi thủ công trong `catch` bằng `showErrorToast`.
+    - [`adjustments/_components/add-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/_components/add-modal.tsx): Loại bỏ hàm `handleCreateError` thủ công hơn 25 dòng, chuẩn hóa qua `showErrorToast`.
+    - [`adjustments/_components/edit-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/_components/edit-modal.tsx): Bắt lỗi qua `showErrorToast`.
+    - [`adjustments/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/page.tsx): Xử lý lỗi duyệt và xóa khiếu nại bằng `showErrorToast`.
+    - [`reports/_components/action-bar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/action-bar.tsx): Xuất Excel bắt lỗi chi tiết qua `getErrorMessage`.
+    - [`live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx): Bắt lỗi fetch vị trí qua `showErrorToast`.
+    - [`edit-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/edit-modal.tsx) & [`add-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/add-modal.tsx): Đồng bộ callback `onError` sử dụng `showErrorToast`.
+  - **Module Phiên bản Ứng dụng (`app-versions`):**
+    - [`release-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/release-modal.tsx): Đồng bộ `setErrorMsg` và `showErrorToast` cùng hiển thị message chi tiết từ server.
+    - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/table.tsx): Chuẩn hóa `fetcher` `catch (err)` dùng `showErrorToast`.
+  - **Module Nghỉ phép (`leave-requests`):**
+    - [`leave-request-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/leave-requests/_components/leave-request-modal.tsx): Thay thế toàn bộ 4 hàm `onError` của mutations (`create`, `update`, `delete`, `review`) sang `showErrorToast`.
+  - **Module Ca làm việc (`shifts`):**
+    - [`form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/shifts/_components/form-modal.tsx): Đồng bộ 2 callbacks `onError` (`createMutation`, `updateMutation`) sang `showErrorToast`.
+    - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/shifts/_components/table.tsx): Bắt lỗi `deleteMutation.onError` bằng `showErrorToast`.
+  - **Module Vai trò & Phân quyền (`roles`):**
+    - [`role-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/roles/_components/role-table.tsx): Chuẩn hóa `fetcher` và `handleDeleteRole.onError` sang `showErrorToast`.
+    - [`role-form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/roles/_components/role-form-modal.tsx): `onError` lưu vai trò dùng `showErrorToast`.
+  - **Module Đề xuất & Góp ý (`suggestions`):**
+    - [`suggestion-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/suggestions/_components/suggestion-modal.tsx): Cập nhật 4 callbacks `onError` (gửi, cập nhật, xóa, duyệt đề xuất) sang `showErrorToast`.
+    - [`suggestion-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/suggestions/_components/suggestion-table.tsx): `fetcher` bắt lỗi bằng `showErrorToast`.
+  - **Module Dự án (`projects`):**
+    - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/table.tsx): Bọc `fetcher` với try/catch gọi `showErrorToast`.
+    - [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/modals.tsx): Cập nhật `createMutation.onError` và `updateMutation.onError` sang `showErrorToast`.
+    - [`quotation-modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/quotation-modals.tsx): Cập nhật tạo và cập nhật báo giá `onError` sang `showErrorToast`.
+
 ## [Unreleased] - 2026-09-10
 
 ### Added
+- **Nâng cấp & Chuẩn hóa Modal Lộ trình Di chuyển theo chuẩn Google Maps ([`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx)):**
+  - **Nút Thumbnail Chuyển đổi Vệ tinh / Bản đồ (Góc dưới bên trái):**
+    - Thiết kế ô thumbnail vuông bo góc `w-14 h-14` chuẩn Google Maps với viền trắng nổi và nhãn chữ mờ dưới đáy.
+    - Hiển thị ảnh chụp vệ tinh thực tế thu nhỏ khi ở chế độ đường phố (Giao thông) và ảnh bản đồ khi ở chế độ Vệ tinh; click hoán đổi linh hoạt giữa Bản đồ và Vệ tinh Hybrid.
+  - **Nút Tròn Phóng to Toàn màn hình chuẩn Google Maps (Góc dưới bên phải):**
+    - Tích hợp nút tròn màu trắng có icon 4 góc phóng to kinh điển của Google Maps ở góc dưới bên phải bản đồ.
+    - Hỗ trợ phím tắt `Escape` để thu nhỏ nhanh.
+  - **Khắc phục Triệt để Lỗi Phóng to (True 100vw x 100vh Fullscreen):**
+    - Sử dụng `rootClassName="route-playback-fullscreen-root"` ghi đè toàn bộ padding/margin của Ant Design Modal, mở rộng modal tràn viền `100vw x 100vh`.
+    - Khóa chiều cao khung bản đồ bằng CSS calc (`calc(100vh - 185px)`), triệt tiêu hoàn toàn lỗi suy biến chiều cao về `0px`.
+    - Duy trì thẻ `<MapContainer>` luôn luôn được mount cố định; hiển thị banner nổi tinh gọn khi chưa có điểm GPS thay vì unmount bản đồ.
+    - Bổ sung `fitBounds` tự động căn chỉnh góc nhìn bao quát toàn bộ hành trình khi tải xong điểm GPS.
+
 - **Module Quản lý Nhà cung cấp (Customer Providers) & Tích hợp Quick-Create vào Khách hàng:**
   - **Trang Quản trị Danh mục Nhà cung cấp ([`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/providers/page.tsx)):**
     - Đường dẫn chuẩn: `/app/customers/providers` (sub-route bên trong module Khách hàng).

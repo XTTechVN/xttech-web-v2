@@ -10,6 +10,7 @@ import { createWorkShift, updateWorkShift, getDepartments, getEmployees } from '
 import queryClient from '@/utils/query';
 import type { WorkShift, WorkShiftCreate, WorkShiftUpdate, Department } from '@/types';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 
 const DAYS_OF_WEEK = [
   { value: '2', label: 'T2' },
@@ -213,8 +214,8 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ['work_shifts'] });
       onClose();
     },
-    onError: (err: any) => {
-      toast.error(err.message || 'Lỗi khi tạo ca làm việc');
+    onError: (err) => {
+      showErrorToast(err, 'Lỗi khi tạo ca làm việc');
     },
   });
 
@@ -227,8 +228,8 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ['work_shifts'] });
       onClose();
     },
-    onError: (err: any) => {
-      toast.error(err.message || 'Lỗi khi cập nhật ca làm việc');
+    onError: (err) => {
+      showErrorToast(err, 'Lỗi khi cập nhật ca làm việc');
     },
   });
 

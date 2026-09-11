@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getRoles, deleteRole } from '@/actions/role';
 import type { Role } from '@/types';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import RoleFormModal from './role-form-modal';
 
 // Lấy màu hiển thị theo mã vai trò
@@ -48,7 +49,7 @@ export default function RoleTable() {
         },
       };
     } catch (error) {
-      toast.error('Lỗi khi tải danh sách vai trò');
+      showErrorToast(error, 'Lỗi khi tải danh sách vai trò');
       throw error;
     }
   };
@@ -64,8 +65,8 @@ export default function RoleTable() {
       setIsDeleteModalOpen(false);
       setRoleToDelete(null);
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Có lỗi xảy ra khi xóa vai trò');
+    onError: (error) => {
+      showErrorToast(error, 'Có lỗi xảy ra khi xóa vai trò');
     },
   });
 

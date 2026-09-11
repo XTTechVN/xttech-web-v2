@@ -6,6 +6,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { createProject, updateProject } from '@/actions';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import type { Project, ProjectCreate, ProjectUpdate, Customer } from '@/types';
@@ -47,7 +48,7 @@ export function ProjectFormModal({
       reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Không thể tạo dự án');
     },
   });
 
@@ -62,7 +63,7 @@ export function ProjectFormModal({
       reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Không thể cập nhật dự án');
     },
   });
 

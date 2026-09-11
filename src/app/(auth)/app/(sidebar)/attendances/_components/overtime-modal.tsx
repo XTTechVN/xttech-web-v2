@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { Modal, Button, Input, Textarea, Select } from '@/components';
 import { Clock, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { usePermission } from '@/hooks';
 import { createAdjustmentRequest, getUsers } from '@/actions';
 import { useQuery } from '@tanstack/react-query';
@@ -101,13 +102,8 @@ export function OvertimeModal({ open, onClose, onSuccess }: OvertimeModalProps) 
       toast.success('Gửi yêu cầu đăng ký tăng ca thành công!');
       onSuccess?.();
       onClose();
-    } catch (err: any) {
-      const errorMsg =
-        err?.response?.data?.message ||
-        err?.response?.data?.detail ||
-        err?.message ||
-        'Không thể tạo yêu cầu tăng ca';
-      toast.error(typeof errorMsg === 'string' ? errorMsg : 'Có lỗi khi tạo yêu cầu tăng ca');
+    } catch (err: unknown) {
+      showErrorToast(err, 'Không thể tạo yêu cầu tăng ca');
     } finally {
       setIsSubmitting(false);
     }
