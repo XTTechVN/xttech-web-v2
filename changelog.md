@@ -5,6 +5,12 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-09-11
 
 ### Added
+- **Nâng cấp Cơ chế Định vị Chạy Ngầm & Đánh thức Ứng dụng trên iOS ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift) & [`AppDelegate.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/AppDelegate.swift)):**
+  - **Đăng ký `startMonitoringSignificantLocationChanges()` song song:** Cho phép hệ điều hành iOS tự động đánh thức (wake up / relaunch in background) ứng dụng khi nhân viên di chuyển đổi trạm phát sóng di động (Cell Tower / Wi-Fi), kể cả khi ứng dụng bị tạm đóng băng hoặc bị giải phóng bộ nhớ RAM.
+  - **Xử lý `handleLocationWakeUp()` trong `AppDelegate`:** Bắt sự kiện `launchOptions[UIApplication.LaunchOptionsKey.location]` để tiếp tục quy trình định vị và gửi ping tọa độ dưới nền ngay khi được hệ điều hành kích hoạt.
+  - **Thay thế Foundation `Timer` bằng `DispatchSourceTimer` trên Background Queue:** Chạy độc lập trên hàng đợi ngầm `com.xttech.ios.heartbeat`, không còn bị đình trệ bởi Main RunLoop khi iPhone khóa màn hình.
+  - **Nới lỏng độ chính xác thích ứng khi đứng yên:** Cho phép sai số lên tới $120\text{m}$ khi đứng yên trong nhà/văn phòng để không bị lọc mất nhịp tim định vị, triệt tiêu hoàn toàn lỗi nhân viên bị chuyển sang `offline` sau 10 phút ngồi làm việc.
+
 - **Hàm Tiện ích Xử lý Lỗi Toàn cục ([`error.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/error.ts)):**
   - Xây dựng `getErrorMessage(err, fallback)` và `showErrorToast(err, fallback)` tự động bóc tách thông báo lỗi thông minh và an toàn kiểu (Type-safe) từ mọi định dạng phản hồi của server: FastAPI (`detail` dạng chuỗi hoặc mảng validation Pydantic), Backend Chấm công (`details.message`), Chuẩn Enterprise (`error.message`), NestJS/Express (`message` chuỗi hoặc mảng), và JavaScript/Axios Network Error.
   - Tích hợp và re-export tập trung qua [`src/utils/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/index.ts).
