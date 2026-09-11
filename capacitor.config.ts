@@ -7,7 +7,7 @@ loadEnvConfig(process.cwd());
 const serverUrl =
   process.env.CAPACITOR_SERVER_URL ||
   process.env.NEXT_PUBLIC_APP_URL ||
-  'https://xttech.vn'; // Fallback mặc định nếu chưa cấu hình env
+  'https://dev-xt-web-v2.up.railway.app'; // Fallback mặc định nếu chưa cấu hình env
 
 const config: CapacitorConfig = {
   appId: 'com.xttech.app2',
