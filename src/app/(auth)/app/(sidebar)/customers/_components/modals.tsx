@@ -21,6 +21,7 @@ import { BASE_MINIO_URL } from '@/config/app';
 import { CUSTOMER_TYPE_OPTIONS } from '../config';
 
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 
@@ -199,7 +200,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
       reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Thêm khách hàng thất bại');
     },
   });
 
@@ -213,7 +214,7 @@ export function CustomerFormModal({ isOpen, onClose, title, submitText = 'Xác n
       reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Cập nhật khách hàng thất bại');
     },
   });
 

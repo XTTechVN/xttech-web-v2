@@ -10,6 +10,7 @@ import type { Door } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { DoorCreateModal, DoorUpdateModal, DoorDeleteModal } from './_components/modals';
+import { showErrorToast } from '@/utils';
 
 const Page = () => {
   const { data: doorData } = useQuery({
@@ -35,7 +36,7 @@ const Page = () => {
       setDoorToDelete(null);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Xóa loại cửa thất bại');
     },
   });
 

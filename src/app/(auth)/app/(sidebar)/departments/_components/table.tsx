@@ -25,6 +25,7 @@ import queryClient from '@/utils/query';
 import { deleteDepartment, getDepartments } from '@/actions/department';
 
 import { useRouter } from 'next/navigation';
+import { showErrorToast } from '@/utils';
 
 
 const Table = () => {
@@ -60,7 +61,7 @@ const Table = () => {
       setDeptToDelete(null);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Xóa phòng ban thất bại');
     },
   });
 

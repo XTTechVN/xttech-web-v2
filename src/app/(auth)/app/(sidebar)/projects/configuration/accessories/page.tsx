@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { AccessoryCreateModal, AccessoryUpdateModal, AccessoryDeleteModal } from './_components/modals';
 import { AccessoryCategoryModal } from './_components/category-modal';
+import { showErrorToast } from '@/utils';
 
 const Page = () => {
   const { data: accessoryData } = useQuery({
@@ -37,7 +38,7 @@ const Page = () => {
       setAccessoryToDelete(null);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Xóa phụ kiện thất bại');
     },
   });
 

@@ -10,6 +10,7 @@ import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import type { Door, DoorCreate, DoorUpdate, DoorImage } from '@/types';
 import { BASE_MINIO_URL } from '@/config/app';
+import { showErrorToast } from '@/utils';
 
 // ==========================================
 // ==========================================
@@ -53,7 +54,7 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
       setPrimaryIndex(0);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Thêm loại cửa thất bại');
     },
   });
 
@@ -318,7 +319,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
       reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Cập nhật loại cửa thất bại');
     },
   });
 

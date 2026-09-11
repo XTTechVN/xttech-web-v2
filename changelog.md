@@ -35,10 +35,21 @@ All notable changes to the frontend project will be documented in this file.
   - **Module Đề xuất & Góp ý (`suggestions`):**
     - [`suggestion-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/suggestions/_components/suggestion-modal.tsx): Cập nhật 4 callbacks `onError` (gửi, cập nhật, xóa, duyệt đề xuất) sang `showErrorToast`.
     - [`suggestion-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/suggestions/_components/suggestion-table.tsx): `fetcher` bắt lỗi bằng `showErrorToast`.
-  - **Module Dự án (`projects`):**
+  - **Module Dự án & Cấu hình Dự án (`projects` & `projects/configuration`):**
     - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/table.tsx): Bọc `fetcher` với try/catch gọi `showErrorToast`.
     - [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/modals.tsx): Cập nhật `createMutation.onError` và `updateMutation.onError` sang `showErrorToast`.
     - [`quotation-modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/quotation-modals.tsx): Cập nhật tạo và cập nhật báo giá `onError` sang `showErrorToast`.
+    - [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/page.tsx): Cập nhật `deleteProjectMutation.onError` sang `showErrorToast`.
+    - [`[id]/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/page.tsx): Chuẩn hóa `deleteProjectMutation.onError` và `changeQuotationStatus.onError` sang `showErrorToast`.
+    - **Cấu hình Vật liệu (`materials`):** [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/materials/page.tsx) & [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/materials/_components/modals.tsx): Đồng bộ toàn bộ `onError` của xóa, tạo, sửa vật tư sang `showErrorToast`.
+    - **Cấu hình Cửa (`doors`):** [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/page.tsx) & [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/modals.tsx): Đồng bộ toàn bộ `onError` của xóa, tạo, sửa hệ cửa sang `showErrorToast`.
+    - **Cấu hình Phụ kiện (`accessories`):** [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/page.tsx) & [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/_components/modals.tsx): Đồng bộ toàn bộ `onError` của xóa, tạo, sửa phụ kiện sang `showErrorToast`.
+  - **Module Khách hàng (`customers`):**
+    - [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/page.tsx): Cập nhật `deleteCustomerMutation.onError` sang `showErrorToast`.
+    - [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx): Cập nhật `createMutation.onError` và `updateMutation.onError` sang `showErrorToast`.
+  - **Module Phòng ban (`departments`):**
+    - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/departments/_components/table.tsx): Chuẩn hóa `deleteDepartment.onError` sang `showErrorToast`.
+    - [`form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/departments/_components/form-modal.tsx): Đồng bộ `createDepartment.onError` và `updateDepartment.onError` sang `showErrorToast`.
 
 ## [Unreleased] - 2026-09-10
 

@@ -11,6 +11,7 @@ import queryClient from '@/utils/query';
 import type { Accessory, AccessoryCreate, AccessoryUpdate, AccessoryCategory } from '@/types';
 import { BASE_MINIO_URL } from '@/config/app';
 import { AccessoryCategoryModal } from './category-modal';
+import { showErrorToast } from '@/utils';
 
 // ==========================================
 // 1. MODAL TẠO MỚI PHỤ KIỆN (AccessoryCreate) HỖ TRỢ UPLOAD & PREVIEW 2 CỘT
@@ -66,7 +67,7 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
       setPreviewUrl(null);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Thêm phụ kiện thất bại');
     },
   });
 
@@ -350,7 +351,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
       setPreviewUrl(null);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Cập nhật phụ kiện thất bại');
     },
   });
 

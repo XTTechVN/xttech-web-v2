@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import type { Material, MaterialCreate, MaterialUpdate, MaterialPriceCreate } from '@/types';
+import { showErrorToast } from '@/utils';
 
 // ==========================================
 // 1. MODAL TẠO MỚI HỆ NHÔM (MaterialCreate)
@@ -61,7 +62,7 @@ export function MaterialCreateModal({ isOpen, onClose, title, submitText = 'Xác
       reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+     showErrorToast(error, 'Thêm hệ nhôm thất bại');
     },
   });
 
@@ -401,7 +402,7 @@ export function MaterialUpdateModal({
       reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Cập nhật hệ nhôm thất bại');
     },
   });
 

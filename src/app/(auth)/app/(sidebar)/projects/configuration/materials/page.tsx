@@ -10,6 +10,7 @@ import type { Material } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { MaterialCreateModal, MaterialUpdateModal, MaterialDeleteModal } from './_components/modals';
+import { showErrorToast } from '@/utils';
 
 const Page = () => {
   const { data: materialData } = useQuery({
@@ -35,7 +36,7 @@ const Page = () => {
       setMaterialToDelete(null);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Xóa hệ nhôm thất bại');
     },
   });
 
