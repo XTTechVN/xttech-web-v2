@@ -24,6 +24,7 @@ import { useMutation } from '@tanstack/react-query';
 
 // utils
 import queryClient from '@/utils/query';
+import { showErrorToast } from '@/utils';
 
 // Kiểu dữ liệu của phòng ban
 import { Department } from '@/types';
@@ -69,7 +70,7 @@ export default function DepartmentFormModal({ isOpen, onClose, title, submitText
       reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Thêm phòng ban thất bại');
     },
   });
 
@@ -83,7 +84,7 @@ export default function DepartmentFormModal({ isOpen, onClose, title, submitText
       reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Cập nhật phòng ban thất bại');
     },
   });
 

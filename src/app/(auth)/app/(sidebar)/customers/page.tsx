@@ -23,6 +23,7 @@ import type { Customer } from '@/types';
 
 // Lấy thư viện hiển thị thông báo toast
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 
 // Lấy cấu hình queryClient từ thư mục utils (src/utils/query.ts)
 import queryClient from '@/utils/query';
@@ -67,7 +68,7 @@ const Page = () => {
       setCustomerToDelete(null);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Xóa khách hàng thất bại');
     },
   });
 
