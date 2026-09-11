@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { getDoor, getDoorAccessories, assignDoorAccessories, revokeDoorAccessories } from '@/actions';
 import { Loader2, Edit, Image, Plus } from 'lucide-react';
-import { formatDoorType, formatAccessoryUnit } from '@/types';
+import { formatDoorType, formatAccessoryUnit, getDoorTypeConfig } from '@/types';
 import { Button } from '@/components';
 import { DoorUpdateModal } from '../_components/modals';
 import { AssignDoorAccessoriesModal } from '../_components/relation-modals';
@@ -178,9 +178,17 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
               <span className="font-semibold text-slate-500">Mã cửa: </span>
               <span className="text-slate-800 font-medium">{door.code || '—'}</span>
             </div>
-            <div>
+            <div className="flex items-center gap-2">
               <span className="font-semibold text-slate-500">Phân loại: </span>
-              <span className="text-slate-800 font-medium">{formatDoorType(door.type) || '—'}</span>
+              {door.type ? (
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${getDoorTypeConfig(door.type).className}`}
+                >
+                  {getDoorTypeConfig(door.type).label}
+                </span>
+              ) : (
+                <span className="text-slate-800 font-medium">—</span>
+              )}
             </div>
             <div className="flex flex-col gap-1 mt-1 border-t border-slate-100 pt-3">
               <span className="font-semibold text-slate-500">Thông số kỹ thuật:</span>

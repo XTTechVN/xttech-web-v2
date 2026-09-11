@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Input, Button, Modal, Select } from '@/components';
-import { CheckCircle2, Upload, Columns } from 'lucide-react';
+import { CheckCircle2, Upload, Columns, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { createDoor, updateDoor, setPrimaryDoorImage } from '@/actions';
 import toast from 'react-hot-toast';
@@ -137,7 +137,7 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
             <div className="w-full flex items-center justify-between">
               <span className="text-xs font-semibold text-gray-700 select-none">Hình ảnh ({newImages.length})</span>
               {newImages.length > 0 && (
-                <span className="text-[11px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md font-medium">
+                <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-md font-medium">
                   Đã chọn ảnh chính
                 </span>
               )}
@@ -151,7 +151,7 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
                 <Columns className="w-10 h-10 text-gray-300" />
               )}
               {currentPrimaryPreview && (
-                <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-medium px-2 py-0.5 rounded shadow">
+                <div className="absolute top-2 left-2 bg-primary text-white text-[10px] font-medium px-2 py-0.5 rounded shadow">
                   Ảnh chính
                 </div>
               )}
@@ -182,13 +182,13 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
                         onClick={() => setPrimaryIndex(idx)}
                         className={`relative aspect-square rounded-xl border overflow-hidden cursor-pointer group transition-all ${
                           isPrimary
-                            ? 'border-blue-600 ring-2 ring-blue-400/40 shadow-xs'
+                            ? 'border-primary ring-2 ring-primary/40 shadow-xs'
                             : 'border-gray-200 hover:border-gray-400 opacity-85 hover:opacity-100'
                         }`}
                       >
                         <img src={img.previewUrl} alt={`Upload ${idx}`} className="w-full h-full object-cover" />
                         {isPrimary && (
-                          <div className="absolute inset-x-0 bottom-0 bg-blue-600/90 text-white text-[10px] text-center font-medium py-0.5 leading-none">
+                          <div className="absolute inset-x-0 bottom-0 bg-primary/95 text-white text-[10px] text-center font-medium py-0.5 leading-none">
                             Chính
                           </div>
                         )}
@@ -198,10 +198,10 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
                             e.stopPropagation();
                             handleRemoveNewImage(idx);
                           }}
-                          className="absolute top-1 right-1 text-red-500 hover:text-red-700 hover:scale-110 drop-shadow-sm p-0.5 transition-all cursor-pointer leading-none opacity-0 group-hover:opacity-100"
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-white/95 text-slate-500 hover:text-red-600 hover:bg-white shadow-md border border-slate-200 flex items-center justify-center transition-all cursor-pointer opacity-0 group-hover:opacity-100 hover:scale-110"
                           title="Xóa ảnh"
                         >
-                          ✕
+                          <X size={11} strokeWidth={2.5} />
                         </button>
                       </div>
                     );
@@ -474,7 +474,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
                 Hình ảnh ({totalImageCount})
               </span>
               {totalImageCount > 0 && (
-                <span className="text-[11px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md font-medium">
+                <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-md font-medium">
                   Đã chọn ảnh chính
                 </span>
               )}
@@ -488,7 +488,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
                 <Columns className="w-10 h-10 text-gray-300" />
               )}
               {currentMainPreview && (
-                <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-medium px-2 py-0.5 rounded shadow">
+                <div className="absolute top-2 left-2 bg-primary text-white text-[10px] font-medium px-2 py-0.5 rounded shadow">
                   Ảnh chính
                 </div>
               )}
@@ -523,13 +523,13 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
                         onClick={() => handleSelectExistingPrimary(img.id)}
                         className={`relative aspect-square rounded-xl border overflow-hidden cursor-pointer group transition-all ${
                           isPrimary
-                            ? 'border-blue-600 ring-2 ring-blue-400/40 shadow-xs'
+                            ? 'border-primary ring-2 ring-primary/40 shadow-xs'
                             : 'border-gray-200 hover:border-gray-400 opacity-85 hover:opacity-100'
                         }`}
                       >
                         <img src={src} alt={img.name || 'Door'} className="w-full h-full object-cover" />
                         {isPrimary && (
-                          <div className="absolute inset-x-0 bottom-0 bg-blue-600/90 text-white text-[10px] text-center font-medium py-0.5 leading-none">
+                          <div className="absolute inset-x-0 bottom-0 bg-primary/95 text-white text-[10px] text-center font-medium py-0.5 leading-none">
                             Chính
                           </div>
                         )}
@@ -539,10 +539,10 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
                             e.stopPropagation();
                             handleRemoveExistingImage(img.id);
                           }}
-                          className="absolute top-1 right-1 text-red-500 hover:text-red-700 hover:scale-110 drop-shadow-sm p-0.5 transition-all cursor-pointer leading-none opacity-0 group-hover:opacity-100"
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-white/95 text-slate-500 hover:text-red-600 hover:bg-white shadow-md border border-slate-200 flex items-center justify-center transition-all cursor-pointer opacity-0 group-hover:opacity-100 hover:scale-110"
                           title="Xóa ảnh"
                         >
-                          ✕
+                          <X size={11} strokeWidth={2.5} />
                         </button>
                       </div>
                     );
@@ -557,13 +557,13 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
                         onClick={() => handleSelectNewPrimary(idx)}
                         className={`relative aspect-square rounded-xl border overflow-hidden cursor-pointer group transition-all ${
                           isPrimary
-                            ? 'border-blue-600 ring-2 ring-blue-400/40 shadow-xs'
+                            ? 'border-primary ring-2 ring-primary/40 shadow-xs'
                             : 'border-blue-200 hover:border-blue-400 opacity-90 hover:opacity-100'
                         }`}
                       >
                         <img src={img.previewUrl} alt={`New upload ${idx}`} className="w-full h-full object-cover" />
                         {isPrimary ? (
-                          <div className="absolute inset-x-0 bottom-0 bg-blue-600/90 text-white text-[10px] text-center font-medium py-0.5 leading-none">
+                          <div className="absolute inset-x-0 bottom-0 bg-primary/95 text-white text-[10px] text-center font-medium py-0.5 leading-none">
                             Chính (Mới)
                           </div>
                         ) : (
@@ -577,10 +577,10 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
                             e.stopPropagation();
                             handleRemoveNewImage(idx);
                           }}
-                          className="absolute top-1 right-1 text-red-500 hover:text-red-700 hover:scale-110 drop-shadow-sm p-0.5 transition-all cursor-pointer leading-none opacity-0 group-hover:opacity-100"
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-white/95 text-slate-500 hover:text-red-600 hover:bg-white shadow-md border border-slate-200 flex items-center justify-center transition-all cursor-pointer opacity-0 group-hover:opacity-100 hover:scale-110"
                           title="Xóa ảnh"
                         >
-                          ✕
+                          <X size={11} strokeWidth={2.5} />
                         </button>
                       </div>
                     );

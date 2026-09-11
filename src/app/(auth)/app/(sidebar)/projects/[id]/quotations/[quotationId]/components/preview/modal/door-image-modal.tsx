@@ -128,7 +128,7 @@ export const DoorImageSelectModal: React.FC<DoorImageSelectModalProps> = ({
                     />
 
                     {img.isPrimary && (
-                      <div className="absolute top-1.5 left-1.5 bg-blue-600/90 text-white text-[9px] px-1.5 py-0.5 rounded font-medium shadow-xs">
+                      <div className="absolute top-1.5 left-1.5 bg-primary text-white text-[9px] px-1.5 py-0.5 rounded font-medium shadow-xs">
                         Gốc
                       </div>
                     )}
