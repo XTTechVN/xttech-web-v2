@@ -84,13 +84,14 @@ export const ATTENDANCE_STATUS_LABELS: Record<string, string> = {
   normal: 'Đúng giờ',
   present: 'Đúng giờ',
   late: 'Đi muộn',
-  absent: 'Vắng mặt',
+  absent: 'Nghỉ không phép',
   half_day: 'Nghỉ nửa ngày',
   early_leave: 'Về sớm',
   early_checkout: 'Về sớm',
   late_and_early_leave: 'Đi muộn & Về sớm',
   overtime: 'Tăng ca',
   missing_checkout: 'Quên check-out',
+  leave: 'Nghỉ có phép'
 };
 
 export const ATTENDANCE_STATUS_VARIANTS: Record<string, AttendanceStatusVariant> = {
@@ -104,6 +105,7 @@ export const ATTENDANCE_STATUS_VARIANTS: Record<string, AttendanceStatusVariant>
   late_and_early_leave: 'warning',
   overtime: 'success',
   missing_checkout: 'warning',
+  leave: "warning",
 };
 
 export const ADJUSTMENT_STATUS_LABELS: Record<string, string> = {
