@@ -7,9 +7,11 @@ import MaterialsPage from './materials/page';
 import AccessoriesPage from './accessories/page';
 import ExtraOptionsPage from './extra-options/page';
 import FormulasPage from './formulas/page';
-import { Columns, ListChecks, Settings, Calculator, LayoutGrid } from 'lucide-react';
+import { Columns, ListChecks, Settings, Calculator, LayoutGrid, UploadCloud } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { usePermission } from '@/hooks';
+import { Button } from '@/components';
+import { ProjectImportModal } from './_components/import-modal';
 
 interface ConfigTab {
   id: string;
@@ -78,6 +80,8 @@ export default function ProjectConfigurationPage() {
   const currentTab = availableTabs.find((t) => t.id === activeTab) || availableTabs[0];
   const ActiveComponent = currentTab?.component || DoorsPage;
 
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     router.push('/app/projects/configuration');
@@ -85,33 +89,54 @@ export default function ProjectConfigurationPage() {
 
   return (
     <div className="flex flex-col gap-4 text-black">
-      {/* Tab Navigation */}
-      {availableTabs.length > 1 && (
-        <div className="flex overflow-x-auto scrollbar-none gap-2 sm:gap-4 p-1">
-          {availableTabs.map((tab) => {
-            const isActive = tab.id === (currentTab?.id || activeTab);
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 cursor-pointer ${
-                  isActive
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-slate-600 hover:text-primary hover:bg-slate-100'
-                }`}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            );
-          })}
+      {/* Tab Navigation & Excel Actions */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {availableTabs.length > 1 && (
+          <div className="flex overflow-x-auto scrollbar-none gap-2 sm:gap-4 p-1">
+            {availableTabs.map((tab) => {
+              const isActive = tab.id === (currentTab?.id || activeTab);
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 cursor-pointer ${
+                    isActive
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-slate-600 hover:text-primary hover:bg-slate-100'
+                  }`}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Nút Nhập dữ liệu */}
+        <div className="flex items-center gap-2 self-end md:self-auto shrink-0 px-1">
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<UploadCloud size={14} />}
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-9 px-3 text-xs md:text-sm font-semibold shrink-0"
+          >
+            Nhập dữ liệu
+          </Button>
         </div>
-      )}
+      </div>
 
       {/* Tab Content */}
       <div className="min-h-[400px]">
         {ActiveComponent && <ActiveComponent />}
       </div>
+
+      {/* Modal Nhập dữ liệu Excel */}
+      <ProjectImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+      />
     </div>
   );
 }
