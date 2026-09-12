@@ -27,6 +27,7 @@ All notable changes to the frontend project will be documented in this file.
 
 ### Refactored & Enhanced
 - **Tái cấu trúc & Nâng cấp Trải nghiệm Sidebar Quản trị ([`src/config/sidebar.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/sidebar.ts), [`src/components/sidebar/sidebar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/sidebar/sidebar.tsx)):**
+  - **Cặp Biểu Tượng Ghim / Hủy Ghim Thông Minh (Pin / PinOff):** Chuẩn hóa hoàn toàn nút điều khiển ở Header chỉ với 2 trạng thái: **Ghim 📌 (`Pin`)** khi đang mở tạm thời do rê chuột (hover) để cố định thanh menu mở rộng, và **Hủy ghim 📍✕ (`PinOff`)** khi đang mở cố định để chuyển sang chế độ tự động thu nhỏ khi rời chuột, loại bỏ hoàn toàn biểu tượng thu nhỏ rườm rà.
   - **Tính năng Hover-to-Expand thông minh & Chống giật vỡ chữ (Text Wrapping):** Khi Sidebar ở trạng thái thu nhỏ (`isCollapsed = true`), rê chuột vào sidebar sẽ tự động mở rộng mượt mà (`w-72`) kèm bóng nổi (`shadow-2xl z-30`). Áp dụng `whitespace-nowrap`, `truncate` và `overflow-hidden` trên toàn bộ nhãn, tiêu đề và menu con, triệt tiêu hoàn toàn hiện tượng chữ bị rớt thành 2 dòng rồi co lại thành 1 dòng trong quá trình co giãn chiều rộng.
   - **Tối ưu hóa Phân nhóm (Section):** Gom 5 nhóm rời rạc thành 4 nhóm cân đối, liền mạch: `Điều hành`, `Nhân sự & Chấm công`, `Dự án & Đối tác`, `Tiện ích & Hệ thống`.
   - **Đặt lại vị trí Bản đồ trực tiếp (Live Map):** Chuyển từ nhóm Nhân sự lên nhóm `Điều hành` cạnh `Tổng quan` đúng ngữ cảnh giám sát hiện trường thời gian thực.

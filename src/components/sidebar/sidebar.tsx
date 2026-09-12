@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/utils';
-import { ChevronDown, ChevronRight, Plus, ChevronLeft, Headphones, ExternalLink, MessageCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Headphones, ExternalLink, MessageCircle, Pin, PinOff } from 'lucide-react';
 import { Avatar } from '@/components';
 import { HEADER_HEIGHT } from '@/config';
 
@@ -189,25 +189,47 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                   )}
                 </div>
 
-                {/* Nút thu nhỏ (ẩn trên mobile) */}
+                {/* Nút hành động ở Header: Ghim (Pin) nếu đang mở do Hover, Hủy ghim (PinOff) nếu đang mở cố định */}
                 <div className="hidden md:flex shrink-0">
-                  <button
-                    type="button"
-                    aria-label="Thu nhỏ sidebar"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsCollapsed(true);
-                      setIsHovered(false);
-                    }}
-                    className={cn(
-                      'w-7 h-7 rounded-lg border flex items-center justify-center transition-colors cursor-pointer',
-                      isLight
-                        ? 'border-slate-200 bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700'
-                        : 'border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white',
-                    )}
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
+                  {isCollapsed ? (
+                    <button
+                      type="button"
+                      aria-label="Ghim mở rộng sidebar"
+                      title="Ghim cố định thanh menu"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCollapsed(false);
+                        setIsHovered(false);
+                      }}
+                      className={cn(
+                        'w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer group',
+                        isLight
+                          ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary hover:text-white shadow-2xs'
+                          : 'border-primary/40 bg-primary/20 text-primary hover:bg-primary hover:text-white',
+                      )}
+                    >
+                      <Pin size={14} className="transition-transform group-hover:scale-110" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label="Hủy ghim sidebar"
+                      title="Hủy ghim thanh menu"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCollapsed(true);
+                        setIsHovered(false);
+                      }}
+                      className={cn(
+                        'w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer group',
+                        isLight
+                          ? 'border-slate-200 bg-white hover:bg-slate-100 text-slate-400 hover:text-primary hover:border-primary/30'
+                          : 'border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white',
+                      )}
+                    >
+                      <PinOff size={14} className="transition-transform group-hover:scale-110" />
+                    </button>
+                  )}
                 </div>
               </>
             )}
