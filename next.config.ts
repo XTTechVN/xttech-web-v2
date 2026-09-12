@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { version } from './package.json';
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -12,16 +13,10 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   env: {
     MINIO_PUBLIC_URL: process.env.MINIO_PUBLIC_URL || 'https://minio-production-2298.up.railway.app',
+    NEXT_PUBLIC_APP_VERSION: version,
   },
   experimental: {
-    optimizePackageImports: [
-      'lucide-react',
-      'react-icons',
-      'antd',
-      'recharts',
-      'motion/react',
-      'dayjs',
-    ],
+    optimizePackageImports: ['lucide-react', 'react-icons', 'antd', 'recharts', 'motion/react', 'dayjs'],
   },
   async headers() {
     return [

@@ -123,7 +123,11 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                   typeof brand.logo === 'string' ? (
                     <img src={brand.logo} alt={brand.name || 'Brand'} className="w-8 h-8 object-contain" />
                   ) : (
-                    brand.logo || <div className="w-8 h-8 rounded-lg bg-primary text-white font-bold flex items-center justify-center text-sm">{brand.name?.charAt(0) || 'X'}</div>
+                    brand.logo || (
+                      <div className="w-8 h-8 rounded-lg bg-primary text-white font-bold flex items-center justify-center text-sm">
+                        {brand.name?.charAt(0) || 'X'}
+                      </div>
+                    )
                   )
                 ) : (
                   user && <Avatar src={user.avatar} name={user.name} size="sm" />
@@ -148,9 +152,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                           {brand.name || 'XTTECH'}
                         </span>
                         {brand.subtitle && (
-                          <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase truncate block">
-                            {brand.subtitle}
-                          </span>
+                          <span className="text-[10px] font-semibold tracking-wider text-slate-400 truncate block">{brand.subtitle}</span>
                         )}
                       </div>
                     </>
@@ -159,7 +161,9 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                       <>
                         <Avatar src={user.avatar} name={user.name} size="md" />
                         <div className="flex flex-col min-w-0">
-                          <span className={cn('text-sm font-semibold truncate block', isLight ? 'text-slate-900' : 'text-slate-100')}>{user.name}</span>
+                          <span className={cn('text-sm font-semibold truncate block', isLight ? 'text-slate-900' : 'text-slate-100')}>
+                            {user.name}
+                          </span>
                           <span className="text-[9px] font-bold tracking-wider text-slate-500 uppercase block">{user.role}</span>
                         </div>
                       </>
@@ -345,9 +349,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                   <div className="flex items-center justify-between gap-1">
                     <h5 className={cn('text-xs font-semibold truncate', isLight ? 'text-slate-800' : 'text-slate-100')}>{cta.title}</h5>
                     {cta.badge && (
-                      <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-primary/10 text-primary shrink-0">
-                        {cta.badge}
-                      </span>
+                      <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-primary/10 text-primary shrink-0">{cta.badge}</span>
                     )}
                   </div>
                   <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">{cta.description}</p>
