@@ -2,12 +2,12 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
-import { RotateCw, Plus, Eye, Pencil, Trash2, Calendar, FileText, User } from 'lucide-react';
+import { RotateCw, Plus, Eye, Pencil, Trash2, User } from 'lucide-react';
 import { useLeaveRequestStore } from '@/stores/useLeaveRequestStore';
 import toast from 'react-hot-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks';
-import { TableData, TableAction, Button, Avatar, Badge } from '@/components';
+import { TableData, TableAction, Button, Avatar } from '@/components';
 import { getLeaveRequests } from '@/actions/leave-request';
 import { getWorkShifts } from '@/actions/work-shift';
 import { LeaveRequest, LeaveRequestStatus, DurationType } from '@/types';
