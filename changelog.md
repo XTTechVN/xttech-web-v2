@@ -2,6 +2,21 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-12
+
+### Fixed & Enhanced
+- **Tối ưu hóa Cơ chế Định vị Chạy Ngầm Native trên iOS ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m), [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist)):**
+  - **Khắc phục triệt để lỗi khóa màn hình bị ngắt kết nối (Offline):**
+    - Loại bỏ mẹo "Silent Audio Keep-Alive" và chế độ `audio` ngầm (dễ bị iOS 15+ phát hiện tạm dừng và vi phạm Apple App Store Review Guideline 2.5.4).
+    - Tự động kiểm tra và yêu cầu cấp quyền "Luôn luôn" (`authorizedAlways`) thay vì chỉ dừng ở "Khi dùng ứng dụng" (`authorizedWhenInUse`).
+    - Bổ sung 2 native method `checkPermission` và `openSettings` hỗ trợ kiểm tra và điều hướng người dùng mở Cài đặt iPhone để nâng cấp quyền lên "Luôn luôn" và bật "Vị trí chính xác".
+  - **Tận dụng Chu kỳ Đánh thức của CoreLocation khi ở trong phòng kín:**
+    - Thay vì drop hoàn toàn các mốc vị trí có sai số $> 50\text{m}$ (do tường che khuất GPS trong phòng làm việc), hệ thống tận dụng các chu kỳ đánh thức của phần cứng để gửi gói tin Heartbeat duy trì kết nối với Điểm neo chuẩn xác cuối cùng (`lastAccurateLocation`) nếu đã quá 2 phút chưa gửi ping.
+    - Đảm bảo nhân viên ngồi làm việc trong phòng khóa màn hình đút túi suốt ca làm vẫn duy trì trạng thái Trực tuyến (Đứng yên) và không bao giờ bị Backend chuyển sang Offline sau 10 phút.
+- **Đồng bộ hóa Interface tại Web Frontend ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
+  - Cập nhật interface `NativeTrackingPlugin` nhận diện `checkPermission` và `openSettings`.
+  - Tự động kiểm tra quyền vị trí trên iOS sau khi bắt đầu tracking và phát cảnh báo nếu chưa được cấp quyền `Always`.
+
 ## [Unreleased] - 2026-09-11
 
 - **Giải pháp Toàn diện Giữ Nhịp Chạy Ngầm & Chống Nhảy Bản Đồ trên iOS ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift) & [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist)):**

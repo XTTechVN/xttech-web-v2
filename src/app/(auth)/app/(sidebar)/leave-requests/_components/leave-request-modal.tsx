@@ -428,6 +428,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
       queryClient.invalidateQueries({ queryKey: ['leave-requests-stats'] });
       setReviewModalOpen(false);
       setDetailModalOpen(false);
+      resetForm();
     },
     onError: (err) => {
       showErrorToast(err, 'Lỗi khi duyệt đơn.');

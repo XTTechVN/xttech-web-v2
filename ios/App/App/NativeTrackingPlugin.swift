@@ -2,7 +2,6 @@ import Foundation
 import CoreLocation
 import Capacitor
 import UIKit
-import AVFoundation
 
 @objc(NativeTrackingPlugin)
 public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
@@ -19,7 +18,6 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     private var heartbeatSource: DispatchSourceTimer?
     private let heartbeatQueue = DispatchQueue(label: "com.xttech.ios.heartbeat", qos: .background)
     private var lastBatteryLevel: Double = -1.0
-    private var silentAudioPlayer: AVAudioPlayer?
 
     private let prefsKeyToken = "xttech_ios_access_token"
     private let prefsKeyRefreshToken = "xttech_ios_refresh_token"
@@ -72,7 +70,6 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.startSilentAudio()
             self.setupLocationManager()
             self.startHeartbeat()
         }
@@ -99,7 +96,6 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.isTracking = false
-            self.stopSilentAudio()
             self.locationManager?.stopUpdatingLocation()
             if CLLocationManager.significantLocationChangeMonitoringAvailable() {
                 self.locationManager?.stopMonitoringSignificantLocationChanges()
@@ -107,6 +103,40 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             self.stopHeartbeat()
         }
         call.resolve(["success": true])
+    }
+
+    @objc func checkPermission(_ call: CAPPluginCall) {
+        let status: CLAuthorizationStatus
+        if #available(iOS 14.0, *) {
+            status = locationManager?.authorizationStatus ?? CLLocationManager().authorizationStatus
+        } else {
+            status = CLLocationManager.authorizationStatus()
+        }
+
+        let isAlways = (status == .authorizedAlways)
+        let isWhenInUse = (status == .authorizedWhenInUse)
+        var isPrecise = true
+        if #available(iOS 14.0, *) {
+            isPrecise = (locationManager?.accuracyAuthorization ?? .fullAccuracy) == .fullAccuracy
+        }
+
+        call.resolve([
+            "status": isAlways ? "always" : isWhenInUse ? "whenInUse" : "denied",
+            "isAlways": isAlways,
+            "isPrecise": isPrecise
+        ])
+    }
+
+    @objc func openSettings(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            if let url = URL(string: UIApplication.openSettingsURLString), UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:]) { success in
+                    call.resolve(["success": success])
+                }
+            } else {
+                call.reject("Cannot open settings")
+            }
+        }
     }
 
     private func setupLocationManager() {
@@ -132,7 +162,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             status = CLLocationManager.authorizationStatus()
         }
 
-        if status == .notDetermined {
+        if status == .notDetermined || status == .authorizedWhenInUse {
             locationManager?.requestAlwaysAuthorization()
         }
 
@@ -144,86 +174,15 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         isTracking = true
     }
 
-    // MARK: - Silent Audio Keep-Alive
-    private func createSilentWavData() -> Data {
-        let sampleRate: UInt32 = 8000
-        let numChannels: UInt16 = 1
-        let bitsPerSample: UInt16 = 8
-        let numSamples: UInt32 = 8000 // 1 giây âm thanh tĩnh
-        let byteRate: UInt32 = sampleRate * UInt32(numChannels) * UInt32(bitsPerSample / 8)
-        let blockAlign: UInt16 = numChannels * (bitsPerSample / 8)
-        let subchunk2Size: UInt32 = numSamples * UInt32(numChannels) * UInt32(bitsPerSample / 8)
-        let chunkSize: UInt32 = 36 + subchunk2Size
-
-        var data = Data()
-        data.append(contentsOf: [0x52, 0x49, 0x46, 0x46]) // "RIFF"
-        var chunkSizeLE = chunkSize.littleEndian
-        data.append(Data(bytes: &chunkSizeLE, count: 4))
-        data.append(contentsOf: [0x57, 0x41, 0x56, 0x45]) // "WAVE"
-
-        data.append(contentsOf: [0x66, 0x6D, 0x74, 0x20]) // "fmt "
-        var subchunk1SizeLE: UInt32 = UInt32(16).littleEndian
-        data.append(Data(bytes: &subchunk1SizeLE, count: 4))
-        var audioFormatLE: UInt16 = UInt16(1).littleEndian // PCM
-        data.append(Data(bytes: &audioFormatLE, count: 2))
-        var channelsLE = numChannels.littleEndian
-        data.append(Data(bytes: &channelsLE, count: 2))
-        var sampleRateLE = sampleRate.littleEndian
-        data.append(Data(bytes: &sampleRateLE, count: 4))
-        var byteRateLE = byteRate.littleEndian
-        data.append(Data(bytes: &byteRateLE, count: 4))
-        var blockAlignLE = blockAlign.littleEndian
-        data.append(Data(bytes: &blockAlignLE, count: 2))
-        var bitsPerSampleLE = bitsPerSample.littleEndian
-        data.append(Data(bytes: &bitsPerSampleLE, count: 2))
-
-        data.append(contentsOf: [0x64, 0x61, 0x74, 0x61]) // "data"
-        var subchunk2SizeLE = subchunk2Size.littleEndian
-        data.append(Data(bytes: &subchunk2SizeLE, count: 4))
-
-        // 8000 bytes giá trị 128 (0x80 là điểm 0 của PCM 8-bit, hoàn toàn im lặng)
-        data.append(contentsOf: [UInt8](repeating: 0x80, count: Int(subchunk2Size)))
-        return data
-    }
-
-    private func startSilentAudio() {
-        guard silentAudioPlayer == nil else { return }
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-            try session.setActive(true)
-
-            let wavData = createSilentWavData()
-            let player = try AVAudioPlayer(data: wavData)
-            player.numberOfLoops = -1
-            player.volume = 0.0
-            player.prepareToPlay()
-            player.play()
-            self.silentAudioPlayer = player
-        } catch {
-            print("[NativeTracking iOS] Failed to start silent audio keep-alive: \(error)")
-        }
-    }
-
-    private func stopSilentAudio() {
-        silentAudioPlayer?.stop()
-        silentAudioPlayer = nil
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-    }
-
     private func startHeartbeat() {
         stopHeartbeat()
-        // Sử dụng DispatchSourceTimer trên background queue độc lập
-        // Nhờ có Silent Audio Keep-Alive, tiến trình CPU không bị iOS đóng băng khi khóa màn hình
         let timer = DispatchSource.makeTimerSource(queue: heartbeatQueue)
         timer.schedule(deadline: .now() + 60.0, repeating: 60.0)
         timer.setEventHandler { [weak self] in
             guard let self = self, self.isTracking else { return }
             let elapsed = Date().timeIntervalSince(self.lastPingTime)
-            // Nếu đã quá 2 phút chưa có ping nào gửi lên (do đứng yên trong phòng làm việc, mất sóng GPS)
+            // Nếu đã quá 2 phút chưa có ping nào gửi lên (do đứng yên trong phòng làm việc)
             if elapsed >= 120.0 {
-                // Sử dụng Điểm neo chuẩn xác cuối cùng (lastAccurateLocation)
-                // Đảm bảo Live Map đứng im phắc 100%, chống giật/nhảy map nhưng Backend vẫn duy trì Online
                 if let anchorLocation = self.lastAccurateLocation ?? self.lastLocation {
                     self.sendPing(location: anchorLocation, isHeartbeat: true)
                 }
@@ -248,7 +207,6 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         DispatchQueue.main.async {
             if let plugin = shared {
-                plugin.startSilentAudio()
                 plugin.setupLocationManager()
                 plugin.startHeartbeat()
             } else {
@@ -256,7 +214,6 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
                 standalone.accessToken = defaults.string(forKey: "xttech_ios_access_token")
                 standalone.refreshToken = defaults.string(forKey: "xttech_ios_refresh_token")
                 standalone.apiUrl = defaults.string(forKey: "xttech_ios_api_url")
-                standalone.startSilentAudio()
                 standalone.setupLocationManager()
                 standalone.startHeartbeat()
                 shared = standalone
@@ -275,24 +232,34 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         // Khởi tạo điểm ban đầu nếu chưa có bất kỳ vị trí nào
         if self.lastAccurateLocation == nil {
-            self.lastAccurateLocation = location
-            self.lastLocation = location
-            self.lastPingTime = Date()
-            sendPing(location: location, isHeartbeat: true)
+            if location.horizontalAccuracy >= 0 && location.horizontalAccuracy <= 100.0 {
+                self.lastAccurateLocation = location
+                self.lastLocation = location
+                self.lastPingTime = Date()
+                sendPing(location: location, isHeartbeat: true)
+            }
             return
         }
 
+        let now = Date()
+        let elapsed = now.timeIntervalSince(lastPingTime)
+
         // Chống nhảy Map: Chỉ chấp nhận cập nhật vị trí hiển thị nếu độ chính xác đạt chuẩn (<= 50m)
-        // Nếu ở trong phòng sai số trạm BTS/Wi-Fi vọt lên > 50m, TỪ CHỐI cập nhật vị trí để chống giật map
+        // Nếu ở trong phòng sai số trạm BTS/Wi-Fi vọt lên > 50m hoặc không hợp lệ:
+        // TỪ CHỐI cập nhật vị trí mới để chống giật map, NHƯNG tận dụng CPU vừa được iOS đánh thức
+        // để gửi nhịp tim giữ kết nối (Heartbeat) với tọa độ chuẩn cũ nếu đã quá 2 phút!
         if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 50.0 {
+            if elapsed >= 120.0 {
+                if let anchorLocation = self.lastAccurateLocation ?? self.lastLocation {
+                    print("[NativeTracking iOS] Indoor weak GPS (>50m). Sending stationary heartbeat with anchor location.")
+                    sendPing(location: anchorLocation, isHeartbeat: true)
+                }
+            }
             return
         }
 
         let rawSpeed = max(0.0, location.speed)
         let speed = rawSpeed >= 0.8 ? rawSpeed : 0.0
-
-        let now = Date()
-        let elapsed = now.timeIntervalSince(lastPingTime)
         let distance = location.distance(from: self.lastAccurateLocation!)
 
         // Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):

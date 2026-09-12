@@ -7,12 +7,14 @@ import { useAuthStore } from '@/stores';
 import { BASE_API_URL } from '@/config';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 
-interface NativeTrackingPlugin {
+export interface NativeTrackingPlugin {
   startTracking(options: { token: string; refreshToken?: string; apiUrl: string }): Promise<{ success: boolean }>;
   updateToken(options: { token: string; refreshToken?: string }): Promise<{ success: boolean }>;
   stopTracking(): Promise<{ success: boolean }>;
+  checkPermission?(): Promise<{ status: string; isAlways: boolean; isPrecise: boolean }>;
+  openSettings?(): Promise<{ success: boolean }>;
 }
-const NativeTracking = registerPlugin<NativeTrackingPlugin>('NativeTracking');
+export const NativeTracking = registerPlugin<NativeTrackingPlugin>('NativeTracking');
 
 interface LocationTrackerOptions {
   enabled?: boolean;
@@ -277,6 +279,14 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
         token: authState.accessToken,
         refreshToken: authState.refreshToken,
         apiUrl: BASE_API_URL,
+      }).then(() => {
+        if (Capacitor.getPlatform() === 'ios' && NativeTracking.checkPermission) {
+          NativeTracking.checkPermission().then((perm) => {
+            if (perm && !perm.isAlways) {
+              console.warn('[NativeTracking iOS] Vị trí chưa được cấp quyền Always. Cần cấp quyền "Luôn luôn" để theo dõi khi khóa màn hình.');
+            }
+          }).catch(() => {});
+        }
       }).catch((e: any) => {
         console.warn('[NativeTracking] Start native tracking failed, falling back to Web Geolocation:', e);
         startWebWatchPosition();
