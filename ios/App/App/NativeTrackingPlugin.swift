@@ -134,7 +134,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
                     call.resolve(["success": success])
                 }
             } else {
-                call.reject("Cannot open settings")
+                call.resolve(["success": false])
             }
         }
     }

@@ -10,6 +10,8 @@ All notable changes to the frontend project will be documented in this file.
     - Loại bỏ mẹo "Silent Audio Keep-Alive" và chế độ `audio` ngầm (dễ bị iOS 15+ phát hiện tạm dừng và vi phạm Apple App Store Review Guideline 2.5.4).
     - Tự động kiểm tra và yêu cầu cấp quyền "Luôn luôn" (`authorizedAlways`) thay vì chỉ dừng ở "Khi dùng ứng dụng" (`authorizedWhenInUse`).
     - Bổ sung 2 native method `checkPermission` và `openSettings` hỗ trợ kiểm tra và điều hướng người dùng mở Cài đặt iPhone để nâng cấp quyền lên "Luôn luôn" và bật "Vị trí chính xác".
+  - **Sửa lỗi biên dịch Xcode Build trên CI/CD (`NativeTrackingPlugin.swift`):**
+    - Khắc phục lỗi `value of type 'CAPPluginCall' has no member 'reject'` bằng cách chuẩn hóa kết quả trả về `call.resolve(["success": false])` trong phương thức `openSettings`, đảm bảo tương thích hoàn toàn với kiến trúc SPM / Objective-C bridge của Capacitor và đồng bộ với interface `Promise<{ success: boolean }>` phía Frontend.
   - **Tận dụng Chu kỳ Đánh thức của CoreLocation khi ở trong phòng kín:**
     - Thay vì drop hoàn toàn các mốc vị trí có sai số $> 50\text{m}$ (do tường che khuất GPS trong phòng làm việc), hệ thống tận dụng các chu kỳ đánh thức của phần cứng để gửi gói tin Heartbeat duy trì kết nối với Điểm neo chuẩn xác cuối cùng (`lastAccurateLocation`) nếu đã quá 2 phút chưa gửi ping.
     - Đảm bảo nhân viên ngồi làm việc trong phòng khóa màn hình đút túi suốt ca làm vẫn duy trì trạng thái Trực tuyến (Đứng yên) và không bao giờ bị Backend chuyển sang Offline sau 10 phút.
