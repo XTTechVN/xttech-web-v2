@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import { Bell, User, Lock, LogOut, Download } from 'lucide-react';
 import { Avatar, Dropdown } from '@/components';
 import { useAuthStore } from '@/stores';
-import { BASE_MINIO_URL, UserRole } from '@/config';
+import { UserRole } from '@/config';
+import { getFileUrl } from '@/utils';
 import { ProfileModal } from './profile-modal';
 import { PasswordModal } from './password-modal';
 
@@ -71,7 +72,7 @@ export function HeaderProfile({ userRole }: HeaderProfileProps) {
     }
   };
 
-  const avatarUrl = user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_MINIO_URL}${user.avatar}`) : null;
+  const avatarUrl = getFileUrl(user?.avatar) || null;
 
   return (
     <div className="flex items-center gap-4 md:gap-6">

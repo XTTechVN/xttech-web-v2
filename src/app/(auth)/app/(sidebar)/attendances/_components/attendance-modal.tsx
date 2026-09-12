@@ -2,17 +2,8 @@
 
 import { Modal, Button, Badge, Avatar } from "@/components";
 import { Attendance, getAttendanceStatusInfo } from "@/types";
-import { BASE_MINIO_URL } from "@/config";
-import {
-  Calendar,
-  MapPin,
-  FileText,
-  LogIn,
-  LogOut,
-  Camera,
-  Timer,
-  Mail,
-} from "lucide-react";
+import { getFileUrl } from "@/utils";
+import { LogIn, LogOut, Camera, Mail, } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -35,23 +26,9 @@ export default function AttendanceDetailModal({
     return value.substring(0, 5);
   };
 
-  const avatarSrc = data.user?.avatar
-    ? data.user.avatar.startsWith("http")
-      ? data.user.avatar
-      : `${BASE_MINIO_URL}${data.user.avatar}`
-    : undefined;
-
-  const checkInImgSrc = data.imgCheckinPath
-    ? data.imgCheckinPath.startsWith("http")
-      ? data.imgCheckinPath
-      : `${BASE_MINIO_URL}${data.imgCheckinPath}`
-    : null;
-
-  const checkOutImgSrc = data.imgCheckoutPath
-    ? data.imgCheckoutPath.startsWith("http")
-      ? data.imgCheckoutPath
-      : `${BASE_MINIO_URL}${data.imgCheckoutPath}`
-    : null;
+  const avatarSrc = getFileUrl(data.user?.avatar)
+  const checkInImgSrc = getFileUrl(data.imgCheckinPath)
+  const checkOutImgSrc = getFileUrl(data.imgCheckoutPath)
 
   const footer = (
     <Button variant="outline" onClick={onClose} className="hover:bg-[#ececf27d]">

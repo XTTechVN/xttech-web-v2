@@ -6,11 +6,11 @@ import { Building2, Eye, ShieldCheck, Calendar } from 'lucide-react';
 import { TableData, type ITableColumn } from '@/components/table';
 import type { ITableFilterProps } from '@/components/table/types';
 import { Badge, Avatar } from '@/components';
-import { BASE_MINIO_URL } from '@/config';
 import { getAttendanceReport, getDepartments } from '@/actions';
 import type { AttendanceReportItem, Department } from '@/types';
 import { ReportDetailModal } from './detail-modal';
 import { useQueryParams, useQueryParam } from '@/hooks';
+import { getFileUrl } from '@/utils';
 
 
 
@@ -107,13 +107,7 @@ export function ReportTable() {
         cell: (row) => (
           <div className="flex items-center gap-3">
             <Avatar
-              src={
-                row.avatar
-                  ? row.avatar.startsWith('http')
-                    ? row.avatar
-                    : `${BASE_MINIO_URL}${row.avatar}`
-                  : undefined
-              }
+              src={getFileUrl(row.avatar)}
               name={row.fullName || row.username || 'NV'}
               size="sm"
             />
@@ -266,13 +260,7 @@ export function ReportTable() {
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <Avatar
-              src={
-                row.avatar
-                  ? row.avatar.startsWith('http')
-                    ? row.avatar
-                    : `${BASE_MINIO_URL}${row.avatar}`
-                  : undefined
-              }
+              src={getFileUrl(row.avatar)}
               name={row.fullName || row.username || 'NV'}
               size="md"
             />

@@ -4,19 +4,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { getLiveLocations } from '@/actions';
 import { StaffLiveLocation } from '@/types';
-import { BASE_WS_URL, BASE_MINIO_URL } from '@/config';
+import { BASE_WS_URL } from '@/config';
 import { LiveMap } from './_components/live-map';
 import { StaffList } from './_components/staff-list';
-import { RoutePlaybackModal } from '../_components/route-playback-modal';
-import toast from 'react-hot-toast';
-import { showErrorToast } from '@/utils';
+import { RoutePlaybackModal } from '@/components';
+import { getFileUrl, showErrorToast } from '@/utils';
 import { Users, X, Route } from 'lucide-react';
 
 export default function AttendanceLiveMapPage() {
   const [staffLocations, setStaffLocations] = useState<StaffLiveLocation[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<StaffLiveLocation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isWsConnected, setIsWsConnected] = useState(false);
   const [isMobileStaffListOpen, setIsMobileStaffListOpen] = useState(false);
 
   // Modal xem lộ trình
@@ -76,7 +74,6 @@ export default function AttendanceLiveMapPage() {
 
         ws.onopen = () => {
           if (!isMountedRef.current) return;
-          setIsWsConnected(true);
           if (reconnectTimerRef.current) {
             clearTimeout(reconnectTimerRef.current);
             reconnectTimerRef.current = null;
@@ -130,7 +127,6 @@ export default function AttendanceLiveMapPage() {
 
         ws.onclose = () => {
           if (!isMountedRef.current) return;
-          setIsWsConnected(false);
           // Tự động kết nối lại sau 3 giây (Auto-Reconnect)
           if (!reconnectTimerRef.current) {
             reconnectTimerRef.current = setTimeout(() => {
@@ -141,7 +137,6 @@ export default function AttendanceLiveMapPage() {
         };
 
         ws.onerror = () => {
-          setIsWsConnected(false);
           ws.close();
         };
       } catch (err) {
@@ -247,7 +242,7 @@ export default function AttendanceLiveMapPage() {
                 <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center font-bold text-xs text-slate-700">
                   {selectedStaff.avatar ? (
                     <img
-                      src={BASE_MINIO_URL + selectedStaff.avatar}
+                      src={getFileUrl(selectedStaff.avatar)}
                       alt={selectedStaff.userName || 'Nhân viên'}
                       className="w-full h-full object-cover"
                     />

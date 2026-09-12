@@ -17,8 +17,7 @@ import { formatAccessoryUnit, formatMaterialUnit, formatDoorType, getAccessoryUn
 import { Button } from '@/components';
 import { AccessoryUpdateModal } from '../_components/modals';
 import { AssignDoorsModal, AssignMaterialsModal } from '../_components/relation-modals';
-import { BASE_MINIO_URL } from '@/config/app';
-import { formatCurrency } from '@/utils';
+import { formatCurrency, getFileUrl } from '@/utils';
 import toast from 'react-hot-toast';
 
 interface AccessoryDetailPageProps {
@@ -164,13 +163,13 @@ export default function AccessoryDetailPage({ params }: AccessoryDetailPageProps
           <div className="w-full aspect-square md:h-64 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center">
             {accessory.imagePath ? (
               <img
-                src={accessory.imagePath.startsWith('http') ? accessory.imagePath : `${BASE_MINIO_URL}${accessory.imagePath}`}
+                src={getFileUrl(accessory.imagePath)}
                 alt={accessory.name}
                 className="w-full h-full object-cover"
               />
             ) : (
               <div className="flex flex-col items-center gap-2 text-slate-400">
-                <Image size={32} strokeWidth={1.5} />
+                <Image size={32} strokeWidth={1.5}/>
                 <span className="text-[10px] font-medium">Chưa có ảnh</span>
               </div>
             )}

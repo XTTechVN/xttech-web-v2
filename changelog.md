@@ -4,6 +4,11 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-12
 
+### Refactored & Enhanced
+- **Chuẩn hóa Đường dẫn Hình ảnh & Tệp tin ([`src/utils/string.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/string.ts)):**
+  - Xây dựng hàm tiện ích tập trung `getFileUrl(path, fallback)` xử lý toàn diện các trường hợp ngoại lệ: `undefined`/`null`, tự động chuẩn hóa dấu gạch chéo `/`, hỗ trợ link tuyệt đối (`http://`, `https://`, `blob:`, `data:`), loại bỏ triệt để hiện tượng URL rác hoặc double slash.
+  - Refactor đồng bộ toàn bộ codebase (hơn 20 files: Header, Profile, Quản lý nhân sự, Cửa & Phụ kiện, Báo giá, Điểm danh, Live Map, Leave Requests...) chuyển từ nối chuỗi thủ công `BASE_MINIO_URL` sang `getFileUrl()`.
+
 ### Fixed & Enhanced
 - **Tối ưu hóa Cơ chế Định vị Chạy Ngầm Native trên iOS ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m), [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist)):**
   - **Khắc phục triệt để lỗi khóa màn hình bị ngắt kết nối (Offline):**

@@ -3,14 +3,14 @@
 import React from 'react';
 import { Columns, Plus, Pencil, Trash2 } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
-import { Heading, Button } from '@/components';
+import {  Button } from '@/components';
 import { useQueryParam } from '@/hooks';
-import { Door, formatDoorType, getDoorTypeConfig } from '@/types';
+import { Door, getDoorTypeConfig } from '@/types';
 import { getDoors } from '@/actions';
 import toast from 'react-hot-toast';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
-import { BASE_MINIO_URL } from '@/config/app';
+import { getFileUrl } from '@/utils';
 
 interface TableProps {
   onEditClick: (door: Door) => void;
@@ -42,7 +42,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
           <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
             {primaryImg ? (
               <img
-                src={primaryImg.startsWith('http') ? primaryImg : `${BASE_MINIO_URL}${primaryImg}`}
+                src={getFileUrl(primaryImg)}
                 alt={row.name}
                 className="w-full h-full object-cover"
               />
@@ -110,7 +110,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
           <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0 mt-0.5">
             {primaryImg ? (
               <img
-                src={primaryImg.startsWith('http') ? primaryImg : `${BASE_MINIO_URL}${primaryImg}`}
+                src={getFileUrl(primaryImg)}
                 alt={row.name}
                 className="w-full h-full object-cover"
               />

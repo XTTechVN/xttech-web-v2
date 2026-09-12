@@ -10,7 +10,7 @@ import { getEmployees, revokePositions, getUsers } from '@/actions';
 import { useQueryParam, useDebounce } from '@/hooks';
 import type { Employee, User } from '@/types';
 import queryClient from '@/utils/query';
-import { BASE_MINIO_URL } from '@/config';
+import { getFileUrl } from '@/utils';
 
 import PositionModal from '@/app/(auth)/app/(sidebar)/employees/_components/position-modal';
 
@@ -117,13 +117,7 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
       cell: (row: Employee) => (
         <div className="flex items-center gap-3">
           <Avatar
-            src={
-              row.avatar
-                ? row.avatar.startsWith('http')
-                  ? row.avatar
-                  : `${BASE_MINIO_URL}${row.avatar}`
-                : undefined
-            }
+            src={getFileUrl(row.avatar) || undefined}
             name={row.fullName || row.username}
             size="sm"
           />
@@ -220,13 +214,7 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <Avatar
-              src={
-                row.avatar
-                  ? row.avatar.startsWith('http')
-                  ? row.avatar
-                  : `${BASE_MINIO_URL}${row.avatar}`
-                  : undefined
-              }
+              src={getFileUrl(row.avatar) || undefined}
               name={row.fullName || row.username}
               size="md"
             />
@@ -381,13 +369,7 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
                   >
                     <div className="flex items-center gap-3 min-w-0 pr-2">
                       <Avatar
-                        src={
-                          u.avatar
-                            ? u.avatar.startsWith('http')
-                              ? u.avatar
-                              : `${BASE_MINIO_URL}${u.avatar}`
-                            : undefined
-                        }
+                        src={getFileUrl(u.avatar) || undefined}
                         name={u.fullName || u.username}
                         size="sm"
                       />

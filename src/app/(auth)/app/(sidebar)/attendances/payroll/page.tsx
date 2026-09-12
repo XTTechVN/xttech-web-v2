@@ -10,11 +10,11 @@ import { useAuthStore } from '@/stores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAttendances } from '@/actions';
 import { Attendance, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
-import { BASE_MINIO_URL } from '@/config/app';
 import StatCart from '../../dashboard/_components/stats-card';
 import AddAdjustmentModal from '../adjustments/_components/add-modal';
 import AttendanceDetailModal from '../_components/attendance-modal';
 import OvertimeModal from '../_components/overtime-modal';
+import { getFileUrl } from '@/utils';
 
 const formatTime = (value?: string | null): string => {
   if (!value) return '--:--';
@@ -203,10 +203,8 @@ export default function PayrollDataPage() {
       label: 'Ảnh chấm công',
       minWidth: '120px',
       cell: (row) => {
-        const inImgPath = row.imgCheckinPath;
-        const outImgPath = row.imgCheckoutPath;
-        const inImgSrc = inImgPath ? (inImgPath.startsWith('http') ? inImgPath : `${BASE_MINIO_URL}${inImgPath}`) : null;
-        const outImgSrc = outImgPath ? (outImgPath.startsWith('http') ? outImgPath : `${BASE_MINIO_URL}${outImgPath}`) : null;
+        const inImgSrc = getFileUrl(row.imgCheckinPath)
+        const outImgSrc = getFileUrl(row.imgCheckoutPath)
 
         return (
           <div className="flex gap-2 items-center py-1">
@@ -301,10 +299,8 @@ export default function PayrollDataPage() {
   ];
 
   const renderAttendanceCard = (row: Attendance, index: number) => {
-    const inImgPath = row.imgCheckinPath;
-    const outImgPath = row.imgCheckoutPath;
-    const inImgSrc = inImgPath ? (inImgPath.startsWith('http') ? inImgPath : `${BASE_MINIO_URL}${inImgPath}`) : null;
-    const outImgSrc = outImgPath ? (outImgPath.startsWith('http') ? outImgPath : `${BASE_MINIO_URL}${outImgPath}`) : null;
+    const inImgSrc = getFileUrl(row.imgCheckinPath)
+    const outImgSrc = getFileUrl(row.imgCheckoutPath)
 
     return (
       <div
