@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Heading, Modal, Button } from '@/components';
 
 // Icons thư viện lucide-react
-import { Eye, Download, Calendar, FileText } from 'lucide-react';
+import { Eye, Download } from 'lucide-react';
 
 // Kiểu dữ liệu dùng riêng cho tài liệu
 interface DocumentItem {

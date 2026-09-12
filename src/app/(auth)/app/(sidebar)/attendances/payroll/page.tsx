@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Button, Badge, TableData, TableAction, ITableColumn, ITableFilterProps } from '@/components';
+import { Button, Badge, TableData, TableAction, ITableColumn, ITableFilterProps, AutoTimekeepingModal } from '@/components';
+
 import { toast } from 'react-hot-toast';
 import { Calendar, Clock, AlertCircle, LogIn, LogOut, FileEdit, Briefcase, Eye, UserX } from 'lucide-react';
 import Link from 'next/link';
-import AutoTimekeepingModal from '@/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal';
 import { useAuthStore } from '@/stores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { getAttendances } from '@/actions';
 import { Attendance, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 import StatCart from '../../dashboard/_components/stats-card';

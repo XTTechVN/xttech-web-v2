@@ -4,7 +4,29 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-12
 
+### Added & Redesigned
+- **Thiết kế lại Trang Dashboard Doanh Nghiệp Thời Gian Thực & Bộ Tiện Ích Di Động Super-App ([`dashboard/`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard)):**
+  - **Loại bỏ triệt để dữ liệu mockup ảo:** Thay thế toàn bộ các chỉ số thống kê giả lập, tài liệu ảo, lịch đào tạo ảo và biểu đồ tĩnh bằng 100% dữ liệu sống từ hệ thống (Nhân sự, Chấm công hôm nay, Đơn xin nghỉ phép đang chờ duyệt, Giải trình công, Dự án và GPS Live Map).
+  - **Trải nghiệm Mobile Chuẩn Super-App Doanh nghiệp (Lark Suite / Base.vn style):**
+    - [`MobileHeader`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/mobile-header.tsx): Lời chào cá nhân hóa thông minh theo thời gian trong ngày, Avatar, Chức vụ, Thứ/Ngày/Tháng tiếng Việt kèm nút làm mới tức thì.
+    - **Tối ưu hóa Toàn diện UI/UX Modal Chấm Công Tự Động ([`src/components/auto-timekeeping-modal/`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal)):**
+      - **Tối ưu Layout & Xóa bỏ khoảng trắng thừa:** Chuyển layout sang dạng Sticky Footer cố định ở chân trang với dải nền phân cách nổi bật; khu vực nội dung bên trên co giãn linh hoạt và cuộn mượt mà trên thiết bị di động.
+      - **Thiết kế lại Nút hành động chính (CTA):** Thay thế nút tròn cũ bằng nút chữ nhật bo góc rộng toàn mép (full-width) màu xanh ngọc chủ đạo (Teal/Primary) với nhãn hành động rõ ràng: `📸 Chụp ảnh chấm công` ở bước chụp và `Xác nhận Check-in / Check-out` ở bước xác nhận.
+      - **Đồng nhất Màu sắc & Cấu trúc Badge:** Thay các badge màu chói bằng badge nền đen bán trong suốt (`rgba(0,0,0,0.6)` + `backdrop-blur-md`) viền kính tinh tế; camera trực tiếp sử dụng dấu chấm đỏ nhấp nháy (pulsating red dot) kèm nhãn "Trực tiếp" sang trọng.
+      - **Gom nhóm thông tin dạng Card UI:** Đặt cụm [Toạ độ + Bản đồ GPS] và [Ghi chú chấm công] vào các Card nền xám nhạt (`bg-slate-50 border border-slate-200/80 rounded-xl`), tạo phân cấp khối thông tin trực quan, ngăn nắp.
+      - **Tinh chỉnh Typography & Icon:** Hạ cỡ chữ tiêu đề xuống mức chuẩn 18px-20px, đồng bộ phong cách và kích thước icon thống nhất trên toàn modal.
+
+    - [`QuickActionsGrid`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/quick-actions-grid.tsx): Lưới 8 tiện ích doanh nghiệp di động chuẩn 4 cột với icon bo góc mềm mại, phối màu hiện đại và badge đếm đơn từ chờ duyệt: Bản đồ Live, Xin nghỉ phép, Giải trình, Bảng công, Dự án, Danh bạ, Góp ý, Báo cáo.
+    - [`PendingApprovalsCard`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/pending-approvals-card.tsx): Thẻ cảnh báo và xử lý nhanh các đơn xin nghỉ phép và khiếu nại công dành riêng cho HR / Admin / Ban giám đốc.
+  - **Trải nghiệm Desktop Bảng Điều Hành Trung Tâm (Command Center):**
+    - 4 Thẻ KPI chính xác theo thời gian thực (Tổng nhân sự, Chuyên cần hôm nay, Hồ sơ chờ duyệt, Dự án đang chạy).
+    - [`WeeklyAttendanceChart`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx): Biểu đồ Recharts cột đôi thể hiện số lượng nhân sự có mặt và đi muộn trong 7 ngày gần nhất.
+    - [`LiveStaffWidget`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/live-staff-widget.tsx): Widget theo dõi danh sách kỹ thuật viên/nhân sự đang trực tuyến định vị GPS ngoài thực địa theo thời gian thực.
+  - **Tích hợp API Backend & Cơ chế Fallback Không Gián Đoạn ([`src/actions/dashboard/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/dashboard/index.ts)):**
+    - Xây dựng action `getDashboardSummary()` ưu tiên gọi endpoint tổng hợp tối ưu từ backend, đồng thời trang bị cơ chế tự động fallback tổng hợp dữ liệu song song client-side từ các API sẵn có, đảm bảo hoạt động trơn tru 100% không gián đoạn trên cả môi trường local và production.
+
 ### Refactored & Enhanced
+
 - **Chuẩn hóa Đường dẫn Hình ảnh & Tệp tin ([`src/utils/string.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/string.ts)):**
   - Xây dựng hàm tiện ích tập trung `getFileUrl(path, fallback)` xử lý toàn diện các trường hợp ngoại lệ: `undefined`/`null`, tự động chuẩn hóa dấu gạch chéo `/`, hỗ trợ link tuyệt đối (`http://`, `https://`, `blob:`, `data:`), loại bỏ triệt để hiện tượng URL rác hoặc double slash.
   - Refactor đồng bộ toàn bộ codebase (hơn 20 files: Header, Profile, Quản lý nhân sự, Cửa & Phụ kiện, Báo giá, Điểm danh, Live Map, Leave Requests...) chuyển từ nối chuỗi thủ công `BASE_MINIO_URL` sang `getFileUrl()`.

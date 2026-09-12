@@ -1,66 +1,104 @@
 'use client';
 
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getDashboardSummary } from '@/actions';
 import StatCard from '../_components/stats-card';
-import Schedule from '../_components/schedule';
-import Document from '../_components/document';
-import { Clock, CalendarCheck, FileText, Sparkles } from 'lucide-react';
-
-const statsMockupData = [
-  {
-    title: 'Ca làm việc hôm nay',
-    value: '_',
-    icon: <Clock size={18} />,
-    trend: 0,
-    trendDirection: 'up' as const,
-  },
-  {
-    title: 'Ngày công tháng này',
-    value: '_',
-    icon: <CalendarCheck size={18} />,
-    trend: 3,
-    trendDirection: 'up' as const,
-  },
-  {
-    title: 'Đơn từ & Khiếu nại',
-    value: '_',
-    icon: <FileText size={18} />,
-    trend: 0,
-    trendDirection: 'up' as const,
-  },
-  {
-    title: 'Đề xuất & Đóng góp',
-    value: '_',
-    icon: <Sparkles size={18} />,
-    trend: 1,
-    trendDirection: 'up' as const,
-  },
-];
+import SystemHistory from '../_components/system-history';
+import MobileHeader from '../_components/mobile-header';
+import QuickAttendanceCard from '../_components/quick-attendance-card';
+import QuickActionsGrid from '../_components/quick-actions-grid';
+import WeeklyAttendanceChart from '../_components/weekly-attendance-chart';
+import LiveStaffWidget from '../_components/live-staff-widget';
+import { Clock, CheckCircle2, Users, Navigation } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export const EmployeeDashboard = () => {
+  const router = useRouter();
+
+  const { data, isLoading, refetch, isRefetching } = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: () => getDashboardSummary(),
+    refetchInterval: 60000,
+  });
+
+  const isCheckedIn = Boolean(data?.myAttendance?.checkIn);
+  const checkInText = isCheckedIn
+    ? `Vào lúc ${data?.myAttendance?.checkIn?.slice(0, 5)}`
+    : 'Chưa vào ca';
+
+  const statsData = [
+    {
+      title: 'Trạng thái ca hôm nay',
+      value: isCheckedIn ? 'Đang làm việc' : 'Chưa điểm danh',
+      icon: <Clock size={18} />,
+      onClick: () => router.push('/app/attendances'),
+    },
+    {
+      title: 'Giờ check-in',
+      value: checkInText,
+      icon: <CheckCircle2 size={18} />,
+      onClick: () => router.push('/app/attendances'),
+    },
+    {
+      title: 'Đồng nghiệp online GPS',
+      value: isLoading ? '...' : `${data?.onlineStaffCount ?? 0} người`,
+      icon: <Navigation size={18} />,
+      onClick: () => router.push('/app/live-map'),
+    },
+    {
+      title: 'Quy mô nhân sự',
+      value: isLoading ? '...' : `${data?.totalEmployees ?? 0} người`,
+      icon: <Users size={18} />,
+      onClick: () => router.push('/app/employees'),
+    },
+  ];
+
   return (
-    <div className="flex relative">
-      <div className="flex-1 min-w-0 flex flex-col p-1 gap-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
-          {statsMockupData.map((stat, index) => (
+    <div className="flex flex-col gap-4 p-1">
+      {/* 1. Mobile Super-App */}
+      <div className="flex md:hidden flex-col gap-3.5">
+        <MobileHeader onRefresh={() => refetch()} isRefreshing={isRefetching} />
+        <QuickAttendanceCard attendance={data?.myAttendance} />
+        <QuickActionsGrid
+          pendingLeavesCount={data?.pendingLeavesCount}
+          pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
+        />
+        <SystemHistory />
+      </div>
+
+      {/* 2. Desktop Employee View */}
+      <div className="hidden md:flex flex-col gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {statsData.map((stat, index) => (
             <StatCard
               key={index}
               title={stat.title}
               value={stat.value}
               icon={stat.icon}
-              trend={stat.trend}
-              trendDirection={stat.trendDirection}
+              trend={0}
+              onClick={stat.onClick}
             />
           ))}
         </div>
-        <div className="md:grid md:grid-cols-12 md:gap-4 flex flex-col gap-2">
-          <div className="col-span-6">
-            <Schedule />
+
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-8 flex flex-col gap-4">
+            <QuickAttendanceCard attendance={data?.myAttendance} />
+            <WeeklyAttendanceChart
+              data={data?.weeklyStats}
+              todayCount={data?.todayAttendancesCount}
+            />
           </div>
-          <div className="col-span-6">
-            <Document />
+
+          <div className="col-span-4 flex flex-col gap-4">
+            <LiveStaffWidget />
+            <SystemHistory />
           </div>
         </div>
       </div>
     </div>
   );
 };
+
+export default EmployeeDashboard;
