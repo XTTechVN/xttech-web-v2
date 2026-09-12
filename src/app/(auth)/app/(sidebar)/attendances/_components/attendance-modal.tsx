@@ -101,7 +101,7 @@ export default function AttendanceDetailModal({
                       Muộn {data.lateMinutes ?? 0} phút
                     </span>
                   ) : (
-                    <span className="text-xs text-black text-slate-500">
+                    <span className="text-xs text-black">
                       {data.checkIn ? "Đúng giờ" : "Chưa vào ca"}
                     </span>
                   )}

@@ -17,7 +17,6 @@ export const PendingApprovalsCard: React.FC<PendingApprovalsCardProps> = ({
   pendingLeavesCount,
   pendingAdjustmentsCount,
   recentLeaves = [],
-  recentAdjustments = [],
   isAdminOrHr = false,
 }) => {
   const totalPending = pendingLeavesCount + pendingAdjustmentsCount;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, CalendarCheck, Clock, FileText, ShieldCheck, ListChecks, User, Smartphone } from 'lucide-react';
+import { Layout, CalendarCheck, Clock, FileText, Map, User, Smartphone } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
 export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician' | 'accountant' | 'employee';
@@ -139,7 +139,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
       {
         id: 'live-map',
         label: 'Bản đồ trực tiếp',
-        icon: React.createElement(ListChecks, { size: 18 }),
+        icon: React.createElement(Map , { size: 18 }),
         href: '/app/live-map',
         roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
       },

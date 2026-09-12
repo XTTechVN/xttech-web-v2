@@ -19,10 +19,7 @@ interface WeeklyAttendanceChartProps {
   todayCount?: number;
 }
 
-export const WeeklyAttendanceChart: React.FC<WeeklyAttendanceChartProps> = ({
-  data = [],
-  todayCount = 0,
-}) => {
+export const WeeklyAttendanceChart: React.FC<WeeklyAttendanceChartProps> = ({ data = [], }) => {
   const [barSize, setBarSize] = useState(20);
 
   useEffect(() => {
