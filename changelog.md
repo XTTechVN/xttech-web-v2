@@ -26,6 +26,11 @@ All notable changes to the frontend project will be documented in this file.
     - Xây dựng action `getDashboardSummary()` ưu tiên gọi endpoint tổng hợp tối ưu từ backend, đồng thời trang bị cơ chế tự động fallback tổng hợp dữ liệu song song client-side từ các API sẵn có, đảm bảo hoạt động trơn tru 100% không gián đoạn trên cả môi trường local và production.
 
 ### Refactored & Enhanced
+- **Tái cấu trúc Sidebar Quản trị Chuẩn Doanh nghiệp 4 Nhóm ([`src/config/sidebar.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/sidebar.ts)):**
+  - **Tối ưu hóa Phân nhóm (Section):** Gom 5 nhóm rời rạc thành 4 nhóm cân đối, liền mạch: `Điều hành`, `Nhân sự & Chấm công`, `Dự án & Đối tác`, `Tiện ích & Hệ thống`.
+  - **Đặt lại vị trí Bản đồ trực tiếp (Live Map):** Chuyển từ nhóm Nhân sự lên nhóm `Điều hành` cạnh `Tổng quan` đúng ngữ cảnh giám sát hiện trường thời gian thực.
+  - **Hợp nhất và phân loại rõ ràng:** Tích hợp `Ca làm việc` vào hệ sinh thái Chấm công; đổi tên `Dự án` thành `Dự án & Đối tác` bao quát cả Khách hàng và Nhà cung cấp; gộp Góp ý và Quản trị thành `Tiện ích & Hệ thống`.
+  - **Đồng bộ hóa Icon ngữ nghĩa:** Thay thế các icon trùng lặp bằng bộ icon trực quan của Lucide (`LayoutDashboard`, `Compass`, `Users`, `FolderKanban`, `Building2`, `ClockAlert`, `MessageSquarePlus`, `Sliders`).
 
 - **Chuẩn hóa Đường dẫn Hình ảnh & Tệp tin ([`src/utils/string.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/string.ts)):**
   - Xây dựng hàm tiện ích tập trung `getFileUrl(path, fallback)` xử lý toàn diện các trường hợp ngoại lệ: `undefined`/`null`, tự động chuẩn hóa dấu gạch chéo `/`, hỗ trợ link tuyệt đối (`http://`, `https://`, `blob:`, `data:`), loại bỏ triệt để hiện tượng URL rác hoặc double slash.
