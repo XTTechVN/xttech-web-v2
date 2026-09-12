@@ -83,8 +83,8 @@ export const TechnicianDashboard = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-8 flex flex-col gap-4">
+        <div className="grid grid-cols-12 gap-4 min-w-0">
+          <div className="col-span-8 flex flex-col gap-4 min-w-0">
             <QuickAttendanceCard attendance={data?.myAttendance} />
             <WeeklyAttendanceChart
               data={data?.weeklyStats}
@@ -92,7 +92,7 @@ export const TechnicianDashboard = () => {
             />
           </div>
 
-          <div className="col-span-4 flex flex-col gap-4">
+          <div className="col-span-4 flex flex-col gap-4 min-w-0">
             <LiveStaffWidget />
             <SystemHistory />
           </div>

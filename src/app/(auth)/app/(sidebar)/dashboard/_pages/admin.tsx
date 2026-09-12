@@ -95,9 +95,9 @@ export const AdminDashboard = () => {
         </div>
 
         {/* Bento Grid: Cột chính & Cột giám sát */}
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-12 gap-4 min-w-0">
           {/* Cột trái (8 cols): Biểu đồ thật & Bảng duyệt đơn khẩn cấp */}
-          <div className="col-span-8 flex flex-col gap-4">
+          <div className="col-span-8 flex flex-col gap-4 min-w-0">
             <WeeklyAttendanceChart
               data={data?.weeklyStats}
               todayCount={data?.todayAttendancesCount}
@@ -112,7 +112,7 @@ export const AdminDashboard = () => {
           </div>
 
           {/* Cột phải (4 cols): Giám sát thực địa GPS & Lịch sử thao tác hệ thống */}
-          <div className="col-span-4 flex flex-col gap-4">
+          <div className="col-span-4 flex flex-col gap-4 min-w-0">
             <LiveStaffWidget />
             <SystemHistory />
           </div>

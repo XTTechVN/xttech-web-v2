@@ -26,7 +26,8 @@ All notable changes to the frontend project will be documented in this file.
     - Xây dựng action `getDashboardSummary()` ưu tiên gọi endpoint tổng hợp tối ưu từ backend, đồng thời trang bị cơ chế tự động fallback tổng hợp dữ liệu song song client-side từ các API sẵn có, đảm bảo hoạt động trơn tru 100% không gián đoạn trên cả môi trường local và production.
 
 ### Refactored & Enhanced
-- **Tái cấu trúc Sidebar Quản trị Chuẩn Doanh nghiệp 4 Nhóm ([`src/config/sidebar.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/sidebar.ts)):**
+- **Tái cấu trúc & Nâng cấp Trải nghiệm Sidebar Quản trị ([`src/config/sidebar.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/sidebar.ts), [`src/components/sidebar/sidebar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/sidebar/sidebar.tsx)):**
+  - **Tính năng Hover-to-Expand thông minh & Chống giật vỡ chữ (Text Wrapping):** Khi Sidebar ở trạng thái thu nhỏ (`isCollapsed = true`), rê chuột vào sidebar sẽ tự động mở rộng mượt mà (`w-72`) kèm bóng nổi (`shadow-2xl z-30`). Áp dụng `whitespace-nowrap`, `truncate` và `overflow-hidden` trên toàn bộ nhãn, tiêu đề và menu con, triệt tiêu hoàn toàn hiện tượng chữ bị rớt thành 2 dòng rồi co lại thành 1 dòng trong quá trình co giãn chiều rộng.
   - **Tối ưu hóa Phân nhóm (Section):** Gom 5 nhóm rời rạc thành 4 nhóm cân đối, liền mạch: `Điều hành`, `Nhân sự & Chấm công`, `Dự án & Đối tác`, `Tiện ích & Hệ thống`.
   - **Đặt lại vị trí Bản đồ trực tiếp (Live Map):** Chuyển từ nhóm Nhân sự lên nhóm `Điều hành` cạnh `Tổng quan` đúng ngữ cảnh giám sát hiện trường thời gian thực.
   - **Hợp nhất và phân loại rõ ràng:** Tích hợp `Ca làm việc` vào hệ sinh thái Chấm công; đổi tên `Dự án` thành `Dự án & Đối tác` bao quát cả Khách hàng và Nhà cung cấp; gộp Góp ý và Quản trị thành `Tiện ích & Hệ thống`.
@@ -42,6 +43,10 @@ All notable changes to the frontend project will be documented in this file.
   - Xóa bỏ `src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx` (file re-export trung gian cũ sau khi đã chuẩn hóa vị trí tại `src/components/auto-timekeeping-modal/`).
 
 ### Fixed & Enhanced
+- **Khắc phục Triệt để Lỗi "Maximum update depth exceeded" do Resize Loop của Recharts ([`WeeklyAttendanceChart`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx)):**
+  - **Loại bỏ vòng lặp `setContainerSize`:** Gỡ bỏ state `barSize` và sự kiện resize thủ công `window.addEventListener('resize')` gây xung đột với `SizeDetectorContainer` của Recharts. Chuyển sang cơ chế tự co giãn tự nhiên qua `maxBarSize={32}` và `barCategoryGap="20%"`.
+  - **Trang bị cơ chế Debounce & Mount an toàn:** Thêm `debounce={50}`, `minWidth={0}`, `minHeight={260}` và kiểm tra `mounted` trước khi render `ResponsiveContainer` trên client.
+  - **Chống tràn lưới CSS Grid:** Bổ sung thuộc tính `min-w-0` vào các cột lưới `col-span-8` và `col-span-4` trên tất cả 6 trang Dashboard role (`admin`, `hr`, `employee`, `sale`, `technician`, `accountant`), triệt tiêu hoàn toàn hiện tượng layout co giãn không điểm dừng.
 - **Tối ưu hóa Cơ chế Định vị Chạy Ngầm Native trên iOS ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m), [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist)):**
   - **Khắc phục triệt để lỗi khóa màn hình bị ngắt kết nối (Offline):**
     - Loại bỏ mẹo "Silent Audio Keep-Alive" và chế độ `audio` ngầm (dễ bị iOS 15+ phát hiện tạm dừng và vi phạm Apple App Store Review Guideline 2.5.4).
