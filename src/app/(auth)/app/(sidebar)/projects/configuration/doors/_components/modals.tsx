@@ -9,8 +9,7 @@ import toast from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import type { Door, DoorCreate, DoorUpdate, DoorImage } from '@/types';
-import { BASE_MINIO_URL } from '@/config/app';
-import { showErrorToast } from '@/utils';
+import { showErrorToast, getFileUrl } from '@/utils';
 
 // ==========================================
 // ==========================================
@@ -447,19 +446,13 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
   } else if (primaryImageId) {
     const found = existingImages.find((img) => img.id === primaryImageId);
     if (found) {
-      currentMainPreview = found.imagePath.startsWith('http')
-        ? found.imagePath
-        : `${BASE_MINIO_URL}${found.imagePath}`;
+      currentMainPreview = getFileUrl(found.imagePath);
     }
   } else if (existingImages.length > 0) {
     const first = existingImages[0];
-    currentMainPreview = first.imagePath.startsWith('http')
-      ? first.imagePath
-      : `${BASE_MINIO_URL}${first.imagePath}`;
+    currentMainPreview = getFileUrl(first.imagePath);
   } else if (initialData?.imagePath) {
-    currentMainPreview = initialData.imagePath.startsWith('http')
-      ? initialData.imagePath
-      : `${BASE_MINIO_URL}${initialData.imagePath}`;
+    currentMainPreview = getFileUrl(initialData.imagePath);
   }
 
   const totalImageCount = existingImages.length + newImages.length;
@@ -515,9 +508,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
                   {/* Render ảnh hiện có */}
                   {existingImages.map((img) => {
                     const isPrimary = primaryImageId === img.id && selectedNewPrimaryIdx === null;
-                    const src = img.imagePath.startsWith('http')
-                      ? img.imagePath
-                      : `${BASE_MINIO_URL}${img.imagePath}`;
+                    const src = getFileUrl(img.imagePath);
                     return (
                       <div
                         key={`existing-${img.id}`}

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/utils';
-import { ChevronDown, ChevronRight, Plus, ChevronLeft, Headphones, ExternalLink, MessageCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Headphones, ExternalLink, MessageCircle, Pin, PinOff } from 'lucide-react';
 import { Avatar } from '@/components';
 import { HEADER_HEIGHT } from '@/config';
 
@@ -60,9 +60,23 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
   ({ sections = [], activeId, onItemSelect, brand, user, cta, className, variant = 'light', onUserClick, ...props }, ref) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>({});
 
     const isLight = variant === 'light';
+    const effectivelyCollapsed = isCollapsed && !isHovered;
+
+    const handleMouseEnter = () => {
+      if (isCollapsed) {
+        setIsHovered(true);
+      }
+    };
+
+    const handleMouseLeave = () => {
+      if (isCollapsed) {
+        setIsHovered(false);
+      }
+    };
 
     const toggleSubMenu = (itemId: string) => {
       setOpenSubMenus((prev) => ({
@@ -84,10 +98,13 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
     return (
       <div
         ref={ref}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         className={cn(
-          'h-200 flex flex-col transition-all duration-300 border rounded-2xl relative select-none overflow-hidden ',
+          'h-200 flex flex-col transition-[width,box-shadow] duration-300 ease-in-out border rounded-2xl relative select-none overflow-x-hidden',
           isLight ? 'bg-white text-slate-700 border-slate-200 shadow-lg' : 'bg-slate-900 text-slate-300 border-slate-800 shadow-2xl',
-          isCollapsed ? 'w-0 md:w-20 border-r-0 md:border-r opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto' : 'w-72',
+          effectivelyCollapsed ? 'w-0 md:w-20 border-r-0 md:border-r opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto' : 'w-72',
+          isCollapsed && isHovered && '!shadow-2xl z-30',
           className,
         )}
         {...props}
@@ -97,24 +114,25 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
           <div
             style={{ height: HEADER_HEIGHT }}
             className={cn(
-              'px-4 flex items-center border-b shrink-0 gap-3 transition-colors',
+              'px-4 flex items-center border-b shrink-0 gap-3 transition-colors overflow-hidden',
               isLight ? 'border-slate-200' : 'border-slate-800/60',
               (brand?.onClick || onUserClick) && (isLight ? 'cursor-pointer hover:bg-slate-50/50' : 'cursor-pointer hover:bg-slate-800/30'),
-              isCollapsed && 'justify-center px-2',
+              effectivelyCollapsed && 'justify-center px-2',
             )}
             onClick={() => {
-              if (!isCollapsed) {
+              if (!effectivelyCollapsed) {
                 if (brand?.onClick) brand.onClick();
                 else onUserClick?.();
               }
             }}
           >
-            {isCollapsed ? (
+            {effectivelyCollapsed ? (
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsCollapsed(false);
+                  setIsHovered(false);
                 }}
                 className="cursor-pointer flex items-center justify-center p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 title={brand?.name || user?.name}
@@ -135,7 +153,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
               </button>
             ) : (
               <>
-                <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="flex items-center gap-3 flex-1 min-w-0 overflow-hidden">
                   {brand ? (
                     <>
                       {typeof brand.logo === 'string' ? (
@@ -147,12 +165,12 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                           </div>
                         )
                       )}
-                      <div className="flex flex-col min-w-0">
-                        <span className={cn('text-base font-bold tracking-tight truncate block', isLight ? 'text-primary' : 'text-white')}>
+                      <div className="flex flex-col min-w-0 overflow-hidden">
+                        <span className={cn('text-base font-bold tracking-tight truncate whitespace-nowrap block', isLight ? 'text-primary' : 'text-white')}>
                           {brand.name || 'XTTECH'}
                         </span>
                         {brand.subtitle && (
-                          <span className="text-[10px] font-semibold tracking-wider text-slate-400 truncate block">{brand.subtitle}</span>
+                          <span className="text-[10px] font-semibold tracking-wider text-slate-400 truncate whitespace-nowrap block">{brand.subtitle}</span>
                         )}
                       </div>
                     </>
@@ -160,35 +178,58 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                     user && (
                       <>
                         <Avatar src={user.avatar} name={user.name} size="md" />
-                        <div className="flex flex-col min-w-0">
-                          <span className={cn('text-sm font-semibold truncate block', isLight ? 'text-slate-900' : 'text-slate-100')}>
+                        <div className="flex flex-col min-w-0 overflow-hidden">
+                          <span className={cn('text-sm font-semibold truncate whitespace-nowrap block', isLight ? 'text-slate-900' : 'text-slate-100')}>
                             {user.name}
                           </span>
-                          <span className="text-[9px] font-bold tracking-wider text-slate-500 uppercase block">{user.role}</span>
+                          <span className="text-[9px] font-bold tracking-wider text-slate-500 uppercase truncate whitespace-nowrap block">{user.role}</span>
                         </div>
                       </>
                     )
                   )}
                 </div>
 
-                {/* Nút thu nhỏ (ẩn trên mobile) */}
+                {/* Nút hành động ở Header: Ghim (Pin) nếu đang mở do Hover, Hủy ghim (PinOff) nếu đang mở cố định */}
                 <div className="hidden md:flex shrink-0">
-                  <button
-                    type="button"
-                    aria-label="Thu nhỏ sidebar"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsCollapsed(true);
-                    }}
-                    className={cn(
-                      'w-7 h-7 rounded-lg border flex items-center justify-center transition-colors cursor-pointer',
-                      isLight
-                        ? 'border-slate-200 bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700'
-                        : 'border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white',
-                    )}
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
+                  {isCollapsed ? (
+                    <button
+                      type="button"
+                      aria-label="Ghim mở rộng sidebar"
+                      title="Ghim cố định thanh menu"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCollapsed(false);
+                        setIsHovered(false);
+                      }}
+                      className={cn(
+                        'w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer group',
+                        isLight
+                          ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary hover:text-white shadow-2xs'
+                          : 'border-primary/40 bg-primary/20 text-primary hover:bg-primary hover:text-white',
+                      )}
+                    >
+                      <Pin size={14} className="transition-transform group-hover:scale-110" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label="Hủy ghim sidebar"
+                      title="Hủy ghim thanh menu"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCollapsed(true);
+                        setIsHovered(false);
+                      }}
+                      className={cn(
+                        'w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer group',
+                        isLight
+                          ? 'border-slate-200 bg-white hover:bg-slate-100 text-slate-400 hover:text-primary hover:border-primary/30'
+                          : 'border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white',
+                      )}
+                    >
+                      <PinOff size={14} className="transition-transform group-hover:scale-110" />
+                    </button>
+                  )}
                 </div>
               </>
             )}
@@ -198,7 +239,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         {/* Danh sách mục điều hướng */}
         <div
           className={cn(
-            'flex-1 overflow-y-auto px-4 py-4 space-y-6 scrollbar-thin scrollbar-track-transparent scrollbar-hide',
+            'flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-6 scrollbar-thin scrollbar-track-transparent scrollbar-hide',
             isLight ? 'scrollbar-thumb-slate-200' : 'scrollbar-thumb-slate-800',
           )}
         >
@@ -208,20 +249,20 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
               {section.title && (
                 <div
                   className={cn(
-                    'flex items-center justify-between text-[10px] font-bold tracking-wider text-slate-500 uppercase px-2 py-1',
-                    isCollapsed && 'justify-center',
+                    'flex items-center justify-between text-[10px] font-bold tracking-wider text-slate-500 uppercase px-2 py-1 overflow-hidden',
+                    effectivelyCollapsed && 'justify-center',
                   )}
                 >
-                  {isCollapsed ? (
+                  {effectivelyCollapsed ? (
                     <span className={cn('w-4 h-[1px] block', isLight ? 'bg-slate-200' : 'bg-slate-800')} />
                   ) : (
                     <>
-                      <span>{section.title}</span>
+                      <span className="truncate whitespace-nowrap">{section.title}</span>
                       {section.showAddButton && (
                         <button
                           onClick={section.onAddClick}
                           className={cn(
-                            'p-0.5 rounded transition-colors cursor-pointer',
+                            'p-0.5 rounded transition-colors cursor-pointer shrink-0 ml-1',
                             isLight ? 'hover:bg-slate-100 hover:text-slate-950' : 'hover:bg-slate-800 hover:text-white',
                           )}
                         >
@@ -248,7 +289,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                         disabled={item.disabled}
                         onClick={() => handleItemClick(item)}
                         className={cn(
-                          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 relative cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 group text-left',
+                          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 relative cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 group text-left overflow-hidden',
                           isItemActive
                             ? isLight
                               ? 'bg-slate-100 text-primary font-semibold'
@@ -259,7 +300,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                         )}
                       >
                         {/* Dải chỉ báo khi ở trạng thái thu gọn */}
-                        {isCollapsed && isItemActive && <span className="absolute right-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-l-md" />}
+                        {effectivelyCollapsed && isItemActive && <span className="absolute right-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-l-md" />}
 
                         {/* Icon hiển thị */}
                         {item.icon && (
@@ -271,19 +312,19 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                         )}
 
                         {/* Nhãn và mũi tên */}
-                        {!isCollapsed && (
+                        {!effectivelyCollapsed && (
                           <>
-                            <span className="flex-1 truncate">{item.label}</span>
+                            <span className="flex-1 truncate whitespace-nowrap">{item.label}</span>
                             {hasSubItems && (
-                              <span className="text-slate-500">{isSubMenuOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</span>
+                              <span className="text-slate-500 shrink-0">{isSubMenuOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</span>
                             )}
                           </>
                         )}
                       </button>
 
                       {/* Danh sách menu con */}
-                      {!isCollapsed && hasSubItems && isSubMenuOpen && (
-                        <div className={cn('relative pl-6 space-y-1 ml-4 border-l', isLight ? 'border-slate-200' : 'border-slate-800')}>
+                      {!effectivelyCollapsed && hasSubItems && isSubMenuOpen && (
+                        <div className={cn('relative pl-6 space-y-1 ml-4 border-l overflow-hidden', isLight ? 'border-slate-200' : 'border-slate-800')}>
                           {item.subItems?.map((sub) => {
                             const isSubActive = activeId === sub.id;
 
@@ -293,7 +334,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                                 type="button"
                                 onClick={() => onItemSelect?.(sub)}
                                 className={cn(
-                                  'w-full text-left py-2 px-3 text-xs rounded-md transition-colors relative cursor-pointer block',
+                                  'w-full text-left py-2 px-3 text-xs rounded-md transition-colors relative cursor-pointer block overflow-hidden',
                                   isSubActive
                                     ? isLight
                                       ? 'bg-slate-100/50 text-primary font-semibold'
@@ -311,7 +352,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                                     isSubActive ? 'bg-primary' : isLight ? 'bg-slate-200' : 'bg-slate-800',
                                   )}
                                 />
-                                {sub.label}
+                                <span className="truncate whitespace-nowrap block">{sub.label}</span>
                               </button>
                             );
                           })}
@@ -326,8 +367,8 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         </div>
 
         {/* Khung quảng bá hành động ở chân trang */}
-        {cta && !isCollapsed && (
-          <div className={cn('p-2.5 sm:p-3 shrink-0 border-t', isLight ? 'border-slate-100 bg-slate-50/40' : 'border-slate-800/50 bg-slate-950/20')}>
+        {cta && !effectivelyCollapsed && (
+          <div className={cn('p-2.5 sm:p-3 shrink-0 border-t overflow-hidden', isLight ? 'border-slate-100 bg-slate-50/40' : 'border-slate-800/50 bg-slate-950/20')}>
             <div
               className={cn(
                 'p-2.5 sm:p-3 rounded-xl border flex flex-col gap-2 sm:gap-2.5 transition-all relative overflow-hidden',
@@ -345,9 +386,9 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                 >
                   {cta.icon || <Headphones size={13} className="stroke-[2.2]" />}
                 </div>
-                <div className="space-y-0.5 min-w-0 flex-1">
+                <div className="space-y-0.5 min-w-0 flex-1 overflow-hidden">
                   <div className="flex items-center justify-between gap-1">
-                    <h5 className={cn('text-xs font-semibold truncate', isLight ? 'text-slate-800' : 'text-slate-100')}>{cta.title}</h5>
+                    <h5 className={cn('text-xs font-semibold truncate whitespace-nowrap', isLight ? 'text-slate-800' : 'text-slate-100')}>{cta.title}</h5>
                     {cta.badge && (
                       <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-primary/10 text-primary shrink-0">{cta.badge}</span>
                     )}
@@ -357,20 +398,23 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
               </div>
               <button
                 onClick={cta.onButtonClick}
-                className="w-full h-7 sm:h-7.5 rounded-lg bg-primary hover:bg-primary/90 active:scale-[0.98] text-white text-[11px] font-medium transition-all shadow-xs shadow-primary/15 cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full h-7 sm:h-7.5 rounded-lg bg-primary hover:bg-primary/90 active:scale-[0.98] text-white text-[11px] font-medium transition-all shadow-xs shadow-primary/15 cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
               >
-                <span>{cta.buttonText}</span>
-                <ExternalLink size={11} className="opacity-80" />
+                <span className="truncate">{cta.buttonText}</span>
+                <ExternalLink size={11} className="opacity-80 shrink-0" />
               </button>
             </div>
           </div>
         )}
 
         {/* Nút mở rộng ở cuối cùng khi thu gọn */}
-        {isCollapsed && (
-          <div className={cn('p-4 shrink-0 flex justify-center border-t', isLight ? 'border-slate-100' : 'border-slate-800/50')}>
+        {effectivelyCollapsed && (
+          <div className={cn('p-4 shrink-0 flex justify-center border-t overflow-hidden', isLight ? 'border-slate-100' : 'border-slate-800/50')}>
             <button
-              onClick={() => setIsCollapsed(false)}
+              onClick={() => {
+                setIsCollapsed(false);
+                setIsHovered(false);
+              }}
               className={cn(
                 'w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer',
                 isLight

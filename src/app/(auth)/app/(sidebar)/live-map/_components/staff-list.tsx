@@ -5,7 +5,7 @@ import { StaffLiveLocation } from '@/types';
 import { Search, Navigation, Battery, Gauge, Clock, Users, RefreshCw } from 'lucide-react';
 import { Input } from '@/components';
 import dayjs from 'dayjs';
-import { BASE_MINIO_URL } from '@/config';
+import { getFileUrl } from '@/utils';
 
 interface StaffListProps {
   staffLocations: StaffLiveLocation[];
@@ -139,7 +139,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
                   <div className="relative w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">
                     {staff.avatar ? (
                       <img
-                        src={BASE_MINIO_URL + staff.avatar}
+                        src={getFileUrl(staff.avatar)}
                         alt={staff.userName || 'Nhân viên'}
                         className={`w-full h-full object-cover overflow-hidden rounded-full ${isOffline ? 'grayscale opacity-60' : ''}`}
                       />

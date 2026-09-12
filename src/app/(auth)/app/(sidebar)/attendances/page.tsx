@@ -6,11 +6,10 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { showErrorToast } from '@/utils';
+import { getFileUrl, showErrorToast } from '@/utils';
 import { Pencil, Trash2, Eye, Clock, FileEdit, Calendar, UserCheck, Users, UserCheck2, Plus, MessageSquareWarning, Route } from 'lucide-react';
 
 import { Button, TableData, TableAction, Badge, Heading, ITableColumn, ITableFilterProps, Avatar, Modal } from '@/components';
-import { BASE_MINIO_URL } from '@/config';
 import { useQueryParam } from '@/hooks';
 import { deleteAttendance, getAttendances, getDepartments, getAdjustmentRequests } from '@/actions';
 import { Attendance, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
@@ -234,7 +233,7 @@ export default function AttendancesPage() {
       minWidth: '180px',
       cell: (row) => {
         const avatar = row.user?.avatar;
-        const avatarSrc = avatar ? (avatar.startsWith('http') ? avatar : `${BASE_MINIO_URL}${avatar}`) : undefined;
+        const avatarSrc = getFileUrl(avatar);
         return (
           <div className="flex items-center gap-2.5 min-w-0">
             <Avatar src={avatarSrc} name={row.user?.fullName || 'NV'} size="sm" />
@@ -249,7 +248,7 @@ export default function AttendancesPage() {
       minWidth: '130px',
       cell: (row) => {
         const imgPath = row.imgCheckinPath;
-        const imgSrc = imgPath ? (imgPath.startsWith('http') ? imgPath : `${BASE_MINIO_URL}${imgPath}`) : null;
+        const imgSrc = getFileUrl(imgPath);
 
         return (
           <div className="flex items-center gap-2">
@@ -276,7 +275,7 @@ export default function AttendancesPage() {
       minWidth: '130px',
       cell: (row) => {
         const imgPath = row.imgCheckoutPath;
-        const imgSrc = imgPath ? (imgPath.startsWith('http') ? imgPath : `${BASE_MINIO_URL}${imgPath}`) : null;
+        const imgSrc = getFileUrl(imgPath);
 
         return (
           <div className="flex items-center gap-2">
@@ -413,7 +412,7 @@ export default function AttendancesPage() {
         <div className="flex items-center justify-between gap-3 pb-2 border-b border-gray-100/50">
           <div className="flex items-center gap-3">
             <Avatar
-              src={row.user?.avatar ? (row.user.avatar.startsWith('http') ? row.user.avatar : `${BASE_MINIO_URL}${row.user.avatar}`) : undefined}
+              src={getFileUrl(row.user?.avatar)}
               name={row.user?.fullName || 'NV'}
               size="md"
             />

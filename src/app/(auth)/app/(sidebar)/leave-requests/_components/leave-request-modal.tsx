@@ -11,9 +11,8 @@ import { createLeaveRequest, updateLeaveRequest, deleteLeaveRequest, reviewLeave
 import { getUsers } from '@/actions/user';
 import { getWorkShifts } from '@/actions/work-shift';
 import { LeaveType, DurationType, LeaveRequestStatus } from '@/types';
-import { BASE_MINIO_URL } from '@/config';
 import toast from 'react-hot-toast';
-import { showErrorToast } from '@/utils';
+import { showErrorToast, getFileUrl } from '@/utils';
 import LeaveRequestReviewModal from './leave-request-review-modal';
 
 export const leaveTypeOptions = [
@@ -296,9 +295,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
       };
     }
     if (formExistingAttachmentUrl) {
-      const cleanBaseUrl = BASE_MINIO_URL.endsWith('/') ? BASE_MINIO_URL.slice(0, -1) : BASE_MINIO_URL;
-      const cleanPath = formExistingAttachmentUrl.startsWith('/') ? formExistingAttachmentUrl : `/${formExistingAttachmentUrl}`;
-      const fullUrl = formExistingAttachmentUrl.startsWith('http') ? formExistingAttachmentUrl : `${cleanBaseUrl}${cleanPath}`;
+      const fullUrl = getFileUrl(formExistingAttachmentUrl);
       const isImg = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(fullUrl);
       const fileName = fullUrl.split('/').pop() || 'Tài liệu đính kèm';
       const ext = fileName.split('.').pop()?.toUpperCase() || 'FILE';
@@ -317,11 +314,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
   // Compute attachment for detail view
   const detailAttachment = useMemo(() => {
     if (!selectedLeaveRequest?.attachmentPath) return null;
-    const cleanBaseUrl = BASE_MINIO_URL.endsWith('/') ? BASE_MINIO_URL.slice(0, -1) : BASE_MINIO_URL;
-    const cleanPath = selectedLeaveRequest.attachmentPath.startsWith('/')
-      ? selectedLeaveRequest.attachmentPath
-      : `/${selectedLeaveRequest.attachmentPath}`;
-    const fullUrl = selectedLeaveRequest.attachmentPath.startsWith('http') ? selectedLeaveRequest.attachmentPath : `${cleanBaseUrl}${cleanPath}`;
+    const fullUrl = getFileUrl(selectedLeaveRequest.attachmentPath);
     const isImg = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(fullUrl);
     const fileName = fullUrl.split('/').pop() || 'document.pdf';
     const ext = fileName.split('.').pop()?.toUpperCase() || 'FILE';

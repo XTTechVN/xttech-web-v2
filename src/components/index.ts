@@ -23,3 +23,6 @@ export * from './stats-card';
 export * from './app-header';
 export * from './logo';
 export * from './app-update-modal';
+export * from './map-modal';
+export * from './auto-timekeeping-modal';
+

@@ -4,7 +4,7 @@ import React from 'react';
 import { Modal, Button, Avatar } from '@/components';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { Employee } from '@/types';
-import { BASE_MINIO_URL } from '@/config';
+import { getFileUrl } from '@/utils';
 
 interface DuplicateUserModalProps {
   isOpen: boolean;
@@ -26,11 +26,7 @@ export function DuplicateUserModal({
   if (!isOpen || !user) return null;
 
   const fieldLabel = duplicateField === 'email' ? 'Email' : 'Căn cước công dân';
-  const avatarUrl = user.avatar
-    ? user.avatar.startsWith('http')
-      ? user.avatar
-      : `${BASE_MINIO_URL}${user.avatar}`
-    : undefined;
+  const avatarUrl = getFileUrl(user.avatar) || undefined;
 
   return (
     <Modal

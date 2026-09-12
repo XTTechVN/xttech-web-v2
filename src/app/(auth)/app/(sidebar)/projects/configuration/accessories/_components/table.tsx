@@ -1,17 +1,16 @@
 'use client';
 
 import React from 'react';
-import { Settings, Plus, Pencil, Trash2, FolderTree } from 'lucide-react';
+import { Settings, Plus, Pencil, Trash2 } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
-import { Heading, Button } from '@/components';
+import { Button } from '@/components';
 import { useQueryParam } from '@/hooks';
-import { Accessory, formatAccessoryUnit, getAccessoryUnitConfig } from '@/types';
+import { Accessory, getAccessoryUnitConfig } from '@/types';
 import { getAccessories } from '@/actions';
 import toast from 'react-hot-toast';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
-import { BASE_MINIO_URL } from '@/config';
-import { formatCurrency } from '@/utils';
+import { formatCurrency, getFileUrl } from '@/utils';
 
 interface TableProps {
   onEditClick: (accessory: Accessory) => void;
@@ -43,7 +42,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, onCategoryClick }: Tabl
         <div className="w-10 h-10 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0">
           {row.imagePath ? (
             <img
-              src={row.imagePath.startsWith('http') ? row.imagePath : `${BASE_MINIO_URL}${row.imagePath}`}
+              src={getFileUrl(row.imagePath)}
               alt={row.name}
               className="w-full h-full object-cover"
             />
@@ -101,7 +100,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, onCategoryClick }: Tabl
       key: 'retailPrice',
       label: 'Giá bán lẻ',
       minWidth: '110px',
-      cell: (row: Accessory) => <span className="text-gray-900 font-semibold text-primary">{formatCurrency(row.retailPrice)}</span>,
+      cell: (row: Accessory) => <span className="text-gray-900 font-semibold">{formatCurrency(row.retailPrice)}</span>,
     },
     {
       key: 'salePrice',
@@ -134,7 +133,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, onCategoryClick }: Tabl
           <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0 mt-0.5">
             {row.imagePath ? (
               <img
-                src={row.imagePath.startsWith('http') ? row.imagePath : `${BASE_MINIO_URL}${row.imagePath}`}
+                src={getFileUrl(row.imagePath)}
                 alt={row.name}
                 className="w-full h-full object-cover"
               />

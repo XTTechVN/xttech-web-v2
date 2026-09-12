@@ -72,3 +72,7 @@ export * from './accessory-category';
 
 // Import Export
 export * from './import-export';
+
+// Dashboard
+export * from './dashboard';
+

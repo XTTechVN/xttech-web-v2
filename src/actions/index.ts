@@ -79,3 +79,7 @@ export * from './import-export';
 // Accessory Category
 export * from './accessory-category';
 
+// Dashboard
+export * from './dashboard';
+
+

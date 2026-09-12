@@ -4,9 +4,9 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Modal, Button, Badge, Avatar } from '@/components';
 import { getAttendances } from '@/actions';
-import { BASE_MINIO_URL } from '@/config';
 import type { AttendanceReportItem, Attendance } from '@/types';
 import { getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
+import { getFileUrl } from '@/utils';
 
 interface ReportDetailModalProps {
   isOpen: boolean;
@@ -55,13 +55,7 @@ export function ReportDetailModal({
         <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
           <div className="flex items-center gap-3">
             <Avatar
-              src={
-                employee?.avatar
-                  ? employee.avatar.startsWith('http')
-                    ? employee.avatar
-                    : `${BASE_MINIO_URL}${employee.avatar}`
-                  : undefined
-              }
+              src={getFileUrl(employee?.avatar)}
               name={employee?.fullName || 'NV'}
               size="md"
             />
