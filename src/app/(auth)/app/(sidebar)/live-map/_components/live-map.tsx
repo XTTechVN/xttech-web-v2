@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import { StaffLiveLocation } from '@/types';
 import { Battery, Gauge, Clock, Navigation } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import { BASE_MINIO_URL } from '@/config';
+import { getFileUrl } from '@/utils';
 
 // Dynamic import Leaflet components for SSR safety
 const MapContainer = dynamic(
@@ -101,7 +101,7 @@ export function LiveMap({
 
     const avatarFilter = isOffline ? 'grayscale opacity-60' : '';
     const avatarHtml = staff.avatar
-      ? `<img src="${BASE_MINIO_URL + staff.avatar}" alt="${safeName}" class="w-full h-full object-cover shrink-0 ${avatarFilter}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 9999px;" />`
+      ? `<img src="${getFileUrl(staff.avatar)}" alt="${safeName}" class="w-full h-full object-cover shrink-0 ${avatarFilter}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 9999px;" />`
       : `<span class="text-[11px] font-bold ${isOffline ? 'text-slate-400' : 'text-slate-700'}">${safeName.charAt(0).toUpperCase()}</span>`;
 
     const dotColor = isOffline ? 'bg-slate-400' : isMoving ? 'bg-amber-400' : 'bg-emerald-400';
@@ -157,7 +157,7 @@ export function LiveMap({
       .map((s, idx) => {
         const offsetClass = idx === 0 ? 'z-10' : 'z-0 -ml-2.5';
         if (s.avatar) {
-          return `<img src="${BASE_MINIO_URL + s.avatar}" class="w-5 h-5 rounded-full border border-white object-cover ${offsetClass}" />`;
+          return `<img src="${getFileUrl(s.avatar)}" class="w-5 h-5 rounded-full border border-white object-cover ${offsetClass}" />`;
         }
         return `<div class="w-5 h-5 rounded-full border border-white bg-slate-200 text-slate-700 text-[9px] font-bold flex items-center justify-center ${offsetClass}">${(s.userName || 'N').charAt(0)}</div>`;
       })
@@ -480,7 +480,7 @@ function StaffPopupContent({
         <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs overflow-hidden shrink-0">
           {staff.avatar ? (
             <img
-              src={BASE_MINIO_URL + staff.avatar}
+              src={getFileUrl(staff.avatar)}
               alt={staff.userName || 'Nhân viên'}
               className="w-full h-full object-cover"
             />

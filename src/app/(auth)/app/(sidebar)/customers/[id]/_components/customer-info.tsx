@@ -13,15 +13,7 @@ import toast from 'react-hot-toast';
 import { getCustomerTypeLabel, getCustomerTypeColor } from '@/app/(auth)/app/(sidebar)/customers/config';
 
 import { Heading } from '@/components';
-
-import { BASE_MINIO_URL } from '@/config/app';
-
-// Lấy đường dẫn ảnh
-const getFullImageUrl = (path: string | undefined | null) => {
-  if (!path) return undefined;
-  if (path.startsWith('http')) return path;
-  return `${BASE_MINIO_URL}${path}`;
-};
+import { getFileUrl } from '@/utils';
 
 interface CustomerInfoProps {
   customer: Customer | null;
@@ -173,7 +165,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
                 <div className="flex flex-wrap items-center gap-3">
                   {customer.images.map((img: any, idx: number) => {
                     const imgPath = typeof img === 'string' ? img : img.imagePath;
-                    const src = getFullImageUrl(imgPath);
+                    const src = getFileUrl(imgPath);
                     if (!src) return null;
                     
                     const isHidden = !showAllImages && idx >= maxImages;
@@ -183,7 +175,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
                     if (isHidden) {
                       return (
                         <div key={idx} className="hidden">
-                          <Image src={src} />
+                          <Image src={src} alt={`customer-img-${idx}`} />
                         </div>
                       );
                     }
@@ -192,7 +184,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
                       return (
                         <div key={idx} className="relative">
                           <div className="hidden">
-                            <Image src={src} />
+                            <Image src={src} alt={`customer-img-${idx}`} />
                           </div>
                           <div
                             onClick={() => setShowAllImages(true)}

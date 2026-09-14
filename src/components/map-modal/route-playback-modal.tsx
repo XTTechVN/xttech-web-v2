@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import dayjs from 'dayjs';
-import L from 'leaflet';
+import type L from 'leaflet';
 import { Modal, DatePicker, Switch } from 'antd';
 import { Loader2, Navigation, MapPin, Gauge, Route, Maximize2, Minimize2 } from 'lucide-react';
 import { getStaffRoute } from '@/actions';
@@ -150,7 +150,10 @@ async function matchRouteWithOSRM(points: StaffRoutePoint[]): Promise<[number, n
 }
 
 // Tạo icon bắt đầu và kết thúc tùy chỉnh
-const createRouteMarkerIcon = (type: 'start' | 'end') => {
+const createRouteMarkerIcon = (
+  LInstance: typeof import('leaflet'),
+  type: 'start' | 'end'
+) => {
   const isStart = type === 'start';
   const bgColor = isStart ? 'bg-emerald-600' : 'bg-rose-600';
   const badgeBg = isStart ? 'bg-emerald-700' : 'bg-rose-700';
@@ -168,7 +171,7 @@ const createRouteMarkerIcon = (type: 'start' | 'end') => {
     </div>
   `;
 
-  return L.divIcon({
+  return LInstance.divIcon({
     html,
     className: `custom-route-${type}-marker`,
     iconSize: [32, 32],
@@ -195,6 +198,7 @@ export function RoutePlaybackModal({
   initialDate,
 }: RoutePlaybackModalProps) {
   const [map, setMap] = useState<L.Map | null>(null);
+  const [leaflet, setLeaflet] = useState<typeof import('leaflet') | null>(null);
   const [mapType, setMapType] = useState<'roadmap' | 'satellite'>('roadmap');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>(
@@ -208,6 +212,15 @@ export function RoutePlaybackModal({
   const [isSnapToRoad, setIsSnapToRoad] = useState<boolean>(false);
   const [isMatchingRoad, setIsMatchingRoad] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Nạp Leaflet an toàn chỉ trên môi trường Client
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('leaflet').then((mod) => {
+        setLeaflet(mod.default || mod);
+      });
+    }
+  }, []);
 
   // Tự động invalidateSize khi thay đổi chế độ toàn màn hình để map không bị xám góc
   useEffect(() => {
@@ -283,8 +296,7 @@ export function RoutePlaybackModal({
   useEffect(() => {
     if (!map || displayedCoords.length === 0) return;
     try {
-      const bounds = L.latLngBounds(displayedCoords.map((c) => [c[0], c[1]]));
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+      map.fitBounds(displayedCoords as [number, number][], { padding: [50, 50], maxZoom: 16 });
     } catch {
       // Bỏ qua nếu bounds không hợp lệ
     }
@@ -644,10 +656,10 @@ export function RoutePlaybackModal({
             )}
 
             {/* Điểm xuất phát (Điểm đầu) */}
-            {points.length > 0 && (
+            {leaflet && points.length > 0 && (
               <Marker
                 position={[points[0].latitude, points[0].longitude]}
-                icon={createRouteMarkerIcon('start')}
+                icon={createRouteMarkerIcon(leaflet, 'start')}
               >
                 <Popup>
                   <div className="text-xs space-y-1">
@@ -662,13 +674,13 @@ export function RoutePlaybackModal({
             )}
 
             {/* Điểm kết thúc / Hiện tại (Điểm cuối) */}
-            {points.length > 1 && (
+            {leaflet && points.length > 1 && (
               <Marker
                 position={[
                   points[points.length - 1].latitude,
                   points[points.length - 1].longitude,
                 ]}
-                icon={createRouteMarkerIcon('end')}
+                icon={createRouteMarkerIcon(leaflet, 'end')}
               >
                 <Popup>
                   <div className="text-xs space-y-1">

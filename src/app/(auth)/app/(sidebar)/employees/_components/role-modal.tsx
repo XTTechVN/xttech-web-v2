@@ -4,14 +4,13 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Modal, Button, Avatar } from '@/components';
-import { UserCog, ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getRoles } from '@/actions/role';
 import { assignRole, revokeRole } from '@/actions/user';
 import type { Employee, Role } from '@/types';
 import queryClient from '@/utils/query';
-import toast from 'react-hot-toast';
-import { BASE_MINIO_URL } from '@/config';
+import { getFileUrl, showErrorToast, showSuccessToast } from '@/utils';
 import { cn } from '@/utils/cn';
 
 interface RoleModalProps {
@@ -140,11 +139,11 @@ export default function RoleModal({ isOpen, onClose, employee }: RoleModalProps)
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success(`Cập nhật vai trò cho ${employee?.fullName || employee?.username} thành công`);
+      showSuccessToast(`Cập nhật vai trò cho ${employee?.fullName || employee?.username} thành công`);
       onClose();
     },
     onError: (error: any) => {
-      toast.error(error?.message || 'Có lỗi xảy ra khi phân vai trò cho người dùng');
+      showErrorToast(error?.message || 'Có lỗi xảy ra khi phân vai trò cho người dùng');
     },
   });
 
@@ -180,13 +179,7 @@ export default function RoleModal({ isOpen, onClose, employee }: RoleModalProps)
         {employee && (
           <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
             <Avatar
-              src={
-                employee.avatar
-                  ? employee.avatar.startsWith('http')
-                    ? employee.avatar
-                    : `${BASE_MINIO_URL}${employee.avatar}`
-                  : undefined
-              }
+              src={getFileUrl(employee.avatar) || undefined}
               name={employee.fullName || employee.username}
               size="md"
             />

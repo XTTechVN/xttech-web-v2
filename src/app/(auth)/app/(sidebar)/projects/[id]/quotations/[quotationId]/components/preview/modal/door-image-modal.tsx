@@ -1,9 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getDoor } from '@/actions';
-import { BASE_MINIO_URL } from '@/config/app';
+import { getFileUrl } from '@/utils';
 import type { Door, DoorImage } from '@/types';
 import { Loader2, Check, X, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -110,9 +111,7 @@ export const DoorImageSelectModal: React.FC<DoorImageSelectModalProps> = ({
 
   // Active path hiện tại
   const activeImage = images.find((img) => img.path === selectedPath) || images[0];
-  const activeFullUrl = activeImage?.path
-    ? (activeImage.path.startsWith('http') ? activeImage.path : `${BASE_MINIO_URL}${activeImage.path}`)
-    : null;
+  const activeFullUrl = getFileUrl(activeImage?.path) || null;
 
   const handleApply = () => {
     if (activeImage?.path) {
@@ -207,9 +206,7 @@ export const DoorImageSelectModal: React.FC<DoorImageSelectModalProps> = ({
               <div className="flex items-center justify-center gap-3 overflow-x-auto py-2 px-2 scrollbar-none max-w-full">
                 {images.map((img, idx) => {
                   const isSelected = activeImage?.path === img.path;
-                  const thumbUrl = img.path.startsWith('http')
-                    ? img.path
-                    : `${BASE_MINIO_URL}${img.path}`;
+                  const thumbUrl = getFileUrl(img.path);
 
                   return (
                     <motion.button

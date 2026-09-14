@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Material, Door, PreviewFloor } from '@/types';
-import { BASE_MINIO_URL } from '@/config/app';
+import { getFileUrl } from '@/utils';
 import { PREVIEW_TABLE_FONT_SIZE } from './config';
 import { readVietnameseNumber } from '../editor/utils';
 import { DoorImageSelectModal } from './modal/door-image-modal';
@@ -203,7 +203,7 @@ export const QuotationTable = ({
                             const doorName = selectedDoor ? selectedDoor.name : `Cửa (ID: ${door.doorId})`;
                             const currentTT = itemCounter++;
                             const finalDoorImgPath = door.imagePath || selectedDoor?.imagePath;
-                            const doorImgUrl = finalDoorImgPath ? `${BASE_MINIO_URL}${finalDoorImgPath}` : null;
+                            const doorImgUrl = getFileUrl(finalDoorImgPath) || null;
 
                             // Lọc: chỉ hiện những phụ kiện/tùy chọn/công thức KHÔNG chung
                             const doorAccessories = (door.accessories || []).filter((acc) => !commonAccessoryIds.has(acc.accessoryId));

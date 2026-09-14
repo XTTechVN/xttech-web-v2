@@ -5,12 +5,11 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { getDoor, getDoorAccessories, assignDoorAccessories, revokeDoorAccessories } from '@/actions';
 import { Loader2, Edit, Image, Plus } from 'lucide-react';
-import { formatDoorType, formatAccessoryUnit, getDoorTypeConfig } from '@/types';
+import { formatAccessoryUnit, getDoorTypeConfig } from '@/types';
 import { Button } from '@/components';
 import { DoorUpdateModal } from '../_components/modals';
 import { AssignDoorAccessoriesModal } from '../_components/relation-modals';
-import { BASE_MINIO_URL } from '@/config/app';
-import { formatCurrency } from '@/utils';
+import { formatCurrency, getFileUrl } from '@/utils';
 import { toast } from 'react-hot-toast';
 
 interface DoorDetailPageProps {
@@ -129,17 +128,13 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
           <div className="w-full aspect-square md:h-64 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center">
             {door.images && door.images.length > 0 ? (
               <img
-                src={
-                  (door.images.find((img) => img.isPrimary)?.imagePath || door.images[0].imagePath).startsWith('http')
-                    ? door.images.find((img) => img.isPrimary)?.imagePath || door.images[0].imagePath
-                    : `${BASE_MINIO_URL}${door.images.find((img) => img.isPrimary)?.imagePath || door.images[0].imagePath}`
-                }
+                src={getFileUrl(door.images.find((img) => img.isPrimary)?.imagePath || door.images[0].imagePath)}
                 alt={door.name}
                 className="w-full h-full object-cover"
               />
             ) : door.imagePath ? (
               <img
-                src={door.imagePath.startsWith('http') ? door.imagePath : `${BASE_MINIO_URL}${door.imagePath}`}
+                src={getFileUrl(door.imagePath)}
                 alt={door.name}
                 className="w-full h-full object-cover"
               />
@@ -160,7 +155,7 @@ export default function DoorDetailPage({ params }: DoorDetailPageProps) {
                   }`}
                 >
                   <img
-                    src={img.imagePath.startsWith('http') ? img.imagePath : `${BASE_MINIO_URL}${img.imagePath}`}
+                    src={getFileUrl(img.imagePath)}
                     alt={img.name || door.name}
                     className="w-full h-full object-cover"
                   />

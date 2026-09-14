@@ -2,9 +2,86 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-14
+
+### Fixed
+- **Khắc phục Triệt để Lỗi SSR "window is not defined" do Leaflet:**
+  - Chuyển toàn bộ `import L from 'leaflet'` sang `import type L from 'leaflet'` trong [`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx), đảm bảo mã Leaflet không bao giờ bị thực thi trên môi trường Server (Node.js).
+  - Khởi tạo icon tùy chỉnh và `fitBounds` hoàn toàn qua dynamic runtime `leaflet` được nạp an toàn trên Client (`useEffect`).
+
+### Changed & Optimized
+- **Tối ưu Barrel Export & Cô lập Bản đồ:**
+  - Gỡ bỏ `export * from './map-modal'` khỏi [`src/components/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/index.ts) để giải phóng toàn bộ `AdminLayout` và các trang vệ tinh khỏi việc nạp mã Leaflet nặng trên Server.
+  - Áp dụng `dynamic(() => import('./_components/live-map').then((mod) => mod.LiveMap), { ssr: false })` cho trang [`live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx).
+- **Render Động Tiện Ích Doanh Nghiệp Theo Phân Quyền Vai Trò (Role-based RBAC):**
+  - Tái cấu trúc [`QuickActionsGrid`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/quick-actions-grid.tsx) trên Dashboard di động: tích hợp trực tiếp với ma trận phân quyền `isRouteAllowedForRole` từ [`src/config/sidebar.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/sidebar.ts) và `useAuthStore`.
+  - Tự động ẩn/hiện các tính năng theo đúng vai trò thực tế của người dùng (`admin`, `hr`, `sale`, `technician`, `accountant`, `employee`), triệt tiêu lỗi 403 Forbidden khi nhân viên bấm vào tính năng quản trị.
+  - Cập nhật số lượng tính năng hiển thị linh hoạt `{visibleActions.length} tính năng` thay vì viết cứng.
+- **Phân Quyền Khối Lịch Sử Dashboard & Bảo Vệ Nhật Ký Hệ Thống (Audit Logs):**
+  - Tạo mới component [`PersonalAttendanceHistory`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/personal-attendance-history.tsx) hiển thị 5 ngày chấm công gần nhất của chính nhân viên (ngày, ca, giờ check-in/out, badge đúng giờ/muộn).
+  - Ẩn hoàn toàn [`SystemHistory`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/system-history.tsx) (Audit Log nhạy cảm) đối với các vai trò `employee`, `technician`, `sale`, `accountant` và thay thế bằng `PersonalAttendanceHistory`.
+  - Giữ lại `SystemHistory` chỉ cho `admin` và `hr`.
+- **Chuẩn Hóa Màu Sắc Tối Giản & Đồng Bộ Màu Thương Hiệu (Design System Alignment):**
+  - **Khối Yêu cầu chờ phê duyệt ([`PendingApprovalsCard`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/pending-approvals-card.tsx)):**
+    - Loại bỏ hoàn toàn các viền vàng chói, nền vàng và các nút màu cam/xanh rời rạc.
+    - Chuẩn hóa theo phong cách Corporate Minimalist: viền xám nhẹ `border-gray-100`, icon tiêu đề & badge số lượng đồng bộ màu nhận diện thương hiệu `bg-primary/10 text-primary` (`#045863`).
+    - 2 Thẻ hành động nhanh ("Đơn nghỉ phép" & "Giải trình công") chuyển sang dạng thẻ trung tính hiện đại: nền xám nhạt `bg-gray-50/80` viền mảnh, icon màu thương hiệu tinh tế.
+  - **Biểu đồ Chuyên cần 7 ngày ([`WeeklyAttendanceChart`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx)):**
+    - Cột **"Có mặt"**: Chuyển từ màu xanh neon `#10b981` sang màu nhận diện thương hiệu XTTech **`#045863` (Teal)**.
+    - Cột **"Đi muộn"**: Chuyển từ màu cam chói `#f59e0b` sang tone trung tính nhẹ **`#94a3b8` (Slate-400)** dịu mắt, không gây rối mắt cho người quản lý.
+    - Hiệu ứng hover chuột: Dùng dải mờ nhẹ `rgba(0, 0, 0, 0.03)` thay cho khối xám đặc.
+
+### Removed
+- **Dọn dẹp Mã nguồn Trùng lặp (DRY):**
+  - Xóa bỏ file trùng lặp `src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx`.
+  - Tái sử dụng thống nhất [`RoutePlaybackModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx) trên cả 2 trang Chấm công (`attendances`) và Bản đồ trực tiếp (`live-map`).
+
 ## [Unreleased] - 2026-09-12
 
+### Added & Redesigned
+- **Thiết kế lại Trang Dashboard Doanh Nghiệp Thời Gian Thực & Bộ Tiện Ích Di Động Super-App ([`dashboard/`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard)):**
+  - **Loại bỏ triệt để dữ liệu mockup ảo:** Thay thế toàn bộ các chỉ số thống kê giả lập, tài liệu ảo, lịch đào tạo ảo và biểu đồ tĩnh bằng 100% dữ liệu sống từ hệ thống (Nhân sự, Chấm công hôm nay, Đơn xin nghỉ phép đang chờ duyệt, Giải trình công, Dự án và GPS Live Map).
+  - **Trải nghiệm Mobile Chuẩn Super-App Doanh nghiệp (Lark Suite / Base.vn style):**
+    - [`MobileHeader`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/mobile-header.tsx): Lời chào cá nhân hóa thông minh theo thời gian trong ngày, Avatar, Chức vụ, Thứ/Ngày/Tháng tiếng Việt kèm nút làm mới tức thì.
+    - **Tối ưu hóa Toàn diện UI/UX Modal Chấm Công Tự Động ([`src/components/auto-timekeeping-modal/`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal)):**
+      - **Tối ưu Layout & Xóa bỏ khoảng trắng thừa:** Chuyển layout sang dạng Sticky Footer cố định ở chân trang với dải nền phân cách nổi bật; khu vực nội dung bên trên co giãn linh hoạt và cuộn mượt mà trên thiết bị di động.
+      - **Thiết kế lại Nút hành động chính (CTA):** Thay thế nút tròn cũ bằng nút chữ nhật bo góc rộng toàn mép (full-width) màu xanh ngọc chủ đạo (Teal/Primary) với nhãn hành động rõ ràng: `📸 Chụp ảnh chấm công` ở bước chụp và `Xác nhận Check-in / Check-out` ở bước xác nhận.
+      - **Đồng nhất Màu sắc & Cấu trúc Badge:** Thay các badge màu chói bằng badge nền đen bán trong suốt (`rgba(0,0,0,0.6)` + `backdrop-blur-md`) viền kính tinh tế; camera trực tiếp sử dụng dấu chấm đỏ nhấp nháy (pulsating red dot) kèm nhãn "Trực tiếp" sang trọng.
+      - **Gom nhóm thông tin dạng Card UI:** Đặt cụm [Toạ độ + Bản đồ GPS] và [Ghi chú chấm công] vào các Card nền xám nhạt (`bg-slate-50 border border-slate-200/80 rounded-xl`), tạo phân cấp khối thông tin trực quan, ngăn nắp.
+      - **Tinh chỉnh Typography & Icon:** Hạ cỡ chữ tiêu đề xuống mức chuẩn 18px-20px, đồng bộ phong cách và kích thước icon thống nhất trên toàn modal.
+
+    - [`QuickActionsGrid`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/quick-actions-grid.tsx): Lưới 8 tiện ích doanh nghiệp di động chuẩn 4 cột với icon bo góc mềm mại, phối màu hiện đại và badge đếm đơn từ chờ duyệt: Bản đồ Live, Xin nghỉ phép, Giải trình, Bảng công, Dự án, Danh bạ, Góp ý, Báo cáo.
+    - [`PendingApprovalsCard`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/pending-approvals-card.tsx): Thẻ cảnh báo và xử lý nhanh các đơn xin nghỉ phép và khiếu nại công dành riêng cho HR / Admin / Ban giám đốc.
+  - **Trải nghiệm Desktop Bảng Điều Hành Trung Tâm (Command Center):**
+    - 4 Thẻ KPI chính xác theo thời gian thực (Tổng nhân sự, Chuyên cần hôm nay, Hồ sơ chờ duyệt, Dự án đang chạy).
+    - [`WeeklyAttendanceChart`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx): Biểu đồ Recharts cột đôi thể hiện số lượng nhân sự có mặt và đi muộn trong 7 ngày gần nhất.
+    - [`LiveStaffWidget`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/live-staff-widget.tsx): Widget theo dõi danh sách kỹ thuật viên/nhân sự đang trực tuyến định vị GPS ngoài thực địa theo thời gian thực.
+  - **Tích hợp API Backend & Cơ chế Fallback Không Gián Đoạn ([`src/actions/dashboard/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/dashboard/index.ts)):**
+    - Xây dựng action `getDashboardSummary()` ưu tiên gọi endpoint tổng hợp tối ưu từ backend, đồng thời trang bị cơ chế tự động fallback tổng hợp dữ liệu song song client-side từ các API sẵn có, đảm bảo hoạt động trơn tru 100% không gián đoạn trên cả môi trường local và production.
+
+### Refactored & Enhanced
+- **Tái cấu trúc & Nâng cấp Trải nghiệm Sidebar Quản trị ([`src/config/sidebar.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/sidebar.ts), [`src/components/sidebar/sidebar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/sidebar/sidebar.tsx)):**
+  - **Cặp Biểu Tượng Ghim / Hủy Ghim Thông Minh (Pin / PinOff):** Chuẩn hóa hoàn toàn nút điều khiển ở Header chỉ với 2 trạng thái: **Ghim 📌 (`Pin`)** khi đang mở tạm thời do rê chuột (hover) để cố định thanh menu mở rộng, và **Hủy ghim 📍✕ (`PinOff`)** khi đang mở cố định để chuyển sang chế độ tự động thu nhỏ khi rời chuột, loại bỏ hoàn toàn biểu tượng thu nhỏ rườm rà.
+  - **Tính năng Hover-to-Expand thông minh & Chống giật vỡ chữ (Text Wrapping):** Khi Sidebar ở trạng thái thu nhỏ (`isCollapsed = true`), rê chuột vào sidebar sẽ tự động mở rộng mượt mà (`w-72`) kèm bóng nổi (`shadow-2xl z-30`). Áp dụng `whitespace-nowrap`, `truncate` và `overflow-hidden` trên toàn bộ nhãn, tiêu đề và menu con, triệt tiêu hoàn toàn hiện tượng chữ bị rớt thành 2 dòng rồi co lại thành 1 dòng trong quá trình co giãn chiều rộng.
+  - **Tối ưu hóa Phân nhóm (Section):** Gom 5 nhóm rời rạc thành 4 nhóm cân đối, liền mạch: `Điều hành`, `Nhân sự & Chấm công`, `Dự án & Đối tác`, `Tiện ích & Hệ thống`.
+  - **Đặt lại vị trí Bản đồ trực tiếp (Live Map):** Chuyển từ nhóm Nhân sự lên nhóm `Điều hành` cạnh `Tổng quan` đúng ngữ cảnh giám sát hiện trường thời gian thực.
+  - **Hợp nhất và phân loại rõ ràng:** Tích hợp `Ca làm việc` vào hệ sinh thái Chấm công; đổi tên `Dự án` thành `Dự án & Đối tác` bao quát cả Khách hàng và Nhà cung cấp; gộp Góp ý và Quản trị thành `Tiện ích & Hệ thống`.
+  - **Đồng bộ hóa Icon ngữ nghĩa:** Thay thế các icon trùng lặp bằng bộ icon trực quan của Lucide (`LayoutDashboard`, `Compass`, `Users`, `FolderKanban`, `Building2`, `ClockAlert`, `MessageSquarePlus`, `Sliders`).
+
+- **Chuẩn hóa Đường dẫn Hình ảnh & Tệp tin ([`src/utils/string.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/string.ts)):**
+  - Xây dựng hàm tiện ích tập trung `getFileUrl(path, fallback)` xử lý toàn diện các trường hợp ngoại lệ: `undefined`/`null`, tự động chuẩn hóa dấu gạch chéo `/`, hỗ trợ link tuyệt đối (`http://`, `https://`, `blob:`, `data:`), loại bỏ triệt để hiện tượng URL rác hoặc double slash.
+### Removed
+- **Dọn dẹp các Component Mockup Thừa Không Sử Dụng:**
+  - Xóa bỏ `src/app/(auth)/app/(sidebar)/dashboard/_components/document.tsx` (danh sách tài liệu mockup cũ).
+  - Xóa bỏ `src/app/(auth)/app/(sidebar)/dashboard/_components/schedule.tsx` (lịch họp/đào tạo mockup cũ).
+  - Xóa bỏ `src/app/(auth)/app/(sidebar)/dashboard/_components/analytics-chart.tsx` (biểu đồ mockup cũ đã được thay bằng `WeeklyAttendanceChart`).
+  - Xóa bỏ `src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx` (file re-export trung gian cũ sau khi đã chuẩn hóa vị trí tại `src/components/auto-timekeeping-modal/`).
+
 ### Fixed & Enhanced
+- **Khắc phục Triệt để Lỗi "Maximum update depth exceeded" do Resize Loop của Recharts ([`WeeklyAttendanceChart`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx)):**
+  - **Loại bỏ vòng lặp `setContainerSize`:** Gỡ bỏ state `barSize` và sự kiện resize thủ công `window.addEventListener('resize')` gây xung đột với `SizeDetectorContainer` của Recharts. Chuyển sang cơ chế tự co giãn tự nhiên qua `maxBarSize={32}` và `barCategoryGap="20%"`.
+  - **Trang bị cơ chế Debounce & Mount an toàn:** Thêm `debounce={50}`, `minWidth={0}`, `minHeight={260}` và kiểm tra `mounted` trước khi render `ResponsiveContainer` trên client.
+  - **Chống tràn lưới CSS Grid:** Bổ sung thuộc tính `min-w-0` vào các cột lưới `col-span-8` và `col-span-4` trên tất cả 6 trang Dashboard role (`admin`, `hr`, `employee`, `sale`, `technician`, `accountant`), triệt tiêu hoàn toàn hiện tượng layout co giãn không điểm dừng.
 - **Tối ưu hóa Cơ chế Định vị Chạy Ngầm Native trên iOS ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m), [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist)):**
   - **Khắc phục triệt để lỗi khóa màn hình bị ngắt kết nối (Offline):**
     - Loại bỏ mẹo "Silent Audio Keep-Alive" và chế độ `audio` ngầm (dễ bị iOS 15+ phát hiện tạm dừng và vi phạm Apple App Store Review Guideline 2.5.4).

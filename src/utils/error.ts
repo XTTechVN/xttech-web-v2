@@ -62,6 +62,10 @@ export function getErrorMessage(err: unknown, fallback = 'Đã có lỗi xảy r
   return fallback;
 }
 
+export function showSuccessToast(message: string): void {
+  toast.success(message);
+}
+
 export function showErrorToast(err: unknown, fallback?: string): string {
   const message = getErrorMessage(err, fallback);
   toast.error(message);

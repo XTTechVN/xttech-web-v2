@@ -2,16 +2,16 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
-import { RotateCw, Plus, Eye, Pencil, Trash2, Calendar, FileText, User } from 'lucide-react';
+import { RotateCw, Plus, Eye, Pencil, Trash2, User } from 'lucide-react';
 import { useLeaveRequestStore } from '@/stores/useLeaveRequestStore';
 import toast from 'react-hot-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks';
-import { TableData, TableAction, Button, Avatar, Badge } from '@/components';
+import { TableData, TableAction, Button, Avatar } from '@/components';
 import { getLeaveRequests } from '@/actions/leave-request';
 import { getWorkShifts } from '@/actions/work-shift';
 import { LeaveRequest, LeaveRequestStatus, DurationType } from '@/types';
-import { BASE_MINIO_URL } from '@/config';
+import { getFileUrl } from '@/utils';
 import { leaveTypeOptions, durationTypeOptions, statusConfig } from './leave-request-modal';
 
 interface LeaveRequestTableProps {
@@ -120,11 +120,7 @@ export default function LeaveRequestTable({ isManager, currentUserId }: LeaveReq
         const userName = row.user?.fullName || row.user?.username || 'Nhân viên';
         const userEmail = row.user?.email || row.userId;
         const avatar = row.user?.avatar;
-        const avatarSrc = avatar
-          ? avatar.startsWith('http')
-            ? avatar
-            : `${BASE_MINIO_URL}${avatar.startsWith('/') ? avatar : `/${avatar}`}`
-          : undefined;
+        const avatarSrc = getFileUrl(avatar) || undefined;
 
         return (
           <div className="flex items-center gap-2.5 min-w-0">
@@ -274,11 +270,7 @@ export default function LeaveRequestTable({ isManager, currentUserId }: LeaveReq
     const canEdit = (isOwner || isManager) && row.status === LeaveRequestStatus.PENDING;
     const canDelete = (isOwner || isManager) && (row.status === LeaveRequestStatus.PENDING || row.status === LeaveRequestStatus.CANCELLED);
     const avatar = row.user?.avatar;
-    const avatarSrc = avatar
-      ? avatar.startsWith('http')
-        ? avatar
-        : `${BASE_MINIO_URL}${avatar.startsWith('/') ? avatar : `/${avatar}`}`
-      : undefined;
+    const avatarSrc = getFileUrl(avatar) || undefined;
 
     const shiftId = row.workShiftId ?? (row as any).work_shift_id;
     const shiftName =

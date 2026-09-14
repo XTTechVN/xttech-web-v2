@@ -8,7 +8,7 @@ import { getDepartments, getPositions, setUserPositions } from '@/actions';
 import type { Employee, Department, Position } from '@/types';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
-import { BASE_MINIO_URL } from '@/config';
+import { getFileUrl } from '@/utils';
 import { cn } from '@/utils/cn';
 
 interface PositionModalProps {
@@ -118,13 +118,7 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
       {/* Thông tin nhân viên */}
       <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
         <Avatar
-          src={
-            employee.avatar
-              ? employee.avatar.startsWith('http')
-                ? employee.avatar
-                : `${BASE_MINIO_URL}${employee.avatar}`
-              : undefined
-          }
+          src={getFileUrl(employee.avatar) || undefined}
           name={employee.fullName || employee.username}
           size="md"
         />

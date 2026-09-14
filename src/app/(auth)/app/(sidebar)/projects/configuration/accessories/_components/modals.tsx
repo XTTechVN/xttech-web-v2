@@ -8,10 +8,9 @@ import { createAccessory, updateAccessory, getAccessoryCategories } from '@/acti
 import toast from 'react-hot-toast';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
-import type { Accessory, AccessoryCreate, AccessoryUpdate, AccessoryCategory } from '@/types';
-import { BASE_MINIO_URL } from '@/config/app';
+import type { Accessory, AccessoryCreate, AccessoryUpdate } from '@/types';
 import { AccessoryCategoryModal } from './category-modal';
-import { showErrorToast } from '@/utils';
+import { showErrorToast, getFileUrl } from '@/utils';
 
 // ==========================================
 // 1. MODAL TẠO MỚI PHỤ KIỆN (AccessoryCreate) HỖ TRỢ UPLOAD & PREVIEW 2 CỘT
@@ -368,13 +367,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
         salePrice: initialData.salePrice !== undefined ? initialData.salePrice : undefined,
       });
       setSelectedFile(null);
-      setPreviewUrl(
-        initialData.imagePath
-          ? initialData.imagePath.startsWith('http')
-            ? initialData.imagePath
-            : `${BASE_MINIO_URL}${initialData.imagePath}`
-          : null,
-      );
+      setPreviewUrl(getFileUrl(initialData.imagePath) || null);
     }
   }, [isOpen, initialData, reset]);
 

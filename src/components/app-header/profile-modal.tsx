@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { User, Camera } from 'lucide-react';
 import { Modal, Input, Button } from '@/components';
 import { useAuthStore } from '@/stores';
-import { BASE_MINIO_URL } from '@/config';
+import { getFileUrl } from '@/utils';
 import { AuthUser } from '@/types';
 import { useMutation } from '@tanstack/react-query';
 import { updateEmployee } from '@/actions';
@@ -87,7 +87,7 @@ function ProfileForm({ user, onClose }: { user: AuthUser | null; onClose: () => 
   };
 
   // Ảnh đại diện hiển thị (ưu tiên ảnh preview, sau đó đến ảnh từ server)
-   const initialAvatarUrl = user?.avatar ?  `${BASE_MINIO_URL}${user.avatar}` : null;
+  const initialAvatarUrl = getFileUrl(user?.avatar) || null;
   const currentAvatar = previewUrl || initialAvatarUrl;
   return (
     <form id="profile-form" onSubmit={handleProfileSubmit} className="flex flex-col gap-6">

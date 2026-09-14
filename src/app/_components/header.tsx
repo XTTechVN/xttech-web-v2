@@ -1,14 +1,12 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-// Icon của thư viện lucide - react
-import { Settings } from 'lucide-react';
-
 // Thành phần dùng chung cho components
 import { Button, Heading, Avatar, XTLogo } from '@/components';
-import { BASE_MINIO_URL } from '@/config';
+import { getFileUrl } from '@/utils';
 import useAuthStore from '@/stores/useAuthStore';
 
 export const Header = () => {
@@ -44,7 +42,7 @@ export const Header = () => {
             isAuthenticated && user ? (
               <Link href="/app/dashboard" className="flex items-center gap-2 hover:bg-gray-100 p-1.5 rounded-full pr-4 transition-colors">
                 <Avatar
-                  src={user.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_MINIO_URL}${user.avatar}`) : undefined}
+                  src={getFileUrl(user.avatar) || undefined}
                   name={user.fullName || user.username}
                   size="sm"
                 />
