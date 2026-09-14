@@ -4,7 +4,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardSummary } from '@/actions';
 import StatCard from '../_components/stats-card';
-import SystemHistory from '../_components/system-history';
+import PersonalAttendanceHistory from '../_components/personal-attendance-history';
 import MobileHeader from '../_components/mobile-header';
 import QuickAttendanceCard from '../_components/quick-attendance-card';
 import QuickActionsGrid from '../_components/quick-actions-grid';
@@ -64,7 +64,7 @@ export const SaleDashboard = () => {
           pendingLeavesCount={data?.pendingLeavesCount}
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
         />
-        <SystemHistory />
+        <PersonalAttendanceHistory />
       </div>
 
       {/* 2. Desktop Sale View */}
@@ -93,7 +93,7 @@ export const SaleDashboard = () => {
 
           <div className="col-span-4 flex flex-col gap-4 min-w-0">
             <LiveStaffWidget />
-            <SystemHistory />
+            <PersonalAttendanceHistory />
           </div>
         </div>
       </div>

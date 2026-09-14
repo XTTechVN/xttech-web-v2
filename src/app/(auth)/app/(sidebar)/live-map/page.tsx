@@ -5,9 +5,21 @@ import { useEffect, useRef, useState } from 'react';
 import { getLiveLocations } from '@/actions';
 import { StaffLiveLocation } from '@/types';
 import { BASE_WS_URL } from '@/config';
-import { LiveMap } from './_components/live-map';
+import dynamic from 'next/dynamic';
 import { StaffList } from './_components/staff-list';
-import { RoutePlaybackModal } from '@/components';
+import { RoutePlaybackModal } from '@/components/map-modal';
+
+const LiveMap = dynamic(
+  () => import('./_components/live-map').then((mod) => mod.LiveMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-sm">
+        Đang tải bản đồ...
+      </div>
+    ),
+  }
+);
 import { getFileUrl, showErrorToast } from '@/utils';
 import { Users, X, Route } from 'lucide-react';
 

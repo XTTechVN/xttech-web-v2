@@ -2,6 +2,40 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-14
+
+### Fixed
+- **Khắc phục Triệt để Lỗi SSR "window is not defined" do Leaflet:**
+  - Chuyển toàn bộ `import L from 'leaflet'` sang `import type L from 'leaflet'` trong [`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx), đảm bảo mã Leaflet không bao giờ bị thực thi trên môi trường Server (Node.js).
+  - Khởi tạo icon tùy chỉnh và `fitBounds` hoàn toàn qua dynamic runtime `leaflet` được nạp an toàn trên Client (`useEffect`).
+
+### Changed & Optimized
+- **Tối ưu Barrel Export & Cô lập Bản đồ:**
+  - Gỡ bỏ `export * from './map-modal'` khỏi [`src/components/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/index.ts) để giải phóng toàn bộ `AdminLayout` và các trang vệ tinh khỏi việc nạp mã Leaflet nặng trên Server.
+  - Áp dụng `dynamic(() => import('./_components/live-map').then((mod) => mod.LiveMap), { ssr: false })` cho trang [`live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx).
+- **Render Động Tiện Ích Doanh Nghiệp Theo Phân Quyền Vai Trò (Role-based RBAC):**
+  - Tái cấu trúc [`QuickActionsGrid`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/quick-actions-grid.tsx) trên Dashboard di động: tích hợp trực tiếp với ma trận phân quyền `isRouteAllowedForRole` từ [`src/config/sidebar.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/sidebar.ts) và `useAuthStore`.
+  - Tự động ẩn/hiện các tính năng theo đúng vai trò thực tế của người dùng (`admin`, `hr`, `sale`, `technician`, `accountant`, `employee`), triệt tiêu lỗi 403 Forbidden khi nhân viên bấm vào tính năng quản trị.
+  - Cập nhật số lượng tính năng hiển thị linh hoạt `{visibleActions.length} tính năng` thay vì viết cứng.
+- **Phân Quyền Khối Lịch Sử Dashboard & Bảo Vệ Nhật Ký Hệ Thống (Audit Logs):**
+  - Tạo mới component [`PersonalAttendanceHistory`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/personal-attendance-history.tsx) hiển thị 5 ngày chấm công gần nhất của chính nhân viên (ngày, ca, giờ check-in/out, badge đúng giờ/muộn).
+  - Ẩn hoàn toàn [`SystemHistory`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/system-history.tsx) (Audit Log nhạy cảm) đối với các vai trò `employee`, `technician`, `sale`, `accountant` và thay thế bằng `PersonalAttendanceHistory`.
+  - Giữ lại `SystemHistory` chỉ cho `admin` và `hr`.
+- **Chuẩn Hóa Màu Sắc Tối Giản & Đồng Bộ Màu Thương Hiệu (Design System Alignment):**
+  - **Khối Yêu cầu chờ phê duyệt ([`PendingApprovalsCard`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/pending-approvals-card.tsx)):**
+    - Loại bỏ hoàn toàn các viền vàng chói, nền vàng và các nút màu cam/xanh rời rạc.
+    - Chuẩn hóa theo phong cách Corporate Minimalist: viền xám nhẹ `border-gray-100`, icon tiêu đề & badge số lượng đồng bộ màu nhận diện thương hiệu `bg-primary/10 text-primary` (`#045863`).
+    - 2 Thẻ hành động nhanh ("Đơn nghỉ phép" & "Giải trình công") chuyển sang dạng thẻ trung tính hiện đại: nền xám nhạt `bg-gray-50/80` viền mảnh, icon màu thương hiệu tinh tế.
+  - **Biểu đồ Chuyên cần 7 ngày ([`WeeklyAttendanceChart`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx)):**
+    - Cột **"Có mặt"**: Chuyển từ màu xanh neon `#10b981` sang màu nhận diện thương hiệu XTTech **`#045863` (Teal)**.
+    - Cột **"Đi muộn"**: Chuyển từ màu cam chói `#f59e0b` sang tone trung tính nhẹ **`#94a3b8` (Slate-400)** dịu mắt, không gây rối mắt cho người quản lý.
+    - Hiệu ứng hover chuột: Dùng dải mờ nhẹ `rgba(0, 0, 0, 0.03)` thay cho khối xám đặc.
+
+### Removed
+- **Dọn dẹp Mã nguồn Trùng lặp (DRY):**
+  - Xóa bỏ file trùng lặp `src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx`.
+  - Tái sử dụng thống nhất [`RoutePlaybackModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx) trên cả 2 trang Chấm công (`attendances`) và Bản đồ trực tiếp (`live-map`).
+
 ## [Unreleased] - 2026-09-12
 
 ### Added & Redesigned

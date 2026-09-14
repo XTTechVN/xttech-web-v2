@@ -78,6 +78,7 @@ export const WeeklyAttendanceChart: React.FC<WeeklyAttendanceChartProps> = ({ da
                 allowDecimals={false}
               />
               <Tooltip
+                cursor={{ fill: 'rgba(0, 0, 0, 0.03)' }}
                 contentStyle={{
                   backgroundColor: 'rgba(255, 255, 255, 0.96)',
                   borderRadius: '12px',
@@ -94,14 +95,14 @@ export const WeeklyAttendanceChart: React.FC<WeeklyAttendanceChartProps> = ({ da
               <Bar
                 name="Có mặt"
                 dataKey="presentCount"
-                fill="#10b981"
+                fill="#045863"
                 radius={[6, 6, 0, 0]}
                 maxBarSize={32}
               />
               <Bar
                 name="Đi muộn"
                 dataKey="lateCount"
-                fill="#f59e0b"
+                fill="#94a3b8"
                 radius={[6, 6, 0, 0]}
                 maxBarSize={32}
               />

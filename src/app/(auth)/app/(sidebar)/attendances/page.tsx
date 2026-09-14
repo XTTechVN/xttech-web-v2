@@ -19,7 +19,7 @@ import AddAttendanceModal from '@/app/(auth)/app/(sidebar)/attendances/_componen
 import EditAttendanceModal from '@/app/(auth)/app/(sidebar)/attendances/_components/edit-modal';
 import AttendanceDetailModal from '@/app/(auth)/app/(sidebar)/attendances/_components/attendance-modal';
 import AddAdjustmentModal from './adjustments/_components/add-modal';
-import { RoutePlaybackModal } from './_components/route-playback-modal';
+import { RoutePlaybackModal } from '@/components/map-modal';
 type FilterOption = {
   value: string | undefined;
   label: string;
