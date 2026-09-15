@@ -2,6 +2,13 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-15
+
+### Changed & Configured
+- **Cấu hình Ứng dụng Di động Tràn viền Toàn màn hình trên iOS ([`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist)):**
+  - Bổ sung `<key>UIStatusBarHidden</key><true/>` và chuyển `<key>UIViewControllerBasedStatusBarAppearance</key><false/>`.
+  - Ẩn hoàn toàn thanh trạng thái hệ thống (Status Bar gồm giờ, pin, cột sóng, wifi) trên iPhone, giúp giao diện ứng dụng hiển thị tràn viền toàn màn hình (True Fullscreen) liền mạch, tối ưu diện tích hiển thị cho nhân viên.
+
 ## [Unreleased] - 2026-09-14
 
 ### Fixed
