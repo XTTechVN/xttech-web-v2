@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sync": "git push -u gh dev && git push -u gl dev"
+    "sync": "git push -u gh dev && git push -u gl dev",
+    "build:apk": "npx cap sync android && .\\android\\gradlew.bat -p android assembleRelease",
+    "build:apk-debug": "npx cap sync android && .\\android\\gradlew.bat -p android assembleDebug"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
