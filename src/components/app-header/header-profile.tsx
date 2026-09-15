@@ -76,14 +76,7 @@ export function HeaderProfile({ userRole }: HeaderProfileProps) {
 
   return (
     <div className="flex items-center gap-4 md:gap-6">
-      <button
-        type="button"
-        aria-label="Thông báo"
-        className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
-      >
-        <Bell size={20} />
-        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-      </button>
+
 
       <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
 

@@ -17,6 +17,7 @@ import { useLocationTracker, useMyTodayAttendance } from '@/hooks';
 
 // Config
 import { getSidebarSectionsForRole, UserRole, acceptedSections } from '@/config';
+import { useAuthStore } from '@/stores';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   // Chỉ tự động thu thập GPS và gửi ping định kỳ khi nhân viên ĐÃ CHECK-IN và CHƯA CHECK-OUT (đang trong ca làm)
@@ -31,27 +32,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [activeMenu, setActiveMenu] = React.useState(lastPath);
 
-  // Định nghĩa role hiện tại của user (mock, sau này có thể lấy từ auth context/store)
-  const [userRole, setUserRole] = React.useState<UserRole>('admin');
-
-  // Đồng bộ role từ cookie lúc component mount
-  React.useEffect(() => {
-    const xtAuthCookie = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('xt-auth='))
-      ?.split('=')[1];
-
-    if (xtAuthCookie) {
-      try {
-        const parsed = JSON.parse(decodeURIComponent(xtAuthCookie));
-        const firstRole = parsed.roles?.[0];
-        const roleCode = typeof firstRole === 'string' ? firstRole : firstRole?.code;
-        if (roleCode) {
-          setUserRole(roleCode as UserRole);
-        }
-      } catch {}
-    }
-  }, []);
+  const { user } = useAuthStore();
+  
+  const userRole = React.useMemo<UserRole>(() => {
+    const firstRole = user?.roles?.[0];
+    const roleCode = typeof firstRole === 'string' ? firstRole : firstRole?.code;
+    return (roleCode as UserRole) || 'employee';
+  }, [user]);
 
   // Lấy danh sách sections đã được lọc theo role của user
   const filteredSections = React.useMemo(() => {

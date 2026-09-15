@@ -42,7 +42,7 @@ export default function DeleteAppealModal({ open, appealId, onClose, onConfirm, 
           <AlertTriangle size={22} />
         </div>
         <div>
-          <p className="font-semibold text-slate-900">Xóa khiếu nại #{appealId}?</p>
+          <p className="font-semibold text-slate-900">Xóa khiếu nại ?</p>
           <p className="mt-1 text-xs text-slate-500">
             Hành động này không thể hoàn tác. Khiếu nại sẽ bị xóa vĩnh viễn khỏi hệ thống.
           </p>
