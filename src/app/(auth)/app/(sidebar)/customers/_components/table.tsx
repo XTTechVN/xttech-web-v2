@@ -210,6 +210,25 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, onExportClick }: TableP
       },
     },
     {
+      key: 'createdAt',
+      label: 'Ngày tạo',
+      minWidth: '150px',
+      cell: (row: Customer) => {
+        if (!row.createdAt) return <span className="text-gray-400 text-xs">—</span>;
+        return (
+          <span className="text-gray-600 text-sm">
+            {new Date(row.createdAt).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        );
+      },
+    },
+    {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
@@ -250,6 +269,15 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, onExportClick }: TableP
             {row.provider && (
               <span className="text-xs text-cyan-700 font-medium ml-1">
                 • NCC: {row.provider.name}
+              </span>
+            )}
+            {row.createdAt && (
+              <span className="text-xs text-gray-400 font-medium ml-1">
+                • Tạo: {new Date(row.createdAt).toLocaleDateString('vi-VN', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })}
               </span>
             )}
           </div>

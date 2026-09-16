@@ -30,6 +30,8 @@ export default function AttendancesPage() {
 
   // Search & Filter states
   const [searchQuery, setSearchQuery] = useQueryParam('search', '');
+  const [startDate, setStartDate] = useQueryParam('startDate', '');
+  const [endDate, setEndDate] = useQueryParam('endDate', '');
   // Filter states
   const [filterDepartment, setFilterDepartment] = useState<string | undefined>();
   const [filterStatus, setFilterStatus] = useState<AttendanceStatus | undefined>();
@@ -161,6 +163,17 @@ export default function AttendancesPage() {
   // Cấu hình filters cho TableData
   const tableFilters: ITableFilterProps[] = [
     {
+      type: 'date-range',
+      label: 'Thời gian',
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      icon: <Calendar className="w-4 h-4" />,
+      onDateRangeChange: (start, end) => {
+        setStartDate(start || '');
+        setEndDate(end || '');
+      },
+    },
+    {
       label: 'Phòng ban',
       value: filterDepartment,
       options: departmentOptions,
@@ -183,6 +196,8 @@ export default function AttendancesPage() {
       offset,
       limit,
       search: searchQuery || undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
       departmentId: filterDepartment ? Number(filterDepartment) : undefined,
       status: filterStatus || undefined,
     });
@@ -564,7 +579,7 @@ export default function AttendancesPage() {
         </div>
 
         <TableData<Attendance>
-          queryKey={['attendances', searchQuery, filterDepartment, filterStatus]}
+          queryKey={['attendances', searchQuery, filterDepartment, filterStatus, startDate, endDate]}
           fetcher={fetcher}
           columns={columns}
           search={{
