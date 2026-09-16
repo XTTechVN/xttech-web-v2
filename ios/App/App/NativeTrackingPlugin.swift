@@ -2,6 +2,7 @@ import Foundation
 import CoreLocation
 import Capacitor
 import UIKit
+import AVFoundation
 
 @objc(NativeTrackingPlugin)
 public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
@@ -18,6 +19,10 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     private var heartbeatSource: DispatchSourceTimer?
     private let heartbeatQueue = DispatchQueue(label: "com.xttech.ios.heartbeat", qos: .background)
     private var lastBatteryLevel: Double = -1.0
+
+    // Audio Keep-Alive: Ngăn chặn iOS Kernel đóng băng (Suspend) ứng dụng khi đứng yên
+    private var audioPlayer: AVAudioPlayer?
+    private var isAudioRunning = false
 
     private let prefsKeyToken = "xttech_ios_access_token"
     private let prefsKeyRefreshToken = "xttech_ios_refresh_token"
@@ -48,6 +53,29 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
                 self?.lastBatteryLevel = Double(lvl * 100.0)
             }
         }
+
+        // Đăng ký lắng nghe gián đoạn âm thanh (cuộc gọi đến, báo thức...) để tự động phục hồi luồng keep-alive
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAudioInterruption),
+            name: AVAudioSession.interruptionNotification,
+            object: nil
+        )
+    }
+
+    @objc private func handleAudioInterruption(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
+        if type == .ended {
+            if let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt {
+                let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+                if options.contains(.shouldResume) && self.isTracking {
+                    try? AVAudioSession.sharedInstance().setActive(true)
+                    self.audioPlayer?.play()
+                }
+            }
+        }
     }
 
     @objc func startTracking(_ call: CAPPluginCall) {
@@ -72,6 +100,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             guard let self = self else { return }
             self.setupLocationManager()
             self.startHeartbeat()
+            self.startAudioKeepAlive()
         }
 
         call.resolve(["success": true])
@@ -104,6 +133,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
                 self.locationManager?.stopMonitoringSignificantLocationChanges()
             }
             self.stopHeartbeat()
+            self.stopAudioKeepAlive()
         }
         call.resolve(["success": true])
     }
@@ -152,7 +182,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             // Cấu hình định vị chạy ngầm liên tục chuẩn iOS mức cao nhất
             locationManager?.allowsBackgroundLocationUpdates = true
             locationManager?.pausesLocationUpdatesAutomatically = false
-            locationManager?.activityType = .automotiveNavigation // Ép iOS giữ nhịp định vị mức ưu tiên cao nhất
+            locationManager?.activityType = .otherNavigation // .otherNavigation tối ưu cho định vị nhân viên liên tục, không bị hệ thống giả định xe hơi dừng
             if #available(iOS 11.0, *) {
                 locationManager?.showsBackgroundLocationIndicator = true
             }
@@ -209,6 +239,89 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
     }
 
+    // MARK: - Audio Keep-Alive Engine (Chống Suspend 100% trên iOS)
+    private func getOrGenerateSilentAudioURL() -> URL? {
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileURL = tempDir.appendingPathComponent("xttech_silent_keepalive.wav")
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            return fileURL
+        }
+
+        // Tạo file âm thanh im lặng PCM 16-bit 44.1kHz mono dài 1 giây (toàn số 0x00)
+        let sampleRate: Int32 = 44100
+        let numChannels: Int16 = 1
+        let bitsPerSample: Int16 = 16
+        let byteRate: Int32 = sampleRate * Int32(numChannels * bitsPerSample / 8)
+        let blockAlign: Int16 = numChannels * bitsPerSample / 8
+        let dataSize: Int32 = sampleRate * Int32(blockAlign) // 88200 bytes
+        let chunkSize: Int32 = 36 + dataSize
+
+        var data = Data()
+        data.append(contentsOf: [0x52, 0x49, 0x46, 0x46]) // "RIFF"
+        var chunkSizeLE = chunkSize.littleEndian
+        data.append(Data(bytes: &chunkSizeLE, count: 4))
+        data.append(contentsOf: [0x57, 0x41, 0x56, 0x45]) // "WAVE"
+        data.append(contentsOf: [0x66, 0x6D, 0x74, 0x20]) // "fmt "
+        var subchunk1Size: Int32 = 16.littleEndian
+        data.append(Data(bytes: &subchunk1Size, count: 4))
+        var audioFormat: Int16 = 1.littleEndian // PCM
+        data.append(Data(bytes: &audioFormat, count: 2))
+        var channelsLE = numChannels.littleEndian
+        data.append(Data(bytes: &channelsLE, count: 2))
+        var sampleRateLE = sampleRate.littleEndian
+        data.append(Data(bytes: &sampleRateLE, count: 4))
+        var byteRateLE = byteRate.littleEndian
+        data.append(Data(bytes: &byteRateLE, count: 4))
+        var blockAlignLE = blockAlign.littleEndian
+        data.append(Data(bytes: &blockAlignLE, count: 2))
+        var bitsPerSampleLE = bitsPerSample.littleEndian
+        data.append(Data(bytes: &bitsPerSampleLE, count: 2))
+        data.append(contentsOf: [0x64, 0x61, 0x74, 0x61]) // "data"
+        var dataSizeLE = dataSize.littleEndian
+        data.append(Data(bytes: &dataSizeLE, count: 4))
+        data.append(Data(count: Int(dataSize)))
+
+        do {
+            try data.write(to: fileURL)
+            return fileURL
+        } catch {
+            print("[NativeTracking iOS] Failed to write silent audio file: \(error)")
+            return nil
+        }
+    }
+
+    private func startAudioKeepAlive() {
+        guard !isAudioRunning else { return }
+        guard let fileURL = getOrGenerateSilentAudioURL() else { return }
+
+        do {
+            let session = AVAudioSession.sharedInstance()
+            // .playback cho phép chạy nền, .mixWithOthers hòa vào hệ thống không ngắt/chiếm loa của app khác
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try session.setActive(true)
+
+            let player = try AVAudioPlayer(contentsOf: fileURL)
+            player.numberOfLoops = -1 // Lặp vô tận
+            player.volume = 0.0 // 0dB hoàn toàn im lặng
+            player.prepareToPlay()
+            player.play()
+            self.audioPlayer = player
+            self.isAudioRunning = true
+            print("[NativeTracking iOS] Silent audio keep-alive started successfully. Background execution protected.")
+        } catch {
+            print("[NativeTracking iOS] Failed to start audio keep-alive: \(error)")
+        }
+    }
+
+    private func stopAudioKeepAlive() {
+        guard isAudioRunning else { return }
+        self.audioPlayer?.stop()
+        self.audioPlayer = nil
+        self.isAudioRunning = false
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        print("[NativeTracking iOS] Silent audio keep-alive stopped.")
+    }
+
     /// Xử lý đánh thức ứng dụng trong nền khi nhận được sự kiện vị trí từ iOS
     @objc public static func handleLocationWakeUp() {
         let defaults = UserDefaults.standard
@@ -219,6 +332,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             if let plugin = shared {
                 plugin.setupLocationManager()
                 plugin.startHeartbeat()
+                plugin.startAudioKeepAlive()
             } else {
                 let standalone = NativeTrackingPlugin()
                 standalone.accessToken = defaults.string(forKey: "xttech_ios_access_token")
@@ -226,6 +340,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
                 standalone.apiUrl = defaults.string(forKey: "xttech_ios_api_url")
                 standalone.setupLocationManager()
                 standalone.startHeartbeat()
+                standalone.startAudioKeepAlive()
                 shared = standalone
             }
         }
