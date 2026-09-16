@@ -27,7 +27,7 @@ interface EditForm {
 
 export default function EditAdjustmentModal({ open, data, onClose, onSuccess }: Props) {
   const [form, setForm] = useState<EditForm>({
-    requestType: 'both',
+    requestType: 'forgot_attendance',
     workDate: '',
     oldCheckIn: '',
     oldCheckOut: '',
@@ -84,13 +84,13 @@ export default function EditAdjustmentModal({ open, data, onClose, onSuccess }: 
 
   if (!data) return null;
 
-  const showCheckIn = form.requestType === 'check_in' || form.requestType === 'both';
-  const showCheckOut = form.requestType === 'check_out' || form.requestType === 'both';
+  const showCheckIn = form.requestType === 'check_in' || form.requestType === 'forgot_attendance';
+  const showCheckOut = form.requestType === 'check_out' || form.requestType === 'forgot_attendance';
 
   const requestTypeOptions = [
     { value: "check_in", label: "Điều chỉnh Check In" },
     { value: "check_out", label: "Điều chỉnh Check Out" },
-    { value: "both", label: "Điều chỉnh cả hai" },
+    { value: "forgot_attendance", label: "Quên chấm công" },
   ];
 
   const footer = (
