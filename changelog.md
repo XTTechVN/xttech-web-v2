@@ -2,6 +2,14 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-16
+
+### Changed & Assets
+- **Đồng Bộ App Icon iOS Khớp Nhận Diện Thương Hiệu Android ([`AppIcon-512@2x.png`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png)):**
+  - Thay thế toàn diện icon mặc định màu xanh dương của Capacitor bằng logo XTTech chính thức xuất từ file vector gốc [`logo-xttech.svg`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/public/image-xttech/logo-xttech.svg).
+  - Tối ưu kích thước hiển thị chuẩn Apple HIG: canvas 1024x1024 px, tỷ lệ logo căn giữa 56% trên nền trắng thuần `#FFFFFF`, loại bỏ hoàn toàn kênh Alpha (RGB 24-bit) để tránh lỗi từ chối của App Store hoặc lỗi nền đen khi bo góc.
+  - Đồng bộ giao diện biểu tượng ứng dụng hoàn toàn thống nhất giữa hai nền tảng Android và iOS.
+
 ## [Unreleased] - 2026-09-15
 
 ### Changed & Configured
