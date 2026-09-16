@@ -1,29 +1,8 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-'use client';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-import { useEffect, useState } from 'react';
-
-import { useRouter } from 'next/navigation';
-
-import { useAuthStore } from '@/stores';
+import { AuthClientLayout } from './_components/auth-client-layout';
 
 export default function AuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { isAuthenticated } = useAuthStore();
-  const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (isMounted && !isAuthenticated) {
-      router.push('/signin');
-    }
-  }, [isMounted, isAuthenticated, router]);
-
-  if (!isMounted || !isAuthenticated) {
-    return null;
-  }
-  return <div className="w-full h-full">{children}</div>;
+  return <AuthClientLayout>{children}</AuthClientLayout>;
 }

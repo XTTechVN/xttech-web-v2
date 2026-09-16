@@ -13,12 +13,11 @@ import {
   revokeAccessoryMaterials 
 } from '@/actions';
 import { Loader2, Edit, Image, Plus } from 'lucide-react';
-import { formatAccessoryUnit, formatMaterialUnit, formatDoorType } from '@/types';
+import { formatAccessoryUnit, formatMaterialUnit, formatDoorType, getAccessoryUnitConfig } from '@/types';
 import { Button } from '@/components';
 import { AccessoryUpdateModal } from '../_components/modals';
 import { AssignDoorsModal, AssignMaterialsModal } from '../_components/relation-modals';
-import { BASE_MINIO_URL } from '@/config/app';
-import { formatCurrency } from '@/utils';
+import { formatCurrency, getFileUrl } from '@/utils';
 import toast from 'react-hot-toast';
 
 interface AccessoryDetailPageProps {
@@ -164,13 +163,13 @@ export default function AccessoryDetailPage({ params }: AccessoryDetailPageProps
           <div className="w-full aspect-square md:h-64 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center">
             {accessory.imagePath ? (
               <img
-                src={accessory.imagePath.startsWith('http') ? accessory.imagePath : `${BASE_MINIO_URL}${accessory.imagePath}`}
+                src={getFileUrl(accessory.imagePath)}
                 alt={accessory.name}
                 className="w-full h-full object-cover"
               />
             ) : (
               <div className="flex flex-col items-center gap-2 text-slate-400">
-                <Image size={32} strokeWidth={1.5} />
+                <Image size={32} strokeWidth={1.5}/>
                 <span className="text-[10px] font-medium">Chưa có ảnh</span>
               </div>
             )}
@@ -185,10 +184,28 @@ export default function AccessoryDetailPage({ params }: AccessoryDetailPageProps
               <span className="font-semibold text-slate-500">Mã phụ kiện: </span>
               <span className="text-slate-800 font-medium">{accessory.code || '—'}</span>
             </div>
-          <div>
-            <span className="font-semibold text-slate-500">Đơn vị tính: </span>
-            <span className="text-slate-800 font-medium">{formatAccessoryUnit(accessory.unit) || '—'}</span>
-          </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-slate-500">Loại phụ kiện: </span>
+              {accessory.category?.name ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-200/70">
+                  {accessory.category.name} ({accessory.category.code})
+                </span>
+              ) : (
+                <span className="text-slate-800 font-medium">—</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-slate-500">Đơn vị tính: </span>
+              {accessory.unit ? (
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${getAccessoryUnitConfig(accessory.unit).className}`}
+                >
+                  {getAccessoryUnitConfig(accessory.unit).label}
+                </span>
+              ) : (
+                <span className="text-slate-800 font-medium">—</span>
+              )}
+            </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-b border-slate-100 py-3.5 my-1">
             <div>
               <span className="font-semibold text-slate-500 block text-xs mb-0.5">Giá vốn</span>

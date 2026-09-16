@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,6 +6,7 @@ import { Modal, Button, Select, Input, Textarea } from "@/components";
 import { Attendance } from "@/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { showErrorToast } from "@/utils";
 import { updateAttendance } from "@/actions";
 
 interface Props {
@@ -46,11 +48,8 @@ export default function EditAttendanceModal({
             onClose();
         },
 
-        onError: (error: any) => {
-            console.error(error.response?.data);
-            toast.error(
-                error.response?.data?.message || "Cập nhật chấm công thất bại"
-            );
+        onError: (error) => {
+            showErrorToast(error, "Cập nhật chấm công thất bại");
         }
     });
 

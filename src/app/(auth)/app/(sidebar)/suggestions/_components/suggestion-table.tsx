@@ -3,15 +3,15 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { RotateCw, User, Plus, EyeOff, Download, Eye, Pencil, Trash2 } from 'lucide-react';
+import { RotateCw, Plus, Download, Eye, Pencil, Trash2 } from 'lucide-react';
 import { useSuggestionStore } from '@/stores/useSuggestionStore';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks';
 import { TableData, TableAction, Button, Heading } from '@/components';
 import { getSuggestions } from '@/actions/suggestion';
 import { Suggestion } from '@/types';
-import { BASE_MINIO_URL } from '@/config';
 
 // Hàm bổ trợ phân loại chủ đề linh hoạt từ type hoặc content
 const getSuggestionType = (p: Suggestion) => {
@@ -91,8 +91,8 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
           limit: limit,
           offset: offset,
         });
-      } catch (err: any) {
-        toast.error('Không thể tải danh sách đề xuất.');
+      } catch (err) {
+        showErrorToast(err, 'Không thể tải danh sách đề xuất.');
         throw err;
       }
 
@@ -143,8 +143,6 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
         const cat = getSuggestionType(row);
         const catInfo = typeLabels[cat] || typeLabels.other;
         const senderName = row.anonymous ? 'Ẩn danh' : `${row.user?.fullName} (${row.user?.email})` || 'Ẩn danh';
-        const senderAvatar = row.anonymous ? null : row.user?.avatar;
-
         return (
           <div className="flex flex-col gap-1 cursor-default w-full max-w-150">
             {/* Title & Tag */}
@@ -159,29 +157,8 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
             <span className="text-[12px] text-[#5E858D] font-normal truncate leading-normal block w-full">{row.content}</span>
 
             {/* Sender / Người dùng nằm dưới */}
-            <div className="flex items-center gap-2 select-none">
-              {row.anonymous ? (
-                <div className="w-6 h-6 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-500 border border-slate-200/60">
-                  <EyeOff className="w-3 h-3" />
-                </div>
-              ) : senderAvatar ? (
-                <div className="relative w-6 h-6 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                  <img
-                    src={senderAvatar.startsWith('http') ? senderAvatar : `${BASE_MINIO_URL}${senderAvatar}`}
-                    alt={senderName}
-                    width={24}
-                    height={24}
-                    className="object-cover w-full h-full"
-                  />
-                </div>
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-cyan-50 shrink-0 flex items-center justify-center text-cyan-700 border border-cyan-100/50">
-                  <User className="w-3.5 h-3.5" />
-                </div>
-              )}
-              <div className="flex items-center gap-1.5 min-w-0 text-[11px]">
-                <span className="font-semibold text-slate-700 truncate">{senderName}</span>
-              </div>
+            <div className="flex items-center min-w-0 text-[11px] select-none">
+              <span className="font-semibold text-slate-700 truncate">{senderName}</span>
             </div>
           </div>
         );
@@ -239,39 +216,52 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
-      cell: (row: Suggestion) => (
-        <TableAction
-          items={[
-            {
-              title: 'Xem chi tiết',
-              icon: Eye,
-              size: 18,
-              onClick: () => handleViewDetails(row),
-            },
-            row.status === 'pending' && {
-              title: 'Chỉnh sửa',
-              icon: Pencil,
-              size: 18,
-              onClick: () => {
-                setSelectedSuggestion(row);
-                setIsEditing(true);
-                setDetailModalOpen(true);
+      cell: (row: Suggestion) => {
+        const isProcessed = row.status !== 'pending';
+        const canDelete = isManager || row.userId === currentUserId;
+
+        return (
+          <TableAction
+            items={[
+              {
+                title: 'Xem chi tiết',
+                icon: Eye,
+                size: 18,
+                onClick: () => handleViewDetails(row),
               },
-            },
-            row.status === 'pending' &&
-              (isManager || row.userId === currentUserId) && {
-                title: 'Xóa',
+              {
+                title: isProcessed ? 'Đề xuất đã xử lý (Không thể sửa)' : 'Chỉnh sửa',
+                icon: Pencil,
+                size: 18,
+                disabled: isProcessed,
+                className: isProcessed
+                  ? 'text-gray-400 dark:text-gray-600 hover:text-gray-400 hover:bg-transparent cursor-not-allowed opacity-35 disabled:opacity-35'
+                  : undefined,
+                onClick: () => {
+                  if (isProcessed) return;
+                  setSelectedSuggestion(row);
+                  setIsEditing(true);
+                  setDetailModalOpen(true);
+                },
+              },
+              (canDelete || isProcessed) && {
+                title: isProcessed ? 'Đề xuất đã xử lý (Không thể xóa)' : 'Xóa',
                 icon: Trash2,
                 size: 18,
-                className: 'hover:text-red-600 hover:bg-red-50',
+                disabled: isProcessed,
+                className: isProcessed
+                  ? 'text-gray-400 dark:text-gray-600 hover:text-gray-400 hover:bg-transparent cursor-not-allowed opacity-35 disabled:opacity-35'
+                  : 'hover:text-red-600 hover:bg-red-50',
                 onClick: () => {
+                  if (isProcessed) return;
                   setSelectedSuggestion(row);
                   setIsDeleteConfirmOpen(true);
                 },
               },
-          ]}
-        />
-      ),
+            ]}
+          />
+        );
+      },
     },
   ];
 
@@ -283,7 +273,6 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
     const senderName = row.anonymous
       ? 'Ẩn danh'
       : `${row.user?.fullName || 'Người dùng'} ${row.user?.email ? `(${row.user.email})` : ''}`.trim() || 'Ẩn danh';
-    const senderAvatar = row.anonymous ? null : row.user?.avatar;
 
     const date = row.createdAt ? new Date(row.createdAt) : null;
     const timeStr = date ? date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
@@ -320,25 +309,6 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
         {/* Footer: Thông tin người gửi, Thời gian & Các nút thao tác */}
         <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100/50">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {row.anonymous ? (
-              <div className="w-6 h-6 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-500 border border-slate-200/60">
-                <EyeOff className="w-3 h-3" />
-              </div>
-            ) : senderAvatar ? (
-              <div className="relative w-6 h-6 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                <img
-                  src={senderAvatar.startsWith('http') ? senderAvatar : `${BASE_MINIO_URL}${senderAvatar}`}
-                  alt={senderName}
-                  width={24}
-                  height={24}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-cyan-50 shrink-0 flex items-center justify-center text-cyan-700 border border-cyan-100/50">
-                <User className="w-3.5 h-3.5" />
-              </div>
-            )}
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-slate-700 text-[11px] truncate">{senderName}</span>
               <span className="text-[10px] text-[#5E858D]">
@@ -349,32 +319,57 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
 
           {/* Các nút hành động */}
           <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-            {row.status === 'pending' && row.userId === currentUserId && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSuggestion(row);
-                  setIsEditing(true);
-                  setDetailModalOpen(true);
-                }}
-                className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <Pencil size={12} />
-                Sửa
-              </button>
-            )}
-            {row.status === 'pending' && (isManager || row.userId === currentUserId) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSuggestion(row);
-                  setIsDeleteConfirmOpen(true);
-                }}
-                className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <Trash2 size={12} />
-                Xóa
-              </button>
+            {row.status !== 'pending' ? (
+              <>
+                <button
+                  type="button"
+                  disabled
+                  className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 text-gray-400 border border-gray-200 flex items-center gap-1 cursor-not-allowed opacity-40"
+                  title="Đề xuất đã xử lý (Không thể sửa)"
+                >
+                  <Pencil size={12} />
+                  Sửa
+                </button>
+                <button
+                  type="button"
+                  disabled
+                  className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 text-gray-400 border border-gray-200 flex items-center gap-1 cursor-not-allowed opacity-40"
+                  title="Đề xuất đã xử lý (Không thể xóa)"
+                >
+                  <Trash2 size={12} />
+                  Xóa
+                </button>
+              </>
+            ) : (
+              <>
+                {row.userId === currentUserId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSuggestion(row);
+                      setIsEditing(true);
+                      setDetailModalOpen(true);
+                    }}
+                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <Pencil size={12} />
+                    Sửa
+                  </button>
+                )}
+                {(isManager || row.userId === currentUserId) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSuggestion(row);
+                      setIsDeleteConfirmOpen(true);
+                    }}
+                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 size={12} />
+                    Xóa
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

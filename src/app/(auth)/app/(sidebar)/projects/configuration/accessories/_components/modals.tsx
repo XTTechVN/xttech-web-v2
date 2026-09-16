@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { Input, Button, Modal, Select, CurrencyInput } from '@/components';
-import { CheckCircle2, Upload, Settings } from 'lucide-react';
+import { CheckCircle2, Upload, Settings, Plus } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
-import { createAccessory, updateAccessory } from '@/actions';
+import { createAccessory, updateAccessory, getAccessoryCategories } from '@/actions';
 import toast from 'react-hot-toast';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import type { Accessory, AccessoryCreate, AccessoryUpdate } from '@/types';
-import { BASE_MINIO_URL } from '@/config/app';
+import { AccessoryCategoryModal } from './category-modal';
+import { showErrorToast, getFileUrl } from '@/utils';
 
 // ==========================================
 // 1. MODAL TẠO MỚI PHỤ KIỆN (AccessoryCreate) HỖ TRỢ UPLOAD & PREVIEW 2 CỘT
@@ -30,10 +31,29 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
     control,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<AccessoryCreateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+
+  const { data: categoryData } = useQuery({
+    queryKey: ['accessory-categories'],
+    queryFn: async () => {
+      const res = await getAccessoryCategories({ limit: 9999 });
+      return res.items;
+    },
+    enabled: isOpen,
+  });
+
+  const categoryOptions = [
+    { value: '', label: 'Không chọn loại' },
+    ...(categoryData?.map((cat) => ({
+      value: String(cat.id),
+      label: `${cat.name} (${cat.code})`,
+    })) || []),
+  ];
 
   const { mutate: createMutation, isPending: isCreating } = useMutation({
     mutationFn: createAccessory,
@@ -46,13 +66,13 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
       setPreviewUrl(null);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Thêm phụ kiện thất bại');
     },
   });
 
   useEffect(() => {
     if (isOpen) {
-      reset({ name: '', code: '', specification: '', unit: '', costPrice: 0, retailPrice: 0, salePrice: 0 });
+      reset({ name: '', code: '', specification: '', unit: '', costPrice: 0, retailPrice: 0, salePrice: 0, categoryId: null });
       setSelectedFile(null);
       setPreviewUrl(null);
     }
@@ -84,6 +104,9 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
     if (data.unit && data.unit.trim() !== '') {
       payload.unit = data.unit;
     }
+    if (data.categoryId) {
+      payload.categoryId = Number(data.categoryId);
+    }
     createMutation({
       data: payload,
       file: selectedFile || undefined,
@@ -91,7 +114,7 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-2xl w-full">
+    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-3xl w-full">
       <form onSubmit={handleSubmit(handleConfirm)}>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           {/* Cột trái: Ảnh & Preview */}
@@ -123,13 +146,35 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
               {...register('name', { required: true })}
               error={errors.name ? 'Tên phụ kiện không được để trống' : undefined}
             />
-            <Input
-              label="Mã phụ kiện *"
-              placeholder="Nhập mã phụ kiện"
-              fullWidth
-              {...register('code', { required: true })}
-              error={errors.code ? 'Mã phụ kiện không được để trống' : undefined}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Mã phụ kiện *"
+                placeholder="Nhập mã phụ kiện"
+                fullWidth
+                {...register('code', { required: true })}
+                error={errors.code ? 'Mã phụ kiện không được để trống' : undefined}
+              />
+              <div className="flex items-end gap-1.5">
+                <div className="flex-1 min-w-0">
+                  <Select
+                    label="Loại phụ kiện"
+                    placeholder="Chọn loại phụ kiện"
+                    fullWidth
+                    value={watch('categoryId') ? String(watch('categoryId')) : ''}
+                    {...register('categoryId')}
+                    options={categoryOptions}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddCategoryOpen(true)}
+                  title="Thêm nhanh loại phụ kiện"
+                  className="h-10 w-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer shrink-0 mb-0.5"
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
+            </div>
             <Input
               label="Thông số kỹ thuật"
               placeholder="Nhập thông số phụ kiện"
@@ -233,6 +278,16 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
           </Button>
         </div>
       </form>
+
+      {/* Modal thêm nhanh loại phụ kiện */}
+      <AccessoryCategoryModal
+        isOpen={isAddCategoryOpen}
+        onClose={() => setIsAddCategoryOpen(false)}
+        onSuccessCreated={(newCat) => {
+          setValue('categoryId', newCat.id);
+          setIsAddCategoryOpen(false);
+        }}
+      />
     </Modal>
   );
 }
@@ -245,7 +300,10 @@ interface AccessoryUpdateModalProps {
   onClose: () => void;
   title: string;
   submitText?: string;
-  initialData?: Pick<Accessory, 'id' | 'name' | 'code' | 'specification' | 'unit' | 'costPrice' | 'retailPrice' | 'salePrice' | 'imagePath'>;
+  initialData?: Pick<
+    Accessory,
+    'id' | 'name' | 'code' | 'categoryId' | 'specification' | 'unit' | 'costPrice' | 'retailPrice' | 'salePrice' | 'imagePath'
+  >;
 }
 
 type AccessoryUpdateFormValues = Omit<AccessoryUpdate, 'imagePath'>;
@@ -257,10 +315,29 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
     control,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<AccessoryUpdateFormValues>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+
+  const { data: categoryData } = useQuery({
+    queryKey: ['accessory-categories'],
+    queryFn: async () => {
+      const res = await getAccessoryCategories({ limit: 9999 });
+      return res.items;
+    },
+    enabled: isOpen,
+  });
+
+  const categoryOptions = [
+    { value: '', label: 'Không chọn loại' },
+    ...(categoryData?.map((cat) => ({
+      value: String(cat.id),
+      label: `${cat.name} (${cat.code})`,
+    })) || []),
+  ];
 
   const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
     mutationFn: ({ id, data, file }: { id: number; data: AccessoryUpdate; file?: File }) => updateAccessory(id, { data, file }),
@@ -273,7 +350,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
       setPreviewUrl(null);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Cập nhật phụ kiện thất bại');
     },
   });
 
@@ -282,6 +359,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
       reset({
         name: initialData.name || '',
         code: initialData.code || '',
+        categoryId: initialData.categoryId !== undefined ? initialData.categoryId : null,
         specification: initialData.specification || '',
         unit: initialData.unit || '',
         costPrice: initialData.costPrice !== undefined ? initialData.costPrice : undefined,
@@ -289,13 +367,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
         salePrice: initialData.salePrice !== undefined ? initialData.salePrice : undefined,
       });
       setSelectedFile(null);
-      setPreviewUrl(
-        initialData.imagePath
-          ? initialData.imagePath.startsWith('http')
-            ? initialData.imagePath
-            : `${BASE_MINIO_URL}${initialData.imagePath}`
-          : null,
-      );
+      setPreviewUrl(getFileUrl(initialData.imagePath) || null);
     }
   }, [isOpen, initialData, reset]);
 
@@ -312,7 +384,8 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
       name: data.name,
       code: data.code,
       unit: data.unit,
-      specification: data.specification?.trim() || "",
+      categoryId: data.categoryId ? Number(data.categoryId) : null,
+      specification: data.specification?.trim() || '',
     };
 
     if (data.costPrice !== undefined) {
@@ -332,7 +405,7 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-2xl w-full">
+    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-3xl w-full">
       <form onSubmit={handleSubmit(handleConfirm)}>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           {/* Cột trái: Ảnh & Preview */}
@@ -364,13 +437,35 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
               {...register('name', { required: true })}
               error={errors.name ? 'Tên phụ kiện không được để trống' : undefined}
             />
-            <Input
-              label="Mã phụ kiện *"
-              placeholder="Nhập mã phụ kiện"
-              fullWidth
-              {...register('code', { required: true })}
-              error={errors.code ? 'Mã phụ kiện không được để trống' : undefined}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Mã phụ kiện *"
+                placeholder="Nhập mã phụ kiện"
+                fullWidth
+                {...register('code', { required: true })}
+                error={errors.code ? 'Mã phụ kiện không được để trống' : undefined}
+              />
+              <div className="flex items-end gap-1.5">
+                <div className="flex-1 min-w-0">
+                  <Select
+                    label="Loại phụ kiện"
+                    placeholder="Chọn loại phụ kiện"
+                    fullWidth
+                    value={watch('categoryId') ? String(watch('categoryId')) : ''}
+                    {...register('categoryId')}
+                    options={categoryOptions}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddCategoryOpen(true)}
+                  title="Thêm nhanh loại phụ kiện"
+                  className="h-10 w-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer shrink-0 mb-0.5"
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
+            </div>
             <Input
               label="Thông số kỹ thuật"
               placeholder="Nhập thông số phụ kiện"
@@ -481,6 +576,16 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
           </Button>
         </div>
       </form>
+
+      {/* Modal thêm nhanh loại phụ kiện */}
+      <AccessoryCategoryModal
+        isOpen={isAddCategoryOpen}
+        onClose={() => setIsAddCategoryOpen(false)}
+        onSuccessCreated={(newCat) => {
+          setValue('categoryId', newCat.id);
+          setIsAddCategoryOpen(false);
+        }}
+      />
     </Modal>
   );
 }

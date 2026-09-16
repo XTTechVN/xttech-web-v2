@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist_Mono, Lexend } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
+import { AppUpdateModal } from '@/components';
 
 import './globals.css';
 
@@ -14,6 +15,7 @@ const lexend = Lexend({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800', '900'],
 });
+
 
 // 1. Cấu hình Viewport để màn hình không bị phóng to thu nhỏ lung tung
 export const viewport: Viewport = {
@@ -54,6 +56,7 @@ export default function RootLayout({
       <body className="bg-white antialiased min-h-screen" suppressHydrationWarning>
         {children}
         <Toaster position="top-center" />
+        <AppUpdateModal />
       </body>
     </html>
   );

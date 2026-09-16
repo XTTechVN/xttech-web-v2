@@ -6,6 +6,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Send, Upload, X, Eye, Check, Trash2 } from 'lucide-react';
 import { useSuggestionStore } from '@/stores/useSuggestionStore';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal, Input, Textarea, Checkbox, Button, Alert, Select } from '@/components';
 import { createSuggestion, updateSuggestion, deleteSuggestion, reviewSuggestion } from '@/actions/suggestion';
@@ -337,9 +338,8 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
       setCreateModalOpen(false);
       setUploadProgress(null);
     },
-    onError: (error: any) => {
-      const errMsg = error.response?.data?.message || error.response?.data?.detail || error.message || 'Có lỗi xảy ra khi gửi đề xuất.';
-      toast.error(errMsg);
+    onError: (error) => {
+      showErrorToast(error, 'Có lỗi xảy ra khi gửi đề xuất.');
       setUploadProgress(null);
     },
   });
@@ -359,8 +359,8 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
       setSelectedSuggestion(null);
       queryClient.invalidateQueries({ queryKey: ['admin-suggestions'] });
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Có lỗi xảy ra khi cập nhật đề xuất.');
+    onError: (error) => {
+      showErrorToast(error, 'Có lỗi xảy ra khi cập nhật đề xuất.');
       setUploadProgress(null);
     },
   });
@@ -377,8 +377,8 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
       queryClient.invalidateQueries({ queryKey: ['admin-suggestions'] });
       queryClient.invalidateQueries({ queryKey: ['admin-suggestions-all-stats'] });
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Có lỗi xảy ra khi xóa đề xuất.');
+    onError: (error) => {
+      showErrorToast(error, 'Có lỗi xảy ra khi xóa đề xuất.');
     },
   });
 
@@ -394,8 +394,8 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
       queryClient.invalidateQueries({ queryKey: ['admin-suggestions'] });
       queryClient.invalidateQueries({ queryKey: ['admin-suggestions-all-stats'] });
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Có lỗi xảy ra khi duyệt đề xuất.');
+    onError: (error) => {
+      showErrorToast(error, 'Có lỗi xảy ra khi duyệt đề xuất.');
     },
   });
 
@@ -660,12 +660,12 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
 
   const modalTitle =
     mode === 'create' ? (
-      'TẠO ĐỀ XUẤT & SÁNG KIẾN MỚI'
+      'Tạo đề xuất và sáng kiến mới'
     ) : mode === 'edit' ? (
-      'CHỈNH SỬA ĐỀ XUẤT'
+      'Chỉnh sửa đề xuất và sáng kiến'
     ) : (
       <div className="flex items-center gap-2.5">
-        <span>CHI TIẾT ĐỀ XUẤT</span>
+        <span>Chi tiết đề xuất và sáng kiến</span>
         {selectedSuggestion && (
           <span
             className={`inline-block px-2.5 py-0.5 rounded-full text-[12px] font-bold border ${getStatusDetails(selectedSuggestion.status).class}`}
@@ -689,7 +689,7 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {/* Title */}
             <Input
-              label="Chủ đề đề xuất"
+              label="Chủ đề đề xuất *"
               placeholder="Nhập tên đề xuất (Ví dụ: Đề xuất cải tạo khu pantry...)"
               value={title}
               onChange={(e) => {
@@ -702,7 +702,7 @@ export default function SuggestionModal({ isManager, currentUserId }: Suggestion
             />
 
             <Select
-              label="Loại đề xuất"
+              label="Loại đề xuất *"
               value={type}
               onChange={(e) => setType(e.target.value)}
               options={[

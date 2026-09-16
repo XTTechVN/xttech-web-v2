@@ -16,6 +16,7 @@ import { getCustomers, deleteProject } from '@/actions';
 import type { Project } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
+import { showErrorToast } from '@/utils';
 
 const Page = () => {
   const router = useRouter();
@@ -46,7 +47,7 @@ const Page = () => {
       setProjectToDelete(null);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Xóa dự án thất bại');
     },
   });
 

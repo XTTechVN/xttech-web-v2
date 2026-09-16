@@ -13,14 +13,13 @@ interface QuotationInfoProps {
 const priceOptions = [
   { id: 'retail', name: 'Bán lẻ' },
   { id: 'sale', name: 'Đại lý' },
-  { id: 'cost', name: 'Vốn' },
 ];
 
 export const QuotationInfo = ({ materialsList }: QuotationInfoProps) => {
   const store = useQuotationStore();
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
-  
+
   const [localDiscount, setLocalDiscount] = useState(store.discountPercentage?.toString() || '');
 
   useEffect(() => {
@@ -50,16 +49,16 @@ export const QuotationInfo = ({ materialsList }: QuotationInfoProps) => {
             onChange={(e) => {
               const rawValue = e.target.value;
               let cleanValue = rawValue.replace(/[^0-9]/g, '');
-              
+
               if (cleanValue !== '') {
                 const num = parseInt(cleanValue, 10);
                 if (num > 100) {
                   cleanValue = '100';
                 }
               }
-              
+
               setLocalDiscount(cleanValue);
-              
+
               if (cleanValue === '') {
                 store.setQuotationField('discountPercentage', 0);
               } else {

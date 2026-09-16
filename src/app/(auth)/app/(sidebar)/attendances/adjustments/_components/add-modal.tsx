@@ -1,8 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
 import { Modal, Button, Select, Input, Textarea } from '@/components';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { createAdjustmentRequest, getUsers } from '@/actions';
 import type { RequestType, AttendanceAdjustmentRequestCreate, Attendance, AdjustmentForm } from '@/types';
 import { useAttendances } from '@/stores';
@@ -86,9 +88,6 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
 
   const employeeOptions = useMemo(() => {
     const list = [...employees] as any[];
-    console.log('--- employeeOptions ---');
-    console.log('currentUser:', currentUser);
-    console.log('employees list:', list);
 
     if (data?.user && !list.some((u) => u.id === data.user?.id)) {
       list.unshift(data.user);
@@ -104,9 +103,6 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
         return 0;
       });
     }
-
-    console.log('sorted list:', list);
-
     return [
       {
         value: '',
@@ -154,34 +150,6 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
     }
   };
 
-  const handleCreateError = (err: any) => {
-    console.error('Create adjustment error:', err);
-    const responseData = err?.response?.data;
-
-    if (Array.isArray(responseData?.detail)) {
-      responseData.detail.forEach((item: any) => {
-        toast.error(item?.msg ?? 'Dữ liệu không hợp lệ');
-      });
-      return;
-    }
-
-    if (typeof responseData?.detail === 'string') {
-      toast.error(responseData.detail);
-      return;
-    }
-
-    if (typeof responseData?.message === 'string') {
-      toast.error(responseData.message);
-      return;
-    }
-
-    if (err?.response?.status) {
-      toast.error(`Lỗi server (${err.response.status})`);
-      return;
-    }
-
-    toast.error('Không thể tạo khiếu nại');
-  };
 
   const isMissingAttendance = !data && form.requestType === 'forgot_attendance';
 
@@ -328,8 +296,8 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
         resetForm();
         onSuccess?.();
         onClose();
-      } catch (err: any) {
-        handleCreateError(err);
+      } catch (err: unknown) {
+        showErrorToast(err, 'Không thể tạo khiếu nại');
       } finally {
         setIsSubmitting(false);
       }
@@ -368,14 +336,13 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
 
     setIsSubmitting(true);
     try {
-      const res = await createAdjustmentRequest(payload);
-      // console.log(res);
+      await createAdjustmentRequest(payload);
       toast.success('Tạo khiếu nại thành công');
       resetForm();
       onSuccess?.();
       onClose();
-    } catch (err: any) {
-      // handleCreateError(err);
+    } catch (err: unknown) {
+      showErrorToast(err, 'Không thể tạo khiếu nại');
     } finally {
       setIsSubmitting(false);
     }

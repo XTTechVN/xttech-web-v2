@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 
 // Icons trong lucide react
-import { User, Pencil, Trash2, Eye, Plus, MapPin } from 'lucide-react';
+import { User, Pencil, Trash2, Eye, Plus, MapPin, FileSpreadsheet } from 'lucide-react';
 
 // Thành phần dùng chung trong hệ thống
 import { TableData, TableAction, ITableFilterProps } from '@/components';
@@ -28,9 +28,11 @@ interface TableProps {
   onEditClick: (customer: Customer) => void;
   onDeleteClick: (customer: Customer) => void;
   onAddClick: () => void;
+  onExportClick?: () => void;
 }
 
-const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
+const Table = ({ onEditClick, onDeleteClick, onAddClick, onExportClick }: TableProps) => {
+
   const router = useRouter();
   const [search, setSearch] = useQueryParam('search');
 
@@ -191,6 +193,23 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       },
     },
     {
+      key: 'provider',
+      label: 'Nhà cung cấp',
+      minWidth: '160px',
+      cell: (row: Customer) => {
+        const provider = row.provider;
+        if (!provider) return <span className="text-gray-400 text-xs">—</span>;
+        return (
+          <span
+            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-50 text-cyan-800 border border-cyan-200"
+            title={`Mã: ${provider.code}`}
+          >
+            {provider.name}
+          </span>
+        );
+      },
+    },
+    {
       key: 'actions',
       label: 'Hành động',
       minWidth: '120px',
@@ -228,6 +247,11 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             <span className="text-xs text-gray-500 font-medium ml-1">
               • Phụ trách: {usersData?.items?.find((u: any) => u.id === row.staffId)?.fullName || (row as any).staff?.fullName || (row as any).staff?.username || row.staffId || '—'}
             </span>
+            {row.provider && (
+              <span className="text-xs text-cyan-700 font-medium ml-1">
+                • NCC: {row.provider.name}
+              </span>
+            )}
           </div>
           {row.images && row.images.length > 0 && (
             <div className="flex items-center gap-2 mt-2">
@@ -281,7 +305,18 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end items-center w-full pr-2 pt-2">
+      <div className="flex justify-end items-center gap-2 w-full pr-2 pt-2">
+        {onExportClick && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2.5 text-xs md:h-9 md:px-3 md:text-sm shrink-0 border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+            leftIcon={<FileSpreadsheet className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-600" />}
+            onClick={onExportClick}
+          >
+            Xuất Excel
+          </Button>
+        )}
         <Button
           variant="primary"
           size="sm"
@@ -292,6 +327,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
           Thêm khách hàng
         </Button>
       </div>
+
       <TableData<Customer>
         queryKey={['customers', search, filterType, filterStaffId]}
         fetcher={fetcher}

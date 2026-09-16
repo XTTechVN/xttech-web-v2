@@ -106,7 +106,7 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <Heading as="h3" className="text-xs md:text-sm font-bold text-gray-500 uppercase tracking-wider">Lịch sử tương tác ({data?.meta?.total || 0})</Heading>
+        <Heading as="h3" className="text-xs md:text-sm font-bold text-gray-500  tracking-wider">Lịch sử tương tác ({data?.meta?.total || 0})</Heading>
         <Button
           variant="ghost"
           size="sm"
@@ -138,19 +138,19 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 flex-1">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Kênh tương tác</span>
+                    <span className="text-[10px] font-bold text-gray-400  tracking-wider">Kênh tương tác</span>
                     <span className="text-sm font-bold text-gray-900">{getCustomerLogChannelLabel(row.channel || row.type)}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Loại tương tác</span>
+                    <span className="text-[10px] font-bold text-gray-400  tracking-wider">Loại tương tác</span>
                     <span className="text-sm font-semibold text-gray-700">{getCustomerLogTypeLabel(row.type)}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ngày tạo</span>
+                    <span className="text-[10px] font-bold text-gray-400  tracking-wider">Ngày tạo</span>
                     <span className="text-sm font-semibold text-gray-900">{new Date(row.createdAt).toLocaleDateString('vi-VN')}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ngày hẹn tiếp</span>
+                    <span className="text-[10px] font-bold text-gray-400  tracking-wider">Ngày hẹn tiếp</span>
                     <span className="text-sm font-semibold text-gray-900">
                       {row.nextFollowDate ? new Date(row.nextFollowDate).toLocaleDateString('vi-VN') : '—'}
                     </span>
@@ -159,7 +159,7 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
 
                 <div className="flex items-center justify-between md:justify-end gap-4 mt-2 md:mt-0 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100 min-w-fit">
                   <div className="flex flex-col gap-1 mr-4">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Trạng thái</span>
+                    <span className="text-[10px] font-bold text-gray-400  tracking-wider">Trạng thái</span>
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-lg border whitespace-nowrap w-fit ${getCustomerLogStatusColor(row.status)}`}>
                       {getCustomerLogStatusLabel(row.status)}
                     </span>

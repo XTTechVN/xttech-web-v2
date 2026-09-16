@@ -11,6 +11,7 @@ import { QuotationCreateModal } from '../_components/quotation-modals';
 import { ProjectInfo, QuotationsList, ProjectSummary, CustomerInfo, OwnerInfo } from './_components';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { 
   FolderOpen, 
   Loader2,
@@ -32,19 +33,21 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isQuotationFormOpen, setIsQuotationFormOpen] = useState(false);
 
-  // Queries
+  // Lấy chi tiết dự án
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['project', projectId],
     queryFn: () => getProject(projectId),
-    enabled: !isNaN(projectId),
+    enabled: !!projectId,
   });
 
+  // Lấy danh sách báo giá của dự án
   const { data: quotationsData, isLoading: isLoadingQuotations } = useQuery({
     queryKey: ['project_quotations', projectId],
     queryFn: () => getProjectQuotations(projectId),
-    enabled: !isNaN(projectId),
+    enabled: !!projectId,
   });
 
+  // Lấy danh sách khách hàng (cho modal sửa)
   const { data: customerData } = useQuery({
     queryKey: ['customers'],
     queryFn: async () => {
@@ -63,7 +66,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       router.push('/app/projects');
     },
     onError: (error) => {
-      toast.error(error.message);
+      showErrorToast(error, 'Xóa dự án thất bại');
     },
   });
 
@@ -76,7 +79,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       toast.success(variables.status === 'approved' ? 'Duyệt báo giá thành công' : 'Hủy duyệt báo giá thành công');
     },
     onError: (error: any) => {
-      toast.error(error?.message || 'Có lỗi xảy ra');
+      showErrorToast(error, 'Có lỗi xảy ra');
     },
   });
 
@@ -128,7 +131,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       {/* Header & Breadcrumb & Action Buttons */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between pb-5 border-b border-slate-200/80">
         <div className="flex flex-col gap-1">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quản lý dự án</span>
+          <span className="text-[10px] font-bold text-slate-400">Quản lý dự án</span>
           <Heading size="h1" className="text-primary text-2xl md:text-3xl font-bold mt-0.5">
             {project.name}
           </Heading>

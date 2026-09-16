@@ -30,7 +30,7 @@ import EmployeeFormModal from './form-modal';
 import RoleModal from './role-modal';
 import PositionModal from './position-modal';
 
-import { BASE_MINIO_URL } from '@/config';
+import { getFileUrl } from '@/utils';
 
 // Lấy màu theo từng vị trí
 const getRoleVariant = (roleCode: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default' => {
@@ -96,14 +96,11 @@ const Table = () => {
       cell: (row: Employee) => (
         <div className="flex items-center gap-3">
           <Avatar 
-            src={row.avatar ? (row.avatar.startsWith('http') ? row.avatar : `${BASE_MINIO_URL}${row.avatar}`) : undefined} 
+            src={getFileUrl(row.avatar) || undefined} 
             name={row.fullName || row.username} 
             size="sm" 
           />
-          <div className="flex flex-col">
-            <span className="font-semibold text-gray-900">{row.fullName || row.username}</span>
-            <span className="text-xs text-gray-500">{row.email}</span>
-          </div>
+          <span className="font-semibold text-gray-900 text-sm truncate">{row.fullName || row.username}</span>
         </div>
       ),
     },
@@ -229,15 +226,13 @@ const Table = () => {
     >
       <div className="flex items-start gap-3">
         <Avatar 
-          src={row.avatar ? (row.avatar.startsWith('http') ? row.avatar : `${BASE_MINIO_URL}${row.avatar}`) : undefined} 
+          src={getFileUrl(row.avatar) || undefined} 
           name={row.fullName || row.username} 
           size="md" 
         />
         <div className="flex flex-col flex-1 min-w-0">
           <span className="font-semibold text-gray-900 truncate text-sm sm:text-base leading-snug">{row.fullName || row.username}</span>
-          <span className="text-xs text-gray-400 truncate">{row.email}</span>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="text-xs text-gray-500">Mã: {row.identifyCode || 'N/A'}</span>
             {row.roles && row.roles.length > 0 && (
               <Badge variant={getRoleVariant(row.roles[0].code)} size="sm">
                 {row.roles[0].name}

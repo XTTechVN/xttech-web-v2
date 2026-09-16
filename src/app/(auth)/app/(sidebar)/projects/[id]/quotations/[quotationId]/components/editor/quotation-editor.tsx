@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Save, Plus, Info, FileDown } from 'lucide-react';
+import { Plus, Info } from 'lucide-react';
 import { Button, Tooltip } from '@/components';
 import { updateQuotation, exportQuotation } from '@/actions';
 import { useQuotationStore } from '@/stores';
@@ -32,7 +32,7 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
 
   const { mutate: updateQuotationMutate, isPending } = useMutation({
     mutationFn: () => {
-      const payload = store.getPayload(accessoriesList, extraOptionsList);
+      const payload = store.getPayload(accessoriesList, extraOptionsList, materialsList);
       return updateQuotation(quotationId, payload);
     },
     onSuccess: () => {
@@ -103,7 +103,6 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
           <Button
             variant="outline"
             size="sm"
-            leftIcon={<FileDown size={14} />}
             onClick={handleExportExcel}
             loading={isExporting}
             disabled={isPending || isSavingForLoBan}
@@ -114,7 +113,6 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
           <Button
             variant="primary"
             size="sm"
-            leftIcon={<Save size={14} />}
             onClick={() => updateQuotationMutate()}
             loading={isPending}
             disabled={isExporting || isSavingForLoBan}

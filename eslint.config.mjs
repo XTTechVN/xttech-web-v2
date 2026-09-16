@@ -19,6 +19,7 @@ const eslintConfig = defineConfig([
       '@next/next/no-img-element': 'off',
       'react-compiler/react-compiler': 'off',
       'react-hooks/incompatible-library': 'off',
+      
     },
   },
 ]);

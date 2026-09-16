@@ -1,15 +1,15 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { ReactNode, useState, useEffect, useRef } from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useRef } from 'react';
+import { keepPreviousData, useQuery, useQueryClient  } from '@tanstack/react-query';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 import { TableHeader } from './table-header';
 import { TableBody } from './table-body';
 import { TablePagination } from './table-pagination';
 
-import { TableDataDesktopProps, ITableColumn, BaseResponseWithPagination } from './types';
+import { TableDataDesktopProps, BaseResponseWithPagination } from './types';
 
 export function TableDataDesktop<T>({
   fetcher,
@@ -80,15 +80,12 @@ export function TableDataDesktop<T>({
         }
       }
     }
+    
   }, [queryKeySerialized, syncToUrl, searchParams, pathname, router]);
 
-  // Sử dụng fetcher để lấy dữ liệu với offset và limit động
-  const {
-    data: res,
-    isLoading,
-    isPlaceholderData,
-    error,
-  } = useQuery<BaseResponseWithPagination<T>>({
+  const queryClient = useQueryClient();
+    // Sử dụng fetcher để lấy dữ liệu với offset và limit động
+  const { data: res, isPlaceholderData } = useQuery<BaseResponseWithPagination<T>>({
     queryKey: [...queryKey, offset, limit],
     queryFn: () => fetcher({ offset, limit }),
     placeholderData: keepPreviousData,
@@ -97,6 +94,28 @@ export function TableDataDesktop<T>({
 
   const meta = res?.meta;
   const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 0;
+  useEffect(() => {
+    if (!isPlaceholderData && meta) {
+      // 1. Prefetch trang tiếp theo nếu còn dữ liệu (meta.next hoặc chưa đến trang cuối)
+      const hasNextPage = meta.next || offset + limit < meta.total;
+      if (hasNextPage) {
+        const nextOffset = offset + limit;
+        queryClient.prefetchQuery({
+          queryKey: [...queryKey, nextOffset, limit],
+          queryFn: () => fetcher({ offset: nextOffset, limit }),
+        });
+      }
+      // 2. (Tùy chọn nâng cao) Prefetch trang trước nếu người dùng đang ở trang > 1
+      if (offset > 0) {
+        const prevOffset = Math.max(0, offset - limit);
+        queryClient.prefetchQuery({
+          queryKey: [...queryKey, prevOffset, limit],
+          queryFn: () => fetcher({ offset: prevOffset, limit }),
+        });
+      }
+    }
+  }, [res, isPlaceholderData, meta, offset, limit, queryKey, fetcher, queryClient]);
+
 
   return (                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
     <div className="flex flex-col gap-4 w-full">

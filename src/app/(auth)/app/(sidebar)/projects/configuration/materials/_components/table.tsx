@@ -3,7 +3,7 @@ import { PackageOpen, Plus, Pencil, Trash2 } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
 import { Button } from '@/components';
 import { useQueryParam } from '@/hooks';
-import { Material, formatMaterialUnit } from '@/types';
+import { Material, formatMaterialUnit, getMaterialUnitConfig } from '@/types';
 import { getMaterials } from '@/actions';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -35,18 +35,13 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       label: 'Mã hệ nhôm',
       minWidth: '150px',
       cell: (row: Material) => (
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/5 text-primary">
-            <PackageOpen size={16} />
-          </div>
-          <span className="font-semibold text-gray-900">{row.code || '—'}</span>
-        </div>
+        <span className="font-semibold text-gray-900">{row.code || '—'}</span>
       ),
     },
     {
       key: 'name',
       label: 'Tên hệ nhôm',
-      minWidth: '220px',
+      minWidth: '200px',
       cell: (row: Material) => (
         <span className="font-medium text-gray-700 truncate max-w-[280px] block" title={row.name}>
           {row.name}
@@ -58,38 +53,62 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
       label: 'ĐVT',
       minWidth: '100px',
       cell: (row: Material) => {
-        return <span className="text-gray-600 text-sm">{formatMaterialUnit(row.unit) || '—'}</span>;
+        if (!row.unit) {
+          return <span className="text-gray-400 text-sm">—</span>;
+        }
+        const unitConfig = getMaterialUnitConfig(row.unit);
+        return (
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${unitConfig.className}`}
+          >
+            {unitConfig.label}
+          </span>
+        );
       },
-    },
-    {
-      key: 'costPrice',
-      label: 'Giá vốn',
-      minWidth: '110px',
-      cell: (row: Material) => (
-        <span className="text-gray-500 font-medium">
-          {formatCurrency(row.costPrice)}
-        </span>
-      ),
     },
     {
       key: 'retailPrice',
       label: 'Giá bán lẻ',
-      minWidth: '110px',
-      cell: (row: Material) => (
-        <span className="text-gray-900 font-semibold text-primary">
-          {formatCurrency(row.retailPrice)}
-        </span>
-      ),
+      minWidth: '130px',
+      cell: (row: Material) => {
+        if (row.unit?.toLowerCase() === 'set') {
+          const maxPrice = row.prices && row.prices.length > 0 
+            ? Math.max(...row.prices.map((p) => Number(p.price) || 0)) 
+            : 0;
+          return (
+            <span className="text-gray-900 font-semibold text-primary">
+              {formatCurrency(maxPrice)}
+            </span>
+          );
+        }
+        return (
+          <span className="text-gray-900 font-semibold text-primary">
+            {formatCurrency(row.retailPrice)}
+          </span>
+        );
+      },
     },
     {
       key: 'salePrice',
       label: 'Giá đại lý',
-      minWidth: '110px',
-      cell: (row: Material) => (
-        <span className="text-gray-900 font-semibold text-teal-650">
-          {formatCurrency(row.salePrice)}
-        </span>
-      ),
+      minWidth: '130px',
+      cell: (row: Material) => {
+        if (row.unit?.toLowerCase() === 'set') {
+          const maxPrice = row.prices && row.prices.length > 0 
+            ? Math.max(...row.prices.map((p) => Number(p.price) || 0)) 
+            : 0;
+          return (
+            <span className="text-gray-900 font-semibold text-teal-650">
+              {formatCurrency(maxPrice)}
+            </span>
+          );
+        }
+        return (
+          <span className="text-gray-900 font-semibold text-teal-650">
+            {formatCurrency(row.salePrice)}
+          </span>
+        );
+      },
     },
     {
       key: 'actions',
@@ -120,13 +139,38 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick }: TableProps) => {
             <span className="font-semibold text-gray-900 wrap-break-word text-sm sm:text-base leading-snug">{row.name}</span>
             <div className="flex flex-col gap-0.5 mt-1 text-xs text-gray-500">
               <div className="flex gap-2 flex-wrap">
-                <span>Vốn: {formatCurrency(row.costPrice)}</span>
+                <span>
+                  Lẻ:{' '}
+                  {formatCurrency(
+                    row.unit?.toLowerCase() === 'set'
+                      ? (row.prices && row.prices.length > 0
+                          ? Math.max(...row.prices.map((p) => Number(p.price) || 0))
+                          : 0)
+                      : row.retailPrice
+                  )}
+                </span>
                 <span>•</span>
-                <span>Lẻ: {formatCurrency(row.retailPrice)}</span>
-                <span>•</span>
-                <span>Sỉ: {formatCurrency(row.salePrice)}</span>
+                <span>
+                  Sỉ:{' '}
+                  {formatCurrency(
+                    row.unit?.toLowerCase() === 'set'
+                      ? (row.prices && row.prices.length > 0
+                          ? Math.max(...row.prices.map((p) => Number(p.price) || 0))
+                          : 0)
+                      : row.salePrice
+                  )}
+                </span>
               </div>
-              {row.unit && <span className="mt-0.5">ĐVT: {formatMaterialUnit(row.unit)}</span>}
+              {row.unit && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="text-gray-400">ĐVT:</span>
+                  <span
+                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold border ${getMaterialUnitConfig(row.unit).className}`}
+                  >
+                    {getMaterialUnitConfig(row.unit).label}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

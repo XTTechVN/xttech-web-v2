@@ -73,6 +73,7 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
     },
   });
 
+  const materialsList = materials || [];
   const accessoriesList = accessories || [];
   const extraOptionsList = extraOptions || [];
   const formulasList = formulas || [];
@@ -87,8 +88,7 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
 
   // Log dữ liệu hiện tại của store ra console khi có thay đổi
   useEffect(() => {
-    console.log('--- ZUSTAND STORE CURRENT STATE ---');
-    console.log('Floors:', store.floors);
+
   }, [store.title, store.code, store.discountPercentage, store.floors]);
 
   // Debounce dữ liệu từ store để giảm số lần gọi API preview khi người dùng nhập liệu nhanh
@@ -98,9 +98,9 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
 
   // Gọi API preview để lấy báo giá chi tiết đã tính toán đầy đủ từ backend
   const { data: previewData, isFetching: isPreviewFetching } = useQuery({
-    queryKey: ['quotation-preview', quotationId, debouncedFloors, debouncedTitle, debouncedDiscount, accessoriesList, extraOptionsList],
+    queryKey: ['quotation-preview', quotationId, debouncedFloors, debouncedTitle, debouncedDiscount, accessoriesList, extraOptionsList, materialsList],
     queryFn: () => {
-      const payload = store.getPayload(accessoriesList, extraOptionsList);
+      const payload = store.getPayload(accessoriesList, extraOptionsList, materialsList);
       return getQuotationPreview({
         title: debouncedTitle,
         code: store.code,

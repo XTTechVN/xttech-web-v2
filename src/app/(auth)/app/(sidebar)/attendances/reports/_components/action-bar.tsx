@@ -6,6 +6,7 @@ import { Button } from '@/components';
 import { useQueryParam } from '@/hooks';
 import { exportAttendanceReport } from '@/actions';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils';
 import { getDefaultDateRange } from './table';
 
 export const ReportActionBar = () => {
@@ -35,8 +36,8 @@ export const ReportActionBar = () => {
         search: search || undefined,
       });
       toast.success('Xuất file Excel thành công', { id: toastId });
-    } catch (err: any) {
-      toast.error(err?.message || 'Có lỗi xảy ra khi xuất file Excel', { id: toastId });
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, 'Có lỗi xảy ra khi xuất file Excel'), { id: toastId });
     } finally {
       setIsExporting(false);
     }

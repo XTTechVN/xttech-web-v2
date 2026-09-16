@@ -14,6 +14,7 @@ interface QuotationExtraOptionProps {
   oIndex: number;
   selectedOptId: number;
   extraOptionsList: ExtraOption[];
+  allExtraOptionsList?: ExtraOption[];
 }
 
 export const QuotationExtraOption = ({
@@ -23,11 +24,14 @@ export const QuotationExtraOption = ({
   oIndex,
   selectedOptId,
   extraOptionsList,
+  allExtraOptionsList,
 }: QuotationExtraOptionProps) => {
   const store = useQuotationStore();
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
-  const selectedOpt = extraOptionsList.find(opt => opt.id === selectedOptId);
+  const selectedOpt =
+    extraOptionsList.find((opt) => opt.id === selectedOptId) ||
+    allExtraOptionsList?.find((opt) => opt.id === selectedOptId);
 
   return (
     <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-1">

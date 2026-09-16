@@ -3,7 +3,7 @@
 import React from 'react';
 
 // Icons thư viện lucide-react
-import { FolderOpen, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 // Thành phần dùng chung cho toàn bộ trang
 import { TableData, TableAction } from '@/components/table';
@@ -18,6 +18,7 @@ import { getProjects } from '@/actions';
 
 // toast
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 
 import type { Customer } from '@/types';
 
@@ -40,12 +41,17 @@ const Table = ({ customers = [], onViewClick, onEditClick, onDeleteClick, onAddC
     if (isSaleOnly && user?.id) {
       params.userId = user.id;
     }
-    const res = await getProjects(params);
-    if (!res) {
-      toast.error('Lỗi khi tải danh sách dự án');
-      throw new Error('Lỗi khi tải danh sách dự án');
+    try {
+      const res = await getProjects(params);
+      if (!res) {
+        showErrorToast(null, 'Lỗi khi tải danh sách dự án');
+        throw new Error('Lỗi khi tải danh sách dự án');
+      }
+      return res;
+    } catch (err) {
+      showErrorToast(err, 'Lỗi khi tải danh sách dự án');
+      throw err;
     }
-    return res;
   };
 
   // Cấu hình các cột cho Desktop
@@ -55,12 +61,7 @@ const Table = ({ customers = [], onViewClick, onEditClick, onDeleteClick, onAddC
       label: 'Tên dự án',
       minWidth: '250px',
       cell: (row: Project) => (
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/5 text-primary">
-            <FolderOpen size={16} />
-          </div>
-          <span className="font-semibold text-gray-900">{row.name}</span>
-        </div>
+        <span className="font-semibold text-gray-900">{row.name}</span>
       ),
     },
     {
@@ -113,9 +114,6 @@ const Table = ({ customers = [], onViewClick, onEditClick, onDeleteClick, onAddC
       className="p-4 rounded-xl border border-primary/10 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 cursor-pointer"
     >
       <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-primary/5 text-primary border border-primary/10 shrink-0 mt-0.5">
-          <FolderOpen size={18} />
-        </div>
         <div className="flex flex-col flex-1 min-w-0">
           <span className="font-semibold text-gray-900 break-words text-sm sm:text-base leading-snug">{row.name}</span>
           <div className="flex items-center gap-2 mt-1 flex-wrap">

@@ -1,8 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Modal, Button, Select, Input, Textarea } from '@/components';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { updateAdjustmentRequest } from "@/actions";
 import type { AttendanceAdjustmentRequest, RequestType, AttendanceAdjustmentRequestUpdate } from "@/types";
 
@@ -73,10 +75,8 @@ export default function EditAdjustmentModal({ open, data, onClose, onSuccess }: 
       toast.success('Cập nhật khiếu nại thành công');
       onSuccess?.();
       onClose();
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.detail?.[0]?.msg || "Cập nhật thất bại"
-      );
+    } catch (error: unknown) {
+      showErrorToast(error, 'Cập nhật thất bại');
     } finally {
       setIsSubmitting(false);
     }

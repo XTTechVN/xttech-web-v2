@@ -13,15 +13,7 @@ import toast from 'react-hot-toast';
 import { getCustomerTypeLabel, getCustomerTypeColor } from '@/app/(auth)/app/(sidebar)/customers/config';
 
 import { Heading } from '@/components';
-
-import { BASE_MINIO_URL } from '@/config/app';
-
-// Lấy đường dẫn ảnh
-const getFullImageUrl = (path: string | undefined | null) => {
-  if (!path) return undefined;
-  if (path.startsWith('http')) return path;
-  return `${BASE_MINIO_URL}${path}`;
-};
+import { getFileUrl } from '@/utils';
 
 interface CustomerInfoProps {
   customer: Customer | null;
@@ -59,7 +51,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
 
   return (
     <div className="mb-2">
-      <Heading as="h3" className="text-xs md:text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">
+      <Heading as="h3" className="text-xs md:text-sm font-bold text-gray-500  tracking-wider mb-3">
         Chi tiết khách hàng
       </Heading>
       <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex flex-col md:flex-row gap- items-start">
@@ -67,36 +59,36 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
         <div className="flex-1 w-full mt-2">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-6">
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Tên khách hàng</span>
+              <span className="text-xs font-semibold text-gray-400 ">Tên khách hàng</span>
               <span className="text-base font-semibold text-gray-900">{customer.name}</span>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Số điện thoại</span>
+              <span className="text-xs font-semibold text-gray-400 ">Số điện thoại</span>
               <span className="text-base font-semibold text-gray-900">{customer.phone || '—'}</span>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Email</span>
+              <span className="text-xs font-semibold text-gray-400 ">Email</span>
               <span className="text-base font-semibold text-gray-900 truncate" title={customer.email || ''}>
                 {customer.email || '—'}
               </span>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Mã định danh (ID)</span>
+              <span className="text-xs font-semibold text-gray-400 ">Mã định danh (ID)</span>
               <span className="text-base font-semibold text-gray-900">{customer.identifyCode || '—'}</span>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Địa chỉ</span>
+              <span className="text-xs font-semibold text-gray-400 ">Địa chỉ</span>
               <span className="text-base font-semibold text-gray-900 truncate" title={customer.address || ''}>
                 {customer.address || '—'}
               </span>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Vị trí (Google Maps)</span>
+              <span className="text-xs font-semibold text-gray-400 ">Vị trí (Google Maps)</span>
               <div className="flex items-center">
                 {hasCoordinates ? (
                   <a
@@ -123,18 +115,31 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Nhân viên phụ trách</span>
+              <span className="text-xs font-semibold text-gray-400 ">Nhân viên phụ trách</span>
               <span className="text-base font-semibold text-gray-900">
                 {customer.staff?.fullName || customer.staff?.username || '—'}
               </span>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Loại khách hàng</span>
+              <span className="text-xs font-semibold text-gray-400 ">Loại khách hàng</span>
               <span
                 className={`text-sm font-medium w-fit px-3 py-1 rounded-lg border ${customer.type ? getCustomerTypeColor(customer.type) : 'text-gray-700 bg-gray-50 border-gray-200'}`}
               >
                 {customer.type ? getCustomerTypeLabel(customer.type) : '—'}
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-gray-400 ">Nhà cung cấp / Đối tác</span>
+              <span className="text-base font-semibold text-gray-900">
+                {customer.provider ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200">
+                    {customer.provider.name} ({customer.provider.code})
+                  </span>
+                ) : (
+                  '—'
+                )}
               </span>
             </div>
           </div>
@@ -143,7 +148,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
           {customer.images && customer.images.length > 0 && (
             <div className="mt-6 border-t border-gray-100 pt-5">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-gray-400 uppercase block">
+                <span className="text-xs font-semibold text-gray-400  block">
                   Hình ảnh đính kèm ({customer.images.length})
                 </span>
                 {showAllImages && customer.images.length > maxImages && (
@@ -160,7 +165,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
                 <div className="flex flex-wrap items-center gap-3">
                   {customer.images.map((img: any, idx: number) => {
                     const imgPath = typeof img === 'string' ? img : img.imagePath;
-                    const src = getFullImageUrl(imgPath);
+                    const src = getFileUrl(imgPath);
                     if (!src) return null;
                     
                     const isHidden = !showAllImages && idx >= maxImages;
@@ -170,7 +175,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
                     if (isHidden) {
                       return (
                         <div key={idx} className="hidden">
-                          <Image src={src} />
+                          <Image src={src} alt={`customer-img-${idx}`} />
                         </div>
                       );
                     }
@@ -179,7 +184,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
                       return (
                         <div key={idx} className="relative">
                           <div className="hidden">
-                            <Image src={src} />
+                            <Image src={src} alt={`customer-img-${idx}`} />
                           </div>
                           <div
                             onClick={() => setShowAllImages(true)}

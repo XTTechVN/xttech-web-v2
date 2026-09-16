@@ -41,7 +41,7 @@ export function useQueryParam(key: string, defaultValue?: string) {
     }
 
     // Cập nhật URL mà không cuộn trang lại đầu (scroll: false)
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
   };
 
   return [value, setValue] as const;

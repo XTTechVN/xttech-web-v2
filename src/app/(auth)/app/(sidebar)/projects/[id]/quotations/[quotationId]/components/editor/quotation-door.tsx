@@ -10,7 +10,7 @@ import { QuotationFormula } from './quotation-formula';
 import { SearchSelect } from '../modal/search-select';
 import { fetchDefaultAccessories } from './utils';
 import toast from 'react-hot-toast';
-import type { Accessory, ExtraOption, Door, Formula } from '@/types';
+import type { Accessory, ExtraOption, Door, Formula, Material } from '@/types';
 
 interface QuotationDoorProps {
   fIndex: number;
@@ -19,7 +19,9 @@ interface QuotationDoorProps {
   doorsList: Door[];
   accessoriesList: Accessory[];
   extraOptionsList: ExtraOption[];
+  allExtraOptionsList?: ExtraOption[];
   formulasList: Formula[];
+  materialsList?: Material[];
 }
 
 export const QuotationDoor = ({
@@ -29,7 +31,9 @@ export const QuotationDoor = ({
   doorsList,
   accessoriesList,
   extraOptionsList,
+  allExtraOptionsList,
   formulasList,
+  materialsList,
 }: QuotationDoorProps) => {
   const store = useQuotationStore();
   const floor = store.floors[fIndex];
@@ -42,6 +46,7 @@ export const QuotationDoor = ({
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
   const [isLoadingAutoFill, setIsLoadingAutoFill] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
+  const selectedMat = materialsList?.find((m) => m.id === material.materialId);
 
   const handleUpdateDoor = async (field: string, value: any) => {
     if (field === 'doorId') {
@@ -81,6 +86,8 @@ export const QuotationDoor = ({
     const firstOpt = extraOptionsList[0];
     if (firstOpt) {
       store.addExtraOption(fIndex, mIndex, dIndex, firstOpt.id);
+    } else {
+      toast.error('Hệ nhôm này chưa được gán tùy chọn phát sinh nào trong cấu hình');
     }
   };
 
@@ -260,6 +267,7 @@ export const QuotationDoor = ({
                   oIndex={oIndex}
                   selectedOptId={selectedOptId}
                   extraOptionsList={extraOptionsList}
+                  allExtraOptionsList={allExtraOptionsList}
                 />
               ))
             )}

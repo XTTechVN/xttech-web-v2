@@ -1,20 +1,21 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Button, Badge, TableData, TableAction, ITableColumn, ITableFilterProps } from '@/components';
+import { Button, Badge, TableData, TableAction, ITableColumn, ITableFilterProps, AutoTimekeepingModal } from '@/components';
+
 import { toast } from 'react-hot-toast';
 import { Calendar, Clock, AlertCircle, LogIn, LogOut, FileEdit, Briefcase, Eye, UserX } from 'lucide-react';
 import Link from 'next/link';
-import AutoTimekeepingModal from '@/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal';
 import { useAuthStore } from '@/stores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { getAttendances } from '@/actions';
 import { Attendance, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
-import { BASE_MINIO_URL } from '@/config/app';
 import StatCart from '../../dashboard/_components/stats-card';
 import AddAdjustmentModal from '../adjustments/_components/add-modal';
 import AttendanceDetailModal from '../_components/attendance-modal';
 import OvertimeModal from '../_components/overtime-modal';
+import { getFileUrl } from '@/utils';
 
 const formatTime = (value?: string | null): string => {
   if (!value) return '--:--';
@@ -203,10 +204,8 @@ export default function PayrollDataPage() {
       label: 'Ảnh chấm công',
       minWidth: '120px',
       cell: (row) => {
-        const inImgPath = row.imgCheckinPath;
-        const outImgPath = row.imgCheckoutPath;
-        const inImgSrc = inImgPath ? (inImgPath.startsWith('http') ? inImgPath : `${BASE_MINIO_URL}${inImgPath}`) : null;
-        const outImgSrc = outImgPath ? (outImgPath.startsWith('http') ? outImgPath : `${BASE_MINIO_URL}${outImgPath}`) : null;
+        const inImgSrc = getFileUrl(row.imgCheckinPath)
+        const outImgSrc = getFileUrl(row.imgCheckoutPath)
 
         return (
           <div className="flex gap-2 items-center py-1">
@@ -260,7 +259,14 @@ export default function PayrollDataPage() {
       key: 'note',
       label: 'Ghi chú',
       minWidth: '100px',
-      cell: (row) => row.note || '-',
+      cell: (row) => (
+        <span
+          className="text-xs max-w-[90px] truncate block"
+          title={row.note || undefined}
+        >
+          {row.note || '-'}
+        </span>
+      ),
     },
     {
       key: 'actions',
@@ -294,10 +300,8 @@ export default function PayrollDataPage() {
   ];
 
   const renderAttendanceCard = (row: Attendance, index: number) => {
-    const inImgPath = row.imgCheckinPath;
-    const outImgPath = row.imgCheckoutPath;
-    const inImgSrc = inImgPath ? (inImgPath.startsWith('http') ? inImgPath : `${BASE_MINIO_URL}${inImgPath}`) : null;
-    const outImgSrc = outImgPath ? (outImgPath.startsWith('http') ? outImgPath : `${BASE_MINIO_URL}${outImgPath}`) : null;
+    const inImgSrc = getFileUrl(row.imgCheckinPath)
+    const outImgSrc = getFileUrl(row.imgCheckoutPath)
 
     return (
       <div
@@ -364,7 +368,9 @@ export default function PayrollDataPage() {
         </div>
 
         {row.note && (
-          <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200">Ghi chú: {row.note}</p>
+          <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 truncate" title={row.note}>
+            Ghi chú: {row.note}
+          </p>
         )}
 
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-2.5" onClick={(e) => e.stopPropagation()}>
@@ -466,17 +472,19 @@ export default function PayrollDataPage() {
         )}
       </div>
 
-      <OvertimeModal
-        open={showOvertimeModal}
-        onClose={() => setShowOvertimeModal(false)}
-        onSuccess={async () => {
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ['attendances'], refetchType: 'all' }),
-            queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'], refetchType: 'all' }),
-            queryClient.invalidateQueries({ queryKey: ['attendance-requests'], refetchType: 'all' }),
-          ]);
-        }}
-      />
+      {showOvertimeModal && (
+        <OvertimeModal
+          open={showOvertimeModal}
+          onClose={() => setShowOvertimeModal(false)}
+          onSuccess={async () => {
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: ['attendances'], refetchType: 'all' }),
+              queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'], refetchType: 'all' }),
+              queryClient.invalidateQueries({ queryKey: ['attendance-requests'], refetchType: 'all' }),
+            ]);
+          }}
+        />
+      )}
 
       <AddAdjustmentModal
         open={showAdjustmentModal}

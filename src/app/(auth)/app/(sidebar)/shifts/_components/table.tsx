@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 import { Clock, MapPin, Building2, Layers, CheckCircle2, Pencil, Trash2 } from 'lucide-react';
 
 import { TableData, TableAction } from '@/components/table';
@@ -100,8 +101,8 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
       setIsDeleteOpen(false);
       setShiftToDelete(null);
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Lỗi khi xóa ca làm việc');
+    onError: (error) => {
+      showErrorToast(error, 'Lỗi khi xóa ca làm việc');
     },
   });
 
@@ -237,10 +238,9 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
         const deptId = getDepartmentId(row);
         const deptName = row.department?.name || (deptId ? departmentMap.get(deptId) : null);
         return (
-          <div className="flex items-center gap-1.5 text-slate-700 text-sm">
-            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>{deptName || <span className="text-gray-400 italic">Toàn công ty</span>}</span>
-          </div>
+          <span className="text-slate-700 text-sm">
+            {deptName || <span className="text-gray-400 italic">Toàn công ty</span>}
+          </span>
         );
       },
     });

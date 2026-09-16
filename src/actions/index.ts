@@ -63,3 +63,23 @@ export * from './report';
 
 // Audit Log
 export * from './audit-log';
+
+// Leave Request
+export * from './leave-request';
+
+// App Version
+export * from './app-version';
+
+// Customer Provider
+export * from './customer-provider';
+
+// Import Export
+export * from './import-export';
+
+// Accessory Category
+export * from './accessory-category';
+
+// Dashboard
+export * from './dashboard';
+
+

@@ -113,7 +113,7 @@ export default function AttendancePolicyPage() {
 
         {/* Card 1: Quy định giờ làm */}
         <div className="lg:col-span-2 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="rounded-xl bg-teal-50 p-2.5 text-[#005c53]">
               <Clock size={22} />
             </div>
