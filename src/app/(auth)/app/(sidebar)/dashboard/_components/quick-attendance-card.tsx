@@ -21,18 +21,23 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
   const isCheckedIn = Boolean(attendance?.checkIn);
   const isCheckedOut = Boolean(attendance?.checkOut);
 
-  const shiftTitle = attendance?.workShiftName || 'Ca làm việc hành chính';
+  // Đang trong ca làm việc: Đã check-in nhưng CHƯA check-out
+  const isCurrentlyWorking = isCheckedIn && !isCheckedOut;
+  // Đã hoàn tất ít nhất 1 lượt chấm công trong ngày (cả vào và ra)
+  const hasCompletedSession = isCheckedIn && isCheckedOut;
+
+  // Xác định thời điểm trong ngày (từ 12:00 trở đi là ca chiều)
+  const currentHour = new Date().getHours();
+  const isAfternoon = currentHour >= 12;
+
+  const shiftTitle = attendance?.workShiftName || 'Ca làm việc linh hoạt';
   const shiftTime =
     attendance?.workShiftStart && attendance?.workShiftEnd
       ? `${attendance.workShiftStart.slice(0, 5)} - ${attendance.workShiftEnd.slice(0, 5)}`
-      : '08:00 - 17:30';
+      : 'Thời gian làm việc linh hoạt';
 
   const handlePunchClick = () => {
-    if (isCheckedIn && isCheckedOut) {
-      router.push('/app/attendances/payroll');
-    } else {
-      setIsOpenModal(true);
-    }
+    setIsOpenModal(true);
   };
 
   const handleTimekeepingSuccess = () => {
@@ -41,7 +46,6 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
     queryClient.invalidateQueries({ queryKey: ['attendances'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard-live-locations'] });
   };
-
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/95 via-primary to-primary/85 text-white p-4.5 shadow-md">
@@ -105,25 +109,42 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
           </div>
         </div>
 
+        {/* Thông báo trạng thái phụ nếu đã hoàn tất ca trước */}
+        {hasCompletedSession && (
+          <div className="flex items-center justify-between text-[11px] text-white/80 px-0.5">
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+              Đã xong ca trước
+            </span>
+            <button
+              type="button"
+              onClick={() => router.push('/app/attendances/payroll')}
+              className="text-white/80 hover:text-white underline underline-offset-2 transition cursor-pointer"
+            >
+              Xem bảng công
+            </button>
+          </div>
+        )}
+
         {/* Nút hành động chấm công */}
         <button
           type="button"
           onClick={handlePunchClick}
           className="w-full py-2.5 px-4 rounded-xl bg-white text-primary font-bold text-xs flex items-center justify-center gap-2 shadow-sm hover:bg-white/95 active:scale-[0.98] transition cursor-pointer"
         >
-          {!isCheckedIn ? (
-            <>
-              <span>Chấm công vào ca ngay</span>
-              <ArrowRight size={14} />
-            </>
-          ) : !isCheckedOut ? (
+          {isCurrentlyWorking ? (
             <>
               <span>Chấm công tan ca</span>
               <ArrowRight size={14} />
             </>
+          ) : hasCompletedSession ? (
+            <>
+              <span>{isAfternoon ? 'Chấm công vào ca chiều' : 'Chấm công ca tiếp theo'}</span>
+              <ArrowRight size={14} />
+            </>
           ) : (
             <>
-              <span>Xem chi tiết ngày công hôm nay</span>
+              <span>Chấm công vào ca ngay</span>
               <ArrowRight size={14} />
             </>
           )}
@@ -135,7 +156,7 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
         open={isOpenModal}
         onClose={() => setIsOpenModal(false)}
         onSuccess={handleTimekeepingSuccess}
-        hasCheckedIn={isCheckedIn}
+        hasCheckedIn={isCurrentlyWorking}
       />
     </div>
   );

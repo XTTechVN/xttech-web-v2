@@ -97,7 +97,6 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
     setFormExistingAttachmentUrl,
     setFormErrors,
     resetForm,
-    initEditForm,
   } = useLeaveRequestStore();
 
   const [reviewType, setReviewType] = useState<'approved' | 'rejected'>('approved');
@@ -537,11 +536,6 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
 
   const isFormLoading = createMutation.isPending || updateMutation.isPending;
 
-  const isOwner = selectedLeaveRequest?.userId === currentUserId;
-  const canEdit = (isOwner || isManager) && selectedLeaveRequest?.status === LeaveRequestStatus.PENDING;
-  const canDelete =
-    (isOwner || isManager) &&
-    (selectedLeaveRequest?.status === LeaveRequestStatus.PENDING || selectedLeaveRequest?.status === LeaveRequestStatus.CANCELLED);
   const canReview = isManager && selectedLeaveRequest?.status === LeaveRequestStatus.PENDING;
 
   const mode = isCreateModalOpen ? 'create' : isEditing ? 'edit' : 'view';
@@ -553,7 +547,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
       'CHỈNH SỬA ĐƠN XIN NGHỈ PHÉP'
     ) : (
       <div className="flex items-center gap-2.5">
-        <span>CHI TIẾT ĐƠN XIN NGHỈ PHÉP</span>
+        <span>ĐƠN XIN NGHỈ PHÉP</span>
         {selectedLeaveRequest && (
           <span
             className={`inline-block px-2.5 py-0.5 rounded-full text-[12px] font-bold select-none border ${
@@ -567,24 +561,10 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
     );
 
   const footer = (
-    <div className="flex items-center justify-between w-full">
-      {/* Nút hủy / xóa bên trái khi ở view mode */}
-      <div>
-        {mode === 'view' && canDelete && (
-          <Button
-            variant="outline"
-            className="text-rose-600 border-rose-200 hover:bg-rose-50"
-            onClick={() => setIsDeleteConfirmOpen(true)}
-            disabled={isFormLoading}
-            leftIcon={<Trash2 className="w-4 h-4" />}
-          >
-            Xóa
-          </Button>
-        )}
-      </div>
+    <div className="flex items-center justify-end w-full">
 
       {/* Nhóm nút hành động bên phải */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         {mode === 'create' && (
           <>
             <Button variant="outline" onClick={handleClose} disabled={isFormLoading}>
@@ -609,14 +589,6 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
 
         {mode === 'view' && (
           <>
-            <Button variant="outline" onClick={handleClose} disabled={isFormLoading}>
-              Đóng
-            </Button>
-            {canEdit && (
-              <Button variant="primary" onClick={() => setIsEditing(true)} disabled={isFormLoading}>
-                Sửa đơn
-              </Button>
-            )}
             {canReview && (
               <>
                 <Button

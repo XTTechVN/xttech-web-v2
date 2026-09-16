@@ -299,8 +299,8 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         </div>
       }
       size="md"
-      className="max-md:!m-0 max-md:!my-0 max-md:!h-dvh max-md:!max-h-dvh max-md:!w-full max-md:!rounded-none max-md:!border-none md:max-w-lg"
-      bodyClassName="!p-3 sm:!p-4 flex flex-col space-y-3 overflow-y-auto max-h-[calc(100dvh-135px)] md:max-h-[70vh]"
+      className="md:max-w-lg"
+      bodyClassName="!p-3 sm:!p-4 flex flex-col space-y-3"
       footer={
         <div className="w-full">
           {step === 'camera' ? (
