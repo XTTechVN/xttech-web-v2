@@ -13,6 +13,16 @@ export interface NativeTrackingPlugin {
   stopTracking(): Promise<{ success: boolean }>;
   checkPermission?(): Promise<{ status: string; isAlways: boolean; isPrecise: boolean }>;
   openSettings?(): Promise<{ success: boolean }>;
+  // Android Background Permissions & Auto-Start
+  checkAndroidPermissions?(): Promise<{
+    isIgnoringBatteryOptimizations: boolean;
+    hasFineLocation: boolean;
+    hasBackgroundLocation: boolean;
+    manufacturer: string;
+  }>;
+  requestIgnoreBatteryOptimization?(): Promise<{ success: boolean }>;
+  requestBackgroundLocation?(): Promise<{ success: boolean }>;
+  openAutoStartSettings?(): Promise<{ success: boolean; manufacturer?: string }>;
 }
 export const NativeTracking = registerPlugin<NativeTrackingPlugin>('NativeTracking');
 
