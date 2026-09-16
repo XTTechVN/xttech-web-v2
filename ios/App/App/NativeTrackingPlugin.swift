@@ -97,6 +97,9 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             guard let self = self else { return }
             self.isTracking = false
             self.locationManager?.stopUpdatingLocation()
+            if CLLocationManager.headingAvailable() {
+                self.locationManager?.stopUpdatingHeading()
+            }
             if CLLocationManager.significantLocationChangeMonitoringAvailable() {
                 self.locationManager?.stopMonitoringSignificantLocationChanges()
             }
@@ -143,13 +146,13 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         if locationManager == nil {
             locationManager = CLLocationManager()
             locationManager?.delegate = self
-            locationManager?.desiredAccuracy = kCLLocationAccuracyBest
+            locationManager?.desiredAccuracy = kCLLocationAccuracyBestForNavigation
             locationManager?.distanceFilter = kCLDistanceFilterNone // Đảm bảo phần cứng giữ nhịp định vị ngay cả khi đứng yên
             
-            // Cấu hình định vị chạy ngầm liên tục chuẩn iOS
+            // Cấu hình định vị chạy ngầm liên tục chuẩn iOS mức cao nhất
             locationManager?.allowsBackgroundLocationUpdates = true
             locationManager?.pausesLocationUpdatesAutomatically = false
-            locationManager?.activityType = .otherNavigation // Ưu tiên định vị liên tục, hạn chế iOS ngắt ngầm
+            locationManager?.activityType = .automotiveNavigation // Ép iOS giữ nhịp định vị mức ưu tiên cao nhất
             if #available(iOS 11.0, *) {
                 locationManager?.showsBackgroundLocationIndicator = true
             }
@@ -167,6 +170,13 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
 
         locationManager?.startUpdatingLocation()
+        
+        // Kích hoạt cảm biến la bàn từ trường: rung động vi mô liên tục cấp nhịp CPU đánh thức app khi đứng yên
+        if CLLocationManager.headingAvailable() {
+            locationManager?.headingFilter = 5.0
+            locationManager?.startUpdatingHeading()
+        }
+
         // Kích hoạt song song cơ chế đánh thức ngầm khi đổi trạm phát sóng (kể cả khi app bị tắt / thu hồi RAM)
         if CLLocationManager.significantLocationChangeMonitoringAvailable() {
             locationManager?.startMonitoringSignificantLocationChanges()
@@ -181,8 +191,8 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         timer.setEventHandler { [weak self] in
             guard let self = self, self.isTracking else { return }
             let elapsed = Date().timeIntervalSince(self.lastPingTime)
-            // Nếu đã quá 2 phút chưa có ping nào gửi lên (do đứng yên trong phòng làm việc)
-            if elapsed >= 120.0 {
+            // Nếu đã quá 90 giây chưa có ping nào gửi lên (do đứng yên trong phòng làm việc)
+            if elapsed >= 90.0 {
                 if let anchorLocation = self.lastAccurateLocation ?? self.lastLocation {
                     self.sendPing(location: anchorLocation, isHeartbeat: true)
                 }
@@ -247,9 +257,9 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         // Chống nhảy Map: Chỉ chấp nhận cập nhật vị trí hiển thị nếu độ chính xác đạt chuẩn (<= 50m)
         // Nếu ở trong phòng sai số trạm BTS/Wi-Fi vọt lên > 50m hoặc không hợp lệ:
         // TỪ CHỐI cập nhật vị trí mới để chống giật map, NHƯNG tận dụng CPU vừa được iOS đánh thức
-        // để gửi nhịp tim giữ kết nối (Heartbeat) với tọa độ chuẩn cũ nếu đã quá 2 phút!
+        // để gửi nhịp tim giữ kết nối (Heartbeat) với tọa độ chuẩn cũ nếu đã quá 90 giây!
         if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 50.0 {
-            if elapsed >= 120.0 {
+            if elapsed >= 90.0 {
                 if let anchorLocation = self.lastAccurateLocation ?? self.lastLocation {
                     print("[NativeTracking iOS] Indoor weak GPS (>50m). Sending stationary heartbeat with anchor location.")
                     sendPing(location: anchorLocation, isHeartbeat: true)
@@ -282,13 +292,27 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
                 return
             }
         } else {
-            // Khi đứng yên ngoài trời (GPS vẫn bắt được): giữ nhịp gửi ping mỗi 2 phút (120s)
-            if elapsed < 120.0 {
+            // Khi đứng yên ngoài trời (GPS vẫn bắt được): giữ nhịp gửi ping mỗi 90 giây (thay vì 120s)
+            if elapsed < 90.0 {
                 return
             }
         }
 
         sendPing(location: location, isHeartbeat: !isMoving)
+    }
+
+    public func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        guard isTracking else { return }
+        let now = Date()
+        let elapsed = now.timeIntervalSince(lastPingTime)
+        // Khi thiết bị đứng yên trong phòng (GPS không nổ vị trí mới), cảm biến la bàn từ trường
+        // vẫn phát sinh dao động vi mô. Tận dụng nhịp CPU này để gửi heartbeat giữ kết nối online.
+        if elapsed >= 90.0 {
+            if let anchorLocation = self.lastAccurateLocation ?? self.lastLocation {
+                print("[NativeTracking iOS] Heading sensor wake up. Sending stationary heartbeat.")
+                sendPing(location: anchorLocation, isHeartbeat: true)
+            }
+        }
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
