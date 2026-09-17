@@ -24,4 +24,5 @@ export * from './app-header';
 export * from './logo';
 export * from './app-update-modal';
 export * from './auto-timekeeping-modal';
+export * from './page-loader';
 
