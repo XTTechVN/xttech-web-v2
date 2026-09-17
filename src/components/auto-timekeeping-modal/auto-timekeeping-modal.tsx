@@ -87,16 +87,44 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     };
   }, []);
 
-  // Bật camera với cơ chế Fallback 3 tầng (HD -> Standard Front -> Any Video)
+  // Bật camera với cơ chế Fallback 3 tầng (HD -> Standard Front -> Any Video) + WebKit Polyfill
   const startCamera = useCallback(async () => {
     setCameraError(null);
 
-    // 1. Kiểm tra hỗ trợ WebRTC mediaDevices và Secure Context (HTTPS)
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      if (typeof window !== 'undefined' && !window.isSecureContext) {
-        setCameraError('Camera yêu cầu kết nối bảo mật HTTPS hoặc localhost. Trình duyệt đã chặn truy cập (NotSecureContext).');
+    // Thu thập thông số chẩn đoán của thiết bị
+    const protocol = typeof window !== 'undefined' ? window.location.protocol : '';
+    const isSec = typeof window !== 'undefined' ? String(window.isSecureContext) : '';
+    const hasMediaDev = typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices);
+    const hasGUM = typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia);
+    const hasWebkitGUM = typeof navigator !== 'undefined' && Boolean((navigator as any).webkitGetUserMedia);
+    const diag = `[Protocol: ${protocol} | Secure: ${isSec} | mediaDev: ${hasMediaDev} | gum: ${hasGUM} | webkit: ${hasWebkitGUM}]`;
+
+    // Hàm gọi getUserMedia hỗ trợ cả chuẩn hiện đại lẫn WebKit cũ trên iOS
+    const requestStream = async (constraints: MediaStreamConstraints): Promise<MediaStream> => {
+      if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      }
+      const legacyGUM =
+        (navigator as any).webkitGetUserMedia ||
+        (navigator as any).mozGetUserMedia ||
+        (navigator as any).getUserMedia;
+
+      if (legacyGUM) {
+        return new Promise<MediaStream>((resolve, reject) => {
+          legacyGUM.call(navigator, constraints, resolve, reject);
+        });
+      }
+      throw new Error('NOT_SUPPORTED');
+    };
+
+    // Kiểm tra khả năng hỗ trợ API
+    if (!hasGUM && !hasWebkitGUM) {
+      if (protocol !== 'https:' && protocol !== 'http:' && !protocol.includes('localhost')) {
+        setCameraError(`Giao thức không hợp lệ. Vui lòng mở trang web trên Safari với HTTPS. ${diag}`);
       } else {
-        setCameraError('Trình duyệt hoặc WebView hiện tại không hỗ trợ API Camera (navigator.mediaDevices is undefined). Vui lòng mở bằng Safari hoặc Chrome.');
+        setCameraError(
+          `Safari trên máy này đang tắt API WebRTC/Camera trong Cài đặt hệ thống. Vui lòng kiểm tra: 1) Cài đặt iPhone > Safari > Nâng cao > Feature Flags (bật WebRTC); 2) Cài đặt > Thời gian sử dụng > Giới hạn (bật Camera). ${diag}`
+        );
       }
       return;
     }
@@ -108,20 +136,20 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
 
       // Tầng 1: Thử lấy camera trước với cấu hình tối ưu HD
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
+        stream = await requestStream({
           video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false,
         });
       } catch (err1) {
         // Tầng 2: Nếu thiết bị/iOS không hỗ trợ kích thước HD dọc, thử lại chỉ với facingMode: 'user'
         try {
-          stream = await navigator.mediaDevices.getUserMedia({
+          stream = await requestStream({
             video: { facingMode: 'user' },
             audio: false,
           });
         } catch (err2) {
           // Tầng 3 (Ultimate Fallback): Mở bất kỳ camera nào khả dụng không ràng buộc
-          stream = await navigator.mediaDevices.getUserMedia({
+          stream = await requestStream({
             video: true,
             audio: false,
           });
