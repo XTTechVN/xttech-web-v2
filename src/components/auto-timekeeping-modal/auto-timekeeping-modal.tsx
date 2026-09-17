@@ -87,21 +87,74 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     };
   }, []);
 
-  // Bật camera
+  // Bật camera với cơ chế Fallback 3 tầng (HD -> Standard Front -> Any Video)
   const startCamera = useCallback(async () => {
     setCameraError(null);
+
+    // 1. Kiểm tra hỗ trợ WebRTC mediaDevices và Secure Context (HTTPS)
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (typeof window !== 'undefined' && !window.isSecureContext) {
+        setCameraError('Camera yêu cầu kết nối bảo mật HTTPS hoặc localhost. Trình duyệt đã chặn truy cập (NotSecureContext).');
+      } else {
+        setCameraError('Trình duyệt hoặc WebView hiện tại không hỗ trợ API Camera (navigator.mediaDevices is undefined). Vui lòng mở bằng Safari hoặc Chrome.');
+      }
+      return;
+    }
+
     try {
       streamRef.current?.getTracks().forEach((t) => t.stop());
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      });
+
+      let stream: MediaStream | null = null;
+
+      // Tầng 1: Thử lấy camera trước với cấu hình tối ưu HD
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        });
+      } catch (err1) {
+        // Tầng 2: Nếu thiết bị/iOS không hỗ trợ kích thước HD dọc, thử lại chỉ với facingMode: 'user'
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' },
+            audio: false,
+          });
+        } catch (err2) {
+          // Tầng 3 (Ultimate Fallback): Mở bất kỳ camera nào khả dụng không ràng buộc
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
+        }
+      }
+
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch {
-      setCameraError('Không thể truy cập camera. Vui lòng cấp quyền camera và thử lại.');
+    } catch (err: unknown) {
+      const error = err as { name?: string; message?: string };
+      const errName = error?.name || '';
+
+      if (errName === 'NotAllowedError' || errName === 'PermissionDeniedError') {
+        setCameraError(
+          'Quyền truy cập Camera bị từ chối (NotAllowedError). Nếu bạn đang mở bằng App XTTECH, vui lòng vào "Cài đặt iPhone > XTTECH > Bật Camera". Nếu mở bằng Web, vui lòng cấp quyền cho trang web trong Safari/Chrome.'
+        );
+      } else if (errName === 'NotReadableError' || errName === 'TrackStartError') {
+        setCameraError(
+          'Camera đang bị ứng dụng khác chiếm dụng hoặc bị kẹt luồng (NotReadableError). Vui lòng đóng các ứng dụng chạy ngầm hoặc khởi động lại iPhone.'
+        );
+      } else if (errName === 'NotFoundError' || errName === 'DevicesNotFoundError') {
+        setCameraError('Không tìm thấy camera khả dụng trên thiết bị (NotFoundError).');
+      } else if (errName === 'OverconstrainedError') {
+        setCameraError('Phần cứng không đáp ứng thông số camera yêu cầu (OverconstrainedError).');
+      } else if (errName === 'SecurityError') {
+        setCameraError('Hệ điều hành iOS chặn quyền truy cập Camera do chính sách bảo mật (SecurityError).');
+      } else {
+        setCameraError(
+          `Không thể mở camera [${errName || 'Lỗi'}]: ${error?.message || 'Vui lòng kiểm tra quyền camera và thử lại.'}`
+        );
+      }
     }
   }, []);
 
