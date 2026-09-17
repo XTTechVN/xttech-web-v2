@@ -36,10 +36,6 @@ export const resetPasswordWithOtp = async (data: { email: string; otp: string; n
 };
 
 export const changePassword = async (newPassword: string) => {
-  try {
     const res = await api.post(`/api/v1/auth/change`, { newPassword } );
     return res.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi đổi mật khẩu');
-  }
 };
