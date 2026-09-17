@@ -14,6 +14,7 @@ import { AppHeader, Sidebar, SidebarItemProps, XTLogo } from '@/components';
 
 // Hooks & Actions
 import { useLocationTracker, useMyTodayAttendance } from '@/hooks';
+import { usePageTransition } from '@/contexts';
 
 // Config
 import { getSidebarSectionsForRole, UserRole, acceptedSections } from '@/config';
@@ -29,6 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const lastPath = pathSegments[pathSegments.length - 1];
 
   const router = useRouter();
+  const { navigateTo } = usePageTransition();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [activeMenu, setActiveMenu] = React.useState(lastPath);
 
@@ -50,7 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       name: 'XTTECH',
       subtitle: 'v' + process.env.NEXT_PUBLIC_APP_VERSION,
       logo: <XTLogo className="w-8 h-8 drop-shadow-[0_2px_5px_rgba(4,88,99,0.35)]" />,
-      onClick: () => router.push('/app/dashboard'),
+      onClick: () => navigateTo('/app/dashboard'),
     },
     sections: filteredSections,
     cta: {
@@ -77,7 +79,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       setActiveMenu(item.id);
       if (item.href) {
-        router.push(item.href);
+        navigateTo(item.href);
       }
     },
     onItemSelectMobile: (item: SidebarItemProps) => {
@@ -93,7 +95,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       setActiveMenu(item.id);
       if (item.href) {
-        router.push(item.href);
+        navigateTo(item.href);
       }
       setIsMobileOpen(false);
     },

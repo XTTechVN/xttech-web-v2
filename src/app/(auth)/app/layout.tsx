@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores';
 import queryClient from '@/utils/query';
-import { SidebarProvider } from '@/contexts/SidebarProvider';
+import { SidebarProvider, PageTransitionProvider } from '@/contexts';
 import { QueryClientProvider } from '@tanstack/react-query';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -41,7 +41,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <>
       <QueryClientProvider client={queryClient}>
         <SidebarProvider>
-          <div>{children}</div>
+          <PageTransitionProvider>
+            <div>{children}</div>
+          </PageTransitionProvider>
         </SidebarProvider>
       </QueryClientProvider>
     </>
