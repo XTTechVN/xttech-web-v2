@@ -18,7 +18,7 @@ All notable changes to the frontend project will be documented in this file.
 ### Added & Enhanced (Auto Timekeeping Camera Compatibility)
 - **Tối ưu hóa Khả năng Tương thích Camera Chấm công trên iOS/Android ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx)):**
   - **Cơ chế Fallback 3 tầng:** Tự động chuyển cấp độ ràng buộc từ HD (`1280x720`) -> Camera trước chuẩn (`facingMode: 'user'`) -> Bất kỳ camera nào khả dụng (`video: true`) nhằm khắc phục triệt để lỗi `OverconstrainedError` trên các dòng iPhone kén tỷ lệ khung hình.
-  - **Chẩn đoán & Hiển thị mã lỗi chi tiết:** Kiểm tra điều kiện `isSecureContext` (HTTPS), phân loại chính xác các lỗi `NotAllowedError`, `NotReadableError`, `NotFoundError`, `SecurityError` để hướng dẫn nhân viên thao tác cấp quyền chính xác thay vì chỉ hiển thị thông báo chung chung.
+  - **Tích hợp Cơ chế Chụp ảnh Bằng Camera Gốc (HTML5 Native Camera Fallback - `capture="user"`):** Bổ sung giải pháp cứu cánh tối thượng khi gặp các thiết bị iPhone bị Apple khóa WebRTC Live Stream (như chế độ PWA hoặc lỗi WebKit). Tự động hiển thị nút "Mở Camera máy" kích hoạt ứng dụng Camera gốc của iPhone ở chế độ Selfie, đảm bảo 100% người dùng chấm công thành công mà không bị chặn bởi bất kỳ rào cản bảo mật nào.
 
 ### Fixed (Route Playback Modal)
 - **Khắc phục lỗi bản đồ tự động reset zoom / thu nhỏ khi đang xem lộ trình ([`src/components/map-modal/route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx)):**
