@@ -2,6 +2,35 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-17
+
+### Fixed (Route Playback Modal)
+- **Khắc phục lỗi bản đồ tự động reset zoom / thu nhỏ khi đang xem lộ trình ([`src/components/map-modal/route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx)):**
+  - **Khống chế số lần tự động căn chỉnh (`hasFittedBoundsRef`):** Chỉ tự động gọi `fitBounds()` 1 lần duy nhất khi dữ liệu lộ trình vừa được nạp lần đầu hoặc khi đổi ngày / nhân viên. Không tự động gọi lại làm giật màn hình khi thuật toán nắn đường OSRM chạy xong hoặc khi component re-render.
+  - **Ghi nhớ tham chiếu mảng tọa độ (`useMemo`):** Bọc `points`, `polylineCoords`, và `displayedCoords` bằng `useMemo` để tránh sinh mảng mới ở mỗi vòng render gây trigger `useEffect` thừa.
+  - **Bổ sung nút Căn vừa lộ trình (`Focus` button):** Thêm nút bấm căn vừa toàn cảnh lộ trình chủ động ở góc dưới bên phải cạnh nút phóng to toàn màn hình.
+
+## [Unreleased] - 2026-09-16
+
+### Fixed & Enhanced (iOS Background Geolocation)
+- **Tái Cấu Trúc Toàn Diện Định Vị Ngầm iOS Theo Kiến Trúc Chuẩn Doanh Nghiệp (Zalo / Life360):**
+  - **Khắc phục triệt để lỗi mất biểu tượng định vị sau 1-2 phút khi ra nền / khóa màn hình ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+    - Loại bỏ hoàn toàn lỗi xung đột luồng: chuyển toàn bộ các lệnh gọi UIKit (`UIApplication.shared.beginBackgroundTask` và `UIDevice.current`) về Main Thread (`DispatchQueue.main.async`), triệt tiêu hoàn toàn lỗi Crash âm thầm và lỗi Watchdog Termination `0x8badf00d`.
+    - Gỡ bỏ `startUpdatingHeading()` (cảm biến la bàn): triệt tiêu lỗi `kCLErrorHeadingFailure` bị hệ điều hành ngắt phiên khi ứng dụng chuyển sang trạng thái chạy nền.
+    - Chuẩn hóa cấu hình `CoreLocation`: đổi sang `kCLLocationAccuracyBest` và `CLActivityType.other` để tránh cơ chế `locationd` tự động dừng nhận diện khi người dùng đứng yên trong phòng.
+    - Loại bỏ mẹo âm thanh ảo `AVAudioPlayer` gây lỗi bị daemon `mediaserverd` của iOS 16/17/18 đình chỉ, đồng thời dọn sạch thẻ `<string>audio</string>` trong [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist).
+  - **Tích Hợp Cơ Chế Vùng Neo Tròn Khi Đứng Yên (Stationary Region Geofence):**
+    - Tự động dựng `CLCircularRegion` bán kính 50m quanh vị trí nhân viên khi ngồi làm việc trong phòng; khi nhân viên bước ra ngoài, iOS tự động bắn sự kiện `didExitRegion` đánh thức định vị tần số cao ngay lập tức.
+    - Đảm bảo gửi nhịp tim Heartbeat đều đặn mỗi 60 giây khi đứng yên, giúp nhân viên không bao giờ bị hiển thị Offline trên hệ thống quản lý.
+  - **Cơ Chế Hồi Sinh Khi Ứng Dụng Bị Thu Hồi RAM (Significant Location Changes):**
+    - Đăng ký `startMonitoringSignificantLocationChanges()` và tự động tái khởi tạo theo dõi vị trí trong `AppDelegate` & `load()` nếu ca làm việc trước đó đang diễn ra.
+
+### Changed & Assets
+- **Đồng Bộ App Icon iOS Khớp Nhận Diện Thương Hiệu Android ([`AppIcon-512@2x.png`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png)):**
+  - Thay thế toàn diện icon mặc định màu xanh dương của Capacitor bằng logo XTTech chính thức xuất từ file vector gốc [`logo-xttech.svg`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/public/image-xttech/logo-xttech.svg).
+  - Tối ưu kích thước hiển thị chuẩn Apple HIG: canvas 1024x1024 px, tỷ lệ logo căn giữa 56% trên nền trắng thuần `#FFFFFF`, loại bỏ hoàn toàn kênh Alpha (RGB 24-bit) để tránh lỗi từ chối của App Store hoặc lỗi nền đen khi bo góc.
+  - Đồng bộ giao diện biểu tượng ứng dụng hoàn toàn thống nhất giữa hai nền tảng Android và iOS.
+
 ## [Unreleased] - 2026-09-15
 
 ### Changed & Configured

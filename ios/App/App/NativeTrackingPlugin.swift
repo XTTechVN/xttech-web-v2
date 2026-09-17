@@ -15,9 +15,11 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     private var lastPingTime: Date = Date.distantPast
     private var lastLocation: CLLocation?
     private var lastAccurateLocation: CLLocation?
-    private var heartbeatSource: DispatchSourceTimer?
-    private let heartbeatQueue = DispatchQueue(label: "com.xttech.ios.heartbeat", qos: .background)
+    private var stationaryRegion: CLCircularRegion?
     private var lastBatteryLevel: Double = -1.0
+
+    // Heartbeat Timer an toàn trên Main RunLoop
+    private var heartbeatTimer: Timer?
 
     private let prefsKeyToken = "xttech_ios_access_token"
     private let prefsKeyRefreshToken = "xttech_ios_refresh_token"
@@ -32,7 +34,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         self.refreshToken = defaults.string(forKey: prefsKeyRefreshToken)
         self.apiUrl = defaults.string(forKey: prefsKeyApiUrl)
 
-        // Bật giám sát pin từ sớm và đăng ký lắng nghe thay đổi mức pin
+        // Giám sát mức pin thiết bị
         UIDevice.current.isBatteryMonitoringEnabled = true
         let initialLevel = UIDevice.current.batteryLevel
         if initialLevel >= 0 {
@@ -46,6 +48,14 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             let lvl = UIDevice.current.batteryLevel
             if lvl >= 0 {
                 self?.lastBatteryLevel = Double(lvl * 100.0)
+            }
+        }
+
+        // Tự động khôi phục theo dõi nếu ca làm việc trước đó chưa kết thúc
+        if defaults.bool(forKey: prefsKeyIsTracking) {
+            DispatchQueue.main.async { [weak self] in
+                self?.setupLocationManager()
+                self?.startHeartbeatTimer()
             }
         }
     }
@@ -71,7 +81,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.setupLocationManager()
-            self.startHeartbeat()
+            self.startHeartbeatTimer()
         }
 
         call.resolve(["success": true])
@@ -97,13 +107,11 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             guard let self = self else { return }
             self.isTracking = false
             self.locationManager?.stopUpdatingLocation()
-            if CLLocationManager.headingAvailable() {
-                self.locationManager?.stopUpdatingHeading()
-            }
             if CLLocationManager.significantLocationChangeMonitoringAvailable() {
                 self.locationManager?.stopMonitoringSignificantLocationChanges()
             }
-            self.stopHeartbeat()
+            self.stopStationaryRegionMonitoring()
+            self.stopHeartbeatTimer()
         }
         call.resolve(["success": true])
     }
@@ -142,17 +150,18 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
     }
 
+    // MARK: - CoreLocation Configuration (Chuẩn Zalo / Life360)
     private func setupLocationManager() {
         if locationManager == nil {
             locationManager = CLLocationManager()
             locationManager?.delegate = self
-            locationManager?.desiredAccuracy = kCLLocationAccuracyBestForNavigation
-            locationManager?.distanceFilter = kCLDistanceFilterNone // Đảm bảo phần cứng giữ nhịp định vị ngay cả khi đứng yên
+            locationManager?.desiredAccuracy = kCLLocationAccuracyBest
+            locationManager?.distanceFilter = kCLDistanceFilterNone
             
-            // Cấu hình định vị chạy ngầm liên tục chuẩn iOS mức cao nhất
+            // Cấu hình định vị chạy ngầm liên tục chuẩn iOS
             locationManager?.allowsBackgroundLocationUpdates = true
             locationManager?.pausesLocationUpdatesAutomatically = false
-            locationManager?.activityType = .automotiveNavigation // Ép iOS giữ nhịp định vị mức ưu tiên cao nhất
+            locationManager?.activityType = .other // .other giúp iOS không bao giờ tự dừng khi đứng yên
             if #available(iOS 11.0, *) {
                 locationManager?.showsBackgroundLocationIndicator = true
             }
@@ -170,46 +179,72 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
 
         locationManager?.startUpdatingLocation()
-        
-        // Kích hoạt cảm biến la bàn từ trường: rung động vi mô liên tục cấp nhịp CPU đánh thức app khi đứng yên
-        if CLLocationManager.headingAvailable() {
-            locationManager?.headingFilter = 5.0
-            locationManager?.startUpdatingHeading()
-        }
 
-        // Kích hoạt song song cơ chế đánh thức ngầm khi đổi trạm phát sóng (kể cả khi app bị tắt / thu hồi RAM)
+        // Đăng ký nhận đánh thức khi đổi trạm phát sóng viễn thông (SLC)
         if CLLocationManager.significantLocationChangeMonitoringAvailable() {
             locationManager?.startMonitoringSignificantLocationChanges()
         }
         isTracking = true
+        print("[NativeTracking iOS] CoreLocation initialized with Zalo-grade continuous background tracking.")
     }
 
-    private func startHeartbeat() {
-        stopHeartbeat()
-        let timer = DispatchSource.makeTimerSource(queue: heartbeatQueue)
-        timer.schedule(deadline: .now() + 60.0, repeating: 60.0)
-        timer.setEventHandler { [weak self] in
+    // MARK: - Stationary Geofencing Engine (Chống ngủ sâu khi đứng yên tại văn phòng)
+    private func updateStationaryRegion(around location: CLLocation) {
+        guard CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) else { return }
+        stopStationaryRegionMonitoring()
+
+        // Bán kính vùng tròn neo đậu khi ngồi làm việc: 50 mét
+        let region = CLCircularRegion(
+            center: location.coordinate,
+            radius: 50.0,
+            identifier: "com.xttech.stationary_anchor"
+        )
+        region.notifyOnExit = true
+        region.notifyOnEntry = false
+        self.stationaryRegion = region
+        self.locationManager?.startMonitoring(for: region)
+    }
+
+    private func stopStationaryRegionMonitoring() {
+        if let region = self.stationaryRegion {
+            self.locationManager?.stopMonitoring(for: region)
+            self.stationaryRegion = nil
+        }
+    }
+
+    public func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
+        if region.identifier == "com.xttech.stationary_anchor" {
+            print("[NativeTracking iOS] Nhân viên rời khỏi vị trí đứng yên (>50m). Tăng tốc lấy GPS tần số cao.")
+            self.stopStationaryRegionMonitoring()
+            self.locationManager?.startUpdatingLocation()
+        }
+    }
+
+    // MARK: - Heartbeat Timer (Giữ kết nối online khi đứng yên)
+    private func startHeartbeatTimer() {
+        stopHeartbeatTimer()
+        // Chạy trên Main RunLoop với common modes để không bị ngắt khi vuốt màn hình
+        let timer = Timer(timeInterval: 60.0, repeats: true) { [weak self] _ in
             guard let self = self, self.isTracking else { return }
             let elapsed = Date().timeIntervalSince(self.lastPingTime)
-            // Nếu đã quá 90 giây chưa có ping nào gửi lên (do đứng yên trong phòng làm việc)
-            if elapsed >= 90.0 {
+            // Nếu quá 60 giây chưa có ping gửi lên (do đứng yên trong phòng)
+            if elapsed >= 60.0 {
                 if let anchorLocation = self.lastAccurateLocation ?? self.lastLocation {
+                    print("[NativeTracking iOS] Stationary heartbeat triggered. Keeping employee online.")
                     self.sendPing(location: anchorLocation, isHeartbeat: true)
                 }
             }
         }
-        timer.resume()
-        self.heartbeatSource = timer
+        RunLoop.main.add(timer, forMode: .common)
+        self.heartbeatTimer = timer
     }
 
-    private func stopHeartbeat() {
-        if let timer = heartbeatSource {
-            timer.cancel()
-            heartbeatSource = nil
-        }
+    private func stopHeartbeatTimer() {
+        self.heartbeatTimer?.invalidate()
+        self.heartbeatTimer = nil
     }
 
-    /// Xử lý đánh thức ứng dụng trong nền khi nhận được sự kiện vị trí từ iOS
+    /// Xử lý khi hệ thống iOS đánh thức ứng dụng từ cõi chết (do SLC hoặc Region Exit)
     @objc public static func handleLocationWakeUp() {
         let defaults = UserDefaults.standard
         let wasTracking = defaults.bool(forKey: "xttech_ios_is_tracking")
@@ -218,50 +253,50 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         DispatchQueue.main.async {
             if let plugin = shared {
                 plugin.setupLocationManager()
-                plugin.startHeartbeat()
+                plugin.startHeartbeatTimer()
             } else {
                 let standalone = NativeTrackingPlugin()
                 standalone.accessToken = defaults.string(forKey: "xttech_ios_access_token")
                 standalone.refreshToken = defaults.string(forKey: "xttech_ios_refresh_token")
                 standalone.apiUrl = defaults.string(forKey: "xttech_ios_api_url")
                 standalone.setupLocationManager()
-                standalone.startHeartbeat()
+                standalone.startHeartbeatTimer()
                 shared = standalone
             }
+            print("[NativeTracking iOS] App awakened by iOS Kernel for background location update.")
         }
     }
 
-    // CLLocationManagerDelegate
+    // MARK: - CLLocationManagerDelegate
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
+        guard isTracking, let location = locations.last else { return }
         
-        // Bỏ qua nếu điểm cache đã quá 60 giây (loại bỏ stale cache từ quá khứ)
+        // Bỏ qua nếu điểm cache đã quá 60 giây
         if abs(location.timestamp.timeIntervalSinceNow) > 60.0 {
-            return
-        }
-
-        // Khởi tạo điểm ban đầu nếu chưa có bất kỳ vị trí nào
-        if self.lastAccurateLocation == nil {
-            if location.horizontalAccuracy >= 0 && location.horizontalAccuracy <= 100.0 {
-                self.lastAccurateLocation = location
-                self.lastLocation = location
-                self.lastPingTime = Date()
-                sendPing(location: location, isHeartbeat: true)
-            }
             return
         }
 
         let now = Date()
         let elapsed = now.timeIntervalSince(lastPingTime)
 
-        // Chống nhảy Map: Chỉ chấp nhận cập nhật vị trí hiển thị nếu độ chính xác đạt chuẩn (<= 50m)
-        // Nếu ở trong phòng sai số trạm BTS/Wi-Fi vọt lên > 50m hoặc không hợp lệ:
-        // TỪ CHỐI cập nhật vị trí mới để chống giật map, NHƯNG tận dụng CPU vừa được iOS đánh thức
-        // để gửi nhịp tim giữ kết nối (Heartbeat) với tọa độ chuẩn cũ nếu đã quá 90 giây!
-        if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 50.0 {
-            if elapsed >= 90.0 {
+        // Khởi tạo điểm ban đầu
+        if self.lastAccurateLocation == nil {
+            if location.horizontalAccuracy >= 0 && location.horizontalAccuracy <= 100.0 {
+                self.lastAccurateLocation = location
+                self.lastLocation = location
+                self.lastPingTime = now
+                sendPing(location: location, isHeartbeat: true)
+                updateStationaryRegion(around: location)
+            }
+            return
+        }
+
+        // Kiểm tra sai số GPS: Nếu ở trong nhà sai số vọt lên > 65m
+        if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 65.0 {
+            // Khi sóng yếu trong phòng: giữ nhịp gửi Heartbeat mỗi 60 giây để nhân viên không bị Offline
+            if elapsed >= 60.0 {
                 if let anchorLocation = self.lastAccurateLocation ?? self.lastLocation {
-                    print("[NativeTracking iOS] Indoor weak GPS (>50m). Sending stationary heartbeat with anchor location.")
+                    print("[NativeTracking iOS] Weak indoor GPS (>65m). Sending stationary heartbeat with anchor.")
                     sendPing(location: anchorLocation, isHeartbeat: true)
                 }
             }
@@ -272,53 +307,42 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         let speed = rawSpeed >= 0.8 ? rawSpeed : 0.0
         let distance = location.distance(from: self.lastAccurateLocation!)
 
-        // Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
+        // Chống bước nhảy dị biệt (outlier jump filter)
         let jumpSpeed = elapsed > 0 ? distance / elapsed : 999.0
         if distance > 150.0 && (jumpSpeed > 35.0 || (distance > 400.0 && elapsed < 30.0)) {
             print("[NativeTracking iOS] Discarding outlier jump point: \(distance)m, speed=\(jumpSpeed)m/s")
             return
         }
 
-        // Cập nhật điểm neo chuẩn xác cuối cùng
+        // Cập nhật tọa độ chuẩn xác
         self.lastAccurateLocation = location
         self.lastLocation = location
 
-        // Smart Adaptive: Xác định có đang di chuyển (speed >= 1.0 m/s hoặc di dời >= 5m)
-        let isMoving = speed >= 1.0 || distance >= 5.0
+        // Xác định trạng thái di chuyển (vận tốc >= 0.8 m/s hoặc dịch chuyển >= 5m)
+        let isMoving = speed >= 0.8 || distance >= 5.0
 
         if isMoving {
-            // Khi đang di chuyển: throttle 3.0 giây / lần để Live-Map mượt mà
+            // Khi di chuyển: throttle nhịp 3.0 giây để Live-Map mượt mà
             if elapsed < 3.0 {
                 return
             }
+            stopStationaryRegionMonitoring()
         } else {
-            // Khi đứng yên ngoài trời (GPS vẫn bắt được): giữ nhịp gửi ping mỗi 90 giây (thay vì 120s)
-            if elapsed < 90.0 {
+            // Khi đứng yên trong văn phòng: duy trì gửi ping đều đặn mỗi 60 giây
+            if elapsed < 60.0 {
                 return
             }
+            updateStationaryRegion(around: location)
         }
 
         sendPing(location: location, isHeartbeat: !isMoving)
-    }
-
-    public func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-        guard isTracking else { return }
-        let now = Date()
-        let elapsed = now.timeIntervalSince(lastPingTime)
-        // Khi thiết bị đứng yên trong phòng (GPS không nổ vị trí mới), cảm biến la bàn từ trường
-        // vẫn phát sinh dao động vi mô. Tận dụng nhịp CPU này để gửi heartbeat giữ kết nối online.
-        if elapsed >= 90.0 {
-            if let anchorLocation = self.lastAccurateLocation ?? self.lastLocation {
-                print("[NativeTracking iOS] Heading sensor wake up. Sending stationary heartbeat.")
-                sendPing(location: anchorLocation, isHeartbeat: true)
-            }
-        }
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("[NativeTracking iOS] Location manager error: \(error.localizedDescription)")
     }
 
+    // MARK: - Main-Thread-Safe Network Dispatcher
     private func sendPing(location: CLLocation, isHeartbeat: Bool, retryCount: Int = 0) {
         guard let apiUrl = self.apiUrl, !apiUrl.isEmpty else { return }
 
@@ -360,7 +384,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         guard let httpBody = try? JSONSerialization.data(withJSONObject: payload, options: []) else { return }
         request.httpBody = httpBody
 
-        // Yêu cầu iOS cấp quyền CPU chạy nền để hoàn tất gửi gói tin mạng khi màn hình khóa
+        // Yêu cầu iOS cấp quyền CPU chạy nền hoàn toàn trên Main Thread
         var bgTask: UIBackgroundTaskIdentifier = .invalid
         bgTask = UIApplication.shared.beginBackgroundTask(withName: "XTTechLocationPing") {
             if bgTask != .invalid {
@@ -371,20 +395,25 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             defer {
-                if bgTask != .invalid {
-                    UIApplication.shared.endBackgroundTask(bgTask)
-                    bgTask = .invalid
+                DispatchQueue.main.async {
+                    if bgTask != .invalid {
+                        UIApplication.shared.endBackgroundTask(bgTask)
+                        bgTask = .invalid
+                    }
                 }
             }
             guard let self = self else { return }
             if let httpResponse = response as? HTTPURLResponse {
                 if (200...299).contains(httpResponse.statusCode) {
-                    self.lastPingTime = Date()
+                    DispatchQueue.main.async {
+                        self.lastPingTime = Date()
+                    }
                 } else if httpResponse.statusCode == 401 && retryCount == 0 {
-                    // Token hết hạn -> tự động refresh token
                     self.refreshAccessToken { success in
                         if success {
-                            self.sendPing(location: location, isHeartbeat: isHeartbeat, retryCount: 1)
+                            DispatchQueue.main.async {
+                                self.sendPing(location: location, isHeartbeat: isHeartbeat, retryCount: 1)
+                            }
                         }
                     }
                 }
@@ -431,9 +460,11 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             defer {
-                if bgTask != .invalid {
-                    UIApplication.shared.endBackgroundTask(bgTask)
-                    bgTask = .invalid
+                DispatchQueue.main.async {
+                    if bgTask != .invalid {
+                        UIApplication.shared.endBackgroundTask(bgTask)
+                        bgTask = .invalid
+                    }
                 }
             }
             guard let self = self, let data = data, let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
@@ -448,8 +479,10 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
                 }
 
                 if let token = newAccessToken, !token.isEmpty {
-                    self.accessToken = token
-                    UserDefaults.standard.set(token, forKey: self.prefsKeyToken)
+                    DispatchQueue.main.async {
+                        self.accessToken = token
+                        UserDefaults.standard.set(token, forKey: self.prefsKeyToken)
+                    }
                     completion(true)
                     return
                 }

@@ -6,6 +6,7 @@ import { Modal, Input, Button } from '@/components';
 import { useMutation } from '@tanstack/react-query';
 import { changePassword } from '@/actions';
 import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
 
 export interface PasswordModalProps {
   isOpen: boolean;
@@ -26,7 +27,7 @@ function PasswordForm({ onClose }: { onClose: () => void }) {
       onClose();
     },
     onError: (error: Error) => {
-      toast.error(error?.message || 'Đổi mật khẩu thất bại');
+      showErrorToast(error)
     },
   });
 
