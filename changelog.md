@@ -2,6 +2,14 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-17
+
+### Fixed (Route Playback Modal)
+- **Khắc phục lỗi bản đồ tự động reset zoom / thu nhỏ khi đang xem lộ trình ([`src/components/map-modal/route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx)):**
+  - **Khống chế số lần tự động căn chỉnh (`hasFittedBoundsRef`):** Chỉ tự động gọi `fitBounds()` 1 lần duy nhất khi dữ liệu lộ trình vừa được nạp lần đầu hoặc khi đổi ngày / nhân viên. Không tự động gọi lại làm giật màn hình khi thuật toán nắn đường OSRM chạy xong hoặc khi component re-render.
+  - **Ghi nhớ tham chiếu mảng tọa độ (`useMemo`):** Bọc `points`, `polylineCoords`, và `displayedCoords` bằng `useMemo` để tránh sinh mảng mới ở mỗi vòng render gây trigger `useEffect` thừa.
+  - **Bổ sung nút Căn vừa lộ trình (`Focus` button):** Thêm nút bấm căn vừa toàn cảnh lộ trình chủ động ở góc dưới bên phải cạnh nút phóng to toàn màn hình.
+
 ## [Unreleased] - 2026-09-16
 
 ### Fixed & Enhanced (iOS Background Geolocation)

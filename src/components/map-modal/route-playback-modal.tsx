@@ -1,12 +1,12 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import dayjs from 'dayjs';
 import type L from 'leaflet';
 import { Modal, DatePicker, Switch } from 'antd';
-import { Loader2, Navigation, MapPin, Gauge, Route, Maximize2, Minimize2 } from 'lucide-react';
+import { Loader2, Navigation, MapPin, Gauge, Route, Maximize2, Minimize2, Focus } from 'lucide-react';
 import { getStaffRoute } from '@/actions';
 
 import { StaffRoutePoint, StaffRouteResponse } from '@/types';
@@ -213,6 +213,9 @@ export function RoutePlaybackModal({
   const [isMatchingRoad, setIsMatchingRoad] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Ref theo dõi việc đã tự động fitBounds hay chưa (chỉ fitBounds 1 lần khi mở/đổi ngày, không làm phiền khi user zoom)
+  const hasFittedBoundsRef = useRef<boolean>(false);
+
   // Nạp Leaflet an toàn chỉ trên môi trường Client
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -250,6 +253,9 @@ export function RoutePlaybackModal({
   useEffect(() => {
     if (!isOpen || !userId) return;
 
+    // Reset cờ fitBounds khi đổi điều kiện lọc / ngày / nhân viên
+    hasFittedBoundsRef.current = false;
+
     const fetchRoute = async () => {
       setIsLoading(true);
       setMatchedCoords([]);
@@ -282,25 +288,39 @@ export function RoutePlaybackModal({
   }, [initialDate, isOpen]);
 
   const rawPoints = routeData?.points || [];
-  const points = filterPointsForMatching(rawPoints);
-  const polylineCoords: [number, number][] = points.map((p) => [
-    p.latitude,
-    p.longitude,
-  ]);
+  const points = useMemo(() => filterPointsForMatching(rawPoints), [rawPoints]);
+  const polylineCoords = useMemo(
+    () => points.map((p) => [p.latitude, p.longitude] as [number, number]),
+    [points]
+  );
 
   // Chọn tọa độ hiển thị: ưu tiên đường đã nắn bám tim đường nếu người dùng bật
-  const displayedCoords =
-    isSnapToRoad && matchedCoords.length > 0 ? matchedCoords : polylineCoords;
+  const displayedCoords = useMemo(
+    () => (isSnapToRoad && matchedCoords.length > 0 ? matchedCoords : polylineCoords),
+    [isSnapToRoad, matchedCoords, polylineCoords]
+  );
 
-  // Tự động căn vừa toàn bộ lộ trình khi có dữ liệu điểm GPS
+  // Tự động căn vừa toàn bộ lộ trình CHỈ 1 LẦN DUY NHẤT khi có dữ liệu điểm GPS
   useEffect(() => {
-    if (!map || displayedCoords.length === 0) return;
+    if (!map || displayedCoords.length === 0 || hasFittedBoundsRef.current) return;
     try {
       map.fitBounds(displayedCoords as [number, number][], { padding: [50, 50], maxZoom: 16 });
+      hasFittedBoundsRef.current = true;
     } catch {
       // Bỏ qua nếu bounds không hợp lệ
     }
   }, [map, displayedCoords]);
+
+  // Hàm hỗ trợ người dùng chủ động căn vừa lộ trình khi cần
+  const handleFitBounds = () => {
+    if (map && displayedCoords.length > 0) {
+      try {
+        map.fitBounds(displayedCoords as [number, number][], { padding: [50, 50], maxZoom: 16 });
+      } catch {
+        // Bỏ qua
+      }
+    }
+  };
 
   const defaultCenter: [number, number] =
     points.length > 0
@@ -584,8 +604,20 @@ export function RoutePlaybackModal({
             </button>
           </div>
 
-          {/* Nút Phóng to / Thu nhỏ toàn màn hình chuẩn Google Maps (Góc dưới bên phải) */}
-          <div className="absolute bottom-5 right-5 z-[1000]">
+          {/* Nút Điều khiển bản đồ: Căn vừa lộ trình & Phóng to toàn màn hình (Góc dưới bên phải) */}
+          <div className="absolute bottom-5 right-5 z-[1000] flex flex-col gap-2">
+            {/* Nút Căn vừa toàn bộ lộ trình */}
+            <button
+              type="button"
+              onClick={handleFitBounds}
+              title="Căn vừa toàn bộ lộ trình"
+              disabled={displayedCoords.length === 0}
+              className="w-11 h-11 rounded-full bg-white shadow-xl border border-slate-200/80 flex items-center justify-center text-slate-700 hover:text-primary hover:bg-slate-50 transition-all duration-200 cursor-pointer active:scale-95 group select-none disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Focus size={18} className="transition-transform group-hover:scale-110" />
+            </button>
+
+            {/* Nút Phóng to / Thu nhỏ toàn màn hình */}
             <button
               type="button"
               onClick={() => setIsFullscreen(!isFullscreen)}
