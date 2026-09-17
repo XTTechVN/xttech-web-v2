@@ -4,6 +4,17 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-17
 
+### Added & Enhanced (Page Transition Loader)
+- **Triển khai Màn hình Loading Chuyển Trang Tức Thì (Zero-Delay Page Transition Loader) Chuẩn Super-App ([`src/components/page-loader`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/page-loader), [`src/contexts/PageTransitionProvider.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/contexts/PageTransitionProvider.tsx)):**
+  - **Khắc phục triệt để hiện tượng trễ (delay) khi bấm chuyển trang trên Mobile/iOS:** Giải quyết điểm nghẽn do Next.js chờ tải JS chunks & server API bằng kiến trúc App Shell Pre-loaded Loader.
+  - **Phản hồi tương tác tức thì 0ms:** Màn hình loading nằm sẵn trong bộ nhớ RAM của Shell Layout, được kích hoạt ngay khi chạm ngón tay vào link hoặc gọi chuyển trang mà không cần chờ nạp script qua mạng.
+  - **Thiết kế thương hiệu XTTech chuẩn mực ([`page-loader.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/page-loader/page-loader.tsx)):**
+    - Header đầy đủ nút Quay lại (Back), tiêu đề trang đích, và nút Trang chủ (Home).
+    - Khung Icon nổi bật kèm hiệu ứng nhịp thở (`pulse`) và tên tính năng cụ thể tương ứng với từng đường dẫn route đích ([`route-metadata.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/route-metadata.ts)).
+    - Thanh tiến trình Progress bar gradient màu chủ đạo XTTech (`#045863` sang `#088395`) chuyển động liên tục (`shimmer`).
+    - Nền sóng uốn lượn (SVG Wave) phía chân trang với tone màu pastel XTTech dịu mắt và sang trọng.
+  - **Tích hợp toàn diện & Tương thích React 19 / Next.js 16:** Bổ sung `PageTransitionProvider` tại [`AppLayout`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/layout.tsx), kết hợp bắt sự kiện click link nội bộ toàn cục; tối ưu hóa lịch biểu `startTransition` qua `setTimeout(..., 0)` để tương thích tuyệt đối với `useInsertionEffect` trong React 19; đồng thời hỗ trợ native Next.js Suspense fallback tại [`(sidebar)/loading.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/loading.tsx).
+
 ### Fixed (Route Playback Modal)
 - **Khắc phục lỗi bản đồ tự động reset zoom / thu nhỏ khi đang xem lộ trình ([`src/components/map-modal/route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx)):**
   - **Khống chế số lần tự động căn chỉnh (`hasFittedBoundsRef`):** Chỉ tự động gọi `fitBounds()` 1 lần duy nhất khi dữ liệu lộ trình vừa được nạp lần đầu hoặc khi đổi ngày / nhân viên. Không tự động gọi lại làm giật màn hình khi thuật toán nắn đường OSRM chạy xong hoặc khi component re-render.
