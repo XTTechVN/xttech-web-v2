@@ -15,6 +15,11 @@ All notable changes to the frontend project will be documented in this file.
     - Nền sóng uốn lượn (SVG Wave) phía chân trang với tone màu pastel XTTech dịu mắt và sang trọng.
   - **Tích hợp toàn diện & Tương thích React 19 / Next.js 16:** Bổ sung `PageTransitionProvider` tại [`AppLayout`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/layout.tsx), kết hợp bắt sự kiện click link nội bộ toàn cục; tối ưu hóa lịch biểu `startTransition` qua `setTimeout(..., 0)` để tương thích tuyệt đối với `useInsertionEffect` trong React 19; đồng thời hỗ trợ native Next.js Suspense fallback tại [`(sidebar)/loading.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/loading.tsx).
 
+### Added & Enhanced (Auto Timekeeping Camera Compatibility)
+- **Tối ưu hóa Khả năng Tương thích Camera Chấm công trên iOS/Android ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx)):**
+  - **Cơ chế Fallback 3 tầng:** Tự động chuyển cấp độ ràng buộc từ HD (`1280x720`) -> Camera trước chuẩn (`facingMode: 'user'`) -> Bất kỳ camera nào khả dụng (`video: true`) nhằm khắc phục triệt để lỗi `OverconstrainedError` trên các dòng iPhone kén tỷ lệ khung hình.
+  - **Tích hợp Cơ chế Chụp ảnh Bằng Camera Gốc (HTML5 Native Camera Fallback - `capture="user"`):** Bổ sung giải pháp cứu cánh tối thượng khi gặp các thiết bị iPhone bị Apple khóa WebRTC Live Stream (như chế độ PWA hoặc lỗi WebKit). Tự động hiển thị nút "Mở Camera máy" kích hoạt ứng dụng Camera gốc của iPhone ở chế độ Selfie, đảm bảo 100% người dùng chấm công thành công mà không bị chặn bởi bất kỳ rào cản bảo mật nào.
+
 ### Fixed (Route Playback Modal)
 - **Khắc phục lỗi bản đồ tự động reset zoom / thu nhỏ khi đang xem lộ trình ([`src/components/map-modal/route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx)):**
   - **Khống chế số lần tự động căn chỉnh (`hasFittedBoundsRef`):** Chỉ tự động gọi `fitBounds()` 1 lần duy nhất khi dữ liệu lộ trình vừa được nạp lần đầu hoặc khi đổi ngày / nhân viên. Không tự động gọi lại làm giật màn hình khi thuật toán nắn đường OSRM chạy xong hoặc khi component re-render.

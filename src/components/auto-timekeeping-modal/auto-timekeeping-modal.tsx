@@ -29,6 +29,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
   const queryClient = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -87,21 +88,98 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     };
   }, []);
 
-  // Bật camera
+  // Bật camera với cơ chế Fallback 3 tầng (HD -> Standard Front -> Any Video) + WebKit Polyfill
   const startCamera = useCallback(async () => {
     setCameraError(null);
+
+    // Thu thập thông số chẩn đoán của thiết bị
+    const protocol = typeof window !== 'undefined' ? window.location.protocol : '';
+    const isSec = typeof window !== 'undefined' ? String(window.isSecureContext) : '';
+    const hasMediaDev = typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices);
+    const hasGUM = typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia);
+    const hasWebkitGUM = typeof navigator !== 'undefined' && Boolean((navigator as any).webkitGetUserMedia);
+    const diag = `[Protocol: ${protocol} | Secure: ${isSec} | mediaDev: ${hasMediaDev} | gum: ${hasGUM} | webkit: ${hasWebkitGUM}]`;
+
+    // Hàm gọi getUserMedia hỗ trợ cả chuẩn hiện đại lẫn WebKit cũ trên iOS
+    const requestStream = async (constraints: MediaStreamConstraints): Promise<MediaStream> => {
+      if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      }
+      const legacyGUM =
+        (navigator as any).webkitGetUserMedia ||
+        (navigator as any).mozGetUserMedia ||
+        (navigator as any).getUserMedia;
+
+      if (legacyGUM) {
+        return new Promise<MediaStream>((resolve, reject) => {
+          legacyGUM.call(navigator, constraints, resolve, reject);
+        });
+      }
+      throw new Error('NOT_SUPPORTED');
+    };
+
+    // Kiểm tra khả năng hỗ trợ API
+    if (!hasGUM && !hasWebkitGUM) {
+      setCameraError(
+        'Thiết bị đang tắt luồng video trực tiếp. Hãy bấm nút "Mở Camera máy" bên dưới để chụp ảnh chấm công.'
+      );
+      return;
+    }
+
     try {
       streamRef.current?.getTracks().forEach((t) => t.stop());
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      });
+
+      let stream: MediaStream | null = null;
+
+      // Tầng 1: Thử lấy camera trước với cấu hình tối ưu HD
+      try {
+        stream = await requestStream({
+          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        });
+      } catch (err1) {
+        // Tầng 2: Nếu thiết bị/iOS không hỗ trợ kích thước HD dọc, thử lại chỉ với facingMode: 'user'
+        try {
+          stream = await requestStream({
+            video: { facingMode: 'user' },
+            audio: false,
+          });
+        } catch (err2) {
+          // Tầng 3 (Ultimate Fallback): Mở bất kỳ camera nào khả dụng không ràng buộc
+          stream = await requestStream({
+            video: true,
+            audio: false,
+          });
+        }
+      }
+
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch {
-      setCameraError('Không thể truy cập camera. Vui lòng cấp quyền camera và thử lại.');
+    } catch (err: unknown) {
+      const error = err as { name?: string; message?: string };
+      const errName = error?.name || '';
+
+      if (errName === 'NotAllowedError' || errName === 'PermissionDeniedError') {
+        setCameraError(
+          'Quyền truy cập Camera bị từ chối (NotAllowedError). Nếu bạn đang mở bằng App XTTECH, vui lòng vào "Cài đặt iPhone > XTTECH > Bật Camera". Nếu mở bằng Web, vui lòng cấp quyền cho trang web trong Safari/Chrome.'
+        );
+      } else if (errName === 'NotReadableError' || errName === 'TrackStartError') {
+        setCameraError(
+          'Camera đang bị ứng dụng khác chiếm dụng hoặc bị kẹt luồng (NotReadableError). Vui lòng đóng các ứng dụng chạy ngầm hoặc khởi động lại iPhone.'
+        );
+      } else if (errName === 'NotFoundError' || errName === 'DevicesNotFoundError') {
+        setCameraError('Không tìm thấy camera khả dụng trên thiết bị (NotFoundError).');
+      } else if (errName === 'OverconstrainedError') {
+        setCameraError('Phần cứng không đáp ứng thông số camera yêu cầu (OverconstrainedError).');
+      } else if (errName === 'SecurityError') {
+        setCameraError('Hệ điều hành iOS chặn quyền truy cập Camera do chính sách bảo mật (SecurityError).');
+      } else {
+        setCameraError(
+          `Không thể mở camera [${errName || 'Lỗi'}]: ${error?.message || 'Vui lòng kiểm tra quyền camera và thử lại.'}`
+        );
+      }
     }
   }, []);
 
@@ -234,13 +312,37 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     );
   };
 
+  // Xử lý ảnh chụp từ Camera gốc của máy (HTML5 Native Capture Fallback)
+  const handleNativeFileCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    setCapturedFile(file);
+    setPreviewUrl(url);
+    setStep('preview');
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    // Reset giá trị của input để có thể chọn lại nếu muốn
+    e.target.value = '';
+  };
+
   // Chụp lại
   const handleRetake = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     setCapturedFile(null);
     setStep('camera');
-    startCamera();
+
+    // Nếu thiết bị không hỗ trợ WebRTC, kích hoạt mở luôn camera máy
+    const hasMedia =
+      typeof navigator !== 'undefined' &&
+      Boolean(navigator.mediaDevices?.getUserMedia || (navigator as any).webkitGetUserMedia);
+    if (!hasMedia) {
+      fileInputRef.current?.click();
+    } else {
+      startCamera();
+    }
   };
 
   // Gửi chấm công
@@ -308,12 +410,12 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
               variant="primary"
               size="lg"
               fullWidth
-              onClick={handleCapture}
-              disabled={!!cameraError || isSubmitting}
+              onClick={cameraError ? () => fileInputRef.current?.click() : handleCapture}
+              disabled={isSubmitting}
               leftIcon={<Camera size={18} />}
               className="py-3 sm:py-3.5 rounded-xl font-bold text-sm sm:text-base shadow-md shadow-primary/20 active:scale-[0.99] transition-all cursor-pointer"
             >
-            Chụp ảnh chấm công
+              {cameraError ? 'Mở Camera máy chụp ảnh' : 'Chụp ảnh chấm công'}
             </Button>
           ) : (
             <div className="flex items-center gap-2.5 w-full">
@@ -384,22 +486,36 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
           <img src={previewUrl} alt="Ảnh chụp chấm công" className="h-full w-full object-cover" />
         )}
 
-        {/* Lỗi camera */}
+        {/* Lỗi camera / Chế độ chụp Native Camera */}
         {cameraError && (
-          <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
-            <div className="rounded-full bg-red-500/20 p-3">
-              <Camera size={24} className="text-red-400" />
+          <div className="flex h-full flex-col items-center justify-center gap-2.5 p-4 text-center">
+            <div className="rounded-full bg-teal-500/20 p-3.5 border border-teal-500/30">
+              <Camera size={26} className="text-teal-400" />
             </div>
-            <p className="text-xs text-slate-300">{cameraError}</p>
-            <Button
-              variant="outline"
-              size="xs"
-              onClick={startCamera}
-              leftIcon={<RefreshCw size={12} />}
-              className="mt-1 text-white border-white/20 hover:bg-white/10 hover:text-white"
-            >
-              Thử lại
-            </Button>
+            <div className="space-y-1 max-w-xs">
+              <p className="text-sm font-semibold text-white">Chế độ Camera máy (Native)</p>
+              <p className="text-xs text-slate-300 leading-relaxed">{cameraError}</p>
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                leftIcon={<Camera size={15} />}
+                className="bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl shadow-md cursor-pointer active:scale-95"
+              >
+                Mở Camera máy
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={startCamera}
+                leftIcon={<RefreshCw size={12} />}
+                className="text-slate-300 border-white/20 hover:bg-white/10 rounded-xl cursor-pointer"
+              >
+                Thử lại
+              </Button>
+            </div>
           </div>
         )}
 
@@ -444,6 +560,14 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="user"
+        className="hidden"
+        onChange={handleNativeFileCapture}
+      />
 
       {/* 3. Card UI: Toạ độ + Bản đồ */}
       <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3 space-y-2 shrink-0">
