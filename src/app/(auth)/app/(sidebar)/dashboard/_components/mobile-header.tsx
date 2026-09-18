@@ -3,6 +3,7 @@
 import React from 'react';
 import { useAuthStore } from '@/stores';
 import { getFileUrl } from '@/utils';
+import { getUser } from '@/actions/user';
 import { Sparkles, Calendar } from 'lucide-react';
 import Image from 'next/image';
 
@@ -32,7 +33,23 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ onRefresh, isRefresh
 
   const displayName = user?.fullName || user?.username || 'Bạn';
   const roleName = user?.positions?.[0]?.name || user?.roles?.[0]?.name || 'Nhân sự';
-  const avatarUrl = user?.avatar ? getFileUrl(user.avatar) : null;
+  const avatarUrl = user?.avatar
+    ? `${getFileUrl(user.avatar)}${user.updatedAt ? `?v=${encodeURIComponent(user.updatedAt)}` : ''}`
+    : null;
+
+  const handleRefresh = async () => {
+    if (user?.id) {
+      try {
+        const latestUser = await getUser(user.id);
+        if (latestUser) {
+          useAuthStore.getState().updateUser(latestUser as any);
+        }
+      } catch {
+        // Bỏ qua lỗi nền nếu có
+      }
+    }
+    onRefresh?.();
+  };
 
   return (
     <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col gap-3">
@@ -71,7 +88,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ onRefresh, isRefresh
 
         <button
           type="button"
-          onClick={onRefresh}
+          onClick={handleRefresh}
           disabled={isRefreshing}
           aria-label="Làm mới dữ liệu"
           className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-600 transition active:scale-95 shrink-0"

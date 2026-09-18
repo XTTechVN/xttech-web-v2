@@ -19,6 +19,8 @@ interface AuthState {
   isLoading: boolean;
   signin: (username: string, password: string) => Promise<boolean>;
   setAccessToken: (accessToken: string) => void;
+  setUser: (user: AuthUser | null) => void;
+  updateUser: (userData: Partial<AuthUser>) => void;
 }
 
 const useAuthStore = create<AuthState>()(
@@ -50,6 +52,24 @@ const useAuthStore = create<AuthState>()(
       },
 
       setAccessToken: (accessToken: string) => set({ accessToken }),
+
+      setUser: (user: AuthUser | null) => {
+        if (user && user.roles && typeof document !== 'undefined') {
+          document.cookie = `xt-auth=${encodeURIComponent(JSON.stringify({ roles: user.roles }))}; path=/; max-age=604800; SameSite=Lax`;
+        }
+        set({ user });
+      },
+
+      updateUser: (userData: Partial<AuthUser>) => {
+        set((state) => {
+          if (!state.user) return state;
+          const updatedUser = { ...state.user, ...userData };
+          if (updatedUser.roles && typeof document !== 'undefined') {
+            document.cookie = `xt-auth=${encodeURIComponent(JSON.stringify({ roles: updatedUser.roles }))}; path=/; max-age=604800; SameSite=Lax`;
+          }
+          return { user: updatedUser };
+        });
+      },
     }),
     {
       name: 'xt-auth',

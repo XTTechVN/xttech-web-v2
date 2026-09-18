@@ -25,7 +25,9 @@ const ProfileCard = () => {
     positions: (user as any)?.positions?.[0]?.name || '',
   });
 
-  const avatarUrl = getFileUrl(user?.avatar) || null;
+  const avatarUrl = user?.avatar
+    ? `${getFileUrl(user.avatar)}${user.updatedAt ? `?v=${encodeURIComponent(user.updatedAt)}` : ''}`
+    : null;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
