@@ -72,7 +72,9 @@ export function HeaderProfile({ userRole }: HeaderProfileProps) {
     }
   };
 
-  const avatarUrl = getFileUrl(user?.avatar) || null;
+  const avatarUrl = user?.avatar
+    ? `${getFileUrl(user.avatar)}${user.updatedAt ? `?v=${encodeURIComponent(user.updatedAt)}` : ''}`
+    : null;
 
   return (
     <div className="flex items-center gap-4 md:gap-6">

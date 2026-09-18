@@ -2,6 +2,53 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-18
+
+### Added & Enhanced (User Profile & Avatar Auto-Synchronization)
+- **Tự Động Đồng Bộ Hồ Sơ & Ảnh Đại Diện Ngầm (Background Profile Revalidation & Cache-Busting) ([`useAuthStore.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/stores/useAuthStore.ts), [`layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/layout.tsx), [`mobile-header.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/mobile-header.tsx)):**
+  - **Khắc phục triệt để lỗi avatar cũ trên điện thoại nhân viên sau khi Admin cập nhật:** Khi Admin thay đổi avatar hoặc quyền hạn của nhân viên từ trang quản trị, điện thoại nhân viên trước đây không nhận được do dữ liệu `user` bị đóng băng trong `localStorage` (`xt-auth`).
+  - **Tự động đồng bộ ngầm khi mở ứng dụng (`AppLayout`):** Ngay sau khi xác thực token thành công, tự động gọi ngầm `getUser(currentUserId)` từ backend để lấy thông tin mới nhất và cập nhật vào `useAuthStore` mà không làm gián đoạn hay làm chậm giao diện của nhân viên.
+  - **Bổ sung phương thức `updateUser` & `setUser` trong `useAuthStore`:** Cho phép cập nhật linh hoạt các trường hồ sơ (avatar, roles, positions, fullName) và đồng bộ tức thì vào cookie `xt-auth` cũng như `localStorage`.
+  - **Tích hợp đồng bộ hồ sơ vào nút Refresh của `MobileHeader`:** Khi nhân viên chạm nút Làm mới dữ liệu trên dashboard di động, app đồng thời kéo lại thông tin cá nhân mới nhất từ server.
+  - **Cơ chế Cache-Busting cho Avatar:** Bổ sung query string `?v=${user.updatedAt}` vào URL ảnh avatar trên `MobileHeader`, `HeaderProfile` và `ProfileCard`, đảm bảo trình duyệt mobile và PWA Webview luôn tải phiên bản ảnh mới nhất, tránh bị dính cache ảnh cũ.
+
+### Added & Enhanced (Page Loader & Transition System)
+- **Nâng Cấp Tiến Trình Nạp Trang 0 - 100% & Khử Hiện Tượng Chớp Nháy Khung Hình ([`page-loader.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/page-loader/page-loader.tsx), [`PageTransitionProvider.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/contexts/PageTransitionProvider.tsx)):**
+  - **Chuyển đổi từ thanh shimmer vô tận sang thanh tiến trình thực tế:** Hiển thị thanh nạp fill theo phần trăm thực tế (`0%` -> `100%`) kèm nhãn số phần trăm sắc nét (`tabular-nums`) và màu thương hiệu XTTech (`#045863` -> `#088395` -> `#0A97B0`).
+  - **Mô phỏng tiến trình thông minh (Smart Simulated Progress):** Tăng nhanh phản hồi tức thì lên 15-30% ngay khi chạm, tăng dần đều mượt mà lên ~90% trong lúc nạp, và tự động hoàn thành 100% khi trang đã sẵn sàng.
+  - **Thời gian hiển thị tối thiểu 1 giây (Minimum 1000ms Duration):** Đo lường `startTimeRef` và tự động bù trừ thời gian chênh lệch (`Math.max(0, 1000 - elapsed)`) đối với các trang nạp từ cache quá nhanh (50ms - 100ms), triệt tiêu hoàn toàn hiện tượng nhấp nháy (flicker) gây mỏi mắt người dùng.
+  - **Giới hạn hiển thị độc quyền trên thiết bị Mobile (< 768px):** Tích hợp kiểm tra `isMobileScreen()` trong [`PageTransitionProvider.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/contexts/PageTransitionProvider.tsx) và class CSS `md:hidden` tại [`page-loader.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/page-loader/page-loader.tsx), tắt hoàn toàn màn hình loader trên Desktop để người dùng PC chuyển trang tức thì không bị che khuất tầm nhìn, đồng thời giữ nguyên trải nghiệm Super App mượt mà trên Mobile & App iOS/Android.
+  - **Hiệu ứng sóng nước dâng theo tiến trình & 1 ngọn sóng cuộn trào đồng nhất màu chủ đạo XTTech:**
+    - **Chiều cao dâng nước:** Mực nước dâng tỉ lệ thuận với `currentProgress` từ 10% cơ sở và đạt đỉnh chạm ngưỡng tối đa đúng **50% chiều cao màn hình** (`50vh`) khi nạp đạt 100% (`transition: height 300ms ease-out`).
+    - **1 ngọn sóng duy nhất chuẩn màu XTTech (#045863):** Loại bỏ hoàn toàn lớp sóng mờ phụ phía sau, chỉ giữ lại 1 ngọn sóng chính sắc nét cuộn dập dềnh (`wave-flow` 2.8s) liền mạch với thân nước bên dưới tạo thành một khối nước màu chủ đạo `#045863` thống nhất, rõ ràng và sang trọng.
+  - **Tinh chỉnh bố cục tối giản chuẩn Mobile UX:**
+    - Thu nhỏ khung icon xuống `h-14 w-14` (56px) và biểu tượng `size={24}` thanh thoát.
+    - Lược bỏ hoàn toàn nhãn chữ "Tiến trình nạp" và số phần trăm `%`, nâng cấp thanh Progress Bar lên độ dày vừa vặn `h-2.5` (10px) giúp dải chuyển màu thương hiệu hiển thị rõ ràng và bắt mắt.
+    - Đẩy cụm thông tin lên vị trí 1/3 phía trên màn hình (`pt-[10vh]`), tạo khoảng thở thị giác rộng rãi và thoáng đãng, tuyệt đối không bị ngọn sóng 50vh che khuất.
+
+### Fixed (Page Transition Lifecycle & Route Duplication)
+- **Khắc phục triệt để lỗi kẹt loading 7 giây khi bấm lại vào chính trang đang đứng:**
+  - Bổ sung Guard Clause `isSameRoute(targetUrl)` so sánh chính xác cả `pathname` và `searchParams` chuẩn hóa (loại trừ trailing slash).
+  - Bỏ qua ngay lập tức và không kích hoạt `isTransitioning = true` trong `startTransition`, `navigateTo`, `handleGlobalClick`, và `window.history.pushState` khi người dùng bấm lại vào cùng trang hiện tại, giải quyết nguyên nhân Next.js không đổi route khiến effect tắt loader không chạy và bị kẹt chờ timer 7 giây.
+- **Khắc phục triệt để lỗi Race Condition khiến loader bị đơ cứng ở 34%:**
+  - Bổ sung `fromPathRef` lưu lại URL ban đầu khi bắt đầu transition.
+  - Ngăn chặn `useEffect` chạy sớm khi `pathname` vẫn là trang cũ, chỉ kích hoạt giai đoạn hoàn tất 100% khi Next.js thực sự chuyển sang URL mới (`currentUrl !== fromPathRef`).
+  - Loại bỏ hoàn toàn lỗi hàm cleanup của React hủy ngang `finishInterval` giữa chừng khi Next.js cập nhật route.
+- **Khắc phục triệt để hiện tượng nháy nhẹ khi bấm vào icon chuyển trang:**
+  - Loại bỏ hoàn toàn hiệu ứng mờ dần lúc mở (`transition-all duration-300`), chuyển sang cơ chế **Instant Snap-In 0ms**: khi người dùng chạm vào icon, màn hình loading lập tức phủ trắng 100% che đậy hoàn toàn trang cũ, triệt tiêu 100% cảm giác màn hình bị chớp mờ nửa trong suốt.
+  - Tách biệt cơ chế fade-out mượt mà (`transition-opacity duration-200`) chỉ áp dụng khi giai đoạn nạp đã hoàn tất 100% để hiển thị trang mới êm dịu.
+  - Bọc `setTimeout(0)` trong `window.history.pushState` và `replaceState` để tuân thủ nghiêm ngặt chuẩn React 19 (ngăn chặn lỗi `useInsertionEffect must not schedule updates`), đồng thời giữ cơ chế bắt sự kiện click DOM (`handleGlobalClick`) trực tiếp 0ms tức thì khi người dùng chạm vào icon.
+- **Đồng bộ hóa 100% màu sắc và triệt tiêu toàn bộ ranh giới, đường kẻ trên sóng nước:**
+  - Tách riêng thẻ `<path>` tô màu (`stroke="none"`) và `<path>` kẻ viền đỉnh sóng (`stroke="#045863"`), loại bỏ hoàn toàn các cạnh khép góc thẳng đứng ở 2 đầu SVG (`x=0` và `x=1200`), xóa sổ vệt kẻ dọc giữa ngọn sóng.
+  - Đồng bộ hóa toàn bộ thân sóng SVG và khối thân nước bên dưới về chung duy nhất một mã màu phẳng Solid chuẩn thương hiệu XTTech (`#5A949C`), loại bỏ hoàn toàn hiện tượng lệch tông màu do dải gradient không đồng đều.
+  - Chuẩn hóa chuyển động cuộn sóng thuần ngang (`0%` -> `-50%` trục X) kết hợp kéo dài đáy SVG xuống `y=160` và tăng gối đè an toàn `-mt-3` (12px), biến toàn bộ mặt nước thành một khối liền lạc, mịn màng và không một vết gãy khúc.
+- **Khắc phục cảnh báo gọi `setState` đồng bộ trong `useEffect` gây cascading render ([`page-loader.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/page-loader/page-loader.tsx)):**
+  - Chuyển `currentProgress` sang mô hình Trạng thái suy luận (Derived State): khi `!isVisible` tự động trả về `0`, loại bỏ hoàn toàn lệnh `setInternalProgress(0)` chạy đồng bộ trên luồng chính của `useEffect`.
+  - Khởi tạo tiến trình mượt mà bên trong callback `setInterval` bất đồng bộ và dọn dẹp biến đếm ở hàm `cleanup`, tuân thủ 100% nguyên tắc chuẩn của React 19 và React Compiler.
+- **Triệt tiêu hiện tượng nháy đổi icon (từ Loader2 sang icon tính năng thật):**
+  - Vô hiệu hóa `PageLoader` trùng lặp trong Next.js native Suspense fallback ([`(sidebar)/loading.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/loading.tsx) và [`app/loading.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/loading.tsx)).
+  - Trao quyền duy nhất cho `PageTransitionProvider` quản lý màn hình loading, đảm bảo icon chính xác của trang đích được hiển thị ngay lập tức từ mili-giây đầu tiên, xóa bỏ hoàn toàn hiện tượng 2 loader tranh chấp gây chớp đổi icon.
+
 ## [Unreleased] - 2026-09-17
 
 ### Added & Enhanced (Page Transition Loader)
