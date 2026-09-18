@@ -83,6 +83,13 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.xttech.app.refresh</string>
+		<string>com.xttech.app.background-processing</string>
 	</array>
 </dict>
 </plist>
