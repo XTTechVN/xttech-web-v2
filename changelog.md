@@ -4,13 +4,12 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-18
 
-### Fixed & Enhanced (Native iOS Background Location Engine - Chuẩn Apple Automotive Navigation)
-- **Nâng Cấp Động Cơ Định Vị Chạy Ngầm Native iOS & Khắc Phục Lỗi Mất Tín Hiệu ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
-  - **Khắc phục hiện tượng iOS tắt định vị app và chuyển sang trạng thái Offline:** Trước đây khi nhân viên khóa màn hình hoặc di chuyển xa, iOS chỉ hiện "Hệ thống đang dùng vị trí" thay vì "XTTech và hệ thống...", đồng thời trên Live Map hiển thị Offline dù nhân viên đã chạy xe máy hơn 1km.
-  - **Chuyển đổi `activityType` sang `.automotiveNavigation`:** Đảm bảo hệ thống CoreLocation của iOS không tự ý đóng băng GPS khi nhân viên di chuyển bằng phương tiện cơ giới (xe máy, ô tô).
-  - **Cấu hình bán kính Geofence đạt chuẩn phần cứng Apple (120m):** Thay thế bán kính cũ 50m (bị chip Apple Baseband bỏ qua vì dưới ngưỡng 100m) bằng 120m, đảm bảo hệ thống phần cứng của iPhone kích hoạt hàm `didExitRegion` đánh thức app ngay khi nhân viên di chuyển ra ngoài văn phòng.
-  - **Lọc sai số GPS thích ứng (Adaptive GPS Accuracy Filter):** Nới lỏng dung sai 100m khi ở trong nhà (indoor) để duy trì nhịp Heartbeat gửi ping neo tĩnh giữ trạng thái Online/Stationary; siết chặt 45m khi di chuyển ngoài đường để khử trôi tọa độ zic zac.
-  - **Cơ chế chống bước nhảy đột biến (Outlier Jump Filter):** Loại bỏ các điểm nhảy tọa độ ảo vượt quá 200m với tốc độ bất thường do trạm thu phát sóng di động (BTS) gây ra.
+### Fixed & Enhanced (Native iOS Background Location Engine - Chuẩn GCD Kernel Timer & Continuous Tracking)
+- **Nâng Cấp Động Cơ Định Vị Chạy Ngầm Native iOS & Khắc Phục Lỗi Mất Tín Hiệu Khi Đứng Yên ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+  - **Khắc phục triệt để lỗi mất kết nối sau 15 phút khi đặt máy yên trên bàn:** Thay thế hoàn toàn `Timer` trên Main RunLoop (vốn bị iOS đóng băng ngay khi khóa màn hình) bằng **`DispatchSourceTimer` (GCD Kernel Timer)** chạy độc lập trên background queue (`com.xttech.ios.heartbeatQueue`), định kỳ gửi ping nhịp tim thật lên Backend mỗi 60 giây.
+  - **Cấu hình `kCLDistanceFilterNone` & `activityType = .other`:** Loại bỏ rào cản lọc 5 mét (khiến máy đứng yên 0m không bao giờ kích hoạt callback), cho phép CoreLocation duy trì liên tục luồng cập nhật ngầm.
+  - **Nới lỏng dung sai sai số trong phòng (250m):** Chấp nhận tọa độ ban đầu và nhịp tim trong nhà với độ chính xác đến 250m, tránh tình trạng sóng yếu trong phòng bị loại bỏ.
+  - **Chủ động làm mới tọa độ (`locationManager.requestLocation()`):** Tự động kích hoạt chip GPS lấy điểm mới nếu chưa có điểm neo ban đầu trong chu kỳ của Timer.
   - **Bổ sung quyền `fetch` & `processing` vào `UIBackgroundModes` ([`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist)):**
     - Khởi tạo công tắc gạt **"Làm mới trong nền" (Background App Refresh)** trong Cài đặt của iPhone/iPad (giống như Messenger, Zalo).
     - Cấu hình các định danh tác vụ nền `BGTaskSchedulerPermittedIdentifiers` (`com.xttech.app.refresh`, `com.xttech.app.background-processing`), cho phép app giữ nhịp tim định kỳ và chạy ngầm bền bỉ mà không bị iOS đình chỉ tiến trình.
