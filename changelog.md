@@ -4,6 +4,15 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-18
 
+### Fixed & Enhanced (Native iOS Background Location Engine - Chuẩn Apple Automotive Navigation)
+- **Nâng Cấp Động Cơ Định Vị Chạy Ngầm Native iOS & Khắc Phục Lỗi Mất Tín Hiệu ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+  - **Khắc phục hiện tượng iOS tắt định vị app và chuyển sang trạng thái Offline:** Trước đây khi nhân viên khóa màn hình hoặc di chuyển xa, iOS chỉ hiện "Hệ thống đang dùng vị trí" thay vì "XTTech và hệ thống...", đồng thời trên Live Map hiển thị Offline dù nhân viên đã chạy xe máy hơn 1km.
+  - **Chuyển đổi `activityType` sang `.automotiveNavigation`:** Đảm bảo hệ thống CoreLocation của iOS không tự ý đóng băng GPS khi nhân viên di chuyển bằng phương tiện cơ giới (xe máy, ô tô).
+  - **Cấu hình bán kính Geofence đạt chuẩn phần cứng Apple (120m):** Thay thế bán kính cũ 50m (bị chip Apple Baseband bỏ qua vì dưới ngưỡng 100m) bằng 120m, đảm bảo hệ thống phần cứng của iPhone kích hoạt hàm `didExitRegion` đánh thức app ngay khi nhân viên di chuyển ra ngoài văn phòng.
+  - **Lọc sai số GPS thích ứng (Adaptive GPS Accuracy Filter):** Nới lỏng dung sai 100m khi ở trong nhà (indoor) để duy trì nhịp Heartbeat gửi ping neo tĩnh giữ trạng thái Online/Stationary; siết chặt 45m khi di chuyển ngoài đường để khử trôi tọa độ zic zac.
+  - **Cơ chế chống bước nhảy đột biến (Outlier Jump Filter):** Loại bỏ các điểm nhảy tọa độ ảo vượt quá 200m với tốc độ bất thường do trạm thu phát sóng di động (BTS) gây ra.
+  - **Khắc phục lỗi cú pháp Swift:** Đóng chuẩn xác hàm `openSettings` và loại bỏ hoàn toàn đoạn code lặp `didUpdateLocations`.
+
 ### Added & Enhanced (User Profile & Avatar Auto-Synchronization)
 - **Tự Động Đồng Bộ Hồ Sơ & Ảnh Đại Diện Ngầm (Background Profile Revalidation & Cache-Busting) ([`useAuthStore.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/stores/useAuthStore.ts), [`layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/layout.tsx), [`mobile-header.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/mobile-header.tsx)):**
   - **Khắc phục triệt để lỗi avatar cũ trên điện thoại nhân viên sau khi Admin cập nhật:** Khi Admin thay đổi avatar hoặc quyền hạn của nhân viên từ trang quản trị, điện thoại nhân viên trước đây không nhận được do dữ liệu `user` bị đóng băng trong `localStorage` (`xt-auth`).
