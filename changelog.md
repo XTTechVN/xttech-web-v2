@@ -11,6 +11,9 @@ All notable changes to the frontend project will be documented in this file.
   - **Cấu hình bán kính Geofence đạt chuẩn phần cứng Apple (120m):** Thay thế bán kính cũ 50m (bị chip Apple Baseband bỏ qua vì dưới ngưỡng 100m) bằng 120m, đảm bảo hệ thống phần cứng của iPhone kích hoạt hàm `didExitRegion` đánh thức app ngay khi nhân viên di chuyển ra ngoài văn phòng.
   - **Lọc sai số GPS thích ứng (Adaptive GPS Accuracy Filter):** Nới lỏng dung sai 100m khi ở trong nhà (indoor) để duy trì nhịp Heartbeat gửi ping neo tĩnh giữ trạng thái Online/Stationary; siết chặt 45m khi di chuyển ngoài đường để khử trôi tọa độ zic zac.
   - **Cơ chế chống bước nhảy đột biến (Outlier Jump Filter):** Loại bỏ các điểm nhảy tọa độ ảo vượt quá 200m với tốc độ bất thường do trạm thu phát sóng di động (BTS) gây ra.
+  - **Bổ sung quyền `fetch` & `processing` vào `UIBackgroundModes` ([`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist)):**
+    - Khởi tạo công tắc gạt **"Làm mới trong nền" (Background App Refresh)** trong Cài đặt của iPhone/iPad (giống như Messenger, Zalo).
+    - Cấu hình các định danh tác vụ nền `BGTaskSchedulerPermittedIdentifiers` (`com.xttech.app.refresh`, `com.xttech.app.background-processing`), cho phép app giữ nhịp tim định kỳ và chạy ngầm bền bỉ mà không bị iOS đình chỉ tiến trình.
   - **Khắc phục lỗi cú pháp Swift:** Đóng chuẩn xác hàm `openSettings` và loại bỏ hoàn toàn đoạn code lặp `didUpdateLocations`.
 
 ### Added & Enhanced (User Profile & Avatar Auto-Synchronization)
