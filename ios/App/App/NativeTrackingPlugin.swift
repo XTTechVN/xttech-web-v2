@@ -18,8 +18,9 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     private var stationaryRegion: CLCircularRegion?
     private var lastBatteryLevel: Double = -1.0
 
-    // Heartbeat Timer an toàn trên Main RunLoop
-    private var heartbeatTimer: Timer?
+    // GCD Kernel Timer chạy trên Background Thread độc lập (không bị iOS đóng băng khi khóa màn hình)
+    private let heartbeatQueue = DispatchQueue(label: "com.xttech.ios.heartbeatQueue", qos: .background)
+    private var dispatchHeartbeatTimer: DispatchSourceTimer?
 
     private let prefsKeyToken = "xttech_ios_access_token"
     private let prefsKeyRefreshToken = "xttech_ios_refresh_token"
@@ -155,13 +156,13 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         if locationManager == nil {
             locationManager = CLLocationManager()
             locationManager?.delegate = self
-            locationManager?.desiredAccuracy = kCLLocationAccuracyBestForNavigation
-            locationManager?.distanceFilter = 5.0
+            locationManager?.desiredAccuracy = kCLLocationAccuracyBest
+            locationManager?.distanceFilter = kCLDistanceFilterNone // KHÔNG LỌC: Giữ luồng cập nhật sống liên tục kể cả khi máy nằm yên trên bàn
             
-            // Cấu hình định vị chạy ngầm liên tục chuẩn Apple Automotive Navigation
+            // Cấu hình định vị chạy ngầm liên tục chuẩn Apple General Tracking
             locationManager?.allowsBackgroundLocationUpdates = true
             locationManager?.pausesLocationUpdatesAutomatically = false
-            locationManager?.activityType = .automotiveNavigation // CHUẨN APPLE: Giữ GPS sống 100% khi đi xe máy/ô tô
+            locationManager?.activityType = .other // .other giúp iOS không bao giờ tự dừng khi đứng yên
             if #available(iOS 11.0, *) {
                 locationManager?.showsBackgroundLocationIndicator = true
             }
@@ -185,7 +186,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             locationManager?.startMonitoringSignificantLocationChanges()
         }
         isTracking = true
-        print("[NativeTracking iOS] CoreLocation initialized with Apple Automotive Navigation grade background tracking.")
+        print("[NativeTracking iOS] CoreLocation initialized with continuous background tracking (.other + kCLDistanceFilterNone).")
     }
 
     // MARK: - Stationary Geofencing Engine (Bán kính 120m chuẩn Apple để chống bỏ qua sự kiện)
@@ -228,28 +229,34 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
     }
 
-    // MARK: - Heartbeat Timer (Giữ kết nối online khi đứng yên)
+    // MARK: - GCD Kernel Heartbeat Engine (Chạy trên Background Thread, không bị đóng băng khi tắt màn hình)
     private func startHeartbeatTimer() {
         stopHeartbeatTimer()
-        // Chạy trên Main RunLoop với common modes để không bị ngắt khi vuốt màn hình
-        let timer = Timer(timeInterval: 60.0, repeats: true) { [weak self] _ in
+        let timer = DispatchSource.makeTimerSource(queue: heartbeatQueue)
+        timer.schedule(deadline: .now() + 60.0, repeating: 60.0, leeway: .seconds(5))
+        timer.setEventHandler { [weak self] in
             guard let self = self, self.isTracking else { return }
             let elapsed = Date().timeIntervalSince(self.lastPingTime)
-            // Nếu quá 60 giây chưa có ping gửi lên (do đứng yên trong phòng)
+            // Nếu quá 60 giây chưa có ping gửi lên (do nằm yên trên bàn làm việc)
             if elapsed >= 60.0 {
                 if let anchorLocation = self.lastAccurateLocation ?? self.lastLocation {
-                    print("[NativeTracking iOS] Stationary heartbeat triggered. Keeping employee online.")
+                    print("[NativeTracking iOS] GCD Background Heartbeat triggered: \(Int(elapsed))s since last ping. Keeping employee online.")
                     self.sendPing(location: anchorLocation, isHeartbeat: true)
+                } else {
+                    // Nếu chưa có tọa độ neo ban đầu, yêu cầu CoreLocation làm mới tức thời
+                    DispatchQueue.main.async {
+                        self.locationManager?.requestLocation()
+                    }
                 }
             }
         }
-        RunLoop.main.add(timer, forMode: .common)
-        self.heartbeatTimer = timer
+        timer.resume()
+        self.dispatchHeartbeatTimer = timer
     }
 
     private func stopHeartbeatTimer() {
-        self.heartbeatTimer?.invalidate()
-        self.heartbeatTimer = nil
+        self.dispatchHeartbeatTimer?.cancel()
+        self.dispatchHeartbeatTimer = nil
     }
 
     /// Xử lý khi hệ thống iOS đánh thức ứng dụng từ cõi chết (do SLC hoặc Region Exit)
@@ -287,9 +294,9 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         let now = Date()
         let elapsed = now.timeIntervalSince(lastPingTime)
 
-        // Khởi tạo điểm ban đầu an toàn (không force-unwrap)
+        // Khởi tạo điểm ban đầu an toàn (không force-unwrap, nới lỏng 250m trong phòng)
         guard let lastAcc = self.lastAccurateLocation else {
-            if location.horizontalAccuracy >= 0 && location.horizontalAccuracy <= 120.0 {
+            if location.horizontalAccuracy >= 0 && location.horizontalAccuracy <= 250.0 {
                 self.lastAccurateLocation = location
                 self.lastLocation = location
                 self.lastPingTime = now
@@ -304,8 +311,8 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         let distance = location.distance(from: lastAcc)
         let isMoving = speed >= 0.8 || distance >= 5.0
 
-        // Kiểm tra sai số GPS thích ứng: nới lỏng 100m trong phòng, siết chặt 45m khi di chuyển ngoài đường
-        let maxAllowedAccuracy = isMoving ? 45.0 : 100.0
+        // Kiểm tra sai số GPS thích ứng: nới lỏng 250m trong phòng, siết chặt 45m khi di chuyển ngoài đường
+        let maxAllowedAccuracy = isMoving ? 45.0 : 250.0
         if location.horizontalAccuracy < 0 || location.horizontalAccuracy > maxAllowedAccuracy {
             // Khi sóng yếu trong phòng: giữ nhịp gửi Heartbeat mỗi 60 giây để nhân viên không bị Offline
             if elapsed >= 60.0 {
