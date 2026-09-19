@@ -2,7 +2,17 @@
 
 All notable changes to the frontend project will be documented in this file.
 
-## [Unreleased] - 2026-09-18
+## [Unreleased] - 2026-09-19
+
+### Enhanced & Refactored (Native iOS Stop-Detection Engine & Battery Optimization)
+- **Tái Cấu Trúc Động Cơ Định Vị Nền Native iOS Sang Mô Hình Chuẩn Life360 & Transistor ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+  - **Tích hợp cảm biến chuyển động `CMMotionActivityManager`:** Khai báo quyền `NSMotionUsageDescription` trong [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist), theo dõi trạng thái `stationary`, `walking`, `running`, `automotive` trực tiếp qua bộ vi xử lý M-series tiết kiệm năng lượng của chip Apple.
+  - **Cơ chế Stop-Detection Engine tự động ngắt GPS khi Đứng yên:** Khi nhân viên đứng yên quá 2 phút, app tự động gửi 1 gói tin chốt hạ vị trí neo (`stationary`), thiết lập vùng Geofence `CLCircularRegion` bán kính 100m, kích hoạt Significant Location Changes (SLC) và **gọi `locationManager.stopUpdatingLocation()` để tắt hoàn toàn chip GPS**, đưa app vào giấc ngủ sâu nhằm tiết kiệm 100% pin điện thoại.
+  - **Tự động đánh thức và tái kích hoạt GPS khi Di chuyển:** Khi người dùng bước đi/lên xe (`walking`/`automotive`) hoặc bước ra khỏi bán kính 100m (`didExitRegion`), phần cứng iOS tự động đánh thức app dậy ➔ Chuyển ngay sang chế độ dẫn đường cao cấp `kCLLocationAccuracyBestForNavigation` và `activityType = .automotiveNavigation`.
+  - **Bộ lọc sai số GPS thích ứng khi thức dậy:** Nới lỏng dung sai `accuracy` lên 90m trong khoảnh khắc đầu tiên xuất phát (`isMovingTransition`), đảm bảo gói tin khởi động không bị vứt bỏ trước khi chip GPS khóa đủ vệ tinh ngoài trời.
+  - **Dọn dẹp GCD Timer không khả dụng:** Loại bỏ hoàn toàn luồng `DispatchSourceTimer` (vốn bị iOS Kernel đóng băng khi khóa màn hình) để chuyển hẳn sang cơ chế đánh thức dựa trên sự kiện phần cứng chuẩn Apple.
+
+## [1.0.0] - 2026-09-18
 
 ### Fixed & Enhanced (Native iOS Background Location Engine - Chuẩn GCD Kernel Timer & Continuous Tracking)
 - **Nâng Cấp Động Cơ Định Vị Chạy Ngầm Native iOS & Khắc Phục Lỗi Mất Tín Hiệu Khi Đứng Yên ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
