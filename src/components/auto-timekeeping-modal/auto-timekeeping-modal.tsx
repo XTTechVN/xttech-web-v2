@@ -183,7 +183,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     }
   }, []);
 
-  // Lấy GPS với fallback 2 tầng (High Accuracy -> Standard Network)
+  // Lấy vị trí 100% bằng GPS Vệ tinh chính xác cao (Strict High Accuracy)
   const fetchLocation = useCallback(() => {
     setIsLocating(true);
     setLocationError(null);
@@ -195,45 +195,36 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
       return;
     }
 
-    const requestPosition = (enableHighAccuracy: boolean, isRetry = false) => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLocation({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            accuracy: Math.round(pos.coords.accuracy),
-          });
-          setLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: Math.round(pos.coords.accuracy),
+        });
+        setLocationError(null);
+        setPermissionDenied(false);
+        setIsLocating(false);
+      },
+      (err) => {
+        setIsLocating(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setPermissionDenied(true);
+          setLocationError('Quyền truy cập vị trí đã bị từ chối.');
+        } else if (err.code === err.TIMEOUT) {
           setPermissionDenied(false);
-          setIsLocating(false);
-        },
-        (err) => {
-          if (err.code === err.PERMISSION_DENIED) {
-            setPermissionDenied(true);
-            setLocationError('Quyền truy cập vị trí đã bị từ chối.');
-            setIsLocating(false);
-          } else if (!isRetry && (err.code === err.TIMEOUT || err.code === err.POSITION_UNAVAILABLE)) {
-            // Thử lại tầng 2 với độ chính xác mạng nếu GPS yếu
-            requestPosition(false, true);
-          } else {
-            setPermissionDenied(false);
-            setLocationError(
-              err.code === err.TIMEOUT
-                ? 'Quá thời gian lấy vị trí GPS. Hãy kiểm tra kết nối mạng và thử lại.'
-                : 'Không thể xác định vị trí. Hãy bật GPS trên thiết bị và thử lại.',
-            );
-            setIsLocating(false);
-          }
-        },
-        {
-          enableHighAccuracy,
-          timeout: enableHighAccuracy ? 15000 : 20000,
-          maximumAge: 60000,
-        },
-      );
-    };
-
-    requestPosition(true, false);
+          setLocationError('Quá thời gian kết nối GPS vệ tinh. Vui lòng di chuyển ra nơi thoáng hơn và bấm "Thử lại".');
+        } else {
+          setPermissionDenied(false);
+          setLocationError('Không thể bắt được tín hiệu GPS vệ tinh. Hãy bật "Vị trí chính xác" trên máy và thử lại.');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 30000,
+      },
+    );
   }, []);
 
   // Tự động lắng nghe khi người dùng bật lại quyền trên thanh địa chỉ URL
