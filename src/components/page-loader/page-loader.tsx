@@ -185,7 +185,7 @@ export const PageLoader: React.FC<PageLoaderProps> = ({ isVisible, title = 'Đan
               <path
                 fill="#5A949C"
                 stroke="none"
-                d="M0,60 C150,5 300,105 480,95 C620,85 750,10 900,20 C1050,30 1120,95 1200,60 L1200,160 L0,160 Z"
+                d=" "
               />
               {/* Chỉ kẻ viền ở mép cong đỉnh sóng, tuyệt đối không kẻ cạnh dọc */}
               <path

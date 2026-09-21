@@ -157,30 +157,33 @@ export const DepartmentShiftsSection: React.FC<DepartmentShiftsSectionProps> = (
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {shifts.map((shift) => {
-              const sType = shift.shiftType || shift.shift_type || '';
+              const sType = shift.shiftType || '';
               const typeInfo = SHIFT_TYPE_BADGES[sType] || {
                 label: sType || 'Khác',
                 variant: 'default',
               };
 
-              const startTime = (shift.startTime || shift.start_time || '--:--').slice(0, 5);
-              const endTime = (shift.endTime || shift.end_time || '--:--').slice(0, 5);
+              const startTime = (shift.startTime || '--:--').slice(0, 5);
+              const endTime = (shift.endTime || '--:--').slice(0, 5);
 
-              const workDays = (shift.workDays || shift.work_days || '')
+              const workDays = (shift.workDays || '')
                 .split(',')
-                .map((d) => d.trim())
+                .map((d: string) => d.trim())
                 .filter(Boolean);
 
-              const latitude = shift.workLatitude ?? shift.work_latitude;
-              const longitude = shift.workLongitude ?? shift.work_longitude;
-              const allowedDistance = shift.allowedDistance ?? shift.allowed_distance ?? 200;
+              const optionalWorkDays = (shift.optionalWorkDays || '')
+                .split(',')
+                .map((d: string) => d.trim())
+                .filter(Boolean);
+
+              const latitude = shift.workLatitude;
+              const longitude = shift.workLongitude;
+              const allowedDistance = shift.allowedDistance ?? 200;
 
               const exceptions =
                 shift.exceptions ||
                 shift.workShiftExceptions ||
                 shift.workShiftException ||
-                shift.work_shift_exceptions ||
-                shift.work_shift_exception ||
                 [];
 
               return (
@@ -222,15 +225,27 @@ export const DepartmentShiftsSection: React.FC<DepartmentShiftsSectionProps> = (
 
                     {/* Days */}
                     <div className="flex items-center gap-1 flex-wrap">
-                      {workDays.length > 0 ? (
-                        workDays.map((d) => (
-                          <span
-                            key={d}
-                            className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200"
-                          >
-                            {DAY_LABELS[d] || d}
-                          </span>
-                        ))
+                      {workDays.length > 0 || optionalWorkDays.length > 0 ? (
+                        <>
+                          {workDays.map((d: string) => (
+                            <span
+                              key={`m-${d}`}
+                              title="Bắt buộc"
+                              className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            >
+                              {DAY_LABELS[d] || d}
+                            </span>
+                          ))}
+                          {optionalWorkDays.map((d: string) => (
+                            <span
+                              key={`o-${d}`}
+                              title="Tùy chọn"
+                              className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200"
+                            >
+                              {DAY_LABELS[d] || d}*
+                            </span>
+                          ))}
+                        </>
                       ) : (
                         <span className="text-[11px] text-slate-400 italic">Chưa chọn ngày</span>
                       )}

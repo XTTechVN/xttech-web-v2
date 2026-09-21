@@ -227,8 +227,8 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         },
         {
           enableHighAccuracy,
-          timeout: enableHighAccuracy ? 8000 : 12000,
-          maximumAge: 0,
+          timeout: enableHighAccuracy ? 15000 : 20000,
+          maximumAge: 60000,
         },
       );
     };
