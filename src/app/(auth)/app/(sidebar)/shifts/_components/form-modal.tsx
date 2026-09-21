@@ -46,6 +46,7 @@ interface FormValues {
   department_id: number | string;
   shift_type: string;
   work_days: string[];
+  optional_work_days: string[];
   status: 'active' | 'inactive';
   work_latitude?: number | string;
   work_longitude?: number | string;
@@ -108,6 +109,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
       department_id: defaultDepartmentId || '',
       shift_type: 'full_day',
       work_days: ['2', '3', '4', '5', '6'],
+      optional_work_days: [],
       status: 'active',
       allowed_distance: 200,
       work_latitude: '',
@@ -143,30 +145,31 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
   }, [employeesData]);
 
   const selectedDays = watch('work_days') || [];
-  const shiftStatus = watch('status');
+  const selectedOptionalDays = watch('optional_work_days') || [];
 
   // Load initial data
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        const rawDays = initialData.workDays || initialData.work_days;
-        const days = rawDays ? rawDays.split(',').map((d) => d.trim()) : ['2', '3', '4', '5', '6'];
+        const rawDays = initialData.workDays;
+        const days = rawDays ? rawDays.split(',').map((d: string) => d.trim()).filter(Boolean) : ['2', '3', '4', '5', '6'];
+
+        const rawOptDays = initialData.optionalWorkDays;
+        const optDays = rawOptDays ? rawOptDays.split(',').map((d: string) => d.trim()).filter(Boolean) : [];
 
         const formatTime = (t?: string) => (t ? t.slice(0, 5) : '');
 
-        const startTime = initialData.startTime || initialData.start_time;
-        const endTime = initialData.endTime || initialData.end_time;
-        const sType = initialData.shiftType || initialData.shift_type || 'full_day';
-        const deptId = initialData.departmentId ?? initialData.department_id ?? defaultDepartmentId ?? '';
-        const lat = initialData.workLatitude ?? initialData.work_latitude ?? '';
-        const lng = initialData.workLongitude ?? initialData.work_longitude ?? '';
-        const dist = initialData.allowedDistance ?? initialData.allowed_distance ?? 200;
+        const startTime = initialData.startTime ;
+        const endTime = initialData.endTime ;
+        const sType = initialData.shiftType || 'full_day';
+        const deptId = initialData.departmentId ?? '';
+        const lat = initialData.workLatitude ?? '';
+        const lng = initialData.workLongitude ?? '';
+        const dist = initialData.allowedDistance ?? 200;
         const rawExceptions =
           initialData.exceptions ||
           initialData.workShiftExceptions ||
           initialData.workShiftException ||
-          initialData.work_shift_exceptions ||
-          initialData.work_shift_exception ||
           [];
 
         reset({
@@ -176,16 +179,17 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
           department_id: deptId,
           shift_type: sType,
           work_days: days,
+          optional_work_days: optDays,
           status: (initialData.status as 'active' | 'inactive') || 'active',
           work_latitude: lat,
           work_longitude: lng,
           allowed_distance: dist,
           exceptions: rawExceptions.map((ex: any) => ({
-            user_id: ex.userId || ex.user_id || '',
-            check_in: formatTime(ex.checkIn || ex.check_in),
-            check_out: formatTime(ex.checkOut || ex.check_out),
-            start_date: ex.startDate || ex.start_date || '',
-            end_date: ex.endDate || ex.end_date || '',
+            user_id: ex.userId || '',
+            check_in: formatTime(ex.checkIn),
+            check_out: formatTime(ex.checkOut),
+            start_date: ex.startDate || '',
+            end_date: ex.endDate || '',
           })),
         });
       } else {
@@ -196,6 +200,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
           department_id: defaultDepartmentId || '',
           shift_type: 'full_day',
           work_days: ['2', '3', '4', '5', '6'],
+          optional_work_days: [],
           status: 'active',
           allowed_distance: 200,
           work_latitude: '',
@@ -235,15 +240,34 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
 
   const isPending = isCreating || isUpdating;
 
-  // Xử lý toggle chọn ngày
-  const toggleDay = (day: string) => {
-    const current = new Set(selectedDays);
-    if (current.has(day)) {
-      current.delete(day);
+  // Xử lý toggle chọn ngày làm việc bắt buộc
+  const toggleMandatoryDay = (day: string) => {
+    const currentMandatory = new Set(selectedDays);
+    const currentOptional = new Set(selectedOptionalDays);
+
+    if (currentMandatory.has(day)) {
+      currentMandatory.delete(day);
     } else {
-      current.add(day);
+      currentMandatory.add(day);
+      currentOptional.delete(day);
     }
-    setValue('work_days', Array.from(current), { shouldValidate: true });
+    setValue('work_days', Array.from(currentMandatory), { shouldValidate: true });
+    setValue('optional_work_days', Array.from(currentOptional), { shouldValidate: true });
+  };
+
+  // Xử lý toggle chọn ngày làm việc tùy chọn
+  const toggleOptionalDay = (day: string) => {
+    const currentMandatory = new Set(selectedDays);
+    const currentOptional = new Set(selectedOptionalDays);
+
+    if (currentOptional.has(day)) {
+      currentOptional.delete(day);
+    } else {
+      currentOptional.add(day);
+      currentMandatory.delete(day);
+    }
+    setValue('work_days', Array.from(currentMandatory), { shouldValidate: true });
+    setValue('optional_work_days', Array.from(currentOptional), { shouldValidate: true });
   };
 
   // Lấy vị trí GPS hiện tại
@@ -269,28 +293,34 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
   };
 
   const onSubmit = (data: FormValues) => {
-    if (data.work_days.length === 0) {
-      toast.error('Vui lòng chọn ít nhất 1 ngày làm việc');
+    if (data.work_days.length === 0 && data.optional_work_days.length === 0) {
+      toast.error('Vui lòng chọn ít nhất 1 ngày làm việc (bắt buộc hoặc tùy chọn)');
       return;
     }
 
-    const payload: any = {
+    if (!data.department_id) {
+      toast.error('Vui lòng chọn phòng ban áp dụng');
+      return;
+    }
+
+    const payload: WorkShiftCreate = {
       name: data.name.trim(),
-      start_time: data.start_time.length === 5 ? `${data.start_time}:00` : data.start_time,
-      end_time: data.end_time.length === 5 ? `${data.end_time}:00` : data.end_time,
-      department_id: data.department_id ? Number(data.department_id) : null,
-      shift_type: data.shift_type,
-      work_days: data.work_days.sort().join(','),
+      startTime: data.start_time.length === 5 ? `${data.start_time}:00` : data.start_time,
+      endTime: data.end_time.length === 5 ? `${data.end_time}:00` : data.end_time,
+      departmentId: Number(data.department_id),
+      shiftType: data.shift_type,
+      workDays: data.work_days.length > 0 ? data.work_days.sort().join(',') : '',
+      optionalWorkDays: data.optional_work_days && data.optional_work_days.length > 0 ? data.optional_work_days.sort().join(',') : undefined,
       status: data.status,
-      work_latitude: data.work_latitude ? Number(data.work_latitude) : null,
-      work_longitude: data.work_longitude ? Number(data.work_longitude) : null,
-      allowed_distance: data.allowed_distance ? Number(data.allowed_distance) : 200,
-      work_shift_exceptions: data.exceptions.map((ex) => ({
-        user_id: ex.user_id,
-        check_in: ex.check_in.length === 5 ? `${ex.check_in}:00` : ex.check_in,
-        check_out: ex.check_out.length === 5 ? `${ex.check_out}:00` : ex.check_out,
-        start_date: ex.start_date,
-        end_date: ex.end_date,
+      workLatitude: data.work_latitude ? Number(data.work_latitude) : null,
+      workLongitude: data.work_longitude ? Number(data.work_longitude) : null,
+      allowedDistance: data.allowed_distance ? Number(data.allowed_distance) : 200,
+      workShiftExceptions: data.exceptions.map((ex) => ({
+        userId: ex.user_id,
+        checkIn: ex.check_in.length === 5 ? `${ex.check_in}:00` : ex.check_in,
+        checkOut: ex.check_out.length === 5 ? `${ex.check_out}:00` : ex.check_out,
+        startDate: ex.start_date,
+        endDate: ex.end_date,
       })),
     };
 
@@ -302,7 +332,13 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="xl"
+      className="m-2 md:max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+    >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 py-2">
         {/* Tên ca & Loại ca */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -351,19 +387,21 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
             <Controller
               control={control}
               name="department_id"
+              rules={{ required: 'Vui lòng chọn phòng ban áp dụng' }}
               render={({ field }) => (
                 <Select
-                  label="Áp dụng cho Phòng ban"
-                  placeholder="-- Toàn công ty / Chưa chỉ định --"
+                  label="Áp dụng cho Phòng ban *"
+                  placeholder="-- Chọn phòng ban áp dụng --"
                   options={departmentOptions}
                   value={field.value}
                   onChange={(e) => field.onChange(e.target.value)}
+                  error={errors.department_id?.message}
                 />
               )}
             />
           ) : (
             <Input
-              label="Phòng ban"
+              label="Phòng ban *"
               value={currentDepartmentName}
               disabled
               className="bg-gray-100 cursor-not-allowed font-medium text-slate-700"
@@ -388,41 +426,84 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
           </div>
         </div>
 
-        {/* Ngày làm việc trong tuần */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-gray-700 select-none">
-            Ngày làm việc trong tuần *
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {DAYS_OF_WEEK.map((d) => {
-              const isSelected = selectedDays.includes(d.value);
-              return (
-                <button
-                  type="button"
-                  key={d.value}
-                  onClick={() => toggleDay(d.value)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 border cursor-pointer select-none ${
-                    isSelected
-                      ? 'bg-primary text-white border-primary shadow-xs'
-                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  {d.label}
-                </button>
-              );
-            })}
+        {/* Cấu hình ngày làm việc: Chia làm 2 cột Bắt buộc & Tùy chọn */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Cột 1: Ngày làm việc bắt buộc */}
+          <div className="flex flex-col justify-between gap-2.5 p-4 bg-slate-50/80 border border-slate-200 rounded-xl">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <label className="text-xs sm:text-sm font-semibold text-slate-800 select-none flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                  Ngày làm việc bắt buộc *
+                </label>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Nhân viên vắng mặt không phép nếu không đi làm
+              </p>
+            </div>
+            <div className="grid grid-cols-7 gap-2 pt-1">
+              {DAYS_OF_WEEK.map((d) => {
+                const isSelected = selectedDays.includes(d.value);
+                return (
+                  <button
+                    type="button"
+                    key={d.value}
+                    onClick={() => toggleMandatoryDay(d.value)}
+                    className={`py-2 text-center rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150 border cursor-pointer select-none ${
+                      isSelected
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedDays.length === 0 && selectedOptionalDays.length === 0 && (
+              <span className="text-xs text-red-500">Vui lòng chọn ít nhất 1 ngày làm việc</span>
+            )}
           </div>
-          {selectedDays.length === 0 && (
-            <span className="text-xs text-red-500">Vui lòng chọn ít nhất 1 ngày</span>
-          )}
+
+          {/* Cột 2: Ngày làm việc tùy chọn */}
+          <div className="flex flex-col justify-between gap-2.5 p-4 bg-slate-50/80 border border-slate-200 rounded-xl">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <label className="text-xs sm:text-sm font-semibold text-slate-800 select-none flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                  Ngày làm việc tùy chọn
+                </label>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Đi làm vẫn tính công, không đi làm không bị phạt
+              </p>
+            </div>
+            <div className="grid grid-cols-7 gap-2 pt-1">
+              {DAYS_OF_WEEK.map((d) => {
+                const isSelected = selectedOptionalDays.includes(d.value);
+                return (
+                  <button
+                    type="button"
+                    key={d.value}
+                    onClick={() => toggleOptionalDay(d.value)}
+                    className={`py-2 text-center rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150 border cursor-pointer select-none ${
+                      isSelected
+                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Cấu hình GPS Chấm công */}
         <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="text-slate-800 font-semibold text-sm">
-              <span>Tọa độ GPS & Bán kính Chấm công</span>
-            </div>
+            <span className="text-slate-800 font-semibold text-sm">Tọa độ GPS & Bán kính Chấm công</span>
             <Button
               type="button"
               variant="outline"
@@ -435,7 +516,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
             <Input
               label="Vĩ độ (Latitude)"
               type="number"
@@ -451,7 +532,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
               {...register('work_longitude')}
             />
             <Input
-              label="Bán kính cho phép (mét)"
+              label="Bán kính (mét)"
               type="number"
               placeholder="200"
               {...register('allowed_distance')}
@@ -462,8 +543,9 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
         {/* Ngoại lệ ca làm việc (WorkShiftException) */}
         <div className="border border-slate-200 rounded-xl p-4 bg-white flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="text-slate-800 font-semibold text-sm">
-              <span>Ngoại lệ nhân viên (Giờ làm riêng biệt)</span>
+            <div>
+              <span className="text-slate-800 font-semibold text-sm">Ngoại lệ nhân viên (Giờ làm riêng biệt)</span>
+              <p className="text-xs text-gray-500">Áp dụng khung giờ check-in/out riêng cho từng cá nhân</p>
             </div>
             <Button
               type="button"
@@ -506,46 +588,51 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <Controller
-                      control={control}
-                      name={`exceptions.${idx}.user_id`}
-                      rules={{ required: 'Vui lòng chọn nhân viên' }}
-                      render={({ field: uField }) => (
-                        <Select
-                          label="Nhân viên *"
-                          placeholder="-- Chọn nhân viên --"
-                          options={userOptions}
-                          value={uField.value}
-                          onChange={(e) => uField.onChange(e.target.value)}
-                        />
-                      )}
-                    />
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+                    <div className="md:col-span-4">
+                      <Controller
+                        control={control}
+                        name={`exceptions.${idx}.user_id`}
+                        rules={{ required: 'Vui lòng chọn nhân viên' }}
+                        render={({ field: uField }) => (
+                          <Select
+                            label="Nhân viên *"
+                            placeholder="-- Chọn nhân viên --"
+                            options={userOptions}
+                            value={uField.value}
+                            onChange={(e) => uField.onChange(e.target.value)}
+                          />
+                        )}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
                       <Input
                         label="Giờ vào"
                         type="time"
                         {...register(`exceptions.${idx}.check_in`, { required: true })}
                       />
+                    </div>
+                    <div className="md:col-span-2">
                       <Input
                         label="Giờ ra"
                         type="time"
                         {...register(`exceptions.${idx}.check_out`, { required: true })}
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      label="Từ ngày"
-                      type="date"
-                      {...register(`exceptions.${idx}.start_date`, { required: true })}
-                    />
-                    <Input
-                      label="Đến ngày"
-                      type="date"
-                      {...register(`exceptions.${idx}.end_date`, { required: true })}
-                    />
+                    <div className="md:col-span-2">
+                      <Input
+                        label="Từ ngày"
+                        type="date"
+                        {...register(`exceptions.${idx}.start_date`, { required: true })}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Input
+                        label="Đến ngày"
+                        type="date"
+                        {...register(`exceptions.${idx}.end_date`, { required: true })}
+                      />
+                    </div>
                   </div>
                 </div>
               ))}

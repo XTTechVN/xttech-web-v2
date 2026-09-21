@@ -112,31 +112,35 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
   };
 
   const getShiftType = (row: WorkShift) => {
-    return row.shiftType || row.shift_type || '';
+    return row.shiftType || '';
   };
 
   const getWorkDays = (row: WorkShift) => {
-    return row.workDays || row.work_days || '';
+    return row.workDays || '';
+  };
+
+  const getOptionalWorkDays = (row: WorkShift) => {
+    return row.optionalWorkDays || '';
   };
 
   const getStartTime = (row: WorkShift) => {
-    return row.startTime || row.start_time || '';
+    return row.startTime || '';
   };
 
   const getEndTime = (row: WorkShift) => {
-    return row.endTime || row.end_time || '';
+    return row.endTime || '';
   };
 
   const getLatitude = (row: WorkShift) => {
-    return row.workLatitude ?? row.work_latitude;
+    return row.workLatitude;
   };
 
   const getLongitude = (row: WorkShift) => {
-    return row.workLongitude ?? row.work_longitude;
+    return row.workLongitude;
   };
 
   const getAllowedDistance = (row: WorkShift) => {
-    return row.allowedDistance ?? row.allowed_distance ?? 200;
+    return row.allowedDistance ?? 200;
   };
 
   const getExceptions = (row: WorkShift) => {
@@ -144,27 +148,36 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
       row.exceptions ||
       row.workShiftExceptions ||
       row.workShiftException ||
-      row.work_shift_exceptions ||
-      row.work_shift_exception ||
       []
     );
   };
 
   const getDepartmentId = (row: WorkShift) => {
-    return row.departmentId ?? row.department_id;
+    return row.departmentId;
   };
 
-  const renderDaysBadge = (workDays?: string) => {
-    if (!workDays) return <span className="text-gray-400 text-xs">Chưa cấu hình</span>;
-    const days = workDays.split(',').map((d) => d.trim());
+  const renderDaysBadge = (workDays?: string, optionalDays?: string) => {
+    if (!workDays && !optionalDays) return <span className="text-gray-400 text-xs">Chưa cấu hình</span>;
+    const mandatoryDays = workDays ? workDays.split(',').map((d) => d.trim()).filter(Boolean) : [];
+    const optionalDaysList = optionalDays ? optionalDays.split(',').map((d) => d.trim()).filter(Boolean) : [];
     return (
       <div className="flex flex-wrap gap-1">
-        {days.map((d) => (
+        {mandatoryDays.map((d) => (
           <span
-            key={d}
-            className="px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
+            key={`m-${d}`}
+            title="Bắt buộc"
+            className="px-1.5 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
           >
             {DAY_LABELS[d] || d}
+          </span>
+        ))}
+        {optionalDaysList.map((d) => (
+          <span
+            key={`o-${d}`}
+            title="Tùy chọn (không bắt buộc)"
+            className="px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200"
+          >
+            {DAY_LABELS[d] || d}*
           </span>
         ))}
       </div>
@@ -223,8 +236,8 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
     {
       key: 'work_days',
       label: 'Ngày làm việc',
-      minWidth: '180px',
-      cell: (row: WorkShift) => renderDaysBadge(getWorkDays(row)),
+      minWidth: '200px',
+      cell: (row: WorkShift) => renderDaysBadge(getWorkDays(row), getOptionalWorkDays(row)),
     },
   ];
 
@@ -328,7 +341,7 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({ departmentId }) => {
         </div>
 
         <div className="flex items-center justify-between gap-2 border-t border-gray-100/50 pt-2.5">
-          <div className="flex-1 min-w-0">{renderDaysBadge(getWorkDays(row))}</div>
+          <div className="flex-1 min-w-0">{renderDaysBadge(getWorkDays(row), getOptionalWorkDays(row))}</div>
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
