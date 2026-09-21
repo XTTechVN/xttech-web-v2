@@ -8,14 +8,6 @@ export interface WorkShiftException {
   endDate: string;
   createdAt?: string;
   updatedAt?: string;
-
-  // Fallback aliases for snake_case
-  work_shift_id?: number;
-  user_id?: string;
-  check_in?: string;
-  check_out?: string;
-  start_date?: string;
-  end_date?: string;
 }
 
 export type ShiftType = 'morning' | 'afternoon' | 'full_day' | 'night';
@@ -27,7 +19,8 @@ export interface WorkShift {
   endTime: string;
   departmentId?: number | null;
   shiftType?: ShiftType | string;
-  workDays?: string; // e.g. "2,3,4,5,6,7,8"
+  workDays?: string; // e.g. "2,3,4,5,6,7"
+  optionalWorkDays?: string; // e.g. "8"
   status: 'active' | 'inactive' | string;
   workLatitude?: number | null;
   workLongitude?: number | null;
@@ -43,20 +36,6 @@ export interface WorkShift {
     name: string;
     code?: string;
   };
-
-  // Fallback aliases for snake_case
-  start_time?: string;
-  end_time?: string;
-  department_id?: number | null;
-  shift_type?: string;
-  work_days?: string;
-  work_latitude?: number | null;
-  work_longitude?: number | null;
-  allowed_distance?: number;
-  work_shift_exception?: WorkShiftException[];
-  work_shift_exceptions?: WorkShiftException[];
-  created_at?: string;
-  updated_at?: string;
 }
 
 export interface WorkShiftCreate {
@@ -66,22 +45,12 @@ export interface WorkShiftCreate {
   departmentId?: number | null;
   shiftType?: string;
   workDays?: string;
+  optionalWorkDays?: string;
   status?: string;
   workLatitude?: number | null;
   workLongitude?: number | null;
   allowedDistance?: number;
   workShiftExceptions?: WorkShiftException[];
-
-  // Fallback snake_case
-  start_time?: string;
-  end_time?: string;
-  department_id?: number | null;
-  shift_type?: string;
-  work_days?: string;
-  work_latitude?: number | null;
-  work_longitude?: number | null;
-  allowed_distance?: number;
-  work_shift_exceptions?: WorkShiftException[];
 }
 
 export interface WorkShiftUpdate {
@@ -91,22 +60,12 @@ export interface WorkShiftUpdate {
   departmentId?: number | null;
   shiftType?: string;
   workDays?: string;
+  optionalWorkDays?: string;
   status?: string;
   workLatitude?: number | null;
   workLongitude?: number | null;
   allowedDistance?: number;
   workShiftExceptions?: WorkShiftException[];
-
-  // Fallback snake_case
-  start_time?: string;
-  end_time?: string;
-  department_id?: number | null;
-  shift_type?: string;
-  work_days?: string;
-  work_latitude?: number | null;
-  work_longitude?: number | null;
-  allowed_distance?: number;
-  work_shift_exceptions?: WorkShiftException[];
 }
 
 export interface WorkShiftQueryParams {
@@ -116,8 +75,4 @@ export interface WorkShiftQueryParams {
   departmentId?: number;
   shiftType?: string;
   status?: string;
-
-  // Fallback snake_case
-  department_id?: number;
-  shift_type?: string;
 }
