@@ -1,4 +1,5 @@
 import type { AccessoryCategory } from './accessory-category';
+import type { Brand } from './brand';
 
 export interface AccessoryUnitConfig {
   label: string;
@@ -19,8 +20,24 @@ export const ACCESSORY_UNIT_CONFIG: Record<string, AccessoryUnitConfig> = {
     className: 'bg-indigo-50 text-indigo-700 border-indigo-200/70',
   },
   pair: {
-    label: 'Đôi',
+    label: 'Đôi / Cặp',
     className: 'bg-purple-50 text-purple-700 border-purple-200/70',
+  },
+  roll: {
+    label: 'Cuộn',
+    className: 'bg-amber-50 text-amber-700 border-amber-200/70',
+  },
+  box: {
+    label: 'Hộp',
+    className: 'bg-sky-50 text-sky-700 border-sky-200/70',
+  },
+  meter: {
+    label: 'Mét',
+    className: 'bg-rose-50 text-rose-700 border-rose-200/70',
+  },
+  sheet: {
+    label: 'Tấm',
+    className: 'bg-orange-50 text-orange-700 border-orange-200/70',
   },
 };
 
@@ -28,7 +45,11 @@ export const ACCESSORY_UNIT_MAP: Record<string, string> = {
   set: 'Bộ',
   pcs: 'Cái',
   unit: 'Chiếc',
-  pair: 'Đôi',
+  pair: 'Đôi / Cặp',
+  roll: 'Cuộn',
+  box: 'Hộp',
+  meter: 'Mét',
+  sheet: 'Tấm',
 };
 
 export const getAccessoryUnitConfig = (unit: string | null | undefined): AccessoryUnitConfig => {
@@ -52,18 +73,33 @@ export const formatAccessoryUnit = (unit: string | null | undefined): string => 
   return ACCESSORY_UNIT_MAP[unit.toLowerCase()] || unit;
 };
 
+export const ACCESSORY_COLOR_MAP: Record<string, string> = {
+  black: 'Đen tuyền',
+  white: 'Trắng sứ',
+  silver: 'Bạc ánh kim',
+  gold: 'Vàng champagne',
+  grey: 'Xám ghi',
+  gray: 'Xám ghi',
+  brown: 'Nâu cafe',
+};
+
 export interface Accessory {
   id: number;
   code: string | null;
   categoryId?: number | null;
   category?: AccessoryCategory | null;
+  brandId?: number | null;
+  brand?: Brand | null;
   name: string;
   specification: string | null;
   unit: string | null;
+  unitPrice?: number;
+  color?: string | null;
   costPrice: number;
   retailPrice: number;
   salePrice: number;
   imagePath: string | null;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -72,30 +108,41 @@ export interface AccessoryCreate {
   name: string;
   code?: string;
   categoryId?: number | null;
+  brandId?: number | null;
   specification?: string;
   unit?: string;
+  unitPrice?: number;
+  color?: string;
   costPrice?: number;
   retailPrice?: number;
   salePrice?: number;
   imagePath?: string;
+  isActive?: boolean;
 }
 
 export interface AccessoryUpdate {
   name?: string;
   code?: string;
   categoryId?: number | null;
+  brandId?: number | null;
   specification?: string;
   unit?: string;
+  unitPrice?: number;
+  color?: string;
   costPrice?: number;
   retailPrice?: number;
   salePrice?: number;
   imagePath?: string;
+  isActive?: boolean;
 }
 
 export interface AccessoryQueryParams {
   search?: string;
   code?: string;
   unit?: string;
+  categoryId?: number;
+  brandId?: number;
+  isActive?: boolean;
   offset?: number;
   limit?: number;
   allowDeleted?: boolean;

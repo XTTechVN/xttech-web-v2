@@ -76,3 +76,12 @@ export * from './import-export';
 // Dashboard
 export * from './dashboard';
 
+// Aluminum & Profile Master Data
+export * from './brand';
+export * from './door-series';
+export * from './profile';
+export * from './glass';
+export * from './gasket';
+export * from './accessory-combo';
+
+
