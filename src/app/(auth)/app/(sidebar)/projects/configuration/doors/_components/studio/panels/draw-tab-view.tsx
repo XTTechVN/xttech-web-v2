@@ -8,12 +8,13 @@ import {
   FrameConfig,
   SashConfig,
   MullionInfo,
+  ColorSwatch,
 } from '../studio-types';
 import { ToolboxLeft } from './toolbox-left';
 import { CanvasCadView } from './canvas-cad-view';
 import { CellInspector } from './cell-inspector';
 import { BomSidebar } from '../bom-sidebar';
-import { DoorCalculateResponse } from '@/types';
+import { DoorCalculateResponse, Glass } from '@/types';
 
 interface DrawTabViewProps {
   w: number;
@@ -46,10 +47,12 @@ interface DrawTabViewProps {
   onCoupleFrame: (direction: 'vertical' | 'horizontal') => void;
   onChangeTab: (tab: 'frame' | 'sash') => void;
   onSelectCell: (id: string | null) => void;
-  onUpdateDimension: (target: 'w' | 'h' | 'cell', value: number, cellId?: string) => void;
+  onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'handleHeight', value: number, cellId?: string) => void;
   onUpdateSelectedCell: (updates: Partial<SceneCellNode>) => void;
   onSplitSelectedCell: (direction: 'vertical' | 'horizontal') => void;
   onMergeSelectedCell: () => void;
+  availableGlasses?: Glass[];
+  aluminumColors?: ColorSwatch[];
 }
 
 export const DrawTabView: React.FC<DrawTabViewProps> = ({
@@ -87,6 +90,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
   onUpdateSelectedCell,
   onSplitSelectedCell,
   onMergeSelectedCell,
+  availableGlasses,
+  aluminumColors,
 }) => {
   const [rightTab, setRightTab] = useState<'inspector' | 'bom'>('inspector');
 
@@ -116,6 +121,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
           onSplitMullion={onSplitMullion}
           onCoupleFrame={onCoupleFrame}
           onChangeTab={onChangeTab}
+          aluminumColors={aluminumColors}
         />
       </div>
 
@@ -176,6 +182,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
               onSplitCell={onSplitSelectedCell}
               onMergeCell={onMergeSelectedCell}
               onDeselect={() => onSelectCell(null)}
+              availableGlasses={availableGlasses}
+              onUpdateDimension={(target, val, cellId) => onUpdateDimension(target, val, cellId)}
             />
           ) : (
             <BomSidebar calcData={calcData} isLoading={isCalculating} />

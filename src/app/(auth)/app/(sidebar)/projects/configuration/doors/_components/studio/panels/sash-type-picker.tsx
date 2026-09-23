@@ -123,7 +123,7 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
     },
     {
       id: 'sliding',
-      name: 'Trượt lùa 2 cánh',
+      name: 'Cánh trượt lùa',
       renderSvg: () => (
         <svg viewBox="0 0 36 36" className="w-8 h-8">
           <rect x="3" y="3" width="30" height="30" fill="#955F20" stroke="#475569" strokeWidth="1" />

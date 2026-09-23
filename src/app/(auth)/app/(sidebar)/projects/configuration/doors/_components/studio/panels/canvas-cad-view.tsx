@@ -16,7 +16,7 @@ interface CanvasCadViewProps {
   onSelectCell: (cellId: string | null) => void;
   onSelectMullion?: (mullion: MullionInfo) => void;
   selectedMullionId?: string | null;
-  onUpdateDimension: (target: 'w' | 'h' | 'cell', value: number, cellId?: string) => void;
+  onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'handleHeight', value: number, cellId?: string) => void;
   frameConfig?: FrameConfig;
   sashConfig?: SashConfig;
 }
@@ -52,7 +52,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
 
   // Dimension Edit Dialog State
   const [editTarget, setEditTarget] = useState<{
-    type: 'w' | 'h' | 'cell';
+    type: 'w' | 'h' | 'cell' | 'handleHeight';
     cellId?: string;
     currentVal: number;
     title: string;
@@ -135,13 +135,27 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
     };
   }, [isDragging]);
 
-  const handleStartEdit = (target: 'w' | 'h' | 'cell', cellId?: string) => {
+  const handleOpenEdit = (target: 'w' | 'h' | 'cell' | 'handleHeight', cellId?: string) => {
     let initialVal = w;
     let title = 'Tổng chiều rộng (W)';
 
     if (target === 'h') {
       initialVal = h;
       title = 'Tổng chiều cao (H)';
+    } else if (target === 'handleHeight') {
+      const findCell = (node: SceneCellNode): SceneCellNode | null => {
+        if (node.id === cellId) return node;
+        if (node.children) {
+          for (const c of node.children) {
+            const found = findCell(c);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      const cNode = cellId ? findCell(rootCell) : null;
+      initialVal = cNode?.handleHeight || 800;
+      title = `Cao độ tim khóa từ đáy (mm)`;
     } else if (target === 'cell' && cellId) {
       // find leaf cell width
       const findCell = (node: SceneCellNode): SceneCellNode | null => {
@@ -267,7 +281,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
         }`}
       >
         <div
-          className="bg-white rounded-2xl shadow-xl border border-gray-200/90 p-3 w-full max-w-[500px] aspect-[500/500] flex items-center justify-center will-change-transform"
+          className="bg-white rounded-2xl shadow-xl border border-gray-200/90 p-4 w-full max-w-[860px] max-h-[640px] flex items-center justify-center will-change-transform"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: 'center center',
@@ -285,7 +299,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
             onSelectCell={onSelectCell}
             onSelectMullion={onSelectMullion}
             selectedMullionId={selectedMullionId}
-            onEditDimension={handleStartEdit}
+            onEditDimension={handleOpenEdit}
             frameConfig={frameConfig}
             sashConfig={sashConfig}
           />

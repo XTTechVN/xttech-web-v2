@@ -126,7 +126,6 @@ const Page = () => {
       <Table 
         onEditClick={handleOpenEditModal} 
         onDeleteClick={handleOpenDeleteModal} 
-        onAddClick={handleOpenCreateModal}
         onAddStudioClick={() => handleOpenStudio()}
         onStudioClick={(door) => handleOpenStudio(door)}
         selectedBrandId={selectedBrandId}
@@ -141,6 +140,7 @@ const Page = () => {
 
       {/* Modal Zone */}
       <DoorStudioModal
+        key={studioDoor ? `studio-${studioDoor.id}` : 'studio-new'}
         isOpen={isStudioOpen}
         door={studioDoor}
         onClose={() => {
