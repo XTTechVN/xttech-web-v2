@@ -4,6 +4,7 @@ import React from 'react';
 import {
   FrameShape,
   SashOpenType,
+  ColorSwatch,
   ALUMINUM_PALETTE,
   HARDWARE_PALETTE,
 } from '../studio-types';
@@ -33,6 +34,7 @@ interface ToolboxLeftProps {
   onSplitMullion: (count: number, direction: 'vertical' | 'horizontal') => void;
   onCoupleFrame: (direction: 'vertical' | 'horizontal') => void;
   onChangeTab: (tab: 'frame' | 'sash') => void;
+  aluminumColors?: ColorSwatch[];
 }
 
 export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
@@ -57,7 +59,13 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
   onSplitMullion,
   onCoupleFrame,
   onChangeTab,
+  aluminumColors,
 }) => {
+  const activeColorPalette = aluminumColors && aluminumColors.length > 0 ? aluminumColors : ALUMINUM_PALETTE;
+  const activeColor = activeColorPalette.find(
+    (c) => c.colorHex.toLowerCase() === aluminumColor.toLowerCase()
+  );
+
   return (
     <div className="flex flex-col h-full overflow-y-auto space-y-3.5 p-3.5 text-xs select-none pr-2 bg-slate-50/50">
       {/* 1. Kích thước (mm) & Màu sắc */}
@@ -90,10 +98,17 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
 
         {/* Màu nhôm */}
         <div>
-          <div className="text-[11px] text-gray-600 font-medium mb-1.5">Màu nhôm</div>
+          <div className="flex items-center justify-between text-[11px] text-gray-600 font-medium mb-1.5">
+            <span>Màu nhôm</span>
+            {activeColor && (
+              <span className="text-[10px] text-blue-600 font-semibold truncate max-w-[130px]" title={activeColor.name}>
+                {activeColor.name}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1.5 flex-wrap">
-            {ALUMINUM_PALETTE.map((col) => {
-              const isSelected = aluminumColor === col.colorHex;
+            {activeColorPalette.map((col) => {
+              const isSelected = aluminumColor.toLowerCase() === col.colorHex.toLowerCase();
               return (
                 <button
                   key={col.code}

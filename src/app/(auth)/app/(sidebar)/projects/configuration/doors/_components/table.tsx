@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Columns, Plus, Layers, Sparkles, Filter, X } from 'lucide-react';
+import { Columns, Layers, Sparkles, Filter, X } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
 import { Button } from '@/components';
 import { useQueryParam } from '@/hooks';
@@ -10,11 +10,12 @@ import { getDoors, getBrands, getDoorSeriesList } from '@/actions';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { getFileUrl } from '@/utils';
+import { DoorCadRenderer } from './studio/cad-engine/door-cad-renderer';
 
 interface TableProps {
   onEditClick: (door: Door) => void;
   onDeleteClick: (door: Door) => void;
-  onAddClick: () => void;
+  onAddClick?: () => void;
   onViewBOMClick: (door: Door) => void;
   onStudioClick: (door: Door) => void;
   onAddStudioClick: () => void;
@@ -107,6 +108,8 @@ const Table: React.FC<TableProps> = ({
       cell: (row: Door) => {
         const primaryImgPath = row.images?.find((img) => img.isPrimary)?.imagePath || row.imagePath;
         const imgSrc = row.imageB64 || (primaryImgPath ? getFileUrl(primaryImgPath) : null);
+        const hasStudioDesign = Boolean(row.systemConfig?.rootCell);
+
         return (
           <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-white flex items-center justify-center p-0.5 shadow-2xs">
             {imgSrc ? (
@@ -115,6 +118,22 @@ const Table: React.FC<TableProps> = ({
                 alt={row.name}
                 className="w-full h-full object-contain"
               />
+            ) : hasStudioDesign ? (
+              <div className="w-full h-full flex items-center justify-center p-0.5 pointer-events-none">
+                <DoorCadRenderer
+                  hideDimensions={true}
+                  w={row.systemConfig?.w || 1600}
+                  h={row.systemConfig?.h || 2300}
+                  aluminumColor={row.systemConfig?.aluminumColor || '#334155'}
+                  hardwareColor={row.systemConfig?.hardwareColor || '#0f172a'}
+                  frameShape={row.systemConfig?.frameShape || 'rectangular'}
+                  rootCell={row.systemConfig!.rootCell}
+                  frameConfig={row.systemConfig?.frameConfig}
+                  sashConfig={row.systemConfig?.sashConfig}
+                  selectedCellId={null}
+                  onSelectCell={() => {}}
+                />
+              </div>
             ) : (
               <Columns className="w-5 h-5 text-gray-400" />
             )}
@@ -309,15 +328,6 @@ const Table: React.FC<TableProps> = ({
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-2.5 text-xs shrink-0 cursor-pointer"
-            leftIcon={<Plus className="w-3.5 h-3.5" />}
-            onClick={onAddClick}
-          >
-            Thêm thủ công
-          </Button>
           <Button
             variant="primary"
             size="sm"

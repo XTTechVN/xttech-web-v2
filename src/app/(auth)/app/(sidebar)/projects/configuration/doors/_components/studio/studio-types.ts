@@ -44,8 +44,13 @@ export interface SceneCellNode {
   beadType?: BeadType;
   beadJoint?: BeadJointType;
   splitDirection?: 'vertical' | 'horizontal';
-  splitType?: 'mullion' | 'coupling';
+  splitType?: 'mullion' | 'coupling' | 'sash_pair';
   children?: SceneCellNode[];
+  hasLock?: boolean;
+  handleHeight?: number;
+  handleType?: 'lever' | 'pull' | 'crescent' | 'multipoint';
+  mullionProfileId?: number;
+  mullionCutType?: MullionCutType;
 }
 
 export interface ColorSwatch {

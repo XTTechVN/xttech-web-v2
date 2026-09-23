@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
+import { Glass } from '@/types';
 import { SceneCellNode, PaneType, BeadType, BeadJointType } from '../studio-types';
-import { ShieldCheck, Grid, Sparkles, Layers, SlidersHorizontal, Check } from 'lucide-react';
+import { ShieldCheck, Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock } from 'lucide-react';
 
 interface CellInspectorProps {
   selectedCell: SceneCellNode | null;
@@ -10,6 +11,8 @@ interface CellInspectorProps {
   onSplitCell: (direction: 'vertical' | 'horizontal') => void;
   onMergeCell: () => void;
   onDeselect: () => void;
+  availableGlasses?: Glass[];
+  onUpdateDimension?: (target: 'cell', value: number, cellId: string) => void;
 }
 
 const GLASS_OPTIONS = [
@@ -28,7 +31,37 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   onSplitCell,
   onMergeCell,
   onDeselect,
+  availableGlasses,
+  onUpdateDimension,
 }) => {
+  const [localW, setLocalW] = React.useState<number>(selectedCell?.w ?? 0);
+  const [localH, setLocalH] = React.useState<number>(selectedCell?.h ?? 0);
+
+  React.useEffect(() => {
+    if (selectedCell) {
+      setLocalW(selectedCell.w);
+      setLocalH(selectedCell.h);
+    }
+  }, [selectedCell?.id, selectedCell?.w, selectedCell?.h]);
+
+  const handleApplyW = () => {
+    if (onUpdateDimension && selectedCell && localW > 0 && localW !== selectedCell.w) {
+      onUpdateDimension('cell', localW, selectedCell.id);
+    }
+  };
+
+  const handleApplyH = () => {
+    if (onUpdateDimension && selectedCell && localH > 0 && localH !== selectedCell.h) {
+      onUpdateDimension('cell', localH, selectedCell.id);
+    }
+  };
+
+  // Ưu tiên dùng data từ DB, fallback về hardcode khi chưa fetch xong
+  // Dùng object {key, label} để key luôn unique (id từ DB, index khi fallback)
+  const glassOptions =
+    availableGlasses && availableGlasses.length > 0
+      ? availableGlasses.map((g) => ({ key: String(g.id), label: g.name }))
+      : GLASS_OPTIONS.map((name, idx) => ({ key: `fallback-${idx}`, label: name }));
   if (!selectedCell) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center text-gray-400 select-none">
@@ -68,11 +101,41 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
       </div>
 
       {/* 2. Cell Dimensions */}
-      <div className="p-2.5 rounded-xl bg-blue-50/60 border border-blue-100 flex items-center justify-between">
-        <span className="text-blue-700 font-medium">Kích thước ô:</span>
-        <span className="font-mono font-bold text-blue-900 text-xs">
-          {selectedCell.w} × {selectedCell.h} mm
-        </span>
+      <div className="p-2.5 rounded-xl bg-blue-50/60 border border-blue-100 space-y-2">
+        <div className="flex items-center justify-between text-blue-700 font-medium">
+          <span>Kích thước ô cánh:</span>
+          <span className="font-mono font-bold text-blue-900 text-xs">
+            {selectedCell.w} × {selectedCell.h} mm
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 pt-0.5">
+          <div>
+            <label className="text-[10px] text-blue-600 font-semibold block mb-0.5">Rộng W (mm)</label>
+            <input
+              type="number"
+              value={localW}
+              onChange={(e) => setLocalW(Number(e.target.value))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleApplyW();
+              }}
+              onBlur={handleApplyW}
+              className="w-full h-7 px-2 font-mono font-bold text-xs rounded-lg border border-blue-200 bg-white text-blue-950 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] text-blue-600 font-semibold block mb-0.5">Cao H (mm)</label>
+            <input
+              type="number"
+              value={localH}
+              onChange={(e) => setLocalH(Number(e.target.value))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleApplyH();
+              }}
+              onBlur={handleApplyH}
+              className="w-full h-7 px-2 font-mono font-bold text-xs rounded-lg border border-blue-200 bg-white text-blue-950 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+        </div>
       </div>
 
       {/* 3. Kiểu mở riêng ô này */}
@@ -82,7 +145,19 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
         </div>
         <select
           value={selectedCell.sashType || 'fixed'}
-          onChange={(e) => onUpdateCell({ sashType: e.target.value as any })}
+          onChange={(e) => {
+            const newSashType = e.target.value as any;
+            const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down', 'sliding'].includes(newSashType);
+            const updates: Record<string, unknown> = { sashType: newSashType };
+            if (sashHasHandle && selectedCell.hasLock === undefined) {
+              updates.hasLock = true;
+              updates.handleHeight = selectedCell.handleHeight ?? 800;
+              updates.handleType = selectedCell.handleType ?? 'lever';
+            } else if (!sashHasHandle) {
+              updates.hasLock = false;
+            }
+            onUpdateCell(updates as any);
+          }}
           className="w-full h-8 px-2.5 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 font-medium"
         >
           <option value="fixed">Vách kính cố định (Fix)</option>
@@ -94,6 +169,65 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
           <option value="sliding">Cánh trượt lùa</option>
         </select>
       </div>
+
+      {/* 3.1. Cấu hình Khóa & Cao độ tay nắm */}
+      {selectedCell.sashType && selectedCell.sashType !== 'fixed' && (
+        <div className="space-y-2 p-2.5 rounded-xl bg-orange-50/70 border border-orange-200/80">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-gray-800 font-semibold text-xs">
+              <Lock size={13} className="text-orange-600" />
+              <span>Khóa & Phụ kiện</span>
+            </div>
+            <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-medium text-slate-700">
+              <input
+                type="checkbox"
+                checked={selectedCell.hasLock === true}
+                onChange={(e) => onUpdateCell({ hasLock: e.target.checked })}
+                className="w-3.5 h-3.5 rounded text-orange-600 focus:ring-orange-500 cursor-pointer"
+              />
+              <span>Lắp khóa</span>
+            </label>
+          </div>
+
+          {selectedCell.hasLock === true && (
+            <div className="space-y-2 pt-1">
+              <div>
+                <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
+                  <span>Cao độ tim khóa:</span>
+                  <span className="font-mono font-bold text-orange-700">
+                    {selectedCell.handleHeight ?? 800} mm
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={selectedCell.handleHeight ?? 800}
+                    onChange={(e) => onUpdateCell({ handleHeight: Number(e.target.value) })}
+                    className="w-full h-8 px-2.5 pr-8 font-mono font-bold text-xs bg-white rounded-lg border border-orange-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-slate-900"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-gray-400">
+                    mm
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] text-gray-600 font-medium block mb-1">Kiểu tay nắm</label>
+                <select
+                  value={selectedCell.handleType || 'lever'}
+                  onChange={(e) => onUpdateCell({ handleType: e.target.value as any })}
+                  className="w-full h-8 px-2 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-orange-500 font-medium text-slate-800"
+                >
+                  <option value="lever">Tay nắm gạt cửa đi (Lever handle)</option>
+                  <option value="multipoint">Tay gạt đa điểm (Cửa sổ)</option>
+                  <option value="pull">Tay nắm kéo chữ D</option>
+                  <option value="crescent">Khóa bán nguyệt</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 4. Loại vật liệu tấm (Pane Type) */}
       <div className="space-y-2">
@@ -132,13 +266,13 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
             <span>Chủng loại kính</span>
           </div>
           <select
-            value={selectedCell.glassName || GLASS_OPTIONS[1]}
+            value={selectedCell.glassName || glassOptions[1]?.label || glassOptions[0]?.label}
             onChange={(e) => onUpdateCell({ glassName: e.target.value })}
             className="w-full h-8 px-2.5 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 font-medium"
           >
-            {GLASS_OPTIONS.map((g) => (
-              <option key={g} value={g}>
-                {g}
+            {glassOptions.map(({ key, label }) => (
+              <option key={key} value={label}>
+                {label}
               </option>
             ))}
           </select>
