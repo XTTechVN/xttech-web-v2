@@ -8,7 +8,6 @@ import { useQueryParam } from '@/hooks';
 import { Accessory, getAccessoryUnitConfig } from '@/types';
 import { getAccessories } from '@/actions';
 import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
 
 import { formatCurrency, getFileUrl } from '@/utils';
 
@@ -20,7 +19,6 @@ interface TableProps {
 }
 
 const Table = ({ onEditClick, onDeleteClick, onAddClick, onCategoryClick }: TableProps) => {
-  const router = useRouter();
   const [search, setSearch] = useQueryParam('search');
 
   const fetcher = async ({ offset, limit }: { offset: number; limit: number }) => {
@@ -114,7 +112,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, onCategoryClick }: Tabl
       minWidth: '120px',
       cell: (row: Accessory) => (
         <TableAction
-          onView={() => router.push(`/app/projects/configuration/accessories/${row.id}`)}
+          onView={() => onEditClick(row)}
           onEdit={() => onEditClick(row)}
           onDelete={() => onDeleteClick(row)}
         />
@@ -126,7 +124,7 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, onCategoryClick }: Tabl
     return (
       <div
         key={row.id || index}
-        onClick={() => router.push(`/app/projects/configuration/accessories/${row.id}`)}
+        onClick={() => onEditClick(row)}
         className="p-4 rounded-xl border border-primary/10 bg-white flex flex-col gap-3 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 cursor-pointer"
       >
         <div className="flex items-start gap-3">

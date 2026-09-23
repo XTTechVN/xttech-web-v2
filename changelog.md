@@ -2,6 +2,28 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-23
+
+### Fixed & Enhanced (Windova CAD Studio 2.0 - Proportional Rendering & Canvas Pan/Zoom)
+- **Cửa Sổ Thiết Lập Thông Số Đố / Khung Tương Tác Chuẩn Windova ([`mullion-inspector-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/mullion-inspector-modal.tsx), [`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx), [`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx)):**
+  - **Tương tác trực tiếp trên bản vẽ CAD:** Người dùng có thể click chuột trực tiếp vào thanh đố khung (mullion) bất kỳ trên canvas. Khu vực hitbox được mở rộng thông minh (+12px) kèm hiệu ứng hover viền vàng hổ phách (`#f59e0b`) giúp thao tác nhấp chính xác và tiện lợi.
+  - **Modal "Kích thước khoang" 2 tab chuẩn giao diện chuyên nghiệp:**
+    - **Tab Cơ bản:** Hiển thị tổng kích thước khoang liên quan, ô nhập kích thước phân đoạn (mm) tự động cân chỉnh độ rộng khoang liền kề để bảo toàn tổng kích thước; dropdown chọn/override thanh profile đố nhôm từ danh mục hệ nhôm đang chọn; nút chuyển nhanh kiểu cắt (`Lọt khung →`, `Phủ khung →`, `Cắt mòi 45° →`, `Vuông 90° →`); nút **Xóa đố này** hỗ trợ gộp 2 khoang liền kề trở lại thành 1 ô kính hoàn chỉnh hoặc trả về ô cha ban đầu.
+    - **Tab Nâng cao:** Hiển thị hướng dẫn quy tắc giao cắt đố *Local transpose*, hỗ trợ định hình đầu thao tác, chọn kiểu cắt mòi/vuông và hướng ưu tiên tại các nút giao cắt đố chữ T / chữ Thập.
+  - **Bảo toàn dữ liệu theo chuẩn camelCase:** Tích hợp `MullionInfo` và `MullionCutType` vào cấu trúc node của `systemConfig`, cập nhật mượt mà vào lịch sử Undo/Redo của Studio.
+- **Chuẩn Hóa Tỷ Lệ Kích Thước Hình Học Ô Cửa Theo Thông Số Kỹ Thuật Thực Tế ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+  - **Khắc phục lỗi hiển thị sai lệch tỉ lệ kích thước:** Trước đây khi chia đố (`mullion`) hoặc tách khung (`coupling`), hàm `traverseTree` chia đều cứng `availSpace / count` khiến các ô có số đo khác nhau (ví dụ: ô trên 500mm, ô dưới 1100mm) bị vẽ bằng nhau 50% - 50%.
+  - **Tính toán theo tỷ lệ trọng số thực tế:** Tính tổng trọng số `totalWeight` của các ô con theo `child.w` (nếu chia dọc) hoặc `child.h` (nếu chia ngang); tỷ lệ vẽ pixel trên canvas co giãn chính xác 100% theo số đo mm thực tế (ô 1100mm hiển thị cao hơn 2.2 lần so với ô 500mm).
+- **Bổ Sung Thước Đo Kích Thước Chiều Rộng Từng Cánh Cho Cửa 2 Cánh (`swing_double`) ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+  - **Tự động bóc tách phân đoạn kích thước:** Với các mẫu cửa hoặc ô chứa cánh mở quay đôi (`swing_double`), hệ thống tự động sinh 2 phân đoạn kích thước chiều rộng bằng nhau (ví dụ: `700` và `700` cho cửa tổng 1400mm).
+  - **Hiển thị tầng gióng thước đo đa tầng:** Thước đo phân đoạn của 2 cánh (`700 | 700`) được hiển thị rõ nét ở tầng trong của cạnh đáy, nằm phía trên thước đo tổng phủ bì (`1400`), đồng bộ hoàn hảo với cách gióng kích thước phân tầng của chiều cao (`500 | 1100` và `1600`) ở cạnh phải.
+- **Nâng Cấp Khung Nhìn CAD Canvas Chuẩn Figma / AutoCAD ([`canvas-cad-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/canvas-cad-view.tsx)):**
+  - **Scroll to Zoom (Lăn chuột phóng to / thu nhỏ):** Bắt sự kiện `wheel` không bị chặn bởi cuộn trang (`passive: false`), cho phép phóng to / thu nhỏ bản vẽ mượt mà từ 0.3x đến 3.5x.
+  - **Click & Drag Pan (Bấm giữ và kéo di chuyển khung nhìn):** Thêm trạng thái `pan = { x, y }`, hỗ trợ click chuột trái hoặc chuột giữa vào vùng trống ngoài cửa để kéo rê bản vẽ tự do trong không gian canvas 2D.
+  - **Bấm ra ngoài để tắt focus ô kính (Deselect on Outside Click):** Khi nhấp chuột vào nền canvas, khung bao ngoài hoặc vùng trống bên ngoài ô cửa (không phải thao tác kéo pan), hệ thống tự động hủy trạng thái chọn (`selectedCellId = null`), ẩn viền nét đứt focus và chuyển bảng `CellInspector` về trạng thái mặc định.
+  - **Con trỏ chuột trực quan:** Tự động chuyển đổi giữa `cursor-grab` (bàn tay mở) và `cursor-grabbing` (bàn tay nắm) khi đang kéo di chuyển; ưu tiên chọn ô kính khi nhấp trực tiếp vào ô.
+  - **Hiển thị tỷ lệ thu phóng:** Bổ sung phần trăm zoom thực tế (ví dụ: `100%`, `120%`) và cập nhật thanh hướng dẫn thao tác phía dưới.
+
 ## [Unreleased] - 2026-09-19
 
 ### Enhanced & Refactored (Native iOS Stop-Detection Engine & Battery Optimization)

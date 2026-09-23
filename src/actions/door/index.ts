@@ -5,6 +5,8 @@ import type {
   AccessoryQueryParams,
   Door,
   DoorAssignAccessories,
+  DoorCalculateRequest,
+  DoorCalculateResponse,
   DoorCreate,
   DoorQueryParams,
   DoorUnassignAccessories,
@@ -179,6 +181,18 @@ export const revokeDoorAccessories = async (
     return response.data;
   } catch (error: unknown) {
     console.warn('API error revokeDoorAccessories', error);
+    throw error;
+  }
+};
+
+export const calculateDoor = async (
+  payload: DoorCalculateRequest,
+): Promise<DoorCalculateResponse> => {
+  try {
+    const response = await api.post('/api/v1/doors/calculate', payload);
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error calculateDoor', error);
     throw error;
   }
 };

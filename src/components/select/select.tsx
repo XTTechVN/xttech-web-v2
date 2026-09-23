@@ -286,14 +286,16 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             style={{
               position: 'fixed',
               left: `${dropdownPos.left}px`,
-              width: `${dropdownPos.width}px`,
+              minWidth: `${dropdownPos.width}px`,
+              width: 'max-content',
+              maxWidth: 'min(420px, calc(100vw - 32px))',
               ...(dropdownPos.openUpward
                 ? { bottom: `${window.innerHeight - dropdownPos.top}px` }
                 : { top: `${dropdownPos.top}px` }),
               zIndex: 99999,
             }}
             className={cn(
-              "bg-white border border-gray-200 rounded-lg shadow-2xl p-1 max-h-52 overflow-y-auto select-none animate-in fade-in duration-150 flex flex-col gap-0.5 pr-0.5",
+              "bg-white border border-gray-200 rounded-lg shadow-2xl p-1 max-h-56 overflow-y-auto select-none animate-in fade-in duration-150 flex flex-col gap-0.5 pr-0.5",
               dropdownPos.openUpward ? "slide-in-from-bottom-1" : "slide-in-from-top-1"
             )}
           >
@@ -311,14 +313,14 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                     disabled={opt.disabled}
                     onClick={() => handleSelectOption(opt.value)}
                     className={cn(
-                      'px-3 py-2 text-left text-sm flex items-center justify-between transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer rounded-md shrink-0',
+                      'px-3 py-2 text-left text-sm flex items-center justify-between transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer rounded-md shrink-0 gap-2',
                       isSelected
                         ? 'bg-primary/10 text-primary font-medium'
                         : 'text-gray-700 hover:bg-gray-50'
                     )}
                   >
-                    <span className="truncate">{opt.label}</span>
-                    {isSelected && <Check size={14} className="text-primary shrink-0 ml-2" />}
+                    <span className="whitespace-normal leading-snug">{opt.label}</span>
+                    {isSelected && <Check size={14} className="text-primary shrink-0 ml-1" />}
                   </button>
                 );
               })

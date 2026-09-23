@@ -1,4 +1,5 @@
 import { DOOR_TYPE_MAP } from './formula';
+import { DoorSeries } from './door-series';
 
 export interface DoorTypeConfig {
   label: string;
@@ -54,36 +55,111 @@ export interface DoorImage {
 
 export interface Door {
   id: number;
+  doorSeriesId?: number | null;
+  doorSeries?: DoorSeries | null;
   type: string | null;
   code: string | null;
   name: string;
   imagePath: string | null;
   images?: DoorImage[];
   specification: string | null;
+  systemConfig?: Record<string, any> | null;
+  imageB64?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
+export interface ProfileBarCut {
+  name: string;
+  side?: number | null;
+  length: number;
+  goc1: number;
+  goc2: number;
+  formula?: string | null;
+  category: string;
+  frameEdge?: string | null;
+  qty: number;
+  weightPerM: number;
+  profileId?: number | null;
+  profileCode?: string | null;
+  profileName?: string | null;
+}
+
+export interface BeadCut {
+  name: string;
+  length: number;
+  goc1: number;
+  goc2: number;
+  formula?: string | null;
+  thicknessMm: number;
+  category: string;
+  qty: number;
+  profileId?: number | null;
+  profileCode?: string | null;
+}
+
+export interface GlassCellBOM {
+  path: string;
+  w: number;
+  h: number;
+  glassW: number;
+  glassH: number;
+  areaM2: number;
+  pricingAreaM2: number;
+  openType?: string | null;
+  glassName?: string | null;
+  glassPrice?: number | null;
+}
+
+export interface DoorCalculateResponse {
+  w: number;
+  h: number;
+  bars: ProfileBarCut[];
+  groupedBars: ProfileBarCut[];
+  beads: BeadCut[];
+  groupedBeads: BeadCut[];
+  cells: GlassCellBOM[];
+  sashCounts: Record<string, number>;
+  totalAluminumWeightKg: number;
+  totalGlassAreaM2: number;
+}
+
+export interface DoorCalculateRequest {
+  doorId?: number;
+  systemConfig?: Record<string, any>;
+  width?: number;
+  height?: number;
+  glassPrice?: number;
+}
+
 export interface DoorCreate {
   name: string;
+  doorSeriesId?: number | null;
   type?: string;
   code?: string;
   imagePath?: string;
   specification?: string;
+  systemConfig?: Record<string, any>;
+  imageB64?: string;
 }
 
 export interface DoorUpdate {
   name?: string;
+  doorSeriesId?: number | null;
   type?: string;
   code?: string;
   imagePath?: string;
   specification?: string;
+  systemConfig?: Record<string, any>;
+  imageB64?: string;
 }
 
 export interface DoorQueryParams {
   search?: string;
   type?: string;
   code?: string;
+  doorSeriesId?: number;
+  brandId?: number;
   offset?: number;
   limit?: number;
 }

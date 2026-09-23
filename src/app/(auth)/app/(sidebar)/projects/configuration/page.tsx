@@ -1,14 +1,13 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import DoorsPage from './doors/page';
-import MaterialsPage from './materials/page';
-import AccessoriesPage from './accessories/page';
-import ExtraOptionsPage from './extra-options/page';
-import FormulasPage from './formulas/page';
-import { Columns, ListChecks, Settings, Calculator, LayoutGrid, UploadCloud } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
+import DoorsTab from './doors';
+import AluminumTab from './aluminum';
+import GlassGasketsTab from './glass-gaskets';
+import AccessoriesTab from './accessories';
+import { Columns, ListChecks, LayoutGrid, UploadCloud, ShieldCheck } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { usePermission } from '@/hooks';
 import { Button } from '@/components';
 import { ProjectImportModal } from './_components/import-modal';
@@ -21,46 +20,43 @@ interface ConfigTab {
   roles: string[];
 }
 
+const ALL_ROLES = ['super', 'admin', 'accountant', 'hr', 'sale', 'employee', 'technician'];
+
 const TABS: ConfigTab[] = [
+  {
+    id: 'aluminum',
+    label: 'Hãng & Hệ nhôm',
+    component: AluminumTab,
+    icon: <LayoutGrid size={16} />,
+    roles: ALL_ROLES,
+  },
+  {
+    id: 'glass-gaskets',
+    label: 'Kính, Panel & Lưới muỗi',
+    component: GlassGasketsTab,
+    icon: <ShieldCheck size={16} />,
+    roles: ALL_ROLES,
+  },
   {
     id: 'doors',
     label: 'Biên dạng cửa',
-    component: DoorsPage,
+    component: DoorsTab,
     icon: <Columns size={16} />,
-    roles: ['super', 'admin', 'sale', 'accountant', 'hr'],
-  },
-  {
-    id: 'materials',
-    label: 'Hệ nhôm',
-    component: MaterialsPage,
-    icon: <LayoutGrid size={16} />,
-    roles: ['super', 'admin', 'accountant', 'hr'],
+    roles: ALL_ROLES,
   },
   {
     id: 'accessories',
-    label: 'Phụ kiện',
-    component: AccessoriesPage,
+    label: 'Phụ kiện & Combo',
+    component: AccessoriesTab,
     icon: <ListChecks size={16} />,
-    roles: ['super', 'admin', 'accountant', 'hr'],
-  },
-  {
-    id: 'extra-options',
-    label: 'Tùy chọn phát sinh',
-    component: ExtraOptionsPage,
-    icon: <Settings size={16} />,
-    roles: ['super', 'admin', 'accountant', 'hr'],
-  },
-  {
-    id: 'formulas',
-    label: 'Công thức',
-    component: FormulasPage,
-    icon: <Calculator size={16} />,
-    roles: ['super', 'admin', 'accountant', 'hr'],
+    roles: ALL_ROLES,
   },
 ];
 
-export default function ProjectConfigurationPage() {
+function ProjectConfigurationContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get('tab');
   const { hasRole } = usePermission();
 
   // Lọc các Tab mà người dùng hiện tại có quyền truy cập
@@ -68,7 +64,19 @@ export default function ProjectConfigurationPage() {
     return TABS.filter((tab) => hasRole(tab.roles));
   }, [hasRole]);
 
-  const [activeTab, setActiveTab] = useState<string>('doors');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (urlTab && TABS.some((t) => t.id === urlTab)) {
+      return urlTab;
+    }
+    return 'aluminum';
+  });
+
+  // Đồng bộ khi URL search param thay đổi
+  useEffect(() => {
+    if (urlTab && availableTabs.some((t) => t.id === urlTab) && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab, availableTabs, activeTab]);
 
   // Đảm bảo activeTab luôn là một tab hợp lệ trong availableTabs
   useEffect(() => {
@@ -78,13 +86,13 @@ export default function ProjectConfigurationPage() {
   }, [availableTabs, activeTab]);
 
   const currentTab = availableTabs.find((t) => t.id === activeTab) || availableTabs[0];
-  const ActiveComponent = currentTab?.component || DoorsPage;
+  const ActiveComponent = currentTab?.component || AluminumTab;
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
-    router.push('/app/projects/configuration');
+    router.replace(`/app/projects/configuration?tab=${tabId}`, { scroll: false });
   };
 
   return (
@@ -141,3 +149,10 @@ export default function ProjectConfigurationPage() {
   );
 }
 
+export default function ProjectConfigurationPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500 font-medium">Đang tải cấu hình dự án...</div>}>
+      <ProjectConfigurationContent />
+    </Suspense>
+  );
+}
