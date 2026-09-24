@@ -2,6 +2,12 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-24
+
+### Fixed (Page Loader Wave Animation)
+- **Khắc Phục Lỗi Thiếu Mảng Màu Sóng Nước Khi Nạp Trang ([`page-loader.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/page-loader/page-loader.tsx)):**
+  - Khôi phục thuộc tính tọa độ `d` cho mảng thân sóng SVG thứ nhất (`#5A949C`), loại bỏ tình trạng rỗng ruột / hiển thị nền trắng đứt đoạn khi animation cuộn sóng lặp vô tận chạy qua.
+
 ## [Unreleased] - 2026-09-19
 
 ### Enhanced & Refactored (Native iOS Stop-Detection Engine & Battery Optimization)
