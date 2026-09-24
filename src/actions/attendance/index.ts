@@ -13,6 +13,10 @@ import {
     LocationPingPayload,
     StaffLiveLocation,
     StaffRouteResponse,
+    DepartmentRosterQueryParams,
+    DepartmentRosterResponse,
+    MonthRosterQueryParams,
+    MonthRosterResponse,
 } from "@/types";
 
 
@@ -125,3 +129,24 @@ export const getStaffRoute = async (userId: string, date?: string, attendanceId?
   });
   return response.data;
 };
+
+export const getDepartmentRoster = async (
+  params: DepartmentRosterQueryParams = {}
+): Promise<DepartmentRosterResponse> => {
+  const response = await api.get<DepartmentRosterResponse>(
+    `${baseVersion1}/attendances/department-roster`,
+    { params }
+  );
+  return response.data;
+};
+
+export const getMonthRoster = async (
+  params: MonthRosterQueryParams = {}
+): Promise<MonthRosterResponse> => {
+  const response = await api.get<MonthRosterResponse>(
+    `${baseVersion1}/attendances/department-roster/month`,
+    { params }
+  );
+  return response.data;
+};
+

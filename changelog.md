@@ -4,6 +4,19 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-24
 
+### Added (Department Roster / Bảng Lịch Làm Việc & Hiện Diện Phòng Ban)
+- **Giao diện Quyển Lịch Tháng Toàn Màn Hình & Popup Chi Tiết ([`department-calendar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/roster/_components/department-calendar.tsx), [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/roster/page.tsx)):**
+  - **Quyển Lịch Tháng Trực Quan (Full-width Month Calendar):** Thiết kế dạng quyển lịch tháng chuẩn, chiếm trọn chiều rộng màn hình, không bị chật hẹp. Hỗ trợ chuyển tháng linh hoạt (`<`, `>`), nút quay lại `"Hôm nay"` và đánh dấu nổi bật ngày hiện tại.
+  - **Tóm Tắt Ngày Trực Tiếp Trên Ô Lịch & Stacked Avatars:** Mỗi ô ngày hiển thị badge số lượng người đi làm (`🟢 X người đi làm`) hoặc nghỉ ca (`Nghỉ ca`), cùng cụm ảnh đại diện xếp chồng chéo (-space-x-1.5) của 2-3 nhân viên kèm huy hiệu `+Y`, giúp quyển lịch trực quan, sống động và không bị trống trải.
+  - **Tối Ưu Hiệu Năng Truy Vấn Tháng:** Sử dụng API `GET /department-roster/month` tải toàn bộ tổng quan tháng trong 1 query duy nhất, ánh xạ O(1) qua Map vào các ô lịch ngày, loại bỏ hoàn toàn tải lặp.
+  - **Popup/Modal Xem Nhanh Khi Click:** Khi nhấp vào bất kỳ ngày nào trong lịch, modal popup tinh gọn mở ra hiển thị danh sách nhân sự đi làm trong ngày đó.
+  - **Thông Báo Lưu Ý Lịch Dự Kiến (Future Date Disclaimer):** Khi xem ngày trong tương lai (`selectedDate > today`), modal tự động hiển thị banner cảnh báo tinh tế: *"Lịch làm việc dự kiến: Dữ liệu được tính toán dựa trên ca làm việc và đơn nghỉ phép đã duyệt tính đến thời điểm hiện tại. Lịch có thể thay đổi nếu nhân sự phát sinh đơn xin nghỉ hoặc điều chỉnh ca trước ngày này."*
+  - **Tích Hợp Chấm Công Thực Tế Cho Ngày Quá Khứ:** Đối với các ngày đã qua (`date < today`), ô lịch hiển thị trực tiếp số lượng có mặt/vắng (`🟢 X/Y có mặt` kèm badge đỏ nếu có vắng). Modal chi tiết hiển thị trạng thái thực tế từng người (`Có mặt`, `Đi muộn`, `Vắng mặt`, `Quên checkout`) cùng khung giờ quẹt thẻ thực tế.
+  - **Tối Ưu & Tái Cấu Trúc Header Toolbar Liền Mạch:** Thiết kế lại cụm tiêu đề trang với Card bo cong trắng tinh tế, icon `Calendar` trang nhã, phân cấp chữ chuẩn mực (`Lịch làm việc phòng ban`), kết hợp nhãn lọc `🏢 Phòng ban: [Dropdown]`. Thanh điều khiển lịch được gom cụm chặt chẽ: `[ < ] [ Hôm nay ] [ > ]` ngay cạnh `Tháng MM / YYYY`, loại bỏ hoàn toàn cảm giác thô ráp và đứt gãy layout.
+  - **Trọng Tâm Danh Sách Đi Làm:** Chỉ hiển thị người có đi làm (ca cố định hoặc làm linh hoạt Part-time), phân biệt rõ ràng ca sáng/chiều/hành chính và giờ làm tự do, tích hợp nút gọi điện nhanh `tel:...`, loại bỏ hoàn toàn các trường dữ liệu rác hoặc người nghỉ.
+- **Widget Hiện Diện Linh Hoạt ([`department-roster-widget.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/department-roster-widget.tsx)):** Nhúng widget trực tiếp vào Dashboard Mobile (`EmployeeDashboard`), bổ sung nút tắt *"Lịch đi làm"* trên `QuickActionsGrid` và menu con *"Lịch làm việc phòng ban"* trong Sidebar Chấm công.
+- **Tái Cấu Trúc Co-location Chuẩn Kiến Trúc Next.js:** Chuyển toàn bộ các private components về đúng phạm vi sử dụng (`attendances/roster/_components/` và `dashboard/_components/`), giải phóng thư mục `src/components` để chỉ giữ lại các UI Design System components dùng chung.
+
 ### Fixed (Page Loader Wave Animation)
 - **Khắc Phục Lỗi Thiếu Mảng Màu Sóng Nước Khi Nạp Trang ([`page-loader.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/page-loader/page-loader.tsx)):**
   - Khôi phục thuộc tính tọa độ `d` cho mảng thân sóng SVG thứ nhất (`#5A949C`), loại bỏ tình trạng rỗng ruột / hiển thị nền trắng đứt đoạn khi animation cuộn sóng lặp vô tận chạy qua.

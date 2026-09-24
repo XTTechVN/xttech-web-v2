@@ -76,3 +76,6 @@ export * from './import-export';
 // Dashboard
 export * from './dashboard';
 
+// Department Roster
+export * from './department-roster';
+

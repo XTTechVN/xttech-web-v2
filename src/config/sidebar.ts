@@ -44,6 +44,7 @@ export const acceptedSections = [
   'live-map',
   'app-versions',
   'leave-request',
+  'attendances-roster',
 ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
@@ -124,6 +125,12 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
             id: 'attendances-payroll',
             label: 'Lịch sử chấm công',
             href: '/app/attendances/payroll',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+          },
+          {
+            id: 'attendances-roster',
+            label: 'Lịch làm việc phòng ban',
+            href: '/app/attendances/roster',
             roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
           },
           {
