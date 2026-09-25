@@ -4,15 +4,13 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-09-25
 
-### Fixed (Xuất File Excel Báo Giá & Dữ Liệu trên Mobile App / Capacitor WebView)
-- **Tạo Tiện Ích Tải File Đa Nền Tảng `downloadOrShareBlob` ([`src/utils/file.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/file.ts)):**
-  - Khắc phục triệt để lỗi người dùng bấm "Xuất Excel" trên App (Capacitor/WebView) báo thành công nhưng không có file tải về (do WebView mặc định chặn thẻ `<a download>` gắn `blob:` URL).
-  - **Phân tách thông minh Desktop & Mobile:** 
-    - Desktop Web: Tải trực tiếp bằng thẻ `<a download>` về thư mục Downloads, không kích hoạt Web Share tránh lỗi `NotAllowedError`.
-    - Mobile App (Capacitor / Android / iOS): Sử dụng Web Share API (`navigator.share`) kích hoạt khay chia sẻ native.
-  - **Cơ chế Hồi phục Cử chỉ (User Gesture Recovery):** Khi thời gian lưu và tạo file kéo dài làm hết hạn User Activation của trình duyệt, hệ thống tự động hiển thị Toast tương tác với nút `[Mở file 📥]` để người dùng chạm mở khay chia sẻ ngay tức thì bằng 1 User Gesture mới 100% hợp lệ.
-  - Fallback an toàn cho Desktop Browser với độ trễ hủy URL (`setTimeout`) giúp không bị ngắt luồng tải ngầm.
-  - Xử lý trích xuất tên file chuẩn UTF-8 tiếng Việt từ header `Content-Disposition`.
+### Fixed & Added (Tích Hợp Native Capacitor Filesystem & Share Xuất File Mobile App)
+- **Tích Hợp Native Plugin `@capacitor/filesystem` & `@capacitor/share` ([`src/utils/file.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/file.ts)):**
+  - Khắc phục triệt để và toàn diện vấn đề Android WebView trong ứng dụng Capacitor không bắt được download `blob:` URL hoặc bị lỗi quyền hạn `NotAllowedError`.
+  - **Tự động nhận diện nền tảng (`Capacitor.isNativePlatform()`):**
+    - **Trên Native Mobile App (Capacitor Android / iOS):** Tự động chuyển đổi `Blob` sang Base64 Data URL, ghi trực tiếp vào bộ nhớ tạm an toàn của app (`Directory.Cache` qua `Filesystem.writeFile`), sau đó kích hoạt khay chia sẻ native của hệ điều hành (`Share.share({ url: fileUri })`). Cho phép người dùng mở xem ngay bằng Excel/WPS Office, gửi qua Zalo, Gmail, lưu vào Google Drive hoặc thiết bị.
+    - **Trên Web Desktop / Mobile Browser:** Tự động fallback về Web Share API hoặc thẻ `<a> download` truyền thống về thư mục Downloads.
+  - Đồng bộ cấu hình Native Android Gradle thông qua `npx cap sync android`.
 - **Tối ưu Luồng Lưu & Xuất Báo Giá ([`quotation-editor.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/quotations/[quotationId]/components/editor/quotation-editor.tsx)):**
   - Chuyển `handleExportExcel` sang luồng bất đồng bộ tuần tự chuẩn (`mutateAsync` -> `exportQuotation`) giúp phản hồi mượt mà và thông báo trạng thái chính xác.
 - **Đồng bộ Tái Sử Dụng Toàn Hệ Thống:**
