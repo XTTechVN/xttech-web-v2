@@ -1,4 +1,5 @@
 import api from '@/utils/api';
+import { downloadOrShareBlob, getFilenameFromContentDisposition } from '@/utils';
 import type {
   AttendanceReportQueryParams,
   AttendanceReportResponse,
@@ -26,15 +27,11 @@ export const exportAttendanceReport = async (params: AttendanceReportQueryParams
     }
   );
 
-  const url = window.URL.createObjectURL(new Blob([response.data]));
-  const link = document.createElement('a');
-  link.href = url;
+  const disposition = response.headers['content-disposition'];
   const from = params.fromDate || params.from_date || '';
   const to = params.toDate || params.to_date || '';
-  const fileName = `bao_cao_cham_cong_${from}_${to}.xlsx`;
-  link.setAttribute('download', fileName);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  const defaultFileName = `bao_cao_cham_cong_${from}_${to}.xlsx`;
+  const fileName = getFilenameFromContentDisposition(disposition, defaultFileName);
+
+  await downloadOrShareBlob(response.data, fileName);
 };

@@ -7,3 +7,4 @@ export * from './toast';
 export * from './error';
 export * from './string';
 export * from './route-metadata';
+export * from './file';

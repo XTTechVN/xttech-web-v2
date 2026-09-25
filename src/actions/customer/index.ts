@@ -1,4 +1,5 @@
 import api from '@/utils/api';
+import { downloadOrShareBlob, getFilenameFromContentDisposition } from '@/utils';
 import type { BaseResponseWithPagination } from '@/components';
 import type { Customer, CustomerCreate, CustomerQueryParams, CustomerExportQueryParams, CustomerUpdate, CustomerLog, CustomerLogCreate } from '@/types';
 
@@ -126,20 +127,13 @@ export const exportCustomersExcel = async (params: CustomerExportQueryParams): P
       responseType: 'blob',
     });
 
-    const blob = new Blob([response.data], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
+    const disposition = response.headers['content-disposition'];
     const from = params.fromDate || params.from_date || 'all';
     const to = params.toDate || params.to_date || 'all';
-    const fileName = `bao_cao_khach_hang_${from}_${to}.xlsx`;
-    link.setAttribute('download', fileName);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
+    const defaultFileName = `bao_cao_khach_hang_${from}_${to}.xlsx`;
+    const fileName = getFilenameFromContentDisposition(disposition, defaultFileName);
+
+    await downloadOrShareBlob(response.data, fileName);
   } catch (error: unknown) {
     console.warn('API error exportCustomersExcel', error);
     throw error;
