@@ -32,6 +32,13 @@ export type PaneType = 'glass' | 'screen' | 'louver' | 'panel';
 export type BeadType = 'square' | 'bevel' | 'round';
 export type BeadJointType = '90' | '45';
 
+export interface CustomEdgeBeads {
+  bottom?: number | null;
+  top?: number | null;
+  left?: number | null;
+  right?: number | null;
+}
+
 export interface SceneCellNode {
   id: string;
   name?: string;
@@ -41,6 +48,8 @@ export interface SceneCellNode {
   paneType: PaneType;
   glassName?: string;
   glassThickness?: number;
+  glassSplitCount?: number;
+  customBeads?: CustomEdgeBeads;
   beadType?: BeadType;
   beadJoint?: BeadJointType;
   splitDirection?: 'vertical' | 'horizontal';

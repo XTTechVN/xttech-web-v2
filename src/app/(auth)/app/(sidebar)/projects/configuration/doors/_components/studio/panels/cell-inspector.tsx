@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Glass } from '@/types';
+import { Glass, ProfileBar } from '@/types';
 import { SceneCellNode, PaneType, BeadType, BeadJointType } from '../studio-types';
-import { ShieldCheck, Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock } from 'lucide-react';
+import { ShieldCheck, Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, Square } from 'lucide-react';
 
 interface CellInspectorProps {
   selectedCell: SceneCellNode | null;
@@ -12,6 +12,8 @@ interface CellInspectorProps {
   onMergeCell: () => void;
   onDeselect: () => void;
   availableGlasses?: Glass[];
+  availableBeads?: ProfileBar[];
+  defaultGlass?: Glass | null;
   onUpdateDimension?: (target: 'cell', value: number, cellId: string) => void;
 }
 
@@ -32,6 +34,8 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   onMergeCell,
   onDeselect,
   availableGlasses,
+  availableBeads,
+  defaultGlass,
   onUpdateDimension,
 }) => {
   const [localW, setLocalW] = React.useState<number>(selectedCell?.w ?? 0);
@@ -149,9 +153,9 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
             const newSashType = e.target.value as any;
             const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down', 'sliding'].includes(newSashType);
             const updates: Record<string, unknown> = { sashType: newSashType };
-            if (sashHasHandle && selectedCell.hasLock === undefined) {
+            if (sashHasHandle) {
               updates.hasLock = true;
-              updates.handleHeight = selectedCell.handleHeight ?? 800;
+              updates.handleHeight = Math.round(selectedCell.h / 2);
               updates.handleType = selectedCell.handleType ?? 'lever';
             } else if (!sashHasHandle) {
               updates.hasLock = false;
@@ -195,13 +199,13 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
                   <span>Cao độ tim khóa:</span>
                   <span className="font-mono font-bold text-orange-700">
-                    {selectedCell.handleHeight ?? 800} mm
+                    {selectedCell.handleHeight ?? Math.round(selectedCell.h / 2)} mm
                   </span>
                 </div>
                 <div className="relative">
                   <input
                     type="number"
-                    value={selectedCell.handleHeight ?? 800}
+                    value={selectedCell.handleHeight ?? Math.round(selectedCell.h / 2)}
                     onChange={(e) => onUpdateCell({ handleHeight: Number(e.target.value) })}
                     className="w-full h-8 px-2.5 pr-8 font-mono font-bold text-xs bg-white rounded-lg border border-orange-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-slate-900"
                   />
@@ -258,58 +262,157 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
         </div>
       </div>
 
-      {/* 4. Chủng loại kính (khi chọn Pane = Glass) */}
+      {/* 4. Kính (khi chọn Pane = Glass) */}
       {selectedCell.paneType === 'glass' && (
-        <div className="space-y-1.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-          <div className="flex items-center gap-1.5 text-gray-700 font-semibold text-xs mb-1">
-            <ShieldCheck size={13} className="text-emerald-600" />
-            <span>Chủng loại kính</span>
+        <div className="space-y-2 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+          <div className="flex items-center gap-1.5 text-gray-800 font-bold text-xs">
+            <span className="text-base">🪟</span>
+            <span>Kính</span>
           </div>
-          <select
-            value={selectedCell.glassName || glassOptions[1]?.label || glassOptions[0]?.label}
-            onChange={(e) => onUpdateCell({ glassName: e.target.value })}
-            className="w-full h-8 px-2.5 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 font-medium"
-          >
-            {glassOptions.map(({ key, label }) => (
-              <option key={key} value={label}>
-                {label}
-              </option>
-            ))}
-          </select>
+
+          <div>
+            <label className="text-[11px] text-gray-600 font-medium block mb-1">Loại kính cho ô này:</label>
+            <select
+              value={selectedCell.glassName || ''}
+              onChange={(e) => onUpdateCell({ glassName: e.target.value || undefined })}
+              className="w-full h-8 px-2.5 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 font-medium text-slate-800"
+            >
+              <option value="">— Dùng kính mặc định —</option>
+              {glassOptions.map(({ key, label }) => (
+                <option key={key} value={label}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-gray-500 italic mt-1.5">
+              Mặc định: {defaultGlass?.name || 'Kính hộp trắng 5-6-5mm cường lực'}
+            </p>
+          </div>
+
+          <div className="pt-1.5 border-t border-slate-200/60">
+            <div className="text-[11px] text-gray-700 font-semibold mb-0.5">Chia kính</div>
+            <div className="flex items-center justify-between text-[11px] text-gray-500 mb-1">
+              <span>Số tấm chia đều:</span>
+            </div>
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={selectedCell.glassSplitCount || 1}
+              onChange={(e) => onUpdateCell({ glassSplitCount: Math.max(1, Number(e.target.value)) })}
+              className="w-full h-8 px-2.5 font-mono font-bold text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 text-slate-800"
+              placeholder="1"
+            />
+          </div>
         </div>
       )}
 
-      {/* 5. Tùy chọn Nẹp kính */}
-      <div className="space-y-2 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-        <div className="flex items-center gap-1.5 text-gray-700 font-semibold text-xs">
-          <SlidersHorizontal size={13} className="text-blue-600" />
-          <span>Tùy chọn nẹp kính</span>
-        </div>
-        <div className="grid grid-cols-3 gap-1.5">
-          {[
-            { id: 'square', label: 'Nẹp vuông' },
-            { id: 'bevel', label: 'Nẹp vát' },
-            { id: 'round', label: 'Nẹp tròn' },
-          ].map((item) => {
-            const isSelected = (selectedCell.beadType || 'square') === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onUpdateCell({ beadType: item.id as BeadType })}
-                className={`py-1.5 px-1 rounded-lg border text-center text-[10.5px] font-medium transition-all cursor-pointer ${
-                  isSelected
-                    ? 'border-blue-500 bg-white text-blue-700 font-bold shadow-2xs'
-                    : 'border-gray-200 text-gray-600 bg-white/60 hover:bg-white'
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
+      {/* 5. Tùy chỉnh nẹp (Custom Edge Beads) */}
+      <div className="space-y-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+        <div>
+          <div className="flex items-center gap-1.5 text-gray-800 font-bold text-xs">
+            <span className="text-base">🔲</span>
+            <span>Tùy chỉnh nẹp</span>
+          </div>
+          <p className="text-[10.5px] text-gray-500 mt-0.5">Chọn nẹp cho cạnh cần thay</p>
         </div>
 
-        <div className="flex items-center justify-between pt-1">
+        {/* Nẹp ngang */}
+        <div className="space-y-1.5">
+          <div className="text-[11px] font-bold text-slate-700">Nẹp ngang</div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <span className="text-[10px] text-gray-500 font-semibold block mb-0.5">Dưới</span>
+              <select
+                value={selectedCell.customBeads?.bottom || ''}
+                onChange={(e) => {
+                  const val = e.target.value ? Number(e.target.value) : null;
+                  onUpdateCell({
+                    customBeads: { ...selectedCell.customBeads, bottom: val },
+                  });
+                }}
+                className="w-full h-7 px-1.5 text-[11px] bg-white rounded-md border border-gray-300 focus:outline-none focus:border-blue-500"
+              >
+                <option value="">— Mặc định —</option>
+                {availableBeads?.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.code} - {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <span className="text-[10px] text-gray-500 font-semibold block mb-0.5">Trên</span>
+              <select
+                value={selectedCell.customBeads?.top || ''}
+                onChange={(e) => {
+                  const val = e.target.value ? Number(e.target.value) : null;
+                  onUpdateCell({
+                    customBeads: { ...selectedCell.customBeads, top: val },
+                  });
+                }}
+                className="w-full h-7 px-1.5 text-[11px] bg-white rounded-md border border-gray-300 focus:outline-none focus:border-blue-500"
+              >
+                <option value="">— Mặc định —</option>
+                {availableBeads?.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.code} - {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Nẹp đứng */}
+        <div className="space-y-1.5">
+          <div className="text-[11px] font-bold text-slate-700">Nẹp đứng</div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <span className="text-[10px] text-gray-500 font-semibold block mb-0.5">Trái</span>
+              <select
+                value={selectedCell.customBeads?.left || ''}
+                onChange={(e) => {
+                  const val = e.target.value ? Number(e.target.value) : null;
+                  onUpdateCell({
+                    customBeads: { ...selectedCell.customBeads, left: val },
+                  });
+                }}
+                className="w-full h-7 px-1.5 text-[11px] bg-white rounded-md border border-gray-300 focus:outline-none focus:border-blue-500"
+              >
+                <option value="">— Mặc định —</option>
+                {availableBeads?.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.code} - {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <span className="text-[10px] text-gray-500 font-semibold block mb-0.5">Phải</span>
+              <select
+                value={selectedCell.customBeads?.right || ''}
+                onChange={(e) => {
+                  const val = e.target.value ? Number(e.target.value) : null;
+                  onUpdateCell({
+                    customBeads: { ...selectedCell.customBeads, right: val },
+                  });
+                }}
+                className="w-full h-7 px-1.5 text-[11px] bg-white rounded-md border border-gray-300 focus:outline-none focus:border-blue-500"
+              >
+                <option value="">— Mặc định —</option>
+                {availableBeads?.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.code} - {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Góc cắt ngàm nẹp */}
+        <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
           <span className="text-[11px] text-gray-500">Góc cắt ngàm nẹp:</span>
           <div className="flex items-center gap-1">
             {[

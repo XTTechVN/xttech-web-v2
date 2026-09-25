@@ -213,10 +213,7 @@ export function GlassModal({ isOpen, onClose, glass, categories }: GlassModalPro
       <form onSubmit={handleSubmit((d) => mutate(d))} className="flex flex-col gap-4">
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-semibold text-gray-700">Nhóm chủng loại *</label>
-            <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
-              Bản chất: {(currentGlassType && GLASS_TYPE_LABELS[currentGlassType]) || currentGlassType || 'Kính tôi cường lực'}
-            </span>
+            <label className="block text-xs font-semibold text-gray-700">Loại vật liệu *</label>
           </div>
           <select
             value={watch('categoryId') || categories[0]?.id || ''}

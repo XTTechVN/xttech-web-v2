@@ -15,11 +15,7 @@ interface ConfigFrameTabProps {
   profiles: ProfileBar[];
 }
 
-export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({
-  config,
-  onChangeConfig,
-  profiles,
-}) => {
+export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChangeConfig, profiles, }) => {
   const frameProfiles = profiles.filter((p) => p.barType === 'FRAME');
   const mullionProfiles = profiles.filter((p) => p.barType === 'MULLION');
   const beadProfiles = profiles.filter((p) => p.barType === 'BEAD');

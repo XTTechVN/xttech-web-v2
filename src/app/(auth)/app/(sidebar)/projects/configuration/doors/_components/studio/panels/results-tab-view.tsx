@@ -77,7 +77,7 @@ export const detectProfileIssues = ({
     if (hasDoubleSash && !sashConfig?.mullionProfileId) {
       issues.push('Thiếu profile đố động giữa 2 cánh');
     }
-    if (!sashConfig?.beadProfileId) {
+    if (!sashConfig?.beadProfileId && !frameConfig?.beadProfileId) {
       issues.push('Thiếu profile nẹp kính cánh');
     }
   }
@@ -108,7 +108,13 @@ export const detectProfileIssues = ({
       if (!node || !node.children) return;
       if (node.splitType !== 'coupling' && node.splitType !== 'sash_pair') {
         node.children.forEach((c: SceneCellNode, idx: number) => {
-          if (idx < node.children!.length - 1 && !c.mullionProfileId && !node.mullionProfileId) {
+          if (
+            idx < node.children!.length - 1 &&
+            !c.mullionProfileId &&
+            !node.mullionProfileId &&
+            !frameConfig?.mullionProfileId &&
+            !sashConfig?.mullionProfileId
+          ) {
             issues.push(`Thanh đố (${node.splitDirection === 'vertical' ? 'Đố đứng' : 'Đố ngang'} #${idx + 1}) thiếu profile`);
           }
         });
