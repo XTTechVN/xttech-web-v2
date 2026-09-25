@@ -30,13 +30,12 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
   const [isSavingForLoBan, setIsSavingForLoBan] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const { mutate: updateQuotationMutate, isPending } = useMutation({
+  const { mutate: updateQuotationMutate, mutateAsync: updateQuotationMutateAsync, isPending } = useMutation({
     mutationFn: () => {
       const payload = store.getPayload(accessoriesList, extraOptionsList, materialsList);
       return updateQuotation(quotationId, payload);
     },
     onSuccess: () => {
-      toast.success('Cập nhật báo giá thành công!');
       queryClient.invalidateQueries({ queryKey: ['quotation', quotationId] });
     },
     onError: (error) => {
@@ -50,6 +49,7 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
     updateQuotationMutate(undefined, {
       onSuccess: () => {
         setIsSavingForLoBan(false);
+        toast.success('Cập nhật báo giá thành công!');
         window.open('https://wonder.vn/thuoc-lo-ban/', '_blank');
       },
       onError: () => {
@@ -58,26 +58,19 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
     });
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     setIsExporting(true);
-    const toastId = toast.loading('Đang lưu dữ liệu và tính toán chuyên sâu...');
-    updateQuotationMutate(undefined, {
-      onSuccess: async () => {
-        try {
-          await exportQuotation(quotationId);
-          toast.success('Xuất file Excel thành công!', { id: toastId });
-        } catch (error) {
-          console.error(error);
-          toast.error('Lưu thành công nhưng lỗi khi xuất file Excel.', { id: toastId });
-        } finally {
-          setIsExporting(false);
-        }
-      },
-      onError: () => {
-        toast.error('Lưu báo giá thất bại, không thể xuất Excel.', { id: toastId });
-        setIsExporting(false);
-      },
-    });
+    const toastId = toast.loading('Đang chuẩn bị file Excel báo giá...');
+    try {
+      await updateQuotationMutateAsync();
+      await exportQuotation(quotationId);
+      toast.success('Xuất file Excel thành công!', { id: toastId });
+    } catch (error: any) {
+      console.error('Lỗi xuất file Excel:', error);
+      toast.error(error?.message || 'Có lỗi xảy ra khi xuất file Excel.', { id: toastId });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
