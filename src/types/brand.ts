@@ -9,6 +9,7 @@ export interface Brand {
   description?: string | null;
   isActive: boolean;
   sortOrder: number;
+  barLengthMm?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +24,7 @@ export interface BrandCreate {
   description?: string | null;
   isActive?: boolean;
   sortOrder?: number;
+  barLengthMm?: number | null;
 }
 
 export interface BrandUpdate {
@@ -35,6 +37,7 @@ export interface BrandUpdate {
   description?: string | null;
   isActive?: boolean;
   sortOrder?: number;
+  barLengthMm?: number | null;
 }
 
 export interface BrandQueryParams {

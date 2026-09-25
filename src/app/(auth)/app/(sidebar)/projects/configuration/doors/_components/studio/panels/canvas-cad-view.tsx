@@ -154,7 +154,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
         return null;
       };
       const cNode = cellId ? findCell(rootCell) : null;
-      initialVal = cNode?.handleHeight || 800;
+      initialVal = cNode?.handleHeight || (cNode ? Math.round(cNode.h / 2) : Math.round(h / 2));
       title = `Cao độ tim khóa từ đáy (mm)`;
     } else if (target === 'cell' && cellId) {
       // find leaf cell width

@@ -124,3 +124,14 @@ export const deleteGlass = async (id: number): Promise<Glass> => {
     throw error;
   }
 };
+
+export const setDefaultGlass = async (id: number): Promise<Glass> => {
+  try {
+    const response = await api.patch(`/api/v1/glasses/${id}/default`);
+    return response.data;
+  } catch (error) {
+    console.warn('API error setDefaultGlass', error);
+    throw error;
+  }
+};
+

@@ -14,7 +14,7 @@ import { ToolboxLeft } from './toolbox-left';
 import { CanvasCadView } from './canvas-cad-view';
 import { CellInspector } from './cell-inspector';
 import { BomSidebar } from '../bom-sidebar';
-import { DoorCalculateResponse, Glass } from '@/types';
+import { DoorCalculateResponse, Glass, ProfileBar } from '@/types';
 
 interface DrawTabViewProps {
   w: number;
@@ -52,6 +52,8 @@ interface DrawTabViewProps {
   onSplitSelectedCell: (direction: 'vertical' | 'horizontal') => void;
   onMergeSelectedCell: () => void;
   availableGlasses?: Glass[];
+  availableBeads?: ProfileBar[];
+  defaultGlass?: Glass | null;
   aluminumColors?: ColorSwatch[];
 }
 
@@ -91,6 +93,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
   onSplitSelectedCell,
   onMergeSelectedCell,
   availableGlasses,
+  availableBeads,
+  defaultGlass,
   aluminumColors,
 }) => {
   const [rightTab, setRightTab] = useState<'inspector' | 'bom'>('inspector');
@@ -183,6 +187,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
               onMergeCell={onMergeSelectedCell}
               onDeselect={() => onSelectCell(null)}
               availableGlasses={availableGlasses}
+              availableBeads={availableBeads}
+              defaultGlass={defaultGlass}
               onUpdateDimension={(target, val, cellId) => onUpdateDimension(target, val, cellId)}
             />
           ) : (

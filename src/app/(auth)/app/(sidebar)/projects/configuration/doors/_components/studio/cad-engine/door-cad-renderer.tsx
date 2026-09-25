@@ -1,15 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  SceneCellNode,
-  FrameShape,
-  FrameConfig,
-  SashConfig,
-  SashCornerJoint,
-  BeadCornerJoint,
-  MullionInfo,
-} from '../studio-types';
+import { SceneCellNode, FrameShape, FrameConfig, SashConfig, SashCornerJoint, BeadCornerJoint, MullionInfo } from '../studio-types';
 
 interface DoorCadRendererProps {
   id?: string;
@@ -53,6 +45,155 @@ interface FrameBox {
   h: number;
 }
 
+interface CurvedFramePaths {
+  outerPath: string;
+  innerPath: string;
+}
+
+const getCurvedFramePaths = (
+  shape: FrameShape,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  frameD: number,
+  isOpenBottom: boolean
+): CurvedFramePaths | null => {
+  if (shape === 'rect' || !shape) return null;
+
+  const d = frameD;
+  const yBot = y + h;
+  const yInBot = isOpenBottom ? yBot : yBot - d;
+
+  switch (shape) {
+    case 'arch_semicircle':
+    case 'arch_semicircle_open': {
+      // Vòm bán nguyệt: thân chữ nhật bên dưới, nóc bán nguyệt bên trên
+      const r = Math.min(w / 2, h);
+      const ySpring = y + r;
+
+      const outerPath = `M ${x} ${yBot} L ${x} ${ySpring} A ${r} ${r} 0 0 1 ${x + w} ${ySpring} L ${x + w} ${yBot} ${isOpenBottom ? '' : `L ${x} ${yBot}`} Z`;
+
+      const rIn = Math.max(2, r - d);
+      const xInLeft = x + d;
+      const xInRight = x + w - d;
+      const innerPath = `M ${xInLeft} ${yInBot} L ${xInLeft} ${ySpring} A ${rIn} ${rIn} 0 0 1 ${xInRight} ${ySpring} L ${xInRight} ${yInBot} L ${xInLeft} ${yInBot} Z`;
+
+      return { outerPath, innerPath };
+    }
+
+    case 'arch_half': {
+      // Vòm nửa tròn: đỉnh tại y, đáy tại y + h
+      const rx = w / 2;
+      const ry = h;
+      const outerPath = `M ${x} ${yBot} A ${rx} ${ry} 0 0 1 ${x + w} ${yBot} ${isOpenBottom ? '' : `L ${x} ${yBot}`} Z`;
+
+      const rxIn = Math.max(2, rx - d);
+      const ryIn = Math.max(2, ry - d);
+      const innerPath = `M ${x + d} ${yInBot} A ${rxIn} ${ryIn} 0 0 1 ${x + w - d} ${yInBot} L ${x + d} ${yInBot} Z`;
+
+      return { outerPath, innerPath };
+    }
+
+    case 'arch_segment': {
+      // Cung tròn nông (segmental arch): vai vòm ở khoảng 1/3 chiều cao từ trên xuống
+      const hArc = Math.min(h * 0.35, w * 0.25);
+      const ySpring = y + hArc;
+      const outerPath = `M ${x} ${yBot} L ${x} ${ySpring} Q ${x + w / 2} ${y} ${x + w} ${ySpring} L ${x + w} ${yBot} ${isOpenBottom ? '' : `L ${x} ${yBot}`} Z`;
+
+      const xInLeft = x + d;
+      const xInRight = x + w - d;
+      const innerPath = `M ${xInLeft} ${yInBot} L ${xInLeft} ${ySpring} Q ${x + w / 2} ${y + d} ${xInRight} ${ySpring} L ${xInRight} ${yInBot} L ${xInLeft} ${yInBot} Z`;
+
+      return { outerPath, innerPath };
+    }
+
+    case 'arch_pointed': {
+      // Vòm nhọn Gothic: 2 cung nhọn giao nhau ở đỉnh giữa (x + w/2, y)
+      const ySpring = y + h * 0.45;
+      const outerPath = `M ${x} ${yBot} L ${x} ${ySpring} Q ${x + w * 0.15} ${y + h * 0.1} ${x + w / 2} ${y} Q ${x + w * 0.85} ${y + h * 0.1} ${x + w} ${ySpring} L ${x + w} ${yBot} ${isOpenBottom ? '' : `L ${x} ${yBot}`} Z`;
+
+      const xInLeft = x + d;
+      const xInRight = x + w - d;
+      const innerPath = `M ${xInLeft} ${yInBot} L ${xInLeft} ${ySpring} Q ${x + w * 0.15 + d} ${y + h * 0.1 + d} ${x + w / 2} ${y + d} Q ${x + w * 0.85 - d} ${y + h * 0.1 + d} ${xInRight} ${ySpring} L ${xInRight} ${yInBot} L ${xInLeft} ${yInBot} Z`;
+
+      return { outerPath, innerPath };
+    }
+
+    case 'round_top_2':
+    case 'round_top_2_open': {
+      // Bo 2 góc trên
+      const r = Math.min(Math.round(w * 0.25), Math.round(h * 0.25), 45);
+      const outerPath = `M ${x} ${yBot} L ${x} ${y + r} A ${r} ${r} 0 0 1 ${x + r} ${y} L ${x + w - r} ${y} A ${r} ${r} 0 0 1 ${x + w} ${y + r} L ${x + w} ${yBot} ${isOpenBottom ? '' : `L ${x} ${yBot}`} Z`;
+
+      const rIn = Math.max(2, r - d);
+      const innerPath = `M ${x + d} ${yInBot} L ${x + d} ${y + r} A ${rIn} ${rIn} 0 0 1 ${x + d + rIn} ${y + d} L ${x + w - d - rIn} ${y + d} A ${rIn} ${rIn} 0 0 1 ${x + w - d} ${y + r} L ${x + w - d} ${yInBot} L ${x + d} ${yInBot} Z`;
+
+      return { outerPath, innerPath };
+    }
+
+    case 'round_top_right': {
+      // Bo góc trên bên phải
+      const r = Math.min(Math.round(w * 0.4), Math.round(h * 0.4), 50);
+      const outerPath = `M ${x} ${yBot} L ${x} ${y} L ${x + w - r} ${y} A ${r} ${r} 0 0 1 ${x + w} ${y + r} L ${x + w} ${yBot} ${isOpenBottom ? '' : `L ${x} ${yBot}`} Z`;
+
+      const rIn = Math.max(2, r - d);
+      const innerPath = `M ${x + d} ${yInBot} L ${x + d} ${y + d} L ${x + w - d - rIn} ${y + d} A ${rIn} ${rIn} 0 0 1 ${x + w - d} ${y + r} L ${x + w - d} ${yInBot} L ${x + d} ${yInBot} Z`;
+
+      return { outerPath, innerPath };
+    }
+
+    case 'round_4_corner': {
+      // Bo tròn 4 góc
+      const r = Math.min(Math.round(w * 0.15), Math.round(h * 0.15), 30);
+      const outerPath = `M ${x + r} ${y} L ${x + w - r} ${y} A ${r} ${r} 0 0 1 ${x + w} ${y + r} L ${x + w} ${yBot - r} A ${r} ${r} 0 0 1 ${x + w - r} ${yBot} L ${x + r} ${yBot} A ${r} ${r} 0 0 1 ${x} ${yBot - r} L ${x} ${y + r} A ${r} ${r} 0 0 1 ${x + r} ${y} Z`;
+
+      const rIn = Math.max(2, r - d);
+      const innerPath = `M ${x + d + rIn} ${y + d} L ${x + w - d - rIn} ${y + d} A ${rIn} ${rIn} 0 0 1 ${x + w - d} ${y + d + rIn} L ${x + w - d} ${yBot - d - rIn} A ${rIn} ${rIn} 0 0 1 ${x + w - d - rIn} ${yBot - d} L ${x + d + rIn} ${yBot - d} A ${rIn} ${rIn} 0 0 1 ${x + d} ${yBot - d - rIn} L ${x + d} ${y + d + rIn} A ${rIn} ${rIn} 0 0 1 ${x + d + rIn} ${y + d} Z`;
+
+      return { outerPath, innerPath };
+    }
+
+    case 'quad_circle': {
+      // 1/4 hình tròn
+      const outerPath = `M ${x} ${yBot} L ${x} ${y} A ${w} ${h} 0 0 1 ${x + w} ${yBot} Z`;
+      const innerPath = `M ${x + d} ${yInBot} L ${x + d} ${y + d} A ${Math.max(2, w - d)} ${Math.max(2, h - d)} 0 0 1 ${x + w - d} ${yInBot} Z`;
+      return { outerPath, innerPath };
+    }
+
+    case 'circle': {
+      // Tròn
+      const r = Math.min(w, h) / 2;
+      const cx = x + w / 2;
+      const cy = y + h / 2;
+      const outerPath = `M ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy} Z`;
+
+      const rIn = Math.max(2, r - d);
+      const innerPath = `M ${cx - rIn} ${cy} A ${rIn} ${rIn} 0 1 1 ${cx + rIn} ${cy} A ${rIn} ${rIn} 0 1 1 ${cx - rIn} ${cy} Z`;
+
+      return { outerPath, innerPath };
+    }
+
+    case 'ellipse': {
+      // Elip
+      const rx = w / 2;
+      const ry = h / 2;
+      const cx = x + rx;
+      const cy = y + ry;
+      const outerPath = `M ${cx - rx} ${cy} A ${rx} ${ry} 0 1 1 ${cx + rx} ${cy} A ${rx} ${ry} 0 1 1 ${cx - rx} ${cy} Z`;
+
+      const rxIn = Math.max(2, rx - d);
+      const ryIn = Math.max(2, ry - d);
+      const innerPath = `M ${cx - rxIn} ${cy} A ${rxIn} ${ryIn} 0 1 1 ${cx + rxIn} ${cy} A ${rxIn} ${ryIn} 0 1 1 ${cx - rxIn} ${cy} Z`;
+
+      return { outerPath, innerPath };
+    }
+
+    default:
+      return null;
+  }
+};
+
 export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   id,
   hideDimensions = false,
@@ -92,29 +233,39 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   // Căn giữa cửa trong viewBox
   const ox = hideDimensions ? Math.round((vbW - fw) / 2) : Math.round((vbW - 55 - fw) / 2) + 20;
   const oy = hideDimensions ? Math.round((vbH - fh) / 2) : Math.round((vbH - 50 - fh) / 2) + 10;
-  const frameD = Math.max(5, Math.min(18, Math.round(32 * scale)));
+  const baseDim = Math.min(fw, fh);
+  // Khung bao ngoài: tỷ lệ trực quan thanh thoát, chuẩn xác theo Windova (Hình 2)
+  const frameD = Math.max(8, Math.min(11, Math.round(baseDim * 0.024)));
 
   const isSlim = sashConfig?.sashStyle === 'slim';
-  const sashD = isSlim
-    ? Math.max(4, Math.round(frameD * 0.5))
-    : Math.max(9, Math.round(frameD * 1.6));
-  const beadW = isSlim
-    ? Math.max(2, Math.round(sashD * 0.2))
-    : Math.max(2, Math.round(sashD * 0.24));
+  const sashD = isSlim ? Math.max(6, Math.round(frameD * 0.65)) : Math.max(8, Math.min(10, Math.round(frameD * 0.95)));
+  const beadW = isSlim ? Math.max(1.5, Math.round(sashD * 0.2)) : Math.max(2, Math.min(2.5, Math.round(sashD * 0.25)));
   const sashJoint: SashCornerJoint = sashConfig?.cornerJoint ?? '45';
 
-  const mullionT = Math.max(4, Math.min(12, Math.round(36 * scale)));
+  const mullionT = Math.max(8, Math.min(12, Math.round(baseDim * 0.024)));
 
-  // Hàm tính độ dày khung cánh thích ứng động theo kích thước từng ô cánh (tránh díu dít khi chia nhiều cánh)
+  // Tính toán hình dạng khung vòm/bo góc (nếu có)
+  const curvedPaths = getCurvedFramePaths(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    fh,
+    frameD,
+    frameConfig?.isOpenBottom ?? false
+  );
+  const clipId = `door-inner-clip-${id || 'root'}`;
+
+  // Hàm tính độ dày khung cánh thích ứng động theo kích thước từng ô cánh (tránh chiếm quá nhiều diện tích kính)
   const getAdaptiveSashD = (cellW: number, cellH: number, isDoubleChild = false, isSliding = false) => {
-    // Khung nhôm 2 bên không bao giờ được chiếm quá 32% bề rộng ô cánh (mỗi bên tối đa 16%)
-    const ratioW = isSliding ? 0.12 : isDoubleChild ? 0.14 : 0.16;
-    const maxAllowedW = Math.max(3, Math.floor(cellW * ratioW));
-    const maxAllowedH = Math.max(3, Math.floor(cellH * 0.15));
+    // Khung nhôm 2 bên cánh
+    const ratioW = isSliding ? 0.07 : isDoubleChild ? 0.07 : 0.08;
+    const maxAllowedW = Math.max(5, Math.floor(cellW * ratioW));
+    const maxAllowedH = Math.max(5, Math.floor(cellH * 0.08));
     const maxAllowed = Math.min(maxAllowedW, maxAllowedH);
 
-    const candidate = isSliding ? Math.round(sashD * 0.75) : sashD;
-    return Math.max(3, Math.min(candidate, maxAllowed));
+    const candidate = isSliding ? Math.round(sashD * 0.85) : sashD;
+    return Math.max(5, Math.min(candidate, maxAllowed));
   };
 
   // Extract vertical slices anywhere in tree (including double sashes and recursive vertical splits)
@@ -212,14 +363,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   const leaves: LeafCell[] = [];
 
   // Recursive Tree Traverser: Handles both Coupling (Tách khung) and Mullion (Chia đố)
-  const traverseTree = (
-    node: SceneCellNode,
-    x: number,
-    y: number,
-    wBox: number,
-    hBox: number,
-    isFrameUnit: boolean
-  ) => {
+  const traverseTree = (node: SceneCellNode, x: number, y: number, wBox: number, hBox: number, isFrameUnit: boolean) => {
     // 1. Frame Coupling: Each child is an independent frame unit (Ảnh 1)
     if (node.splitType === 'coupling' && node.children && node.children.length > 0) {
       const isVert = node.splitDirection === 'vertical';
@@ -233,7 +377,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
         const ratio = totalWeight > 0 ? weight / totalWeight : 1 / count;
 
         const cw = isVert ? (isLast ? wBox - cur : Math.round(wBox * ratio)) : wBox;
-        const ch = isVert ? hBox : (isLast ? hBox - cur : Math.round(hBox * ratio));
+        const ch = isVert ? hBox : isLast ? hBox - cur : Math.round(hBox * ratio);
         const cx = isVert ? x + cur : x;
         const cy = isVert ? y : y + cur;
 
@@ -343,20 +487,46 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
 
     switch (type) {
       case 'swing_left':
-        return <polyline points={`${cx},${cy} ${cx + cw},${cy + ch / 2} ${cx},${cy + ch}`} fill="none" stroke={stroke} strokeWidth={strokeW} />;
-      case 'swing_right':
+        // Cánh mở quay trái: Bản lề nằm bên trái -> đỉnh nhọn tam giác chỉ vào mép trái (cx, cy + ch/2)
         return <polyline points={`${cx + cw},${cy} ${cx},${cy + ch / 2} ${cx + cw},${cy + ch}`} fill="none" stroke={stroke} strokeWidth={strokeW} />;
+      case 'swing_right':
+        // Cánh mở quay phải: Bản lề nằm bên phải -> đỉnh nhọn tam giác chỉ vào mép phải (cx + cw, cy + ch/2)
+        return <polyline points={`${cx},${cy} ${cx + cw},${cy + ch / 2} ${cx},${cy + ch}`} fill="none" stroke={stroke} strokeWidth={strokeW} />;
       case 'awning':
-        return <polyline points={`${cx},${cy} ${cx + cw / 2},${cy + ch} ${cx + cw},${cy}`} fill="none" stroke={stroke} strokeWidth={strokeW} />;
+        // Mở hất: Bản lề nằm cạnh trên -> đỉnh nhọn chỉ lên cạnh trên (cx + cw/2, cy)
+        return <polyline points={`${cx},${cy + ch} ${cx + cw / 2},${cy} ${cx + cw},${cy + ch}`} fill="none" stroke={stroke} strokeWidth={strokeW} />;
       case 'tilt':
-        return <polyline points={`${cx},${cy + ch} ${cx + cw / 2},${cy} ${cx + cw},${cy + ch}`} fill="none" stroke={stroke} strokeWidth={strokeW} strokeDasharray="3,3" />;
+        // Mở lật trong: Bản lề nằm cạnh dưới -> đỉnh nhọn chỉ xuống cạnh dưới (cx + cw/2, cy + ch)
+        return (
+          <polyline
+            points={`${cx},${cy} ${cx + cw / 2},${cy + ch} ${cx + cw},${cy}`}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={strokeW}
+            strokeDasharray="3,3"
+          />
+        );
       case 'tilt_down':
-        return <polyline points={`${cx},${cy} ${cx + cw / 2},${cy + ch} ${cx + cw},${cy}`} fill="none" stroke={stroke} strokeWidth={strokeW} strokeDasharray="3,3" />;
+        return (
+          <polyline
+            points={`${cx},${cy + ch} ${cx + cw / 2},${cy} ${cx + cw},${cy + ch}`}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={strokeW}
+            strokeDasharray="3,3"
+          />
+        );
       case 'tilt_turn':
         return (
           <g>
-            <polyline points={`${cx},${cy} ${cx + cw},${cy + ch / 2} ${cx},${cy + ch}`} fill="none" stroke={stroke} strokeWidth={strokeW} />
-            <polyline points={`${cx},${cy + ch} ${cx + cw / 2},${cy} ${cx + cw},${cy + ch}`} fill="none" stroke={stroke} strokeWidth={strokeW} strokeDasharray="3,3" />
+            <polyline points={`${cx + cw},${cy} ${cx},${cy + ch / 2} ${cx + cw},${cy + ch}`} fill="none" stroke={stroke} strokeWidth={strokeW} />
+            <polyline
+              points={`${cx},${cy} ${cx + cw / 2},${cy + ch} ${cx + cw},${cy}`}
+              fill="none"
+              stroke={stroke}
+              strokeWidth={strokeW}
+              strokeDasharray="3,3"
+            />
           </g>
         );
       case 'sliding':
@@ -373,15 +543,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   };
 
   // Render Sash Frame Box with exact Sash Corner Joint (Ghép 45°, 90° Dọc phủ, 90° Ngang phủ, 45° trên - 90° dưới)
-  const renderSashBox = (
-    sx: number,
-    sy: number,
-    sw: number,
-    sh: number,
-    key: string,
-    joint: SashCornerJoint = '45',
-    effectiveSashD = sashD
-  ) => {
+  const renderSashBox = (sx: number, sy: number, sw: number, sh: number, key: string, joint: SashCornerJoint = '45', effectiveSashD = sashD) => {
     const sd = effectiveSashD;
     if (joint === '90_vert') {
       // 90° Dọc phủ: 2 thanh đứng chạy suốt từ trên xuống dưới, 2 thanh ngang lọt lòng ở giữa
@@ -436,17 +598,17 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     gw: number,
     gh: number,
     key: string,
-    effectiveBeadW = beadW
+    effectiveBeadW = beadW,
   ): { el: React.ReactNode; gx2: number; gy2: number; gw2: number; gh2: number } => {
-    // Nẹp kính không bao giờ chiếm quá 10% lòng kính
-    const bw = Math.max(1, Math.min(effectiveBeadW, Math.floor(gw * 0.1)));
+    // Nẹp kính thanh mảnh, chiếm tối đa 8% lòng cánh
+    const bw = Math.max(2, Math.min(effectiveBeadW, Math.floor(gw * 0.08), Math.floor(gh * 0.08)));
     const gx2 = gx + bw;
     const gy2 = gy + bw;
     const gw2 = Math.max(2, gw - 2 * bw);
     const gh2 = Math.max(2, gh - 2 * bw);
     // 4 thanh nẹp kính ghép mòi 45° sắc nét, cùng màu nhôm và cùng stroke viền với khung cánh (Ảnh 2)
     const el = (
-      <g key={key} fill={aluminumColor} stroke="#27272a" strokeWidth="0.6" strokeLinejoin="miter">
+      <g key={key} fill={aluminumColor} stroke="#27272a" strokeWidth="0.5" strokeLinejoin="miter">
         {/* Top Bead */}
         <polygon points={`${gx},${gy} ${gx + gw},${gy} ${gx + gw - bw},${gy + bw} ${gx + bw},${gy + bw}`} />
         {/* Bottom Bead */}
@@ -460,14 +622,15 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     return { el, gx2, gy2, gw2, gh2 };
   };
 
-
   // Render Frame Box with exact Corner Joint & Open-Bottom Handling
   const renderMiteredFrame = (fx: number, fy: number, fwBox: number, fhBox: number, key: string) => {
     if (frameShape === 'round_top_2' && frames.length === 1) {
       const cr = Math.min(40, Math.round(fwBox * 0.2));
       return (
         <g key={key} fill={aluminumColor} stroke="#27272a" strokeWidth="0.8">
-          <path d={`M ${fx} ${fy + fhBox} L ${fx} ${fy + cr} Q ${fx} ${fy} ${fx + cr} ${fy} L ${fx + fwBox - cr} ${fy} Q ${fx + fwBox} ${fy} ${fx + fwBox} ${fy + cr} L ${fx + fwBox} ${fy + fhBox} Z`} />
+          <path
+            d={`M ${fx} ${fy + fhBox} L ${fx} ${fy + cr} Q ${fx} ${fy} ${fx + cr} ${fy} L ${fx + fwBox - cr} ${fy} Q ${fx + fwBox} ${fy} ${fx + fwBox} ${fy + cr} L ${fx + fwBox} ${fy + fhBox} Z`}
+          />
         </g>
       );
     }
@@ -511,7 +674,9 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
           {/* Left Bar (45° at top, 90° flat at bottom) */}
           <polygon points={`${fx},${fy} ${fx + frameD},${fy + frameD} ${fx + frameD},${fy + fhBox} ${fx},${fy + fhBox}`} />
           {/* Right Bar (45° at top, 90° flat at bottom) */}
-          <polygon points={`${fx + fwBox},${fy} ${fx + fwBox - frameD},${fy + frameD} ${fx + fwBox - frameD},${fy + fhBox} ${fx + fwBox},${fy + fhBox}`} />
+          <polygon
+            points={`${fx + fwBox},${fy} ${fx + fwBox - frameD},${fy + frameD} ${fx + fwBox - frameD},${fy + fhBox} ${fx + fwBox},${fy + fhBox}`}
+          />
         </g>
       );
     }
@@ -547,7 +712,9 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
           <polygon points={`${fx},${fy} ${fx + fwBox},${fy} ${fx + fwBox - frameD},${fy + frameD} ${fx + frameD},${fy + frameD}`} />
           <rect x={fx} y={fy + fhBox - frameD} width={fwBox} height={frameD} />
           <polygon points={`${fx},${fy} ${fx + frameD},${fy + frameD} ${fx + frameD},${fy + fhBox - frameD} ${fx},${fy + fhBox - frameD}`} />
-          <polygon points={`${fx + fwBox},${fy} ${fx + fwBox - frameD},${fy + frameD} ${fx + fwBox - frameD},${fy + fhBox - frameD} ${fx + fwBox},${fy + fhBox - frameD}`} />
+          <polygon
+            points={`${fx + fwBox},${fy} ${fx + fwBox - frameD},${fy + frameD} ${fx + fwBox - frameD},${fy + fhBox - frameD} ${fx + fwBox},${fy + fhBox - frameD}`}
+          />
         </g>
       );
     }
@@ -556,9 +723,13 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     return (
       <g key={key} fill={aluminumColor} stroke="#27272a" strokeWidth="0.8" strokeLinejoin="miter">
         <polygon points={`${fx},${fy} ${fx + fwBox},${fy} ${fx + fwBox - frameD},${fy + frameD} ${fx + frameD},${fy + frameD}`} />
-        <polygon points={`${fx},${fy + fhBox} ${fx + fwBox},${fy + fhBox} ${fx + fwBox - frameD},${fy + fhBox - frameD} ${fx + frameD},${fy + fhBox - frameD}`} />
+        <polygon
+          points={`${fx},${fy + fhBox} ${fx + fwBox},${fy + fhBox} ${fx + fwBox - frameD},${fy + fhBox - frameD} ${fx + frameD},${fy + fhBox - frameD}`}
+        />
         <polygon points={`${fx},${fy} ${fx + frameD},${fy + frameD} ${fx + frameD},${fy + fhBox - frameD} ${fx},${fy + fhBox}`} />
-        <polygon points={`${fx + fwBox},${fy} ${fx + fwBox - frameD},${fy + frameD} ${fx + fwBox - frameD},${fy + fhBox - frameD} ${fx + fwBox},${fy + fhBox}`} />
+        <polygon
+          points={`${fx + fwBox},${fy} ${fx + fwBox - frameD},${fy + frameD} ${fx + fwBox - frameD},${fy + fhBox - frameD} ${fx + fwBox},${fy + fhBox}`}
+        />
       </g>
     );
   };
@@ -591,14 +762,45 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
         <pattern id="louver-pattern" width="10" height="8" patternUnits="userSpaceOnUse">
           <line x1="0" y1="4" x2="10" y2="4" stroke="#64748b" strokeWidth="1.2" />
         </pattern>
+        {curvedPaths && (
+          <clipPath id={clipId}>
+            <path d={curvedPaths.innerPath} />
+          </clipPath>
+        )}
       </defs>
 
-      {/* 1. Mitered Frames: 1 outer frame OR multiple coupled frames with 45° corners */}
-      {frames.map((fb) => renderMiteredFrame(fb.x, fb.y, fb.w, fb.h, fb.id))}
+      {/* 1. Outer Frame: Uốn cong theo kiểu khung (Vòm, Bo góc) HOẶC Ghép mòi 45° chữ nhật */}
+      {curvedPaths ? (
+        <g key="curved-outer-frame">
+          {/* Bản nhôm khung bao ngoài uốn cong */}
+          <path
+            d={`${curvedPaths.outerPath} ${curvedPaths.innerPath}`}
+            fill={aluminumColor}
+            fillRule="evenodd"
+            stroke="none"
+          />
+          {/* Viền ngoài khung bao */}
+          <path
+            d={curvedPaths.outerPath}
+            fill="none"
+            stroke="#27272a"
+            strokeWidth="0.8"
+          />
+          {/* Viền trong khung bao */}
+          <path
+            d={curvedPaths.innerPath}
+            fill="none"
+            stroke="#27272a"
+            strokeWidth="0.8"
+          />
+        </g>
+      ) : (
+        frames.map((fb) => renderMiteredFrame(fb.x, fb.y, fb.w, fb.h, fb.id))
+      )}
 
-
-
-      {/* 2. Physical Mullion Bars (Đố T 90° chia ô ngang hoặc dọc - Ảnh 2 & 3) */}
+      {/* Vùng lòng cửa: Đố chia ô, Khung cánh, Kính, Nẹp, Tay nắm — Tự động cắt theo lòng vòm cong */}
+      <g clipPath={curvedPaths ? `url(#${clipId})` : undefined}>
+        {/* 2. Physical Mullion Bars (Đố T 90° chia ô ngang hoặc dọc - Ảnh 2 & 3) */}
       {mullions.map((m, idx) => {
         const isHoveredOrSelected = selectedMullionId === m.info.id;
         return (
@@ -650,221 +852,266 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
             className="cursor-pointer"
           >
             {/* Case A: 2 cánh mở quay đối xứng (swing_double) */}
-            {isDouble ? (
-              (() => {
-                const astW = Math.max(4, Math.round(mullionT * 0.8));
-                // Dùng floor cho left, right bù phần còn lại để tổng luôn = cw
-                const s1W = Math.floor((cw - astW) / 2);
-                const s2W = cw - astW - s1W;
-                const dSash1 = getAdaptiveSashD(s1W, ch, true, false);
-                const dSash2 = getAdaptiveSashD(s2W, ch, true, false);
-                const s1X = cx;
-                const s2X = cx + s1W + astW;
-                const pane1W = Math.max(4, s1W - 2 * dSash1);
-                const pane2W = Math.max(4, s2W - 2 * dSash2);
-                const paneH1 = Math.max(4, ch - 2 * dSash1);
-                const paneH2 = Math.max(4, ch - 2 * dSash2);
+            {isDouble
+              ? (() => {
+                  const astW = Math.max(4, Math.min(7, Math.round(mullionT * 0.5)));
+                  // Dùng floor cho left, right bù phần còn lại để tổng luôn = cw
+                  const s1W = Math.floor((cw - astW) / 2);
+                  const s2W = cw - astW - s1W;
+                  const dSash1 = getAdaptiveSashD(s1W, ch, true, false);
+                  const dSash2 = getAdaptiveSashD(s2W, ch, true, false);
+                  const s1X = cx;
+                  const s2X = cx + s1W + astW;
+                  const pane1W = Math.max(4, s1W - 2 * dSash1);
+                  const pane2W = Math.max(4, s2W - 2 * dSash2);
+                  const paneH1 = Math.max(4, ch - 2 * dSash1);
+                  const paneH2 = Math.max(4, ch - 2 * dSash2);
 
-                return (
-                  <g>
-                    {/* Cánh trái */}
-                    {renderSashBox(s1X, cy, s1W, ch, `${node.id}-sash-1`, sashJoint, dSash1)}
-                    {(() => {
-                      const bead1 = renderBead(s1X + dSash1, cy + dSash1, pane1W, paneH1, `${node.id}-bead-1`, Math.max(1, Math.round(dSash1 * 0.22)));
-                      return (<>
-                        {bead1.el}
-                        <rect x={bead1.gx2} y={bead1.gy2} width={bead1.gw2} height={bead1.gh2} fill="#b2f5ea" fillOpacity={0.85} stroke="none" />
-                        {renderOpeningSymbol(bead1.gx2, bead1.gy2, bead1.gw2, bead1.gh2, 'swing_left')}
-                      </>);
-                    })()}
-
-                    {/* Đố động giữa 2 cánh */}
-                    <rect x={cx + s1W} y={cy} width={astW} height={ch} fill={aluminumColor} stroke="#27272a" strokeWidth="0.7" />
-
-                    {/* Cánh phải */}
-                    {renderSashBox(s2X, cy, s2W, ch, `${node.id}-sash-2`, sashJoint, dSash2)}
-                    {(() => {
-                      const bead2 = renderBead(s2X + dSash2, cy + dSash2, pane2W, paneH2, `${node.id}-bead-2`, Math.max(1, Math.round(dSash2 * 0.22)));
-                      return (<>
-                        {bead2.el}
-                        <rect x={bead2.gx2} y={bead2.gy2} width={bead2.gw2} height={bead2.gh2} fill="#b2f5ea" fillOpacity={0.85} stroke="none" />
-                        {renderOpeningSymbol(bead2.gx2, bead2.gy2, bead2.gw2, bead2.gh2, 'swing_right')}
-                      </>);
-                    })()}
-
-                    {/* Lever handle on right sash */}
-                    {(() => {
-                      const handleHVal = node.handleHeight || 800;
-                      const lockYCalc = (oy + fh) - Math.round((handleHVal / h) * fh);
-                      const handleY = Math.max(cy + dSash2 + 20, Math.min(cy + ch - dSash2 - 20, lockYCalc));
-                      const plateX = s2X + dSash2 / 2 - 3;
-                      const plateY = handleY - 14;
-                      const leverX = plateX + 3;
-                      const leverY = handleY - 5;
-                      return (
-                        <g className="cursor-pointer" onClick={(e) => { e.stopPropagation(); onEditDimension?.('handleHeight', node.id); }}>
-                          <rect x={plateX} y={plateY} width={6} height={28} rx={2} fill={hardwareColor} stroke="#000" strokeWidth="0.7" />
-                          <circle cx={plateX + 3} cy={handleY + 7} r={1.2} fill="#111" />
-                          <rect x={leverX} y={leverY} width={18} height={4.5} rx={2} fill={hardwareColor} stroke="#000" strokeWidth="0.7" />
-                        </g>
-                      );
-                    })()}
-                  </g>
-                );
-              })()
-            ) : (
-              /* Case B: Single sash or fixed pane */
-              (() => {
-                const dSash = isFixed ? 0 : getAdaptiveSashD(cw, ch, false, isSliding);
-                const dBead = isFixed ? 0 : Math.max(1, Math.round(dSash * 0.22));
-                const innerX = isFixed ? cx : cx + dSash;
-                const innerY = isFixed ? cy : cy + dSash;
-                const innerW = Math.max(4, isFixed ? cw : cw - 2 * dSash);
-                const innerH = Math.max(4, isFixed ? ch : ch - 2 * dSash);
-                // Bead chỉ cho cánh mở và glass; fixed/panel/screen không có nẹp
-                const hasBead = !isFixed && node.paneType === 'glass';
-                const bead = hasBead ? renderBead(innerX, innerY, innerW, innerH, `${node.id}-bead`, dBead) : null;
-                const glassX = hasBead && bead ? bead.gx2 : innerX;
-                const glassY = hasBead && bead ? bead.gy2 : innerY;
-                const glassW = hasBead && bead ? bead.gw2 : innerW;
-                const glassH = hasBead && bead ? bead.gh2 : innerH;
-
-                return (
-                  <g>
-                    {!isFixed && renderSashBox(cx, cy, cw, ch, `${node.id}-sash-single`, sashJoint, dSash)}
-
-                    {/* Nẹp kính (render trước glass) */}
-                    {bead?.el}
-
-                    <rect
-                      x={glassX}
-                      y={glassY}
-                      width={glassW}
-                      height={glassH}
-                      fill={
-                        node.paneType === 'screen'
-                          ? 'url(#screen-mesh)'
-                          : node.paneType === 'louver'
-                          ? 'url(#louver-pattern)'
-                          : node.paneType === 'panel'
-                          ? aluminumColor
-                          : '#b2f5ea'
-                      }
-                      fillOpacity={node.paneType === 'glass' ? 0.85 : 0.95}
-                      stroke="none"
-                    />
-
-                    {!isFixed && renderOpeningSymbol(glassX, glassY, glassW, glassH, node.sashType)}
-
-                    {/* Hardware Handle — chỉ render khi hasLock explicitly = true */}
-                    {!isFixed && node.hasLock === true && (() => {
-                      const isBottomHandle = node.sashType === 'awning' || node.sashType === 'tilt';
-                      const isTopHandle = node.sashType === 'tilt_down';
-                      const isRightHandle = node.sashType === 'swing_left' || node.sashType === 'tilt_turn';
-                      const isLeftHandle = node.sashType === 'swing_right';
-
-                      if (isBottomHandle) {
-                        return (
-                          <rect
-                            x={cx + cw / 2 - 10}
-                            y={cy + ch - dSash / 2 - 2}
-                            width={20}
-                            height={4}
-                            rx={1.5}
-                            fill={hardwareColor}
-                            stroke="#000"
-                            strokeWidth="0.5"
-                          />
+                  return (
+                    <g>
+                      {/* Cánh trái */}
+                      {renderSashBox(s1X, cy, s1W, ch, `${node.id}-sash-1`, sashJoint, dSash1)}
+                      {(() => {
+                        const bead1 = renderBead(
+                          s1X + dSash1,
+                          cy + dSash1,
+                          pane1W,
+                          paneH1,
+                          `${node.id}-bead-1`,
+                          Math.max(2, Math.round(dSash1 * 0.25)),
                         );
-                      }
-
-                      if (isTopHandle) {
                         return (
-                          <rect
-                            x={cx + cw / 2 - 10}
-                            y={cy + dSash / 2 - 2}
-                            width={20}
-                            height={4}
-                            rx={1.5}
-                            fill={hardwareColor}
-                            stroke="#000"
-                            strokeWidth="0.5"
-                          />
+                          <>
+                            {bead1.el}
+                            <rect x={bead1.gx2} y={bead1.gy2} width={bead1.gw2} height={bead1.gh2} fill="#b2f5ea" fillOpacity={0.85} stroke="none" />
+                            {renderOpeningSymbol(bead1.gx2, bead1.gy2, bead1.gw2, bead1.gh2, 'swing_left')}
+                          </>
                         );
-                      }
+                      })()}
 
-                      // Tính cao độ tim khóa handleY theo handleHeight (mm) từ đáy cửa lên
-                      const handleHVal = node.handleHeight || 800;
-                      const lockYCalc = (oy + fh) - Math.round((handleHVal / h) * fh);
-                      const isOpenBot = frameConfig?.isOpenBottom ?? false;
-                      const bottomBound = isOpenBot
-                        ? (oy + fh - dSash - 10)
-                        : (oy + fh - frameD - dSash - 10);
-                      const handleY = Math.max(cy + dSash + 20, Math.min(bottomBound, lockYCalc));
+                      {/* Đố động giữa 2 cánh */}
+                      <rect x={cx + s1W} y={cy} width={astW} height={ch} fill={aluminumColor} stroke="#27272a" strokeWidth="0.7" />
 
-                      if (isRightHandle) {
-                        // Tay nắm lắp ở cạnh phải của cánh (quay trái), tay gạt chìa sang trái
-                        const plateX = cx + cw - dSash / 2 - 3;
-                        const plateY = handleY - 14;
-                        const leverW = 18;
-                        const leverX = plateX + 3 - leverW;
-                        const leverY = handleY - 5;
-
+                      {/* Cánh phải */}
+                      {renderSashBox(s2X, cy, s2W, ch, `${node.id}-sash-2`, sashJoint, dSash2)}
+                      {(() => {
+                        const bead2 = renderBead(
+                          s2X + dSash2,
+                          cy + dSash2,
+                          pane2W,
+                          paneH2,
+                          `${node.id}-bead-2`,
+                          Math.max(2, Math.round(dSash2 * 0.25)),
+                        );
                         return (
-                          <g className="cursor-pointer" onClick={(e) => { e.stopPropagation(); onEditDimension?.('handleHeight', node.id); }}>
-                            {/* Ốp thân khóa thẳng đứng */}
-                            <rect x={plateX} y={plateY} width={6} height={28} rx={2} fill={hardwareColor} stroke="#000" strokeWidth="0.7" />
-                            {/* Lỗ khóa / ổ chìa */}
-                            <circle cx={plateX + 3} cy={handleY + 7} r={1.2} fill="#111" />
-                            {/* Cần tay gạt nằm ngang */}
-                            <rect x={leverX} y={leverY} width={leverW} height={4.5} rx={2} fill={hardwareColor} stroke="#000" strokeWidth="0.7" />
+                          <>
+                            {bead2.el}
+                            <rect x={bead2.gx2} y={bead2.gy2} width={bead2.gw2} height={bead2.gh2} fill="#b2f5ea" fillOpacity={0.85} stroke="none" />
+                            {renderOpeningSymbol(bead2.gx2, bead2.gy2, bead2.gw2, bead2.gh2, 'swing_right')}
+                          </>
+                        );
+                      })()}
+
+                      {/* Lever handle on right sash */}
+                      {(() => {
+                        const handleHVal = node.handleHeight || Math.round(node.h / 2);
+                        const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
+                        const handleY = Math.max(cy + dSash2 + 20, Math.min(cy + ch - dSash2 - 20, lockYCalc));
+                        const plateX = s2X + dSash2 / 2 - 2.5;
+                        const plateY = handleY - 12;
+                        const leverX = plateX + 2.5;
+                        const leverY = handleY - 4;
+                        return (
+                          <g
+                            className="cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditDimension?.('handleHeight', node.id);
+                            }}
+                          >
+                            <rect x={plateX} y={plateY} width={5} height={24} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
+                            <circle cx={plateX + 2.5} cy={handleY + 6} r={1} fill="#111" />
+                            <rect x={leverX} y={leverY} width={15} height={4} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
                           </g>
                         );
-                      }
+                      })()}
+                    </g>
+                  );
+                })()
+              : /* Case B: Single sash or fixed pane */
+                (() => {
+                  const dSash = isFixed ? 0 : getAdaptiveSashD(cw, ch, false, isSliding);
+                  const dBead = isFixed ? 0 : Math.max(2, Math.round(dSash * 0.25));
+                  const innerX = isFixed ? cx : cx + dSash;
+                  const innerY = isFixed ? cy : cy + dSash;
+                  const innerW = Math.max(4, isFixed ? cw : cw - 2 * dSash);
+                  const innerH = Math.max(4, isFixed ? ch : ch - 2 * dSash);
+                  // Bead chỉ cho cánh mở và glass; fixed/panel/screen không có nẹp
+                  const hasBead = !isFixed && node.paneType === 'glass';
+                  const bead = hasBead ? renderBead(innerX, innerY, innerW, innerH, `${node.id}-bead`, dBead) : null;
+                  const glassX = hasBead && bead ? bead.gx2 : innerX;
+                  const glassY = hasBead && bead ? bead.gy2 : innerY;
+                  const glassW = hasBead && bead ? bead.gw2 : innerW;
+                  const glassH = hasBead && bead ? bead.gh2 : innerH;
 
-                      if (isLeftHandle) {
-                        // Tay nắm lắp ở cạnh trái của cánh (quay phải - như Ảnh 2 của User), tay gạt chìa sang phải
-                        const plateX = cx + dSash / 2 - 3;
-                        const plateY = handleY - 14;
-                        const leverW = 18;
-                        const leverX = plateX + 3;
-                        const leverY = handleY - 5;
+                  return (
+                    <g>
+                      {!isFixed && renderSashBox(cx, cy, cw, ch, `${node.id}-sash-single`, sashJoint, dSash)}
 
-                        return (
-                          <g className="cursor-pointer" onClick={(e) => { e.stopPropagation(); onEditDimension?.('handleHeight', node.id); }}>
-                            {/* Ốp thân khóa thẳng đứng */}
-                            <rect x={plateX} y={plateY} width={6} height={28} rx={2} fill={hardwareColor} stroke="#000" strokeWidth="0.7" />
-                            {/* Lỗ khóa / ổ chìa */}
-                            <circle cx={plateX + 3} cy={handleY + 7} r={1.2} fill="#111" />
-                            {/* Cần tay gạt nằm ngang (chìa sang phải qua mặt kính) */}
-                            <rect x={leverX} y={leverY} width={leverW} height={4.5} rx={2} fill={hardwareColor} stroke="#000" strokeWidth="0.7" />
-                          </g>
-                        );
-                      }
+                      {/* Nẹp kính (render trước glass) */}
+                      {bead?.el}
 
-                      return null;
-                    })()}
-
-                    {/* Selection Outline - Viền đứt màu cam ôm sát ô kính, không đè lên nẹp nhôm */}
-                    {isSelected && (
                       <rect
-                        x={glassX + 1}
-                        y={glassY + 1}
-                        width={Math.max(2, glassW - 2)}
-                        height={Math.max(2, glassH - 2)}
-                        fill="none"
-                        stroke="#f59e0b"
-                        strokeWidth="1.5"
-                        strokeDasharray="5,3"
+                        x={glassX}
+                        y={glassY}
+                        width={glassW}
+                        height={glassH}
+                        fill={
+                          node.paneType === 'screen'
+                            ? 'url(#screen-mesh)'
+                            : node.paneType === 'louver'
+                              ? 'url(#louver-pattern)'
+                              : node.paneType === 'panel'
+                                ? aluminumColor
+                                : '#b2f5ea'
+                        }
+                        fillOpacity={node.paneType === 'glass' ? 0.85 : 0.95}
+                        stroke="none"
                       />
-                    )}
-                  </g>
-                );
-              })()
-            )}
+
+                      {!isFixed && renderOpeningSymbol(glassX, glassY, glassW, glassH, node.sashType)}
+
+                      {/* Hardware Handle — chỉ render khi hasLock explicitly = true */}
+                      {!isFixed &&
+                        node.hasLock === true &&
+                        (() => {
+                          const isBottomHandle = node.sashType === 'awning' || node.sashType === 'tilt';
+                          const isTopHandle = node.sashType === 'tilt_down';
+                          const isRightHandle = node.sashType === 'swing_left' || node.sashType === 'tilt_turn';
+                          const isLeftHandle = node.sashType === 'swing_right';
+
+                          if (isBottomHandle) {
+                            return (
+                              <rect
+                                x={cx + cw / 2 - 8}
+                                y={cy + ch - dSash / 2 - 1.5}
+                                width={16}
+                                height={3.5}
+                                rx={1}
+                                fill={hardwareColor}
+                                stroke="#000"
+                                strokeWidth="0.5"
+                              />
+                            );
+                          }
+
+                          if (isTopHandle) {
+                            return (
+                              <rect
+                                x={cx + cw / 2 - 8}
+                                y={cy + dSash / 2 - 1.5}
+                                width={16}
+                                height={3.5}
+                                rx={1}
+                                fill={hardwareColor}
+                                stroke="#000"
+                                strokeWidth="0.5"
+                              />
+                            );
+                          }
+
+                          // Tính cao độ tim khóa handleY theo handleHeight (mm) từ đáy cửa lên
+                          const handleHVal = node.handleHeight || Math.round(node.h / 2);
+                          const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
+                          const isOpenBot = frameConfig?.isOpenBottom ?? false;
+                          const bottomBound = isOpenBot ? oy + fh - dSash - 10 : oy + fh - frameD - dSash - 10;
+                          const handleY = Math.max(cy + dSash + 20, Math.min(bottomBound, lockYCalc));
+
+                          if (isRightHandle) {
+                            // Tay nắm lắp ở cạnh phải của cánh (quay trái), tay gạt chìa sang trái
+                            const plateX = cx + cw - dSash / 2 - 2.5;
+                            const plateY = handleY - 12;
+                            const leverW = 15;
+                            const leverX = plateX + 2.5 - leverW;
+                            const leverY = handleY - 4;
+
+                            return (
+                              <g
+                                className="cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEditDimension?.('handleHeight', node.id);
+                                }}
+                              >
+                                {/* Ốp thân khóa thẳng đứng */}
+                                <rect x={plateX} y={plateY} width={5} height={24} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
+                                {/* Lỗ khóa / ổ chìa */}
+                                <circle cx={plateX + 2.5} cy={handleY + 6} r={1} fill="#111" />
+                                {/* Cần tay gạt nằm ngang */}
+                                <rect x={leverX} y={leverY} width={leverW} height={4} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
+                              </g>
+                            );
+                          }
+
+                          if (isLeftHandle) {
+                            // Tay nắm lắp ở cạnh trái của cánh (quay phải - như Ảnh 2 của User), tay gạt chìa sang phải
+                            const plateX = cx + dSash / 2 - 2.5;
+                            const plateY = handleY - 12;
+                            const leverW = 15;
+                            const leverX = plateX + 2.5;
+                            const leverY = handleY - 4;
+
+                            return (
+                              <g
+                                className="cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEditDimension?.('handleHeight', node.id);
+                                }}
+                              >
+                                {/* Ốp thân khóa thẳng đứng */}
+                                <rect x={plateX} y={plateY} width={5} height={24} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
+                                {/* Lỗ khóa / ổ chìa */}
+                                <circle cx={plateX + 2.5} cy={handleY + 6} r={1} fill="#111" />
+                                {/* Cần tay gạt nằm ngang (chìa sang phải qua mặt kính) */}
+                                <rect x={leverX} y={leverY} width={leverW} height={4} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
+                              </g>
+                            );
+                          }
+
+                          return null;
+                        })()}
+
+                      {/* Selection Outline - Viền đứt màu cam ôm sát ô kính, không đè lên nẹp nhôm */}
+                      {isSelected && (
+                        <rect
+                          x={glassX + 1}
+                          y={glassY + 1}
+                          width={Math.max(2, glassW - 2)}
+                          height={Math.max(2, glassH - 2)}
+                          fill="none"
+                          stroke="#f59e0b"
+                          strokeWidth="1.5"
+                          strokeDasharray="5,3"
+                        />
+                      )}
+                    </g>
+                  );
+                })()}
           </g>
         );
       })}
+      </g>
+
+      {/* Đường nẹp chỉ thanh mảnh chạy theo viền trong của khung vòm */}
+      {curvedPaths && (
+        <path
+          d={curvedPaths.innerPath}
+          fill="none"
+          stroke="#27272a"
+          strokeWidth="0.6"
+        />
+      )}
 
       {/* Dimensions & Sub-dimensions (Only rendered when hideDimensions is false) */}
       {!hideDimensions && (
@@ -1015,16 +1262,14 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
               (l) =>
                 (l.node.hasLock ?? (l.node.sashType === 'swing_left' || l.node.sashType === 'swing_right')) &&
                 (l.node.sashType === 'swing_left' || l.node.sashType === 'swing_right') &&
-                l.node.hasLock !== false
+                l.node.hasLock !== false,
             );
             if (!lockLeaf) return null;
 
-            const handleHVal = lockLeaf.node.handleHeight || 800;
-            const lockYCalc = (oy + fh) - Math.round((handleHVal / h) * fh);
+            const handleHVal = lockLeaf.node.handleHeight || Math.round(lockLeaf.node.h / 2);
+            const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
             const isOpenBot = frameConfig?.isOpenBottom ?? false;
-            const bottomBound = isOpenBot
-              ? (oy + fh - sashD - 10)
-              : (oy + fh - frameD - sashD - 10);
+            const bottomBound = isOpenBot ? oy + fh - sashD - 10 : oy + fh - frameD - sashD - 10;
             const lockY = Math.max(oy + frameD + 10, Math.min(bottomBound, lockYCalc));
             const dimLeftX = ox - 26;
 

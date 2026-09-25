@@ -43,6 +43,7 @@ export interface Glass {
   weightPerM2: number;
   maxWidthMm?: number | null;
   maxHeightMm?: number | null;
+  isDefault: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -59,6 +60,7 @@ export interface GlassCreate {
   weightPerM2?: number;
   maxWidthMm?: number | null;
   maxHeightMm?: number | null;
+  isDefault?: boolean;
   isActive?: boolean;
 }
 
@@ -72,6 +74,7 @@ export interface GlassUpdate {
   weightPerM2?: number;
   maxWidthMm?: number | null;
   maxHeightMm?: number | null;
+  isDefault?: boolean;
   isActive?: boolean;
 }
 
@@ -79,6 +82,7 @@ export interface GlassQueryParams {
   search?: string;
   categoryId?: number;
   glassType?: string;
+  isDefault?: boolean;
   isActive?: boolean;
   offset?: number;
   limit?: number;

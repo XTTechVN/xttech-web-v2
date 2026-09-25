@@ -3,27 +3,9 @@
 import React, { useState } from 'react';
 import { StatsCard, Button } from '@/components';
 import { TableData } from '@/components/table';
-import {
-  ShieldCheck,
-  Layers,
-  Wrench,
-  CheckCircle2,
-  Plus,
-  Pencil,
-  Trash2,
-  ArrowUp,
-  ArrowDown,
-} from 'lucide-react';
+import { ShieldCheck, Layers, Wrench, CheckCircle2, Plus, Pencil, Trash2, ArrowUp, ArrowDown, Star, } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import {
-  getGlasses,
-  getGlassCategories,
-  getGaskets,
-  deleteGlass,
-  deleteGlassCategory,
-  updateGlassCategory,
-  deleteGasket,
-} from '@/actions';
+import { getGlasses, getGlassCategories, getGaskets, deleteGlass, setDefaultGlass, deleteGlassCategory, updateGlassCategory, deleteGasket, } from '@/actions';
 import type { Glass, GlassCategory, Gasket } from '@/types';
 import { GASKET_UNIT_MAP } from '@/types';
 import toast from 'react-hot-toast';
@@ -101,6 +83,15 @@ export default function GlassGasketsPage() {
       toast.success('Xóa kính thành công');
     },
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa kính'),
+  });
+
+  const { mutate: setDefaultGlassMutate } = useMutation({
+    mutationFn: (id: number) => setDefaultGlass(id),
+    onSuccess: (updatedGlass) => {
+      queryClient.invalidateQueries({ queryKey: ['glasses'] });
+      toast.success(`Đã đặt "${updatedGlass.name}" làm kính mặc định`);
+    },
+    onError: (err) => showErrorToast(err, 'Lỗi khi đặt kính mặc định'),
   });
 
   const { mutate: deleteGasketMutate } = useMutation({
@@ -325,6 +316,24 @@ export default function GlassGasketsPage() {
       minWidth: '130px',
       cell: (row: Glass) => (
         <span className="font-bold text-gray-900">{formatCurrency(row.unitPrice)}</span>
+      ),
+    },
+    {
+      key: 'isDefault',
+      label: 'Mặc định',
+      minWidth: '90px',
+      cell: (row: Glass) => (
+        <button
+          type="button"
+          onClick={() => setDefaultGlassMutate(row.id)}
+          className="p-1 rounded-md hover:bg-amber-50 transition cursor-pointer"
+          title={row.isDefault ? 'Đang là kính mặc định hệ thống' : 'Bấm để đặt làm kính mặc định hệ thống'}
+        >
+          <Star
+            size={18}
+            className={row.isDefault ? 'text-amber-500 fill-amber-500' : 'text-slate-300 hover:text-amber-400'}
+          />
+        </button>
       ),
     },
     {

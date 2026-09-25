@@ -146,6 +146,12 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
   });
   const availableProfiles = profilesData?.items || [];
 
+  const availableBeads = React.useMemo(() => {
+    return availableProfiles.filter(
+      (p) => p.barType?.toUpperCase() === 'BEAD' || (p as any).category === 'bead'
+    );
+  }, [availableProfiles]);
+
   // Fetch Accessory Combos
   const { data: combosData } = useQuery({
     queryKey: ['accessory-combos-list'],
@@ -161,6 +167,10 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
     enabled: isOpen,
   });
   const availableGlasses = glassesData?.items || [];
+
+  const defaultGlass = React.useMemo(() => {
+    return availableGlasses.find((g) => g.isDefault) || availableGlasses[0] || null;
+  }, [availableGlasses]);
 
   // Lấy brandId từ hệ nhôm (DoorSeries) đang chọn
   const selectedSeries = availableSeries.find((s) => s.id === seriesId);
@@ -429,7 +439,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
             ...c1,
             sashType: 'swing_right',
             hasLock: true,
-            handleHeight: c1.handleHeight ?? 800,
+            handleHeight: Math.round(c1.h / 2),
             handleType: c1.handleType ?? 'lever',
           },
         ];
@@ -461,7 +471,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
         glassName: activeGlassName,
         glassThickness: activeGlassThickness,
         hasLock: sashHasHandle,
-        handleHeight: sashHasHandle ? (targetNode.handleHeight || c1.handleHeight || 800) : undefined,
+        handleHeight: sashHasHandle ? Math.round(pairContainer.h / 2) : undefined,
         handleType: sashHasHandle ? (targetNode.handleType || c1.handleType || 'lever') : undefined,
       };
 
@@ -496,7 +506,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
             glassName: targetNode.glassName,
             glassThickness: targetNode.glassThickness,
             hasLock: true,
-            handleHeight: targetNode.handleHeight || 800,
+            handleHeight: Math.round(targetNode.h / 2),
             handleType: targetNode.handleType || 'lever',
           },
         ];
@@ -516,7 +526,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
       const updates: Partial<SceneCellNode> = {
         sashType: newSashType,
         hasLock: sashHasHandle,
-        handleHeight: sashHasHandle ? (targetNode.handleHeight ?? 800) : undefined,
+        handleHeight: sashHasHandle ? Math.round(targetNode.h / 2) : undefined,
         handleType: sashHasHandle ? (targetNode.handleType ?? 'lever') : undefined,
       };
       return {
@@ -932,6 +942,8 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
             pushState(updateNode(rootCell, selectedCellId, { children: [] }));
           }}
           availableGlasses={availableGlasses}
+          availableBeads={availableBeads}
+          defaultGlass={defaultGlass}
           aluminumColors={dynamicAluminumColors}
         />
       )}

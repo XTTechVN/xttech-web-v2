@@ -21,7 +21,7 @@ interface BrandModalProps {
 
 export function BrandModal({ isOpen, onClose, brand }: BrandModalProps) {
   const isEdit = Boolean(brand);
-  const { register, handleSubmit, reset } = useForm<BrandCreate>({
+  const { register, handleSubmit, reset, watch } = useForm<BrandCreate>({
     defaultValues: {
       code: '',
       name: '',
@@ -31,6 +31,7 @@ export function BrandModal({ isOpen, onClose, brand }: BrandModalProps) {
       description: '',
       isActive: true,
       sortOrder: 0,
+      barLengthMm: 6000,
     },
   });
 
@@ -45,6 +46,7 @@ export function BrandModal({ isOpen, onClose, brand }: BrandModalProps) {
         description: brand.description || '',
         isActive: brand.isActive,
         sortOrder: brand.sortOrder,
+        barLengthMm: brand.barLengthMm ?? 6000,
       });
     } else {
       reset({
@@ -56,12 +58,18 @@ export function BrandModal({ isOpen, onClose, brand }: BrandModalProps) {
         description: '',
         isActive: true,
         sortOrder: 0,
+        barLengthMm: 6000,
       });
     }
   }, [brand, reset, isOpen]);
 
+  const currentBrandType = watch('brandType');
+
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: BrandCreate) => {
+      if (data.barLengthMm !== undefined && data.barLengthMm !== null) {
+        data.barLengthMm = Number(data.barLengthMm);
+      }
       if (isEdit && brand) {
         return await updateBrand(brand.id, data);
       }
@@ -114,6 +122,15 @@ export function BrandModal({ isOpen, onClose, brand }: BrandModalProps) {
             {...register('originCountry')}
           />
         </div>
+
+        {(currentBrandType === 'aluminum' || currentBrandType === 'both') && (
+          <Input
+            label="Chiều dài thanh tiêu chuẩn (mm)"
+            type="number"
+            placeholder="6000"
+            {...register('barLengthMm')}
+          />
+        )}
 
         <Input
           label="Website"
@@ -316,6 +333,8 @@ export function ProfileBarModal({
   const sections = sectionsData || [];
 
   const initialBId = defaultBrandId ?? brands[0]?.id;
+  const initialBrand = brands.find((b) => b.id === initialBId);
+  const initialBarLength = initialBrand?.barLengthMm || 6000;
   const initialSId = seriesList.find((s) => s.brandId === initialBId)?.id || seriesList[0]?.id;
 
   const { register, handleSubmit, reset, watch, setValue } = useForm<ProfileBarCreate>({
@@ -327,7 +346,7 @@ export function ProfileBarModal({
       barType: 'FRAME',
       weightPerM: 0.8,
       sectionHeightMm: 50,
-      barLengthMm: 6000,
+      barLengthMm: initialBarLength,
       deductSashMm: 0,
       deductGlassMm: 0,
       deductMullionMm: 0,
@@ -357,6 +376,8 @@ export function ProfileBarModal({
       });
     } else {
       const curBId = defaultBrandId ?? brands[0]?.id;
+      const curBrand = brands.find((b) => b.id === curBId);
+      const curBarLength = curBrand?.barLengthMm || 6000;
       const curSId = seriesList.find((s) => s.brandId === curBId)?.id || seriesList[0]?.id;
       reset({
         brandId: curBId,
@@ -366,7 +387,7 @@ export function ProfileBarModal({
         barType: 'FRAME',
         weightPerM: 0.8,
         sectionHeightMm: 50,
-        barLengthMm: 6000,
+        barLengthMm: curBarLength,
         deductSashMm: 0,
         deductGlassMm: 0,
         deductMullionMm: 0,
@@ -418,7 +439,7 @@ export function ProfileBarModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEdit ? 'Sửa thanh profile nhôm' : 'Thêm cây nhôm profile mới (6m)'}
+      title={isEdit ? 'Sửa thanh profile nhôm' : 'Thêm cây nhôm profile mới'}
       size="lg"
     >
       <form onSubmit={handleSubmit((d) => mutate(d))} className="flex flex-col gap-4">
@@ -432,6 +453,12 @@ export function ProfileBarModal({
                 setValue('brandId', bId);
                 const matching = seriesList.find((s) => s.brandId === bId);
                 if (matching) setValue('seriesId', matching.id);
+                if (!isEdit) {
+                  const chosenBrand = brands.find((b) => b.id === bId);
+                  if (chosenBrand?.barLengthMm) {
+                    setValue('barLengthMm', chosenBrand.barLengthMm);
+                  }
+                }
               }}
               className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-primary"
             >
