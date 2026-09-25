@@ -12,6 +12,7 @@ import WeeklyAttendanceChart from '../_components/weekly-attendance-chart';
 import LiveStaffWidget from '../_components/live-staff-widget';
 import { Clock, Navigation, FolderGit2, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { DepartmentRosterWidget } from '../_components/department-roster-widget';
 
 export const TechnicianDashboard = () => {
   const router = useRouter();
@@ -65,6 +66,7 @@ export const TechnicianDashboard = () => {
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
         />
         <LiveStaffWidget />
+        <DepartmentRosterWidget />
         <PersonalAttendanceHistory />
       </div>
 

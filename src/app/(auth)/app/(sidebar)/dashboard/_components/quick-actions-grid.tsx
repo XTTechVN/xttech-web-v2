@@ -2,16 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  MapPin,
-  CalendarOff,
-  ClockAlert,
-  CalendarCheck,
-  Building2,
-  Users,
-  Lightbulb,
-  BarChart3,
-} from 'lucide-react';
+import { MapPin, CalendarOff, ClockAlert, CalendarCheck, CalendarDays, Building2, Users, Lightbulb, BarChart3, } from 'lucide-react';
 import { useAuthStore } from '@/stores';
 import { UserRole, isRouteAllowedForRole } from '@/config';
 
@@ -81,6 +72,14 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
         icon: <CalendarCheck size={22} />,
         bgColor: 'bg-purple-50 hover:bg-purple-100/80',
         textColor: 'text-purple-600',
+      },
+      {
+        id: 'roster',
+        title: 'Lịch đi làm',
+        href: '/app/attendances/roster',
+        icon: <CalendarDays size={22} />,
+        bgColor: 'bg-teal-50 hover:bg-teal-100/80',
+        textColor: 'text-teal-700',
       },
       {
         id: 'projects',
