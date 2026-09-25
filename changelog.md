@@ -2,6 +2,15 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-25
+
+### Added & Enhanced
+- **Quản lý Chiều dài Thanh tiêu chuẩn trong Hãng nhôm & Tự động Gợi ý khi Tạo Profile:**
+  - Bổ sung `barLengthMm` vào interface `Brand`, `BrandCreate`, `BrandUpdate` ([`src/types/brand.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/brand.ts)).
+  - **`BrandModal`:** Hiển thị ô nhập *"Chiều dài thanh tiêu chuẩn (mm)"* khi phân loại là Hãng nhôm (`aluminum`) hoặc Cả hai (`both`), mặc định 6000mm.
+  - **`ProfileBarModal`:** Tự động điền giá trị `barLengthMm` từ Hãng nhôm đã chọn vào ô *"Chiều dài cây gốc (mm)"* khi tạo mới. Tự động đồng bộ cập nhật khi người dùng chuyển đổi Hãng nhôm khác trong dropdown.
+  - **Bảng Danh sách Hãng (`aluminum/index.tsx`):** Hiển thị nhãn thông số chuẩn `• Chuẩn: {barLengthMm}mm` ngay cạnh quốc gia xuất xứ.
+
 ## [Unreleased] - 2026-09-23
 
 ### Fixed & Enhanced (Windova CAD Studio 2.0 - Proportional Rendering & Canvas Pan/Zoom)

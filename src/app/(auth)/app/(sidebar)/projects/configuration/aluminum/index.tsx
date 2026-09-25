@@ -172,7 +172,15 @@ export default function AluminumConfigurationPage() {
       cell: (row: Brand) => (
         <div>
           <p className="font-semibold text-gray-900">{row.name}</p>
-          <span className="text-xs text-gray-500">Xuất xứ: {row.originCountry || 'Chưa rõ'}</span>
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <span>Xuất xứ: {row.originCountry || 'Chưa rõ'}</span>
+            {Boolean(row.barLengthMm) && (
+              <>
+                <span>•</span>
+                <span className="text-primary font-medium">Chuẩn: {row.barLengthMm}mm</span>
+              </>
+            )}
+          </div>
         </div>
       ),
     },
