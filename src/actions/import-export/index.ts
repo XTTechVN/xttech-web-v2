@@ -1,4 +1,5 @@
 import api from '@/utils/api';
+import { downloadOrShareBlob, getFilenameFromContentDisposition } from '@/utils';
 import type { ImportPreviewResult, ImportResult } from '@/types';
 
 /**
@@ -9,14 +10,9 @@ export const downloadProjectImportTemplate = async (): Promise<void> => {
     const response = await api.get('/api/v1/excels/project/export', {
       responseType: 'blob',
     });
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'project_export_sample.xlsx');
-    document.body.appendChild(link);
-    link.click();
-    link.parentNode?.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    const disposition = response.headers['content-disposition'];
+    const fileName = getFilenameFromContentDisposition(disposition, 'project_export_sample.xlsx');
+    await downloadOrShareBlob(response.data, fileName);
   } catch (error: unknown) {
     console.warn('API error downloadProjectImportTemplate', error);
     throw error;

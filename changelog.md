@@ -2,7 +2,19 @@
 
 All notable changes to the frontend project will be documented in this file.
 
-## [Unreleased] - 2026-09-24
+## [Unreleased] - 2026-09-25
+
+### Fixed (Xuất File Excel Báo Giá & Dữ Liệu trên Mobile App / Capacitor WebView)
+- **Tạo Tiện Ích Tải File Đa Nền Tảng `downloadOrShareBlob` ([`src/utils/file.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/file.ts)):**
+  - Khắc phục triệt để lỗi người dùng bấm "Xuất Excel" trên App (Capacitor/WebView) báo thành công nhưng không có file tải về (do WebView mặc định chặn thẻ `<a download>` gắn `blob:` URL).
+  - Tích hợp **Web Share API (`navigator.share` / `navigator.canShare`)**: Khi chạy trên điện thoại hoặc môi trường WebView, hệ thống tự động kích hoạt khay chia sẻ native của hệ điều hành (Android / iOS Share Sheet) để người dùng có thể lưu vào Tệp/Downloads, mở trực tiếp bằng Excel/WPS Office hoặc gửi qua Zalo/Gmail.
+  - Fallback an toàn cho Desktop Browser với cơ chế `<a download>` kèm độ trễ hủy URL (`setTimeout`) giúp không bị ngắt luồng tải ngầm.
+  - Xử lý trích xuất tên file chuẩn UTF-8 tiếng Việt từ header `Content-Disposition`.
+- **Đồng bộ Tái Sử Dụng Toàn Hệ Thống:**
+  - Cập nhật hàm xuất báo giá `exportQuotation` ([`src/actions/quotation/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/quotation/index.ts)).
+  - Cập nhật hàm xuất danh sách khách hàng `exportCustomersExcel` ([`src/actions/customer/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/customer/index.ts)).
+  - Cập nhật hàm xuất chấm công `exportAttendanceReport` ([`src/actions/report/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/report/index.ts)).
+  - Cập nhật hàm tải file Excel mẫu `downloadProjectImportTemplate` ([`src/actions/import-export/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/import-export/index.ts)).
 
 ### Added (Department Roster / Bảng Lịch Làm Việc & Hiện Diện Phòng Ban)
 - **Giao diện Quyển Lịch Tháng Toàn Màn Hình & Popup Chi Tiết ([`department-calendar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/roster/_components/department-calendar.tsx), [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/roster/page.tsx)):**
