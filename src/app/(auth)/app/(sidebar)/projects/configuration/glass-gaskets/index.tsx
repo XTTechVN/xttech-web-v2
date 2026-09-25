@@ -450,7 +450,7 @@ export default function GlassGasketsPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="p-4 flex flex-col gap-5">
       {/* Stats Header */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat, idx) => (

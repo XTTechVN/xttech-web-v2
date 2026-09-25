@@ -126,7 +126,7 @@ const Page = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="p-4 flex flex-col gap-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <StatsCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection} />

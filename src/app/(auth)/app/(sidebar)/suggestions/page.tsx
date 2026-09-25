@@ -23,7 +23,7 @@ function SuggestionsPageContent() {
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full flex flex-col gap-4">
+    <div ref={containerRef} className="w-full flex flex-col gap-4 p-4">
 
       {/* Statistical Metrics Cards */}
       {isManager && <StatCards containerWidth={containerWidth} />}

@@ -127,7 +127,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     : '—';
 
   return (
-    <div className="flex flex-col gap-6 text-slate-800">
+    <div className="p-4 flex flex-col gap-6 text-slate-800">
       {/* Header & Breadcrumb & Action Buttons */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between pb-5 border-b border-slate-200/80">
         <div className="flex flex-col gap-1">

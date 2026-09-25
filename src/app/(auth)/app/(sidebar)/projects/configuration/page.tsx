@@ -3,14 +3,13 @@
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import DoorsTab from './doors';
-import AluminumTab from './aluminum';
+import BrandTab from './brand';
+import SeriesTab from './series';
 import GlassGasketsTab from './glass-gaskets';
 import AccessoriesTab from './accessories';
-import { Columns, ListChecks, LayoutGrid, UploadCloud, ShieldCheck } from 'lucide-react';
+import { Columns, ListChecks, Building2, ShieldCheck, Layers } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePermission } from '@/hooks';
-import { Button } from '@/components';
-import { ProjectImportModal } from './_components/import-modal';
 
 interface ConfigTab {
   id: string;
@@ -24,10 +23,17 @@ const ALL_ROLES = ['super', 'admin', 'accountant', 'hr', 'sale', 'employee', 'te
 
 const TABS: ConfigTab[] = [
   {
-    id: 'aluminum',
-    label: 'Hãng & Hệ nhôm',
-    component: AluminumTab,
-    icon: <LayoutGrid size={16} />,
+    id: 'brand',
+    label: 'Hãng nhôm',
+    component: BrandTab,
+    icon: <Building2 size={16} />,
+    roles: ALL_ROLES,
+  },
+  {
+    id: 'series',
+    label: 'Hệ nhôm',
+    component: SeriesTab,
+    icon: <Layers size={16} />,
     roles: ALL_ROLES,
   },
   {
@@ -65,10 +71,11 @@ function ProjectConfigurationContent() {
   }, [hasRole]);
 
   const [activeTab, setActiveTab] = useState<string>(() => {
+    if (urlTab === 'aluminum') return 'brand';
     if (urlTab && TABS.some((t) => t.id === urlTab)) {
       return urlTab;
     }
-    return 'aluminum';
+    return 'brand';
   });
 
   // Đồng bộ khi URL search param thay đổi
@@ -86,7 +93,7 @@ function ProjectConfigurationContent() {
   }, [availableTabs, activeTab]);
 
   const currentTab = availableTabs.find((t) => t.id === activeTab) || availableTabs[0];
-  const ActiveComponent = currentTab?.component || AluminumTab;
+  const ActiveComponent = currentTab?.component || BrandTab;
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
@@ -97,54 +104,10 @@ function ProjectConfigurationContent() {
 
   return (
     <div className="flex flex-col gap-4 text-black">
-      {/* Tab Navigation & Excel Actions */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {availableTabs.length > 1 && (
-          <div className="flex overflow-x-auto scrollbar-none gap-2 sm:gap-4 p-1">
-            {availableTabs.map((tab) => {
-              const isActive = tab.id === (currentTab?.id || activeTab);
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 cursor-pointer ${
-                    isActive
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-slate-600 hover:text-primary hover:bg-slate-100'
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Nút Nhập dữ liệu */}
-        <div className="flex items-center gap-2 self-end md:self-auto shrink-0 px-1">
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<UploadCloud size={14} />}
-            onClick={() => setIsImportModalOpen(true)}
-            className="h-9 px-3 text-xs md:text-sm font-semibold shrink-0"
-          >
-            Nhập dữ liệu
-          </Button>
-        </div>
-      </div>
-
       {/* Tab Content */}
       <div className="min-h-[400px]">
         {ActiveComponent && <ActiveComponent />}
       </div>
-
-      {/* Modal Nhập dữ liệu Excel */}
-      <ProjectImportModal
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-      />
     </div>
   );
 }

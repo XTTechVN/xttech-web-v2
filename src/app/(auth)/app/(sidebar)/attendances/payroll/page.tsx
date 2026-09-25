@@ -402,7 +402,7 @@ export default function PayrollDataPage() {
   };
 
   return (
-    <div className="w-full flex flex-col gap-4">
+    <div className="w-full flex flex-col gap-4 p-4">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {payrollStats.map((stat, i) => (
           <StatCart

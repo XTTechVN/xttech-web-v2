@@ -117,18 +117,20 @@ export function TableDataDesktop<T>({
   }, [res, isPlaceholderData, meta, offset, limit, queryKey, fetcher, queryClient]);
 
 
-  return (                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+  return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="overflow-x-auto w-full">
-        <table
-          className={`table w-full border-collapse transition-opacity duration-200 ${isPlaceholderData ? 'opacity-60' : 'opacity-100'}`}
-        >
-          {/* Render table header */}
-          <TableHeader columns={columns} select={select} />
+      <div className="w-full bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xs">
+        <div className="overflow-x-auto w-full">
+          <table
+            className={`table w-full border-collapse transition-opacity duration-200 ${isPlaceholderData ? 'opacity-60' : 'opacity-100'}`}
+          >
+            {/* Render table header */}
+            <TableHeader columns={columns} select={select} />
 
-          {/* Render table rows */}
-          <TableBody data={res?.items || []} columns={columns} select={select} />
-        </table>
+            {/* Render table rows */}
+            <TableBody data={res?.items || []} columns={columns} select={select} />
+          </table>
+        </div>
       </div>
 
       {/* Render Pagination controls if metadata is available */}

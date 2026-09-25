@@ -40,9 +40,16 @@ export const getBrand = async (id: number): Promise<Brand> => {
   }
 };
 
-export const createBrand = async (data: BrandCreate): Promise<Brand> => {
+export const createBrand = async (data: BrandCreate, file?: File | null): Promise<Brand> => {
   try {
-    const response = await api.post('/api/v1/brands', data);
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(data));
+    if (file) {
+      formData.append('file', file);
+    }
+    const response = await api.post('/api/v1/brands', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   } catch (error) {
     console.warn('API error createBrand', error);
@@ -50,9 +57,20 @@ export const createBrand = async (data: BrandCreate): Promise<Brand> => {
   }
 };
 
-export const updateBrand = async (id: number, data: BrandUpdate): Promise<Brand> => {
+export const updateBrand = async (
+  id: number,
+  data: BrandUpdate,
+  file?: File | null,
+): Promise<Brand> => {
   try {
-    const response = await api.put(`/api/v1/brands/${id}`, data);
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(data));
+    if (file) {
+      formData.append('file', file);
+    }
+    const response = await api.put(`/api/v1/brands/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   } catch (error) {
     console.warn('API error updateBrand', error);

@@ -35,7 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [activeMenu, setActiveMenu] = React.useState(lastPath);
 
   const { user } = useAuthStore();
-  
+
   const userRole = React.useMemo<UserRole>(() => {
     const firstRole = user?.roles?.[0];
     const roleCode = typeof firstRole === 'string' ? firstRole : firstRole?.code;
@@ -133,7 +133,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* 3. Vùng nội dung chính */}
       <div className="flex-1 h-full bg-slate-50 flex flex-col min-w-0">
         <AppHeader setActive={setActiveMenu} onMenuClick={() => setIsMobileOpen(true)} userRole={userRole} />
-        <div className="flex-1 p-4 overflow-y-auto">{children}</div>
+        <div className="flex-1 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

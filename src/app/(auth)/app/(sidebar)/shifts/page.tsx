@@ -59,7 +59,7 @@ export default function ShiftsPage() {
   ];
 
   return (
-    <div className="flex w-full h-full flex-1 flex-col gap-4">
+    <div className="p-4 flex w-full h-full flex-1 flex-col gap-4">
       {/* Khối thống kê Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {shiftStats.map((stat, index) => (

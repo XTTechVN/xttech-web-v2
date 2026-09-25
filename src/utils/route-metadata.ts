@@ -46,9 +46,14 @@ export const ROUTE_METADATA_MAP: Record<string, RouteMeta> = {
     iconName: 'Clock',
   },
   '/app/projects': {
-    title: 'Quản lý dự án',
+    title: 'Dự án',
     subtitle: 'Tiến độ & Nhiệm vụ công việc',
     iconName: 'FolderKanban',
+  },
+  '/app/projects/configuration': {
+    title: 'Cấu hình dự án',
+    subtitle: 'Thiết lập danh mục nhôm kính và phụ kiện',
+    iconName: 'SlidersHorizontal',
   },
   '/app/customers': {
     title: 'Quản lý khách hàng',

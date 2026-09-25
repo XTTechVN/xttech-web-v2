@@ -26,7 +26,7 @@ export default function DepartmentDetailPage() {
   });
 
   return (
-    <div className="flex flex-col gap-4 text-black w-full">
+    <div className="p-4 flex flex-col gap-4 text-black w-full">
       {/* Header Banner & Stats */}
       <DepartmentHeader
         department={departmentDetail}

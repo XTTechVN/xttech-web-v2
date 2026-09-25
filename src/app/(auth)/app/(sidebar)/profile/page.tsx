@@ -16,7 +16,7 @@ const Page = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="p-4 flex flex-col gap-4">
       <div className="flex justify-between items-center p-3">
         <div className="flex flex-col gap-2">
           <Heading size="h2" className="text-primary text-xl md:text-3xl">

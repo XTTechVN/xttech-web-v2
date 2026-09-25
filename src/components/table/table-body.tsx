@@ -21,11 +21,10 @@ export function TableBody<T>({ data, columns, select }: { data: T[]; columns: IT
               return (
                 <td
                   key={column.key}
-                  className={`h-12 px-4 py-2 text-sm font-medium text-slate-600 whitespace-normal wrap-break-word ${column.maxWidth ? 'truncate' : ''} ${
-                    isSticky
+                  className={`h-12 px-4 py-2 text-xs font-medium text-slate-600 whitespace-normal wrap-break-word ${column.maxWidth ? 'truncate' : ''} ${isSticky
                       ? 'sticky z-10 bg-white group-hover:bg-slate-50/60 border-r md:border-r-0 border-slate-200 transition-colors'
                       : ''
-                  }`}
+                    }`}
                   style={{
                     minWidth: column.minWidth,
                     maxWidth: column.maxWidth,
