@@ -11,6 +11,8 @@ import {
   getDoorSeriesList,
   getProfileBars,
   getAccessoryCombos,
+  getGlasses,
+  getBrandColors,
 } from '@/actions';
 import {
   FrameShape,
@@ -23,6 +25,8 @@ import {
   DEFAULT_SASH_CONFIG,
   MullionInfo,
   MullionCutType,
+  ColorSwatch,
+  ALUMINUM_PALETTE,
 } from './studio-types';
 import { DrawTabView } from './panels/draw-tab-view';
 import { InfoTabView } from './panels/info-tab-view';
@@ -30,6 +34,7 @@ import { ConfigTabView } from './panels/config/config-tab-view';
 import { ResultsTabView } from './panels/results-tab-view';
 import { AccessoriesTabView } from './panels/accessories-tab-view';
 import { MullionInspectorModal } from './panels/mullion-inspector-modal';
+import { DoorCadRenderer } from './cad-engine/door-cad-renderer';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
@@ -69,6 +74,26 @@ const findNode = (root: SceneCellNode, id: string): SceneCellNode | null => {
   return null;
 };
 
+const findParentNode = (root: SceneCellNode, id: string): SceneCellNode | null => {
+  if (root.children) {
+    if (root.children.some((c) => c.id === id)) return root;
+    for (const c of root.children) {
+      const p = findParentNode(c, id);
+      if (p) return p;
+    }
+  }
+  return null;
+};
+
+const createDefaultRootCell = (width = 1400, height = 1600): SceneCellNode => ({
+  id: 'root',
+  w: width,
+  h: height,
+  sashType: 'fixed',
+  paneType: 'glass',
+  children: [],
+});
+
 export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClose, door }) => {
   // Navigation Tabs
   const [activeMainTab, setActiveMainTab] = useState<StudioMainTab>('draw');
@@ -76,9 +101,9 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
   // Basic Door State
   const [w, setW] = useState<number>(1400);
   const [h, setH] = useState<number>(1600);
-  const [name, setName] = useState<string>('Cửa sổ 2 cánh mở quay Class A65');
-  const [code, setCode] = useState<string>('CS_CLA65');
-  const [type, setType] = useState<string>('cs');
+  const [name, setName] = useState<string>('Vách kính cố định');
+  const [code, setCode] = useState<string>('');
+  const [type, setType] = useState<string>('ck');
   const [aluminumColor, setAluminumColor] = useState<string>('#955F20');
   const [hardwareColor, setHardwareColor] = useState<string>('#1E293B');
   const [frameShape, setFrameShape] = useState<FrameShape>('rect');
@@ -91,24 +116,13 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
 
   // Drawing View State
   const [activeLeftTab, setActiveLeftTab] = useState<'frame' | 'sash'>('sash');
-  const [currentSashType, setCurrentSashType] = useState<SashOpenType>('swing_left');
+  const [currentSashType, setCurrentSashType] = useState<SashOpenType>('fixed');
   const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [selectedMullion, setSelectedMullion] = useState<MullionInfo | null>(null);
   const [isMullionModalOpen, setIsMullionModalOpen] = useState<boolean>(false);
 
-  // Scene Graph Root
-  const [rootCell, setRootCell] = useState<SceneCellNode>(() => ({
-    id: 'root',
-    w: 1400,
-    h: 1600,
-    sashType: 'swing_double',
-    paneType: 'glass',
-    splitDirection: 'vertical',
-    children: [
-      { id: 'cell_0', w: 700, h: 1600, sashType: 'swing_left', paneType: 'glass' },
-      { id: 'cell_1', w: 700, h: 1600, sashType: 'swing_right', paneType: 'glass' },
-    ],
-  }));
+  // Scene Graph Root: Mặc định là Vách kính cố định (fixed)
+  const [rootCell, setRootCell] = useState<SceneCellNode>(() => createDefaultRootCell(1400, 1600));
 
   // Undo / Redo Stack
   const [history, setHistory] = useState<SceneCellNode[]>([]);
@@ -140,9 +154,58 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
   });
   const availableCombos = combosData?.items || [];
 
-  // Initialize or re-hydrate state when editing existing door
+  // Fetch Glasses (for CellInspector dropdown)
+  const { data: glassesData } = useQuery({
+    queryKey: ['glasses-list'],
+    queryFn: () => getGlasses({ limit: 200, isActive: true }),
+    enabled: isOpen,
+  });
+  const availableGlasses = glassesData?.items || [];
+
+  // Lấy brandId từ hệ nhôm (DoorSeries) đang chọn
+  const selectedSeries = availableSeries.find((s) => s.id === seriesId);
+  const brandId = selectedSeries?.brandId;
+
+  // Fetch danh sách màu thực tế của Hãng từ Database
+  const { data: brandColorsData } = useQuery({
+    queryKey: ['brand-colors', brandId],
+    queryFn: () => getBrandColors({ brandId, limit: 100, isActive: true }),
+    enabled: isOpen && !!brandId,
+  });
+  const availableBrandColors = brandColorsData?.items || [];
+
+  // Bảng màu nhôm động: nếu hãng có cấu hình màu thì dùng của hãng, fallback về palette mặc định
+  const dynamicAluminumColors: ColorSwatch[] =
+    availableBrandColors.length > 0
+      ? availableBrandColors.map((bc) => ({
+          code: bc.code,
+          name: bc.name,
+          colorHex: bc.colorHex,
+        }))
+      : ALUMINUM_PALETTE;
+
+  // Khi danh sách màu của hãng load hoặc khi user đổi hệ nhôm (hãng khác):
+  // Nếu màu hiện tại không thuộc bảng màu của hãng, tự động chọn màu mặc định của hãng đó
   useEffect(() => {
-    if (door && isOpen) {
+    if (availableBrandColors.length > 0) {
+      const exists = availableBrandColors.some(
+        (c) => c.colorHex.toLowerCase() === aluminumColor.toLowerCase()
+      );
+      if (!exists) {
+        const defaultColor =
+          availableBrandColors.find((c) => c.isDefault) || availableBrandColors[0];
+        if (defaultColor) {
+          setAluminumColor(defaultColor.colorHex);
+        }
+      }
+    }
+  }, [availableBrandColors, aluminumColor]);
+
+  // Khởi tạo hoặc nạp lại state khi sửa cửa cũ, HOẶC reset toàn bộ khi thêm cửa mới
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (door) {
       if (door.name) setName(door.name);
       if (door.code) setCode(door.code);
       if (door.type) setType(door.type);
@@ -176,6 +239,39 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
         setHistory([sc.rootCell]);
         setHistoryIdx(0);
       }
+      setSelectedCellId(null);
+      setSelectedMullion(null);
+      setIsMullionModalOpen(false);
+      setCalcData(null);
+      setActiveMainTab('draw');
+    } else {
+      // Khi thêm cửa mới (door === null / undefined): RESET TOÀN BỘ VỀ MẶC ĐỊNH
+      const defaultW = 1400;
+      const defaultH = 1600;
+      const initialRoot = createDefaultRootCell(defaultW, defaultH);
+
+      setName('Vách kính cố định');
+      setCode('');
+      setType('ck');
+      setW(defaultW);
+      setH(defaultH);
+      setFrameShape('rect');
+      setAluminumColor('#955F20');
+      setHardwareColor('#1E293B');
+      setSeriesId(1);
+      setSelectedComboId(null);
+      setFrameConfig(DEFAULT_FRAME_CONFIG);
+      setSashConfig(DEFAULT_SASH_CONFIG);
+      setCurrentSashType('fixed');
+      setRootCell(initialRoot);
+      setHistory([initialRoot]);
+      setHistoryIdx(0);
+      setSelectedCellId(null);
+      setSelectedMullion(null);
+      setIsMullionModalOpen(false);
+      setCalcData(null);
+      setIsCalculating(false);
+      setActiveMainTab('draw');
     }
   }, [door, isOpen]);
 
@@ -201,32 +297,29 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
   };
 
   const handleReset = () => {
-    const initRoot: SceneCellNode = {
-      id: 'root',
-      w,
-      h,
-      sashType: 'fixed',
-      paneType: 'glass',
-      children: [],
-    };
-    pushState(initRoot);
+    const initRoot: SceneCellNode = createDefaultRootCell(w, h);
+    setRootCell(initRoot);
+    setHistory([initRoot]);
+    setHistoryIdx(0);
     setSelectedCellId(null);
+    setSelectedMullion(null);
+    setIsMullionModalOpen(false);
+    toast.success('Đã làm mới bản vẽ cửa về mặc định');
   };
 
+  const rescaleTree = (node: SceneCellNode, scaleX: number, scaleY: number): SceneCellNode => ({
+    ...node,
+    w: Math.round(node.w * scaleX),
+    h: Math.round(node.h * scaleY),
+    children: node.children?.map((c) => rescaleTree(c, scaleX, scaleY)),
+  });
+
   const handleChangeDimension = (newW: number, newH: number) => {
+    const scaleX = newW / (w || 1);
+    const scaleY = newH / (h || 1);
     setW(newW);
     setH(newH);
-    const updated = {
-      ...rootCell,
-      w: newW,
-      h: newH,
-      children: rootCell.children?.map((c) => ({
-        ...c,
-        w: rootCell.splitDirection === 'vertical' ? Math.round(newW / (rootCell.children?.length || 1)) : newW,
-        h: rootCell.splitDirection === 'horizontal' ? Math.round(newH / (rootCell.children?.length || 1)) : newH,
-      })),
-    };
-    pushState(updated);
+    pushState(rescaleTree(rootCell, scaleX, scaleY));
   };
 
   const createSplitChildren = (
@@ -248,7 +341,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
       accumulated += currentSpan;
 
       return {
-        id: `${parentId}_c${i}_${Math.random().toString(36).slice(2, 6)}`,
+        id: `${parentId}_c${i}_${crypto.randomUUID().slice(0, 8)}`,
         w: isVert ? currentSpan : totalW,
         h: isVert ? totalH : currentSpan,
         sashType: defaultSashType,
@@ -286,47 +379,231 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
     if (children.length > 0) setSelectedCellId(children[0].id);
   };
 
-  const handleSelectSashType = (sashType: SashOpenType) => {
-    setCurrentSashType(sashType);
-    const targetId = selectedCellId || (rootCell.children?.[0]?.id || 'cell_0');
-    const updated = updateNode(rootCell, targetId, { sashType });
-    pushState(updated);
+  // Đồng bộ kiểu cánh cho cụm cửa hoặc chuyển đổi giữa cửa 2 cánh và cửa 1 cánh / vách cố định
+  const applySashTypeToCluster = (
+    root: SceneCellNode,
+    targetId: string,
+    newSashType: SashOpenType
+  ): { updatedRoot: SceneCellNode; nextSelectedId?: string } => {
+    const targetNode = findNode(root, targetId);
+    if (!targetNode) return { updatedRoot: root };
+
+    const parentNode = findParentNode(root, targetId);
+
+    // Nhận diện cụm cánh đôi (sash pair):
+    const isParentPair =
+      parentNode &&
+      parentNode.children &&
+      parentNode.children.length === 2 &&
+      parentNode.splitDirection === 'vertical' &&
+      (parentNode.splitType === 'sash_pair' ||
+        parentNode.sashType === 'swing_double' ||
+        (parentNode.children.some((c) => c.sashType === 'swing_left') &&
+          parentNode.children.some((c) => c.sashType === 'swing_right')));
+
+    const isTargetPair =
+      targetNode.children &&
+      targetNode.children.length === 2 &&
+      targetNode.splitDirection === 'vertical' &&
+      (targetNode.splitType === 'sash_pair' ||
+        targetNode.sashType === 'swing_double' ||
+        (targetNode.children.some((c) => c.sashType === 'swing_left') &&
+          targetNode.children.some((c) => c.sashType === 'swing_right')));
+
+    const pairContainer = isParentPair ? parentNode : isTargetPair ? targetNode : null;
+
+    // TRƯỜNG HỢP 1: Khoang đang là Cụm 2 cánh (pairContainer)
+    if (pairContainer && pairContainer.children && pairContainer.children.length === 2) {
+      const c0 = pairContainer.children[0];
+      const c1 = pairContainer.children[1];
+
+      // 1.1: Giữ nguyên là Cửa 2 cánh mở quay
+      if (newSashType === 'swing_double') {
+        const updatedChildren: SceneCellNode[] = [
+          {
+            ...c0,
+            sashType: 'swing_left',
+            hasLock: false,
+          },
+          {
+            ...c1,
+            sashType: 'swing_right',
+            hasLock: true,
+            handleHeight: c1.handleHeight ?? 800,
+            handleType: c1.handleType ?? 'lever',
+          },
+        ];
+        return {
+          updatedRoot: updateNode(root, pairContainer.id, {
+            sashType: 'swing_double',
+            splitDirection: 'vertical',
+            splitType: 'sash_pair',
+            children: updatedChildren,
+          }),
+          nextSelectedId: targetId === c0.id ? c0.id : c1.id,
+        };
+      }
+
+      // 1.2: TẤT CẢ các kiểu cánh đơn (sliding, swing_left, swing_right, awning, tilt, tilt_down, tilt_turn) hoặc Vách cố định (fixed)
+      // -> Hợp nhất cụm 2 cánh thành 1 cánh/ô duy nhất toàn khoang
+      const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down', 'sliding'].includes(newSashType);
+      const activePaneType = targetNode.paneType || c0.paneType || 'glass';
+      const activeGlassName = targetNode.glassName || c0.glassName;
+      const activeGlassThickness = targetNode.glassThickness || c0.glassThickness;
+
+      const mergedNode: SceneCellNode = {
+        ...pairContainer,
+        sashType: newSashType,
+        splitDirection: undefined,
+        splitType: undefined,
+        children: [],
+        paneType: activePaneType,
+        glassName: activeGlassName,
+        glassThickness: activeGlassThickness,
+        hasLock: sashHasHandle,
+        handleHeight: sashHasHandle ? (targetNode.handleHeight || c1.handleHeight || 800) : undefined,
+        handleType: sashHasHandle ? (targetNode.handleType || c1.handleType || 'lever') : undefined,
+      };
+
+      return {
+        updatedRoot: updateNode(root, pairContainer.id, mergedNode),
+        nextSelectedId: pairContainer.id,
+      };
+    }
+
+    // TRƯỜNG HỢP 2: Khoang đang là Ô đơn lẻ (chưa chia hoặc đã hợp nhất)
+    if (!pairContainer && (!targetNode.children || targetNode.children.length === 0)) {
+      // 2.1: Chuyển từ ô đơn lẻ sang Cửa 2 cánh mở quay
+      if (newSashType === 'swing_double') {
+        const halfW = Math.round(targetNode.w / 2);
+        const newChildren: SceneCellNode[] = [
+          {
+            id: `${targetNode.id}_c0_${crypto.randomUUID().slice(0, 8)}`,
+            w: halfW,
+            h: targetNode.h,
+            sashType: 'swing_left',
+            paneType: targetNode.paneType || 'glass',
+            glassName: targetNode.glassName,
+            glassThickness: targetNode.glassThickness,
+            hasLock: false,
+          },
+          {
+            id: `${targetNode.id}_c1_${crypto.randomUUID().slice(0, 8)}`,
+            w: targetNode.w - halfW,
+            h: targetNode.h,
+            sashType: 'swing_right',
+            paneType: targetNode.paneType || 'glass',
+            glassName: targetNode.glassName,
+            glassThickness: targetNode.glassThickness,
+            hasLock: true,
+            handleHeight: targetNode.handleHeight || 800,
+            handleType: targetNode.handleType || 'lever',
+          },
+        ];
+        return {
+          updatedRoot: updateNode(root, targetNode.id, {
+            sashType: newSashType,
+            splitDirection: 'vertical',
+            splitType: 'sash_pair',
+            children: newChildren,
+          }),
+          nextSelectedId: newChildren[1].id,
+        };
+      }
+
+      // 2.2: Chuyển đổi giữa các kiểu cánh đơn / vách cố định cho ô đơn lẻ (bao gồm sliding)
+      const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down', 'sliding'].includes(newSashType);
+      const updates: Partial<SceneCellNode> = {
+        sashType: newSashType,
+        hasLock: sashHasHandle,
+        handleHeight: sashHasHandle ? (targetNode.handleHeight ?? 800) : undefined,
+        handleType: sashHasHandle ? (targetNode.handleType ?? 'lever') : undefined,
+      };
+      return {
+        updatedRoot: updateNode(root, targetId, updates),
+        nextSelectedId: targetId,
+      };
+    }
+
+    return { updatedRoot: root, nextSelectedId: targetId };
   };
 
-  const handleUpdateDimension = (target: 'w' | 'h' | 'cell', value: number, cellId?: string) => {
+  const handleSelectSashType = (sashType: SashOpenType) => {
+    setCurrentSashType(sashType);
+    const targetId = selectedCellId || (rootCell.children?.[0]?.id || rootCell.id);
+    const { updatedRoot, nextSelectedId } = applySashTypeToCluster(rootCell, targetId, sashType);
+    pushState(updatedRoot);
+    if (nextSelectedId) {
+      setSelectedCellId(nextSelectedId);
+    }
+  };
+
+  // Tổng quát: resize 1 cell bất kỳ trong cây, bù lại cho sibling kế tiếp
+  const resizeCellInParent = (
+    root: SceneCellNode,
+    cellId: string,
+    newValue: number,
+    axis: 'w' | 'h'
+  ): SceneCellNode => {
+    if (!root.children || root.children.length === 0) return root;
+
+    const childIdx = root.children.findIndex((c) => c.id === cellId);
+    const isMatchingAxis =
+      (axis === 'w' && root.splitDirection === 'vertical') ||
+      (axis === 'h' && root.splitDirection === 'horizontal');
+
+    if (childIdx >= 0 && isMatchingAxis) {
+      const siblingIdx = childIdx + 1 < root.children.length ? childIdx + 1 : childIdx - 1;
+      const oldVal = axis === 'w' ? root.children[childIdx].w : root.children[childIdx].h;
+      const sibOld = axis === 'w' ? root.children[siblingIdx].w : root.children[siblingIdx].h;
+      const maxAllowed = oldVal + (sibOld - 100);
+      const clamped = Math.max(100, Math.min(maxAllowed, newValue));
+      const delta = clamped - oldVal;
+
+      const newChildren = root.children.map((c, i) => {
+        if (i === childIdx) return { ...c, [axis]: clamped };
+        if (i === siblingIdx) {
+          return { ...c, [axis]: Math.max(100, sibOld - delta) };
+        }
+        return c;
+      });
+      return { ...root, children: newChildren };
+    }
+
+    // Không tìm thấy ở cấp này, đệ quy xuống sâu hơn
+    return { ...root, children: root.children.map((c) => resizeCellInParent(c, cellId, newValue, axis)) };
+  };
+
+  const handleUpdateDimension = (target: 'w' | 'h' | 'cell' | 'handleHeight', value: number, cellId?: string) => {
     if (target === 'w') {
       handleChangeDimension(value, h);
     } else if (target === 'h') {
       handleChangeDimension(w, value);
+    } else if (target === 'handleHeight' && cellId) {
+      const clampedVal = Math.max(200, Math.min(h - 100, value));
+      pushState(updateNode(rootCell, cellId, { handleHeight: clampedVal }));
+      toast.success(`Đã cập nhật cao độ khóa: ${clampedVal} mm`);
     } else if (target === 'cell' && cellId) {
-      if (rootCell.children && rootCell.children.length === 2) {
-        const c0 = rootCell.children[0];
-        const c1 = rootCell.children[1];
-        if (rootCell.splitDirection === 'horizontal') {
-          if (cellId === c0.id) {
-            const newH0 = Math.max(100, Math.min(h - 100, value));
-            pushState({ ...rootCell, children: [{ ...c0, h: newH0 }, { ...c1, h: h - newH0 }] });
-          } else if (cellId === c1.id) {
-            const newH1 = Math.max(100, Math.min(h - 100, value));
-            pushState({ ...rootCell, children: [{ ...c0, h: h - newH1 }, { ...c1, h: newH1 }] });
-          }
-        } else if (rootCell.splitDirection === 'vertical') {
-          if (cellId === c0.id) {
-            const newW0 = Math.max(100, Math.min(w - 100, value));
-            pushState({ ...rootCell, children: [{ ...c0, w: newW0 }, { ...c1, w: w - newW0 }] });
-          } else if (cellId === c1.id) {
-            const newW1 = Math.max(100, Math.min(w - 100, value));
-            pushState({ ...rootCell, children: [{ ...c0, w: w - newW1 }, { ...c1, w: newW1 }] });
-          }
-        }
-      } else {
-        pushState(updateNode(rootCell, cellId, { w: value }));
-      }
+      // Xác định axis dựa trên splitDirection của parent chứa cell
+      const tryW = resizeCellInParent(rootCell, cellId, value, 'w');
+      const tryH = resizeCellInParent(rootCell, cellId, value, 'h');
+      // Dùng kết quả của axis nào thực sự thay đổi
+      const changed = JSON.stringify(tryW) !== JSON.stringify(rootCell) ? tryW : tryH;
+      pushState(changed);
     }
   };
 
   const handleUpdateSelectedCell = (updates: Partial<SceneCellNode>) => {
     if (!selectedCellId) return;
+    if (updates.sashType) {
+      setCurrentSashType(updates.sashType);
+      const { updatedRoot, nextSelectedId } = applySashTypeToCluster(rootCell, selectedCellId, updates.sashType);
+      pushState(updatedRoot);
+      if (nextSelectedId) {
+        setSelectedCellId(nextSelectedId);
+      }
+      return;
+    }
     pushState(updateNode(rootCell, selectedCellId, updates));
   };
 
@@ -461,10 +738,26 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
   // Save Mutation
   const { mutate: saveMutation, isPending: isSaving } = useMutation({
     mutationFn: async () => {
+      // 1. Tự động trích xuất vector SVG bản vẽ cửa để làm thumbnail
+      let imageB64: string | undefined = undefined;
+      try {
+        const svgEl = document.getElementById('studio-export-cad-svg') || document.getElementById('door-cad-svg');
+        if (svgEl) {
+          const clone = svgEl.cloneNode(true) as SVGSVGElement;
+          clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+          const svgString = new XMLSerializer().serializeToString(clone);
+          imageB64 = `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
+        }
+      } catch (err) {
+        console.warn('Cannot serialize CAD SVG:', err);
+      }
+
       const payload: DoorCreate = {
         name,
         code,
         type,
+        doorSeriesId: seriesId || null,
+        imageB64,
         specification: `${w}×${h}mm, ${frameShape}, hệ ID:${seriesId || 'default'}`,
         systemConfig: {
           w,
@@ -494,6 +787,16 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
   });
 
   const selectedCellNode = selectedCellId ? findNode(rootCell, selectedCellId) : null;
+  const parentOfSelected = selectedCellId ? findParentNode(rootCell, selectedCellId) : null;
+  const isSelectedInPair =
+    parentOfSelected &&
+    parentOfSelected.children &&
+    parentOfSelected.children.length === 2 &&
+    parentOfSelected.splitDirection === 'vertical' &&
+    (parentOfSelected.splitType === 'sash_pair' || parentOfSelected.sashType === 'swing_double');
+  const effectiveSashType: SashOpenType = isSelectedInPair
+    ? (parentOfSelected.sashType || 'swing_double')
+    : (selectedCellNode?.sashType || currentSashType);
 
   const NAV_TABS = [
     { id: 'info' as const, label: 'Thông tin', icon: FileText },
@@ -574,6 +877,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
             aluminumColor={aluminumColor}
             hardwareColor={hardwareColor}
             doorSeriesList={availableSeries}
+            aluminumColors={dynamicAluminumColors}
             onChangeField={(field, val) => {
               if (field === 'w') setW(val);
               else if (field === 'h') setH(val);
@@ -603,7 +907,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
           selectedMullionId={selectedMullion?.id}
           onSelectMullion={handleSelectMullion}
           activeLeftTab={activeLeftTab}
-          currentSashType={currentSashType}
+          currentSashType={effectiveSashType}
           historyIdx={historyIdx}
           historyLength={history.length}
           calcData={calcData}
@@ -627,6 +931,8 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
             if (!selectedCellId) return;
             pushState(updateNode(rootCell, selectedCellId, { children: [] }));
           }}
+          availableGlasses={availableGlasses}
+          aluminumColors={dynamicAluminumColors}
         />
       )}
 
@@ -647,6 +953,13 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
           <ResultsTabView
             calcData={calcData}
             isCalculating={isCalculating}
+            w={w}
+            h={h}
+            rootCell={rootCell}
+            frameConfig={frameConfig}
+            sashConfig={sashConfig}
+            seriesId={seriesId}
+            onNavigateTab={setActiveMainTab}
           />
         </div>
       )}
@@ -674,6 +987,24 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
         onSave={handleSaveMullion}
         onDeleteMullion={handleDeleteMullion}
       />
+
+      {/* Hidden CAD Renderer for clean SVG Thumbnail Export */}
+      <div className="sr-only pointer-events-none absolute -top-[9999px] -left-[9999px] w-[400px] h-[400px] opacity-0" aria-hidden="true">
+        <DoorCadRenderer
+          id="studio-export-cad-svg"
+          hideDimensions={true}
+          w={w}
+          h={h}
+          aluminumColor={aluminumColor}
+          hardwareColor={hardwareColor}
+          frameShape={frameShape}
+          rootCell={rootCell}
+          frameConfig={frameConfig}
+          sashConfig={sashConfig}
+          selectedCellId={null}
+          onSelectCell={() => {}}
+        />
+      </div>
     </Modal>
   );
 };

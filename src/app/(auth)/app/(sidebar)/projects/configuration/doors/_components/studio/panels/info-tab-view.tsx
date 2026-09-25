@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ALUMINUM_PALETTE, HARDWARE_PALETTE } from '../studio-types';
+import { ColorSwatch, ALUMINUM_PALETTE, HARDWARE_PALETTE } from '../studio-types';
 import { DoorSeries } from '@/types';
 
 interface InfoTabViewProps {
@@ -17,6 +17,7 @@ interface InfoTabViewProps {
   hardwareColor: string;
   doorSeriesList: DoorSeries[];
   onChangeField: (field: string, val: any) => void;
+  aluminumColors?: ColorSwatch[];
 }
 
 export const InfoTabView: React.FC<InfoTabViewProps> = ({
@@ -32,7 +33,12 @@ export const InfoTabView: React.FC<InfoTabViewProps> = ({
   hardwareColor,
   doorSeriesList,
   onChangeField,
+  aluminumColors,
 }) => {
+  const activeColorPalette = aluminumColors && aluminumColors.length > 0 ? aluminumColors : ALUMINUM_PALETTE;
+  const activeColor = activeColorPalette.find(
+    (c) => c.colorHex.toLowerCase() === aluminumColor.toLowerCase()
+  );
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 flex justify-center">
       <div className="max-w-2xl w-full bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-5 text-xs text-gray-800">
@@ -129,16 +135,23 @@ export const InfoTabView: React.FC<InfoTabViewProps> = ({
         {/* Màu nhôm & Phụ kiện */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="font-semibold text-gray-700">Màu nhôm tiêu chuẩn</label>
+            <div className="flex items-center justify-between">
+              <label className="font-semibold text-gray-700">Màu nhôm tiêu chuẩn</label>
+              {activeColor && (
+                <span className="text-[11px] text-blue-600 font-semibold truncate max-w-[140px]" title={activeColor.name}>
+                  {activeColor.name}
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2 flex-wrap">
-              {ALUMINUM_PALETTE.map((col) => (
+              {activeColorPalette.map((col) => (
                 <button
                   key={col.code}
                   type="button"
                   title={col.name}
                   onClick={() => onChangeField('aluminumColor', col.colorHex)}
                   className={`w-7 h-7 rounded-full border transition-transform cursor-pointer ${
-                    aluminumColor === col.colorHex
+                    aluminumColor.toLowerCase() === col.colorHex.toLowerCase()
                       ? 'ring-2 ring-blue-500 ring-offset-2 scale-110 shadow-xs border-transparent'
                       : 'border-gray-300 hover:scale-105'
                   }`}
