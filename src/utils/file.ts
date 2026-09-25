@@ -3,6 +3,23 @@
  */
 import React from 'react';
 import toast from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+
+/**
+ * Chuyển đổi Blob thành Base64 Data URL để lưu file qua Capacitor Filesystem
+ */
+const blobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      resolve(reader.result as string);
+    };
+    reader.readAsDataURL(blob);
+  });
+};
 
 export const getFilenameFromContentDisposition = (
   disposition?: string,
@@ -46,6 +63,38 @@ export const downloadOrShareBlob = async (
   mimeType: string = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ): Promise<void> => {
   const blob = data instanceof Blob ? data : new Blob([data], { type: mimeType });
+
+  // 1. Ưu tiên cao nhất trên Native Mobile App (Capacitor Android / iOS)
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const base64Data = await blobToBase64(blob);
+      const savedFile = await Filesystem.writeFile({
+        path: filename,
+        data: base64Data,
+        directory: Directory.Cache,
+        recursive: true,
+      });
+
+      await Share.share({
+        title: filename,
+        text: filename,
+        url: savedFile.uri,
+        dialogTitle: 'Chia sẻ hoặc mở file',
+      });
+      return;
+    } catch (error: any) {
+      // Người dùng bấm ra ngoài để hủy khay chia sẻ -> Kết thúc bình thường
+      if (
+        error?.name === 'AbortError' ||
+        error?.message?.includes('canceled') ||
+        error?.message?.includes('cancelled') ||
+        error?.message?.includes('dismiss')
+      ) {
+        return;
+      }
+      console.warn('Lỗi chia sẻ Native Capacitor, chuyển sang phương thức dự phòng:', error);
+    }
+  }
 
   const isMobile =
     typeof window !== 'undefined' &&
