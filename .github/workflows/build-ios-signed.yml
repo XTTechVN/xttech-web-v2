@@ -3,7 +3,7 @@ name: Build Signed iOS App Store IPA
 on:
   workflow_dispatch:
   push:
-    branches: [ main, dev ]
+    branches: [ main, dev, re_project  ]
     paths:
       - 'ios/**'
       - 'src/**'
