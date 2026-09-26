@@ -86,6 +86,7 @@ export const adaptQuotationPreview = (data: QuotationDetail): PreviewFloor[] => 
             })),
             formulas: (door.formulas || []).map((f: QuotationFormulaResponse) => ({
               formulaId: f.formulaId,
+              type: f.type || null,
               code: f.code || '',
               name: f.name || 'Công uốn vòm',
               unit: f.unit || 'md',
