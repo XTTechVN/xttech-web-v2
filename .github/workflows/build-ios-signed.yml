@@ -1,0 +1,122 @@
+name: Build Signed iOS App Store IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, dev ]
+    paths:
+      - 'ios/**'
+      - 'src/**'
+      - 'public/**'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - '.github/workflows/build-ios-signed.yml'
+
+jobs:
+  build-signed-ipa:
+    name: Build Signed IPA on macOS
+    runs-on: macos-14
+
+    steps:
+      - name: 1. Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 2. Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: 3. Install Apple Certificate (.p12)
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD || 'temporal_keychain_pwd_123' }}
+        run: |
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+      - name: 4. Install Provisioning Profile
+        env:
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+        run: |
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/XTTech_AppStore.mobileprovision
+
+      - name: 5. Install dependencies, Build Next.js & Sync Capacitor iOS
+        run: |
+          npm ci
+          npm run build
+          npx cap sync ios
+
+      - name: 6. Create ExportOptions.plist
+        run: |
+          cat << 'EOF' > ios/App/ExportOptions.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>GPCFYP2K8W</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.xttech.app2</key>
+                  <string>XTTech_AppStore</string>
+              </dict>
+              <key>compileBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: 7. Build Archive with Xcode
+        run: |
+          cd ios/App
+          xcodebuild clean archive \
+            -project App.xcodeproj \
+            -scheme App \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -archivePath "$GITHUB_WORKSPACE/build/App.xcarchive" \
+            CODE_SIGN_STYLE="Manual" \
+            DEVELOPMENT_TEAM="GPCFYP2K8W" \
+            PROVISIONING_PROFILE_SPECIFIER="XTTech_AppStore" \
+            CODE_SIGN_IDENTITY="Apple Distribution"
+
+      - name: 8. Export Signed IPA for App Store
+        run: |
+          cd ios/App
+          xcodebuild -exportArchive \
+            -archivePath "$GITHUB_WORKSPACE/build/App.xcarchive" \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath "$GITHUB_WORKSPACE/output"
+
+      - name: 9. Upload Signed IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: XTTech-AppStore-Signed-IPA
+          path: output/*.ipa
+          retention-days: 14
+
+      - name: 10. Clean up temporary Keychain
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db 2>/dev/null || true
