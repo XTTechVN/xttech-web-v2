@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useRef } from 'react';
 import { Modal, Button } from '@/components';
 import { UploadCloud, Loader2, Download, FileCheck, Search, X } from 'lucide-react';
@@ -55,6 +54,8 @@ export const ProjectImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose
   const [activeTab, setActiveTab] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  
 
   // Reset state khi đóng hoặc mở modal
   const handleClose = () => {
@@ -70,10 +71,13 @@ export const ProjectImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose
   // 1. Tải template
   const handleDownloadTemplate = async () => {
     try {
+      setLoading(true)
       await downloadProjectImportTemplate();
       toast.success('Đang tải xuống file mẫu...');
     } catch {
       toast.error('Lỗi khi tải xuống file mẫu');
+    }finally{
+      setLoading(false)
     }
   };
 
@@ -154,11 +158,12 @@ export const ProjectImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose
             <Button
               variant="outline"
               size="sm"
-              leftIcon={<Download size={14} />}
+              leftIcon={loading ? <Loader2 size={14} className="animate-spin" />: <Download size={14} />}
               onClick={handleDownloadTemplate}
-              className="text-xs font-semibold hover:text-primary hover:border-primary/40 shrink-0"
+              className="text-xs font-semibold hover:text-primary hover:border-primary/40 shrink-0 disabled"
+              disabled={loading}
             >
-              Tải file mẫu
+              {loading ?  'Đang tính toán'  : 'Tải file mẫu'}
             </Button>
 
             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".xlsx" className="hidden" />

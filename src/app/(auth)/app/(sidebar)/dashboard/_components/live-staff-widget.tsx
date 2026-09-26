@@ -21,7 +21,7 @@ export const LiveStaffWidget: React.FC = () => {
     <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col gap-3.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+          <div className="p-2 rounded-xl bg-primary/10 text-primary">
             <Navigation size={18} />
           </div>
           <div className="flex flex-col">
