@@ -437,7 +437,6 @@ export function RoutePlaybackModal({
               )}
             </div>
 
-            {/* Chọn ngày */}
               <DatePicker
                 value={dayjs(selectedDate)}
                 onChange={(d) => {
@@ -445,7 +444,7 @@ export function RoutePlaybackModal({
                 }}
                 allowClear={false}
                 format="DD/MM/YYYY"
-                className="border-none shadow-none text-xs w-28 px-1"
+                className="text-xs w-32"
               />
 
             {/* Nút Phóng to / Thu nhỏ toàn màn hình */}
