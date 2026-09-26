@@ -695,11 +695,11 @@ export function RoutePlaybackModal({
               >
                 <Popup>
                   <div className="text-xs space-y-1">
-                    <p className="font-bold text-emerald-700">📍 Điểm bắt đầu</p>
-                    <p>
+                    <div className="font-bold text-emerald-700 !m-0 !p-0">📍 Điểm bắt đầu</div>
+                    <div className="!m-0 !p-0">
                       Thời gian:{' '}
                       {dayjs(points[0].recordedAt).format('HH:mm:ss DD/MM')}
-                    </p>
+                    </div>
                   </div>
                 </Popup>
               </Marker>
@@ -716,13 +716,13 @@ export function RoutePlaybackModal({
               >
                 <Popup>
                   <div className="text-xs space-y-1">
-                    <p className="font-bold text-rose-700">🏁 Điểm gần nhất</p>
-                    <p>
+                    <div className="font-bold text-rose-700 !m-0 !p-0">🏁 Điểm gần nhất</div>
+                    <div className="!m-0 !p-0">
                       Thời gian:{' '}
                       {dayjs(
                         points[points.length - 1].recordedAt
                       ).format('HH:mm:ss DD/MM')}
-                    </p>
+                    </div>
                   </div>
                 </Popup>
               </Marker>
