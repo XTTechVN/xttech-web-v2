@@ -10,6 +10,7 @@ import { getFileUrl, showErrorToast } from '@/utils';
 import { Pencil, Trash2, Eye, Clock, FileEdit, Calendar, UserCheck, Users, UserCheck2, Plus, MessageSquareWarning, Route } from 'lucide-react';
 
 import { Button, TableData, TableAction, Badge, Heading, ITableColumn, ITableFilterProps, Avatar, Modal } from '@/components';
+import { Image } from 'antd';
 import { useQueryParam } from '@/hooks';
 import { deleteAttendance, getAttendances, getDepartments, getAdjustmentRequests } from '@/actions';
 import { Attendance, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
@@ -267,15 +268,17 @@ export default function AttendancesPage() {
 
         return (
           <div className="flex items-center gap-2">
-            {imgSrc ? (
-              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                <img src={imgSrc} alt={row.user?.fullName || 'Check In'} className="object-cover w-full h-full" />
-              </div>
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
-                <Clock className="w-4 h-4" />
-              </div>
-            )}
+            <Image.PreviewGroup>
+              {imgSrc ? (
+                <div className="relative w-8 h-8 rounded-full border border-slate-200 shrink-0 cursor-pointer overflow-hidden">
+                  <Image src={imgSrc} alt={row.user?.fullName || 'Check In'} rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: false }} />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
+                  <Clock className="w-4 h-4" />
+                </div>
+              )}
+            </Image.PreviewGroup>
             <div className="flex flex-col">
               <span className="font-medium text-slate-700 text-sm">{row.checkIn ? row.checkIn.slice(0, 5) : '--:--'}</span>
               {row.isLate && <span className="text-[10px] text-slate-500 font-semibold">Muộn {row.lateMinutes ?? 0}p</span>}
@@ -294,15 +297,17 @@ export default function AttendancesPage() {
 
         return (
           <div className="flex items-center gap-2">
-            {imgSrc ? (
-              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                <img src={imgSrc} alt={row.user?.fullName || 'Check Out'} className="object-cover w-full h-full" />
-              </div>
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
-                <Clock className="w-4 h-4" />
-              </div>
-            )}
+            <Image.PreviewGroup>
+              {imgSrc ? (
+                <div className="relative w-8 h-8 rounded-full border border-slate-200 shrink-0 cursor-pointer overflow-hidden">
+                  <Image src={imgSrc} alt={row.user?.fullName || 'Check Out'} rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: false }} />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
+                  <Clock className="w-4 h-4" />
+                </div>
+              )}
+            </Image.PreviewGroup>
             <div className="flex flex-col">
               <span className="font-medium text-slate-700 text-sm">{row.checkOut ? row.checkOut.slice(0, 5) : '--:--'}</span>
               {row.isEarlyLeave && <span className="text-[10px] text-slate-500 font-semibold">Về sớm {row.earlyLeaveMinutes ?? 0}p</span>}
