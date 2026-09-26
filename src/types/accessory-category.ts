@@ -28,6 +28,7 @@ export interface AccessoryCategoryUpdate {
 export interface AccessoryCategoryQueryParams {
   search?: string;
   code?: string;
+  allowDeleted?: boolean;
   offset?: number;
   limit?: number;
 }

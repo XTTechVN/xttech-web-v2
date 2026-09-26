@@ -8,7 +8,7 @@ import { createAccessory, updateAccessory, getAccessoryCategories, getBrands } f
 import toast from 'react-hot-toast';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
-import type { Accessory, AccessoryCreate, AccessoryUpdate } from '@/types';
+import type { Accessory, AccessoryCreate, AccessoryUpdate, AccessoryCategory } from '@/types';
 import { AccessoryCategoryModal } from './category-modal';
 import { BrandModal } from '../../aluminum/_components/modals';
 import { showErrorToast, getFileUrl } from '@/utils';
@@ -94,12 +94,16 @@ export function AccessoryCreateModal({ isOpen, onClose, title, submitText = 'Xá
     enabled: isOpen,
   });
 
+  const categoriesList: AccessoryCategory[] = Array.isArray(categoryData)
+    ? categoryData
+    : (categoryData as unknown as { items?: AccessoryCategory[] })?.items || [];
+
   const categoryOptions = [
     { value: '', label: 'Không chọn loại' },
-    ...(categoryData?.map((cat) => ({
+    ...categoriesList.map((cat) => ({
       value: String(cat.id),
       label: `${cat.name} (${cat.code})`,
-    })) || []),
+    })),
   ];
 
   const brandOptions = [
@@ -526,12 +530,16 @@ export function AccessoryUpdateModal({ isOpen, onClose, title, submitText = 'Xá
     enabled: isOpen,
   });
 
+  const categoriesList: AccessoryCategory[] = Array.isArray(categoryData)
+    ? categoryData
+    : (categoryData as unknown as { items?: AccessoryCategory[] })?.items || [];
+
   const categoryOptions = [
     { value: '', label: 'Không chọn loại' },
-    ...(categoryData?.map((cat) => ({
+    ...categoriesList.map((cat) => ({
       value: String(cat.id),
       label: `${cat.name} (${cat.code})`,
-    })) || []),
+    })),
   ];
 
   const brandOptions = [

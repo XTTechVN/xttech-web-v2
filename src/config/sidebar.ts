@@ -38,6 +38,7 @@ export const acceptedSections = [
   'configurations-root',
   'brand',
   'series',
+  'profile-bars',
   'aluminum',
   'doors',
   'accessories',
@@ -189,7 +190,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         subItems: [
           {
             id: 'brand',
-            label: 'Hãng nhôm',
+            label: 'Hãng cung cấp',
             href: '/app/projects/configuration?tab=brand',
             roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
           },
@@ -197,6 +198,18 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
             id: 'series',
             label: 'Hệ nhôm',
             href: '/app/projects/configuration?tab=series',
+            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+          },
+          {
+            id: 'profile-bars',
+            label: 'Thanh profile',
+            href: '/app/projects/configuration?tab=profile-bars',
+            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+          },
+          {
+            id: 'accessories',
+            label: 'Phụ kiện',
+            href: '/app/projects/configuration?tab=accessories',
             roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
           },
         ],

@@ -40,6 +40,8 @@ export function SeriesModal({
   });
 
   useEffect(() => {
+    if (!isOpen) return;
+
     if (series) {
       reset({
         brandId: series.brandId,
@@ -61,7 +63,7 @@ export function SeriesModal({
         isActive: true,
       });
     }
-  }, [series, defaultBrandId, brands, reset, isOpen]);
+  }, [isOpen, series, defaultBrandId]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: DoorSeriesCreate) => {
