@@ -216,7 +216,7 @@ export default function PayrollDataPage() {
                   className="block relative w-9 h-9 rounded-full border border-slate-200 overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                   title="Ảnh check-in"
                 >
-                  <Image src={inImgSrc} alt="Check In" rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: false }} />
+                  <Image src={inImgSrc} alt="Check In" rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: true }} />
                 </div>
               ) : (
                 <div
