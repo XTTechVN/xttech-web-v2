@@ -329,6 +329,7 @@ export function RoutePlaybackModal({
 
   return (
     <Modal
+      centered
       open={isOpen}
       onCancel={() => {
         setIsFullscreen(false);
@@ -341,7 +342,7 @@ export function RoutePlaybackModal({
       style={
         isFullscreen
           ? { top: 0, left: 0, padding: 0, margin: 0, maxWidth: '100vw', width: '100vw', height: '100vh' }
-          : { top: 20 }
+          : {}
       }
       className={
         isFullscreen
