@@ -230,6 +230,7 @@ export interface PreviewDoor {
   }[];
   formulas?: {
     formulaId: number;
+    type?: string | null;
     code?: string;
     name?: string;
     unit?: string;

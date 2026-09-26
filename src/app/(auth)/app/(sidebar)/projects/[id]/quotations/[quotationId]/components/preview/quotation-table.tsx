@@ -208,8 +208,9 @@ export const QuotationTable = ({
                             // Lọc: chỉ hiện những phụ kiện/tùy chọn/công thức KHÔNG chung
                             const doorAccessories = (door.accessories || []).filter((acc) => !commonAccessoryIds.has(acc.accessoryId));
                             const doorExtraOptions = (door.extraOptions || []).filter((opt) => !commonOptionIds.has(opt.extraOptionId));
-                            const doorFormulas = (door.formulas || []).filter((f) => !commonFormulaIds.has(f.formulaId));
-
+                            const doorFormulas = (door.formulas || []).filter(
+                              (f) => !commonFormulaIds.has(f.formulaId) && f.type !== 'door_trim'
+                            );
                             return (
                               <React.Fragment key={`door-group-${door.id || dIndex}`}>
                                 {/* Door Main Row */}
