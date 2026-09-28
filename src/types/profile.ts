@@ -97,6 +97,7 @@ export interface ProfileBarQueryParams {
   seriesId?: number;
   barType?: string;
   isActive?: boolean;
+  allowDeleted?: boolean;
   offset?: number;
   limit?: number;
 }

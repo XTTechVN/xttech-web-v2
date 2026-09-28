@@ -39,6 +39,8 @@ export function BrandModal({ isOpen, onClose, brand }: BrandModalProps) {
   });
 
   useEffect(() => {
+    if (!isOpen) return;
+
     setSelectedFile(null);
     if (brand) {
       reset({

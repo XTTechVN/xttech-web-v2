@@ -44,6 +44,7 @@ export interface BrandQueryParams {
   search?: string;
   brandType?: string;
   isActive?: boolean;
+  allowDeleted?: boolean;
   offset?: number;
   limit?: number;
 }

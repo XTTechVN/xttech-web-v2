@@ -11,6 +11,7 @@ import {
   BrandCard,
   BrandToolbar,
   BrandModal,
+  BrandDetailModal,
   BrandGridSkeleton,
   BrandEmptyState,
 } from './_components';
@@ -20,6 +21,10 @@ export default function BrandTab() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
 
+  // State Modal toàn màn hình để cấu hình hãng
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [detailBrand, setDetailBrand] = useState<Brand | null>(null);
+
   const { data: response, isLoading } = useQuery({
     queryKey: ['brands', search],
     queryFn: async () => {
@@ -27,10 +32,24 @@ export default function BrandTab() {
     },
   });
 
-  const brands = useMemo(() => {
+  const allBrands = useMemo(() => {
     const items = response?.items || [];
     return [...items].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
   }, [response?.items]);
+
+  // Phân loại: Hãng nhôm
+  const aluminumBrands = useMemo(() => {
+    return allBrands.filter(
+      (b) => b.brandType === 'aluminum' || b.brandType === 'both' || !b.brandType
+    );
+  }, [allBrands]);
+
+  // Phân loại: Hãng phụ kiện
+  const accessoryBrands = useMemo(() => {
+    return allBrands.filter(
+      (b) => b.brandType === 'accessory' || b.brandType === 'both'
+    );
+  }, [allBrands]);
 
   const { mutate: deleteBrandMutate } = useMutation({
     mutationFn: (id: number) => deleteBrand(id),
@@ -51,6 +70,11 @@ export default function BrandTab() {
     setIsModalOpen(true);
   };
 
+  const handleOpenDetailModal = (brand: Brand) => {
+    setDetailBrand(brand);
+    setIsDetailModalOpen(true);
+  };
+
   const handleDeleteBrand = (brand: Brand) => {
     if (confirm(`Xác nhận xóa thương hiệu "${brand.name}" (${brand.code})?`)) {
       deleteBrandMutate(brand.id);
@@ -58,7 +82,7 @@ export default function BrandTab() {
   };
 
   return (
-    <div className="p-4 flex flex-col gap-5">
+    <div className="p-4 flex flex-col gap-6">
       {/* Toolbar: Tìm kiếm và nút Thêm mới */}
       <BrandToolbar
         search={search}
@@ -66,25 +90,85 @@ export default function BrandTab() {
         onAddClick={handleOpenCreateModal}
       />
 
-      {/* Grid danh sách thương hiệu */}
       {isLoading ? (
         <BrandGridSkeleton count={12} />
-      ) : brands.length === 0 ? (
+      ) : allBrands.length === 0 ? (
         <BrandEmptyState />
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {brands.map((brand) => (
-            <BrandCard
-              key={brand.id}
-              brand={brand}
-              onEdit={handleOpenEditModal}
-              onDelete={handleDeleteBrand}
-            />
-          ))}
+        <div className="flex flex-col gap-8">
+          {/* Mục 1: Hãng nhôm */}
+          <section className="flex flex-col gap-3.5">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                  Hãng nhôm
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Các thương hiệu cung cấp thanh profile nhôm và phụ kiện hệ nhôm
+                </p>
+              </div>
+              <span className="text-xs text-slate-500 font-medium">
+                {aluminumBrands.length} thương hiệu
+              </span>
+            </div>
+
+            {aluminumBrands.length === 0 ? (
+              <div className="p-6 text-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200 text-xs text-slate-500">
+                Không tìm thấy hãng nhôm nào phù hợp
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                {aluminumBrands.map((brand) => (
+                  <BrandCard
+                    key={brand.id}
+                    brand={brand}
+                    onClick={handleOpenDetailModal}
+                    onEdit={handleOpenEditModal}
+                    onDelete={handleDeleteBrand}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Mục 2: Hãng phụ kiện */}
+          <section className="flex flex-col gap-3.5">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                  Hãng phụ kiện
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Các thương hiệu cung cấp phụ kiện cửa, khóa, bản lề, tay nắm...
+                </p>
+              </div>
+              <span className="text-xs text-slate-500 font-medium">
+                {accessoryBrands.length} thương hiệu
+              </span>
+            </div>
+
+            {accessoryBrands.length === 0 ? (
+              <div className="p-6 text-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200 text-xs text-slate-500">
+                Không tìm thấy hãng phụ kiện nào phù hợp
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                {accessoryBrands.map((brand) => (
+                  <BrandCard
+                    key={brand.id}
+                    brand={brand}
+                    onClick={handleOpenDetailModal}
+                    onEdit={handleOpenEditModal}
+                    onDelete={handleDeleteBrand}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       )}
 
-      {/* Modal Thêm mới / Chỉnh sửa */}
+      {/* Modal Thêm mới / Chỉnh sửa thương hiệu */}
       <BrandModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -93,6 +177,20 @@ export default function BrandTab() {
         }}
         brand={selectedBrand}
       />
+
+      {/* Modal Toàn màn hình Cấu hình Hãng */}
+      <BrandDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedBrand(null);
+          setDetailBrand(null);
+        }}
+        brand={detailBrand}
+        brands={allBrands}
+        onSelectBrand={setDetailBrand}
+      />
     </div>
   );
 }
+

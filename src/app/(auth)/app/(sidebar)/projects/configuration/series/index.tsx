@@ -25,8 +25,8 @@ export default function SeriesTab() {
 
   // Queries
   const { data: brandsData, isLoading: isBrandsLoading } = useQuery({
-    queryKey: ['brands'],
-    queryFn: async () => (await getBrands({ offset: 0, limit: 9999 })).items,
+    queryKey: ['brands', 'aluminum'],
+    queryFn: async () => (await getBrands({ offset: 0, limit: 9999, brandType: 'aluminum' })).items,
   });
 
   const { data: seriesData, isLoading: isSeriesLoading } = useQuery({

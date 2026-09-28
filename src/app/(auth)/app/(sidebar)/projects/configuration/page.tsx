@@ -5,9 +5,10 @@ import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import DoorsTab from './doors';
 import BrandTab from './brand';
 import SeriesTab from './series';
+import ProfileBarsTab from './profile-bars';
 import GlassGasketsTab from './glass-gaskets';
 import AccessoriesTab from './accessories';
-import { Columns, ListChecks, Building2, ShieldCheck, Layers } from 'lucide-react';
+import { Columns, ListChecks, Building2, ShieldCheck, Layers, Ruler } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePermission } from '@/hooks';
 
@@ -24,7 +25,7 @@ const ALL_ROLES = ['super', 'admin', 'accountant', 'hr', 'sale', 'employee', 'te
 const TABS: ConfigTab[] = [
   {
     id: 'brand',
-    label: 'Hãng nhôm',
+    label: 'Hãng cung cấp',
     component: BrandTab,
     icon: <Building2 size={16} />,
     roles: ALL_ROLES,
@@ -34,6 +35,13 @@ const TABS: ConfigTab[] = [
     label: 'Hệ nhôm',
     component: SeriesTab,
     icon: <Layers size={16} />,
+    roles: ALL_ROLES,
+  },
+  {
+    id: 'profile-bars',
+    label: 'Thanh profile',
+    component: ProfileBarsTab,
+    icon: <Ruler size={16} />,
     roles: ALL_ROLES,
   },
   {
@@ -52,7 +60,7 @@ const TABS: ConfigTab[] = [
   },
   {
     id: 'accessories',
-    label: 'Phụ kiện & Combo',
+    label: 'Phụ kiện',
     component: AccessoriesTab,
     icon: <ListChecks size={16} />,
     roles: ALL_ROLES,

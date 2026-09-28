@@ -7,6 +7,7 @@ import { BASE_MINIO_URL } from '@/config';
 
 interface BrandCardProps {
   brand: Brand;
+  onClick?: (brand: Brand) => void;
   onEdit: (brand: Brand) => void;
   onDelete: (brand: Brand) => void;
 }
@@ -59,12 +60,15 @@ function BrandLogo({
   );
 }
 
-export function BrandCard({ brand, onEdit, onDelete }: BrandCardProps) {
+export function BrandCard({ brand, onClick, onEdit, onDelete }: BrandCardProps) {
   return (
-    <div className="group bg-white border border-slate-200 hover:border-primary/50 hover:shadow-md rounded-xl p-3 flex flex-col justify-between transition-all duration-200 relative overflow-hidden">
+    <div
+      onClick={() => onClick?.(brand)}
+      className="group bg-white border border-slate-200 hover:border-primary hover:shadow-md rounded-lg p-2.5 flex flex-col justify-between transition-all duration-200 relative overflow-hidden cursor-pointer select-none"
+    >
       {/* Card Header: Brand Logo & Status indicator */}
       <div>
-        <div className="relative aspect-square w-full bg-slate-50/80 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden mb-2.5">
+        <div className="relative aspect-square w-full bg-slate-50/80 border border-slate-100 rounded-md flex items-center justify-center overflow-hidden mb-2">
           <BrandLogo
             logoPath={brand.logoPath}
             name={brand.name}
@@ -74,8 +78,8 @@ export function BrandCard({ brand, onEdit, onDelete }: BrandCardProps) {
 
           {/* Active dot badge */}
           <span
-            className={`absolute top-2 right-2 w-2.5 h-2.5 rounded-full ${
-              brand.isActive ? 'bg-emerald-500 ring-4 ring-emerald-50' : 'bg-rose-400 ring-4 ring-rose-50'
+            className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${
+              brand.isActive ? 'bg-emerald-500 ring-2 ring-emerald-50' : 'bg-rose-400 ring-2 ring-rose-50'
             }`}
             title={brand.isActive ? 'Đang hoạt động' : 'Tạm ngưng'}
           />
@@ -84,65 +88,61 @@ export function BrandCard({ brand, onEdit, onDelete }: BrandCardProps) {
         {/* Brand Name & Code */}
         <div className="flex flex-col gap-0.5">
           <h3
-            className="font-bold text-sm text-slate-900 truncate group-hover:text-primary transition-colors"
+            className="font-bold text-xs text-slate-900 truncate group-hover:text-primary transition-colors"
             title={brand.name}
           >
             {brand.name}
           </h3>
 
-          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-            <span className="font-mono text-[11px] font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded">
+          <div className="flex items-center gap-1 flex-wrap mt-0.5">
+            <span className="font-mono text-[10px] font-semibold text-primary bg-primary/10 px-1 py-0.2 rounded">
               {brand.code}
             </span>
             {brand.originCountry && (
-              <span className="text-[11px] text-slate-500 truncate" title={`Xuất xứ: ${brand.originCountry}`}>
+              <span className="text-[10px] text-slate-500 truncate" title={`Xuất xứ: ${brand.originCountry}`}>
                 • {brand.originCountry}
               </span>
             )}
           </div>
 
           {Boolean(brand.barLengthMm) && (
-            <span className="text-[11px] text-slate-400 mt-1">
-              Cây chuẩn: <strong className="text-slate-600 font-medium">{brand.barLengthMm} mm</strong>
+            <span className="text-[10px] text-slate-400 mt-0.5 truncate">
+              Cây: <strong className="text-slate-600 font-medium">{brand.barLengthMm}mm</strong>
             </span>
           )}
         </div>
       </div>
 
       {/* Card Footer: Action buttons & link */}
-      <div className="pt-2.5 mt-2.5 border-t border-slate-100 flex items-center justify-between">
+      <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between">
         <div>
           {brand.website ? (
             <a
               href={brand.website}
               target="_blank"
               rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="p-1 text-slate-400 hover:text-primary transition inline-flex"
               title={brand.website}
             >
-              <ExternalLink size={14} />
+              <ExternalLink size={12} />
             </a>
           ) : (
-            <span className="text-[10px] text-slate-300 font-mono">#{brand.id}</span>
+            <span className="text-[9px] text-slate-300 font-mono">#{brand.id}</span>
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <button
             type="button"
-            onClick={() => onEdit(brand)}
-            className="p-1.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition cursor-pointer"
-            title="Sửa thương hiệu"
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(brand)}
-            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(brand);
+            }}
+            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
             title="Xóa thương hiệu"
           >
-            <Trash2 size={14} />
+            <Trash2 size={13} />
           </button>
         </div>
       </div>
