@@ -177,23 +177,27 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
       {/* 3.1. Cấu hình Khóa & Cao độ tay nắm */}
       {selectedCell.sashType && selectedCell.sashType !== 'fixed' && (
         <div className="space-y-2 p-2.5 rounded-xl bg-orange-50/70 border border-orange-200/80">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-gray-800 font-semibold text-xs">
-              <Lock size={13} className="text-orange-600" />
-              <span>Khóa & Phụ kiện</span>
-            </div>
-            <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-medium text-slate-700">
-              <input
-                type="checkbox"
-                checked={selectedCell.hasLock === true}
-                onChange={(e) => onUpdateCell({ hasLock: e.target.checked })}
-                className="w-3.5 h-3.5 rounded text-orange-600 focus:ring-orange-500 cursor-pointer"
-              />
-              <span>Lắp khóa</span>
-            </label>
-          </div>
+          {(() => {
+            const isLockActive = selectedCell.hasLock ?? ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down'].includes(selectedCell.sashType || '');
+            return (
+              <>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-gray-800 font-semibold text-xs">
+                    <Lock size={13} className="text-orange-600" />
+                    <span>Khóa & Phụ kiện</span>
+                  </div>
+                  <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-medium text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={isLockActive}
+                      onChange={(e) => onUpdateCell({ hasLock: e.target.checked })}
+                      className="w-3.5 h-3.5 rounded text-orange-600 focus:ring-orange-500 cursor-pointer"
+                    />
+                    <span>Lắp khóa</span>
+                  </label>
+                </div>
 
-          {selectedCell.hasLock === true && (
+                {isLockActive && (
             <div className="space-y-2 pt-1">
               <div>
                 <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
@@ -230,8 +234,11 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
               </div>
             </div>
           )}
-        </div>
-      )}
+        </>
+      );
+    })()}
+  </div>
+)}
 
       {/* 4. Loại vật liệu tấm (Pane Type) */}
       <div className="space-y-2">
