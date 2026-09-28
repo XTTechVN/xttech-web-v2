@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { DoorCadRenderer } from '../cad-engine/door-cad-renderer';
+import { DoorCadRenderer, ResizeSplitParams } from '../cad-engine/door-cad-renderer';
 import { FrameShape, SceneCellNode, FrameConfig, SashConfig, MullionInfo } from '../studio-types';
 import { Plus, Minus, Target, Check, X } from 'lucide-react';
 
@@ -17,6 +17,7 @@ interface CanvasCadViewProps {
   onSelectMullion?: (mullion: MullionInfo) => void;
   selectedMullionId?: string | null;
   onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'handleHeight', value: number, cellId?: string) => void;
+  onResizeSplit?: (params: ResizeSplitParams) => void;
   frameConfig?: FrameConfig;
   sashConfig?: SashConfig;
 }
@@ -33,6 +34,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
   onSelectMullion,
   selectedMullionId,
   onUpdateDimension,
+  onResizeSplit,
   frameConfig,
   sashConfig,
 }) => {
@@ -300,6 +302,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
             onSelectMullion={onSelectMullion}
             selectedMullionId={selectedMullionId}
             onEditDimension={handleOpenEdit}
+            onResizeSplit={onResizeSplit}
             frameConfig={frameConfig}
             sashConfig={sashConfig}
           />
@@ -316,7 +319,11 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
           <span className="text-gray-300">·</span>
           <span>Scroll = zoom</span>
           <span className="text-gray-300">·</span>
-          <span className="text-blue-600 font-semibold cursor-pointer">Click số đo = sửa</span>
+          <span className="text-blue-600 font-semibold">Click số đo = sửa</span>
+          <span className="text-gray-300">·</span>
+          <span className="text-amber-600 font-semibold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+            Giữ chuột phải đố = trượt nhanh
+          </span>
         </div>
         <div className="font-mono text-gray-400">Tỷ lệ 1:10 • {Math.round(zoom * 100)}%</div>
       </div>
