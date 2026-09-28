@@ -125,8 +125,12 @@ export default function AdjustmentsSidebarPage() {
   }, [allAdjustments]);
 
   const typeOptions = useMemo(() => {
-    const types = Array.from(new Set(allAdjustments.map((item) => item.requestType).filter((type): type is RequestType => Boolean(type))));
-    return types.map((type) => ({
+    const baseTypes: RequestType[] = ['check_in', 'check_out', 'forgot_attendance', 'overtime'];
+    const dataTypes = allAdjustments
+      .map((item) => item.requestType)
+      .filter((type): type is RequestType => Boolean(type));
+    const allTypes = Array.from(new Set([...baseTypes, ...dataTypes]));
+    return allTypes.map((type) => ({
       label: getRequestTypeLabel(type) || 'Không xác định',
       value: String(type),
     }));
@@ -153,6 +157,7 @@ export default function AdjustmentsSidebarPage() {
       limit,
       search: searchQuery || undefined,
       status: filterStatus,
+      requestType: filterType,
       startDate: filterStartDate || undefined,
       endDate: filterEndDate || undefined,
       userId: isAdmin ? filterEmployee : currentUser?.id,

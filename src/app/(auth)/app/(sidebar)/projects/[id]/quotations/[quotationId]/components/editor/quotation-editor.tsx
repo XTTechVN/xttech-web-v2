@@ -77,21 +77,21 @@ export const QuotationEditor = ({ quotationId, materialsList, doorsList, accesso
     <div className="flex flex-col gap-3 text-black">
 
       {/* Thanh tác vụ đầu tiên */}
-      <div className="flex justify-between items-center pb-2">
-        <div className="flex items-center gap-1.5">
-          <h2 className="text-base font-bold text-primary">Chỉnh sửa báo giá</h2>
+      <div className="sticky top-[-1rem] -mx-4 -mt-4 px-4 py-2.5 bg-white/95 backdrop-blur-xs z-20 border-b border-gray-200 shadow-xs rounded-t flex justify-between items-center xl:static xl:m-0 xl:p-0 xl:bg-transparent xl:border-b-0 xl:shadow-none xl:rounded-none xl:z-auto xl:pb-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <h2 className="text-sm sm:text-base font-bold text-primary truncate">Chỉnh sửa báo giá</h2>
           <Tooltip content={isSavingForLoBan ? 'Đang lưu báo giá...' : 'Xem thông thủy đẹp (Thước Lỗ Ban)'} position="top">
             <button
               type="button"
               onClick={handleLoBanClick}
               disabled={isSavingForLoBan || isPending || isExporting}
-              className="text-primary hover:text-primary-dark focus:outline-hidden disabled:opacity-50 cursor-pointer flex items-center justify-center pt-0.5"
+              className="text-primary hover:text-primary-dark focus:outline-hidden disabled:opacity-50 cursor-pointer flex items-center justify-center pt-0.5 shrink-0"
             >
               <Info size={16} />
             </button>
           </Tooltip>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           
           <Button
             variant="outline"

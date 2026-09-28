@@ -270,6 +270,7 @@ export interface AdjustmentRequestQueryParams {
     startDate?: string;
     endDate?: string;
     status?: AdjustmentStatus;
+    requestType?: RequestType;
 }
 
 export interface AttendanceAdjustmentRequest {
