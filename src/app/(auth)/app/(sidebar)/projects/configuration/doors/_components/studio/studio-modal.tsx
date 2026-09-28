@@ -35,7 +35,7 @@ import { ConfigTabView } from './panels/config/config-tab-view';
 import { ResultsTabView } from './panels/results-tab-view';
 import { AccessoriesTabView } from './panels/accessories-tab-view';
 import { MullionInspectorModal } from './panels/mullion-inspector-modal';
-import { DoorCadRenderer } from './cad-engine/door-cad-renderer';
+import { DoorCadRenderer, ResizeSplitParams } from './cad-engine/door-cad-renderer';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
@@ -688,6 +688,61 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
     toast.success('Cập nhật thông số đố thành công');
   };
 
+  const handleResizeSplit = ({
+    parentNodeId,
+    splitIndex,
+    direction,
+    newDimension,
+    isFinal,
+  }: ResizeSplitParams) => {
+    const parentNode = findNode(rootCell, parentNodeId);
+    if (!parentNode || !parentNode.children || parentNode.children.length < splitIndex + 2) return;
+
+    const idx = splitIndex;
+    const isVert = direction === 'vertical';
+    const child = parentNode.children[idx];
+    const nextChild = parentNode.children[idx + 1];
+
+    const oldDim1 = isVert ? child.w : child.h;
+    const oldDim2 = isVert ? nextChild.w : nextChild.h;
+    const totalDim = oldDim1 + oldDim2;
+
+    const clampedDim1 = Math.max(100, Math.min(totalDim - 100, newDimension));
+    const clampedDim2 = totalDim - clampedDim1;
+
+    // Tỉ lệ scale các con bên trong nếu có
+    const updatedChild = rescaleTree(
+      child,
+      isVert ? clampedDim1 / (oldDim1 || 1) : 1,
+      isVert ? 1 : clampedDim1 / (oldDim1 || 1)
+    );
+    const updatedNextChild = rescaleTree(
+      nextChild,
+      isVert ? clampedDim2 / (oldDim2 || 1) : 1,
+      isVert ? 1 : clampedDim2 / (oldDim2 || 1)
+    );
+
+    const newChildren = [...parentNode.children];
+    newChildren[idx] = {
+      ...updatedChild,
+      w: isVert ? clampedDim1 : updatedChild.w,
+      h: isVert ? updatedChild.h : clampedDim1,
+    };
+    newChildren[idx + 1] = {
+      ...updatedNextChild,
+      w: isVert ? clampedDim2 : updatedNextChild.w,
+      h: isVert ? updatedNextChild.h : clampedDim2,
+    };
+
+    const updatedRoot = updateNode(rootCell, parentNode.id, { children: newChildren });
+
+    if (isFinal) {
+      pushState(updatedRoot);
+    } else {
+      setRootCell(updatedRoot);
+    }
+  };
+
   const handleDeleteMullion = () => {
     if (!selectedMullion) return;
     const parentNode = findNode(rootCell, selectedMullion.parentNodeId);
@@ -1004,6 +1059,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
           onChangeTab={setActiveLeftTab}
           onSelectCell={setSelectedCellId}
           onUpdateDimension={handleUpdateDimension}
+          onResizeSplit={handleResizeSplit}
           onUpdateSelectedCell={handleUpdateSelectedCell}
           onSplitSelectedCell={(dir) => handleSplitMullion(2, dir)}
           onMergeSelectedCell={() => {

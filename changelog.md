@@ -2,6 +2,52 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-09-28
+
+### Added & Enhanced (Windova CAD Studio - Right-Click Interactive Drag Resizer for Mullions & Frame Couplings)
+- **Tương Tác Kéo Chuột Phải Di Chuyển Nhanh Đố & Vách Tách Khung (Interactive Drag Resizing):**
+  - **Trải nghiệm giống Windova:** Khi rê chuột vào thanh đố T (`mullion`) hoặc vách ngăn tách khung (`coupling seam`), con trỏ đổi thành `col-resize` ($\leftrightarrow$) hoặc `row-resize` ($\updownarrow$), thanh đố sáng viền highlight.
+  - **Giữ chuột phải (`e.button === 2`) hoặc chuột trái:** Người dùng có thể kéo trực tiếp để tăng/giảm kích thước 2 ô liền kề theo thời gian thực (60fps). Chặn hoàn toàn menu chuột phải mặc định của trình duyệt (`onContextMenu e.preventDefault()`).
+  - **Live Floating Badge:** Hiển thị thước đo nổi trực quan ngay tại vị trí kéo (`◄ 750 mm | 650 mm ►` hoặc `▲ 600 mm | 1000 mm ▼`).
+  - **Làm tròn số kỹ thuật & Ràng buộc an toàn:** Tự động snap theo bước nhảy $5\text{ mm}$, giới hạn biên an toàn tối thiểu mỗi ô $\ge 100\text{ mm}$.
+  - **Undo / Redo & Co giãn đệ quy:** Khi nhả chuột, commit vào history stack dưới dạng 1 bước duy nhất (nút Undo/Redo hoạt động mượt mà), các ô con bên trong tự động co giãn tỷ lệ nhờ hàm `rescaleTree`.
+  - Bổ sung chỉ dẫn trực quan ngay tại thanh Guide bar ở đáy màn hình CAD: *"Giữ chuột phải đố = trượt nhanh"*.
+
+### Refactored & Optimized (Windova CAD Engine - Modular Architecture Refactoring)
+- **Tái Cấu Trúc Toàn Diện Bộ Render CAD ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+  - Giải quyết triệt để tình trạng "God File" 1.753 dòng, đưa component chính về mức chuẩn Clean Code (~300 dòng), phân tách độc lập các trách nhiệm (Single Responsibility Principle):
+    - [`cad-config.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-config.ts) (40 dòng): Tập trung toàn bộ hằng số tỷ lệ hình học (`CAD_CONFIG`) cho khung, cánh, nẹp và đố.
+    - [`cad-types.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-types.ts) (43 dòng): Định nghĩa các kiểu dữ liệu nội bộ (`DoorCadRendererProps`, `LeafCell`, `MullionBar`, `FrameBox`, `CurvedFramePaths`).
+    - [`cad-geometry.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-geometry.ts) (141 dòng): Thuần toán học giải tích vector cong/vòm (`getCurvedContourPath`, `getCurvedFramePaths`), độc lập 100% với React.
+    - [`cad-tree-traverser.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-tree-traverser.ts) (206 dòng): Thuật toán duyệt đệ quy cây layout (`buildCadLayout`, `getVerticalSlices`, `getHorizontalSlices`), bóc tách độc lập logic tính toán khung ghép (coupling) và đố T.
+    - [`components/cad-opening-symbol.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-opening-symbol.tsx) (93 dòng): Vẽ ký hiệu mở cánh (tam giác đỏ mở quay, lật, hất, trượt).
+    - [`components/cad-bead.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-bead.tsx) (46 dòng): Module tính toán nẹp kính ghép mòi 45°.
+    - [`components/cad-sash-box.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-sash-box.tsx) (68 dòng): Module dựng khung cánh với các phương pháp ghép góc (45°, 90° dọc phủ, 90° ngang phủ, 45° trên 90° dưới).
+    - [`components/cad-mitered-frame.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-mitered-frame.tsx) (119 dòng): Dựng khung bao ngoài và xử lý khung hở sàn 3 cạnh.
+    - [`components/cad-curved-door.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-curved-door.tsx) (338 dòng): Render chuyên dụng cho hệ cửa vòm, cửa tròn 1 cánh & 2 cánh.
+    - [`components/cad-rectangular-leaf.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-rectangular-leaf.tsx) (326 dòng): Render ô cánh và vách kính chữ nhật thông thường.
+    - [`components/cad-dimension-overlay.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-dimension-overlay.tsx) (228 dòng): Toàn bộ hệ thống đường gióng thước đo kích thước W/H, kích thước phụ và cao độ khóa.
+  - Đảm bảo 100% backward-compatibility (re-export đầy đủ `CAD_CONFIG` và types từ file gốc), TypeScript biên dịch sạch 0 lỗi.
+
+### Added & Changed (Windova CAD Studio - CAD Config Constants & Glazing Bead Enhancement)
+- **Tập Trung Hóa Toàn Bộ Tỉ Lệ Kích Thước CAD Vào Hằng Số `CAD_CONFIG` ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+  - Khởi tạo object cấu hình hằng số `CAD_CONFIG` đặt ngay đầu file với chú thích tiếng Việt chi tiết cho 4 phân hệ hình học:
+    - **`FRAME`:** Tỷ lệ độ dày khung bao ngoài (`SCALE_RATIO: 0.026`, giới hạn `7px - 10px`).
+    - **`SASH`:** Tỷ lệ khung cánh cửa đi (`DOOR_RATIO: 1.4`), cửa sổ (`WINDOW_RATIO: 1.15`), hệ slim (`SLIM_RATIO: 0.75`), cùng các khoảng min/max pixel tương ứng.
+    - **`BEAD`:** Tỷ lệ và độ dày nẹp kính hiển thị (`NORMAL_RATIO: 0.28`, `FIXED_RATIO: 0.35`, `MIN_W: 4px`, `MAX_W: 6.5px`, chiếm tối đa `10%` diện tích lọt lòng cánh).
+    - **`MULLION`:** Đố tĩnh T (`SCALE_RATIO: 1.0`, `7px - 10px`) và đố động giữa 2 cánh (`ASTRAGAL_RATIO: 0.5`, `4px - 7px`).
+- **Tăng Độ Dày Nẹp Kính Trực Quan:**
+  - Nẹp kính được tăng độ dày rõ nét (từ mức cũ ~2-3px lên 4-6.5px), giúp các đường mòi 45° hiển thị chuẩn xác, cân đối như bản vẽ kỹ thuật thực tế.
+- **Nâng Cấp Thuật Toán Vẽ Cánh Cong Tự Nhiên Cho Khung Vòm & Cửa Tròn (`Curved Contour Geometry`):**
+  - **Khắc phục triệt để lỗi cánh chữ nhật bị xén cụt (`clipPath`):** Trước đây, các bộ cửa vòm (`arch_semicircle`, `arch_half`, `round_top_2`...) và cửa tròn (`circle`, `ellipse`) chỉ vẽ cánh hình chữ nhật phẳng rồi dùng mặt nạ cắt xén, gây lỗi trơ 2 mẩu nhôm đứng ở mép cửa tròn và mất thanh ngang đỉnh vòm.
+  - **Thuật toán sinh đường cong song song đa tầng (`getCurvedContourPath`):** Tự động sinh đường bao hình học đồng tâm offset chính xác theo độ dày từng lớp:
+    - Mép ngoài cánh / dạ khung bao: offset `frameD`.
+    - Mép trong cánh: offset `frameD + sashD`.
+    - Mép nẹp kính: offset `frameD + sashD + beadW`.
+  - **Bộ Render Chuyên Biệt `renderCurvedDoubleDoor` & `renderCurvedSingleDoor`:**
+    - Cửa 2 cánh mở quay đối xứng (`swing_double`): Khung nhôm cánh và nẹp kính ôm trọn 360° theo vòng cung tròn hoặc uốn lượn theo vòm; trục giữa giữ nguyên 2 thanh đứng gặp nhau và đố động thẳng tắp; 2 mặt kính được chia nửa hoàn hảo; tam giác chỉ hướng mở màu đỏ tự động neo vào đúng vị trí bản lề cong theo hình học elip/vòm.
+    - Cửa 1 cánh mở quay và vách chết (`fixed`): Tự động uốn theo biên dạng vòm đồng tâm sắc nét.
+
 ## [Unreleased] - 2026-09-25
 
 ### Added & Enhanced

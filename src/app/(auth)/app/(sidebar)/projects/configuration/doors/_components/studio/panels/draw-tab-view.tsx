@@ -48,6 +48,7 @@ interface DrawTabViewProps {
   onChangeTab: (tab: 'frame' | 'sash') => void;
   onSelectCell: (id: string | null) => void;
   onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'handleHeight', value: number, cellId?: string) => void;
+  onResizeSplit?: (params: import('../cad-engine/door-cad-renderer').ResizeSplitParams) => void;
   onUpdateSelectedCell: (updates: Partial<SceneCellNode>) => void;
   onSplitSelectedCell: (direction: 'vertical' | 'horizontal') => void;
   onMergeSelectedCell: () => void;
@@ -89,6 +90,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
   onChangeTab,
   onSelectCell,
   onUpdateDimension,
+  onResizeSplit,
   onUpdateSelectedCell,
   onSplitSelectedCell,
   onMergeSelectedCell,
@@ -148,6 +150,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
             setRightTab('inspector');
           }}
           onUpdateDimension={onUpdateDimension}
+          onResizeSplit={onResizeSplit}
         />
       </div>
 
