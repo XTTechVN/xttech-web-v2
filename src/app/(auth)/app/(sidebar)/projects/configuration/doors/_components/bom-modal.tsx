@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   X,
@@ -12,6 +12,7 @@ import {
   Sparkles,
   Info,
   CheckCircle2,
+  Wrench,
 } from 'lucide-react';
 import { Button } from '@/components';
 import { calculateDoor } from '@/actions';
@@ -32,34 +33,43 @@ const CATEGORY_MAP: Record<string, string> = {
 };
 
 export const DoorBOMModal: React.FC<DoorBOMModalProps> = ({ door, isOpen, onClose }) => {
-  const getDoorW = () => door?.systemConfig?.w ?? door?.systemConfig?.drawing?.w ?? 1400;
-  const getDoorH = () => door?.systemConfig?.h ?? door?.systemConfig?.drawing?.h ?? 1600;
+  if (!isOpen || !door) return null;
+
+  return (
+    <DoorBOMModalContent
+      key={`bom-${door.id}`}
+      door={door}
+      isOpen={isOpen}
+      onClose={onClose}
+    />
+  );
+};
+
+interface DoorBOMModalContentProps {
+  door: Door;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen, onClose }) => {
+  const getDoorW = () => door.systemConfig?.w ?? door.systemConfig?.drawing?.w ?? 1400;
+  const getDoorH = () => door.systemConfig?.h ?? door.systemConfig?.drawing?.h ?? 1600;
 
   const [w, setW] = useState<number>(getDoorW);
   const [h, setH] = useState<number>(getDoorH);
-  const [activeTab, setActiveTab] = useState<'bars' | 'beads' | 'glass'>('bars');
-
-  useEffect(() => {
-    if (door && isOpen) {
-      setW(getDoorW());
-      setH(getDoorH());
-    }
-  }, [door?.id, isOpen]);
+  const [activeTab, setActiveTab] = useState<'bars' | 'beads' | 'glass' | 'joints'>('bars');
 
   const { data: bom, isLoading, refetch, isFetching } = useQuery<DoorCalculateResponse>({
-    queryKey: ['door-bom', door?.id, w, h],
+    queryKey: ['door-bom', door.id, w, h],
     queryFn: async () => {
-      if (!door?.id) throw new Error('Chưa chọn mẫu cửa');
       return await calculateDoor({
         doorId: door.id,
         width: w,
         height: h,
       });
     },
-    enabled: isOpen && !!door?.id,
+    enabled: isOpen && !!door.id,
   });
-
-  if (!isOpen || !door) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -129,13 +139,32 @@ export const DoorBOMModal: React.FC<DoorBOMModalProps> = ({ door, isOpen, onClos
 
           {/* Quick Metrics */}
           {bom && (
-            <div className="flex items-center gap-4 text-xs font-medium">
+            <div className="flex items-center gap-3 text-xs font-medium flex-wrap">
               <div className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-100">
                 Tổng nhôm: <strong className="font-bold">{bom.totalAluminumWeightKg} kg</strong>
               </div>
               <div className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg border border-blue-100">
                 Tổng kính: <strong className="font-bold">{bom.totalGlassAreaM2} m²</strong>
               </div>
+              {bom.totalJointQty !== undefined && (
+                <div
+                  className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 ${
+                    bom.hasUnconfiguredJoints
+                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                      : 'bg-purple-50 text-purple-700 border-purple-100'
+                  }`}
+                >
+                  <Wrench size={13} />
+                  <span>
+                    Liên kết góc: <strong className="font-bold">{bom.totalJointQty} con ke</strong>
+                  </span>
+                  {bom.hasUnconfiguredJoints && (
+                    <span className="text-[10px] font-semibold text-amber-700 underline">
+                      (chưa cấu hình)
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -199,6 +228,19 @@ export const DoorBOMModal: React.FC<DoorBOMModalProps> = ({ door, isOpen, onClos
                 }`}
               >
                 Đặt kính ({bom?.cells?.length || 0})
+              </button>
+              <button
+                onClick={() => setActiveTab('joints')}
+                className={`pb-2 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
+                  activeTab === 'joints'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span>Liên kết góc ({bom?.cornerJoints?.length || 0})</span>
+                {bom?.hasUnconfiguredJoints && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Có vị trí chưa gán con ke" />
+                )}
               </button>
             </div>
 
@@ -325,6 +367,97 @@ export const DoorBOMModal: React.FC<DoorBOMModalProps> = ({ door, isOpen, onClos
                       ))}
                     </tbody>
                   </table>
+                )}
+
+                {/* Tab 4: Corner Joints */}
+                {activeTab === 'joints' && (
+                  <div className="space-y-3">
+                    {bom.hasUnconfiguredJoints && (
+                      <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2">
+                        <span className="text-base leading-none">⚠️</span>
+                        <div className="space-y-0.5">
+                          <p className="font-bold">Chưa cấu hình con ke cụ thể từ hãng</p>
+                          <p className="text-[11px] text-amber-800">
+                            Các vị trí liên kết góc đã được tính số lượng theo thiết kế, nhưng chưa được gán mã con ke trong gói phụ kiện để lấy đơn giá thật.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50/50">
+                          <th className="py-2 px-2">Vị trí & Con ke</th>
+                          <th className="py-2 px-2">Phương pháp</th>
+                          <th className="py-2 px-2">Mã / Tên phụ kiện</th>
+                          <th className="py-2 px-2 text-center">Số lượng</th>
+                          <th className="py-2 px-2 text-right">Đơn giá</th>
+                          <th className="py-2 px-2 text-right">Thành tiền</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {(bom.cornerJoints || []).map((j, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-2.5 px-2">
+                              <div className="font-bold text-slate-900">{j.name}</div>
+                              <div className="text-[10px] text-slate-400 font-mono">{j.formula}</div>
+                            </td>
+                            <td className="py-2.5 px-2">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  j.jointType === 'ke_vinh_cuu'
+                                    ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                    : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                }`}
+                              >
+                                {j.jointType === 'ke_vinh_cuu' ? 'Ke vĩnh cửu' : 'Ke ép góc'}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-2">
+                              {j.isConfigured ? (
+                                <div>
+                                  <span className="font-mono font-bold text-slate-900">
+                                    {j.accessoryCode}
+                                  </span>
+                                  <span className="text-slate-500 block text-[11px]">
+                                    {j.accessoryName}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80">
+                                  ⚠️ Chưa cấu hình
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-2 text-center">
+                              <span className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-slate-100 font-bold text-slate-900 text-xs">
+                                {j.qty} con
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-mono text-slate-600">
+                              {j.unitPrice && j.unitPrice > 0
+                                ? j.unitPrice.toLocaleString('vi-VN') + ' đ'
+                                : '-'}
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-bold font-mono text-slate-900">
+                              {j.totalPrice && j.totalPrice > 0
+                                ? j.totalPrice.toLocaleString('vi-VN') + ' đ'
+                                : '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    {bom.totalJointPrice !== undefined && bom.totalJointPrice > 0 && (
+                      <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs font-semibold text-slate-700">
+                        <span>Tổng chi phí ke liên kết:</span>
+                        <span className="font-bold text-sm text-blue-700 font-mono">
+                          {bom.totalJointPrice.toLocaleString('vi-VN')} đ
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}

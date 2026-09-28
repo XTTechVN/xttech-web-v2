@@ -133,6 +133,15 @@ export const detectProfileIssues = ({
     }
   }
 
+  // 6. Kiểm tra Ke liên kết góc
+  if (calcData?.hasUnconfiguredJoints) {
+    for (const j of calcData.cornerJoints || []) {
+      if (!j.isConfigured) {
+        issues.push(`Chưa cấu hình con ke cho ${j.position === 'frame' ? 'Khung bao' : 'Cánh cửa'} (Cần ${j.qty} con)`);
+      }
+    }
+  }
+
   return issues;
 };
 
@@ -212,17 +221,27 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
             <div className="flex items-center justify-between">
               <div className="font-bold text-xs text-[#b45309] flex items-center gap-1.5">
                 <span className="text-sm">⚠️</span>
-                <span>Phát hiện {issues.length} vấn đề profile — kiểm tra lại:</span>
+                <span>Phát hiện {issues.length} vấn đề cấu hình vật tư & profile:</span>
               </div>
               {onNavigateTab && (
-                <button
-                  type="button"
-                  onClick={() => onNavigateTab('config')}
-                  className="text-[11px] font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-3 py-1 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  <span>⚙️ Đến Cấu hình</span>
-                  <ArrowRight size={12} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onNavigateTab('config')}
+                    className="text-[11px] font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>⚙️ Cấu hình nhôm</span>
+                    <ArrowRight size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onNavigateTab('accessories')}
+                    className="text-[11px] font-bold text-blue-900 bg-blue-100 hover:bg-blue-200 px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>🔧 Chọn Phụ kiện / Ke</span>
+                    <ArrowRight size={12} />
+                  </button>
+                </div>
               )}
             </div>
 

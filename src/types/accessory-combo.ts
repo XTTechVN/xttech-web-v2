@@ -4,6 +4,8 @@ export interface AccessoryComboItem {
   note?: string;
   accessoryName?: string;
   accessoryCode?: string;
+  unit?: string;
+  unitPrice?: number;
 }
 
 export interface AccessoryCombo {

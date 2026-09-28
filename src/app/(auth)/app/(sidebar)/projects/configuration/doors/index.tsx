@@ -150,6 +150,7 @@ const Page = () => {
       />
 
       <DoorBOMModal
+        key={doorForBOM ? `bom-${doorForBOM.id}` : 'bom-modal'}
         isOpen={isBOMOpen}
         door={doorForBOM}
         onClose={() => {
