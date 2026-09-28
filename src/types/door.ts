@@ -111,6 +111,28 @@ export interface GlassCellBOM {
   glassPrice?: number | null;
 }
 
+export interface CornerJointBOM {
+  name: string;
+  position: 'frame' | 'sash';
+  qty: number;
+  unit: string;
+  jointType?: string | null;
+  formula?: string | null;
+  accessoryId?: number | null;
+  accessoryCode?: string | null;
+  accessoryName?: string | null;
+  unitPrice?: number;
+  totalPrice?: number;
+  isConfigured: boolean;
+  note?: string | null;
+}
+
+export interface SelectedAccessoryItem {
+  accessoryId: number;
+  quantity: number;
+  note?: string | null;
+}
+
 export interface DoorCalculateResponse {
   w: number;
   h: number;
@@ -119,9 +141,13 @@ export interface DoorCalculateResponse {
   beads: BeadCut[];
   groupedBeads: BeadCut[];
   cells: GlassCellBOM[];
+  cornerJoints?: CornerJointBOM[];
   sashCounts: Record<string, number>;
   totalAluminumWeightKg: number;
   totalGlassAreaM2: number;
+  totalJointQty?: number;
+  totalJointPrice?: number;
+  hasUnconfiguredJoints?: boolean;
 }
 
 export interface DoorCalculateRequest {

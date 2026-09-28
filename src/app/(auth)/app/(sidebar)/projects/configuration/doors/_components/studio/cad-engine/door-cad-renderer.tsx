@@ -234,15 +234,24 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   const ox = hideDimensions ? Math.round((vbW - fw) / 2) : Math.round((vbW - 55 - fw) / 2) + 20;
   const oy = hideDimensions ? Math.round((vbH - fh) / 2) : Math.round((vbH - 50 - fh) / 2) + 10;
   const baseDim = Math.min(fw, fh);
-  // Khung bao ngoài: tỷ lệ trực quan thanh thoát, chuẩn xác theo Windova (Hình 2)
-  const frameD = Math.max(8, Math.min(11, Math.round(baseDim * 0.024)));
+  // Khung bao ngoài: tỷ lệ trực quan thanh mảnh, sắc nét chuẩn Windova (Hình 2)
+  const frameD = Math.max(7, Math.min(10, Math.round(baseDim * 0.026)));
 
   const isSlim = sashConfig?.sashStyle === 'slim';
-  const sashD = isSlim ? Math.max(6, Math.round(frameD * 0.65)) : Math.max(8, Math.min(10, Math.round(frameD * 0.95)));
-  const beadW = isSlim ? Math.max(1.5, Math.round(sashD * 0.2)) : Math.max(2, Math.min(2.5, Math.round(sashD * 0.25)));
+  const isDoorUnit = h >= 1800;
+  // Cánh cửa đi (85-90mm) dày hơn khung bao (55-66mm) khoảng 1.35 - 1.45 lần
+  // Cánh cửa sổ dày khoảng 1.15 lần khung bao
+  const defaultSashRatio = isDoorUnit ? 1.4 : 1.15;
+  const sashD = isSlim
+    ? Math.max(7, Math.round(frameD * 0.75))
+    : Math.max(isDoorUnit ? 14 : 11, Math.min(isDoorUnit ? 18 : 14, Math.round(frameD * defaultSashRatio)));
+  const beadW = isSlim
+    ? Math.max(1.2, Math.round(sashD * 0.18))
+    : Math.max(2, Math.min(2.8, Math.round(sashD * 0.2)));
   const sashJoint: SashCornerJoint = sashConfig?.cornerJoint ?? '45';
 
-  const mullionT = Math.max(8, Math.min(12, Math.round(baseDim * 0.024)));
+  // Đố tĩnh T: độ dày bằng với khung bao ngoài (khoảng 7 - 10px)
+  const mullionT = Math.max(7, Math.min(10, Math.round(frameD * 1.0)));
 
   // Tính toán hình dạng khung vòm/bo góc (nếu có)
   const curvedPaths = getCurvedFramePaths(
@@ -259,13 +268,13 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   // Hàm tính độ dày khung cánh thích ứng động theo kích thước từng ô cánh (tránh chiếm quá nhiều diện tích kính)
   const getAdaptiveSashD = (cellW: number, cellH: number, isDoubleChild = false, isSliding = false) => {
     // Khung nhôm 2 bên cánh
-    const ratioW = isSliding ? 0.07 : isDoubleChild ? 0.07 : 0.08;
-    const maxAllowedW = Math.max(5, Math.floor(cellW * ratioW));
-    const maxAllowedH = Math.max(5, Math.floor(cellH * 0.08));
+    const ratioW = isSliding ? 0.12 : isDoubleChild ? 0.16 : 0.18;
+    const maxAllowedW = Math.max(8, Math.floor(cellW * ratioW));
+    const maxAllowedH = Math.max(8, Math.floor(cellH * 0.12));
     const maxAllowed = Math.min(maxAllowedW, maxAllowedH);
 
     const candidate = isSliding ? Math.round(sashD * 0.85) : sashD;
-    return Math.max(5, Math.min(candidate, maxAllowed));
+    return Math.max(8, Math.min(candidate, maxAllowed));
   };
 
   // Extract vertical slices anywhere in tree (including double sashes and recursive vertical splits)
@@ -878,7 +887,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
                           pane1W,
                           paneH1,
                           `${node.id}-bead-1`,
-                          Math.max(2, Math.round(dSash1 * 0.25)),
+                          Math.max(3, Math.min(5, Math.round(dSash1 * 0.22))),
                         );
                         return (
                           <>
@@ -901,7 +910,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
                           pane2W,
                           paneH2,
                           `${node.id}-bead-2`,
-                          Math.max(2, Math.round(dSash2 * 0.25)),
+                          Math.max(3, Math.min(5, Math.round(dSash2 * 0.22))),
                         );
                         return (
                           <>
@@ -917,10 +926,14 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
                         const handleHVal = node.handleHeight || Math.round(node.h / 2);
                         const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
                         const handleY = Math.max(cy + dSash2 + 20, Math.min(cy + ch - dSash2 - 20, lockYCalc));
-                        const plateX = s2X + dSash2 / 2 - 2.5;
-                        const plateY = handleY - 12;
-                        const leverX = plateX + 2.5;
-                        const leverY = handleY - 4;
+                        const plateW = 4.5;
+                        const plateH = 22;
+                        const leverW = 14;
+                        const leverH = 3.5;
+                        const plateX = s2X + dSash2 / 2 - plateW / 2;
+                        const plateY = handleY - plateH / 2;
+                        const leverX = plateX + plateW / 2;
+                        const leverY = handleY - leverH / 2;
                         return (
                           <g
                             className="cursor-pointer"
@@ -929,9 +942,9 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
                               onEditDimension?.('handleHeight', node.id);
                             }}
                           >
-                            <rect x={plateX} y={plateY} width={5} height={24} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
-                            <circle cx={plateX + 2.5} cy={handleY + 6} r={1} fill="#111" />
-                            <rect x={leverX} y={leverY} width={15} height={4} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
+                            <rect x={plateX} y={plateY} width={plateW} height={plateH} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
+                            <circle cx={plateX + plateW / 2} cy={handleY + 5.5} r={1} fill="#111" />
+                            <rect x={leverX} y={leverY} width={leverW} height={leverH} rx={1.2} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
                           </g>
                         );
                       })()}
@@ -941,13 +954,15 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
               : /* Case B: Single sash or fixed pane */
                 (() => {
                   const dSash = isFixed ? 0 : getAdaptiveSashD(cw, ch, false, isSliding);
-                  const dBead = isFixed ? 0 : Math.max(2, Math.round(dSash * 0.25));
+                  const dBead = isFixed
+                    ? Math.max(2, Math.min(3, Math.round(frameD * 0.25)))
+                    : Math.max(2, Math.min(3, Math.round(dSash * 0.2)));
                   const innerX = isFixed ? cx : cx + dSash;
                   const innerY = isFixed ? cy : cy + dSash;
                   const innerW = Math.max(4, isFixed ? cw : cw - 2 * dSash);
                   const innerH = Math.max(4, isFixed ? ch : ch - 2 * dSash);
-                  // Bead chỉ cho cánh mở và glass; fixed/panel/screen không có nẹp
-                  const hasBead = !isFixed && node.paneType === 'glass';
+                  // Cả ô vách chết (Fixed) lẫn cánh mở đều có nẹp kính khi paneType === 'glass' (như Hình 2)
+                  const hasBead = node.paneType === 'glass';
                   const bead = hasBead ? renderBead(innerX, innerY, innerW, innerH, `${node.id}-bead`, dBead) : null;
                   const glassX = hasBead && bead ? bead.gx2 : innerX;
                   const glassY = hasBead && bead ? bead.gy2 : innerY;
@@ -981,9 +996,27 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
 
                       {!isFixed && renderOpeningSymbol(glassX, glassY, glassW, glassH, node.sashType)}
 
-                      {/* Hardware Handle — chỉ render khi hasLock explicitly = true */}
+                      {/* Hardware Handle — render khi có cấu hình hasLock hoặc mặc định cánh mở có tay nắm */}
                       {!isFixed &&
-                        node.hasLock === true &&
+                        (() => {
+                          // Nếu là cửa 2 cánh mở quay đối xứng (swing_left và swing_right gặp nhau):
+                          // Cánh phụ (swing_left) mặc định không vẽ tay gạt để nhường cho cánh chính (swing_right),
+                          // trừ khi người dùng chủ động tick chọn hasLock === true.
+                          const isSecondaryOfPair =
+                            node.sashType === 'swing_left' &&
+                            node.hasLock !== true &&
+                            leaves.some(
+                              (other) =>
+                                other.node.id !== node.id &&
+                                other.node.sashType === 'swing_right' &&
+                                Math.abs(other.y - cy) < 10,
+                            );
+
+                          if (isSecondaryOfPair) return false;
+
+                          const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down'].includes(node.sashType || '');
+                          return node.hasLock ?? sashHasHandle;
+                        })() &&
                         (() => {
                           const isBottomHandle = node.sashType === 'awning' || node.sashType === 'tilt';
                           const isTopHandle = node.sashType === 'tilt_down';
@@ -1027,13 +1060,17 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
                           const bottomBound = isOpenBot ? oy + fh - dSash - 10 : oy + fh - frameD - dSash - 10;
                           const handleY = Math.max(cy + dSash + 20, Math.min(bottomBound, lockYCalc));
 
+                          const plateW = 4.5;
+                          const plateH = 22;
+                          const leverW = 14;
+                          const leverH = 3.5;
+
                           if (isRightHandle) {
                             // Tay nắm lắp ở cạnh phải của cánh (quay trái), tay gạt chìa sang trái
-                            const plateX = cx + cw - dSash / 2 - 2.5;
-                            const plateY = handleY - 12;
-                            const leverW = 15;
-                            const leverX = plateX + 2.5 - leverW;
-                            const leverY = handleY - 4;
+                            const plateX = cx + cw - dSash / 2 - plateW / 2;
+                            const plateY = handleY - plateH / 2;
+                            const leverX = plateX + plateW / 2 - leverW;
+                            const leverY = handleY - leverH / 2;
 
                             return (
                               <g
@@ -1044,22 +1081,21 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
                                 }}
                               >
                                 {/* Ốp thân khóa thẳng đứng */}
-                                <rect x={plateX} y={plateY} width={5} height={24} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
+                                <rect x={plateX} y={plateY} width={plateW} height={plateH} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
                                 {/* Lỗ khóa / ổ chìa */}
-                                <circle cx={plateX + 2.5} cy={handleY + 6} r={1} fill="#111" />
+                                <circle cx={plateX + plateW / 2} cy={handleY + 5.5} r={1} fill="#111" />
                                 {/* Cần tay gạt nằm ngang */}
-                                <rect x={leverX} y={leverY} width={leverW} height={4} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
+                                <rect x={leverX} y={leverY} width={leverW} height={leverH} rx={1.2} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
                               </g>
                             );
                           }
 
                           if (isLeftHandle) {
                             // Tay nắm lắp ở cạnh trái của cánh (quay phải - như Ảnh 2 của User), tay gạt chìa sang phải
-                            const plateX = cx + dSash / 2 - 2.5;
-                            const plateY = handleY - 12;
-                            const leverW = 15;
-                            const leverX = plateX + 2.5;
-                            const leverY = handleY - 4;
+                            const plateX = cx + dSash / 2 - plateW / 2;
+                            const plateY = handleY - plateH / 2;
+                            const leverX = plateX + plateW / 2;
+                            const leverY = handleY - leverH / 2;
 
                             return (
                               <g
@@ -1070,11 +1106,11 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
                                 }}
                               >
                                 {/* Ốp thân khóa thẳng đứng */}
-                                <rect x={plateX} y={plateY} width={5} height={24} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
+                                <rect x={plateX} y={plateY} width={plateW} height={plateH} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
                                 {/* Lỗ khóa / ổ chìa */}
-                                <circle cx={plateX + 2.5} cy={handleY + 6} r={1} fill="#111" />
+                                <circle cx={plateX + plateW / 2} cy={handleY + 5.5} r={1} fill="#111" />
                                 {/* Cần tay gạt nằm ngang (chìa sang phải qua mặt kính) */}
-                                <rect x={leverX} y={leverY} width={leverW} height={4} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.6" />
+                                <rect x={leverX} y={leverY} width={leverW} height={leverH} rx={1.2} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
                               </g>
                             );
                           }

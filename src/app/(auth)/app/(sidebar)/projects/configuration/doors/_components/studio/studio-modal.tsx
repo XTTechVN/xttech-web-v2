@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components';
-import { Door, DoorCreate, DoorUpdate, DoorCalculateResponse } from '@/types';
+import { Door, DoorCreate, DoorUpdate, DoorCalculateResponse, SelectedAccessoryItem } from '@/types';
 import {
   calculateDoor,
   createDoor,
@@ -11,6 +11,7 @@ import {
   getDoorSeriesList,
   getProfileBars,
   getAccessoryCombos,
+  getAccessories,
   getGlasses,
   getBrandColors,
 } from '@/actions';
@@ -108,7 +109,8 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
   const [hardwareColor, setHardwareColor] = useState<string>('#1E293B');
   const [frameShape, setFrameShape] = useState<FrameShape>('rect');
   const [seriesId, setSeriesId] = useState<number | undefined>(1);
-  const [selectedComboId, setSelectedComboId] = useState<number | null>(null);
+  const [selectedComboIds, setSelectedComboIds] = useState<number[]>([]);
+  const [selectedAccessories, setSelectedAccessories] = useState<SelectedAccessoryItem[]>([]);
 
   // Flexible Configurations (Frame & Sash)
   const [frameConfig, setFrameConfig] = useState<FrameConfig>(DEFAULT_FRAME_CONFIG);
@@ -159,6 +161,14 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
     enabled: isOpen,
   });
   const availableCombos = combosData?.items || [];
+
+  // Fetch Individual Accessories
+  const { data: accessoriesData } = useQuery({
+    queryKey: ['accessories-list'],
+    queryFn: () => getAccessories({ limit: 1000, isActive: true }),
+    enabled: isOpen,
+  });
+  const availableAccessories = accessoriesData?.items || [];
 
   // Fetch Glasses (for CellInspector dropdown)
   const { data: glassesData } = useQuery({
@@ -227,7 +237,18 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
       if (sc.aluminumColor) setAluminumColor(sc.aluminumColor);
       if (sc.hardwareColor) setHardwareColor(sc.hardwareColor);
       if (sc.seriesId) setSeriesId(sc.seriesId);
-      if (sc.selectedComboId) setSelectedComboId(sc.selectedComboId);
+      if (sc.selectedComboIds && Array.isArray(sc.selectedComboIds)) {
+        setSelectedComboIds(sc.selectedComboIds);
+      } else if (sc.selectedComboId) {
+        setSelectedComboIds([sc.selectedComboId]);
+      } else {
+        setSelectedComboIds([]);
+      }
+      if (sc.selectedAccessories && Array.isArray(sc.selectedAccessories)) {
+        setSelectedAccessories(sc.selectedAccessories);
+      } else {
+        setSelectedAccessories([]);
+      }
       if (sc.frameConfig) {
         setFrameConfig({
           ...DEFAULT_FRAME_CONFIG,
@@ -269,7 +290,8 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
       setAluminumColor('#955F20');
       setHardwareColor('#1E293B');
       setSeriesId(1);
-      setSelectedComboId(null);
+      setSelectedComboIds([]);
+      setSelectedAccessories([]);
       setFrameConfig(DEFAULT_FRAME_CONFIG);
       setSashConfig(DEFAULT_SASH_CONFIG);
       setCurrentSashType('fixed');
@@ -729,6 +751,9 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
             frameConfig,
             sashConfig,
             seriesId,
+            selectedComboIds,
+            selectedComboId: selectedComboIds[0] || null,
+            selectedAccessories,
           },
         });
         if (isMounted) setCalcData(res);
@@ -743,7 +768,49 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [isOpen, w, h, frameShape, aluminumColor, rootCell, frameConfig, sashConfig, seriesId]);
+  }, [isOpen, w, h, frameShape, aluminumColor, rootCell, frameConfig, sashConfig, seriesId, selectedComboIds, selectedAccessories]);
+
+  // Accessory Handlers
+  const handleToggleCombo = (comboId: number) => {
+    setSelectedComboIds((prev) =>
+      prev.includes(comboId) ? prev.filter((id) => id !== comboId) : [...prev, comboId]
+    );
+  };
+
+  const handleUpdateAccessoryQty = (accessoryId: number, delta: number) => {
+    setSelectedAccessories((prev) => {
+      const existing = prev.find((a) => a.accessoryId === accessoryId);
+      if (existing) {
+        const newQty = existing.quantity + delta;
+        if (newQty <= 0) {
+          return prev.filter((a) => a.accessoryId !== accessoryId);
+        }
+        return prev.map((a) => (a.accessoryId === accessoryId ? { ...a, quantity: newQty } : a));
+      }
+      if (delta > 0) {
+        return [...prev, { accessoryId, quantity: delta }];
+      }
+      return prev;
+    });
+  };
+
+  const handleSetAccessoryQty = (accessoryId: number, qty: number) => {
+    setSelectedAccessories((prev) => {
+      if (qty <= 0) {
+        return prev.filter((a) => a.accessoryId !== accessoryId);
+      }
+      const existing = prev.find((a) => a.accessoryId === accessoryId);
+      if (existing) {
+        return prev.map((a) => (a.accessoryId === accessoryId ? { ...a, quantity: qty } : a));
+      }
+      return [...prev, { accessoryId, quantity: qty }];
+    });
+  };
+
+  const handleClearAllAccessories = () => {
+    setSelectedComboIds([]);
+    setSelectedAccessories([]);
+  };
 
   // Save Mutation
   const { mutate: saveMutation, isPending: isSaving } = useMutation({
@@ -779,7 +846,9 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
           frameConfig,
           sashConfig,
           seriesId,
-          selectedComboId,
+          selectedComboIds,
+          selectedComboId: selectedComboIds[0] || null,
+          selectedAccessories,
         },
       };
 
@@ -980,8 +1049,13 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
         <div className="h-[80vh] -m-4 overflow-y-auto">
           <AccessoriesTabView
             combos={availableCombos}
-            selectedComboId={selectedComboId}
-            onSelectCombo={setSelectedComboId}
+            selectedComboIds={selectedComboIds}
+            onToggleCombo={handleToggleCombo}
+            accessories={availableAccessories}
+            selectedAccessories={selectedAccessories}
+            onUpdateAccessoryQty={handleUpdateAccessoryQty}
+            onSetAccessoryQty={handleSetAccessoryQty}
+            onClearAll={handleClearAllAccessories}
             hardwareColor={hardwareColor}
             onChangeHardwareColor={setHardwareColor}
           />
