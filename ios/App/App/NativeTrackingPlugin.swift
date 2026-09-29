@@ -1,6 +1,5 @@
 import Foundation
 import CoreLocation
-import CoreMotion
 import Capacitor
 import UIKit
 
@@ -9,20 +8,13 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     public static var shared: NativeTrackingPlugin?
 
     private var locationManager: CLLocationManager?
-    private let motionActivityManager = CMMotionActivityManager()
     private var isTracking = false
-    private var isStationaryMode = false
-    private var stationaryDetectionDate: Date?
-    private var isMovingTransition = false
 
     private var accessToken: String?
     private var refreshToken: String?
     private var apiUrl: String?
     private var lastPingTime: Date = Date.distantPast
-    private var lastLocation: CLLocation?
-    private var lastAccurateLocation: CLLocation?
-    private var stationaryRegion: CLCircularRegion?
-    private var stationaryAnchorLocation: CLLocation?
+    private var lastSentLocation: CLLocation?
     private var lastBatteryLevel: Double = -1.0
 
     private let prefsKeyToken = "xttech_ios_access_token"
@@ -59,7 +51,6 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         if defaults.bool(forKey: prefsKeyIsTracking) {
             DispatchQueue.main.async { [weak self] in
                 self?.isTracking = true
-                self?.startMotionActivityMonitoring()
                 self?.setupLocationManager()
             }
         }
@@ -86,7 +77,6 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.isTracking = true
-            self.startMotionActivityMonitoring()
             self.setupLocationManager()
         }
 
@@ -112,13 +102,12 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.isTracking = false
-            self.isStationaryMode = false
-            self.stopMotionActivityMonitoring()
             self.locationManager?.stopUpdatingLocation()
             if CLLocationManager.significantLocationChangeMonitoringAvailable() {
                 self.locationManager?.stopMonitoringSignificantLocationChanges()
             }
-            self.stopStationaryRegionMonitoring()
+            self.lastSentLocation = nil
+            print("[NativeTracking iOS] Stopped live tracking.")
         }
         call.resolve(["success": true])
     }
@@ -157,102 +146,23 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
     }
 
-    // MARK: - CoreMotion Stop-Detection Engine (Chuẩn Life360 / Transistor)
-    private func startMotionActivityMonitoring() {
-        guard CMMotionActivityManager.isActivityAvailable() else { return }
-        stopMotionActivityMonitoring()
-        motionActivityManager.startActivityUpdates(to: .main) { [weak self] activity in
-            guard let self = self, self.isTracking, let activity = activity else { return }
-            self.handleMotionActivity(activity)
-        }
-    }
-
-    private func stopMotionActivityMonitoring() {
-        if CMMotionActivityManager.isActivityAvailable() {
-            motionActivityManager.stopActivityUpdates()
-        }
-        stationaryDetectionDate = nil
-    }
-
-    private func handleMotionActivity(_ activity: CMMotionActivity) {
-        guard isTracking else { return }
-
-        // 1. Khi phát hiện bước đi, chạy bộ hoặc di chuyển xe:
-        if activity.walking || activity.running || activity.automotive {
-            stationaryDetectionDate = nil
-            if isStationaryMode {
-                print("[NativeTracking iOS] CoreMotion phát hiện di chuyển (walking/automotive). Đánh thức và bật lại GPS.")
-                enterMovingMode()
-            }
-        }
-        // 2. Khi phát hiện đứng yên ổn định liên tục >= 2 phút:
-        else if activity.stationary {
-            if !isStationaryMode {
-                if stationaryDetectionDate == nil {
-                    stationaryDetectionDate = Date()
-                } else if Date().timeIntervalSince(stationaryDetectionDate!) >= 120.0 {
-                    print("[NativeTracking iOS] CoreMotion xác nhận đứng yên > 2 phút. Kích hoạt chế độ siêu tiết kiệm pin (Stop-Detection).")
-                    enterStationaryMode()
-                }
-            }
-        }
-    }
-
-    private func enterStationaryMode() {
-        guard isTracking, !isStationaryMode else { return }
-        isStationaryMode = true
-        stationaryDetectionDate = nil
-
-        // 1. Lưu mốc neo cố định và gửi ping chốt hạ vị trí neo với trạng thái đứng yên
-        if let anchor = self.lastAccurateLocation ?? self.lastLocation {
-            self.stationaryAnchorLocation = anchor
-            self.lastPingTime = Date()
-            sendPing(location: anchor, isHeartbeat: true)
-            updateStationaryRegion(around: anchor)
-        }
-
-        // 2. Chuyển sang chế độ HundredMeters để iOS ngắt chip GPS vệ tinh, chuyển sang Wi-Fi/Cellular tiết kiệm pin tối đa
-        // TUYỆT ĐỐI KHÔNG GỌI stopUpdatingLocation() vì sẽ làm app bị iOS SUSPEND khi khóa màn hình!
-        locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        locationManager?.distanceFilter = kCLDistanceFilterNone
-        print("[NativeTracking iOS] Chuyển sang chế độ đứng yên (HundredMeters + kCLDistanceFilterNone). Giữ tiến trình chạy ngầm.")
-    }
-
-    private func enterMovingMode() {
-        guard isTracking else { return }
-        isStationaryMode = false
-        stationaryDetectionDate = nil
-        self.stationaryAnchorLocation = nil // Xóa mốc neo cũ khi chuyển sang di chuyển
-        isMovingTransition = true // Nới lỏng accuracy khi vừa xuất phát
-
-        // 1. Dỡ bỏ geofence cũ
-        stopStationaryRegionMonitoring()
-
-        // 2. Nâng lên chế độ BestForNavigation để bật chip GPS vệ tinh vẽ đường mượt mà
-        locationManager?.desiredAccuracy = kCLLocationAccuracyBestForNavigation
-        locationManager?.activityType = .automotiveNavigation
-        locationManager?.distanceFilter = kCLDistanceFilterNone
-        locationManager?.startUpdatingLocation()
-        print("[NativeTracking iOS] Đã bật lại GPS vệ tinh (.automotiveNavigation + kCLDistanceFilterNone).")
-    }
-
-    // MARK: - CoreLocation Configuration (Chuẩn Automotive Navigation)
+    // MARK: - CoreLocation Active Tracking Engine (Chuẩn Live Location Zalo / Grab)
     private func setupLocationManager() {
         if locationManager == nil {
             locationManager = CLLocationManager()
             locationManager?.delegate = self
-            locationManager?.desiredAccuracy = kCLLocationAccuracyBestForNavigation
-            locationManager?.distanceFilter = kCLDistanceFilterNone
-            
-            // Cấu hình định vị chạy ngầm liên tục chuẩn Apple
-            locationManager?.allowsBackgroundLocationUpdates = true
-            locationManager?.pausesLocationUpdatesAutomatically = false
-            locationManager?.activityType = .automotiveNavigation
-            if #available(iOS 11.0, *) {
-                locationManager?.showsBackgroundLocationIndicator = true
-            }
-        } else {
-            locationManager?.distanceFilter = kCLDistanceFilterNone
+        }
+
+        // Cấu hình GPS phần cứng chất lượng cao nhất, không tự ý ngắt chip GPS
+        locationManager?.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager?.distanceFilter = kCLDistanceFilterNone
+        locationManager?.allowsBackgroundLocationUpdates = true
+        locationManager?.pausesLocationUpdatesAutomatically = false
+        locationManager?.activityType = .automotiveNavigation
+
+        // Hiển thị viên thuốc màu xanh trên Status Bar / Dynamic Island (chuẩn Apple cho ứng dụng Live Tracking)
+        if #available(iOS 11.0, *) {
+            locationManager?.showsBackgroundLocationIndicator = true
         }
 
         let status: CLAuthorizationStatus
@@ -268,55 +178,16 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         locationManager?.startUpdatingLocation()
 
-        // Đăng ký nhận đánh thức khi đổi trạm phát sóng viễn thông (SLC)
+        // Lưới an toàn cứu sinh: Giữ đánh thức SLC khi khởi động lại máy hoặc bị hệ thống kill
         if CLLocationManager.significantLocationChangeMonitoringAvailable() {
             locationManager?.startMonitoringSignificantLocationChanges()
         }
+
         isTracking = true
-        isStationaryMode = false
-        print("[NativeTracking iOS] CoreLocation initialized with .automotiveNavigation.")
+        print("[NativeTracking iOS] Active Live-Tracking started (kCLLocationAccuracyBest, showsBackgroundLocationIndicator=true).")
     }
 
-    // MARK: - Stationary Geofencing Engine (Bán kính 100m chuẩn Apple)
-    private func updateStationaryRegion(around location: CLLocation) {
-        guard CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) else { return }
-        
-        // Tránh tạo lại liên tục nếu điểm neo cũ chưa đổi quá 50m
-        if let existing = self.stationaryRegion {
-            let dist = location.distance(from: CLLocation(latitude: existing.center.latitude, longitude: existing.center.longitude))
-            if dist < 50.0 {
-                return
-            }
-        }
-        stopStationaryRegionMonitoring()
-
-        // Bán kính vùng tròn neo đậu chuẩn Apple: 100 mét
-        let region = CLCircularRegion(
-            center: location.coordinate,
-            radius: 100.0,
-            identifier: "com.xttech.stationary_anchor"
-        )
-        region.notifyOnExit = true
-        region.notifyOnEntry = false
-        self.stationaryRegion = region
-        self.locationManager?.startMonitoring(for: region)
-    }
-
-    private func stopStationaryRegionMonitoring() {
-        if let region = self.stationaryRegion {
-            self.locationManager?.stopMonitoring(for: region)
-            self.stationaryRegion = nil
-        }
-    }
-
-    public func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
-        if region.identifier == "com.xttech.stationary_anchor" {
-            print("[NativeTracking iOS] didExitRegion: Thiết bị rời khỏi bán kính 100m. Đánh thức app dậy di chuyển.")
-            enterMovingMode()
-        }
-    }
-
-    /// Xử lý khi hệ thống iOS đánh thức ứng dụng từ cõi chết (do SLC hoặc Region Exit)
+    /// Đánh thức ứng dụng từ nền khi nhận sự kiện hệ thống
     @objc public static func handleLocationWakeUp() {
         let defaults = UserDefaults.standard
         let wasTracking = defaults.bool(forKey: "xttech_ios_is_tracking")
@@ -324,14 +195,12 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         DispatchQueue.main.async {
             if let plugin = shared {
-                plugin.startMotionActivityMonitoring()
                 plugin.setupLocationManager()
             } else {
                 let standalone = NativeTrackingPlugin()
                 standalone.accessToken = defaults.string(forKey: "xttech_ios_access_token")
                 standalone.refreshToken = defaults.string(forKey: "xttech_ios_refresh_token")
                 standalone.apiUrl = defaults.string(forKey: "xttech_ios_api_url")
-                standalone.startMotionActivityMonitoring()
                 standalone.setupLocationManager()
                 shared = standalone
             }
@@ -339,91 +208,62 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
     }
 
-    // MARK: - CLLocationManagerDelegate
+    // MARK: - CLLocationManagerDelegate (Active Live-Tracking Delegate)
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard isTracking, let location = locations.last else { return }
-        
-        // Bỏ qua nếu điểm cache đã quá 60 giây
-        if abs(location.timestamp.timeIntervalSinceNow) > 60.0 {
+
+        // Bỏ qua tọa độ cũ đã lưu cache quá 30 giây
+        if abs(location.timestamp.timeIntervalSinceNow) > 30.0 {
+            return
+        }
+
+        // Bỏ qua tọa độ sai số quá lớn (> 200m)
+        if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 200.0 {
             return
         }
 
         let now = Date()
         let elapsed = now.timeIntervalSince(lastPingTime)
 
-        // Khởi tạo điểm ban đầu an toàn
-        guard let lastAcc = self.lastAccurateLocation else {
-            if location.horizontalAccuracy >= 0 && location.horizontalAccuracy <= 150.0 {
-                self.lastAccurateLocation = location
-                self.lastLocation = location
-                self.lastPingTime = now
-                sendPing(location: location, isHeartbeat: true)
-                updateStationaryRegion(around: location)
+        // Tính toán khoảng cách dịch chuyển so với điểm đã gửi trước đó
+        let distance: Double = {
+            if let lastSent = self.lastSentLocation {
+                return location.distance(from: lastSent)
             }
-            return
-        }
-
-        // Đo khoảng cách: nếu đang đứng yên thì đo so với mốc neo cố định stationaryAnchorLocation
-        // để nhận diện ngay khi người dùng bước đi rời xa khỏi chỗ ngồi
-        let distance: Double = (isStationaryMode && self.stationaryAnchorLocation != nil)
-            ? location.distance(from: self.stationaryAnchorLocation!)
-            : location.distance(from: lastAcc)
+            return 999.0
+        }()
 
         let rawSpeed = max(0.0, location.speed)
         let speed = rawSpeed >= 0.8 ? rawSpeed : 0.0
-        let isMoving = speed >= 0.8 || distance >= 25.0
 
-        // Nếu đang ở trạng thái Stationary nhưng nhận được điểm GPS di chuyển đáng kể (> 25m so với mốc neo hoặc có vận tốc):
-        if isStationaryMode && isMoving {
-            print("[NativeTracking iOS] Phát hiện di chuyển rời mốc neo (distance=\(distance)m, speed=\(speed)m/s). Chuyển ngay sang Moving Mode.")
-            enterMovingMode()
+        // Nhận diện trạng thái di chuyển:
+        // Có tốc độ >= 0.8 m/s (~ 2.88 km/h) HOẶC dịch chuyển vị trí >= 10 mét
+        let isMoving = speed >= 0.8 || distance >= 10.0
+
+        // Lọc bước nhảy dị biệt (outlier jump do chuyển đổi trạm BTS ảo)
+        if distance > 250.0 && elapsed > 0 {
+            let jumpSpeed = distance / elapsed
+            if jumpSpeed > 45.0 { // Vượt quá 162 km/h
+                print("[NativeTracking iOS] Discarding outlier jump point: \(distance)m in \(elapsed)s")
+                return
+            }
         }
 
-        // Kiểm tra sai số GPS thích ứng:
-        // - Khi vừa xuất phát (isMovingTransition): Nới lỏng 90m để gói tin đầu tiên thoát đi được
-        // - Khi di chuyển bình thường: Nới lỏng 65m
-        // - Khi đứng yên: Nới lỏng 200m (đồng bộ 200m với Backend để luôn nhận nhịp tim khi khóa màn hình)
-        let maxAllowedAccuracy: Double = {
-            if isMovingTransition { return 90.0 }
-            if isMoving { return 65.0 }
-            return 200.0
-        }()
-
-        if location.horizontalAccuracy < 0 || location.horizontalAccuracy > maxAllowedAccuracy {
-            return
-        }
-
-        // Đã nhận tọa độ hợp lệ sau khi thức dậy
-        if isMovingTransition {
-            isMovingTransition = false
-        }
-
-        // Chống bước nhảy dị biệt (outlier jump filter từ trạm sóng BTS ảo)
-        let jumpSpeed = elapsed > 0 ? distance / elapsed : 999.0
-        if distance > 200.0 && (jumpSpeed > 35.0 || (distance > 500.0 && elapsed < 30.0)) {
-            print("[NativeTracking iOS] Discarding outlier jump point: \(distance)m, speed=\(jumpSpeed)m/s")
-            return
-        }
-
-        // Chỉ cập nhật mốc lastAccurateLocation khi đang di chuyển (để không làm trôi điểm neo khi đứng yên)
-        if isMoving || self.lastAccurateLocation == nil {
-            self.lastAccurateLocation = location
-        }
-        self.lastLocation = location
-
+        // Điều tiết tần suất gửi (Throttling Engine):
         if isMoving {
-            // Khi di chuyển: throttle nhịp 3.0 giây để Live-Map mượt mà
+            // Khi di chuyển ngoài đường: Gửi thời gian thực mỗi 3.0 giây / lần (chuẩn Live-Map như Zalo / Grab)
             if elapsed < 3.0 {
                 return
             }
         } else {
-            // Khi đứng yên (stationary): gửi Heartbeat mỗi 60.0 giây 1 lần để Server luôn báo Online
+            // Khi đứng yên một chỗ (văn phòng / nhà ở): Gửi nhịp tim mỗi 60.0 giây / lần để Server luôn nhận Online
             if elapsed < 60.0 {
                 return
             }
         }
 
         self.lastPingTime = now
+        self.lastSentLocation = location
         sendPing(location: location, isHeartbeat: !isMoving)
     }
 
@@ -473,7 +313,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         guard let httpBody = try? JSONSerialization.data(withJSONObject: payload, options: []) else { return }
         request.httpBody = httpBody
 
-        // Yêu cầu iOS cấp quyền CPU chạy nền hoàn toàn trên Main Thread
+        // Yêu cầu iOS cấp quyền CPU chạy nền an toàn
         var bgTask: UIBackgroundTaskIdentifier = .invalid
         bgTask = UIApplication.shared.beginBackgroundTask(withName: "XTTechLocationPing") {
             if bgTask != .invalid {
