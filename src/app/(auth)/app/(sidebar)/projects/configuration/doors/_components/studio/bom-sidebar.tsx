@@ -10,7 +10,7 @@ interface BomSidebarProps {
 }
 
 export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) => {
-  const [activeTab, setActiveTab] = useState<'bars' | 'glass'>('bars');
+  const [activeTab, setActiveTab] = useState<'bars' | 'glass' | 'grilles'>('bars');
 
   return (
     <div className="flex flex-col h-full bg-white text-xs select-none">
@@ -77,6 +77,20 @@ export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) =
           <Maximize2 size={13} />
           <span>Kính & Nẹp ({calcData?.cells?.length ?? 0})</span>
         </button>
+        {calcData?.grilles && calcData.grilles.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('grilles')}
+            className={`pb-2 px-2 font-semibold text-xs border-b-2 transition-colors flex items-center gap-1.5 ${
+              activeTab === 'grilles'
+                ? 'border-amber-600 text-amber-600'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <Sparkles size={13} />
+            <span>Nan đồng ({calcData.grilles.length})</span>
+          </button>
+        )}
       </div>
 
       {/* Content List */}
@@ -163,6 +177,36 @@ export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) =
                   ))}
                 </div>
               </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'grilles' && (
+          <div className="space-y-2">
+            {calcData?.grilles && calcData.grilles.length > 0 ? (
+              calcData.grilles.map((g, idx) => (
+                <div
+                  key={idx}
+                  className="p-2.5 rounded-lg border border-amber-200/80 bg-amber-50/40 space-y-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-amber-900 font-mono text-[11px]">{g.cellPath}</span>
+                    <span className="font-bold font-mono text-amber-800 text-xs">
+                      {g.totalBarLengthM} m
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-amber-800/80 flex items-center justify-between">
+                    <span>Nan {g.barWidthMm}mm ({g.barColor})</span>
+                    <span>{g.motifQty > 0 ? `${g.motifQty} hoa văn` : 'Không hoa văn'}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-mono flex items-center justify-between pt-1 border-t border-amber-200/40">
+                    <span>Thành tiền:</span>
+                    <span className="font-bold text-amber-900">{g.totalPrice.toLocaleString('vi-VN')} đ</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-6 text-gray-400">Không có kính nan đồng</div>
             )}
           </div>
         )}

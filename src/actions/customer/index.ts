@@ -119,9 +119,9 @@ export const exportCustomersExcel = async (params: CustomerExportQueryParams): P
   try {
     const response = await api.get('/api/v1/customers/export', {
       params: {
-        from_date: params.fromDate || params.from_date || undefined,
-        to_date: params.toDate || params.to_date || undefined,
-        staff_id: params.staffId || params.staff_id || undefined,
+        from_date: params.fromDate || undefined,
+        to_date: params.toDate || undefined,
+        staff_id: params.staffId || undefined,
       },
       responseType: 'blob',
     });
@@ -132,8 +132,8 @@ export const exportCustomersExcel = async (params: CustomerExportQueryParams): P
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const from = params.fromDate || params.from_date || 'all';
-    const to = params.toDate || params.to_date || 'all';
+    const from = params.fromDate || 'all';
+    const to = params.toDate || 'all';
     const fileName = `bao_cao_khach_hang_${from}_${to}.xlsx`;
     link.setAttribute('download', fileName);
     document.body.appendChild(link);

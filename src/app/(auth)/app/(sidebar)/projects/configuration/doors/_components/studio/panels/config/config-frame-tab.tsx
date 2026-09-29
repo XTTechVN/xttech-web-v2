@@ -19,6 +19,9 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
   const frameProfiles = profiles.filter((p) => p.barType === 'FRAME');
   const mullionProfiles = profiles.filter((p) => p.barType === 'MULLION');
   const beadProfiles = profiles.filter((p) => p.barType === 'BEAD');
+  const auxiliaryProfiles = profiles.filter(
+    (p) => p.barType !== 'FRAME' && p.barType !== 'SASH' && p.barType !== 'MULLION' && p.barType !== 'BEAD'
+  );
 
   const leftEdge = config?.leftEdge ?? { offsetMm: 0 };
   const topEdge = config?.topEdge ?? { offsetMm: 0 };
@@ -207,23 +210,59 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
             </div>
           </div>
 
-          {/* Cạnh Dưới */}
+          {/* Cạnh Dưới (Hỗ trợ Ngưỡng nhôm & Ốp chân ngưỡng) */}
           <div className="p-3 bg-slate-50 rounded-xl border border-gray-200 space-y-2">
             <div className="flex items-center justify-between font-bold text-xs text-gray-800">
               <span>CẠNH DƯỚI</span>
-              <span className="text-amber-700 font-mono text-[11px]">W • 45°/45°</span>
+              <span className="text-amber-700 font-mono text-[11px]">
+                {config.isOpenBottom
+                  ? 'Bỏ qua'
+                  : bottomEdge.profileId && auxiliaryProfiles.some((p) => p.id === bottomEdge.profileId)
+                  ? 'W • 90°/90° (Ngưỡng)'
+                  : 'W • 45°/45°'}
+              </span>
             </div>
             <select
               disabled={config.isOpenBottom}
               value={bottomEdge.profileId || ''}
-              onChange={(e) => onChangeConfig({ bottomEdge: { ...bottomEdge, profileId: Number(e.target.value) } })}
+              onChange={(e) => {
+                const pId = Number(e.target.value) || undefined;
+                const selected = profiles.find((p) => p.id === pId);
+                onChangeConfig({
+                  bottomEdge: {
+                    ...bottomEdge,
+                    profileId: pId,
+                    profileCode: selected?.code,
+                  },
+                });
+              }}
               className="w-full h-8 px-2 text-xs rounded-lg border border-gray-300 bg-white disabled:bg-gray-100"
             >
-              <option value="">{config.isOpenBottom ? '(Khung hở - không có cạnh dưới)' : (leftEdge.profileId ? '↑ Kế thừa (Cạnh trái)' : 'Chọn profile...')}</option>
-              {frameProfiles.map((p) => (
-                <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-              ))}
+              <option value="">
+                {config.isOpenBottom
+                  ? '(Khung hở - không có cạnh dưới)'
+                  : leftEdge.profileId
+                  ? '↑ Kế thừa (Cạnh trái)'
+                  : 'Chọn profile...'}
+              </option>
+              <optgroup label="Khung bao tiêu chuẩn (FRAME)">
+                {frameProfiles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.code} - {p.name}
+                  </option>
+                ))}
+              </optgroup>
+              {auxiliaryProfiles.length > 0 && (
+                <optgroup label="Ngưỡng sàn / Thanh phụ khác (OTHER / SILL)">
+                  {auxiliaryProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.code} - {p.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
+
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-gray-500">Bù/trừ offset:</span>
               <input
@@ -235,6 +274,54 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
               />
               <span className="text-[11px] text-gray-400">mm</span>
             </div>
+
+            {/* Ốp chân ngưỡng phụ đi kèm (Tùy chọn nâng cao) */}
+            {!config.isOpenBottom && bottomEdge.profileId && auxiliaryProfiles.length > 0 && (
+              <div className="pt-2 border-t border-gray-200/60 mt-1 space-y-1">
+                <div className="flex items-center justify-between text-[10.5px]">
+                  <span className="font-semibold text-slate-700">Ốp chân ngưỡng / nẹp phụ:</span>
+                  {bottomEdge.coverProfileId && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onChangeConfig({
+                          bottomEdge: {
+                            ...bottomEdge,
+                            coverProfileId: undefined,
+                            coverProfileCode: undefined,
+                          },
+                        })
+                      }
+                      className="text-[10px] text-rose-500 hover:underline cursor-pointer"
+                    >
+                      Bỏ chọn
+                    </button>
+                  )}
+                </div>
+                <select
+                  value={bottomEdge.coverProfileId || ''}
+                  onChange={(e) => {
+                    const cId = Number(e.target.value) || undefined;
+                    const selected = profiles.find((p) => p.id === cId);
+                    onChangeConfig({
+                      bottomEdge: {
+                        ...bottomEdge,
+                        coverProfileId: cId,
+                        coverProfileCode: selected?.code,
+                      },
+                    });
+                  }}
+                  className="w-full h-7 px-1.5 text-[11px] rounded-lg border border-gray-300 bg-white"
+                >
+                  <option value="">-- Không dùng thanh ốp chân --</option>
+                  {auxiliaryProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.code} - {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
       </div>

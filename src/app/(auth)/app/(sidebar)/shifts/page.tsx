@@ -24,7 +24,7 @@ export default function ShiftsPage() {
   const totalShifts = shiftsData?.meta?.total || allShifts.length || 0;
   const activeShifts = allShifts.filter((s: any) => s.status === 'active').length || totalShifts;
   const morningOrDayShifts =
-    allShifts.filter((s: any) => (s.shiftType || s.shift_type) === 'morning' || (s.shiftType || s.shift_type) === 'full_day').length;
+    allShifts.filter((s: any) => s.shiftType === 'morning' || s.shiftType === 'full_day').length;
   const totalDepartments = departmentData?.meta?.total || 0;
 
   const shiftStats = [

@@ -14,10 +14,19 @@ type SortField = 'code' | 'name' | 'series' | 'barType' | 'weight' | 'length' | 
 type SortOrder = 'asc' | 'desc';
 
 const BAR_TYPE_MAP: Record<string, string> = {
+  FRAME: 'Khung bao',
+  SASH: 'Cánh cửa',
+  MULLION: 'Đố chia / Đố động',
+  BEAD: 'Nẹp kính',
+  TRACK: 'Ray trượt',
+  COVER: 'Ốp / Nắp đậy',
+  CORNER: 'Ke góc',
+  OTHER: 'Khác',
   frame: 'Khung bao',
   sash: 'Cánh cửa',
   mullion: 'Đố chia / Đố động',
   bead: 'Nẹp kính',
+  track: 'Ray trượt',
   cover: 'Ốp / Nắp đậy',
   corner: 'Ke góc',
   other: 'Khác',
@@ -70,8 +79,8 @@ export function ProfileBarTable({
           break;
         }
         case 'barType': {
-          const typeA = BAR_TYPE_MAP[a.barType] || a.barType || '';
-          const typeB = BAR_TYPE_MAP[b.barType] || b.barType || '';
+          const typeA = BAR_TYPE_MAP[a.barType?.toUpperCase()] || BAR_TYPE_MAP[a.barType] || a.barType || '';
+          const typeB = BAR_TYPE_MAP[b.barType?.toUpperCase()] || BAR_TYPE_MAP[b.barType] || b.barType || '';
           comparison = typeA.localeCompare(typeB, 'vi', { sensitivity: 'base' });
           break;
         }
@@ -190,7 +199,7 @@ export function ProfileBarTable({
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm">
             {sortedBars.map((bar) => {
-              const typeLabel = BAR_TYPE_MAP[bar.barType] || bar.barType || '—';
+              const typeLabel = BAR_TYPE_MAP[bar.barType?.toUpperCase()] || BAR_TYPE_MAP[bar.barType] || bar.barType || '—';
               const seriesLabel = bar.doorSeries?.name || bar.doorSeries?.code || '—';
 
               return (
