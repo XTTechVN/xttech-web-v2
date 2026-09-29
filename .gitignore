@@ -40,3 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Apple certificates & secrets
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+*.key
+

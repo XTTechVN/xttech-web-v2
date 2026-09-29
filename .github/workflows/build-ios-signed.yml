@@ -1,0 +1,162 @@
+name: Build Signed iOS App Store IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-signed-ipa:
+    name: Build Signed IPA on macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: 1. Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 2. Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: 3. Install Apple Certificate (.p12)
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD || '123456' }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD || 'temporal_keychain_pwd_123' }}
+        run: |
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          if [ -f "./ios_distribution.p12" ]; then
+            echo "Using p12 certificate directly from repository..."
+            cp ./ios_distribution.p12 $CERTIFICATE_PATH
+          else
+            echo "Decoding p12 certificate from secret..."
+            echo "$BUILD_CERTIFICATE_BASE64" | base64 -d > $CERTIFICATE_PATH
+          fi
+
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | tr -d '"')
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+      - name: 4. Install Provisioning Profile
+        env:
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          if [ -f "./XTTech_AppStore.mobileprovision" ]; then
+            echo "Using mobileprovision directly from repository..."
+            cp ./XTTech_AppStore.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/XTTech_AppStore.mobileprovision
+          else
+            echo "Decoding mobileprovision from secret..."
+            echo "$BUILD_PROVISION_PROFILE_BASE64" | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/XTTech_AppStore.mobileprovision
+          fi
+
+      - name: 5. Install dependencies, Build Next.js & Sync Capacitor iOS
+        env:
+          CAPACITOR_SERVER_URL: ${{ vars.CAPACITOR_SERVER_URL || 'https://xttech.vn' }}
+          NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL || 'https://xttech.vn' }}
+        run: |
+          npm ci
+          npm run build
+          npx cap sync ios
+
+      - name: 6. Create ExportOptions.plist
+        run: |
+          cat << 'EOF' > ios/App/ExportOptions.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>GPCFYP2K8W</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.xttech.app2</key>
+                  <string>XTTech_AppStore</string>
+              </dict>
+              <key>compileBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: 7. Build Archive with Xcode
+        run: |
+          cd ios/App
+          xcodebuild clean archive \
+            -project App.xcodeproj \
+            -scheme App \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -archivePath "$GITHUB_WORKSPACE/build/App.xcarchive" \
+            PRODUCT_BUNDLE_IDENTIFIER="com.xttech.app2" \
+            CODE_SIGN_STYLE="Manual" \
+            DEVELOPMENT_TEAM="GPCFYP2K8W" \
+            PROVISIONING_PROFILE_SPECIFIER="XTTech_AppStore" \
+            CODE_SIGN_IDENTITY="Apple Distribution"
+
+      - name: 8. Export Signed IPA for App Store
+        run: |
+          cd ios/App
+          xcodebuild -exportArchive \
+            -archivePath "$GITHUB_WORKSPACE/build/App.xcarchive" \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath "$GITHUB_WORKSPACE/output"
+
+      - name: 9. Upload Signed IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: XTTech-AppStore-Signed-IPA
+          path: output/*.ipa
+          retention-days: 14
+
+      - name: 10. Upload IPA to App Store Connect (TestFlight)
+        env:
+          APP_STORE_KEY_ID: '62SF2X98X4'
+          APP_STORE_ISSUER_ID: '3ebd3f7b-ce8b-4566-8c9e-3824ddcad0b0'
+          APP_STORE_API_KEY_BASE64: ${{ secrets.APP_STORE_API_KEY_BASE64 || secrets.APP_STORE_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          mkdir -p ~/.private_keys
+          if [ -f "./AuthKey_62SF2X98X4.p8" ]; then
+            echo "Using AuthKey directly from repository..."
+            cp ./AuthKey_62SF2X98X4.p8 ~/.appstoreconnect/private_keys/AuthKey_62SF2X98X4.p8
+            cp ./AuthKey_62SF2X98X4.p8 ~/.private_keys/AuthKey_62SF2X98X4.p8
+          elif [ -n "$APP_STORE_API_KEY_BASE64" ]; then
+            echo "Decoding AuthKey from secret..."
+            echo "$APP_STORE_API_KEY_BASE64" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_62SF2X98X4.p8
+            cp ~/.appstoreconnect/private_keys/AuthKey_62SF2X98X4.p8 ~/.private_keys/AuthKey_62SF2X98X4.p8
+          fi
+
+          IPA_FILE=$(find "$GITHUB_WORKSPACE/output" -name "*.ipa" | head -n 1)
+          echo "Found IPA to upload: $IPA_FILE"
+
+          echo "Validating IPA with App Store Connect..."
+          xcrun altool --validate-app \
+            -f "$IPA_FILE" \
+            -t ios \
+            --apiKey "$APP_STORE_KEY_ID" \
+            --apiIssuer "$APP_STORE_ISSUER_ID"
+
+          echo "Uploading IPA to App Store Connect..."
+          xcrun altool --upload-app \
+            -f "$IPA_FILE" \
+            -t ios \
+            --apiKey "$APP_STORE_KEY_ID" \
+            --apiIssuer "$APP_STORE_ISSUER_ID"
+
+      - name: 11. Clean up temporary Keychain & Secrets
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db 2>/dev/null || true
+          rm -rf ~/.appstoreconnect ~/.private_keys

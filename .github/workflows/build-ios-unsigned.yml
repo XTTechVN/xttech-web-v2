@@ -2,15 +2,6 @@ name: Build Unsigned iOS App
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ real_time_tracking, main, dev ]
-    paths:
-      - 'ios/**'
-      - 'src/**'
-      - 'public/**'
-      - 'capacitor.config.ts'
-      - 'package.json'
-      - '.github/workflows/build-ios-unsigned.yml'
 
 jobs:
   build-ipa:
