@@ -204,18 +204,16 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         // 1. Gửi ping chốt hạ vị trí neo với trạng thái đứng yên
         if let anchor = self.lastAccurateLocation ?? self.lastLocation {
+            self.lastPingTime = Date()
             sendPing(location: anchor, isHeartbeat: true)
             updateStationaryRegion(around: anchor)
         }
 
-        // 2. Bật Significant Location Changes (để modem trạm sóng đánh thức khi đi xa)
-        if CLLocationManager.significantLocationChangeMonitoringAvailable() {
-            locationManager?.startMonitoringSignificantLocationChanges()
-        }
-
-        // 3. TẮT HẲN GPS tần số cao để cứu 100% pin và cho app ngủ sâu
-        locationManager?.stopUpdatingLocation()
-        print("[NativeTracking iOS] Đã tắt GPS tần số cao. App chuyển sang chế độ Geofence 100m tiết kiệm pin.")
+        // 2. Chuyển sang chế độ HundredMeters để iOS ngắt chip GPS vệ tinh, chuyển sang Wi-Fi/Cellular tiết kiệm pin tối đa
+        // TUYỆT ĐỐI KHÔNG GỌI stopUpdatingLocation() vì sẽ làm app bị iOS SUSPEND khi khóa màn hình!
+        locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        locationManager?.distanceFilter = kCLDistanceFilterNone
+        print("[NativeTracking iOS] Chuyển sang chế độ đứng yên (HundredMeters + kCLDistanceFilterNone). Giữ tiến trình chạy ngầm.")
     }
 
     private func enterMovingMode() {
@@ -227,12 +225,12 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         // 1. Dỡ bỏ geofence cũ
         stopStationaryRegionMonitoring()
 
-        // 2. Bật lại GPS tần số cao với cấu hình Navigation
+        // 2. Nâng lên chế độ BestForNavigation để bật chip GPS vệ tinh vẽ đường mượt mà
         locationManager?.desiredAccuracy = kCLLocationAccuracyBestForNavigation
         locationManager?.activityType = .automotiveNavigation
-        locationManager?.distanceFilter = 10.0
+        locationManager?.distanceFilter = kCLDistanceFilterNone
         locationManager?.startUpdatingLocation()
-        print("[NativeTracking iOS] Đã bật lại GPS tần số cao (.automotiveNavigation).")
+        print("[NativeTracking iOS] Đã bật lại GPS vệ tinh (.automotiveNavigation + kCLDistanceFilterNone).")
     }
 
     // MARK: - CoreLocation Configuration (Chuẩn Automotive Navigation)
@@ -241,7 +239,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             locationManager = CLLocationManager()
             locationManager?.delegate = self
             locationManager?.desiredAccuracy = kCLLocationAccuracyBestForNavigation
-            locationManager?.distanceFilter = 10.0
+            locationManager?.distanceFilter = kCLDistanceFilterNone
             
             // Cấu hình định vị chạy ngầm liên tục chuẩn Apple
             locationManager?.allowsBackgroundLocationUpdates = true
@@ -250,6 +248,8 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             if #available(iOS 11.0, *) {
                 locationManager?.showsBackgroundLocationIndicator = true
             }
+        } else {
+            locationManager?.distanceFilter = kCLDistanceFilterNone
         }
 
         let status: CLAuthorizationStatus
@@ -362,20 +362,20 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         let distance = location.distance(from: lastAcc)
 
-        // Nếu đang ở trạng thái Stationary nhưng nhận được điểm GPS di chuyển đáng kể (> 100m):
-        if isStationaryMode && distance >= 100.0 {
-            print("[NativeTracking iOS] Phát hiện di chuyển xa (>100m) khi đang stationary. Chuyển sang moving mode.")
-            enterMovingMode()
-        }
-
         let rawSpeed = max(0.0, location.speed)
         let speed = rawSpeed >= 0.8 ? rawSpeed : 0.0
-        let isMoving = speed >= 0.8 || distance >= 10.0
+        let isMoving = speed >= 0.8 || distance >= 25.0
+
+        // Nếu đang ở trạng thái Stationary nhưng nhận được điểm GPS di chuyển đáng kể (> 25m hoặc có vận tốc):
+        if isStationaryMode && isMoving {
+            print("[NativeTracking iOS] Phát hiện di chuyển (distance=\(distance)m, speed=\(speed)m/s) khi đang stationary. Chuyển sang moving mode.")
+            enterMovingMode()
+        }
 
         // Kiểm tra sai số GPS thích ứng:
         // - Khi vừa xuất phát (isMovingTransition): Nới lỏng 90m để gói tin đầu tiên thoát đi được
         // - Khi di chuyển bình thường: Nới lỏng 65m (thay vì 45m siết quá chặt)
-        // - Khi đứng yên: Nới lỏng 150m
+        // - Khi đứng yên: Nới lỏng 150m (để nhận tín hiệu Wi-Fi / Cell tower duy trì nhịp tim)
         let maxAllowedAccuracy: Double = {
             if isMovingTransition { return 90.0 }
             if isMoving { return 65.0 }
@@ -407,9 +407,15 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             if elapsed < 3.0 {
                 return
             }
+        } else {
+            // Khi đứng yên (stationary): gửi Heartbeat mỗi 60.0 giây 1 lần để Server luôn báo Online
+            if elapsed < 60.0 {
+                return
+            }
         }
 
-        sendPing(location: location, isHeartbeat: isStationaryMode)
+        self.lastPingTime = now
+        sendPing(location: location, isHeartbeat: !isMoving)
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
