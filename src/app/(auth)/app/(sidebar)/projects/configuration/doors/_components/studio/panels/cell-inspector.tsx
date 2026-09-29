@@ -15,6 +15,7 @@ interface CellInspectorProps {
   availableBeads?: ProfileBar[];
   defaultGlass?: Glass | null;
   onUpdateDimension?: (target: 'cell', value: number, cellId: string) => void;
+  onOpenGrilleModal?: (cell: SceneCellNode) => void;
 }
 
 const GLASS_OPTIONS = [
@@ -37,6 +38,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   availableBeads,
   defaultGlass,
   onUpdateDimension,
+  onOpenGrilleModal,
 }) => {
   const [localW, setLocalW] = React.useState<number>(selectedCell?.w ?? 0);
   const [localH, setLocalH] = React.useState<number>(selectedCell?.h ?? 0);
@@ -443,6 +445,53 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
           </div>
         </div>
       </div>
+
+      {/* 5.1. Kính nan đồng (Windova Style) */}
+      {selectedCell.paneType === 'glass' && (
+        <div className="space-y-2.5 p-3 rounded-xl bg-amber-50/60 border border-amber-200/80">
+          <div>
+            <div className="font-bold text-amber-950 text-xs flex items-center justify-between">
+              <span>Kính nan đồng</span>
+              {selectedCell.grilleConfig?.enabled && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900">
+                  {selectedCell.grilleConfig.cols}x{selectedCell.grilleConfig.rows}
+                </span>
+              )}
+            </div>
+            <p className="text-[10.5px] text-amber-800/80 mt-0.5 leading-snug">
+              Thiết kế nan và hoa văn cho tấm kính đang chọn.
+            </p>
+          </div>
+
+          <div className="space-y-1.5 pt-0.5">
+            <button
+              type="button"
+              onClick={() => onOpenGrilleModal?.(selectedCell)}
+              className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+            >
+              <Sparkles size={14} />
+              <span>Thiết kế</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedCell.grilleConfig) {
+                  onUpdateCell({
+                    grilleConfig: {
+                      ...selectedCell.grilleConfig,
+                      borderOffset: 95,
+                      cornerSize: 180,
+                    },
+                  });
+                }
+              }}
+              className="w-full py-1.5 px-3 rounded-xl bg-amber-100/70 hover:bg-amber-200/60 text-amber-900 border border-amber-300/70 font-semibold text-xs transition-colors cursor-pointer"
+            >
+              Căn tim nan
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 6. Thao tác chia đố trong ô này */}
       <div className="space-y-2 pt-1 border-t border-gray-100">

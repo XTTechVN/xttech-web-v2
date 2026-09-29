@@ -39,6 +39,50 @@ export interface CustomEdgeBeads {
   right?: number | null;
 }
 
+export interface GlassGrilleMotif {
+  id: string;
+  motifType: 'flower_classic' | 'rhombus' | 'lotus' | string;
+  name?: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+  price?: number;
+  accessoryId?: number;
+  accessoryCode?: string;
+}
+
+export interface GlassGrilleConfig {
+  enabled: boolean;
+  applyToAllSashes?: boolean;
+  glassW: number;
+  glassH: number;
+  installedW: number;
+  installedH: number;
+  hasGrid: boolean;
+  hasBorder: boolean;
+  hasCorner: boolean;
+  barWidth: number;
+  barColor: string;
+  cols: number;
+  rows: number;
+  borderOffset: number;
+  cornerSize: number;
+  motifs: GlassGrilleMotif[];
+  templateName?: string;
+  unitPricePerM?: number;
+  motifUnitPrice?: number;
+}
+
+export const GRILLE_COLORS: ColorSwatch[] = [
+  { name: 'Vàng Đồng', colorHex: '#D4AF37', code: 'gold' },
+  { name: 'Bạc Kim Loại', colorHex: '#CBD5E1', code: 'silver' },
+  { name: 'Trắng Sứ', colorHex: '#FFFFFF', code: 'white' },
+  { name: 'Đen Nhám', colorHex: '#1E293B', code: 'black' },
+  { name: 'Đồng Cổ / Nâu', colorHex: '#78350F', code: 'brown' },
+];
+
 export interface SceneCellNode {
   id: string;
   name?: string;
@@ -60,7 +104,9 @@ export interface SceneCellNode {
   handleType?: 'lever' | 'pull' | 'crescent' | 'multipoint';
   mullionProfileId?: number;
   mullionCutType?: MullionCutType;
+  grilleConfig?: GlassGrilleConfig;
 }
+
 
 export interface ColorSwatch {
   name: string;
@@ -206,6 +252,8 @@ export type BeadCornerJoint = '45' | '90_horiz' | '90_vert';
 export interface FrameEdgeProfile {
   profileId?: number;
   profileCode?: string;
+  coverProfileId?: number;
+  coverProfileCode?: string;
   offsetMm: number;
 }
 

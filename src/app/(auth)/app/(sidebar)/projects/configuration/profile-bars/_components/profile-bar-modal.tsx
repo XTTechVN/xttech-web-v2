@@ -19,13 +19,14 @@ interface ProfileBarModalProps {
 }
 
 const BAR_TYPE_OPTIONS = [
-  { value: 'frame', label: 'Khung bao (Frame)' },
-  { value: 'sash', label: 'Cánh cửa (Sash)' },
-  { value: 'mullion', label: 'Đố chia / Đố động (Mullion)' },
-  { value: 'bead', label: 'Nẹp kính (Bead)' },
-  { value: 'cover', label: 'Ốp / Nắp đậy (Cover)' },
-  { value: 'corner', label: 'Ke góc liên kết (Corner Joint)' },
-  { value: 'other', label: 'Khác (Other)' },
+  { value: 'FRAME', label: 'Khung bao (Frame)' },
+  { value: 'SASH', label: 'Cánh cửa (Sash)' },
+  { value: 'MULLION', label: 'Đố chia / Đố động (Mullion)' },
+  { value: 'BEAD', label: 'Nẹp kính (Bead)' },
+  { value: 'TRACK', label: 'Ray trượt (Track)' },
+  { value: 'COVER', label: 'Ốp / Nắp đậy (Cover)' },
+  { value: 'CORNER', label: 'Ke góc liên kết (Corner Joint)' },
+  { value: 'OTHER', label: 'Khác (Other)' },
 ];
 
 export function ProfileBarModal({
@@ -50,7 +51,7 @@ export function ProfileBarModal({
       seriesId: 0,
       code: '',
       name: '',
-      barType: 'frame',
+      barType: 'FRAME',
       weightPerM: 0,
       sectionHeightMm: 0,
       barLengthMm: 6000,
@@ -88,7 +89,7 @@ export function ProfileBarModal({
         seriesId: profileBar.seriesId,
         code: profileBar.code,
         name: profileBar.name,
-        barType: profileBar.barType || 'frame',
+        barType: (profileBar.barType || 'FRAME').toUpperCase(),
         weightPerM: profileBar.weightPerM ?? 0,
         sectionHeightMm: profileBar.sectionHeightMm ?? 0,
         barLengthMm: profileBar.barLengthMm ?? 6000,
@@ -105,7 +106,7 @@ export function ProfileBarModal({
         seriesId: firstSeries,
         code: '',
         name: '',
-        barType: 'frame',
+        barType: 'FRAME',
         weightPerM: 0,
         sectionHeightMm: 0,
         barLengthMm: 6000,
@@ -144,6 +145,7 @@ export function ProfileBarModal({
       ...data,
       brandId: Number(data.brandId),
       seriesId: Number(data.seriesId),
+      barType: String(data.barType || 'FRAME').toUpperCase(),
       weightPerM: Number(data.weightPerM) || 0,
       sectionHeightMm: Number(data.sectionHeightMm) || 0,
       barLengthMm: Number(data.barLengthMm) || 6000,

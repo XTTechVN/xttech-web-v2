@@ -52,6 +52,7 @@ interface DrawTabViewProps {
   onUpdateSelectedCell: (updates: Partial<SceneCellNode>) => void;
   onSplitSelectedCell: (direction: 'vertical' | 'horizontal') => void;
   onMergeSelectedCell: () => void;
+  onOpenGrilleModal?: (cell: SceneCellNode) => void;
   availableGlasses?: Glass[];
   availableBeads?: ProfileBar[];
   defaultGlass?: Glass | null;
@@ -94,6 +95,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
   onUpdateSelectedCell,
   onSplitSelectedCell,
   onMergeSelectedCell,
+  onOpenGrilleModal,
   availableGlasses,
   availableBeads,
   defaultGlass,
@@ -188,6 +190,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
               onUpdateCell={onUpdateSelectedCell}
               onSplitCell={onSplitSelectedCell}
               onMergeCell={onMergeSelectedCell}
+              onOpenGrilleModal={onOpenGrilleModal}
               onDeselect={() => onSelectCell(null)}
               availableGlasses={availableGlasses}
               availableBeads={availableBeads}

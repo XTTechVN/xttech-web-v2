@@ -156,7 +156,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
   seriesId,
   onNavigateTab,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'bars' | 'beads' | 'glass'>('bars');
+  const [activeSubTab, setActiveSubTab] = useState<'bars' | 'beads' | 'glass' | 'grilles'>('bars');
 
   const issues = detectProfileIssues({
     rootCell,
@@ -342,6 +342,19 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
               >
                 3. Kích thước đặt kính ({calcData.cells?.length || 0})
               </button>
+              {calcData.grilles && calcData.grilles.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveSubTab('grilles')}
+                  className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                    activeSubTab === 'grilles'
+                      ? 'border-amber-600 text-amber-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  4. Kính nan đồng ({calcData.grilles.length})
+                </button>
+              )}
             </div>
 
             {/* Table Content */}
@@ -440,6 +453,49 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                         </td>
                         <td className="py-2.5 px-3 text-right text-gray-600">
                           {cell.glassPrice ? cell.glassPrice.toLocaleString('vi-VN') + ' đ' : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {activeSubTab === 'grilles' && (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-gray-500 font-semibold text-[11px]">
+                      <th className="py-2 px-3">Vị trí ô kính</th>
+                      <th className="py-2 px-3">Bản nan & Màu</th>
+                      <th className="py-2 px-3 text-right">Nan chia lưới (m)</th>
+                      <th className="py-2 px-3 text-right">Nan viền (m)</th>
+                      <th className="py-2 px-3 text-right">Nan góc (m)</th>
+                      <th className="py-2 px-3 text-center">Tổng mét dài</th>
+                      <th className="py-2 px-3 text-center">Hoa văn</th>
+                      <th className="py-2 px-3 text-right">Thành tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 font-mono text-xs">
+                    {calcData.grilles?.map((g, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="py-2.5 px-3 font-sans font-medium text-gray-800">{g.cellPath}</td>
+                        <td className="py-2.5 px-3 font-sans text-gray-700">
+                          Nan {g.barWidthMm}mm ({g.barColor})
+                        </td>
+                        <td className="py-2.5 px-3 text-right text-gray-600">{g.gridLengthM}</td>
+                        <td className="py-2.5 px-3 text-right text-gray-600">{g.borderLengthM}</td>
+                        <td className="py-2.5 px-3 text-right text-gray-600">{g.cornerLengthM}</td>
+                        <td className="py-2.5 px-3 text-center font-bold text-amber-700">{g.totalBarLengthM} m</td>
+                        <td className="py-2.5 px-3 text-center">
+                          {g.motifQty > 0 ? (
+                            <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              {g.motifQty} con
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-bold text-amber-900">
+                          {g.totalPrice.toLocaleString('vi-VN')} đ
                         </td>
                       </tr>
                     ))}

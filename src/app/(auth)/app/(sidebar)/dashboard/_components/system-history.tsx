@@ -126,10 +126,10 @@ const parseAuditLogDetail = (log: AuditLog): ParsedEventDetail => {
   const res = (log.resource || '').toUpperCase().trim();
   const rawResourceText = RESOURCE_LABELS[res] || (res ? res.toLowerCase().replace(/_/g, ' ') : 'dữ liệu');
 
-  // Lấy dữ liệu payload hỗ trợ cả camelCase và snake_case
-  const oldVal = log.changes?.oldValue || log.changes?.old_value;
-  const newVal = log.changes?.newValue || log.changes?.new_value;
-  const targetId = log.targetId || log.target_id;
+  // Lấy dữ liệu payload chuẩn camelCase
+  const oldVal = log.changes?.oldValue;
+  const newVal = log.changes?.newValue;
+  const targetId = log.targetId;
   const errorMsg = log.changes?.error;
   const isFailed = log.status?.toUpperCase() !== 'SUCCESS';
 

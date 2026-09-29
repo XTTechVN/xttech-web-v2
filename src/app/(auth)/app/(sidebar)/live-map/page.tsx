@@ -55,8 +55,8 @@ export default function AttendanceLiveMapPage() {
       // Đồng bộ selectedStaff nếu đang theo dõi 1 nhân sự
       setSelectedStaff((current) => {
         if (!current) return null;
-        const currentId = current.userId || (current as any).user_id;
-        const fresh = data.find((s) => (s.userId || (s as any).user_id) === currentId);
+        const currentId = current.userId;
+        const fresh = data.find((s) => s.userId === currentId);
         return fresh ? { ...current, ...fresh } : current;
       });
     } catch (err) {
@@ -99,24 +99,24 @@ export default function AttendanceLiveMapPage() {
             const payload = JSON.parse(event.data);
             if (payload.type === 'STAFF_LOCATION_UPDATE' && payload.data) {
               const rawData = payload.data;
-              const targetUserId: string = rawData.userId || rawData.user_id;
+              const targetUserId: string = rawData.userId;
               if (!targetUserId) return;
 
               const updatedStaff: StaffLiveLocation = {
                 ...rawData,
                 userId: targetUserId,
-                userName: rawData.userName || rawData.user_name || 'Nhân viên',
+                userName: rawData.userName || 'Nhân viên',
                 avatar: rawData.avatar,
-                departmentName: rawData.departmentName || rawData.department_name,
-                positionName: rawData.positionName || rawData.position_name,
-                attendanceId: rawData.attendanceId ?? rawData.attendance_id,
-                batteryLevel: rawData.batteryLevel ?? rawData.battery_level,
-                checkInTime: rawData.checkInTime || rawData.check_in_time,
-                updatedAt: rawData.updatedAt || rawData.updated_at,
+                departmentName: rawData.departmentName,
+                positionName: rawData.positionName,
+                attendanceId: rawData.attendanceId,
+                batteryLevel: rawData.batteryLevel,
+                checkInTime: rawData.checkInTime,
+                updatedAt: rawData.updatedAt,
               };
 
               setStaffLocations((prev) => {
-                const index = prev.findIndex((s) => (s.userId || (s as any).user_id) === targetUserId);
+                const index = prev.findIndex((s) => s.userId === targetUserId);
                 if (index >= 0) {
                   const clone = [...prev];
                   clone[index] = { ...clone[index], ...updatedStaff };

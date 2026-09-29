@@ -166,9 +166,8 @@ export default function LeaveRequestTable({ isManager, currentUserId }: LeaveReq
       minWidth: '100px',
       cell: (row: LeaveRequest) => {
         if (row.durationType === DurationType.CUSTOM_SHIFT || row.durationType === 'custom_shift') {
-          const shiftId = row.workShiftId ?? (row as any).work_shift_id;
-          const shiftName =
-            (row as any).workShift?.name || (row as any).work_shift?.name || (shiftId ? workShiftsMap.get(String(shiftId)) : null) || 'Theo ca';
+          const shiftId = row.workShiftId;
+          const shiftName = (shiftId ? workShiftsMap.get(String(shiftId)) : null) || 'Theo ca';
           return <span className="font-semibold text-sm text-primary">{shiftName}</span>;
         }
         return (
@@ -272,9 +271,8 @@ export default function LeaveRequestTable({ isManager, currentUserId }: LeaveReq
     const avatar = row.user?.avatar;
     const avatarSrc = getFileUrl(avatar) || undefined;
 
-    const shiftId = row.workShiftId ?? (row as any).work_shift_id;
-    const shiftName =
-      (row as any).workShift?.name || (row as any).work_shift?.name || (shiftId ? workShiftsMap.get(String(shiftId)) : null) || 'Theo ca';
+    const shiftId = row.workShiftId;
+    const shiftName = (shiftId ? workShiftsMap.get(String(shiftId)) : null) || 'Theo ca';
     const totalDaysText =
       row.durationType === DurationType.CUSTOM_SHIFT || row.durationType === 'custom_shift'
         ? shiftName

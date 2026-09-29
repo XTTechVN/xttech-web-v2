@@ -2,14 +2,56 @@
 
 All notable changes to the frontend project will be documented in this file.
 
-## [Unreleased] - 2026-09-28
+## [Unreleased] - 2026-09-29
+
+### Added & Enhanced (Windova CAD Studio - Decorative Glass Grille & Motifs with Dynamic Pricing & DB Accessories)
+- **Tính năng Trang Trí Kính Nan Đồng & Hoa Văn Vector Chuẩn Phong Cách Windova:**
+  - **Modal Thiết Kế CAD 3 Cột Chuyên Nghiệp ([`glass-grille-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille-modal.tsx)):**
+    - Cột 1 (Thiết lập nan & Thông số): Bật/tắt nan, chọn màu sắc nan đồng (Vàng Gold, Bạc Silver, Trắng, Đen, Đồng cafe), bề rộng nan (6mm, 8mm, 10mm, 18mm), tùy chỉnh chia lưới (hàng/cột), nan viền chu vi, nan góc hoa thị với đường gióng thực tế.
+    - Cột 2 (Interactive CAD SVG Canvas): Vẽ trực quan ô kính theo milimet thực tế, đường gióng CAD kích thước lọt lòng và kích thước chia nan, hỗ trợ Zoom in/out, Pan, Undo/Redo, và click/drag tương tác thêm con hoa văn.
+    - Cột 3 (Thư viện hoa văn & Mẫu nan dựng sẵn): Cung cấp sẵn 3 con hoa văn đúc vector SVG chuẩn ngành cửa: Hoa 4 cánh đối xứng (`flower_classic`), Hình thoi hoàng gia (`rhombus`), Búp hoa sen cổ điển (`lotus`), cùng 4 mẫu nan phong cách (Cổ điển, Hình thoi sang trọng, Hoa sen tâm điểm, Hoàng gia cao cấp).
+    - Hỗ trợ nút *"Áp dụng cho tất cả cánh kính"* hoặc chỉ áp dụng riêng cho ô kính đang chọn.
+  - **Cấu Hình Đơn Giá Động & Liên Kết Kho Phụ Kiện CSDL (Database Accessories Linking):**
+    - Không fix cứng đơn giá trong mã nguồn: Cho phép người dùng tùy chỉnh trực tiếp *"Đơn giá nan đồng (đ/m)"* và *"Đơn giá hoa văn chung (đ/con)"*.
+    - Khi click chọn từng con hoa văn trên bản vẽ CAD: Hiển thị thanh thuộc tính chi tiết, cho phép chọn liên kết trực tiếp với phụ kiện có sẵn trong CSDL (`accessories`), tự động lấy mã phụ kiện (`accessoryCode`), tên và đơn giá kho, hoặc nhập đơn giá riêng cho từng con hoa văn.
+  - **Tích Hợp CAD Renderer 2D ([`cad-rectangular-leaf.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-rectangular-leaf.tsx)):**
+    - Tự động vẽ nan chia lưới, nan viền, nan góc và các con hoa văn trực tiếp lên ô kính (cả hệ cánh đơn, vách kính cố định và hệ cánh đôi có đố động).
+  - **Thanh Công Cụ Ô Kính ([`cell-inspector.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/cell-inspector.tsx)):**
+    - Bổ sung Card "Kính nan đồng" hiển thị tóm tắt cấu hình hiện tại (màu sắc, bề rộng nan, hoa văn), nút *"Thiết kế"* mở modal Windova và nút *"Căn tim nan"* tự động cân đối nan theo tỷ lệ ô kính.
+  - **Thống Kê Bóc Tách Vật Tư BOM Nan Đồng ([`bom-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/bom-modal.tsx), [`bom-sidebar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/bom-sidebar.tsx), [`results-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/results-tab-view.tsx)):**
+    - Bổ sung Tab và bảng bóc tách chi tiết: Chiều dài nan lưới (m), nan viền (m), nan góc (m), tổng mét dài có bù hao hụt cắt 5%, số lượng con hoa văn, đơn giá và tổng chi phí gia công nan đồng.
+  - **Linh Hoạt Cấu Hình Cạnh Dưới Khung Bao & Ngưỡng Sàn ([`config-frame-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/config/config-frame-tab.tsx)):**
+    - Mở rộng dropdown Cạnh Dưới: Phân nhóm rõ ràng giữa *Khung bao tiêu chuẩn (FRAME)* và *Ngưỡng sàn / Thanh phụ khác (OTHER / SILL)*, cho phép thợ xưởng tự do gán đích danh thanh ngưỡng nhôm dẹt (như `JP-AC713`).
+    - Bổ sung ô chọn tùy chọn *Ốp chân ngưỡng / nẹp phụ đi kèm* (`coverProfileId`) cho phép bốc kèm thanh ốp phụ (như `JP-AC714`) vào danh sách cắt vật tư BOM.
+
+### Fixed
+- **Đồng Bộ Hai Chiều & Sửa Lỗi Hiển Thị Phân Loại Thanh Profile ([`profile-bar-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-bar-modal.tsx), [`profile-bar-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-bar-table.tsx)):**
+  - Sửa lỗi dropdown phân loại thanh profile bị rỗng khi mở modal Chỉnh sửa: Chuẩn hóa toàn bộ `BAR_TYPE_OPTIONS` sang định dạng in hoa chuẩn quốc tế (`FRAME`, `SASH`, `MULLION`, `BEAD`, `TRACK`, `COVER`, `CORNER`, `OTHER`).
+  - Tự động chuẩn hóa `toUpperCase()` khi reset nạp dữ liệu vào form và khi submit lưu payload API xuống CSDL.
+  - Cập nhật từ điển `BAR_TYPE_MAP` tại bảng danh sách thanh profile để hiển thị tên tiếng Việt chính xác.
+
+### Removed & Cleaned (Code Hygiene - Rule 13 Strict Compliance)
+- **Loại Bỏ 100% Fallback Kép (`camelCase ?? snake_case`) Dư Thừa Trên Toàn Bộ Frontend:**
+  - Dọn sạch các fallback kép che giấu lỗi schema và trùng lặp type tại:
+    - [`live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx)
+    - [`shifts/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/shifts/page.tsx)
+    - [`leave-requests/_components/leave-request-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/leave-requests/_components/leave-request-modal.tsx)
+    - [`leave-requests/_components/leave-request-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/leave-requests/_components/leave-request-table.tsx)
+    - [`departments/[id]/_components/members/members-section.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/departments/[id]/_components/members/members-section.tsx)
+    - [`employees/_components/position-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/employees/_components/position-modal.tsx)
+    - [`dashboard/_components/system-history.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/system-history.tsx)
+    - [`actions/report/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/report/index.ts)
+    - [`actions/customer/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/customer/index.ts)
+    - [`types/customer.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/customer.ts), [`types/report.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/report.ts), [`stores/useLeaveRequestStore.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/stores/useLeaveRequestStore.ts).
+
+## [2.1.2] - 2026-09-28
 
 ### Added & Enhanced (Windova CAD Studio - Right-Click Interactive Drag Resizer for Mullions & Frame Couplings)
 - **Tương Tác Kéo Chuột Phải Di Chuyển Nhanh Đố & Vách Tách Khung (Interactive Drag Resizing):**
-  - **Trải nghiệm giống Windova:** Khi rê chuột vào thanh đố T (`mullion`) hoặc vách ngăn tách khung (`coupling seam`), con trỏ đổi thành `col-resize` ($\leftrightarrow$) hoặc `row-resize` ($\updownarrow$), thanh đố sáng viền highlight.
+  - **Trải nghiệm giống Windova:** Khi rê chuột vào thanh đố T (`mullion`) hoặc vách ngăn tách khung (`coupling seam`), con trỏ đổi thành mũi tên 2 chiều, thanh đố sáng viền highlight.
   - **Giữ chuột phải (`e.button === 2`) hoặc chuột trái:** Người dùng có thể kéo trực tiếp để tăng/giảm kích thước 2 ô liền kề theo thời gian thực (60fps). Chặn hoàn toàn menu chuột phải mặc định của trình duyệt (`onContextMenu e.preventDefault()`).
   - **Live Floating Badge:** Hiển thị thước đo nổi trực quan ngay tại vị trí kéo (`◄ 750 mm | 650 mm ►` hoặc `▲ 600 mm | 1000 mm ▼`).
-  - **Làm tròn số kỹ thuật & Ràng buộc an toàn:** Tự động snap theo bước nhảy $5\text{ mm}$, giới hạn biên an toàn tối thiểu mỗi ô $\ge 100\text{ mm}$.
+  - **Làm tròn số kỹ thuật & Ràng buộc an toàn:** Tự động snap theo bước nhảy 5 mm, giới hạn biên an toàn tối thiểu mỗi ô >= 100 mm.
   - **Undo / Redo & Co giãn đệ quy:** Khi nhả chuột, commit vào history stack dưới dạng 1 bước duy nhất (nút Undo/Redo hoạt động mượt mà), các ô con bên trong tự động co giãn tỷ lệ nhờ hàm `rescaleTree`.
   - Bổ sung chỉ dẫn trực quan ngay tại thanh Guide bar ở đáy màn hình CAD: *"Giữ chuột phải đố = trượt nhanh"*.
 

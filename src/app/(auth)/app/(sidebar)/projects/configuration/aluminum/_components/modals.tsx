@@ -414,6 +414,7 @@ export function ProfileBarModal({
       data.deductGlassMm = Number(data.deductGlassMm || 0);
       data.deductMullionMm = Number(data.deductMullionMm || 0);
       data.deductBeadMm = Number(data.deductBeadMm || 0);
+      data.barType = String(data.barType || 'FRAME').toUpperCase();
       data.sectionLibraryId = data.sectionLibraryId ? Number(data.sectionLibraryId) : undefined;
 
       if (isEdit && bar) {

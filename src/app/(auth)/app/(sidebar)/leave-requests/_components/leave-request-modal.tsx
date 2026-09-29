@@ -143,7 +143,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
       return undefined;
     }
     const pos = targetUser.positions[0] as any;
-    const dId = pos?.departmentId ?? pos?.department?.id ?? pos?.department_id;
+    const dId = pos?.departmentId ?? pos?.department?.id;
     return dId !== undefined && dId !== null ? Number(dId) : undefined;
   }, [targetUser]);
 
@@ -200,7 +200,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
     const items = Array.isArray(workShiftsData) ? workShiftsData : workShiftsData?.items || [];
     return items.map((shift: any) => ({
       value: String(shift.id),
-      label: `${shift.name} (${shift.startTime || shift.start_time || ''} - ${shift.endTime || shift.end_time || ''})`,
+      label: `${shift.name} (${shift.startTime || ''} - ${shift.endTime || ''})`,
     }));
   }, [workShiftsData]);
 
@@ -501,7 +501,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
       setFormUserId(uId);
       setFormLeaveType(selectedLeaveRequest.leaveType);
       setFormDurationType(selectedLeaveRequest.durationType);
-      const shiftId = selectedLeaveRequest.workShiftId ?? (selectedLeaveRequest as any).work_shift_id ?? null;
+      const shiftId = selectedLeaveRequest.workShiftId ?? null;
       setFormWorkShiftId(shiftId ? String(shiftId) : null);
       setFormStartDate(selectedLeaveRequest.startDate);
       setFormEndDate(selectedLeaveRequest.endDate);

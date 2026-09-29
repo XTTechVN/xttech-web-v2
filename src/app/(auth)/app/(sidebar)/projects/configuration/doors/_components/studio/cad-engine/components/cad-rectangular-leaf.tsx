@@ -1,10 +1,95 @@
 import React from 'react';
-import { SashCornerJoint } from '../../studio-types';
+import { SashCornerJoint, GlassGrilleConfig } from '../../studio-types';
 import { CAD_CONFIG } from '../cad-config';
 import { LeafCell } from '../cad-types';
 import { CadOpeningSymbol } from './cad-opening-symbol';
 import { renderCadBead } from './cad-bead';
 import { CadSashBox } from './cad-sash-box';
+
+const renderCadGrille = (
+  gx: number,
+  gy: number,
+  gw: number,
+  gh: number,
+  grilleConfig?: GlassGrilleConfig
+) => {
+  if (!grilleConfig || !grilleConfig.enabled) return null;
+  const {
+    hasGrid,
+    hasBorder,
+    hasCorner,
+    barColor = '#D4AF37',
+    barWidth = 6,
+    cols = 1,
+    rows = 1,
+    borderOffset = 95,
+    cornerSize = 180,
+    motifs = [],
+  } = grilleConfig;
+
+  const scale = gw / (grilleConfig.glassW || gw || 1);
+  const bw = Math.max(1.2, barWidth * scale);
+  const bOffset = Math.min(gw / 3, borderOffset * scale);
+  const cSize = Math.min(gw / 3, cornerSize * scale);
+
+  return (
+    <g id="glass-grille">
+      {/* 1. Nan chia lưới */}
+      {hasGrid && (
+        <>
+          {Array.from({ length: cols - 1 }).map((_, i) => {
+            const x = gx + ((i + 1) / cols) * gw;
+            return <line key={`v-${i}`} x1={x} y1={gy} x2={x} y2={gy + gh} stroke={barColor} strokeWidth={bw} />;
+          })}
+          {Array.from({ length: rows - 1 }).map((_, i) => {
+            const y = gy + ((i + 1) / rows) * gh;
+            return <line key={`h-${i}`} x1={gx} y1={y} x2={gx + gw} y2={y} stroke={barColor} strokeWidth={bw} />;
+          })}
+        </>
+      )}
+      {/* 2. Nan viền */}
+      {hasBorder && (
+        <rect
+          x={gx + bOffset}
+          y={gy + bOffset}
+          width={Math.max(0, gw - bOffset * 2)}
+          height={Math.max(0, gh - bOffset * 2)}
+          fill="none"
+          stroke={barColor}
+          strokeWidth={bw}
+        />
+      )}
+      {/* 3. Nan góc */}
+      {hasCorner && (
+        <g stroke={barColor} strokeWidth={bw} fill="none">
+          <path d={`M ${gx + bOffset} ${gy + bOffset + cSize} L ${gx + bOffset + cSize} ${gy + bOffset + cSize} L ${gx + bOffset + cSize} ${gy + bOffset}`} />
+          <path d={`M ${gx + gw - bOffset} ${gy + bOffset + cSize} L ${gx + gw - bOffset - cSize} ${gy + bOffset + cSize} L ${gx + gw - bOffset - cSize} ${gy + bOffset}`} />
+          <path d={`M ${gx + bOffset} ${gy + gh - bOffset - cSize} L ${gx + bOffset + cSize} ${gy + gh - bOffset - cSize} L ${gx + bOffset + cSize} ${gy + gh - bOffset}`} />
+          <path d={`M ${gx + gw - bOffset} ${gy + gh - bOffset - cSize} L ${gx + gw - bOffset - cSize} ${gy + gh - bOffset - cSize} L ${gx + gw - bOffset - cSize} ${gy + gh - bOffset}`} />
+        </g>
+      )}
+      {/* 4. Hoa văn */}
+      {motifs.map((m) => {
+        const mx = gx + gw / 2;
+        const my = gy + gh / 2;
+        const mw = Math.max(8, m.width * scale * 0.7);
+        const mh = Math.max(8, m.height * scale * 0.7);
+        return (
+          <ellipse
+            key={m.id}
+            cx={mx}
+            cy={my}
+            rx={mw / 2}
+            ry={mh / 2}
+            fill="none"
+            stroke={barColor}
+            strokeWidth={bw * 1.2}
+          />
+        );
+      })}
+    </g>
+  );
+};
 
 interface CadRectangularLeafProps {
   leaf: LeafCell;
@@ -131,6 +216,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
               <CadSashBox sx={s1X} sy={cy} sw={s1W} sh={ch} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash1} />
               {bead1.el}
               <rect x={bead1.gx2} y={bead1.gy2} width={bead1.gw2} height={bead1.gh2} fill="#b2f5ea" fillOpacity={0.85} stroke="none" />
+              {renderCadGrille(bead1.gx2, bead1.gy2, bead1.gw2, bead1.gh2, node.grilleConfig)}
               <CadOpeningSymbol cx={bead1.gx2} cy={bead1.gy2} cw={bead1.gw2} ch={bead1.gh2} type="swing_left" />
 
               {/* Đố động giữa 2 cánh */}
@@ -140,6 +226,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
               <CadSashBox sx={s2X} sy={cy} sw={s2W} sh={ch} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash2} />
               {bead2.el}
               <rect x={bead2.gx2} y={bead2.gy2} width={bead2.gw2} height={bead2.gh2} fill="#b2f5ea" fillOpacity={0.85} stroke="none" />
+              {renderCadGrille(bead2.gx2, bead2.gy2, bead2.gw2, bead2.gh2, node.grilleConfig)}
               <CadOpeningSymbol cx={bead2.gx2} cy={bead2.gy2} cw={bead2.gw2} ch={bead2.gh2} type="swing_right" />
 
               {/* Tay gạt khóa */}
@@ -232,6 +319,9 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                 fillOpacity={node.paneType === 'glass' ? 0.85 : 0.95}
                 stroke="none"
               />
+
+              {/* Kính nan đồng */}
+              {node.paneType === 'glass' && renderCadGrille(glassX, glassY, glassW, glassH, node.grilleConfig)}
 
               {/* Ký hiệu mở cửa */}
               {!isFixed && <CadOpeningSymbol cx={glassX} cy={glassY} cw={glassW} ch={glassH} type={node.sashType} />}

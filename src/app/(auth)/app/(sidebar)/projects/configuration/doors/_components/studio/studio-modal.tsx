@@ -1,54 +1,24 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@/components';
 import { Door, DoorCreate, DoorUpdate, DoorCalculateResponse, SelectedAccessoryItem } from '@/types';
-import {
-  calculateDoor,
-  createDoor,
-  updateDoor,
-  getDoorSeriesList,
-  getProfileBars,
-  getAccessoryCombos,
-  getAccessories,
-  getGlasses,
-  getBrandColors,
-} from '@/actions';
-import {
-  FrameShape,
-  SashOpenType,
-  SceneCellNode,
-  StudioMainTab,
-  FrameConfig,
-  SashConfig,
-  DEFAULT_FRAME_CONFIG,
-  DEFAULT_SASH_CONFIG,
-  MullionInfo,
-  MullionCutType,
-  ColorSwatch,
-  ALUMINUM_PALETTE,
-} from './studio-types';
+import { calculateDoor, createDoor, updateDoor, getDoorSeriesList, getProfileBars, getAccessoryCombos, getAccessories, getGlasses, getBrandColors, } from '@/actions';
+import { FrameShape, SashOpenType, SceneCellNode, StudioMainTab, FrameConfig, SashConfig, DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG, MullionInfo, MullionCutType, ColorSwatch, ALUMINUM_PALETTE, GlassGrilleConfig, } from './studio-types';
 import { DrawTabView } from './panels/draw-tab-view';
 import { InfoTabView } from './panels/info-tab-view';
 import { ConfigTabView } from './panels/config/config-tab-view';
 import { ResultsTabView } from './panels/results-tab-view';
 import { AccessoriesTabView } from './panels/accessories-tab-view';
 import { MullionInspectorModal } from './panels/mullion-inspector-modal';
+import { GlassGrilleModal } from './panels/glass-grille-modal';
 import { DoorCadRenderer, ResizeSplitParams } from './cad-engine/door-cad-renderer';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
 import { showErrorToast } from '@/utils';
-import {
-  Save,
-  Loader2,
-  FileText,
-  PenTool,
-  Sliders,
-  BarChart3,
-  Wrench,
-} from 'lucide-react';
+import { Save, Loader2, FileText, PenTool, Sliders, BarChart3, Wrench, } from 'lucide-react';
 
 interface DoorStudioModalProps {
   isOpen: boolean;
@@ -122,6 +92,8 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
   const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [selectedMullion, setSelectedMullion] = useState<MullionInfo | null>(null);
   const [isMullionModalOpen, setIsMullionModalOpen] = useState<boolean>(false);
+  const [isGrilleModalOpen, setIsGrilleModalOpen] = useState<boolean>(false);
+  const [grilleEditingCell, setGrilleEditingCell] = useState<SceneCellNode | null>(null);
 
   // Scene Graph Root: Mặc định là Vách kính cố định (fixed)
   const [rootCell, setRootCell] = useState<SceneCellNode>(() => createDefaultRootCell(1400, 1600));
@@ -146,9 +118,9 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
     queryFn: () => getProfileBars({ seriesId: seriesId || undefined, limit: 300 }),
     enabled: isOpen,
   });
-  const availableProfiles = profilesData?.items || [];
+  const availableProfiles = useMemo(() => profilesData?.items || [], [profilesData]);
 
-  const availableBeads = React.useMemo(() => {
+  const availableBeads = useMemo(() => {
     return availableProfiles.filter(
       (p) => p.barType?.toUpperCase() === 'BEAD' || (p as any).category === 'bead'
     );
@@ -176,9 +148,9 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
     queryFn: () => getGlasses({ limit: 200, isActive: true }),
     enabled: isOpen,
   });
-  const availableGlasses = glassesData?.items || [];
+  const availableGlasses = useMemo(() => glassesData?.items || [], [glassesData]);
 
-  const defaultGlass = React.useMemo(() => {
+  const defaultGlass =useMemo(() => {
     return availableGlasses.find((g) => g.isDefault) || availableGlasses[0] || null;
   }, [availableGlasses]);
 
@@ -192,7 +164,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
     queryFn: () => getBrandColors({ brandId, limit: 100, isActive: true }),
     enabled: isOpen && !!brandId,
   });
-  const availableBrandColors = brandColorsData?.items || [];
+  const availableBrandColors = useMemo(() => brandColorsData?.items || [], [brandColorsData]);
 
   // Bảng màu nhôm động: nếu hãng có cấu hình màu thì dùng của hãng, fallback về palette mặc định
   const dynamicAluminumColors: ColorSwatch[] =
@@ -786,6 +758,28 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
     toast.success('Đã xóa thanh đố thành công');
   };
 
+  const handleSaveGrille = (config: GlassGrilleConfig, applyToAllSashes: boolean) => {
+    if (!grilleEditingCell) return;
+    if (applyToAllSashes) {
+      const updateAllLeaves = (node: SceneCellNode): SceneCellNode => {
+        if (!node.children || node.children.length === 0) {
+          if (node.paneType === 'glass') {
+            return { ...node, grilleConfig: { ...config } };
+          }
+          return node;
+        }
+        return { ...node, children: node.children.map(updateAllLeaves) };
+      };
+      pushState(updateAllLeaves(rootCell));
+      toast.success('Đã áp dụng mẫu nan đồng cho tất cả các cánh kính');
+    } else {
+      pushState(updateNode(rootCell, grilleEditingCell.id, { grilleConfig: config }));
+      toast.success('Đã cập nhật nan đồng cho ô kính');
+    }
+    setIsGrilleModalOpen(false);
+    setGrilleEditingCell(null);
+  };
+
   // Realtime calculate BOM
   useEffect(() => {
     if (!isOpen) return;
@@ -1066,6 +1060,10 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
             if (!selectedCellId) return;
             pushState(updateNode(rootCell, selectedCellId, { children: [] }));
           }}
+          onOpenGrilleModal={(cell) => {
+            setGrilleEditingCell(cell);
+            setIsGrilleModalOpen(true);
+          }}
           availableGlasses={availableGlasses}
           availableBeads={availableBeads}
           defaultGlass={defaultGlass}
@@ -1128,6 +1126,16 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
         profileBars={availableProfiles}
         onSave={handleSaveMullion}
         onDeleteMullion={handleDeleteMullion}
+      />
+
+      <GlassGrilleModal
+        isOpen={isGrilleModalOpen}
+        onClose={() => {
+          setIsGrilleModalOpen(false);
+          setGrilleEditingCell(null);
+        }}
+        cell={grilleEditingCell}
+        onApply={handleSaveGrille}
       />
 
       {/* Hidden CAD Renderer for clean SVG Thumbnail Export */}

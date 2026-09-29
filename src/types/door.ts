@@ -133,6 +133,22 @@ export interface SelectedAccessoryItem {
   note?: string | null;
 }
 
+export interface GlassGrilleBOM {
+  cellPath: string;
+  barWidthMm: number;
+  barColor: string;
+  gridLengthM: number;
+  borderLengthM: number;
+  cornerLengthM: number;
+  totalBarLengthM: number;
+  motifQty: number;
+  motifItems: Array<{ id: string; motifType: string; name?: string; qty: number }>;
+  unitPricePerM: number;
+  totalBarPrice: number;
+  totalMotifPrice: number;
+  totalPrice: number;
+}
+
 export interface DoorCalculateResponse {
   w: number;
   h: number;
@@ -142,11 +158,13 @@ export interface DoorCalculateResponse {
   groupedBeads: BeadCut[];
   cells: GlassCellBOM[];
   cornerJoints?: CornerJointBOM[];
+  grilles?: GlassGrilleBOM[];
   sashCounts: Record<string, number>;
   totalAluminumWeightKg: number;
   totalGlassAreaM2: number;
   totalJointQty?: number;
   totalJointPrice?: number;
+  totalGrillePrice?: number;
   hasUnconfiguredJoints?: boolean;
 }
 

@@ -82,7 +82,7 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
   const { mutate: handleRemoveFromDepartment, isPending: isRemoving } = useMutation({
     mutationFn: async (emp: Employee) => {
       const deptPositions = (emp.positions || []).filter(
-        (p: any) => Number(p.departmentId || p.department_id) === departmentId
+        (p: any) => Number(p.departmentId) === departmentId
       );
       const posIdsToRemove = deptPositions.map((p) => Number(p.id));
 
@@ -141,7 +141,7 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
       minWidth: '180px',
       cell: (row: Employee) => {
         const deptPositions = (row.positions || []).filter(
-          (p: any) => Number(p.departmentId || p.department_id) === departmentId
+          (p: any) => Number(p.departmentId) === departmentId
         );
 
         if (deptPositions.length === 0) {
@@ -203,7 +203,7 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
   // Cấu hình Card hiển thị trên thiết bị di động
   const renderCard = (row: Employee, index: number) => {
     const deptPositions = (row.positions || []).filter(
-      (p: any) => Number(p.departmentId || p.department_id) === departmentId
+      (p: any) => Number(p.departmentId) === departmentId
     );
 
     return (

@@ -57,7 +57,7 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
 
   const [w, setW] = useState<number>(getDoorW);
   const [h, setH] = useState<number>(getDoorH);
-  const [activeTab, setActiveTab] = useState<'bars' | 'beads' | 'glass' | 'joints'>('bars');
+  const [activeTab, setActiveTab] = useState<'bars' | 'beads' | 'glass' | 'joints' | 'grilles'>('bars');
 
   const { data: bom, isLoading, refetch, isFetching } = useQuery<DoorCalculateResponse>({
     queryKey: ['door-bom', door.id, w, h],
@@ -165,6 +165,11 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
                   )}
                 </div>
               )}
+              {bom.totalGrillePrice !== undefined && bom.totalGrillePrice > 0 && (
+                <div className="px-3 py-1.5 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 font-medium">
+                  Kính nan đồng: <strong className="font-bold">{bom.totalGrillePrice.toLocaleString('vi-VN')} đ</strong>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -242,6 +247,18 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Có vị trí chưa gán con ke" />
                 )}
               </button>
+              {bom?.grilles && bom.grilles.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('grilles')}
+                  className={`pb-2 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
+                    activeTab === 'grilles'
+                      ? 'border-amber-600 text-amber-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <span>Kính nan đồng ({bom.grilles.length})</span>
+                </button>
+              )}
             </div>
 
             {/* Loading */}
@@ -454,6 +471,67 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
                         <span>Tổng chi phí ke liên kết:</span>
                         <span className="font-bold text-sm text-blue-700 font-mono">
                           {bom.totalJointPrice.toLocaleString('vi-VN')} đ
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'grilles' && (
+                  <div className="space-y-4">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                          <th className="py-2 px-2">Ô kính & Bóc tách</th>
+                          <th className="py-2 px-2">Quy cách nan</th>
+                          <th className="py-2 px-2 text-center">Bóc tách dài (m)</th>
+                          <th className="py-2 px-2 text-center">Hoa văn</th>
+                          <th className="py-2 px-2 text-right">Đơn giá / m</th>
+                          <th className="py-2 px-2 text-right">Thành tiền</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {(bom.grilles || []).map((g, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-2.5 px-2">
+                              <div className="font-bold text-slate-900 font-mono">{g.cellPath}</div>
+                              <div className="text-[10px] text-slate-400">
+                                Lưới: {g.gridLengthM}m | Viền: {g.borderLengthM}m | Góc: {g.cornerLengthM}m
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-2">
+                              <span className="font-semibold text-slate-800">
+                                Bản {g.barWidthMm}mm ({g.barColor})
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-2 text-center font-bold font-mono text-amber-700">
+                              {g.totalBarLengthM} m
+                            </td>
+                            <td className="py-2.5 px-2 text-center">
+                              {g.motifQty > 0 ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                  {g.motifQty} con
+                                </span>
+                              ) : (
+                                <span className="text-slate-400">-</span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-mono text-slate-600">
+                              {g.unitPricePerM.toLocaleString('vi-VN')} đ
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-bold font-mono text-slate-900">
+                              {g.totalPrice.toLocaleString('vi-VN')} đ
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    {bom.totalGrillePrice !== undefined && bom.totalGrillePrice > 0 && (
+                      <div className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl flex items-center justify-between text-xs font-semibold text-amber-900">
+                        <span>Tổng chi phí gia công kính nan đồng:</span>
+                        <span className="font-bold text-sm text-amber-700 font-mono">
+                          {bom.totalGrillePrice.toLocaleString('vi-VN')} đ
                         </span>
                       </div>
                     )}
