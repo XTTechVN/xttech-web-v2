@@ -22,6 +22,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     private var lastLocation: CLLocation?
     private var lastAccurateLocation: CLLocation?
     private var stationaryRegion: CLCircularRegion?
+    private var stationaryAnchorLocation: CLLocation?
     private var lastBatteryLevel: Double = -1.0
 
     private let prefsKeyToken = "xttech_ios_access_token"
@@ -202,8 +203,9 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         isStationaryMode = true
         stationaryDetectionDate = nil
 
-        // 1. Gửi ping chốt hạ vị trí neo với trạng thái đứng yên
+        // 1. Lưu mốc neo cố định và gửi ping chốt hạ vị trí neo với trạng thái đứng yên
         if let anchor = self.lastAccurateLocation ?? self.lastLocation {
+            self.stationaryAnchorLocation = anchor
             self.lastPingTime = Date()
             sendPing(location: anchor, isHeartbeat: true)
             updateStationaryRegion(around: anchor)
@@ -220,6 +222,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         guard isTracking else { return }
         isStationaryMode = false
         stationaryDetectionDate = nil
+        self.stationaryAnchorLocation = nil // Xóa mốc neo cũ khi chuyển sang di chuyển
         isMovingTransition = true // Nới lỏng accuracy khi vừa xuất phát
 
         // 1. Dỡ bỏ geofence cũ
@@ -360,26 +363,30 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             return
         }
 
-        let distance = location.distance(from: lastAcc)
+        // Đo khoảng cách: nếu đang đứng yên thì đo so với mốc neo cố định stationaryAnchorLocation
+        // để nhận diện ngay khi người dùng bước đi rời xa khỏi chỗ ngồi
+        let distance: Double = (isStationaryMode && self.stationaryAnchorLocation != nil)
+            ? location.distance(from: self.stationaryAnchorLocation!)
+            : location.distance(from: lastAcc)
 
         let rawSpeed = max(0.0, location.speed)
         let speed = rawSpeed >= 0.8 ? rawSpeed : 0.0
         let isMoving = speed >= 0.8 || distance >= 25.0
 
-        // Nếu đang ở trạng thái Stationary nhưng nhận được điểm GPS di chuyển đáng kể (> 25m hoặc có vận tốc):
+        // Nếu đang ở trạng thái Stationary nhưng nhận được điểm GPS di chuyển đáng kể (> 25m so với mốc neo hoặc có vận tốc):
         if isStationaryMode && isMoving {
-            print("[NativeTracking iOS] Phát hiện di chuyển (distance=\(distance)m, speed=\(speed)m/s) khi đang stationary. Chuyển sang moving mode.")
+            print("[NativeTracking iOS] Phát hiện di chuyển rời mốc neo (distance=\(distance)m, speed=\(speed)m/s). Chuyển ngay sang Moving Mode.")
             enterMovingMode()
         }
 
         // Kiểm tra sai số GPS thích ứng:
         // - Khi vừa xuất phát (isMovingTransition): Nới lỏng 90m để gói tin đầu tiên thoát đi được
-        // - Khi di chuyển bình thường: Nới lỏng 65m (thay vì 45m siết quá chặt)
-        // - Khi đứng yên: Nới lỏng 150m (để nhận tín hiệu Wi-Fi / Cell tower duy trì nhịp tim)
+        // - Khi di chuyển bình thường: Nới lỏng 65m
+        // - Khi đứng yên: Nới lỏng 200m (đồng bộ 200m với Backend để luôn nhận nhịp tim khi khóa màn hình)
         let maxAllowedAccuracy: Double = {
             if isMovingTransition { return 90.0 }
             if isMoving { return 65.0 }
-            return 150.0
+            return 200.0
         }()
 
         if location.horizontalAccuracy < 0 || location.horizontalAccuracy > maxAllowedAccuracy {
@@ -398,8 +405,10 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             return
         }
 
-        // Cập nhật tọa độ chuẩn xác
-        self.lastAccurateLocation = location
+        // Chỉ cập nhật mốc lastAccurateLocation khi đang di chuyển (để không làm trôi điểm neo khi đứng yên)
+        if isMoving || self.lastAccurateLocation == nil {
+            self.lastAccurateLocation = location
+        }
         self.lastLocation = location
 
         if isMoving {
