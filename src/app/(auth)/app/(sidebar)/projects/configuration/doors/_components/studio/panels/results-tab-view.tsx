@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import { DoorCalculateResponse } from '@/types';
 import { FrameConfig, SashConfig, SceneCellNode } from '../studio-types';
-import { Layers, Scissors, CheckCircle, Scale, Maximize2, Loader2, ArrowRight } from 'lucide-react';
+import { detectProfileIssues } from '../utils/detect-profile-issues';
+
+export { detectProfileIssues };
 
 interface ResultsTabViewProps {
   calcData: DoorCalculateResponse | null;
@@ -17,146 +19,23 @@ interface ResultsTabViewProps {
   onNavigateTab?: (tab: 'info' | 'draw' | 'config' | 'bom' | 'accessories') => void;
 }
 
-export const detectProfileIssues = ({
-  rootCell,
-  frameConfig,
-  sashConfig,
-  seriesId,
-  calcData,
-}: {
-  rootCell?: SceneCellNode;
-  frameConfig?: FrameConfig;
-  sashConfig?: SashConfig;
-  seriesId?: number;
-  calcData?: DoorCalculateResponse | null;
-}): string[] => {
-  const issues: string[] = [];
-
-  // 1. Kiểm tra Hệ nhôm
-  if (!seriesId) {
-    issues.push('Chưa chọn Hệ nhôm (Series) cho bộ cửa');
-  }
-
-  // 2. Kiểm tra Cánh (Sashes)
-  let hasSash = false;
-  let hasDoubleSash = false;
-  let hasMullion = false;
-
-  const checkNodes = (node?: SceneCellNode) => {
-    if (!node) return;
-    if (node.sashType && node.sashType !== 'fixed') {
-      hasSash = true;
-      if (node.sashType === 'swing_double') {
-        hasDoubleSash = true;
-      }
-    }
-    if (node.children && node.children.length > 0) {
-      if (node.splitType !== 'coupling' && node.splitType !== 'sash_pair') {
-        hasMullion = true;
-      }
-      for (const c of node.children) {
-        checkNodes(c);
-      }
-    }
-  };
-  checkNodes(rootCell);
-
-  if (hasSash) {
-    if (!sashConfig?.leftProfileId) {
-      issues.push('Thiếu profile bao cánh: cạnh trái');
-    }
-    if (!sashConfig?.topProfileId) {
-      issues.push('Thiếu profile bao cánh: cạnh trên');
-    }
-    if (!sashConfig?.rightProfileId) {
-      issues.push('Thiếu profile bao cánh: cạnh phải');
-    }
-    if (!sashConfig?.bottomProfileId) {
-      issues.push('Thiếu profile bao cánh: cạnh dưới');
-    }
-    if (hasDoubleSash && !sashConfig?.mullionProfileId) {
-      issues.push('Thiếu profile đố động giữa 2 cánh');
-    }
-    if (!sashConfig?.beadProfileId && !frameConfig?.beadProfileId) {
-      issues.push('Thiếu profile nẹp kính cánh');
-    }
-  }
-
-  // 3. Kiểm tra Khung bao (Frame)
-  const leftEdge = frameConfig?.leftEdge;
-  const topEdge = frameConfig?.topEdge;
-  const rightEdge = frameConfig?.rightEdge;
-  const bottomEdge = frameConfig?.bottomEdge;
-  const isOpenBottom = frameConfig?.isOpenBottom ?? false;
-
-  if (!leftEdge?.profileId) {
-    issues.push('Thanh "Đứng trái" thiếu profile');
-  }
-  if (!topEdge?.profileId) {
-    issues.push('Thanh "Ngang trên" thiếu profile');
-  }
-  if (!rightEdge?.profileId) {
-    issues.push('Thanh "Đứng phải" thiếu profile');
-  }
-  if (!isOpenBottom && !bottomEdge?.profileId) {
-    issues.push('Thanh "Ngang dưới" thiếu profile');
-  }
-
-  // 4. Kiểm tra Đố (Mullions)
-  if (hasMullion) {
-    const checkMullionProfiles = (node?: SceneCellNode) => {
-      if (!node || !node.children) return;
-      if (node.splitType !== 'coupling' && node.splitType !== 'sash_pair') {
-        node.children.forEach((c: SceneCellNode, idx: number) => {
-          if (
-            idx < node.children!.length - 1 &&
-            !c.mullionProfileId &&
-            !node.mullionProfileId &&
-            !frameConfig?.mullionProfileId &&
-            !sashConfig?.mullionProfileId
-          ) {
-            issues.push(`Thanh đố (${node.splitDirection === 'vertical' ? 'Đố đứng' : 'Đố ngang'} #${idx + 1}) thiếu profile`);
-          }
-        });
-      }
-      node.children.forEach(checkMullionProfiles);
-    };
-    checkMullionProfiles(rootCell);
-  }
-
-  // 5. Kiểm tra từ calcData
-  if (calcData?.bars) {
-    for (const b of calcData.bars) {
-      if (!b.profileId && !issues.some((iss) => iss.includes(b.name))) {
-        issues.push(`Thanh "${b.name}" thiếu profile`);
-      }
-    }
-  }
-
-  // 6. Kiểm tra Ke liên kết góc
-  if (calcData?.hasUnconfiguredJoints) {
-    for (const j of calcData.cornerJoints || []) {
-      if (!j.isConfigured) {
-        issues.push(`Chưa cấu hình con ke cho ${j.position === 'frame' ? 'Khung bao' : 'Cánh cửa'} (Cần ${j.qty} con)`);
-      }
-    }
-  }
-
-  return issues;
-};
-
 export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
   calcData,
   isCalculating,
-  w = 1600,
-  h = 2300,
+  w = 1400,
+  h = 1600,
   rootCell,
   frameConfig,
   sashConfig,
   seriesId,
   onNavigateTab,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'bars' | 'beads' | 'glass' | 'grilles'>('bars');
+  const [activeSubTab, setActiveSubTab] = useState<'bars' | 'beads' | 'glass' | 'grilles' | 'accessories'>('bars');
+
+  const totalWeight = calcData?.totalAluminumWeightKg ?? 0;
+  const totalGlassArea = calcData?.totalGlassAreaM2 ?? 0;
+  const doorAreaM2 = (w * h) / 1000000;
+  const totalCutBars = (calcData?.bars?.length || 0) + (calcData?.beads?.length || 0);
 
   const issues = detectProfileIssues({
     rootCell,
@@ -166,153 +45,113 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
     calcData,
   });
 
-  const doorW = w || calcData?.w || 1600;
-  const doorH = h || calcData?.h || 2300;
-  const doorAreaM2 = (doorW * doorH) / 1000000;
-  const totalWeight = calcData?.totalAluminumWeightKg || 0;
-  const totalGlassArea = calcData?.totalGlassAreaM2 || 0;
-
-  if (isCalculating && !calcData) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-12 text-gray-500 space-y-3">
-        <Loader2 size={28} className="animate-spin text-blue-600" />
-        <p className="text-xs font-semibold">Đang bóc tách khối lượng vật tư...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 flex justify-center">
-      <div className="max-w-4xl w-full space-y-4 text-xs text-gray-800">
-        {/* 1. Header Banner kiểu CAD chuẩn (Dark Slate Banner) */}
-        <div className="bg-[#1e293b] text-white rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-1.5 font-bold text-xs tracking-wide">
-              <span>📐</span>
-              <span>Kết quả tính mẫu</span>
+    <div className="p-3 sm:p-5 bg-slate-50/50 min-h-full">
+      <div className="max-w-6xl mx-auto space-y-3">
+        {/* Technical Stats Bar */}
+        <div className="bg-white border border-gray-200 rounded-lg px-4 py-2.5 shadow-2xs">
+          <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-4 text-xs text-gray-600">
+            <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-5 gap-y-1">
+              <div>
+                <span className="text-gray-400">Kích thước: </span>
+                <span className="font-mono font-bold text-gray-900">{w}×{h}</span>
+                <span className="text-gray-400 text-[11px]"> mm</span>
+              </div>
+              <span className="text-gray-200 hidden sm:inline">|</span>
+              <div>
+                <span className="text-gray-400">Diện tích: </span>
+                <span className="font-mono font-bold text-gray-900">{doorAreaM2.toFixed(2)}</span>
+                <span className="text-gray-400 text-[11px]"> m²</span>
+              </div>
+              <span className="text-gray-200 hidden sm:inline">|</span>
+              <div>
+                <span className="text-gray-400">Khối lượng nhôm: </span>
+                <span className="font-mono font-bold text-gray-900">{totalWeight.toFixed(2)}</span>
+                <span className="text-gray-400 text-[11px]"> kg</span>
+              </div>
+              <span className="text-gray-200 hidden sm:inline">|</span>
+              <div>
+                <span className="text-gray-400">Diện tích kính: </span>
+                <span className="font-mono font-bold text-gray-900">{totalGlassArea.toFixed(2)}</span>
+                <span className="text-gray-400 text-[11px]"> m²</span>
+              </div>
+              <span className="text-gray-200 hidden sm:inline">|</span>
+              <div>
+                <span className="text-gray-400">Tổng thanh cắt: </span>
+                <span className="font-mono font-bold text-gray-900">{totalCutBars}</span>
+                <span className="text-gray-400 text-[11px]"> thanh</span>
+              </div>
+              {doorAreaM2 > 0 && totalWeight > 0 && (
+                <>
+                  <span className="text-gray-200 hidden md:inline">|</span>
+                  <div className="hidden md:block">
+                    <span className="text-gray-400">Tỷ trọng: </span>
+                    <span className="font-mono font-bold text-gray-900">
+                      {(totalWeight / doorAreaM2).toFixed(2)}
+                    </span>
+                    <span className="text-gray-400 text-[11px]"> kg/m²</span>
+                  </div>
+                </>
+              )}
             </div>
-            <span className="bg-slate-700/80 text-slate-200 px-2.5 py-0.5 rounded-md font-mono text-[11px] font-semibold border border-slate-600">
-              W={doorW} × H={doorH} mm
-            </span>
-          </div>
 
-          <div className="flex items-center gap-5 text-xs font-mono text-slate-300">
-            <div>
-              <span>Kính: </span>
-              <strong className="text-white font-bold">{totalGlassArea.toFixed(3)}</strong> m²
-            </div>
-            <div>
-              <span>Cân nặng: </span>
-              <strong className="text-white font-bold">{totalWeight.toFixed(2)}</strong> kg
-            </div>
-            <div>
-              <span>KL/m²: </span>
-              <strong className="text-white font-bold">
-                {doorAreaM2 > 0 ? (totalWeight / doorAreaM2).toFixed(2) : '0.00'}
-              </strong>{' '}
-              kg/m²
-            </div>
+            {isCalculating && (
+              <span className="text-[11px] text-blue-600 font-medium">
+                Đang tính toán...
+              </span>
+            )}
           </div>
         </div>
 
-        {/* 2. Warning Alert Box: Hiển thị khi phát hiện thiếu profile hoặc chưa cấu hình xong */}
+        {/* Minimalist Issue Alert */}
         {issues.length > 0 && (
-          <div className="bg-[#fffbeb] border border-[#fde68a] rounded-2xl p-4 space-y-2.5 shadow-2xs">
-            <div className="flex items-center justify-between">
-              <div className="font-bold text-xs text-[#b45309] flex items-center gap-1.5">
-                <span className="text-sm">⚠️</span>
-                <span>Phát hiện {issues.length} vấn đề cấu hình vật tư & profile:</span>
-              </div>
+          <div className="bg-amber-50/60 border border-amber-200/80 rounded-lg p-3 space-y-1.5 text-xs text-amber-900">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-medium">
+              <span>Lưu ý cấu hình ({issues.length} mục chưa hoàn tất):</span>
               {onNavigateTab && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-[11px]">
                   <button
                     type="button"
                     onClick={() => onNavigateTab('config')}
-                    className="text-[11px] font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                    className="hover:underline text-amber-800 font-medium cursor-pointer"
                   >
-                    <span>⚙️ Cấu hình nhôm</span>
-                    <ArrowRight size={12} />
+                    Cấu hình nhôm →
                   </button>
+                  <span className="text-amber-300">|</span>
                   <button
                     type="button"
                     onClick={() => onNavigateTab('accessories')}
-                    className="text-[11px] font-bold text-blue-900 bg-blue-100 hover:bg-blue-200 px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                    className="hover:underline text-blue-800 font-medium cursor-pointer"
                   >
-                    <span>🔧 Chọn Phụ kiện / Ke</span>
-                    <ArrowRight size={12} />
+                    Chọn phụ kiện & ke →
                   </button>
                 </div>
               )}
             </div>
 
-            <ul className="space-y-1 text-xs text-[#92400e] pl-1 font-medium">
+            <ul className="space-y-0.5 text-[11px] text-amber-800/90 pl-3 list-disc">
               {issues.map((msg, idx) => (
-                <li key={idx} className="flex items-center gap-1.5">
-                  <span className="text-[#d97706] text-[11px]">⚠️</span>
-                  <span>{msg}</span>
-                </li>
+                <li key={idx}>{msg}</li>
               ))}
             </ul>
           </div>
         )}
 
-        {/* 3. KPI Summary Cards */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="p-4 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-1">
-            <div className="flex items-center gap-2 text-gray-500 font-medium text-[11px]">
-              <Scale size={14} className="text-blue-600" />
-              <span>Tổng khối lượng nhôm</span>
-            </div>
-            <div className="text-xl font-bold font-mono text-gray-900">
-              {totalWeight.toFixed(2)}{' '}
-              <span className="text-xs font-normal text-gray-500">kg</span>
-              {totalWeight === 0 && (
-                <span className="block text-[10px] font-sans font-medium text-amber-600 mt-0.5">
-                  (Cần chọn profile để tính)
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="p-4 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-1">
-            <div className="flex items-center gap-2 text-gray-500 font-medium text-[11px]">
-              <Maximize2 size={14} className="text-emerald-600" />
-              <span>Tổng diện tích kính</span>
-            </div>
-            <div className="text-xl font-bold font-mono text-emerald-700">
-              {totalGlassArea.toFixed(2)}{' '}
-              <span className="text-xs font-normal text-gray-500">m²</span>
-            </div>
-          </div>
-
-          <div className="p-4 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-1">
-            <div className="flex items-center gap-2 text-gray-500 font-medium text-[11px]">
-              <Scissors size={14} className="text-amber-600" />
-              <span>Tổng thanh cắt xưởng</span>
-            </div>
-            <div className="text-xl font-bold font-mono text-gray-900">
-              {(calcData?.bars?.length || 0) + (calcData?.beads?.length || 0)}{' '}
-              <span className="text-xs font-normal text-gray-500">thanh</span>
-            </div>
-          </div>
-        </div>
-
         {/* Sub-tab Navigation */}
         {!calcData ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-500 space-y-2 shadow-2xs">
-            <Layers size={36} className="mx-auto text-amber-500 opacity-60 mb-2" />
-            <p className="font-semibold text-xs text-gray-700">Chưa có kết quả bóc tách vật tư</p>
-            <p className="text-[11px] text-gray-500">
-              Vui lòng hoàn tất cấu hình thanh profile ở tab &ldquo;Cấu hình&rdquo; để hệ thống tự động tính toán.
+          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500 space-y-1 shadow-2xs">
+            <p className="font-medium text-xs text-gray-700">Chưa có kết quả bóc tách vật tư</p>
+            <p className="text-[11px] text-gray-400">
+              Vui lòng hoàn tất cấu hình thanh profile ở tab Cấu hình để hệ thống tính toán.
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="border-b border-gray-200 px-4 pt-3 flex items-center gap-2 bg-gray-50/60">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-2xs overflow-hidden">
+            <div className="border-b border-gray-200 px-3 pt-2 flex items-center gap-1 bg-gray-50/60 overflow-x-auto no-scrollbar">
               <button
                 type="button"
                 onClick={() => setActiveSubTab('bars')}
-                className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                className={`px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                   activeSubTab === 'bars'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-900'
@@ -323,7 +162,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveSubTab('beads')}
-                className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                className={`px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                   activeSubTab === 'beads'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-900'
@@ -334,7 +173,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveSubTab('glass')}
-                className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                className={`px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                   activeSubTab === 'glass'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-900'
@@ -346,19 +185,32 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveSubTab('grilles')}
-                  className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                  className={`px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                     activeSubTab === 'grilles'
-                      ? 'border-amber-600 text-amber-600'
+                      ? 'border-blue-600 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-900'
                   }`}
                 >
                   4. Kính nan đồng ({calcData.grilles.length})
                 </button>
               )}
+              {calcData.accessories && calcData.accessories.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveSubTab('accessories')}
+                  className={`px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                    activeSubTab === 'accessories'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  5. Phụ kiện ({calcData.accessories.length})
+                </button>
+              )}
             </div>
 
             {/* Table Content */}
-            <div className="p-4 overflow-x-auto">
+            <div className="p-3 sm:p-4 overflow-x-auto">
               {activeSubTab === 'bars' && (
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -377,16 +229,16 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                         <td className="py-2.5 px-3 font-sans font-medium text-gray-800">{bar.name}</td>
                         <td className="py-2.5 px-3">
                           {bar.profileCode ? (
-                            <span className="text-blue-600 font-semibold">{bar.profileCode}</span>
+                            <span className="text-gray-900 font-semibold">{bar.profileCode}</span>
                           ) : (
-                            <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-sans font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span className="text-gray-400 text-[11px] font-sans">
                               Chưa chọn profile
                             </span>
                           )}
                         </td>
                         <td className="py-2.5 px-3 text-right font-bold text-gray-900">{bar.length}</td>
                         <td className="py-2.5 px-3 text-center text-gray-600">{bar.goc1}° / {bar.goc2}°</td>
-                        <td className="py-2.5 px-3 text-center font-bold text-amber-700">{bar.qty}</td>
+                        <td className="py-2.5 px-3 text-center font-bold text-gray-900">{bar.qty}</td>
                         <td className="py-2.5 px-3 text-gray-400 font-sans text-[11px]">{bar.formula || '-'}</td>
                       </tr>
                     ))}
@@ -412,16 +264,16 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                         <td className="py-2.5 px-3 font-sans font-medium text-gray-800">{bead.name}</td>
                         <td className="py-2.5 px-3">
                           {bead.profileCode ? (
-                            <span className="text-purple-600 font-semibold">{bead.profileCode}</span>
+                            <span className="text-gray-900 font-semibold">{bead.profileCode}</span>
                           ) : (
-                            <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-sans font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span className="text-gray-400 text-[11px] font-sans">
                               Chưa chọn profile
                             </span>
                           )}
                         </td>
                         <td className="py-2.5 px-3 text-right font-bold text-gray-900">{bead.length}</td>
                         <td className="py-2.5 px-3 text-center text-gray-600">{bead.goc1}° / {bead.goc2}°</td>
-                        <td className="py-2.5 px-3 text-center font-bold text-amber-700">{bead.qty}</td>
+                        <td className="py-2.5 px-3 text-center font-bold text-gray-900">{bead.qty}</td>
                         <td className="py-2.5 px-3 text-gray-500">{bead.thicknessMm} mm</td>
                       </tr>
                     ))}
@@ -445,7 +297,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                       <tr key={idx} className="hover:bg-gray-50">
                         <td className="py-2.5 px-3 font-sans font-medium text-gray-800">{cell.path}</td>
                         <td className="py-2.5 px-3 text-gray-600 font-sans">{cell.glassName || 'Kính cường lực'}</td>
-                        <td className="py-2.5 px-3 text-right font-bold text-emerald-800">
+                        <td className="py-2.5 px-3 text-right font-bold text-gray-900">
                           {cell.glassW} × {cell.glassH}
                         </td>
                         <td className="py-2.5 px-3 text-right font-bold text-gray-900">
@@ -484,18 +336,52 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                         <td className="py-2.5 px-3 text-right text-gray-600">{g.gridLengthM}</td>
                         <td className="py-2.5 px-3 text-right text-gray-600">{g.borderLengthM}</td>
                         <td className="py-2.5 px-3 text-right text-gray-600">{g.cornerLengthM}</td>
-                        <td className="py-2.5 px-3 text-center font-bold text-amber-700">{g.totalBarLengthM} m</td>
+                        <td className="py-2.5 px-3 text-center font-bold text-gray-900">{g.totalBarLengthM} m</td>
                         <td className="py-2.5 px-3 text-center">
                           {g.motifQty > 0 ? (
-                            <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span className="font-sans font-medium text-gray-900 text-xs">
                               {g.motifQty} con
                             </span>
                           ) : (
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
-                        <td className="py-2.5 px-3 text-right font-bold text-amber-900">
+                        <td className="py-2.5 px-3 text-right font-bold text-gray-900">
                           {g.totalPrice.toLocaleString('vi-VN')} đ
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {activeSubTab === 'accessories' && (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-gray-500 font-semibold text-[11px]">
+                      <th className="py-2 px-3">Phụ kiện & Mã vật tư</th>
+                      <th className="py-2 px-3">Gói nguồn</th>
+                      <th className="py-2 px-3 text-center">ĐVT</th>
+                      <th className="py-2 px-3 text-center">Số lượng</th>
+                      <th className="py-2 px-3 text-right">Đơn giá</th>
+                      <th className="py-2 px-3 text-right">Thành tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-xs">
+                    {calcData.accessories?.map((acc, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="py-2.5 px-3">
+                          <div className="font-semibold text-gray-900">{acc.name}</div>
+                          {acc.code && <div className="text-[10px] text-gray-400 font-mono">{acc.code}</div>}
+                        </td>
+                        <td className="py-2.5 px-3 text-gray-600 text-[11px]">{acc.comboName || 'Phụ kiện lẻ'}</td>
+                        <td className="py-2.5 px-3 text-center text-gray-600">{acc.unit || 'cái'}</td>
+                        <td className="py-2.5 px-3 text-center font-bold text-gray-900 font-mono">{acc.quantity}</td>
+                        <td className="py-2.5 px-3 text-right font-mono text-gray-600">
+                          {acc.unitPrice > 0 ? `${acc.unitPrice.toLocaleString('vi-VN')} đ` : '—'}
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-bold text-blue-700 font-mono">
+                          {acc.totalPrice > 0 ? `${acc.totalPrice.toLocaleString('vi-VN')} đ` : '—'}
                         </td>
                       </tr>
                     ))}

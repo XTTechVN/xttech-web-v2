@@ -110,6 +110,71 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
     };
   };
 
+  // Touch Gesture (Pan 1 ngón & Pinch-to-zoom 2 ngón cho Mobile/Tablet)
+  const touchStartRef = useRef<{
+    x: number;
+    y: number;
+    panX: number;
+    panY: number;
+    dist: number;
+    zoom: number;
+    hasMoved: boolean;
+  }>({ x: 0, y: 0, panX: 0, panY: 0, dist: 0, zoom: 1, hasMoved: false });
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button, input, select, text[class*="cursor-pointer"], g[class*="cursor-pointer"]')) {
+      return;
+    }
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      touchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        panX: pan.x,
+        panY: pan.y,
+        dist: 0,
+        zoom: zoom,
+        hasMoved: false,
+      };
+    } else if (e.touches.length === 2) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      touchStartRef.current = {
+        ...touchStartRef.current,
+        dist,
+        zoom: zoom,
+        hasMoved: true,
+      };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const dx = touch.clientX - touchStartRef.current.x;
+      const dy = touch.clientY - touchStartRef.current.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        touchStartRef.current.hasMoved = true;
+      }
+      setPan({
+        x: touchStartRef.current.panX + dx,
+        y: touchStartRef.current.panY + dy,
+      });
+    } else if (e.touches.length === 2) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const newDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      if (touchStartRef.current.dist > 0) {
+        touchStartRef.current.hasMoved = true;
+        const scaleDelta = newDist / touchStartRef.current.dist;
+        const nextZoom = Number((touchStartRef.current.zoom * scaleDelta).toFixed(2));
+        setZoom(Math.min(3.5, Math.max(0.3, nextZoom)));
+      }
+    }
+  };
+
   React.useEffect(() => {
     if (!isDragging) return;
 
@@ -270,20 +335,25 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
       <div
         ref={canvasAreaRef}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={() => {
+          touchStartRef.current.dist = 0;
+        }}
         onClick={(e) => {
-          if (dragStartRef.current.hasMoved) return;
+          if (dragStartRef.current.hasMoved || touchStartRef.current.hasMoved) return;
           const target = e.target as HTMLElement;
           if (target.closest('g.cursor-pointer, button, input, text[class*="cursor-pointer"]')) {
             return;
           }
           onSelectCell(null);
         }}
-        className={`flex-1 overflow-hidden flex items-center justify-center p-6 pb-14 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] select-none ${
+        className={`flex-1 overflow-hidden flex items-center justify-center p-2 sm:p-6 pb-16 sm:pb-14 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] select-none ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
       >
         <div
-          className="bg-white rounded-2xl shadow-xl border border-gray-200/90 p-4 w-full max-w-[860px] max-h-[640px] flex items-center justify-center will-change-transform"
+          className="bg-white rounded-2xl shadow-xl border border-gray-200/90 p-2 sm:p-4 w-full max-w-[860px] max-h-[640px] flex items-center justify-center will-change-transform"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: 'center center',
@@ -310,8 +380,8 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
       </div>
 
       {/* Bottom Guide Bar */}
-      <div className="h-8 shrink-0 z-10 bg-white/95 border-t border-gray-200 px-4 flex items-center justify-between text-[11px] text-gray-500 font-medium">
-        <div className="flex items-center gap-1.5">
+      <div className="h-8 shrink-0 z-10 bg-white/95 border-t border-gray-200 px-3 sm:px-4 flex items-center justify-between text-[10px] sm:text-[11px] text-gray-500 font-medium">
+        <div className="hidden sm:flex items-center gap-1.5 truncate">
           <span className="text-gray-400">Hướng dẫn:</span>
           <span>Click ô = chọn</span>
           <span className="text-gray-300">·</span>
@@ -320,12 +390,15 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
           <span>Scroll = zoom</span>
           <span className="text-gray-300">·</span>
           <span className="text-blue-600 font-semibold">Click số đo = sửa</span>
-          <span className="text-gray-300">·</span>
-          <span className="text-amber-600 font-semibold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-            Giữ chuột phải đố = trượt nhanh
-          </span>
         </div>
-        <div className="font-mono text-gray-400">Tỷ lệ 1:10 • {Math.round(zoom * 100)}%</div>
+        <div className="sm:hidden text-gray-400 font-medium flex items-center gap-1.5">
+          <span>🖐️ 1 ngón: di chuyển</span>
+          <span className="text-gray-300">·</span>
+          <span>👌 2 ngón: thu phóng</span>
+        </div>
+        <div className="font-mono text-gray-400 text-right ml-auto">
+          {Math.round(zoom * 100)}%
+        </div>
       </div>
     </div>
   );

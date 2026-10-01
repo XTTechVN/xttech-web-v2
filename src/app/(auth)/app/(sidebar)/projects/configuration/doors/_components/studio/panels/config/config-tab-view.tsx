@@ -26,13 +26,13 @@ export const ConfigTabView: React.FC<ConfigTabViewProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-slate-50/50 overflow-y-auto">
-      {/* Sub-tab Switcher: Cấu hình khung vs Cấu hình cánh (Matches Windova) */}
-      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200 py-3 px-6 flex items-center justify-center">
-        <div className="bg-gray-100/90 p-1 rounded-xl flex items-center gap-1 border border-gray-200 shadow-2xs">
+      {/* Sub-tab Switcher: Cấu hình khung vs Cấu hình cánh */}
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200 py-2 sm:py-3 px-3 sm:px-6 flex items-center justify-center">
+        <div className="bg-gray-100/90 p-1 rounded-xl flex items-center gap-1 border border-gray-200 shadow-2xs w-full sm:w-auto justify-center">
           <button
             type="button"
             onClick={() => setSubTab('frame')}
-            className={`px-5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-3 sm:px-5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer ${
               subTab === 'frame'
                 ? 'bg-white text-blue-900 shadow-xs ring-1 ring-black/5'
                 : 'text-gray-600 hover:text-gray-900'
@@ -44,7 +44,7 @@ export const ConfigTabView: React.FC<ConfigTabViewProps> = ({
           <button
             type="button"
             onClick={() => setSubTab('sash')}
-            className={`px-5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-3 sm:px-5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer ${
               subTab === 'sash'
                 ? 'bg-white text-emerald-800 shadow-xs ring-1 ring-black/5'
                 : 'text-gray-600 hover:text-gray-900'
@@ -57,7 +57,7 @@ export const ConfigTabView: React.FC<ConfigTabViewProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto w-full py-4 px-4">
+      <div className="max-w-4xl mx-auto w-full py-3 px-2 sm:px-4">
         {subTab === 'frame' ? (
           <ConfigFrameTab
             config={frameConfig}

@@ -55,8 +55,18 @@ export function TableDataMobile<T>({
     threshold: 300, // Kích hoạt fetch trước khi chạm đáy 300px
   });
 
-  // Gom toàn bộ items từ tất cả các trang đã tải về thành 1 mảng phẳng duy nhất
-  const items = data?.pages?.flatMap((page) => page?.items || []) || [];
+  // Gom toàn bộ items từ tất cả các trang đã tải về thành 1 mảng phẳng duy nhất & khử trùng lặp theo id nếu có
+  const rawItems = data?.pages?.flatMap((page) => page?.items || []) || [];
+  const seenIds = new Set<string | number>();
+  const items = rawItems.filter((item) => {
+    const id = (item as any)?.id;
+    if (id !== undefined && id !== null) {
+      if (seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
+    }
+    return true;
+  });
 
   if (isLoading) {
     return (
@@ -85,7 +95,7 @@ export function TableDataMobile<T>({
           {/* Danh sách các Cards */}
           <div className="flex flex-col gap-3">
             {items.map((item, index) => (
-              <div key={(item as any)?.id ?? index} className="w-full">
+              <div key={`${(item as any)?.id ?? 'item'}-${index}`} className="w-full">
                 {renderCard(item, index)}
               </div>
             ))}

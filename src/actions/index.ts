@@ -89,6 +89,5 @@ export * from './profile';
 export * from './glass';
 export * from './gasket';
 export * from './accessory-combo';
-
-
-
+export * from './brass-pattern';
+export * from './brass-ornament';

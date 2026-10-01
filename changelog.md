@@ -2,44 +2,250 @@
 
 All notable changes to the frontend project will be documented in this file.
 
-## [Unreleased] - 2026-09-29
+## [Unreleased] - 2026-10-01
+
+### Changed & Refactored
+
+- **Chuẩn Hóa Hợp Đồng Dữ Liệu Phụ Kiện & Loại Bỏ Lỗi `Phụ kiện #undefined` / `NaN đ` ([`useDoorStudioState.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/hooks/useDoorStudioState.ts), [`selected-items-panel.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/accessories/selected-items-panel.tsx)):**
+  - **Đồng bộ chuẩn hợp đồng 2 mảng độc lập:**
+    - `selectedComboIds: number[]`: Nạp và lưu danh sách ID các gói combo chuẩn gán cho cửa.
+    - `selectedAccessories: SelectedAccessoryItem[]`: Chỉ chứa phụ kiện rời thực sự (`{ accessoryId, quantity, note }`).
+  - **Khắc phục triệt để lỗi hiển thị:** Loại bỏ hoàn toàn tình trạng các combo cũ bị đọc nhầm thành phụ kiện rời gây ra các dòng `Phụ kiện #undefined`, `NaN đ`, `NaN Phụ kiện rời` và cảnh báo duplicate key trên console.
+  - **Gán `key` duy nhất an toàn:** Cập nhật key trong `SelectedItemsPanel` dạng `sel-acc-${item.accessoryId}-${idx}` ngăn chặn lỗi rendering trong mọi tình huống.
+
+- **Chuyển Đổi 100% Thương Hiệu Phụ Kiện & Phân Loại Sang Dữ Liệu Động Từ CSDL ([`types.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/accessories/types.ts), [`accessories-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/accessories-tab-view.tsx), [`useDoorStudioState.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/hooks/useDoorStudioState.ts)):**
+  - **Xóa Bỏ Mảng Tĩnh `KNOWN_BRANDS`:** Xóa hoàn toàn danh sách thương hiệu fix cứng trong code frontend. 100% thương hiệu hiển thị trên dải Filter Pills được truy vấn tự động từ bảng `brands` trong CSDL PostgreSQL qua API `getBrands({ limit: 200, isActive: true })`.
+  - **Nhận Diện Nhóm Phụ Kiện Chuẩn Xác Từ CSDL:** Hàm `detectComboCategory` phân loại chính xác dựa trên trường `combo.description` lưu chuẩn xưởng (`DANH_CHO:frame` $\rightarrow$ Khung, `DANH_CHO:sash` $\rightarrow$ Cánh, `DANH_CHO:direction` $\rightarrow$ Hướng mở), thay vì phán đoán mơ hồ theo chuỗi.
+  - **Khớp Thương Hiệu Combo Động:** `detectComboBrand` ưu tiên ánh xạ `combo.brandId` trực tiếp với bảng `brands` trong DB, kết hợp quét chi tiết từng món vật tư (`comboItems[].brandName`), đảm bảo tính chính xác tuyệt đối và tự động tương thích khi thêm/sửa hãng mới trong CSDL.
+  - **Nâng Cấp Query Limit Combo:** Tăng giới hạn query combo từ 100 lên 500 gói để tải trọn vẹn 163 combo thực tế có trong cơ sở dữ liệu.
+
+- **Tái Thiết Kế Toàn Diện Giao Diện Quản Lý Phụ Kiện Trực Quan Chuẩn Xưởng ([`accessories-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/accessories-tab-view.tsx)):**
+  - **Khắc Phục Triệt Để Khó Khăn Khi Hủy Combo:**
+    - Bổ sung bảng **"Chi tiết (X mục đã chọn)"** (`SelectedItemsPanel`) luôn hiện diện cố định ở phía dưới, liệt kê tập trung toàn bộ các combo và phụ kiện đang gán cho cửa.
+    - Cung cấp nút `[ ✕ Hủy ]` màu đỏ cạnh từng mục đã chọn: Người dùng có thể xóa/hủy bất kỳ combo nào chỉ bằng **1-click ngay tại bảng**, hoàn toàn không cần phải cuộn chuột tìm kiếm lại trong danh sách 100 combo khả dụng.
+    - Tích hợp nút `[ Hủy tất cả ]` giúp dọn sạch toàn bộ phụ kiện chỉ trong 1 thao tác.
+    - Trạng thái rỗng hiển thị thông báo hướng dẫn trực quan theo đúng mẫu tham chiếu của người dùng.
+  - **Phân Loại Cấu Trúc Cửa & Dải Nhãn Thương Hiệu:**
+    - Cụm tab phân loại nhanh: `[ 🚪 Khung ]`, `[ 🪟 Cánh ]`, `[ 🔁 Hướng mở ]`, `[ 📦 Phụ kiện lẻ ]` và `[ Tất cả combo ]`.
+    - Dải Brand Pills (`Tất cả`, `3H`, `ALVERO`, `BOGO`, `Cmech`, `Cologe`, `Draho`, `Kinlong`, `Generic`...) cho phép lọc tức thì combo theo nhà sản xuất phụ kiện.
+  - **Nút Hành Động Trực Quan Trên Từng Thẻ Combo (`ComboCard`):**
+    - Chuyển đổi checkbox nhỏ khó bấm thành nút hành động rõ nét: `[ + Thêm ]` (màu cam/vàng) khi chưa chọn và `[ ✓ Đã thêm ] / [ ✕ Bỏ chọn ]` khi đã chọn.
+  - **Tái Cấu Trúc Mã Nguồn Clean Code (Rule 3):**
+    - Phân tách file khổng lồ cũ ($539$ dòng) thành module con độc lập tại [`studio/panels/accessories/`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/accessories/):
+      - `types.ts` ($70$ dòng): Types và thuật toán nhận diện nhóm Khung/Cánh/Hướng mở & Hãng.
+      - `combo-card.tsx` ($95$ dòng): Component thẻ combo với nút Thêm/Đã thêm.
+      - `selected-items-panel.tsx` ($180$ dòng): Bảng quản lý các mục đã chọn kèm hủy nhanh.
+      - `individual-accessories-view.tsx` ($170$ dòng): Giao diện tìm kiếm và chọn phụ kiện lẻ.
+      - `accessories-tab-view.tsx` ($250$ dòng): View orchestrator chính gọn gàng, 100% tuân thủ chuẩn $< 300$ dòng.
+
+- **Tối Giản Hóa Toàn Diện Giao Diện Tab Kết Quả Bóc Tách Vật Tư ([`results-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/results-tab-view.tsx)):**
+  - **Triệt Tiêu Hoàn Toàn Màu Sắc Lòe Loẹt & Khối Thừa:**
+    - Xóa bỏ khối Banner nền gradient xanh tím to cồng kềnh (`blue-700 via-indigo-700 to-slate-800`), loại bỏ tiêu đề lớn *"Bóc tách Kỹ thuật Cắt nhôm & Kính"* và câu mô tả dài dòng không cần thiết.
+    - Xóa bỏ 3 ô thẻ KPI lớn cồng kềnh chiếm không gian dọc và toàn bộ các icon màu mè trang trí (`CheckCircle`, `Scale`, `Maximize2`, `Scissors`, emojis ⚠️).
+  - **Thanh Thông Số Kỹ Thuật Tinh Gọn 1 Dòng (Compact Technical Ribbon):**
+    - Thiết kế thanh Ribbon phẳng thanh lịch nền trắng viền xám (`bg-white border border-gray-200 rounded-lg px-4 py-2.5`), hiển thị thẳng hàng các thông số cốt lõi: Kích thước ($W \times H\text{ mm}$), Diện tích ($\text{m}^2$), Khối lượng nhôm ($\text{kg}$), Diện tích kính ($\text{m}^2$), Tổng thanh cắt xưởng ($\text{thanh}$) và Tỷ trọng ($\text{kg/m}^2$) với phông chữ kỹ thuật monospace sắc nét.
+  - **Cảnh Báo Cấu Hình Tối Giản (Minimalist Issue Alert):**
+    - Chuyển đổi khối cảnh báo vàng dày cộp sang thanh thông báo phẳng, viền mảnh thanh lịch, liên kết điều hướng text đơn giản `Cấu hình nhôm →` và `Chọn phụ kiện & ke →` không màu mè.
+  - **Bảng Cắt Nhôm & Kính Chuẩn Mực Xưởng:**
+    - Đồng bộ bảng dữ liệu với tone màu trung tính, loại bỏ các badge và màu chữ phân mảnh (tím, xanh lá, vàng, cam), đưa số lượng và thông số kỹ thuật về màu đen đậm rõ ràng, giúp kỹ sư xưởng đọc số đo cắt nhanh chóng, trực quan.
+
+## [Unreleased] - 2026-09-30
+
+### Added & Enhanced
+
+- **Tối Ưu Trải Nghiệm Studio Thiết Kế Cửa Trên Điện Thoại & Máy Tính Bảng (Mobile & Tablet CAD Experience):**
+  - **Triết Lý "Canvas is the Hero" (Vùng Vẽ CAD Chiếm Trọn 100% Màn Hình):**
+    - **Desktop ($\ge 1024\text{px}$):** Giữ nguyên vẹn 100% bố cục 3 cột (`ToolboxLeft` $320\text{px}$ + `CanvasCadView` flex-1 + `Right Inspector / BOM` $340\text{px}$).
+    - **Mobile & Tablet ($< 1024\text{px}$):** Bản vẽ CAD chiếm $100\%$ chiều rộng và chiều cao hiển thị. Cột công cụ và bảng thuộc tính được chuyển hóa thành hệ thống **Floating Action Bar & Bottom Sheet Drawer**.
+  - **Thanh Điều Hướng Nổi (Floating Island Bar) Tiện Dụng Ở Đáy:**
+    - Cố định nổi trên Canvas với phong cách Glassmorphism (`backdrop-blur-md bg-slate-900/90 shadow-2xl rounded-full`).
+    - Tích hợp 2 nút thao tác nhanh `[ ↩️ Hoàn tác ]` & `[ ↪️ Làm lại ]`.
+    - 3 nút mở ngăn kéo Bottom Sheet linh hoạt: `[ 🛠️ Vẽ cửa ]` (chỉnh kích thước W/H, màu nhôm, màu phụ kiện, hình dạng khung, chia đố, ghép khung), `[ 🔍 Ô kính ]` (chọn ô kính, chia đố con, đổi loại cánh, nẹp kính), `[ 📊 BOM ]` (xem kết quả bóc tách nhanh).
+  - **Bottom Sheet Drawer Tương Tác Thời Gian Thực (Live Reactive):**
+    - Trượt mượt mà từ đáy màn hình lên với chiều cao thích ứng $60\text{vh}$, nửa trên màn hình vẫn luôn hiển thị bản vẽ CAD. Mọi thay đổi về thông số hay vật liệu trong Drawer lập tức render cập nhật ngay trên bản vẽ CAD ở nửa trên.
+    - **Chạm Chọn Ô Tự Động Kích Hoạt Drawer:** Khi người dùng chạm ngón tay vào một ô kính trên Canvas CAD, Drawer "Thuộc tính ô" tự động trượt lên để chỉnh sửa tức thì mà không cần tìm nút bấm.
+    - Tích hợp thanh chuyển tab nhanh ngay trong header Drawer (`Vẽ cửa ↔ Ô kính ↔ BOM`) kèm nút đóng `✕`.
+  - **Hỗ Trợ Cảm Ứng Đa Điểm Chuẩn CAD (Multi-touch Gestures):**
+    - **1 Ngón Tay (Touch Pan):** Vuốt nhẹ trên nền bản vẽ để di chuyển (Pan) bản vẽ CAD mượt mà theo mọi hướng.
+    - **2 Ngón Tay (Pinch Zoom):** Thao tác chụm/mở 2 ngón tay để phóng to/thu nhỏ (Pinch-to-zoom) tỷ lệ bản vẽ CAD chính xác và trực quan.
+  - **Tối Ưu Toàn Diện Header, Body & Footer Của Modal Studio:**
+    - **Header Tabs:** Hỗ trợ cuộn ngang (`overflow-x-auto no-scrollbar whitespace-nowrap`), chống tràn và chống đè lên nút đóng `✕`.
+    - **Body Modal:** Loại bỏ hack âm `h-[80vh] -m-4`, chuyển sang kiến trúc Flexbox `flex-1 h-full overflow-hidden` vừa khít 100% mọi kích cỡ màn hình.
+    - **Footer Modal:** Ẩn bớt mô tả dài trên màn hình nhỏ, 2 nút "Đóng" và "Lưu thiết kế" căn chỉnh linh hoạt, kích thước vừa vặn cho ngón tay cái.
+    - **Các Tab Khác (Info, Config, Results, Accessories):** Tự động dàn layout từ 2-3 cột sang 1 cột linh hoạt trên màn hình hẹp, bảng phụ kiện lẻ hỗ trợ cuộn ngang chống vỡ giao diện.
+  - **Tối Ưu Modal Thiết Kế Kính Nan Đồng (`GlassGrilleModal`):**
+    - Áp dụng kiến trúc Canvas Hero: trên điện thoại/máy tính bảng, vùng vẽ kính nan đồng chiếm trọn $100\%$ màn hình thay vì bị 2 cột ép bóp nghẹt làm mất canvas.
+    - Thanh Floating Pill Bar tích hợp nút mở Bottom Sheet: `[ 📐 Kích thước & Lưới nan ]` và `[ 🌸 Hoa văn & Mẫu nan ]`.
+    - Header modal gọn gàng: nút *"Hủy"* và nút *"Áp dụng"* không bị bẻ rớt dòng `whitespace-nowrap`.
+  - **Tối Ưu Tab Cấu Hình Khung & Cánh (`ConfigTabView`):**
+    - Ẩn triệt để thanh cuộn ngang xám dày cộm (`no-scrollbar`) trên header.
+    - Nút chọn kiểu khung (*Khung kín 4 cạnh* / *Khung hở 3 cạnh*) và đố chia chuyển sang `grid-cols-1 sm:grid-cols-2/3` không bị co ép chữ.
+  - **Tối Ưu Tab Quản Lý Phụ Kiện (`AccessoriesTabView`):**
+    - Header banner chuyển sang layout `flex-col sm:flex-row`, tiêu đề và nút Sub-tab không còn đè ép nhau.
+    - Thanh tổng tiền tạm tính ở chân trang (Footer) hiển thị chuẩn mực, không bị rớt dòng số tiền và đơn vị `đ`.
+
+### Refactored & Architecture Optimization
+
+- **Chuẩn Hóa Dữ Liệu Nan & Dọn Sạch Từ Khóa Hệ Thống:**
+  - **Loại Bỏ Hoàn Toàn Dữ Liệu Fallback Tĩnh Mẫu Nan & Hoa Văn:**
+    - Xóa bỏ mảng tĩnh `DEFAULT_WINDOVA_TEMPLATES` trong [`types.ts`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/types.ts>).
+    - Cập nhật [`useGlassGrilleState.ts`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/hooks/useGlassGrilleState.ts>) lấy 100% mẫu nan từ CSDL (`brass_patterns`); không tự động gán đè 4 hoa văn mẫu hardcoded khi mở ô kính mới mà để rỗng `motifs: []` theo đúng dữ liệu thực tế.
+  - **Loại Bỏ Triệt Để Tất Cả Các Từ "Windova" Khỏi Toàn Bộ Giao Diện & Mã Nguồn:**
+    - Chuẩn hóa text hiển thị UI: "nan", "mẫu nan", "hoa văn nan đồng", "Thiết kế Kính nan đồng", "Mở Studio thiết kế cửa", "Gán 4 góc đối xứng".
+    - Thay thế các tên component và alias `WindovaMotifSvg` $\rightarrow$ `GrilleMotifSvg`, `WINDOVA_MOTIF_DEFS` $\rightarrow$ `MOTIF_DEFS`.
+  - **Đồng Bộ & Nâng Cấp Thumbnail Preview Mẫu Nan 1:1 Với Bản Vẽ Thực Tế:**
+    - Cập nhật [`grille-template-mini-preview.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/components/grille-template-mini-preview.tsx>) hiển thị trực tiếp biểu tượng hoa văn CAD thật (`GrilleMotifSvg`) thay vì chấm tròn đơn sơ bị che khuất.
+    - Thêm nền mask ngắt nan chuẩn CAD giúp hoa văn nổi bật rõ ràng, không bị nan lưới đè qua.
+    - Giới hạn các nan lưới chia ô nằm gọn bên trong lòng khung viền khi mẫu có nan viền lề (`hasBorder`), khắc phục tình trạng nan đâm thủng viền kính.
+
+- **Tái Cấu Trúc Toàn Diện Module Cửa (`doors`) Chuẩn Kiến Trúc Doanh Nghiệp (Lộ Trình A):**
+  - **Khắc Phục Điểm Nóng Số 1 - `glass-grille-modal.tsx` (Từ 2.785 Dòng $\rightarrow$ Dưới 190 Dòng):**
+    - Phân tách thành module con độc lập tại [`panels/glass-grille/`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/>):
+      - [`hooks/useGlassGrilleState.ts`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/hooks/useGlassGrilleState.ts>): Đóng gói toàn bộ logic React Query, tương tác kéo thả nan/hoa văn CAD, tính toán vật tư và đồng bộ state.
+      - [`components/grille-canvas.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/components/grille-canvas.tsx>): Canvas SVG render nan và hoa văn đục lỗ mask.
+      - [`components/grille-cad-dimensions.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/components/grille-cad-dimensions.tsx>): Hệ thống đường gióng kích thước CAD và badge kích thước tương tác.
+      - [`components/grille-left-panel.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/components/grille-left-panel.tsx>): Panel bên trái quản lý lưới nan, viền, góc, đơn giá và hoa văn đang chọn.
+      - [`components/grille-right-panel.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/components/grille-right-panel.tsx>): Thư viện hoa văn và mẫu nan lưu trong Database.
+      - [`components/grille-dim-dialog.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/components/grille-dim-dialog.tsx>): Popover chỉnh sửa kích thước đường gióng CAD trực tiếp.
+      - Giữ nguyên [`panels/glass-grille-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille-modal.tsx>) làm proxy re-export đảm bảo 100% tương thích ngược.
+  - **Khắc Phục Điểm Nóng Số 2 - `studio-modal.tsx` (Từ 1.161 Dòng $\rightarrow$ 235 Dòng):**
+    - Trích xuất toàn bộ thuật toán thao tác cây Scene Graph (`updateNode`, `findNode`, `findParentNode`, `rescaleTree`, `applySashTypeToCluster`, `resizeCellInParent`...) sang [`utils/door-tree-utils.ts`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/utils/door-tree-utils.ts>).
+    - Tạo custom hook [`hooks/useDoorStudioState.ts`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/hooks/useDoorStudioState.ts>) đóng gói toàn bộ state lịch sử Undo/Redo, mutations, queries và handlers.
+    - File [`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>) trở thành View Component gọn gàng, trong sáng (< 250 dòng).
+  - **Khắc Phục Điểm Nóng Số 3 - `modals.tsx` (Từ 676 Dòng $\rightarrow$ Phân Tách Thư Mục `modals/`):**
+    - Phân tách 3 modal riêng biệt vào [`_components/modals/`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/modals/>):
+      - [`door-create-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/modals/door-create-modal.tsx>) (< 230 dòng).
+      - [`door-update-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/modals/door-update-modal.tsx>) (< 280 dòng).
+      - [`door-delete-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/modals/door-delete-modal.tsx>) (< 40 dòng).
+    - Duy trì [`_components/modals.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/modals.tsx>) re-export proxy đảm bảo tương thích 100%.
+  - **Khắc Phục Điểm Nóng Số 4 - `bom-modal.tsx` (Từ 559 Dòng $\rightarrow$ Dưới 220 Dòng):**
+    - Tách các bảng bóc tách thành các component con tại [`_components/bom/`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/bom/>):
+      - `BomBarsTable` (cắt nhôm), `BomBeadsTable` (cắt nẹp), `BomGlassTable` (đặt kính), `BomJointsTable` (liên kết góc), `BomGrillesTable` (kính nan đồng).
+  - **Khắc Phục Điểm Nóng Số 5 - `results-tab-view.tsx` (Từ 512 Dòng $\rightarrow$ Dưới 250 Dòng):**
+    - Trích xuất hàm kiểm tra cấu hình [`detectProfileIssues`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/utils/detect-profile-issues.ts>) sang file utility dùng chung.
+  - **Bảo Đảm Tuyệt Đối:**
+    - Giữ nguyên 100% giao diện, phong cách thẩm mỹ và toàn bộ hành vi/chức năng nghiệp vụ.
+    - 0 lỗi TypeScript (`npx tsc --noEmit` đạt Exit Code 0).
+    - Toàn bộ component tuân thủ nghiêm ngặt quy chuẩn Clean Code (không file nào vượt quá 300 dòng).
+
+### Added & Enhanced
+
+- **Lưu Danh Mục & Đơn Giá Hoa Văn Nan Đồng Vào CSDL & Cấu Hình Đơn Giá Từng Hoa Văn Riêng Biệt ([`glass-grille-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille-modal.tsx>), [`brass-ornament/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/brass-ornament/index.ts)):**
+  - **Tích Hợp API Danh Mục Hoa Văn CSDL (`/api/v1/brass-ornaments`):**
+    - Tạo client action `getBrassOrnaments` gọi backend lấy danh mục hoa văn chuẩn kèm đơn giá lưu trong Database (`chu_van`: 150.000 đ, `kim_cuong_vuong`: 95.000 đ, `tram_kim_cuong`: 380.000 đ).
+    - Hiển thị badge đơn giá CSDL nổi bật ngay trên từng thẻ hoa văn ở cột Thư viện bên phải (`150.000 đ/con`, `95.000 đ/con`, `380.000 đ/con`) kèm kích thước milimet.
+  - **Tự Động Điền Đơn Giá Chuẩn (`Auto-fill`) Khi Chọn / Gán Hoa Văn:**
+    - Khi bấm _"Gán 4 góc chuẩn Windova"_, click vào giao điểm trống hoặc kéo thả hoa văn vào ô kính, từng con hoa văn tự động được gán giá chuẩn của loại hoa văn đó từ CSDL, không còn bị cào bằng giá chung.
+  - **Click Chọn Trực Tiếp Con Hoa Văn Trên Bản Vẽ CAD:**
+    - Sửa sự kiện click trên vector hoa văn: Luôn kích hoạt `setSelectedMotifId(m.id)` để chọn con hoa văn đó (không tự động ghi đè bằng cọ đang cầm).
+    - Làm nổi bật con hoa văn được chọn bằng khung viền cam `#f59e0b`, 4 chấm neo định vị góc CAD và badge giá nhỏ hiển thị trực tiếp bên dưới con hoa văn.
+  - **Thẻ Vàng "Hoa văn đang chọn" Ở Cột Trái:**
+    - Tự động cuộn mượt (smooth scroll) đến thẻ vàng khi click chọn hoa văn trên CAD.
+    - Hiển thị thông tin giao điểm, kích thước, tên hiển thị, phụ kiện liên kết từ kho CSDL.
+    - Cho phép người dùng trực tiếp điều chỉnh đơn giá riêng cho từng con hoa văn (`activeMotif.price`), tự động tính lại tổng tiền nan kính dự toán trong BOM.
+
+### Fixed
+
+- **Khắc Phục Lỗi Click Vào Hoa Văn/Nan Bị Biến Mất - Chuyển Hoàn Toàn Sang Cơ Chế Chọn & Điền Thông Tin Cột Trái ([`useGlassGrilleState.ts`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/hooks/useGlassGrilleState.ts>), [`grille-canvas.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille/components/grille-canvas.tsx>)):**
+  - **Nguyên nhân gốc rễ (Root Cause):**
+    1. Trong hàm `handleAssignOrReplaceMotifAtCell`, khi người dùng bấm chuột vào giao điểm đã có hoa văn và loại hoa văn đó trùng với công cụ active (`activeMotifTool`), mã nguồn cũ kích hoạt logic gỡ bỏ hoa văn (`setMotifs.filter...`), dẫn đến việc hoa văn bị biến mất.
+    2. Trong `grille-canvas.tsx`, khung chữ nhật bao ngoài hoa văn để `fill="none"` khiến sự kiện click chuột xuyên qua vùng trống rơi vào vòng tròn giao điểm ở lớp dưới.
+  - **Giải pháp xử lý:**
+    - Cập nhật `handleAssignOrReplaceMotifAtCell`: Khi người dùng click chuột thông thường vào giao điểm đã có hoa văn, hệ thống **CHỈ CHỌN (`setSelectedMotifId(existing.id)`) để fill toàn bộ thông tin lên thẻ chi tiết ở cột bên trái**, tuyệt đối không xóa/làm biến mất hoa văn (việc thay thế chỉ kích hoạt khi người dùng chủ động kéo thả hoa văn mới vào).
+    - Cập nhật `grille-canvas.tsx`: Đặt `pointerEvents="all"` và `fill="transparent"` cho khung bao hoa văn, đồng thời tại điểm snap giao điểm, nếu đã có `existing` thì click sẽ chọn hoa văn đó thay vì gọi hàm gán lại.
+
+- **Khắc Phục Lỗi Hàm Không Thuần Khiết (`Cannot call impure function Date.now during render`) ([`glass-grille-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille-modal.tsx>)):**
+  - Loại bỏ hoàn toàn 100% các lệnh gọi hàm không thuần khiết `Date.now()` trong việc sinh định danh hoa văn nan kính (`handleAssignOrReplaceMotifAtCell`, `handleAssignFourSymmetricCorners`, `handleApplyTemplate`).
+  - Thay thế bằng cơ chế sinh định danh xác định (**Deterministic ID**) dựa trên vị trí cột và hàng của lưới nan (`motif_c${colIdx}_r${rowIdx}`) và mã mẫu template (`motif_tpl_${tpl.id}_${col}_${row}`).
+  - Đảm bảo 100% tuân thủ quy chuẩn Pure/Idempotent của React Compiler / React 19, triệt tiêu hoàn toàn cảnh báo Console và tối ưu hóa cơ chế DOM Reconciliation / React Key.
+
+- **Khử Trùng Lặp Bản Ghi & Phòng Vệ Key Trùng Trong Cuộn Vô Hạn ([`table-data-mobile.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-data-mobile.tsx)):**
+  - Thêm bước deduplicate bằng `Set` theo thuộc tính `id` khi gộp mảng `pages.flatMap()` trong `useInfiniteQuery`.
+  - Kết hợp `id` và `index` cho thuộc tính `key={`${(item as any)?.id ?? 'item'}-${index}`}` để đảm bảo không bao giờ phát sinh cảnh báo trùng React key trong Console khi cuộn tải trang trên Mobile.
+
+- **Khắc Phục Lỗi Thứ Tự Hook React (Rules of Hooks) ([`glass-grille-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille-modal.tsx>)):**
+  - Chuyển logic tính toán tổng mét nan (`totalM`) và giá tạm tính (`estimatedTotalPrice`) sang tính toán trực tiếp thay vì bọc trong `useMemo` đặt sau lệnh return sớm (`if (!isOpen || !cell) return null;`), loại bỏ hoàn toàn cảnh báo lỗi _React has detected a change in the order of Hooks called by GlassGrilleModal_.
+
+- **Khắc Phục Lỗi Nan Đồng Chạy Xuyên Vào Trong Hoa Văn & Cải Tiến Kích Thước Bản Vẽ CAD ([`glass-grille-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille-modal.tsx>), [`cad-rectangular-leaf.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-rectangular-leaf.tsx>)):**
+  - **Áp Dụng SVG Mask Đục Lỗ Ngắt Nan Tự Động Tại Mép Hoa Văn:**
+    - Tạo `<mask id="grille-bars-mask">` (trong modal thiết kế) và `grille-leaf-mask-...` (ngoài CAD Studio cánh cửa), tự động đục lỗ che các thanh nan dọc/ngang tại toàn bộ vị trí hoa văn đúc (`tram_kim_cuong` quả trám búp sen, `kim_cuong_vuong` hình thoi, `chu_van` cuốn thư chữ Vạn).
+    - Các thanh nan dừng tiếp xúc chính xác tại mép ngoài hoa văn, giải quyết triệt để lỗi nan vàng chạy cắt xuyên qua tâm và lộ ra bên trong các khoảng rỗng của hoa văn đúc đồng.
+  - **Tăng Kích Thước Chữ Số Đường Gióng CAD To Rõ & Thiết Kế Badge Pill Nền Trắng:**
+    - Tính toán cỡ chữ động `dimFontSize` (từ 22px đến 30px+ theo tỷ lệ kính), tăng hơn 2.3 lần so với trước (không còn bị bé tí lí nhí khó nhìn).
+    - Bọc từng con số kích thước trong Badge Pill hình chữ nhật bo tròn nền trắng viền xanh dương `#0284c7` sắc nét, các số phía bên phải được đặt thẳng ngang tự nhiên, không bị xoay ngược 90 độ gây khó đọc.
+  - **Chỉnh Sửa Kích Thước Trực Tiếp Bằng Cách Bấm Vào Số Kích Thước Trên Bản Vẽ:**
+    - Người dùng có thể click chuột trực tiếp vào bất kỳ con số kích thước nào (khoang cột đáy, khoang hàng bên phải, lề viền nan, chiều dài góc).
+    - Hệ thống mở Popover/Modal nhỏ ngay tại chỗ cho phép nhập số mm mong muốn (hỗ trợ phím Enter để xác nhận nhanh).
+    - Tự động dịch chuyển nan dọc/ngang tương ứng, đồng bộ đối xứng qua tâm khi chế độ _Khóa đối xứng_ đang bật, và tự động kéo theo các con hoa văn gắn ở giao điểm.
+
+- **Bổ Sung Cấu Hình Bản Rộng Nan Đồng & Đơn Giá Vật Tư BOM ([`glass-grille-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille-modal.tsx>)):**
+  - **Bộ Chọn Bản Rộng Nan (`barWidth`):** Bổ sung cụm nút bấm chọn nhanh các kích thước nan chuẩn xưởng (6mm, 8mm, 10mm, 12mm, 18mm) kèm ô nhập mm tùy ý, liên kết tự động làm dày/mỏng đường nan trực tiếp trên bản vẽ CAD.
+  - **Cấu Hình Đơn Giá Vật Tư Nan Đồng (Tính BOM):** Bổ sung 2 ô nhập đơn giá thanh nan (`unitPricePerM` theo đ/m) và đơn giá hoa văn mặc định (`motifUnitPrice` theo đ/con), tính toán và hiển thị ngay tổng mét dài (đã bù 5% hao hụt) và thành tiền tạm tính của tấm kính ngay tại cột trái.
+  - **Thẻ Kích Thước Kính Tinh Gọn:** Hiển thị trực quan kích thước kính, bản nan kèm chấm màu thực tế, tổng mét nan và chi phí dự toán.
+
+### Added & Enhanced (Windova Standard - Interactive Drag & Drop Glass Grille with Symmetric Locking & Authentic Windova API Motifs)
+
+- **Nâng Cấp Thiết Kế Kính Nan Đồng & Trích Xuất Dữ Liệu Gốc Từ Windova API ([`glass-grille-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille-modal.tsx>), [`grille-motif-svgs.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/grille-motif-svgs.tsx>), [`cad-rectangular-leaf.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-rectangular-leaf.tsx>), [`studio-types.ts`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-types.ts>)):**
+  - **Tích Hợp 100% Vector Đúc Chuẩn Từng Milimet Từ Windova API (`/api/brass-ornaments`):**
+    - Trích xuất trực tiếp đường vector khép kín (`filled-path` với `fillRule="evenodd"`) từ API Windova chính thức của 3 mẫu hoa văn đúc đồng:
+      1. _Hoa văn cuốn thư chữ Vạn (`chu_van` - Windova ID 1)_: Kích thước $95.9 \times 95.89$ mm, viewBox `0 0 95.900 95.889` (Hoa văn cuốn thư cổ điển đúc đồng - Cột trái Ảnh 2 Windova).
+      2. _Hình thoi kim cương vuông (`kim_cuong_vuong` - Windova ID 3)_: Kích thước $105.86 \times 105.86$ mm, viewBox `0 0 105.859 105.859` (Hình thoi kim cương vuông - Cột phải Ảnh 2 Windova).
+      3. _Phù điêu trám kim cương lớn (`tram_kim_cuong` - Windova ID 4)_: Kích thước $280.1 \times 437.6$ mm, viewBox `0 0 280.103 437.604` (Phù điêu trám kim cương lớn - Ảnh 3 Windova).
+    - Cập nhật cả modal thiết kế lẫn renderer cánh cửa 2D CAD ngoài màn hình Studio sử dụng component `WindovaMotifSvg` đồng nhất.
+  - **Cơ Chế Click & Kéo Thả (Drag & Drop) Thay Thế Hoa Văn Trực Tiếp Tại Giao Điểm:**
+    - Người dùng có thể kéo thả (Drag & Drop) trực tiếp hoa văn từ thư viện bên phải vào bất kỳ ô giao nhau nào trên bản vẽ để gán/thay thế hoa văn.
+    - Click vào bất kỳ giao điểm nào (kể cả đã có hay chưa có hoa văn): Hệ thống sẽ thay thế trực tiếp hoa văn tại giao điểm đó bằng hoa văn đang kích hoạt làm cọ vẽ (click lại chính loại hoa văn đó để gỡ bỏ).
+  - \*_Nút Tiện Ích _"Gán 4 góc chuẩn Windova"_:_ Tự động gán cặp đối xứng: 2 con `chu_van` cột trái + 2 con `kim_cuong_vuong` cột phải đúng chuẩn theo mẫu Windova `nan 01`.
+  - **Kéo Thả Trực Quan & Khóa Đối Xứng (Symmetric Locking):**
+    - Mặc định bật chế độ _"Khóa đối xứng"_ (`isSymmetric = true`): Khi kéo nan dọc/ngang bất kỳ, nan đối diện tự động phản chiếu qua tâm tấm kính (đảm bảo khoảng giữa luôn cân đối đối xứng như mẫu Windova $184 | 172 | 184$), kèm toggle bật/tắt để chỉnh lệch tự do khi cần.
+  - **Tái Thiết Kế Giao Diện Thư Viện Mẫu Nan (Templates UI Redesign):**
+    - Sửa triệt để lỗi chữ tràn và nút thao tác "Dùng →" bị đè / mờ mờ sau văn bản.
+    - Bổ sung **Thumbnail CAD Mini Vector trực quan** (`GrilleTemplateMiniPreview`) cho từng mẫu nan trong danh sách (thể hiện trực quan khung kính, nan viền, nan góc, các đường nan dọc/ngang và các con hoa văn).
+    - Hiển thị hệ thống thẻ tag / badge thông số rõ ràng: Tỷ lệ cột $\times$ hàng, Lề viền nan, Số lượng con hoa văn đính kèm.
+    - Cụm nút bấm _"Dùng"_ riêng biệt dạng solid button (Amber gold), kèm nút _"Xóa"_ (`Trash2`) cho các mẫu do người dùng tự lưu.
+    - Nâng cấp `handleApplyTemplate` và `handleSaveTemplate`: Bảo toàn 100% dữ liệu hoa văn (`motifs`), tự động map và căn chỉnh tọa độ hoa văn khớp với kích thước kính thực tế của ô cửa.
+
+## [2.1.3] - 2026-09-29
 
 ### Added & Enhanced (Windova CAD Studio - Decorative Glass Grille & Motifs with Dynamic Pricing & DB Accessories)
+
 - **Tính năng Trang Trí Kính Nan Đồng & Hoa Văn Vector Chuẩn Phong Cách Windova:**
-  - **Modal Thiết Kế CAD 3 Cột Chuyên Nghiệp ([`glass-grille-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille-modal.tsx)):**
+  - **Modal Thiết Kế CAD 3 Cột Chuyên Nghiệp ([`glass-grille-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/glass-grille-modal.tsx>)):**
     - Cột 1 (Thiết lập nan & Thông số): Bật/tắt nan, chọn màu sắc nan đồng (Vàng Gold, Bạc Silver, Trắng, Đen, Đồng cafe), bề rộng nan (6mm, 8mm, 10mm, 18mm), tùy chỉnh chia lưới (hàng/cột), nan viền chu vi, nan góc hoa thị với đường gióng thực tế.
     - Cột 2 (Interactive CAD SVG Canvas): Vẽ trực quan ô kính theo milimet thực tế, đường gióng CAD kích thước lọt lòng và kích thước chia nan, hỗ trợ Zoom in/out, Pan, Undo/Redo, và click/drag tương tác thêm con hoa văn.
     - Cột 3 (Thư viện hoa văn & Mẫu nan dựng sẵn): Cung cấp sẵn 3 con hoa văn đúc vector SVG chuẩn ngành cửa: Hoa 4 cánh đối xứng (`flower_classic`), Hình thoi hoàng gia (`rhombus`), Búp hoa sen cổ điển (`lotus`), cùng 4 mẫu nan phong cách (Cổ điển, Hình thoi sang trọng, Hoa sen tâm điểm, Hoàng gia cao cấp).
-    - Hỗ trợ nút *"Áp dụng cho tất cả cánh kính"* hoặc chỉ áp dụng riêng cho ô kính đang chọn.
+    - Hỗ trợ nút _"Áp dụng cho tất cả cánh kính"_ hoặc chỉ áp dụng riêng cho ô kính đang chọn.
   - **Cấu Hình Đơn Giá Động & Liên Kết Kho Phụ Kiện CSDL (Database Accessories Linking):**
-    - Không fix cứng đơn giá trong mã nguồn: Cho phép người dùng tùy chỉnh trực tiếp *"Đơn giá nan đồng (đ/m)"* và *"Đơn giá hoa văn chung (đ/con)"*.
+    - Không fix cứng đơn giá trong mã nguồn: Cho phép người dùng tùy chỉnh trực tiếp _"Đơn giá nan đồng (đ/m)"_ và _"Đơn giá hoa văn chung (đ/con)"_.
     - Khi click chọn từng con hoa văn trên bản vẽ CAD: Hiển thị thanh thuộc tính chi tiết, cho phép chọn liên kết trực tiếp với phụ kiện có sẵn trong CSDL (`accessories`), tự động lấy mã phụ kiện (`accessoryCode`), tên và đơn giá kho, hoặc nhập đơn giá riêng cho từng con hoa văn.
-  - **Tích Hợp CAD Renderer 2D ([`cad-rectangular-leaf.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-rectangular-leaf.tsx)):**
+  - **Tích Hợp CAD Renderer 2D ([`cad-rectangular-leaf.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-rectangular-leaf.tsx>)):**
     - Tự động vẽ nan chia lưới, nan viền, nan góc và các con hoa văn trực tiếp lên ô kính (cả hệ cánh đơn, vách kính cố định và hệ cánh đôi có đố động).
-  - **Thanh Công Cụ Ô Kính ([`cell-inspector.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/cell-inspector.tsx)):**
-    - Bổ sung Card "Kính nan đồng" hiển thị tóm tắt cấu hình hiện tại (màu sắc, bề rộng nan, hoa văn), nút *"Thiết kế"* mở modal Windova và nút *"Căn tim nan"* tự động cân đối nan theo tỷ lệ ô kính.
-  - **Thống Kê Bóc Tách Vật Tư BOM Nan Đồng ([`bom-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/bom-modal.tsx), [`bom-sidebar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/bom-sidebar.tsx), [`results-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/results-tab-view.tsx)):**
+  - **Thanh Công Cụ Ô Kính ([`cell-inspector.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/cell-inspector.tsx>)):**
+    - Bổ sung Card "Kính nan đồng" hiển thị tóm tắt cấu hình hiện tại (màu sắc, bề rộng nan, hoa văn), nút _"Thiết kế"_ mở modal Windova và nút _"Căn tim nan"_ tự động cân đối nan theo tỷ lệ ô kính.
+  - **Thống Kê Bóc Tách Vật Tư BOM Nan Đồng ([`bom-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/bom-modal.tsx>), [`bom-sidebar.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/bom-sidebar.tsx>), [`results-tab-view.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/results-tab-view.tsx>)):**
     - Bổ sung Tab và bảng bóc tách chi tiết: Chiều dài nan lưới (m), nan viền (m), nan góc (m), tổng mét dài có bù hao hụt cắt 5%, số lượng con hoa văn, đơn giá và tổng chi phí gia công nan đồng.
-  - **Linh Hoạt Cấu Hình Cạnh Dưới Khung Bao & Ngưỡng Sàn ([`config-frame-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/config/config-frame-tab.tsx)):**
-    - Mở rộng dropdown Cạnh Dưới: Phân nhóm rõ ràng giữa *Khung bao tiêu chuẩn (FRAME)* và *Ngưỡng sàn / Thanh phụ khác (OTHER / SILL)*, cho phép thợ xưởng tự do gán đích danh thanh ngưỡng nhôm dẹt (như `JP-AC713`).
-    - Bổ sung ô chọn tùy chọn *Ốp chân ngưỡng / nẹp phụ đi kèm* (`coverProfileId`) cho phép bốc kèm thanh ốp phụ (như `JP-AC714`) vào danh sách cắt vật tư BOM.
+  - **Linh Hoạt Cấu Hình Cạnh Dưới Khung Bao & Ngưỡng Sàn ([`config-frame-tab.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/config/config-frame-tab.tsx>)):**
+    - Mở rộng dropdown Cạnh Dưới: Phân nhóm rõ ràng giữa _Khung bao tiêu chuẩn (FRAME)_ và _Ngưỡng sàn / Thanh phụ khác (OTHER / SILL)_, cho phép thợ xưởng tự do gán đích danh thanh ngưỡng nhôm dẹt (như `JP-AC713`).
+    - Bổ sung ô chọn tùy chọn _Ốp chân ngưỡng / nẹp phụ đi kèm_ (`coverProfileId`) cho phép bốc kèm thanh ốp phụ (như `JP-AC714`) vào danh sách cắt vật tư BOM.
 
 ### Fixed
-- **Đồng Bộ Hai Chiều & Sửa Lỗi Hiển Thị Phân Loại Thanh Profile ([`profile-bar-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-bar-modal.tsx), [`profile-bar-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-bar-table.tsx)):**
+
+- **Đồng Bộ Hai Chiều & Sửa Lỗi Hiển Thị Phân Loại Thanh Profile ([`profile-bar-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-bar-modal.tsx>), [`profile-bar-table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-bar-table.tsx>)):**
   - Sửa lỗi dropdown phân loại thanh profile bị rỗng khi mở modal Chỉnh sửa: Chuẩn hóa toàn bộ `BAR_TYPE_OPTIONS` sang định dạng in hoa chuẩn quốc tế (`FRAME`, `SASH`, `MULLION`, `BEAD`, `TRACK`, `COVER`, `CORNER`, `OTHER`).
   - Tự động chuẩn hóa `toUpperCase()` khi reset nạp dữ liệu vào form và khi submit lưu payload API xuống CSDL.
   - Cập nhật từ điển `BAR_TYPE_MAP` tại bảng danh sách thanh profile để hiển thị tên tiếng Việt chính xác.
 
 ### Removed & Cleaned (Code Hygiene - Rule 13 Strict Compliance)
+
 - **Loại Bỏ 100% Fallback Kép (`camelCase ?? snake_case`) Dư Thừa Trên Toàn Bộ Frontend:**
   - Dọn sạch các fallback kép che giấu lỗi schema và trùng lặp type tại:
-    - [`live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx)
-    - [`shifts/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/shifts/page.tsx)
-    - [`leave-requests/_components/leave-request-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/leave-requests/_components/leave-request-modal.tsx)
-    - [`leave-requests/_components/leave-request-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/leave-requests/_components/leave-request-table.tsx)
-    - [`departments/[id]/_components/members/members-section.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/departments/[id]/_components/members/members-section.tsx)
-    - [`employees/_components/position-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/employees/_components/position-modal.tsx)
-    - [`dashboard/_components/system-history.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/system-history.tsx)
+    - [`live-map/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx>)
+    - [`shifts/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/shifts/page.tsx>)
+    - [`leave-requests/_components/leave-request-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/leave-requests/_components/leave-request-modal.tsx>)
+    - [`leave-requests/_components/leave-request-table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/leave-requests/_components/leave-request-table.tsx>)
+    - [`departments/[id]/_components/members/members-section.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/departments/[id]/_components/members/members-section.tsx>)
+    - [`employees/_components/position-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/employees/_components/position-modal.tsx>)
+    - [`dashboard/_components/system-history.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/system-history.tsx>)
     - [`actions/report/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/report/index.ts)
     - [`actions/customer/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/customer/index.ts)
     - [`types/customer.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/customer.ts), [`types/report.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/report.ts), [`stores/useLeaveRequestStore.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/stores/useLeaveRequestStore.ts).
@@ -47,32 +253,35 @@ All notable changes to the frontend project will be documented in this file.
 ## [2.1.2] - 2026-09-28
 
 ### Added & Enhanced (Windova CAD Studio - Right-Click Interactive Drag Resizer for Mullions & Frame Couplings)
+
 - **Tương Tác Kéo Chuột Phải Di Chuyển Nhanh Đố & Vách Tách Khung (Interactive Drag Resizing):**
   - **Trải nghiệm giống Windova:** Khi rê chuột vào thanh đố T (`mullion`) hoặc vách ngăn tách khung (`coupling seam`), con trỏ đổi thành mũi tên 2 chiều, thanh đố sáng viền highlight.
   - **Giữ chuột phải (`e.button === 2`) hoặc chuột trái:** Người dùng có thể kéo trực tiếp để tăng/giảm kích thước 2 ô liền kề theo thời gian thực (60fps). Chặn hoàn toàn menu chuột phải mặc định của trình duyệt (`onContextMenu e.preventDefault()`).
   - **Live Floating Badge:** Hiển thị thước đo nổi trực quan ngay tại vị trí kéo (`◄ 750 mm | 650 mm ►` hoặc `▲ 600 mm | 1000 mm ▼`).
   - **Làm tròn số kỹ thuật & Ràng buộc an toàn:** Tự động snap theo bước nhảy 5 mm, giới hạn biên an toàn tối thiểu mỗi ô >= 100 mm.
   - **Undo / Redo & Co giãn đệ quy:** Khi nhả chuột, commit vào history stack dưới dạng 1 bước duy nhất (nút Undo/Redo hoạt động mượt mà), các ô con bên trong tự động co giãn tỷ lệ nhờ hàm `rescaleTree`.
-  - Bổ sung chỉ dẫn trực quan ngay tại thanh Guide bar ở đáy màn hình CAD: *"Giữ chuột phải đố = trượt nhanh"*.
+  - Bổ sung chỉ dẫn trực quan ngay tại thanh Guide bar ở đáy màn hình CAD: _"Giữ chuột phải đố = trượt nhanh"_.
 
 ### Refactored & Optimized (Windova CAD Engine - Modular Architecture Refactoring)
-- **Tái Cấu Trúc Toàn Diện Bộ Render CAD ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+
+- **Tái Cấu Trúc Toàn Diện Bộ Render CAD ([`door-cad-renderer.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx>)):**
   - Giải quyết triệt để tình trạng "God File" 1.753 dòng, đưa component chính về mức chuẩn Clean Code (~300 dòng), phân tách độc lập các trách nhiệm (Single Responsibility Principle):
-    - [`cad-config.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-config.ts) (40 dòng): Tập trung toàn bộ hằng số tỷ lệ hình học (`CAD_CONFIG`) cho khung, cánh, nẹp và đố.
-    - [`cad-types.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-types.ts) (43 dòng): Định nghĩa các kiểu dữ liệu nội bộ (`DoorCadRendererProps`, `LeafCell`, `MullionBar`, `FrameBox`, `CurvedFramePaths`).
-    - [`cad-geometry.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-geometry.ts) (141 dòng): Thuần toán học giải tích vector cong/vòm (`getCurvedContourPath`, `getCurvedFramePaths`), độc lập 100% với React.
-    - [`cad-tree-traverser.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-tree-traverser.ts) (206 dòng): Thuật toán duyệt đệ quy cây layout (`buildCadLayout`, `getVerticalSlices`, `getHorizontalSlices`), bóc tách độc lập logic tính toán khung ghép (coupling) và đố T.
-    - [`components/cad-opening-symbol.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-opening-symbol.tsx) (93 dòng): Vẽ ký hiệu mở cánh (tam giác đỏ mở quay, lật, hất, trượt).
-    - [`components/cad-bead.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-bead.tsx) (46 dòng): Module tính toán nẹp kính ghép mòi 45°.
-    - [`components/cad-sash-box.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-sash-box.tsx) (68 dòng): Module dựng khung cánh với các phương pháp ghép góc (45°, 90° dọc phủ, 90° ngang phủ, 45° trên 90° dưới).
-    - [`components/cad-mitered-frame.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-mitered-frame.tsx) (119 dòng): Dựng khung bao ngoài và xử lý khung hở sàn 3 cạnh.
-    - [`components/cad-curved-door.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-curved-door.tsx) (338 dòng): Render chuyên dụng cho hệ cửa vòm, cửa tròn 1 cánh & 2 cánh.
-    - [`components/cad-rectangular-leaf.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-rectangular-leaf.tsx) (326 dòng): Render ô cánh và vách kính chữ nhật thông thường.
-    - [`components/cad-dimension-overlay.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-dimension-overlay.tsx) (228 dòng): Toàn bộ hệ thống đường gióng thước đo kích thước W/H, kích thước phụ và cao độ khóa.
+    - [`cad-config.ts`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-config.ts>) (40 dòng): Tập trung toàn bộ hằng số tỷ lệ hình học (`CAD_CONFIG`) cho khung, cánh, nẹp và đố.
+    - [`cad-types.ts`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-types.ts>) (43 dòng): Định nghĩa các kiểu dữ liệu nội bộ (`DoorCadRendererProps`, `LeafCell`, `MullionBar`, `FrameBox`, `CurvedFramePaths`).
+    - [`cad-geometry.ts`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-geometry.ts>) (141 dòng): Thuần toán học giải tích vector cong/vòm (`getCurvedContourPath`, `getCurvedFramePaths`), độc lập 100% với React.
+    - [`cad-tree-traverser.ts`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-tree-traverser.ts>) (206 dòng): Thuật toán duyệt đệ quy cây layout (`buildCadLayout`, `getVerticalSlices`, `getHorizontalSlices`), bóc tách độc lập logic tính toán khung ghép (coupling) và đố T.
+    - [`components/cad-opening-symbol.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-opening-symbol.tsx>) (93 dòng): Vẽ ký hiệu mở cánh (tam giác đỏ mở quay, lật, hất, trượt).
+    - [`components/cad-bead.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-bead.tsx>) (46 dòng): Module tính toán nẹp kính ghép mòi 45°.
+    - [`components/cad-sash-box.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-sash-box.tsx>) (68 dòng): Module dựng khung cánh với các phương pháp ghép góc (45°, 90° dọc phủ, 90° ngang phủ, 45° trên 90° dưới).
+    - [`components/cad-mitered-frame.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-mitered-frame.tsx>) (119 dòng): Dựng khung bao ngoài và xử lý khung hở sàn 3 cạnh.
+    - [`components/cad-curved-door.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-curved-door.tsx>) (338 dòng): Render chuyên dụng cho hệ cửa vòm, cửa tròn 1 cánh & 2 cánh.
+    - [`components/cad-rectangular-leaf.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-rectangular-leaf.tsx>) (326 dòng): Render ô cánh và vách kính chữ nhật thông thường.
+    - [`components/cad-dimension-overlay.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-dimension-overlay.tsx>) (228 dòng): Toàn bộ hệ thống đường gióng thước đo kích thước W/H, kích thước phụ và cao độ khóa.
   - Đảm bảo 100% backward-compatibility (re-export đầy đủ `CAD_CONFIG` và types từ file gốc), TypeScript biên dịch sạch 0 lỗi.
 
 ### Added & Changed (Windova CAD Studio - CAD Config Constants & Glazing Bead Enhancement)
-- **Tập Trung Hóa Toàn Bộ Tỉ Lệ Kích Thước CAD Vào Hằng Số `CAD_CONFIG` ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+
+- **Tập Trung Hóa Toàn Bộ Tỉ Lệ Kích Thước CAD Vào Hằng Số `CAD_CONFIG` ([`door-cad-renderer.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx>)):**
   - Khởi tạo object cấu hình hằng số `CAD_CONFIG` đặt ngay đầu file với chú thích tiếng Việt chi tiết cho 4 phân hệ hình học:
     - **`FRAME`:** Tỷ lệ độ dày khung bao ngoài (`SCALE_RATIO: 0.026`, giới hạn `7px - 10px`).
     - **`SASH`:** Tỷ lệ khung cánh cửa đi (`DOOR_RATIO: 1.4`), cửa sổ (`WINDOW_RATIO: 1.15`), hệ slim (`SLIM_RATIO: 0.75`), cùng các khoảng min/max pixel tương ứng.
@@ -93,38 +302,42 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-09-25
 
 ### Added & Enhanced
+
 - **Quản lý Chiều dài Thanh tiêu chuẩn trong Hãng nhôm & Tự động Gợi ý khi Tạo Profile:**
   - Bổ sung `barLengthMm` vào interface `Brand`, `BrandCreate`, `BrandUpdate` ([`src/types/brand.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/brand.ts)).
-  - **`BrandModal`:** Hiển thị ô nhập *"Chiều dài thanh tiêu chuẩn (mm)"* khi phân loại là Hãng nhôm (`aluminum`) hoặc Cả hai (`both`), mặc định 6000mm.
-  - **`ProfileBarModal`:** Tự động điền giá trị `barLengthMm` từ Hãng nhôm đã chọn vào ô *"Chiều dài cây gốc (mm)"* khi tạo mới. Tự động đồng bộ cập nhật khi người dùng chuyển đổi Hãng nhôm khác trong dropdown.
+  - **`BrandModal`:** Hiển thị ô nhập _"Chiều dài thanh tiêu chuẩn (mm)"_ khi phân loại là Hãng nhôm (`aluminum`) hoặc Cả hai (`both`), mặc định 6000mm.
+  - **`ProfileBarModal`:** Tự động điền giá trị `barLengthMm` từ Hãng nhôm đã chọn vào ô _"Chiều dài cây gốc (mm)"_ khi tạo mới. Tự động đồng bộ cập nhật khi người dùng chuyển đổi Hãng nhôm khác trong dropdown.
   - **Bảng Danh sách Hãng (`aluminum/index.tsx`):** Hiển thị nhãn thông số chuẩn `• Chuẩn: {barLengthMm}mm` ngay cạnh quốc gia xuất xứ.
 
 ## [Unreleased] - 2026-09-23
 
 ### Added & Enhanced (Windova CAD Studio 2.0 - Strict Profile Calculation & Elimination of Mock Fallbacks)
+
 - **Loại Bỏ Triệt Để Dữ Liệu Mock/Hardcode Sai Lệch Trong Backend ([`door_calculation_service.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/services/project/door_calculation_service.py)):**
   - **Khắc phục lỗi tự ý sinh số liệu khi chưa cấu hình:** Trước đây, khi bộ cửa chưa được người dùng chọn thanh nhôm cụ thể trong tab Cấu hình, Backend tự động fallback về các mã thanh mẫu hardcode sẵn (`C80649`, `C76722`, `C86335`) và tính ra khối lượng giả định $37.51\text{ kg}$, gây mâu thuẫn hoàn toàn với cảnh báo thiếu profile ở Frontend.
   - **Đồng bộ hóa với `frameConfig` & `sashConfig` (Studio 2.0):** Cập nhật `_fetch_profile_map` và `_build_frame_bars`, `_build_sashes_and_cells` để đọc chính xác `profileId` từ các cạnh khung bao (`leftEdge`, `topEdge`, `rightEdge`, `bottomEdge`), khung cánh (`leftProfileId`, `beadProfileId`) và đố động (`mullionProfileId`).
   - **Bảo toàn tính toàn vẹn sản xuất:** Nếu thanh nào chưa được cấu hình, Backend trả về `profile_id: None`, `profile_code: None`, `profile_name: "Chưa cấu hình"`, `weight_per_m: 0.0`. Tổng khối lượng nhôm chỉ được tính khi có thanh thật trong cơ sở dữ liệu.
 
-- **Minh Bạch Trạng Thái Cấu Hình Tại Tab Kết Quả ([`results-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/results-tab-view.tsx)):**
-  - **Nhãn hiển thị rõ ràng:** Bổ sung badge nổi bật `<Chưa chọn profile>` ở cột *Mã Profile* cho các thanh chưa được gán mã nhôm, giúp thợ xưởng và kỹ thuật viên nhận diện ngay thanh nào cần vào tab Cấu hình để chọn.
+- **Minh Bạch Trạng Thái Cấu Hình Tại Tab Kết Quả ([`results-tab-view.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/results-tab-view.tsx>)):**
+  - **Nhãn hiển thị rõ ràng:** Bổ sung badge nổi bật `<Chưa chọn profile>` ở cột _Mã Profile_ cho các thanh chưa được gán mã nhôm, giúp thợ xưởng và kỹ thuật viên nhận diện ngay thanh nào cần vào tab Cấu hình để chọn.
   - **Chỉ dẫn KPI khối lượng:** Khi tổng khối lượng bằng 0 do chưa cấu hình, hiển thị chú thích `(Cần chọn profile để tính)`, loại bỏ hoàn toàn hiện tượng số liệu ảo gây hiểu lầm.
 
 ### Added & Enhanced (Windova CAD Studio 2.0 - CAD Vector SVG Thumbnail Export & Live Table Preview)
-- **Tự Động Xuất Ảnh Vector SVG Khi Lưu Thiết Kế ([`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx), [`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+
+- **Tự Động Xuất Ảnh Vector SVG Khi Lưu Thiết Kế ([`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>), [`door-cad-renderer.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx>)):**
   - **Khắc phục lỗi thiếu ảnh đại diện khi lưu cửa:** Trước đây, hàm `saveMutation` trong Studio chỉ gửi `systemConfig` mà không trích xuất đồ họa SVG của cửa, khiến trường `image_b64` trong Database bị `NULL` và bảng danh sách ngoài chỉ hiển thị icon fallback `[ | ]`.
   - **Trích xuất SVG Vector Thumbnail tự động:** Thiết lập luồng serialize đồ họa SVG độc lập (`studio-export-cad-svg`) với chế độ `hideDimensions: true` (loại bỏ thước đo để khung cửa chiếm trọn khung hình vuông vắn). Khi bấm **Lưu thiết kế**, toàn bộ đồ họa vector của bộ cửa được mã hóa và gửi thẳng vào trường `imageB64` của payload lưu vào Database.
-  - **Đồng bộ gán Hệ nhôm (`doorSeriesId`):** Bổ sung `doorSeriesId: seriesId || null` vào payload lưu cửa, khắc phục triệt để tình trạng ngoài bảng danh sách hiển thị *"Hệ nhôm: Chưa gán"* dù đã chọn hệ trong Studio.
+  - **Đồng bộ gán Hệ nhôm (`doorSeriesId`):** Bổ sung `doorSeriesId: seriesId || null` vào payload lưu cửa, khắc phục triệt để tình trạng ngoài bảng danh sách hiển thị _"Hệ nhôm: Chưa gán"_ dù đã chọn hệ trong Studio.
 
-- **Hiển Thị Bản Vẽ Vector Trực Tiếp Ngoài Bảng Danh Sách Cửa ([`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/table.tsx)):**
+- **Hiển Thị Bản Vẽ Vector Trực Tiếp Ngoài Bảng Danh Sách Cửa ([`table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/table.tsx>)):**
   - **Cơ chế Fallback thông minh 2 tầng:**
     1. Nếu cửa đã có chuỗi `imageB64` (hoặc ảnh upload `imagePath`), bảng hiển thị thẻ `<img>` siêu nhanh.
     2. Nếu cửa chưa có `imageB64` nhưng đã có cấu trúc thiết kế `systemConfig.rootCell` (như các mẫu cửa đã tạo trước đây), bảng tự động render trực tiếp một bản vẽ CAD vector mini bằng `<DoorCadRenderer hideDimensions={true} />`.
   - **Hiệu quả tức thì:** Mọi mẫu cửa đã lưu trong hệ thống lập tức hiển thị hình ảnh bản vẽ CAD chuẩn xác và sắc nét ngoài bảng danh mục mà người dùng không cần phải mở lại để lưu lại.
 
 ### Added & Enhanced (Windova CAD Studio 2.0 - Profile Configuration Validation & Warning Alert Box)
-- **Hệ Thống Kiểm Tra Hồ Sơ Profile & Hộp Cảnh Báo Thiết Kế Thiếu Cấu Hình ([`results-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/results-tab-view.tsx), [`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx)):**
+
+- **Hệ Thống Kiểm Tra Hồ Sơ Profile & Hộp Cảnh Báo Thiết Kế Thiếu Cấu Hình ([`results-tab-view.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/results-tab-view.tsx>), [`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>)):**
   - **Banner Kết Quả Chuẩn CAD (Dark Slate Header):** Thiết kế thanh tiêu đề màu tối sang trọng `📐 Kết quả tính mẫu W={w} × H={h} mm` hiển thị trực tiếp các chỉ số tổng quan: `Kính: {area} m²` | `Cân nặng: {kg} kg` | `KL/m²: {kg/m2} kg/m²`.
   - **Tự động quét và phát hiện vấn đề cấu hình (`detectProfileIssues`):**
     - Kiểm tra lựa chọn Hệ nhôm (`seriesId`).
@@ -138,84 +351,88 @@ All notable changes to the frontend project will be documented in this file.
     - Khung cảnh báo sẽ tự động biến mất và hiển thị đầy đủ bảng bóc tách nhôm/nẹp/kính khi người dùng đã cấu hình đầy đủ.
 
 ### Added & Enhanced (Windova CAD Studio 2.0 - Single Sliding Sash & Multi-Level Cell Dimensioning)
-- **Chuẩn Hóa Cánh Trượt Lùa Thành Kiểu Cánh Đơn (`Single Sliding Sash`) ([`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx), [`sash-type-picker.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/sash-type-picker.tsx)):**
+
+- **Chuẩn Hóa Cánh Trượt Lùa Thành Kiểu Cánh Đơn (`Single Sliding Sash`) ([`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>), [`sash-type-picker.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/sash-type-picker.tsx>)):**
   - **Khắc phục lỗi tự động nhân đôi cánh lùa:** Trước đây, khi chọn "Trượt lùa" (`sliding`), hệ thống tự động ép chia đôi ô thành cụm 2 cánh lùa (`c0`, `c1`), khiến người dùng không thể tạo cửa 1 cánh lùa, 3 cánh lùa hoặc chia số cánh lùa theo ý muốn.
   - **Trượt lùa độc lập 1 cánh:** Đã chuyển đổi `sliding` thành kiểu cánh đơn chuẩn (`single sash`). Khi chọn "Cánh trượt lùa", ô đang chọn trở thành **đúng 1 cánh lùa duy nhất** (mang biểu tượng `↔`), kích thước và vật liệu hoàn toàn độc lập, không bị tách đôi. Người dùng tự do chia đố dọc thành 2, 3, 4, 6... ô và gán kiểu cánh trượt lùa cho từng ô để tạo cửa lùa 2 cánh, 3 cánh, 4 cánh tùy ý.
 
-- **Hiển Thị Thước Đo Kích Thước Toàn Bộ Cánh Con & Cho Phép Nhập Sửa Kích Thước Trực Tiếp ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx), [`cell-inspector.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/cell-inspector.tsx), [`draw-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/draw-tab-view.tsx)):**
+- **Hiển Thị Thước Đo Kích Thước Toàn Bộ Cánh Con & Cho Phép Nhập Sửa Kích Thước Trực Tiếp ([`door-cad-renderer.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx>), [`cell-inspector.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/cell-inspector.tsx>), [`draw-tab-view.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/draw-tab-view.tsx>)):**
   - **Trích xuất đệ quy toàn bộ cột dọc (`getVerticalSlices`):** Thước đo kích thước chân cửa (sub-dimensions) giờ đây đệ quy qua toàn bộ cây Scene Graph, hiển thị đầy đủ số đo của **tất cả từng cánh cửa lùa con** (kể cả khi chia nhiều cấp), người dùng click vào số đo của bất kỳ cánh nào để sửa số mm trực tiếp.
   - **Input chỉnh kích thước trực tiếp trong bảng `CellInspector`:** Bổ sung 2 ô nhập `Rộng W (mm)` và `Cao H (mm)` ngay trong bảng `Tùy chọn ô kính`. Khi click chọn bất kỳ cánh cửa lùa nào, người dùng có thể gõ trực tiếp kích thước mm và nhấn Enter để cập nhật ngay lập tức.
   - **Bảo toàn tổng kích thước:** Cơ chế `resizeCellInParent` tự động bù trừ cho cánh liền kề cùng khoang và chặn sàn an toàn 100mm, giúp việc co giãn cánh diễn ra mượt mà và tổng kích thước bộ cửa không bị xô lệch.
 
 ### Added & Enhanced (Windova CAD Studio 2.0 - Adaptive Sash Width & Dynamic CAD Viewport)
-- **Phương Án 1: Bề Rộng Thanh Cánh & Nẹp Kính Thích Ứng Động Theo Ô Cửa (`Adaptive Sash & Bead Width`) ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+
+- **Phương Án 1: Bề Rộng Thanh Cánh & Nẹp Kính Thích Ứng Động Theo Ô Cửa (`Adaptive Sash & Bead Width`) ([`door-cad-renderer.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx>)):**
   - **Khắc phục triệt để hiện tượng díu dít khi chia nhiều cánh/vách:** Trước đây, bề rộng khung cánh (`sashD`) bị kẹp sàn cứng ở mức tối thiểu 12–13px và nẹp kính (`beadW`) cố định; khi người dùng chia nhiều cánh (4–8 cánh) hoặc nhiều vách kính lọt lòng, các thanh nhôm cánh chiếm tới 65–75% diện tích bề rộng ô, lòng kính chỉ còn lại một khe hẹp như sợi chỉ.
   - **Hàm tính toán thích ứng `getAdaptiveSashD`:** Tự động điều chỉnh độ dày thanh nhôm khung cánh (`sashD`) theo tỷ lệ bề rộng và chiều cao thực tế của từng ô con (`cell.w`, `cell.h`). Thanh cánh 2 bên không bao giờ được chiếm quá 24–32% bề rộng ô (mỗi bên tối đa 12–16%), đảm bảo diện tích lòng kính luôn chiếm từ 68% đến 76% diện tích ô cánh.
   - **Tối ưu thanh cánh cửa lùa (`sliding`):** Cửa trượt lùa tự động áp dụng hệ thanh nhôm thanh mảnh hơn cửa mở quay 25–30% (`ratioW: 0.12`), nẹp kính tự động giới hạn tối đa 10% lòng kính (`Math.min(effectiveBeadW, Math.floor(gw * 0.1))`), giúp toàn bộ các cánh lùa và vách kính hiển thị thanh thoát, cân đối và sắc nét.
 
-- **Phương Án 2: Mở Rộng Linh Hoạt Khung Canvas & ViewBox Theo Tỉ Lệ Bộ Cửa (`Dynamic ViewBox & Viewport`) ([`canvas-cad-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/canvas-cad-view.tsx), [`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+- **Phương Án 2: Mở Rộng Linh Hoạt Khung Canvas & ViewBox Theo Tỉ Lệ Bộ Cửa (`Dynamic ViewBox & Viewport`) ([`canvas-cad-view.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/canvas-cad-view.tsx>), [`door-cad-renderer.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx>)):**
   - **Gỡ bỏ giới hạn khung vuông cố định 500x500px:** Mở rộng container vẽ CAD trong `canvas-cad-view.tsx` từ `max-w-[500px] aspect-[500/500]` lên `max-w-[860px] max-h-[640px]`, cho phép bộ cửa trải rộng toàn màn hình làm việc của Studio.
   - **ViewBox động thích ứng theo tỉ lệ thực tế:** Với cửa rộng ngang kích thước lớn (như 4000x2400mm hay 8000x4000mm, `aspect >= 1.25`), `viewBox` tự động mở rộng bề ngang lên tới 780px; với cửa cao đứng (`aspect <= 0.8`), tự động mở rộng chiều cao lên tới 680px.
   - **Diện tích hiển thị cửa tăng gấp 2 lần:** Vùng vẽ cửa thực tế được mở rộng từ 270px lên 420–580px, thước đo kích thước 2 chiều (Dimensions lines) tự động bố trí giãn thoáng, không còn bị chèn ép layout.
 
 ### Fixed & Enhanced (Windova CAD Studio 2.0 - Sash Cluster Conversion & State Isolation)
-- **Thiết Lập Mặc Định Ban Đầu Là Vách Kính Cố Định (`fixed`) Khi Thêm Mới Cửa ([`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx)):**
+
+- **Thiết Lập Mặc Định Ban Đầu Là Vách Kính Cố Định (`fixed`) Khi Thêm Mới Cửa ([`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>)):**
   - **Khởi tạo trực quan chuẩn xuất phát điểm:** Khi người dùng mở Studio để thêm mới cửa (hoặc bấm làm mới bản vẽ), mẫu thiết kế mặc định ban đầu là **Vách kính cố định** (`sashType: 'fixed'`, `type: 'ck'`, `children: []`) với kích thước 1400x1600mm.
   - **Tự động highlight nút Vách cố định:** Nút "Vách cố định" trên thanh công cụ bên trái được kích hoạt sẵn màu xanh; từ xuất phát điểm vách kính phẳng này, người dùng có thể dễ dàng chia đố, đổi sang cửa 1 cánh hoặc chuyển sang cửa 2 cánh một cách linh hoạt và tự nhiên nhất.
 
-- **Loại Bỏ Nút "Thêm Thủ Công" Khỏi Danh Sách Thiết Kế Cửa ([`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/table.tsx), [`index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/index.tsx)):**
+- **Loại Bỏ Nút "Thêm Thủ Công" Khỏi Danh Sách Thiết Kế Cửa ([`table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/table.tsx>), [`index.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/index.tsx>)):**
   - **Tập trung hóa luồng thiết kế:** Đã xóa bỏ nút `+ Thêm thủ công` trên thanh công cụ lọc của danh mục cửa. Toàn bộ quy trình thêm mới mẫu cửa giờ đây được điều hướng 100% qua công cụ chuyên dụng **🪄 Studio Thiết kế Cửa**, đảm bảo đồng nhất về cấu trúc Scene Graph, tính toán BOM cơ khí và bản vẽ CAD 2D.
 
-- **Khắc Phục Lỗi Rò Rỉ Dữ Liệu Khi Thêm Cửa Mới (State Persistence Isolation) ([`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx), [`index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/index.tsx)):**
+- **Khắc Phục Lỗi Rò Rỉ Dữ Liệu Khi Thêm Cửa Mới (State Persistence Isolation) ([`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>), [`index.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/index.tsx>)):**
   - **Nguyên nhân gốc rễ:** Do modal không bị unmount khi đóng và `useEffect` chỉ hydrate khi có `door` mà không có nhánh reset khi `door === null`, dẫn tới khi mở xem cửa cũ rồi bấm "Thêm cửa mới", toàn bộ state thiết kế (cây cửa `rootCell`, kích thước `w, h`, màu nhôm, tên cửa, mã cửa) của cửa cũ vẫn bị lưu giữ trong bộ nhớ component và hiển thị lên canvas.
   - **Tự động Reset toàn bộ State:** Bổ sung khối xử lý chuyên biệt trong `useEffect` của `DoorStudioModal` khi `isOpen && !door`, tự động khôi phục toàn bộ state về trạng thái thiết kế cửa mới sạch sẽ (`createDefaultRootCell(1400, 1600)`, mã rỗng, màu mặc định, xóa trắng lịch sử undo/redo và tiêu điểm chọn).
   - **Cơ chế Key động cách ly Instance:** Gán `key={studioDoor ? "studio-" + studioDoor.id : "studio-new"}` cho `<DoorStudioModal />` ở trang danh sách cửa. Mỗi khi chuyển giữa các cửa hoặc chuyển sang thêm mới, React sẽ tạo một instance hoàn toàn mới, triệt tiêu 100% hiện tượng chồng chéo hoặc rò rỉ dữ liệu giữa các lần mở Studio.
 
-- **Chuẩn Hóa Chuyển Đổi Trạng Thái Giữa Cửa 2 Cánh & Cửa 1 Cánh / Vách Kính Cố Định ([`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx)):**
+- **Chuẩn Hóa Chuyển Đổi Trạng Thái Giữa Cửa 2 Cánh & Cửa 1 Cánh / Vách Kính Cố Định ([`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>)):**
   - **Khắc phục lỗi ép kiểu cửa 2 cánh:** Trước đây, các kiểu mở đơn như `swing_left`, `swing_right` bị gom chung nhánh với `swing_double`, đồng thời các kiểu khác như `awning`, `tilt`, `tilt_down`, `tilt_turn` áp dụng vào cả 2 cánh con trong cụm `sash_pair` khiến bất kỳ thao tác chọn kiểu cánh nào cũng biến thành cửa 2 cánh mở quay (chỉ có vách kính cố định là thay đổi được).
   - **Tự động hợp nhất (Merge/Flatten) khoang thành 1 cánh đơn duy nhất:** Khi người dùng chọn bất kỳ kiểu cánh đơn nào (`swing_left`, `swing_right`, `awning`, `tilt`, `tilt_down`, `tilt_turn`) hoặc Vách kính cố định (`fixed`), cụm 2 cánh tự động được hợp nhất thành 1 cánh/ô duy nhất toàn khoang (`children: []`, xóa `splitDirection` và `splitType`), tự động bảo toàn vật liệu kính `paneType` đang chọn và kích hoạt khóa/tay nắm chuẩn xác.
-  - **Tự động tách đôi khi chuyển sang kiểu cánh đôi:** Khi đang ở ô đơn lẻ, việc chọn *2 cánh mở quay (`swing_double`)* hoặc *Trượt lùa 2 cánh (`sliding`)* sẽ tự động chia đôi khoang thành 2 cánh đối xứng chuẩn kỹ thuật cơ khí, khóa gắn trên cánh chính bên phải.
+  - **Tự động tách đôi khi chuyển sang kiểu cánh đôi:** Khi đang ở ô đơn lẻ, việc chọn _2 cánh mở quay (`swing_double`)_ hoặc _Trượt lùa 2 cánh (`sliding`)_ sẽ tự động chia đôi khoang thành 2 cánh đối xứng chuẩn kỹ thuật cơ khí, khóa gắn trên cánh chính bên phải.
   - **Đồng bộ tiêu điểm chọn (`nextSelectedId`):** Khi hợp nhất về ô đơn hoặc tách thành 2 cánh, hệ thống tự động cập nhật `selectedCellId` tới đúng ô vừa tạo, đảm bảo viền chọn màu cam và bảng thuộc tính `CellInspector` luôn hiển thị chính xác.
 
 ### Added & Enhanced (Windova CAD Studio 2.0 - Dynamic Brand Colors & Proportional Profile Rendering)
-- **Tích Hợp Bảng Mã Màu Nhôm Động Theo Hãng (`BrandColor`) Vào Studio CAD ([`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx), [`toolbox-left.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/toolbox-left.tsx), [`info-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/info-tab-view.tsx), [`draw-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/draw-tab-view.tsx)):**
+
+- **Tích Hợp Bảng Mã Màu Nhôm Động Theo Hãng (`BrandColor`) Vào Studio CAD ([`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>), [`toolbox-left.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/toolbox-left.tsx>), [`info-tab-view.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/info-tab-view.tsx>), [`draw-tab-view.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/draw-tab-view.tsx>)):**
   - **Truy vấn danh mục màu thực tế của hãng từ Database:** Khi người dùng chọn Hệ nhôm (`seriesId`), hệ thống tự động nhận diện Hãng nhôm (`brandId`) và gọi API `getBrandColors({ brandId, isActive: true })` để tải trọn vẹn danh mục màu thực tế được hãng phân phối (mã màu, tên màu catalog, mã HEX hiển thị, loại sơn...).
   - **Tự động áp dụng màu mặc định:** Khi đổi sang hệ nhôm/hãng khác, hệ thống tự động đồng bộ màu cửa sang màu mặc định (`isDefault: true`) hoặc màu đầu tiên trong catalog của hãng đó.
-  - **Hiển thị nhãn tên màu chuẩn:** Cả ở tab *Thông tin chung* và thanh công cụ vẽ *Vẽ CAD*, người dùng đều thấy tên màu chính thức của hãng (ví dụ: *Nâu cafe ánh kim*, *Vân gỗ trắc hoàng gia*, *Vàng sâm banh Champagne Anode*...) hiển thị rõ nét bên cạnh bảng màu.
+  - **Hiển thị nhãn tên màu chuẩn:** Cả ở tab _Thông tin chung_ và thanh công cụ vẽ _Vẽ CAD_, người dùng đều thấy tên màu chính thức của hãng (ví dụ: _Nâu cafe ánh kim_, _Vân gỗ trắc hoàng gia_, _Vàng sâm banh Champagne Anode_...) hiển thị rõ nét bên cạnh bảng màu.
   - **Cơ chế Fallback an toàn:** Nếu hệ nhôm chưa khai báo màu riêng, hệ thống tự động fallback về bảng màu phổ thông tiêu chuẩn, đảm bảo giao diện luôn mượt mà và không bao giờ bị trống.
 
-- **Đồng Bộ Kiểu Cánh Cho Cụm Cửa 2 Cánh & Duy Trì Tương Tác Độc Lập Từng Ô Kính ([`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx)):**
+- **Đồng Bộ Kiểu Cánh Cho Cụm Cửa 2 Cánh & Duy Trì Tương Tác Độc Lập Từng Ô Kính ([`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>)):**
   - **Cơ chế `applySashTypeToCluster` thông minh:** Khi người dùng đang chọn bất kỳ ô con nào trong cụm cửa đôi (`sash_pair`), việc thay đổi kiểu cánh (`sashType`) ở thanh công cụ hoặc bảng thuộc tính sẽ **tự động áp dụng đồng bộ cho toàn bộ cụm cánh**:
-    - Chọn *2 cánh mở quay*: Cánh trái tự động quay trái (`swing_left`), cánh phải quay phải (`swing_right`), khóa tích hợp trên cánh chính.
-    - Chọn *Trượt lùa 2 cánh*: Cả 2 cánh cùng đồng bộ sang cánh trượt lùa (`sliding`).
-    - Chọn *Vách cố định*: Cả 2 cánh cùng chuyển sang ô kính cố định (`fixed`).
-    - Chọn *Mở hất / Mở lật*: Cả 2 cánh cùng chuyển đồng bộ sang kiểu mở tương ứng.
+    - Chọn _2 cánh mở quay_: Cánh trái tự động quay trái (`swing_left`), cánh phải quay phải (`swing_right`), khóa tích hợp trên cánh chính.
+    - Chọn _Trượt lùa 2 cánh_: Cả 2 cánh cùng đồng bộ sang cánh trượt lùa (`sliding`).
+    - Chọn _Vách cố định_: Cả 2 cánh cùng chuyển sang ô kính cố định (`fixed`).
+    - Chọn _Mở hất / Mở lật_: Cả 2 cánh cùng chuyển đồng bộ sang kiểu mở tương ứng.
   - **Bảo toàn khả năng tương tác độc lập từng ô kính:** Người dùng vẫn click chọn riêng từng ô cánh để cấu hình vật liệu kính (`paneType`: kính, nan chớp louver, tấm nhôm panel, lưới chống muỗi), chọn mã kính catalog, bật/tắt khóa và chỉnh cao độ tay nắm độc lập cho từng ô.
   - **Tự động highlight chuẩn trên thanh công cụ:** Khi nhấp vào bất kỳ cánh nào trong cụm 2 cánh, thanh công cụ bên trái tự động hiển thị và kích hoạt đúng nút của cụm cánh đó (ví dụ: đang là cửa 2 cánh mở quay thì nút "2 cánh mở quay" được highlight).
 
-- **Loại Bỏ Thanh Đố Tĩnh Ở Giữa Cho Cửa 2 Cánh Mở Quay Chuẩn Kỹ Thuật Thực Tế ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx), [`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx)):**
+- **Loại Bỏ Thanh Đố Tĩnh Ở Giữa Cho Cửa 2 Cánh Mở Quay Chuẩn Kỹ Thuật Thực Tế ([`door-cad-renderer.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx>), [`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>)):**
   - **Nhận diện thông minh cặp cánh mở quay đối xứng:** Khi 2 ô liền kề là cặp cánh mở quay (`swing_left` và `swing_right`) hoặc node mang kiểu `sash_pair` / `swing_double`, động cơ CAD tự động nhận diện và **không chèn thanh đố tĩnh (`mullion`) của khung bao vào giữa**.
   - **Hai cánh giáp trực tiếp tại tim cửa:** Thanh đứng cánh trái và thanh đứng cánh phải khép khít trực tiếp vào nhau tại tim cửa (không còn khoảng hở đố màu ghi ở giữa). Góc mòi 45° trên đỉnh và dưới chân của 2 cánh chạm nhau thành hình chữ V sắc nét chạm vào khung bao ngoài, phản ánh đúng 100% kết cấu cơ khí thực tế của cửa đi/cửa sổ 2 cánh mở quay dùng đố động.
 
-- **Tách Cửa 2 Cánh Thành 2 Ô Con Độc Lập & Cấu Hình Khóa / Cao Độ Tay Nắm Chuẩn Windova ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx), [`cell-inspector.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/cell-inspector.tsx), [`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx)):**
+- **Tách Cửa 2 Cánh Thành 2 Ô Con Độc Lập & Cấu Hình Khóa / Cao Độ Tay Nắm Chuẩn Windova ([`door-cad-renderer.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx>), [`cell-inspector.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/cell-inspector.tsx>), [`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>)):**
   - **Tách rời 2 ô cánh độc lập (`SceneCellNode`):** Cửa 2 cánh mở quay (`swing_double`) giờ đây được tổ chức chuẩn kiến trúc Scene Graph gồm 2 node con (`cell_0`: mở quay trái `swing_left`, `cell_1`: mở quay phải `swing_right`) ngăn cách bởi đố động. Người dùng có thể nhấp chọn từng cánh riêng biệt để đổi vật liệu (kính, nan chớp, panel) hoặc chia đố con độc lập cho từng cánh.
   - **Hiển thị viền focus màu cam chuẩn Windova:** Khi chọn ô kính, đường viền nét đứt màu cam nổi bật (`stroke="#f59e0b"`, nét đứt 6x4) hiển thị chuẩn xác quanh mặt kính được chọn.
   - **Mô hình hóa Tay nắm gạt thực tế (Lever Handle):** Thay thế khối hình oval cũ ở giữa đố động bằng tay nắm gạt cửa đi thực tế (có ốp thân khóa thẳng đứng, ổ chìa và tay gạt ngang chìa qua mặt kính), gắn chính xác trên thanh đố cánh của cánh chính.
   - **Thước đo Cao độ tim khóa bên hông trái:** Hiển thị đường gióng kích thước từ chân đáy cửa lên tim khóa (`800` mm), cho phép click trực tiếp vào số đo để chỉnh nhanh cao độ hoặc thay đổi trong bảng Thuộc tính.
   - **Bảng điều khiển Khóa & Phụ kiện (`CellInspector`):** Bổ sung switch bật/tắt khóa cho từng cánh, ô nhập cao độ tim khóa (mm) và dropdown chọn kiểu tay nắm (tay gạt cửa đi, tay gạt đa điểm, tay nắm chữ D...).
-- **Cửa Sổ Thiết Lập Thông Số Đố / Khung Tương Tác Chuẩn Windova ([`mullion-inspector-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/mullion-inspector-modal.tsx), [`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx), [`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx)):**
+- **Cửa Sổ Thiết Lập Thông Số Đố / Khung Tương Tác Chuẩn Windova ([`mullion-inspector-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/mullion-inspector-modal.tsx>), [`door-cad-renderer.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx>), [`studio-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx>)):**
   - **Tương tác trực tiếp trên bản vẽ CAD:** Người dùng có thể click chuột trực tiếp vào thanh đố khung (mullion) bất kỳ trên canvas. Khu vực hitbox được mở rộng thông minh (+12px) kèm hiệu ứng hover viền vàng hổ phách (`#f59e0b`) giúp thao tác nhấp chính xác và tiện lợi.
   - **Modal "Kích thước khoang" 2 tab chuẩn giao diện chuyên nghiệp:**
     - **Tab Cơ bản:** Hiển thị tổng kích thước khoang liên quan, ô nhập kích thước phân đoạn (mm) tự động cân chỉnh độ rộng khoang liền kề để bảo toàn tổng kích thước; dropdown chọn/override thanh profile đố nhôm từ danh mục hệ nhôm đang chọn; nút chuyển nhanh kiểu cắt (`Lọt khung →`, `Phủ khung →`, `Cắt mòi 45° →`, `Vuông 90° →`); nút **Xóa đố này** hỗ trợ gộp 2 khoang liền kề trở lại thành 1 ô kính hoàn chỉnh hoặc trả về ô cha ban đầu.
-    - **Tab Nâng cao:** Hiển thị hướng dẫn quy tắc giao cắt đố *Local transpose*, hỗ trợ định hình đầu thao tác, chọn kiểu cắt mòi/vuông và hướng ưu tiên tại các nút giao cắt đố chữ T / chữ Thập.
+    - **Tab Nâng cao:** Hiển thị hướng dẫn quy tắc giao cắt đố _Local transpose_, hỗ trợ định hình đầu thao tác, chọn kiểu cắt mòi/vuông và hướng ưu tiên tại các nút giao cắt đố chữ T / chữ Thập.
   - **Bảo toàn dữ liệu theo chuẩn camelCase:** Tích hợp `MullionInfo` và `MullionCutType` vào cấu trúc node của `systemConfig`, cập nhật mượt mà vào lịch sử Undo/Redo của Studio.
-- **Chuẩn Hóa Tỷ Lệ Kích Thước Hình Học Ô Cửa Theo Thông Số Kỹ Thuật Thực Tế ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+- **Chuẩn Hóa Tỷ Lệ Kích Thước Hình Học Ô Cửa Theo Thông Số Kỹ Thuật Thực Tế ([`door-cad-renderer.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx>)):**
   - **Khắc phục lỗi hiển thị sai lệch tỉ lệ kích thước:** Trước đây khi chia đố (`mullion`) hoặc tách khung (`coupling`), hàm `traverseTree` chia đều cứng `availSpace / count` khiến các ô có số đo khác nhau (ví dụ: ô trên 500mm, ô dưới 1100mm) bị vẽ bằng nhau 50% - 50%.
   - **Tính toán theo tỷ lệ trọng số thực tế:** Tính tổng trọng số `totalWeight` của các ô con theo `child.w` (nếu chia dọc) hoặc `child.h` (nếu chia ngang); tỷ lệ vẽ pixel trên canvas co giãn chính xác 100% theo số đo mm thực tế (ô 1100mm hiển thị cao hơn 2.2 lần so với ô 500mm).
-- **Bổ Sung Thước Đo Kích Thước Chiều Rộng Từng Cánh Cho Cửa 2 Cánh (`swing_double`) ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+- **Bổ Sung Thước Đo Kích Thước Chiều Rộng Từng Cánh Cho Cửa 2 Cánh (`swing_double`) ([`door-cad-renderer.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx>)):**
   - **Tự động bóc tách phân đoạn kích thước:** Với các mẫu cửa hoặc ô chứa cánh mở quay đôi (`swing_double`), hệ thống tự động sinh 2 phân đoạn kích thước chiều rộng bằng nhau (ví dụ: `700` và `700` cho cửa tổng 1400mm).
   - **Hiển thị tầng gióng thước đo đa tầng:** Thước đo phân đoạn của 2 cánh (`700 | 700`) được hiển thị rõ nét ở tầng trong của cạnh đáy, nằm phía trên thước đo tổng phủ bì (`1400`), đồng bộ hoàn hảo với cách gióng kích thước phân tầng của chiều cao (`500 | 1100` và `1600`) ở cạnh phải.
-- **Nâng Cấp Khung Nhìn CAD Canvas Chuẩn Figma / AutoCAD ([`canvas-cad-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/canvas-cad-view.tsx)):**
+- **Nâng Cấp Khung Nhìn CAD Canvas Chuẩn Figma / AutoCAD ([`canvas-cad-view.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/canvas-cad-view.tsx>)):**
   - **Scroll to Zoom (Lăn chuột phóng to / thu nhỏ):** Bắt sự kiện `wheel` không bị chặn bởi cuộn trang (`passive: false`), cho phép phóng to / thu nhỏ bản vẽ mượt mà từ 0.3x đến 3.5x.
   - **Click & Drag Pan (Bấm giữ và kéo di chuyển khung nhìn):** Thêm trạng thái `pan = { x, y }`, hỗ trợ click chuột trái hoặc chuột giữa vào vùng trống ngoài cửa để kéo rê bản vẽ tự do trong không gian canvas 2D.
   - **Bấm ra ngoài để tắt focus ô kính (Deselect on Outside Click):** Khi nhấp chuột vào nền canvas, khung bao ngoài hoặc vùng trống bên ngoài ô cửa (không phải thao tác kéo pan), hệ thống tự động hủy trạng thái chọn (`selectedCellId = null`), ẩn viền nét đứt focus và chuyển bảng `CellInspector` về trạng thái mặc định.
@@ -225,6 +442,7 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-09-19
 
 ### Enhanced & Refactored (Native iOS Stop-Detection Engine & Battery Optimization)
+
 - **Tái Cấu Trúc Động Cơ Định Vị Nền Native iOS Sang Mô Hình Chuẩn Life360 & Transistor ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
   - **Tích hợp cảm biến chuyển động `CMMotionActivityManager`:** Khai báo quyền `NSMotionUsageDescription` trong [`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist), theo dõi trạng thái `stationary`, `walking`, `running`, `automotive` trực tiếp qua bộ vi xử lý M-series tiết kiệm năng lượng của chip Apple.
   - **Cơ chế Stop-Detection Engine tự động ngắt GPS khi Đứng yên:** Khi nhân viên đứng yên quá 2 phút, app tự động gửi 1 gói tin chốt hạ vị trí neo (`stationary`), thiết lập vùng Geofence `CLCircularRegion` bán kính 100m, kích hoạt Significant Location Changes (SLC) và **gọi `locationManager.stopUpdatingLocation()` để tắt hoàn toàn chip GPS**, đưa app vào giấc ngủ sâu nhằm tiết kiệm 100% pin điện thoại.
@@ -235,6 +453,7 @@ All notable changes to the frontend project will be documented in this file.
 ## [1.0.0] - 2026-09-18
 
 ### Fixed & Enhanced (Native iOS Background Location Engine - Chuẩn GCD Kernel Timer & Continuous Tracking)
+
 - **Nâng Cấp Động Cơ Định Vị Chạy Ngầm Native iOS & Khắc Phục Lỗi Mất Tín Hiệu Khi Đứng Yên ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
   - **Khắc phục triệt để lỗi mất kết nối sau 15 phút khi đặt máy yên trên bàn:** Thay thế hoàn toàn `Timer` trên Main RunLoop (vốn bị iOS đóng băng ngay khi khóa màn hình) bằng **`DispatchSourceTimer` (GCD Kernel Timer)** chạy độc lập trên background queue (`com.xttech.ios.heartbeatQueue`), định kỳ gửi ping nhịp tim thật lên Backend mỗi 60 giây.
   - **Cấu hình `kCLDistanceFilterNone` & `activityType = .other`:** Loại bỏ rào cản lọc 5 mét (khiến máy đứng yên 0m không bao giờ kích hoạt callback), cho phép CoreLocation duy trì liên tục luồng cập nhật ngầm.
@@ -246,7 +465,8 @@ All notable changes to the frontend project will be documented in this file.
   - **Khắc phục lỗi cú pháp Swift:** Đóng chuẩn xác hàm `openSettings` và loại bỏ hoàn toàn đoạn code lặp `didUpdateLocations`.
 
 ### Added & Enhanced (User Profile & Avatar Auto-Synchronization)
-- **Tự Động Đồng Bộ Hồ Sơ & Ảnh Đại Diện Ngầm (Background Profile Revalidation & Cache-Busting) ([`useAuthStore.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/stores/useAuthStore.ts), [`layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/layout.tsx), [`mobile-header.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/mobile-header.tsx)):**
+
+- **Tự Động Đồng Bộ Hồ Sơ & Ảnh Đại Diện Ngầm (Background Profile Revalidation & Cache-Busting) ([`useAuthStore.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/stores/useAuthStore.ts), [`layout.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/layout.tsx>), [`mobile-header.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/mobile-header.tsx>)):**
   - **Khắc phục triệt để lỗi avatar cũ trên điện thoại nhân viên sau khi Admin cập nhật:** Khi Admin thay đổi avatar hoặc quyền hạn của nhân viên từ trang quản trị, điện thoại nhân viên trước đây không nhận được do dữ liệu `user` bị đóng băng trong `localStorage` (`xt-auth`).
   - **Tự động đồng bộ ngầm khi mở ứng dụng (`AppLayout`):** Ngay sau khi xác thực token thành công, tự động gọi ngầm `getUser(currentUserId)` từ backend để lấy thông tin mới nhất và cập nhật vào `useAuthStore` mà không làm gián đoạn hay làm chậm giao diện của nhân viên.
   - **Bổ sung phương thức `updateUser` & `setUser` trong `useAuthStore`:** Cho phép cập nhật linh hoạt các trường hồ sơ (avatar, roles, positions, fullName) và đồng bộ tức thì vào cookie `xt-auth` cũng như `localStorage`.
@@ -254,6 +474,7 @@ All notable changes to the frontend project will be documented in this file.
   - **Cơ chế Cache-Busting cho Avatar:** Bổ sung query string `?v=${user.updatedAt}` vào URL ảnh avatar trên `MobileHeader`, `HeaderProfile` và `ProfileCard`, đảm bảo trình duyệt mobile và PWA Webview luôn tải phiên bản ảnh mới nhất, tránh bị dính cache ảnh cũ.
 
 ### Added & Enhanced (Page Loader & Transition System)
+
 - **Nâng Cấp Tiến Trình Nạp Trang 0 - 100% & Khử Hiện Tượng Chớp Nháy Khung Hình ([`page-loader.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/page-loader/page-loader.tsx), [`PageTransitionProvider.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/contexts/PageTransitionProvider.tsx)):**
   - **Chuyển đổi từ thanh shimmer vô tận sang thanh tiến trình thực tế:** Hiển thị thanh nạp fill theo phần trăm thực tế (`0%` -> `100%`) kèm nhãn số phần trăm sắc nét (`tabular-nums`) và màu thương hiệu XTTech (`#045863` -> `#088395` -> `#0A97B0`).
   - **Mô phỏng tiến trình thông minh (Smart Simulated Progress):** Tăng nhanh phản hồi tức thì lên 15-30% ngay khi chạm, tăng dần đều mượt mà lên ~90% trong lúc nạp, và tự động hoàn thành 100% khi trang đã sẵn sàng.
@@ -268,6 +489,7 @@ All notable changes to the frontend project will be documented in this file.
     - Đẩy cụm thông tin lên vị trí 1/3 phía trên màn hình (`pt-[10vh]`), tạo khoảng thở thị giác rộng rãi và thoáng đãng, tuyệt đối không bị ngọn sóng 50vh che khuất.
 
 ### Fixed (Page Transition Lifecycle & Route Duplication)
+
 - **Khắc phục triệt để lỗi kẹt loading 7 giây khi bấm lại vào chính trang đang đứng:**
   - Bổ sung Guard Clause `isSameRoute(targetUrl)` so sánh chính xác cả `pathname` và `searchParams` chuẩn hóa (loại trừ trailing slash).
   - Bỏ qua ngay lập tức và không kích hoạt `isTransitioning = true` trong `startTransition`, `navigateTo`, `handleGlobalClick`, và `window.history.pushState` khi người dùng bấm lại vào cùng trang hiện tại, giải quyết nguyên nhân Next.js không đổi route khiến effect tắt loader không chạy và bị kẹt chờ timer 7 giây.
@@ -287,12 +509,13 @@ All notable changes to the frontend project will be documented in this file.
   - Chuyển `currentProgress` sang mô hình Trạng thái suy luận (Derived State): khi `!isVisible` tự động trả về `0`, loại bỏ hoàn toàn lệnh `setInternalProgress(0)` chạy đồng bộ trên luồng chính của `useEffect`.
   - Khởi tạo tiến trình mượt mà bên trong callback `setInterval` bất đồng bộ và dọn dẹp biến đếm ở hàm `cleanup`, tuân thủ 100% nguyên tắc chuẩn của React 19 và React Compiler.
 - **Triệt tiêu hiện tượng nháy đổi icon (từ Loader2 sang icon tính năng thật):**
-  - Vô hiệu hóa `PageLoader` trùng lặp trong Next.js native Suspense fallback ([`(sidebar)/loading.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/loading.tsx) và [`app/loading.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/loading.tsx)).
+  - Vô hiệu hóa `PageLoader` trùng lặp trong Next.js native Suspense fallback ([`(sidebar)/loading.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/loading.tsx>) và [`app/loading.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/loading.tsx>)).
   - Trao quyền duy nhất cho `PageTransitionProvider` quản lý màn hình loading, đảm bảo icon chính xác của trang đích được hiển thị ngay lập tức từ mili-giây đầu tiên, xóa bỏ hoàn toàn hiện tượng 2 loader tranh chấp gây chớp đổi icon.
 
 ## [Unreleased] - 2026-09-17
 
 ### Added & Enhanced (Page Transition Loader)
+
 - **Triển khai Màn hình Loading Chuyển Trang Tức Thì (Zero-Delay Page Transition Loader) Chuẩn Super-App ([`src/components/page-loader`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/page-loader), [`src/contexts/PageTransitionProvider.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/contexts/PageTransitionProvider.tsx)):**
   - **Khắc phục triệt để hiện tượng trễ (delay) khi bấm chuyển trang trên Mobile/iOS:** Giải quyết điểm nghẽn do Next.js chờ tải JS chunks & server API bằng kiến trúc App Shell Pre-loaded Loader.
   - **Phản hồi tương tác tức thì 0ms:** Màn hình loading nằm sẵn trong bộ nhớ RAM của Shell Layout, được kích hoạt ngay khi chạm ngón tay vào link hoặc gọi chuyển trang mà không cần chờ nạp script qua mạng.
@@ -301,14 +524,16 @@ All notable changes to the frontend project will be documented in this file.
     - Khung Icon nổi bật kèm hiệu ứng nhịp thở (`pulse`) và tên tính năng cụ thể tương ứng với từng đường dẫn route đích ([`route-metadata.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/route-metadata.ts)).
     - Thanh tiến trình Progress bar gradient màu chủ đạo XTTech (`#045863` sang `#088395`) chuyển động liên tục (`shimmer`).
     - Nền sóng uốn lượn (SVG Wave) phía chân trang với tone màu pastel XTTech dịu mắt và sang trọng.
-  - **Tích hợp toàn diện & Tương thích React 19 / Next.js 16:** Bổ sung `PageTransitionProvider` tại [`AppLayout`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/layout.tsx), kết hợp bắt sự kiện click link nội bộ toàn cục; tối ưu hóa lịch biểu `startTransition` qua `setTimeout(..., 0)` để tương thích tuyệt đối với `useInsertionEffect` trong React 19; đồng thời hỗ trợ native Next.js Suspense fallback tại [`(sidebar)/loading.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/loading.tsx).
+  - **Tích hợp toàn diện & Tương thích React 19 / Next.js 16:** Bổ sung `PageTransitionProvider` tại [`AppLayout`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/layout.tsx>), kết hợp bắt sự kiện click link nội bộ toàn cục; tối ưu hóa lịch biểu `startTransition` qua `setTimeout(..., 0)` để tương thích tuyệt đối với `useInsertionEffect` trong React 19; đồng thời hỗ trợ native Next.js Suspense fallback tại [`(sidebar)/loading.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/loading.tsx>).
 
 ### Added & Enhanced (Auto Timekeeping Camera Compatibility)
+
 - **Tối ưu hóa Khả năng Tương thích Camera Chấm công trên iOS/Android ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx)):**
   - **Cơ chế Fallback 3 tầng:** Tự động chuyển cấp độ ràng buộc từ HD (`1280x720`) -> Camera trước chuẩn (`facingMode: 'user'`) -> Bất kỳ camera nào khả dụng (`video: true`) nhằm khắc phục triệt để lỗi `OverconstrainedError` trên các dòng iPhone kén tỷ lệ khung hình.
   - **Tích hợp Cơ chế Chụp ảnh Bằng Camera Gốc (HTML5 Native Camera Fallback - `capture="user"`):** Bổ sung giải pháp cứu cánh tối thượng khi gặp các thiết bị iPhone bị Apple khóa WebRTC Live Stream (như chế độ PWA hoặc lỗi WebKit). Tự động hiển thị nút "Mở Camera máy" kích hoạt ứng dụng Camera gốc của iPhone ở chế độ Selfie, đảm bảo 100% người dùng chấm công thành công mà không bị chặn bởi bất kỳ rào cản bảo mật nào.
 
 ### Fixed (Route Playback Modal)
+
 - **Khắc phục lỗi bản đồ tự động reset zoom / thu nhỏ khi đang xem lộ trình ([`src/components/map-modal/route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx)):**
   - **Khống chế số lần tự động căn chỉnh (`hasFittedBoundsRef`):** Chỉ tự động gọi `fitBounds()` 1 lần duy nhất khi dữ liệu lộ trình vừa được nạp lần đầu hoặc khi đổi ngày / nhân viên. Không tự động gọi lại làm giật màn hình khi thuật toán nắn đường OSRM chạy xong hoặc khi component re-render.
   - **Ghi nhớ tham chiếu mảng tọa độ (`useMemo`):** Bọc `points`, `polylineCoords`, và `displayedCoords` bằng `useMemo` để tránh sinh mảng mới ở mỗi vòng render gây trigger `useEffect` thừa.
@@ -317,6 +542,7 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-09-16
 
 ### Fixed & Enhanced (iOS Background Geolocation)
+
 - **Tái Cấu Trúc Toàn Diện Định Vị Ngầm iOS Theo Kiến Trúc Chuẩn Doanh Nghiệp (Zalo / Life360):**
   - **Khắc phục triệt để lỗi mất biểu tượng định vị sau 1-2 phút khi ra nền / khóa màn hình ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
     - Loại bỏ hoàn toàn lỗi xung đột luồng: chuyển toàn bộ các lệnh gọi UIKit (`UIApplication.shared.beginBackgroundTask` và `UIDevice.current`) về Main Thread (`DispatchQueue.main.async`), triệt tiêu hoàn toàn lỗi Crash âm thầm và lỗi Watchdog Termination `0x8badf00d`.
@@ -330,6 +556,7 @@ All notable changes to the frontend project will be documented in this file.
     - Đăng ký `startMonitoringSignificantLocationChanges()` và tự động tái khởi tạo theo dõi vị trí trong `AppDelegate` & `load()` nếu ca làm việc trước đó đang diễn ra.
 
 ### Changed & Assets
+
 - **Đồng Bộ App Icon iOS Khớp Nhận Diện Thương Hiệu Android ([`AppIcon-512@2x.png`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png)):**
   - Thay thế toàn diện icon mặc định màu xanh dương của Capacitor bằng logo XTTech chính thức xuất từ file vector gốc [`logo-xttech.svg`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/public/image-xttech/logo-xttech.svg).
   - Tối ưu kích thước hiển thị chuẩn Apple HIG: canvas 1024x1024 px, tỷ lệ logo căn giữa 56% trên nền trắng thuần `#FFFFFF`, loại bỏ hoàn toàn kênh Alpha (RGB 24-bit) để tránh lỗi từ chối của App Store hoặc lỗi nền đen khi bo góc.
@@ -338,6 +565,7 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-09-15
 
 ### Changed & Configured
+
 - **Cấu hình Ứng dụng Di động Tràn viền Toàn màn hình trên iOS ([`Info.plist`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/Info.plist)):**
   - Bổ sung `<key>UIStatusBarHidden</key><true/>` và chuyển `<key>UIViewControllerBasedStatusBarAppearance</key><false/>`.
   - Ẩn hoàn toàn thanh trạng thái hệ thống (Status Bar gồm giờ, pin, cột sóng, wifi) trên iPhone, giúp giao diện ứng dụng hiển thị tràn viền toàn màn hình (True Fullscreen) liền mạch, tối ưu diện tích hiển thị cho nhân viên.
@@ -345,33 +573,36 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-09-14
 
 ### Fixed
+
 - **Khắc phục Triệt để Lỗi SSR "window is not defined" do Leaflet:**
   - Chuyển toàn bộ `import L from 'leaflet'` sang `import type L from 'leaflet'` trong [`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx), đảm bảo mã Leaflet không bao giờ bị thực thi trên môi trường Server (Node.js).
   - Khởi tạo icon tùy chỉnh và `fitBounds` hoàn toàn qua dynamic runtime `leaflet` được nạp an toàn trên Client (`useEffect`).
 
 ### Changed & Optimized
+
 - **Tối ưu Barrel Export & Cô lập Bản đồ:**
   - Gỡ bỏ `export * from './map-modal'` khỏi [`src/components/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/index.ts) để giải phóng toàn bộ `AdminLayout` và các trang vệ tinh khỏi việc nạp mã Leaflet nặng trên Server.
-  - Áp dụng `dynamic(() => import('./_components/live-map').then((mod) => mod.LiveMap), { ssr: false })` cho trang [`live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx).
+  - Áp dụng `dynamic(() => import('./_components/live-map').then((mod) => mod.LiveMap), { ssr: false })` cho trang [`live-map/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx>).
 - **Render Động Tiện Ích Doanh Nghiệp Theo Phân Quyền Vai Trò (Role-based RBAC):**
-  - Tái cấu trúc [`QuickActionsGrid`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/quick-actions-grid.tsx) trên Dashboard di động: tích hợp trực tiếp với ma trận phân quyền `isRouteAllowedForRole` từ [`src/config/sidebar.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/sidebar.ts) và `useAuthStore`.
+  - Tái cấu trúc [`QuickActionsGrid`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/quick-actions-grid.tsx>) trên Dashboard di động: tích hợp trực tiếp với ma trận phân quyền `isRouteAllowedForRole` từ [`src/config/sidebar.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/sidebar.ts) và `useAuthStore`.
   - Tự động ẩn/hiện các tính năng theo đúng vai trò thực tế của người dùng (`admin`, `hr`, `sale`, `technician`, `accountant`, `employee`), triệt tiêu lỗi 403 Forbidden khi nhân viên bấm vào tính năng quản trị.
   - Cập nhật số lượng tính năng hiển thị linh hoạt `{visibleActions.length} tính năng` thay vì viết cứng.
 - **Phân Quyền Khối Lịch Sử Dashboard & Bảo Vệ Nhật Ký Hệ Thống (Audit Logs):**
-  - Tạo mới component [`PersonalAttendanceHistory`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/personal-attendance-history.tsx) hiển thị 5 ngày chấm công gần nhất của chính nhân viên (ngày, ca, giờ check-in/out, badge đúng giờ/muộn).
-  - Ẩn hoàn toàn [`SystemHistory`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/system-history.tsx) (Audit Log nhạy cảm) đối với các vai trò `employee`, `technician`, `sale`, `accountant` và thay thế bằng `PersonalAttendanceHistory`.
+  - Tạo mới component [`PersonalAttendanceHistory`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/personal-attendance-history.tsx>) hiển thị 5 ngày chấm công gần nhất của chính nhân viên (ngày, ca, giờ check-in/out, badge đúng giờ/muộn).
+  - Ẩn hoàn toàn [`SystemHistory`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/system-history.tsx>) (Audit Log nhạy cảm) đối với các vai trò `employee`, `technician`, `sale`, `accountant` và thay thế bằng `PersonalAttendanceHistory`.
   - Giữ lại `SystemHistory` chỉ cho `admin` và `hr`.
 - **Chuẩn Hóa Màu Sắc Tối Giản & Đồng Bộ Màu Thương Hiệu (Design System Alignment):**
-  - **Khối Yêu cầu chờ phê duyệt ([`PendingApprovalsCard`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/pending-approvals-card.tsx)):**
+  - **Khối Yêu cầu chờ phê duyệt ([`PendingApprovalsCard`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/pending-approvals-card.tsx>)):**
     - Loại bỏ hoàn toàn các viền vàng chói, nền vàng và các nút màu cam/xanh rời rạc.
     - Chuẩn hóa theo phong cách Corporate Minimalist: viền xám nhẹ `border-gray-100`, icon tiêu đề & badge số lượng đồng bộ màu nhận diện thương hiệu `bg-primary/10 text-primary` (`#045863`).
     - 2 Thẻ hành động nhanh ("Đơn nghỉ phép" & "Giải trình công") chuyển sang dạng thẻ trung tính hiện đại: nền xám nhạt `bg-gray-50/80` viền mảnh, icon màu thương hiệu tinh tế.
-  - **Biểu đồ Chuyên cần 7 ngày ([`WeeklyAttendanceChart`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx)):**
+  - **Biểu đồ Chuyên cần 7 ngày ([`WeeklyAttendanceChart`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx>)):**
     - Cột **"Có mặt"**: Chuyển từ màu xanh neon `#10b981` sang màu nhận diện thương hiệu XTTech **`#045863` (Teal)**.
     - Cột **"Đi muộn"**: Chuyển từ màu cam chói `#f59e0b` sang tone trung tính nhẹ **`#94a3b8` (Slate-400)** dịu mắt, không gây rối mắt cho người quản lý.
     - Hiệu ứng hover chuột: Dùng dải mờ nhẹ `rgba(0, 0, 0, 0.03)` thay cho khối xám đặc.
 
 ### Removed
+
 - **Dọn dẹp Mã nguồn Trùng lặp (DRY):**
   - Xóa bỏ file trùng lặp `src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx`.
   - Tái sử dụng thống nhất [`RoutePlaybackModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/map-modal/route-playback-modal.tsx) trên cả 2 trang Chấm công (`attendances`) và Bản đồ trực tiếp (`live-map`).
@@ -379,10 +610,11 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-09-12
 
 ### Added & Redesigned
-- **Thiết kế lại Trang Dashboard Doanh Nghiệp Thời Gian Thực & Bộ Tiện Ích Di Động Super-App ([`dashboard/`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard)):**
+
+- **Thiết kế lại Trang Dashboard Doanh Nghiệp Thời Gian Thực & Bộ Tiện Ích Di Động Super-App ([`dashboard/`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard>)):**
   - **Loại bỏ triệt để dữ liệu mockup ảo:** Thay thế toàn bộ các chỉ số thống kê giả lập, tài liệu ảo, lịch đào tạo ảo và biểu đồ tĩnh bằng 100% dữ liệu sống từ hệ thống (Nhân sự, Chấm công hôm nay, Đơn xin nghỉ phép đang chờ duyệt, Giải trình công, Dự án và GPS Live Map).
   - **Trải nghiệm Mobile Chuẩn Super-App Doanh nghiệp (Lark Suite / Base.vn style):**
-    - [`MobileHeader`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/mobile-header.tsx): Lời chào cá nhân hóa thông minh theo thời gian trong ngày, Avatar, Chức vụ, Thứ/Ngày/Tháng tiếng Việt kèm nút làm mới tức thì.
+    - [`MobileHeader`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/mobile-header.tsx>): Lời chào cá nhân hóa thông minh theo thời gian trong ngày, Avatar, Chức vụ, Thứ/Ngày/Tháng tiếng Việt kèm nút làm mới tức thì.
     - **Tối ưu hóa Toàn diện UI/UX Modal Chấm Công Tự Động ([`src/components/auto-timekeeping-modal/`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal)):**
       - **Tối ưu Layout & Xóa bỏ khoảng trắng thừa:** Chuyển layout sang dạng Sticky Footer cố định ở chân trang với dải nền phân cách nổi bật; khu vực nội dung bên trên co giãn linh hoạt và cuộn mượt mà trên thiết bị di động.
       - **Thiết kế lại Nút hành động chính (CTA):** Thay thế nút tròn cũ bằng nút chữ nhật bo góc rộng toàn mép (full-width) màu xanh ngọc chủ đạo (Teal/Primary) với nhãn hành động rõ ràng: `📸 Chụp ảnh chấm công` ở bước chụp và `Xác nhận Check-in / Check-out` ở bước xác nhận.
@@ -390,16 +622,18 @@ All notable changes to the frontend project will be documented in this file.
       - **Gom nhóm thông tin dạng Card UI:** Đặt cụm [Toạ độ + Bản đồ GPS] và [Ghi chú chấm công] vào các Card nền xám nhạt (`bg-slate-50 border border-slate-200/80 rounded-xl`), tạo phân cấp khối thông tin trực quan, ngăn nắp.
       - **Tinh chỉnh Typography & Icon:** Hạ cỡ chữ tiêu đề xuống mức chuẩn 18px-20px, đồng bộ phong cách và kích thước icon thống nhất trên toàn modal.
 
-    - [`QuickActionsGrid`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/quick-actions-grid.tsx): Lưới 8 tiện ích doanh nghiệp di động chuẩn 4 cột với icon bo góc mềm mại, phối màu hiện đại và badge đếm đơn từ chờ duyệt: Bản đồ Live, Xin nghỉ phép, Giải trình, Bảng công, Dự án, Danh bạ, Góp ý, Báo cáo.
-    - [`PendingApprovalsCard`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/pending-approvals-card.tsx): Thẻ cảnh báo và xử lý nhanh các đơn xin nghỉ phép và khiếu nại công dành riêng cho HR / Admin / Ban giám đốc.
+    - [`QuickActionsGrid`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/quick-actions-grid.tsx>): Lưới 8 tiện ích doanh nghiệp di động chuẩn 4 cột với icon bo góc mềm mại, phối màu hiện đại và badge đếm đơn từ chờ duyệt: Bản đồ Live, Xin nghỉ phép, Giải trình, Bảng công, Dự án, Danh bạ, Góp ý, Báo cáo.
+    - [`PendingApprovalsCard`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/pending-approvals-card.tsx>): Thẻ cảnh báo và xử lý nhanh các đơn xin nghỉ phép và khiếu nại công dành riêng cho HR / Admin / Ban giám đốc.
+
   - **Trải nghiệm Desktop Bảng Điều Hành Trung Tâm (Command Center):**
     - 4 Thẻ KPI chính xác theo thời gian thực (Tổng nhân sự, Chuyên cần hôm nay, Hồ sơ chờ duyệt, Dự án đang chạy).
-    - [`WeeklyAttendanceChart`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx): Biểu đồ Recharts cột đôi thể hiện số lượng nhân sự có mặt và đi muộn trong 7 ngày gần nhất.
-    - [`LiveStaffWidget`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/live-staff-widget.tsx): Widget theo dõi danh sách kỹ thuật viên/nhân sự đang trực tuyến định vị GPS ngoài thực địa theo thời gian thực.
+    - [`WeeklyAttendanceChart`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx>): Biểu đồ Recharts cột đôi thể hiện số lượng nhân sự có mặt và đi muộn trong 7 ngày gần nhất.
+    - [`LiveStaffWidget`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/live-staff-widget.tsx>): Widget theo dõi danh sách kỹ thuật viên/nhân sự đang trực tuyến định vị GPS ngoài thực địa theo thời gian thực.
   - **Tích hợp API Backend & Cơ chế Fallback Không Gián Đoạn ([`src/actions/dashboard/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/dashboard/index.ts)):**
     - Xây dựng action `getDashboardSummary()` ưu tiên gọi endpoint tổng hợp tối ưu từ backend, đồng thời trang bị cơ chế tự động fallback tổng hợp dữ liệu song song client-side từ các API sẵn có, đảm bảo hoạt động trơn tru 100% không gián đoạn trên cả môi trường local và production.
 
 ### Refactored & Enhanced
+
 - **Tái cấu trúc & Nâng cấp Trải nghiệm Sidebar Quản trị ([`src/config/sidebar.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/sidebar.ts), [`src/components/sidebar/sidebar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/sidebar/sidebar.tsx)):**
   - **Cặp Biểu Tượng Ghim / Hủy Ghim Thông Minh (Pin / PinOff):** Chuẩn hóa hoàn toàn nút điều khiển ở Header chỉ với 2 trạng thái: **Ghim 📌 (`Pin`)** khi đang mở tạm thời do rê chuột (hover) để cố định thanh menu mở rộng, và **Hủy ghim 📍✕ (`PinOff`)** khi đang mở cố định để chuyển sang chế độ tự động thu nhỏ khi rời chuột, loại bỏ hoàn toàn biểu tượng thu nhỏ rườm rà.
   - **Tính năng Hover-to-Expand thông minh & Chống giật vỡ chữ (Text Wrapping):** Khi Sidebar ở trạng thái thu nhỏ (`isCollapsed = true`), rê chuột vào sidebar sẽ tự động mở rộng mượt mà (`w-72`) kèm bóng nổi (`shadow-2xl z-30`). Áp dụng `whitespace-nowrap`, `truncate` và `overflow-hidden` trên toàn bộ nhãn, tiêu đề và menu con, triệt tiêu hoàn toàn hiện tượng chữ bị rớt thành 2 dòng rồi co lại thành 1 dòng trong quá trình co giãn chiều rộng.
@@ -410,7 +644,9 @@ All notable changes to the frontend project will be documented in this file.
 
 - **Chuẩn hóa Đường dẫn Hình ảnh & Tệp tin ([`src/utils/string.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/string.ts)):**
   - Xây dựng hàm tiện ích tập trung `getFileUrl(path, fallback)` xử lý toàn diện các trường hợp ngoại lệ: `undefined`/`null`, tự động chuẩn hóa dấu gạch chéo `/`, hỗ trợ link tuyệt đối (`http://`, `https://`, `blob:`, `data:`), loại bỏ triệt để hiện tượng URL rác hoặc double slash.
+
 ### Removed
+
 - **Dọn dẹp các Component Mockup Thừa Không Sử Dụng:**
   - Xóa bỏ `src/app/(auth)/app/(sidebar)/dashboard/_components/document.tsx` (danh sách tài liệu mockup cũ).
   - Xóa bỏ `src/app/(auth)/app/(sidebar)/dashboard/_components/schedule.tsx` (lịch họp/đào tạo mockup cũ).
@@ -418,7 +654,8 @@ All notable changes to the frontend project will be documented in this file.
   - Xóa bỏ `src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx` (file re-export trung gian cũ sau khi đã chuẩn hóa vị trí tại `src/components/auto-timekeeping-modal/`).
 
 ### Fixed & Enhanced
-- **Khắc phục Triệt để Lỗi "Maximum update depth exceeded" do Resize Loop của Recharts ([`WeeklyAttendanceChart`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx)):**
+
+- **Khắc phục Triệt để Lỗi "Maximum update depth exceeded" do Resize Loop của Recharts ([`WeeklyAttendanceChart`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/weekly-attendance-chart.tsx>)):**
   - **Loại bỏ vòng lặp `setContainerSize`:** Gỡ bỏ state `barSize` và sự kiện resize thủ công `window.addEventListener('resize')` gây xung đột với `SizeDetectorContainer` của Recharts. Chuyển sang cơ chế tự co giãn tự nhiên qua `maxBarSize={32}` và `barCategoryGap="20%"`.
   - **Trang bị cơ chế Debounce & Mount an toàn:** Thêm `debounce={50}`, `minWidth={0}`, `minHeight={260}` và kiểm tra `mounted` trước khi render `ResponsiveContainer` trên client.
   - **Chống tràn lưới CSS Grid:** Bổ sung thuộc tính `min-w-0` vào các cột lưới `col-span-8` và `col-span-4` trên tất cả 6 trang Dashboard role (`admin`, `hr`, `employee`, `sale`, `technician`, `accountant`), triệt tiêu hoàn toàn hiện tượng layout co giãn không điểm dừng.
@@ -456,51 +693,53 @@ All notable changes to the frontend project will be documented in this file.
   - Tích hợp và re-export tập trung qua [`src/utils/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/index.ts).
 
 ### Changed / Refactored
+
 - **Chuẩn hóa Xử lý Lỗi Toàn cục (DRY Error Handling) trên toàn hệ thống:**
   - **Module Chấm công (`attendances`):**
-    - [`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx): Rút gọn khối `catch` chấm công tự động sang `showErrorToast`.
-    - [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx): Khối `handleDeleteConfirm` dùng `showErrorToast`.
-    - [`overtime-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/overtime-modal.tsx): Thay thế toàn bộ 6 dòng bóc tách lỗi thủ công trong `catch` bằng `showErrorToast`.
-    - [`adjustments/_components/add-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/_components/add-modal.tsx): Loại bỏ hàm `handleCreateError` thủ công hơn 25 dòng, chuẩn hóa qua `showErrorToast`.
-    - [`adjustments/_components/edit-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/_components/edit-modal.tsx): Bắt lỗi qua `showErrorToast`.
-    - [`adjustments/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/page.tsx): Xử lý lỗi duyệt và xóa khiếu nại bằng `showErrorToast`.
-    - [`reports/_components/action-bar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/action-bar.tsx): Xuất Excel bắt lỗi chi tiết qua `getErrorMessage`.
-    - [`live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx): Bắt lỗi fetch vị trí qua `showErrorToast`.
-    - [`edit-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/edit-modal.tsx) & [`add-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/add-modal.tsx): Đồng bộ callback `onError` sử dụng `showErrorToast`.
+    - [`auto-timekeeping-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx>): Rút gọn khối `catch` chấm công tự động sang `showErrorToast`.
+    - [`page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx>): Khối `handleDeleteConfirm` dùng `showErrorToast`.
+    - [`overtime-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/overtime-modal.tsx>): Thay thế toàn bộ 6 dòng bóc tách lỗi thủ công trong `catch` bằng `showErrorToast`.
+    - [`adjustments/_components/add-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/_components/add-modal.tsx>): Loại bỏ hàm `handleCreateError` thủ công hơn 25 dòng, chuẩn hóa qua `showErrorToast`.
+    - [`adjustments/_components/edit-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/_components/edit-modal.tsx>): Bắt lỗi qua `showErrorToast`.
+    - [`adjustments/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/adjustments/page.tsx>): Xử lý lỗi duyệt và xóa khiếu nại bằng `showErrorToast`.
+    - [`reports/_components/action-bar.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/action-bar.tsx>): Xuất Excel bắt lỗi chi tiết qua `getErrorMessage`.
+    - [`live-map/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx>): Bắt lỗi fetch vị trí qua `showErrorToast`.
+    - [`edit-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/edit-modal.tsx>) & [`add-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/add-modal.tsx>): Đồng bộ callback `onError` sử dụng `showErrorToast`.
   - **Module Phiên bản Ứng dụng (`app-versions`):**
-    - [`release-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/release-modal.tsx): Đồng bộ `setErrorMsg` và `showErrorToast` cùng hiển thị message chi tiết từ server.
-    - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/table.tsx): Chuẩn hóa `fetcher` `catch (err)` dùng `showErrorToast`.
+    - [`release-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/release-modal.tsx>): Đồng bộ `setErrorMsg` và `showErrorToast` cùng hiển thị message chi tiết từ server.
+    - [`table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/table.tsx>): Chuẩn hóa `fetcher` `catch (err)` dùng `showErrorToast`.
   - **Module Nghỉ phép (`leave-requests`):**
-    - [`leave-request-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/leave-requests/_components/leave-request-modal.tsx): Thay thế toàn bộ 4 hàm `onError` của mutations (`create`, `update`, `delete`, `review`) sang `showErrorToast`.
+    - [`leave-request-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/leave-requests/_components/leave-request-modal.tsx>): Thay thế toàn bộ 4 hàm `onError` của mutations (`create`, `update`, `delete`, `review`) sang `showErrorToast`.
   - **Module Ca làm việc (`shifts`):**
-    - [`form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/shifts/_components/form-modal.tsx): Đồng bộ 2 callbacks `onError` (`createMutation`, `updateMutation`) sang `showErrorToast`.
-    - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/shifts/_components/table.tsx): Bắt lỗi `deleteMutation.onError` bằng `showErrorToast`.
+    - [`form-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/shifts/_components/form-modal.tsx>): Đồng bộ 2 callbacks `onError` (`createMutation`, `updateMutation`) sang `showErrorToast`.
+    - [`table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/shifts/_components/table.tsx>): Bắt lỗi `deleteMutation.onError` bằng `showErrorToast`.
   - **Module Vai trò & Phân quyền (`roles`):**
-    - [`role-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/roles/_components/role-table.tsx): Chuẩn hóa `fetcher` và `handleDeleteRole.onError` sang `showErrorToast`.
-    - [`role-form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/roles/_components/role-form-modal.tsx): `onError` lưu vai trò dùng `showErrorToast`.
+    - [`role-table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/roles/_components/role-table.tsx>): Chuẩn hóa `fetcher` và `handleDeleteRole.onError` sang `showErrorToast`.
+    - [`role-form-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/roles/_components/role-form-modal.tsx>): `onError` lưu vai trò dùng `showErrorToast`.
   - **Module Đề xuất & Góp ý (`suggestions`):**
-    - [`suggestion-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/suggestions/_components/suggestion-modal.tsx): Cập nhật 4 callbacks `onError` (gửi, cập nhật, xóa, duyệt đề xuất) sang `showErrorToast`.
-    - [`suggestion-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/suggestions/_components/suggestion-table.tsx): `fetcher` bắt lỗi bằng `showErrorToast`.
+    - [`suggestion-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/suggestions/_components/suggestion-modal.tsx>): Cập nhật 4 callbacks `onError` (gửi, cập nhật, xóa, duyệt đề xuất) sang `showErrorToast`.
+    - [`suggestion-table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/suggestions/_components/suggestion-table.tsx>): `fetcher` bắt lỗi bằng `showErrorToast`.
   - **Module Dự án & Cấu hình Dự án (`projects` & `projects/configuration`):**
-    - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/table.tsx): Bọc `fetcher` với try/catch gọi `showErrorToast`.
-    - [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/modals.tsx): Cập nhật `createMutation.onError` và `updateMutation.onError` sang `showErrorToast`.
-    - [`quotation-modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/quotation-modals.tsx): Cập nhật tạo và cập nhật báo giá `onError` sang `showErrorToast`.
-    - [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/page.tsx): Cập nhật `deleteProjectMutation.onError` sang `showErrorToast`.
-    - [`[id]/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/page.tsx): Chuẩn hóa `deleteProjectMutation.onError` và `changeQuotationStatus.onError` sang `showErrorToast`.
-    - **Cấu hình Vật liệu (`materials`):** [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/materials/page.tsx) & [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/materials/_components/modals.tsx): Đồng bộ toàn bộ `onError` của xóa, tạo, sửa vật tư sang `showErrorToast`.
-    - **Cấu hình Cửa (`doors`):** [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/page.tsx) & [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/modals.tsx): Đồng bộ toàn bộ `onError` của xóa, tạo, sửa hệ cửa sang `showErrorToast`.
-    - **Cấu hình Phụ kiện (`accessories`):** [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/page.tsx) & [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/_components/modals.tsx): Đồng bộ toàn bộ `onError` của xóa, tạo, sửa phụ kiện sang `showErrorToast`.
+    - [`table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/table.tsx>): Bọc `fetcher` với try/catch gọi `showErrorToast`.
+    - [`modals.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/modals.tsx>): Cập nhật `createMutation.onError` và `updateMutation.onError` sang `showErrorToast`.
+    - [`quotation-modals.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/quotation-modals.tsx>): Cập nhật tạo và cập nhật báo giá `onError` sang `showErrorToast`.
+    - [`page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/page.tsx>): Cập nhật `deleteProjectMutation.onError` sang `showErrorToast`.
+    - [`[id]/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/page.tsx>): Chuẩn hóa `deleteProjectMutation.onError` và `changeQuotationStatus.onError` sang `showErrorToast`.
+    - **Cấu hình Vật liệu (`materials`):** [`page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/materials/page.tsx>) & [`modals.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/materials/_components/modals.tsx>): Đồng bộ toàn bộ `onError` của xóa, tạo, sửa vật tư sang `showErrorToast`.
+    - **Cấu hình Cửa (`doors`):** [`page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/page.tsx>) & [`modals.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/modals.tsx>): Đồng bộ toàn bộ `onError` của xóa, tạo, sửa hệ cửa sang `showErrorToast`.
+    - **Cấu hình Phụ kiện (`accessories`):** [`page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/page.tsx>) & [`modals.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/_components/modals.tsx>): Đồng bộ toàn bộ `onError` của xóa, tạo, sửa phụ kiện sang `showErrorToast`.
   - **Module Khách hàng (`customers`):**
-    - [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/page.tsx): Cập nhật `deleteCustomerMutation.onError` sang `showErrorToast`.
-    - [`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx): Cập nhật `createMutation.onError` và `updateMutation.onError` sang `showErrorToast`.
+    - [`page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/page.tsx>): Cập nhật `deleteCustomerMutation.onError` sang `showErrorToast`.
+    - [`modals.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx>): Cập nhật `createMutation.onError` và `updateMutation.onError` sang `showErrorToast`.
   - **Module Phòng ban (`departments`):**
-    - [`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/departments/_components/table.tsx): Chuẩn hóa `deleteDepartment.onError` sang `showErrorToast`.
-    - [`form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/departments/_components/form-modal.tsx): Đồng bộ `createDepartment.onError` và `updateDepartment.onError` sang `showErrorToast`.
+    - [`table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/departments/_components/table.tsx>): Chuẩn hóa `deleteDepartment.onError` sang `showErrorToast`.
+    - [`form-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/departments/_components/form-modal.tsx>): Đồng bộ `createDepartment.onError` và `updateDepartment.onError` sang `showErrorToast`.
 
 ## [Unreleased] - 2026-09-10
 
 ### Added
-- **Nâng cấp & Chuẩn hóa Modal Lộ trình Di chuyển theo chuẩn Google Maps ([`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx)):**
+
+- **Nâng cấp & Chuẩn hóa Modal Lộ trình Di chuyển theo chuẩn Google Maps ([`route-playback-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx>)):**
   - **Nút Thumbnail Chuyển đổi Vệ tinh / Bản đồ (Góc dưới bên trái):**
     - Thiết kế ô thumbnail vuông bo góc `w-14 h-14` chuẩn Google Maps với viền trắng nổi và nhãn chữ mờ dưới đáy.
     - Hiển thị ảnh chụp vệ tinh thực tế thu nhỏ khi ở chế độ đường phố (Giao thông) và ảnh bản đồ khi ở chế độ Vệ tinh; click hoán đổi linh hoạt giữa Bản đồ và Vệ tinh Hybrid.
@@ -514,33 +753,33 @@ All notable changes to the frontend project will be documented in this file.
     - Bổ sung `fitBounds` tự động căn chỉnh góc nhìn bao quát toàn bộ hành trình khi tải xong điểm GPS.
 
 - **Module Quản lý Nhà cung cấp (Customer Providers) & Tích hợp Quick-Create vào Khách hàng:**
-  - **Trang Quản trị Danh mục Nhà cung cấp ([`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/providers/page.tsx)):**
+  - **Trang Quản trị Danh mục Nhà cung cấp ([`page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/providers/page.tsx>)):**
     - Đường dẫn chuẩn: `/app/customers/providers` (sub-route bên trong module Khách hàng).
     - Thẻ thống kê 4 ô chuẩn hệ thống (`StatsCard`: Tổng số nhà cung cấp, Đang hoạt động, Nguồn đối tác, Mới cập nhật).
     - Thanh tìm kiếm theo mã, tên nhà cung cấp (`useQueryParam('search')`).
     - Bảng dữ liệu chuẩn `TableData` hỗ trợ đầy đủ Desktop & Mobile card view, định dạng ngày tháng và phân trang.
-    - Modal Thêm / Cập nhật nhà cung cấp ([`provider-form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/provider-form-modal.tsx)) dùng chung cho toàn bộ cụm `customers`, chuẩn DRY 100%, loại bỏ hoàn toàn việc import chéo.
+    - Modal Thêm / Cập nhật nhà cung cấp ([`provider-form-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/provider-form-modal.tsx>)) dùng chung cho toàn bộ cụm `customers`, chuẩn DRY 100%, loại bỏ hoàn toàn việc import chéo.
     - Modal Xác nhận xóa an toàn gọi API xóa mềm backend.
-  - **Tiện ích Quick-Create tại Form Khách hàng ([`modals.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx)):**
+  - **Tiện ích Quick-Create tại Form Khách hàng ([`modals.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx>)):**
     - Tích hợp Selectbox "Nhà cung cấp / Đối tác" vào `CustomerFormModal`.
     - Thêm nút `+` nằm ngay bên phải ô Selectbox: mở popup mini tạo nhanh tại chỗ, sau khi lưu sẽ tự động invalidate cache React Query và gán ngay ID vừa tạo vào form mà **không làm mất thông tin form đang nhập dở**.
   - **Hiển thị thông tin Nhà cung cấp:**
-    - Cột "Nhà cung cấp" trong Bảng Khách hàng ([`table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx)) cả trên giao diện Desktop lẫn thẻ Mobile.
-    - Trường "Nhà cung cấp / Đối tác" trong Thẻ chi tiết khách hàng ([`customer-info.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/[id]/_components/customer-info.tsx)).
+    - Cột "Nhà cung cấp" trong Bảng Khách hàng ([`table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx>)) cả trên giao diện Desktop lẫn thẻ Mobile.
+    - Trường "Nhà cung cấp / Đối tác" trong Thẻ chi tiết khách hàng ([`customer-info.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/[id]/_components/customer-info.tsx>)).
   - **API Actions & Type Safety:**
     - Tạo `src/types/customer-provider.ts` và cập nhật `src/types/customer.ts` bổ sung `providerId`, `provider`.
     - Tạo `src/actions/customer-provider/index.ts` kết nối đồng bộ với endpoint `/api/v1/customer-providers`.
 
-
 ### Fixed
+
 - **Tối ưu hóa Hệ thống Live Map Realtime & Triệt tiêu Lộ trình Zic Zac Con thoi:**
-  - **Khắc phục lỗi Live Map bị đơ / phải reload mới cập nhật ([`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):**
+  - **Khắc phục lỗi Live Map bị đơ / phải reload mới cập nhật ([`page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx>)):**
     - Tích hợp cơ chế **WebSocket Auto-Reconnect** tự động kết nối lại sau 3s khi đứt mạng, đóng nắp máy hoặc đổi Wi-Fi.
     - Bổ sung **Fallback Polling** định kỳ (10s/lần khi mất socket và 60s dự phòng) giúp dữ liệu bản đồ luôn cập nhật mượt mà, không bao giờ phải F5.
-  - **Tính năng Tự động Theo sát Nhân viên (Auto-Follow Mode) ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+  - **Tính năng Tự động Theo sát Nhân viên (Auto-Follow Mode) ([`live-map.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx>)):**
     - Tự động gọi `map.panTo()` mượt mà giữ nhân viên luôn ở tâm màn hình khi họ di chuyển.
-    - Thêm nút toggle nổi *"Đang theo sát"* / *"Bật theo sát"* ở góc phải bản đồ để admin chủ động kiểm soát.
-  - **Triệt tiêu hiện tượng lộ trình chạy ngược chạy xuôi zic zac trên đường ([`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx)):**
+    - Thêm nút toggle nổi _"Đang theo sát"_ / _"Bật theo sát"_ ở góc phải bản đồ để admin chủ động kiểm soát.
+  - **Triệt tiêu hiện tượng lộ trình chạy ngược chạy xuôi zic zac trên đường ([`route-playback-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/route-playback-modal.tsx>)):**
     - Thuật toán **Ping-Pong Spike Filter** $O(n)$: phát hiện và loại bỏ các điểm nhảy sang trạm sóng BTS rồi quay về vị trí cũ.
     - Đổi mặc định `isSnapToRoad = false` giúp hiển thị đường Polyline GPS tự nhiên, không bị OSRM bẻ ngoặt thành các vòng lặp quay đầu xe trên đường đôi.
   - **Khắc phục xung đột trạm sóng BTS & GPS ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java) & [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
@@ -554,30 +793,33 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-09-08
 
 ### Added
+
 - **Tính năng Tự động Cập nhật APK Nội bộ (In-App APK Auto-Updater) cho Android:**
   - **Native Plugin (`AppUpdatePlugin.java` & `MainActivity.java`):** Tích hợp plugin Capacitor Native đọc `versionCode`/`versionName` từ Android `PackageInfo`, sử dụng luồng tải ngầm đa luồng truyền thẳng file APK vào bộ nhớ cache, phát sự kiện tiến trình tải theo thời gian thực (`downloadProgress`).
   - **Tự động kích hoạt cài đặt (`FileProvider` & `ACTION_VIEW`):** Cấp quyền `REQUEST_INSTALL_PACKAGES` trong `AndroidManifest.xml` và cấu hình `file_paths.xml`. Tự động kích hoạt Intent cài đặt hệ thống của Android với cờ `FLAG_GRANT_READ_URI_PERMISSION`. Hỗ trợ mở cài đặt cấp quyền cài app không rõ nguồn gốc nếu Android 8.0+ yêu cầu.
   - **Tự động hóa Phiên bản trong Gradle ([`build.gradle`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/build.gradle)):** Tự động đồng bộ `versionName` từ `package.json` và tự động tính `versionCode` theo số lượng commit Git (`git rev-list --count HEAD`), loại bỏ hoàn toàn việc gõ tay số phiên bản.
   - **Kết nối Backend FastAPI ([`AppUpdateModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/app-update-modal/index.tsx)):** Gọi trực tiếp endpoint `/api/v1/system/app-versions/latest?platform=android` từ Backend Railway thay vì lưu file tĩnh trên frontend.
   - **Giao diện Modal Thông báo Cập nhật ([`AppUpdateModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/app-update-modal/index.tsx)):** Tự động phát hiện khi mở ứng dụng trên Android, hiển thị popup thân thiện với danh sách tính năng mới, thanh tiến trình % tải xuống trực quan và các nút điều hướng cài đặt 1 chạm.
-  - **Trang Quản lý Phiên bản Ứng dụng Di động ([`app-versions/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/page.tsx)):**
+  - **Trang Quản lý Phiên bản Ứng dụng Di động ([`app-versions/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/page.tsx>)):**
     - Bổ sung nhóm mục **"Hệ thống"** trên Sidebar (`/app/app-versions`, phân quyền `super`, `admin`).
     - Tái cấu trúc layout đồng bộ 100% với các trang chuẩn (`customers`, `departments`, `shifts`):
       - Khối thống kê 4 thẻ chuẩn [`StatsCard`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/stats-card.tsx) (Bản mới nhất, Tổng bản phát hành, Yêu cầu bắt buộc, Nền tảng hỗ trợ).
       - Bỏ box header dư thừa ở đầu trang, đưa nút hành động "Phát hành bản mới" lên Action Bar chuẩn.
-      - Tích hợp ô tìm kiếm và bộ lọc Nền tảng (Android / iOS) trực tiếp vào [`TableData`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/table.tsx).
-      - Chuẩn hóa form modal phát hành [`ReleaseModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/release-modal.tsx) đồng bộ styling với các form modal trong hệ thống.
+      - Tích hợp ô tìm kiếm và bộ lọc Nền tảng (Android / iOS) trực tiếp vào [`TableData`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/table.tsx>).
+      - Chuẩn hóa form modal phát hành [`ReleaseModal`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/app-versions/_components/release-modal.tsx>) đồng bộ styling với các form modal trong hệ thống.
 
 ### Changed
-- **Tối ưu hóa luồng Check-in & Loại bỏ Ping thủ công ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx)):**
+
+- **Tối ưu hóa luồng Check-in & Loại bỏ Ping thủ công ([`auto-timekeeping-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx>)):**
   - Lược bỏ hoàn toàn lệnh gọi `sendLocationPing` thủ công sau khi Check-in thành công. Toàn bộ việc khởi tạo Live Location và broadcast WebSocket hiện được Backend tự động thực hiện từ chính toạ độ của form chấm công.
 
 ### Fixed
-- **Chuẩn hóa cơ chế tự động bay về nhân sự tuân thủ React 19 Compiler ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx) & [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):**
+
+- **Chuẩn hóa cơ chế tự động bay về nhân sự tuân thủ React 19 Compiler ([`live-map.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx>) & [`page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx>)):**
   - Bổ sung timestamp `_selectedAt` mỗi khi click chọn nhân sự ở Sidebar.
   - Sử dụng duy nhất một `lastSelectedAtRef` khai báo chuẩn ở đầu component, loại bỏ hoàn toàn các ref mutate trong render body và các hook vi phạm thứ tự của React 19 Compiler.
   - Xóa bỏ lỗi `Error: This value cannot be modified` và đảm bảo click lại vào nhân viên bất kỳ lúc nào thì bản đồ đều bay về đúng vị trí tức thì.
-- **Triệt tiêu lỗi vòng lặp render vô hạn `Maximum update depth exceeded` trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+- **Triệt tiêu lỗi vòng lặp render vô hạn `Maximum update depth exceeded` trên Live Map ([`live-map.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx>)):**
   - Xóa bỏ state rác `mapVersion` liên tục ép re-render trong sự kiện di chuyển bản đồ.
   - Bỏ listener `moveend`, chỉ cập nhật `currentZoom` khi giá trị thực tế thay đổi (`zoomend`) và có guard `prev !== newZoom`.
   - Chuẩn hóa callback ref cho `<MapContainer ref={handleMapRef}>` qua `React.useCallback` ngăn React gọi lại inline ref liên tục.
@@ -585,12 +827,11 @@ All notable changes to the frontend project will be documented in this file.
 - **Hỗ trợ định vị Wi-Fi / IP trên Laptop & Môi trường Web ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
   - Đồng bộ chuẩn hóa các ngưỡng lọc định vị trên thiết bị.
 
-
 ## [Unreleased] - 2026-09-07
 
-
 ### Added
-- **Tính năng Marker Clustering & Spiderfy (Gom cụm và Xòe nan hoa) trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+
+- **Tính năng Marker Clustering & Spiderfy (Gom cụm và Xòe nan hoa) trên Live Map ([`live-map.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx>)):**
   - **Thuật toán Gom cụm theo khoảng cách Pixel thích ứng theo mức Zoom (Zoom-Adaptive Clustering):** Khi zoom xa (zoom $< 11$: $65\text{px}$, zoom $< 13$: $55\text{px}$), tự động gom các nhân sự trong cùng thành phố/tỉnh thành 1 Marker Cụm duy nhất; khi zoom gần (zoom $\ge 13$: $38\text{px}$), tách ra từng phòng/tòa nhà riêng biệt.
   - **Hiển thị thông minh theo mức Zoom (Clean Map UI):** Khi zoom xa ($< 14$), tự động ẩn nhãn tên để bản đồ thoáng đãng, chỉ giữ Avatar tròn mini ($32\text{px}$) kèm viền màu trạng thái, nhãn tên tự động hiện lên khi rê chuột `hover` hoặc khi click chọn; khi zoom gần ($\ge 14$), hiển thị nhãn tên đầy đủ.
   - **Rút gọn tên nhân viên thông minh (`formatShortStaffName`):** Tự động chuyển `System Administrator` thành `Admin`, giới hạn độ dài tên tránh hiện tượng chữ quá dài đè lên marker khác.
@@ -598,18 +839,20 @@ All notable changes to the frontend project will be documented in this file.
   - **Auto-Spiderfy khi chọn từ Sidebar:** Khi Admin click vào nhân sự ở danh sách bên trái, bản đồ tự động bay tới và bung xòe cụm chứa nhân sự đó.
 
 ### Fixed
-- **Khắc phục vòng lặp tự bung xòe nan hoa (Spiderfy Loop), tự zoom gần lại và gom nhầm nhân sự ở xa trên Live Map ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx)):**
+
+- **Khắc phục vòng lặp tự bung xòe nan hoa (Spiderfy Loop), tự zoom gần lại và gom nhầm nhân sự ở xa trên Live Map ([`live-map.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx>)):**
   - **Khắc phục lỗi tự động phóng to lại mức 16 khi vừa zoom xa (Auto Zoom-In Loop):** Di chuyển lệnh `map.flyTo(..., 16)` vào bên trong guard `selectedStaff.userId !== prevSelectedStaffIdRef.current`. Chỉ bay tới nhân viên khi người dùng mới chủ động click chọn từ Sidebar, không tự động flyTo lại khi zoom xa hoặc re-render bản đồ.
   - **Khắc phục lỗi tự động mở nan hoa liên tục khi zoom (Zoom Loop):** Loại bỏ việc re-trigger `useEffect` mở Spiderfy phụ thuộc vào `clusters`. Sử dụng `prevSelectedStaffIdRef` đảm bảo Spiderfy chỉ kích hoạt khi người dùng chủ động click chọn cụm trên bản đồ hoặc click chọn nhân sự mới từ Sidebar.
   - **Tự động thu gọn nan hoa khi Zoom xa:** Bổ sung cơ chế tự động reset `activeSpiderfyClusterId = null` khi mức zoom $< 14$, ngăn ngừa nan hoa bị giãn/nhảy rối mắt khi quan sát ở phạm vi thành phố/toàn quốc.
   - **Ràng buộc khoảng cách địa lý thực tế ($\le 150\text{m}$):** Bổ sung điều kiện kiểm tra khoảng cách thực tế bằng `map.distance` trước khi gộp marker theo khoảng cách pixel màn hình. Tuyệt đối không gom nhân sự ở khác quận, tỉnh (ví dụ Nam Định với Hải Phòng) vào chung một cụm văn phòng khi zoom xa.
 
 ### Added
+
 - **Khắc phục triệt để lỗi sai lệch vị trí giữa Chấm công và Live Map, loại bỏ Stale Cache quá khứ và hỗ trợ định vị trong nhà:**
   - **Triệt tiêu Stale Cache Android ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java)):** Kiểm tra thời gian ghi nhận của `lastKnownLocation`. Nếu điểm lưu quá $60$ giây từ quá khứ, vứt bỏ ngay lập tức, chấm dứt triệt để lỗi vừa khởi động app đã bắn tọa độ cũ đi xe ngoài đường (kèm tốc độ cũ $48\text{ km/h}$) lên Live Map.
   - **Hỗ trợ định vị đa tầng trong nhà (Dual Provider):** Đăng ký song song cả `GPS_PROVIDER` (cho ngoài trời) và `NETWORK_PROVIDER` (cho trong phòng / văn phòng qua Wi-Fi) kèm bộ lọc ưu tiên, đảm bảo khi nhân viên ngồi trong văn phòng mất sóng vệ tinh thì hệ thống vẫn cập nhật vị trí văn phòng chuẩn xác.
   - **Bộ lọc sai số thích ứng (Adaptive Accuracy):** Áp dụng đồng bộ trên cả 3 nền tảng ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java), [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)): siết chặt `accuracy <= 30m` khi di chuyển ngoài đường, nới lỏng `accuracy <= 80m` khi đứng yên trong phòng (chuẩn hóa `speed = 0`).
-  - **Đồng bộ khởi tạo tức thì khi Check-in ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx)):** Tự động gửi ping khởi tạo với `speed = 0` ngay khi bấm Chấm công thành công, đồng bộ ngay lập tức điểm chấm công lên Redis Live Map.
+  - **Đồng bộ khởi tạo tức thì khi Check-in ([`auto-timekeeping-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx>)):** Tự động gửi ping khởi tạo với `speed = 0` ngay khi bấm Chấm công thành công, đồng bộ ngay lập tức điểm chấm công lên Redis Live Map.
 - **Triệt tiêu hiện tượng lộ trình bị giật loằng ngoằng do Fallback trạm phát sóng di động (Cellular BTS) và thiếu bộ lọc điểm rác:**
   - **Web Geolocation Tracker (`useLocationTracker.ts`):** Loại bỏ hoàn toàn cơ chế fallback gọi lại `getCurrentPosition` với `enableHighAccuracy: false` (nguyên nhân gây lấy vị trí cột sóng BTS/IP sai số 500m - 1000m). Tăng thời gian chờ định vị `timeout` lên 12s và siết `maximumAge: 5000` để đảm bảo luôn nhận tín hiệu vệ tinh phần cứng.
   - **Chốt chặn độ chính xác Client (`useLocationTracker.ts`):** Lọc cứng toàn bộ điểm có `accuracy > 30m` hoặc bước nhảy dị biệt $> 200m$ trong thời gian $< 6s$, không gửi điểm rác lên backend.
@@ -620,6 +863,7 @@ All notable changes to the frontend project will be documented in this file.
 ## [Unreleased] - 2026-09-05
 
 ### Fixed
+
 - **Khắc phục lỗi app Android bị chuyển về trạng thái `offline` sau khoảng 40 - 60 phút (Background Tracking):**
   - **Tự động Refresh Token trong Background Service:** Bổ sung việc lưu trữ `refreshToken` trong [`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java). Khi Access Token hết hạn (mặc định 30 phút theo cấu hình backend) và API trả về `HTTP 401 Unauthorized`, Service tầng Native sẽ tự động gọi endpoint `/api/v1/auth/refresh`, lưu Access Token mới và retry ping ngay lập tức mà không làm gián đoạn luồng định vị.
   - **Đồng bộ Token thời gian thực:** Cập nhật [`NativeTrackingPlugin.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/NativeTrackingPlugin.java) với method `updateToken` và hook [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts) lắng nghe sự kiện cập nhật token từ `useAuthStore` để đồng bộ tức thời xuống Service nền.
@@ -630,7 +874,8 @@ All notable changes to the frontend project will be documented in this file.
   - **Bổ sung quyền `NSLocationAlwaysUsageDescription`:** Đảm bảo tương thích toàn diện với cơ chế cấp quyền "Luôn luôn" (Always) trên các phiên bản iOS.
 
 ### Added
-- **Xem Lộ trình theo đúng Ca Chấm công ([`route-playback-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/route-playback-modal.tsx) & [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):**
+
+- **Xem Lộ trình theo đúng Ca Chấm công ([`route-playback-modal.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/route-playback-modal.tsx>) & [`page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx>)):**
   - Khi bấm xem "Lộ trình" của nhân viên trên Live-Map, modal tự động lọc chính xác chuỗi tọa độ GPS gắn liền với bản ghi chấm công đó (`attendanceId`), không bị vẽ nối hoặc lẫn lộn với các ca làm việc khác trong ngày.
   - Bổ sung nút chuyển đổi linh hoạt `[Theo ca #ID]` và `[Cả ngày]` ngay trên thanh điều khiển của modal để người quản trị dễ dàng so sánh lộ trình ca hiện tại hoặc toàn bộ hành trình trong ngày.
 - **Nâng cấp cơ chế 'Ping 3s Thông minh (Smart Adaptive Location Tracking)' trên Android, iOS và Web:**
@@ -649,29 +894,34 @@ All notable changes to the frontend project will be documented in this file.
   - Tự động chạy trên môi trường macOS M1/M2 ảo (`macos-14`) của GitHub.
   - Biên dịch dự án thành bản lưu trữ Release không yêu cầu chứng chỉ trả phí (`CODE_SIGNING_ALLOWED=NO`).
   - Đóng gói ứng dụng thành file `App-unsigned.ipa` đẩy lên mục Artifacts để tải về máy tính Windows và ký qua 3uTools bằng tài khoản Apple ID cá nhân (sử dụng 7 ngày).
+
 ## [Unreleased] - 2026-08-30
 
 ### Added
-- Bổ sung modal [`CustomerExportModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx) hỗ trợ xuất file Excel báo cáo khách hàng phân tầng đa Sheet theo nhân viên phụ trách.
-- Bổ sung các preset chọn nhanh thời gian thông minh (*Tuần này (mặc định)*, *Tuần trước*, *Tháng này*, *Tháng trước*, *Tùy chọn ngày*) cùng dropdown lọc nhân viên phụ trách dành cho Quản lý.
+
+- Bổ sung modal [`CustomerExportModal`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx>) hỗ trợ xuất file Excel báo cáo khách hàng phân tầng đa Sheet theo nhân viên phụ trách.
+- Bổ sung các preset chọn nhanh thời gian thông minh (_Tuần này (mặc định)_, _Tuần trước_, _Tháng này_, _Tháng trước_, _Tùy chọn ngày_) cùng dropdown lọc nhân viên phụ trách dành cho Quản lý.
 - Thêm action [`exportCustomersExcel`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/customer/index.ts) và type [`CustomerExportQueryParams`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/customer.ts).
-- Tích hợp nút bấm **"Xuất Excel"** (`FileSpreadsheet`) trên thanh công cụ quản lý khách hàng tại [`customers/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx).
-- Tích hợp giao diện **Hướng dẫn cấp lại quyền vị trí trực quan (Visual Permission Guide)** và cơ chế **Tự động bắt quyền (Auto-Permission Recovery)** trong [`AutoTimekeepingModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx): Hướng dẫn chi tiết từng bước cho cả 3 nền tảng (🤖 Android App / PWA cài đặt, 🍏 iPhone iOS Safari / Standalone, 💻 Máy tính Chrome/Edge), kèm lắng nghe sự kiện `navigator.permissions` tự động kích hoạt lấy vị trí ngay khi người dùng vừa bật lại quyền.
+- Tích hợp nút bấm **"Xuất Excel"** (`FileSpreadsheet`) trên thanh công cụ quản lý khách hàng tại [`customers/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx>).
+- Tích hợp giao diện **Hướng dẫn cấp lại quyền vị trí trực quan (Visual Permission Guide)** và cơ chế **Tự động bắt quyền (Auto-Permission Recovery)** trong [`AutoTimekeepingModal`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx>): Hướng dẫn chi tiết từng bước cho cả 3 nền tảng (🤖 Android App / PWA cài đặt, 🍏 iPhone iOS Safari / Standalone, 💻 Máy tính Chrome/Edge), kèm lắng nghe sự kiện `navigator.permissions` tự động kích hoạt lấy vị trí ngay khi người dùng vừa bật lại quyền.
 
 ### Fixed
-- Chuẩn hóa thiết kế giao diện [`CustomerExportModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx) đồng bộ 100% với hệ thống Modal của dự án: cấu trúc container `flex flex-col gap-4 py-2`, spacing `gap-3`, tiêu đề súc tích, bộ chọn mốc thời gian chip và nút bấm `Button` chuẩn Design System.
-- Sửa lỗi cảnh báo React render phase *"Cannot access refs during render"* tại [`quotation-info.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/quotations/[quotationId]/components/editor/quotation-info.tsx) khi truyền thuộc tính `width` chứa `ref.current`.
+
+- Chuẩn hóa thiết kế giao diện [`CustomerExportModal`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx>) đồng bộ 100% với hệ thống Modal của dự án: cấu trúc container `flex flex-col gap-4 py-2`, spacing `gap-3`, tiêu đề súc tích, bộ chọn mốc thời gian chip và nút bấm `Button` chuẩn Design System.
+- Sửa lỗi cảnh báo React render phase _"Cannot access refs during render"_ tại [`quotation-info.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/quotations/[quotationId]/components/editor/quotation-info.tsx>) khi truyền thuộc tính `width` chứa `ref.current`.
 
 ### Changed / Refactored
-- Tối ưu hóa và tái cấu trúc toàn diện trang Quản lý chấm công [`attendances/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx): loại bỏ hơn 350 dòng code rác, các state mồ côi (`filterEmployeeId`, `filterStartDate`, `filterEndDate`, `filterShift`, `isLoading`, `showTimekeepingModal`, `reviewModalState`), các modal không sử dụng (`ReviewAdjustmentModal`, `AutoTimekeepingModal`) và các khối JSX comment cũ; chuẩn hóa bộ lọc `TableData` và tối ưu hiệu năng render.
+
+- Tối ưu hóa và tái cấu trúc toàn diện trang Quản lý chấm công [`attendances/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx>): loại bỏ hơn 350 dòng code rác, các state mồ côi (`filterEmployeeId`, `filterStartDate`, `filterEndDate`, `filterShift`, `isLoading`, `showTimekeepingModal`, `reviewModalState`), các modal không sử dụng (`ReviewAdjustmentModal`, `AutoTimekeepingModal`) và các khối JSX comment cũ; chuẩn hóa bộ lọc `TableData` và tối ưu hiệu năng render.
 
 ### Removed
-- Loại bỏ nút xuất lẻ Excel theo từng nhân sự tại Bảng báo cáo chấm công [`attendances/reports/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/table.tsx), action `exportUserAttendanceDetailReport` và type `UserAttendanceDetailReportQueryParams`.
+
+- Loại bỏ nút xuất lẻ Excel theo từng nhân sự tại Bảng báo cáo chấm công [`attendances/reports/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/table.tsx>), action `exportUserAttendanceDetailReport` và type `UserAttendanceDetailReportQueryParams`.
 
 ## [0.1.0] - 2026-08-26
 
 - Xây dựng **Android Native Foreground Service (`TrackingLocationService.java`)** độc lập chạy ngầm liên tục chuẩn như Zalo/Grab:
-  - Khởi tạo tiến trình nền độc lập dưới tầng Android OS với `START_STICKY`, Notification Channel cố định (*"XTTech đang hoạt động"*) và gắn cờ `android:stopWithTask="false"` trong `AndroidManifest.xml`.
+  - Khởi tạo tiến trình nền độc lập dưới tầng Android OS với `START_STICKY`, Notification Channel cố định (_"XTTech đang hoạt động"_) và gắn cờ `android:stopWithTask="false"` trong `AndroidManifest.xml`.
   - Bắt sự kiện `onTaskRemoved()`: Khi người dùng vuốt đóng app hoàn toàn khỏi màn hình đa nhiệm (Recent Apps), tầng Java Native tiếp tục duy trì hoạt động, lắng nghe `LocationManager` và gửi HTTP POST trực tiếp lên endpoint `/api/v1/attendances/location-ping` bằng `HttpURLConnection` mà không cần WebView hay JavaScript phải thức.
   - Tích hợp cầu nối `NativeTrackingPlugin.java` đăng ký trong `MainActivity.java` và kết nối với hook [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts) để kích hoạt tự động theo ca làm việc.
 - Thêm component [`AppLauncherRedirect`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/_components/AppLauncherRedirect.tsx) vào trang chủ [`src/app/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/page.tsx):
@@ -683,72 +933,74 @@ All notable changes to the frontend project will be documented in this file.
   - Đồng bộ cơ chế kích hoạt lại nhịp tim khi người dùng bật lại màn hình hoặc focus vào ứng dụng.
 
 ### Fixed
+
 - Sửa dứt điểm lỗi hiển thị chuỗi văn bản thô (RSC Flight Payload `:HL... 0:{"tree":...}`) trên ứng dụng Android khi đăng xuất hoặc đăng nhập lại:
-  - Chuẩn hóa kiến trúc Server Layout tại [`src/app/(auth)/layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/layout.tsx) với `export const dynamic = 'force-dynamic'` và `revalidate = 0`, ngăn chặn Next.js tự động prerender tĩnh khu vực authenticated routes và loại bỏ hoàn toàn header `s-maxage=31536000`.
-  - Tách riêng component guard phía client [`AuthClientLayout`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/_components/auth-client-layout.tsx) để xử lý hydrate Zustand và bảo vệ phân quyền.
+  - Chuẩn hóa kiến trúc Server Layout tại [`src/app/(auth)/layout.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/layout.tsx>) với `export const dynamic = 'force-dynamic'` và `revalidate = 0`, ngăn chặn Next.js tự động prerender tĩnh khu vực authenticated routes và loại bỏ hoàn toàn header `s-maxage=31536000`.
+  - Tách riêng component guard phía client [`AuthClientLayout`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/_components/auth-client-layout.tsx>) để xử lý hydrate Zustand và bảo vệ phân quyền.
   - Bổ sung cấu hình `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate` và `CDN-Cache-Control: no-store` cho toàn bộ route `/app/:path*` trong [`next.config.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/next.config.ts) và Middleware [`src/proxy.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/proxy.ts), ngăn chặn hoàn toàn Edge CDN của Railway lưu cache nhầm response dạng `text/x-component`.
   - Giữ nguyên URL điều hướng sạch đẹp (`/app/dashboard`) bằng `window.location.replace` mà không cần dùng query param tạm thời (`?_t=...`).
   - Tối ưu [`MainActivity.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/MainActivity.java): Bật `setAcceptThirdPartyCookies`, đồng thời gọi `CookieManager.getInstance().flush()` ngay trong sự kiện vòng đời `onResume()` để đồng bộ cookie tức thời.
-- Tính năng **Giám sát Vị trí Nhân sự Trực tiếp & Lịch sử Lộ trình** ([`attendances/live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):
-  - Trang Bản đồ Admin kết hợp bản đồ Leaflet mượt mà và danh sách nhân sự trực tuyến ([`LiveMap`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx), [`StaffList`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/staff-list.tsx)).
+- Tính năng **Giám sát Vị trí Nhân sự Trực tiếp & Lịch sử Lộ trình** ([`attendances/live-map/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx>)):
+  - Trang Bản đồ Admin kết hợp bản đồ Leaflet mượt mà và danh sách nhân sự trực tuyến ([`LiveMap`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx>), [`StaffList`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/staff-list.tsx>)).
   - Kết nối Realtime **WebSocket** nhận cập nhật tọa độ tức thời với trạng thái di chuyển (Moving / Stationary / Offline), mức pin và vận tốc.
-  - Modal xem lại lộ trình di chuyển theo ngày ([`RoutePlaybackModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/route-playback-modal.tsx)) vẽ đường đi Polyline, tổng km đã đi và mốc thời gian.
+  - Modal xem lại lộ trình di chuyển theo ngày ([`RoutePlaybackModal`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/route-playback-modal.tsx>)) vẽ đường đi Polyline, tổng km đã đi và mốc thời gian.
     - Hook định vị thông minh [`useLocationTracker`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts) tích hợp cơ chế chống đóng băng toàn diện (**Web Worker Timer** chạy độc lập không bị throttle khi ẩn tab, **`watchPosition`** lắng nghe phần cứng GPS, **Screen WakeLock API**, và tự động ping bù khi bật màn hình / focus tab).
-  - Tích hợp `useLocationTracker` trực tiếp vào layout toàn cục [`layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/layout.tsx) tự động kích hoạt định vị khi đăng nhập.
-  - Bổ sung cơ chế kích hoạt gửi ping vị trí tức thời ngay khi nhân viên bấm Check-in thành công trong [`AutoTimekeepingModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx).
+  - Tích hợp `useLocationTracker` trực tiếp vào layout toàn cục [`layout.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/layout.tsx>) tự động kích hoạt định vị khi đăng nhập.
+  - Bổ sung cơ chế kích hoạt gửi ping vị trí tức thời ngay khi nhân viên bấm Check-in thành công trong [`AutoTimekeepingModal`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/auto-timekeeping-modal.tsx>).
 - Thêm action [`exportUserAttendanceDetailReport`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/report/index.ts) và type [`UserAttendanceDetailReportQueryParams`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/report.ts) để gọi API xuất file Excel chi tiết chấm công và bảng lương theo từng nhân sự.
-- Bổ sung nút bấm 📊 **"Xuất chi tiết Excel"** (`FileSpreadsheet`) vào cột Thao tác (`actions`) và giao diện Mobile Card trong Bảng báo cáo chấm công ([`attendances/reports/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/table.tsx)).
+- Bổ sung nút bấm 📊 **"Xuất chi tiết Excel"** (`FileSpreadsheet`) vào cột Thao tác (`actions`) và giao diện Mobile Card trong Bảng báo cáo chấm công ([`attendances/reports/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/reports/_components/table.tsx>)).
 - Tích hợp trạng thái `exportingUserId` để hiển thị spinner loading xoay tròn (`Loader2`) khi tải file và thông báo tiến trình bằng `react-hot-toast`.
 
 ### Fixed
+
 - Sửa dứt điểm lỗi hiển thị phần trăm pin `null%` và icon pin màu đỏ khi thiết bị không cung cấp thông số pin:
-  - Cập nhật [`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx) và [`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/staff-list.tsx) kiểm tra chặt chẽ `typeof batteryLevel === 'number'`, hiển thị `--` hoặc ẩn icon pin khi không có dữ liệu.
+  - Cập nhật [`live-map.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/live-map.tsx>) và [`staff-list.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/staff-list.tsx>) kiểm tra chặt chẽ `typeof batteryLevel === 'number'`, hiển thị `--` hoặc ẩn icon pin khi không có dữ liệu.
   - Bổ sung cơ chế cache giữ lại mức pin đọc được gần nhất trong [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts).
-- Sửa lỗi mảng `staffLocations` bị nhân đôi 2 phần tử của cùng 1 nhân sự trên trang Giám sát Vị trí ([`attendances/live-map/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx)):
+- Sửa lỗi mảng `staffLocations` bị nhân đôi 2 phần tử của cùng 1 nhân sự trên trang Giám sát Vị trí ([`attendances/live-map/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/page.tsx>)):
   - Chuẩn hóa hàm nhận WebSocket `onmessage` với cơ chế phòng thủ 2 lớp (hỗ trợ cả `userId` và `user_id`), tự động map các thuộc tính về `StaffLiveLocation` và merge state an toàn.
-- Cập nhật [`src/types/location.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/location.ts) và [`RoutePlaybackModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/route-playback-modal.tsx):
+- Cập nhật [`src/types/location.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/location.ts) và [`RoutePlaybackModal`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/live-map/_components/route-playback-modal.tsx>):
   - Đồng bộ hỗ trợ cả `camelCase` (`totalDistanceKm`, `recordedAt`) và `snake_case` tránh lỗi hiển thị tổng quãng đường `0 km` hoặc thời gian không xác định khi xem lộ trình.
 - Sửa lỗi logo hệ thống (`XTLogo`) bị tàng hình / biến mất trên giao diện Sidebar Mobile do xung đột ID `<linearGradient>` tĩnh với Sidebar Desktop (`display: none`):
   - Áp dụng `React.useId()` trong [`XTLogo`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/logo/logo.tsx) để sinh ID động duy nhất cho từng thể hiện SVG, tránh xung đột CSS Paint Server trong DOM.
 - Sửa lỗi phân trang tự động reset về trang 1 khi chuyển sang trang 2, 3, 4 trên toàn bộ các trang bảng dữ liệu:
-  - Loại bỏ biến `offset` thừa khỏi mảng `queryKey` tại: [`materials/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/materials/_components/table.tsx), [`doors/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/table.tsx), [`formulas/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/formulas/_components/table.tsx), [`extra-options/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/extra-options/_components/table.tsx), [`accessories/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/_components/table.tsx), [`projects/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/table.tsx), và [`customers/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx).
+  - Loại bỏ biến `offset` thừa khỏi mảng `queryKey` tại: [`materials/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/materials/_components/table.tsx>), [`doors/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/table.tsx>), [`formulas/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/formulas/_components/table.tsx>), [`extra-options/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/extra-options/_components/table.tsx>), [`accessories/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/_components/table.tsx>), [`projects/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/table.tsx>), và [`customers/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx>).
   - Tránh kích hoạt nhầm hook tự động reset `offset=0` trong [`TableDataDesktop`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-data-desktop.tsx) khi người dùng chuyển trang.
-- Sửa lỗi TypeScript interface trong [`attendances/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx) sau khi đồng bộ branch dev.
-
+- Sửa lỗi TypeScript interface trong [`attendances/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx>) sau khi đồng bộ branch dev.
 
 ## [1.1.0] - 2026-08-24
 
-
 ### Added
-- Bổ sung `departmentId` vào [`AttendanceQueryParams`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/attendance.ts) và truyền `departmentId` vào hàm `fetcher` trong [`attendances/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx) để hỗ trợ lọc danh sách chấm công theo phòng ban.
-- Mở rộng phân quyền chọn nhân viên khi tạo khiếu nại chấm công trong [`AddAdjustmentModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/adjustment/add-modal.tsx) cho tài khoản có vai trò `hr`.
+
+- Bổ sung `departmentId` vào [`AttendanceQueryParams`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/attendance.ts) và truyền `departmentId` vào hàm `fetcher` trong [`attendances/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx>) để hỗ trợ lọc danh sách chấm công theo phòng ban.
+- Mở rộng phân quyền chọn nhân viên khi tạo khiếu nại chấm công trong [`AddAdjustmentModal`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/_components/adjustment/add-modal.tsx>) cho tài khoản có vai trò `hr`.
 - Tính năng tự động nạp phụ kiện theo Hệ nhôm (Material) & Biên dạng cửa (Door) trong trình chỉnh sửa chi tiết báo giá:
   - Tự động gọi API `GET /api/v1/accessories` với `materialId`, `doorId` và `limit=100` để lấy danh sách phụ kiện cấu hình sẵn khi tạo cửa mới hoặc khi chọn lại biên dạng cửa.
-  - Bổ sung nút bấm 🔄 **"Nạp gợi ý"** trong phần *Phụ kiện đính kèm* của từng cửa ([`QuotationDoor`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/quotations/[quotationId]/components/editor/quotation-door.tsx)) cho phép chủ động tải lại phụ kiện mặc định bất cứ lúc nào.
+  - Bổ sung nút bấm 🔄 **"Nạp gợi ý"** trong phần _Phụ kiện đính kèm_ của từng cửa ([`QuotationDoor`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/quotations/[quotationId]/components/editor/quotation-door.tsx>)) cho phép chủ động tải lại phụ kiện mặc định bất cứ lúc nào.
   - Bổ sung action `setAccessories` vào [`useQuotationStore`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/stores/useQuotationStore.ts).
-- Tích hợp `Image.PreviewGroup` từ thư viện `antd` trong [`CustomerInfo`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/[id]/customer-logs/_components/customer-info.tsx) để hỗ trợ xem ảnh đính kèm khách hàng ở chế độ full screen, zoom phóng to, thu nhỏ, xoay và chuyển ảnh mượt mà.
-- Tối ưu hóa cấu trúc Bảng danh sách Khách hàng ([`customers/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx)):
-  - Rút gọn từ 8 cột cồng kềnh sang 5 cột tinh gọn: *Khách hàng (Tên + Badge Loại KH + Mã định danh)*, *Liên hệ (SĐT + Email)*, *Địa chỉ & Vị trí (Địa chỉ + Link mở nhanh Google Maps)*, *Phụ trách*, và *Hành động*.
+- Tích hợp `Image.PreviewGroup` từ thư viện `antd` trong [`CustomerInfo`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/[id]/customer-logs/_components/customer-info.tsx>) để hỗ trợ xem ảnh đính kèm khách hàng ở chế độ full screen, zoom phóng to, thu nhỏ, xoay và chuyển ảnh mượt mà.
+- Tối ưu hóa cấu trúc Bảng danh sách Khách hàng ([`customers/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx>)):
+  - Rút gọn từ 8 cột cồng kềnh sang 5 cột tinh gọn: _Khách hàng (Tên + Badge Loại KH + Mã định danh)_, _Liên hệ (SĐT + Email)_, _Địa chỉ & Vị trí (Địa chỉ + Link mở nhanh Google Maps)_, _Phụ trách_, và _Hành động_.
   - Loại bỏ hoàn toàn thanh cuộn ngang (horizontal scroll), tối ưu trải nghiệm trực quan theo chuẩn SaaS CRM hiện đại.
-- Bổ sung bộ lọc (Filters) cho Bảng quản lý khách hàng ([`customers/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx)):
-  - Lọc theo **Loại khách hàng** (*Tiềm năng, Đang hoạt động, Ngưng hoạt động, VIP*).
+- Bổ sung bộ lọc (Filters) cho Bảng quản lý khách hàng ([`customers/_components/table.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/table.tsx>)):
+  - Lọc theo **Loại khách hàng** (_Tiềm năng, Đang hoạt động, Ngưng hoạt động, VIP_).
   - Lọc theo **Nhân viên phụ trách** (Tự động hiển thị danh sách nhân viên cho Admin/HR, và cố định theo tài khoản của Sale).
   - Đồng bộ trạng thái lọc vào `queryKey` và `fetcher` để phân trang chuẩn xác từ Backend API.
-- Bổ sung nút 📍 **"Lấy vị trí hiện tại"** trong Form Thêm & Sửa khách hàng ([`CustomerFormModal`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx)): sử dụng HTML5 Geolocation API để tự động xác định tọa độ GPS của thiết bị và điền vào các ô Vĩ độ & Kinh độ.
+- Bổ sung nút 📍 **"Lấy vị trí hiện tại"** trong Form Thêm & Sửa khách hàng ([`CustomerFormModal`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/_components/modals.tsx>)): sử dụng HTML5 Geolocation API để tự động xác định tọa độ GPS của thiết bị và điền vào các ô Vĩ độ & Kinh độ.
 
 ### Fixed
-- Tái cấu trúc và dọn dẹp mã nguồn trang Bảng công cá nhân ([`attendances/payroll/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/payroll/page.tsx)):
+
+- Tái cấu trúc và dọn dẹp mã nguồn trang Bảng công cá nhân ([`attendances/payroll/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/payroll/page.tsx>)):
   - Loại bỏ các state và biến thừa (`filterStartDate`, `filterEndDate`, `dateOptions`, các import icon không dùng).
   - Tinh gọn hàm `fetcher`, bỏ toàn bộ các bước lọc thủ công trùng lặp ở Client để giao quyền phân trang và lọc chuẩn cho Backend API.
   - Gom các hàm tính toán thống kê (Tổng ngày công, Ngày phép, Ngày nghỉ, Tăng ca, Đi muộn/về sớm) vào duy nhất 1 hook `useMemo` tính toán 1 lượt (`O(n)`), nâng cao hiệu năng render.
-- Sửa lỗi nhận diện sai trạng thái nút Check-in / Check-out trên trang Chấm công cá nhân ([`attendances/payroll/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/payroll/page.tsx)):
+- Sửa lỗi nhận diện sai trạng thái nút Check-in / Check-out trên trang Chấm công cá nhân ([`attendances/payroll/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/payroll/page.tsx>)):
   - Ưu tiên tìm kiếm phiên chấm công đang mở (`checkIn` có giá trị và `checkOut` chưa có) trong danh sách chấm công thay vì chỉ đọc bản ghi đầu tiên trong ngày theo `workDate`.
   - Đảm bảo khi nhân viên có phiên làm việc dở dang (ví dụ đã check-in 13:00 và sau đó tạo thêm bản ghi ca sáng 7:00-11:00) thì hệ thống vẫn luôn hiển thị nút **"Check-out ngay"** chính xác.
-- Căn chỉnh và hoàn thiện giao diện Khối Chi tiết Khách hàng ([`CustomerInfo`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/[id]/_components/customer-info.tsx)):
-  - Tổ chức lại layout thành lưới 8 ô chuẩn (4 cột x 2 hàng), bổ sung ô *Nhân viên phụ trách* để cân đối 100% không gian.
+- Căn chỉnh và hoàn thiện giao diện Khối Chi tiết Khách hàng ([`CustomerInfo`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/customers/[id]/_components/customer-info.tsx>)):
+  - Tổ chức lại layout thành lưới 8 ô chuẩn (4 cột x 2 hàng), bổ sung ô _Nhân viên phụ trách_ để cân đối 100% không gian.
   - Sửa lỗi hiển thị chuỗi UUID `staffId` sang họ tên đầy đủ của nhân viên phụ trách (`customer.staff?.fullName || customer.staff?.username`).
-  - Sửa lỗi vỡ dòng icon và text của nút *Mở Google Maps*, thiết kế dạng inline badge sang trọng (`whitespace-nowrap`, bo góc, hiệu ứng hover mượt mà).
-- Sửa lỗi phân trang trên trang Quản lý chấm công ([`attendances/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx)):
+  - Sửa lỗi vỡ dòng icon và text của nút _Mở Google Maps_, thiết kế dạng inline badge sang trọng (`whitespace-nowrap`, bo góc, hiệu ứng hover mượt mà).
+- Sửa lỗi phân trang trên trang Quản lý chấm công ([`attendances/page.tsx`](<file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/page.tsx>)):
   - Cập nhật hàm `fetcher` để đọc chính xác `response.meta.total`, `response.meta.offset`, `response.meta.limit` và `response.meta.next` từ Backend trả về, thay vì tính fallback `items.length`.
   - Bỏ cấu hình `syncToUrl={false}` trong `TableData` để đồng bộ URL Query Parameters (`offset`, `limit`) chuẩn hóa với toàn hệ thống.
   - Sử dụng hook `useQueryParam('search')` cho ô tìm kiếm để tự động đồng bộ từ khóa và reset `offset=0`.
