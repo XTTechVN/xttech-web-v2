@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getBrands, getAccessories, deleteAccessory } from '@/actions';
+import { getBrands, getAccessories, deleteAccessory, getAccessoryCategories } from '@/actions';
 import type { Accessory, Brand } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
@@ -20,6 +20,7 @@ import {
 export default function AccessoriesTab() {
   const [search, setSearch] = useState('');
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(null);
@@ -58,13 +59,22 @@ export default function AccessoriesTab() {
     }
   }, [sortedBrands, selectedBrandId]);
 
-  // Queries danh sách phụ kiện theo Hãng đang chọn
+  // Queries danh sách phân loại phụ kiện
+  const { data: categoriesData } = useQuery({
+    queryKey: ['accessory-categories'],
+    queryFn: async () => (await getAccessoryCategories({ offset: 0, limit: 9999 })).items,
+  });
+
+  const categoryList = categoriesData || [];
+
+  // Queries danh sách phụ kiện theo Hãng + Phân loại đang chọn
   const { data: accessoriesData, isLoading: isAccessoriesLoading } = useQuery({
-    queryKey: ['accessories', selectedBrandId, search],
+    queryKey: ['accessories', selectedBrandId, selectedCategoryId, search],
     queryFn: async () => {
       if (!selectedBrandId) return [];
       const res = await getAccessories({
         brandId: selectedBrandId,
+        categoryId: selectedCategoryId || undefined,
         limit: 1000,
         offset: 0,
         allowDeleted: false,
@@ -120,12 +130,15 @@ export default function AccessoriesTab() {
 
       {/* Khu vực nội dung danh sách Phụ kiện bên phải */}
       <div className="flex-1 flex flex-col gap-4 min-w-0 w-full p-4">
-        {/* Toolbar: Tìm kiếm & Thêm mới */}
+        {/* Toolbar: Tìm kiếm, Lọc phân loại & Thêm mới */}
         <AccessoryToolbar
           search={search}
           onSearchChange={setSearch}
           onAddClick={handleOpenCreateModal}
           onManageCategoriesClick={() => setIsCategoryManagerOpen(true)}
+          categoryList={categoryList}
+          selectedCategoryId={selectedCategoryId}
+          onCategoryChange={setSelectedCategoryId}
         />
 
         {/* Danh sách phụ kiện dạng bảng */}

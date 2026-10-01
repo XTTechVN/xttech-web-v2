@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getBrands, getProfileBars, deleteProfileBar } from '@/actions';
+import { getBrands, getProfileBars, deleteProfileBar, getDoorSeriesList } from '@/actions';
 import type { ProfileBar } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
@@ -19,6 +19,7 @@ import {
 export default function ProfileBarsTab() {
   const [search, setSearch] = useState('');
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
+  const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBar, setSelectedBar] = useState<ProfileBar | null>(null);
@@ -42,13 +43,30 @@ export default function ProfileBarsTab() {
     }
   }, [sortedBrands, selectedBrandId]);
 
-  // Queries danh sách thanh profile theo Hãng đang chọn
+  // Queries danh sách Hệ nhôm theo Hãng đang chọn
+  const { data: seriesData } = useQuery({
+    queryKey: ['door-series', selectedBrandId],
+    queryFn: async () => {
+      const res = await getDoorSeriesList({
+        offset: 0,
+        limit: 9999,
+        ...(selectedBrandId ? { brandId: selectedBrandId } : {}),
+      });
+      return res.items;
+    },
+    enabled: selectedBrandId !== null,
+  });
+
+  const seriesList = seriesData || [];
+
+  // Queries danh sách thanh profile theo Hãng + Hệ nhôm đang chọn
   const { data: profileBarsData, isLoading: isBarsLoading } = useQuery({
-    queryKey: ['profile-bars', selectedBrandId, search],
+    queryKey: ['profile-bars', selectedBrandId, selectedSeriesId, search],
     queryFn: async () => {
       if (!selectedBrandId) return [];
       const res = await getProfileBars({
         brandId: selectedBrandId,
+        seriesId: selectedSeriesId || undefined,
         limit: 1000,
         offset: 0,
         allowDeleted: false,
@@ -75,6 +93,11 @@ export default function ProfileBarsTab() {
     return selectedBrandId ? brandsList.find((b) => b.id === selectedBrandId) : null;
   }, [brandsList, selectedBrandId]);
 
+  const handleSelectBrand = (brandId: number) => {
+    setSelectedBrandId(brandId);
+    setSelectedSeriesId(null); // reset filter hệ nhôm khi đổi hãng
+  };
+
   const handleOpenCreateModal = () => {
     setSelectedBar(null);
     setIsModalOpen(true);
@@ -99,16 +122,19 @@ export default function ProfileBarsTab() {
       <ProfileBarSidebar
         brands={brandsList}
         selectedBrandId={selectedBrandId}
-        onSelectBrand={setSelectedBrandId}
+        onSelectBrand={handleSelectBrand}
       />
 
       {/* Khu vực nội dung danh sách Thanh profile bên phải */}
       <div className="flex-1 flex flex-col gap-4 min-w-0 w-full p-4">
-        {/* Toolbar: Tìm kiếm & Thêm mới */}
+        {/* Toolbar: Tìm kiếm, Lọc hệ nhôm & Thêm mới */}
         <ProfileBarToolbar
           search={search}
           onSearchChange={setSearch}
           onAddClick={handleOpenCreateModal}
+          seriesList={seriesList}
+          selectedSeriesId={selectedSeriesId}
+          onSeriesChange={setSelectedSeriesId}
         />
 
         {/* Danh sách thanh profile dạng bảng */}

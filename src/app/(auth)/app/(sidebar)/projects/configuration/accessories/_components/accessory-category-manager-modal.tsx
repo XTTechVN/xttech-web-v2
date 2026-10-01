@@ -83,19 +83,12 @@ export function AccessoryCategoryManagerModal({
   });
 
   // Queries danh sách danh mục
-  const { data: response, isLoading } = useQuery({
+  const { data: categories = [], isLoading } = useQuery({
     queryKey: ['accessory-categories'],
-    queryFn: async () => {
-      return await getAccessoryCategories({
-        limit: 9999,
-        offset: 0,
-        allowDeleted: false,
-      });
-    },
+    queryFn: async () =>
+      (await getAccessoryCategories({ limit: 9999, offset: 0, allowDeleted: false })).items,
     enabled: isOpen,
   });
-
-  const categories = response?.items || [];
 
   // Reset form khi chọn category hoặc chuyển sang tạo mới
   useEffect(() => {
@@ -113,12 +106,13 @@ export function AccessoryCategoryManagerModal({
       reset({
         code: '',
         name: '',
-        sortOrder: categories.length > 0 ? Math.max(...categories.map((c) => c.sortOrder ?? 0)) + 1 : 1,
+        sortOrder: 1,
         description: '',
         isActive: true,
       });
     }
-  }, [isOpen, selectedCategory, reset, categories]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, selectedCategory]);
 
   // Sắp xếp và tìm kiếm danh mục
   const filteredCategories = useMemo(() => {

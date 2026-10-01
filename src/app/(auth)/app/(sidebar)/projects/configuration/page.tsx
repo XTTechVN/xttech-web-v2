@@ -8,7 +8,9 @@ import SeriesTab from './series';
 import ProfileBarsTab from './profile-bars';
 import GlassGasketsTab from './glass-gaskets';
 import AccessoriesTab from './accessories';
-import { Columns, ListChecks, Building2, ShieldCheck, Layers, Ruler } from 'lucide-react';
+import AccessoryCombosTab from './accessory-combos';
+import DoorTemplatesTab from './door-templates';
+import { Columns, ListChecks, Building2, ShieldCheck, Layers, Ruler, PackageOpen, LayoutGrid } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePermission } from '@/hooks';
 
@@ -59,10 +61,24 @@ const TABS: ConfigTab[] = [
     roles: ALL_ROLES,
   },
   {
+    id: 'door-templates',
+    label: 'Mẫu cửa',
+    component: DoorTemplatesTab,
+    icon: <LayoutGrid size={16} />,
+    roles: ALL_ROLES,
+  },
+  {
     id: 'accessories',
     label: 'Phụ kiện',
     component: AccessoriesTab,
     icon: <ListChecks size={16} />,
+    roles: ALL_ROLES,
+  },
+  {
+    id: 'accessory-combos',
+    label: 'Combo phụ kiện',
+    component: AccessoryCombosTab,
+    icon: <PackageOpen size={16} />,
     roles: ALL_ROLES,
   },
 ];
