@@ -49,20 +49,20 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
   ];
 
   return (
-    <div className="flex flex-col space-y-5 p-5 text-xs text-gray-800 bg-white">
+    <div className="flex flex-col space-y-4 sm:space-y-5 p-3 sm:p-5 text-xs text-gray-800 bg-white rounded-2xl shadow-2xs">
       <div className="text-center font-bold text-sm text-slate-800 py-1 border-b border-gray-100 flex items-center justify-center gap-2">
         <span className="bg-blue-900 text-white px-3 py-0.5 rounded-full text-xs font-semibold">PHẦN 1 — KHUNG BAO</span>
       </div>
 
       {/* 1. Khung bao (Frame) */}
-      <div className="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-gray-200/80">
+      <div className="space-y-3 p-3.5 sm:p-4 rounded-2xl bg-slate-50/70 border border-gray-200/80">
         <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
           <span className="w-5 h-5 rounded-full bg-blue-900 text-white flex items-center justify-center text-[10px]">1</span>
           <span>Khung bao (Frame)</span>
         </div>
 
         {/* Khung kín vs Khung hở */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <button
             type="button"
             onClick={() => onChangeConfig({ isOpenBottom: false })}
@@ -90,13 +90,13 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
         {/* Kiểu góc ghép khung */}
         <div className="space-y-1.5 pt-2">
           <div className="font-semibold text-gray-700 text-xs">Kiểu góc ghép khung</div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             {CORNER_JOINTS.map((joint) => (
               <button
                 key={joint.id}
                 type="button"
                 onClick={() => onChangeConfig({ cornerJoint: joint.id })}
-                className={`px-3 py-1.5 rounded-lg border font-medium text-xs transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg border font-medium text-[11px] sm:text-xs transition-all cursor-pointer ${
                   config.cornerJoint === joint.id
                     ? 'bg-blue-900 text-white border-blue-900 shadow-xs'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -112,7 +112,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
         </div>
 
         {/* Công thức cắt theo góc ghép */}
-        <div className="grid grid-cols-2 gap-2 p-3 bg-white rounded-xl border border-gray-200 text-xs font-mono">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 p-3 bg-white rounded-xl border border-gray-200 text-xs font-mono">
           <div className="text-gray-600">Trái: <span className="font-bold text-amber-700">H · {config.cornerJoint === '45' ? '45°/45°' : '90°/90°'}</span></div>
           <div className="text-gray-600">Trên: <span className="font-bold text-amber-700">W · {config.cornerJoint === '45' ? '45°/45°' : '90°/90°'}</span></div>
           <div className="text-gray-600">Phải: <span className="font-bold text-amber-700">H · {config.cornerJoint === '45' ? '45°/45°' : '90°/90°'}</span></div>
@@ -121,11 +121,11 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
       </div>
 
       {/* Nhập Profile từng cạnh */}
-      <div className="space-y-2.5 p-4 rounded-2xl bg-white border border-gray-200 shadow-2xs">
+      <div className="space-y-2.5 p-3.5 sm:p-4 rounded-2xl bg-white border border-gray-200 shadow-2xs">
         <div className="text-xs text-gray-500 font-medium">
           Nhập profile từng cạnh. Chỉ nhập <strong className="text-gray-900">CẠNH TRÁI</strong> → áp dụng cho tất cả.
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {/* Cạnh Trái */}
           <div className="p-3 bg-slate-50 rounded-xl border border-gray-200 space-y-2">
             <div className="flex items-center justify-between font-bold text-xs text-gray-800">
@@ -332,7 +332,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
           <span className="w-5 h-5 rounded-full bg-teal-600 text-white flex items-center justify-center text-[10px]">2</span>
           <span>Đố chia (Mullion)</span>
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {[
             { id: 'none', label: 'Không có' },
             { id: 'single', label: 'Dùng chung 1 loại' },

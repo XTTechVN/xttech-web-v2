@@ -195,7 +195,7 @@ const Table: React.FC<TableProps> = ({
         <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            title="Mở Windova Studio thiết kế trực quan"
+            title="Mở Studio thiết kế cửa"
             onClick={() => onStudioClick(row)}
             className="px-2 py-1 rounded-md text-amber-700 bg-amber-50 hover:bg-amber-100/80 transition-colors flex items-center gap-1 text-xs font-semibold cursor-pointer border border-amber-200/60"
           >
@@ -225,6 +225,7 @@ const Table: React.FC<TableProps> = ({
     const config = getDoorTypeConfig(row.type);
     const primaryImgPath = row.images?.find((img) => img.isPrimary)?.imagePath || row.imagePath;
     const imgSrc = row.imageB64 || (primaryImgPath ? getFileUrl(primaryImgPath) : null);
+    const hasStudioDesign = Boolean(row.systemConfig?.rootCell);
 
     return (
       <div className="p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow space-y-3">
@@ -232,6 +233,22 @@ const Table: React.FC<TableProps> = ({
           <div className="w-14 h-14 rounded-lg border border-gray-200 overflow-hidden bg-white flex items-center justify-center p-0.5 shrink-0 shadow-2xs">
             {imgSrc ? (
               <img src={imgSrc} alt={row.name} className="w-full h-full object-contain" />
+            ) : hasStudioDesign ? (
+              <div className="w-full h-full flex items-center justify-center p-0.5 pointer-events-none">
+                <DoorCadRenderer
+                  hideDimensions={true}
+                  w={row.systemConfig?.w || 1600}
+                  h={row.systemConfig?.h || 2300}
+                  aluminumColor={row.systemConfig?.aluminumColor || '#334155'}
+                  hardwareColor={row.systemConfig?.hardwareColor || '#0f172a'}
+                  frameShape={row.systemConfig?.frameShape || 'rectangular'}
+                  rootCell={row.systemConfig!.rootCell}
+                  frameConfig={row.systemConfig?.frameConfig}
+                  sashConfig={row.systemConfig?.sashConfig}
+                  selectedCellId={null}
+                  onSelectCell={() => {}}
+                />
+              </div>
             ) : (
               <Columns className="w-6 h-6 text-gray-400" />
             )}

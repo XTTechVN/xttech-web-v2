@@ -51,6 +51,8 @@ export interface GlassGrilleMotif {
   price?: number;
   accessoryId?: number;
   accessoryCode?: string;
+  gridCol?: number; // Chỉ số cột nan liên kết (0, 1...)
+  gridRow?: number; // Chỉ số hàng nan liên kết (0, 1...)
 }
 
 export interface GlassGrilleConfig {
@@ -69,6 +71,9 @@ export interface GlassGrilleConfig {
   rows: number;
   borderOffset: number;
   cornerSize: number;
+  colPositions?: number[]; // Tọa độ x (mm) của từng thanh nan dọc
+  rowPositions?: number[]; // Tọa độ y (mm) của từng thanh nan ngang
+  isSymmetric?: boolean;   // Khóa đối xứng nan
   motifs: GlassGrilleMotif[];
   templateName?: string;
   unitPricePerM?: number;

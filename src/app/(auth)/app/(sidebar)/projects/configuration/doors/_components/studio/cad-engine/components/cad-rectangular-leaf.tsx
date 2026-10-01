@@ -5,6 +5,7 @@ import { LeafCell } from '../cad-types';
 import { CadOpeningSymbol } from './cad-opening-symbol';
 import { renderCadBead } from './cad-bead';
 import { CadSashBox } from './cad-sash-box';
+import { GrilleMotifSvg } from '../../panels/grille-motif-svgs';
 
 const renderCadGrille = (
   gx: number,
@@ -24,30 +25,101 @@ const renderCadGrille = (
     rows = 1,
     borderOffset = 95,
     cornerSize = 180,
+    colPositions,
+    rowPositions,
     motifs = [],
   } = grilleConfig;
 
-  const scale = gw / (grilleConfig.glassW || gw || 1);
-  const bw = Math.max(1.2, barWidth * scale);
-  const bOffset = Math.min(gw / 3, borderOffset * scale);
-  const cSize = Math.min(gw / 3, cornerSize * scale);
+  const origW = grilleConfig.glassW || gw || 1;
+  const origH = grilleConfig.glassH || gh || 1;
+  const scaleX = gw / origW;
+  const scaleY = gh / origH;
+  const bw = Math.max(1.2, barWidth * scaleX);
+
+  const bOffset = borderOffset * scaleX;
+  const cDist = cornerSize * scaleX; // Khoảng cách từ mép ngoài tới đường nan góc (180mm)
+
+  // Tọa độ các thanh nan dọc
+  const vBars = (colPositions && colPositions.length === cols - 1)
+    ? colPositions.map((pos) => gx + pos * scaleX)
+    : Array.from({ length: cols - 1 }).map((_, i) => gx + ((i + 1) / cols) * gw);
+
+  // Tọa độ các thanh nan ngang
+  const hBars = (rowPositions && rowPositions.length === rows - 1)
+    ? rowPositions.map((pos) => gy + pos * scaleY)
+    : Array.from({ length: rows - 1 }).map((_, i) => gy + ((i + 1) / rows) * gh);
+
+  const maskId = `grille-leaf-mask-${Math.round(gx)}-${Math.round(gy)}`;
 
   return (
     <g id="glass-grille">
+      {motifs.length > 0 && (
+        <defs>
+          <mask id={maskId}>
+            <rect x={gx - 10} y={gy - 10} width={gw + 20} height={gh + 20} fill="white" />
+            {motifs.map((m) => {
+              const mx = gx + (m.x ?? origW / 2) * scaleX;
+              const my = gy + (m.y ?? origH / 2) * scaleY;
+              const mw = Math.max(8, (m.width || 100) * scaleX);
+              const mh = Math.max(8, (m.height || 100) * scaleY);
+              const motifType = m.motifType || 'flower_classic';
+
+              if (motifType === 'rhombus' || motifType === 'kim_cuong_vuong' || motifType === '3') {
+                const pTop = `${mx},${my - mh / 2 + 1}`;
+                const pRight = `${mx + mw / 2 - 1},${my}`;
+                const pBottom = `${mx},${my + mh / 2 - 1}`;
+                const pLeft = `${mx - mw / 2 + 1},${my}`;
+                return (
+                  <polygon
+                    key={`leaf-mask-rhombus-${m.id}`}
+                    points={`${pTop} ${pRight} ${pBottom} ${pLeft}`}
+                    fill="black"
+                  />
+                );
+              }
+
+              if (motifType === 'lotus' || motifType === 'tram_kim_cuong' || motifType === '4') {
+                const pTop = `${mx},${my - mh / 2 + 2}`;
+                const pRight = `${mx + mw / 2 - 2},${my}`;
+                const pBottom = `${mx},${my + mh / 2 - 2}`;
+                const pLeft = `${mx - mw / 2 + 2},${my}`;
+                return (
+                  <polygon
+                    key={`leaf-mask-lotus-${m.id}`}
+                    points={`${pTop} ${pRight} ${pBottom} ${pLeft}`}
+                    fill="black"
+                  />
+                );
+              }
+
+              return (
+                <rect
+                  key={`leaf-mask-rect-${m.id}`}
+                  x={mx - mw / 2 + 1.5}
+                  y={my - mh / 2 + 1.5}
+                  width={mw - 3}
+                  height={mh - 3}
+                  rx="3"
+                  fill="black"
+                />
+              );
+            })}
+          </mask>
+        </defs>
+      )}
+
       {/* 1. Nan chia lưới */}
       {hasGrid && (
-        <>
-          {Array.from({ length: cols - 1 }).map((_, i) => {
-            const x = gx + ((i + 1) / cols) * gw;
-            return <line key={`v-${i}`} x1={x} y1={gy} x2={x} y2={gy + gh} stroke={barColor} strokeWidth={bw} />;
-          })}
-          {Array.from({ length: rows - 1 }).map((_, i) => {
-            const y = gy + ((i + 1) / rows) * gh;
-            return <line key={`h-${i}`} x1={gx} y1={y} x2={gx + gw} y2={y} stroke={barColor} strokeWidth={bw} />;
-          })}
-        </>
+        <g mask={motifs.length > 0 ? `url(#${maskId})` : undefined}>
+          {vBars.map((x, i) => (
+            <line key={`v-${i}`} x1={x} y1={gy} x2={x} y2={gy + gh} stroke={barColor} strokeWidth={bw} />
+          ))}
+          {hBars.map((y, i) => (
+            <line key={`h-${i}`} x1={gx} y1={y} x2={gx + gw} y2={y} stroke={barColor} strokeWidth={bw} />
+          ))}
+        </g>
       )}
-      {/* 2. Nan viền */}
+      {/* 2. Nan viền chu vi */}
       {hasBorder && (
         <rect
           x={gx + bOffset}
@@ -62,29 +134,29 @@ const renderCadGrille = (
       {/* 3. Nan góc */}
       {hasCorner && (
         <g stroke={barColor} strokeWidth={bw} fill="none">
-          <path d={`M ${gx + bOffset} ${gy + bOffset + cSize} L ${gx + bOffset + cSize} ${gy + bOffset + cSize} L ${gx + bOffset + cSize} ${gy + bOffset}`} />
-          <path d={`M ${gx + gw - bOffset} ${gy + bOffset + cSize} L ${gx + gw - bOffset - cSize} ${gy + bOffset + cSize} L ${gx + gw - bOffset - cSize} ${gy + bOffset}`} />
-          <path d={`M ${gx + bOffset} ${gy + gh - bOffset - cSize} L ${gx + bOffset + cSize} ${gy + gh - bOffset - cSize} L ${gx + bOffset + cSize} ${gy + gh - bOffset}`} />
-          <path d={`M ${gx + gw - bOffset} ${gy + gh - bOffset - cSize} L ${gx + gw - bOffset - cSize} ${gy + gh - bOffset - cSize} L ${gx + gw - bOffset - cSize} ${gy + gh - bOffset}`} />
+          <path d={`M ${gx + bOffset} ${gy + cDist} L ${gx + cDist} ${gy + cDist} L ${gx + cDist} ${gy + bOffset}`} />
+          <path d={`M ${gx + gw - bOffset} ${gy + cDist} L ${gx + gw - cDist} ${gy + cDist} L ${gx + gw - cDist} ${gy + bOffset}`} />
+          <path d={`M ${gx + bOffset} ${gy + gh - cDist} L ${gx + cDist} ${gy + gh - cDist} L ${gx + cDist} ${gy + gh - bOffset}`} />
+          <path d={`M ${gx + gw - bOffset} ${gy + gh - cDist} L ${gx + gw - cDist} ${gy + gh - cDist} L ${gx + gw - cDist} ${gy + gh - bOffset}`} />
         </g>
       )}
-      {/* 4. Hoa văn */}
+      {/* 4. Hoa văn đúc tại giao điểm nan */}
       {motifs.map((m) => {
-        const mx = gx + gw / 2;
-        const my = gy + gh / 2;
-        const mw = Math.max(8, m.width * scale * 0.7);
-        const mh = Math.max(8, m.height * scale * 0.7);
+        const mx = gx + (m.x ?? origW / 2) * scaleX;
+        const my = gy + (m.y ?? origH / 2) * scaleY;
+        const mw = Math.max(8, (m.width || 100) * scaleX);
+        const mh = Math.max(8, (m.height || 100) * scaleY);
+        const motifType = m.motifType || 'flower_classic';
+
         return (
-          <ellipse
-            key={m.id}
-            cx={mx}
-            cy={my}
-            rx={mw / 2}
-            ry={mh / 2}
-            fill="none"
-            stroke={barColor}
-            strokeWidth={bw * 1.2}
-          />
+          <g key={m.id} transform={`translate(${mx - mw / 2}, ${my - mh / 2})`}>
+            <GrilleMotifSvg
+              motifType={motifType}
+              color={barColor}
+              width={mw}
+              height={mh}
+            />
+          </g>
         );
       })}
     </g>

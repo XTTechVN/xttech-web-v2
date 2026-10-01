@@ -149,6 +149,21 @@ export interface GlassGrilleBOM {
   totalPrice: number;
 }
 
+export interface AccessoryBOMItem {
+  accessoryId?: number | null;
+  comboId?: number | null;
+  comboName?: string | null;
+  code?: string | null;
+  name: string;
+  category?: string | null;
+  brandName?: string | null;
+  unit: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  note?: string | null;
+}
+
 export interface DoorCalculateResponse {
   w: number;
   h: number;
@@ -159,12 +174,15 @@ export interface DoorCalculateResponse {
   cells: GlassCellBOM[];
   cornerJoints?: CornerJointBOM[];
   grilles?: GlassGrilleBOM[];
+  accessories?: AccessoryBOMItem[];
   sashCounts: Record<string, number>;
   totalAluminumWeightKg: number;
   totalGlassAreaM2: number;
   totalJointQty?: number;
   totalJointPrice?: number;
   totalGrillePrice?: number;
+  totalAccessoryQty?: number;
+  totalAccessoryPrice?: number;
   hasUnconfiguredJoints?: boolean;
 }
 

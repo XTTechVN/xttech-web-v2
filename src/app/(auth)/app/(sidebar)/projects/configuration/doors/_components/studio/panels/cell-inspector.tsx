@@ -446,7 +446,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
         </div>
       </div>
 
-      {/* 5.1. Kính nan đồng (Windova Style) */}
+      {/* 5.1. Kính nan đồng */}
       {selectedCell.paneType === 'glass' && (
         <div className="space-y-2.5 p-3 rounded-xl bg-amber-50/60 border border-amber-200/80">
           <div>

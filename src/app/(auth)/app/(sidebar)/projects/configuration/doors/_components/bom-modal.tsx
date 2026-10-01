@@ -6,31 +6,30 @@ import {
   X,
   Layers,
   Ruler,
-  Maximize2,
-  Minimize2,
   RefreshCw,
   Sparkles,
-  Info,
   CheckCircle2,
   Wrench,
 } from 'lucide-react';
 import { Button } from '@/components';
 import { calculateDoor } from '@/actions';
 import type { Door, DoorCalculateResponse } from '@/types';
+import { getFileUrl } from '@/utils';
+import { DoorCadRenderer } from './studio/cad-engine/door-cad-renderer';
+import {
+  BomBarsTable,
+  BomBeadsTable,
+  BomGlassTable,
+  BomJointsTable,
+  BomGrillesTable,
+  BomAccessoriesTable,
+} from './bom';
 
 interface DoorBOMModalProps {
   door: Door | null;
   isOpen: boolean;
   onClose: () => void;
 }
-
-const CATEGORY_MAP: Record<string, string> = {
-  frame: 'Khung bao',
-  sash_h: 'Cánh đứng',
-  sash_w: 'Cánh ngang',
-  dodong: 'Đố động',
-  bead: 'Nẹp kính',
-};
 
 export const DoorBOMModal: React.FC<DoorBOMModalProps> = ({ door, isOpen, onClose }) => {
   if (!isOpen || !door) return null;
@@ -57,7 +56,12 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
 
   const [w, setW] = useState<number>(getDoorW);
   const [h, setH] = useState<number>(getDoorH);
-  const [activeTab, setActiveTab] = useState<'bars' | 'beads' | 'glass' | 'joints' | 'grilles'>('bars');
+  const [activeTab, setActiveTab] = useState<'bars' | 'beads' | 'glass' | 'joints' | 'grilles' | 'accessories'>('bars');
+  const [mobileView, setMobileView] = useState<'drawing' | 'bom'>('bom');
+
+  const hasStudioDesign = Boolean(door.systemConfig?.rootCell);
+  const primaryImgPath = door.images?.find((img) => img.isPrimary)?.imagePath || door.imagePath;
+  const imgSrc = door.imageB64 || (primaryImgPath ? getFileUrl(primaryImgPath) : null);
 
   const { data: bom, isLoading, refetch, isFetching } = useQuery<DoorCalculateResponse>({
     queryKey: ['door-bom', door.id, w, h],
@@ -72,120 +76,182 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-5xl bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-5xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-100 flex flex-col h-[100dvh] sm:h-auto sm:max-h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
-              <Layers className="w-5 h-5" />
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold shrink-0">
+              <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-slate-900">{door.name}</h3>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate max-w-[200px] sm:max-w-md">
+                  {door.name}
+                </h3>
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 shrink-0">
                   {door.code || 'CS_MẪU'}
                 </span>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-[11px] sm:text-xs text-slate-500 truncate hidden sm:block">
                 Bóc tách kỹ thuật cắt nhôm & kính chuẩn xưởng (Parametric BOM Engine)
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Dimension Toolbar */}
-        <div className="px-6 py-3 bg-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4 text-sm">
-            <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-              <Ruler className="w-4 h-4 text-slate-400" />
-              Kích thước thiết kế:
+        {/* Dimension Toolbar & Quick Metrics */}
+        <div className="px-4 py-2 sm:px-6 sm:py-3 bg-white border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-2 sm:gap-4 shrink-0">
+          <div className="flex items-center justify-between sm:justify-start gap-2 text-xs sm:text-sm">
+            <span className="font-semibold text-slate-700 flex items-center gap-1 shrink-0 whitespace-nowrap">
+              <Ruler className="w-3.5 h-3.5 text-blue-600" />
+              <span className="hidden sm:inline">Kích thước thiết kế:</span>
+              <span className="sm:hidden">KT:</span>
             </span>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-500 font-medium">W (mm):</label>
-              <input
-                type="number"
-                value={w}
-                onChange={(e) => setW(Number(e.target.value))}
-                className="w-24 px-2.5 py-1 text-sm font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-slate-900"
-              />
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                <span className="text-[10px] sm:text-xs text-slate-400 font-medium mr-1">W:</span>
+                <input
+                  type="number"
+                  value={w}
+                  onChange={(e) => setW(Number(e.target.value))}
+                  className="w-13 sm:w-18 bg-transparent text-xs sm:text-sm font-bold text-slate-900 focus:outline-none"
+                />
+              </div>
+              <span className="text-slate-400 text-xs">×</span>
+              <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                <span className="text-[10px] sm:text-xs text-slate-400 font-medium mr-1">H:</span>
+                <input
+                  type="number"
+                  value={h}
+                  onChange={(e) => setH(Number(e.target.value))}
+                  className="w-13 sm:w-18 bg-transparent text-xs sm:text-sm font-bold text-slate-900 focus:outline-none"
+                />
+              </div>
+              <span className="text-[10px] sm:text-xs text-slate-400 font-medium">mm</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="gap-1 text-xs font-semibold px-2 py-1 h-7 ml-1 shrink-0"
+              >
+                <RefreshCw className={`w-3 h-3 ${isFetching ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Tính lại</span>
+              </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-500 font-medium">H (mm):</label>
-              <input
-                type="number"
-                value={h}
-                onChange={(e) => setH(Number(e.target.value))}
-                className="w-24 px-2.5 py-1 text-sm font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-slate-900"
-              />
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="gap-1.5 text-xs font-semibold"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
-              Tính lại
-            </Button>
           </div>
 
           {/* Quick Metrics */}
           {bom && (
-            <div className="flex items-center gap-3 text-xs font-medium flex-wrap">
-              <div className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-100">
-                Tổng nhôm: <strong className="font-bold">{bom.totalAluminumWeightKg} kg</strong>
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium overflow-x-auto no-scrollbar py-0.5">
+              <div className="px-2 sm:px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100 whitespace-nowrap shrink-0">
+                Nhôm: <strong className="font-bold">{bom.totalAluminumWeightKg} kg</strong>
               </div>
-              <div className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg border border-blue-100">
-                Tổng kính: <strong className="font-bold">{bom.totalGlassAreaM2} m²</strong>
+              <div className="px-2 sm:px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md border border-blue-100 whitespace-nowrap shrink-0">
+                Kính: <strong className="font-bold">{bom.totalGlassAreaM2} m²</strong>
               </div>
               {bom.totalJointQty !== undefined && (
                 <div
-                  className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 ${
+                  className={`px-2 sm:px-2.5 py-1 rounded-md border flex items-center gap-1 whitespace-nowrap shrink-0 ${
                     bom.hasUnconfiguredJoints
                       ? 'bg-amber-50 text-amber-800 border-amber-200'
                       : 'bg-purple-50 text-purple-700 border-purple-100'
                   }`}
                 >
-                  <Wrench size={13} />
+                  <Wrench size={11} />
                   <span>
-                    Liên kết góc: <strong className="font-bold">{bom.totalJointQty} con ke</strong>
+                    Ke: <strong className="font-bold">{bom.totalJointQty} con</strong>
                   </span>
                   {bom.hasUnconfiguredJoints && (
-                    <span className="text-[10px] font-semibold text-amber-700 underline">
-                      (chưa cấu hình)
+                    <span className="text-[9px] font-semibold text-amber-700 underline">
+                      (!)
                     </span>
                   )}
                 </div>
               )}
               {bom.totalGrillePrice !== undefined && bom.totalGrillePrice > 0 && (
-                <div className="px-3 py-1.5 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 font-medium">
-                  Kính nan đồng: <strong className="font-bold">{bom.totalGrillePrice.toLocaleString('vi-VN')} đ</strong>
+                <div className="px-2 sm:px-2.5 py-1 bg-amber-50 text-amber-800 rounded-md border border-amber-200 font-medium whitespace-nowrap shrink-0">
+                  Nan: <strong className="font-bold">{bom.totalGrillePrice.toLocaleString('vi-VN')} đ</strong>
+                </div>
+              )}
+              {bom.totalAccessoryPrice !== undefined && bom.totalAccessoryPrice > 0 && (
+                <div className="px-2 sm:px-2.5 py-1 bg-purple-50 text-purple-800 rounded-md border border-purple-200 font-medium whitespace-nowrap shrink-0">
+                  PK: <strong className="font-bold">{bom.totalAccessoryPrice.toLocaleString('vi-VN')} đ</strong>
                 </div>
               )}
             </div>
           )}
         </div>
 
+        {/* Mobile View Switcher (Only visible on mobile/tablet < lg) */}
+        <div className="lg:hidden px-4 pt-2.5 pb-1 bg-white border-b border-slate-100 shrink-0">
+          <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setMobileView('bom')}
+              className={`py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                mobileView === 'bom'
+                  ? 'bg-white text-blue-600 shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5 text-blue-500" />
+              <span>Bóc tách BOM ({bom?.groupedBars?.length || 0})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileView('drawing')}
+              className={`py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                mobileView === 'drawing'
+                  ? 'bg-white text-blue-600 shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Bản vẽ 2D Vector</span>
+            </button>
+          </div>
+        </div>
+
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column: 2D Vector Drawing */}
-          <div className="lg:col-span-5 flex flex-col gap-3">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-10 sm:pb-8 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 min-h-0">
+          {/* 2D Vector Drawing Column */}
+          <div
+            className={`flex flex-col gap-2.5 ${
+              mobileView === 'drawing' ? 'flex' : 'hidden lg:flex'
+            } lg:col-span-5`}
+          >
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               Bản vẽ kỹ thuật 2D Vector
             </h4>
-            <div className="w-full aspect-[4/4.5] rounded-xl border border-slate-200/80 bg-slate-50/50 flex items-center justify-center p-3 overflow-hidden shadow-inner">
-              {door.imageB64 ? (
+            <div className="w-full aspect-[4/4.5] max-h-[60vh] lg:max-h-none rounded-xl border border-slate-200/80 bg-white flex items-center justify-center p-2 overflow-hidden shadow-inner relative">
+              {hasStudioDesign ? (
+                <div className="w-full h-full flex items-center justify-center pointer-events-none">
+                  <DoorCadRenderer
+                    hideDimensions={false}
+                    w={w > 0 ? w : (door.systemConfig?.w || 1400)}
+                    h={h > 0 ? h : (door.systemConfig?.h || 1600)}
+                    aluminumColor={door.systemConfig?.aluminumColor || '#334155'}
+                    hardwareColor={door.systemConfig?.hardwareColor || '#0f172a'}
+                    frameShape={door.systemConfig?.frameShape || 'rectangular'}
+                    rootCell={door.systemConfig!.rootCell}
+                    frameConfig={door.systemConfig?.frameConfig}
+                    sashConfig={door.systemConfig?.sashConfig}
+                    selectedCellId={null}
+                    onSelectCell={() => {}}
+                  />
+                </div>
+              ) : imgSrc ? (
                 <img
-                  src={door.imageB64}
+                  src={imgSrc}
                   alt={door.name}
                   className="w-full h-full object-contain"
                 />
@@ -200,13 +266,17 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
             </div>
           </div>
 
-          {/* Right Column: BOM Tables */}
-          <div className="lg:col-span-7 flex flex-col">
+          {/* BOM Tables Column */}
+          <div
+            className={`flex flex-col flex-1 min-w-0 ${
+              mobileView === 'bom' ? 'flex' : 'hidden lg:flex'
+            } lg:col-span-7`}
+          >
             {/* Tabs */}
-            <div className="flex border-b border-slate-200 mb-4 gap-2">
+            <div className="flex border-b border-slate-200 mb-3 gap-1 sm:gap-2 overflow-x-auto no-scrollbar shrink-0">
               <button
                 onClick={() => setActiveTab('bars')}
-                className={`pb-2 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
+                className={`pb-2 px-2 sm:px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap shrink-0 ${
                   activeTab === 'bars'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -216,17 +286,17 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
               </button>
               <button
                 onClick={() => setActiveTab('beads')}
-                className={`pb-2 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
+                className={`pb-2 px-2 sm:px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap shrink-0 ${
                   activeTab === 'beads'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
-                Cắt nẹp kính ({bom?.groupedBeads?.length || 0})
+                Nẹp kính ({bom?.groupedBeads?.length || 0})
               </button>
               <button
                 onClick={() => setActiveTab('glass')}
-                className={`pb-2 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
+                className={`pb-2 px-2 sm:px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap shrink-0 ${
                   activeTab === 'glass'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -236,13 +306,13 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
               </button>
               <button
                 onClick={() => setActiveTab('joints')}
-                className={`pb-2 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
+                className={`pb-2 px-2 sm:px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1 whitespace-nowrap shrink-0 ${
                   activeTab === 'joints'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
-                <span>Liên kết góc ({bom?.cornerJoints?.length || 0})</span>
+                <span>Con ke ({bom?.cornerJoints?.length || 0})</span>
                 {bom?.hasUnconfiguredJoints && (
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Có vị trí chưa gán con ke" />
                 )}
@@ -250,18 +320,28 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
               {bom?.grilles && bom.grilles.length > 0 && (
                 <button
                   onClick={() => setActiveTab('grilles')}
-                  className={`pb-2 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
+                  className={`pb-2 px-2 sm:px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1 whitespace-nowrap shrink-0 ${
                     activeTab === 'grilles'
                       ? 'border-amber-600 text-amber-600'
                       : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
-                  <span>Kính nan đồng ({bom.grilles.length})</span>
+                  <span>Nan đồng ({bom.grilles.length})</span>
                 </button>
               )}
+              <button
+                onClick={() => setActiveTab('accessories')}
+                className={`pb-2 px-2 sm:px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1 whitespace-nowrap shrink-0 ${
+                  activeTab === 'accessories'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span>Phụ kiện ({bom?.accessories?.length || 0})</span>
+              </button>
             </div>
 
-            {/* Loading */}
+            {/* Loading / Error / Data Content */}
             {isLoading ? (
               <div className="py-16 text-center text-slate-400 text-sm flex items-center justify-center gap-2">
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -272,270 +352,29 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
                 Không thể tải dữ liệu bóc tách
               </div>
             ) : (
-              <div className="flex-1 overflow-x-auto">
-                {/* Tab 1: Bars */}
-                {activeTab === 'bars' && (
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50/50">
-                        <th className="py-2 px-2">Mã nhôm</th>
-                        <th className="py-2 px-2">Tên vị trí thanh</th>
-                        <th className="py-2 px-2 text-right">Dài (mm)</th>
-                        <th className="py-2 px-2 text-center">Góc cắt</th>
-                        <th className="py-2 px-2 text-center">SL</th>
-                        <th className="py-2 px-2 text-right">Trừ lọt</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {bom.groupedBars.map((bar, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-2 px-2 font-mono font-bold text-slate-900">
-                            {bar.profileCode || '—'}
-                          </td>
-                          <td className="py-2 px-2 font-medium">
-                            {bar.name}
-                            <span className="block text-[10px] text-slate-400 font-normal">
-                              {CATEGORY_MAP[bar.category] || bar.category}
-                            </span>
-                          </td>
-                          <td className="py-2 px-2 text-right font-bold text-blue-600">
-                            {bar.length.toLocaleString('vi-VN')}
-                          </td>
-                          <td className="py-2 px-2 text-center font-mono text-[11px] text-slate-600">
-                            {bar.goc1}° / {bar.goc2}°
-                          </td>
-                          <td className="py-2 px-2 text-center">
-                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 font-bold text-slate-900 text-xs">
-                              {bar.qty}
-                            </span>
-                          </td>
-                          <td className="py-2 px-2 text-right text-slate-500 font-mono text-[11px]">
-                            {bar.formula || '—'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-
-                {/* Tab 2: Beads */}
-                {activeTab === 'beads' && (
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50/50">
-                        <th className="py-2 px-2">Vị trí nẹp</th>
-                        <th className="py-2 px-2 text-right">Chiều dài (mm)</th>
-                        <th className="py-2 px-2 text-center">Góc cắt</th>
-                        <th className="py-2 px-2 text-center">Số lượng</th>
-                        <th className="py-2 px-2 text-right">Độ dày kính</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {bom.groupedBeads.map((b, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-2 px-2 font-medium text-slate-900">{b.name}</td>
-                          <td className="py-2 px-2 text-right font-bold text-blue-600">
-                            {b.length.toLocaleString('vi-VN')}
-                          </td>
-                          <td className="py-2 px-2 text-center font-mono text-[11px] text-slate-600">
-                            {b.goc1}° / {b.goc2}°
-                          </td>
-                          <td className="py-2 px-2 text-center">
-                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 font-bold text-slate-900 text-xs">
-                              {b.qty}
-                            </span>
-                          </td>
-                          <td className="py-2 px-2 text-right text-slate-600">
-                            {b.thicknessMm} mm
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-
-                {/* Tab 3: Glass */}
-                {activeTab === 'glass' && (
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50/50">
-                        <th className="py-2 px-2">Vị trí ô</th>
-                        <th className="py-2 px-2">Quy cách kính</th>
-                        <th className="py-2 px-2 text-right">Rộng x Cao (mm)</th>
-                        <th className="py-2 px-2 text-right">Diện tích (m²)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {bom.cells.map((c, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-2 px-2 font-mono font-bold text-slate-900">
-                            {c.path}
-                          </td>
-                          <td className="py-2 px-2 font-medium text-slate-700">
-                            {c.glassName || 'Kính hộp 5-6-5mm'}
-                          </td>
-                          <td className="py-2 px-2 text-right font-bold text-emerald-600 font-mono">
-                            {c.glassW} × {c.glassH}
-                          </td>
-                          <td className="py-2 px-2 text-right font-semibold text-slate-900">
-                            {c.areaM2.toFixed(4)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-
-                {/* Tab 4: Corner Joints */}
+              <div className="flex-1 overflow-x-auto min-w-0">
+                {activeTab === 'bars' && <BomBarsTable bars={bom.groupedBars} />}
+                {activeTab === 'beads' && <BomBeadsTable beads={bom.groupedBeads} />}
+                {activeTab === 'glass' && <BomGlassTable cells={bom.cells} />}
                 {activeTab === 'joints' && (
-                  <div className="space-y-3">
-                    {bom.hasUnconfiguredJoints && (
-                      <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2">
-                        <span className="text-base leading-none">⚠️</span>
-                        <div className="space-y-0.5">
-                          <p className="font-bold">Chưa cấu hình con ke cụ thể từ hãng</p>
-                          <p className="text-[11px] text-amber-800">
-                            Các vị trí liên kết góc đã được tính số lượng theo thiết kế, nhưng chưa được gán mã con ke trong gói phụ kiện để lấy đơn giá thật.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50/50">
-                          <th className="py-2 px-2">Vị trí & Con ke</th>
-                          <th className="py-2 px-2">Phương pháp</th>
-                          <th className="py-2 px-2">Mã / Tên phụ kiện</th>
-                          <th className="py-2 px-2 text-center">Số lượng</th>
-                          <th className="py-2 px-2 text-right">Đơn giá</th>
-                          <th className="py-2 px-2 text-right">Thành tiền</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-700">
-                        {(bom.cornerJoints || []).map((j, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="py-2.5 px-2">
-                              <div className="font-bold text-slate-900">{j.name}</div>
-                              <div className="text-[10px] text-slate-400 font-mono">{j.formula}</div>
-                            </td>
-                            <td className="py-2.5 px-2">
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                  j.jointType === 'ke_vinh_cuu'
-                                    ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                                    : 'bg-blue-50 text-blue-700 border border-blue-200'
-                                }`}
-                              >
-                                {j.jointType === 'ke_vinh_cuu' ? 'Ke vĩnh cửu' : 'Ke ép góc'}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-2">
-                              {j.isConfigured ? (
-                                <div>
-                                  <span className="font-mono font-bold text-slate-900">
-                                    {j.accessoryCode}
-                                  </span>
-                                  <span className="text-slate-500 block text-[11px]">
-                                    {j.accessoryName}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80">
-                                  ⚠️ Chưa cấu hình
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-2.5 px-2 text-center">
-                              <span className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-slate-100 font-bold text-slate-900 text-xs">
-                                {j.qty} con
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-2 text-right font-mono text-slate-600">
-                              {j.unitPrice && j.unitPrice > 0
-                                ? j.unitPrice.toLocaleString('vi-VN') + ' đ'
-                                : '-'}
-                            </td>
-                            <td className="py-2.5 px-2 text-right font-bold font-mono text-slate-900">
-                              {j.totalPrice && j.totalPrice > 0
-                                ? j.totalPrice.toLocaleString('vi-VN') + ' đ'
-                                : '-'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    {bom.totalJointPrice !== undefined && bom.totalJointPrice > 0 && (
-                      <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs font-semibold text-slate-700">
-                        <span>Tổng chi phí ke liên kết:</span>
-                        <span className="font-bold text-sm text-blue-700 font-mono">
-                          {bom.totalJointPrice.toLocaleString('vi-VN')} đ
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  <BomJointsTable
+                    joints={bom.cornerJoints}
+                    hasUnconfiguredJoints={bom.hasUnconfiguredJoints}
+                    totalJointPrice={bom.totalJointPrice}
+                  />
                 )}
-
                 {activeTab === 'grilles' && (
-                  <div className="space-y-4">
-                    <table className="w-full text-left border-collapse text-xs">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                          <th className="py-2 px-2">Ô kính & Bóc tách</th>
-                          <th className="py-2 px-2">Quy cách nan</th>
-                          <th className="py-2 px-2 text-center">Bóc tách dài (m)</th>
-                          <th className="py-2 px-2 text-center">Hoa văn</th>
-                          <th className="py-2 px-2 text-right">Đơn giá / m</th>
-                          <th className="py-2 px-2 text-right">Thành tiền</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-700">
-                        {(bom.grilles || []).map((g, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="py-2.5 px-2">
-                              <div className="font-bold text-slate-900 font-mono">{g.cellPath}</div>
-                              <div className="text-[10px] text-slate-400">
-                                Lưới: {g.gridLengthM}m | Viền: {g.borderLengthM}m | Góc: {g.cornerLengthM}m
-                              </div>
-                            </td>
-                            <td className="py-2.5 px-2">
-                              <span className="font-semibold text-slate-800">
-                                Bản {g.barWidthMm}mm ({g.barColor})
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-2 text-center font-bold font-mono text-amber-700">
-                              {g.totalBarLengthM} m
-                            </td>
-                            <td className="py-2.5 px-2 text-center">
-                              {g.motifQty > 0 ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                  {g.motifQty} con
-                                </span>
-                              ) : (
-                                <span className="text-slate-400">-</span>
-                              )}
-                            </td>
-                            <td className="py-2.5 px-2 text-right font-mono text-slate-600">
-                              {g.unitPricePerM.toLocaleString('vi-VN')} đ
-                            </td>
-                            <td className="py-2.5 px-2 text-right font-bold font-mono text-slate-900">
-                              {g.totalPrice.toLocaleString('vi-VN')} đ
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    {bom.totalGrillePrice !== undefined && bom.totalGrillePrice > 0 && (
-                      <div className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl flex items-center justify-between text-xs font-semibold text-amber-900">
-                        <span>Tổng chi phí gia công kính nan đồng:</span>
-                        <span className="font-bold text-sm text-amber-700 font-mono">
-                          {bom.totalGrillePrice.toLocaleString('vi-VN')} đ
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  <BomGrillesTable
+                    grilles={bom.grilles}
+                    totalGrillePrice={bom.totalGrillePrice}
+                  />
+                )}
+                {activeTab === 'accessories' && (
+                  <BomAccessoriesTable
+                    accessories={bom.accessories}
+                    totalAccessoryQty={bom.totalAccessoryQty}
+                    totalAccessoryPrice={bom.totalAccessoryPrice}
+                  />
                 )}
               </div>
             )}
@@ -543,12 +382,14 @@ const DoorBOMModalContent: React.FC<DoorBOMModalContentProps> = ({ door, isOpen,
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            <span>Thuật toán bóc tách tự động đồng bộ theo hệ nhôm {door.systemConfig?.sash?.family || 'tiêu chuẩn'}.</span>
+        <div className="px-4 py-2.5 sm:px-6 sm:py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 shrink-0">
+          <div className="flex items-center gap-1.5 min-w-0 pr-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+            <span className="truncate">
+              Bóc tách tự động hệ nhôm {door.systemConfig?.sash?.family || 'chuẩn'}.
+            </span>
           </div>
-          <Button variant="outline" size="sm" onClick={onClose}>
+          <Button variant="outline" size="sm" onClick={onClose} className="h-8 px-3 shrink-0">
             Đóng
           </Button>
         </div>

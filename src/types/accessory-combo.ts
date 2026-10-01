@@ -6,6 +6,9 @@ export interface AccessoryComboItem {
   accessoryCode?: string;
   unit?: string;
   unitPrice?: number;
+  brandId?: number;
+  brandName?: string;
+  category?: string;
 }
 
 export interface AccessoryCombo {
@@ -13,6 +16,8 @@ export interface AccessoryCombo {
   code: string;
   name: string;
   doorTypeId?: number | null;
+  description?: string | null;
+  brandId?: number | null;
   comboItems: AccessoryComboItem[];
   totalComboPrice: number;
   isDefault: boolean;
@@ -25,6 +30,8 @@ export interface AccessoryComboCreate {
   code: string;
   name: string;
   doorTypeId?: number | null;
+  description?: string | null;
+  brandId?: number | null;
   comboItems: AccessoryComboItem[];
   totalComboPrice: number;
   isDefault?: boolean;
@@ -35,6 +42,8 @@ export interface AccessoryComboUpdate {
   code?: string;
   name?: string;
   doorTypeId?: number | null;
+  description?: string | null;
+  brandId?: number | null;
   comboItems?: AccessoryComboItem[];
   totalComboPrice?: number;
   isDefault?: boolean;
@@ -44,6 +53,7 @@ export interface AccessoryComboUpdate {
 export interface AccessoryComboQueryParams {
   search?: string;
   doorTypeId?: number;
+  brandId?: number;
   isActive?: boolean;
   offset?: number;
   limit?: number;

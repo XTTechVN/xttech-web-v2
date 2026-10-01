@@ -1,28 +1,19 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { AccessoryCombo, Accessory, SelectedAccessoryItem } from '@/types';
-import { ACCESSORY_UNIT_CONFIG } from '@/types/accessory';
-import {
-  Wrench,
-  Package,
-  Boxes,
-  CheckCircle2,
-  Search,
-  Plus,
-  Minus,
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-  Info,
-  Layers,
-} from 'lucide-react';
+import { AccessoryCombo, Accessory, SelectedAccessoryItem, Brand } from '@/types';
+import { Search, Boxes } from 'lucide-react';
+import { ComboCategoryTab, detectComboCategory, detectComboBrand } from './accessories/types';
+import { ComboCard } from './accessories/combo-card';
+import { SelectedItemsPanel } from './accessories/selected-items-panel';
+import { IndividualAccessoriesView } from './accessories/individual-accessories-view';
 
 interface AccessoriesTabViewProps {
   combos: AccessoryCombo[];
   selectedComboIds: number[];
   onToggleCombo: (comboId: number) => void;
   accessories: Accessory[];
+  brands?: Brand[];
   selectedAccessories: SelectedAccessoryItem[];
   onUpdateAccessoryQty: (accessoryId: number, delta: number) => void;
   onSetAccessoryQty: (accessoryId: number, qty: number) => void;
@@ -36,69 +27,81 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
   selectedComboIds,
   onToggleCombo,
   accessories,
+  brands = [],
   selectedAccessories,
   onUpdateAccessoryQty,
   onSetAccessoryQty,
   onClearAll,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'combos' | 'individual'>('combos');
-  const [comboSearch, setComboSearch] = useState<string>('');
-  const [accSearch, setAccSearch] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [categoryTab, setCategoryTab] = useState<ComboCategoryTab>('frame');
+  const [brandFilter, setBrandFilter] = useState<string>('all');
+  const [search, setSearch] = useState<string>('');
   const [expandedComboId, setExpandedComboId] = useState<number | null>(null);
 
-  // Map quantity for quick lookup: accessoryId -> quantity
-  const selectedAccMap = useMemo(() => {
-    const map = new Map<number, number>();
-    for (const item of selectedAccessories) {
-      map.set(item.accessoryId, item.quantity);
+  // Group combos by category for badges
+  const categoryCounts = useMemo(() => {
+    let frame = 0;
+    let sash = 0;
+    let opening = 0;
+    for (const c of combos) {
+      const cat = detectComboCategory(c);
+      if (cat === 'frame') frame++;
+      else if (cat === 'sash') sash++;
+      else if (cat === 'opening') opening++;
     }
-    return map;
-  }, [selectedAccessories]);
+    return { frame, sash, opening, all: combos.length };
+  }, [combos]);
 
-  // Filter Combos
-  const filteredCombos = useMemo(() => {
-    if (!comboSearch.trim()) return combos;
-    const q = comboSearch.toLowerCase();
-    return combos.filter(
-      (c) => c.name.toLowerCase().includes(q) || (c.code && c.code.toLowerCase().includes(q))
-    );
-  }, [combos, comboSearch]);
-
-  // Categories list for individual accessories
-  const categories = useMemo(() => {
+  // Detected brands in available combos & DB brands
+  const dynamicBrandFilters = useMemo(() => {
     const set = new Set<string>();
-    accessories.forEach((a) => {
-      if (a.category?.name) set.add(a.category.name);
-    });
-    return Array.from(set);
-  }, [accessories]);
-
-  // Filter Individual Accessories
-  const filteredAccessories = useMemo(() => {
-    return accessories.filter((a) => {
-      // Category filter
-      if (selectedCategory !== 'all') {
-        if (a.category?.name !== selectedCategory) return false;
+    // 1. Quét từ danh sách combo thực tế
+    for (const c of combos) {
+      const b = detectComboBrand(c, brands);
+      if (b && b !== 'Khác') set.add(b);
+    }
+    // 2. Bổ sung các thương hiệu phụ kiện hoặc cả hai từ CSDL
+    for (const b of brands) {
+      if (b.brandType === 'accessory' || b.brandType === 'both') {
+        set.add(b.name);
       }
-      // Search query
-      if (accSearch.trim()) {
-        const q = accSearch.toLowerCase();
-        const matchName = a.name.toLowerCase().includes(q);
-        const matchCode = a.code ? a.code.toLowerCase().includes(q) : false;
-        const matchSpec = a.specification ? a.specification.toLowerCase().includes(q) : false;
-        if (!matchName && !matchCode && !matchSpec) return false;
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [combos, brands]);
+
+  // Filter combos based on active category, brand, search
+  const filteredCombos = useMemo(() => {
+    return combos.filter((c) => {
+      // Category filter
+      if (categoryTab !== 'all') {
+        const cat = detectComboCategory(c);
+        if (cat !== categoryTab) return false;
+      }
+      // Brand filter
+      if (brandFilter !== 'all') {
+        const b = detectComboBrand(c, brands);
+        if (b.toLowerCase() !== brandFilter.toLowerCase()) return false;
+      }
+      // Search text
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const matchName = c.name.toLowerCase().includes(q);
+        const matchCode = c.code ? c.code.toLowerCase().includes(q) : false;
+        if (!matchName && !matchCode) return false;
       }
       return true;
     });
-  }, [accessories, selectedCategory, accSearch]);
+  }, [combos, categoryTab, brandFilter, search, brands]);
 
-  // Calculate totals
-  const totalCombosPrice = useMemo(() => {
-    return combos
-      .filter((c) => selectedComboIds.includes(c.id))
-      .reduce((sum, c) => sum + (c.totalComboPrice || 0), 0);
+  // Selected Combos list
+  const selectedCombos = useMemo(() => {
+    return combos.filter((c) => selectedComboIds.includes(c.id));
   }, [combos, selectedComboIds]);
+
+  // Price calculations
+  const totalCombosPrice = useMemo(() => {
+    return selectedCombos.reduce((sum, c) => sum + (c.totalComboPrice || 0), 0);
+  }, [selectedCombos]);
 
   const totalIndividualPrice = useMemo(() => {
     return selectedAccessories.reduce((sum, item) => {
@@ -108,426 +111,207 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
     }, 0);
   }, [selectedAccessories, accessories]);
 
-  const totalAccessoryAmount = totalCombosPrice + totalIndividualPrice;
-  const totalSelectedIndividualCount = selectedAccessories.reduce((s, a) => s + a.quantity, 0);
+  const totalAmount = totalCombosPrice + totalIndividualPrice;
+  const totalIndividualCount = selectedAccessories.reduce((sum, a) => sum + a.quantity, 0);
+
+  const searchPlaceholder = useMemo(() => {
+    if (categoryTab === 'frame') return 'Tìm combo khung...';
+    if (categoryTab === 'sash') return 'Tìm combo cánh...';
+    if (categoryTab === 'opening') return 'Tìm combo hướng mở, bản lề, khóa...';
+    return 'Tìm kiếm bộ combo phụ kiện theo tên, mã...';
+  }, [categoryTab]);
 
   return (
     <div className="flex-1 flex flex-col h-full bg-slate-50/50 overflow-hidden text-xs text-gray-800">
-      {/* Header Info Banner */}
-      <div className="p-4 bg-white border-b border-gray-200 shrink-0 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
-            <Wrench className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-gray-900">Quản Lý Phụ Kiện & Vật Tư Kim Khí</h3>
-            <p className="text-[11px] text-gray-500">
-              Có thể chọn nhiều combo phụ kiện đồng bộ và bổ sung các món phụ kiện lẻ theo nhu cầu
-            </p>
-          </div>
-        </div>
-
-        {/* Sub-Tab Navigation Toggle */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
+      {/* ===================== TẦNG 1: BỘ LỌC PHÂN LOẠI & THƯƠNG HIỆU ===================== */}
+      <div className="p-3 bg-white border-b border-gray-200 shrink-0 space-y-2.5 shadow-2xs">
+        {/* Category Switcher Tabs matching Image 2 */}
+        <div className="flex items-center gap-1 border-b border-gray-100 pb-2 overflow-x-auto no-scrollbar">
           <button
             type="button"
-            onClick={() => setActiveSubTab('combos')}
-            className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
-              activeSubTab === 'combos'
-                ? 'bg-white text-blue-600 shadow-xs'
-                : 'text-gray-600 hover:text-gray-900'
+            onClick={() => { setCategoryTab('frame'); setBrandFilter('all'); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+              categoryTab === 'frame'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <Boxes size={14} />
-            <span>1. Combo Phụ Kiện</span>
-            <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                selectedComboIds.length > 0
-                  ? 'bg-blue-100 text-blue-700 font-bold'
-                  : 'bg-gray-200 text-gray-600'
-              }`}
-            >
-              {selectedComboIds.length}
-            </span>
+            <span>🚪 Khung</span>
+            <span className="text-[10px] opacity-80">({categoryCounts.frame})</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveSubTab('individual')}
-            className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
-              activeSubTab === 'individual'
-                ? 'bg-white text-blue-600 shadow-xs'
-                : 'text-gray-600 hover:text-gray-900'
+            onClick={() => { setCategoryTab('sash'); setBrandFilter('all'); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+              categoryTab === 'sash'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <Package size={14} />
-            <span>2. Phụ Kiện Lẻ / Rời</span>
-            <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                selectedAccessories.length > 0
-                  ? 'bg-emerald-100 text-emerald-700 font-bold'
-                  : 'bg-gray-200 text-gray-600'
-              }`}
-            >
-              {selectedAccessories.length}
-            </span>
+            <span>🪟 Cánh</span>
+            <span className="text-[10px] opacity-80">({categoryCounts.sash})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setCategoryTab('opening'); setBrandFilter('all'); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+              categoryTab === 'opening'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <span>🔁 Hướng mở</span>
+            <span className="text-[10px] opacity-80">({categoryCounts.opening})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setCategoryTab('all'); setBrandFilter('all'); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+              categoryTab === 'all'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <span>Tất cả combo</span>
+            <span className="text-[10px] opacity-80">({categoryCounts.all})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCategoryTab('individual')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ml-auto ${
+              categoryTab === 'individual'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+            }`}
+          >
+            <span>📦 Phụ kiện lẻ</span>
+            <span className="text-[10px] opacity-80">({accessories.length})</span>
           </button>
         </div>
+
+        {/* Brand Tags Filter matching Image 2 */}
+        {categoryTab !== 'individual' && (
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+            <button
+              type="button"
+              onClick={() => setBrandFilter('all')}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                brandFilter === 'all'
+                  ? 'bg-slate-800 text-white shadow-2xs'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Tất cả
+            </button>
+            {dynamicBrandFilters.map((brand) => (
+              <button
+                key={brand}
+                type="button"
+                onClick={() => setBrandFilter(brandFilter === brand ? 'all' : brand)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  brandFilter === brand
+                    ? 'bg-slate-800 text-white shadow-2xs'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {brand}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Search bar */}
+        {categoryTab !== 'individual' && (
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+        )}
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-4">
-        {/* ===================== SUB-TAB 1: COMBOS ===================== */}
-        {activeSubTab === 'combos' && (
-          <div className="space-y-4">
-            {/* Search bar */}
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1">
-                <Search
-                  size={15}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  value={comboSearch}
-                  onChange={(e) => setComboSearch(e.target.value)}
-                  placeholder="Tìm kiếm bộ combo phụ kiện theo tên, mã..."
-                  className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
-              </div>
-              <div className="text-[11px] text-gray-500 font-medium whitespace-nowrap">
-                {filteredCombos.length} bộ combo khả dụng
-              </div>
+      {/* ===================== TẦNG 2 & 3: MAIN SCROLLABLE CONTENT ===================== */}
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
+        {/* TẦNG 2: KHO COMBO KHẢ DỤNG HOẶC PHỤ KIỆN LẺ */}
+        {categoryTab === 'individual' ? (
+          <IndividualAccessoriesView
+            accessories={accessories}
+            selectedAccessories={selectedAccessories}
+            onUpdateAccessoryQty={onUpdateAccessoryQty}
+            onSetAccessoryQty={onSetAccessoryQty}
+          />
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-[11px] text-gray-500 font-medium">
+              <span>Danh mục combo ({filteredCombos.length} bộ khả dụng)</span>
+              {brandFilter !== 'all' && (
+                <span className="text-blue-600">Đang lọc theo hãng: {brandFilter}</span>
+              )}
             </div>
 
-            {/* Combos Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {filteredCombos.map((c) => {
-                const isSelected = selectedComboIds.includes(c.id);
-                const isExpanded = expandedComboId === c.id;
-                const itemsCount = c.comboItems?.length || 0;
-
-                return (
-                  <div
-                    key={c.id}
-                    className={`rounded-2xl border transition-all bg-white flex flex-col justify-between overflow-hidden ${
-                      isSelected
-                        ? 'border-blue-500 shadow-md ring-2 ring-blue-500/20 bg-blue-50/10'
-                        : 'border-gray-200 hover:border-gray-300 shadow-2xs'
-                    }`}
-                  >
-                    <div className="p-4 space-y-3">
-                      {/* Top Row: Name + Multi-select Checkbox */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div
-                          onClick={() => onToggleCombo(c.id)}
-                          className="flex-1 cursor-pointer select-none"
-                        >
-                          <div className="font-bold text-sm text-gray-900 hover:text-blue-600 transition-colors">
-                            {c.name}
-                          </div>
-                          <div className="text-[11px] text-gray-400 font-mono mt-0.5">
-                            Mã: {c.code || '---'}
-                          </div>
-                        </div>
-
-                        {/* Checkbox Button */}
-                        <button
-                          type="button"
-                          onClick={() => onToggleCombo(c.id)}
-                          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                            isSelected
-                              ? 'bg-blue-600 text-white shadow-xs'
-                              : 'border border-gray-300 hover:border-gray-400 bg-white text-transparent'
-                          }`}
-                          title={isSelected ? 'Bỏ chọn combo này' : 'Chọn combo này'}
-                        >
-                          <CheckCircle2 size={15} />
-                        </button>
-                      </div>
-
-                      {/* Middle Row: Items Count & Price */}
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                        <div className="flex items-center gap-1.5 text-gray-500">
-                          <Layers size={13} className="text-gray-400" />
-                          <span>{itemsCount} món vật tư</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-bold text-sm text-blue-700 font-mono">
-                            {c.totalComboPrice
-                              ? c.totalComboPrice.toLocaleString('vi-VN') + ' đ'
-                              : 'Liên hệ'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Expand/Collapse Item Details */}
-                    <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                      <button
-                        type="button"
-                        onClick={() => setExpandedComboId(isExpanded ? null : c.id)}
-                        className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>{isExpanded ? 'Ẩn chi tiết' : 'Xem chi tiết vật tư'}</span>
-                        {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                      </button>
-
-                      {isSelected && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded-full">
-                          ✓ Đã áp dụng
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Collapsible Item Details List */}
-                    {isExpanded && (
-                      <div className="p-3 bg-slate-50/80 border-t border-slate-100 divide-y divide-slate-200/60 max-h-48 overflow-y-auto">
-                        {c.comboItems && c.comboItems.length > 0 ? (
-                          c.comboItems.map((item, idx) => (
-                            <div
-                              key={idx}
-                              className="py-1.5 flex items-center justify-between text-[11px]"
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-mono text-[9px]">
-                                  {idx + 1}
-                                </span>
-                                <span className="font-medium text-slate-800">
-                                  {item.accessoryName || item.accessoryCode || `Phụ kiện #${item.accessoryId}`}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 font-mono text-slate-500">
-                                <span>{item.quantity} {item.unit || 'món'}</span>
-                                {item.unitPrice ? (
-                                  <span className="text-slate-400">
-                                    ({item.unitPrice.toLocaleString('vi-VN')} đ)
-                                  </span>
-                                ) : null}
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="py-2 text-center text-slate-400 italic">
-                            Chưa có chi tiết vật tư trong combo này
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
+              {filteredCombos.map((combo) => (
+                <ComboCard
+                  key={combo.id}
+                  combo={combo}
+                  isSelected={selectedComboIds.includes(combo.id)}
+                  isExpanded={expandedComboId === combo.id}
+                  onToggle={() => onToggleCombo(combo.id)}
+                  onToggleExpand={() =>
+                    setExpandedComboId(expandedComboId === combo.id ? null : combo.id)
+                  }
+                />
+              ))}
             </div>
 
             {filteredCombos.length === 0 && (
-              <div className="py-12 text-center text-gray-400 space-y-2">
-                <Boxes size={32} className="mx-auto text-gray-300" />
-                <p>Không tìm thấy combo phụ kiện nào phù hợp</p>
+              <div className="py-8 text-center text-gray-400 space-y-1 bg-white rounded-xl border border-gray-200">
+                <Boxes size={24} className="mx-auto text-gray-300" />
+                <p className="text-xs">Không tìm thấy combo nào phù hợp với bộ lọc</p>
               </div>
             )}
           </div>
         )}
 
-        {/* ===================== SUB-TAB 2: INDIVIDUAL ACCESSORIES ===================== */}
-        {activeSubTab === 'individual' && (
-          <div className="space-y-4">
-            {/* Search and Category Filters */}
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1">
-                <Search
-                  size={15}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  value={accSearch}
-                  onChange={(e) => setAccSearch(e.target.value)}
-                  placeholder="Tìm phụ kiện theo tên, mã (bản lề, khóa, ke góc, chốt...)"
-                  className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
-              </div>
-
-              {/* Category Pills Filter */}
-              {categories.length > 0 && (
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-sm">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCategory('all')}
-                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                      selectedCategory === 'all'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    Tất cả ({accessories.length})
-                  </button>
-                  {categories.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                        selectedCategory === cat
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Accessories Table */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-gray-200 text-gray-500 font-semibold bg-gray-50/70">
-                    <th className="py-2.5 px-4">Mã & Tên phụ kiện</th>
-                    <th className="py-2.5 px-3">Phân loại</th>
-                    <th className="py-2.5 px-3 text-center">ĐVT</th>
-                    <th className="py-2.5 px-3 text-right">Đơn giá tham khảo</th>
-                    <th className="py-2.5 px-4 text-center w-36">Số lượng</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-gray-700">
-                  {filteredAccessories.map((acc) => {
-                    const currentQty = selectedAccMap.get(acc.id) || 0;
-                    const isSelected = currentQty > 0;
-                    const price = acc.salePrice || acc.retailPrice || acc.costPrice || 0;
-                    const unitCfg = acc.unit ? ACCESSORY_UNIT_CONFIG[acc.unit] : null;
-
-                    return (
-                      <tr
-                        key={acc.id}
-                        className={`transition-colors ${
-                          isSelected ? 'bg-blue-50/40 hover:bg-blue-50/60' : 'hover:bg-gray-50/80'
-                        }`}
-                      >
-                        {/* Name & Code */}
-                        <td className="py-3 px-4">
-                          <div className="font-bold text-gray-900">{acc.name}</div>
-                          <div className="text-[11px] text-gray-400 font-mono">
-                            Mã: {acc.code || '---'} {acc.specification && `| ${acc.specification}`}
-                          </div>
-                        </td>
-
-                        {/* Category */}
-                        <td className="py-3 px-3">
-                          <span className="text-gray-600 text-[11px]">
-                            {acc.category?.name || 'Phụ kiện lẻ'}
-                          </span>
-                        </td>
-
-                        {/* Unit */}
-                        <td className="py-3 px-3 text-center">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                              unitCfg ? unitCfg.className : 'bg-gray-100 text-gray-700 border-gray-200'
-                            }`}
-                          >
-                            {unitCfg ? unitCfg.label : acc.unit || 'Cái'}
-                          </span>
-                        </td>
-
-                        {/* Unit Price */}
-                        <td className="py-3 px-3 text-right font-mono font-semibold text-gray-900">
-                          {price > 0 ? price.toLocaleString('vi-VN') + ' đ' : '-'}
-                        </td>
-
-                        {/* Quantity Controls */}
-                        <td className="py-3 px-4 text-center">
-                          {isSelected ? (
-                            <div className="inline-flex items-center gap-1 bg-white border border-blue-300 rounded-xl p-0.5 shadow-2xs">
-                              <button
-                                type="button"
-                                onClick={() => onUpdateAccessoryQty(acc.id, -1)}
-                                className="w-6 h-6 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 transition-colors cursor-pointer"
-                                title="Giảm 1"
-                              >
-                                <Minus size={12} />
-                              </button>
-
-                              <input
-                                type="number"
-                                min={0}
-                                value={currentQty}
-                                onChange={(e) => {
-                                  const val = parseInt(e.target.value, 10);
-                                  onSetAccessoryQty(acc.id, isNaN(val) ? 0 : val);
-                                }}
-                                className="w-10 text-center font-bold font-mono text-xs text-blue-700 focus:outline-none"
-                              />
-
-                              <button
-                                type="button"
-                                onClick={() => onUpdateAccessoryQty(acc.id, 1)}
-                                className="w-6 h-6 rounded-lg bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-700 transition-colors cursor-pointer"
-                                title="Tăng 1"
-                              >
-                                <Plus size={12} />
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => onUpdateAccessoryQty(acc.id, 1)}
-                              className="px-3 py-1 rounded-xl bg-gray-100 hover:bg-blue-50 hover:text-blue-700 border border-gray-200 text-gray-700 font-semibold text-[11px] transition-all cursor-pointer flex items-center gap-1 mx-auto"
-                            >
-                              <Plus size={12} />
-                              <span>Thêm</span>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-
-              {filteredAccessories.length === 0 && (
-                <div className="py-12 text-center text-gray-400 space-y-2">
-                  <Package size={32} className="mx-auto text-gray-300" />
-                  <p>Không tìm thấy phụ kiện nào phù hợp</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* TẦNG 3: VÙNG "CHI TIẾT ĐÃ CHỌN" (GIẢI QUYẾT TRIỆT ĐỂ BẤT TIỆN KHI HỦY) */}
+        <div className="pt-2 border-t border-gray-200">
+          <SelectedItemsPanel
+            selectedCombos={selectedCombos}
+            onToggleCombo={onToggleCombo}
+            selectedAccessories={selectedAccessories}
+            accessories={accessories}
+            onUpdateAccessoryQty={onUpdateAccessoryQty}
+            onSetAccessoryQty={onSetAccessoryQty}
+            onClearAll={onClearAll}
+          />
+        </div>
       </div>
 
-      {/* ===================== BOTTOM SUMMARY BAR ===================== */}
-      <div className="p-3.5 bg-white border-t border-gray-200 shrink-0 flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-gray-600">Đã chọn:</span>
-            <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold border border-blue-200">
-              {selectedComboIds.length} Combo
-            </span>
-            <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-              {totalSelectedIndividualCount} Phụ kiện rời ({selectedAccessories.length} loại)
-            </span>
-          </div>
-
-          {(selectedComboIds.length > 0 || selectedAccessories.length > 0) && onClearAll && (
-            <button
-              type="button"
-              onClick={onClearAll}
-              className="text-[11px] text-rose-600 hover:text-rose-800 font-medium flex items-center gap-1 cursor-pointer"
-            >
-              <Trash2 size={12} />
-              <span>Bỏ chọn tất cả</span>
-            </button>
-          )}
+      {/* ===================== FOOTER: SUMMARY BAR ===================== */}
+      <div className="p-3 bg-white border-t border-gray-200 shrink-0 flex items-center justify-between shadow-xs text-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-gray-500">Đã chọn:</span>
+          <span className="px-2 py-0.5 rounded font-bold bg-blue-50 text-blue-700 border border-blue-200">
+            {selectedComboIds.length} Combo
+          </span>
+          <span className="px-2 py-0.5 rounded font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            {totalIndividualCount} Phụ kiện rời
+          </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-gray-500 font-medium">Tổng tiền phụ kiện tạm tính:</span>
-          <span className="font-bold text-base text-blue-700 font-mono">
-            {totalAccessoryAmount > 0
-              ? totalAccessoryAmount.toLocaleString('vi-VN') + ' đ'
-              : '0 đ'}
+        <div className="flex items-center gap-2 font-mono">
+          <span className="text-gray-500 font-sans text-xs">Tạm tính:</span>
+          <span className="font-bold text-sm sm:text-base text-blue-700">
+            {totalAmount > 0 ? `${totalAmount.toLocaleString('vi-VN')} đ` : '0 đ'}
           </span>
         </div>
       </div>

@@ -50,7 +50,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
   ];
 
   return (
-    <div className="flex flex-col space-y-5 p-5 text-xs text-gray-800 bg-white">
+    <div className="flex flex-col space-y-4 sm:space-y-5 p-3 sm:p-5 text-xs text-gray-800 bg-white rounded-2xl shadow-2xs">
       <div className="text-center font-bold text-sm text-slate-800 py-1 border-b border-gray-100 flex items-center justify-center gap-2">
         <span className="bg-emerald-800 text-white px-3 py-0.5 rounded-full text-xs font-semibold">PHẦN 2 — CÁNH CỬA</span>
       </div>
@@ -59,7 +59,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
       <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-gray-200">
         <div className="flex items-center gap-2 font-bold text-xs text-gray-800">
           <span>🦟 Cấu hình cánh lưới muỗi (Screen Sash)</span>
-          <span className="text-[11px] text-gray-400 font-normal">Bật để cấu hình và sử dụng hệ lưới chống muỗi độc lập.</span>
+          <span className="text-[11px] text-gray-400 font-normal hidden sm:inline">Bật để cấu hình và sử dụng hệ lưới chống muỗi độc lập.</span>
         </div>
         <input
           type="checkbox"
@@ -70,12 +70,12 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
       </div>
 
       {/* 4. Cánh cửa (Sash) */}
-      <div className="space-y-3.5 p-4 rounded-2xl bg-slate-50/70 border border-gray-200/80">
+      <div className="space-y-3.5 p-3.5 sm:p-4 rounded-2xl bg-slate-50/70 border border-gray-200/80">
         <div className="flex items-center justify-between font-bold text-sm text-slate-900">
           <div className="flex items-center gap-2">
             <span className="w-5 h-5 rounded-full bg-emerald-800 text-white flex items-center justify-center text-[10px]">4</span>
             <span>Cánh cửa (Sash)</span>
-            <span className="text-[11px] text-gray-400 font-normal">— config mặc định, có thể override từng ô ở tab Vẽ</span>
+            <span className="text-[11px] text-gray-400 font-normal hidden sm:inline">— config mặc định, có thể override từng ô ở tab Vẽ</span>
           </div>
         </div>
 
@@ -97,7 +97,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
         {/* Loại cánh cửa sổ */}
         <div className="space-y-1 pt-1">
           <div className="font-semibold text-gray-700 text-xs">Loại cánh cửa sổ:</div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => onChangeConfig({ sashStyle: 'standard' })}
@@ -124,7 +124,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
         </div>
 
         {/* Khe hở & ngàm trừ cơ khí */}
-        <div className="grid grid-cols-3 gap-3 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
           <div className="p-3 bg-white rounded-xl border border-gray-200 space-y-1">
             <div className="font-semibold text-gray-700 text-[11px]">Ngàm ngang:</div>
             <input
@@ -236,7 +236,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
           <span>▾ Cánh cửa sổ mở quay / hất / lật</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div className="space-y-1">
             <div className="font-semibold text-gray-700 text-[11px]">1 • Đứng trái *</div>
             <select

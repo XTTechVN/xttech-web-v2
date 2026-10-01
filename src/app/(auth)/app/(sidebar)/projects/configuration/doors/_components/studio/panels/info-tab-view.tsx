@@ -40,15 +40,15 @@ export const InfoTabView: React.FC<InfoTabViewProps> = ({
     (c) => c.colorHex.toLowerCase() === aluminumColor.toLowerCase()
   );
   return (
-    <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 flex justify-center">
-      <div className="max-w-2xl w-full bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-5 text-xs text-gray-800">
+    <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-50/50 flex justify-center">
+      <div className="max-w-2xl w-full bg-white p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm space-y-5 text-xs text-gray-800">
         <div className="border-b border-gray-100 pb-3">
           <h3 className="text-base font-bold text-gray-900">Thông tin Mẫu cửa</h3>
           <p className="text-xs text-gray-500">Khai báo thông số kỹ thuật, hệ nhôm và kích thước tiêu chuẩn</p>
         </div>
 
         {/* Tên & Mã */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div className="space-y-1">
             <label className="font-semibold text-gray-700">Tên mẫu cửa *</label>
             <input
@@ -72,7 +72,7 @@ export const InfoTabView: React.FC<InfoTabViewProps> = ({
         </div>
 
         {/* Loại cửa & Hệ nhôm */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div className="space-y-1">
             <label className="font-semibold text-gray-700">Loại cửa</label>
             <select
@@ -102,7 +102,7 @@ export const InfoTabView: React.FC<InfoTabViewProps> = ({
         </div>
 
         {/* Kích thước tiêu chuẩn & Đơn giá kính */}
-        <div className="grid grid-cols-3 gap-3 p-4 bg-slate-50 rounded-xl border border-gray-200">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 sm:p-4 bg-slate-50 rounded-xl border border-gray-200">
           <div className="space-y-1">
             <label className="font-semibold text-gray-600">Chiều rộng W (mm)</label>
             <input
@@ -133,7 +133,7 @@ export const InfoTabView: React.FC<InfoTabViewProps> = ({
         </div>
 
         {/* Màu nhôm & Phụ kiện */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="font-semibold text-gray-700">Màu nhôm tiêu chuẩn</label>
