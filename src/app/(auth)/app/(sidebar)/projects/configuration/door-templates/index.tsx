@@ -143,14 +143,13 @@ export default function DoorTemplatesTab() {
     setSelectedSeriesId(null);
   }, [selectedBrandId]);
 
-  // Doors — fetch all for grid (grouping by series)
+  // Doors — fetch all, không lọc type ở server để count tabs chính xác
+  // Doors — chỉ lọc theo brand, tất cả cứ còn lại lọc ở frontend
   const { data: doorsData, isLoading } = useQuery({
-    queryKey: ['door-templates', selectedBrandId, selectedSeriesId, selectedType],
+    queryKey: ['door-templates', selectedBrandId],
     queryFn: () =>
       getDoors({
         brandId: selectedBrandId || undefined,
-        doorSeriesId: selectedSeriesId || undefined,
-        type: selectedType || undefined,
         limit: 9999,
         offset: 0,
       }),
@@ -158,16 +157,25 @@ export default function DoorTemplatesTab() {
   });
   const allDoors = doorsData?.items || [];
 
-  // Client-side search filter
+  // Client-side filter: series + type + search
   const filteredDoors = useMemo(() => {
-    if (!search.trim()) return allDoors;
-    const q = search.toLowerCase();
-    return allDoors.filter(
-      (d) =>
-        d.name.toLowerCase().includes(q) ||
-        (d.code && d.code.toLowerCase().includes(q)),
-    );
-  }, [allDoors, search]);
+    let result = allDoors;
+    if (selectedSeriesId) {
+      result = result.filter((d) => d.doorSeriesId === selectedSeriesId);
+    }
+    if (selectedType) {
+      result = result.filter((d) => d.type === selectedType);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (d) =>
+          d.name.toLowerCase().includes(q) ||
+          (d.code && d.code.toLowerCase().includes(q)),
+      );
+    }
+    return result;
+  }, [allDoors, selectedSeriesId, selectedType, search]);
 
   // Group by series
   const grouped = useMemo(() => {
