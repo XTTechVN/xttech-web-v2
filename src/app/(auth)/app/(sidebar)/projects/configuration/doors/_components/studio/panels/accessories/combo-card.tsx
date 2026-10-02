@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AccessoryCombo } from '@/types';
-import { ChevronDown, ChevronUp, Layers, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Plus } from 'lucide-react';
 
 interface ComboCardProps {
   combo: AccessoryCombo;
@@ -23,79 +23,88 @@ export const ComboCard: React.FC<ComboCardProps> = ({
 
   return (
     <div
-      className={`rounded-xl border transition-all bg-white flex flex-col justify-between overflow-hidden ${
+      className={`rounded-xl border transition-all duration-150 bg-white flex flex-col overflow-hidden ${
         isSelected
-          ? 'border-blue-500 shadow-sm ring-1 ring-blue-500/30 bg-blue-50/10'
-          : 'border-gray-200 hover:border-gray-300 shadow-2xs'
+          ? 'border-primary/50 shadow-sm ring-1 ring-primary/20 bg-primary/[0.02]'
+          : 'border-slate-200 hover:border-slate-300 hover:shadow-sm'
       }`}
     >
-      <div className="p-3.5 space-y-2">
-        {/* Top: Name & Action Button */}
+      <div className="p-3 flex flex-col gap-2">
+        {/* Name + action button */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-xs sm:text-sm text-gray-900 truncate" title={combo.name}>
+            <p className="font-semibold text-xs text-slate-800 leading-snug line-clamp-2" title={combo.name}>
               {combo.name}
-            </div>
-            <div className="text-[11px] text-gray-400 font-mono mt-0.5 truncate">
-              {combo.code || '---'} · {itemsCount} phụ kiện
-            </div>
+            </p>
+            <p className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">
+              {combo.code || '—'} · {itemsCount} phụ kiện
+            </p>
           </div>
 
-          {/* Action button matching Reference Image 2 */}
           <button
             type="button"
             onClick={onToggle}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
+            className={`shrink-0 h-7 px-2.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
               isSelected
-                ? 'bg-blue-600 hover:bg-rose-600 text-white shadow-xs group'
-                : 'bg-amber-500 hover:bg-amber-600 text-white shadow-xs'
+                ? 'bg-primary text-white hover:bg-rose-500'
+                : 'bg-amber-400 hover:bg-amber-500 text-white'
             }`}
           >
             {isSelected ? (
               <>
-                <Check size={12} className="group-hover:hidden" />
+                <Check size={11} className="shrink-0" />
+                <span className="hidden group-hover:inline">Bỏ</span>
                 <span className="group-hover:hidden">Đã thêm</span>
-                <span className="hidden group-hover:inline">✕ Bỏ chọn</span>
               </>
             ) : (
-              <span>+ Thêm</span>
+              <>
+                <Plus size={11} className="shrink-0" />
+                Thêm
+              </>
             )}
           </button>
         </div>
 
-        {/* Price & Expand */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
+        {/* Price + expand toggle */}
+        <div className="flex items-center justify-between border-t border-slate-100 pt-2">
           <button
             type="button"
             onClick={onToggleExpand}
-            className="text-gray-500 hover:text-blue-600 font-medium flex items-center gap-1 cursor-pointer text-[11px]"
+            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-primary transition-colors cursor-pointer font-medium"
           >
-            <span>{isExpanded ? 'Ẩn chi tiết' : 'Chi tiết vật tư'}</span>
-            {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+            {isExpanded ? 'Ẩn' : 'Chi tiết vật tư'}
           </button>
 
-          <span className="font-mono font-bold text-blue-700">
-            {combo.totalComboPrice ? `${combo.totalComboPrice.toLocaleString('vi-VN')} đ` : 'Liên hệ'}
+          <span className={`text-[12px] font-bold tabular-nums ${isSelected ? 'text-primary' : 'text-slate-600'}`}>
+            {combo.totalComboPrice
+              ? combo.totalComboPrice.toLocaleString('vi-VN') + ' đ'
+              : 'Liên hệ'}
           </span>
         </div>
       </div>
 
-      {/* Expandable item details */}
+      {/* Expandable detail */}
       {isExpanded && (
-        <div className="p-2.5 bg-slate-50 border-t border-slate-100 divide-y divide-slate-200/60 max-h-36 overflow-y-auto text-[11px]">
+        <div className="border-t border-slate-100 bg-slate-50 px-3 py-2 max-h-36 overflow-y-auto">
           {combo.comboItems && combo.comboItems.length > 0 ? (
-            combo.comboItems.map((item, idx) => (
-              <div key={idx} className="py-1 flex items-center justify-between text-gray-700">
-                <span className="truncate pr-2">
-                  {idx + 1}. {item.accessoryName || item.accessoryCode || `Phụ kiện #${item.accessoryId}`}
-                </span>
-                <span className="font-mono text-gray-500 shrink-0">
-                  {item.quantity} {item.unit || 'món'}
-                </span>
-              </div>
-            ))
+            <div className="flex flex-col gap-1">
+              {combo.comboItems.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between text-[11px] text-slate-600 py-0.5 border-b border-slate-100 last:border-0">
+                  <span className="truncate pr-2 flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-500 text-[9px] font-bold flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    {item.accessoryName || item.accessoryCode || `Phụ kiện #${item.accessoryId}`}
+                  </span>
+                  <span className="font-mono text-slate-400 shrink-0">
+                    ×{item.quantity} {item.unit || ''}
+                  </span>
+                </div>
+              ))}
+            </div>
           ) : (
-            <div className="py-1 text-center text-gray-400 italic">Chưa có chi tiết vật tư</div>
+            <p className="text-center text-[11px] text-slate-400 italic py-2">Chưa có chi tiết vật tư</p>
           )}
         </div>
       )}

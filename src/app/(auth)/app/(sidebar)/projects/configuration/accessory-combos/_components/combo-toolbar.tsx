@@ -25,9 +25,7 @@ export function ComboToolbar({ search, onSearchChange, onAddClick, total }: Comb
             className="pl-9 pr-3 h-9 w-72 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-primary transition"
           />
         </div>
-        {(total ?? 0) > 0 && (
-          <span className="text-xs text-slate-500 font-medium">{total} gói combo</span>
-        )}
+
       </div>
 
       <Button variant="primary" size="sm" leftIcon={<Plus size={15} />} onClick={onAddClick}>

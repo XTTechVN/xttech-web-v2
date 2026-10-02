@@ -7,7 +7,6 @@ import type { Door } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 import { Search, Plus, ImageOff, LayoutGrid } from 'lucide-react';
 import { AccessoryBrandSidebar } from '../accessories/_components';
-import { DoorCreateModal, DoorUpdateModal, DoorDeleteModal } from '../doors/_components/modals';
 import { DoorStudioModal } from '../doors/_components/studio';
 import { DoorThumbnail } from './_components/door-thumbnail';
 
@@ -98,9 +97,6 @@ export default function DoorTemplatesTab() {
   const [search, setSearch] = useState('');
 
   // Modals
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editDoor, setEditDoor] = useState<Door | null>(null);
-  const [deleteDoor, setDeleteDoor] = useState<Door | null>(null);
   const [studioDoor, setStudioDoor] = useState<Door | null>(null);
   const [isStudioOpen, setIsStudioOpen] = useState(false);
 
@@ -234,7 +230,10 @@ export default function DoorTemplatesTab() {
 
           <button
             type="button"
-            onClick={() => setIsCreateOpen(true)}
+            onClick={() => {
+              setStudioDoor(null);
+              setIsStudioOpen(true);
+            }}
             className="inline-flex items-center gap-1.5 h-9 px-4 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition cursor-pointer shrink-0"
           >
             <Plus size={15} /> Tạo mẫu mới
@@ -318,7 +317,6 @@ export default function DoorTemplatesTab() {
         </div>
       </div>
 
-      {/* Modals — reuse from doors tab */}
       <DoorStudioModal
         key={studioDoor ? `studio-${studioDoor.id}` : 'studio-new'}
         isOpen={isStudioOpen}
@@ -327,29 +325,6 @@ export default function DoorTemplatesTab() {
           setIsStudioOpen(false);
           setStudioDoor(null);
         }}
-      />
-
-      <DoorCreateModal
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
-        title="Tạo mẫu cửa mới"
-        submitText="Xác nhận tạo"
-      />
-
-      <DoorUpdateModal
-        isOpen={!!editDoor}
-        onClose={() => setEditDoor(null)}
-        title="Sửa mẫu cửa"
-        submitText="Lưu thay đổi"
-        initialData={editDoor || undefined}
-      />
-
-      <DoorDeleteModal
-        isOpen={!!deleteDoor}
-        onClose={() => setDeleteDoor(null)}
-        doorName={deleteDoor?.name}
-        onConfirm={() => {}}
-        isPending={false}
       />
     </div>
   );

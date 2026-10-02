@@ -16,6 +16,8 @@ export interface AccessoryCombo {
   code: string;
   name: string;
   doorTypeId?: number | null;
+  applyFor?: string | null;
+  openingType?: string | null;
   description?: string | null;
   brandId?: number | null;
   comboItems: AccessoryComboItem[];
@@ -30,6 +32,8 @@ export interface AccessoryComboCreate {
   code: string;
   name: string;
   doorTypeId?: number | null;
+  applyFor?: string | null;
+  openingType?: string | null;
   description?: string | null;
   brandId?: number | null;
   comboItems: AccessoryComboItem[];

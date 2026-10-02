@@ -139,6 +139,7 @@ export default function AccessoryCombosTab() {
           setSelectedCombo(null);
         }}
         combo={selectedCombo}
+        brandId={selectedBrandId}
       />
     </div>
   );

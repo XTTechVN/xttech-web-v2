@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown, X, ZoomIn } from 'lucide-react';
 import type { Accessory } from '@/types';
 import { formatAccessoryUnit, ACCESSORY_COLOR_MAP } from '@/types';
 import { formatCurrency } from '@/utils';
+import { BASE_MINIO_URL } from '@/config';
 
 interface AccessoryTableProps {
   accessories: Accessory[];
@@ -33,6 +34,7 @@ export function AccessoryTable({
 }: AccessoryTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -101,41 +103,21 @@ export function AccessoryTable({
         <table className="w-full text-left border-collapse select-none">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              {/* Cột 1: Mã phụ kiện */}
-              <th
-                onClick={() => handleSort('code')}
-                className="py-3 px-4 w-36 cursor-pointer group/th hover:text-slate-800 transition-colors"
-                title="Sắp xếp theo Mã phụ kiện"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span>Mã phụ kiện</span>
-                  <SortIcon active={sortField === 'code'} order={sortOrder} />
-                </div>
-              </th>
+              {/* Cột 0: Ảnh */}
+              <th className="py-3 px-3 w-14" />
 
-              {/* Cột 2: Tên phụ kiện */}
+              {/* Cột 1: Tên phụ kiện */}
               <th
                 onClick={() => handleSort('name')}
-                className="py-3 px-4 min-w-[200px] cursor-pointer group/th hover:text-slate-800 transition-colors"
+                className="py-3 px-4 min-w-[160px] cursor-pointer group/th hover:text-slate-800 transition-colors"
                 title="Sắp xếp theo Tên phụ kiện"
               >
                 <div className="flex items-center gap-1.5">
-                  <span>Mô tả / Tên phụ kiện</span>
+                  <span>Tên phụ kiện</span>
                   <SortIcon active={sortField === 'name'} order={sortOrder} />
                 </div>
               </th>
 
-              {/* Cột 3: Phân loại */}
-              <th
-                onClick={() => handleSort('category')}
-                className="py-3 px-4 text-center w-36 cursor-pointer group/th hover:text-slate-800 transition-colors"
-                title="Sắp xếp theo Phân loại"
-              >
-                <div className="flex items-center justify-center gap-1.5">
-                  <span>Phân loại</span>
-                  <SortIcon active={sortField === 'category'} order={sortOrder} />
-                </div>
-              </th>
 
               {/* Cột 4: Quy cách */}
               <th
@@ -213,40 +195,62 @@ export function AccessoryTable({
                   key={acc.id}
                   className="hover:bg-slate-50/80 transition-colors group"
                 >
-                  {/* Cột 1: Mã phụ kiện */}
-                  <td className="py-3.5 px-4 font-semibold text-slate-800 text-xs font-mono">
-                    {acc.code || '—'}
+                  {/* Cột 0: Ảnh nhỏ */}
+                  <td className="py-2.5 px-3">
+                    {acc.imagePath ? (() => {
+                      const src = acc.imagePath.startsWith('http')
+                        ? acc.imagePath
+                        : `${BASE_MINIO_URL}/${acc.imagePath.startsWith('/') ? acc.imagePath.slice(1) : acc.imagePath}`;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => setLightboxUrl(src)}
+                          className="relative group/img block w-9 h-9 cursor-zoom-in"
+                        >
+                          <img
+                            src={src}
+                            alt={acc.name}
+                            className="w-9 h-9 object-contain rounded border border-slate-200 bg-slate-50"
+                            onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                          />
+                          <span className="absolute inset-0 flex items-center justify-center bg-black/30 rounded opacity-0 group-hover/img:opacity-100 transition-opacity">
+                            <ZoomIn size={12} className="text-white" />
+                          </span>
+                        </button>
+                      );
+                    })() : (
+                      <div className="w-9 h-9 rounded border border-slate-100 bg-slate-50" />
+                    )}
                   </td>
 
-                  {/* Cột 2: Tên phụ kiện */}
-                  <td className="py-3.5 px-4">
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-sm">
-                        {acc.name}
-                      </span>
-                      {acc.brand?.name ? (
-                        <span className="text-xs text-slate-400 mt-0.5">
-                          Hãng: {acc.brand.name}
+                  {/* Cột 1: Tên phụ kiện + mã + phân loại */}
+                  <td className="py-2.5 px-4">
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1.5">
+                        {categoryLabel !== '—' && (
+                          <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                            {categoryLabel}
+                          </span>
+                        )}
+                        <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-xs">
+                          {acc.name}
                         </span>
-                      ) : null}
+                      </div>
+                      {acc.code && (
+                        <span className="text-[11px] text-slate-400 font-mono">{acc.code}</span>
+                      )}
                     </div>
                   </td>
 
-                  {/* Cột 3: Phân loại */}
-                  <td className="py-3.5 px-4 text-center">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                      {categoryLabel}
-                    </span>
-                  </td>
 
                   {/* Cột 4: Quy cách */}
-                  <td className="py-3.5 px-4 text-center text-xs text-slate-600">
+                  <td className="py-2.5 px-4 text-center text-xs text-slate-600 whitespace-nowrap">
                     {acc.specification || '—'}
                   </td>
 
                   {/* Cột 5: ĐVT */}
-                  <td className="py-3.5 px-4 text-center">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
+                  <td className="py-2.5 px-4 text-center">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
                       {unitLabel}
                     </span>
                   </td>
@@ -301,6 +305,28 @@ export function AccessoryTable({
           </tbody>
         </table>
       </div>
+
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxUrl(null)}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+          >
+            <X size={18} />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="preview"
+            className="max-w-[90vw] max-h-[85vh] object-contain rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

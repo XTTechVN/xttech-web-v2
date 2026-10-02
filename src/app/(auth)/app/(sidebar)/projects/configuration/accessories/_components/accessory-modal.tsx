@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Modal, Input, Button } from '@/components';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -9,6 +9,8 @@ import toast from 'react-hot-toast';
 import { showErrorToast } from '@/utils';
 import { createAccessory, updateAccessory, getAccessoryCategories } from '@/actions';
 import type { Accessory, AccessoryCreate, AccessoryUpdate, Brand, AccessoryCategory } from '@/types';
+import { BASE_MINIO_URL } from '@/config';
+import { ImagePlus, X } from 'lucide-react';
 
 interface AccessoryModalProps {
   isOpen: boolean;
@@ -47,13 +49,15 @@ export function AccessoryModal({
   defaultBrandId,
 }: AccessoryModalProps) {
   const isEdit = Boolean(accessory);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     reset,
-    setValue,
-    formState: { errors },
+    formState: { errors: _errors },
   } = useForm<AccessoryCreate>({
     defaultValues: {
       brandId: defaultBrandId || 0,
@@ -90,6 +94,9 @@ export function AccessoryModal({
   useEffect(() => {
     if (!isOpen) return;
 
+    setSelectedFile(null);
+    setPreviewUrl(null);
+
     if (accessory) {
       reset({
         brandId: accessory.brandId ?? defaultBrandId ?? 0,
@@ -123,9 +130,30 @@ export function AccessoryModal({
     }
   }, [isOpen, accessory, defaultBrandId]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const clearFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const existingImageUrl = accessory?.imagePath
+    ? accessory.imagePath.startsWith('http')
+      ? accessory.imagePath
+      : `${BASE_MINIO_URL}/${accessory.imagePath.startsWith('/') ? accessory.imagePath.slice(1) : accessory.imagePath}`
+    : null;
+
+  const displayImage = previewUrl || existingImageUrl;
+
   // Mutations
   const { mutate: createMutate, isPending: isCreating } = useMutation({
-    mutationFn: (data: AccessoryCreate) => createAccessory({ data }),
+    mutationFn: (data: AccessoryCreate) => createAccessory({ data, file: selectedFile || undefined }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accessories'] });
       toast.success('Thêm phụ kiện thành công');
@@ -135,7 +163,7 @@ export function AccessoryModal({
   });
 
   const { mutate: updateMutate, isPending: isUpdating } = useMutation({
-    mutationFn: (data: AccessoryUpdate) => updateAccessory(accessory!.id, { data }),
+    mutationFn: (data: AccessoryUpdate) => updateAccessory(accessory!.id, { data, file: selectedFile || undefined }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accessories'] });
       toast.success('Cập nhật phụ kiện thành công');
@@ -173,6 +201,55 @@ export function AccessoryModal({
       title={isEdit ? 'Chỉnh sửa phụ kiện' : 'Thêm phụ kiện mới'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        {/* Upload ảnh */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1.5">Hình ảnh</label>
+          <div className="flex items-center gap-3">
+            <div className="relative w-20 h-20 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
+              {displayImage ? (
+                <>
+                  <img src={displayImage} alt="preview" className="w-full h-full object-contain" />
+                  {selectedFile && (
+                    <button
+                      type="button"
+                      onClick={clearFile}
+                      className="absolute top-0.5 right-0.5 w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition cursor-pointer"
+                    >
+                      <X size={10} />
+                    </button>
+                  )}
+                </>
+              ) : (
+                <ImagePlus size={22} className="text-slate-300" />
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-slate-200 rounded-lg text-slate-700 bg-white hover:bg-slate-50 hover:border-primary hover:text-primary transition cursor-pointer"
+              >
+                <ImagePlus size={13} />
+                {displayImage ? 'Đổi ảnh' : 'Chọn ảnh'}
+              </button>
+              <p className="text-[11px] text-slate-400">JPG, PNG, WebP. Tối đa 5MB.</p>
+              {selectedFile && (
+                <p className="text-[11px] text-emerald-600 font-medium truncate max-w-[180px]">
+                  ✓ {selectedFile.name}
+                </p>
+              )}
+            </div>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+        </div>
+
         {/* Hãng & Danh mục phụ kiện */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
@@ -254,9 +331,7 @@ export function AccessoryModal({
         {/* Màu sắc & Đơn giá */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Màu sắc
-            </label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Màu sắc</label>
             <select
               {...register('color')}
               className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition"
@@ -271,18 +346,16 @@ export function AccessoryModal({
 
           <Input
             type="number"
-            step="1000"
             label="Đơn giá (VNĐ)"
             placeholder="VD: 85000"
             {...register('unitPrice')}
           />
         </div>
 
-        {/* Giá vốn */}
+        {/* Giá vốn & Kích hoạt */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <Input
             type="number"
-            step="1000"
             label="Giá vốn / nhập (VNĐ)"
             placeholder="VD: 65000"
             {...register('costPrice')}
