@@ -137,7 +137,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     <svg
       id={id}
       viewBox={`0 0 ${vbW} ${vbH}`}
-      className="w-full h-full select-none"
+      className="w-full h-full max-w-full max-h-full select-none"
       shapeRendering="geometricPrecision"
       textRendering="geometricPrecision"
       onClick={() => onSelectCell(null)}
