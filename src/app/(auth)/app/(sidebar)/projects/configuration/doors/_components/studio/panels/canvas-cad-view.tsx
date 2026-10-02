@@ -348,34 +348,40 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
           }
           onSelectCell(null);
         }}
-        className={`flex-1 overflow-hidden flex items-center justify-center p-2 sm:p-6 pb-16 sm:pb-14 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] select-none ${
+        className={`flex-1 overflow-hidden flex items-center justify-center p-3 sm:p-5 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] select-none ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
       >
-        <div
-          className="bg-white rounded-2xl shadow-xl border border-gray-200/90 p-2 sm:p-4 w-full max-w-[860px] max-h-[640px] flex items-center justify-center will-change-transform"
-          style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: 'center center',
-            transition: isDragging ? 'none' : 'transform 0.12s ease-out',
-          }}
-        >
-          <DoorCadRenderer
-            w={w}
-            h={h}
-            aluminumColor={aluminumColor}
-            hardwareColor={hardwareColor}
-            frameShape={frameShape}
-            rootCell={rootCell}
-            selectedCellId={selectedCellId}
-            onSelectCell={onSelectCell}
-            onSelectMullion={onSelectMullion}
-            selectedMullionId={selectedMullionId}
-            onEditDimension={handleOpenEdit}
-            onResizeSplit={onResizeSplit}
-            frameConfig={frameConfig}
-            sashConfig={sashConfig}
-          />
+        {/* Khung nền trắng Artboard cố định: Hiển thị full chiều cao, không bị co kéo hay zoom theo cửa */}
+        <div className="relative w-full h-full bg-white rounded-2xl shadow-sm border border-gray-200/90 overflow-hidden flex items-center justify-center">
+          {/* Lớp hiển thị & tương tác cửa CAD: Chỉ thu phóng và dịch chuyển cửa bên trong khung nền trắng */}
+          <div
+            className="w-full h-full flex items-center justify-center will-change-transform p-4 sm:p-8"
+            style={{
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transformOrigin: 'center center',
+              transition: isDragging ? 'none' : 'transform 0.12s ease-out',
+            }}
+          >
+            <div className="w-full h-full max-w-full max-h-full flex items-center justify-center">
+              <DoorCadRenderer
+                w={w}
+                h={h}
+                aluminumColor={aluminumColor}
+                hardwareColor={hardwareColor}
+                frameShape={frameShape}
+                rootCell={rootCell}
+                selectedCellId={selectedCellId}
+                onSelectCell={onSelectCell}
+                onSelectMullion={onSelectMullion}
+                selectedMullionId={selectedMullionId}
+                onEditDimension={handleOpenEdit}
+                onResizeSplit={onResizeSplit}
+                frameConfig={frameConfig}
+                sashConfig={sashConfig}
+              />
+            </div>
+          </div>
         </div>
       </div>
 

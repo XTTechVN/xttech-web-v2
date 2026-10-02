@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { DoorCalculateResponse } from '@/types';
 import { Weight, Maximize2, Scissors, Loader2, Sparkles } from 'lucide-react';
 
@@ -11,6 +11,68 @@ interface BomSidebarProps {
 
 export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) => {
   const [activeTab, setActiveTab] = useState<'bars' | 'glass' | 'grilles'>('bars');
+
+  const cells = calcData?.cells;
+  const beads = calcData?.beads;
+
+  // Gom nhóm các tấm kính có cùng quy cách và cùng kích thước
+  const groupedGlasses = useMemo(() => {
+    if (!cells || cells.length === 0) return [];
+
+    const map = new Map<string, {
+      glassName: string;
+      glassW: number;
+      glassH: number;
+      areaM2: number;
+      qty: number;
+    }>();
+
+    for (const cell of cells) {
+      const name = cell.glassName || 'Kính cường lực';
+      const key = `${name}_${cell.glassW.toFixed(1)}_${cell.glassH.toFixed(1)}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        map.set(key, {
+          glassName: name,
+          glassW: cell.glassW,
+          glassH: cell.glassH,
+          areaM2: cell.areaM2,
+          qty: 1,
+        });
+      }
+    }
+    return Array.from(map.values());
+  }, [cells]);
+
+  // Gom nhóm nẹp kính theo loại vị trí và cùng chiều dài cắt
+  const groupedBeads = useMemo(() => {
+    if (!beads || beads.length === 0) return [];
+
+    const map = new Map<string, {
+      name: string;
+      length: number;
+      qty: number;
+    }>();
+
+    for (const bead of beads) {
+      // Chuẩn hóa tên nẹp (bỏ số thứ tự cánh/ô ở cuối: "Nẹp đứng cánh 1" -> "Nẹp đứng cánh")
+      const cleanName = bead.name.replace(/\s+\d+.*$/, '').trim();
+      const key = `${cleanName}_${bead.length.toFixed(1)}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.qty += bead.qty || 1;
+      } else {
+        map.set(key, {
+          name: cleanName,
+          length: bead.length,
+          qty: bead.qty || 1,
+        });
+      }
+    }
+    return Array.from(map.values());
+  }, [beads]);
 
   return (
     <div className="flex flex-col h-full bg-white text-xs select-none">
@@ -129,27 +191,36 @@ export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) =
           <div className="space-y-3">
             {/* Glass panels */}
             <div>
-              <div className="text-[11px] font-bold text-gray-700 uppercase mb-1.5">Tấm kính</div>
+              <div className="text-[11px] font-bold text-gray-700 uppercase mb-1.5 flex items-center justify-between">
+                <span>Tấm kính</span>
+                {groupedGlasses.length > 0 && (
+                  <span className="text-[10px] text-gray-400 font-normal font-mono lowercase">
+                    {calcData?.cells?.length ?? 0} tấm
+                  </span>
+                )}
+              </div>
               <div className="space-y-1.5">
-                {calcData?.cells && calcData.cells.length > 0 ? (
-                  calcData.cells.map((cell, idx) => (
+                {groupedGlasses.length > 0 ? (
+                  groupedGlasses.map((glass, idx) => (
                     <div
                       key={idx}
                       className="p-2 rounded-lg border border-blue-100 bg-blue-50/40 flex items-center justify-between"
                     >
-                      <div>
-                        <div className="font-semibold text-gray-800 text-xs">
-                          {cell.glassName || `Kính ô ${idx + 1}`}
+                      <div className="min-w-0 pr-2">
+                        <div className="font-semibold text-gray-800 text-xs truncate">
+                          {glass.glassName}
                         </div>
-                        <div className="text-[10px] text-gray-500 font-mono">
-                          Diện tích: {cell.areaM2.toFixed(3)} m²
+                        <div className="text-[10px] text-gray-500 font-mono mt-0.5">
+                          Diện tích: {glass.areaM2.toFixed(3)} m²
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right shrink-0">
                         <div className="font-bold text-blue-700 font-mono text-xs">
-                          {cell.glassW.toFixed(1)} × {cell.glassH.toFixed(1)}
+                          {glass.glassW.toFixed(1)} × {glass.glassH.toFixed(1)} <span className="text-[10px] font-normal text-gray-400">mm</span>
                         </div>
-                        <div className="text-[10px] text-gray-400">mm</div>
+                        <div className="text-[11px] font-semibold text-blue-800 font-mono mt-0.5">
+                          {glass.qty} tấm
+                        </div>
                       </div>
                     </div>
                   ))
@@ -160,11 +231,16 @@ export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) =
             </div>
 
             {/* Beads list */}
-            {calcData?.beads && calcData.beads.length > 0 && (
+            {groupedBeads.length > 0 && (
               <div>
-                <div className="text-[11px] font-bold text-gray-700 uppercase mb-1.5">Nẹp kính</div>
+                <div className="text-[11px] font-bold text-gray-700 uppercase mb-1.5 flex items-center justify-between">
+                  <span>Nẹp kính</span>
+                  <span className="text-[10px] text-gray-400 font-normal font-mono lowercase">
+                    {calcData?.beads?.length ?? 0} cây
+                  </span>
+                </div>
                 <div className="space-y-1">
-                  {calcData.beads.map((bead, idx) => (
+                  {groupedBeads.map((bead, idx) => (
                     <div
                       key={idx}
                       className="p-1.5 rounded-lg border border-gray-200/60 bg-white flex items-center justify-between text-[11px]"
