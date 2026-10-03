@@ -65,7 +65,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm theo tên hoặc phòng ban..."
-            className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-slate-200 focus:bg-white"
+            className="pl-8 h-8 text-xs rounded-lg bg-slate-50 border-slate-200 focus:bg-white"
           />
         </div>
 
@@ -73,7 +73,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
         <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[11px]">
           <button
             onClick={() => setStatusFilter('all')}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
+            className={`px-1.5 py-0.5 rounded-md font-medium transition-colors cursor-pointer shrink-0 ${
               statusFilter === 'all' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -81,7 +81,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
           </button>
           <button
             onClick={() => setStatusFilter('moving')}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
+            className={`px-1.5 py-0.5 rounded-md font-medium transition-colors cursor-pointer shrink-0 ${
               statusFilter === 'moving' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -89,7 +89,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
           </button>
           <button
             onClick={() => setStatusFilter('stationary')}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
+            className={`px-1.5 py-0.5 rounded-md font-medium transition-colors cursor-pointer shrink-0 ${
               statusFilter === 'stationary' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >

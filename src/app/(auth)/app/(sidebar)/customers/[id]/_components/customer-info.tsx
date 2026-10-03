@@ -175,7 +175,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
                     if (isHidden) {
                       return (
                         <div key={idx} className="hidden">
-                          <Image src={src} alt={`customer-img-${idx}`} />
+                          <Image src={src} alt={`customer-img-${idx}`}  />
                         </div>
                       );
                     }
@@ -184,7 +184,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
                       return (
                         <div key={idx} className="relative">
                           <div className="hidden">
-                            <Image src={src} alt={`customer-img-${idx}`} />
+                            <Image src={src} alt={`customer-img-${idx}`}  />
                           </div>
                           <div
                             onClick={() => setShowAllImages(true)}
@@ -212,7 +212,7 @@ export const CustomerInfo = ({ customer }: CustomerInfoProps) => {
                           src={src}
                           alt={`customer-img-${idx}`}
                           width={80}
-                          height={80}
+                          height={80} 
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-lg"
                         />
                       </div>

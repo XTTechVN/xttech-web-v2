@@ -489,12 +489,12 @@ function StaffPopupContent({
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="text-xs font-bold text-slate-800 truncate">
+          <div className="text-xs font-bold text-slate-800 truncate !m-0 !p-0 leading-normal">
             {staff.userName || 'Nhân viên'}
-          </h4>
-          <p className="text-[10px] text-slate-500 truncate">
+          </div>
+          <div className="text-[10px] text-slate-500 truncate !m-0 !p-0 leading-normal">
             {staff.positionName || staff.departmentName || 'Nhân viên'}
-          </p>
+          </div>
         </div>
       </div>
 

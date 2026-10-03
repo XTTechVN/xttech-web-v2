@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import dayjs from 'dayjs';
 import type L from 'leaflet';
 import { Modal, DatePicker, Switch } from 'antd';
-import { Loader2, Navigation, MapPin, Gauge, Route, Maximize2, Minimize2, Focus } from 'lucide-react';
+import { Loader2, Navigation, MapPin, Gauge, Route, Maximize2, Minimize2, Focus, Flag } from 'lucide-react';
 import { getStaffRoute } from '@/actions';
 
 import { StaffRoutePoint, StaffRouteResponse } from '@/types';
@@ -329,6 +329,7 @@ export function RoutePlaybackModal({
 
   return (
     <Modal
+      centered
       open={isOpen}
       onCancel={() => {
         setIsFullscreen(false);
@@ -341,7 +342,7 @@ export function RoutePlaybackModal({
       style={
         isFullscreen
           ? { top: 0, left: 0, padding: 0, margin: 0, maxWidth: '100vw', width: '100vw', height: '100vh' }
-          : { top: 20 }
+          : {}
       }
       className={
         isFullscreen
@@ -436,7 +437,6 @@ export function RoutePlaybackModal({
               )}
             </div>
 
-            {/* Chọn ngày */}
               <DatePicker
                 value={dayjs(selectedDate)}
                 onChange={(d) => {
@@ -444,7 +444,7 @@ export function RoutePlaybackModal({
                 }}
                 allowClear={false}
                 format="DD/MM/YYYY"
-                className="border-none shadow-none text-xs w-28 px-1"
+                className="text-xs w-32"
               />
 
             {/* Nút Phóng to / Thu nhỏ toàn màn hình */}
@@ -510,7 +510,7 @@ export function RoutePlaybackModal({
 
       <div className={`pt-3 flex flex-col ${isFullscreen ? 'flex-1 min-h-0' : 'space-y-3'}`}>
         {/* Thống kê lộ trình cân đối */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/80 shrink-0 mb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-slate-50/80 p-1.5 rounded-lg border border-slate-200/80 shrink-0 mb-3">
           <div className="flex items-center gap-2.5 px-2 py-1">
             <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Navigation size={16} />
@@ -693,13 +693,16 @@ export function RoutePlaybackModal({
                 position={[points[0].latitude, points[0].longitude]}
                 icon={createRouteMarkerIcon(leaflet, 'start')}
               >
-                <Popup>
+                <Popup className="custom-route-popup">
                   <div className="text-xs space-y-1">
-                    <p className="font-bold text-emerald-700">📍 Điểm bắt đầu</p>
-                    <p>
+                    <div className="font-bold text-emerald-700 flex items-center gap-1 !m-0 !p-0">
+                      <MapPin size={12} />
+                      Điểm bắt đầu
+                    </div>
+                    <div className="!m-0 !p-0">
                       Thời gian:{' '}
                       {dayjs(points[0].recordedAt).format('HH:mm:ss DD/MM')}
-                    </p>
+                    </div>
                   </div>
                 </Popup>
               </Marker>
@@ -714,15 +717,18 @@ export function RoutePlaybackModal({
                 ]}
                 icon={createRouteMarkerIcon(leaflet, 'end')}
               >
-                <Popup>
+                <Popup className="custom-route-popup">
                   <div className="text-xs space-y-1">
-                    <p className="font-bold text-rose-700">🏁 Điểm gần nhất</p>
-                    <p>
+                    <div className="font-bold text-rose-700 flex items-center gap-1 !m-0 !p-0">
+                      <Flag size={12} />
+                      Điểm gần nhất
+                    </div>
+                    <div className="!m-0 !p-0">
                       Thời gian:{' '}
                       {dayjs(
                         points[points.length - 1].recordedAt
                       ).format('HH:mm:ss DD/MM')}
-                    </p>
+                    </div>
                   </div>
                 </Popup>
               </Marker>

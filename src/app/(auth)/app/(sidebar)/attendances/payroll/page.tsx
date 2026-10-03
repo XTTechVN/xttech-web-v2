@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Button, Badge, TableData, TableAction, ITableColumn, ITableFilterProps, AutoTimekeepingModal } from '@/components';
+import { Image } from 'antd';
 
 import { toast } from 'react-hot-toast';
 import { Calendar, Clock, AlertCircle, LogIn, LogOut, FileEdit, Briefcase, Eye, UserX } from 'lucide-react';
@@ -226,42 +227,38 @@ export default function PayrollDataPage() {
 
         return (
           <div className="flex gap-2 items-center py-1">
-            {inImgSrc ? (
-              <a
-                href={inImgSrc}
-                target="_blank"
-                rel="noreferrer"
-                className="block relative w-9 h-9 rounded-full border border-slate-200 overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
-                title="Ảnh check-in"
-              >
-                <img src={inImgSrc} alt="Check In" className="object-cover w-full h-full" />
-              </a>
-            ) : (
-              <div
-                className="w-9 h-9 rounded-full bg-slate-50 border border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-xs"
-                title="Không có ảnh check-in"
-              >
-                -
-              </div>
-            )}
-            {outImgSrc ? (
-              <a
-                href={outImgSrc}
-                target="_blank"
-                rel="noreferrer"
-                className="block relative w-9 h-9 rounded-full border border-slate-200 overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
-                title="Ảnh check-out"
-              >
-                <img src={outImgSrc} alt="Check Out" className="object-cover w-full h-full" />
-              </a>
-            ) : (
-              <div
-                className="w-9 h-9 rounded-full bg-slate-50 border border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-xs"
-                title="Không có ảnh check-out"
-              >
-                -
-              </div>
-            )}
+            <Image.PreviewGroup>
+              {inImgSrc ? (
+                <div
+                  className="block relative w-9 h-9 rounded-full border border-slate-200 overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                  title="Ảnh check-in"
+                >
+                  <Image src={inImgSrc} alt="Check In" rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: true }} />
+                </div>
+              ) : (
+                <div
+                  className="w-9 h-9 rounded-full bg-slate-50 border border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-xs"
+                  title="Không có ảnh check-in"
+                >
+                  -
+                </div>
+              )}
+              {outImgSrc ? (
+                <div
+                  className="block relative w-9 h-9 rounded-full border border-slate-200 overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                  title="Ảnh check-out"
+                >
+                  <Image src={outImgSrc} alt="Check Out" rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: false }} />
+                </div>
+              ) : (
+                <div
+                  className="w-9 h-9 rounded-full bg-slate-50 border border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-xs"
+                  title="Không có ảnh check-out"
+                >
+                  -
+                </div>
+              )}
+            </Image.PreviewGroup>
           </div>
         );
       },
@@ -338,42 +335,38 @@ export default function PayrollDataPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-          <div className="flex gap-2">
-            {inImgSrc ? (
-              <a
-                href={inImgSrc}
-                target="_blank"
-                rel="noreferrer"
-                className="block relative w-8 h-8 rounded-full border border-slate-200 overflow-hidden shrink-0 mt-0.5"
-              >
-                <img src={inImgSrc} alt="Check In" className="object-cover w-full h-full" />
-              </a>
-            ) : null}
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase block">Check In</span>
-              <span className="font-semibold text-slate-800">{formatTime(row.checkIn)}</span>
-              {(row.lateMinutes ?? 0) > 0 && <span className="text-[10px] text-red-600 font-medium block">Muộn {row.lateMinutes}p</span>}
+          <Image.PreviewGroup>
+            <div className="flex gap-2">
+              {inImgSrc ? (
+                <div
+                  className="block relative w-8 h-8 rounded-full border border-slate-200 overflow-hidden shrink-0 mt-0.5 cursor-pointer"
+                >
+                  <Image src={inImgSrc} alt="Check In" rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: false }} />
+                </div>
+              ) : null}
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Check In</span>
+                <span className="font-semibold text-slate-800">{formatTime(row.checkIn)}</span>
+                {(row.lateMinutes ?? 0) > 0 && <span className="text-[10px] text-red-600 font-medium block">Muộn {row.lateMinutes}p</span>}
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2">
-            {outImgSrc ? (
-              <a
-                href={outImgSrc}
-                target="_blank"
-                rel="noreferrer"
-                className="block relative w-8 h-8 rounded-full border border-slate-200 overflow-hidden shrink-0 mt-0.5"
-              >
-                <img src={outImgSrc} alt="Check Out" className="object-cover w-full h-full" />
-              </a>
-            ) : null}
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase block">Check Out</span>
-              <span className="font-semibold text-slate-800">{formatTime(row.checkOut)}</span>
-              {(row.earlyLeaveMinutes ?? 0) > 0 && (
-                <span className="text-[10px] text-amber-600 font-medium block">Về sớm {row.earlyLeaveMinutes}p</span>
-              )}
+            <div className="flex gap-2">
+              {outImgSrc ? (
+                <div
+                  className="block relative w-8 h-8 rounded-full border border-slate-200 overflow-hidden shrink-0 mt-0.5 cursor-pointer"
+                >
+                  <Image src={outImgSrc} alt="Check Out" rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: false }} />
+                </div>
+              ) : null}
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Check Out</span>
+                <span className="font-semibold text-slate-800">{formatTime(row.checkOut)}</span>
+                {(row.earlyLeaveMinutes ?? 0) > 0 && (
+                  <span className="text-[10px] text-amber-600 font-medium block">Về sớm {row.earlyLeaveMinutes}p</span>
+                )}
+              </div>
             </div>
-          </div>
+          </Image.PreviewGroup>
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase block">Giờ công</span>
             <span className="font-bold text-teal-700">{row.totalHours?.toFixed(1) ?? '0'}h</span>

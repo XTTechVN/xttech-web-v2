@@ -102,7 +102,7 @@ const Modal: React.FC<ModalProps> = ({
             exit={{ opacity: 0, scale: 0.98, y: 8 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
-              'relative w-full bg-white flex flex-col',
+              'relative w-full bg-white flex flex-col overflow-hidden',
               sizes[size],
               size === 'full'
                 ? 'h-full m-0 rounded-none'
