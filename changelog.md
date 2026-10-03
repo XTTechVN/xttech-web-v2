@@ -2,6 +2,16 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-03
+
+### Fixed & Added (Hiển Thị Phần Trăm Pin iPhone / Android Trên Live Map)
+- **Tích Hợp API Đọc Pin Native Qua Capacitor ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m), [`NativeTrackingPlugin.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/NativeTrackingPlugin.java)):**
+  - **Khắc phục lỗi iOS WebKit cấm `navigator.getBattery()`:** Thêm phương thức bridge `getBatteryLevel` vào Capacitor Plugin cho cả iOS (Swift) và Android (Java) để Webview có thể truy xuất mức pin thực tế của phần cứng.
+  - **Cơ chế đọc pin an toàn trên iOS:** Luôn kích hoạt `UIDevice.current.isBatteryMonitoringEnabled = true` trên Main Thread, bổ sung cơ chế fallback lưu giữ mốc pin hợp lệ gần nhất khi hệ thống chưa kịp đọc giá trị mới (tránh bị trả về `-1.0 Unknown`).
+  - **Chuẩn hóa Payload:** Gửi đồng thời cả hai khóa `batteryLevel` (camelCase) và `battery_level` (snake_case) trong gói tin tọa độ của `NativeTrackingPlugin.swift`.
+- **Cập nhật Hook Định Vị ([`src/hooks/useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
+  - Tự động gọi `NativeTracking.getBatteryLevel()` khi chạy trên nền tảng Native (`Capacitor.isNativePlatform()`), lấy chính xác mức pin để đính kèm vào ping tọa độ.
+
 ## [Unreleased] - 2026-09-29
 
 ### Fixed & Refactored (Nâng Cấp Kiến Trúc iOS Active Live-Tracking Engine Chuẩn Zalo / Grab)

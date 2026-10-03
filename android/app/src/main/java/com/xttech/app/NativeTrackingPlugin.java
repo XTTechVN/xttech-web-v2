@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.content.IntentFilter;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.PowerManager;
 import android.provider.Settings;
@@ -251,5 +253,48 @@ public class NativeTrackingPlugin extends Plugin {
     @PluginMethod
     public void openSettings(PluginCall call) {
         requestBackgroundLocation(call);
+    }
+
+    @PluginMethod
+    public void getBatteryLevel(PluginCall call) {
+        Context context = getContext();
+        if (context == null) {
+            JSObject ret = new JSObject();
+            ret.put("level", -1);
+            call.resolve(ret);
+            return;
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                BatteryManager bm = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
+                if (bm != null) {
+                    int cap = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+                    if (cap >= 0) {
+                        JSObject ret = new JSObject();
+                        ret.put("level", cap);
+                        call.resolve(ret);
+                        return;
+                    }
+                }
+            }
+            IntentFilter iFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+            Intent batteryStatus = context.registerReceiver(null, iFilter);
+            if (batteryStatus != null) {
+                int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+                int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+                if (level >= 0 && scale > 0) {
+                    int pct = Math.round((level / (float) scale) * 100);
+                    JSObject ret = new JSObject();
+                    ret.put("level", pct);
+                    call.resolve(ret);
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Could not read battery level", e);
+        }
+        JSObject ret = new JSObject();
+        ret.put("level", -1);
+        call.resolve(ret);
     }
 }

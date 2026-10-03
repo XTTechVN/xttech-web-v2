@@ -76,6 +76,8 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
+            self.enableBatteryMonitoringIfNeeded()
+            _ = self.getCurrentBatteryLevel()
             self.isTracking = true
             self.setupLocationManager()
         }
@@ -142,6 +144,42 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
                 }
             } else {
                 call.resolve(["success": false])
+            }
+        }
+    }
+
+    // MARK: - Battery Monitoring Engine
+    private func enableBatteryMonitoringIfNeeded() {
+        if !UIDevice.current.isBatteryMonitoringEnabled {
+            UIDevice.current.isBatteryMonitoringEnabled = true
+        }
+    }
+
+    private func getCurrentBatteryLevel() -> Double? {
+        enableBatteryMonitoringIfNeeded()
+        let raw = UIDevice.current.batteryLevel
+        if raw >= 0.0 {
+            let pct = Double(round(raw * 100.0))
+            self.lastBatteryLevel = pct
+            return pct
+        }
+        // Fallback: Sử dụng mức pin hợp lệ gần nhất nếu hệ thống tạm thời chưa kịp đọc
+        if self.lastBatteryLevel >= 0.0 {
+            return self.lastBatteryLevel
+        }
+        return nil
+    }
+
+    @objc func getBatteryLevel(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else {
+                call.resolve(["level": -1])
+                return
+            }
+            if let level = self.getCurrentBatteryLevel() {
+                call.resolve(["level": level])
+            } else {
+                call.resolve(["level": -1])
             }
         }
     }
@@ -291,11 +329,6 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        let rawBattery = UIDevice.current.batteryLevel
-        if rawBattery >= 0 {
-            self.lastBatteryLevel = Double(rawBattery * 100.0)
-        }
-        let batteryLevel = self.lastBatteryLevel
         let speed = isHeartbeat ? 0.0 : max(0.0, location.speed)
         let heading = location.course >= 0 ? location.course : 0.0
 
@@ -306,8 +339,9 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             "speed": speed,
             "heading": heading
         ]
-        if batteryLevel >= 0 {
-            payload["battery_level"] = batteryLevel
+        if let battery = getCurrentBatteryLevel() {
+            payload["battery_level"] = battery
+            payload["batteryLevel"] = battery
         }
 
         guard let httpBody = try? JSONSerialization.data(withJSONObject: payload, options: []) else { return }
