@@ -2,6 +2,41 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-03
+
+### Added (Bắt Buộc Quyền Vị Trí "Luôn Luôn" Bằng Pop-up Native iOS UIAlertController Khi Chấm Công)
+- **Phương Thức Native Bridge Mới ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m), [`NativeTrackingPlugin.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/NativeTrackingPlugin.java)):**
+  - **`ensureAlwaysPermission`:** Kiểm tra trực tiếp quyền vị trí từ `CLLocationManager`. Nếu đã có quyền `authorizedAlways`, trả về `isAlways: true` ngay lập tức.
+  - **Native iOS Alert chuẩn 100%:** Nếu chưa có quyền "Luôn luôn", khởi tạo và hiển thị trực tiếp `UIAlertController` gốc của hệ điều hành iOS (phong cách kính mờ, typography chuẩn Apple).
+  - **Hai nút hành động Native:** Nút *"Hủy"* và nút *"Mở Cài đặt"* tự động mở `UIApplication.openSettingsURLString` dẫn người dùng vào trang cài đặt quyền của XTTech.
+- **Tích Hợp Tinh Gọn Tại Các Điểm Chấm Công:**
+  - **Trang chủ ([`quick-attendance-card.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/quick-attendance-card.tsx)):** Gọi `await NativeTracking.ensureAlwaysPermission()`; nếu chưa cấp quyền thì dừng lại, không mở modal chấm công.
+  - **Bảng công ([`payroll/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/payroll/page.tsx)):** Kiểm tra trước khi mở modal check-in.
+  - **Modal Chấm công ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx)):** Tự động đóng modal nếu chưa có quyền "Luôn luôn" trên iOS, chặn mở camera và lấy vị trí GPS khi chưa đủ điều kiện chạy ngầm.
+
+### Fixed & Added (Hiển Thị Phần Trăm Pin iPhone / Android Trên Live Map)
+- **Tích Hợp API Đọc Pin Native Qua Capacitor ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m), [`NativeTrackingPlugin.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/NativeTrackingPlugin.java)):**
+  - **Khắc phục lỗi iOS WebKit cấm `navigator.getBattery()`:** Thêm phương thức bridge `getBatteryLevel` vào Capacitor Plugin cho cả iOS (Swift) và Android (Java) để Webview có thể truy xuất mức pin thực tế của phần cứng.
+  - **Cơ chế đọc pin an toàn trên iOS:** Luôn kích hoạt `UIDevice.current.isBatteryMonitoringEnabled = true` trên Main Thread, bổ sung cơ chế fallback lưu giữ mốc pin hợp lệ gần nhất khi hệ thống chưa kịp đọc giá trị mới (tránh bị trả về `-1.0 Unknown`).
+  - **Chuẩn hóa Payload:** Gửi đồng thời cả hai khóa `batteryLevel` (camelCase) và `battery_level` (snake_case) trong gói tin tọa độ của `NativeTrackingPlugin.swift`.
+- **Cập nhật Hook Định Vị ([`src/hooks/useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
+  - Tự động gọi `NativeTracking.getBatteryLevel()` khi chạy trên nền tảng Native (`Capacitor.isNativePlatform()`), lấy chính xác mức pin để đính kèm vào ping tọa độ.
+
+## [Unreleased] - 2026-09-29
+
+### Fixed & Refactored (Nâng Cấp Kiến Trúc iOS Active Live-Tracking Engine Chuẩn Zalo / Grab)
+- **Tái Cấu Trúc Toàn Diện Native CoreLocation Plugin ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+  - **Duy trì nguồn điện GPS vệ tinh liên tục:** Cố định `desiredAccuracy = kCLLocationAccuracyBest`, `pausesLocationUpdatesAutomatically = false`, `allowsBackgroundLocationUpdates = true` và `showsBackgroundLocationIndicator = true` (viên thuốc màu xanh trên Dynamic Island / Status Bar).
+  - **Loại bỏ triệt để 3 bẫy kỹ thuật gây mất dấu và độ trễ:**
+    - Xóa bỏ hoàn toàn cơ chế hạ cấp GPS xuống `HundredMeters` khi đứng yên (vốn làm ngắt nguồn chip GPS khiến xe di chuyển 2km không hay biết).
+    - Xóa bỏ hoàn toàn sự phụ thuộc vào `CMMotionActivityManager` (vốn bị iOS suspend/đóng băng khi khóa màn hình bỏ túi).
+    - Xóa bỏ hàng rào địa lý ảo `CLCircularRegion` (vốn có độ trễ 3 - 5 phút từ Apple).
+  - **Bộ Điều Tiết Nhịp Thông Minh (Throttling Engine):**
+    - Khi đứng yên trong văn phòng: Tự động throttle, chỉ gửi 1 gói nhịp tim mỗi 60 giây (duy trì trạng thái Online 100%, không tốn pin, không làm nóng máy).
+    - Ngay khi bước ra đường / lên xe di chuyển (> 10m hoặc vận tốc $\ge$ 0.8 m/s): Lập tức chuyển sang nhịp gửi thời gian thực 3 giây/lần. Bản đồ Live-Map cập nhật từng mét chuẩn xác.
+- **Tự Động Tăng Build Number Trong CI/CD ([`build-ios-signed.yml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/.github/workflows/build-ios-signed.yml)):**
+  - Đồng bộ `CFBundleVersion` với `${{ github.run_number }}` bằng `PlistBuddy` và biến môi trường `CURRENT_PROJECT_VERSION`, loại bỏ lỗi Apple TestFlight từ chối do trùng phiên bản build.
+
 ## [Unreleased] - 2026-09-25
 
 ### Fixed & Added (Tích Hợp Native Capacitor Filesystem & Share Xuất File Mobile App)

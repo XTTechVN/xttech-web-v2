@@ -13,6 +13,7 @@ export interface NativeTrackingPlugin {
   stopTracking(): Promise<{ success: boolean }>;
   checkPermission?(): Promise<{ status: string; isAlways: boolean; isPrecise: boolean }>;
   openSettings?(): Promise<{ success: boolean }>;
+  ensureAlwaysPermission?(): Promise<{ isAlways: boolean; action: string }>;
   // Android Background Permissions & Auto-Start
   checkAndroidPermissions?(): Promise<{
     isIgnoringBatteryOptimizations: boolean;
@@ -23,6 +24,7 @@ export interface NativeTrackingPlugin {
   requestIgnoreBatteryOptimization?(): Promise<{ success: boolean }>;
   requestBackgroundLocation?(): Promise<{ success: boolean }>;
   openAutoStartSettings?(): Promise<{ success: boolean; manufacturer?: string }>;
+  getBatteryLevel?(): Promise<{ level: number }>;
 }
 export const NativeTracking = registerPlugin<NativeTrackingPlugin>('NativeTracking');
 
@@ -61,7 +63,17 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
   // Đọc mức pin thiết bị nếu được hỗ trợ (có cache lại mức pin gần nhất)
   const getBatteryLevel = async (): Promise<number | undefined> => {
     try {
-      if ('getBattery' in navigator) {
+      // 1. Ưu tiên đọc từ Native Plugin trên iOS/Android
+      if (Capacitor.isNativePlatform() && NativeTracking.getBatteryLevel) {
+        const res = await NativeTracking.getBatteryLevel();
+        if (res && typeof res.level === 'number' && res.level >= 0) {
+          const level = Math.round(res.level);
+          lastBatteryRef.current = level;
+          return level;
+        }
+      }
+      // 2. Fallback cho trình duyệt Web hỗ trợ Battery API (Chrome, Edge...)
+      if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
         const nav = navigator as unknown as { getBattery: () => Promise<{ level: number }> };
         const battery = await nav.getBattery();
         const level = Math.round(battery.level * 100);
