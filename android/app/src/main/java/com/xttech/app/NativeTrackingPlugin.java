@@ -256,6 +256,14 @@ public class NativeTrackingPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void ensureAlwaysPermission(PluginCall call) {
+        com.getcapacitor.JSObject ret = new com.getcapacitor.JSObject();
+        ret.put("isAlways", true);
+        ret.put("action", "granted");
+        call.resolve(ret);
+    }
+
+    @PluginMethod
     public void getBatteryLevel(PluginCall call) {
         Context context = getContext();
         if (context == null) {

@@ -4,6 +4,16 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-10-03
 
+### Added (Bắt Buộc Quyền Vị Trí "Luôn Luôn" Bằng Pop-up Native iOS UIAlertController Khi Chấm Công)
+- **Phương Thức Native Bridge Mới ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m), [`NativeTrackingPlugin.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/NativeTrackingPlugin.java)):**
+  - **`ensureAlwaysPermission`:** Kiểm tra trực tiếp quyền vị trí từ `CLLocationManager`. Nếu đã có quyền `authorizedAlways`, trả về `isAlways: true` ngay lập tức.
+  - **Native iOS Alert chuẩn 100%:** Nếu chưa có quyền "Luôn luôn", khởi tạo và hiển thị trực tiếp `UIAlertController` gốc của hệ điều hành iOS (phong cách kính mờ, typography chuẩn Apple).
+  - **Hai nút hành động Native:** Nút *"Hủy"* và nút *"Mở Cài đặt"* tự động mở `UIApplication.openSettingsURLString` dẫn người dùng vào trang cài đặt quyền của XTTech.
+- **Tích Hợp Tinh Gọn Tại Các Điểm Chấm Công:**
+  - **Trang chủ ([`quick-attendance-card.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/quick-attendance-card.tsx)):** Gọi `await NativeTracking.ensureAlwaysPermission()`; nếu chưa cấp quyền thì dừng lại, không mở modal chấm công.
+  - **Bảng công ([`payroll/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/payroll/page.tsx)):** Kiểm tra trước khi mở modal check-in.
+  - **Modal Chấm công ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx)):** Tự động đóng modal nếu chưa có quyền "Luôn luôn" trên iOS, chặn mở camera và lấy vị trí GPS khi chưa đủ điều kiện chạy ngầm.
+
 ### Fixed & Added (Hiển Thị Phần Trăm Pin iPhone / Android Trên Live Map)
 - **Tích Hợp API Đọc Pin Native Qua Capacitor ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m), [`NativeTrackingPlugin.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/NativeTrackingPlugin.java)):**
   - **Khắc phục lỗi iOS WebKit cấm `navigator.getBattery()`:** Thêm phương thức bridge `getBatteryLevel` vào Capacitor Plugin cho cả iOS (Swift) và Android (Java) để Webview có thể truy xuất mức pin thực tế của phần cứng.

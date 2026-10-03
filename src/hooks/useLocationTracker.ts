@@ -13,6 +13,7 @@ export interface NativeTrackingPlugin {
   stopTracking(): Promise<{ success: boolean }>;
   checkPermission?(): Promise<{ status: string; isAlways: boolean; isPrecise: boolean }>;
   openSettings?(): Promise<{ success: boolean }>;
+  ensureAlwaysPermission?(): Promise<{ isAlways: boolean; action: string }>;
   // Android Background Permissions & Auto-Start
   checkAndroidPermissions?(): Promise<{
     isIgnoringBatteryOptimizations: boolean;

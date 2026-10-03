@@ -9,6 +9,8 @@ import { TimekeepingType } from '@/types';
 import { Camera, RefreshCw, MapPin, Clock, LogIn, LogOut, Loader2, CheckCircle2, Navigation, Lock, } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { showErrorToast } from '@/utils';
+import { Capacitor } from '@capacitor/core';
+import { NativeTracking } from '@/hooks/useLocationTracker';
 
 export interface AutoTimekeepingModalProps {
   open: boolean;
@@ -263,13 +265,31 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
       setCapturedFile(null);
       setNote('');
       setIsSubmitting(false);
-      startCamera();
-      fetchLocation();
+
+      // Nếu là iPhone và đang chuẩn bị check-in (chưa check-in vào ca): Kiểm tra quyền Luôn luôn (Always) qua Native Alert của iOS
+      if (Capacitor.getPlatform() === 'ios' && !hasCheckedIn && NativeTracking.ensureAlwaysPermission) {
+        NativeTracking.ensureAlwaysPermission()
+          .then((res) => {
+            if (!res.isAlways) {
+              onClose(); // Đóng modal chấm công nếu chưa có quyền Always
+              return;
+            }
+            startCamera();
+            fetchLocation();
+          })
+          .catch(() => {
+            startCamera();
+            fetchLocation();
+          });
+      } else {
+        startCamera();
+        fetchLocation();
+      }
     } else {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-  }, [open, startCamera, fetchLocation]);
+  }, [open, hasCheckedIn, startCamera, fetchLocation, onClose]);
 
   // Chụp ảnh từ video
   const handleCapture = () => {
@@ -345,6 +365,17 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     if (!location) {
       toast.error('Chưa lấy được vị trí GPS. Vui lòng thử lại.');
       return;
+    }
+
+    if (Capacitor.getPlatform() === 'ios' && type === 'check_in' && NativeTracking.ensureAlwaysPermission) {
+      try {
+        const res = await NativeTracking.ensureAlwaysPermission();
+        if (!res.isAlways) {
+          return;
+        }
+      } catch (err) {
+        console.warn('[AutoTimekeepingModal] Lỗi kiểm tra quyền vị trí iOS:', err);
+      }
     }
 
     setIsSubmitting(true);

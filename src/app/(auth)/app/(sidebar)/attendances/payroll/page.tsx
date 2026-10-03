@@ -8,6 +8,8 @@ import { Calendar, Clock, AlertCircle, LogIn, LogOut, FileEdit, Briefcase, Eye, 
 import Link from 'next/link';
 import { useAuthStore } from '@/stores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Capacitor } from '@capacitor/core';
+import { NativeTracking } from '@/hooks/useLocationTracker';
 
 import { getAttendances } from '@/actions';
 import { Attendance, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
@@ -50,6 +52,21 @@ export default function PayrollDataPage() {
 
   // Chỉ hiển thị 'Check-out ngay' khi có phiên chấm công đang mở; ngược lại hiển thị 'Check-in ngay'
   const isCheckOutAction = Boolean(activeOpenAttendance);
+
+  const handleTimekeepingButtonClick = async () => {
+    // Nếu là iPhone và chuẩn bị check-in vào ca: Kiểm tra quyền Luôn luôn (Always) qua Native Alert của iOS
+    if (Capacitor.getPlatform() === 'ios' && !isCheckOutAction && NativeTracking.ensureAlwaysPermission) {
+      try {
+        const res = await NativeTracking.ensureAlwaysPermission();
+        if (!res.isAlways) {
+          return; // Dừng lại, Native Alert của iOS đã hiển thị và xử lý
+        }
+      } catch (err) {
+        console.warn('[Payroll] Error checking iOS location permission:', err);
+      }
+    }
+    setShowTimekeepingModal(true);
+  };
 
   // Filters and search for Payroll attendance history table
   const [searchQuery, setSearchQuery] = useState('');
@@ -425,7 +442,7 @@ export default function PayrollDataPage() {
               size="sm"
               className="gap-2 px-3 shrink-0"
               leftIcon={isCheckOutAction ? <LogOut size={16} /> : <LogIn size={16} />}
-              onClick={() => setShowTimekeepingModal(true)}
+              onClick={handleTimekeepingButtonClick}
             >
               {isCheckOutAction ? 'Check-out ngay' : 'Check-in ngay'}
             </Button>

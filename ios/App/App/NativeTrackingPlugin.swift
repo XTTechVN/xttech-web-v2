@@ -148,6 +148,64 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
     }
 
+    /// Kiểm tra quyền Vị trí Luôn luôn. Nếu chưa có, hiển thị trực tiếp UIAlertController gốc của iOS
+    @objc func ensureAlwaysPermission(_ call: CAPPluginCall) {
+        let status: CLAuthorizationStatus
+        if #available(iOS 14.0, *) {
+            status = locationManager?.authorizationStatus ?? CLLocationManager().authorizationStatus
+        } else {
+            status = CLLocationManager.authorizationStatus()
+        }
+
+        let isAlways = (status == .authorizedAlways)
+        if isAlways {
+            call.resolve([
+                "isAlways": true,
+                "action": "already_granted"
+            ])
+            return
+        }
+
+        // Chưa có quyền Luôn luôn: Hiển thị Native Pop-up UIAlertController chuẩn iOS
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else {
+                call.resolve(["isAlways": false, "action": "dismissed"])
+                return
+            }
+
+            let alert = UIAlertController(
+                title: "Yêu cầu quyền Vị trí \"Luôn luôn\"",
+                message: "Để duy trì chấm công và theo dõi lộ trình làm việc liên tục khi khóa màn hình, vui lòng cấp quyền vị trí \"Luôn luôn\" (Always) và bật \"Vị trí chính xác\" cho XTTech.",
+                preferredStyle: .alert
+            )
+
+            alert.addAction(UIAlertAction(title: "Hủy", style: .cancel) { _ in
+                call.resolve([
+                    "isAlways": false,
+                    "action": "cancelled"
+                ])
+            })
+
+            alert.addAction(UIAlertAction(title: "Mở Cài đặt", style: .default) { _ in
+                if let url = URL(string: UIApplication.openSettingsURLString), UIApplication.shared.canOpenURL(url) {
+                    UIApplication.shared.open(url, options: [:]) { _ in
+                        call.resolve([
+                            "isAlways": false,
+                            "action": "settings_opened"
+                        ])
+                    }
+                } else {
+                    call.resolve([
+                        "isAlways": false,
+                        "action": "failed_open_settings"
+                    ])
+                }
+            })
+
+            self.bridge?.viewController?.present(alert, animated: true, completion: nil)
+        }
+    }
+
     // MARK: - Battery Monitoring Engine
     private func enableBatteryMonitoringIfNeeded() {
         if !UIDevice.current.isBatteryMonitoringEnabled {
