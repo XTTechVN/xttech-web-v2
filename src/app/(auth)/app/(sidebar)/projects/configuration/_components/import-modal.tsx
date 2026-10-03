@@ -126,6 +126,8 @@ export const ProjectImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose
 
       // Refresh các query liên quan
       queryClient.invalidateQueries({ queryKey: ['doors'] });
+      queryClient.invalidateQueries({ queryKey: ['door-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['doors-stats'] });
       queryClient.invalidateQueries({ queryKey: ['materials'] });
       queryClient.invalidateQueries({ queryKey: ['accessories'] });
     } catch (err: any) {

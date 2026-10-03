@@ -37,6 +37,8 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
     mutationFn: createDoor,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['doors'] });
+      queryClient.invalidateQueries({ queryKey: ['door-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['doors-stats'] });
       toast.success('Thêm loại cửa thành công');
       onClose();
       reset();

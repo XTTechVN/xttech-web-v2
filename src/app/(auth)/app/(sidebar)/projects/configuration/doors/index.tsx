@@ -46,6 +46,7 @@ const Page = () => {
     mutationFn: (id: number) => deleteDoor(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['doors'] });
+      queryClient.invalidateQueries({ queryKey: ['door-templates'] });
       queryClient.invalidateQueries({ queryKey: ['doors-stats'] });
       toast.success('Xóa loại cửa thành công');
       setIsDeleteOpen(false);
