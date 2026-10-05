@@ -249,6 +249,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
           const paneH1 = Math.max(4, ch - 2 * dSash1);
           const paneH2 = Math.max(4, ch - 2 * dSash2);
 
+          const beadJoint = node.beadJoint || '90';
           const bead1 = renderCadBead(
             s1X + dSash1,
             cy + dSash1,
@@ -256,7 +257,8 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
             paneH1,
             `${node.id}-bead-1`,
             aluminumColor,
-            Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash1 * CAD_CONFIG.BEAD.NORMAL_RATIO)))
+            Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash1 * CAD_CONFIG.BEAD.NORMAL_RATIO))),
+            beadJoint
           );
 
           const bead2 = renderCadBead(
@@ -266,7 +268,8 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
             paneH2,
             `${node.id}-bead-2`,
             aluminumColor,
-            Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash2 * CAD_CONFIG.BEAD.NORMAL_RATIO)))
+            Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash2 * CAD_CONFIG.BEAD.NORMAL_RATIO))),
+            beadJoint
           );
 
           // Tay nắm trên cánh phải
@@ -329,7 +332,8 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
           const innerH = Math.max(4, isFixed ? ch : ch - 2 * dSash);
 
           const hasBead = node.paneType === 'glass';
-          const bead = hasBead ? renderCadBead(innerX, innerY, innerW, innerH, `${node.id}-bead`, aluminumColor, dBead) : null;
+          const beadJoint = node.beadJoint || '90';
+          const bead = hasBead ? renderCadBead(innerX, innerY, innerW, innerH, `${node.id}-bead`, aluminumColor, dBead, beadJoint) : null;
           const glassX = hasBead && bead ? bead.gx2 : innerX;
           const glassY = hasBead && bead ? bead.gy2 : innerY;
           const glassW = hasBead && bead ? bead.gw2 : innerW;

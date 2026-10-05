@@ -213,12 +213,23 @@ export function useDoorStudioState({ isOpen, onClose, door }: UseDoorStudioState
           topEdge: { ...DEFAULT_FRAME_CONFIG.topEdge, ...(sc.frameConfig.topEdge || {}) },
           rightEdge: { ...DEFAULT_FRAME_CONFIG.rightEdge, ...(sc.frameConfig.rightEdge || {}) },
           bottomEdge: { ...DEFAULT_FRAME_CONFIG.bottomEdge, ...(sc.frameConfig.bottomEdge || {}) },
+          archConfig: {
+            ...(DEFAULT_FRAME_CONFIG.archConfig || { isCutAtApex: false, bendingClampingMm: 400 }),
+            ...(sc.frameConfig.archConfig || {}),
+          },
         });
       }
+      const defaultFamily = door?.type === 'cd' ? 'Cửa đi mở quay' : 'Cửa sổ mở quay/Hất';
       if (sc.sashConfig) {
         setSashConfig({
           ...DEFAULT_SASH_CONFIG,
+          family: sc.sashConfig.family || defaultFamily,
           ...sc.sashConfig,
+        });
+      } else {
+        setSashConfig({
+          ...DEFAULT_SASH_CONFIG,
+          family: defaultFamily,
         });
       }
       if (sc.rootCell) {

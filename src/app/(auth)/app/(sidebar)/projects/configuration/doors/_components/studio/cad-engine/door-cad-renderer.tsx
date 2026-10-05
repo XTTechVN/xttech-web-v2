@@ -230,6 +230,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
             onEditDimension={onEditDimension}
             leftNode={leaves[0].node}
             rightNode={leaves[1]?.node}
+            frameConfig={frameConfig}
           />
         ) : isCurvedSingle ? (
           <CadCurvedSingleDoor

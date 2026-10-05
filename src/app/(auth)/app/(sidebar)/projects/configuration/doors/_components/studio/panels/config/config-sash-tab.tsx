@@ -94,9 +94,11 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
           </select>
         </div>
 
-        {/* Loại cánh cửa sổ */}
+        {/* Loại cánh */}
         <div className="space-y-1 pt-1">
-          <div className="font-semibold text-gray-700 text-xs">Loại cánh cửa sổ:</div>
+          <div className="font-semibold text-gray-700 text-xs">
+            Loại cánh {config.family ? `(${config.family})` : ''}:
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
               type="button"
@@ -107,7 +109,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
-              Cánh mở quay thường
+              Cánh tiêu chuẩn
             </button>
             <button
               type="button"
@@ -118,7 +120,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
-              Cửa vô cực (Slim)
+              Cánh vô cực (Slim)
             </button>
           </div>
         </div>
@@ -233,7 +235,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
       {/* Profile cánh theo kiểu mở */}
       <div className="space-y-3 p-4 rounded-2xl bg-white border border-gray-200 shadow-2xs">
         <div className="bg-emerald-700 text-white p-2 rounded-xl font-bold text-xs flex items-center justify-between">
-          <span>▾ Cánh cửa sổ mở quay / hất / lật</span>
+          <span>▾ Cánh {config.family || 'cửa'}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">

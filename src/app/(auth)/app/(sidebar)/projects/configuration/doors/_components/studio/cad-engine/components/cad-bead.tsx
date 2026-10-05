@@ -20,7 +20,8 @@ export const renderCadBead = (
   gh: number,
   key: string,
   aluminumColor: string,
-  effectiveBeadW: number
+  effectiveBeadW: number,
+  jointType: '90' | '45' = '90'
 ): CadBeadResult => {
   const maxAllowed = Math.max(2, Math.floor((Math.min(gw, gh) - 4) / 2));
   const targetBw = Math.min(
@@ -33,7 +34,7 @@ export const renderCadBead = (
   const gw2 = Math.max(2, gw - 2 * bw);
   const gh2 = Math.max(2, gh - 2 * bw);
 
-  const el = (
+  const el = jointType === '45' ? (
     <g key={key} fill={aluminumColor} stroke="#27272a" strokeWidth="0.5" strokeLinejoin="miter">
       {/* Top Bead */}
       <polygon points={`${gx},${gy} ${gx + gw},${gy} ${gx + gw - bw},${gy + bw} ${gx + bw},${gy + bw}`} />
@@ -43,6 +44,15 @@ export const renderCadBead = (
       <polygon points={`${gx},${gy} ${gx + bw},${gy + bw} ${gx + bw},${gy + gh - bw} ${gx},${gy + gh}`} />
       {/* Right Bead */}
       <polygon points={`${gx + gw},${gy} ${gx + gw},${gy + gh} ${gx + gw - bw},${gy + gh - bw} ${gx + gw - bw},${gy + bw}`} />
+    </g>
+  ) : (
+    <g key={key} fill={aluminumColor} stroke="#27272a" strokeWidth="0.5" strokeLinejoin="miter">
+      {/* Nẹp đứng chạy suốt (Left & Right) */}
+      <rect x={gx} y={gy} width={bw} height={gh} />
+      <rect x={gx + gw - bw} y={gy} width={bw} height={gh} />
+      {/* Nẹp ngang ăn vuông góc 90° vào nẹp đứng (Top & Bottom) */}
+      <rect x={gx + bw} y={gy} width={Math.max(0, gw - 2 * bw)} height={bw} />
+      <rect x={gx + bw} y={gy + gh - bw} width={Math.max(0, gw - 2 * bw)} height={bw} />
     </g>
   );
 

@@ -111,8 +111,14 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
               if (field === 'w') state.setW(val);
               else if (field === 'h') state.setH(val);
               else if (field === 'name') state.setName(val);
-              else if (field === 'code') state.setCode(val);
-              else if (field === 'type') state.setType(val);
+              else if (field === 'type') {
+                state.setType(val);
+                if (val === 'cd' && state.sashConfig.family === 'Cửa sổ mở quay/Hất') {
+                  state.setSashConfig((prev) => ({ ...prev, family: 'Cửa đi mở quay' }));
+                } else if (val === 'cs' && state.sashConfig.family === 'Cửa đi mở quay') {
+                  state.setSashConfig((prev) => ({ ...prev, family: 'Cửa sổ mở quay/Hất' }));
+                }
+              }
               else if (field === 'aluminumColor') state.setAluminumColor(val);
               else if (field === 'hardwareColor') state.setHardwareColor(val);
               else if (field === 'seriesId') state.setSeriesId(val);
@@ -169,6 +175,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
           availableBeads={state.availableBeads}
           defaultGlass={state.defaultGlass}
           aluminumColors={state.dynamicAluminumColors}
+          onChangeFrameConfig={(updates) => state.setFrameConfig((prev) => ({ ...prev, ...updates }))}
         />
       )}
 
