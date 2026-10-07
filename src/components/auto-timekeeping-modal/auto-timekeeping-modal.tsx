@@ -257,39 +257,50 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     };
   }, [open, fetchLocation]);
 
-  // Khởi động khi modal mở
+  const prevOpenRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  // Khởi động khi modal mở (Chỉ chạy 1 lần duy nhất khi open chuyển từ false sang true)
   useEffect(() => {
     if (open) {
-      setStep('camera');
-      setPreviewUrl(null);
-      setCapturedFile(null);
-      setNote('');
-      setIsSubmitting(false);
+      if (!prevOpenRef.current) {
+        prevOpenRef.current = true;
+        setStep('camera');
+        setPreviewUrl(null);
+        setCapturedFile(null);
+        setNote('');
+        setIsSubmitting(false);
+        setCameraError(null);
 
-      // Nếu là iPhone và đang chuẩn bị check-in (chưa check-in vào ca): Kiểm tra quyền Luôn luôn (Always) qua Native Alert của iOS
-      if (Capacitor.getPlatform() === 'ios' && !hasCheckedIn && NativeTracking.ensureAlwaysPermission) {
-        NativeTracking.ensureAlwaysPermission()
-          .then((res) => {
-            if (!res.isAlways) {
-              onClose(); // Đóng modal chấm công nếu chưa có quyền Always
-              return;
-            }
-            startCamera();
-            fetchLocation();
-          })
-          .catch(() => {
-            startCamera();
-            fetchLocation();
-          });
-      } else {
-        startCamera();
-        fetchLocation();
+        // Nếu là iPhone và đang chuẩn bị check-in (chưa check-in vào ca): Kiểm tra quyền Luôn luôn (Always) qua Native Alert của iOS
+        if (Capacitor.getPlatform() === 'ios' && !hasCheckedIn && NativeTracking.ensureAlwaysPermission) {
+          NativeTracking.ensureAlwaysPermission()
+            .then((res) => {
+              if (!res.isAlways) {
+                onCloseRef.current(); // Đóng modal chấm công nếu chưa có quyền Always
+                return;
+              }
+              startCamera();
+              fetchLocation();
+            })
+            .catch(() => {
+              startCamera();
+              fetchLocation();
+            });
+        } else {
+          startCamera();
+          fetchLocation();
+        }
       }
     } else {
+      if (prevOpenRef.current) {
+        prevOpenRef.current = false;
+      }
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-  }, [open, hasCheckedIn, startCamera, fetchLocation, onClose]);
+  }, [open, hasCheckedIn, startCamera, fetchLocation]);
 
   // Chụp ảnh từ video
   const handleCapture = () => {
@@ -332,6 +343,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     setCapturedFile(file);
     setPreviewUrl(url);
     setStep('preview');
+    setCameraError(null);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     // Reset giá trị của input để có thể chọn lại nếu muốn
@@ -509,7 +521,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         )}
 
         {/* Lỗi camera / Chế độ chụp Native Camera */}
-        {cameraError && (
+        {step === 'camera' && cameraError && (
           <div className="flex h-full flex-col items-center justify-center gap-2.5 p-4 text-center">
             <div className="rounded-full bg-teal-500/20 p-3.5 border border-teal-500/30">
               <Camera size={26} className="text-teal-400" />

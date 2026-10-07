@@ -53,12 +53,16 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
     setIsOpenModal(true);
   };
 
-  const handleTimekeepingSuccess = () => {
+  const handleCloseModal = React.useCallback(() => {
+    setIsOpenModal(false);
+  }, []);
+
+  const handleTimekeepingSuccess = React.useCallback(() => {
     setIsOpenModal(false);
     queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
     queryClient.invalidateQueries({ queryKey: ['attendances'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard-live-locations'] });
-  };
+  }, [queryClient]);
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/95 via-primary to-primary/85 text-white p-4.5 shadow-md">
@@ -167,7 +171,7 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
       {/* Modal Chấm công tự động (Khuôn mặt + Vị trí GPS) */}
       <AutoTimekeepingModal
         open={isOpenModal}
-        onClose={() => setIsOpenModal(false)}
+        onClose={handleCloseModal}
         onSuccess={handleTimekeepingSuccess}
         hasCheckedIn={isCurrentlyWorking}
       />
