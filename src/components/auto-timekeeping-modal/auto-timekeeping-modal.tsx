@@ -38,6 +38,12 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
   const [step, setStep] = useState<Step>('camera');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [capturedFile, setCapturedFile] = useState<File | null>(null);
+
+  // Lưu trữ tham chiếu tức thời (Synchronous Ref) để các hàm Async không ghi đè State
+  const stepRef = useRef<Step>('camera');
+  stepRef.current = step;
+  const capturedFileRef = useRef<File | null>(null);
+  capturedFileRef.current = capturedFile;
   const [location, setLocation] = useState<GpsCoords | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
@@ -92,6 +98,11 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
 
   // Bật camera với cơ chế Fallback 3 tầng (HD -> Standard Front -> Any Video) + WebKit Polyfill
   const startCamera = useCallback(async () => {
+    // Nếu người dùng đã ở bước xem trước ảnh (preview) hoặc đã có ảnh chụp thì không khởi động lại luồng camera
+    if ((stepRef.current as Step) === 'preview' || capturedFileRef.current) {
+      return;
+    }
+
     setCameraError(null);
 
     // Thu thập thông số chẩn đoán của thiết bị
@@ -122,9 +133,11 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
 
     // Kiểm tra khả năng hỗ trợ API
     if (!hasGUM && !hasWebkitGUM) {
-      setCameraError(
-        'Thiết bị đang tắt luồng video trực tiếp. Hãy bấm nút "Mở Camera máy" bên dưới để chụp ảnh chấm công.'
-      );
+      if ((stepRef.current as Step) !== 'preview') {
+        setCameraError(
+          'Thiết bị đang tắt luồng video trực tiếp. Hãy bấm nút "Mở Camera máy" bên dưới để chụp ảnh chấm công.'
+        );
+      }
       return;
     }
 
@@ -155,11 +168,22 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         }
       }
 
+      // Nếu trong lúc chờ đợi getUserMedia mà người dùng đã chụp ảnh fallback xong thì tắt stream và hủy gán
+      if ((stepRef.current as Step) === 'preview' || capturedFileRef.current) {
+        stream?.getTracks().forEach((t) => t.stop());
+        return;
+      }
+
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (err: unknown) {
+      // Nếu đã chụp ảnh fallback thành công thì bỏ qua lỗi của luồng camera video stream
+      if ((stepRef.current as Step) === 'preview' || capturedFileRef.current) {
+        return;
+      }
+
       const error = err as { name?: string; message?: string };
       const errName = error?.name || '';
 
@@ -257,39 +281,61 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     };
   }, [open, fetchLocation]);
 
-  // Khởi động khi modal mở
+  const prevOpenRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  // Khởi động khi modal mở (Chỉ chạy 1 lần khi modal mở từ false sang true và chưa có ảnh chụp)
   useEffect(() => {
     if (open) {
-      setStep('camera');
-      setPreviewUrl(null);
-      setCapturedFile(null);
-      setNote('');
-      setIsSubmitting(false);
+      // Chỉ khởi tạo lại khi chưa mở VÀ chưa có ảnh preview sẵn sàng
+      if (!prevOpenRef.current && stepRef.current !== 'preview' && !capturedFileRef.current) {
+        prevOpenRef.current = true;
+        setStep('camera');
+        setPreviewUrl(null);
+        setCapturedFile(null);
+        setNote('');
+        setIsSubmitting(false);
+        setCameraError(null);
 
-      // Nếu là iPhone và đang chuẩn bị check-in (chưa check-in vào ca): Kiểm tra quyền Luôn luôn (Always) qua Native Alert của iOS
-      if (Capacitor.getPlatform() === 'ios' && !hasCheckedIn && NativeTracking.ensureAlwaysPermission) {
-        NativeTracking.ensureAlwaysPermission()
-          .then((res) => {
-            if (!res.isAlways) {
-              onClose(); // Đóng modal chấm công nếu chưa có quyền Always
-              return;
-            }
-            startCamera();
-            fetchLocation();
-          })
-          .catch(() => {
-            startCamera();
-            fetchLocation();
-          });
-      } else {
-        startCamera();
-        fetchLocation();
+        // Nếu là iPhone và đang chuẩn bị check-in (chưa check-in vào ca): Kiểm tra quyền Luôn luôn (Always) qua Native Alert của iOS
+        if (Capacitor.getPlatform() === 'ios' && !hasCheckedIn && NativeTracking.ensureAlwaysPermission) {
+          NativeTracking.ensureAlwaysPermission()
+            .then((res) => {
+              if (!res.isAlways) {
+                onCloseRef.current(); // Đóng modal chấm công nếu chưa có quyền Always
+                return;
+              }
+              startCamera();
+              fetchLocation();
+            })
+            .catch(() => {
+              startCamera();
+              fetchLocation();
+            });
+        } else {
+          startCamera();
+          fetchLocation();
+        }
+      } else if (!prevOpenRef.current) {
+        // Đánh dấu modal đang mở nếu người dùng đã có ảnh preview
+        prevOpenRef.current = true;
       }
     } else {
+      if (prevOpenRef.current) {
+        prevOpenRef.current = false;
+        setStep('camera');
+        setPreviewUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return null;
+        });
+        setCapturedFile(null);
+        setCameraError(null);
+      }
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-  }, [open, hasCheckedIn, startCamera, fetchLocation, onClose]);
+  }, [open, hasCheckedIn, startCamera, fetchLocation]);
 
   // Chụp ảnh từ video
   const handleCapture = () => {
@@ -315,6 +361,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         setCapturedFile(file);
         setPreviewUrl(url);
         setStep('preview');
+        setCameraError(null);
         streamRef.current?.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
       },
@@ -326,12 +373,19 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
   // Xử lý ảnh chụp từ Camera gốc của máy (HTML5 Native Capture Fallback)
   const handleNativeFileCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.warn('[AutoTimekeepingModal] Không nhận được file từ camera thiết bị.');
+      return;
+    }
 
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     const url = URL.createObjectURL(file);
     setCapturedFile(file);
     setPreviewUrl(url);
     setStep('preview');
+    setCameraError(null);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     // Reset giá trị của input để có thể chọn lại nếu muốn
@@ -344,6 +398,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
     setPreviewUrl(null);
     setCapturedFile(null);
     setStep('camera');
+    setCameraError(null);
 
     // Nếu thiết bị không hỗ trợ WebRTC, kích hoạt mở luôn camera máy
     const hasMedia =
@@ -509,7 +564,7 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         )}
 
         {/* Lỗi camera / Chế độ chụp Native Camera */}
-        {cameraError && (
+        {step === 'camera' && cameraError && (
           <div className="flex h-full flex-col items-center justify-center gap-2.5 p-4 text-center">
             <div className="rounded-full bg-teal-500/20 p-3.5 border border-teal-500/30">
               <Camera size={26} className="text-teal-400" />
