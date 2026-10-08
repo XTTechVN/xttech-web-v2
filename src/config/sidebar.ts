@@ -39,6 +39,7 @@ export const acceptedSections = [
   'brand',
   'series',
   'profile-bars',
+  'glass-gaskets',
   'aluminum',
   'doors',
   'door-templates',
@@ -206,6 +207,12 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
             id: 'profile-bars',
             label: 'Thanh profile',
             href: '/app/projects/configuration?tab=profile-bars',
+            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+          },
+          {
+            id: 'glass-gaskets',
+            label: 'Kính & Gioăng keo',
+            href: '/app/projects/configuration?tab=glass-gaskets',
             roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
           },
           {
