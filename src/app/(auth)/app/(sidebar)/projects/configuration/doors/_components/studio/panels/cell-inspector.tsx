@@ -2,7 +2,15 @@
 
 import React from 'react';
 import { Glass, ProfileBar } from '@/types';
-import { SceneCellNode, PaneType, BeadType, BeadJointType } from '../studio-types';
+import {
+  SceneCellNode,
+  PaneType,
+  BeadType,
+  BeadJointType,
+  FrameShape,
+  FrameConfig,
+  ArchConfig,
+} from '../studio-types';
 import { ShieldCheck, Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, Square, DoorClosed } from 'lucide-react';
 
 interface CellInspectorProps {
@@ -16,6 +24,10 @@ interface CellInspectorProps {
   defaultGlass?: Glass | null;
   onUpdateDimension?: (target: 'cell' | 'cell-w' | 'cell-h', value: number, cellId: string) => void;
   onOpenGrilleModal?: (cell: SceneCellNode) => void;
+  frameShape?: FrameShape;
+  frameConfig?: FrameConfig;
+  doorW?: number;
+  onChangeFrameConfig?: (updates: Partial<FrameConfig>) => void;
 }
 
 const GLASS_OPTIONS = [
@@ -39,6 +51,10 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   defaultGlass,
   onUpdateDimension,
   onOpenGrilleModal,
+  frameShape,
+  frameConfig,
+  doorW,
+  onChangeFrameConfig,
 }) => {
   const [localW, setLocalW] = React.useState<number>(selectedCell?.w ?? 0);
   const [localH, setLocalH] = React.useState<number>(selectedCell?.h ?? 0);
@@ -68,16 +84,104 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
     availableGlasses && availableGlasses.length > 0
       ? availableGlasses.map((g) => ({ key: String(g.id), label: g.name }))
       : GLASS_OPTIONS.map((name, idx) => ({ key: `fallback-${idx}`, label: name }));
+  const isArchShape = Boolean(
+    frameShape &&
+    frameShape !== 'rect' &&
+    (frameShape.startsWith('arch_') || frameShape.startsWith('round_') || frameShape === 'circle' || frameShape === 'ellipse' || frameShape === 'quad_circle')
+  );
+
+  const renderArchConfigCard = () => {
+    if (!isArchShape || !frameConfig || !onChangeFrameConfig) return null;
+    const archCfg: ArchConfig = frameConfig.archConfig || {
+      radiusMm: undefined,
+      isCutAtApex: false,
+      bendingClampingMm: 400,
+    };
+    const defaultR = Math.round((doorW || 1600) / 2);
+    const currentR = archCfg.radiusMm ?? defaultR;
+
+    const handleUpdateArch = (updates: Partial<ArchConfig>) => {
+      onChangeFrameConfig({
+        archConfig: {
+          ...archCfg,
+          ...updates,
+        },
+      });
+    };
+
+    return (
+      <div className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-3">
+        <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs pb-1 border-b border-slate-100">
+          <span className="text-sm">📐</span>
+          <span>Cấu hình vòm / góc</span>
+        </div>
+
+        {/* 1. Bán kính R */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-[11px] font-semibold text-slate-700">Bán kính R (mm)</label>
+            <input
+              type="number"
+              value={currentR}
+              onChange={(e) => handleUpdateArch({ radiusMm: Number(e.target.value) || undefined })}
+              className="w-24 h-7 px-2 text-right font-mono font-bold text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-slate-800"
+            />
+          </div>
+          <div className="text-[10px] text-slate-400 text-right">Tự động tính theo W / 2</div>
+        </div>
+
+        <div className="border-t border-slate-100 pt-2 space-y-1">
+          {/* 2. Cắt vòm tại đỉnh */}
+          <label className="flex items-start gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={archCfg.isCutAtApex ?? false}
+              onChange={(e) => handleUpdateArch({ isCutAtApex: e.target.checked })}
+              className="mt-0.5 w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+            />
+            <div>
+              <div className="text-xs font-semibold text-slate-800">Cắt vòm tại đỉnh</div>
+              <div className="text-[10.5px] text-slate-400 leading-tight mt-0.5">
+                Chia thanh vòm và nẹp vòm thành hai phần trái, phải
+              </div>
+            </div>
+          </label>
+        </div>
+
+        {/* 3. Kẹp phôi */}
+        <div className="border-t border-slate-100 pt-2 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-[11px] font-semibold text-slate-700">Kẹp phôi (mm)</label>
+            <input
+              type="number"
+              value={archCfg.bendingClampingMm ?? 400}
+              onChange={(e) => handleUpdateArch({ bendingClampingMm: Number(e.target.value) || 0 })}
+              className="w-24 h-7 px-2 text-right font-mono font-bold text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-slate-800"
+            />
+          </div>
+          <div className="text-[10px] text-slate-400 leading-tight space-y-0.5">
+            <div>Phần chiều dài cây nhôm không sử dụng được khi uốn</div>
+            <div>Chiều dài uốn tối đa = chiều dài cây nhôm của hãng – kẹp phôi</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (!selectedCell) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-slate-400 select-none">
-        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3 border border-slate-200">
-          <Grid size={22} />
+      <div className="flex flex-col h-full overflow-y-auto space-y-3.5 p-3.5 text-xs select-none bg-slate-50/50">
+        <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400 select-none bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
+          <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3 border border-slate-200">
+            <Grid size={22} />
+          </div>
+          <div className="font-semibold text-slate-700 text-xs mb-1">Chưa chọn ô kính</div>
+          <p className="text-[11px] text-slate-400 max-w-[200px] leading-relaxed">
+            Bấm vào ô kính trên bản vẽ 2D để tùy chỉnh vật liệu kính, phụ kiện và nẹp kính.
+          </p>
         </div>
-        <div className="font-semibold text-slate-700 text-xs mb-1">Chưa chọn ô kính</div>
-        <p className="text-[11px] text-slate-400 max-w-[200px] leading-relaxed">
-          Bấm vào ô kính trên bản vẽ 2D để tùy chỉnh vật liệu kính, phụ kiện và nẹp kính.
-        </p>
+
+        {renderArchConfigCard()}
       </div>
     );
   }
@@ -525,6 +629,10 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
           </button>
         )}
       </div>
+
+      {/* 7. Cấu hình vòm / góc */}
+      {renderArchConfigCard()}
     </div>
   );
 };
+
