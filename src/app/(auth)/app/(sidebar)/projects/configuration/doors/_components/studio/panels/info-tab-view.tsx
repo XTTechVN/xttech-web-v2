@@ -36,8 +36,9 @@ export const InfoTabView: React.FC<InfoTabViewProps> = ({
   aluminumColors,
 }) => {
   const activeColorPalette = aluminumColors && aluminumColors.length > 0 ? aluminumColors : ALUMINUM_PALETTE;
+  const cleanAluminumColor = (aluminumColor || '').trim().toLowerCase();
   const activeColor = activeColorPalette.find(
-    (c) => c.colorHex.toLowerCase() === aluminumColor.toLowerCase()
+    (c) => (c.colorHex || '').trim().toLowerCase() === cleanAluminumColor
   );
   return (
     <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-50/50 flex justify-center">
@@ -149,9 +150,9 @@ export const InfoTabView: React.FC<InfoTabViewProps> = ({
                   key={col.code}
                   type="button"
                   title={col.name}
-                  onClick={() => onChangeField('aluminumColor', col.colorHex)}
+                  onClick={() => onChangeField('aluminumColor', col.colorHex.trim())}
                   className={`w-7 h-7 rounded-full border transition-transform cursor-pointer ${
-                    aluminumColor.toLowerCase() === col.colorHex.toLowerCase()
+                    cleanAluminumColor === (col.colorHex || '').trim().toLowerCase()
                       ? 'ring-2 ring-blue-500 ring-offset-2 scale-110 shadow-xs border-transparent'
                       : 'border-gray-300 hover:scale-105'
                   }`}

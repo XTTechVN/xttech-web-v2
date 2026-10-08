@@ -62,8 +62,9 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
   aluminumColors,
 }) => {
   const activeColorPalette = aluminumColors && aluminumColors.length > 0 ? aluminumColors : ALUMINUM_PALETTE;
+  const cleanAluminumColor = (aluminumColor || '').trim().toLowerCase();
   const activeColor = activeColorPalette.find(
-    (c) => c.colorHex.toLowerCase() === aluminumColor.toLowerCase()
+    (c) => (c.colorHex || '').trim().toLowerCase() === cleanAluminumColor
   );
 
   return (
@@ -108,13 +109,13 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             {activeColorPalette.map((col) => {
-              const isSelected = aluminumColor.toLowerCase() === col.colorHex.toLowerCase();
+              const isSelected = cleanAluminumColor === (col.colorHex || '').trim().toLowerCase();
               return (
                 <button
                   key={col.code}
                   type="button"
                   title={col.name}
-                  onClick={() => onSelectAluminumColor(col.colorHex)}
+                  onClick={() => onSelectAluminumColor(col.colorHex.trim())}
                   className={`w-6 h-6 rounded-full transition-transform cursor-pointer border ${
                     isSelected
                       ? 'ring-2 ring-blue-500 ring-offset-2 scale-110 shadow-xs border-transparent'

@@ -2,6 +2,44 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-05
+
+### Added & Enhanced
+
+- **Đồng Bộ Hóa Động Nhóm Kiểu Mở Cánh (Sash Family) Theo Loại Cửa & Khắc Phục Lỗi Hardcode Cố Định ([`config-sash-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/config/config-sash-tab.tsx), [`useDoorStudioState.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/hooks/useDoorStudioState.ts), [`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-modal.tsx)):**
+  - **Khắc phục chuỗi tĩnh cố định:** Xóa bỏ text hardcode `"▾ Cánh cửa sổ mở quay / hất / lật"` trên thanh tiêu đề màu xanh; chuyển sang hiển thị động 100% theo trường `config.family` (`▾ Cánh ${config.family || 'cửa'}`).
+  - **Đồng bộ tự động theo loại cửa (`door.type`):** Khi nạp hoặc chuyển đổi loại cửa là Cửa đi (`cd`), hệ thống tự động gán `family = 'Cửa đi mở quay'`; khi là Cửa sổ (`cs`), tự động gán `family = 'Cửa sổ mở quay/Hất'`.
+  - **Chuẩn hóa nhãn phân loại cánh:** Cập nhật nhãn `Loại cánh (${config.family})` và 2 nút lựa chọn chung `Cánh tiêu chuẩn` / `Cánh vô cực (Slim)` tương thích hoàn hảo cho mọi hệ cửa (Cửa đi, Cửa sổ, Cửa lùa, Cửa xếp trượt).
+
+- **Tích Hợp Toàn Diện Module "2B. Khung Bảo Vệ" Chuẩn Windova ([`config-frame-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/config/config-frame-tab.tsx), [`studio-types.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-types.ts), [`cad-safety-bars.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-safety-bars.tsx), [`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx)):**
+  - **Giao diện cấu hình Card 2B chuyên nghiệp:** Bổ sung Card `2B Khung bảo vệ` với công tắc Switch bật/tắt độc lập và 3 Preset:
+    1. `4 cạnh · Bằng khung` (`equal_frame`): Cấu hình Profile khung, Góc ghép (`Ghép 45°` | `90° Dọc phủ`), hiển thị Section profile tự động và chọn Profile Đố chia (Cây dọc, Cây ngang).
+    2. `4 cạnh · Lọt lòng` (`inset`): Cấu hình thêm trường `Độ hở lắp lọt lòng (mm)` (mặc định 3mm) kèm chú thích trừ tự động.
+    3. `Không khung` (`no_frame`): Cấu hình thanh nan bảo vệ trực tiếp (Cây dọc, Cây ngang).
+  - **Cảnh báo thông minh khác Serie:** Tự động phát hiện và hiển thị nhãn cảnh báo `⚠️ khác serie` khi người dùng chọn profile nhôm khác với hệ nhôm chính của cửa.
+  - **Giữ bản vẽ CAD 2D sạch đẹp chuẩn kỹ thuật:** Không vẽ các nan đan chéo/lưới đè lên mặt kính và đố cửa trên CAD 2D nhằm tránh gây rối mắt và che khuất kết cấu cửa, toàn bộ dữ liệu kích thước cắt nhôm và con ke của Khung bảo vệ được chuyển giao cho Backend bóc tách chính xác trong BOM.
+
+- **Chuẩn Hóa Đồ Họa Cửa Vòm 2 Cánh Mở Quay & Sửa Triệt Để Lỗi Mối Cắt Mòi 45° ([`cad-curved-door.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-curved-door.tsx), [`cell-inspector.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/cell-inspector.tsx), [`studio-types.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-types.ts)):**
+  - **Góc vát mòi 45° chuẩn xác ở đỉnh vòm (Apex - Hình 2):** Thay thế thanh chữ nhật bằng đa giác `polygon` vát mòi 45° nhọn lên tận đỉnh dạ vòm `(xMid, oy + frameD)` cho cả 2 cánh trái/phải; xóa bỏ nét ngang cắt ngang đố đứng, giữ lại đường chỉ tim đứng phân cách giữa 2 cánh và mối nối nẹp kính vuông vắn sạch sẽ.
+  - **Khắc phục lỗi đan chéo chữ X / bát quái ở chân tim giữa 2 cánh:** Cho 2 thanh đố đứng trung tâm chạy thẳng xuống tận chân cánh, 2 thanh cánh ngang đáy đâm vuông góc 90° vào thanh đứng; nẹp đứng và nẹp ngang đáy khớp kín 100%, xóa bỏ toàn bộ các đường chéo dị dạng và ô vuông cắt chéo ở chân tim.
+  - **Chuẩn hóa mối ghép chân khung bao 90° & mòi cánh 45° (Hình 2 Windova):** Loại bỏ hoàn toàn các khối chữ nhật `<rect>` vẽ đè gây lỗi xuất hiện đồng thời cả đường cắt 90° và 45° ở góc cánh; chân khung bao ngoài hiển thị 1 đường đứng 90° duy nhất, góc cánh và nẹp kính chỉ có 1 đường mòi 45° đồng quy sắc nét.
+  - **Sửa triệt để lỗi nét đỏ hình con diều:** Đặt đỉnh nhọn 2 bên tại trung điểm chiều cao lòng cánh `yHingeMid = (yOpeningTop + yOpeningBot) / 2`, tạo thành hình thoi mở quay đối xứng, cân đối 100% cho mọi kích thước cửa ($H=1600, 2350...$).
+  - **Tích hợp Panel "Cấu hình vòm / góc" ở thanh bên phải:**
+    - Bán kính $R$ (mm): Tự động tính theo $W / 2$ hoặc cho phép người dùng tùy biến nhập $R$.
+    - Cắt vòm tại đỉnh: Checkbox bật/tắt vết cắt nối tại tim đỉnh khung bao nhôm.
+    - Kẹp phôi (mm): Mặc định 400mm, tính toán phần chiều dài cây nhôm hao hụt khi uốn.
+  - **Chuẩn hóa tay nắm mở quay:** Render duy nhất 1 tay nắm trên cánh chính, hỗ trợ 4 kiểu (`lever`, `multipoint`, `pull`, `crescent`) đồng bộ với sidebar phải.
+
+- **Hoàn Thiện Tùy Chọn Cấu Hình & Bóc Tách Đố Chia Dọc / Ngang Riêng Biệt ([`config-frame-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/config/config-frame-tab.tsx)):**
+  - **Tách biệt 2 trường lựa chọn Profile:** Khi chọn chế độ "Dọc / Ngang riêng", giao diện hiển thị 2 dropdown độc lập: "Đố đứng (Dọc)" (`mullionVertProfileId`) và "Đố ngang" (`mullionHorizProfileId`), thay vì chỉ hiển thị 1 dropdown chung như trước.
+  - **Đồng bộ hóa 2 chiều:** Tự động fallback về profile chung `mullionProfileId` khi chưa cấu hình riêng lẻ, giúp chuyển đổi qua lại giữa các chế độ mượt mà không bị mất dữ liệu.
+
+- **Engine CAD Đồ Họa 2D Hỗ Trợ Đầy Đủ Góc Cắt Ngàm Nẹp 90° & 45° ([`cad-bead.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-bead.tsx), [`cad-rectangular-leaf.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-rectangular-leaf.tsx)):**
+  - **Hỗ trợ 2 kiểu ghép nẹp chuẩn xưởng:**
+    - **Cắt 90° (Butt Joint):** Nẹp đứng chạy suốt chiều cao ô kính, 2 nẹp ngang ăn vuông góc 90° sập vào giữa 2 nẹp đứng.
+    - **Cắt 45° (Miter Joint):** Ghép mòi 45° chuẩn xác tại 4 góc ô kính.
+  - **Liên kết động với thuộc tính ô:** `cad-rectangular-leaf.tsx` truyền trực tiếp `node.beadJoint` vào `renderCadBead`, phản hồi trực quan ngay lập tức trên bản vẽ khi người dùng chuyển đổi góc cắt ở bảng bên phải.
+
 ## [Unreleased] - 2026-10-01
 
 ### Changed & Refactored

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { DoorCalculateResponse } from '@/types';
 import { Weight, Maximize2, Scissors, Loader2, Sparkles } from 'lucide-react';
 
@@ -12,67 +12,15 @@ interface BomSidebarProps {
 export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) => {
   const [activeTab, setActiveTab] = useState<'bars' | 'glass' | 'grilles'>('bars');
 
-  const cells = calcData?.cells;
-  const beads = calcData?.beads;
+  // Dữ liệu bóc tách gom nhóm 100% từ Backend (Pure View - Single Source of Truth)
+  const displayBars = calcData?.groupedBars || [];
+  const displayGlasses = calcData?.groupedCells || [];
+  const displayBeads = calcData?.groupedBeads || [];
 
-  // Gom nhóm các tấm kính có cùng quy cách và cùng kích thước
-  const groupedGlasses = useMemo(() => {
-    if (!cells || cells.length === 0) return [];
-
-    const map = new Map<string, {
-      glassName: string;
-      glassW: number;
-      glassH: number;
-      areaM2: number;
-      qty: number;
-    }>();
-
-    for (const cell of cells) {
-      const name = cell.glassName || 'Kính cường lực';
-      const key = `${name}_${cell.glassW.toFixed(1)}_${cell.glassH.toFixed(1)}`;
-      const existing = map.get(key);
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        map.set(key, {
-          glassName: name,
-          glassW: cell.glassW,
-          glassH: cell.glassH,
-          areaM2: cell.areaM2,
-          qty: 1,
-        });
-      }
-    }
-    return Array.from(map.values());
-  }, [cells]);
-
-  // Gom nhóm nẹp kính theo loại vị trí và cùng chiều dài cắt
-  const groupedBeads = useMemo(() => {
-    if (!beads || beads.length === 0) return [];
-
-    const map = new Map<string, {
-      name: string;
-      length: number;
-      qty: number;
-    }>();
-
-    for (const bead of beads) {
-      // Chuẩn hóa tên nẹp (bỏ số thứ tự cánh/ô ở cuối: "Nẹp đứng cánh 1" -> "Nẹp đứng cánh")
-      const cleanName = bead.name.replace(/\s+\d+.*$/, '').trim();
-      const key = `${cleanName}_${bead.length.toFixed(1)}`;
-      const existing = map.get(key);
-      if (existing) {
-        existing.qty += bead.qty || 1;
-      } else {
-        map.set(key, {
-          name: cleanName,
-          length: bead.length,
-          qty: bead.qty || 1,
-        });
-      }
-    }
-    return Array.from(map.values());
-  }, [beads]);
+  // Tổng số lượng chi tiết thực tế
+  const totalBarCount = displayBars.reduce((sum, b) => sum + (b.qty || 1), 0);
+  const totalGlassCount = displayGlasses.reduce((sum, g) => sum + (g.qty || 1), 0);
+  const totalBeadCount = displayBeads.reduce((sum, b) => sum + (b.qty || 1), 0);
 
   return (
     <div className="flex flex-col h-full bg-white text-xs select-none">
@@ -125,7 +73,7 @@ export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) =
           }`}
         >
           <Scissors size={13} />
-          <span>Thanh nhôm ({calcData?.bars?.length ?? 0})</span>
+          <span>Thanh nhôm ({totalBarCount})</span>
         </button>
         <button
           type="button"
@@ -137,7 +85,7 @@ export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) =
           }`}
         >
           <Maximize2 size={13} />
-          <span>Kính & Nẹp ({calcData?.cells?.length ?? 0})</span>
+          <span>Kính & Nẹp ({totalGlassCount})</span>
         </button>
         {calcData?.grilles && calcData.grilles.length > 0 && (
           <button
@@ -159,25 +107,39 @@ export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) =
       <div className="flex-1 overflow-y-auto p-3">
         {activeTab === 'bars' && (
           <div className="space-y-1.5">
-            {calcData?.bars && calcData.bars.length > 0 ? (
-              calcData.bars.map((bar, idx) => (
+            {displayBars.length > 0 ? (
+              displayBars.map((bar, idx) => (
                 <div
                   key={idx}
-                  className="p-2 rounded-lg border border-gray-200/70 bg-gray-50/50 hover:bg-gray-100/60 transition-colors flex items-center justify-between"
+                  className="p-2.5 rounded-lg border border-gray-200/80 bg-gray-50/50 hover:bg-gray-100/60 transition-colors flex items-center justify-between"
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-gray-800 text-xs truncate">{bar.name}</div>
-                    <div className="text-[11px] text-gray-400 flex items-center gap-2 mt-0.5 font-mono">
+                  <div className="min-w-0 flex-1 pr-2">
+                    <div className="font-semibold text-gray-800 text-xs truncate flex items-center gap-1.5">
+                      <span>{bar.profileName || bar.name}</span>
+                      {bar.positions && bar.positions.length > 1 && (
+                        <span className="text-[10px] font-normal text-gray-400 bg-gray-200/60 px-1.5 py-0.5 rounded font-sans">
+                          {bar.positions.length} vị trí
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-gray-500 flex items-center gap-1.5 mt-0.5 font-mono">
                       <span>Mã: {bar.profileCode || '—'}</span>
                       <span>•</span>
                       <span>Góc: {bar.goc1}° / {bar.goc2}°</span>
                     </div>
+                    {bar.positions && bar.positions.length > 0 && (
+                      <div className="text-[10px] text-gray-400 mt-0.5 truncate" title={bar.positions.join(', ')}>
+                        {bar.positions.join(', ')}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-right pl-2">
+                  <div className="text-right shrink-0">
                     <div className="font-bold text-primary font-mono text-xs">
                       {bar.length.toFixed(1)} mm
                     </div>
-                    <div className="text-[10px] text-gray-400 font-mono">SL: {bar.qty}</div>
+                    <div className="inline-block mt-0.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold text-[11px] font-mono">
+                      {bar.qty} cây
+                    </div>
                   </div>
                 </div>
               ))
@@ -193,15 +155,15 @@ export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) =
             <div>
               <div className="text-[11px] font-bold text-gray-700 uppercase mb-1.5 flex items-center justify-between">
                 <span>Tấm kính</span>
-                {groupedGlasses.length > 0 && (
+                {displayGlasses.length > 0 && (
                   <span className="text-[10px] text-gray-400 font-normal font-mono lowercase">
-                    {calcData?.cells?.length ?? 0} tấm
+                    {totalGlassCount} tấm
                   </span>
                 )}
               </div>
               <div className="space-y-1.5">
-                {groupedGlasses.length > 0 ? (
-                  groupedGlasses.map((glass, idx) => (
+                {displayGlasses.length > 0 ? (
+                  displayGlasses.map((glass, idx) => (
                     <div
                       key={idx}
                       className="p-2 rounded-lg border border-blue-100 bg-blue-50/40 flex items-center justify-between"
@@ -231,16 +193,16 @@ export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) =
             </div>
 
             {/* Beads list */}
-            {groupedBeads.length > 0 && (
+            {displayBeads.length > 0 && (
               <div>
                 <div className="text-[11px] font-bold text-gray-700 uppercase mb-1.5 flex items-center justify-between">
                   <span>Nẹp kính</span>
                   <span className="text-[10px] text-gray-400 font-normal font-mono lowercase">
-                    {calcData?.beads?.length ?? 0} cây
+                    {totalBeadCount} cây
                   </span>
                 </div>
                 <div className="space-y-1">
-                  {groupedBeads.map((bead, idx) => (
+                  {displayBeads.map((bead, idx) => (
                     <div
                       key={idx}
                       className="p-1.5 rounded-lg border border-gray-200/60 bg-white flex items-center justify-between text-[11px]"
