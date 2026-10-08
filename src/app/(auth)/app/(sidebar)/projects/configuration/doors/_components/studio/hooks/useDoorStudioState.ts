@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Door, DoorCreate, DoorUpdate, DoorCalculateResponse, SelectedAccessoryItem } from '@/types';
 import { calculateDoor, createDoor, updateDoor, getDoorSeriesList, getProfileBars, getAccessoryCombos, getAccessories, getGlasses, getBrandColors, getBrands, } from '@/actions';
 import { FrameShape, SashOpenType, SceneCellNode, StudioMainTab, FrameConfig, SashConfig, DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG, MullionInfo, MullionCutType, ColorSwatch, ALUMINUM_PALETTE, GlassGrilleConfig, } from '../studio-types';
@@ -36,6 +36,7 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
   const [hardwareColor, setHardwareColor] = useState<string>('#1E293B');
   const [frameShape, setFrameShape] = useState<FrameShape>('rect');
   const [seriesId, setSeriesId] = useState<number | undefined>(1);
+  const prevSeriesIdRef = useRef<number | undefined>(undefined);
   const [selectedComboIds, setSelectedComboIds] = useState<number[]>([]);
   const [selectedAccessories, setSelectedAccessories] = useState<SelectedAccessoryItem[]>([]);
 
@@ -147,21 +148,29 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
         }))
       : ALUMINUM_PALETTE;
 
-  // Tự động fallback màu khi đổi hệ nhôm
+  // Tự động fallback màu khi người dùng đổi hệ nhôm trong Studio
   useEffect(() => {
-    if (availableBrandColors.length > 0) {
-      const exists = availableBrandColors.some(
-        (c) => c.colorHex.toLowerCase() === aluminumColor.toLowerCase()
-      );
-      if (!exists) {
-        const defaultColor =
-          availableBrandColors.find((c) => c.isDefault) || availableBrandColors[0];
-        if (defaultColor) {
-          setAluminumColor(defaultColor.colorHex);
+    if (
+      prevSeriesIdRef.current !== undefined &&
+      seriesId !== undefined &&
+      prevSeriesIdRef.current !== seriesId
+    ) {
+      prevSeriesIdRef.current = seriesId;
+      if (availableBrandColors.length > 0) {
+        const cleanCurrent = (aluminumColor || '').trim().toLowerCase();
+        const exists = availableBrandColors.some(
+          (c) => (c.colorHex || '').trim().toLowerCase() === cleanCurrent
+        );
+        if (!exists) {
+          const defaultColor =
+            availableBrandColors.find((c) => c.isDefault) || availableBrandColors[0];
+          if (defaultColor) {
+            setAluminumColor(defaultColor.colorHex.trim());
+          }
         }
       }
     }
-  }, [availableBrandColors, aluminumColor]);
+  }, [seriesId, availableBrandColors, aluminumColor]);
 
   // Khởi tạo hoặc nạp lại state khi sửa cửa cũ, HOẶC reset toàn bộ khi thêm cửa mới
   useEffect(() => {
@@ -176,18 +185,24 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
       if (sc.w) setW(sc.w);
       if (sc.h) setH(sc.h);
       if (sc.frameShape) setFrameShape(sc.frameShape);
-      if (sc.aluminumColor) setAluminumColor(sc.aluminumColor);
-      if (sc.hardwareColor) setHardwareColor(sc.hardwareColor);
+      const rawColor = (sc.aluminumColor || sc.surface_color || '').trim();
+      if (rawColor) setAluminumColor(rawColor);
+      const rawHwColor = (sc.hardwareColor || '').trim();
+      if (rawHwColor) setHardwareColor(rawHwColor);
       if (sc.seriesId) {
         setSeriesId(sc.seriesId);
+        prevSeriesIdRef.current = sc.seriesId;
         const curSeries = allAvailableSeries.find((s) => s.id === sc.seriesId);
         if (curSeries?.brandId) setSelectedBrandId(curSeries.brandId);
         else if (door.doorSeries?.brandId) setSelectedBrandId(door.doorSeries.brandId);
       } else if (door.doorSeriesId) {
         setSeriesId(door.doorSeriesId);
+        prevSeriesIdRef.current = door.doorSeriesId;
         if (door.doorSeries?.brandId) setSelectedBrandId(door.doorSeries.brandId);
       } else if (defaultBrandId) {
         setSelectedBrandId(defaultBrandId);
+        setSeriesId(undefined);
+        prevSeriesIdRef.current = undefined;
       }
       if (sc.selectedComboIds && Array.isArray(sc.selectedComboIds)) {
         setSelectedComboIds(sc.selectedComboIds);
@@ -216,12 +231,23 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
           topEdge: { ...DEFAULT_FRAME_CONFIG.topEdge, ...(sc.frameConfig.topEdge || {}) },
           rightEdge: { ...DEFAULT_FRAME_CONFIG.rightEdge, ...(sc.frameConfig.rightEdge || {}) },
           bottomEdge: { ...DEFAULT_FRAME_CONFIG.bottomEdge, ...(sc.frameConfig.bottomEdge || {}) },
+          archConfig: {
+            ...(DEFAULT_FRAME_CONFIG.archConfig || { isCutAtApex: false, bendingClampingMm: 400 }),
+            ...(sc.frameConfig.archConfig || {}),
+          },
         });
       }
+      const defaultFamily = door?.type === 'cd' ? 'Cửa đi mở quay' : 'Cửa sổ mở quay/Hất';
       if (sc.sashConfig) {
         setSashConfig({
           ...DEFAULT_SASH_CONFIG,
+          family: sc.sashConfig.family || defaultFamily,
           ...sc.sashConfig,
+        });
+      } else {
+        setSashConfig({
+          ...DEFAULT_SASH_CONFIG,
+          family: defaultFamily,
         });
       }
       if (sc.rootCell) {
@@ -247,14 +273,14 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
       setFrameShape('rect');
       setAluminumColor('#955F20');
       setHardwareColor('#1E293B');
-
       const initialBrandId = defaultBrandId || (availableBrands[0]?.id ?? null);
       setSelectedBrandId(initialBrandId);
       const brandSeriesList = initialBrandId
         ? allAvailableSeries.filter((s) => s.brandId === initialBrandId)
         : allAvailableSeries;
-      setSeriesId(brandSeriesList[0]?.id || undefined);
-
+      const initialSeriesId = brandSeriesList[0]?.id || undefined;
+      setSeriesId(initialSeriesId);
+      prevSeriesIdRef.current = initialSeriesId;
       setSelectedComboIds([]);
       setSelectedAccessories([]);
       setFrameConfig(DEFAULT_FRAME_CONFIG);
@@ -662,8 +688,8 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
           w,
           h,
           frameShape,
-          aluminumColor,
-          hardwareColor,
+          aluminumColor: (aluminumColor || '').trim(),
+          hardwareColor: (hardwareColor || '').trim(),
           rootCell,
           frameConfig,
           sashConfig,
@@ -681,6 +707,8 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['doors'] });
+      queryClient.invalidateQueries({ queryKey: ['door-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['doors-stats'] });
       toast.success(door?.id ? 'Cập nhật thiết kế thành công' : 'Lưu thiết kế thành công');
       onClose();
     },

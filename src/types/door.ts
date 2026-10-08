@@ -83,6 +83,7 @@ export interface ProfileBarCut {
   profileId?: number | null;
   profileCode?: string | null;
   profileName?: string | null;
+  positions?: string[];
 }
 
 export interface BeadCut {
@@ -96,6 +97,7 @@ export interface BeadCut {
   qty: number;
   profileId?: number | null;
   profileCode?: string | null;
+  positions?: string[];
 }
 
 export interface GlassCellBOM {
@@ -109,6 +111,16 @@ export interface GlassCellBOM {
   openType?: string | null;
   glassName?: string | null;
   glassPrice?: number | null;
+}
+
+export interface GroupedGlassCellBOM {
+  glassName: string;
+  glassW: number;
+  glassH: number;
+  areaM2: number;
+  totalAreaM2: number;
+  qty: number;
+  glassPrice?: number;
 }
 
 export interface CornerJointBOM {
@@ -172,6 +184,7 @@ export interface DoorCalculateResponse {
   beads: BeadCut[];
   groupedBeads: BeadCut[];
   cells: GlassCellBOM[];
+  groupedCells: GroupedGlassCellBOM[];
   cornerJoints?: CornerJointBOM[];
   grilles?: GlassGrilleBOM[];
   accessories?: AccessoryBOMItem[];

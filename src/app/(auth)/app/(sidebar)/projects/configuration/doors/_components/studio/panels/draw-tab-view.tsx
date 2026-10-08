@@ -58,6 +58,7 @@ interface DrawTabViewProps {
   availableBeads?: ProfileBar[];
   defaultGlass?: Glass | null;
   aluminumColors?: ColorSwatch[];
+  onChangeFrameConfig?: (updates: Partial<FrameConfig>) => void;
 }
 
 export const DrawTabView: React.FC<DrawTabViewProps> = ({
@@ -101,6 +102,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
   availableBeads,
   defaultGlass,
   aluminumColors,
+  onChangeFrameConfig,
 }) => {
   const [rightTab, setRightTab] = useState<'inspector' | 'bom'>('inspector');
   const [mobileDrawer, setMobileDrawer] = useState<'toolbox' | 'inspector' | 'bom' | null>(null);
@@ -276,6 +278,10 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
               availableBeads={availableBeads}
               defaultGlass={defaultGlass}
               onUpdateDimension={(target, val, cellId) => onUpdateDimension(target, val, cellId)}
+              frameShape={frameShape}
+              frameConfig={frameConfig}
+              doorW={w}
+              onChangeFrameConfig={onChangeFrameConfig}
             />
           ) : (
             <BomSidebar calcData={calcData} isLoading={isCalculating} />
@@ -386,6 +392,10 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   availableBeads={availableBeads}
                   defaultGlass={defaultGlass}
                   onUpdateDimension={(target, val, cellId) => onUpdateDimension(target, val, cellId)}
+                  frameShape={frameShape}
+                  frameConfig={frameConfig}
+                  doorW={w}
+                  onChangeFrameConfig={onChangeFrameConfig}
                 />
               )}
 

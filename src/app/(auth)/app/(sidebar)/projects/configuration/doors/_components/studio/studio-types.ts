@@ -262,6 +262,26 @@ export interface FrameEdgeProfile {
   offsetMm: number;
 }
 
+export type SafetyBarsPreset = 'equal_frame' | 'inset' | 'no_frame';
+export type SafetyBarsCornerJoint = '45' | '90_vert';
+
+export interface SafetyBarsConfig {
+  isEnabled: boolean;
+  preset: SafetyBarsPreset;
+  profileId?: number;
+  cornerJoint: SafetyBarsCornerJoint;
+  insetGapMm: number;
+  mullionVertProfileId?: number;
+  mullionHorizProfileId?: number;
+}
+
+export const DEFAULT_SAFETY_BARS_CONFIG: SafetyBarsConfig = {
+  isEnabled: false,
+  preset: 'equal_frame',
+  cornerJoint: '45',
+  insetGapMm: 3,
+};
+
 export interface FrameConfig {
   isOpenBottom: boolean;
   cornerJoint: FrameCornerJoint;
@@ -274,12 +294,26 @@ export interface FrameConfig {
   mullionVertProfileId?: number;
   mullionHorizProfileId?: number;
   hasSafetyBars: boolean;
+  safetyBarsConfig?: SafetyBarsConfig;
   beadProfileId?: number;
   beadCornerJoint: BeadCornerJoint;
   couplingProfileId?: number;
   isReversedWall: boolean;
   isReversedSash: boolean;
+  archConfig?: ArchConfig;
 }
+
+export interface ArchConfig {
+  radiusMm?: number;        // Bán kính R (mm), mặc định W / 2
+  isCutAtApex: boolean;      // Cắt vòm tại đỉnh: chia thanh vòm và nẹp vòm thành hai phần trái, phải
+  bendingClampingMm: number; // Kẹp phôi (mm), mặc định 400
+}
+
+export const DEFAULT_ARCH_CONFIG: ArchConfig = {
+  radiusMm: undefined,
+  isCutAtApex: false,
+  bendingClampingMm: 400,
+};
 
 export interface SashConfig {
   hasScreenSash: boolean;
@@ -315,9 +349,11 @@ export const DEFAULT_FRAME_CONFIG: FrameConfig = {
   bottomEdge: { offsetMm: 0 },
   mullionMode: 'none',
   hasSafetyBars: false,
+  safetyBarsConfig: DEFAULT_SAFETY_BARS_CONFIG,
   beadCornerJoint: '45',
   isReversedWall: false,
   isReversedSash: false,
+  archConfig: DEFAULT_ARCH_CONFIG,
 };
 
 export const DEFAULT_SASH_CONFIG: SashConfig = {

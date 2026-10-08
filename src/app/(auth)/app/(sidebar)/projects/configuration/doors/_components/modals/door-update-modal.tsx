@@ -65,6 +65,8 @@ export function DoorUpdateModal({
         }
       }
       queryClient.invalidateQueries({ queryKey: ['doors'] });
+      queryClient.invalidateQueries({ queryKey: ['door-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['doors-stats'] });
       toast.success('Cập nhật loại cửa thành công');
       onClose();
       reset();
