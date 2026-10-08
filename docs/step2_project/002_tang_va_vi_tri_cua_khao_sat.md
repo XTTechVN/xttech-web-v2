@@ -1,6 +1,6 @@
 # HƯỚNG DẪN TÍCH HỢP FRONTEND: TẦNG, VỊ TRÍ CỬA & KHẢO SÁT HIỆN TRƯỜNG (MODULE 002)
 
-Module này phụ trách việc phân cấp kiến trúc theo **Tầng (Floors)** và danh sách các **Vị trí cửa vật lý (Door Positions)**, hỗ trợ sinh cửa hàng loạt theo ma trận tầng, kiểm soát xung đột dữ liệu bằng **Optimistic Locking (`revisionId`)**, đo đạc kích thước ô chờ thực tế kèm cảnh báo dung sai, và tra cứu hiện trường bằng mã **QR Code**.
+Module này phụ trách việc phân cấp kiến trúc theo **Tầng (Floors)** và danh sách các **Vị trí cửa vật lý (Door Positions)**, hỗ trợ sinh cửa hàng loạt theo ma trận tầng, nhân bản cửa (`duplicate`), bóc tách thiết kế (`design`), kiểm soát xung đột dữ liệu bằng **Optimistic Locking (`revisionId`)**, đo đạc kích thước ô chờ thực tế kèm cảnh báo dung sai, và tra cứu hiện trường bằng mã **QR Code**.
 
 ---
 
@@ -23,12 +23,12 @@ sequenceDiagram
     Note over Tech, FE: Bước 2: Tạo Cửa Hàng Loạt Theo Ma Trận
     Tech->>FE: Bấm "Thêm cửa nhanh (Bulk Create)"
     User Inputs: Chọn Tầng, Hệ cửa (D1, S1), Kích thước thiết kế WxH, Số lượng
-    FE->>BE: POST /api/v1/positions/bulk (Ma trận items)
+    FE->>BE: POST /api/v1/projects/{projectId}/positions/bulk (Ma trận items)
     BE-->>FE: 200 OK (Tự sinh mã vị trí D1-01, D1-02..., kèm QR Token độc nhất)
 
     Note over Tech, FE: Bước 3: Khảo Sát Đo Đạc Ô Chờ Thực Tế
     Tech->>FE: Nhập kích thước đo đạc thực tế tại công trình (WxH)
-    FE->>BE: PUT /api/v1/positions/{id}/measure {"width": 2835, "height": 2410, "revisionId": 1}
+    FE->>BE: PUT /api/v1/projects/{projectId}/positions/{positionId}/measure {"width": 2835, "height": 2410, "revisionId": 1}
     BE-->>FE: 200 OK (Cảnh báo dung sai tolerance_exceeded nếu lệch > 20mm)
     alt Dung sai vượt ngưỡng (> 20mm)
         FE->>Tech: Hiển thị Banner Cảnh Báo Màu Cam: "Kích thước đo lệch 35mm so với thiết kế. Cần cân nhắc lập phụ lục hợp đồng!"
@@ -36,7 +36,7 @@ sequenceDiagram
 
     Note over Tech, FE: Bước 4: Quét Mã QR Ngoài Hiện Trường
     Tech->>FE: Quét mã QR dán trên khung nhôm bằng Camera điện thoại
-    FE->>BE: GET /api/v1/positions/by-qr/{qrToken} (Không cần Bearer Token)
+    FE->>BE: GET /api/v1/projects/positions/by-qr/{token} (Không cần Bearer Token)
     BE-->>FE: 200 OK (Thông tin cửa, bản vẽ, lịch sử tiến độ tức thì)
 ```
 
@@ -55,71 +55,72 @@ sequenceDiagram
       "note": "Khu vực phòng khách và gara"
     }
     ```
-- **Sửa tầng:** `PUT /api/v1/projects/floors/{id}`
-- **Xóa tầng:** `DELETE /api/v1/projects/floors/{id}` *(Backend tự động chặn xóa nếu tầng đang chứa vị trí cửa)*.
+- **Sửa tầng:** `PUT /api/v1/projects/{projectId}/floors/{floorId}`
+- **Xóa tầng:** `DELETE /api/v1/projects/{projectId}/floors/{floorId}` *(Backend tự động chặn xóa nếu tầng đang chứa vị trí cửa)*.
 
 ---
 
-### 2.2. Thêm Vị Trí Cửa Hàng Loạt (Bulk Create Positions)
-- **Endpoint:** `POST /api/v1/positions/bulk`
-- **Tác dụng:** Cho phép người dùng nhập nhanh nhiều bộ cửa cùng lúc, tự động gán tầng, tự sinh mã QR token ngẫu nhiên và eager load thông tin tầng (0 lỗi `MissingGreenlet`).
-- **Request Body:**
-  ```json
-  [
-    {
-      "projectId": 58,
-      "floorId": 46,
-      "positionCode": "D1-01",
-      "doorName": "Cửa đi chính 4 cánh mở quay",
-      "doorId": 1,
-      "width": 2800.0,
-      "height": 2400.0,
-      "quantity": 1,
-      "locationDescription": "Mặt tiền hướng Nam"
-    },
-    {
-      "projectId": 58,
-      "floorId": 46,
-      "positionCode": "S1-01",
-      "doorName": "Cửa sổ lùa 2 cánh phòng ngủ",
-      "doorId": 2,
-      "width": 1400.0,
-      "height": 1600.0,
-      "quantity": 1,
-      "locationDescription": "Phòng ngủ tầng 1"
-    }
-  ]
-  ```
-- **Response Body (200 OK):**
-  ```json
-  {
-    "success": true,
-    "data": [
+### 2.2. Lấy Danh Sách & Thêm Vị Trí Cửa
+- **Lấy danh sách vị trí cửa của dự án:** `GET /api/v1/projects/{projectId}/positions`
+- **Thêm 1 vị trí cửa đơn lẻ:** `POST /api/v1/projects/{projectId}/positions`
+- **Thêm cửa hàng loạt (Bulk Create Positions):** `POST /api/v1/projects/{projectId}/positions/bulk`
+  - **Request Body:**
+    ```json
+    [
       {
-        "id": 107,
         "projectId": 58,
         "floorId": 46,
         "positionCode": "D1-01",
         "doorName": "Cửa đi chính 4 cánh mở quay",
+        "doorId": 1,
         "width": 2800.0,
         "height": 2400.0,
-        "areaM2": 6.72,
-        "revisionId": 1,
-        "qrToken": "793a26c6d4824317a224...",
-        "status": "draft",
-        "floor": {
-          "id": 46,
-          "name": "Tầng 1"
-        }
+        "quantity": 1,
+        "locationDescription": "Mặt tiền hướng Nam"
+      },
+      {
+        "projectId": 58,
+        "floorId": 46,
+        "positionCode": "S1-01",
+        "doorName": "Cửa sổ lùa 2 cánh phòng ngủ",
+        "doorId": 2,
+        "width": 1400.0,
+        "height": 1600.0,
+        "quantity": 1,
+        "locationDescription": "Phòng ngủ tầng 1"
       }
     ]
-  }
-  ```
+    ```
+  - **Response Body (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": [
+        {
+          "id": 107,
+          "projectId": 58,
+          "floorId": 46,
+          "positionCode": "D1-01",
+          "doorName": "Cửa đi chính 4 cánh mở quay",
+          "width": 2800.0,
+          "height": 2400.0,
+          "areaM2": 6.72,
+          "revisionId": 1,
+          "qrToken": "793a26c6d4824317a224...",
+          "status": "draft",
+          "floor": {
+            "id": 46,
+            "name": "Tầng 1"
+          }
+        }
+      ]
+    }
+    ```
 
 ---
 
 ### 2.3. Cập Nhật Vị Trí Cửa & Chống Xung Đột Đồng Thời (Optimistic Locking)
-- **Endpoint:** `PUT /api/v1/positions/{id}`
+- **Endpoint:** `PUT /api/v1/projects/{projectId}/positions/{positionId}`
 - **Quy tắc bắt buộc:** FE **bắt buộc phải gửi kèm trường `revisionId`** đã nhận được từ lần query trước.
 - **Request Body:**
   ```json
@@ -131,7 +132,7 @@ sequenceDiagram
   }
   ```
 - **Xử lý mã lỗi HTTP 409 Conflict:**
-  - Nếu Backend phát hiện `revisionId` client gửi lên nhỏ hơn giá trị trong DB (nghĩa là đã có người dùng khác chỉnh sửa trước đó), Backend trả về:
+  - Nếu Backend phát hiện `revisionId` client gửi lên nhỏ hơn giá trị trong DB, Backend trả về:
     ```json
     {
       "success": false,
@@ -141,12 +142,20 @@ sequenceDiagram
       }
     }
     ```
-  - **Cách xử lý trên FE:** Bắt mã `409`, hiển thị thông báo Modal/Toast cảnh báo và gọi lại API `GET /api/v1/projects/{projectId}/positions` để cập nhật bảng dữ liệu mới nhất.
+  - **Cách xử lý trên FE:** Bắt mã `409`, hiển thị thông báo Toast cảnh báo và gọi lại API `GET /api/v1/projects/{projectId}/positions` để cập nhật bảng dữ liệu mới nhất.
 
 ---
 
-### 2.4. Đo Đạc Ô Chờ Thực Tế & Cảnh Báo Dung Sai (Measure Endpoint)
-- **Endpoint:** `PUT /api/v1/positions/{id}/measure`
+### 2.4. Nhân Bản Cửa & Cập Nhật Bóc Tách Thiết Kế
+- **Nhân bản vị trí cửa:** `POST /api/v1/projects/{projectId}/positions/{positionId}/duplicate`
+  - Tác dụng: Sao chép toàn bộ thông số cấu hình cửa cũ sang vị trí mới, tự sinh mã kế tiếp (ví dụ: `D1-01` $\rightarrow$ `D1-02`).
+- **Cập nhật bóc tách kỹ thuật:** `PUT /api/v1/projects/{projectId}/positions/{positionId}/design`
+  - Request Body chứa các thông số kỹ thuật tùy chỉnh (bản vẽ cad, số thanh cắt, danh mục phụ kiện đi kèm).
+
+---
+
+### 2.5. Đo Đạc Ô Chờ Thực Tế & Cảnh Báo Dung Sai (Measure Endpoint)
+- **Endpoint:** `PUT /api/v1/projects/{projectId}/positions/{positionId}/measure`
 - **Tác dụng:** Cập nhật số đo thực tế sau khi thợ khảo sát tại công trình. Đánh dấu cờ `isMeasured = true` (đây là điều kiện bắt buộc để bóc tách đơn đặt kính tôi nhiệt ở Phân hệ 5).
 - **Request Body:**
   ```json
@@ -170,13 +179,11 @@ sequenceDiagram
     "toleranceWarning": "Cảnh báo: Kích thước đo lệch 35 mm so với thiết kế ban đầu (2800x2400 -> 2835x2410). Cần cân nhắc lập phụ lục hợp đồng!"
   }
   ```
-- **UX Requirement trên FE:**
-  Nếu `toleranceExceeded === true`, FE hiển thị `Alert` cảnh báo nổi bật kèm nội dung `toleranceWarning` để nhân viên phụ trách nhận biết và thông báo cho khách hàng trước khi ra lệnh cắt nhôm kính.
 
 ---
 
-### 2.5. Tra Cứu Hiện Trường Bằng Mã QR Code Công Khai (Public QR Lookup)
-- **Endpoint:** `GET /api/v1/positions/by-qr/{qrToken}`
+### 2.6. Tra Cứu Hiện Trường Bằng Mã QR Code Công Khai (Public QR Lookup)
+- **Endpoint:** `GET /api/v1/projects/positions/by-qr/{token}`
 - **Bảo mật:** Endpoint này được cấu hình **Công khai (`is_public = true`)**, **KHÔNG CẦN Bearer Token**. Bất kỳ ai quét mã QR dán trên tem cửa (chủ nhà, giám sát, thợ phụ) đều xem được thông tin.
 - **Response Body (200 OK):**
   ```json

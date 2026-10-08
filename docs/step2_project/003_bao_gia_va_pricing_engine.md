@@ -1,6 +1,6 @@
 # HƯỚNG DẪN TÍCH HỢP FRONTEND: BÁO GIÁ & PRICING ENGINE (MODULE 003)
 
-Module này cung cấp công cụ tính giá tự động (**Pricing Engine**), cho phép tạo nhiều phương án báo giá (Phương án 1 - Tiêu chuẩn, Phương án 2 - Cao cấp) để chủ đầu tư so sánh, đóng băng bản bóc tách vật tư (**mBOM Snapshot**) và chốt phương án chính thức làm căn cứ ký hợp đồng.
+Module này cung cấp công cụ tính giá tự động (**Pricing Engine**), cho phép tạo nhiều phương án báo giá (Phương án 1 - Tiêu chuẩn, Phương án 2 - Cao cấp) để chủ đầu tư so sánh, nhân bản báo giá (`clone`), đóng băng bản bóc tách vật tư (**mBOM Snapshot**) và chốt phương án chính thức làm căn cứ ký hợp đồng.
 
 ---
 
@@ -15,21 +15,26 @@ sequenceDiagram
 
     Note over Sales, FE: Bước 1: Tính Thử Dự Toán (Live Preview)
     Sales->>FE: Điều chỉnh: % Chiết khấu, Đơn giá nhân công/m2, Hệ số hao hụt, VAT
-    FE->>BE: POST /api/v1/quotations/preview (Payload cấu hình)
+    FE->>BE: POST /api/v1/projects/{projectId}/quotations/preview (Payload cấu hình)
     BE-->>FE: 200 OK (Giá vốn, Doanh thu trước thuế, Tiền thuế, Tổng tiền, Lợi nhuận)
     FE->>Sales: Cập nhật Widget Thống kê Lãi/Lỗ theo thời gian thực (Zero lag)
 
     Note over Sales, FE: Bước 2: Lưu Phương Án Báo Giá
     Sales->>FE: Bấm "Lưu Phương Án Báo Giá"
-    FE->>BE: POST /api/v1/quotations (Lưu snapshot mBOM chi tiết từng thanh nhôm, tấm kính)
+    FE->>BE: POST /api/v1/projects/{projectId}/quotations (Lưu snapshot mBOM chi tiết)
     BE-->>FE: 200 OK (Tạo Báo Giá ID: 27, Mã: BG-2026-XXXX)
 
-    Note over Sales, FE: Bước 3: So Sánh & Chốt Phương Án
+    Note over Sales, FE: Bước 3: Nhân Bản Phương Án (Tạo PA2 từ PA1)
+    Sales->>FE: Bấm "Nhân bản báo giá"
+    FE->>BE: POST /api/v1/projects/{projectId}/quotations/{quotationId}/clone
+    BE-->>FE: 200 OK (Tạo bản sao mới với version kế tiếp, giữ nguyên các thông số để chỉnh sửa)
+
+    Note over Sales, FE: Bước 4: So Sánh & Chốt Phương Án
     Sales->>FE: Vào tab "So Sánh Phương Án"
-    FE->>BE: GET /api/v1/quotations/project/{projectId}
+    FE->>BE: GET /api/v1/projects/{projectId}/quotations
     BE-->>FE: Danh sách các phiên bản báo giá (Version 1, Version 2...)
     Sales->>FE: Khách hàng đồng ý PA2 -> Bấm "Chọn phương án này"
-    FE->>BE: POST /api/v1/quotations/{id}/select
+    FE->>BE: POST /api/v1/projects/{projectId}/quotations/{quotationId}/select
     BE-->>FE: 200 OK (Đánh dấu isSelected = true, tự động đồng bộ cấu hình vào Dự án)
 ```
 
@@ -38,7 +43,7 @@ sequenceDiagram
 ## 2. Chi Tiết Các API Call & Chuẩn Dữ Liệu
 
 ### 2.1. Tính Dự Toán Nháp (Preview Pricing Engine)
-- **Endpoint:** `POST /api/v1/quotations/preview`
+- **Endpoint:** `POST /api/v1/projects/{projectId}/quotations/preview`
 - **Tác dụng:** Chạy thuật toán định giá đa biến, bóc tách giá nhôm theo kg, kính theo $m^2$, phụ kiện theo bộ/chiếc, nhân công sản xuất & lắp đặt, chiết khấu và thuế VAT. Không lưu vào Database, phục vụ giao diện kéo trượt slider / đổi cấu hình trực tiếp.
 - **Request Body:**
   ```json
@@ -66,18 +71,11 @@ sequenceDiagram
     "totalAluminumKg": 134.4
   }
   ```
-- **Lưu ý định dạng số tiền trên FE:**
-  Tất cả số tiền đều là số nguyên VND (`round(..., 0)`). Frontend sử dụng hàm format chuẩn:
-  ```typescript
-  export const formatVND = (amount: number): string => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
-  ```
 
 ---
 
 ### 2.2. Lưu Phương Án Báo Giá Chính Thức (Save Quotation)
-- **Endpoint:** `POST /api/v1/quotations`
+- **Endpoint:** `POST /api/v1/projects/{projectId}/quotations`
 - **Tác dụng:** Đóng băng toàn bộ giá thành và danh mục vật tư thành snapshot JSON (`snapshotItems`), cấp mã tự động `BG-YYYY-XXXX`.
 - **Request Body:**
   ```json
@@ -120,14 +118,23 @@ sequenceDiagram
 
 ---
 
-### 2.3. Lấy Danh Sách Báo Giá Của Dự Án
-- **Endpoint:** `GET /api/v1/quotations/project/{projectId}`
-- **Tác dụng:** Trả về danh sách tất cả các phương án báo giá đã lập của dự án để hiển thị bảng so sánh (Comparison Table).
+### 2.3. Lấy Danh Sách & Chi Tiết Báo Giá
+- **Lấy danh sách các phương án báo giá của dự án:** `GET /api/v1/projects/{projectId}/quotations`
+- **Lấy chi tiết 1 phương án báo giá:** `GET /api/v1/projects/{projectId}/quotations/{quotationId}`
+- **Cập nhật phương án báo giá:** `PUT /api/v1/projects/{projectId}/quotations/{quotationId}`
+  *(Lưu ý: Nếu báo giá đã bị khóa `isLocked = true` do hợp đồng đã ký kết, Backend sẽ chặn sửa và trả về mã lỗi 403 Forbidden).*
+- **Xóa báo giá:** `DELETE /api/v1/projects/{projectId}/quotations/{quotationId}`
 
 ---
 
-### 2.4. Chọn Phương Án Chính Thức (Select Official Quotation)
-- **Endpoint:** `POST /api/v1/quotations/{id}/select`
+### 2.4. Nhân Bản Báo Giá (Clone Quotation)
+- **Endpoint:** `POST /api/v1/projects/{projectId}/quotations/{quotationId}/clone`
+- **Tác dụng:** Tự động copy toàn bộ dữ liệu của báo giá cũ sang một báo giá mới, tự động tăng chỉ số phiên bản (`version = version + 1`), đặt tên dạng *"Bản sao - [Tên cũ]"*, cho phép nhân viên kinh doanh nhanh chóng điều chỉnh hệ số để chào giá khách hàng.
+
+---
+
+### 2.5. Chọn Phương Án Chính Thức (Select Official Quotation)
+- **Endpoint:** `POST /api/v1/projects/{projectId}/quotations/{quotationId}/select`
 - **Tác dụng:** Khi khách hàng đồng ý chốt phương án nào, nhấn chọn phương án đó. Backend sẽ:
   1. Chuyển `isSelected = true` cho báo giá được chọn.
   2. Tự động chuyển tất cả các báo giá khác của dự án về `isSelected = false`.
