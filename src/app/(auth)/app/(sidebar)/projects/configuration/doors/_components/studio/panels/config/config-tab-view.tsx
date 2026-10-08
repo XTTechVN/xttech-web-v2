@@ -27,37 +27,37 @@ export const ConfigTabView: React.FC<ConfigTabViewProps> = ({
   return (
     <div className="flex flex-col h-full bg-slate-50/50 overflow-y-auto">
       {/* Sub-tab Switcher: Cấu hình khung vs Cấu hình cánh */}
-      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200 py-2 sm:py-3 px-3 sm:px-6 flex items-center justify-center">
-        <div className="bg-gray-100/90 p-1 rounded-xl flex items-center gap-1 border border-gray-200 shadow-2xs w-full sm:w-auto justify-center">
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-slate-200 py-2.5 px-3 sm:px-6 flex items-center justify-center">
+        <div className="bg-slate-100 p-1 rounded-lg flex items-center gap-1 border border-slate-200/80 w-full sm:w-auto justify-center">
           <button
             type="button"
             onClick={() => setSubTab('frame')}
-            className={`flex-1 sm:flex-initial px-3 sm:px-5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-4 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               subTab === 'frame'
-                ? 'bg-white text-blue-900 shadow-xs ring-1 ring-black/5'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-primary text-white shadow-2xs font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
-            <LayoutGrid size={14} className={subTab === 'frame' ? 'text-blue-900' : 'text-gray-400'} />
-            <span>CẤU HÌNH KHUNG</span>
+            <LayoutGrid size={14} />
+            <span>Cấu hình khung</span>
           </button>
           <button
             type="button"
             onClick={() => setSubTab('sash')}
-            className={`flex-1 sm:flex-initial px-3 sm:px-5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-4 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               subTab === 'sash'
-                ? 'bg-white text-emerald-800 shadow-xs ring-1 ring-black/5'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-primary text-white shadow-2xs font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
-            <DoorClosed size={14} className={subTab === 'sash' ? 'text-emerald-800' : 'text-gray-400'} />
-            <span>CẤU HÌNH CÁNH</span>
+            <DoorClosed size={14} />
+            <span>Cấu hình cánh</span>
           </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto w-full py-3 px-2 sm:px-4">
+      <div className="w-full flex-1 p-4 sm:p-6 overflow-y-auto">
         {subTab === 'frame' ? (
           <ConfigFrameTab
             config={frameConfig}

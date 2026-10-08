@@ -16,7 +16,7 @@ interface CanvasCadViewProps {
   onSelectCell: (cellId: string | null) => void;
   onSelectMullion?: (mullion: MullionInfo) => void;
   selectedMullionId?: string | null;
-  onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'handleHeight', value: number, cellId?: string) => void;
+  onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', value: number, cellId?: string) => void;
   onResizeSplit?: (params: ResizeSplitParams) => void;
   frameConfig?: FrameConfig;
   sashConfig?: SashConfig;
@@ -54,7 +54,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
 
   // Dimension Edit Dialog State
   const [editTarget, setEditTarget] = useState<{
-    type: 'w' | 'h' | 'cell' | 'handleHeight';
+    type: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight';
     cellId?: string;
     currentVal: number;
     title: string;
@@ -202,7 +202,10 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
     };
   }, [isDragging]);
 
-  const handleOpenEdit = (target: 'w' | 'h' | 'cell' | 'handleHeight', cellId?: string) => {
+  const handleOpenEdit = (
+    target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight',
+    cellId?: string
+  ) => {
     let initialVal = w;
     let title = 'Tổng chiều rộng (W)';
 
@@ -223,8 +226,23 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
       const cNode = cellId ? findCell(rootCell) : null;
       initialVal = cNode?.handleHeight || (cNode ? Math.round(cNode.h / 2) : Math.round(h / 2));
       title = `Cao độ tim khóa từ đáy (mm)`;
-    } else if (target === 'cell' && cellId) {
-      // find leaf cell width
+    } else if (target === 'cell-h' && cellId) {
+      // Tìm leaf cell hoặc row cell để lấy chiều cao
+      const findCell = (node: SceneCellNode): SceneCellNode | null => {
+        if (node.id === cellId) return node;
+        if (node.children) {
+          for (const c of node.children) {
+            const found = findCell(c);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      const cNode = findCell(rootCell);
+      initialVal = cNode?.h || Math.round(h / 2);
+      title = `Chiều cao ô/hàng (${cellId})`;
+    } else if ((target === 'cell' || target === 'cell-w') && cellId) {
+      // Tìm leaf cell để lấy chiều rộng
       const findCell = (node: SceneCellNode): SceneCellNode | null => {
         if (node.id === cellId) return node;
         if (node.children) {
@@ -257,72 +275,77 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
       className="relative flex-1 flex flex-col h-full bg-slate-50 overflow-hidden border-x border-gray-200 select-none"
     >
       {/* Top Floating Zoom Controls */}
-      <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/95 backdrop-blur p-1 rounded-xl shadow-md border border-gray-200 z-10">
+      <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/95 backdrop-blur p-1 rounded-lg shadow-2xs border border-slate-200 z-10">
         <button
           type="button"
           title="Phóng to"
           onClick={handleZoomIn}
-          className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-700 transition-colors cursor-pointer"
+          className="w-7 h-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
         >
-          <Plus size={16} />
+          <Plus size={15} />
         </button>
         <button
           type="button"
           title="Thu nhỏ"
           onClick={handleZoomOut}
-          className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-700 transition-colors cursor-pointer"
+          className="w-7 h-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
         >
-          <Minus size={16} />
+          <Minus size={15} />
         </button>
-        <div className="w-px h-4 bg-gray-300 mx-0.5" />
+        <div className="w-px h-3.5 bg-slate-200 mx-0.5" />
         <button
           type="button"
           title="Đặt lại góc nhìn"
           onClick={handleResetZoom}
-          className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-700 transition-colors cursor-pointer"
+          className="w-7 h-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
         >
-          <Target size={15} />
+          <Target size={14} />
         </button>
       </div>
 
       {/* Inline Quick Dimension Edit Popover */}
       {editTarget && (
-        <div className="absolute top-3 left-3 bg-white p-3 rounded-2xl shadow-xl border border-blue-200 z-20 flex flex-col gap-2 w-64 animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center justify-between text-xs font-bold text-gray-800">
-            <span>{editTarget.title}</span>
+        <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-2 rounded-xl shadow-lg border border-blue-200 z-20 flex flex-col gap-1.5 w-52 max-w-[calc(100%-24px)] animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center justify-between gap-1.5 text-[11px] font-bold text-gray-800">
+            <span className="truncate" title={editTarget.title}>{editTarget.title}</span>
             <button
               type="button"
               onClick={() => setEditTarget(null)}
-              className="p-0.5 text-gray-400 hover:text-gray-700"
+              className="p-0.5 text-gray-400 hover:text-gray-700 shrink-0 cursor-pointer"
             >
-              <X size={14} />
+              <X size={13} />
             </button>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              autoFocus
-              value={inputVal}
-              onChange={(e) => setInputVal(Number(e.target.value))}
-              onKeyDown={(e) => e.key === 'Enter' && handleConfirmEdit()}
-              className="flex-1 h-8 px-2.5 font-mono font-bold text-sm rounded-lg border border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-            <span className="text-xs text-gray-500 font-medium">mm</span>
+          <div className="flex items-center gap-1.5">
+            <div className="relative flex-1">
+              <input
+                type="number"
+                autoFocus
+                value={inputVal}
+                onChange={(e) => setInputVal(Number(e.target.value))}
+                onKeyDown={(e) => e.key === 'Enter' && handleConfirmEdit()}
+                className="w-full h-7 pl-2 pr-6 font-mono font-bold text-xs rounded-md border border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 font-medium select-none pointer-events-none">
+                mm
+              </span>
+            </div>
             <button
               type="button"
               onClick={handleConfirmEdit}
-              className="h-8 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center cursor-pointer shadow-xs"
+              className="h-7 w-7 rounded-md bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shrink-0 cursor-pointer shadow-xs"
+              title="Xác nhận"
             >
-              <Check size={14} />
+              <Check size={13} />
             </button>
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-gray-500">
+          <div className="flex items-center justify-between gap-1 text-[9.5px] text-gray-500 pt-0.5 border-t border-gray-100">
             {[-50, -10, 10, 50].map((delta) => (
               <button
                 key={delta}
                 type="button"
                 onClick={() => setInputVal((prev) => Math.max(100, prev + delta))}
-                className="px-1.5 py-0.5 rounded bg-gray-100 hover:bg-gray-200 font-mono text-gray-700"
+                className="flex-1 py-0.5 rounded bg-gray-50 hover:bg-gray-200/80 font-mono text-gray-600 border border-gray-100 text-center cursor-pointer transition-colors"
               >
                 {delta > 0 ? `+${delta}` : delta}
               </button>
@@ -352,9 +375,9 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
       >
-        {/* Khung nền trắng Artboard cố định: Hiển thị full chiều cao, không bị co kéo hay zoom theo cửa */}
-        <div className="relative w-full h-full bg-white rounded-2xl shadow-sm border border-gray-200/90 overflow-hidden flex items-center justify-center">
-          {/* Lớp hiển thị & tương tác cửa CAD: Chỉ thu phóng và dịch chuyển cửa bên trong khung nền trắng */}
+        {/* Khung nền trắng Artboard cố định */}
+        <div className="relative w-full h-full bg-white rounded-xl shadow-2xs border border-slate-200 overflow-hidden flex items-center justify-center">
+          {/* Lớp hiển thị & tương tác cửa CAD */}
           <div
             className="w-full h-full flex items-center justify-center will-change-transform p-4 sm:p-8"
             style={{
@@ -386,23 +409,23 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
       </div>
 
       {/* Bottom Guide Bar */}
-      <div className="h-8 shrink-0 z-10 bg-white/95 border-t border-gray-200 px-3 sm:px-4 flex items-center justify-between text-[10px] sm:text-[11px] text-gray-500 font-medium">
+      <div className="h-8 shrink-0 z-10 bg-white/95 border-t border-slate-200 px-3 sm:px-4 flex items-center justify-between text-[11px] text-slate-500 font-medium">
         <div className="hidden sm:flex items-center gap-1.5 truncate">
-          <span className="text-gray-400">Hướng dẫn:</span>
+          <span className="text-slate-400">Hướng dẫn:</span>
           <span>Click ô = chọn</span>
-          <span className="text-gray-300">·</span>
+          <span className="text-slate-300">·</span>
           <span>Kéo nền ngoài = di chuyển</span>
-          <span className="text-gray-300">·</span>
-          <span>Scroll = zoom</span>
-          <span className="text-gray-300">·</span>
-          <span className="text-blue-600 font-semibold">Click số đo = sửa</span>
+          <span className="text-slate-300">·</span>
+          <span>Cuộn chuột = thu phóng</span>
+          <span className="text-slate-300">·</span>
+          <span className="text-primary font-semibold">Click số đo = sửa</span>
         </div>
-        <div className="sm:hidden text-gray-400 font-medium flex items-center gap-1.5">
-          <span>🖐️ 1 ngón: di chuyển</span>
-          <span className="text-gray-300">·</span>
-          <span>👌 2 ngón: thu phóng</span>
+        <div className="sm:hidden text-slate-400 font-medium flex items-center gap-1.5">
+          <span>1 ngón: di chuyển</span>
+          <span className="text-slate-300">·</span>
+          <span>2 ngón: thu phóng</span>
         </div>
-        <div className="font-mono text-gray-400 text-right ml-auto">
+        <div className="text-slate-400 text-right ml-auto font-medium">
           {Math.round(zoom * 100)}%
         </div>
       </div>

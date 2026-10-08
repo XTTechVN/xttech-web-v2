@@ -179,7 +179,7 @@ interface CadRectangularLeafProps {
   sashJoint: SashCornerJoint;
   isOpenBottom: boolean;
   onSelectCell: (cellId: string | null) => void;
-  onEditDimension?: (target: 'w' | 'h' | 'cell' | 'handleHeight', cellId?: string) => void;
+  onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
 }
 
 /**

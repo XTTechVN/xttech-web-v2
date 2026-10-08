@@ -19,6 +19,7 @@ interface DoorStudioModalProps {
   isOpen: boolean;
   onClose: () => void;
   door?: Door | null;
+  defaultBrandId?: number | null;
 }
 
 const NAV_TABS = [
@@ -29,8 +30,8 @@ const NAV_TABS = [
   { id: 'accessories' as const, label: 'Phụ kiện', icon: Wrench },
 ];
 
-export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClose, door }) => {
-  const state = useDoorStudioState({ isOpen, onClose, door });
+export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClose, door, defaultBrandId }) => {
+  const state = useDoorStudioState({ isOpen, onClose, door, defaultBrandId });
 
   return (
     <Modal
@@ -38,8 +39,9 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
       onClose={onClose}
       bodyClassName="p-0 overflow-hidden flex flex-col h-full"
       title={
-        <div className="flex items-center justify-between w-full min-w-0 pr-1 sm:pr-4">
-          <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 overflow-x-auto no-scrollbar max-w-full">
+        <div className="flex items-center w-full min-w-0 pr-2">
+          {/* Segmented Navigation Tabs */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/70 overflow-x-auto no-scrollbar shrink-0">
             {NAV_TABS.map((t) => {
               const Icon = t.icon;
               const isActive = state.activeMainTab === t.id;
@@ -48,34 +50,31 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
                   key={t.id}
                   type="button"
                   onClick={() => state.setActiveMainTab(t.id)}
-                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer shrink-0 ${
                     isActive
-                      ? 'bg-blue-600 text-white shadow-xs ring-1 ring-blue-700/20'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                      ? 'bg-primary text-white shadow-2xs font-bold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                   }`}
                 >
-                  <Icon size={13} className="sm:w-3.5 sm:h-3.5" />
+                  <Icon size={14} />
                   <span>{t.label}</span>
                 </button>
               );
             })}
           </div>
-          <div className="text-xs font-semibold text-slate-500 font-mono hidden md:block shrink-0 pl-2">
-            {state.name} ({state.w}×{state.h}mm)
-          </div>
         </div>
       }
       size="full"
       footer={
-        <div className="flex items-center justify-between w-full px-1 sm:px-2 py-0.5 sm:py-1">
-          <div className="text-xs text-gray-500 hidden sm:block truncate pr-2">
+        <div className="flex items-center justify-between w-full px-2 py-1">
+          <div className="text-xs text-slate-500 hidden sm:block truncate pr-2">
             Bản vẽ CAD vector và bảng bóc tách tự động cập nhật
           </div>
           <div className="flex items-center gap-2 ml-auto">
             <button
               type="button"
               onClick={onClose}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors shrink-0"
+              className="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors shrink-0 cursor-pointer"
             >
               Đóng
             </button>
@@ -83,7 +82,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
               type="button"
               onClick={() => state.saveMutation()}
               disabled={state.isSaving}
-              className="px-4 sm:px-5 py-1.5 sm:py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-xs flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer shrink-0 font-bold"
+              className="px-4.5 py-2 text-xs font-bold rounded-lg bg-primary hover:bg-primary/90 text-white shadow-2xs flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer shrink-0"
             >
               {state.isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               <span>Lưu thiết kế</span>
@@ -98,6 +97,8 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
             name={state.name}
             code={state.code}
             type={state.type}
+            brandId={state.selectedBrandId ?? undefined}
+            brandsList={state.availableBrands}
             seriesId={state.seriesId}
             specification={`${state.w}×${state.h}mm, ${state.frameShape}`}
             w={state.w}
@@ -113,6 +114,12 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
               else if (field === 'name') state.setName(val);
               else if (field === 'code') state.setCode(val);
               else if (field === 'type') state.setType(val);
+              else if (field === 'brandId') {
+                state.setSelectedBrandId(val ?? null);
+                // Tìm series thuộc brand mới và gán mặc định
+                const nextSeries = state.allAvailableSeries.filter((s) => !val || s.brandId === val);
+                state.setSeriesId(nextSeries[0]?.id || undefined);
+              }
               else if (field === 'aluminumColor') state.setAluminumColor(val);
               else if (field === 'hardwareColor') state.setHardwareColor(val);
               else if (field === 'seriesId') state.setSeriesId(val);

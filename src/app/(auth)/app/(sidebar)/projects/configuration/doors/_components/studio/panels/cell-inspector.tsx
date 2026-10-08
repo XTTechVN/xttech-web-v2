@@ -3,7 +3,7 @@
 import React from 'react';
 import { Glass, ProfileBar } from '@/types';
 import { SceneCellNode, PaneType, BeadType, BeadJointType } from '../studio-types';
-import { ShieldCheck, Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, Square } from 'lucide-react';
+import { ShieldCheck, Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, Square, DoorClosed } from 'lucide-react';
 
 interface CellInspectorProps {
   selectedCell: SceneCellNode | null;
@@ -14,7 +14,7 @@ interface CellInspectorProps {
   availableGlasses?: Glass[];
   availableBeads?: ProfileBar[];
   defaultGlass?: Glass | null;
-  onUpdateDimension?: (target: 'cell', value: number, cellId: string) => void;
+  onUpdateDimension?: (target: 'cell' | 'cell-w' | 'cell-h', value: number, cellId: string) => void;
   onOpenGrilleModal?: (cell: SceneCellNode) => void;
 }
 
@@ -52,13 +52,13 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
 
   const handleApplyW = () => {
     if (onUpdateDimension && selectedCell && localW > 0 && localW !== selectedCell.w) {
-      onUpdateDimension('cell', localW, selectedCell.id);
+      onUpdateDimension('cell-w', localW, selectedCell.id);
     }
   };
 
   const handleApplyH = () => {
     if (onUpdateDimension && selectedCell && localH > 0 && localH !== selectedCell.h) {
-      onUpdateDimension('cell', localH, selectedCell.id);
+      onUpdateDimension('cell-h', localH, selectedCell.id);
     }
   };
 
@@ -70,53 +70,56 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
       : GLASS_OPTIONS.map((name, idx) => ({ key: `fallback-${idx}`, label: name }));
   if (!selectedCell) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-gray-400 select-none">
-        <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3 border border-slate-200">
-          <Grid size={24} />
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-slate-400 select-none">
+        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3 border border-slate-200">
+          <Grid size={22} />
         </div>
-        <div className="font-semibold text-gray-700 text-xs mb-1">Chưa chọn ô kính nào</div>
-        <p className="text-[11px] text-gray-400 max-w-[200px] leading-relaxed">
-          Bấm vào từng ô kính trên bản vẽ 2D để tùy chỉnh vật liệu kính, lưới chống muỗi, nan chớp và nẹp.
+        <div className="font-semibold text-slate-700 text-xs mb-1">Chưa chọn ô kính</div>
+        <p className="text-[11px] text-slate-400 max-w-[200px] leading-relaxed">
+          Bấm vào ô kính trên bản vẽ 2D để tùy chỉnh vật liệu kính, phụ kiện và nẹp kính.
         </p>
       </div>
     );
   }
 
-  const paneOptions: Array<{ id: PaneType; label: string; icon: string }> = [
-    { id: 'glass', label: 'Kính', icon: '🪟' },
-    { id: 'screen', label: 'Lưới muỗi', icon: '🦟' },
-    { id: 'louver', label: 'Nan chớp', icon: '📑' },
-    { id: 'panel', label: 'Panel nhôm', icon: '⬛' },
+  const paneOptions: Array<{ id: PaneType; label: string }> = [
+    { id: 'glass', label: 'Kính' },
+    { id: 'screen', label: 'Lưới muỗi' },
+    { id: 'louver', label: 'Nan chớp' },
+    { id: 'panel', label: 'Panel nhôm' },
   ];
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto space-y-3.5 p-3.5 text-xs select-none bg-white">
+    <div className="flex flex-col h-full overflow-y-auto space-y-3 p-3.5 text-xs select-none bg-white">
       {/* 1. Header Box */}
-      <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-        <div className="flex items-center gap-1.5 font-bold text-gray-800 text-xs">
-          <Sparkles size={14} className="text-amber-500" />
-          <span>Tùy chọn ô kính</span>
+      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
+          <SlidersHorizontal size={14} className="text-primary" />
+          <span>Thuộc tính ô kính</span>
         </div>
         <button
           type="button"
           onClick={onDeselect}
-          className="text-[11px] text-blue-600 hover:underline cursor-pointer"
+          className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
         >
-          Đóng ô
+          Bỏ chọn
         </button>
       </div>
 
       {/* 2. Cell Dimensions */}
-      <div className="p-2.5 rounded-xl bg-blue-50/60 border border-blue-100 space-y-2">
-        <div className="flex items-center justify-between text-blue-700 font-medium">
+      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+        <div className="flex items-center justify-between text-slate-600 font-medium text-xs">
           <span>Kích thước ô cánh:</span>
-          <span className="font-mono font-bold text-blue-900 text-xs">
+          <span className="font-bold text-slate-900">
             {selectedCell.w} × {selectedCell.h} mm
           </span>
         </div>
         <div className="grid grid-cols-2 gap-2 pt-0.5">
           <div>
-            <label className="text-[10px] text-blue-600 font-semibold block mb-0.5">Rộng W (mm)</label>
+            <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
+              <span>Rộng (W)</span>
+              <span className="text-[10px] text-slate-400">mm</span>
+            </div>
             <input
               type="number"
               value={localW}
@@ -125,11 +128,14 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 if (e.key === 'Enter') handleApplyW();
               }}
               onBlur={handleApplyW}
-              className="w-full h-7 px-2 font-mono font-bold text-xs rounded-lg border border-blue-200 bg-white text-blue-950 focus:outline-none focus:border-blue-500"
+              className="w-full h-7 px-2 font-bold text-xs rounded border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-primary text-center"
             />
           </div>
           <div>
-            <label className="text-[10px] text-blue-600 font-semibold block mb-0.5">Cao H (mm)</label>
+            <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
+              <span>Cao (H)</span>
+              <span className="text-[10px] text-slate-400">mm</span>
+            </div>
             <input
               type="number"
               value={localH}
@@ -138,16 +144,17 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 if (e.key === 'Enter') handleApplyH();
               }}
               onBlur={handleApplyH}
-              className="w-full h-7 px-2 font-mono font-bold text-xs rounded-lg border border-blue-200 bg-white text-blue-950 focus:outline-none focus:border-blue-500"
+              className="w-full h-7 px-2 font-bold text-xs rounded border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-primary text-center"
             />
           </div>
         </div>
       </div>
 
       {/* 3. Kiểu mở riêng ô này */}
-      <div className="space-y-1.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-        <div className="flex items-center gap-1 text-gray-700 font-semibold text-xs mb-1">
-          <span>🚪 Kiểu mở riêng ô này</span>
+      <div className="space-y-1.5 p-3 rounded-lg bg-slate-50 border border-slate-200">
+        <div className="flex items-center gap-1.5 text-slate-800 font-semibold text-xs mb-1">
+          <DoorClosed size={13} className="text-primary" />
+          <span>Kiểu mở riêng ô này</span>
         </div>
         <select
           value={selectedCell.sashType || 'fixed'}
@@ -244,11 +251,11 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
 
       {/* 4. Loại vật liệu tấm (Pane Type) */}
       <div className="space-y-2">
-        <div className="flex items-center gap-1 text-gray-700 font-semibold text-xs">
+        <div className="flex items-center gap-1.5 text-slate-800 font-semibold text-xs">
           <Layers size={13} className="text-primary" />
-          <span>Loại vật liệu tấm</span>
+          <span>Vật liệu tấm</span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           {paneOptions.map((opt) => {
             const isSelected = selectedCell.paneType === opt.id;
             return (
@@ -256,15 +263,14 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 key={opt.id}
                 type="button"
                 onClick={() => onUpdateCell({ paneType: opt.id })}
-                className={`p-2 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer ${
+                className={`p-2 rounded-lg border text-left flex items-center justify-between transition-all cursor-pointer ${
                   isSelected
-                    ? 'border-blue-500 bg-blue-50/70 font-semibold text-blue-800 shadow-2xs'
-                    : 'border-gray-200 bg-gray-50/50 hover:bg-gray-100 text-gray-700'
+                    ? 'border-primary bg-primary/10 font-semibold text-primary shadow-2xs'
+                    : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
                 }`}
               >
-                <span className="text-base">{opt.icon}</span>
                 <span className="text-xs">{opt.label}</span>
-                {isSelected && <Check size={13} className="ml-auto text-blue-600" />}
+                {isSelected && <Check size={13} className="text-primary shrink-0" />}
               </button>
             );
           })}
@@ -273,18 +279,18 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
 
       {/* 4. Kính (khi chọn Pane = Glass) */}
       {selectedCell.paneType === 'glass' && (
-        <div className="space-y-2 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-          <div className="flex items-center gap-1.5 text-gray-800 font-bold text-xs">
-            <span className="text-base">🪟</span>
-            <span>Kính</span>
+        <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
+          <div className="flex items-center gap-1.5 text-slate-800 font-semibold text-xs">
+            <Square size={13} className="text-primary" />
+            <span>Kính ô cửa</span>
           </div>
 
           <div>
-            <label className="text-[11px] text-gray-600 font-medium block mb-1">Loại kính cho ô này:</label>
+            <label className="text-[11px] text-slate-600 font-medium block mb-1">Loại kính cho ô này:</label>
             <select
               value={selectedCell.glassName || ''}
               onChange={(e) => onUpdateCell({ glassName: e.target.value || undefined })}
-              className="w-full h-8 px-2.5 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 font-medium text-slate-800"
+              className="w-full h-8 px-2.5 text-xs bg-white rounded-md border border-slate-200 focus:outline-none focus:border-primary text-slate-800"
             >
               <option value="">— Dùng kính mặc định —</option>
               {glassOptions.map(({ key, label }) => (
@@ -317,21 +323,21 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
       )}
 
       {/* 5. Tùy chỉnh nẹp (Custom Edge Beads) */}
-      <div className="space-y-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+      <div className="space-y-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200">
         <div>
-          <div className="flex items-center gap-1.5 text-gray-800 font-bold text-xs">
-            <span className="text-base">🔲</span>
-            <span>Tùy chỉnh nẹp</span>
+          <div className="flex items-center gap-1.5 text-slate-800 font-semibold text-xs">
+            <SlidersHorizontal size={13} className="text-primary" />
+            <span>Tùy chỉnh nẹp kính</span>
           </div>
-          <p className="text-[10.5px] text-gray-500 mt-0.5">Chọn nẹp cho cạnh cần thay</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Chọn nẹp riêng cho từng cạnh ô</p>
         </div>
 
         {/* Nẹp ngang */}
         <div className="space-y-1.5">
-          <div className="text-[11px] font-bold text-slate-700">Nẹp ngang</div>
+          <div className="text-[11px] font-semibold text-slate-700">Nẹp ngang</div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <span className="text-[10px] text-gray-500 font-semibold block mb-0.5">Dưới</span>
+              <span className="text-[10px] text-slate-500 font-medium block mb-0.5">Dưới</span>
               <select
                 value={selectedCell.customBeads?.bottom || ''}
                 onChange={(e) => {
@@ -340,7 +346,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                     customBeads: { ...selectedCell.customBeads, bottom: val },
                   });
                 }}
-                className="w-full h-7 px-1.5 text-[11px] bg-white rounded-md border border-gray-300 focus:outline-none focus:border-blue-500"
+                className="w-full h-7 px-1.5 text-[11px] bg-white rounded border border-slate-200 focus:outline-none focus:border-primary text-slate-800"
               >
                 <option value="">— Mặc định —</option>
                 {availableBeads?.map((b) => (
@@ -351,7 +357,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
               </select>
             </div>
             <div>
-              <span className="text-[10px] text-gray-500 font-semibold block mb-0.5">Trên</span>
+              <span className="text-[10px] text-slate-500 font-medium block mb-0.5">Trên</span>
               <select
                 value={selectedCell.customBeads?.top || ''}
                 onChange={(e) => {
@@ -360,7 +366,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                     customBeads: { ...selectedCell.customBeads, top: val },
                   });
                 }}
-                className="w-full h-7 px-1.5 text-[11px] bg-white rounded-md border border-gray-300 focus:outline-none focus:border-blue-500"
+                className="w-full h-7 px-1.5 text-[11px] bg-white rounded border border-slate-200 focus:outline-none focus:border-primary text-slate-800"
               >
                 <option value="">— Mặc định —</option>
                 {availableBeads?.map((b) => (
@@ -375,10 +381,10 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
 
         {/* Nẹp đứng */}
         <div className="space-y-1.5">
-          <div className="text-[11px] font-bold text-slate-700">Nẹp đứng</div>
+          <div className="text-[11px] font-semibold text-slate-700">Nẹp đứng</div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <span className="text-[10px] text-gray-500 font-semibold block mb-0.5">Trái</span>
+              <span className="text-[10px] text-slate-500 font-medium block mb-0.5">Trái</span>
               <select
                 value={selectedCell.customBeads?.left || ''}
                 onChange={(e) => {
@@ -387,7 +393,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                     customBeads: { ...selectedCell.customBeads, left: val },
                   });
                 }}
-                className="w-full h-7 px-1.5 text-[11px] bg-white rounded-md border border-gray-300 focus:outline-none focus:border-blue-500"
+                className="w-full h-7 px-1.5 text-[11px] bg-white rounded border border-slate-200 focus:outline-none focus:border-primary text-slate-800"
               >
                 <option value="">— Mặc định —</option>
                 {availableBeads?.map((b) => (
@@ -398,7 +404,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
               </select>
             </div>
             <div>
-              <span className="text-[10px] text-gray-500 font-semibold block mb-0.5">Phải</span>
+              <span className="text-[10px] text-slate-500 font-medium block mb-0.5">Phải</span>
               <select
                 value={selectedCell.customBeads?.right || ''}
                 onChange={(e) => {
@@ -407,7 +413,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                     customBeads: { ...selectedCell.customBeads, right: val },
                   });
                 }}
-                className="w-full h-7 px-1.5 text-[11px] bg-white rounded-md border border-gray-300 focus:outline-none focus:border-blue-500"
+                className="w-full h-7 px-1.5 text-[11px] bg-white rounded border border-slate-200 focus:outline-none focus:border-primary text-slate-800"
               >
                 <option value="">— Mặc định —</option>
                 {availableBeads?.map((b) => (
@@ -421,8 +427,8 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
         </div>
 
         {/* Góc cắt ngàm nẹp */}
-        <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
-          <span className="text-[11px] text-gray-500">Góc cắt ngàm nẹp:</span>
+        <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+          <span className="text-[11px] text-slate-600">Góc cắt ngàm nẹp:</span>
           <div className="flex items-center gap-1">
             {[
               { id: '90', label: 'Cắt 90°' },
@@ -434,8 +440,8 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                   key={joint.id}
                   type="button"
                   onClick={() => onUpdateCell({ beadJoint: joint.id as BeadJointType })}
-                  className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
-                    isSelected ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
+                    isSelected ? 'bg-primary text-white shadow-2xs' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                   }`}
                 >
                   {joint.label}
@@ -448,28 +454,25 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
 
       {/* 5.1. Kính nan đồng */}
       {selectedCell.paneType === 'glass' && (
-        <div className="space-y-2.5 p-3 rounded-xl bg-amber-50/60 border border-amber-200/80">
-          <div>
-            <div className="font-bold text-amber-950 text-xs flex items-center justify-between">
+        <div className="space-y-2 p-3 rounded-lg bg-amber-50/60 border border-amber-200">
+          <div className="flex items-center justify-between">
+            <div className="font-semibold text-amber-950 text-xs flex items-center gap-1.5">
+              <Sparkles size={13} className="text-amber-600" />
               <span>Kính nan đồng</span>
-              {selectedCell.grilleConfig?.enabled && (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900">
-                  {selectedCell.grilleConfig.cols}x{selectedCell.grilleConfig.rows}
-                </span>
-              )}
             </div>
-            <p className="text-[10.5px] text-amber-800/80 mt-0.5 leading-snug">
-              Thiết kế nan và hoa văn cho tấm kính đang chọn.
-            </p>
+            {selectedCell.grilleConfig?.enabled && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-200/80 text-amber-900">
+                {selectedCell.grilleConfig.cols}×{selectedCell.grilleConfig.rows}
+              </span>
+            )}
           </div>
 
-          <div className="space-y-1.5 pt-0.5">
+          <div className="grid grid-cols-2 gap-1.5 pt-1">
             <button
               type="button"
               onClick={() => onOpenGrilleModal?.(selectedCell)}
-              className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+              className="py-1.5 px-2 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1 shadow-2xs"
             >
-              <Sparkles size={14} />
               <span>Thiết kế</span>
             </button>
             <button
@@ -485,7 +488,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                   });
                 }
               }}
-              className="w-full py-1.5 px-3 rounded-xl bg-amber-100/70 hover:bg-amber-200/60 text-amber-900 border border-amber-300/70 font-semibold text-xs transition-colors cursor-pointer"
+              className="py-1.5 px-2 rounded-md bg-white hover:bg-amber-100/60 text-amber-900 border border-amber-300 font-semibold text-xs transition-colors cursor-pointer"
             >
               Căn tim nan
             </button>
@@ -494,29 +497,29 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
       )}
 
       {/* 6. Thao tác chia đố trong ô này */}
-      <div className="space-y-2 pt-1 border-t border-gray-100">
-        <div className="text-gray-700 font-semibold text-xs">Chia đố riêng ô này</div>
-        <div className="grid grid-cols-2 gap-2">
+      <div className="space-y-2 pt-2 border-t border-slate-100">
+        <div className="text-slate-700 font-semibold text-xs">Chia đố riêng ô này</div>
+        <div className="grid grid-cols-2 gap-1.5">
           <button
             type="button"
             onClick={() => onSplitCell('vertical')}
-            className="py-1.5 px-2 rounded-lg bg-white border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 text-[11px] cursor-pointer"
+            className="py-1.5 px-2 rounded-md bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
           >
-            | Chia dọc làm 2
+            Chia dọc làm 2
           </button>
           <button
             type="button"
             onClick={() => onSplitCell('horizontal')}
-            className="py-1.5 px-2 rounded-lg bg-white border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 text-[11px] cursor-pointer"
+            className="py-1.5 px-2 rounded-md bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
           >
-            — Chia ngang làm 2
+            Chia ngang làm 2
           </button>
         </div>
         {selectedCell.children && selectedCell.children.length > 0 && (
           <button
             type="button"
             onClick={onMergeCell}
-            className="w-full py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold text-[11px] hover:bg-red-100 transition-colors cursor-pointer"
+            className="w-full py-1.5 rounded-md bg-rose-50 text-rose-600 border border-rose-200 font-semibold text-xs hover:bg-rose-100 transition-colors cursor-pointer"
           >
             Gộp ô (Xóa đố con)
           </button>

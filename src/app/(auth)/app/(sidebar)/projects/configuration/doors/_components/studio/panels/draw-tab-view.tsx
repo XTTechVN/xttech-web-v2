@@ -48,7 +48,7 @@ interface DrawTabViewProps {
   onCoupleFrame: (direction: 'vertical' | 'horizontal') => void;
   onChangeTab: (tab: 'frame' | 'sash') => void;
   onSelectCell: (id: string | null) => void;
-  onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'handleHeight', value: number, cellId?: string) => void;
+  onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', value: number, cellId?: string) => void;
   onResizeSplit?: (params: import('../cad-engine/door-cad-renderer').ResizeSplitParams) => void;
   onUpdateSelectedCell: (updates: Partial<SceneCellNode>) => void;
   onSplitSelectedCell: (direction: 'vertical' | 'horizontal') => void;
@@ -233,30 +233,34 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
       </div>
 
       {/* 3. Right Inspector & BOM (Desktop lg+) */}
-      <div className="w-[320px] xl:w-[340px] shrink-0 h-full bg-white hidden lg:flex flex-col border-l border-gray-200">
-        <div className="h-10 px-3 border-b border-gray-200 flex items-center gap-2 bg-slate-50/60 shrink-0">
-          <button
-            type="button"
-            onClick={() => setRightTab('inspector')}
-            className={`text-xs font-bold pb-2 pt-2 border-b-2 transition-colors cursor-pointer ${
-              rightTab === 'inspector'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-900'
-            }`}
-          >
-            🔎 Thuộc tính ô
-          </button>
-          <button
-            type="button"
-            onClick={() => setRightTab('bom')}
-            className={`text-xs font-bold pb-2 pt-2 border-b-2 transition-colors cursor-pointer ${
-              rightTab === 'bom'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-900'
-            }`}
-          >
-            📊 BOM Bóc tách
-          </button>
+      <div className="w-[320px] xl:w-[340px] shrink-0 h-full bg-white hidden lg:flex flex-col border-l border-slate-200">
+        <div className="p-2 border-b border-slate-200 flex items-center bg-slate-50/70 shrink-0">
+          <div className="grid grid-cols-2 gap-1 w-full p-1 bg-slate-100 rounded-lg border border-slate-200/80">
+            <button
+              type="button"
+              onClick={() => setRightTab('inspector')}
+              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                rightTab === 'inspector'
+                  ? 'bg-primary text-white shadow-2xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              }`}
+            >
+              <Sliders size={13} />
+              <span>Thuộc tính ô</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRightTab('bom')}
+              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                rightTab === 'bom'
+                  ? 'bg-primary text-white shadow-2xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              }`}
+            >
+              <BarChart3 size={13} />
+              <span>Bóc tách BOM</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">

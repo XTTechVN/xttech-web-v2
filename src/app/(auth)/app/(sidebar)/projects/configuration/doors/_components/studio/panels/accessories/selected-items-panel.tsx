@@ -66,87 +66,93 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
 
       {/* Empty State matching Reference Image 2 */}
       {totalCount === 0 ? (
-        <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center bg-white/60 space-y-1.5">
-          <p className="text-xs text-gray-500 font-medium">
-            Chưa có combo phụ kiện nào được gán cho cửa này.
+        <div className="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center bg-white/70 space-y-2">
+          <div className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+            <Boxes size={22} />
+          </div>
+          <p className="text-xs font-semibold text-slate-700">
+            Chưa có combo phụ kiện nào được gán cho cửa này
           </p>
-          <p className="text-[11px] text-gray-400">
-            💡 Chọn các tab ở trên (Khung, Cánh, Hướng mở) để gán combo có sẵn.
+          <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+            Chọn các mục ở cột bên trái (Khung, Cánh, Hướng mở hoặc Phụ kiện lẻ) để gán vật tư tương ứng.
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {/* Selected Combos Grid */}
+        <div className="space-y-2.5">
+          {/* Selected Combos List */}
           {selectedCombos.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {selectedCombos.map((c) => {
-                const cat = detectComboCategory(c);
-                const isExpanded = expandedComboId === c.id;
-                return (
-                  <div
-                    key={c.id}
-                    className="p-3 bg-white border border-blue-200 rounded-xl shadow-2xs space-y-2"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                            {categoryLabels[cat] || 'Combo'}
-                          </span>
-                          <span className="font-bold text-xs text-gray-900 truncate" title={c.name}>
-                            {c.name}
-                          </span>
-                        </div>
-                        <div className="text-[11px] text-gray-400 font-mono mt-0.5">
-                          {c.code || '---'} · {c.comboItems?.length || 0} món ·{' '}
-                          <span className="font-bold text-blue-700">
-                            {c.totalComboPrice ? `${c.totalComboPrice.toLocaleString('vi-VN')} đ` : 'Liên hệ'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Immediate cancel button */}
-                      <button
-                        type="button"
-                        onClick={() => onToggleCombo(c.id)}
-                        className="px-2 py-1 rounded-lg text-[11px] font-semibold text-rose-600 hover:text-white hover:bg-rose-600 bg-rose-50 border border-rose-200 transition-all flex items-center gap-0.5 cursor-pointer shrink-0"
-                        title="Hủy bỏ combo này"
-                      >
-                        <X size={12} />
-                        <span>Hủy</span>
-                      </button>
-                    </div>
-
-                    {/* Expand Details */}
-                    {c.comboItems && c.comboItems.length > 0 && (
-                      <div className="border-t border-gray-100 pt-1 text-[11px]">
-                        <button
-                          type="button"
-                          onClick={() => setExpandedComboId(isExpanded ? null : c.id)}
-                          className="text-gray-400 hover:text-blue-600 flex items-center gap-1 cursor-pointer"
-                        >
-                          <span>{isExpanded ? 'Ẩn chi tiết' : 'Xem chi tiết'}</span>
-                          {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-                        </button>
-                        {isExpanded && (
-                          <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-blue-200 text-gray-600">
-                            {c.comboItems.map((item, idx) => (
-                              <div key={idx} className="flex justify-between">
-                                <span className="truncate pr-2">
-                                  {idx + 1}. {item.accessoryName || item.accessoryCode}
-                                </span>
-                                <span className="font-mono text-gray-500 shrink-0">
-                                  x{item.quantity}
-                                </span>
-                              </div>
-                            ))}
+            <div className="bg-white border border-primary/20 rounded-xl overflow-hidden shadow-2xs">
+              <div className="px-3.5 py-2 bg-primary/5 border-b border-primary/10 font-bold text-[11px] text-primary flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Boxes size={13} />
+                  <span>Combo phụ kiện đã chọn ({selectedCombos.length})</span>
+                </div>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {selectedCombos.map((c) => {
+                  const cat = detectComboCategory(c);
+                  const isExpanded = expandedComboId === c.id;
+                  const price = c.totalComboPrice || 0;
+                  return (
+                    <div key={c.id} className="p-3 hover:bg-slate-50/50 transition-colors space-y-2">
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0">
+                              {categoryLabels[cat] || 'Combo'}
+                            </span>
+                            <span className="font-bold text-slate-900 truncate" title={c.name}>
+                              {c.name}
+                            </span>
                           </div>
-                        )}
+                          <div className="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-2">
+                            <span>{c.code || '---'}</span>
+                            <span>·</span>
+                            <span>{c.comboItems?.length || 0} vật tư</span>
+                            <button
+                              type="button"
+                              onClick={() => setExpandedComboId(isExpanded ? null : c.id)}
+                              className="text-primary hover:underline font-sans cursor-pointer font-medium"
+                            >
+                              {isExpanded ? 'Ẩn chi tiết' : 'Xem chi tiết'}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2.5 shrink-0">
+                          <span className={`font-mono text-xs ${price > 0 ? 'font-bold text-primary' : 'text-slate-400'}`}>
+                            {price > 0 ? `${price.toLocaleString('vi-VN')} đ` : '-'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => onToggleCombo(c.id)}
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer transition-colors"
+                            title="Hủy combo này"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+
+                      {/* Expand Details */}
+                      {isExpanded && c.comboItems && c.comboItems.length > 0 && (
+                        <div className="p-2 bg-slate-50/80 rounded-lg border border-slate-200/60 text-[11px] space-y-1">
+                          {c.comboItems.map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center text-slate-600">
+                              <span className="truncate pr-2">
+                                {idx + 1}. {item.accessoryName || item.accessoryCode || `Phụ kiện #${item.accessoryId}`}
+                              </span>
+                              <span className="font-mono text-slate-400 shrink-0 font-medium">
+                                ×{item.quantity} {item.unit || ''}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

@@ -46,74 +46,72 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
   });
 
   return (
-    <div className="p-3 sm:p-5 bg-slate-50/50 min-h-full">
-      <div className="max-w-6xl mx-auto space-y-3">
-        {/* Technical Stats Bar */}
-        <div className="bg-white border border-gray-200 rounded-lg px-4 py-2.5 shadow-2xs">
-          <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-4 text-xs text-gray-600">
-            <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-5 gap-y-1">
-              <div>
-                <span className="text-gray-400">Kích thước: </span>
-                <span className="font-mono font-bold text-gray-900">{w}×{h}</span>
-                <span className="text-gray-400 text-[11px]"> mm</span>
-              </div>
-              <span className="text-gray-200 hidden sm:inline">|</span>
-              <div>
-                <span className="text-gray-400">Diện tích: </span>
-                <span className="font-mono font-bold text-gray-900">{doorAreaM2.toFixed(2)}</span>
-                <span className="text-gray-400 text-[11px]"> m²</span>
-              </div>
-              <span className="text-gray-200 hidden sm:inline">|</span>
-              <div>
-                <span className="text-gray-400">Khối lượng nhôm: </span>
-                <span className="font-mono font-bold text-gray-900">{totalWeight.toFixed(2)}</span>
-                <span className="text-gray-400 text-[11px]"> kg</span>
-              </div>
-              <span className="text-gray-200 hidden sm:inline">|</span>
-              <div>
-                <span className="text-gray-400">Diện tích kính: </span>
-                <span className="font-mono font-bold text-gray-900">{totalGlassArea.toFixed(2)}</span>
-                <span className="text-gray-400 text-[11px]"> m²</span>
-              </div>
-              <span className="text-gray-200 hidden sm:inline">|</span>
-              <div>
-                <span className="text-gray-400">Tổng thanh cắt: </span>
-                <span className="font-mono font-bold text-gray-900">{totalCutBars}</span>
-                <span className="text-gray-400 text-[11px]"> thanh</span>
+    <div className="p-4 sm:p-6 bg-slate-50/60 min-h-full">
+      <div className="max-w-6xl mx-auto space-y-4">
+        {/* Technical Stats: KPI Cards Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs flex flex-col justify-between">
+            <span className="text-[11px] font-medium text-slate-400">Kích thước cửa (W×H)</span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="font-mono font-bold text-base text-slate-900">{w}×{h}</span>
+              <span className="text-[10px] text-slate-400 font-sans">mm</span>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs flex flex-col justify-between">
+            <span className="text-[11px] font-medium text-slate-400">Diện tích cửa</span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="font-mono font-bold text-base text-slate-900">{doorAreaM2.toFixed(2)}</span>
+              <span className="text-[10px] text-slate-400 font-sans">m²</span>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs flex flex-col justify-between">
+            <span className="text-[11px] font-medium text-slate-400">Khối lượng nhôm</span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="font-mono font-bold text-base text-primary">{totalWeight.toFixed(2)}</span>
+              <span className="text-[10px] text-slate-400 font-sans">kg</span>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs flex flex-col justify-between">
+            <span className="text-[11px] font-medium text-slate-400">Diện tích kính</span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="font-mono font-bold text-base text-emerald-600">{totalGlassArea.toFixed(2)}</span>
+              <span className="text-[10px] text-slate-400 font-sans">m²</span>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs flex flex-col justify-between col-span-2 sm:col-span-1">
+            <span className="text-[11px] font-medium text-slate-400">Tổng thanh cắt</span>
+            <div className="flex items-baseline justify-between mt-1">
+              <div className="flex items-baseline gap-1">
+                <span className="font-mono font-bold text-base text-slate-900">{totalCutBars}</span>
+                <span className="text-[10px] text-slate-400 font-sans">thanh</span>
               </div>
               {doorAreaM2 > 0 && totalWeight > 0 && (
-                <>
-                  <span className="text-gray-200 hidden md:inline">|</span>
-                  <div className="hidden md:block">
-                    <span className="text-gray-400">Tỷ trọng: </span>
-                    <span className="font-mono font-bold text-gray-900">
-                      {(totalWeight / doorAreaM2).toFixed(2)}
-                    </span>
-                    <span className="text-gray-400 text-[11px]"> kg/m²</span>
-                  </div>
-                </>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {(totalWeight / doorAreaM2).toFixed(1)} kg/m²
+                </span>
               )}
             </div>
-
-            {isCalculating && (
-              <span className="text-[11px] text-blue-600 font-medium">
-                Đang tính toán...
-              </span>
-            )}
           </div>
         </div>
 
         {/* Minimalist Issue Alert */}
         {issues.length > 0 && (
-          <div className="bg-amber-50/60 border border-amber-200/80 rounded-lg p-3 space-y-1.5 text-xs text-amber-900">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-medium">
-              <span>Lưu ý cấu hình ({issues.length} mục chưa hoàn tất):</span>
+          <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3.5 space-y-1.5 text-xs text-amber-900 shadow-2xs">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-semibold">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                Lưu ý cấu hình ({issues.length} mục cần kiểm tra lại):
+              </span>
               {onNavigateTab && (
                 <div className="flex items-center gap-2 text-[11px]">
                   <button
                     type="button"
                     onClick={() => onNavigateTab('config')}
-                    className="hover:underline text-amber-800 font-medium cursor-pointer"
+                    className="hover:underline text-amber-900 font-bold cursor-pointer"
                   >
                     Cấu hình nhôm →
                   </button>
@@ -121,7 +119,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onNavigateTab('accessories')}
-                    className="hover:underline text-blue-800 font-medium cursor-pointer"
+                    className="hover:underline text-blue-700 font-bold cursor-pointer"
                   >
                     Chọn phụ kiện & ke →
                   </button>
@@ -129,7 +127,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
               )}
             </div>
 
-            <ul className="space-y-0.5 text-[11px] text-amber-800/90 pl-3 list-disc">
+            <ul className="space-y-0.5 text-[11px] text-amber-800/90 pl-4 list-disc">
               {issues.map((msg, idx) => (
                 <li key={idx}>{msg}</li>
               ))}
@@ -139,22 +137,22 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
 
         {/* Sub-tab Navigation */}
         {!calcData ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500 space-y-1 shadow-2xs">
-            <p className="font-medium text-xs text-gray-700">Chưa có kết quả bóc tách vật tư</p>
-            <p className="text-[11px] text-gray-400">
-              Vui lòng hoàn tất cấu hình thanh profile ở tab Cấu hình để hệ thống tính toán.
+          <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-500 space-y-2 shadow-2xs">
+            <p className="font-bold text-sm text-slate-700">Chưa có kết quả bóc tách vật tư</p>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Vui lòng hoàn tất cấu hình thanh profile ở tab Cấu hình để hệ thống tự động bóc tách cắt nhôm, nẹp kính và kính.
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-2xs overflow-hidden">
-            <div className="border-b border-gray-200 px-3 pt-2 flex items-center gap-1 bg-gray-50/60 overflow-x-auto no-scrollbar">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+            <div className="border-b border-slate-200/80 px-4 pt-3 pb-2 flex items-center gap-1.5 bg-slate-50/50 overflow-x-auto no-scrollbar">
               <button
                 type="button"
                 onClick={() => setActiveSubTab('bars')}
-                className={`px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                   activeSubTab === 'bars'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-900'
+                    ? 'bg-primary/10 text-primary border border-primary/25 font-bold shadow-2xs'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70 hover:text-slate-900'
                 }`}
               >
                 1. Cắt thanh nhôm ({calcData.groupedBars?.length || calcData.bars?.length || 0})
@@ -162,10 +160,10 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveSubTab('beads')}
-                className={`px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                   activeSubTab === 'beads'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-900'
+                    ? 'bg-primary/10 text-primary border border-primary/25 font-bold shadow-2xs'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70 hover:text-slate-900'
                 }`}
               >
                 2. Cắt nẹp kính ({calcData.groupedBeads?.length || calcData.beads?.length || 0})
@@ -173,10 +171,10 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveSubTab('glass')}
-                className={`px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                   activeSubTab === 'glass'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-900'
+                    ? 'bg-primary/10 text-primary border border-primary/25 font-bold shadow-2xs'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70 hover:text-slate-900'
                 }`}
               >
                 3. Kích thước đặt kính ({calcData.cells?.length || 0})
@@ -185,10 +183,10 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveSubTab('grilles')}
-                  className={`px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     activeSubTab === 'grilles'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-900'
+                      ? 'bg-primary/10 text-primary border border-primary/25 font-bold shadow-2xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70 hover:text-slate-900'
                   }`}
                 >
                   4. Kính nan đồng ({calcData.grilles.length})
@@ -198,10 +196,10 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveSubTab('accessories')}
-                  className={`px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     activeSubTab === 'accessories'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-900'
+                      ? 'bg-primary/10 text-primary border border-primary/25 font-bold shadow-2xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70 hover:text-slate-900'
                   }`}
                 >
                   5. Phụ kiện ({calcData.accessories.length})

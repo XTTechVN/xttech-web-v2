@@ -56,27 +56,27 @@ export const IndividualAccessoriesView: React.FC<IndividualAccessoriesViewProps>
   return (
     <div className="space-y-3">
       {/* Search & Categories */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+      <div className="flex flex-col gap-2">
         <div className="relative flex-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm phụ kiện theo tên, mã (bản lề, khóa, ke góc, chốt...)"
-            className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full pl-9 pr-3 h-8.5 bg-white border border-slate-200/80 rounded-xl text-xs placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 shadow-2xs transition-all"
           />
         </div>
 
         {categories.length > 0 && (
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
             <button
               type="button"
               onClick={() => setSelectedCategory('all')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 selectedCategory === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  ? 'bg-slate-200 text-slate-900 border border-slate-300 font-bold'
+                  : 'bg-white border border-slate-200/70 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               Tất cả
@@ -86,10 +86,10 @@ export const IndividualAccessoriesView: React.FC<IndividualAccessoriesViewProps>
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-3 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap ${
                   selectedCategory === cat
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                    ? 'bg-primary/10 text-primary border border-primary/30 font-bold shadow-2xs'
+                    : 'bg-white border border-slate-200/70 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
                 {cat}
@@ -100,16 +100,16 @@ export const IndividualAccessoriesView: React.FC<IndividualAccessoriesViewProps>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto max-h-72 overflow-y-auto">
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse min-w-[500px]">
-            <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-xs z-10">
-              <tr className="border-b border-gray-200 text-gray-500 font-semibold text-[11px]">
-                <th className="py-2 px-3">Mã & Tên phụ kiện</th>
-                <th className="py-2 px-2">Phân loại</th>
-                <th className="py-2 px-2 text-center">ĐVT</th>
-                <th className="py-2 px-2 text-right">Đơn giá</th>
-                <th className="py-2 px-3 text-center w-28">Thao tác</th>
+            <thead className="sticky top-0 bg-slate-50/95 backdrop-blur-xs z-10">
+              <tr className="border-b border-slate-200 text-slate-500 font-semibold text-[11px]">
+                <th className="py-2.5 px-3.5">Mã & Tên phụ kiện</th>
+                <th className="py-2.5 px-3">Phân loại</th>
+                <th className="py-2.5 px-2.5 text-center">ĐVT</th>
+                <th className="py-2.5 px-3 text-right">Đơn giá</th>
+                <th className="py-2.5 px-3 text-center w-28">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-gray-700">
@@ -126,49 +126,49 @@ export const IndividualAccessoriesView: React.FC<IndividualAccessoriesViewProps>
                       isSelected ? 'bg-blue-50/30 hover:bg-blue-50/50' : 'hover:bg-gray-50'
                     }`}
                   >
-                    <td className="py-2 px-3">
-                      <div className="font-semibold text-gray-900">{acc.name}</div>
-                      <div className="text-[10px] text-gray-400 font-mono">
+                    <td className="py-2.5 px-3.5">
+                      <div className="font-semibold text-slate-900">{acc.name}</div>
+                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
                         {acc.code || '---'} {acc.specification && `| ${acc.specification}`}
                       </div>
                     </td>
-                    <td className="py-2 px-2 text-[11px] text-gray-500">
+                    <td className="py-2.5 px-3 text-[11px] text-slate-500">
                       {acc.category?.name || 'Phụ kiện lẻ'}
                     </td>
-                    <td className="py-2 px-2 text-center">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-mono">
+                    <td className="py-2.5 px-2.5 text-center">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono border border-slate-200/60">
                         {unitCfg ? unitCfg.label : acc.unit || 'Cái'}
                       </span>
                     </td>
-                    <td className="py-2 px-2 text-right font-mono font-semibold text-gray-900">
+                    <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
                       {price > 0 ? `${price.toLocaleString('vi-VN')} đ` : '-'}
                     </td>
-                    <td className="py-2 px-3 text-center">
+                    <td className="py-2.5 px-3 text-center">
                       {isSelected ? (
-                        <div className="inline-flex items-center gap-1 border border-blue-300 rounded-lg p-0.5 bg-white">
+                        <div className="inline-flex items-center gap-1 border border-primary/30 rounded-lg p-0.5 bg-primary/5">
                           <button
                             type="button"
                             onClick={() => onUpdateAccessoryQty(acc.id, -1)}
-                            className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-gray-700 cursor-pointer"
+                            className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-slate-700 cursor-pointer transition-colors"
                           >
-                            <Minus size={10} />
+                            <Minus size={11} />
                           </button>
-                          <span className="w-6 text-center font-bold font-mono text-xs text-blue-700">
+                          <span className="w-6 text-center font-bold font-mono text-xs text-primary">
                             {qty}
                           </span>
                           <button
                             type="button"
                             onClick={() => onUpdateAccessoryQty(acc.id, 1)}
-                            className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-blue-700 cursor-pointer"
+                            className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-primary cursor-pointer transition-colors"
                           >
-                            <Plus size={10} />
+                            <Plus size={11} />
                           </button>
                         </div>
                       ) : (
                         <button
                           type="button"
                           onClick={() => onUpdateAccessoryQty(acc.id, 1)}
-                          className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-amber-500 hover:text-white text-gray-700 font-semibold text-[11px] transition-all cursor-pointer flex items-center gap-1 mx-auto"
+                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold text-[11px] transition-all cursor-pointer flex items-center gap-1 mx-auto shadow-2xs"
                         >
                           <Plus size={11} />
                           <span>Thêm</span>

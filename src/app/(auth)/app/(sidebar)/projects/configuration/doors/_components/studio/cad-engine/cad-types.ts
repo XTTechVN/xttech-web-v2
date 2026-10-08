@@ -23,7 +23,7 @@ export interface DoorCadRendererProps {
   onSelectCell: (cellId: string | null) => void;
   onSelectMullion?: (mullion: MullionInfo) => void;
   selectedMullionId?: string | null;
-  onEditDimension?: (target: 'w' | 'h' | 'cell' | 'handleHeight', cellId?: string) => void;
+  onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
   onResizeSplit?: (params: ResizeSplitParams) => void;
   frameConfig?: FrameConfig;
   sashConfig?: SashConfig;

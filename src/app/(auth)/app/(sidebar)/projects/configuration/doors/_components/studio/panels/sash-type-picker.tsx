@@ -137,83 +137,83 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
   ];
 
   return (
-    <div className="flex flex-col space-y-3.5 text-xs">
+    <div className="flex flex-col space-y-3 text-xs">
       {/* 1. Box: Chia đố khung (Đố T) */}
-      <div className="p-3 bg-white rounded-2xl border border-gray-200/90 shadow-2xs space-y-2.5">
-        <div className="flex items-center gap-1.5 font-bold text-gray-800 text-xs">
-          <Grid size={14} className="text-teal-600" />
+      <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2.5">
+        <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
+          <Grid size={14} className="text-primary" />
           <span>Chia đố khung</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 shrink-0">
             <input
               type="number"
               min={1}
               max={6}
               value={splitCount}
               onChange={(e) => setSplitCount(Math.max(1, Math.min(6, Number(e.target.value))))}
-              className="w-12 h-8 text-center text-xs font-bold font-mono rounded-xl border border-gray-300 bg-white focus:outline-none focus:border-teal-500"
+              className="w-10 h-7 text-center text-xs font-bold rounded border border-slate-200 bg-white focus:outline-none focus:border-primary"
             />
-            <span className="text-gray-500 font-medium">ô</span>
+            <span className="text-slate-500 font-medium">ô</span>
           </div>
           <button
             type="button"
             onClick={() => onSplitMullion(splitCount, 'vertical')}
-            className="flex-1 h-8 px-2 rounded-xl bg-teal-50/80 hover:bg-teal-100 text-teal-700 border border-teal-200/80 font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+            className="flex-1 h-7 px-2 rounded bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
           >
-            <Columns size={13} />
-            <span>| Dọc</span>
+            <Columns size={12} />
+            <span>Dọc</span>
           </button>
           <button
             type="button"
             onClick={() => onSplitMullion(splitCount, 'horizontal')}
-            className="flex-1 h-8 px-2 rounded-xl bg-teal-50/80 hover:bg-teal-100 text-teal-700 border border-teal-200/80 font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+            className="flex-1 h-7 px-2 rounded bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
           >
-            <Rows size={13} />
-            <span>— Ngang</span>
+            <Rows size={12} />
+            <span>Ngang</span>
           </button>
         </div>
       </div>
 
       {/* 2. Box: Tách khung (Nối khung) */}
-      <div className="p-3 bg-white rounded-2xl border border-gray-200/90 shadow-2xs space-y-2.5">
-        <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
-          <Scissors size={14} className="text-amber-600" />
-          <span>Tách khung</span>
+      <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2.5">
+        <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
+          <Scissors size={14} className="text-primary" />
+          <span>Tách ghép khung</span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           <button
             type="button"
             onClick={() => onCoupleFrame('vertical')}
-            className="h-8 px-2 rounded-xl bg-amber-50/80 hover:bg-amber-100 text-amber-800 border border-amber-200/80 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            className="h-7 px-2 rounded bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Columns size={13} />
-            <span>| Dọc</span>
+            <Columns size={12} />
+            <span>Ghép dọc</span>
           </button>
           <button
             type="button"
             onClick={() => onCoupleFrame('horizontal')}
-            className="h-8 px-2 rounded-xl bg-amber-50/80 hover:bg-amber-100 text-amber-800 border border-amber-200/80 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            className="h-7 px-2 rounded bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Rows size={13} />
-            <span>— Ngang</span>
+            <Rows size={12} />
+            <span>Ghép ngang</span>
           </button>
         </div>
       </div>
 
       {/* 3. Kiểu cánh (Gán cho ô đang chọn) */}
       <div className="space-y-2 pt-1">
-        <div className="font-bold text-gray-800 text-xs flex items-center justify-between">
-          <span>🚪 Kiểu cánh (Ô đang chọn)</span>
+        <div className="font-semibold text-slate-800 text-xs flex items-center justify-between">
+          <span>Kiểu cánh</span>
           {selectedCellId ? (
-            <span className="text-[10px] font-mono text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-              {selectedCellId}
+            <span className="text-[10px] text-primary font-semibold bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
+              Ô: {selectedCellId}
             </span>
           ) : (
-            <span className="text-[10px] text-gray-400 font-normal">Chưa chọn ô</span>
+            <span className="text-[10px] text-slate-400 font-normal">Chưa chọn ô</span>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           {sashItems.map((item) => {
             const isSelected = currentSashType === item.id;
             return (
@@ -221,15 +221,15 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
                 key={item.id}
                 type="button"
                 onClick={() => onSelectSashType(item.id)}
-                className={`flex items-center gap-2.5 p-2 rounded-xl border transition-all cursor-pointer text-left ${
+                className={`flex items-center gap-2 p-1.5 rounded-lg border transition-all cursor-pointer text-left ${
                   isSelected
-                    ? 'border-blue-500 bg-blue-50/60 shadow-xs ring-2 ring-blue-500/20'
-                    : 'border-gray-200/80 bg-white hover:border-gray-300 hover:bg-gray-50/50'
+                    ? 'border-primary bg-primary/10 text-primary shadow-2xs font-semibold'
+                    : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
                 }`}
               >
                 <div className="shrink-0">{item.renderSvg()}</div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-semibold text-gray-800 truncate">{item.name}</div>
+                  <div className="text-xs truncate">{item.name}</div>
                 </div>
               </button>
             );

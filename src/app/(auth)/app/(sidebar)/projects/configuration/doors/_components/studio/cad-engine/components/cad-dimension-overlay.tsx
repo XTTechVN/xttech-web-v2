@@ -15,7 +15,7 @@ interface CadDimensionOverlayProps {
   vertSlices: { id: string; w: number }[];
   horizSlices: SceneCellNode[];
   leaves: LeafCell[];
-  onEditDimension?: (target: 'w' | 'h' | 'cell' | 'handleHeight', cellId?: string) => void;
+  onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
 }
 
 /**
@@ -132,7 +132,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
                     strokeLinejoin="round"
                     transform={`rotate(-90, ${dimSubRightX - 3}, ${curY + childHScale / 2})`}
                     className="cursor-pointer hover:fill-red-600 hover:font-bold"
-                    onClick={() => onEditDimension?.('cell', child.id)}
+                    onClick={() => onEditDimension?.('cell-h', child.id)}
                   >
                     {child.h}
                   </text>

@@ -318,9 +318,10 @@ export default function DoorTemplatesTab() {
       </div>
 
       <DoorStudioModal
-        key={studioDoor ? `studio-${studioDoor.id}` : 'studio-new'}
+        key={studioDoor ? `studio-${studioDoor.id}` : `studio-new-${selectedBrandId}`}
         isOpen={isStudioOpen}
         door={studioDoor}
+        defaultBrandId={selectedBrandId}
         onClose={() => {
           setIsStudioOpen(false);
           setStudioDoor(null);

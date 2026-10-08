@@ -10,7 +10,7 @@ import {
 } from '../studio-types';
 import { FrameShapePicker } from './frame-shape-picker';
 import { SashTypePicker } from './sash-type-picker';
-import { Undo2, Redo2, Trash2 } from 'lucide-react';
+import { Undo2, Redo2, RotateCcw, Ruler, Palette, Columns, DoorClosed, LayoutGrid } from 'lucide-react';
 
 interface ToolboxLeftProps {
   w: number;
@@ -65,43 +65,93 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
   const activeColor = activeColorPalette.find(
     (c) => c.colorHex.toLowerCase() === aluminumColor.toLowerCase()
   );
+  const activeHwColor = HARDWARE_PALETTE.find(
+    (c) => c.colorHex.toLowerCase() === hardwareColor.toLowerCase()
+  );
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto space-y-3.5 p-3.5 text-xs select-none pr-2 bg-slate-50/50">
-      {/* 1. Kích thước (mm) & Màu sắc */}
-      <div className="p-3 bg-white rounded-2xl border border-gray-200/90 shadow-2xs space-y-3">
-        <div className="flex items-center gap-1.5 font-bold text-gray-800 text-xs">
-          <span>📐 Kích thước (mm)</span>
+    <div className="flex flex-col h-full overflow-y-auto space-y-3 p-3.5 text-xs select-none bg-slate-50/60">
+      {/* 1. Kích thước & Lịch sử thao tác */}
+      <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
+            <Ruler size={14} className="text-primary" />
+            <span>Kích thước phủ bì</span>
+          </div>
+
+          {/* Action History: Undo / Redo / Reset */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onUndo}
+              disabled={!canUndo}
+              title="Hoàn tác (Undo)"
+              className="w-7 h-7 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <Undo2 size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={onRedo}
+              disabled={!canRedo}
+              title="Làm lại (Redo)"
+              className="w-7 h-7 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <Redo2 size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={onReset}
+              title="Đặt lại bản vẽ"
+              className="w-7 h-7 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <RotateCcw size={13} />
+            </button>
+          </div>
         </div>
 
         {/* Inputs W & H */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <div>
-            <label className="text-[11px] text-gray-500 font-medium block mb-1">W</label>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="p-2 rounded-md bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium mb-1">
+              <span>Rộng (W)</span>
+              <span className="text-[10px] text-slate-400">mm</span>
+            </div>
             <input
               type="number"
               value={w}
               onChange={(e) => onChangeDimension(Number(e.target.value), h)}
-              className="w-full h-8 px-2.5 font-bold font-mono text-xs rounded-xl border border-gray-300 bg-white focus:outline-none focus:border-blue-500"
+              className="w-full h-7 px-2 font-bold text-slate-900 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:border-primary text-center"
             />
           </div>
-          <div>
-            <label className="text-[11px] text-gray-500 font-medium block mb-1">H</label>
+          <div className="p-2 rounded-md bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium mb-1">
+              <span>Cao (H)</span>
+              <span className="text-[10px] text-slate-400">mm</span>
+            </div>
             <input
               type="number"
               value={h}
               onChange={(e) => onChangeDimension(w, Number(e.target.value))}
-              className="w-full h-8 px-2.5 font-bold font-mono text-xs rounded-xl border border-gray-300 bg-white focus:outline-none focus:border-blue-500"
+              className="w-full h-7 px-2 font-bold text-slate-900 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:border-primary text-center"
             />
           </div>
         </div>
+      </div>
+
+      {/* 2. Màu nhôm & Phụ kiện */}
+      <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-3">
+        <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
+          <Palette size={14} className="text-primary" />
+          <span>Màu hoàn thiện</span>
+        </div>
 
         {/* Màu nhôm */}
-        <div>
-          <div className="flex items-center justify-between text-[11px] text-gray-600 font-medium mb-1.5">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[11px] text-slate-600">
             <span>Màu nhôm</span>
             {activeColor && (
-              <span className="text-[10px] text-blue-600 font-semibold truncate max-w-[130px]" title={activeColor.name}>
+              <span className="text-[11px] text-primary font-medium truncate max-w-[140px]">
                 {activeColor.name}
               </span>
             )}
@@ -117,8 +167,8 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
                   onClick={() => onSelectAluminumColor(col.colorHex)}
                   className={`w-6 h-6 rounded-full transition-transform cursor-pointer border ${
                     isSelected
-                      ? 'ring-2 ring-blue-500 ring-offset-2 scale-110 shadow-xs border-transparent'
-                      : 'border-gray-300 hover:scale-105'
+                      ? 'ring-2 ring-primary ring-offset-1 scale-105 shadow-2xs border-white'
+                      : 'border-slate-300 hover:scale-105'
                   }`}
                   style={{ backgroundColor: col.colorHex }}
                 />
@@ -128,11 +178,18 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
         </div>
 
         {/* Màu phụ kiện */}
-        <div>
-          <div className="text-[11px] text-gray-600 font-medium mb-1.5">Màu phụ kiện</div>
+        <div className="space-y-1.5 pt-2 border-t border-slate-100">
+          <div className="flex items-center justify-between text-[11px] text-slate-600">
+            <span>Màu phụ kiện</span>
+            {activeHwColor && (
+              <span className="text-[11px] text-primary font-medium truncate max-w-[140px]">
+                {activeHwColor.name}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             {HARDWARE_PALETTE.map((col) => {
-              const isSelected = hardwareColor === col.colorHex;
+              const isSelected = hardwareColor.toLowerCase() === col.colorHex.toLowerCase();
               return (
                 <button
                   key={col.code}
@@ -141,8 +198,8 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
                   onClick={() => onSelectHardwareColor(col.colorHex)}
                   className={`w-6 h-6 rounded-full transition-transform cursor-pointer border ${
                     isSelected
-                      ? 'ring-2 ring-blue-500 ring-offset-2 scale-110 shadow-xs border-transparent'
-                      : 'border-gray-300 hover:scale-105'
+                      ? 'ring-2 ring-primary ring-offset-1 scale-105 shadow-2xs border-white'
+                      : 'border-slate-300 hover:scale-105'
                   }`}
                   style={{ backgroundColor: col.colorHex }}
                 />
@@ -152,59 +209,31 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
         </div>
       </div>
 
-      {/* 2. Action History (Undo, Redo, Xóa) */}
-      <div className="grid grid-cols-3 gap-1.5">
-        <button
-          type="button"
-          onClick={onUndo}
-          disabled={!canUndo}
-          className="h-8 px-2 rounded-xl bg-white border border-gray-200 text-gray-700 font-medium text-[11px] flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors disabled:opacity-40 cursor-pointer shadow-2xs"
-        >
-          <Undo2 size={13} />
-          <span>Undo</span>
-        </button>
-        <button
-          type="button"
-          onClick={onRedo}
-          disabled={!canRedo}
-          className="h-8 px-2 rounded-xl bg-white border border-gray-200 text-gray-700 font-medium text-[11px] flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors disabled:opacity-40 cursor-pointer shadow-2xs"
-        >
-          <Redo2 size={13} />
-          <span>Redo</span>
-        </button>
-        <button
-          type="button"
-          onClick={onReset}
-          className="h-8 px-2 rounded-xl bg-red-50/70 border border-red-200/80 text-red-600 font-medium text-[11px] flex items-center justify-center gap-1 hover:bg-red-100 transition-colors cursor-pointer shadow-2xs"
-        >
-          <Trash2 size={13} />
-          <span>Xóa</span>
-        </button>
-      </div>
-
-      {/* 3. Tab Switcher: Kiểu khung vs Kiểu cánh */}
-      <div className="p-1 bg-gray-200/70 rounded-xl grid grid-cols-2 gap-1">
+      {/* 3. Segmented Tab Switcher: Kiểu khung vs Kiểu cánh */}
+      <div className="p-1 bg-slate-100 rounded-lg border border-slate-200/80 grid grid-cols-2 gap-1">
         <button
           type="button"
           onClick={() => onChangeTab('frame')}
-          className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+          className={`py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             activeTab === 'frame'
-              ? 'bg-white text-gray-900 shadow-xs'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-white text-slate-900 shadow-2xs font-bold'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <span>■ Kiểu khung</span>
+          <LayoutGrid size={13} className={activeTab === 'frame' ? 'text-primary' : 'text-slate-400'} />
+          <span>Kiểu khung</span>
         </button>
         <button
           type="button"
           onClick={() => onChangeTab('sash')}
-          className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+          className={`py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             activeTab === 'sash'
-              ? 'bg-white text-blue-600 shadow-xs'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-white text-slate-900 shadow-2xs font-bold'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <span>🚪 Kiểu cánh</span>
+          <DoorClosed size={13} className={activeTab === 'sash' ? 'text-primary' : 'text-slate-400'} />
+          <span>Kiểu cánh</span>
         </button>
       </div>
 
