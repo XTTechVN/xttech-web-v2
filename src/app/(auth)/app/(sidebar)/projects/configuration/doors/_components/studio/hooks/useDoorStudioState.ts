@@ -265,9 +265,9 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
       const defaultH = 1600;
       const initialRoot = createDefaultRootCell(defaultW, defaultH);
 
-      setName('Vách kính cố định');
+      setName('Cửa đi mở quay');
       setCode('');
-      setType('ck');
+      setType('casement_door');
       setW(defaultW);
       setH(defaultH);
       setFrameShape('rect');

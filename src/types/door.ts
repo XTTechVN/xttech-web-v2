@@ -1,24 +1,101 @@
 import { DOOR_TYPE_MAP } from './formula';
 import { DoorSeries } from './door-series';
 
+export type DoorType =
+  | 'glass_wall'
+  | 'casement_window'
+  | 'sliding_window'
+  | 'casement_door'
+  | 'sliding_door'
+  | 'folding_door'
+  | 'sliding_casement_door'
+  | 'composite'
+  | 'curtain_wall'
+  // Legacy compatibility aliases
+  | 'cd'
+  | 'cs'
+  | 'ck';
+
 export interface DoorTypeConfig {
   label: string;
   className: string;
 }
 
+export const DOOR_TYPE_LABELS: Record<string, string> = {
+  glass_wall: 'Vách kính',
+  casement_window: 'Cửa sổ mở quay',
+  sliding_window: 'Cửa sổ lùa',
+  casement_door: 'Cửa đi mở quay',
+  sliding_door: 'Cửa đi lùa',
+  folding_door: 'Cửa gấp xếp',
+  sliding_casement_door: 'Cửa trượt quay',
+  composite: 'Tổng hợp',
+  curtain_wall: 'Mặt dựng',
+  // Legacy aliases
+  cd: 'Cửa đi mở quay',
+  cs: 'Cửa sổ mở quay',
+  ck: 'Vách kính',
+};
+
 export const DOOR_TYPE_CONFIG: Record<string, DoorTypeConfig> = {
+  glass_wall: {
+    label: 'Vách kính',
+    className: 'bg-amber-50 text-amber-700 border-amber-200/70',
+  },
+  casement_window: {
+    label: 'Cửa sổ mở quay',
+    className: 'bg-blue-50 text-blue-700 border-blue-200/70',
+  },
+  sliding_window: {
+    label: 'Cửa sổ lùa',
+    className: 'bg-sky-50 text-sky-700 border-sky-200/70',
+  },
+  casement_door: {
+    label: 'Cửa đi mở quay',
+    className: 'bg-emerald-50 text-emerald-700 border-emerald-200/70',
+  },
+  sliding_door: {
+    label: 'Cửa đi lùa',
+    className: 'bg-teal-50 text-teal-700 border-teal-200/70',
+  },
+  folding_door: {
+    label: 'Cửa gấp xếp',
+    className: 'bg-indigo-50 text-indigo-700 border-indigo-200/70',
+  },
+  sliding_casement_door: {
+    label: 'Cửa trượt quay',
+    className: 'bg-purple-50 text-purple-700 border-purple-200/70',
+  },
+  composite: {
+    label: 'Tổng hợp',
+    className: 'bg-slate-100 text-slate-700 border-slate-300',
+  },
+  curtain_wall: {
+    label: 'Mặt dựng',
+    className: 'bg-rose-50 text-rose-700 border-rose-200/70',
+  },
+  // Legacy aliases
   cd: {
-    label: 'Cửa đi',
+    label: 'Cửa đi mở quay',
     className: 'bg-emerald-50 text-emerald-700 border-emerald-200/70',
   },
   cs: {
-    label: 'Cửa sổ',
+    label: 'Cửa sổ mở quay',
     className: 'bg-blue-50 text-blue-700 border-blue-200/70',
   },
   ck: {
-    label: 'Cửa kính',
+    label: 'Vách kính',
     className: 'bg-amber-50 text-amber-700 border-amber-200/70',
   },
+};
+
+export const normalizeDoorType = (type: string | null | undefined): string => {
+  if (!type) return '';
+  const key = type.toLowerCase().trim();
+  if (key === 'cd') return 'casement_door';
+  if (key === 'cs') return 'casement_window';
+  if (key === 'ck') return 'glass_wall';
+  return key;
 };
 
 export const getDoorTypeConfig = (type: string | null | undefined): DoorTypeConfig => {
@@ -31,6 +108,10 @@ export const getDoorTypeConfig = (type: string | null | undefined): DoorTypeConf
   const key = type.toLowerCase().trim();
   if (DOOR_TYPE_CONFIG[key]) {
     return DOOR_TYPE_CONFIG[key];
+  }
+  const normalized = normalizeDoorType(key);
+  if (DOOR_TYPE_CONFIG[normalized]) {
+    return DOOR_TYPE_CONFIG[normalized];
   }
   const mappedLabel = (DOOR_TYPE_MAP as Record<string, string>)[key] || type;
   return {

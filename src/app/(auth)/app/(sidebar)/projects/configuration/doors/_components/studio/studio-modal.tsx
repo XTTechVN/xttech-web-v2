@@ -115,9 +115,11 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClos
               else if (field === 'code') state.setCode(val);
               else if (field === 'type') {
                 state.setType(val);
-                if (val === 'cd' && state.sashConfig.family === 'Cửa sổ mở quay/Hất') {
+                const isDoor = val === 'casement_door' || val === 'sliding_door' || val === 'folding_door' || val === 'sliding_casement_door' || val === 'cd';
+                const isWindow = val === 'casement_window' || val === 'sliding_window' || val === 'cs';
+                if (isDoor && state.sashConfig.family === 'Cửa sổ mở quay/Hất') {
                   state.setSashConfig((prev) => ({ ...prev, family: 'Cửa đi mở quay' }));
-                } else if (val === 'cs' && state.sashConfig.family === 'Cửa đi mở quay') {
+                } else if (isWindow && state.sashConfig.family === 'Cửa đi mở quay') {
                   state.setSashConfig((prev) => ({ ...prev, family: 'Cửa sổ mở quay/Hất' }));
                 }
               }

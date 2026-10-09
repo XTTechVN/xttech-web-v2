@@ -10,14 +10,28 @@ import { AccessoryBrandSidebar } from '../accessories/_components';
 import { DoorStudioModal } from '../doors/_components/studio';
 import { DoorThumbnail } from './_components/door-thumbnail';
 
-// ─── Door type tabs ───────────────────────────────────────────────────────────
-const DOOR_TYPES = [
+import { getDoorTypeConfig, normalizeDoorType } from '@/types';
+
+// ─── Door type tabs theo schema API mới ──────────────────────────────────────────
+const DOOR_TYPES: Array<{ value: string | null; label: string }> = [
   { value: null, label: 'Tất cả' },
-  { value: 'cd', label: 'Cửa đi' },
-  { value: 'cs', label: 'Cửa sổ' },
-  { value: 'ck', label: 'Cửa kính' },
+  { value: 'casement_door', label: 'Cửa đi mở quay' },
+  { value: 'sliding_door', label: 'Cửa đi lùa' },
+  { value: 'casement_window', label: 'Cửa sổ mở quay' },
+  { value: 'sliding_window', label: 'Cửa sổ lùa' },
+  { value: 'folding_door', label: 'Cửa gấp xếp' },
+  { value: 'sliding_casement_door', label: 'Cửa trượt quay' },
+  { value: 'glass_wall', label: 'Vách kính' },
+  { value: 'curtain_wall', label: 'Mặt dựng' },
+  { value: 'composite', label: 'Tổng hợp' },
 ];
 
+// Helper kiểm tra door có khớp với type tab không (hỗ trợ cả legacy aliases cd/cs/ck)
+function matchDoorType(doorType: string | null | undefined, filterType: string | null): boolean {
+  if (!filterType) return true;
+  if (!doorType) return false;
+  return normalizeDoorType(doorType) === normalizeDoorType(filterType);
+}
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 function DoorCard({
@@ -38,6 +52,8 @@ function DoorCard({
     if (path.startsWith('http')) return path;
     return `${BASE_MINIO_URL}/${path.startsWith('/') ? path.slice(1) : path}`;
   })();
+
+  const typeConfig = getDoorTypeConfig(door.type);
 
   return (
     <button
@@ -65,25 +81,20 @@ function DoorCard({
             <span className="text-[11px] font-medium">Chưa có bản vẽ</span>
           </div>
         )}
-        {/* Type badge */}
-        {door.type && (
-          <span className="absolute top-2 left-2 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-white/90 border border-slate-200 text-slate-600 shadow-xs">
-            {door.type}
-          </span>
-        )}
       </div>
 
       {/* Info */}
-      <div className="p-3 border-t border-slate-100">
-        {door.code && (
-          <p className="text-[11px] font-mono text-slate-400 mb-0.5 truncate">{door.code}</p>
+      <div className="p-3 border-t border-slate-100 flex flex-col gap-1.5">
+        {door.type && (
+          <div>
+            <span className={`inline-flex text-[10px] font-semibold px-2 py-0.5 rounded border ${typeConfig.className}`}>
+              {typeConfig.label}
+            </span>
+          </div>
         )}
-        <p className="text-sm font-semibold text-slate-800 group-hover:text-primary transition-colors leading-snug line-clamp-2">
+        <p className="text-xs font-semibold text-slate-800 group-hover:text-primary transition-colors leading-snug line-clamp-2">
           {door.name}
         </p>
-        {door.doorSeries?.name && (
-          <p className="text-[11px] text-slate-400 mt-1 truncate">{door.doorSeries.name}</p>
-        )}
       </div>
     </button>
   );
@@ -160,7 +171,7 @@ export default function DoorTemplatesTab() {
       result = result.filter((d) => d.doorSeriesId === selectedSeriesId);
     }
     if (selectedType) {
-      result = result.filter((d) => d.type === selectedType);
+      result = result.filter((d) => matchDoorType(d.type, selectedType));
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -184,6 +195,23 @@ export default function DoorTemplatesTab() {
     return map;
   }, [filteredDoors]);
 
+  // Thống kê số lượng theo từng tab (có tính cả series filter nếu chọn)
+  const tabCounts = useMemo(() => {
+    const baseList = selectedSeriesId
+      ? allDoors.filter((d) => d.doorSeriesId === selectedSeriesId)
+      : allDoors;
+
+    const counts: Record<string, number> = {
+      all: baseList.length,
+    };
+    DOOR_TYPES.forEach((t) => {
+      if (t.value) {
+        counts[t.value] = baseList.filter((d) => matchDoorType(d.type, t.value)).length;
+      }
+    });
+    return counts;
+  }, [allDoors, selectedSeriesId]);
+
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
       {/* Brand sidebar */}
@@ -206,7 +234,7 @@ export default function DoorTemplatesTab() {
               <select
                 value={selectedSeriesId ?? ''}
                 onChange={(e) => setSelectedSeriesId(e.target.value ? Number(e.target.value) : null)}
-                className="h-9 px-2.5 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-none focus:border-primary transition"
+                className="h-9 px-2.5 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-none focus:border-primary transition cursor-pointer"
               >
                 <option value="">Tất cả series</option>
                 {seriesList.map((s) => (
@@ -241,24 +269,32 @@ export default function DoorTemplatesTab() {
         </div>
 
         {/* Door type tabs */}
-        <div className="flex items-center gap-0 px-4 pt-3 pb-0 overflow-x-auto [scrollbar-width:none]">
-          {DOOR_TYPES.map((t) => (
-            <button
-              key={String(t.value)}
-              type="button"
-              onClick={() => setSelectedType(t.value)}
-              className={`shrink-0 px-4 py-2 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
-                selectedType === t.value
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              {t.label}
-              <span className="ml-1.5 text-[10px] font-medium text-slate-400">
-                ({t.value ? allDoors.filter((d) => d.type === t.value).length : allDoors.length})
-              </span>
-            </button>
-          ))}
+        <div className="flex items-center gap-1 px-4 pt-2.5 pb-0 overflow-x-auto [scrollbar-width:none]">
+          {DOOR_TYPES.map((t) => {
+            const count = t.value ? (tabCounts[t.value] || 0) : tabCounts.all;
+            const isSelected = selectedType === t.value;
+            return (
+              <button
+                key={String(t.value)}
+                type="button"
+                onClick={() => setSelectedType(t.value)}
+                className={`shrink-0 px-3.5 py-2 text-xs font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'border-primary text-primary font-bold'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span>{t.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    isSelected ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
         <div className="h-px bg-slate-200 mx-4 mb-4" />
 

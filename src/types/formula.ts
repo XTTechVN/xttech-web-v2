@@ -1,5 +1,5 @@
 export type FormulaType = 'door_trim' | 'circle' | 'semicircle' | 'wall_cladding';
-export type DoorType = 'cd' | 'cs' | 'ck';
+export type FormulaDoorType = 'cd' | 'cs' | 'ck';
 
 export const FORMULA_TYPE_MAP: Record<FormulaType, string> = {
   door_trim: 'Công thức phào',
@@ -8,7 +8,7 @@ export const FORMULA_TYPE_MAP: Record<FormulaType, string> = {
   wall_cladding: 'Khuôn bao phủ tường',
 };
 
-export const DOOR_TYPE_MAP: Record<DoorType, string> = {
+export const DOOR_TYPE_MAP: Record<FormulaDoorType, string> = {
   cd: 'Cửa đi',
   cs: 'Cửa sổ',
   ck: 'Cửa kính',
@@ -23,7 +23,7 @@ export interface Formula {
   unit: string | null;
   type: FormulaType;
   materialId?: number | null;
-  doorType: DoorType | null;
+  doorType: FormulaDoorType | null;
   wastageRate: number | null;
   widthAdd: number | null;
   heightAdd: number | null;
@@ -39,7 +39,7 @@ export interface FormulaCreate {
   name?: string;
   unit?: string;
   type: FormulaType;
-  doorType?: DoorType;
+  doorType?: FormulaDoorType;
   wastageRate?: number;
   widthAdd?: number;
   heightAdd?: number;
@@ -52,7 +52,7 @@ export interface FormulaUpdate {
   name?: string;
   unit?: string;
   type?: FormulaType;
-  doorType?: DoorType;
+  doorType?: FormulaDoorType;
   wastageRate?: number;
   widthAdd?: number;
   heightAdd?: number;
@@ -63,7 +63,7 @@ export interface FormulaUpdate {
 export interface FormulaQueryParams {
   type?: FormulaType;
   materialId?: number;
-  doorType?: DoorType;
+  doorType?: FormulaDoorType;
   offset?: number;
   limit?: number;
   search?: string;

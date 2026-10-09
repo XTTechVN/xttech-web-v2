@@ -224,9 +224,15 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
               value={watch('type') || ''}
               {...register('type', { required: true })}
               options={[
-                { value: 'cd', label: 'Cửa đi' },
-                { value: 'cs', label: 'Cửa sổ' },
-                { value: 'ck', label: 'Cửa kính' },
+                { value: 'casement_door', label: 'Cửa đi mở quay' },
+                { value: 'sliding_door', label: 'Cửa đi lùa' },
+                { value: 'casement_window', label: 'Cửa sổ mở quay' },
+                { value: 'sliding_window', label: 'Cửa sổ lùa' },
+                { value: 'folding_door', label: 'Cửa gấp xếp' },
+                { value: 'sliding_casement_door', label: 'Cửa trượt quay' },
+                { value: 'glass_wall', label: 'Vách kính' },
+                { value: 'curtain_wall', label: 'Mặt dựng' },
+                { value: 'composite', label: 'Tổng hợp' },
               ]}
               error={errors.type ? 'Vui lòng chọn phân loại cửa' : undefined}
             />
