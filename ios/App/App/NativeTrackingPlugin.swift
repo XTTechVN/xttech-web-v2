@@ -29,7 +29,6 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         config.timeoutIntervalForResource = 8.0
         config.waitsForConnectivity = false
         config.allowsCellularAccess = true
-        config.shouldSetCookies = false
         config.httpMaximumConnectionsPerHost = 2
         return URLSession(configuration: config)
     }()
