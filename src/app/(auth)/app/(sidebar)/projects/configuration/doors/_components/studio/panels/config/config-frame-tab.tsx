@@ -5,6 +5,8 @@ import {
   FrameConfig,
   FrameCornerJoint,
   BeadCornerJoint,
+  SafetyBarsConfig,
+  DEFAULT_SAFETY_BARS_CONFIG,
 } from '../../studio-types';
 import { ProfileBar } from '@/types';
 import { Layers, Shield, RefreshCw, Plus } from 'lucide-react';
@@ -27,6 +29,34 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
   const topEdge = config?.topEdge ?? { offsetMm: 0 };
   const rightEdge = config?.rightEdge ?? { offsetMm: 0 };
   const bottomEdge = config?.bottomEdge ?? { offsetMm: 0 };
+
+  const safetyBarsConfig = config.safetyBarsConfig || {
+    ...DEFAULT_SAFETY_BARS_CONFIG,
+    isEnabled: config.hasSafetyBars,
+  };
+
+  const updateSafetyBars = (updates: Partial<SafetyBarsConfig>) => {
+    const nextCfg: SafetyBarsConfig = {
+      ...safetyBarsConfig,
+      ...updates,
+    };
+    onChangeConfig({
+      hasSafetyBars: nextCfg.isEnabled,
+      safetyBarsConfig: nextCfg,
+    });
+  };
+
+  const mainSeriesId = profiles.find((p) => p.id === leftEdge.profileId)?.seriesId;
+  const isDifferentSerie = (profileId?: number) => {
+    if (!profileId || !mainSeriesId) return false;
+    const p = profiles.find((item) => item.id === profileId);
+    return Boolean(p && p.seriesId && p.seriesId !== mainSeriesId);
+  };
+
+  const selectedSafetyProfile = profiles.find((p) => p.id === safetyBarsConfig.profileId);
+  const safetySectionMm = selectedSafetyProfile?.sectionHeightMm || 50;
+  const vertSafetyProfile = profiles.find((p) => p.id === safetyBarsConfig.mullionVertProfileId);
+  const horizSafetyProfile = profiles.find((p) => p.id === safetyBarsConfig.mullionHorizProfileId);
 
   // Handle Master Left Edge input -> auto apply to other edges if empty
   const handleLeftProfileChange = (profileId: number) => {
@@ -387,11 +417,238 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
               <input
                 type="checkbox"
                 checked={config.hasSafetyBars}
-                onChange={(e) => onChangeConfig({ hasSafetyBars: e.target.checked })}
+                onChange={(e) => updateSafetyBars({ isEnabled: e.target.checked })}
                 className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
               />
             </label>
           </div>
+
+          {/* Form cấu hình chi tiết Khung bảo vệ */}
+          {config.hasSafetyBars && (
+            <div className="pt-2 border-t border-slate-100 space-y-3">
+              {/* Presets: 3 chế độ */}
+              <div className="grid grid-cols-3 gap-1.5">
+                {([
+                  { id: 'equal_frame', label: 'Bằng khung ngoài' },
+                  { id: 'inset', label: 'Lọt lòng' },
+                  { id: 'no_frame', label: 'Không khung ngoài' },
+                ] as const).map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => updateSafetyBars({ preset: tab.id })}
+                    className={`p-2 rounded-lg border text-[11px] font-medium text-center transition-all cursor-pointer ${
+                      safetyBarsConfig.preset === tab.id
+                        ? 'border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary/30'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Chi tiết cho preset Bằng khung hoặc Lọt lòng */}
+              {safetyBarsConfig.preset !== 'no_frame' && (
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Profile khung bảo vệ */}
+                    <div className="space-y-1">
+                      <label className="font-semibold text-xs text-slate-700">Profile khung bảo vệ</label>
+                      <select
+                        value={safetyBarsConfig.profileId || ''}
+                        onChange={(e) => updateSafetyBars({ profileId: Number(e.target.value) || undefined })}
+                        className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
+                      >
+                        <option value="">Chọn profile khung...</option>
+                        {profiles.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.code} · {p.name}
+                          </option>
+                        ))}
+                      </select>
+                      {selectedSafetyProfile && (
+                        <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                          <span>{selectedSafetyProfile.code} — {selectedSafetyProfile.name}</span>
+                          {isDifferentSerie(safetyBarsConfig.profileId) && (
+                            <span className="text-amber-600 font-medium">⚠️ khác serie</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Góc ghép khung */}
+                    <div className="space-y-1">
+                      <label className="font-semibold text-xs text-slate-700">Góc ghép khung</label>
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => updateSafetyBars({ cornerJoint: '45' })}
+                          className={`px-2.5 py-1 rounded text-[11px] font-medium border cursor-pointer transition-colors ${
+                            safetyBarsConfig.cornerJoint === '45'
+                              ? 'bg-primary text-white border-primary shadow-xs'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          Ghép 45°
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateSafetyBars({ cornerJoint: '90_vert' })}
+                          className={`px-2.5 py-1 rounded text-[11px] font-medium border cursor-pointer transition-colors ${
+                            safetyBarsConfig.cornerJoint === '90_vert'
+                              ? 'bg-primary text-white border-primary shadow-xs'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          90° Dọc phủ
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 italic">Mặc định khung kín 4 cạnh</p>
+                    </div>
+
+                    {/* Độ hở lắp lọt lòng (chỉ hiển thị khi preset == 'inset') */}
+                    {safetyBarsConfig.preset === 'inset' && (
+                      <div className="sm:col-span-2 space-y-1 pt-1">
+                        <label className="font-semibold text-xs text-slate-700">Độ hở lắp lọt lòng (mm)</label>
+                        <div className="w-full sm:w-1/2">
+                          <input
+                            type="number"
+                            min={0}
+                            max={50}
+                            value={safetyBarsConfig.insetGapMm ?? 3}
+                            onChange={(e) => updateSafetyBars({ insetGapMm: Number(e.target.value) || 0 })}
+                            className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
+                          />
+                        </div>
+                        <p className="text-[10px] text-slate-400 italic">
+                          Inner khung sẽ trừ thêm {safetyBarsConfig.insetGapMm ?? 3}mm mỗi cạnh.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-[11px] text-slate-500 font-medium">
+                    Bản dày profile khung bảo vệ: <span className="font-bold text-slate-800">{safetySectionMm}mm</span>
+                  </div>
+
+                  {/* Đố chia khung bảo vệ */}
+                  <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-2.5">
+                    <div className="font-semibold text-xs text-slate-800">Đố chia khung bảo vệ</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Cây dọc */}
+                      <div className="space-y-1">
+                        <label className="font-medium text-[11px] text-slate-700">Cây dọc</label>
+                        <select
+                          value={safetyBarsConfig.mullionVertProfileId || ''}
+                          onChange={(e) => updateSafetyBars({ mullionVertProfileId: Number(e.target.value) || undefined })}
+                          className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
+                        >
+                          <option value="">Chọn profile cây dọc...</option>
+                          {profiles.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.code} · {p.name}
+                            </option>
+                          ))}
+                        </select>
+                        {vertSafetyProfile && (
+                          <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                            <span>{vertSafetyProfile.code} — {vertSafetyProfile.name}</span>
+                            {isDifferentSerie(safetyBarsConfig.mullionVertProfileId) && (
+                              <span className="text-amber-600 font-medium">⚠️ khác serie</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Cây ngang */}
+                      <div className="space-y-1">
+                        <label className="font-medium text-[11px] text-slate-700">Cây ngang</label>
+                        <select
+                          value={safetyBarsConfig.mullionHorizProfileId || ''}
+                          onChange={(e) => updateSafetyBars({ mullionHorizProfileId: Number(e.target.value) || undefined })}
+                          className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
+                        >
+                          <option value="">Chọn profile cây ngang...</option>
+                          {profiles.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.code} · {p.name}
+                            </option>
+                          ))}
+                        </select>
+                        {horizSafetyProfile && (
+                          <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                            <span>{horizSafetyProfile.code} — {horizSafetyProfile.name}</span>
+                            {isDifferentSerie(safetyBarsConfig.mullionHorizProfileId) && (
+                              <span className="text-amber-600 font-medium">⚠️ khác serie</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Chi tiết cho preset Không khung ngoài */}
+              {safetyBarsConfig.preset === 'no_frame' && (
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2.5">
+                  <div className="font-semibold text-xs text-slate-800">Thanh bảo vệ không khung</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Cây dọc */}
+                    <div className="space-y-1">
+                      <label className="font-medium text-[11px] text-slate-700">Cây dọc</label>
+                      <select
+                        value={safetyBarsConfig.mullionVertProfileId || ''}
+                        onChange={(e) => updateSafetyBars({ mullionVertProfileId: Number(e.target.value) || undefined })}
+                        className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
+                      >
+                        <option value="">Chọn profile cây dọc...</option>
+                        {profiles.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.code} · {p.name}
+                          </option>
+                        ))}
+                      </select>
+                      {vertSafetyProfile && (
+                        <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                          <span>{vertSafetyProfile.code} — {vertSafetyProfile.name}</span>
+                          {isDifferentSerie(safetyBarsConfig.mullionVertProfileId) && (
+                            <span className="text-amber-600 font-medium">⚠️ khác serie</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Cây ngang */}
+                    <div className="space-y-1">
+                      <label className="font-medium text-[11px] text-slate-700">Cây ngang</label>
+                      <select
+                        value={safetyBarsConfig.mullionHorizProfileId || ''}
+                        onChange={(e) => updateSafetyBars({ mullionHorizProfileId: Number(e.target.value) || undefined })}
+                        className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
+                      >
+                        <option value="">Chọn profile cây ngang...</option>
+                        {profiles.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.code} · {p.name}
+                          </option>
+                        ))}
+                      </select>
+                      {horizSafetyProfile && (
+                        <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                          <span>{horizSafetyProfile.code} — {horizSafetyProfile.name}</span>
+                          {isDifferentSerie(safetyBarsConfig.mullionHorizProfileId) && (
+                            <span className="text-amber-600 font-medium">⚠️ khác serie</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 3. Nẹp kính & Nối khung */}
