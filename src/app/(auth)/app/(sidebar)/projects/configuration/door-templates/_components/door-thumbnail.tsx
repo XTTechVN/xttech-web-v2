@@ -7,15 +7,22 @@ import { DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG } from '../../doors/_componen
 import type { Door } from '@/types';
 
 interface DoorThumbnailProps {
-  door: Door;
+  door?: { systemConfig?: any } | null;
+  systemConfig?: Record<string, any> | null;
+  hideDimensions?: boolean;
   className?: string;
 }
 
 /**
- * Đọc systemConfig của door và render SVG thumbnail bằng DoorCadRenderer.
+ * Đọc systemConfig của door hoặc config truyền trực tiếp và render SVG thumbnail bằng DoorCadRenderer.
  */
-export function DoorThumbnail({ door, className = '' }: DoorThumbnailProps) {
-  const sc = (door.systemConfig || {}) as Record<string, any>;
+export function DoorThumbnail({
+  door,
+  systemConfig: directConfig,
+  hideDimensions = true,
+  className = '',
+}: DoorThumbnailProps) {
+  const sc = (directConfig || door?.systemConfig || {}) as Record<string, any>;
 
   const w: number = sc.w || 800;
   const h: number = sc.h || 1200;
@@ -52,7 +59,7 @@ export function DoorThumbnail({ door, className = '' }: DoorThumbnailProps) {
   return (
     <div className={`w-full h-full ${className}`}>
       <DoorCadRenderer
-        hideDimensions
+        hideDimensions={hideDimensions}
         w={w}
         h={h}
         aluminumColor={aluminumColor}

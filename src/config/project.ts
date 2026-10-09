@@ -27,3 +27,21 @@ export const PROJECT_STATUS_OPTIONS: { label: string; value: ProjectStatus }[] =
   { label: 'Đã hủy', value: 'cancelled' },
   { label: 'Dự thảo', value: 'draft' },
 ];
+
+export const DOOR_STATUS_MAP: Record<
+  string,
+  { label: string; variant: NonNullable<BadgeProps['variant']> }
+> = {
+  draft: { label: 'Bản vẽ sơ bộ', variant: 'default' },
+  surveyed: { label: 'Đã đo ô chờ', variant: 'info' },
+  designed: { label: 'Đã bóc tách', variant: 'info' },
+  approved: { label: 'Đã duyệt mẫu', variant: 'primary' },
+  producing: { label: 'Đang gia công', variant: 'warning' },
+  factory_done: { label: 'KCS xuất xưởng', variant: 'primary' },
+  delivered: { label: 'Đã giao công trình', variant: 'info' },
+  installed: { label: 'Đã lắp đặt xong', variant: 'warning' },
+  completed: { label: 'Hoàn thành', variant: 'success' },
+  accepted: { label: 'Đã nghiệm thu', variant: 'success' },
+  cancelled: { label: 'Đã hủy', variant: 'danger' },
+};
+

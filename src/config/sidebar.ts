@@ -11,6 +11,7 @@ import {
   Sliders,
   SlidersHorizontal,
   ClockAlert,
+  Warehouse,
 } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
@@ -30,6 +31,7 @@ export const acceptedSections = [
   'departments',
   'projects',
   'projects-root',
+  'warehouse',
   'customers',
   'customers-root',
   'providers',
@@ -55,6 +57,7 @@ export const acceptedSections = [
   'app-versions',
   'leave-request',
 ];
+
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
   roles?: UserRole[];
@@ -185,7 +188,15 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         roles: ['super', 'admin', 'sale', 'accountant', 'hr'],
       },
       {
+        id: 'warehouse',
+        label: 'Quản lý kho',
+        icon: React.createElement(Warehouse, { size: 18 }),
+        href: '/app/warehouse',
+        roles: ['super', 'admin', 'technician', 'accountant'],
+      },
+      {
         id: 'configurations-root',
+
         label: 'Cấu hình dự án',
         icon: React.createElement(SlidersHorizontal, { size: 18 }),
         href: '/app/projects/configuration',

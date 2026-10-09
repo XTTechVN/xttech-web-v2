@@ -5,10 +5,22 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getProject, getProjectQuotations, getCustomers, deleteProject, updateQuotation } from '@/actions';
-import { Heading, Button } from '@/components';
+import { Heading, Button, Tabs, type TabItem } from '@/components';
 import { ProjectFormModal, ProjectDeleteModal } from '../_components/modals';
 import { QuotationCreateModal } from '../_components/quotation-modals';
-import { ProjectInfo, QuotationsList, ProjectSummary, CustomerInfo, OwnerInfo, ProjectActivities } from './_components';
+import {
+  ProjectInfo,
+  QuotationsList,
+  ProjectSummary,
+  CustomerInfo,
+  OwnerInfo,
+  ProjectActivities,
+  ProjectFloorsPositions,
+  ProjectQuotationsPricing,
+  ProjectContractsLedger,
+  ProjectProductionProgress,
+} from './_components';
+
 
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
@@ -17,8 +29,14 @@ import {
   FolderOpen, 
   Loader2,
   Edit,
-  Trash2
+  Trash2,
+  Layers,
+  FileText,
+  CheckCircle2,
+  Calculator,
 } from 'lucide-react';
+
+
 
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>;
@@ -29,7 +47,8 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   const { id } = React.use(params);
   const projectId = Number(id);
 
-  // State modals
+  // State modals & tabs
+  const [activeTab, setActiveTab] = useState<string>('overview');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isQuotationFormOpen, setIsQuotationFormOpen] = useState(false);
@@ -127,65 +146,101 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       })
     : '—';
 
+  const projectTabs: TabItem[] = [
+    { value: 'overview', label: 'Tổng quan & Nhật ký', icon: <FolderOpen size={15} /> },
+    { value: 'positions', label: 'Tầng & Vị trí cửa', icon: <Layers size={15} /> },
+    { value: 'quotations', label: 'Báo giá & Pricing', icon: <Calculator size={15} /> },
+    { value: 'contracts', label: 'Hợp đồng & Sổ cái', icon: <FileText size={15} /> },
+    { value: 'production', label: 'Lệnh sản xuất & KCS', icon: <CheckCircle2 size={15} /> },
+  ];
+
   return (
     <div className="p-4 flex flex-col gap-6 text-slate-800">
-      {/* Header & Breadcrumb & Action Buttons */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between pb-5 border-b border-slate-200/80">
-        <div className="flex flex-col gap-1">
-          <span className="text-[10px] font-bold text-slate-400">Quản lý dự án</span>
-          <Heading size="h1" className="text-primary text-2xl md:text-3xl font-bold mt-0.5">
-            {project.name}
-          </Heading>
+      {/* Header: Badge Tabs thay cho Tên Dự Án to & Action Buttons */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between pb-4 border-b border-slate-200/80">
+        {/* Tag Badge Tabs */}
+        <div className="flex flex-wrap items-center gap-2">
+          {projectTabs.map((tab) => {
+            const isActive = tab.value === activeTab;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => setActiveTab(tab.value)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer select-none border ${
+                  isActive
+                    ? 'bg-primary text-white border-primary shadow-xs'
+                    : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                {tab.icon && <span className="shrink-0">{tab.icon}</span>}
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
         
         {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0 md:mt-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button 
             variant="outline" 
             size="sm" 
-            leftIcon={<Edit size={16} />}
+            leftIcon={<Edit size={14} />}
             onClick={() => setIsFormOpen(true)}
-            className="h-9 px-3 text-sm font-semibold hover:text-primary hover:border-primary/30"
+            className="h-8 px-2.5 text-xs font-semibold hover:text-primary hover:border-primary/30"
           >
             Chỉnh sửa
           </Button>
           <Button 
             variant="outline" 
             size="sm" 
-            leftIcon={<Trash2 size={16} />}
+            leftIcon={<Trash2 size={14} />}
             onClick={() => setIsDeleteOpen(true)}
-            className="h-9 px-3 text-sm font-semibold border-red-200 text-red-650 hover:bg-red-50"
+            className="h-8 px-2.5 text-xs font-semibold border-red-200 text-red-650 hover:bg-red-50"
           >
             Xóa dự án
           </Button>
         </div>
       </div>
 
-      {/* Main Content Layout (2/3 & 1/3 Grid) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Project Details & Quotations & Activities (2/3) */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <ProjectInfo project={project} formattedDate={formattedDate} />
-          <QuotationsList 
-            projectId={projectId} 
-            quotations={quotations} 
-            isLoadingQuotations={isLoadingQuotations} 
-            onAddClick={() => setIsQuotationFormOpen(true)}
-            onStatusChange={async (quotationId, status) => {
-              await changeQuotationStatus({ quotationId, status });
-            }}
-          />
-          <ProjectActivities projectId={projectId} />
-        </div>
+      {/* Tab 1: Tổng quan & Nhật ký (Module 001) */}
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 flex flex-col gap-6">
+            <ProjectInfo project={project} formattedDate={formattedDate} />
+            <ProjectActivities projectId={projectId} />
+          </div>
 
-        {/* Right Column: Summaries & Client Info (1/3) */}
-        <div className="lg:col-span-1 flex flex-col gap-6">
-          <ProjectSummary quotations={quotations} formattedDate={formattedDate} />
-          <CustomerInfo customer={project.customer} />
-          <OwnerInfo user={project.user} />
+          <div className="lg:col-span-1 flex flex-col gap-6">
+            <ProjectSummary quotations={quotations} formattedDate={formattedDate} />
+            <CustomerInfo customer={project.customer} />
+            <OwnerInfo user={project.user} />
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Tab 2: Tầng & Vị trí cửa & Đo đạc ô chờ (Module 002) */}
+      {activeTab === 'positions' && (
+        <ProjectFloorsPositions projectId={projectId} />
+      )}
+
+      {/* Tab 3: Báo giá & Pricing Engine (Module 003) */}
+      {activeTab === 'quotations' && (
+        <ProjectQuotationsPricing projectId={projectId} />
+      )}
+
+      {/* Tab 4: Hợp đồng & Sổ cái (Module 004) */}
+      {activeTab === 'contracts' && (
+        <ProjectContractsLedger projectId={projectId} quotations={quotations} />
+      )}
+
+
+      {/* Tab 5: Lệnh sản xuất & KCS */}
+      {activeTab === 'production' && (
+        <ProjectProductionProgress projectId={projectId} />
+      )}
+
+
 
 
       {/* Form Modal */}

@@ -4,4 +4,7 @@ export * from './project-summary';
 export * from './customer-info';
 export * from './owner-info';
 export * from './project-activities';
-
+export * from './project-floors-positions';
+export * from './project-quotations-pricing';
+export * from './project-contracts-ledger';
+export * from './project-production-progress';

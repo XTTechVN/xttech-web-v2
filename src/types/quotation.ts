@@ -327,3 +327,93 @@ export interface DraftFloor {
   index: number;
   materials: DraftMaterial[];
 }
+
+// Module 003: Step 2 Live Pricing Engine & Quotation
+export interface ProjectQuotationPreviewRequest {
+  scopeType?: 'all' | 'by_floor';
+  floorIds?: number[];
+  laborCalcUnit?: 'vnd_per_m2' | 'vnd_per_kg';
+  laborProductionRate?: number;
+  laborInstallRate?: number;
+  laborCleanRate?: number;
+  otherCost?: number;
+  otherSellingPrice?: number;
+  managementRatePercent?: number;
+  pricingMode?: 'markup' | 'margin';
+  markupPercent?: number;
+  marginPercent?: number;
+  discountPercent?: number;
+  vatPercent?: number;
+  accessoryMode?: 'combined' | 'separated';
+}
+
+export interface QuotationDoorItemSnapshot {
+  positionId: number;
+  positionCode: string;
+  positionName?: string | null;
+  doorName: string;
+  doorType?: string;
+  floorId: number;
+  floorName: string;
+  width: number;
+  height: number;
+  areaM2: number;
+  aluminumKg: number;
+  costPrice: number;
+  suggestedPrice: number;
+  sellingPrice: number;
+  isManuallyEdited: boolean;
+  isBelowCost: boolean;
+}
+
+export interface ProjectQuotationPreviewResponse {
+  items: QuotationDoorItemSnapshot[];
+  totalPositions: number;
+  totalAreaM2: number;
+  totalAluminumKg: number;
+  materialCost: number;
+  laborCost: number;
+  aluminumWasteCost: number;
+  otherCost: number;
+  workshopPrice: number;
+  subtotalSellingPrice: number;
+  discountAmount: number;
+  totalAmountBeforeVat: number;
+  totalProfit: number;
+  effectiveMarginPercent: number;
+  vatAmount: number;
+  totalAmount: number;
+  warningFlags: string[];
+  isLoss: boolean;
+}
+
+export interface ProjectQuotationCreatePayload extends ProjectQuotationPreviewRequest {
+  name: string;
+  note?: string;
+  kind?: 'main' | 'change_order';
+}
+
+export interface ProjectQuotationItem {
+  id: number;
+  projectId: number;
+  code: string;
+  name: string;
+  version: number;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected' | string;
+  kind: 'main' | 'change_order';
+  isSelected: boolean;
+  isLocked: boolean;
+  workshopPrice: number;
+  subtotalSellingPrice: number;
+  discountAmount: number;
+  discountPercent: number;
+  totalAmountBeforeVat: number;
+  vatAmount: number;
+  totalAmount: number;
+  totalProfit: number;
+  effectiveMarginPercent: number;
+  createdAt: string;
+  updatedAt: string;
+  note?: string | null;
+}
+
