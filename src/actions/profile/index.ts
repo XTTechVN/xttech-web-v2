@@ -8,6 +8,7 @@ import type {
   ProfileSection,
   ProfileSectionCreate,
   ProfileSectionUpdate,
+  ProfileSectionQueryParams,
 } from '@/types';
 
 // Profile Bars
@@ -73,10 +74,14 @@ export const deleteProfileBar = async (id: number): Promise<ProfileBar> => {
 };
 
 // Profile Sections
-export const getProfileSections = async (): Promise<ProfileSection[]> => {
+export const getProfileSections = async (
+  params?: ProfileSectionQueryParams,
+): Promise<ProfileSection[]> => {
   try {
-    const response = await api.get('/api/v1/profile-sections');
-    return response.data?.items || response.data || [];
+    const response = await api.get('/api/v1/profile-sections', {
+      params: { limit: 500, ...params },
+    });
+    return response.data?.items || (Array.isArray(response.data) ? response.data : []);
   } catch (error) {
     console.warn('API error getProfileSections', error);
     throw error;

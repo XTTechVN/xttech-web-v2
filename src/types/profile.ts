@@ -101,3 +101,10 @@ export interface ProfileBarQueryParams {
   offset?: number;
   limit?: number;
 }
+
+export interface ProfileSectionQueryParams {
+  search?: string;
+  category?: string;
+  offset?: number;
+  limit?: number;
+}
