@@ -21,7 +21,7 @@ interface UseDoorStudioStateProps {
 
 export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: UseDoorStudioStateProps) {
   // Navigation Tabs
-  const [activeMainTab, setActiveMainTab] = useState<StudioMainTab>('draw');
+  const [activeMainTab, setActiveMainTab] = useState<StudioMainTab>('info');
 
   // Selected Brand State
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
@@ -259,7 +259,7 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
       setSelectedMullion(null);
       setIsMullionModalOpen(false);
       setCalcData(null);
-      setActiveMainTab('draw');
+      setActiveMainTab('info');
     } else {
       const defaultW = 1400;
       const defaultH = 1600;
@@ -294,7 +294,7 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
       setIsMullionModalOpen(false);
       setCalcData(null);
       setIsCalculating(false);
-      setActiveMainTab('draw');
+      setActiveMainTab('info');
     }
   }, [door, isOpen, defaultBrandId, allAvailableSeries.length]);
 

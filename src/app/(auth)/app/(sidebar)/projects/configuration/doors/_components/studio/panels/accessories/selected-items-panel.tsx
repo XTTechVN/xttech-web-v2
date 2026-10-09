@@ -105,14 +105,14 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                               {c.name}
                             </span>
                           </div>
-                          <div className="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-2">
+                          <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-2">
                             <span>{c.code || '---'}</span>
                             <span>·</span>
                             <span>{c.comboItems?.length || 0} vật tư</span>
                             <button
                               type="button"
                               onClick={() => setExpandedComboId(isExpanded ? null : c.id)}
-                              className="text-primary hover:underline font-sans cursor-pointer font-medium"
+                              className="text-primary hover:underline cursor-pointer font-medium"
                             >
                               {isExpanded ? 'Ẩn chi tiết' : 'Xem chi tiết'}
                             </button>
@@ -120,7 +120,7 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                         </div>
 
                         <div className="flex items-center gap-2.5 shrink-0">
-                          <span className={`font-mono text-xs ${price > 0 ? 'font-bold text-primary' : 'text-slate-400'}`}>
+                          <span className={`text-xs ${price > 0 ? 'font-bold text-primary' : 'text-slate-400'}`}>
                             {price > 0 ? `${price.toLocaleString('vi-VN')} đ` : '-'}
                           </span>
                           <button
@@ -142,7 +142,7 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                               <span className="truncate pr-2">
                                 {idx + 1}. {item.accessoryName || item.accessoryCode || `Phụ kiện #${item.accessoryId}`}
                               </span>
-                              <span className="font-mono text-slate-400 shrink-0 font-medium">
+                              <span className="text-slate-400 shrink-0 font-medium">
                                 ×{item.quantity} {item.unit || ''}
                               </span>
                             </div>
@@ -176,7 +176,7 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                         <div className="font-semibold text-gray-900 truncate">
                           {acc?.name || `Phụ kiện #${item.accessoryId}`}
                         </div>
-                        <div className="text-[11px] text-gray-400 font-mono">
+                        <div className="text-[11px] text-gray-400">
                           {acc?.code || '---'} {price > 0 && `· ${price.toLocaleString('vi-VN')} đ/${acc?.unit || 'cái'}`}
                         </div>
                       </div>
@@ -191,7 +191,7 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                           >
                             <Minus size={11} />
                           </button>
-                          <span className="w-8 text-center font-mono font-bold text-gray-900 text-[11px]">
+                          <span className="w-8 text-center font-bold text-gray-900 text-[11px]">
                             {item.quantity}
                           </span>
                           <button
@@ -203,7 +203,7 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                           </button>
                         </div>
 
-                        <span className="font-mono font-bold text-gray-900 text-xs w-20 text-right">
+                        <span className="font-bold text-gray-900 text-xs w-20 text-right">
                           {(price * item.quantity).toLocaleString('vi-VN')} đ
                         </span>
 

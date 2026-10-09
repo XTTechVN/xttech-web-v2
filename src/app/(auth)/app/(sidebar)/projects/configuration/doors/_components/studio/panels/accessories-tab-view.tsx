@@ -154,7 +154,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
                 {tab.icon && <span>{tab.icon}</span>}
                 <span>{tab.label}</span>
                 <span
-                  className={`text-[10px] rounded-full px-1.5 py-0.2 font-mono font-bold ${
+                  className={`text-[10px] rounded-full px-1.5 py-0.2 font-bold ${
                     isActive ? 'bg-primary/20 text-primary' : 'bg-slate-100 text-slate-500'
                   }`}
                 >
@@ -177,7 +177,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
             <Package size={13} className="shrink-0" />
             <span>Phụ kiện lẻ</span>
             <span
-              className={`text-[10px] rounded-full px-1.5 py-0.2 font-mono font-bold ${
+              className={`text-[10px] rounded-full px-1.5 py-0.2 font-bold ${
                 categoryTab === 'individual' ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-50 text-emerald-700'
               }`}
             >
@@ -310,10 +310,10 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
                               >
                                 <td className="py-2.5 px-3.5">
                                   <div className="font-semibold text-slate-900">{combo.name}</div>
-                                  <div className="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-1.5">
+                                  <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5">
                                     <span>{combo.code || '—'}</span>
                                     {brand && brand !== 'Khác' && (
-                                      <span className="text-primary font-sans font-medium">· {brand}</span>
+                                      <span className="text-primary font-medium">· {brand}</span>
                                     )}
                                   </div>
                                 </td>
@@ -332,7 +332,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
                                     <span>{itemsCount} món</span>
                                   </button>
                                 </td>
-                                <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
+                                <td className="py-2.5 px-3 text-right font-bold text-slate-900">
                                   {combo.totalComboPrice
                                     ? `${combo.totalComboPrice.toLocaleString('vi-VN')} đ`
                                     : '-'}
@@ -376,7 +376,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
                                               <span className="truncate pr-2">
                                                 {idx + 1}. {item.accessoryName || item.accessoryCode || `Phụ kiện #${item.accessoryId}`}
                                               </span>
-                                              <span className="font-mono text-slate-500 font-medium shrink-0">
+                                              <span className="text-slate-500 font-medium shrink-0">
                                                 ×{item.quantity} {item.unit || ''}
                                               </span>
                                             </div>

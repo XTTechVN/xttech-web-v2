@@ -60,26 +60,6 @@ export const InfoTabView: React.FC<InfoTabViewProps> = ({
   return (
     <div className="flex-1 overflow-y-auto bg-slate-50/70 p-4 lg:p-6">
       <div className="max-w-6xl mx-auto space-y-4">
-        {/* Banner tiêu đề định hướng */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">Thông số kỹ thuật mẫu cửa</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Khai báo danh mục định danh, hệ nhôm cơ sở, kích thước phủ bì tiêu chuẩn và màu sơn bề mặt.
-            </p>
-          </div>
-          {(Boolean(selectedBrand) || Boolean(selectedSeries)) && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary border border-primary/20 text-xs font-semibold shrink-0">
-              <Layers size={14} />
-              <span>
-                {selectedBrand?.name ? `${selectedBrand.name} — ` : ''}
-                {selectedSeries?.name || 'Chưa chọn hệ nhôm'}
-                {selectedSeries?.code ? ` (${selectedSeries.code})` : ''}
-              </span>
-            </div>
-          )}
-        </div>
-
         {/* Bố cục 2 cột chính: Trái = Thông số kỹ thuật & Kích thước, Phải = Bảng màu & Tóm tắt */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* CỘT TRÁI (7 CỘT): Thông tin định danh & Kích thước */}
@@ -130,7 +110,8 @@ export const InfoTabView: React.FC<InfoTabViewProps> = ({
                       value: String(b.id),
                       label: b.name,
                     }))}
-                    className="h-9 text-xs font-normal"
+                    className="h-9 text-xs font-normal bg-slate-50 cursor-not-allowed text-slate-600"
+                    disabled
                     fullWidth
                   />
                 </div>
