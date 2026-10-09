@@ -207,9 +207,32 @@ export function ProfileBarTable({
                   key={bar.id}
                   className="hover:bg-slate-50/80 transition-colors group"
                 >
-                  {/* Cột 1: Mã thanh */}
+                  {/* Cột 1: Mã thanh & Mặt cắt */}
                   <td className="py-3.5 px-4 font-semibold text-slate-800 text-xs">
-                    {bar.code || '—'}
+                    <div className="flex items-center gap-2.5">
+                      {bar.sectionLibrary ? (
+                        <div
+                          title={`Mặt cắt: ${bar.sectionLibrary.name}`}
+                          className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center p-1 shrink-0 shadow-2xs"
+                        >
+                          <svg
+                            viewBox={bar.sectionLibrary.viewBox || '0 0 100 100'}
+                            className="w-full h-full stroke-slate-700 fill-none"
+                            strokeWidth="1.5"
+                          >
+                            <path d={bar.sectionLibrary.svgPathData} />
+                          </svg>
+                        </div>
+                      ) : (
+                        <div
+                          title="Chưa gán mặt cắt SVG"
+                          className="w-8 h-8 rounded-lg bg-slate-50/60 border border-dashed border-slate-200 flex items-center justify-center shrink-0 text-slate-300 text-[9px]"
+                        >
+                          —
+                        </div>
+                      )}
+                      <span>{bar.code || '—'}</span>
+                    </div>
                   </td>
 
                   {/* Cột 2: Tên thanh profile */}

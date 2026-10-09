@@ -2,6 +2,20 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-09
+
+### Added & Enhanced
+
+- **Tích Hợp Giao Diện Quản Lý & Thư Viện Mặt Cắt Profile Nhôm Chuẩn Windova 1:1 ([`profile-bar-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-bar-modal.tsx), [`profile-section-library-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-section-library-modal.tsx), [`profile-bar-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-bar-table.tsx)):**
+  - **Khối Mặt Cắt Profile Trung Tâm (Windova Header):** Hiển thị ô vuông trực quan render vector SVG mặt cắt nhôm (`svgPathData` & `viewBox`), nút đỏ `✕` gỡ bỏ mặt cắt và nhãn `SVG (Vector)`. Click vào ô kích hoạt mở Modal Thư viện mặt cắt.
+  - **Modal "Thư viện mặt cắt SVG" Độc Lập:**
+    - Thanh công cụ tìm kiếm theo tên và lọc theo phân loại (Khung bao, Cánh cửa, Đố chia, Nẹp kính, Ray trượt...).
+    - Toggle checkbox `Sửa mặt cắt` bật/tắt chế độ quản trị cho phép xóa mặt cắt khỏi thư viện.
+    - Nút `📥 Tải lên file mới` hỗ trợ chọn file vector `.svg`, tự động phân tích cú pháp XML/SVG trích xuất `viewBox` và đường vẽ vector `path d="..."` để tạo mới bản ghi `ProfileSection`.
+    - Lưới thẻ card 4 cột trực quan hiển thị hình vẽ SVG, tên, mã, badge số lượng profile đang sử dụng (`X profile`) và badge loại thanh. Click để chọn và gán mặt cắt ngay lập tức.
+  - **Tối Ưu Form Sửa/Thêm Profile Nhôm:** Tái cơ cấu layout gọn gàng chuẩn Windova: Hãng nhôm · Serie cửa · Chiều dài $\rightarrow$ Mã thanh · Tên thanh · Phân loại $\rightarrow$ Khung "Thông số kích thước & tỷ trọng" (Tỷ trọng, Chiều cao tiết diện, Trừ cánh, Trừ nẹp, Trừ kính, Trừ đố chia).
+  - **Thumbnail Mặt Cắt Trên Bảng Danh Sách (`ProfileBarTable`):** Hiển thị mini vector SVG ngay cạnh mã thanh nhôm ở cột đầu tiên, giúp kỹ sư xưởng nhận diện tiết diện thanh nhôm trực quan trong nháy mắt.
+
 ## [Unreleased] - 2026-10-05
 
 ### Added & Enhanced
