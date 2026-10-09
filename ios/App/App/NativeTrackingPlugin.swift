@@ -22,6 +22,18 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     private let prefsKeyApiUrl = "xttech_ios_api_url"
     private let prefsKeyIsTracking = "xttech_ios_is_tracking"
 
+    // Custom URLSession tối ưu riêng cho tác vụ nền (Background Network)
+    private lazy var backgroundSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 5.0
+        config.timeoutIntervalForResource = 8.0
+        config.waitsForConnectivity = false
+        config.allowsCellularAccess = true
+        config.shouldSetCookies = false
+        config.httpMaximumConnectionsPerHost = 2
+        return URLSession(configuration: config)
+    }()
+
     public override func load() {
         super.load()
         NativeTrackingPlugin.shared = self
@@ -254,7 +266,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         locationManager?.distanceFilter = kCLDistanceFilterNone
         locationManager?.allowsBackgroundLocationUpdates = true
         locationManager?.pausesLocationUpdatesAutomatically = false
-        locationManager?.activityType = .automotiveNavigation
+        locationManager?.activityType = .otherNavigation
 
         // Hiển thị viên thuốc màu xanh trên Status Bar / Dynamic Island (chuẩn Apple cho ứng dụng Live Tracking)
         if #available(iOS 11.0, *) {
@@ -381,7 +393,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         request.httpMethod = "POST"
         request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.timeoutInterval = 15.0
+        request.timeoutInterval = 5.0
 
         if let token = self.accessToken, !token.isEmpty {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -406,22 +418,27 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         request.httpBody = httpBody
 
         // Yêu cầu iOS cấp quyền CPU chạy nền an toàn
-        var bgTask: UIBackgroundTaskIdentifier = .invalid
-        bgTask = UIApplication.shared.beginBackgroundTask(withName: "XTTechLocationPing") {
-            if bgTask != .invalid {
-                UIApplication.shared.endBackgroundTask(bgTask)
-                bgTask = .invalid
+        var bgTaskId: UIBackgroundTaskIdentifier = .invalid
+        bgTaskId = UIApplication.shared.beginBackgroundTask(withName: "XTTechLocationPing") {
+            if bgTaskId != .invalid {
+                UIApplication.shared.endBackgroundTask(bgTaskId)
+                bgTaskId = .invalid
             }
         }
 
-        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            defer {
-                DispatchQueue.main.async {
-                    if bgTask != .invalid {
-                        UIApplication.shared.endBackgroundTask(bgTask)
-                        bgTask = .invalid
-                    }
+        let endBgTask = {
+            DispatchQueue.main.async {
+                if bgTaskId != .invalid {
+                    let currentId = bgTaskId
+                    bgTaskId = .invalid
+                    UIApplication.shared.endBackgroundTask(currentId)
                 }
+            }
+        }
+
+        let task = self.backgroundSession.dataTask(with: request) { [weak self] data, response, error in
+            defer {
+                endBgTask()
             }
             guard let self = self else { return }
             if let httpResponse = response as? HTTPURLResponse {
@@ -462,7 +479,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         request.httpMethod = "POST"
         request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.timeoutInterval = 15.0
+        request.timeoutInterval = 5.0
 
         let payload = ["refreshToken": refreshToken]
         guard let httpBody = try? JSONSerialization.data(withJSONObject: payload, options: []) else {
@@ -471,22 +488,27 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
         request.httpBody = httpBody
 
-        var bgTask: UIBackgroundTaskIdentifier = .invalid
-        bgTask = UIApplication.shared.beginBackgroundTask(withName: "XTTechRefreshToken") {
-            if bgTask != .invalid {
-                UIApplication.shared.endBackgroundTask(bgTask)
-                bgTask = .invalid
+        var bgTaskId: UIBackgroundTaskIdentifier = .invalid
+        bgTaskId = UIApplication.shared.beginBackgroundTask(withName: "XTTechRefreshToken") {
+            if bgTaskId != .invalid {
+                UIApplication.shared.endBackgroundTask(bgTaskId)
+                bgTaskId = .invalid
             }
         }
 
-        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            defer {
-                DispatchQueue.main.async {
-                    if bgTask != .invalid {
-                        UIApplication.shared.endBackgroundTask(bgTask)
-                        bgTask = .invalid
-                    }
+        let endBgTask = {
+            DispatchQueue.main.async {
+                if bgTaskId != .invalid {
+                    let currentId = bgTaskId
+                    bgTaskId = .invalid
+                    UIApplication.shared.endBackgroundTask(currentId)
                 }
+            }
+        }
+
+        let task = self.backgroundSession.dataTask(with: request) { [weak self] data, response, error in
+            defer {
+                endBgTask()
             }
             guard let self = self, let data = data, let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
                 completion(false)
