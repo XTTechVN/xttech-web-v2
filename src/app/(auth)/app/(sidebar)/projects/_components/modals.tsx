@@ -4,12 +4,13 @@ import { useEffect } from 'react';
 import { Input, Button, Modal, Select } from '@/components';
 import { CheckCircle2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { createProject, updateProject } from '@/actions';
+import { createProject, updateProject, getBrands, getDoorSeriesList, getBrandColors } from '@/actions';
 import toast from 'react-hot-toast';
 import { showErrorToast } from '@/utils';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
-import type { Project, ProjectCreate, ProjectUpdate, Customer } from '@/types';
+import type { Project, ProjectCreate, ProjectUpdate, Customer, ProjectStatus } from '@/types';
+import { PROJECT_STATUS_OPTIONS } from '@/config';
 
 // Form modal để Thêm / Sửa thông tin dự án
 interface ProjectFormModalProps {
@@ -17,11 +18,23 @@ interface ProjectFormModalProps {
   onClose: () => void;
   title: string;
   submitText?: string;
-  initialData?: Pick<Project, 'id' | 'name' | 'address' | 'note'> & { customerId: number };
+  initialData?: Partial<Project> & { id?: number; customerId?: number };
   customers?: Pick<Customer, 'id' | 'name'>[];
 }
 
-type ProjectFormValues = Omit<ProjectCreate, 'customerId'> & { customerId?: string | number };
+interface ProjectFormInputs {
+  code?: string;
+  name: string;
+  customerId: string | number;
+  status?: ProjectStatus;
+  address?: string;
+  note?: string;
+  defaultBrandId?: string | number;
+  defaultSeriesId?: string | number;
+  defaultColorId?: string | number;
+  startDate?: string;
+  targetDate?: string;
+}
 
 export function ProjectFormModal({
   isOpen,
@@ -37,7 +50,47 @@ export function ProjectFormModal({
     reset,
     watch,
     formState: { errors },
-  } = useForm<ProjectFormValues>();
+  } = useForm<ProjectFormInputs>();
+
+  const selectedBrandId = watch('defaultBrandId');
+
+  // Lấy danh sách hãng nhôm (chỉ lấy loại nhôm 'aluminum')
+  const { data: brandsData } = useQuery({
+    queryKey: ['brands', 'aluminum'],
+    queryFn: async () => {
+      const res = await getBrands({ limit: 100, brandType: 'aluminum' } as any);
+      const items = Array.isArray(res?.items) ? res.items : [];
+      return items.filter((b) => !b.brandType || b.brandType === 'aluminum');
+    },
+    enabled: isOpen,
+  });
+
+
+  // Lấy danh sách hệ nhôm theo brand (hoặc tất cả)
+  const { data: seriesData } = useQuery({
+    queryKey: ['door-series', selectedBrandId],
+    queryFn: async () => {
+      const res = await getDoorSeriesList({
+        limit: 100,
+        brandId: selectedBrandId ? Number(selectedBrandId) : undefined,
+      });
+      return res.items;
+    },
+    enabled: isOpen,
+  });
+
+  // Lấy danh sách màu nhôm
+  const { data: colorsData } = useQuery({
+    queryKey: ['brand-colors', selectedBrandId],
+    queryFn: async () => {
+      const res = await getBrandColors({
+        limit: 100,
+        brandId: selectedBrandId ? Number(selectedBrandId) : undefined,
+      });
+      return res.items;
+    },
+    enabled: isOpen,
+  });
 
   const { mutate, isPending } = useMutation({
     mutationFn: createProject,
@@ -70,66 +123,182 @@ export function ProjectFormModal({
   useEffect(() => {
     if (isOpen) {
       reset({
+        code: initialData?.code || '',
         name: initialData?.name || '',
         customerId: initialData?.customerId || undefined,
+        status: initialData?.status || 'surveying',
         address: initialData?.address || '',
         note: initialData?.note || '',
+        defaultBrandId: initialData?.defaultBrandId || undefined,
+        defaultSeriesId: initialData?.defaultSeriesId || undefined,
+        defaultColorId: initialData?.defaultColorId || undefined,
+        startDate: initialData?.startDate || '',
+        targetDate: initialData?.targetDate || '',
       });
     } else {
-      reset({ name: '', customerId: undefined, address: '', note: '' });
+      reset({
+        code: '',
+        name: '',
+        customerId: undefined,
+        status: 'surveying',
+        address: '',
+        note: '',
+        defaultBrandId: undefined,
+        defaultSeriesId: undefined,
+        defaultColorId: undefined,
+        startDate: '',
+        targetDate: '',
+      });
     }
   }, [isOpen, initialData, reset]);
 
-  const handleConfirm = (data: ProjectFormValues) => {
-    const formattedData = {
-      ...data,
+  const handleConfirm = (data: ProjectFormInputs) => {
+    const payload: ProjectCreate = {
+      name: data.name,
       customerId: Number(data.customerId),
-    } as ProjectCreate;
+      status: data.status,
+      address: data.address || undefined,
+      note: data.note || undefined,
+      code: data.code?.trim() || undefined,
+      defaultBrandId: data.defaultBrandId ? Number(data.defaultBrandId) : undefined,
+      defaultSeriesId: data.defaultSeriesId ? Number(data.defaultSeriesId) : undefined,
+      defaultColorId: data.defaultColorId ? Number(data.defaultColorId) : undefined,
+      startDate: data.startDate || undefined,
+      targetDate: data.targetDate || undefined,
+    };
 
-    if (initialData) {
-      updateMutation({ id: initialData.id, data: formattedData as ProjectUpdate });
+    if (initialData?.id) {
+      updateMutation({ id: initialData.id, data: payload as ProjectUpdate });
     } else {
-      mutate(formattedData);
+      mutate(payload);
     }
   };
 
+  // Sắp xếp từ A-Z theo tiếng Việt
+  const customerOptions = [...(customers || [])]
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'))
+    .map((c) => ({ value: c.id, label: c.name }));
+
+  const brandOptions = (Array.isArray(brandsData) ? brandsData : [])
+    .slice()
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'))
+    .map((b) => ({ value: b.id, label: b.name }));
+
+  const seriesOptions = (Array.isArray(seriesData) ? seriesData : [])
+    .slice()
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'))
+    .map((s) => ({ value: s.id, label: s.name }));
+
+  const colorOptions = (Array.isArray(colorsData) ? colorsData : [])
+    .slice()
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'))
+    .map((c) => ({ value: c.id, label: c.name }));
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-md w-full">
+    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-2xl w-full">
       <form onSubmit={handleSubmit(handleConfirm)}>
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col space-y-4 max-h-[75vh] overflow-y-auto px-1 py-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Tên dự án *"
+              placeholder="Nhập tên dự án"
+              fullWidth
+              {...register('name', { required: true })}
+              error={errors.name ? 'Tên dự án không được để trống' : undefined}
+            />
+            <Input
+              label="Mã dự án (Để trống để tự sinh DA-YYYY-XXXX)"
+              placeholder="VD: DA-2026-0001"
+              fullWidth
+              {...register('code')}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select
+              label="Khách hàng *"
+              placeholder="Chọn khách hàng"
+              fullWidth
+              value={watch('customerId') || ''}
+              {...register('customerId', { required: true })}
+              options={customerOptions}
+              error={errors.customerId ? 'Vui lòng chọn khách hàng' : undefined}
+            />
+            <Select
+              label="Trạng thái dự án"
+              placeholder="Chọn trạng thái"
+              fullWidth
+              value={watch('status') || 'surveying'}
+              {...register('status')}
+              options={PROJECT_STATUS_OPTIONS}
+            />
+          </div>
+
+
           <Input
-            label="Tên dự án *"
-            placeholder="Nhập tên dự án"
-            fullWidth
-            {...register('name', { required: true })}
-            error={errors.name ? 'Tên dự án không được để trống' : undefined}
-          />
-          <Select
-            label="Khách hàng *"
-            placeholder="Chọn khách hàng"
-            fullWidth
-            value={watch('customerId') || ''}
-            {...register('customerId', { required: true })}
-            options={customers.map((c) => ({ value: c.id, label: c.name }))}
-            error={errors.customerId ? 'Vui lòng chọn khách hàng' : undefined}
-          />
-          <Input
-            label="Địa chỉ"
+            label="Địa chỉ công trình"
             placeholder="Nhập địa chỉ công trình"
             fullWidth
             {...register('address')}
             error={errors.address ? 'Địa chỉ không hợp lệ' : undefined}
           />
+
+          <div className="border-t border-slate-100 pt-3">
+            <span className="text-xs font-bold text-slate-500 block mb-2">Cấu hình nhôm mặc định</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <Select
+                label="Hãng nhôm"
+                placeholder="Chọn hãng"
+                fullWidth
+                value={watch('defaultBrandId') || ''}
+                {...register('defaultBrandId')}
+                options={brandOptions}
+              />
+              <Select
+                label="Hệ nhôm"
+                placeholder="Chọn hệ"
+                fullWidth
+                value={watch('defaultSeriesId') || ''}
+                {...register('defaultSeriesId')}
+                options={seriesOptions}
+              />
+              <Select
+                label="Màu nhôm"
+                placeholder="Chọn màu"
+                fullWidth
+                value={watch('defaultColorId') || ''}
+                {...register('defaultColorId')}
+                options={colorOptions}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              type="date"
+              label="Ngày bắt đầu"
+              fullWidth
+              {...register('startDate')}
+            />
+            <Input
+              type="date"
+              label="Dự kiến hoàn thành"
+              fullWidth
+              {...register('targetDate')}
+            />
+          </div>
+
           <Input
             label="Ghi chú"
-            placeholder="Nhập ghi chú"
+            placeholder="Nhập ghi chú yêu cầu thiết kế / khảo sát..."
             fullWidth
             {...register('note')}
             error={errors.note ? 'Ghi chú không hợp lệ' : undefined}
           />
         </div>
-        <div className="flex gap-2 justify-end w-full mt-4">
-          <Button variant="outline" size="sm" onClick={onClose}>
+
+        <div className="flex gap-2 justify-end w-full mt-5 pt-3 border-t border-slate-100">
+          <Button variant="outline" size="sm" onClick={onClose} type="button">
             Hủy
           </Button>
           <Button
@@ -147,6 +316,7 @@ export function ProjectFormModal({
     </Modal>
   );
 }
+
 
 // Modal xác nhận xoá dự án
 interface ProjectDeleteModalProps {

@@ -128,19 +128,10 @@ const Page = () => {
         }}
         title={selectedProject ? 'Sửa dự án' : 'Thêm dự án mới'}
         submitText={selectedProject ? 'Xác nhận lưu' : 'Xác nhận tạo'}
-        initialData={
-          selectedProject
-            ? {
-                id: selectedProject.id,
-                name: selectedProject.name,
-                customerId: selectedProject.customerId,
-                address: selectedProject.address,
-                note: selectedProject.note,
-              }
-            : undefined
-        }
+        initialData={selectedProject || undefined}
         customers={customerData}
       />
+
 
       <ProjectDeleteModal
         isOpen={isDeleteOpen}

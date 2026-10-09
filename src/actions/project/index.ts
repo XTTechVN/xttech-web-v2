@@ -80,3 +80,26 @@ export const deleteProject = async (id: number): Promise<Project> => {
     throw error;
   }
 };
+
+export const getProjectActivities = async (
+  projectId: number,
+  params?: import('@/types').ProjectActivityQueryParams,
+): Promise<BaseResponseWithPagination<import('@/types').ProjectActivity>> => {
+  try {
+    const response = await api.get(`/api/v1/projects/${projectId}/activities`, { params });
+    const { items, meta } = response.data;
+    return {
+      items: items || [],
+      meta: {
+        total: meta?.total ?? 0,
+        offset: meta?.offset ?? 0,
+        limit: meta?.limit ?? 10,
+        next: meta?.next ?? false,
+      },
+    };
+  } catch (error: unknown) {
+    console.warn('API error getProjectActivities', error);
+    throw error;
+  }
+};
+

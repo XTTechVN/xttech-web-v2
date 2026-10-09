@@ -8,7 +8,8 @@ import { getProject, getProjectQuotations, getCustomers, deleteProject, updateQu
 import { Heading, Button } from '@/components';
 import { ProjectFormModal, ProjectDeleteModal } from '../_components/modals';
 import { QuotationCreateModal } from '../_components/quotation-modals';
-import { ProjectInfo, QuotationsList, ProjectSummary, CustomerInfo, OwnerInfo } from './_components';
+import { ProjectInfo, QuotationsList, ProjectSummary, CustomerInfo, OwnerInfo, ProjectActivities } from './_components';
+
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
 import { showErrorToast } from '@/utils';
@@ -163,7 +164,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       {/* Main Content Layout (2/3 & 1/3 Grid) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left Column: Project Details & Quotations (2/3) */}
+        {/* Left Column: Project Details & Quotations & Activities (2/3) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <ProjectInfo project={project} formattedDate={formattedDate} />
           <QuotationsList 
@@ -175,6 +176,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               await changeQuotationStatus({ quotationId, status });
             }}
           />
+          <ProjectActivities projectId={projectId} />
         </div>
 
         {/* Right Column: Summaries & Client Info (1/3) */}
@@ -185,21 +187,16 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
         </div>
       </div>
 
+
       {/* Form Modal */}
       <ProjectFormModal 
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         title="Chỉnh sửa thông tin dự án"
         submitText="Lưu thay đổi"
-        customers={customerData}
-        initialData={project ? {
-          id: project.id,
-          name: project.name,
-          address: project.address || '',
-          note: project.note || '',
-          customerId: project.customerId
-        } : undefined}
+        initialData={project || undefined}
       />
+
 
       {/* Delete Modal */}
       <ProjectDeleteModal 
