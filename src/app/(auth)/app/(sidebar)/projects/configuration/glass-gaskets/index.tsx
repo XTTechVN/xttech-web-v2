@@ -28,10 +28,13 @@ import {
   GasketModal,
   GlassCategoryModal,
   type GlassGasketCategoryFilter,
+  type MaterialTypeFilter,
+  getCategoryMaterialType,
 } from './_components';
 
 export default function GlassGasketsPage() {
   const [search, setSearch] = useState('');
+  const [selectedType, setSelectedType] = useState<MaterialTypeFilter>('all');
   const [selectedCategory, setSelectedCategory] = useState<GlassGasketCategoryFilter>('all');
 
   // Modals state
@@ -65,6 +68,29 @@ export default function GlassGasketsPage() {
   const categoriesList = useMemo(() => catData || [], [catData]);
   const glassesList = useMemo(() => glassesData || [], [glassesData]);
   const gasketsList = useMemo(() => gasketData || [], [gasketData]);
+
+  // Map categoryId -> materialType
+  const categoryTypeMap = useMemo(() => {
+    const map = new Map<number, 'glass' | 'panel' | 'screen_mesh'>();
+    categoriesList.forEach((c) => {
+      map.set(c.id, getCategoryMaterialType(c));
+    });
+    return map;
+  }, [categoriesList]);
+
+  // Thống kê số lượng từng loại chính
+  const glassTypeCounts = useMemo(() => {
+    let glass = 0;
+    let panel = 0;
+    let screen_mesh = 0;
+    glassesList.forEach((g) => {
+      const type = categoryTypeMap.get(g.categoryId) || 'glass';
+      if (type === 'panel') panel++;
+      else if (type === 'screen_mesh') screen_mesh++;
+      else glass++;
+    });
+    return { glass, panel, screen_mesh };
+  }, [glassesList, categoryTypeMap]);
 
   // Mutations
   const { mutate: deleteGlassMutate } = useMutation({
@@ -111,33 +137,21 @@ export default function GlassGasketsPage() {
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa nhóm chủng loại'),
   });
 
-  const { mutate: swapOrderMutate, isPending: isSwapping } = useMutation({
-    mutationFn: async ({ current, target }: { current: GlassCategory; target: GlassCategory }) => {
-      let currentOrder = current.sortOrder;
-      let targetOrder = target.sortOrder;
-      if (currentOrder === targetOrder) {
-        const currIdx = categoriesList.findIndex((c) => c.id === current.id);
-        const targetIdx = categoriesList.findIndex((c) => c.id === target.id);
-        currentOrder = currIdx + 1;
-        targetOrder = targetIdx + 1;
-      }
-      await updateGlassCategory(current.id, { sortOrder: targetOrder });
-      await updateGlassCategory(target.id, { sortOrder: currentOrder });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['glass-categories'] });
-      toast.success('Đã cập nhật thứ tự nhóm chủng loại');
-    },
-    onError: (err) => showErrorToast(err, 'Lỗi khi sắp xếp thứ tự'),
-  });
-
   // Filtered glasses
   const filteredGlasses = useMemo(() => {
     return glassesList.filter((g) => {
+      // 1. Lọc theo Loại chính (Kính, Tấm, Lưới)
+      if (selectedType !== 'all') {
+        const matType = categoryTypeMap.get(g.categoryId) || 'glass';
+        if (matType !== selectedType) return false;
+      }
+
+      // 2. Lọc theo Category cụ thể
       if (selectedCategory !== 'all' && selectedCategory !== 'gaskets') {
         if (g.categoryId !== selectedCategory) return false;
       }
 
+      // 3. Lọc theo từ khóa tìm kiếm
       if (!search.trim()) return true;
       const query = search.toLowerCase();
       return (
@@ -146,7 +160,7 @@ export default function GlassGasketsPage() {
         (g.glassType && g.glassType.toLowerCase().includes(query))
       );
     });
-  }, [glassesList, selectedCategory, search]);
+  }, [glassesList, selectedType, selectedCategory, search, categoryTypeMap]);
 
   // Filtered gaskets
   const filteredGaskets = useMemo(() => {
@@ -223,10 +237,13 @@ export default function GlassGasketsPage() {
       {/* Cột lọc phân loại bên trái */}
       <GlassCategorySidebar
         categories={categoriesList}
+        selectedType={selectedType}
+        onSelectType={setSelectedType}
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
         glassCount={glassesList.length}
         gasketCount={gasketsList.length}
+        glassTypeCounts={glassTypeCounts}
       />
 
       {/* Khu vực nội dung bên phải */}
@@ -236,6 +253,7 @@ export default function GlassGasketsPage() {
           search={search}
           onSearchChange={setSearch}
           selectedCategory={selectedCategory}
+          selectedType={selectedType}
           onAddGlass={handleOpenCreateGlass}
           onAddGasket={handleOpenCreateGasket}
           onManageCategories={() => setIsCategoryManagerOpen(true)}
@@ -255,7 +273,18 @@ export default function GlassGasketsPage() {
             />
           )
         ) : filteredGlasses.length === 0 ? (
-          <GlassEmptyState categoryName={selectedCategoryObj?.name} />
+          <GlassEmptyState
+            categoryName={
+              selectedCategoryObj?.name ||
+              (selectedType === 'glass'
+                ? 'Kính'
+                : selectedType === 'panel'
+                ? 'Tấm'
+                : selectedType === 'screen_mesh'
+                ? 'Lưới'
+                : null)
+            }
+          />
         ) : (
           <GlassTable
             glasses={filteredGlasses}
@@ -277,6 +306,8 @@ export default function GlassGasketsPage() {
         }}
         glass={selectedGlass}
         categories={categoriesList}
+        defaultMaterialType={selectedType !== 'all' ? selectedType : 'glass'}
+        defaultCategoryId={typeof selectedCategory === 'number' ? selectedCategory : undefined}
       />
 
       {/* Modal Thêm/Sửa Gioăng Ron & Keo */}
@@ -299,7 +330,7 @@ export default function GlassGasketsPage() {
         category={selectedCategoryItem}
       />
 
-      {/* Modal Quản lý danh sách & Thứ tự Nhóm Chủng Loại */}
+      {/* Modal Quản lý danh sách Nhóm Chủng Loại */}
       <GlassCategoryManagerModal
         isOpen={isCategoryManagerOpen}
         onClose={() => setIsCategoryManagerOpen(false)}
@@ -307,8 +338,6 @@ export default function GlassGasketsPage() {
         onAddCategory={handleOpenCreateCategory}
         onEditCategory={handleOpenEditCategory}
         onDeleteCategory={handleDeleteCategory}
-        onSwapOrder={(current, target) => swapOrderMutate({ current, target })}
-        isSwapping={isSwapping}
       />
     </div>
   );

@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { Modal, Button } from '@/components';
-import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, Layers } from 'lucide-react';
+import { Pencil, Trash2, Plus, Layers } from 'lucide-react';
 import type { GlassCategory } from '@/types';
+import { getCategoryMaterialType } from './glass-category-sidebar';
 
 interface GlassCategoryManagerModalProps {
   isOpen: boolean;
@@ -12,8 +13,6 @@ interface GlassCategoryManagerModalProps {
   onAddCategory: () => void;
   onEditCategory: (category: GlassCategory) => void;
   onDeleteCategory: (category: GlassCategory) => void;
-  onSwapOrder: (current: GlassCategory, target: GlassCategory) => void;
-  isSwapping?: boolean;
 }
 
 export function GlassCategoryManagerModal({
@@ -23,10 +22,35 @@ export function GlassCategoryManagerModal({
   onAddCategory,
   onEditCategory,
   onDeleteCategory,
-  onSwapOrder,
-  isSwapping = false,
 }: GlassCategoryManagerModalProps) {
-  const sortedCategories = [...categories].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  // Tab hiện tại trong modal: 'glass' | 'panel' | 'screen_mesh'
+  const [activeTab, setActiveTab] = React.useState<'glass' | 'panel' | 'screen_mesh'>('glass');
+
+  // Lọc và sắp xếp category theo tab đang chọn (theo tên A-Z)
+  const categoriesByTab = React.useMemo(() => {
+    const list = categories.filter((c) => getCategoryMaterialType(c) === activeTab);
+    return list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi', { sensitivity: 'base' }));
+  }, [categories, activeTab]);
+
+  // Thống kê số lượng từng tab
+  const counts = React.useMemo(() => {
+    let glass = 0;
+    let panel = 0;
+    let screen_mesh = 0;
+    categories.forEach((c) => {
+      const t = getCategoryMaterialType(c);
+      if (t === 'panel') panel++;
+      else if (t === 'screen_mesh') screen_mesh++;
+      else glass++;
+    });
+    return { glass, panel, screen_mesh };
+  }, [categories]);
+
+  const TABS: Array<{ id: 'glass' | 'panel' | 'screen_mesh'; label: string; count: number }> = [
+    { id: 'glass', label: 'Kính', count: counts.glass },
+    { id: 'panel', label: 'Tấm', count: counts.panel },
+    { id: 'screen_mesh', label: 'Lưới', count: counts.screen_mesh },
+  ];
 
   return (
     <Modal
@@ -42,11 +66,34 @@ export function GlassCategoryManagerModal({
         </div>
       }
     >
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-          <p className="text-xs text-slate-500">
-            Sắp xếp thứ tự ưu tiên hoặc chỉnh sửa định danh các nhóm quy cách kính, panel, lưới muỗi.
-          </p>
+      <div className="flex flex-col gap-3.5">
+        {/* Thanh chuyển đổi 3 Tabs chính và nút Thêm */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-100">
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${isActive
+                      ? 'bg-white text-primary shadow-2xs font-bold'
+                      : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${isActive ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-500'
+                      }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
           <Button
             variant="primary"
             size="sm"
@@ -61,53 +108,20 @@ export function GlassCategoryManagerModal({
           <table className="w-full text-left border-collapse text-xs">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold sticky top-0 z-1">
               <tr>
-                <th className="py-2.5 px-3 w-16 text-center">Thứ tự</th>
-                <th className="py-2.5 px-3 w-32">Mã nhóm</th>
+                <th className="py-2.5 px-3 w-12 text-center">STT</th>
+                <th className="py-2.5 px-3 w-36">Mã nhóm</th>
                 <th className="py-2.5 px-3">Tên nhóm chủng loại & Mô tả</th>
-                <th className="py-2.5 px-3 w-28 text-center">Trạng thái</th>
-                <th className="py-2.5 px-3 w-24 text-right">Thao tác</th>
+                <th className="py-2.5 px-3 w-24 text-center">Trạng thái</th>
+                <th className="py-2.5 px-3 w-20 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {sortedCategories.map((cat, idx) => {
-                const isFirst = idx === 0;
-                const isLast = idx === sortedCategories.length - 1;
-
+              {categoriesByTab.map((cat, idx) => {
                 return (
                   <tr key={cat.id} className="hover:bg-slate-50/70 transition-colors">
-                    {/* Cột Thứ tự */}
-                    <td className="py-2.5 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <span className="font-bold text-slate-700">#{idx + 1}</span>
-                        <div className="flex flex-col ml-1">
-                          <button
-                            type="button"
-                            disabled={isFirst || isSwapping}
-                            onClick={() => onSwapOrder(cat, sortedCategories[idx - 1])}
-                            className={`p-0.5 rounded transition cursor-pointer ${
-                              isFirst || isSwapping
-                                ? 'text-slate-200 cursor-not-allowed'
-                                : 'text-slate-500 hover:text-primary hover:bg-slate-100'
-                            }`}
-                            title="Di chuyển lên trên"
-                          >
-                            <ArrowUp size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            disabled={isLast || isSwapping}
-                            onClick={() => onSwapOrder(cat, sortedCategories[idx + 1])}
-                            className={`p-0.5 rounded transition cursor-pointer ${
-                              isLast || isSwapping
-                                ? 'text-slate-200 cursor-not-allowed'
-                                : 'text-slate-500 hover:text-primary hover:bg-slate-100'
-                            }`}
-                            title="Di chuyển xuống dưới"
-                          >
-                            <ArrowDown size={12} />
-                          </button>
-                        </div>
-                      </div>
+                    {/* Cột STT */}
+                    <td className="py-2.5 px-3 text-center font-bold text-slate-500">
+                      {idx + 1}
                     </td>
 
                     {/* Cột Mã nhóm */}
@@ -128,11 +142,10 @@ export function GlassCategoryManagerModal({
                     {/* Cột Trạng thái */}
                     <td className="py-2.5 px-3 text-center">
                       <span
-                        className={`inline-flex px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                          cat.isActive !== false
+                        className={`inline-flex px-2 py-0.5 rounded text-[10px] font-semibold border ${cat.isActive !== false
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : 'bg-slate-100 text-slate-600 border-slate-200'
-                        }`}
+                          }`}
                       >
                         {cat.isActive !== false ? 'Áp dụng' : 'Khóa'}
                       </span>
@@ -162,6 +175,14 @@ export function GlassCategoryManagerModal({
                   </tr>
                 );
               })}
+
+              {categoriesByTab.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-400 italic">
+                    Chưa có nhóm chủng loại nào trong tab này.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

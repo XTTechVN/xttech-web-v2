@@ -396,16 +396,20 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
               onChange={(e) => onUpdateCell({ glassName: e.target.value || undefined })}
               className="w-full h-8 px-2.5 text-xs bg-white rounded-md border border-slate-200 focus:outline-none focus:border-primary text-slate-800"
             >
-              <option value="">— Dùng kính mặc định —</option>
+              <option value="">
+                {defaultGlass?.name ? `${defaultGlass.name} (Mặc định)` : 'Dùng kính mặc định'}
+              </option>
               {glassOptions.map(({ key, label }) => (
                 <option key={key} value={label}>
                   {label}
                 </option>
               ))}
             </select>
-            <p className="text-[11px] text-gray-500 italic mt-1.5">
-              Mặc định: {defaultGlass?.name || 'Kính hộp trắng 5-6-5mm cường lực'}
-            </p>
+            {defaultGlass?.name && (
+              <p className="text-[11px] text-gray-500 italic mt-1.5">
+                Mặc định: {defaultGlass.name}
+              </p>
+            )}
           </div>
 
           <div className="pt-1.5 border-t border-slate-200/60">

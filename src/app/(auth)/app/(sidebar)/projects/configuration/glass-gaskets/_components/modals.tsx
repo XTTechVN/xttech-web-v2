@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { showErrorToast } from '@/utils';
 import { createGlass, updateGlass, createGlassCategory, updateGlassCategory, createGasket, updateGasket, } from '@/actions';
 import type { Glass, GlassCreate, GlassCategory, GlassCategoryCreate, Gasket, GasketCreate, } from '@/types';
+import { getCategoryMaterialType } from './glass-category-sidebar';
 
 const GLASS_TYPE_LABELS: Record<string, string> = {
   cuong_luc: 'Kính tôi cường lực',
@@ -31,13 +32,33 @@ interface GlassModalProps {
   onClose: () => void;
   glass?: Glass | null;
   categories: GlassCategory[];
+  defaultMaterialType?: 'glass' | 'panel' | 'screen_mesh';
+  defaultCategoryId?: number;
 }
 
-export function GlassModal({ isOpen, onClose, glass, categories }: GlassModalProps) {
+export function GlassModal({
+  isOpen,
+  onClose,
+  glass,
+  categories,
+  defaultMaterialType = 'glass',
+  defaultCategoryId,
+}: GlassModalProps) {
   const isEdit = Boolean(glass);
+
+  // Loại vật liệu chính đang chọn (Kính, Tấm, Lưới)
+  const [selectedMaterialType, setSelectedMaterialType] = React.useState<'glass' | 'panel' | 'screen_mesh'>(
+    defaultMaterialType
+  );
+
+  // Danh sách categories thuộc loại chính đang chọn
+  const availableCategoriesForType = React.useMemo(() => {
+    return categories.filter((c) => getCategoryMaterialType(c) === selectedMaterialType);
+  }, [categories, selectedMaterialType]);
+
   const { register, handleSubmit, reset, watch, setValue } = useForm<GlassCreate>({
     defaultValues: {
-      categoryId: categories[0]?.id,
+      categoryId: defaultCategoryId || categories[0]?.id,
       code: '',
       name: '',
       glassType: 'cuong_luc',
@@ -115,6 +136,18 @@ export function GlassModal({ isOpen, onClose, glass, categories }: GlassModalPro
     }
   };
 
+  const handleSelectMaterialType = (type: 'glass' | 'panel' | 'screen_mesh') => {
+    setSelectedMaterialType(type);
+    const matchedCats = categories.filter((c) => getCategoryMaterialType(c) === type);
+    if (matchedCats.length > 0) {
+      handleCategoryChange(matchedCats[0].id);
+    } else {
+      if (type === 'panel') setValue('glassType', 'panel_alu');
+      else if (type === 'screen_mesh') setValue('glassType', 'luoi_muoi');
+      else setValue('glassType', 'cuong_luc');
+    }
+  };
+
   useEffect(() => {
     // Tự động gợi ý khối lượng nếu người dùng chưa nhập hoặc đang để 0
     if (thicknessValue && (!currentWeight || currentWeight === 0)) {
@@ -137,6 +170,10 @@ export function GlassModal({ isOpen, onClose, glass, categories }: GlassModalPro
 
   useEffect(() => {
     if (glass) {
+      const curCat = categories.find((c) => c.id === glass.categoryId);
+      if (curCat) {
+        setSelectedMaterialType(getCategoryMaterialType(curCat));
+      }
       reset({
         categoryId: glass.categoryId,
         code: glass.code,
@@ -150,26 +187,34 @@ export function GlassModal({ isOpen, onClose, glass, categories }: GlassModalPro
         isActive: glass.isActive,
       });
     } else {
+      const initialType = defaultMaterialType || 'glass';
+      setSelectedMaterialType(initialType);
+      const matchedCats = categories.filter((c) => getCategoryMaterialType(c) === initialType);
+      const initialCatId =
+        (defaultCategoryId && matchedCats.some((c) => c.id === defaultCategoryId))
+          ? defaultCategoryId
+          : (matchedCats[0]?.id || categories[0]?.id);
+
       reset({
-        categoryId: categories[0]?.id,
+        categoryId: initialCatId,
         code: '',
         name: '',
-        glassType: 'cuong_luc',
-        thicknessMm: 8.0,
-        unitPrice: 250000,
-        weightPerM2: 20.0,
+        glassType: initialType === 'panel' ? 'panel_alu' : initialType === 'screen_mesh' ? 'luoi_muoi' : 'cuong_luc',
+        thicknessMm: initialType === 'panel' ? 3.0 : initialType === 'screen_mesh' ? 0.8 : 8.0,
+        unitPrice: initialType === 'panel' ? 380000 : initialType === 'screen_mesh' ? 180000 : 250000,
+        weightPerM2: initialType === 'panel' ? 3.8 : initialType === 'screen_mesh' ? 1.2 : 20.0,
         maxWidthMm: 2400,
         maxHeightMm: 3600,
         isActive: true,
       });
     }
-  }, [glass, categories, reset, isOpen]);
+  }, [glass, categories, reset, isOpen, defaultMaterialType, defaultCategoryId]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: GlassCreate) => {
-      const targetCatId = Number(data.categoryId) || categories[0]?.id;
+      const targetCatId = Number(data.categoryId) || availableCategoriesForType[0]?.id || categories[0]?.id;
       if (!targetCatId) {
-        throw new Error('Vui lòng chọn hoặc tạo nhóm chủng loại kính trước');
+        throw new Error('Vui lòng tạo ít nhất 1 nhóm chủng loại thuộc loại này trước');
       }
       data.categoryId = targetCatId;
       const targetCat = categories.find((c) => c.id === targetCatId);
@@ -207,25 +252,67 @@ export function GlassModal({ isOpen, onClose, glass, categories }: GlassModalPro
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEdit ? 'Sửa quy cách vật tư tấm' : 'Thêm quy cách vật tư tấm (Kính / Panel / Lưới muỗi)'}
+      title={isEdit ? 'Sửa quy cách vật tư' : 'Thêm quy cách vật tư mới'}
       size="md"
     >
       <form onSubmit={handleSubmit((d) => mutate(d))} className="flex flex-col gap-4">
+        {/* Bước 1: Chọn Loại chính (Kính, Tấm, Lưới) */}
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+            Loại vật tư chính *
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: 'glass', label: 'Kính' },
+              { id: 'panel', label: 'Tấm' },
+              { id: 'screen_mesh', label: 'Lưới' },
+            ].map((t) => {
+              const isSelected = selectedMaterialType === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => handleSelectMaterialType(t.id as any)}
+                  className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-center ${
+                    isSelected
+                      ? 'border-primary bg-primary/10 text-primary shadow-2xs font-bold'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Bước 2: Chọn Chủng loại (Category) thuộc loại chính đã chọn */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-semibold text-gray-700">Loại vật liệu *</label>
+            <label className="block text-xs font-semibold text-gray-700">
+              Chủng loại ({selectedMaterialType === 'glass' ? 'Kính' : selectedMaterialType === 'panel' ? 'Tấm' : 'Lưới'}) *
+            </label>
+            <span className="text-[11px] text-slate-400">
+              {availableCategoriesForType.length} chủng loại
+            </span>
           </div>
-          <select
-            value={watch('categoryId') || categories[0]?.id || ''}
-            onChange={(e) => handleCategoryChange(Number(e.target.value))}
-            className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-primary cursor-pointer font-medium"
-          >
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.code})
-              </option>
-            ))}
-          </select>
+          {availableCategoriesForType.length > 0 ? (
+            <select
+              value={watch('categoryId') || availableCategoriesForType[0]?.id || ''}
+              onChange={(e) => handleCategoryChange(Number(e.target.value))}
+              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-primary cursor-pointer font-medium"
+            >
+              {availableCategoriesForType.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} ({c.code})
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between">
+              <span>Chưa có nhóm chủng loại nào cho loại này.</span>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -410,10 +497,11 @@ interface GlassCategoryModalProps {
 export function GlassCategoryModal({ isOpen, onClose, category }: GlassCategoryModalProps) {
   const isEdit = Boolean(category);
 
-  const { register, handleSubmit, reset } = useForm<GlassCategoryCreate>({
+  const { register, handleSubmit, reset, watch, setValue } = useForm<GlassCategoryCreate>({
     defaultValues: {
       code: '',
       name: '',
+      materialType: 'glass',
       description: '',
       isActive: true,
     },
@@ -424,6 +512,7 @@ export function GlassCategoryModal({ isOpen, onClose, category }: GlassCategoryM
       reset({
         code: category.code,
         name: category.name,
+        materialType: (category.materialType as any) || 'glass',
         description: category.description || '',
         isActive: category.isActive,
       });
@@ -431,6 +520,7 @@ export function GlassCategoryModal({ isOpen, onClose, category }: GlassCategoryM
       reset({
         code: '',
         name: '',
+        materialType: 'glass',
         description: '',
         isActive: true,
       });
@@ -443,6 +533,7 @@ export function GlassCategoryModal({ isOpen, onClose, category }: GlassCategoryM
         return await updateGlassCategory(category.id, {
           code: data.code,
           name: data.name,
+          materialType: data.materialType,
           description: data.description,
           isActive: data.isActive,
         });
@@ -465,19 +556,46 @@ export function GlassCategoryModal({ isOpen, onClose, category }: GlassCategoryM
       size="md"
     >
       <form onSubmit={handleSubmit((d) => mutate(d))} className="flex flex-col gap-4">
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Thuộc loại chính *</label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: 'glass', label: 'Kính' },
+              { id: 'panel', label: 'Tấm' },
+              { id: 'screen_mesh', label: 'Lưới' },
+            ].map((t) => {
+              const isSelected = (watch('materialType') || 'glass') === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setValue('materialType', t.id as any)}
+                  className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-center ${
+                    isSelected
+                      ? 'border-primary bg-primary/10 text-primary shadow-2xs'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <Input
           label="Mã nhóm chủng loại *"
-          placeholder="VD: PANEL_ALU, LUOI_MUOI, KINH_CUONG_LUC"
+          placeholder="Mã nhóm (VD: KINH_CUONG_LUC)"
           {...register('code', { required: true })}
         />
         <Input
           label="Tên nhóm chủng loại *"
-          placeholder="VD: Tấm Panel nhôm & Alu, Lưới inox chống muỗi"
+          placeholder="Tên nhóm chủng loại"
           {...register('name', { required: true })}
         />
         <Input
           label="Mô tả / Ứng dụng"
-          placeholder="VD: Dùng cho vách ngăn phòng, cửa đi pano, chống côn trùng..."
+          placeholder="Mô tả ngắn gọn hoặc ứng dụng..."
           {...register('description')}
         />
 

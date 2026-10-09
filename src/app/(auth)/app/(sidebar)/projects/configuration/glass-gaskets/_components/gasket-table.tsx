@@ -139,7 +139,7 @@ export function GasketTable({
               <th className="py-3 px-4 text-right w-24">Hành động</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-sm">
+          <tbody className="divide-y divide-slate-100 text-xs">
             {sortedList.map((gasket) => {
               const unitLabel = GASKET_UNIT_MAP[gasket.unit?.toLowerCase()] || gasket.unit || '—';
 
@@ -155,14 +155,14 @@ export function GasketTable({
 
                   {/* Cột 2: Tên vật tư */}
                   <td className="py-3.5 px-4">
-                    <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-sm">
+                    <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-xs">
                       {gasket.name}
                     </span>
                   </td>
 
                   {/* Cột 3: Đơn vị tính */}
                   <td className="py-3.5 px-4 text-center">
-                    <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                       {unitLabel}
                     </span>
                   </td>
@@ -177,7 +177,7 @@ export function GasketTable({
                   {/* Cột 5: Trạng thái */}
                   <td className="py-3.5 px-4 text-center">
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border whitespace-nowrap ${
                         gasket.isActive !== false
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : 'bg-slate-100 text-slate-600 border-slate-200'

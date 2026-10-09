@@ -183,7 +183,7 @@ export function GlassTable({
               <th className="py-3 px-4 text-right w-24">Hành động</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-sm">
+          <tbody className="divide-y divide-slate-100 text-xs">
             {sortedList.map((glass) => {
               const typeConfig = GLASS_TYPE_LABELS[glass.glassType] || {
                 label: glass.glassType,
@@ -204,7 +204,7 @@ export function GlassTable({
                   {/* Cột 2: Tên quy cách */}
                   <td className="py-3.5 px-4">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-sm">
+                      <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-xs">
                         {glass.name}
                       </span>
                       <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
@@ -224,7 +224,7 @@ export function GlassTable({
                   {/* Cột 3: Chủng loại */}
                   <td className="py-3.5 px-4 text-center">
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${typeConfig.badgeClass}`}
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${typeConfig.badgeClass}`}
                     >
                       {typeConfig.label}
                     </span>
@@ -255,7 +255,7 @@ export function GlassTable({
                   <td className="py-3.5 px-4 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border whitespace-nowrap ${
                           glass.isActive !== false
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : 'bg-slate-100 text-slate-600 border-slate-200'

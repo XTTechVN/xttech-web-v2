@@ -1,7 +1,10 @@
+export type MaterialType = 'glass' | 'panel' | 'screen_mesh';
+
 export interface GlassCategory {
   id: number;
   code: string;
   name: string;
+  materialType?: MaterialType;
   description?: string | null;
   sortOrder: number;
   isActive: boolean;
@@ -12,6 +15,7 @@ export interface GlassCategory {
 export interface GlassCategoryCreate {
   code: string;
   name: string;
+  materialType?: MaterialType;
   description?: string;
   sortOrder?: number;
   isActive?: boolean;
@@ -20,6 +24,7 @@ export interface GlassCategoryCreate {
 export interface GlassCategoryUpdate {
   code?: string;
   name?: string;
+  materialType?: MaterialType;
   description?: string;
   sortOrder?: number;
   isActive?: boolean;
@@ -27,6 +32,7 @@ export interface GlassCategoryUpdate {
 
 export interface GlassCategoryQueryParams {
   search?: string;
+  materialType?: MaterialType;
   isActive?: boolean;
   offset?: number;
   limit?: number;
