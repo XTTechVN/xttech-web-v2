@@ -40,7 +40,7 @@ export const isMobileDevice = () => {
   );
 }
 
-export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbeatMs = 180000, }: LocationTrackerOptions = {}) {
+export function useLocationTracker({ enabled = true, intervalMs = 60000 }: LocationTrackerOptions = {}) {
   const [isTracking, setIsTracking] = useState(false);
   const [lastPingTime, setLastPingTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
