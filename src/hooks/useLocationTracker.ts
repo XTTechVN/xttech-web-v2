@@ -192,19 +192,6 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
     );
   }, [executePing]);
 
-  const sendHeartbeat = useCallback(async () => {
-    const elapsed = Date.now() - lastPingRef.current;
-    if (elapsed >= heartbeatMs) {
-      if (lastKnownCoordsRef.current) {
-        await executePing({
-          ...lastKnownCoordsRef.current,
-          speed: 0,
-        });
-      } else {
-        pingCurrentLocation();
-      }
-    }
-  }, [executePing, heartbeatMs, pingCurrentLocation]);
 
   // Yêu cầu Screen WakeLock để giữ luồng định vị không bị ngủ sâu trên Web
   const requestWakeLock = async () => {
@@ -281,8 +268,12 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
       }
     };
 
-    // 1. NẾU LÀ NATIVE ANDROID / IOS: KHỞI CHẠY NATIVE FOREGROUND SERVICE ĐỘC LẬP
-    // Chạy ngầm 100% bằng Java/Swift Native, duy trì liên tục kể cả khi khóa màn hình
+    let locationListenerHandle: { remove: () => void } | null = null;
+    let authErrorHandle: { remove: () => void } | null = null;
+    let permListenerHandle: { remove: () => void } | null = null;
+
+    // 1. NẾU LÀ NATIVE ANDROID / IOS: KHỞI CHẠY NATIVE SERVICE ĐỘC LẬP
+    // Chạy ngầm 100% bằng Swift/Java Native, duy trì liên tục kể cả khi khóa màn hình
     if (isNative) {
       const authState = useAuthStore.getState();
       NativeTracking.startTracking({
@@ -290,6 +281,7 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
         refreshToken: authState.refreshToken,
         apiUrl: BASE_API_URL,
       }).then(() => {
+        setIsTracking(true);
         if (Capacitor.getPlatform() === 'ios' && NativeTracking.checkPermission) {
           NativeTracking.checkPermission().then((perm) => {
             if (perm && !perm.isAlways) {
@@ -301,69 +293,84 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
         console.warn('[NativeTracking] Start native tracking failed, falling back to Web Geolocation:', e);
         startWebWatchPosition();
       });
+
+      // Lắng nghe sự kiện từ Native Service để đồng bộ state lên giao diện
+      if (typeof (NativeTracking as any).addListener === 'function') {
+        (NativeTracking as any).addListener('locationUpdate', (data: { timestamp?: number }) => {
+          setIsTracking(true);
+          if (data?.timestamp) {
+            setLastPingTime(new Date(data.timestamp * 1000));
+          } else {
+            setLastPingTime(new Date());
+          }
+        }).then((handle: any) => { locationListenerHandle = handle; }).catch(() => {});
+
+        (NativeTracking as any).addListener('authError', (err: any) => {
+          console.error('[NativeTracking] Phiên làm việc chạy ngầm hết hạn:', err);
+          setError('Phiên làm việc chạy ngầm đã hết hạn');
+        }).then((handle: any) => { authErrorHandle = handle; }).catch(() => {});
+
+        (NativeTracking as any).addListener('permissionChanged', (perm: { status: string; isAlways: boolean }) => {
+          if (!perm.isAlways) {
+            console.warn('[NativeTracking] Quyền vị trí bị thay đổi, chưa cấp "Luôn luôn":', perm);
+          }
+        }).then((handle: any) => { permListenerHandle = handle; }).catch(() => {});
+      }
     } else {
-      // 2. NẾU LÀ TRÌNH DUYỆT WEB: DÙNG WATCH POSITION CỦA HTML5
+      // 2. NẾU LÀ TRÌNH DUYỆT WEB: DÙNG WATCH POSITION VÀ WEB WORKER CỦA HTML5
       startWebWatchPosition();
-    }
 
-    // 3. WEB WORKER TIMER: ĐẢM NHIỆM HEARTBEAT KHI ĐỨNG YÊN (HOẠT ĐỘNG CHO CẢ NATIVE VÀ WEB)
-    // Tần suất kiểm tra: Mỗi 30 giây kiểm tra một lần
-    const checkIntervalMs = Math.min(30000, intervalMs);
-    try {
-      const blob = new Blob(
-        [
-          `
-          let interval = ${checkIntervalMs};
-          let timer = setInterval(() => {
-            postMessage('tick');
-          }, interval);
-          self.onmessage = function(e) {
-            if (e.data === 'stop') clearInterval(timer);
-          };
-        `,
-        ],
-        { type: 'application/javascript' }
-      );
-      const workerUrl = URL.createObjectURL(blob);
-      const worker = new Worker(workerUrl);
-      workerRef.current = worker;
+      // WEB WORKER TIMER: CHỈ KHỞI TẠO CHO TRÌNH DUYỆT WEB DESKTOP/MOBILE
+      const checkIntervalMs = Math.min(30000, intervalMs);
+      try {
+        const blob = new Blob(
+          [
+            `
+            let interval = ${checkIntervalMs};
+            let timer = setInterval(() => {
+              postMessage('tick');
+            }, interval);
+            self.onmessage = function(e) {
+              if (e.data === 'stop') clearInterval(timer);
+            };
+          `,
+          ],
+          { type: 'application/javascript' }
+        );
+        const workerUrl = URL.createObjectURL(blob);
+        const worker = new Worker(workerUrl);
+        workerRef.current = worker;
 
-      worker.onmessage = (e) => {
-        if (e.data === 'tick') {
-          // Chỉ chạy worker heartbeat khi trên Web; Native app đã có Service nền độc lập
-          if (!isNative) {
+        worker.onmessage = (e) => {
+          if (e.data === 'tick') {
             const elapsed = Date.now() - lastPingRef.current;
             if (elapsed >= intervalMs) {
               pingCurrentLocation();
             }
           }
-        }
-      };
-    } catch (e) {
-      console.warn('[LocationTracker] Fallback to standard timer:', e);
-      const fallbackTimer = setInterval(() => {
+        };
+      } catch (e) {
+        console.warn('[LocationTracker] Fallback to standard timer:', e);
+        const fallbackTimer = setInterval(() => {
+          const elapsed = Date.now() - lastPingRef.current;
+          if (elapsed >= intervalMs) {
+            pingCurrentLocation();
+          }
+        }, checkIntervalMs);
+        return () => clearInterval(fallbackTimer);
+      }
+    }
+
+    // 3. LẮNG NGHE SỰ KIỆN BẬT MÀN HÌNH HOẶC FOCUS LẠI VÀO APP TRÊN WEB
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
         if (!isNative) {
           const elapsed = Date.now() - lastPingRef.current;
           if (elapsed >= intervalMs) {
             pingCurrentLocation();
           }
+          requestWakeLock();
         }
-      }, checkIntervalMs);
-      return () => clearInterval(fallbackTimer);
-    }
-
-    // 4. LẮNG NGHE SỰ KIỆN BẬT MÀN HÌNH HOẶC FOCUS LẠI VÀO APP
-    const handleVisibilityOrFocus = () => {
-      if (document.visibilityState === 'visible') {
-        const elapsed = Date.now() - lastPingRef.current;
-        if (elapsed >= (isNative ? heartbeatMs : intervalMs)) {
-          if (isNative) {
-            sendHeartbeat();
-          } else {
-            pingCurrentLocation();
-          }
-        }
-        requestWakeLock();
       }
     };
 
@@ -383,15 +390,19 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
-      if (wakeLockRef.current) {
-        const lock = wakeLockRef.current as { release?: () => Promise<void> };
-        lock.release?.().catch(() => {});
-        wakeLockRef.current = null;
+      if (locationListenerHandle) {
+        locationListenerHandle.remove();
+      }
+      if (authErrorHandle) {
+        authErrorHandle.remove();
+      }
+      if (permListenerHandle) {
+        permListenerHandle.remove();
       }
       document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
       window.removeEventListener('focus', handleVisibilityOrFocus);
     };
-  }, [enabled, intervalMs, heartbeatMs, pingCurrentLocation, executePing, sendHeartbeat]);
+  }, [enabled, intervalMs, pingCurrentLocation]);
 
   // Đồng bộ tức thời khi AccessToken / RefreshToken được cập nhật từ Web sang Native Service
   const accessToken = useAuthStore((state) => state.accessToken);
