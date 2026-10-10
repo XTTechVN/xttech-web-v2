@@ -105,20 +105,40 @@ sequenceDiagram
 - **Danh sách phiếu xuất / nhập kho:** `GET /api/v1/warehouse/receipts`
   - Query parameters: `receiptType` (import/export), `status` (draft/approved/cancelled), `page`, `limit`.
 - **Tạo phiếu nhập kho NCC thủ công:** `POST /api/v1/warehouse/receipts`
-  - Request Body:
+  - **Cơ chế Tự Động Khởi Tạo Mặt Hàng (Just-In-Time Provisioning):** 
+    - Nếu mặt hàng đã có sẵn trong kho: Gửi `itemId`.
+    - Nếu là **mặt hàng mới lần đầu nhập về xưởng (chưa có trong danh mục kho)**: Không cần truyền `itemId`, chỉ cần truyền `itemCode`, `itemName`, `unit` kèm tùy chọn (`profileBarId`, `colorId`, `itemType`). Backend sẽ **tự động khởi tạo mặt hàng mới vào danh mục kho** ngay trong transaction và tự động cộng dồn tồn kho khi duyệt phiếu (`approve`)!
+  - **Hướng dẫn thiết kế UX Component trên Frontend (Universal Smart Search):**
+    - Thay vì bắt người dùng chuyển đổi Tab hoặc nhớ xem hàng đã có trong kho chưa, giao diện cung cấp **1 ô tìm kiếm Autocomplete duy nhất**.
+    - Khi người dùng gõ từ khóa (ví dụ `C3303` hoặc `Bản lề`):
+      1. **Nhóm 1 (Đã có trong kho):** Hiển thị các mặt hàng tìm được từ `GET /api/v1/warehouse/items?search=...` kèm số lượng tồn hiện tại $\rightarrow$ Chọn thì gán `itemId`.
+      2. **Nhóm 2 (Từ danh mục nhôm kỹ thuật):** Hiển thị các thanh profile tìm được từ `GET /api/v1/material/profile-bars?search=...` $\rightarrow$ Chọn thì mở popover chọn nhanh **Màu sơn** (`GET /api/v1/material/brand-colors`), tự động ghép mã `{profile_code}-{color_code}` và để `itemId = null`.
+      3. **Nhóm 3 (Thêm mới tự do):** Dòng cuối cùng `+ Nhập mới mặt hàng: '...'` dành cho phụ kiện/vật tư lạ lần đầu mua ngoài thị trường $\rightarrow$ Điền đơn vị tính và đơn giá, để `itemId = null`.
+  - **Request Body ví dụ:**
     ```json
     {
-      "code": "PNK-2026-0006",
       "receiptType": "import",
       "receiptReason": "purchase",
       "supplierId": 15,
-      "note": "Nhập lô nhôm Xingfa 55 từ đại lý Tuấn Mai",
+      "note": "Nhập lô nhôm Xingfa 55 và phụ kiện từ nhà cung cấp",
       "items": [
         {
           "itemId": 1,
+          "itemCode": "XF55-C3303-CF",
+          "itemName": "Thanh cánh Xingfa 55 Màu Cafe",
+          "unit": "bar",
           "quantity": 10.0,
           "unitPrice": 570000,
-          "note": "Nhôm nguyên cây 6m"
+          "note": "Nhập hàng đã có trong kho"
+        },
+        {
+          "itemCode": "ACC-KHOA-SLIM-01",
+          "itemName": "Khóa thông minh cửa trượt Slim",
+          "itemType": "accessory",
+          "unit": "set",
+          "quantity": 5.0,
+          "unitPrice": 1250000,
+          "note": "Hàng mới lần đầu nhập xưởng - Backend tự sinh danh mục kho"
         }
       ]
     }
