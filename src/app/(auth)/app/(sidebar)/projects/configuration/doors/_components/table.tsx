@@ -3,14 +3,13 @@
 import React, { useState } from 'react';
 import { Columns, Layers, Sparkles, Filter, X } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
-import { Button } from '@/components';
+import { Button, DoorCadRenderer } from '@/components';
 import { useQueryParam } from '@/hooks';
 import { Door, getDoorTypeConfig } from '@/types';
 import { getDoors, getBrands, getDoorSeriesList } from '@/actions';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { getFileUrl } from '@/utils';
-import { DoorCadRenderer } from './studio/cad-engine/door-cad-renderer';
 
 interface TableProps {
   onEditClick: (door: Door) => void;

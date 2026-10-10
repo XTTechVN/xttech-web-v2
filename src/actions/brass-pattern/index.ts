@@ -1,6 +1,5 @@
 import api from '@/utils/api';
-import type { BaseResponseWithPagination } from '@/components';
-import type { GlassGrilleConfig } from '../../app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/studio-types';
+import type { BaseResponseWithPagination, GlassGrilleConfig } from '@/components';
 
 export interface BrassPatternItem {
   id: number;

@@ -147,11 +147,11 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     : '—';
 
   const projectTabs: TabItem[] = [
-    { value: 'overview', label: 'Tổng quan & Nhật ký', icon: <FolderOpen size={15} /> },
-    { value: 'positions', label: 'Tầng & Vị trí cửa', icon: <Layers size={15} /> },
-    { value: 'quotations', label: 'Báo giá & Pricing', icon: <Calculator size={15} /> },
-    { value: 'contracts', label: 'Hợp đồng & Sổ cái', icon: <FileText size={15} /> },
-    { value: 'production', label: 'Lệnh sản xuất & KCS', icon: <CheckCircle2 size={15} /> },
+    { value: 'overview', label: 'Thông tin', icon: <FolderOpen size={15} /> },
+    { value: 'positions', label: 'Thiết kế', icon: <Layers size={15} /> },
+    { value: 'quotations', label: 'Báo giá', icon: <Calculator size={15} /> },
+    { value: 'contracts', label: 'Hợp đồng', icon: <FileText size={15} /> },
+    { value: 'production', label: 'Sản xuất', icon: <CheckCircle2 size={15} /> },
   ];
 
   return (
@@ -203,15 +203,15 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
         </div>
       </div>
 
-      {/* Tab 1: Tổng quan & Nhật ký (Module 001) */}
+      {/* Tab 1: Thông tin (Module 001) */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 flex flex-col gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 flex flex-col gap-4">
             <ProjectInfo project={project} formattedDate={formattedDate} />
             <ProjectActivities projectId={projectId} />
           </div>
 
-          <div className="lg:col-span-1 flex flex-col gap-6">
+          <div className="lg:col-span-1 flex flex-col gap-4">
             <ProjectSummary quotations={quotations} formattedDate={formattedDate} />
             <CustomerInfo customer={project.customer} />
             <OwnerInfo user={project.user} />
@@ -250,6 +250,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
         title="Chỉnh sửa thông tin dự án"
         submitText="Lưu thay đổi"
         initialData={project || undefined}
+        customers={project?.customer ? [project.customer] : []}
       />
 
 

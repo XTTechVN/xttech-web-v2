@@ -71,13 +71,23 @@ export function ProjectProductionProgress({ projectId }: ProjectProductionProgre
 
   // Mutations
   const { mutate: createOrderMutate, isPending: isCreatingOrder } = useMutation({
-    mutationFn: () =>
-      createProductionOrder(projectId, {
+    mutationFn: () => {
+      const unmeasured = allPositions.filter(
+        (p) => selectedPositionIds.includes(p.id) && !p.isMeasured
+      );
+      if (unmeasured.length > 0) {
+        const codes = unmeasured.map((u) => u.code).join(', ');
+        throw new Error(
+          `Bộ cửa [${codes}] chưa chốt số đo thực tế. Vui lòng đo đạc trước khi đưa vào sản xuất!`
+        );
+      }
+      return createProductionOrder(projectId, {
         name: orderName.trim(),
         positionIds: selectedPositionIds,
         startDate: startDate || undefined,
         dueDate: dueDate || undefined,
-      }),
+      });
+    },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['production_orders', projectId] });
       queryClient.invalidateQueries({ queryKey: ['progress_matrix', projectId] });
@@ -118,9 +128,16 @@ export function ProjectProductionProgress({ projectId }: ProjectProductionProgre
     onError: (err) => showErrorToast(err, 'Lỗi nghiệm thu KCS'),
   });
 
-  const toggleSelectPosition = (id: number) => {
+  const toggleSelectPosition = (pos: ProjectDoorPosition) => {
+    if (!pos.isMeasured) {
+      toast.error(
+        `Bộ cửa ${pos.code} chưa chốt số đo thực tế! Không thể đưa vào Lệnh sản xuất.`,
+        { duration: 4000 }
+      );
+      return;
+    }
     setSelectedPositionIds((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+      prev.includes(pos.id) ? prev.filter((p) => p !== pos.id) : [...prev, pos.id],
     );
   };
 
@@ -386,35 +403,81 @@ export function ProjectProductionProgress({ projectId }: ProjectProductionProgre
           </div>
 
           <div>
-            <span className="text-xs font-bold text-slate-600 block mb-2">
-              Chọn các bộ cửa đưa vào lệnh ({selectedPositionIds.length} đã chọn) *
-            </span>
-            <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1.5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-slate-700">
+                Chọn các bộ cửa đưa vào lệnh ({selectedPositionIds.length} đã chọn) *
+              </span>
+              <span className="text-[11px] text-slate-400 font-medium">
+                (Chỉ chọn cửa đã chốt số đo)
+              </span>
+            </div>
+            <div className="max-h-56 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1.5">
               {allPositions.map((pos) => {
                 const isSelected = selectedPositionIds.includes(pos.id);
+                const isMeasured = !!pos.isMeasured;
+
+                if (!isMeasured) {
+                  return (
+                    <div
+                      key={pos.id}
+                      onClick={() => toggleSelectPosition(pos)}
+                      title="Chưa chốt số đo thực tế - Không thể đưa vào lệnh sản xuất"
+                      className="p-2 rounded flex items-center justify-between text-xs cursor-not-allowed bg-slate-50/70 border border-slate-100 opacity-60 text-slate-400 select-none"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <input
+                          type="checkbox"
+                          disabled
+                          checked={false}
+                          className="rounded text-slate-300 cursor-not-allowed"
+                        />
+                        <span className="font-bold text-slate-500">{pos.code}</span>
+                        <span className="truncate">
+                          - {pos.description || (pos.doorType === 'window' ? 'Cửa sổ' : 'Cửa đi')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60 font-medium">
+                          Chờ đo thực tế
+                        </span>
+                        <span className="text-slate-400">
+                          {pos.width}x{pos.height} mm
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={pos.id}
-                    onClick={() => toggleSelectPosition(pos.id)}
+                    onClick={() => toggleSelectPosition(pos)}
                     className={`p-2 rounded flex items-center justify-between text-xs cursor-pointer transition-colors ${
                       isSelected
                         ? 'bg-primary/10 border border-primary/30 text-primary font-semibold'
-                        : 'hover:bg-slate-50 border border-transparent text-slate-700'
+                        : 'hover:bg-slate-50 border border-slate-200/60 text-slate-700'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => {}}
                         className="rounded text-primary"
                       />
-                      <span className="font-mono">{pos.code}</span>
-                      <span>- {pos.description || (pos.doorType === 'window' ? 'Cửa sổ' : 'Cửa đi')}</span>
+                      <span className="font-bold">{pos.code}</span>
+                      <span className="truncate">
+                        - {pos.description || (pos.doorType === 'window' ? 'Cửa sổ' : 'Cửa đi')}
+                      </span>
                     </div>
-                    <span className="font-mono text-slate-400">
-                      {pos.width}x{pos.height} mm
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 font-medium">
+                        Đã chốt số đo
+                      </span>
+                      <span className="text-slate-500">
+                        {pos.width}x{pos.height} mm
+                      </span>
+                    </div>
                   </div>
                 );
               })}

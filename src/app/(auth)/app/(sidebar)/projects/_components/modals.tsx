@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Input, Button, Modal, Select } from '@/components';
 import { CheckCircle2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -18,7 +18,7 @@ interface ProjectFormModalProps {
   onClose: () => void;
   title: string;
   submitText?: string;
-  initialData?: Partial<Project> & { id?: number; customerId?: number };
+  initialData?: (Partial<Project> & { id?: number; customerId?: number; customer?: Partial<Customer> | null; expectedDate?: string }) | null;
   customers?: Pick<Customer, 'id' | 'name'>[];
 }
 
@@ -52,6 +52,7 @@ export function ProjectFormModal({
     formState: { errors },
   } = useForm<ProjectFormInputs>();
 
+  const isEdit = !!initialData?.id;
   const selectedBrandId = watch('defaultBrandId');
 
   // Lấy danh sách hãng nhôm (chỉ lấy loại nhôm 'aluminum')
@@ -125,15 +126,15 @@ export function ProjectFormModal({
       reset({
         code: initialData?.code || '',
         name: initialData?.name || '',
-        customerId: initialData?.customerId || undefined,
+        customerId: initialData?.customerId ? String(initialData.customerId) : undefined,
         status: initialData?.status || 'surveying',
         address: initialData?.address || '',
         note: initialData?.note || '',
-        defaultBrandId: initialData?.defaultBrandId || undefined,
-        defaultSeriesId: initialData?.defaultSeriesId || undefined,
-        defaultColorId: initialData?.defaultColorId || undefined,
+        defaultBrandId: initialData?.defaultBrandId ? String(initialData.defaultBrandId) : undefined,
+        defaultSeriesId: initialData?.defaultSeriesId ? String(initialData.defaultSeriesId) : undefined,
+        defaultColorId: initialData?.defaultColorId ? String(initialData.defaultColorId) : undefined,
         startDate: initialData?.startDate || '',
-        targetDate: initialData?.targetDate || '',
+        targetDate: initialData?.targetDate || (initialData as any)?.expectedDate || '',
       });
     } else {
       reset({
@@ -153,13 +154,16 @@ export function ProjectFormModal({
   }, [isOpen, initialData, reset]);
 
   const handleConfirm = (data: ProjectFormInputs) => {
+    const finalCustomerId = isEdit ? (initialData?.customerId ?? Number(data.customerId)) : Number(data.customerId);
+    const finalStatus = isEdit ? (initialData?.status ?? data.status) : data.status;
+
     const payload: ProjectCreate = {
       name: data.name,
-      customerId: Number(data.customerId),
-      status: data.status,
+      customerId: Number(finalCustomerId),
+      status: finalStatus,
       address: data.address || undefined,
       note: data.note || undefined,
-      code: data.code?.trim() || undefined,
+      code: isEdit ? undefined : (data.code?.trim() || undefined),
       defaultBrandId: data.defaultBrandId ? Number(data.defaultBrandId) : undefined,
       defaultSeriesId: data.defaultSeriesId ? Number(data.defaultSeriesId) : undefined,
       defaultColorId: data.defaultColorId ? Number(data.defaultColorId) : undefined,
@@ -174,10 +178,18 @@ export function ProjectFormModal({
     }
   };
 
-  // Sắp xếp từ A-Z theo tiếng Việt
-  const customerOptions = [...(customers || [])]
-    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'))
-    .map((c) => ({ value: c.id, label: c.name }));
+  // Nạp khách hàng từ initialData nếu có để đảm bảo luôn hiển thị đúng
+  const customerOptions = useMemo(() => {
+    const list = [...(customers || [])];
+    const initialCustomer = (initialData as any)?.customer;
+    if (initialCustomer && initialCustomer.id && !list.some((c) => c.id === initialCustomer.id)) {
+      list.push({ id: initialCustomer.id, name: initialCustomer.name });
+    }
+    return list
+      .slice()
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'))
+      .map((c) => ({ value: String(c.id), label: c.name }));
+  }, [customers, initialData]);
 
   const brandOptions = (Array.isArray(brandsData) ? brandsData : [])
     .slice()
@@ -207,9 +219,10 @@ export function ProjectFormModal({
               error={errors.name ? 'Tên dự án không được để trống' : undefined}
             />
             <Input
-              label="Mã dự án (Để trống để tự sinh DA-YYYY-XXXX)"
-              placeholder="VD: DA-2026-0001"
+              label="Mã dự án"
+              placeholder={isEdit ? '' : 'VD: DA-2026-0001'}
               fullWidth
+              disabled={isEdit}
               {...register('code')}
             />
           </div>
@@ -219,8 +232,9 @@ export function ProjectFormModal({
               label="Khách hàng *"
               placeholder="Chọn khách hàng"
               fullWidth
-              value={watch('customerId') || ''}
-              {...register('customerId', { required: true })}
+              disabled={isEdit}
+              value={watch('customerId') || (initialData?.customerId ? String(initialData.customerId) : '')}
+              {...register('customerId', { required: !isEdit })}
               options={customerOptions}
               error={errors.customerId ? 'Vui lòng chọn khách hàng' : undefined}
             />
@@ -228,7 +242,8 @@ export function ProjectFormModal({
               label="Trạng thái dự án"
               placeholder="Chọn trạng thái"
               fullWidth
-              value={watch('status') || 'surveying'}
+              disabled={isEdit}
+              value={watch('status') || initialData?.status || 'surveying'}
               {...register('status')}
               options={PROJECT_STATUS_OPTIONS}
             />

@@ -11,11 +11,10 @@ import {
   CheckCircle2,
   Wrench,
 } from 'lucide-react';
-import { Button } from '@/components';
+import { Button, DoorCadRenderer } from '@/components';
 import { calculateDoor } from '@/actions';
 import type { Door, DoorCalculateResponse } from '@/types';
 import { getFileUrl } from '@/utils';
-import { DoorCadRenderer } from './studio/cad-engine/door-cad-renderer';
 import {
   BomBarsTable,
   BomBeadsTable,

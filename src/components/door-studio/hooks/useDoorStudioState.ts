@@ -17,9 +17,27 @@ interface UseDoorStudioStateProps {
   onClose: () => void;
   door?: Door | null;
   defaultBrandId?: number | null;
+  onSaveSuccess?: (savedDoor: Door) => void;
+  onCustomSave?: (data: {
+    name: string;
+    code: string;
+    type: string;
+    doorSeriesId?: number | null;
+    width: number;
+    height: number;
+    systemConfig: Record<string, any>;
+    imageB64?: string;
+  }) => Promise<void>;
 }
 
-export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: UseDoorStudioStateProps) {
+export function useDoorStudioState({
+  isOpen,
+  onClose,
+  door,
+  defaultBrandId,
+  onSaveSuccess,
+  onCustomSave,
+}: UseDoorStudioStateProps) {
   // Navigation Tabs
   const [activeMainTab, setActiveMainTab] = useState<StudioMainTab>('info');
 
@@ -677,6 +695,46 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
         console.warn('Cannot serialize CAD SVG:', err);
       }
 
+      const sysConfig = {
+        w,
+        h,
+        frameShape,
+        aluminumColor: (aluminumColor || '').trim(),
+        hardwareColor: (hardwareColor || '').trim(),
+        rootCell,
+        frameConfig,
+        sashConfig,
+        seriesId,
+        selectedComboIds,
+        selectedComboId: selectedComboIds[0] || null,
+        selectedAccessories,
+      };
+
+      if (onCustomSave) {
+        await onCustomSave({
+          name,
+          code,
+          type,
+          doorSeriesId: seriesId || null,
+          width: w,
+          height: h,
+          systemConfig: sysConfig,
+          imageB64,
+        });
+        return {
+          id: door?.id || 0,
+          name,
+          code,
+          type,
+          doorSeriesId: seriesId || undefined,
+          imagePath: door?.imagePath || null,
+          specification: `${w}×${h}mm`,
+          systemConfig: sysConfig,
+          createdAt: '',
+          updatedAt: '',
+        } as Door;
+      }
+
       const payload: DoorCreate = {
         name,
         code,
@@ -684,20 +742,7 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
         doorSeriesId: seriesId || null,
         imageB64,
         specification: `${w}×${h}mm, ${frameShape}, hệ ID:${seriesId || 'default'}`,
-        systemConfig: {
-          w,
-          h,
-          frameShape,
-          aluminumColor: (aluminumColor || '').trim(),
-          hardwareColor: (hardwareColor || '').trim(),
-          rootCell,
-          frameConfig,
-          sashConfig,
-          seriesId,
-          selectedComboIds,
-          selectedComboId: selectedComboIds[0] || null,
-          selectedAccessories,
-        },
+        systemConfig: sysConfig,
       };
 
       if (door?.id) {
@@ -705,11 +750,13 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
       }
       return createDoor({ data: payload });
     },
-    onSuccess: () => {
+    onSuccess: (savedDoor: Door) => {
       queryClient.invalidateQueries({ queryKey: ['doors'] });
       queryClient.invalidateQueries({ queryKey: ['door-templates'] });
       queryClient.invalidateQueries({ queryKey: ['doors-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['project_positions'] });
       toast.success(door?.id ? 'Cập nhật thiết kế thành công' : 'Lưu thiết kế thành công');
+      onSaveSuccess?.(savedDoor);
       onClose();
     },
     onError: (err) => showErrorToast(err, 'Lưu thiết kế thất bại'),
