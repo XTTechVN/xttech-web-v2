@@ -93,6 +93,9 @@ jobs:
       - name: 7. Build Archive with Xcode
         run: |
           cd ios/App
+          BUILD_NUMBER=$((21 + GITHUB_RUN_NUMBER))
+          echo "Automated Build Number (CFBundleVersion): $BUILD_NUMBER"
+
           xcodebuild clean archive \
             -project App.xcodeproj \
             -scheme App \
@@ -100,6 +103,7 @@ jobs:
             -configuration Release \
             -archivePath "$GITHUB_WORKSPACE/build/App.xcarchive" \
             PRODUCT_BUNDLE_IDENTIFIER="com.xttech.app2" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGN_STYLE="Manual" \
             DEVELOPMENT_TEAM="GPCFYP2K8W" \
             PROVISIONING_PROFILE_SPECIFIER="XTTech_AppStore" \
