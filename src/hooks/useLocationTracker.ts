@@ -11,7 +11,7 @@ export interface NativeTrackingPlugin {
   startTracking(options: { token: string; refreshToken?: string; apiUrl: string }): Promise<{ success: boolean }>;
   updateToken(options: { token: string; refreshToken?: string }): Promise<{ success: boolean }>;
   stopTracking(): Promise<{ success: boolean }>;
-  checkPermission?(): Promise<{ status: string; isAlways: boolean; isPrecise: boolean }>;
+  checkPermission?(): Promise<{ status: string; isAlways: boolean; isWhenInUse?: boolean; isPrecise: boolean }>;
   openSettings?(): Promise<{ success: boolean }>;
   ensureAlwaysPermission?(): Promise<{ isAlways: boolean; action: string }>;
   // Android Background Permissions & Auto-Start

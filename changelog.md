@@ -16,6 +16,14 @@ All notable changes to the frontend project will be documented in this file.
   - Thêm trạng thái `app_closed` (badge "Đã tắt app"), `STAFF_LIVE_STATUS_MAP` và helper `isStaffSignalLost`.
 
 ### Fixed
+- **Khắc phục lỗi mất mục "Vị trí" trong Cài đặt iPhone trên thiết bị mới cài đặt ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
+  - **Nguyên nhân gốc rễ:** Trên iOS, mục "Vị trí" chỉ xuất hiện trong `Cài đặt > [Tên App]` sau khi ứng dụng đã gọi API xin quyền của hệ thống ít nhất một lần. Trước đây, hàm `ensureAlwaysPermission` khi thấy quyền chưa phải là `authorizedAlways` đã lập tức hiển thị Alert mở thẳng Cài đặt iPhone mà chưa từng gọi lệnh xin quyền của hệ điều hành. Đối với các máy mới cài đặt hoặc nhân viên mới đăng nhập (trạng thái `notDetermined`), người dùng bấm sang Cài đặt bị mất hoàn toàn mục "Vị trí", gây tắc nghẽn luồng chấm công.
+  - **Giải pháp xử lý:**
+    - Khi `status == .notDetermined`: Tự động gọi `locationManager.requestAlwaysAuthorization()` để iOS bung popup xin quyền hệ thống gốc của Apple ("Cho phép XTTech truy cập vị trí của bạn?"). Nhờ đó iOS ghi nhận và lưu vĩnh viễn mục "Vị trí" vào Cài đặt của app.
+    - Cài đặt delegate `locationManagerDidChangeAuthorization` và `didChangeAuthorization` (`CLLocationManagerDelegate`) để lắng nghe lựa chọn của người dùng:
+      - Sau khi người dùng chọn "Khi dùng ứng dụng" (`authorizedWhenInUse`), mục "Vị trí" đã có sẵn trong Cài đặt, app tiếp tục hiển thị Native Alert chuẩn dẫn người dùng vào Cài đặt để gạt chuyển sang "Luôn luôn" (Always).
+      - Bổ sung helper tập trung `getOrCreateLocationManager()`, quản lý an toàn vòng đời `CLLocationManager`.
+    - Chuẩn hóa `checkPermission` trả về đầy đủ các trạng thái `always`, `whenInUse`, `notDetermined`, `denied` và cờ `isWhenInUse`.
 - **[Root cause] Plugin `NativeTracking` chưa từng được đăng ký trên iOS:**
   - Capacitor 6+ chỉ đăng ký plugin có trong `packageClassList` (đang rỗng), nên JS gọi `startTracking` bị lỗi và âm thầm fallback sang `navigator.geolocation` của WebView, vốn chỉ chạy khi app ở foreground. Hậu quả: toàn bộ GPS nền / geofence / app_closed chưa từng chạy.
   - [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift) conform `CAPBridgedPlugin` (`identifier`, `jsName`, `pluginMethods`). Xoá `NativeTrackingPlugin.m` (macro `CAP_PLUGIN` cũ).
