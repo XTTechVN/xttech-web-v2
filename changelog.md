@@ -2,6 +2,37 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-12
+
+### Added (Phát hiện vuốt tắt app & tăng nguồn đánh thức định vị nền iOS)
+- **Geofence neo + Visits ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+  - Luôn duy trì một geofence bán kính 150m quanh vị trí tốt gần nhất (đặt lại sau mỗi 100m di chuyển, cùng identifier nên không cộng dồn region).
+  - Bật `startMonitoringVisits()`. Cùng với SLC, đây là các nguồn để iOS đánh thức lại app sau force-quit khi nhân viên rời khỏi vị trí.
+  - `didExitRegion` / `didVisit`: bật lại GPS liên tục và đặt neo mới.
+- **Phát hiện vuốt tắt app ([`AppDelegate.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/AppDelegate.swift)):**
+  - `applicationWillTerminate` gọi `NativeTrackingPlugin.handleAppWillTerminate()`: gửi ping `eventType = app_closed` và đặt local notification nhắc mở lại app (chờ tối đa 3 giây).
+  - `startTracking` xin quyền thông báo; `load()` / `stopTracking` xoá notification nhắc nhở.
+- **Live Map ([`location.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/location.ts), [`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/staff-list.tsx), [`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/live-map.tsx), [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx)):**
+  - Thêm trạng thái `app_closed` (badge "Đã tắt app"), `STAFF_LIVE_STATUS_MAP` và helper `isStaffSignalLost`.
+
+### Fixed
+- Giải phóng instance standalone (tạo lúc iOS đánh thức app từ nền) khi Capacitor bridge load, tránh 2 `CLLocationManager` gửi ping trùng.
+
+### Changed
+- Tách `makePingRequest` dùng chung cho ping định kỳ và ping `app_closed`; payload có thêm `eventType`.
+
+## [Unreleased] - 2026-10-09
+
+### Fixed (Tối Ưu Hoá Tầng Mạng Nền Và Chế Độ Định Vị Nền iOS Chống Nghẽn Khi Khóa Màn Hình)
+- **Tách Biệt Dedicated Background URLSession ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+  - Khởi tạo instance `backgroundSession` với cấu hình `URLSessionConfiguration` chuyên trách cho tiến trình chạy ngầm.
+  - Thiết lập `timeoutIntervalForRequest = 5.0s`, `timeoutIntervalForResource = 8.0s`, `waitsForConnectivity = false` và `httpMaximumConnectionsPerHost = 2` để giải phóng socket ngay tức thì, triệt tiêu triệt để hiện tượng treo lơ lửng gói tin HTTP khi iPhone bị khóa màn hình.
+  - Hạ `request.timeoutInterval` từ 15.0s xuống 5.0s cho cả `sendPing` và `refreshAccessToken`.
+- **Đồng Bộ Chu Kỳ `beginBackgroundTask` An Toàn:**
+  - Đóng gói logic giải phóng task `endBgTask` luôn được kích hoạt an toàn trên Main Thread ngay khi request hoàn tất (thành công, lỗi hoặc timeout), ngăn chặn hệ điều hành iOS đánh dấu app vi phạm "CPU background execution time limit".
+- **Chuẩn Hóa CoreLocation Activity Type:**
+  - Chuyển đổi `activityType` từ `.automotiveNavigation` (chỉ xe ô tô) sang `.otherNavigation` (tương thích đa phương tiện: đi bộ, xe máy, phương tiện cá nhân), giúp iOS CoreLocation không tự ý bóp trễ nhịp quét GPS khi nhân viên di chuyển chậm hoặc ở trong không gian làm việc.
+
 ## [Unreleased] - 2026-10-03
 
 ### Added (Bắt Buộc Quyền Vị Trí "Luôn Luôn" Bằng Pop-up Native iOS UIAlertController Khi Chấm Công)

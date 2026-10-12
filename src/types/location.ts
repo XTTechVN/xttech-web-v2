@@ -7,6 +7,19 @@ export interface LocationPingPayload {
   batteryLevel?: number;
 }
 
+export type StaffLiveStatus = 'moving' | 'stationary' | 'app_closed' | 'offline';
+
+export const STAFF_LIVE_STATUS_MAP: Record<StaffLiveStatus, string> = {
+  moving: 'Di chuyển',
+  stationary: 'Đứng yên',
+  app_closed: 'Đã tắt app',
+  offline: 'Ngoại tuyến',
+};
+
+/** Mất tín hiệu định vị: ngoại tuyến hoặc nhân viên đã vuốt tắt ứng dụng */
+export const isStaffSignalLost = (status: StaffLiveStatus): boolean =>
+  status === 'offline' || status === 'app_closed';
+
 export interface StaffLiveLocation {
   userId: string;
   userName: string;
@@ -21,7 +34,7 @@ export interface StaffLiveLocation {
   heading?: number;
   batteryLevel?: number;
   checkInTime?: string;
-  status: 'moving' | 'stationary' | 'offline';
+  status: StaffLiveStatus;
   updatedAt: string;
 }
 
