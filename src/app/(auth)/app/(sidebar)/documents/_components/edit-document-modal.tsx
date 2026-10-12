@@ -15,7 +15,7 @@ import {
   DOCUMENT_STATUS_MAP,
   APPROVAL_STATUS_MAP,
 } from '@/types';
-import { formatBytes, getFileVisualInfo } from '../_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '../_utils/doc-helpers';
 import toast from 'react-hot-toast';
 import {
   Edit3,
@@ -55,46 +55,7 @@ const editDocumentSchema = z.object({
 
 type EditDocumentFormValues = z.infer<typeof editDocumentSchema>;
 
-const isApproverEligible = (emp: any): boolean => {
-  if (!emp) return false;
-  const validKeywords = ['admin', 'hr', 'super', 'supper', 'quản trị', 'nhân sự'];
-  const matchString = (val?: string | null): boolean => {
-    if (!val || typeof val !== 'string') return false;
-    const lower = val.toLowerCase().trim();
-    return validKeywords.some((keyword) => lower.includes(keyword));
-  };
-  if (Array.isArray(emp.roles) && emp.roles.length > 0) {
-    const hasMatch = emp.roles.some((r: any) => {
-      if (typeof r === 'string') return matchString(r);
-      return matchString(r?.code) || matchString(r?.name);
-    });
-    if (hasMatch) return true;
-  }
-  if (typeof emp.role === 'string' && matchString(emp.role)) return true;
-  if (emp.role && typeof emp.role === 'object') {
-    if (matchString(emp.role?.code) || matchString(emp.role?.name)) return true;
-  }
-  if (Array.isArray(emp.positions) && emp.positions.length > 0) {
-    const hasMatchPos = emp.positions.some((p: any) => {
-      if (typeof p === 'string') return matchString(p);
-      return matchString(p?.code) || matchString(p?.name);
-    });
-    if (hasMatchPos) return true;
-  }
-  return false;
-};
 
-const getApproverRoleBadge = (emp: any): string => {
-  if (Array.isArray(emp.roles) && emp.roles.length > 0) {
-    const names = emp.roles
-      .map((r: any) => (typeof r === 'string' ? r : r.name || r.code))
-      .filter(Boolean);
-    if (names.length > 0) return names.join(', ');
-  }
-  if (typeof emp.role === 'string') return emp.role;
-  if (emp.role && typeof emp.role === 'object') return emp.role.name || emp.role.code || '';
-  return 'Cán bộ duyệt';
-};
 
 export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   isOpen,
@@ -581,6 +542,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
             <Select
               label="Lưu vào Thư mục"
               fullWidth
+              disabled
               value={categoryIdVal}
               onChange={(e) => setValue('categoryId', e.target.value ? Number(e.target.value) : '')}
               options={folderOptions}

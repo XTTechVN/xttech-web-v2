@@ -93,9 +93,10 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       if (data.code?.trim()) {
         documentData.code = data.code.trim().toUpperCase();
       }
-      if (data.categoryId) {
-        documentData.category_id = Number(data.categoryId);
-        documentData.categoryId = Number(data.categoryId);
+      const targetCatId = currentFolderId ? Number(currentFolderId) : (data.categoryId ? Number(data.categoryId) : undefined);
+      if (targetCatId) {
+        documentData.category_id = targetCatId;
+        documentData.categoryId = targetCatId;
       }
       if (data.approverId?.trim()) {
         documentData.approver_id = data.approverId.trim();
@@ -114,9 +115,9 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       if (data.code?.trim()) {
         formData.append('code', data.code.trim().toUpperCase());
       }
-      if (data.categoryId) {
-        formData.append('category_id', String(data.categoryId));
-        formData.append('categoryId', String(data.categoryId));
+      if (targetCatId) {
+        formData.append('category_id', String(targetCatId));
+        formData.append('categoryId', String(targetCatId));
       }
       if (data.approverId?.trim()) {
         formData.append('approver_id', data.approverId.trim());
@@ -154,7 +155,8 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
         title: '',
         documentType: 'work_report',
         code: '',
-        categoryId: currentFolderId || '',
+        categoryId: currentFolderId ? Number(currentFolderId) : '',
+        approverId: '',
       });
     }
   }, [isOpen, currentFolderId, reset]);
@@ -235,8 +237,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
 
   const approverOptions = useMemo(() => {
     const eligibleApprovers = employees.filter(isApproverEligible);
-    const pool = eligibleApprovers.length > 0 ? eligibleApprovers : employees;
-    const unique = pool.filter((emp: any, index: number, self: any[]) =>
+    const unique = eligibleApprovers.filter((emp: any, index: number, self: any[]) =>
       index === self.findIndex((t: any) => String(t.id) === String(emp.id))
     );
     return [
@@ -373,12 +374,13 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
           </div>
 
           <div>
-            <Select
+            <Input
               label="Lưu vào Thư mục"
               fullWidth
-              value={categoryIdVal}
-              onChange={(e) => setValue('categoryId', e.target.value ? Number(e.target.value) : '')}
-              options={folderOptions}
+              readOnly
+              disabled
+              value={currentFolder ? currentFolder.name : 'Thư mục gốc (Root)'}
+              className="bg-slate-100 text-slate-700 font-medium cursor-not-allowed select-none"
             />
           </div>
         </div>

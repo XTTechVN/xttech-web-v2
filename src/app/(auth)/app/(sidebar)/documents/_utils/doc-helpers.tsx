@@ -226,34 +226,43 @@ export function DriveFileIcon({
 // DriveFileBadge alias to DriveFileIcon
 export const DriveFileBadge = DriveFileIcon;
 
-// Kiểm tra nhân sự có đủ thẩm quyền phê duyệt hay không
+// Kiểm tra nhân sự có đủ thẩm quyền phê duyệt hay không (CHỈ LOAD ROLE ADMIN HOẶC HR)
 export const isApproverEligible = (emp: any): boolean => {
   if (!emp) return false;
-  const validKeywords = ['admin', 'hr', 'super', 'supper', 'quản trị', 'nhân sự', 'manager', 'lead', 'trưởng'];
-  const matchString = (val?: string | null): boolean => {
-    if (!val || typeof val !== 'string') return false;
-    const lower = val.toLowerCase().trim();
-    return validKeywords.some((keyword) => lower.includes(keyword));
-  };
-  if (Array.isArray(emp.roles) && emp.roles.length > 0) {
-    const hasMatch = emp.roles.some((r: any) => {
-      if (typeof r === 'string') return matchString(r);
-      return matchString(r?.code) || matchString(r?.name);
+
+  const roles: { code?: string; name?: string }[] = [];
+  if (Array.isArray(emp.roles)) {
+    emp.roles.forEach((r: any) => {
+      if (typeof r === 'string') roles.push({ code: r, name: r });
+      else if (r && typeof r === 'object') roles.push({ code: r.code, name: r.name });
     });
-    if (hasMatch) return true;
   }
-  if (typeof emp.role === 'string' && matchString(emp.role)) return true;
-  if (emp.role && typeof emp.role === 'object') {
-    if (matchString(emp.role?.code) || matchString(emp.role?.name)) return true;
-  }
-  if (Array.isArray(emp.positions) && emp.positions.length > 0) {
-    const hasMatchPos = emp.positions.some((p: any) => {
-      if (typeof p === 'string') return matchString(p);
-      return matchString(p?.code) || matchString(p?.name);
-    });
-    if (hasMatchPos) return true;
-  }
-  return false;
+  if (typeof emp.role === 'string') roles.push({ code: emp.role, name: emp.role });
+  else if (emp.role && typeof emp.role === 'object') roles.push({ code: emp.role.code, name: emp.role.name });
+
+  if (roles.length === 0) return false;
+
+  return roles.some(({ code, name }) => {
+    const c = (code || '').toLowerCase().trim();
+    const n = (name || '').toLowerCase().trim();
+
+    // 1. Role code khớp admin / hr / super
+    const validCodes = ['admin', 'hr', 'super', 'supper', 'super_admin', 'supper_admin', 'admin_hr'];
+    if (validCodes.includes(c)) return true;
+
+    // 2. Role name tiếng Việt: 'quản trị', 'quản trị viên', 'nhân sự' (tuyệt đối không chấp nhận 'nhân viên' hay 'kinh doanh')
+    if (n === 'admin' || n === 'hr' || n === 'quản trị' || n === 'quản trị viên' || n === 'nhân sự') {
+      return true;
+    }
+    if (c.includes('admin') || n.includes('admin') || n.includes('quản trị')) {
+      return true;
+    }
+    if ((c.includes('hr') || n.includes('nhân sự')) && !n.includes('nhân viên') && !c.includes('employee')) {
+      return true;
+    }
+
+    return false;
+  });
 };
 
 // Lấy badge chức vụ / vai trò của người duyệt

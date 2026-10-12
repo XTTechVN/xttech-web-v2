@@ -68,7 +68,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const [showRejectPrompt, setShowRejectPrompt] = useState(false);
   const [rejectNote, setRejectNote] = useState('');
   const currentUser = useAuthStore((state) => state.user);
-  const { hasRole, isAdmin, isHR, isSuper } = usePermission();
+  const { hasRole, isAdmin, isHR, isSuper, isManager } = usePermission();
 
   // Fetch chi tiết tài liệu đầy đủ kèm recipients & departments
   const { data: fullDoc } = useQuery({
@@ -248,17 +248,23 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
     String(doc.createdById) === String(currentUser?.id)
   );
 
-  // Người có quyền duyệt: Admin, HR, Super hoặc đúng người được chọn duyệt (kể cả khi chia sẻ chọn người duyệt)
-  const canApprove =
+  // Quản lý văn bản & phê duyệt: Chỉ Admin, HR, Super Admin
+  const canManageDoc =
     isAdmin ||
     isHR ||
     isSuper ||
-    hasRole(['admin', 'hr', 'super', 'supper', 'super_admin', 'supper_admin']) ||
-    isAssignedApprover;
+    isManager ||
+    hasRole(['admin', 'hr', 'super', 'supper', 'super_admin', 'supper_admin']);
+
+  // Role nhân viên không có quyền duyệt tài liệu (chỉ cấp quản lý mới được duyệt)
+  const canApprove = canManageDoc;
 
   const approvalStatus = targetDoc?.approvalStatus || doc.approvalStatus || 'draft';
   const isApproved = approvalStatus === 'approved';
   const isDraftOrRejected = approvalStatus === 'draft' || approvalStatus === 'rejected';
+
+  // Role nhân viên không trình duyệt tài liệu (chỉ cấp quản lý tạo tài liệu mới trình duyệt)
+  const canSubmitForApproval = canManageDoc && isCreator && isDraftOrRejected;
 
   const handleReview = async (status: 'approved' | 'rejected') => {
     try {
@@ -402,8 +408,8 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
           {/* Workflow Action Buttons (Left) */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-start flex-wrap">
-            {/* Nếu là người tạo và tài liệu ở trạng thái soạn thảo/từ chối, cho phép trình duyệt */}
-            {isCreator && isDraftOrRejected && (
+            {/* Chỉ người tạo thuộc cấp quản lý mới trình duyệt tài liệu; role nhân viên không duyệt */}
+            {canSubmitForApproval && (
               <Button
                 variant="outline"
                 size="sm"
@@ -444,8 +450,8 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </>
             )}
 
-            {/* Nếu là Admin/HR và tài liệu đã được duyệt nhưng chưa ban hành */}
-            {(isAdmin || isHR || isSuper) && isApproved && targetDoc.status !== 'published' && (
+            {/* Nếu là cấp quản lý (Admin/HR/Super) và tài liệu đã được duyệt nhưng chưa ban hành */}
+            {canManageDoc && isApproved && targetDoc.status !== 'published' && (
               <Button
                 variant="outline"
                 size="sm"

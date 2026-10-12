@@ -149,8 +149,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
 
   const approverOptions = useMemo(() => {
     const eligibleApprovers = employees.filter(isApproverEligible);
-    const pool = eligibleApprovers.length > 0 ? eligibleApprovers : employees;
-    const unique = pool.filter((emp: any, index: number, self: any[]) =>
+    const unique = eligibleApprovers.filter((emp: any, index: number, self: any[]) =>
       index === self.findIndex((t: any) => String(t.id) === String(emp.id))
     );
     return [
