@@ -22,7 +22,7 @@ interface CreateFolderModalProps {
 // Validation schema dùng Zod theo chuẩn form-modal
 const folderSchema = z.object({
   name: z.string().min(1, { message: 'Tên thư mục không được để trống' }),
-  code: z.string().min(1, { message: 'Mã định danh không được để trống' }),
+  code: z.string().optional(),
   description: z.string().optional(),
 });
 
@@ -48,7 +48,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   } = useForm<FolderFormValues>({
     resolver: zodResolver(folderSchema),
     defaultValues: {
-      name: '',
+      name: 'New folder',
       code: '',
       description: '',
     },
@@ -63,7 +63,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       reset({
-        name: '',
+        name: 'New folder',
         code: '',
         description: '',
       });
@@ -78,9 +78,6 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setValue('name', val, { shouldValidate: true });
-    if (!isManualCode) {
-      setValue('code', generateSlugCode(val, 'DIR'), { shouldValidate: true });
-    }
   };
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +86,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   };
 
   const handleFormSubmit = async (data: FolderFormValues) => {
-    const finalCode = (data.code.trim() || generateSlugCode(data.name, 'DIR')).toUpperCase();
+    const finalCode = (data.code?.trim() || generateSlugCode(data.name || 'New folder', 'DIR')).toUpperCase();
 
     try {
       setLoading(true);
@@ -126,7 +123,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
         <div>
           <Input
             label="Tên thư mục *"
-            placeholder="Ví dụ: Hồ sơ nghiệm thu 2026..."
+            placeholder="Ví dụ: New folder..."
             fullWidth
             value={nameVal}
             onChange={handleNameChange}
@@ -137,8 +134,8 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
 
         <div>
           <Input
-            label="Mã định danh (Code) *"
-            placeholder="Ví dụ: HS_NT_2026"
+            label="Mã định danh (Code)"
+            placeholder="Để trống để tự động tạo từ tên..."
             fullWidth
             value={codeVal}
             onChange={handleCodeChange}
@@ -146,7 +143,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
             className="font-mono uppercase"
           />
           <p className="text-[10px] text-slate-400 mt-1">
-            Mã định danh viết hoa, không dấu, ngăn cách bằng dấu gạch dưới.
+            Mã định danh viết hoa, không dấu, ngăn cách bằng dấu gạch dưới (tự động tạo nếu để trống).
           </p>
         </div>
 
