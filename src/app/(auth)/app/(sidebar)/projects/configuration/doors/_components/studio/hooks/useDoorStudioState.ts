@@ -367,6 +367,131 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
     if (children.length > 0) setSelectedCellId(children[0].id);
   };
 
+  const handleSplitSashMullion = (count: number, direction: 'vertical' | 'horizontal') => {
+    if (!selectedCellId) {
+      toast.error('Vui lòng chọn một cánh cửa trên bản vẽ để chia đố cánh');
+      return;
+    }
+    const targetNode = findNode(rootCell, selectedCellId);
+    if (!targetNode) return;
+
+    // Chặn nghiêm ngặt: Ô fix / vách kính cố định không phải cánh cửa!
+    if (targetNode.sashType === 'fixed') {
+      toast.error('Ô đang chọn là Vách kính cố định (ô fix), không phải cánh cửa. Vui lòng sử dụng "Chia đố khung" ở tab Kiểu khung.');
+      return;
+    }
+
+    const countClamped = Math.max(2, Math.min(6, count));
+    const target = targetNode;
+
+    // Tính toán chia đều vị trí
+    const totalDim = direction === 'vertical' ? target.w : target.h;
+    const baseVal = Math.round(totalDim / countClamped);
+    const positions: number[] = [];
+    let cur = 0;
+    for (let i = 0; i < countClamped - 1; i++) {
+      positions.push(baseVal);
+      cur += baseVal;
+    }
+    positions.push(totalDim - cur);
+
+    // Tạo các ô con đệ quy bên trong ô/cánh đang chọn
+    const subChildren = createSplitChildren(
+      target.id,
+      target.w,
+      target.h,
+      countClamped,
+      direction,
+      'fixed'
+    ).map((child) => ({
+      ...child,
+      paneType: target.paneType || 'glass',
+    }));
+
+    const updated = updateNode(rootCell, target.id, {
+      splitDirection: direction,
+      splitType: 'sash_mullion',
+      children: subChildren,
+      sashMullions: {
+        count: countClamped,
+        direction,
+        positions,
+      },
+    });
+    pushState(updated);
+    if (subChildren.length > 0) {
+      setSelectedCellId(subChildren[0].id);
+    }
+    toast.success(`Đã chia đố cánh thành ${countClamped} ô`);
+  };
+
+  const handleDeleteSelected = () => {
+    if (!selectedCellId) {
+      toast.error('Vui lòng chọn một ô hoặc cánh cần xóa');
+      return;
+    }
+    const targetNode = findNode(rootCell, selectedCellId);
+    if (!targetNode) return;
+
+    // 1. Nếu ô đang chọn là ô con bên trong một cụm chia đố cánh (sash_mullion):
+    const parentNode = findParentNode(rootCell, selectedCellId);
+    if (parentNode && parentNode.splitType === 'sash_mullion') {
+      const updated = updateNode(rootCell, parentNode.id, {
+        splitDirection: undefined,
+        splitType: undefined,
+        children: [],
+        sashMullions: undefined,
+      });
+      pushState(updated);
+      setSelectedCellId(parentNode.id);
+      toast.success('Đã xóa đố cánh, hợp nhất lại ô');
+      return;
+    }
+
+    // 2. Nếu ô đang có đố cánh: xóa đố cánh trước
+    if (targetNode.sashMullions || (targetNode.children && targetNode.splitType === 'sash_mullion')) {
+      const updated = updateNode(rootCell, selectedCellId, {
+        splitDirection: undefined,
+        splitType: undefined,
+        children: [],
+        sashMullions: undefined,
+      });
+      pushState(updated);
+      toast.success('Đã xóa đố cánh');
+      return;
+    }
+
+    // 3. Nếu đang là cánh cửa: chuyển về vách kính cố định
+    if (targetNode.sashType !== 'fixed') {
+      const updated = updateNode(rootCell, selectedCellId, {
+        sashType: 'fixed',
+        hasLock: false,
+        handleHeight: undefined,
+        sashMullions: undefined,
+        splitDirection: undefined,
+        splitType: undefined,
+        children: [],
+      });
+      pushState(updated);
+      toast.success('Đã chuyển về vách cố định');
+      return;
+    }
+
+    // 4. Nếu có children: xóa các con và hợp nhất
+    if (targetNode.children && targetNode.children.length > 0) {
+      const updated = updateNode(rootCell, selectedCellId, {
+        splitDirection: undefined,
+        splitType: undefined,
+        children: [],
+      });
+      pushState(updated);
+      toast.success('Đã xóa phân chia ô');
+      return;
+    }
+
+    toast('Ô vách cố định mặc định');
+  };
+
   const handleSelectSashType = (sashType: SashOpenType) => {
     setCurrentSashType(sashType);
     const targetId = selectedCellId || (rootCell.children?.[0]?.id || rootCell.id);
@@ -435,7 +560,10 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
     const nextChild = parentNode.children[idx + 1];
 
     const oldDim = isVert ? child.w : child.h;
-    const newDim = Math.max(100, params.dimension);
+    const oldNextDim = isVert ? nextChild.w : nextChild.h;
+    const totalDim = oldDim + oldNextDim;
+    const minDim = Math.min(50, Math.max(20, Math.floor(totalDim * 0.15)));
+    const newDim = Math.max(minDim, Math.min(totalDim - minDim, params.dimension));
     const delta = newDim - oldDim;
 
     const newChildren = parentNode.children.map((c, i) => {
@@ -449,8 +577,7 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
         };
       }
       if (i === idx + 1 && nextChild) {
-        const oldNextDim = isVert ? nextChild.w : nextChild.h;
-        const newNextDim = Math.max(100, oldNextDim - delta);
+        const newNextDim = Math.max(minDim, oldNextDim - delta);
         return {
           ...c,
           w: isVert ? newNextDim : c.w,
@@ -460,7 +587,17 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
       return c;
     });
 
-    pushState(updateNode(rootCell, parentNode.id, { children: newChildren }));
+    const updatedNodeData: Partial<SceneCellNode> = {
+      children: newChildren,
+      sashMullions: parentNode.sashMullions
+        ? {
+            ...parentNode.sashMullions,
+            positions: newChildren.map((c) => (isVert ? c.w : c.h)),
+          }
+        : undefined,
+    };
+
+    pushState(updateNode(rootCell, parentNode.id, updatedNodeData));
     toast.success('Cập nhật thông số đố thành công');
   };
 
@@ -483,7 +620,8 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
     const oldDim2 = isVert ? nextChild.w : nextChild.h;
     const totalDim = oldDim1 + oldDim2;
 
-    const clampedDim1 = Math.max(100, Math.min(totalDim - 100, newDimension));
+    const minDim = Math.min(50, Math.max(20, Math.floor(totalDim * 0.15)));
+    const clampedDim1 = Math.max(minDim, Math.min(totalDim - minDim, newDimension));
     const clampedDim2 = totalDim - clampedDim1;
 
     const updatedChild = rescaleTree(
@@ -509,7 +647,15 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
       h: isVert ? updatedNextChild.h : clampedDim2,
     };
 
-    const updatedRoot = updateNode(rootCell, parentNode.id, { children: newChildren });
+    const updatedRoot = updateNode(rootCell, parentNode.id, {
+      children: newChildren,
+      sashMullions: parentNode.sashMullions
+        ? {
+            ...parentNode.sashMullions,
+            positions: newChildren.map((c) => (isVert ? c.w : c.h)),
+          }
+        : undefined,
+    });
 
     if (isFinal) {
       pushState(updatedRoot);
@@ -792,6 +938,8 @@ export function useDoorStudioState({ isOpen, onClose, door, defaultBrandId }: Us
     handleChangeDimension,
     handleSplitMullion,
     handleCoupleFrame,
+    handleSplitSashMullion,
+    handleDeleteSelected,
     handleSelectSashType,
     handleUpdateDimension,
     handleUpdateSelectedCell,

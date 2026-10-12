@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   FrameShape,
   SashOpenType,
@@ -10,7 +10,20 @@ import {
 } from '../studio-types';
 import { FrameShapePicker } from './frame-shape-picker';
 import { SashTypePicker } from './sash-type-picker';
-import { Undo2, Redo2, RotateCcw, Ruler, Palette, Columns, DoorClosed, LayoutGrid } from 'lucide-react';
+import {
+  Undo2,
+  Redo2,
+  RotateCcw,
+  Ruler,
+  Palette,
+  Columns,
+  Rows,
+  DoorClosed,
+  LayoutGrid,
+  Grid,
+  Scissors,
+  Trash2,
+} from 'lucide-react';
 
 interface ToolboxLeftProps {
   w: number;
@@ -33,6 +46,8 @@ interface ToolboxLeftProps {
   onSelectSashType: (sashType: SashOpenType) => void;
   onSplitMullion: (count: number, direction: 'vertical' | 'horizontal') => void;
   onCoupleFrame: (direction: 'vertical' | 'horizontal') => void;
+  onSplitSashMullion?: (count: number, direction: 'vertical' | 'horizontal') => void;
+  onDeleteSelected?: () => void;
   onChangeTab: (tab: 'frame' | 'sash') => void;
   aluminumColors?: ColorSwatch[];
 }
@@ -58,9 +73,13 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
   onSelectSashType,
   onSplitMullion,
   onCoupleFrame,
+  onSplitSashMullion,
+  onDeleteSelected,
   onChangeTab,
   aluminumColors,
 }) => {
+  const [frameSplitCount, setFrameSplitCount] = useState<number>(2);
+
   const activeColorPalette = aluminumColors && aluminumColors.length > 0 ? aluminumColors : ALUMINUM_PALETTE;
   const cleanAluminumColor = (aluminumColor || '').trim().toLowerCase();
   const activeColor = activeColorPalette.find(
@@ -80,35 +99,14 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
             <span>Kích thước phủ bì</span>
           </div>
 
-          {/* Action History: Undo / Redo / Reset */}
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={onUndo}
-              disabled={!canUndo}
-              title="Hoàn tác (Undo)"
-              className="w-7 h-7 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center transition-colors cursor-pointer"
-            >
-              <Undo2 size={13} />
-            </button>
-            <button
-              type="button"
-              onClick={onRedo}
-              disabled={!canRedo}
-              title="Làm lại (Redo)"
-              className="w-7 h-7 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center transition-colors cursor-pointer"
-            >
-              <Redo2 size={13} />
-            </button>
-            <button
-              type="button"
-              onClick={onReset}
-              title="Đặt lại bản vẽ"
-              className="w-7 h-7 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
-            >
-              <RotateCcw size={13} />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onReset}
+            title="Đặt lại bản vẽ"
+            className="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <RotateCcw size={12} />
+          </button>
         </div>
 
         {/* Inputs W & H */}
@@ -210,7 +208,40 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
         </div>
       </div>
 
-      {/* 3. Segmented Tab Switcher: Kiểu khung vs Kiểu cánh */}
+      {/* 3. Action History: Undo / Redo / Xóa (Ảnh 4) */}
+      <div className="grid grid-cols-3 gap-1.5">
+        <button
+          type="button"
+          onClick={onUndo}
+          disabled={!canUndo}
+          title="Hoàn tác (Undo)"
+          className="h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 disabled:opacity-35 disabled:pointer-events-none flex items-center justify-center gap-1 transition-all cursor-pointer text-xs font-semibold shadow-2xs"
+        >
+          <Undo2 size={13} />
+          <span>Undo</span>
+        </button>
+        <button
+          type="button"
+          onClick={onRedo}
+          disabled={!canRedo}
+          title="Làm lại (Redo)"
+          className="h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 disabled:opacity-35 disabled:pointer-events-none flex items-center justify-center gap-1 transition-all cursor-pointer text-xs font-semibold shadow-2xs"
+        >
+          <Redo2 size={13} />
+          <span>Redo</span>
+        </button>
+        <button
+          type="button"
+          onClick={onDeleteSelected || onReset}
+          title="Xóa ô / Đố / Cánh"
+          className="h-8 rounded-lg border border-rose-200 bg-rose-50/80 hover:bg-rose-100 text-rose-600 flex items-center justify-center gap-1 transition-all cursor-pointer text-xs font-semibold shadow-2xs"
+        >
+          <Trash2 size={13} />
+          <span>Xóa</span>
+        </button>
+      </div>
+
+      {/* 4. Segmented Tab Switcher: Kiểu khung vs Kiểu cánh (Ảnh 3 & 4) */}
       <div className="p-1 bg-slate-100 rounded-lg border border-slate-200/80 grid grid-cols-2 gap-1">
         <button
           type="button"
@@ -221,7 +252,7 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <LayoutGrid size={13} className={activeTab === 'frame' ? 'text-primary' : 'text-slate-400'} />
+          <span className="w-2.5 h-2.5 rounded-xs bg-blue-600 inline-block" />
           <span>Kiểu khung</span>
         </button>
         <button
@@ -233,21 +264,89 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <DoorClosed size={13} className={activeTab === 'sash' ? 'text-primary' : 'text-slate-400'} />
+          <span className="w-2.5 h-2.5 rounded-xs bg-amber-700 inline-block" />
           <span>Kiểu cánh</span>
         </button>
       </div>
 
-      {/* 4. Sub-panel View */}
+      {/* 5. Sub-panel View */}
       {activeTab === 'frame' ? (
-        <FrameShapePicker currentShape={frameShape} onSelectShape={onSelectFrameShape} />
+        <div className="flex flex-col space-y-3 text-xs">
+          {/* Box: Chia đố khung (Đố T) - Ảnh 3 */}
+          <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2.5">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
+              <Grid size={14} className="text-primary" />
+              <span>Chia đố khung</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 shrink-0">
+                <input
+                  type="number"
+                  min={1}
+                  max={6}
+                  value={frameSplitCount}
+                  onChange={(e) => setFrameSplitCount(Math.max(1, Math.min(6, Number(e.target.value))))}
+                  className="w-10 h-7 text-center text-xs font-bold rounded border border-slate-200 bg-white focus:outline-none focus:border-primary"
+                />
+                <span className="text-slate-500 font-medium">ô</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onSplitMullion(frameSplitCount, 'vertical')}
+                className="flex-1 h-7 px-2 rounded-md border border-emerald-300 bg-emerald-50/50 hover:bg-emerald-500 hover:text-white text-emerald-700 font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+              >
+                <Columns size={12} />
+                <span>Dọc</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onSplitMullion(frameSplitCount, 'horizontal')}
+                className="flex-1 h-7 px-2 rounded-md border border-emerald-300 bg-emerald-50/50 hover:bg-emerald-500 hover:text-white text-emerald-700 font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+              >
+                <Rows size={12} />
+                <span>Ngang</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Box: Tách khung (Nối ghép khung) - Ảnh 3 */}
+          <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2.5">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
+              <Scissors size={14} className="text-primary" />
+              <span>Tách khung</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={() => onCoupleFrame('vertical')}
+                className="h-7 px-2 rounded-md border border-amber-300 bg-amber-50/50 hover:bg-amber-500 hover:text-white text-amber-800 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Columns size={12} />
+                <span>Dọc</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onCoupleFrame('horizontal')}
+                className="h-7 px-2 rounded-md border border-amber-300 bg-amber-50/50 hover:bg-amber-500 hover:text-white text-amber-800 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Rows size={12} />
+                <span>Ngang</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Box: Hình dạng khung bao */}
+          <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2">
+            <div className="font-semibold text-slate-800 text-xs">Hình dạng khung bao</div>
+            <FrameShapePicker currentShape={frameShape} onSelectShape={onSelectFrameShape} />
+          </div>
+        </div>
       ) : (
         <SashTypePicker
           currentSashType={currentSashType}
           selectedCellId={selectedCellId}
           onSelectSashType={onSelectSashType}
-          onSplitMullion={onSplitMullion}
-          onCoupleFrame={onCoupleFrame}
+          onSplitSashMullion={onSplitSashMullion}
         />
       )}
     </div>

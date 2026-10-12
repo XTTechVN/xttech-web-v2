@@ -46,6 +46,8 @@ interface DrawTabViewProps {
   onSelectSashType: (type: SashOpenType) => void;
   onSplitMullion: (count: number, direction: 'vertical' | 'horizontal') => void;
   onCoupleFrame: (direction: 'vertical' | 'horizontal') => void;
+  onSplitSashMullion?: (count: number, direction: 'vertical' | 'horizontal') => void;
+  onDeleteSelected?: () => void;
   onChangeTab: (tab: 'frame' | 'sash') => void;
   onSelectCell: (id: string | null) => void;
   onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', value: number, cellId?: string) => void;
@@ -90,6 +92,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
   onSelectSashType,
   onSplitMullion,
   onCoupleFrame,
+  onSplitSashMullion,
+  onDeleteSelected,
   onChangeTab,
   onSelectCell,
   onUpdateDimension,
@@ -141,6 +145,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
           onSelectSashType={onSelectSashType}
           onSplitMullion={onSplitMullion}
           onCoupleFrame={onCoupleFrame}
+          onSplitSashMullion={onSplitSashMullion}
+          onDeleteSelected={onDeleteSelected}
           onChangeTab={onChangeTab}
           aluminumColors={aluminumColors}
         />
@@ -375,6 +381,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   onSelectSashType={onSelectSashType}
                   onSplitMullion={onSplitMullion}
                   onCoupleFrame={onCoupleFrame}
+                  onSplitSashMullion={onSplitSashMullion}
+                  onDeleteSelected={onDeleteSelected}
                   onChangeTab={onChangeTab}
                   aluminumColors={aluminumColors}
                 />

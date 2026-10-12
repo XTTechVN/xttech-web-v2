@@ -5,7 +5,7 @@ import { SashCornerJoint } from '../studio-types';
 import { CAD_CONFIG } from './cad-config';
 import { DoorCadRendererProps } from './cad-types';
 import { getCurvedFramePaths } from './cad-geometry';
-import { buildCadLayout, getVerticalSlices, getHorizontalSlices } from './cad-tree-traverser';
+import { buildCadLayout, getVerticalSlices, getHorizontalSlices, collectSashMullions } from './cad-tree-traverser';
 import { CadMiteredFrame } from './components/cad-mitered-frame';
 import { CadCurvedDoubleDoor, CadCurvedSingleDoor } from './components/cad-curved-door';
 import { CadRectangularLeaf } from './components/cad-rectangular-leaf';
@@ -111,6 +111,10 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   // Xây dựng sơ đồ khung, đố và ô lá từ cây scene
   const { frames, mullions, couplingSeams, leaves } = buildCadLayout(rootCell, ox, oy, fw, fh, frameD, mullionT);
 
+  // Thu thập toàn bộ đố cánh (kể cả phân chia đệ quy) và hợp nhất vào danh sách đố tương tác
+  const sashMullions = collectSashMullions(leaves, sashD);
+  const allMullions = [...mullions, ...sashMullions];
+
   // Dimensions positioning (Crisp CAD Style)
   const vertSlices = getVerticalSlices(rootCell);
   const horizSlices = getHorizontalSlices(rootCell);
@@ -198,18 +202,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
 
       {/* Vùng lòng cửa: Đố chia ô, Khung cánh, Kính, Nẹp, Tay nắm — Tự động cắt theo lòng vòm cong */}
       <g clipPath={curvedPaths ? `url(#${clipId})` : undefined}>
-        {/* 2. Split Resizer: Đố T và Vách ghép Tách khung (Hỗ trợ kéo chuột phải) */}
-        <CadSplitResizer
-          mullions={mullions}
-          couplingSeams={couplingSeams}
-          scale={scale}
-          selectedMullionId={selectedMullionId}
-          aluminumColor={aluminumColor}
-          onSelectMullion={onSelectMullion}
-          onResizeSplit={onResizeSplit}
-        />
-
-        {/* 3. Leaf Cells: Glass + Sash + Opening Symbols */}
+        {/* 2. Leaf Cells: Glass + Sash + Opening Symbols */}
         {isCurvedDouble ? (
           <CadCurvedDoubleDoor
             id={id}
@@ -259,6 +252,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
               leaf={leaf}
               allLeaves={leaves}
               isSelected={selectedCellId === leaf.node.id}
+              selectedCellId={selectedCellId}
               sashD={sashD}
               beadW={beadW}
               mullionT={mullionT}
@@ -275,6 +269,17 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
             />
           ))
         )}
+
+        {/* 3. Split Resizer Layer: Đố T (cả đố khung & đố cánh) và Vách ghép Tách khung (Nằm trên cùng để nhận chuột 100%) */}
+        <CadSplitResizer
+          mullions={allMullions}
+          couplingSeams={couplingSeams}
+          scale={scale}
+          selectedMullionId={selectedMullionId}
+          aluminumColor={aluminumColor}
+          onSelectMullion={onSelectMullion}
+          onResizeSplit={onResizeSplit}
+        />
       </g>
 
       {/* Đường nẹp chỉ thanh mảnh chạy theo viền trong của khung vòm */}

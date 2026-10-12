@@ -2,6 +2,36 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-10
+
+### Fixed & Enhanced
+
+- **Kiến Trúc Snapshot Cấu Hình Vật Tư & Quan Hệ Độc Lập Cho Vị Trí Cửa Dự Án ([`project_door_positions`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/models/project/core/project_door_position.py), [`project_door_position_service.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/services/project/core/project_door_position_service.py)):**
+  - **Khắc phục lỗi trả về null khi gán mẫu cửa vào dự án:** Thêm các cột snapshot độc lập vào bảng `project_door_positions` (`brand_id`, `door_series_id`, `color_id`, `glass_id`, `gasket_id`) kèm khóa ngoại và index, bảo đảm vị trí cửa trong dự án là một instance độc lập (Snapshot & Instance Pattern) thay vì phụ thuộc động vào mẫu cửa catalogue `template_door_id`.
+  - **Tự động trích xuất thông số khi tạo cửa (Auto-Resolution & Fallback):** Hàm `_resolve_specs` ưu tiên giá trị người dùng truyền lên; nếu thiếu sẽ tự động trích xuất từ mẫu cửa thư viện `Door`, hệ nhôm `DoorSeries`, và `system_config` (các trường `seriesId`, `colorId`, `glassId`, `gasketId`, `brandId`), đồng thời tự động suy ra `brand_id` từ `door_series.brand_id`.
+  - **Bảo lưu `door_type` và `template_door`:** Cho phép `door_type` kế thừa chính xác từ mẫu cửa thư viện (`ck`, `cs`, `cd`...) thay vì bị hardcode ghi đè thành `"door"`. Schema `ProjectDoorPositionResponse` bổ sung `template_door` để frontend hiển thị đầy đủ thông tin mẫu cửa gốc.
+  - **Eager Loading quan hệ toàn diện:** Bổ sung `selectinload` cho `brand`, `door_series`, `color`, `glass`, `gasket`, `template_door` trong các hàm truy vấn danh sách, chi tiết, nhân bản (duplicate) và tạo hàng loạt (bulk create), giúp client truy xuất ngay lập tức các đối tượng vật tư mà không bị `null`.
+  - **Alembic Migration & Backfill:** Tạo migration [`l7g8h9i0j1k2`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/alembic/versions/l7g8h9i0j1k2_add_spec_columns_to_project_door_positions.py) thêm các cột và tự động backfill dữ liệu `door_series_id`, `brand_id` cho tất cả các vị trí cửa hiện có trong CSDL.
+- **Chuyển Đổi Sang Xóa Cứng Vị Trí Cửa Dự Án ([`project_door_position_service.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/services/project/core/project_door_position_service.py)):**
+  - **Thực thi Xóa cứng vật lý (Hard Delete):** Thay thế logic gán cờ `deleted_at = datetime.utcnow()` bằng `await db.delete(position)` kèm `await db.commit()`, xóa hoàn toàn bản ghi khỏi Database để tránh xung đột mã `position_code` (Unique Constraint) khi tạo lại vị trí cửa mới cùng mã.
+  - **Bảo vệ toàn vẹn khóa ngoại:** Bọc xử lý ngoại lệ `IntegrityError` để rollback và trả về thông báo lỗi rõ ràng nếu vị trí cửa đang có dữ liệu liên kết từ xưởng sản xuất hoặc đơn đặt kính.
+  - **Ghi nhận Audit Log:** Lưu trữ nhật ký hoạt động `action_type="delete"` trước khi giải phóng bản ghi khỏi CSDL.
+- **Sửa Triệt Để Lỗi AttributeError: 'NoneType' object has no attribute 'get' & Chuẩn Hóa Bóc Tách Đố Cánh BOM ([`door_calculation_service.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/services/project/door/door_calculation_service.py)):**
+  - **Triệt tiêu lỗi NoneType:** Bọc phòng thủ toàn diện (Zero-Defect Defensive Programming) cho toàn bộ các hàm giải toán BOM; thay thế triệt để các lệnh `dict.get(key, {})` nguy hiểm (vốn trả về `None` khi dữ liệu JSON chứa giá trị `"key": null`) thành `dict.get(key) or {}` kèm kiểm tra `isinstance(..., dict)`.
+  - **Khắc phục lỗi tính ke góc & khung bảo vệ:** Sửa dứt điểm dòng tính góc cắt mở đáy `frame_cfg = system_config.get("frameConfig") or {}` và `sb_cfg = frame_cfg.get("safetyBarsConfig") or {}`, bảo đảm luôn là dictionary hợp lệ.
+  - **Phòng vệ mảng danh sách:** Lọc an toàn các phần tử `None` hoặc phần tử không phải dictionary trong mảng `leavesLayout`, `selectedAccessories`, danh sách liên kết `coupling` và danh sách phụ kiện `combo_items`.
+  - **Chuẩn hóa duyệt khung và bóc tách đố cánh:** Loại trừ `splitType != 'sash_mullion'` trong hàm duyệt khung `traverse_layout` để tránh nhầm lẫn đố cánh thành đố khung bao ngoài, bảo đảm bóc tách chính xác các thanh nhôm cánh, thanh đố cánh (`category="sash_mullion"`) và các ô kính con.
+- **Bảo Vệ Tính Toàn Vẹn Cấu Trúc Khung & Chặn Chia Đố Cánh Trên Ô Fix ([`sash-type-picker.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/panels/sash-type-picker.tsx), [`useDoorStudioState.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/hooks/useDoorStudioState.ts)):**
+  - **Khóa bảo vệ logic (Guard Clause):** Hàm `handleSplitSashMullion` kiểm tra nghiêm ngặt loại ô đang chọn; nếu là Vách cố định / ô fix (`sashType === 'fixed'`), hệ thống lập tức từ chối và hiển thị toast nhắc nhở chuyển sang dùng "Chia đố khung" ở tab *Kiểu khung*.
+  - **Trạng thái giao diện trực quan:** Khi người dùng chọn ô fix, box "Chia đố cánh" hiển thị badge cảnh báo màu hổ phách `⚠️ Không áp dụng cho ô fix` kèm dòng hướng dẫn chi tiết, ẩn/vô hiệu hóa các nút chia đố cánh để tránh thao tác nhầm.
+- **Tương Tác Kéo Thả Điều Chỉnh Kích Thước Đố Khung & Đố Cánh Trực Tiếp Trên Canvas CAD 2D ([`cad-split-resizer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/components/cad-split-resizer.tsx), [`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/door-cad-renderer.tsx), [`cad-tree-traverser.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/_components/studio/cad-engine/cad-tree-traverser.ts)):**
+  - **Kéo trượt bằng chuột trái (Left-Click Drag):** Khắc phục lỗi sự kiện `onMouseDown` chỉ bắt chuột phải (`e.button === 2`); hiện tại người dùng có thể nhấp giữ chuột trái và kéo trượt thanh đố một cách tự nhiên.
+  - **Cơ chế phân biệt thông minh Click tĩnh vs Kéo trượt (Click-vs-Drag):** Nhấp chuột tại chỗ ($< 3\text{px}$) sẽ mở modal thanh tra thông số đố (`MullionInspectorModal`). Khi kéo rê ($\ge 3\text{px}$), hệ thống kích hoạt chế độ kéo trượt di chuyển đố với phản hồi mượt mà và không bật modal làm phiền.
+  - **Hợp nhất tương tác Đố Cánh (Sash Mullions):** Trích xuất danh sách thanh đố cánh (kể cả phân chia đệ quy nhiều cấp) và đưa vào chung layer `<CadSplitResizer>` ở lớp trên cùng của SVG; đố cánh giờ đây có đầy đủ con trỏ `col-resize` / `row-resize`, hitbox nhạy bén, highlight màu hổ phách/xanh và thanh đo kích thước động.
+  - **Quy đổi tọa độ màn hình chuẩn xác qua SVG CTM (`getScreenCTM`):** Khóa bám dính vị trí thanh đố theo đầu con trỏ chuột 1:1, loại bỏ hiện tượng trôi lệch khi thu phóng cửa sổ.
+  - **Kích thước tối thiểu thích ứng linh hoạt (Adaptive Min Dimension):** Loại bỏ giới hạn cứng `minDim = 100mm`, chuyển sang công thức động `Math.min(50, Math.max(20, Math.floor(totalDim * 0.15)))` giúp các ô đố cánh nhỏ ($\le 200\text{mm}$) di chuyển trơn tru không bị khóa cứng.
+  - **Đồng bộ hóa mảng `sashMullions.positions`:** Cập nhật đồng bộ kích thước mảng vị trí khi đố cánh được kéo trượt hoặc thay đổi thông số.
+
 ## [Unreleased] - 2026-10-09
 
 ### Added & Enhanced

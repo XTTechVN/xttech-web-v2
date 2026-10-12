@@ -2,14 +2,13 @@
 
 import React, { useState } from 'react';
 import { SashOpenType } from '../studio-types';
-import { Columns, Rows, Grid, Scissors } from 'lucide-react';
+import { Columns, Rows, Grid } from 'lucide-react';
 
 interface SashTypePickerProps {
   currentSashType: SashOpenType;
   selectedCellId: string | null;
   onSelectSashType: (sashType: SashOpenType) => void;
-  onSplitMullion: (count: number, direction: 'vertical' | 'horizontal') => void;
-  onCoupleFrame: (direction: 'vertical' | 'horizontal') => void;
+  onSplitSashMullion?: (count: number, direction: 'vertical' | 'horizontal') => void;
 }
 
 interface SashVisualItem {
@@ -22,8 +21,7 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
   currentSashType,
   selectedCellId,
   onSelectSashType,
-  onSplitMullion,
-  onCoupleFrame,
+  onSplitSashMullion,
 }) => {
   const [splitCount, setSplitCount] = useState<number>(2);
 
@@ -136,72 +134,70 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
     },
   ];
 
+  const isFixed = currentSashType === 'fixed';
+  const hasSelectedCell = Boolean(selectedCellId);
+
   return (
     <div className="flex flex-col space-y-3 text-xs">
-      {/* 1. Box: Chia đố khung (Đố T) */}
+      {/* 1. Box: Chia đố cánh (Ảnh 4 & 5) */}
       <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2.5">
-        <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
-          <Grid size={14} className="text-primary" />
-          <span>Chia đố khung</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-1 shrink-0">
-            <input
-              type="number"
-              min={1}
-              max={6}
-              value={splitCount}
-              onChange={(e) => setSplitCount(Math.max(1, Math.min(6, Number(e.target.value))))}
-              className="w-10 h-7 text-center text-xs font-bold rounded border border-slate-200 bg-white focus:outline-none focus:border-primary"
-            />
-            <span className="text-slate-500 font-medium">ô</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
+            <Grid size={14} className="text-primary" />
+            <span>Chia đố cánh</span>
           </div>
-          <button
-            type="button"
-            onClick={() => onSplitMullion(splitCount, 'vertical')}
-            className="flex-1 h-7 px-2 rounded bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
-          >
-            <Columns size={12} />
-            <span>Dọc</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onSplitMullion(splitCount, 'horizontal')}
-            className="flex-1 h-7 px-2 rounded bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
-          >
-            <Rows size={12} />
-            <span>Ngang</span>
-          </button>
+          {isFixed && (
+            <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-medium">
+              Vách cố định (ô fix)
+            </span>
+          )}
         </div>
+
+        {isFixed ? (
+          <div className="text-[11px] text-amber-800 bg-amber-50/90 p-2.5 rounded-md border border-amber-200/80 leading-relaxed space-y-1">
+            <div className="font-semibold text-amber-900">⚠️ Không áp dụng cho ô fix</div>
+            <div>
+              Ô đang chọn là vách kính cố định. Để chia vách thành các ô kính, vui lòng sử dụng <strong>Chia đố khung</strong> ở tab <em>Kiểu khung</em>.
+            </div>
+          </div>
+        ) : !hasSelectedCell ? (
+          <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-md border border-slate-200 leading-relaxed">
+            Vui lòng nhấp chọn một cánh cửa trên bản vẽ để chia đố cánh.
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 shrink-0">
+              <input
+                type="number"
+                min={2}
+                max={6}
+                value={splitCount}
+                onChange={(e) => setSplitCount(Math.max(2, Math.min(6, Number(e.target.value))))}
+                className="w-10 h-7 text-center text-xs font-bold rounded border border-slate-200 bg-white focus:outline-none focus:border-primary"
+              />
+              <span className="text-slate-500 font-medium">ô</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => onSplitSashMullion?.(splitCount, 'vertical')}
+              className="flex-1 h-7 px-2 rounded-md border border-emerald-300 bg-emerald-50/50 hover:bg-emerald-500 hover:text-white text-emerald-700 font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+            >
+              <Columns size={12} />
+              <span>Dọc</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onSplitSashMullion?.(splitCount, 'horizontal')}
+              className="flex-1 h-7 px-2 rounded-md border border-emerald-300 bg-emerald-50/50 hover:bg-emerald-500 hover:text-white text-emerald-700 font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+            >
+              <Rows size={12} />
+              <span>Ngang</span>
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* 2. Box: Tách khung (Nối khung) */}
-      <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-2.5">
-        <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
-          <Scissors size={14} className="text-primary" />
-          <span>Tách ghép khung</span>
-        </div>
-        <div className="grid grid-cols-2 gap-1.5">
-          <button
-            type="button"
-            onClick={() => onCoupleFrame('vertical')}
-            className="h-7 px-2 rounded bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <Columns size={12} />
-            <span>Ghép dọc</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onCoupleFrame('horizontal')}
-            className="h-7 px-2 rounded bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <Rows size={12} />
-            <span>Ghép ngang</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 3. Kiểu cánh (Gán cho ô đang chọn) */}
+      {/* 2. Kiểu cánh (Gán cho ô đang chọn) */}
       <div className="space-y-2 pt-1">
         <div className="font-semibold text-slate-800 text-xs flex items-center justify-between">
           <span>Kiểu cánh</span>
