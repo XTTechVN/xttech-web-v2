@@ -5,7 +5,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import L from 'leaflet';
 import dayjs from 'dayjs';
-import { StaffLiveLocation } from '@/types';
+import { StaffLiveLocation, isStaffSignalLost } from '@/types';
 import { Battery, Gauge, Clock, Navigation } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { getFileUrl } from '@/utils';
@@ -81,7 +81,7 @@ export function LiveMap({
   const createCustomStaffIcon = (staff: StaffLiveLocation) => {
     const isSelected = selectedStaff?.userId === staff.userId;
     const isMoving = staff.status === 'moving';
-    const isOffline = staff.status === 'offline';
+    const isOffline = isStaffSignalLost(staff.status);
     const isCloseZoom = currentZoom >= 13;
 
     const ringColor = isOffline
@@ -139,7 +139,7 @@ export function LiveMap({
   const createClusterIcon = (cluster: StaffCluster) => {
     const count = cluster.staffList.length;
     const hasMoving = cluster.staffList.some((s) => s.status === 'moving');
-    const allOffline = cluster.staffList.every((s) => s.status === 'offline');
+    const allOffline = cluster.staffList.every((s) => isStaffSignalLost(s.status));
 
     const badgeColor = allOffline
       ? 'bg-slate-500 ring-slate-300'

@@ -34,6 +34,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+        // Người dùng vuốt tắt app trong ca làm việc: báo Server trạng thái app_closed + nhắc mở lại bằng local notification
+        NativeTrackingPlugin.handleAppWillTerminate()
     }
 
     func application(_ application: UIApplication,

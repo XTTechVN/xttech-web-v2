@@ -2,6 +2,39 @@ import Foundation
 import CoreLocation
 import Capacitor
 import UIKit
+import UserNotifications
+
+/// Loại sự kiện gửi kèm location-ping (đồng bộ enum `eventType` phía Backend)
+private enum PingEventType {
+    static let location = "location"
+    static let appClosed = "app_closed"
+}
+
+/// Local notification nhắc nhân viên mở lại app khi lỡ vuốt tắt trong ca làm việc
+private enum AppClosedReminder {
+    static let identifier = "com.xttech.app_closed_reminder"
+
+    static func requestAuthorization() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    }
+
+    static func schedule(group: DispatchGroup) {
+        let content = UNMutableNotificationContent()
+        content.title = "XTTech đã bị tắt"
+        content.body = "Bạn đang trong ca làm việc. Mở lại ứng dụng để tiếp tục chia sẻ vị trí."
+        content.sound = .default
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        group.enter()
+        UNUserNotificationCenter.current().add(request) { _ in group.leave() }
+    }
+
+    static func clear() {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+        center.removeDeliveredNotifications(withIdentifiers: [identifier])
+    }
+}
 
 @objc(NativeTrackingPlugin)
 public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
@@ -17,10 +50,18 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     private var lastSentLocation: CLLocation?
     private var lastBatteryLevel: Double = -1.0
 
+    // Geofence neo: nguồn đánh thức app của iOS sau khi bị vuốt tắt (force-quit) khi nhân viên rời đi
+    private var anchorCenter: CLLocation?
+    private let anchorRegionId = "com.xttech.anchor_region"
+    private let anchorRegionRadius: CLLocationDistance = 150.0
+    private let anchorRefreshDistance: CLLocationDistance = 100.0
+    private let anchorMaxAccuracy: CLLocationAccuracy = 100.0
+
+    private static let prefsKeyIsTrackingShared = "xttech_ios_is_tracking"
     private let prefsKeyToken = "xttech_ios_access_token"
     private let prefsKeyRefreshToken = "xttech_ios_refresh_token"
     private let prefsKeyApiUrl = "xttech_ios_api_url"
-    private let prefsKeyIsTracking = "xttech_ios_is_tracking"
+    private let prefsKeyIsTracking = NativeTrackingPlugin.prefsKeyIsTrackingShared
 
     // Custom URLSession tối ưu riêng cho tác vụ nền (Background Network)
     private lazy var backgroundSession: URLSession = {
@@ -35,7 +76,12 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
     public override func load() {
         super.load()
+        // Giải phóng instance standalone (tạo lúc iOS đánh thức app từ nền) để tránh 2 luồng GPS gửi ping trùng
+        if let previous = NativeTrackingPlugin.shared, previous !== self {
+            previous.releaseLocationManager()
+        }
         NativeTrackingPlugin.shared = self
+        AppClosedReminder.clear()
         let defaults = UserDefaults.standard
         self.accessToken = defaults.string(forKey: prefsKeyToken)
         self.refreshToken = defaults.string(forKey: prefsKeyRefreshToken)
@@ -84,6 +130,7 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             UserDefaults.standard.set(apiUrl, forKey: prefsKeyApiUrl)
         }
         UserDefaults.standard.set(true, forKey: prefsKeyIsTracking)
+        AppClosedReminder.requestAuthorization()
 
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
@@ -119,7 +166,10 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             if CLLocationManager.significantLocationChangeMonitoringAvailable() {
                 self.locationManager?.stopMonitoringSignificantLocationChanges()
             }
+            self.locationManager?.stopMonitoringVisits()
+            self.stopAnchorRegionMonitoring()
             self.lastSentLocation = nil
+            AppClosedReminder.clear()
             print("[NativeTracking iOS] Stopped live tracking.")
         }
         call.resolve(["success": true])
@@ -289,15 +339,48 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         if CLLocationManager.significantLocationChangeMonitoringAvailable() {
             locationManager?.startMonitoringSignificantLocationChanges()
         }
+        // Visits: thêm một nguồn đánh thức hệ thống (vẫn hoạt động sau khi app bị vuốt tắt)
+        locationManager?.startMonitoringVisits()
 
         isTracking = true
         print("[NativeTracking iOS] Active Live-Tracking started (kCLLocationAccuracyBest, showsBackgroundLocationIndicator=true).")
     }
 
+    private func releaseLocationManager() {
+        isTracking = false
+        locationManager?.stopUpdatingLocation()
+        locationManager?.delegate = nil
+        locationManager = nil
+    }
+
+    // MARK: - Anchor Geofence Engine (đánh thức app sau force-quit khi rời khỏi vị trí)
+    private func refreshAnchorRegionIfNeeded(around location: CLLocation) {
+        guard location.horizontalAccuracy <= anchorMaxAccuracy,
+              CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self),
+              let manager = locationManager else { return }
+        if let center = anchorCenter, location.distance(from: center) < anchorRefreshDistance {
+            return
+        }
+        let region = CLCircularRegion(center: location.coordinate, radius: anchorRegionRadius, identifier: anchorRegionId)
+        region.notifyOnExit = true
+        region.notifyOnEntry = false
+        // Cùng identifier: iOS tự thay thế region cũ, không bị cộng dồn giới hạn 20 region
+        manager.startMonitoring(for: region)
+        anchorCenter = location
+    }
+
+    private func stopAnchorRegionMonitoring() {
+        anchorCenter = nil
+        guard let manager = locationManager else { return }
+        for region in manager.monitoredRegions where region.identifier == anchorRegionId {
+            manager.stopMonitoring(for: region)
+        }
+    }
+
     /// Đánh thức ứng dụng từ nền khi nhận sự kiện hệ thống
     @objc public static func handleLocationWakeUp() {
         let defaults = UserDefaults.standard
-        let wasTracking = defaults.bool(forKey: "xttech_ios_is_tracking")
+        let wasTracking = defaults.bool(forKey: prefsKeyIsTrackingShared)
         guard wasTracking else { return }
 
         DispatchQueue.main.async {
@@ -328,6 +411,8 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 200.0 {
             return
         }
+
+        refreshAnchorRegionIfNeeded(around: location)
 
         let now = Date()
         let elapsed = now.timeIntervalSince(lastPingTime)
@@ -378,15 +463,52 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         print("[NativeTracking iOS] Location manager error: \(error.localizedDescription)")
     }
 
+    public func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
+        guard region.identifier == anchorRegionId, isTracking else { return }
+        // Rời vùng neo: buộc dựng neo mới tại điểm GPS kế tiếp và đảm bảo GPS liên tục đang chạy
+        anchorCenter = nil
+        manager.startUpdatingLocation()
+    }
+
+    public func locationManager(_ manager: CLLocationManager, didVisit visit: CLVisit) {
+        guard isTracking else { return }
+        manager.startUpdatingLocation()
+    }
+
+    public func locationManager(_ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?, withError error: Error) {
+        guard region?.identifier == anchorRegionId else { return }
+        anchorCenter = nil
+        print("[NativeTracking iOS] Anchor region monitoring failed: \(error.localizedDescription)")
+    }
+
+    // MARK: - App Termination (người dùng vuốt tắt app trong ca làm việc)
+    /// Gọi từ AppDelegate.applicationWillTerminate: báo Server trạng thái app_closed + đặt local notification nhắc mở lại.
+    /// iOS chỉ cho vài giây trước khi kill process nên chờ tối đa 3 giây.
+    @objc public static func handleAppWillTerminate() {
+        guard UserDefaults.standard.bool(forKey: prefsKeyIsTrackingShared) else { return }
+        let group = DispatchGroup()
+        AppClosedReminder.schedule(group: group)
+        shared?.sendAppClosedPing(group: group)
+        _ = group.wait(timeout: .now() + 3.0)
+    }
+
+    private func sendAppClosedPing(group: DispatchGroup) {
+        guard let location = lastSentLocation ?? locationManager?.location,
+              let request = makePingRequest(location: location, speed: 0.0, eventType: PingEventType.appClosed) else { return }
+        group.enter()
+        // Completion chạy trên delegate queue riêng của URLSession nên không deadlock với main thread đang chờ
+        backgroundSession.dataTask(with: request) { _, _, _ in group.leave() }.resume()
+    }
+
     // MARK: - Main-Thread-Safe Network Dispatcher
-    private func sendPing(location: CLLocation, isHeartbeat: Bool, retryCount: Int = 0) {
-        guard let apiUrl = self.apiUrl, !apiUrl.isEmpty else { return }
+    private func makePingRequest(location: CLLocation, speed: Double, eventType: String) -> URLRequest? {
+        guard let apiUrl = self.apiUrl, !apiUrl.isEmpty else { return nil }
 
         var baseUrl = apiUrl
         if baseUrl.hasSuffix("/") {
             baseUrl.removeLast()
         }
-        guard let url = URL(string: "\(baseUrl)/api/v1/attendances/location-ping") else { return }
+        guard let url = URL(string: "\(baseUrl)/api/v1/attendances/location-ping") else { return nil }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -398,23 +520,28 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        let speed = isHeartbeat ? 0.0 : max(0.0, location.speed)
         let heading = location.course >= 0 ? location.course : 0.0
-
         var payload: [String: Any] = [
             "latitude": location.coordinate.latitude,
             "longitude": location.coordinate.longitude,
             "accuracy": location.horizontalAccuracy,
             "speed": speed,
-            "heading": heading
+            "heading": heading,
+            "eventType": eventType
         ]
         if let battery = getCurrentBatteryLevel() {
             payload["battery_level"] = battery
             payload["batteryLevel"] = battery
         }
 
-        guard let httpBody = try? JSONSerialization.data(withJSONObject: payload, options: []) else { return }
+        guard let httpBody = try? JSONSerialization.data(withJSONObject: payload, options: []) else { return nil }
         request.httpBody = httpBody
+        return request
+    }
+
+    private func sendPing(location: CLLocation, isHeartbeat: Bool, retryCount: Int = 0) {
+        let speed = isHeartbeat ? 0.0 : max(0.0, location.speed)
+        guard let request = makePingRequest(location: location, speed: speed, eventType: PingEventType.location) else { return }
 
         // Yêu cầu iOS cấp quyền CPU chạy nền an toàn
         var bgTaskId: UIBackgroundTaskIdentifier = .invalid

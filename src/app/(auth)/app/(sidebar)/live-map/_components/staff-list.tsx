@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { StaffLiveLocation } from '@/types';
+import { StaffLiveLocation, StaffLiveStatus, STAFF_LIVE_STATUS_MAP, isStaffSignalLost } from '@/types';
 import { Search, Navigation, Battery, Gauge, Clock, Users, RefreshCw } from 'lucide-react';
 import { Input } from '@/components';
 import dayjs from 'dayjs';
@@ -18,7 +18,7 @@ interface StaffListProps {
 
 export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onViewRoute, isLoading = false, onRefresh}: StaffListProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'moving' | 'stationary' | 'offline'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | StaffLiveStatus>('all');
   const filteredStaff = staffLocations.filter((staff) => {
     const name = staff.userName || '';
     const dept = staff.departmentName || '';
@@ -120,7 +120,8 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
           filteredStaff.map((staff, index) => {
             const isSelected = selectedStaff?.userId === staff.userId;
             const isMoving = staff.status === 'moving';
-            const isOffline = staff.status === 'offline';
+            const isOffline = isStaffSignalLost(staff.status);
+            const isAppClosed = staff.status === 'app_closed';
             const uniqueKey = staff.userId ? `${staff.userId}-${index}` : `staff-${index}`;
 
             return (
@@ -165,8 +166,14 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
 
                       {/* Badge trạng thái trực quan */}
                       {isOffline ? (
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 shrink-0">
-                          Ngoại tuyến
+                        <span
+                          className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-md border shrink-0 ${
+                            isAppClosed
+                              ? 'bg-rose-50 text-rose-600 border-rose-200'
+                              : 'bg-slate-100 text-slate-500 border-slate-200'
+                          }`}
+                        >
+                          {STAFF_LIVE_STATUS_MAP[staff.status]}
                         </span>
                       ) : isMoving ? (
                         <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 shrink-0 flex items-center gap-1">
