@@ -18,7 +18,9 @@ interface FileCardProps {
   onEdit?: (document: DocumentItem) => void;
   onShare?: (document: DocumentItem) => void;
   onMove?: (document: DocumentItem) => void;
-  onDelete: (document: DocumentItem) => void;
+  onDelete?: (document: DocumentItem) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 export const FileCard: React.FC<FileCardProps> = ({
@@ -32,6 +34,8 @@ export const FileCard: React.FC<FileCardProps> = ({
   onShare,
   onMove,
   onDelete,
+  canEdit = true,
+  canDelete = true,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -95,33 +99,43 @@ export const FileCard: React.FC<FileCardProps> = ({
           }
         ]
       : []),
-    ...(onEdit ? [
-      {
-        label: 'Chỉnh sửa',
-        icon: <Edit3 size={15} className="text-primary" />,
-        onClick: () => onEdit(doc),
-      }
-    ] : []),
-    ...(onShare ? [
-      {
-        label: 'Chia sẻ',
-        icon: <Share2 size={15} className="text-primary" />,
-        onClick: () => onShare(doc),
-      }
-    ] : []),
-    ...(onMove ? [
-      {
-        label: 'Di chuyển',
-        icon: <FolderOpen size={15} className="text-primary" />,
-        onClick: () => onMove(doc),
-      }
-    ] : []),
-    {
-      label: 'Xóa tài liệu',
-      icon: <Trash2 size={15} className="text-rose-500" />,
-      danger: true,
-      onClick: () => onDelete(doc),
-    },
+    ...(canEdit && onEdit
+      ? [
+          {
+            label: 'Chỉnh sửa',
+            icon: <Edit3 size={15} className="text-primary" />,
+            onClick: () => onEdit(doc),
+          }
+        ]
+      : []),
+    ...(canEdit && onShare
+      ? [
+          {
+            label: 'Chia sẻ',
+            icon: <Share2 size={15} className="text-primary" />,
+            onClick: () => onShare(doc),
+          }
+        ]
+      : []),
+    ...(canEdit && onMove
+      ? [
+          {
+            label: 'Di chuyển',
+            icon: <FolderOpen size={15} className="text-primary" />,
+            onClick: () => onMove(doc),
+          }
+        ]
+      : []),
+    ...(canDelete && onDelete
+      ? [
+          {
+            label: 'Xóa tài liệu',
+            icon: <Trash2 size={15} className="text-rose-500" />,
+            danger: true,
+            onClick: () => onDelete(doc),
+          }
+        ]
+      : []),
   ];
 
   // Subtitle format: e.g. "trong Tài liệu của tôi" or "Quy chế • 28.3 KB"
@@ -131,8 +145,12 @@ export const FileCard: React.FC<FileCardProps> = ({
 
   return (
     <div
-      draggable
+      draggable={canEdit}
       onDragStart={(e) => {
+        if (!canEdit) {
+          e.preventDefault();
+          return;
+        }
         e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'document', id: doc.id }));
         e.dataTransfer.effectAllowed = 'move';
       }}

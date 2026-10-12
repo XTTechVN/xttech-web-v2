@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Modal, Button, Input, Select } from '@/components';
 import { createDocument } from '@/actions/document';
+import { getEmployees } from '@/actions/employee';
 import { DOCUMENT_TYPE_MAP } from '@/types';
-import { formatBytes, getFileVisualInfo } from '../_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '../_utils/doc-helpers';
 import toast from 'react-hot-toast';
 import { Upload, FileUp, X } from 'lucide-react';
 import type { DocumentCategory } from '@/types';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -28,6 +29,7 @@ const documentSchema = z.object({
   documentType: z.string().min(1, { message: 'Vui lòng chọn loại văn bản' }),
   code: z.string().optional(),
   categoryId: z.union([z.number(), z.string()]).optional(),
+  approverId: z.string().optional(),
 });
 
 type DocumentFormValues = z.infer<typeof documentSchema>;
@@ -60,6 +62,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       documentType: 'work_report',
       code: '',
       categoryId: currentFolderId || '',
+      approverId: '',
     },
   });
 
@@ -94,6 +97,10 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
         documentData.category_id = Number(data.categoryId);
         documentData.categoryId = Number(data.categoryId);
       }
+      if (data.approverId?.trim()) {
+        documentData.approver_id = data.approverId.trim();
+        documentData.approverId = data.approverId.trim();
+      }
 
       formData.append('document_data', JSON.stringify(documentData));
       formData.append('title', data.title.trim());
@@ -110,6 +117,10 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       if (data.categoryId) {
         formData.append('category_id', String(data.categoryId));
         formData.append('categoryId', String(data.categoryId));
+      }
+      if (data.approverId?.trim()) {
+        formData.append('approver_id', data.approverId.trim());
+        formData.append('approverId', data.approverId.trim());
       }
 
       return createDocument(formData);
@@ -210,6 +221,36 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
     return result;
   };
 
+  const { data: employeesData } = useQuery({
+    queryKey: ['users', 'approver-options'],
+    queryFn: () => getEmployees({ limit: 200 }),
+    enabled: isOpen,
+  });
+
+  const employees = useMemo(() => {
+    if (Array.isArray(employeesData?.items)) return employeesData.items;
+    if (Array.isArray(employeesData)) return employeesData;
+    return [];
+  }, [employeesData]);
+
+  const approverOptions = useMemo(() => {
+    const eligibleApprovers = employees.filter(isApproverEligible);
+    const pool = eligibleApprovers.length > 0 ? eligibleApprovers : employees;
+    const unique = pool.filter((emp: any, index: number, self: any[]) =>
+      index === self.findIndex((t: any) => String(t.id) === String(emp.id))
+    );
+    return [
+      { value: '', label: '-- Không chỉ định / Để trống --' },
+      ...unique.map((emp: any) => {
+        const roleName = getApproverRoleBadge(emp);
+        return {
+          value: String(emp.id),
+          label: `${emp.fullName || emp.username} (${roleName})`,
+        };
+      }),
+    ];
+  }, [employees]);
+
   const flatCategoryList = useMemo(() => flattenCategories(categories), [categories]);
 
   const docTypeOptions = useMemo(
@@ -230,6 +271,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
   const codeVal = watch('code');
   const documentTypeVal = watch('documentType');
   const categoryIdVal = watch('categoryId');
+  const approverIdVal = watch('approverId');
 
   return (
     <Modal
@@ -339,6 +381,18 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
               options={folderOptions}
             />
           </div>
+        </div>
+
+        {/* Approver Selection */}
+        <div>
+          <Select
+            label="Người phê duyệt văn bản (Tùy chọn)"
+            fullWidth
+            value={approverIdVal || ''}
+            onChange={(e) => setValue('approverId', e.target.value)}
+            options={approverOptions}
+            placeholder="-- Chọn người phê duyệt nếu cần --"
+          />
         </div>
 
         {/* Action Buttons */}

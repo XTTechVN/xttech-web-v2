@@ -3,7 +3,7 @@
 import React, { useState, useMemo, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useDebounce } from '@/hooks';
+import { useDebounce, usePermission } from '@/hooks';
 import {
   getDocumentCategoryTree,
   getDocuments,
@@ -49,6 +49,8 @@ function MyDocumentsContent() {
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
   const queryClient = useQueryClient();
+  const { isAdmin, isHR } = usePermission();
+  const canManageDocuments = isAdmin || isHR;
   
   // Navigation & View States
   const [currentFolderId, setCurrentFolderId] = useState<number | null>(null);
@@ -261,6 +263,37 @@ function MyDocumentsContent() {
     return myFolders; // default for 'my' or null
   }, [currentFolderId, tab, subFolders, sharedFolders, myFolders]);
 
+  // Kiểm tra xem vị trí hiện tại có thuộc mục "Được chia sẻ với tôi" hay không
+  const isSharedSection = useMemo(() => {
+    if (tab === 'shared') return true;
+    if (currentFolder?.isShared) return true;
+    if (currentFolderId !== null && safeCategoryTree.length > 0) {
+      const checkDescendantOfShared = (
+        nodes: DocumentCategory[],
+        targetId: number,
+        isUnderShared = false
+      ): boolean => {
+        for (const node of nodes) {
+          const nodeIsShared = isUnderShared || Boolean(node.isShared);
+          if (node.id === targetId) {
+            return nodeIsShared;
+          }
+          if (node.children && node.children.length > 0) {
+            if (checkDescendantOfShared(node.children, targetId, nodeIsShared)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+      return checkDescendantOfShared(safeCategoryTree, currentFolderId);
+    }
+    return false;
+  }, [tab, currentFolder, currentFolderId, safeCategoryTree]);
+
+  // Quyền chỉnh sửa và xóa tài liệu / thư mục: trong mục Được chia sẻ với tôi chỉ HR hoặc ADMIN được sửa/xóa
+  const canEditItem = !isSharedSection || canManageDocuments;
+  const canDeleteItem = !isSharedSection || canManageDocuments;
 
   // Handle go back 1 level (như nút Back trên máy tính)
   const handleGoBack = () => {
@@ -273,6 +306,11 @@ function MyDocumentsContent() {
 
   // Delete Action
   const handleConfirmDelete = async () => {
+    if (isSharedSection && !canManageDocuments) {
+      toast.error('Bạn không có quyền xóa trong mục Được chia sẻ với tôi');
+      setDeleteModal((prev) => ({ ...prev, isOpen: false }));
+      return;
+    }
     try {
       setDeleteModal((prev) => ({ ...prev, loading: true }));
       if (deleteModal.type === 'folder') {
@@ -317,6 +355,10 @@ function MyDocumentsContent() {
   };
 
   const handleDropItem = async (sourceType: 'folder' | 'document', sourceId: number, targetFolderId: number) => {
+    if (isSharedSection && !canManageDocuments) {
+      toast.error('Bạn không có quyền di chuyển trong mục Được chia sẻ với tôi');
+      return;
+    }
     if (sourceType === 'folder') {
       if (sourceId === targetFolderId) return; // Drop on itself
       if (isDescendant(safeCategoryTree, sourceId, targetFolderId)) {
@@ -449,28 +491,30 @@ function MyDocumentsContent() {
             </div>
           </div>
 
-          {/* Right: Action buttons (Ảnh 3) */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2.5 text-xs md:h-9 md:px-3 md:text-sm shrink-0"
-              onClick={() => setCreateFolderOpen(true)}
-              leftIcon={<FolderPlus className="w-3.5 h-3.5 md:w-4 md:h-4" />}
-            >
-              Thư mục mới
-            </Button>
+          {/* Right: Action buttons (Ẩn khi ở mục Được chia sẻ với tôi đối với user thường) */}
+          {(!isSharedSection || canManageDocuments) && (
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2.5 text-xs md:h-9 md:px-3 md:text-sm shrink-0"
+                onClick={() => setCreateFolderOpen(true)}
+                leftIcon={<FolderPlus className="w-3.5 h-3.5 md:w-4 md:h-4" />}
+              >
+                Thư mục mới
+              </Button>
 
-            <Button
-              variant="primary"
-              size="sm"
-              className="h-7 px-2.5 text-xs md:h-9 md:px-3 md:text-sm shrink-0"
-              onClick={() => setCreateDocOpen(true)}
-              leftIcon={<Upload className="w-3.5 h-3.5 md:w-4 md:h-4" />}
-            >
-              Tải lên tài liệu
-            </Button>
-          </div>
+              <Button
+                variant="primary"
+                size="sm"
+                className="h-7 px-2.5 text-xs md:h-9 md:px-3 md:text-sm shrink-0"
+                onClick={() => setCreateDocOpen(true)}
+                leftIcon={<Upload className="w-3.5 h-3.5 md:w-4 md:h-4" />}
+              >
+                Tải lên tài liệu
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -545,20 +589,20 @@ function MyDocumentsContent() {
                     onToggleSelect={(f) => toggleSelectItem('folder', f.id)}
                     locationName={currentFolder ? currentFolder.name : (tab === 'shared' ? 'Được chia sẻ với tôi' : (tab === 'trash' ? 'Thùng rác' : 'Tài liệu của tôi'))}
                     onOpen={(f) => setCurrentFolderId(f.id)}
-                    onEdit={(f) => {
+                    onEdit={canEditItem ? (f) => {
                       setEditingFolder(f);
                       setEditFolderOpen(true);
-                    }}
-                    onShare={(f) => {
+                    } : undefined}
+                    onShare={canEditItem ? (f) => {
                       setSharingFolder(f);
                       setShareFolderOpen(true);
-                    }}
-                    onMove={(f) => {
+                    } : undefined}
+                    onMove={canEditItem ? (f) => {
                       setItemToMove({ type: 'folder', item: f });
                       setMoveModalOpen(true);
-                    }}
-                    onDropItem={handleDropItem}
-                    onDelete={(f) => {
+                    } : undefined}
+                    onDropItem={canEditItem ? handleDropItem : undefined}
+                    onDelete={canDeleteItem ? (f) => {
                       setDeleteModal({
                         isOpen: true,
                         type: 'folder',
@@ -566,7 +610,7 @@ function MyDocumentsContent() {
                         name: f.name,
                         loading: false,
                       });
-                    }}
+                    } : undefined}
                   />
                 ))}
                 {/* 2. Render Documents */}
@@ -576,7 +620,13 @@ function MyDocumentsContent() {
                     document={doc}
                     isSelected={selectedItemKeys.has(`doc-${doc.id}`)}
                     onToggleSelect={(d) => toggleSelectItem('document', d.id)}
-                    locationName={currentFolder ? currentFolder.name : doc.category?.name || 'Tài liệu của tôi'}
+                    locationName={
+                      currentFolder
+                        ? currentFolder.name
+                        : doc.category?.name || (isSharedSection ? 'Được chia sẻ với tôi' : (tab === 'trash' ? 'Thùng rác' : 'Tài liệu của tôi'))
+                    }
+                    canEdit={canEditItem}
+                    canDelete={canDeleteItem}
                     onPreview={(d) => {
                       setSelectedDoc(d);
                       setPreviewDocOpen(true);
@@ -585,20 +635,20 @@ function MyDocumentsContent() {
                       setSelectedDoc(d);
                       setDetailDocOpen(true);
                     }}
-                    onEdit={(d) => {
+                    onEdit={canEditItem ? (d) => {
                       setEditingDoc(d);
                       setEditDocOpen(true);
-                    }}
-                    onShare={(d) => {
+                    } : undefined}
+                    onShare={canEditItem ? (d) => {
                       setSharingDoc(d);
                       setSharingFolder(null);
                       setShareFolderOpen(true);
-                    }}
-                    onMove={(d) => {
+                    } : undefined}
+                    onMove={canEditItem ? (d) => {
                       setItemToMove({ type: 'document', item: d });
                       setMoveModalOpen(true);
-                    }}
-                    onDelete={(d) => {
+                    } : undefined}
+                    onDelete={canDeleteItem ? (d) => {
                       setDeleteModal({
                         isOpen: true,
                         type: 'document',
@@ -606,7 +656,7 @@ function MyDocumentsContent() {
                         name: d.title,
                         loading: false,
                       });
-                    }}
+                    } : undefined}
                   />
                 ))}
               </div>
@@ -621,21 +671,21 @@ function MyDocumentsContent() {
                     locationName={currentFolder ? currentFolder.name : (tab === 'shared' ? 'Được chia sẻ với tôi' : (tab === 'trash' ? 'Thùng rác' : 'Tài liệu của tôi'))}
                     showHeader={true}
                     onOpen={(f) => setCurrentFolderId(f.id)}
-                    onEdit={(f) => {
+                    onEdit={canEditItem ? (f) => {
                       setEditingFolder(f);
                       setEditFolderOpen(true);
-                    }}
-                    onShare={(f) => {
+                    } : undefined}
+                    onShare={canEditItem ? (f) => {
                       setSharingFolder(f);
                       setSharingDoc(null);
                       setShareFolderOpen(true);
-                    }}
-                    onMove={(f) => {
+                    } : undefined}
+                    onMove={canEditItem ? (f) => {
                       setItemToMove({ type: 'folder', item: f });
                       setMoveModalOpen(true);
-                    }}
-                    onDropItem={handleDropItem}
-                    onDelete={(f) => {
+                    } : undefined}
+                    onDropItem={canEditItem ? handleDropItem : undefined}
+                    onDelete={canDeleteItem ? (f) => {
                       setDeleteModal({
                         isOpen: true,
                         type: 'folder',
@@ -643,7 +693,7 @@ function MyDocumentsContent() {
                         name: f.name,
                         loading: false,
                       });
-                    }}
+                    } : undefined}
                   />
                 )}
                 {/* 2. Render Documents */}
@@ -652,8 +702,18 @@ function MyDocumentsContent() {
                     documents={documents}
                     selectedKeys={selectedItemKeys}
                     onToggleSelect={(d) => toggleSelectItem('document', d.id)}
-                    currentFolderName={currentFolder ? currentFolder.name : 'Tài liệu của tôi'}
+                    currentFolderName={
+                      currentFolder
+                        ? currentFolder.name
+                        : isSharedSection
+                        ? 'Được chia sẻ với tôi'
+                        : tab === 'trash'
+                        ? 'Thùng rác'
+                        : 'Tài liệu của tôi'
+                    }
                     showHeader={foldersToDisplay.length === 0}
+                    canEdit={canEditItem}
+                    canDelete={canDeleteItem}
                     onPreview={(d) => {
                       setSelectedDoc(d);
                       setPreviewDocOpen(true);
@@ -662,20 +722,20 @@ function MyDocumentsContent() {
                       setSelectedDoc(d);
                       setDetailDocOpen(true);
                     }}
-                    onEdit={(d) => {
+                    onEdit={canEditItem ? (d) => {
                       setEditingDoc(d);
                       setEditDocOpen(true);
-                    }}
-                    onShare={(d) => {
+                    } : undefined}
+                    onShare={canEditItem ? (d) => {
                       setSharingDoc(d);
                       setSharingFolder(null);
                       setShareFolderOpen(true);
-                    }}
-                    onMove={(d) => {
+                    } : undefined}
+                    onMove={canEditItem ? (d) => {
                       setItemToMove({ type: 'document', item: d });
                       setMoveModalOpen(true);
-                    }}
-                    onDelete={(d) => {
+                    } : undefined}
+                    onDelete={canDeleteItem ? (d) => {
                       setDeleteModal({
                         isOpen: true,
                         type: 'document',
@@ -683,7 +743,7 @@ function MyDocumentsContent() {
                         name: d.title,
                         loading: false,
                       });
-                    }}
+                    } : undefined}
                     onNavigateFolder={(id) => setCurrentFolderId(id)}
                   />
                 )}

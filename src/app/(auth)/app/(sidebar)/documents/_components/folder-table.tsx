@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Folder, MoreVertical, Edit2, Trash2, FolderOpen, Users, Share2 } from 'lucide-react';
 import type { DocumentCategory } from '@/types';
 import { useAuthStore } from '@/stores';
+import { usePermission } from '@/hooks';
 import { cn } from '@/utils';
 import dayjs from 'dayjs';
 
@@ -15,10 +16,10 @@ interface FolderTableProps {
   selectedKeys?: Set<string>;
   onToggleSelect?: (folder: DocumentCategory) => void;
   onOpen: (folder: DocumentCategory) => void;
-  onEdit: (folder: DocumentCategory) => void;
+  onEdit?: (folder: DocumentCategory) => void;
   onMove?: (folder: DocumentCategory) => void;
   onDropItem?: (sourceType: 'folder' | 'document', sourceId: number, targetFolderId: number) => void;
-  onDelete: (folder: DocumentCategory) => void;
+  onDelete?: (folder: DocumentCategory) => void;
   onShare?: (folder: DocumentCategory) => void;
 }
 
@@ -56,6 +57,9 @@ export const FolderTable: React.FC<FolderTableProps> = ({
   onShare,
 }) => {
   const { user } = useAuthStore();
+  const { isAdmin, isHR } = usePermission();
+  const canManage = isAdmin || isHR;
+
   const [openMenuFolderId, setOpenMenuFolderId] = useState<number | null>(null);
   const [dragOverFolderId, setDragOverFolderId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -101,8 +105,8 @@ export const FolderTable: React.FC<FolderTableProps> = ({
             folder.isOwner === false ||
             folder.permission === 'view'
           );
-          const canEdit = folder.isOwner !== false && folder.permission !== 'view';
-          const canShare = Boolean(onShare && folder.isOwner !== false);
+          const canEdit = canManage || (folder.isOwner !== false && folder.permission !== 'view');
+          const canShare = Boolean(onShare && (canManage || folder.isOwner !== false));
           const parentName = locationName || 'Drive của tôi';
           const isMenuOpen = openMenuFolderId === folder.id;
 
@@ -128,24 +132,34 @@ export const FolderTable: React.FC<FolderTableProps> = ({
               : []),
             ...(canEdit
               ? [
-                  {
-                    label: 'Đổi tên / Sửa',
-                    icon: <Edit2 size={15} className="text-primary" />,
-                    onClick: () => onEdit(folder),
-                  },
-                  ...(onMove ? [
-                    {
-                      label: 'Di chuyển',
-                      icon: <FolderOpen size={15} className="text-primary" />,
-                      onClick: () => onMove(folder),
-                    }
-                  ] : []),
-                  {
-                    label: 'Xóa thư mục',
-                    icon: <Trash2 size={15} className="text-rose-500" />,
-                    danger: true,
-                    onClick: () => onDelete(folder),
-                  },
+                  ...(onEdit
+                    ? [
+                        {
+                          label: 'Đổi tên / Sửa',
+                          icon: <Edit2 size={15} className="text-primary" />,
+                          onClick: () => onEdit(folder),
+                        },
+                      ]
+                    : []),
+                  ...(onMove
+                    ? [
+                        {
+                          label: 'Di chuyển',
+                          icon: <FolderOpen size={15} className="text-primary" />,
+                          onClick: () => onMove(folder),
+                        },
+                      ]
+                    : []),
+                  ...(onDelete
+                    ? [
+                        {
+                          label: 'Xóa thư mục',
+                          icon: <Trash2 size={15} className="text-rose-500" />,
+                          danger: true,
+                          onClick: () => onDelete(folder),
+                        },
+                      ]
+                    : []),
                 ]
               : []),
           ];

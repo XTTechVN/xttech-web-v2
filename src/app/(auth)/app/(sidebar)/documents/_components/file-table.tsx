@@ -19,9 +19,11 @@ interface FileTableProps {
   onEdit?: (document: DocumentItem) => void;
   onShare?: (document: DocumentItem) => void;
   onMove?: (document: DocumentItem) => void;
-  onDelete: (document: DocumentItem) => void;
+  onDelete?: (document: DocumentItem) => void;
   onNavigateFolder?: (folderId: number | null) => void;
   showHeader?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 const AVATAR_COLORS = [
@@ -56,6 +58,8 @@ export const FileTable: React.FC<FileTableProps> = ({
   onMove,
   onDelete,
   onNavigateFolder,
+  canEdit = true,
+  canDelete = true,
 }) => {
   const { user } = useAuthStore();
   const [openMenuDocId, setOpenMenuDocId] = useState<number | null>(null);
@@ -132,33 +136,43 @@ export const FileTable: React.FC<FileTableProps> = ({
                   }
                 ]
               : []),
-            ...(onEdit ? [
-              {
-                label: 'Chỉnh sửa',
-                icon: <Edit3 size={15} className="text-primary" />,
-                onClick: () => onEdit(doc),
-              }
-            ] : []),
-            ...(onShare ? [
-              {
-                label: 'Chia sẻ',
-                icon: <Share2 size={15} className="text-primary" />,
-                onClick: () => onShare(doc),
-              }
-            ] : []),
-            ...(onMove ? [
-              {
-                label: 'Di chuyển',
-                icon: <FolderOpen size={15} className="text-primary" />,
-                onClick: () => onMove(doc),
-              }
-            ] : []),
-            {
-              label: 'Xóa tài liệu',
-              icon: <Trash2 size={15} className="text-rose-500" />,
-              danger: true,
-              onClick: () => onDelete(doc),
-            },
+            ...(canEdit && onEdit
+              ? [
+                  {
+                    label: 'Chỉnh sửa',
+                    icon: <Edit3 size={15} className="text-primary" />,
+                    onClick: () => onEdit(doc),
+                  }
+                ]
+              : []),
+            ...(canEdit && onShare
+              ? [
+                  {
+                    label: 'Chia sẻ',
+                    icon: <Share2 size={15} className="text-primary" />,
+                    onClick: () => onShare(doc),
+                  }
+                ]
+              : []),
+            ...(canEdit && onMove
+              ? [
+                  {
+                    label: 'Di chuyển',
+                    icon: <FolderOpen size={15} className="text-primary" />,
+                    onClick: () => onMove(doc),
+                  }
+                ]
+              : []),
+            ...(canDelete && onDelete
+              ? [
+                  {
+                    label: 'Xóa tài liệu',
+                    icon: <Trash2 size={15} className="text-rose-500" />,
+                    danger: true,
+                    onClick: () => onDelete(doc),
+                  }
+                ]
+              : []),
           ];
 
           const isSelected = selectedKeys?.has(`doc-${doc.id}`) ?? false;
@@ -166,8 +180,12 @@ export const FileTable: React.FC<FileTableProps> = ({
           return (
             <div
               key={doc.id}
-              draggable
+              draggable={canEdit}
               onDragStart={(e) => {
+                if (!canEdit) {
+                  e.preventDefault();
+                  return;
+                }
                 e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'document', id: doc.id }));
                 e.dataTransfer.effectAllowed = 'move';
               }}

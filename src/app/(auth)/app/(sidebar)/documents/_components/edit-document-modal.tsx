@@ -4,9 +4,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Modal, Button, Input, Textarea, Select, MultiSelect } from '@/components';
 import {
   updateDocument,
-  submitDocument,
-  reviewDocument,
-  publishDocument,
   getDocumentById,
   getDocumentShares,
 } from '@/actions/document';
@@ -22,15 +19,12 @@ import { formatBytes, getFileVisualInfo } from '../_utils/doc-helpers';
 import toast from 'react-hot-toast';
 import {
   Edit3,
-  Send,
-  CheckCircle2,
-  XCircle,
-  Megaphone,
   FileUp,
   X,
   Clock,
   Check,
-  AlertCircle,
+  CheckCircle2,
+  Megaphone,
 } from 'lucide-react';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -111,13 +105,8 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
-  const [workflowActionLoading, setWorkflowActionLoading] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<(string | number)[]>([]);
-
-  // Rejection note state if rejecting
-  const [showRejectPrompt, setShowRejectPrompt] = useState(false);
-  const [rejectNote, setRejectNote] = useState('');
 
   const {
     register,
@@ -290,8 +279,6 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
     }
 
     setSelectedDepartmentIds(Array.from(deptIdsSet));
-    setShowRejectPrompt(false);
-    setRejectNote('');
   }, [isOpen, doc, fullDoc, sharesData, departments, reset]);
 
   // Submit update changes
@@ -353,86 +340,6 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
       toast.error(error.message || 'Không thể cập nhật tài liệu');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Workflow Action 1: Trình duyệt (Submit)
-  const handleSubmitForApproval = async () => {
-    if (!doc) return;
-    try {
-      setWorkflowActionLoading(true);
-      await submitDocument(doc.id);
-      toast.success('Đã trình duyệt tài liệu thành công!');
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
-      onSuccess();
-      onClose();
-    } catch (error: any) {
-      toast.error(error.message || 'Không thể trình duyệt tài liệu');
-    } finally {
-      setWorkflowActionLoading(false);
-    }
-  };
-
-  // Workflow Action 2: Phê duyệt (Approve)
-  const handleApprove = async () => {
-    if (!doc) return;
-    try {
-      setWorkflowActionLoading(true);
-      await reviewDocument(doc.id, {
-        approvalStatus: 'approved',
-        action: 'approved',
-      });
-      toast.success('Đã phê duyệt tài liệu thành công!');
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
-      onSuccess();
-      onClose();
-    } catch (error: any) {
-      toast.error(error.message || 'Không thể phê duyệt tài liệu');
-    } finally {
-      setWorkflowActionLoading(false);
-    }
-  };
-
-  // Workflow Action 3: Từ chối duyệt (Reject)
-  const handleReject = async () => {
-    if (!doc) return;
-    try {
-      setWorkflowActionLoading(true);
-      await reviewDocument(doc.id, {
-        approvalStatus: 'rejected',
-        action: 'rejected',
-        comment: rejectNote.trim() || undefined,
-        approvalNote: rejectNote.trim() || undefined,
-      });
-      toast.success('Đã từ chối tài liệu!');
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
-      onSuccess();
-      onClose();
-    } catch (error: any) {
-      toast.error(error.message || 'Lỗi khi từ chối tài liệu');
-    } finally {
-      setWorkflowActionLoading(false);
-    }
-  };
-
-  // Workflow Action 4: Ban hành (Publish)
-  const handlePublish = async () => {
-    if (!doc) return;
-    try {
-      setWorkflowActionLoading(true);
-      await publishDocument(doc.id);
-      toast.success('Đã ban hành văn bản chính thức!');
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
-      onSuccess();
-      onClose();
-    } catch (error: any) {
-      toast.error(error.message || 'Không thể ban hành tài liệu');
-    } finally {
-      setWorkflowActionLoading(false);
     }
   };
 
@@ -565,7 +472,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
       title={
         <div className="flex items-center gap-2 text-slate-800">
           <Edit3 className="text-primary" size={20} />
-          <span>Chỉnh sửa & Phê duyệt tài liệu</span>
+          <span>Chỉnh sửa thông tin tài liệu</span>
         </div>
       }
       className="m-2 max-w-2xl w-full"
@@ -629,30 +536,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
           </div>
         </div>
 
-        {/* Rejection Prompt if toggled */}
-        {showRejectPrompt && (
-          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl space-y-2">
-            <div className="flex items-center gap-2 text-rose-800 font-semibold">
-              <AlertCircle size={16} />
-              <span>Nhập lý do từ chối phê duyệt</span>
-            </div>
-            <Textarea
-              placeholder="Ghi chú lý do từ chối để người soạn thảo nắm rõ..."
-              rows={2}
-              value={rejectNote}
-              onChange={(e) => setRejectNote(e.target.value)}
-              fullWidth
-            />
-            <div className="flex justify-end gap-2">
-              <Button size="xs" variant="outline" onClick={() => setShowRejectPrompt(false)}>
-                Hủy bỏ
-              </Button>
-              <Button size="xs" variant="danger" onClick={handleReject} loading={workflowActionLoading}>
-                Xác nhận từ chối
-              </Button>
-            </div>
-          </div>
-        )}
+
 
         {/* Title & Code */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -790,81 +674,14 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
           />
         </div>
 
-        {/* Action Buttons with Approval Workflow Actions */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200/80">
-          {/* Workflow Action Buttons (Left) */}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            {/* Action: Trình duyệt (khi đang ở bản thảo hoặc bị từ chối) */}
-            {isDraftOrRejected && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleSubmitForApproval}
-                disabled={loading || workflowActionLoading}
-                loading={workflowActionLoading}
-                leftIcon={<Send size={14} className="text-sky-600" />}
-                className="border-sky-300 bg-sky-50/50 hover:bg-sky-50 text-sky-800"
-              >
-                Trình duyệt tài liệu
-              </Button>
-            )}
-
-            {/* Actions: Phê duyệt & Từ chối (khi đang chờ duyệt) */}
-            {isPending && (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowRejectPrompt(true)}
-                  disabled={loading || workflowActionLoading}
-                  leftIcon={<XCircle size={14} className="text-rose-600" />}
-                  className="border-rose-300 bg-rose-50/50 hover:bg-rose-50 text-rose-800"
-                >
-                  Từ chối
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleApprove}
-                  disabled={loading || workflowActionLoading}
-                  loading={workflowActionLoading}
-                  leftIcon={<CheckCircle2 size={14} className="text-emerald-600" />}
-                  className="border-emerald-300 bg-emerald-50/50 hover:bg-emerald-50 text-emerald-800"
-                >
-                  Phê duyệt
-                </Button>
-              </>
-            )}
-
-            {/* Action: Ban hành (khi đã được phê duyệt) */}
-            {isApproved && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handlePublish}
-                disabled={loading || workflowActionLoading}
-                loading={workflowActionLoading}
-                leftIcon={<Megaphone size={14} className="text-teal-600" />}
-                className="border-teal-300 bg-teal-50/50 hover:bg-teal-50 text-teal-800"
-              >
-                Ban hành văn bản
-              </Button>
-            )}
-          </div>
-
-          {/* Standard Save & Cancel (Right) */}
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-            <Button variant="outline" size="sm" onClick={onClose} disabled={loading || workflowActionLoading}>
-              Hủy
-            </Button>
-            <Button variant="primary" size="sm" type="submit" disabled={loading || workflowActionLoading} loading={loading}>
-              Lưu thay đổi
-            </Button>
-          </div>
+        {/* Standard Save & Cancel */}
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200/80">
+          <Button variant="outline" size="sm" onClick={onClose} disabled={loading}>
+            Hủy
+          </Button>
+          <Button variant="primary" size="sm" type="submit" disabled={loading} loading={loading}>
+            Lưu thay đổi
+          </Button>
         </div>
       </form>
     </Modal>

@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Folder, MoreVertical, Edit2, Trash2, FolderOpen, User, Share2 } from 'lucide-react';
 import type { DocumentCategory } from '@/types';
+import { usePermission } from '@/hooks';
 import { cn } from '@/utils';
 
 interface FolderCardProps {
@@ -12,10 +13,10 @@ interface FolderCardProps {
   isSelected?: boolean;
   onToggleSelect?: (folder: DocumentCategory) => void;
   onOpen: (folder: DocumentCategory) => void;
-  onEdit: (folder: DocumentCategory) => void;
+  onEdit?: (folder: DocumentCategory) => void;
   onMove?: (folder: DocumentCategory) => void;
   onDropItem?: (sourceType: 'folder' | 'document', sourceId: number, targetFolderId: number) => void;
-  onDelete: (folder: DocumentCategory) => void;
+  onDelete?: (folder: DocumentCategory) => void;
   onShare?: (folder: DocumentCategory) => void;
 }
 
@@ -34,6 +35,8 @@ export const FolderCard: React.FC<FolderCardProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { isAdmin, isHR } = usePermission();
+  const canManage = isAdmin || isHR;
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -58,8 +61,8 @@ export const FolderCard: React.FC<FolderCardProps> = ({
     folder.isOwner === false ||
     folder.permission === 'view'
   );
-  const canEdit = folder.isOwner !== false && folder.permission !== 'view';
-  const canShare = Boolean(onShare && folder.isOwner !== false);
+  const canEdit = canManage || (folder.isOwner !== false && folder.permission !== 'view');
+  const canShare = Boolean(onShare && (canManage || folder.isOwner !== false));
 
   const menuItems: {
     label: string;
@@ -84,24 +87,34 @@ export const FolderCard: React.FC<FolderCardProps> = ({
       : []),
     ...(canEdit
       ? [
-          {
-            label: 'Đổi tên / Sửa',
-            icon: <Edit2 size={15} className="text-primary" />,
-            onClick: () => onEdit(folder),
-          },
-          ...(onMove ? [
-            {
-              label: 'Di chuyển',
-              icon: <FolderOpen size={15} className="text-primary" />,
-              onClick: () => onMove(folder),
-            }
-          ] : []),
-          {
-            label: 'Xóa thư mục',
-            icon: <Trash2 size={15} className="text-rose-500" />,
-            danger: true,
-            onClick: () => onDelete(folder),
-          },
+          ...(onEdit
+            ? [
+                {
+                  label: 'Đổi tên / Sửa',
+                  icon: <Edit2 size={15} className="text-primary" />,
+                  onClick: () => onEdit(folder),
+                },
+              ]
+            : []),
+          ...(onMove
+            ? [
+                {
+                  label: 'Di chuyển',
+                  icon: <FolderOpen size={15} className="text-primary" />,
+                  onClick: () => onMove(folder),
+                },
+              ]
+            : []),
+          ...(onDelete
+            ? [
+                {
+                  label: 'Xóa thư mục',
+                  icon: <Trash2 size={15} className="text-rose-500" />,
+                  danger: true,
+                  onClick: () => onDelete(folder),
+                },
+              ]
+            : []),
         ]
       : []),
   ];

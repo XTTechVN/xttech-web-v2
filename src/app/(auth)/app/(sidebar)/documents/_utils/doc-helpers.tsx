@@ -226,5 +226,48 @@ export function DriveFileIcon({
 // DriveFileBadge alias to DriveFileIcon
 export const DriveFileBadge = DriveFileIcon;
 
+// Kiểm tra nhân sự có đủ thẩm quyền phê duyệt hay không
+export const isApproverEligible = (emp: any): boolean => {
+  if (!emp) return false;
+  const validKeywords = ['admin', 'hr', 'super', 'supper', 'quản trị', 'nhân sự', 'manager', 'lead', 'trưởng'];
+  const matchString = (val?: string | null): boolean => {
+    if (!val || typeof val !== 'string') return false;
+    const lower = val.toLowerCase().trim();
+    return validKeywords.some((keyword) => lower.includes(keyword));
+  };
+  if (Array.isArray(emp.roles) && emp.roles.length > 0) {
+    const hasMatch = emp.roles.some((r: any) => {
+      if (typeof r === 'string') return matchString(r);
+      return matchString(r?.code) || matchString(r?.name);
+    });
+    if (hasMatch) return true;
+  }
+  if (typeof emp.role === 'string' && matchString(emp.role)) return true;
+  if (emp.role && typeof emp.role === 'object') {
+    if (matchString(emp.role?.code) || matchString(emp.role?.name)) return true;
+  }
+  if (Array.isArray(emp.positions) && emp.positions.length > 0) {
+    const hasMatchPos = emp.positions.some((p: any) => {
+      if (typeof p === 'string') return matchString(p);
+      return matchString(p?.code) || matchString(p?.name);
+    });
+    if (hasMatchPos) return true;
+  }
+  return false;
+};
+
+// Lấy badge chức vụ / vai trò của người duyệt
+export const getApproverRoleBadge = (emp: any): string => {
+  if (Array.isArray(emp?.roles) && emp.roles.length > 0) {
+    const names = emp.roles
+      .map((r: any) => (typeof r === 'string' ? r : r.name || r.code))
+      .filter(Boolean);
+    if (names.length > 0) return names.join(', ');
+  }
+  if (typeof emp?.role === 'string') return emp.role;
+  if (emp?.role && typeof emp.role === 'object') return emp.role.name || emp.role.code || '';
+  return 'Cán bộ duyệt';
+};
+
 
 

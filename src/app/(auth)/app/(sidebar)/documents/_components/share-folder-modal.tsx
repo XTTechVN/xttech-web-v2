@@ -8,9 +8,11 @@ import {
   getDocumentCategoryShares,
   revokeDocumentCategoryShare,
   shareDocument,
+  updateDocument,
   getDocumentShares,
   revokeDocumentShare,
 } from '@/actions/document';
+import { isApproverEligible, getApproverRoleBadge } from '../_utils/doc-helpers';
 import { getEmployees } from '@/actions/employee';
 import { getDepartments } from '@/actions/department';
 import type { DocumentCategory, DocumentItem, FolderShare } from '@/types';
@@ -52,7 +54,8 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
   const [shareTarget, setShareTarget] = useState<'user' | 'department' | 'all'>('user');
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<(string | number)[]>([]);
-  const [permission, setPermission] = useState<'view' | 'edit'>('view');
+  const [permission, setPermission] = useState<'view' | 'edit' | 'approve'>('view');
+  const [selectedApproverId, setSelectedApproverId] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [revokingId, setRevokingId] = useState<number | string | null>(null);
   const [confirmRevokeState, setConfirmRevokeState] = useState<{
@@ -143,9 +146,28 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
     });
   }, [departments, existingDepartmentIds]);
 
+  const approverOptions = useMemo(() => {
+    const eligibleApprovers = employees.filter(isApproverEligible);
+    const pool = eligibleApprovers.length > 0 ? eligibleApprovers : employees;
+    const unique = pool.filter((emp: any, index: number, self: any[]) =>
+      index === self.findIndex((t: any) => String(t.id) === String(emp.id))
+    );
+    return [
+      { value: '', label: '-- Không chỉ định / Chưa chọn người duyệt --' },
+      ...unique.map((emp: any) => {
+        const roleName = getApproverRoleBadge(emp);
+        return {
+          value: String(emp.id),
+          label: `${emp.fullName || emp.username} (${roleName})`,
+        };
+      }),
+    ];
+  }, [employees]);
+
   const permissionOptions = [
     { value: 'view', label: 'Người xem (Chỉ xem & tải)' },
     { value: 'edit', label: 'Người sửa (Upload & sửa)' },
+    ...(isDoc ? [{ value: 'approve', label: 'Người phê duyệt (Chỉ định duyệt văn bản)' }] : []),
   ];
 
   // Sync selected IDs on open or when shares change
@@ -155,14 +177,21 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
       setSelectedDepartmentIds(existingDepartmentIds);
       setPermission('view');
       setConfirmRevokeState(null);
+      const currentDocApprover =
+        document?.approverId ||
+        document?.approver?.id ||
+        (document as any)?.approver_id ||
+        '';
+      setSelectedApproverId(currentDocApprover ? String(currentDocApprover) : '');
     }
-  }, [isOpen, targetId, existingUserIds, existingDepartmentIds]);
+  }, [isOpen, targetId, existingUserIds, existingDepartmentIds, document]);
 
   const invalidateShareQueries = () => {
     refetchShares();
     if (isDoc && document) {
       queryClient.invalidateQueries({ queryKey: ['document-shares', document.id] });
       queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['document-detail', document.id] });
       queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
     } else if (folder) {
       queryClient.invalidateQueries({ queryKey: ['document-category-shares', folder.id] });
@@ -175,17 +204,37 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
     e.preventDefault();
     if (!targetId) return;
 
-    // Đôi với TÀI LIỆU: Gọi API update PUT /api/v1/documents/{id} cập nhật shareScope & recipientUserIds / recipientDepartmentIds
+    // Đôi với TÀI LIỆU: Gọi API update PUT /api/v1/documents/{id} cập nhật shareScope & recipientUserIds / recipientDepartmentIds & approverId
     if (isDoc && document) {
       try {
         setIsSubmitting(true);
         const scope = shareTarget === 'all' ? 'all' : (shareTarget === 'department' ? 'department' : 'private');
+        
+        let approverToSave = selectedApproverId;
+        if (permission === 'approve' && selectedUserIds.length > 0) {
+          approverToSave = String(selectedUserIds[0]);
+        }
+
         await shareDocument(document.id, {
           shareScope: scope,
           recipientUserIds: shareTarget === 'user' ? selectedUserIds : [],
           recipientDepartmentIds: shareTarget === 'department' ? selectedDepartmentIds : [],
+          approverId: approverToSave ? String(approverToSave) : undefined,
         });
-        toast.success('Đã cập nhật quyền chia sẻ tài liệu thành công!');
+
+        // Đảm bảo updateDocument cũng lưu approver_id lên DB
+        if (approverToSave) {
+          try {
+            await updateDocument(document.id, {
+              approverId: String(approverToSave),
+              approver_id: String(approverToSave),
+            } as any);
+          } catch (e) {
+            console.warn('Lỗi đồng bộ approver_id khi chia sẻ tài liệu:', e);
+          }
+        }
+
+        toast.success('Đã cập nhật quyền chia sẻ & người duyệt tài liệu thành công!');
         invalidateShareQueries();
         onSuccess?.();
         onClose();
@@ -212,7 +261,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
             if (folder) {
               await shareDocumentCategory(folder.id, {
                 userId: String(userId),
-                permission,
+                permission: permission === 'approve' ? 'view' : permission,
               });
               successCount++;
             }
@@ -248,7 +297,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
             if (folder) {
               await shareDocumentCategory(folder.id, {
                 departmentId: Number(deptId),
-                permission,
+                permission: permission === 'approve' ? 'view' : permission,
               });
               successCount++;
             }
@@ -388,10 +437,29 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
                   label="Quyền hạn"
                   options={permissionOptions}
                   value={permission}
-                  onChange={(e) => setPermission(e.target.value as 'view' | 'edit')}
+                  onChange={(e) => setPermission(e.target.value as 'view' | 'edit' | 'approve')}
                 />
               </div>
             </div>
+
+            {/* Chỉ định người phê duyệt văn bản/tài liệu */}
+            {isDoc && (
+              <div className="p-3 bg-amber-50/50 border border-amber-200/80 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-900">
+                  <ShieldCheck size={14} className="text-amber-600" />
+                  <span>Người phê duyệt tài liệu</span>
+                </div>
+                <Select
+                  options={approverOptions}
+                  value={selectedApproverId}
+                  onChange={(e) => setSelectedApproverId(e.target.value)}
+                  placeholder="-- Chọn người phê duyệt --"
+                />
+                <p className="text-[11px] text-amber-700/80">
+                  Nhân sự được chỉ định ở đây sẽ có thẩm quyền phê duyệt văn bản trực tiếp.
+                </p>
+              </div>
+            )}
 
             {/* Selector chi tiết */}
             {shareTarget === 'user' && (

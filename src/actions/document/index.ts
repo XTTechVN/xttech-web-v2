@@ -269,6 +269,7 @@ export const shareDocument = async (
     userId?: string;
     departmentId?: number;
     permission?: string;
+    approverId?: string;
   }
 ): Promise<any> => {
   try {
@@ -298,6 +299,10 @@ export const shareDocument = async (
     if (payload.recipientDepartmentIds) {
       updateData.recipientDepartmentIds = payload.recipientDepartmentIds.map(Number);
       updateData.recipient_department_ids = payload.recipientDepartmentIds.map(Number);
+    }
+    if (payload.approverId) {
+      updateData.approverId = payload.approverId;
+      updateData.approver_id = payload.approverId;
     }
 
     const res = await api.put(`/api/v1/documents/${documentId}`, updateData);
