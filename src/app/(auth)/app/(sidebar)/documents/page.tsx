@@ -11,6 +11,10 @@ import {
   updateDocument,
   deleteDocumentCategory,
   deleteDocument,
+  getDocumentCategoryShares,
+  revokeDocumentCategoryShare,
+  getDocumentShares,
+  revokeDocumentShare,
 } from '@/actions/document';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
@@ -22,6 +26,7 @@ import { FileCard } from './_components/file-card';
 import { FileTable } from './_components/file-table';
 import { CreateFolderModal } from './_components/create-folder-modal';
 import { EditFolderModal } from './_components/edit-folder-modal';
+import { FolderDetailModal } from './_components/folder-detail-modal';
 import { CreateDocumentModal } from './_components/create-document-modal';
 import { EditDocumentModal } from './_components/edit-document-modal';
 import { DocumentDetailModal } from './_components/document-detail-modal';
@@ -128,6 +133,8 @@ function MyDocumentsContent() {
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [editFolderOpen, setEditFolderOpen] = useState(false);
   const [editingFolder, setEditingFolder] = useState<DocumentCategory | null>(null);
+  const [detailFolderOpen, setDetailFolderOpen] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState<DocumentCategory | null>(null);
   const [shareFolderOpen, setShareFolderOpen] = useState(false);
   const [sharingFolder, setSharingFolder] = useState<DocumentCategory | null>(null);
   const [sharingDoc, setSharingDoc] = useState<DocumentItem | null>(null);
@@ -314,8 +321,40 @@ function MyDocumentsContent() {
     try {
       setDeleteModal((prev) => ({ ...prev, loading: true }));
       if (deleteModal.type === 'folder') {
-        await deleteDocumentCategory(deleteModal.id);
-        toast.success(`Đã xóa thư mục "${deleteModal.name}"`);
+        try {
+          await deleteDocumentCategory(deleteModal.id);
+          toast.success(`Đã xóa thư mục "${deleteModal.name}"`);
+        } catch (catError: any) {
+          const errMsg = catError.message || '';
+          const isPermissionErr =
+            errMsg.includes('chủ sở hữu') ||
+            errMsg.includes('Quản trị viên') ||
+            errMsg.includes('FORBIDDEN') ||
+            errMsg.includes('403');
+
+          if (isPermissionErr) {
+            // Nếu không có quyền xóa thư mục gốc của người tạo, tự động gỡ bỏ thư mục khỏi mục Được chia sẻ với tôi
+            try {
+              const shares = await getDocumentCategoryShares(deleteModal.id);
+              const myShare = shares.find(
+                (s) =>
+                  String(s.userId) === String(currentUser?.id) ||
+                  (Boolean(currentUser?.email) &&
+                    s.user?.email?.toLowerCase() === currentUser?.email?.toLowerCase())
+              );
+              if (myShare?.id) {
+                await revokeDocumentCategoryShare(deleteModal.id, myShare.id);
+                toast.success(`Đã gỡ thư mục "${deleteModal.name}" khỏi mục Được chia sẻ với tôi`);
+              } else {
+                throw catError;
+              }
+            } catch (fallbackErr) {
+              throw catError;
+            }
+          } else {
+            throw catError;
+          }
+        }
         refetchCategories();
         queryClient.invalidateQueries({ queryKey: ['documents', 'trash'] });
         queryClient.invalidateQueries({ queryKey: ['document-categories'] });
@@ -323,8 +362,38 @@ function MyDocumentsContent() {
           handleGoBack();
         }
       } else {
-        await deleteDocument(deleteModal.id);
-        toast.success(`Đã xóa tài liệu "${deleteModal.name}"`);
+        try {
+          await deleteDocument(deleteModal.id);
+          toast.success(`Đã xóa tài liệu "${deleteModal.name}"`);
+        } catch (docErr: any) {
+          const errMsg = docErr.message || '';
+          const isPermissionErr =
+            errMsg.includes('quyền') ||
+            errMsg.includes('FORBIDDEN') ||
+            errMsg.includes('403');
+
+          if (isPermissionErr) {
+            try {
+              const shares = await getDocumentShares(deleteModal.id);
+              const myShare = shares.find(
+                (s) =>
+                  String(s.userId) === String(currentUser?.id) ||
+                  (Boolean(currentUser?.email) &&
+                    s.user?.email?.toLowerCase() === currentUser?.email?.toLowerCase())
+              );
+              if (myShare?.id) {
+                await revokeDocumentShare(deleteModal.id, myShare.id);
+                toast.success(`Đã gỡ tài liệu "${deleteModal.name}" khỏi mục Được chia sẻ với tôi`);
+              } else {
+                throw docErr;
+              }
+            } catch (fallbackErr) {
+              throw docErr;
+            }
+          } else {
+            throw docErr;
+          }
+        }
         refetchDocuments();
         queryClient.invalidateQueries({ queryKey: ['documents', 'trash'] });
         queryClient.invalidateQueries({ queryKey: ['documents'] });
@@ -589,6 +658,10 @@ function MyDocumentsContent() {
                     onToggleSelect={(f) => toggleSelectItem('folder', f.id)}
                     locationName={currentFolder ? currentFolder.name : (tab === 'shared' ? 'Được chia sẻ với tôi' : (tab === 'trash' ? 'Thùng rác' : 'Tài liệu của tôi'))}
                     onOpen={(f) => setCurrentFolderId(f.id)}
+                    onViewDetail={(f) => {
+                      setSelectedFolder(f);
+                      setDetailFolderOpen(true);
+                    }}
                     onEdit={canEditItem ? (f) => {
                       setEditingFolder(f);
                       setEditFolderOpen(true);
@@ -671,6 +744,10 @@ function MyDocumentsContent() {
                     locationName={currentFolder ? currentFolder.name : (tab === 'shared' ? 'Được chia sẻ với tôi' : (tab === 'trash' ? 'Thùng rác' : 'Tài liệu của tôi'))}
                     showHeader={true}
                     onOpen={(f) => setCurrentFolderId(f.id)}
+                    onViewDetail={(f) => {
+                      setSelectedFolder(f);
+                      setDetailFolderOpen(true);
+                    }}
                     onEdit={canEditItem ? (f) => {
                       setEditingFolder(f);
                       setEditFolderOpen(true);
@@ -889,6 +966,17 @@ function MyDocumentsContent() {
           refetchDocuments();
         }}
       />
+
+      {/* 7. Folder Detail Modal */}
+      <FolderDetailModal
+        isOpen={detailFolderOpen}
+        onClose={() => {
+          setDetailFolderOpen(false);
+          setSelectedFolder(null);
+        }}
+        folder={selectedFolder}
+      />
+
 
       {/* Floating Multi-Selection Bar */}
       {selectedItemKeys.size > 0 && (

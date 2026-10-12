@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Folder, MoreVertical, Edit2, Trash2, FolderOpen, User, Share2 } from 'lucide-react';
+import { Folder, MoreVertical, Edit2, Trash2, FolderOpen, User, Share2, Eye } from 'lucide-react';
 import type { DocumentCategory } from '@/types';
 import { usePermission } from '@/hooks';
 import { cn } from '@/utils';
@@ -13,6 +13,7 @@ interface FolderCardProps {
   isSelected?: boolean;
   onToggleSelect?: (folder: DocumentCategory) => void;
   onOpen: (folder: DocumentCategory) => void;
+  onViewDetail?: (folder: DocumentCategory) => void;
   onEdit?: (folder: DocumentCategory) => void;
   onMove?: (folder: DocumentCategory) => void;
   onDropItem?: (sourceType: 'folder' | 'document', sourceId: number, targetFolderId: number) => void;
@@ -27,6 +28,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
   isSelected = false,
   onToggleSelect,
   onOpen,
+  onViewDetail,
   onEdit,
   onMove,
   onDropItem,
@@ -71,6 +73,15 @@ export const FolderCard: React.FC<FolderCardProps> = ({
     danger?: boolean;
     disabled?: boolean;
   }[] = [
+    ...(onViewDetail
+      ? [
+          {
+            label: 'Xem chi tiết',
+            icon: <Eye size={15} className="text-primary" />,
+            onClick: () => onViewDetail(folder),
+          },
+        ]
+      : []),
     {
       label: 'Mở thư mục',
       icon: <FolderOpen size={15} className="text-primary" />,

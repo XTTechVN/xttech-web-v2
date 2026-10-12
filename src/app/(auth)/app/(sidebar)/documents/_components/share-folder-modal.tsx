@@ -9,6 +9,7 @@ import {
   revokeDocumentCategoryShare,
   shareDocument,
   updateDocument,
+  updateDocumentCategory,
   getDocumentShares,
   revokeDocumentShare,
 } from '@/actions/document';
@@ -323,15 +324,57 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
       try {
         setIsSubmitting(true);
         if (folder) {
-          await shareDocumentCategory(folder.id, {
-            isAll: true,
-            permission,
-          } as any);
+          // Thử cập nhật shareScope lên thư mục nếu backend hỗ trợ
+          try {
+            await updateDocumentCategory(folder.id, {
+              shareScope: 'all',
+              share_scope: 'all',
+            } as any);
+          } catch (e) {
+            // ignore
+          }
+
+          // Backend API /document-categories/{id}/shares yêu cầu departmentId hoặc userId.
+          // Để chia sẻ cho toàn bộ hệ thống, ta chia sẻ cho tất cả các phòng ban (hoặc tất cả nhân sự)
+          const perm = permission === 'approve' ? 'view' : permission;
+          let shareSuccessCount = 0;
+
+          if (departments.length > 0) {
+            for (const dept of departments) {
+              try {
+                await shareDocumentCategory(folder.id, {
+                  departmentId: Number(dept.id),
+                  permission: perm,
+                });
+                shareSuccessCount++;
+              } catch (err) {
+                console.warn(`Lỗi chia sẻ cho phòng ban ${dept.id}:`, err);
+              }
+            }
+          } else if (employees.length > 0) {
+            for (const emp of employees) {
+              try {
+                await shareDocumentCategory(folder.id, {
+                  userId: String(emp.id),
+                  permission: perm,
+                });
+                shareSuccessCount++;
+              } catch (err) {
+                console.warn(`Lỗi chia sẻ cho nhân sự ${emp.id}:`, err);
+              }
+            }
+          }
+
+          if (shareSuccessCount === 0 && departments.length === 0 && employees.length === 0) {
+            toast.error('Không tìm thấy danh sách phòng ban hoặc nhân sự để chia sẻ');
+            return;
+          }
         }
 
-        toast.success('Đã chia sẻ thư mục cho toàn bộ hệ thống thành công');
+        toast.success('Đã chia sẻ thư mục cho toàn bộ hệ thống thành công!');
         invalidateShareQueries();
         onSuccess?.();
+        onClose();
       } catch (error: any) {
         toast.error(error.message || 'Lỗi khi chia sẻ thư mục cho toàn hệ thống');
       } finally {

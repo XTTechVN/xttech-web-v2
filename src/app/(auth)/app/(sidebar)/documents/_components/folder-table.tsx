@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Folder, MoreVertical, Edit2, Trash2, FolderOpen, Users, Share2 } from 'lucide-react';
+import { Folder, MoreVertical, Edit2, Trash2, FolderOpen, Users, Share2, Eye } from 'lucide-react';
 import type { DocumentCategory } from '@/types';
 import { useAuthStore } from '@/stores';
 import { usePermission } from '@/hooks';
@@ -16,6 +16,7 @@ interface FolderTableProps {
   selectedKeys?: Set<string>;
   onToggleSelect?: (folder: DocumentCategory) => void;
   onOpen: (folder: DocumentCategory) => void;
+  onViewDetail?: (folder: DocumentCategory) => void;
   onEdit?: (folder: DocumentCategory) => void;
   onMove?: (folder: DocumentCategory) => void;
   onDropItem?: (sourceType: 'folder' | 'document', sourceId: number, targetFolderId: number) => void;
@@ -50,6 +51,7 @@ export const FolderTable: React.FC<FolderTableProps> = ({
   selectedKeys,
   onToggleSelect,
   onOpen,
+  onViewDetail,
   onEdit,
   onMove,
   onDropItem,
@@ -116,6 +118,18 @@ export const FolderTable: React.FC<FolderTableProps> = ({
             onClick: () => void;
             danger?: boolean;
           }[] = [
+            ...(onViewDetail
+              ? [
+                  {
+                    label: 'Xem chi tiết',
+                    icon: <Eye size={15} className="text-primary" />,
+                    onClick: () => {
+                      setOpenMenuFolderId(null);
+                      onViewDetail(folder);
+                    },
+                  },
+                ]
+              : []),
             {
               label: 'Mở thư mục',
               icon: <FolderOpen size={15} className="text-primary" />,
