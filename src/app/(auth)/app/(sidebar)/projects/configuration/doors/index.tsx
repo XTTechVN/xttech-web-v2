@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Heading, StatsCard } from '@/components';
+import { Heading, StatsCard, DoorStudioModal } from '@/components';
 import Table from './_components/table';
 import { Columns, Eye, EyeOff, LayoutGrid } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -11,7 +11,6 @@ import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { DoorCreateModal, DoorUpdateModal, DoorDeleteModal } from './_components/modals';
 import { DoorBOMModal } from './_components/bom-modal';
-import { DoorStudioModal } from './_components/studio';
 import { showErrorToast } from '@/utils';
 
 const Page = () => {

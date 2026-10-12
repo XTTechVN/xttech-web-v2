@@ -183,6 +183,9 @@ export interface ProjectDoorPosition {
   status: DoorPositionStatus;
   qrCodeToken: string;
   revision: number;
+  isMeasured?: boolean;
+  measuredAt?: string | null;
+  measureNote?: string | null;
   systemConfig?: Record<string, any> | null;
   createdAt: string;
   updatedAt: string;
@@ -244,11 +247,12 @@ export interface ProjectDoorPositionUpdate {
   glassId?: number;
   gasketId?: number;
   status?: DoorPositionStatus;
+  systemConfig?: Record<string, any>;
   revision?: number;
 }
 
 export interface ProjectDoorPositionDuplicate {
-  newCode: string;
+  newCode?: string;
   newFloorId?: number;
   newFloorName?: string;
 }

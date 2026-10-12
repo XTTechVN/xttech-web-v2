@@ -15,11 +15,24 @@ import { updateNode } from './utils/door-tree-utils';
 import { useDoorStudioState } from './hooks/useDoorStudioState';
 import { Save, Loader2, FileText, PenTool, Sliders, BarChart3, Wrench } from 'lucide-react';
 
-interface DoorStudioModalProps {
+export interface DoorStudioModalSaveData {
+  name: string;
+  code: string;
+  type: string;
+  doorSeriesId?: number | null;
+  width: number;
+  height: number;
+  systemConfig: Record<string, any>;
+  imageB64?: string;
+}
+
+export interface DoorStudioModalProps {
   isOpen: boolean;
   onClose: () => void;
   door?: Door | null;
   defaultBrandId?: number | null;
+  onSaveSuccess?: (savedDoor: Door) => void;
+  onCustomSave?: (data: DoorStudioModalSaveData) => Promise<void>;
 }
 
 const NAV_TABS = [
@@ -30,8 +43,15 @@ const NAV_TABS = [
   { id: 'accessories' as const, label: 'Phụ kiện', icon: Wrench },
 ];
 
-export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({ isOpen, onClose, door, defaultBrandId }) => {
-  const state = useDoorStudioState({ isOpen, onClose, door, defaultBrandId });
+export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
+  isOpen,
+  onClose,
+  door,
+  defaultBrandId,
+  onSaveSuccess,
+  onCustomSave,
+}) => {
+  const state = useDoorStudioState({ isOpen, onClose, door, defaultBrandId, onSaveSuccess, onCustomSave });
 
   return (
     <Modal

@@ -277,10 +277,10 @@ export const updateProjectPosition = async (
 export const duplicateProjectPosition = async (
   projectId: number,
   positionId: number,
-  data: import('@/types').ProjectDoorPositionDuplicate,
+  data?: import('@/types').ProjectDoorPositionDuplicate,
 ): Promise<import('@/types').ProjectDoorPosition> => {
   try {
-    const response = await api.post(`/api/v1/projects/${projectId}/positions/${positionId}/duplicate`, data);
+    const response = await api.post(`/api/v1/projects/${projectId}/positions/${positionId}/duplicate`, data || {});
     return response.data;
   } catch (error) {
     console.warn('API error duplicateProjectPosition', error);

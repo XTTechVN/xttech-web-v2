@@ -15,98 +15,76 @@ export function ProjectInfo({ project, formattedDate }: ProjectInfoProps) {
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xs font-bold text-slate-500">Chi tiết dự án</h2>
+    <div className="bg-white rounded-lg border border-slate-200/70 p-3.5 shadow-2xs">
+      {/* Header: Title, Tên dự án & Trạng thái */}
+      <div className="flex items-center justify-between pb-2 mb-1 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xs font-semibold text-slate-700">Chi tiết dự án</h2>
+          <span className="font-semibold text-primary text-xs">{project.name}</span>
+        </div>
         <Badge variant={statusConfig.variant} size="sm">
           {statusConfig.label}
         </Badge>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200/60 p-5 shadow-xs space-y-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 block">Tên dự án</span>
-            <span className="text-sm font-bold text-slate-800 mt-1 block">{project.name}</span>
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 block">Mã dự án (Code)</span>
-            <span className="text-sm font-mono font-bold text-primary mt-1 block">
+      {/* Grid 2 cột chia các row dạng key-value giống bên phải */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 text-xs">
+        {/* Cột trái: Thông tin chung */}
+        <div className="divide-y divide-slate-100">
+          <div className="flex items-center justify-between py-2">
+            <span className="text-slate-500">Mã dự án (Code)</span>
+            <span className="font-mono font-medium text-primary">
               {project.code || `DA-${project.id}`}
             </span>
           </div>
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 block">Địa chỉ</span>
-            <span className="text-sm font-medium text-slate-700 mt-1 block">{project.address || '—'}</span>
+          <div className="flex items-start justify-between gap-2 py-2">
+            <span className="text-slate-500 shrink-0">Địa chỉ</span>
+            <span className="font-medium text-slate-700 text-right">{project.address || '—'}</span>
           </div>
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 block">Ngày khởi tạo</span>
-            <span className="text-sm font-medium text-slate-700 mt-1 block">{formattedDate}</span>
+          <div className="flex items-center justify-between py-2">
+            <span className="text-slate-500">Ngày khởi tạo</span>
+            <span className="font-medium text-slate-700">{formattedDate}</span>
+          </div>
+          <div className="flex items-center justify-between py-2">
+            <span className="text-slate-500">Tiến độ thi công</span>
+            <span className="font-medium text-slate-700">
+              {project.startDate ? new Date(project.startDate).toLocaleDateString('vi-VN') : '—'} ➔{' '}
+              {project.targetDate ? new Date(project.targetDate).toLocaleDateString('vi-VN') : '—'}
+            </span>
+          </div>
+          <div className="flex items-start justify-between gap-2 py-2">
+            <span className="text-slate-500 shrink-0">Ghi chú</span>
+            <span className="font-medium text-slate-700 text-right">{project.note || '—'}</span>
           </div>
         </div>
 
-        {/* Cấu hình nhôm mặc định */}
-        <div className="pt-4 border-t border-slate-100">
-          <span className="text-[10px] font-bold text-slate-400 block mb-2">Cấu hình nhôm mặc định</span>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50/70 p-3 rounded-lg border border-slate-100">
-            <div>
-              <span className="text-[10px] text-slate-400 block">Hãng nhôm</span>
-              <span className="text-xs font-semibold text-slate-800 mt-0.5 block">
-                {project.defaultBrand?.name || '—'}
-              </span>
-            </div>
-            <div>
-              <span className="text-[10px] text-slate-400 block">Hệ nhôm</span>
-              <span className="text-xs font-semibold text-slate-800 mt-0.5 block">
-                {project.defaultSeries?.name || '—'}
-              </span>
-            </div>
-            <div>
-              <span className="text-[10px] text-slate-400 block">Màu nhôm</span>
-              <span className="text-xs font-semibold text-slate-800 mt-0.5 block">
-                {project.defaultColor?.name || '—'}
-              </span>
-            </div>
-            <div>
-              <span className="text-[10px] text-slate-400 block">Tiến độ thời gian</span>
-              <span className="text-xs font-medium text-slate-700 mt-0.5 block">
-                {project.startDate ? new Date(project.startDate).toLocaleDateString('vi-VN') : '—'} ➔{' '}
-                {project.targetDate ? new Date(project.targetDate).toLocaleDateString('vi-VN') : '—'}
-              </span>
-            </div>
+        {/* Cột phải: Cấu hình nhôm & Quy mô */}
+        <div className="divide-y divide-slate-100 border-t md:border-t-0 border-slate-100">
+          <div className="flex items-center justify-between py-2">
+            <span className="text-slate-500">Hãng nhôm</span>
+            <span className="font-medium text-slate-800">{project.defaultBrand?.name || '—'}</span>
+          </div>
+          <div className="flex items-center justify-between py-2">
+            <span className="text-slate-500">Hệ nhôm</span>
+            <span className="font-medium text-slate-800">{project.defaultSeries?.name || '—'}</span>
+          </div>
+          <div className="flex items-center justify-between py-2">
+            <span className="text-slate-500">Màu nhôm</span>
+            <span className="font-medium text-slate-800">{project.defaultColor?.name || '—'}</span>
+          </div>
+          <div className="flex items-center justify-between py-2">
+            <span className="text-slate-500">Tổng vị trí cửa</span>
+            <span className="font-semibold text-slate-800">{project.totalPositions ?? 0} bộ</span>
+          </div>
+          <div className="flex items-center justify-between py-2">
+            <span className="text-slate-500">Tổng diện tích</span>
+            <span className="font-semibold text-slate-800">{(project.totalAreaM2 ?? 0).toFixed(2)} m²</span>
+          </div>
+          <div className="flex items-center justify-between py-2">
+            <span className="text-slate-500">Trọng lượng nhôm</span>
+            <span className="font-semibold text-slate-800">{(project.totalAluminumKg ?? 0).toFixed(1)} kg</span>
           </div>
         </div>
-
-        {/* Metrics quy mô */}
-        <div className="pt-3 border-t border-slate-100 grid grid-cols-3 gap-4 text-center">
-          <div className="p-2.5 rounded-lg bg-primary/5">
-            <span className="text-[10px] font-bold text-primary block">TỔNG VỊ TRÍ CỬA</span>
-            <span className="text-base font-bold text-slate-800 mt-0.5 block">
-              {project.totalPositions ?? 0} bộ
-            </span>
-          </div>
-          <div className="p-2.5 rounded-lg bg-primary/5">
-            <span className="text-[10px] font-bold text-primary block">TỔNG DIỆN TÍCH</span>
-            <span className="text-base font-bold text-slate-800 mt-0.5 block">
-              {(project.totalAreaM2 ?? 0).toFixed(2)} m2
-            </span>
-          </div>
-          <div className="p-2.5 rounded-lg bg-primary/5">
-            <span className="text-[10px] font-bold text-primary block">TỔNG TRỌNG LƯỢNG NHÔM</span>
-            <span className="text-base font-bold text-slate-800 mt-0.5 block">
-              {(project.totalAluminumKg ?? 0).toFixed(1)} kg
-            </span>
-          </div>
-        </div>
-
-        {project.note && (
-          <div className="pt-3 border-t border-slate-100">
-            <span className="text-[10px] font-bold text-slate-400 block">Ghi chú / Yêu cầu công trình</span>
-            <p className="text-sm text-slate-600 mt-1 whitespace-pre-line leading-relaxed">
-              {project.note}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

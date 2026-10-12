@@ -33,7 +33,7 @@ export const DOOR_STATUS_MAP: Record<
   { label: string; variant: NonNullable<BadgeProps['variant']> }
 > = {
   draft: { label: 'Bản vẽ sơ bộ', variant: 'default' },
-  surveyed: { label: 'Đã đo ô chờ', variant: 'info' },
+  surveyed: { label: 'Đã chốt số đo', variant: 'info' },
   designed: { label: 'Đã bóc tách', variant: 'info' },
   approved: { label: 'Đã duyệt mẫu', variant: 'primary' },
   producing: { label: 'Đang gia công', variant: 'warning' },

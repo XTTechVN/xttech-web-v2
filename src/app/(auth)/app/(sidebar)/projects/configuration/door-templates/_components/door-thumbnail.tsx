@@ -1,9 +1,15 @@
 'use client';
 
 import React from 'react';
-import { DoorCadRenderer } from '../../doors/_components/studio/cad-engine/door-cad-renderer';
-import type { SceneCellNode, FrameShape, FrameConfig, SashConfig } from '../../doors/_components/studio/studio-types';
-import { DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG } from '../../doors/_components/studio/studio-types';
+import {
+  DoorCadRenderer,
+  DEFAULT_FRAME_CONFIG,
+  DEFAULT_SASH_CONFIG,
+  type SceneCellNode,
+  type FrameShape,
+  type FrameConfig,
+  type SashConfig,
+} from '@/components';
 import type { Door } from '@/types';
 
 interface DoorThumbnailProps {
