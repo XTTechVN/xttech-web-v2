@@ -270,7 +270,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
   },
   // 4. Tiện ích & Hệ thống
   {
-    title: 'Hệ thống',
+    title: 'Cơ chế và tài liệu',
     items: [
       {
         id: 'documents-root',
@@ -293,7 +293,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
           },
           {
             id: 'documents-rule',
-            label: 'Quy chế',
+            label: 'Tài liệu ban hành',
             href: '/app/rules',
             roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
           },
@@ -305,6 +305,12 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
           },
         ],
       },
+    ],
+  },
+  // 5. Hệ thống
+  {
+    title: 'Hệ thống',
+    items: [
       {
         id: 'app-versions',
         label: 'Quản trị hệ thống',
