@@ -1,15 +1,39 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Modal, Button, Input, Textarea, Select, MultiSelect } from '@/components';
-import { updateDocument } from '@/actions/document';
+import {
+  updateDocument,
+  submitDocument,
+  reviewDocument,
+  publishDocument,
+  getDocumentById,
+  getDocumentShares,
+} from '@/actions/document';
 import { getEmployees } from '@/actions/employee';
 import { getDepartments } from '@/actions/department';
-import { DOCUMENT_TYPE_MAP, SHARE_SCOPE_MAP } from '@/types';
+import {
+  DOCUMENT_TYPE_MAP,
+  SHARE_SCOPE_MAP,
+  DOCUMENT_STATUS_MAP,
+  APPROVAL_STATUS_MAP,
+} from '@/types';
+import { formatBytes, getFileVisualInfo } from '../_utils/doc-helpers';
 import toast from 'react-hot-toast';
-import { Edit3 } from 'lucide-react';
+import {
+  Edit3,
+  Send,
+  CheckCircle2,
+  XCircle,
+  Megaphone,
+  FileUp,
+  X,
+  Clock,
+  Check,
+  AlertCircle,
+} from 'lucide-react';
 import type { DocumentCategory, DocumentItem } from '@/types';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -87,8 +111,13 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+  const [workflowActionLoading, setWorkflowActionLoading] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<(string | number)[]>([]);
+
+  // Rejection note state if rejecting
+  const [showRejectPrompt, setShowRejectPrompt] = useState(false);
+  const [rejectNote, setRejectNote] = useState('');
 
   const {
     register,
@@ -114,6 +143,20 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
     enabled: isOpen,
   });
 
+  // Fetch chi tiết tài liệu đầy đủ kèm recipients & departments
+  const { data: fullDoc } = useQuery({
+    queryKey: ['document-detail', doc?.id],
+    queryFn: () => (doc?.id ? getDocumentById(doc.id) : null),
+    enabled: Boolean(isOpen && doc?.id),
+  });
+
+  // Fetch thêm shares của tài liệu nếu có
+  const { data: sharesData = [] } = useQuery({
+    queryKey: ['document-shares', doc?.id],
+    queryFn: () => (doc?.id ? getDocumentShares(doc.id) : []),
+    enabled: Boolean(isOpen && doc?.id),
+  });
+
   const employees = employeesData?.items || [];
   const departments = useMemo(() => {
     const raw = (departmentsData as any)?.data ?? departmentsData;
@@ -135,28 +178,123 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   }, [register]);
 
   useEffect(() => {
-    if (isOpen && doc) {
-      reset({
-        title: doc.title || '',
-        documentType: doc.documentType || 'work_report',
-        code: doc.code || '',
-        categoryId: doc.categoryId || doc.category?.id || '',
-        summary: doc.summary || '',
-        shareScope: doc.shareScope || 'private',
-        approverId: doc.approverId || doc.approver?.id || '',
-        effectiveDate: doc.effectiveDate ? dayjs(doc.effectiveDate).format('YYYY-MM-DD') : '',
-        expirationDate: doc.expirationDate ? dayjs(doc.expirationDate).format('YYYY-MM-DD') : '',
-      });
+    if (!isOpen || !doc) return;
 
-      // Populate recipients if available
-      const recipientUsers = (doc.recipients || [])
-        .map((r) => r.userId)
-        .filter(Boolean);
-      setSelectedUserIds(recipientUsers);
-      setSelectedDepartmentIds([]);
+    const targetDoc = fullDoc || doc;
+
+    reset({
+      title: targetDoc.title || '',
+      documentType: targetDoc.documentType || 'work_report',
+      code: targetDoc.code || '',
+      categoryId: targetDoc.categoryId || targetDoc.category?.id || '',
+      summary: targetDoc.summary || '',
+      shareScope: targetDoc.shareScope || 'private',
+      approverId: targetDoc.approverId || targetDoc.approver?.id || '',
+      effectiveDate: targetDoc.effectiveDate ? dayjs(targetDoc.effectiveDate).format('YYYY-MM-DD') : '',
+      expirationDate: targetDoc.expirationDate ? dayjs(targetDoc.expirationDate).format('YYYY-MM-DD') : '',
+    });
+
+    // 1. Trích xuất danh sách ID người dùng nhận đích danh
+    const userIdsSet = new Set<string>();
+
+    const rawUserIds = (targetDoc as any)?.recipientUserIds || (targetDoc as any)?.recipient_user_ids || [];
+    if (Array.isArray(rawUserIds)) {
+      rawUserIds.forEach((uid: any) => uid && userIdsSet.add(String(uid)));
     }
-  }, [isOpen, doc, reset]);
 
+    if (Array.isArray(targetDoc.recipients)) {
+      targetDoc.recipients.forEach((r: any) => {
+        const uid = r.userId || r.user_id || (r.user && r.user.id) || (typeof r === 'string' ? r : null);
+        if (uid) userIdsSet.add(String(uid));
+      });
+    }
+
+    if (Array.isArray(sharesData)) {
+      sharesData.forEach((s: any) => {
+        if (s.userId) userIdsSet.add(String(s.userId));
+      });
+    }
+
+    setSelectedUserIds(Array.from(userIdsSet));
+
+    // 2. Trích xuất danh sách ID phòng ban nhận
+    const deptIdsSet = new Set<string>();
+
+    const addDept = (val: any) => {
+      if (val === null || val === undefined) return;
+      if (typeof val === 'number' || typeof val === 'string') {
+        const str = String(val).trim();
+        if (str && str !== '0' && str !== 'NaN') {
+          deptIdsSet.add(str);
+        }
+      } else if (typeof val === 'object') {
+        const id = val.id ?? val.departmentId ?? val.department_id ?? val.value;
+        if (id !== undefined && id !== null) {
+          deptIdsSet.add(String(id));
+        } else if (val.name || val.departmentName || val.department_name) {
+          const name = val.name || val.departmentName || val.department_name;
+          const match = departments.find((d: any) => String(d.name || '').toLowerCase() === String(name).toLowerCase());
+          if (match?.id) deptIdsSet.add(String(match.id));
+        }
+      }
+    };
+
+    // Quét từ các mảng ID phòng ban
+    const rawDeptLists = [
+      (targetDoc as any)?.recipientDepartmentIds,
+      (targetDoc as any)?.recipient_department_ids,
+      (targetDoc as any)?.departmentIds,
+      (targetDoc as any)?.department_ids,
+      (targetDoc as any)?.recipientDepartments,
+      (targetDoc as any)?.recipient_departments,
+      (targetDoc as any)?.departments,
+    ];
+    rawDeptLists.forEach((list) => {
+      if (Array.isArray(list)) {
+        list.forEach(addDept);
+      }
+    });
+
+    // Quét từ recipients
+    if (Array.isArray(targetDoc.recipients)) {
+      targetDoc.recipients.forEach((r: any) => {
+        addDept(r.departmentId);
+        addDept(r.department_id);
+        addDept(r.department);
+        if (r.departmentName && !r.departmentId) {
+          addDept({ departmentName: r.departmentName });
+        }
+      });
+    }
+
+    // Quét từ shares
+    if (Array.isArray(sharesData)) {
+      sharesData.forEach((s: any) => {
+        addDept(s.departmentId);
+        addDept(s.department_id);
+        addDept(s.department);
+      });
+    }
+
+    if (Array.isArray((targetDoc as any)?.shares)) {
+      (targetDoc as any).shares.forEach((s: any) => {
+        addDept(s.departmentId);
+        addDept(s.department_id);
+        addDept(s.department);
+      });
+    }
+
+    // Nếu văn bản có departmentId riêng
+    if ((targetDoc as any)?.departmentId) {
+      addDept((targetDoc as any).departmentId);
+    }
+
+    setSelectedDepartmentIds(Array.from(deptIdsSet));
+    setShowRejectPrompt(false);
+    setRejectNote('');
+  }, [isOpen, doc, fullDoc, sharesData, departments, reset]);
+
+  // Submit update changes
   const handleFormSubmit = async (data: EditDocumentFormValues) => {
     if (!doc) return;
 
@@ -190,18 +328,24 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
         payload.expiration_date = data.expirationDate.trim();
       }
 
-      if (selectedUserIds.length > 0) {
-        payload.recipientUserIds = selectedUserIds.map(String);
-        payload.recipient_user_ids = selectedUserIds.map(String);
-      }
-      if (selectedDepartmentIds.length > 0) {
-        payload.recipientDepartmentIds = selectedDepartmentIds.map(Number);
-        payload.recipient_department_ids = selectedDepartmentIds.map(Number);
-      }
+      // Luôn đồng bộ danh sách người nhận và phòng ban nhận đầy đủ các field
+      const userIdsStr = selectedUserIds.map(String).filter(Boolean);
+      payload.recipientUserIds = userIdsStr;
+      payload.recipient_user_ids = userIdsStr;
+      payload.userIds = userIdsStr;
+      payload.user_ids = userIdsStr;
+
+      const deptIdsNum = selectedDepartmentIds.map(Number).filter((n) => !isNaN(n));
+      payload.recipientDepartmentIds = deptIdsNum;
+      payload.recipient_department_ids = deptIdsNum;
+      payload.departmentIds = deptIdsNum;
+      payload.department_ids = deptIdsNum;
 
       await updateDocument(doc.id, payload);
       toast.success('Cập nhật thông tin tài liệu thành công!');
       queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['document-detail', doc.id] });
+      queryClient.invalidateQueries({ queryKey: ['document-shares', doc.id] });
       queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
       onSuccess();
       onClose();
@@ -212,7 +356,87 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
     }
   };
 
-  // Flatten categories for select dropdown (với cơ chế deduplicate ID)
+  // Workflow Action 1: Trình duyệt (Submit)
+  const handleSubmitForApproval = async () => {
+    if (!doc) return;
+    try {
+      setWorkflowActionLoading(true);
+      await submitDocument(doc.id);
+      toast.success('Đã trình duyệt tài liệu thành công!');
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || 'Không thể trình duyệt tài liệu');
+    } finally {
+      setWorkflowActionLoading(false);
+    }
+  };
+
+  // Workflow Action 2: Phê duyệt (Approve)
+  const handleApprove = async () => {
+    if (!doc) return;
+    try {
+      setWorkflowActionLoading(true);
+      await reviewDocument(doc.id, {
+        approvalStatus: 'approved',
+        action: 'approved',
+      });
+      toast.success('Đã phê duyệt tài liệu thành công!');
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || 'Không thể phê duyệt tài liệu');
+    } finally {
+      setWorkflowActionLoading(false);
+    }
+  };
+
+  // Workflow Action 3: Từ chối duyệt (Reject)
+  const handleReject = async () => {
+    if (!doc) return;
+    try {
+      setWorkflowActionLoading(true);
+      await reviewDocument(doc.id, {
+        approvalStatus: 'rejected',
+        action: 'rejected',
+        comment: rejectNote.trim() || undefined,
+        approvalNote: rejectNote.trim() || undefined,
+      });
+      toast.success('Đã từ chối tài liệu!');
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || 'Lỗi khi từ chối tài liệu');
+    } finally {
+      setWorkflowActionLoading(false);
+    }
+  };
+
+  // Workflow Action 4: Ban hành (Publish)
+  const handlePublish = async () => {
+    if (!doc) return;
+    try {
+      setWorkflowActionLoading(true);
+      await publishDocument(doc.id);
+      toast.success('Đã ban hành văn bản chính thức!');
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || 'Không thể ban hành tài liệu');
+    } finally {
+      setWorkflowActionLoading(false);
+    }
+  };
+
+  // Flatten categories for select dropdown
   const flattenCategories = (
     cats: DocumentCategory[],
     prefix = '',
@@ -325,6 +549,14 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
 
   if (!doc) return null;
 
+  // Workflow states
+  const currentStatus = doc.status || 'draft';
+  const currentApprovalStatus = doc.approvalStatus || 'draft';
+  const isDraftOrRejected = currentApprovalStatus === 'draft' || currentApprovalStatus === 'rejected' || currentStatus === 'draft';
+  const isPending = currentApprovalStatus === 'pending' || currentStatus === 'pending';
+  const isApproved = (currentApprovalStatus === 'approved' || currentStatus === 'approved') && currentStatus !== 'published';
+  const isPublished = currentStatus === 'published';
+
   return (
     <Modal
       isOpen={isOpen}
@@ -333,12 +565,95 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
       title={
         <div className="flex items-center gap-2 text-slate-800">
           <Edit3 className="text-primary" size={20} />
-          <span>Chỉnh sửa thông tin tài liệu</span>
+          <span>Chỉnh sửa & Phê duyệt tài liệu</span>
         </div>
       }
       className="m-2 max-w-2xl w-full"
     >
       <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-4 text-xs">
+        {/* Workflow Status Tracker Bar */}
+        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              Tiến trình duyệt & Ban hành
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
+                DOCUMENT_STATUS_MAP[currentStatus]?.badgeClass || 'bg-slate-100 text-slate-700 border-slate-200'
+              }`}>
+                {DOCUMENT_STATUS_MAP[currentStatus]?.label || currentStatus}
+              </span>
+              {currentApprovalStatus !== currentStatus && (
+                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
+                  APPROVAL_STATUS_MAP[currentApprovalStatus]?.badgeClass || 'bg-slate-100 text-slate-700 border-slate-200'
+                }`}>
+                  {APPROVAL_STATUS_MAP[currentApprovalStatus]?.label || currentApprovalStatus}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Stepper Timeline */}
+          <div className="grid grid-cols-4 gap-1 pt-1 text-center">
+            {/* Step 1: Soạn thảo */}
+            <div className={`p-2 rounded-xl border flex flex-col items-center gap-1 ${
+              isDraftOrRejected ? 'bg-amber-50 border-amber-300 text-amber-900 font-semibold' : 'bg-white border-slate-200 text-slate-400'
+            }`}>
+              <Edit3 size={14} className={isDraftOrRejected ? 'text-amber-600' : 'text-slate-400'} />
+              <span className="text-[10px]">1. Soạn thảo</span>
+            </div>
+
+            {/* Step 2: Chờ duyệt */}
+            <div className={`p-2 rounded-xl border flex flex-col items-center gap-1 ${
+              isPending ? 'bg-sky-50 border-sky-300 text-sky-900 font-semibold' : 'bg-white border-slate-200 text-slate-400'
+            }`}>
+              <Clock size={14} className={isPending ? 'text-sky-600' : 'text-slate-400'} />
+              <span className="text-[10px]">2. Chờ duyệt</span>
+            </div>
+
+            {/* Step 3: Đã duyệt */}
+            <div className={`p-2 rounded-xl border flex flex-col items-center gap-1 ${
+              isApproved ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-semibold' : 'bg-white border-slate-200 text-slate-400'
+            }`}>
+              <CheckCircle2 size={14} className={isApproved ? 'text-emerald-600' : 'text-slate-400'} />
+              <span className="text-[10px]">3. Đã duyệt</span>
+            </div>
+
+            {/* Step 4: Ban hành */}
+            <div className={`p-2 rounded-xl border flex flex-col items-center gap-1 ${
+              isPublished ? 'bg-teal-50 border-teal-300 text-teal-900 font-semibold' : 'bg-white border-slate-200 text-slate-400'
+            }`}>
+              <Megaphone size={14} className={isPublished ? 'text-teal-600' : 'text-slate-400'} />
+              <span className="text-[10px]">4. Ban hành</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Rejection Prompt if toggled */}
+        {showRejectPrompt && (
+          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl space-y-2">
+            <div className="flex items-center gap-2 text-rose-800 font-semibold">
+              <AlertCircle size={16} />
+              <span>Nhập lý do từ chối phê duyệt</span>
+            </div>
+            <Textarea
+              placeholder="Ghi chú lý do từ chối để người soạn thảo nắm rõ..."
+              rows={2}
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              fullWidth
+            />
+            <div className="flex justify-end gap-2">
+              <Button size="xs" variant="outline" onClick={() => setShowRejectPrompt(false)}>
+                Hủy bỏ
+              </Button>
+              <Button size="xs" variant="danger" onClick={handleReject} loading={workflowActionLoading}>
+                Xác nhận từ chối
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Title & Code */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -354,9 +669,9 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
 
           <div>
             <Input
-              label="Mã văn bản"
+              label="Mã văn bản (Tùy chọn)"
               fullWidth
-              placeholder="Mã tài liệu"
+              placeholder="TỰ ĐỘNG NẾU ĐỂ TRỐNG"
               value={codeVal}
               onChange={(e) => setValue('code', e.target.value.toUpperCase())}
               error={errors.code?.message}
@@ -380,7 +695,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
 
           <div>
             <Select
-              label="Thư mục"
+              label="Lưu vào Thư mục"
               fullWidth
               value={categoryIdVal}
               onChange={(e) => setValue('categoryId', e.target.value ? Number(e.target.value) : '')}
@@ -445,7 +760,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
           <div>
             <Input
               type="date"
-              label="Ngày bắt đầu hiệu lực"
+              label="Ngày bắt đầu hiệu lực (Tùy chọn)"
               fullWidth
               value={effectiveDateVal}
               onChange={(e) => setValue('effectiveDate', e.target.value)}
@@ -455,7 +770,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
           <div>
             <Input
               type="date"
-              label="Ngày hết hiệu lực"
+              label="Ngày hết hiệu lực (Tùy chọn)"
               fullWidth
               value={expirationDateVal}
               onChange={(e) => setValue('expirationDate', e.target.value)}
@@ -475,14 +790,81 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
           />
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 justify-end w-full mt-4">
-          <Button variant="outline" size="sm" onClick={onClose} disabled={loading}>
-            Hủy
-          </Button>
-          <Button variant="primary" size="sm" type="submit" disabled={loading} loading={loading}>
-            Lưu thay đổi
-          </Button>
+        {/* Action Buttons with Approval Workflow Actions */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200/80">
+          {/* Workflow Action Buttons (Left) */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {/* Action: Trình duyệt (khi đang ở bản thảo hoặc bị từ chối) */}
+            {isDraftOrRejected && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSubmitForApproval}
+                disabled={loading || workflowActionLoading}
+                loading={workflowActionLoading}
+                leftIcon={<Send size={14} className="text-sky-600" />}
+                className="border-sky-300 bg-sky-50/50 hover:bg-sky-50 text-sky-800"
+              >
+                Trình duyệt tài liệu
+              </Button>
+            )}
+
+            {/* Actions: Phê duyệt & Từ chối (khi đang chờ duyệt) */}
+            {isPending && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowRejectPrompt(true)}
+                  disabled={loading || workflowActionLoading}
+                  leftIcon={<XCircle size={14} className="text-rose-600" />}
+                  className="border-rose-300 bg-rose-50/50 hover:bg-rose-50 text-rose-800"
+                >
+                  Từ chối
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleApprove}
+                  disabled={loading || workflowActionLoading}
+                  loading={workflowActionLoading}
+                  leftIcon={<CheckCircle2 size={14} className="text-emerald-600" />}
+                  className="border-emerald-300 bg-emerald-50/50 hover:bg-emerald-50 text-emerald-800"
+                >
+                  Phê duyệt
+                </Button>
+              </>
+            )}
+
+            {/* Action: Ban hành (khi đã được phê duyệt) */}
+            {isApproved && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handlePublish}
+                disabled={loading || workflowActionLoading}
+                loading={workflowActionLoading}
+                leftIcon={<Megaphone size={14} className="text-teal-600" />}
+                className="border-teal-300 bg-teal-50/50 hover:bg-teal-50 text-teal-800"
+              >
+                Ban hành văn bản
+              </Button>
+            )}
+          </div>
+
+          {/* Standard Save & Cancel (Right) */}
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+            <Button variant="outline" size="sm" onClick={onClose} disabled={loading || workflowActionLoading}>
+              Hủy
+            </Button>
+            <Button variant="primary" size="sm" type="submit" disabled={loading || workflowActionLoading} loading={loading}>
+              Lưu thay đổi
+            </Button>
+          </div>
         </div>
       </form>
     </Modal>

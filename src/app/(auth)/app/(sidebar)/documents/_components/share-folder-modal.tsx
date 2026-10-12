@@ -326,7 +326,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
         isOpen={isOpen}
         onClose={onClose}
         size="lg"
-        title={`CHIA SẺ ${isDoc ? 'TÀI LIỆU' : 'THƯ MỤC'} "${itemName.toUpperCase()}"`}
+        title={`Chia sẻ ${isDoc ? 'tài liệu' : 'thư mục'} "${itemName.toUpperCase()}"`}
       >
         <form onSubmit={handleShareSubmit} className="space-y-6 pt-2 select-none">
           {/* Form thêm đối tượng chia sẻ */}
@@ -417,9 +417,9 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
             )}
 
             {shareTarget === 'all' && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md flex items-center gap-2 text-xs font-semibold text-emerald-800">
-                <Globe size={16} className="text-emerald-600 shrink-0" />
-                <span>Thư mục sẽ được chia sẻ cho Tất cả người dùng trong hệ thống.</span>
+              <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl flex items-center gap-2 text-xs font-semibold text-primary">
+                <Globe size={16} className="text-primary shrink-0" />
+                <span>{isDoc ? 'Tài liệu' : 'Thư mục'} sẽ được chia sẻ cho Tất cả người dùng trong hệ thống.</span>
               </div>
             )}
           </div>

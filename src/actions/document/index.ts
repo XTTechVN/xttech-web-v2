@@ -374,36 +374,61 @@ export const revokeDocumentShare = async (documentId: number, shareId: number | 
 // 4. Phê duyệt & Quy trình tài liệu (Approval Workflow)
 // ==========================================
 
-// Phê duyệt hoặc từ chối tài liệu
-export const reviewDocument = async (
+// 8.1. Trình duyệt tài liệu: POST /api/v1/documents/{id}/submit
+// Trạng thái duyệt sẽ chuyển thành pending
+export const submitDocument = async (
   documentId: number,
-  payload: {
-    approvalStatus: 'approved' | 'rejected';
-    approvalNote?: string;
-  },
+  payload?: { approverId?: string }
 ): Promise<DocumentItem> => {
   try {
-    const res = await api.post(`/api/v1/documents/${documentId}/approve`, payload);
-    return res.data?.data ?? res.data;
-  } catch (error: any) {
-    throw new Error(extractErrorMessage(error, 'Không thể xử lý phê duyệt tài liệu'));
-  }
-};
-
-// Trình duyệt tài liệu (chuyển sang trạng thái chờ duyệt)
-export const submitDocument = async (documentId: number): Promise<DocumentItem> => {
-  try {
-    const res = await api.post(`/api/v1/documents/${documentId}/submit`);
+    const res = await api.post(`/api/v1/documents/${documentId}/submit`, payload || {});
     return res.data?.data ?? res.data;
   } catch (error: any) {
     throw new Error(extractErrorMessage(error, 'Không thể trình duyệt tài liệu'));
   }
 };
 
-// Ban hành tài liệu đã được duyệt
-export const publishDocument = async (documentId: number): Promise<DocumentItem> => {
+// 8.2. Phê duyệt hoặc Từ chối văn bản: POST /api/v1/documents/{id}/approve
+export const reviewDocument = async (
+  documentId: number,
+  payload: {
+    action?: 'approved' | 'rejected';
+    approvalStatus?: 'approved' | 'rejected';
+    comment?: string;
+    approvalNote?: string;
+  },
+): Promise<DocumentItem> => {
   try {
-    const res = await api.post(`/api/v1/documents/${documentId}/publish`);
+    const status = payload.approvalStatus || payload.action || 'approved';
+    const note = payload.comment || payload.approvalNote;
+
+    const body: Record<string, any> = {
+      approvalStatus: status,
+      approval_status: status,
+      action: status,
+    };
+    if (note) {
+      body.comment = note;
+      body.approvalNote = note;
+      body.approval_note = note;
+    }
+
+    const res = await api.post(`/api/v1/documents/${documentId}/approve`, body);
+    return res.data?.data ?? res.data;
+  } catch (error: any) {
+    throw new Error(extractErrorMessage(error, 'Không thể xử lý phê duyệt tài liệu'));
+  }
+};
+
+// 8.3. Ban hành văn bản chính thức: POST /api/v1/documents/{id}/publish
+// Request body (tùy chọn): { shareScope?: "all" | "department" | "private" }
+// Sau khi ban hành, trạng thái đổi thành published
+export const publishDocument = async (
+  documentId: number,
+  payload?: { shareScope?: string }
+): Promise<DocumentItem> => {
+  try {
+    const res = await api.post(`/api/v1/documents/${documentId}/publish`, payload || {});
     return res.data?.data ?? res.data;
   } catch (error: any) {
     throw new Error(extractErrorMessage(error, 'Không thể ban hành tài liệu'));

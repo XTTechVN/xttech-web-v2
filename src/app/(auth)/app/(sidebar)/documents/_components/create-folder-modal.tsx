@@ -134,13 +134,12 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
 
         <div>
           <Input
-            label="Mã định danh (Code)"
-            placeholder="Để trống để tự động tạo từ tên..."
+            label="Mã thư mục (Code)"
+            placeholder="Nhập mã folder..."
             fullWidth
             value={codeVal}
             onChange={handleCodeChange}
             error={errors.code?.message}
-            className="font-mono uppercase"
           />
           <p className="text-[10px] text-slate-400 mt-1">
             Mã định danh viết hoa, không dấu, ngăn cách bằng dấu gạch dưới (tự động tạo nếu để trống).
