@@ -19,7 +19,7 @@ export function useMyTodayAttendance() {
   const user = useAuthStore((state) => state.user);
   const todayStr = useMemo(() => getLocalDateString(), []);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isSuccess, refetch } = useQuery({
     queryKey: ['my-today-attendance', user?.id, todayStr],
     queryFn: () =>
       getAttendances({
@@ -45,6 +45,7 @@ export function useMyTodayAttendance() {
     hasCheckedOut,
     isWorkingShift,
     isLoading,
+    isSuccess,
     refetch,
   };
 }

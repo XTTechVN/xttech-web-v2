@@ -16,6 +16,14 @@ All notable changes to the frontend project will be documented in this file.
   - Thêm trạng thái `app_closed` (badge "Đã tắt app"), `STAFF_LIVE_STATUS_MAP` và helper `isStaffSignalLost`.
 
 ### Fixed
+- **[Root cause] Plugin `NativeTracking` chưa từng được đăng ký trên iOS:**
+  - Capacitor 6+ chỉ đăng ký plugin có trong `packageClassList` (đang rỗng), nên JS gọi `startTracking` bị lỗi và âm thầm fallback sang `navigator.geolocation` của WebView, vốn chỉ chạy khi app ở foreground. Hậu quả: toàn bộ GPS nền / geofence / app_closed chưa từng chạy.
+  - [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift) conform `CAPBridgedPlugin` (`identifier`, `jsName`, `pluginMethods`). Xoá `NativeTrackingPlugin.m` (macro `CAP_PLUGIN` cũ).
+  - Thêm [`MainViewController.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/MainViewController.swift): override `capacitorDidLoad()` → `registerPluginInstance(NativeTrackingPlugin())`. `Main.storyboard` và [`SceneDelegate.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/SceneDelegate.swift) dùng `MainViewController`.
+  - `SceneDelegate` chỉ tạo window khi `window == nil`, tránh dựng 2 bridge/WebView song song với storyboard.
+- **Race condition gọi `stopTracking` khi mở app ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts), [`useMyTodayAttendance.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useMyTodayAttendance.ts), [`layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/layout.tsx)):**
+  - Trước đây mỗi lần mở app, khi dữ liệu chấm công chưa tải xong, hook coi như "không trong ca" và gọi `stopTracking` native (xoá SLC/geofence/visits). Nay chỉ dừng khi trạng thái ca đã xác định (`isStatusResolved`).
+- **Khôi phục tracking khi app khởi chạy ([`AppDelegate.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/AppDelegate.swift)):** luôn gọi `handleLocationWakeUp()` (hàm tự kiểm tra cờ tracking), không phụ thuộc launch key `.location`.
 - **Khắc phục lệch Build Number trên CI/CD TestFlight ([`build-ios-signed.yml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/.github/workflows/build-ios-signed.yml)):**
   - Thêm offset `BUILD_NUM=$(( ${{ github.run_number }} + 30 ))` vào quy trình đóng gói Xcode (`CURRENT_PROJECT_VERSION` và `CFBundleVersion`) nhằm đảm bảo các bản build mới luôn có số build vượt trội (> 50), tránh xung đột thụt lùi số phiên bản với các bản build 44 trước đó trên TestFlight.
 - Giải phóng instance standalone (tạo lúc iOS đánh thức app từ nền) khi Capacitor bridge load, tránh 2 `CLLocationManager` gửi ping trùng.

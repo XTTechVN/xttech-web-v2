@@ -37,7 +37,20 @@ private enum AppClosedReminder {
 }
 
 @objc(NativeTrackingPlugin)
-public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
+public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDelegate {
+    // Metadata đăng ký plugin cho Capacitor 6+ (plugin nội bộ app phải đăng ký thủ công qua MainViewController)
+    public let identifier = "NativeTrackingPlugin"
+    public let jsName = "NativeTracking"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "startTracking", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "stopTracking", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "updateToken", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "checkPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "openSettings", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "ensureAlwaysPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getBatteryLevel", returnType: CAPPluginReturnPromise)
+    ]
+
     public static var shared: NativeTrackingPlugin?
 
     private var locationManager: CLLocationManager?
