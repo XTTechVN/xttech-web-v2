@@ -61,37 +61,8 @@ export const FileTable: React.FC<FileTableProps> = ({
   const [openMenuDocId, setOpenMenuDocId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const clearCloseTimeout = () => {
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-  };
-
-  const handleButtonPointerEnter = (e: React.PointerEvent, docId: number) => {
-    if (e.pointerType === 'touch') return;
-    clearCloseTimeout();
-    setOpenMenuDocId(docId);
-  };
-
-  const handleMenuPointerEnter = (e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') return;
-    clearCloseTimeout();
-  };
-
-  const handlePointerLeave = (e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') return;
-    clearCloseTimeout();
-    closeTimeoutRef.current = setTimeout(() => {
-      setOpenMenuDocId(null);
-    }, 200);
-  };
-
   const handleButtonClick = (e: React.MouseEvent, docId: number) => {
     e.stopPropagation();
-    clearCloseTimeout();
     setOpenMenuDocId((prev) => (prev === docId ? null : docId));
   };
 
@@ -100,19 +71,12 @@ export const FileTable: React.FC<FileTableProps> = ({
     if (!openMenuDocId) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        clearCloseTimeout();
         setOpenMenuDocId(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openMenuDocId]);
-
-  useEffect(() => {
-    return () => {
-      clearCloseTimeout();
-    };
-  }, []);
 
   return (
     <div className="w-full bg-[#fafbfc]">
@@ -303,11 +267,9 @@ export const FileTable: React.FC<FileTableProps> = ({
                   </button>
                 )}
 
-                {/* Nút 3 chấm tròn - hover hiện trên PC, click trên mobile */}
+                {/* Nút 3 chấm tròn - click để mở menu */}
                 <button
                   type="button"
-                  onPointerEnter={(e) => handleButtonPointerEnter(e, doc.id)}
-                  onPointerLeave={handlePointerLeave}
                   onClick={(e) => handleButtonClick(e, doc.id)}
                   className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-200/80 transition-colors cursor-pointer',
@@ -324,9 +286,7 @@ export const FileTable: React.FC<FileTableProps> = ({
                 <div
                   ref={menuRef}
                   onClick={(e) => e.stopPropagation()}
-                  onPointerEnter={handleMenuPointerEnter}
-                  onPointerLeave={handlePointerLeave}
-                  className="absolute right-3.5 top-[calc(100%+8px)] z-50 w-48 rounded-lg bg-white shadow-xl ring-1 ring-black/5 divide-y divide-gray-100 overflow-hidden border border-slate-200/90 py-0 animate-in fade-in zoom-in-95 duration-100 before:absolute before:-top-3 before:left-0 before:right-0 before:h-3 before:content-['']"
+                  className="absolute right-3.5 top-[calc(100%+8px)] z-50 w-48 rounded-lg bg-white shadow-xl ring-1 ring-black/5 divide-y divide-gray-100 overflow-hidden border border-slate-200/90 py-0 animate-in fade-in zoom-in-95 duration-100"
                 >
                   {menuItems.map((item, idx) => (
                     <button
@@ -334,7 +294,6 @@ export const FileTable: React.FC<FileTableProps> = ({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        clearCloseTimeout();
                         setOpenMenuDocId(null);
                         item.onClick?.();
                       }}

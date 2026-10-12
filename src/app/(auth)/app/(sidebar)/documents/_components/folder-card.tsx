@@ -35,37 +35,8 @@ export const FolderCard: React.FC<FolderCardProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const clearCloseTimeout = () => {
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-  };
-
-  const handleButtonPointerEnter = (e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') return;
-    clearCloseTimeout();
-    setIsMenuOpen(true);
-  };
-
-  const handleMenuPointerEnter = (e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') return;
-    clearCloseTimeout();
-  };
-
-  const handlePointerLeave = (e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') return;
-    clearCloseTimeout();
-    closeTimeoutRef.current = setTimeout(() => {
-      setIsMenuOpen(false);
-    }, 200);
-  };
-
   const handleButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    clearCloseTimeout();
     setIsMenuOpen((prev) => !prev);
   };
 
@@ -74,19 +45,12 @@ export const FolderCard: React.FC<FolderCardProps> = ({
     if (!isMenuOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        clearCloseTimeout();
         setIsMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMenuOpen]);
-
-  useEffect(() => {
-    return () => {
-      clearCloseTimeout();
-    };
-  }, []);
 
   const isShared = Boolean(
     folder.isShared ||
@@ -240,8 +204,6 @@ export const FolderCard: React.FC<FolderCardProps> = ({
       >
         <button
           type="button"
-          onPointerEnter={handleButtonPointerEnter}
-          onPointerLeave={handlePointerLeave}
           onClick={handleButtonClick}
           className={cn(
             'w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-200/80 transition-colors cursor-pointer',
@@ -258,9 +220,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
         <div
           ref={menuRef}
           onClick={(e) => e.stopPropagation()}
-          onPointerEnter={handleMenuPointerEnter}
-          onPointerLeave={handlePointerLeave}
-          className="absolute right-0 top-[calc(100%+6px)] z-50 w-48 rounded-lg bg-white shadow-xl ring-1 ring-black/5 divide-y divide-gray-100 overflow-hidden border border-slate-200/80 py-0 animate-in fade-in zoom-in-95 duration-100 before:absolute before:-top-2 before:left-0 before:right-0 before:h-2 before:content-['']"
+          className="absolute right-0 top-[calc(100%+6px)] z-50 w-48 rounded-lg bg-white shadow-xl ring-1 ring-black/5 divide-y divide-gray-100 overflow-hidden border border-slate-200/80 py-0 animate-in fade-in zoom-in-95 duration-100"
         >
           {menuItems.map((item, idx) => (
             <button
@@ -269,7 +229,6 @@ export const FolderCard: React.FC<FolderCardProps> = ({
               disabled={item.disabled}
               onClick={(e) => {
                 e.stopPropagation();
-                clearCloseTimeout();
                 setIsMenuOpen(false);
                 item.onClick?.();
               }}
