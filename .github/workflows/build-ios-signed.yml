@@ -93,7 +93,9 @@ jobs:
       - name: 7. Build Archive with Xcode
         run: |
           cd ios/App
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" App/Info.plist || true
+          BUILD_NUM=$(( ${{ github.run_number }} + 30 ))
+          echo "Computed iOS Build Number: $BUILD_NUM"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUM" App/Info.plist || true
           xcodebuild clean archive \
             -project App.xcodeproj \
             -scheme App \
@@ -101,7 +103,7 @@ jobs:
             -configuration Release \
             -archivePath "$GITHUB_WORKSPACE/build/App.xcarchive" \
             PRODUCT_BUNDLE_IDENTIFIER="com.xttech.app2" \
-            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUM" \
             CODE_SIGN_STYLE="Manual" \
             DEVELOPMENT_TEAM="GPCFYP2K8W" \
             PROVISIONING_PROFILE_SPECIFIER="XTTech_AppStore" \

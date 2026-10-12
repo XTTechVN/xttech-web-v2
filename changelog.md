@@ -16,6 +16,8 @@ All notable changes to the frontend project will be documented in this file.
   - Thêm trạng thái `app_closed` (badge "Đã tắt app"), `STAFF_LIVE_STATUS_MAP` và helper `isStaffSignalLost`.
 
 ### Fixed
+- **Khắc phục lệch Build Number trên CI/CD TestFlight ([`build-ios-signed.yml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/.github/workflows/build-ios-signed.yml)):**
+  - Thêm offset `BUILD_NUM=$(( ${{ github.run_number }} + 30 ))` vào quy trình đóng gói Xcode (`CURRENT_PROJECT_VERSION` và `CFBundleVersion`) nhằm đảm bảo các bản build mới luôn có số build vượt trội (> 50), tránh xung đột thụt lùi số phiên bản với các bản build 44 trước đó trên TestFlight.
 - Giải phóng instance standalone (tạo lúc iOS đánh thức app từ nền) khi Capacitor bridge load, tránh 2 `CLLocationManager` gửi ping trùng.
 
 ### Changed
