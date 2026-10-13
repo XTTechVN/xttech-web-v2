@@ -50,6 +50,7 @@ interface ToolboxLeftProps {
   onDeleteSelected?: () => void;
   onChangeTab: (tab: 'frame' | 'sash') => void;
   aluminumColors?: ColorSwatch[];
+  isInsideSash?: boolean;
 }
 
 export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
@@ -77,6 +78,7 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
   onDeleteSelected,
   onChangeTab,
   aluminumColors,
+  isInsideSash,
 }) => {
   const [frameSplitCount, setFrameSplitCount] = useState<number>(2);
 
@@ -345,6 +347,7 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
         <SashTypePicker
           currentSashType={currentSashType}
           selectedCellId={selectedCellId}
+          isInsideSash={isInsideSash}
           onSelectSashType={onSelectSashType}
           onSplitSashMullion={onSplitSashMullion}
         />

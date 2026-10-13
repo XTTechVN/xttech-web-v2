@@ -617,7 +617,15 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
           return (
             <g>
               {!isFixed && (
-                <CadSashBox sx={cx} sy={cy} sw={cw} sh={ch} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash} />
+                <g
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectCell(node.id);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <CadSashBox sx={cx} sy={cy} sw={cw} sh={ch} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash} />
+                </g>
               )}
 
               {/* 1. Các thanh đố cánh */}

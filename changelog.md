@@ -2,6 +2,16 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-13
+
+### Fixed & Enhanced
+
+- **Mở Khóa Chia Đố Cánh Đa Cấp & Phân Định Ô Kính Con Trong Cánh Cửa ([`door-tree-utils.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/utils/door-tree-utils.ts), [`sash-type-picker.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/sash-type-picker.tsx), [`useDoorStudioState.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/hooks/useDoorStudioState.ts), [`cad-rectangular-leaf.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-rectangular-leaf.tsx)):**
+  - **Khắc phục lỗi không chia đố cánh được nhiều lần:** Bổ sung helper `isInsideSash(rootCell, cellId)` kiểm tra chuỗi tổ tiên của ô; phân biệt rạch ròi giữa *Vách kính cố định của khung bao ngoài* (`isFixed && !isInsideSash`) và *Ô kính con nằm bên trong cánh cửa* (`isInsideSash`).
+  - **Mở khóa giao diện chia đố cánh:** Panel `SashTypePicker` không còn chặn nhầm ô kính con là ô fix khung bao; hiển thị badge trực quan `Ô trong cánh cửa` kèm bộ công cụ chia đố cánh Dọc / Ngang để người dùng chia đố lồng nhau đệ quy nhiều lần (lưới đố chữ T, lưới đố nhiều ô).
+  - **Chuẩn hóa Guard Clause:** Cập nhật hàm `handleSplitSashMullion` trong `useDoorStudioState` chỉ chặn khi ô đang chọn là vách kính cố định của khung bao ngoài, cho phép chia đố cánh liên tục trên các ô kính con.
+  - **Tương tác trực tiếp trên viền khung cánh:** Bổ sung `onClick` chọn `node.id` khi nhấp vào viền khung nhôm `CadSashBox`, giúp người dùng dễ dàng chuyển đổi qua lại giữa thao tác toàn cánh và thao tác trên từng ô kính con.
+
 ## [Unreleased] - 2026-10-10
 
 ### Fixed & Enhanced

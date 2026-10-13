@@ -7,6 +7,7 @@ import { Columns, Rows, Grid } from 'lucide-react';
 interface SashTypePickerProps {
   currentSashType: SashOpenType;
   selectedCellId: string | null;
+  isInsideSash?: boolean;
   onSelectSashType: (sashType: SashOpenType) => void;
   onSplitSashMullion?: (count: number, direction: 'vertical' | 'horizontal') => void;
 }
@@ -20,6 +21,7 @@ interface SashVisualItem {
 export const SashTypePicker: React.FC<SashTypePickerProps> = ({
   currentSashType,
   selectedCellId,
+  isInsideSash = false,
   onSelectSashType,
   onSplitSashMullion,
 }) => {
@@ -135,6 +137,7 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
   ];
 
   const isFixed = currentSashType === 'fixed';
+  const isOuterFixed = isFixed && !isInsideSash;
   const hasSelectedCell = Boolean(selectedCellId);
 
   return (
@@ -146,23 +149,27 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
             <Grid size={14} className="text-primary" />
             <span>Chia đố cánh</span>
           </div>
-          {isFixed && (
+          {isInsideSash ? (
+            <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-medium">
+              Ô trong cánh cửa
+            </span>
+          ) : isFixed ? (
             <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-medium">
               Vách cố định (ô fix)
             </span>
-          )}
+          ) : null}
         </div>
 
-        {isFixed ? (
+        {isOuterFixed ? (
           <div className="text-[11px] text-amber-800 bg-amber-50/90 p-2.5 rounded-md border border-amber-200/80 leading-relaxed space-y-1">
             <div className="font-semibold text-amber-900">⚠️ Không áp dụng cho ô fix</div>
             <div>
-              Ô đang chọn là vách kính cố định. Để chia vách thành các ô kính, vui lòng sử dụng <strong>Chia đố khung</strong> ở tab <em>Kiểu khung</em>.
+              Ô đang chọn là vách kính cố định của khung bao. Để chia vách thành các ô kính, vui lòng sử dụng <strong>Chia đố khung</strong> ở tab <em>Kiểu khung</em>.
             </div>
           </div>
         ) : !hasSelectedCell ? (
           <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-md border border-slate-200 leading-relaxed">
-            Vui lòng nhấp chọn một cánh cửa trên bản vẽ để chia đố cánh.
+            Vui lòng nhấp chọn một cánh cửa hoặc ô trong cánh trên bản vẽ để chia đố cánh.
           </div>
         ) : (
           <div className="flex items-center gap-1.5">
@@ -203,35 +210,42 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
           <span>Kiểu cánh</span>
           {selectedCellId ? (
             <span className="text-[10px] text-primary font-semibold bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
-              Ô: {selectedCellId}
+              {isInsideSash ? 'Ô trong cánh' : `Ô: ${selectedCellId}`}
             </span>
           ) : (
             <span className="text-[10px] text-slate-400 font-normal">Chưa chọn ô</span>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-1.5">
-          {sashItems.map((item) => {
-            const isSelected = currentSashType === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onSelectSashType(item.id)}
-                className={`flex items-center gap-2 p-1.5 rounded-lg border transition-all cursor-pointer text-left ${
-                  isSelected
-                    ? 'border-primary bg-primary/10 text-primary shadow-2xs font-semibold'
-                    : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
-                }`}
-              >
-                <div className="shrink-0">{item.renderSvg()}</div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs truncate">{item.name}</div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        {isInsideSash ? (
+          <div className="text-[11px] text-slate-500 bg-slate-50 p-2 rounded-md border border-slate-200 leading-relaxed">
+            Ô đang chọn là ô kính con trong cánh. Nhấp vào <strong>viền nhôm cánh</strong> trên bản vẽ để chọn toàn bộ cánh nếu muốn đổi kiểu mở.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-1.5">
+            {sashItems.map((item) => {
+              const isSelected = currentSashType === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelectSashType(item.id)}
+                  className={`flex items-center gap-2 p-1.5 rounded-lg border transition-all cursor-pointer text-left ${
+                    isSelected
+                      ? 'border-primary bg-primary/10 text-primary shadow-2xs font-semibold'
+                      : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
+                  }`}
+                >
+                  <div className="shrink-0">{item.renderSvg()}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs truncate">{item.name}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
 };
+

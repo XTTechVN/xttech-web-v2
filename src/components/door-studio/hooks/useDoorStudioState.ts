@@ -6,7 +6,7 @@ import { Door, DoorCreate, DoorUpdate, DoorCalculateResponse, SelectedAccessoryI
 import { calculateDoor, createDoor, updateDoor, getDoorSeriesList, getProfileBars, getAccessoryCombos, getAccessories, getGlasses, getBrandColors, getBrands, } from '@/actions';
 import { FrameShape, SashOpenType, SceneCellNode, StudioMainTab, FrameConfig, SashConfig, DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG, MullionInfo, MullionCutType, ColorSwatch, ALUMINUM_PALETTE, GlassGrilleConfig, } from '../studio-types';
 import { ResizeSplitParams } from '../cad-engine/door-cad-renderer';
-import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, createSplitChildren, applySashTypeToCluster, resizeCellInParent, } from '../utils/door-tree-utils';
+import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, } from '../utils/door-tree-utils';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
@@ -393,9 +393,10 @@ export function useDoorStudioState({
     const targetNode = findNode(rootCell, selectedCellId);
     if (!targetNode) return;
 
-    // Chặn nghiêm ngặt: Ô fix / vách kính cố định không phải cánh cửa!
-    if (targetNode.sashType === 'fixed') {
-      toast.error('Ô đang chọn là Vách kính cố định (ô fix), không phải cánh cửa. Vui lòng sử dụng "Chia đố khung" ở tab Kiểu khung.');
+    // Chặn nghiêm ngặt: Chỉ chặn khi là ô fix của khung bao ngoài (không nằm trong cánh cửa)
+    const inSash = isInsideSash(rootCell, targetNode.id);
+    if (targetNode.sashType === 'fixed' && !inSash) {
+      toast.error('Ô đang chọn là Vách kính cố định của khung bao. Vui lòng sử dụng "Chia đố khung" ở tab Kiểu khung.');
       return;
     }
 
@@ -919,6 +920,7 @@ export function useDoorStudioState({
   const effectiveSashType: SashOpenType = isSelectedInPair
     ? (parentOfSelected.sashType || 'swing_double')
     : (selectedCellNode?.sashType || currentSashType);
+  const isSelectedInsideSash = selectedCellId ? isInsideSash(rootCell, selectedCellId) : false;
 
   return {
     activeMainTab,
@@ -954,6 +956,7 @@ export function useDoorStudioState({
     setSelectedCellId,
     selectedCellNode,
     effectiveSashType,
+    isSelectedInsideSash,
     selectedMullion,
     setSelectedMullion,
     isMullionModalOpen,

@@ -208,6 +208,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           defaultGlass={state.defaultGlass}
           aluminumColors={state.dynamicAluminumColors}
           onChangeFrameConfig={(updates) => state.setFrameConfig((prev) => ({ ...prev, ...updates }))}
+          isInsideSash={state.isSelectedInsideSash}
         />
       )}
 

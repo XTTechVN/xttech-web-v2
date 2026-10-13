@@ -61,6 +61,7 @@ interface DrawTabViewProps {
   defaultGlass?: Glass | null;
   aluminumColors?: ColorSwatch[];
   onChangeFrameConfig?: (updates: Partial<FrameConfig>) => void;
+  isInsideSash?: boolean;
 }
 
 export const DrawTabView: React.FC<DrawTabViewProps> = ({
@@ -107,6 +108,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
   defaultGlass,
   aluminumColors,
   onChangeFrameConfig,
+  isInsideSash,
 }) => {
   const [rightTab, setRightTab] = useState<'inspector' | 'bom'>('inspector');
   const [mobileDrawer, setMobileDrawer] = useState<'toolbox' | 'inspector' | 'bom' | null>(null);
@@ -149,6 +151,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
           onDeleteSelected={onDeleteSelected}
           onChangeTab={onChangeTab}
           aluminumColors={aluminumColors}
+          isInsideSash={isInsideSash}
         />
       </div>
 
@@ -385,6 +388,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   onDeleteSelected={onDeleteSelected}
                   onChangeTab={onChangeTab}
                   aluminumColors={aluminumColors}
+                  isInsideSash={isInsideSash}
                 />
               )}
 
