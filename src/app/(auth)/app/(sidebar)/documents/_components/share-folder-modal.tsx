@@ -198,7 +198,14 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
     if (isDoc && document) {
       try {
         setIsSubmitting(true);
-        const scope = shareTarget === 'all' ? 'all' : (shareTarget === 'department' ? 'department' : 'private');
+        const scope =
+          shareTarget === 'all'
+            ? 'all'
+            : shareTarget === 'department'
+            ? 'department'
+            : selectedUserIds.length > 0
+            ? 'user'
+            : 'private';
 
         await shareDocument(document.id, {
           shareScope: scope,

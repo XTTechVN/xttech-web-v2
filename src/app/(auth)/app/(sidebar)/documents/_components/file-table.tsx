@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Download, Eye, MoreVertical, Trash2, Folder, Users, FolderOpen, Share2, Edit3 } from 'lucide-react';
 import type { DocumentItem } from '@/types';
-import { DriveFileIcon } from '../_utils/doc-helpers';
+import { DriveFileIcon, isDocumentShared } from '../_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import { useAuthStore } from '@/stores';
 import { cn } from '@/utils';
@@ -102,7 +102,7 @@ export const FileTable: React.FC<FileTableProps> = ({
           const fileName = currentVersion?.fileName || doc.title;
           const isOwner = doc.createdById === user?.id;
           const ownerName = isOwner ? 'tôi' : doc.createdBy?.fullName || doc.createdBy?.email || 'Thành viên';
-          const isShared = doc.shareScope !== 'private';
+          const isShared = isDocumentShared(doc, user?.id);
           const folderName = doc.category?.name || currentFolderName || 'Drive của tôi';
           const isMenuOpen = openMenuDocId === doc.id;
 

@@ -7,6 +7,29 @@ import {
   FileArchive,
   File,
 } from 'lucide-react';
+import type { DocumentItem } from '@/types';
+
+/**
+ * Kiểm tra xem một tài liệu có phải là tài liệu được chia sẻ hay không:
+ * 1. Có cờ isShared = true từ backend
+ * 2. Phạm vi chia sẻ khác 'private' (ví dụ: 'all', 'department', 'user', 'internal')
+ * 3. Có danh sách người nhận recipients > 0
+ * 4. Không phải do người dùng hiện tại tạo ra (được người khác chia sẻ cho mình)
+ */
+export function isDocumentShared(
+  doc: DocumentItem | null | undefined,
+  currentUserId?: string | number
+): boolean {
+  if (!doc) return false;
+  if ((doc as any).isShared === true) return true;
+  if (doc.shareScope && doc.shareScope !== 'private') return true;
+  if (Array.isArray(doc.recipients) && doc.recipients.length > 0) return true;
+  if (currentUserId && doc.createdById && String(doc.createdById) !== String(currentUserId)) {
+    return true;
+  }
+  return false;
+}
+
 
 // Định dạng dung lượng tệp
 export function formatBytes(bytes?: number, decimals = 1): string {

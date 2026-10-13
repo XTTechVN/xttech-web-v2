@@ -16,21 +16,26 @@ export function useFolderTree({ categoryTree, currentFolderId, tab }: UseFolderT
     return [];
   }, [categoryTree]);
 
+  // Phân chia danh mục gốc: Của tôi vs Được chia sẻ
+  const myFolders = useMemo<DocumentCategory[]>(() => {
+    return safeCategoryTree.filter((f) => !f.isShared);
+  }, [safeCategoryTree]);
+
+  const sharedFolders = useMemo<DocumentCategory[]>(() => {
+    return safeCategoryTree.filter((f) => f.isShared);
+  }, [safeCategoryTree]);
+
   // Tìm thư mục hiện tại, thư mục cha trực tiếp và các thư mục con
-  const { currentFolder, parentFolder, subFolders, myFolders, sharedFolders } = useMemo<{
+  const { currentFolder, parentFolder, subFolders } = useMemo<{
     currentFolder: DocumentCategory | null;
     parentFolder: DocumentCategory | null;
     subFolders: DocumentCategory[];
-    myFolders: DocumentCategory[];
-    sharedFolders: DocumentCategory[];
   }>(() => {
     if (currentFolderId === null) {
       return {
         currentFolder: null,
         parentFolder: null,
         subFolders: safeCategoryTree,
-        myFolders: safeCategoryTree.filter((f) => !f.isShared),
-        sharedFolders: safeCategoryTree.filter((f) => f.isShared),
       };
     }
 
@@ -64,8 +69,6 @@ export function useFolderTree({ categoryTree, currentFolderId, tab }: UseFolderT
       currentFolder: targetFolder,
       parentFolder: directParent,
       subFolders: children,
-      myFolders: children,
-      sharedFolders: [],
     };
   }, [safeCategoryTree, currentFolderId]);
 
@@ -127,6 +130,8 @@ export function useFolderTree({ categoryTree, currentFolderId, tab }: UseFolderT
     currentFolder,
     parentFolder,
     subFolders,
+    myFolders,
+    sharedFolders,
     foldersToDisplay,
     isSharedSection,
     isDescendant,

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePermission } from '@/hooks';
@@ -19,6 +19,7 @@ import {
 } from '@/actions/document';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
+import { isDocumentShared } from './_utils/doc-helpers';
 
 // Custom Hooks
 import { useDocumentSelection } from './_hooks/use-document-selection';
@@ -118,6 +119,11 @@ function MyDocumentsContent() {
     loading: false,
   });
 
+  // Reset thư mục khi chuyển tab (Tài liệu của tôi <-> Được chia sẻ)
+  useEffect(() => {
+    setCurrentFolderId(null);
+  }, [tab]);
+
   // 1. Fetch Category Tree
   const {
     data: categoryTree = [],
@@ -134,6 +140,8 @@ function MyDocumentsContent() {
     currentFolder,
     parentFolder,
     subFolders,
+    myFolders,
+    sharedFolders,
     foldersToDisplay,
     isSharedSection,
     isDescendant,
@@ -160,20 +168,64 @@ function MyDocumentsContent() {
       }),
   });
 
-  // 4. Resolve documents list for current folder
+  // 4. Resolve documents list for current folder & shared / my section
   const documents = useMemo<DocumentItem[]>(() => {
     let rawItems: DocumentItem[] = [];
     if (Array.isArray(documentsData?.items)) rawItems = documentsData.items;
     else if (Array.isArray(documentsData)) rawItems = documentsData as any;
     else if (Array.isArray((documentsData as any)?.data)) rawItems = (documentsData as any).data;
 
-    if (currentFolderId === null) {
-      return rawItems.filter((doc) => doc.categoryId === null || doc.categoryId === undefined);
+    // Tập hợp toàn bộ ID của các thư mục thuộc cây thư mục chia sẻ
+    const allSharedCategoryIds = new Set<number>();
+    const collectSharedIds = (nodes: DocumentCategory[]) => {
+      for (const node of nodes) {
+        allSharedCategoryIds.add(node.id);
+        if (node.children && node.children.length > 0) {
+          collectSharedIds(node.children);
+        }
+      }
+    };
+    collectSharedIds(sharedFolders);
+
+    // PHÂN VÙNG: ĐƯỢC CHIA SẺ (tab === 'shared' hoặc đang ở trong thư mục con thuộc nhánh chia sẻ)
+    if (isSharedSection) {
+      if (currentFolderId === null) {
+        // Ở thư mục gốc của Được chia sẻ:
+        // Chỉ hiển thị các tài liệu ĐƯỢC CHIA SẺ mà không nằm trong các thư mục con chia sẻ đã hiển thị
+        return rawItems.filter((doc) => {
+          const shared = isDocumentShared(doc, currentUser?.id);
+          if (!shared) return false;
+          // Nếu không thuộc thư mục nào hoặc thư mục đó không nằm trong cây thư mục chia sẻ -> hiển thị ở gốc Được chia sẻ
+          if (doc.categoryId === null || doc.categoryId === undefined) return true;
+          return !allSharedCategoryIds.has(doc.categoryId);
+        });
+      }
+
+      // Đang ở trong một thư mục chia sẻ cụ thể:
+      return rawItems.filter(
+        (doc) => doc.categoryId === currentFolderId || doc.category?.id === currentFolderId
+      );
     }
-    return rawItems.filter(
-      (doc) => doc.categoryId === currentFolderId || doc.category?.id === currentFolderId
-    );
-  }, [documentsData, currentFolderId]);
+
+    // PHÂN VÙNG: TÀI LIỆU CỦA TÔI (tab !== 'shared' và không nằm trong nhánh chia sẻ)
+    // Quy tắc: Những tài liệu nào được chia sẻ thì CHỈ vào mục Được chia sẻ thôi, KHÔNG vào Tài liệu của tôi
+    if (currentFolderId === null) {
+      return rawItems.filter((doc) => {
+        const isRoot = doc.categoryId === null || doc.categoryId === undefined;
+        if (!isRoot) return false;
+        // Loại bỏ hoàn toàn tài liệu đã được chia sẻ
+        return !isDocumentShared(doc, currentUser?.id);
+      });
+    }
+
+    return rawItems.filter((doc) => {
+      const isInFolder =
+        doc.categoryId === currentFolderId || doc.category?.id === currentFolderId;
+      if (!isInFolder) return false;
+      // Loại bỏ tài liệu đã được chia sẻ khỏi thư mục cá nhân
+      return !isDocumentShared(doc, currentUser?.id);
+    });
+  }, [documentsData, currentFolderId, isSharedSection, sharedFolders, currentUser?.id]);
 
   // Quyền chỉnh sửa và xóa tài liệu / thư mục: trong mục Được chia sẻ với tôi chỉ HR hoặc ADMIN được sửa/xóa
   const canEditItem = !isSharedSection || canManageDocuments;

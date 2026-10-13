@@ -30,7 +30,13 @@ export const DocumentsFolderHeader: React.FC<DocumentsFolderHeaderProps> = ({
             type="button"
             onClick={onGoBack}
             className="h-8 w-8 sm:w-auto px-0 sm:px-2.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 cursor-pointer shadow-2xs shrink-0 inline-flex items-center justify-center gap-1.5 whitespace-nowrap select-none"
-            title={parentFolder ? `Quay lại ${parentFolder.name}` : 'Quay lại Tài liệu của tôi'}
+            title={
+              parentFolder
+                ? `Quay lại ${parentFolder.name}`
+                : tab === 'shared'
+                ? 'Quay lại Được chia sẻ với tôi'
+                : 'Quay lại Tài liệu của tôi'
+            }
           >
             <ArrowLeft size={16} className="shrink-0" />
             <span className="hidden sm:inline whitespace-nowrap leading-none">Quay lại</span>

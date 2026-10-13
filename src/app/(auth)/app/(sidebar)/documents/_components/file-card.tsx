@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, Eye, MoreVertical, Trash2, FolderOpen, Share2, Edit3 } from 'lucide-react';
+import { Download, Eye, MoreVertical, Trash2, FolderOpen, Share2, Edit3, Users } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
-import { formatBytes, getFileVisualInfo } from '../_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo, isDocumentShared } from '../_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
+import { useAuthStore } from '@/stores';
 import { cn } from '@/utils';
 
 interface FileCardProps {
@@ -56,6 +57,9 @@ export const FileCard: React.FC<FileCardProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMenuOpen]);
+
+  const user = useAuthStore((state) => state.user);
+  const isShared = isDocumentShared(doc, user?.id);
 
   const currentVersion = doc.currentVersion;
   const fileName = currentVersion?.fileName || doc.title;
@@ -182,6 +186,11 @@ export const FileCard: React.FC<FileCardProps> = ({
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <div className="relative shrink-0 flex items-center justify-center">
           {visualInfo.icon}
+          {isShared && (
+            <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-2xs">
+              <Users size={10} className="text-primary fill-primary" />
+            </div>
+          )}
         </div>
 
         {/* Tên file & Thông tin phụ */}

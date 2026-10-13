@@ -380,6 +380,7 @@ export const revokeDocumentShare = async (documentId: number, shareId: number | 
     await api.put(`/api/v1/documents/${documentId}`, {
       recipientUserIds: updatedUserIds,
       recipient_user_ids: updatedUserIds,
+      ...(updatedUserIds.length === 0 ? { shareScope: 'private', share_scope: 'private' } : {}),
     });
   } catch (e: any) {
     throw new Error(extractErrorMessage(e, 'Không thể thu hồi quyền chia sẻ tài liệu'));
