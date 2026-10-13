@@ -44,8 +44,8 @@ export const DocumentsFolderHeader: React.FC<DocumentsFolderHeaderProps> = ({
         )}
 
         {/* Thông tin thư mục hiện tại */}
-        <div className="flex items-start gap-2.5 min-w-0 flex-1">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 self-start">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
             {currentFolderId !== null ? <FolderOpen size={18} /> : <Folder size={18} />}
           </div>
           <div className="min-w-0 flex-1">
@@ -65,11 +65,6 @@ export const DocumentsFolderHeader: React.FC<DocumentsFolderHeaderProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-500 truncate mt-0.5">
-              {currentFolder
-                ? `${subFoldersCount} thư mục con • ${documentsCount} tài liệu`
-                : `${subFoldersCount} thư mục • ${documentsCount} tài liệu`}
-            </p>
           </div>
         </div>
       </div>
