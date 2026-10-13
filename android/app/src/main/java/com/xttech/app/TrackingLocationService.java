@@ -326,6 +326,7 @@ public class TrackingLocationService extends Service implements LocationListener
             payload.put("speed", (double) speed);
             if (loc.hasBearing()) payload.put("heading", (double) loc.getBearing());
             if (batteryLevel >= 0) payload.put("battery_level", (double) batteryLevel);
+            payload.put("platform", "android");
 
             byte[] postData = payload.toString().getBytes(StandardCharsets.UTF_8);
             try (OutputStream os = conn.getOutputStream()) {

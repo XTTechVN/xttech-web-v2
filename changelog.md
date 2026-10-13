@@ -2,6 +2,25 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-13
+
+### Added (Hiển thị nhãn thiết bị điểm danh & phát định vị: iOS, Android, Web App)
+- **Component dùng chung ([`src/components/platform-badge/platform-badge.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/platform-badge/platform-badge.tsx)):**
+  - Tạo mới component `PlatformBadge` trực quan, hiển thị icon & nhãn cho từng nền tảng:
+    - 🍏 **iOS**: Badge màu slate xám với biểu tượng Apple logo.
+    - 🤖 **Android**: Badge màu emerald xanh lá với biểu tượng chú robot Android.
+    - 🌐 **Web App**: Badge màu xanh dương với biểu tượng quả địa cầu Globe.
+- **Danh sách nhân sự & Bản đồ trực tuyến ([`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/staff-list.tsx), [`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/live-map.tsx), [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx)):**
+  - Hiển thị `PlatformBadge` cạnh mức phần trăm pin trên từng card nhân sự trong danh sách Live Map.
+  - Hiển thị `PlatformBadge` trong popup chi tiết nhân sự khi click vào điểm đánh dấu trên bản đồ vệ tinh / đường phố.
+  - WebSocket auto-sync cập nhật nền tảng thời gian thực khi nhận sự kiện `STAFF_LOCATION_UPDATE`.
+- **Chấm công & Thu thập tọa độ nền ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx), [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts), [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java)):**
+  - Modal chấm công tự động phát hiện `Capacitor.getPlatform()` và gửi kèm `platform: 'ios' | 'android' | 'web'` khi Check-in / Check-out.
+  - Tự động gắn kèm `platform` vào các gói tin location-ping định kỳ trên cả Web, iOS native URLSession và Android Java Foreground Service.
+- **Types ([`types/attendance.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/attendance.ts), [`types/location.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/location.ts)):**
+  - Bổ sung type `DevicePlatform = 'ios' | 'android' | 'web'` và `DEVICE_PLATFORM_MAP`.
+  - Bổ sung `checkInPlatform`, `checkOutPlatform` vào `Attendance` và `platform` vào `StaffLiveLocation`, `LocationPingPayload`, `AutoTimekeepingData`.
+
 ## [Unreleased] - 2026-10-12
 
 ### Added (Phát hiện vuốt tắt app & tăng nguồn đánh thức định vị nền iOS)

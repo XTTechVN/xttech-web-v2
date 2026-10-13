@@ -146,6 +146,12 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
 
     try {
       const battery = await getBatteryLevel();
+      const clientPlatform =
+        Capacitor.getPlatform() === 'ios'
+          ? 'ios'
+          : Capacitor.getPlatform() === 'android'
+          ? 'android'
+          : 'web';
       await sendLocationPing({
         latitude: pos.latitude,
         longitude: pos.longitude,
@@ -153,6 +159,7 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
         speed: speed,
         heading: pos.heading,
         batteryLevel: battery,
+        platform: clientPlatform,
       });
 
       setLastPingTime(new Date());

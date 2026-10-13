@@ -649,7 +649,8 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
             "accuracy": location.horizontalAccuracy,
             "speed": speed,
             "heading": heading,
-            "eventType": eventType
+            "eventType": eventType,
+            "platform": "ios"
         ]
         if let battery = getCurrentBatteryLevel() {
             payload["battery_level"] = battery

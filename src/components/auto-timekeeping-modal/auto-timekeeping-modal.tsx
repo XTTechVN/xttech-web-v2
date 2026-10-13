@@ -435,12 +435,20 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
 
     setIsSubmitting(true);
     try {
+      const currentPlatform =
+        Capacitor.getPlatform() === 'ios'
+          ? 'ios'
+          : Capacitor.getPlatform() === 'android'
+          ? 'android'
+          : 'web';
+
       await autoTimekeeping(
         {
           latitude: location.lat,
           longitude: location.lng,
           note: note || undefined,
           type,
+          platform: currentPlatform,
         },
         capturedFile,
       );

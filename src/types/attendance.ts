@@ -164,9 +164,11 @@ export interface Attendance {
     isLate: boolean | null;
     lateMinutes: number | null;
     imgCheckinPath: string | null;
+    checkInPlatform?: string | null;
     checkOut: string | null;
     checkOutLatitude: number | null;
     checkOutLongitude: number | null;
+    checkOutPlatform?: string | null;
     isEarlyLeave: boolean | null;
     earlyLeaveMinutes: number | null;
     imgCheckoutPath: string | null;
@@ -347,6 +349,7 @@ export interface AutoTimekeepingData {
     latitude: number;
     note?: string;
     type?: TimekeepingType;
+    platform?: 'ios' | 'android' | 'web';
 }
 
 // =======================

@@ -7,6 +7,7 @@ import { getLiveLocations } from '@/actions';
 import { getFileUrl } from '@/utils';
 import { MapPin, Navigation, ArrowUpRight, Signal } from 'lucide-react';
 import Image from 'next/image';
+import { PlatformBadge } from '@/components';
 
 export const LiveStaffWidget: React.FC = () => {
   const { data: liveStaff = [], isLoading } = useQuery({
@@ -86,14 +87,17 @@ export const LiveStaffWidget: React.FC = () => {
                   </div>
                 </div>
 
-                <span className="text-[10px] text-gray-400 font-mono shrink-0 pl-2">
-                  {staff.updatedAt
-                    ? new Date(staff.updatedAt).toLocaleTimeString('vi-VN', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : ''}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0 pl-2">
+                  <PlatformBadge platform={staff.platform} variant="minimal" />
+                  <span className="text-[10px] text-gray-400 font-mono">
+                    {staff.updatedAt
+                      ? new Date(staff.updatedAt).toLocaleTimeString('vi-VN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : ''}
+                  </span>
+                </div>
               </div>
             );
           })}
