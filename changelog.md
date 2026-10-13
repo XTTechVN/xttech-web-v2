@@ -21,6 +21,13 @@ All notable changes to the frontend project will be documented in this file.
   - Bổ sung type `DevicePlatform = 'ios' | 'android' | 'web'` và `DEVICE_PLATFORM_MAP`.
   - Bổ sung `checkInPlatform`, `checkOutPlatform` vào `Attendance` và `platform` vào `StaffLiveLocation`, `LocationPingPayload`, `AutoTimekeepingData`.
 
+### Changed (Tối ưu Trực quan Live Map & Đồng bộ Checkout Realtime)
+- **Sắp xếp thứ tự nhân sự ([`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/staff-list.tsx)):**
+  - Tự động sắp xếp danh sách nhân sự trên bản đồ theo 3 nhóm rõ ràng: **Rank 1: Online (`moving`, `stationary`) -> Rank 2: Tắt app (`app_closed`) -> Rank 3: Mất tín hiệu/Offline (`offline`)**.
+  - Các nhân sự trong cùng một nhóm trạng thái được sắp xếp theo thứ tự bảng chữ cái tiếng Việt (A-Z) giúp quản lý dễ dàng tra cứu.
+- **Xử lý Checkout thời gian thực ([`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx)):**
+  - Lắng nghe sự kiện WebSocket `STAFF_CHECKOUT`: Khi nhân viên hoàn tất check-out ca làm việc, hệ thống lập tức gỡ bỏ thông tin và marker của nhân viên đó khỏi danh sách và bản đồ Live Map mà không cần tải lại trang.
+
 ## [Unreleased] - 2026-10-12
 
 ### Added (Phát hiện vuốt tắt app & tăng nguồn đánh thức định vị nền iOS)
