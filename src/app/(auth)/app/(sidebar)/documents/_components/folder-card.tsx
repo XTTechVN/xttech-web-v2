@@ -67,13 +67,13 @@ export const FolderCard: React.FC<FolderCardProps> = ({
     folder.permission === 'view'
   );
   // Nếu là thư mục chia sẻ:
-  // - Chỉ chủ sở hữu (isOwner !== false) mới có quyền Xóa và Di chuyển.
+  // - Chỉ chủ sở hữu (isOwner !== false) hoặc quản trị viên (canManage) mới có quyền Xóa và Di chuyển.
   // - UI người nhận ẩn nút Xóa và Di chuyển.
-  // - Nút Đổi tên / Sửa: Chỉ hiện nếu người nhận có quyền sửa (folder.permission === 'edit'), còn lại ẩn đi.
-  const canEditFolder = isOwner !== false || folder.permission === 'edit';
-  const canMoveFolder = isOwner !== false;
-  const canDeleteFolder = isOwner !== false;
-  const canShareFolder = Boolean(onShare && isOwner !== false);
+  // - Nút Đổi tên / Sửa: Chỉ hiện nếu người nhận có quyền sửa (folder.permission === 'edit') hoặc là quản trị viên, còn lại ẩn đi.
+  const canEditFolder = isOwner !== false || folder.permission === 'edit' || canManage;
+  const canMoveFolder = isOwner !== false || canManage;
+  const canDeleteFolder = isOwner !== false || canManage;
+  const canShareFolder = Boolean(onShare && (isOwner !== false || canManage));
 
   const menuItems: {
     label: string;

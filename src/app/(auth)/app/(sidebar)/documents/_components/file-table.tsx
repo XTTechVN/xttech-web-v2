@@ -6,6 +6,7 @@ import type { DocumentItem } from '@/types';
 import { DriveFileIcon, isDocumentShared, getDocumentPermissions } from '../_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import { useAuthStore } from '@/stores';
+import { usePermission } from '@/hooks';
 import { cn } from '@/utils';
 import dayjs from 'dayjs';
 
@@ -64,6 +65,8 @@ export const FileTable: React.FC<FileTableProps> = ({
   canDelete = true,
 }) => {
   const { user } = useAuthStore();
+  const { isAdmin, isHR } = usePermission();
+  const canManage = isAdmin || isHR;
   const [openMenuDocId, setOpenMenuDocId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -105,6 +108,7 @@ export const FileTable: React.FC<FileTableProps> = ({
           const docPerms = getDocumentPermissions(doc, user, {
             isSharedSection: isSharedSection || currentFolderName?.includes('Được chia sẻ'),
             folderPermission: (doc.category as any)?.permission,
+            canManageDocuments: canManage,
           });
           const isShared = docPerms.isShared;
           const isOwner = docPerms.isOwner;

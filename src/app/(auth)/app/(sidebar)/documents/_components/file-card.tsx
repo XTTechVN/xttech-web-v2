@@ -7,6 +7,7 @@ import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
 import { formatBytes, getFileVisualInfo, isDocumentShared, getDocumentPermissions } from '../_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import { useAuthStore } from '@/stores';
+import { usePermission } from '@/hooks';
 import { cn } from '@/utils';
 
 interface FileCardProps {
@@ -61,9 +62,13 @@ export const FileCard: React.FC<FileCardProps> = ({
   }, [isMenuOpen]);
 
   const user = useAuthStore((state) => state.user);
+  const { isAdmin, isHR } = usePermission();
+  const canManage = isAdmin || isHR;
+
   const docPerms = getDocumentPermissions(doc, user, {
     isSharedSection: isSharedSection || locationName?.includes('Được chia sẻ'),
     folderPermission: (doc.category as any)?.permission,
+    canManageDocuments: canManage,
   });
   const isShared = docPerms.isShared;
 

@@ -17,9 +17,18 @@ import {
   getDocumentShares,
   revokeDocumentShare,
 } from '@/actions/document';
-import type { DocumentCategory, DocumentItem } from '@/types';
-import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
-import { isDocumentShared, getDocumentPermissions } from './_utils/doc-helpers';
+import {
+  DOCUMENT_TYPE_MAP,
+  DOCUMENT_STATUS_MAP,
+  type DocumentCategory,
+  type DocumentItem,
+} from '@/types';
+import {
+  isDocumentOwner,
+  isDocumentSharedWithUser,
+  isDocumentSharedOut,
+  getDocumentPermissions,
+} from './_utils/doc-helpers';
 
 // Custom Hooks
 import { useDocumentSelection } from './_hooks/use-document-selection';
@@ -187,15 +196,29 @@ function MyDocumentsContent() {
     };
     collectSharedIds(sharedFolders);
 
+    // Tập hợp toàn bộ ID của các thư mục thuộc cây thư mục của tôi
+    const allMyCategoryIds = new Set<number>();
+    const collectMyIds = (nodes: DocumentCategory[]) => {
+      for (const node of nodes) {
+        allMyCategoryIds.add(node.id);
+        if (node.children && node.children.length > 0) {
+          collectMyIds(node.children);
+        }
+      }
+    };
+    collectMyIds(myFolders);
+
     // PHÂN VÙNG: ĐƯỢC CHIA SẺ (tab === 'shared' hoặc đang ở trong thư mục con thuộc nhánh chia sẻ)
     if (isSharedSection) {
       if (currentFolderId === null) {
-        // Ở thư mục gốc của Được chia sẻ:
-        // Chỉ hiển thị các tài liệu ĐƯỢC CHIA SẺ mà không nằm trong các thư mục con chia sẻ đã hiển thị
+        // Ở thư mục gốc của Được chia sẻ với tôi:
+        // 1. Tuyệt đối KHÔNG hiển thị tài liệu do chính currentUser sở hữu.
+        // 2. Chỉ hiển thị tài liệu được người khác chia sẻ cho currentUser (có quyền truy cập hợp lệ).
+        // 3. Nếu tài liệu nằm trong thư mục chia sẻ con đã hiển thị -> không lặp lại ở gốc.
         return rawItems.filter((doc) => {
-          const shared = isDocumentShared(doc, currentUser?.id);
-          if (!shared) return false;
-          // Nếu không thuộc thư mục nào hoặc thư mục đó không nằm trong cây thư mục chia sẻ -> hiển thị ở gốc Được chia sẻ
+          if (isDocumentOwner(doc, currentUser, allMyCategoryIds)) return false;
+          const sharedToMe = isDocumentSharedWithUser(doc, currentUser, allSharedCategoryIds);
+          if (!sharedToMe) return false;
           if (doc.categoryId === null || doc.categoryId === undefined) return true;
           return !allSharedCategoryIds.has(doc.categoryId);
         });
@@ -208,13 +231,16 @@ function MyDocumentsContent() {
     }
 
     // PHÂN VÙNG: TÀI LIỆU CỦA TÔI (tab !== 'shared' và không nằm trong nhánh chia sẻ)
-    // Quy tắc: Những tài liệu nào được chia sẻ thì CHỈ vào mục Được chia sẻ thôi, KHÔNG vào Tài liệu của tôi
+    // Nguyên tắc quan trọng:
+    // - Hiển thị các tài liệu thuộc quyền sở hữu của người dùng hiện tại.
+    // - Khi chủ sở hữu chia sẻ tài liệu cho người khác, tài liệu VẪN PHẢI HIỂN THỊ trong Tài liệu của tôi của chủ sở hữu.
+    // - Tuyệt đối KHÔNG xóa, ẩn hoặc di chuyển tài liệu khỏi danh sách của chủ sở hữu sau khi chia sẻ.
+    // - Tài liệu do người khác tạo và chia sẻ cho tôi TUYỆT ĐỐI KHÔNG hiển thị tại đây.
     if (currentFolderId === null) {
       return rawItems.filter((doc) => {
         const isRoot = doc.categoryId === null || doc.categoryId === undefined;
         if (!isRoot) return false;
-        // Loại bỏ hoàn toàn tài liệu đã được chia sẻ
-        return !isDocumentShared(doc, currentUser?.id);
+        return isDocumentOwner(doc, currentUser, allMyCategoryIds);
       });
     }
 
@@ -222,14 +248,13 @@ function MyDocumentsContent() {
       const isInFolder =
         doc.categoryId === currentFolderId || doc.category?.id === currentFolderId;
       if (!isInFolder) return false;
-      // Loại bỏ tài liệu đã được chia sẻ khỏi thư mục cá nhân
-      return !isDocumentShared(doc, currentUser?.id);
+      return isDocumentOwner(doc, currentUser, allMyCategoryIds);
     });
-  }, [documentsData, currentFolderId, isSharedSection, sharedFolders, currentUser?.id]);
+  }, [documentsData, currentFolderId, isSharedSection, sharedFolders, myFolders, currentUser]);
 
-  // Quyền chỉnh sửa và xóa tài liệu / thư mục: trong mục Được chia sẻ với tôi chỉ HR hoặc ADMIN được sửa/xóa
-  const canEditItem = !isSharedSection || canManageDocuments;
-  const canDeleteItem = !isSharedSection || canManageDocuments;
+  // Quyền thao tác thư mục: trong mục Được chia sẻ với tôi chỉ HR hoặc ADMIN được sửa/xóa folder
+  const canEditFolder = !isSharedSection || canManageDocuments;
+  const canDeleteFolder = !isSharedSection || canManageDocuments;
 
   // Handle go back 1 level (như nút Back trên máy tính)
   const handleGoBack = () => {
@@ -295,8 +320,11 @@ function MyDocumentsContent() {
       } else {
         const docToDelete = documents.find((d) => d.id === deleteModal.id);
         if (docToDelete) {
-          const perms = getDocumentPermissions(docToDelete, currentUser, { isSharedSection });
-          if (perms.isShared && !perms.isOwner) {
+          const perms = getDocumentPermissions(docToDelete, currentUser, {
+            isSharedSection,
+            canManageDocuments,
+          });
+          if (!perms.canDelete && !canManageDocuments) {
             toast.error('Chỉ chủ sở hữu tài liệu mới có quyền xóa');
             setDeleteModal((prev) => ({ ...prev, isOpen: false, loading: false }));
             return;
@@ -356,8 +384,11 @@ function MyDocumentsContent() {
     if (sourceType === 'document') {
       const doc = documents.find((d) => d.id === sourceId);
       if (doc) {
-        const perms = getDocumentPermissions(doc, currentUser, { isSharedSection });
-        if (perms.isShared && !perms.isOwner) {
+        const perms = getDocumentPermissions(doc, currentUser, {
+          isSharedSection,
+          canManageDocuments,
+        });
+        if (!perms.canMove && !canManageDocuments) {
           toast.error('Chỉ chủ sở hữu tài liệu mới có quyền di chuyển');
           return;
         }
@@ -480,7 +511,7 @@ function MyDocumentsContent() {
                       setDetailFolderOpen(true);
                     }}
                     onEdit={
-                      canEditItem
+                      canEditFolder
                         ? (f) => {
                             setEditingFolder(f);
                             setEditFolderOpen(true);
@@ -488,7 +519,7 @@ function MyDocumentsContent() {
                         : undefined
                     }
                     onShare={
-                      canEditItem
+                      canEditFolder
                         ? (f) => {
                             setSharingFolder(f);
                             setShareFolderOpen(true);
@@ -496,16 +527,16 @@ function MyDocumentsContent() {
                         : undefined
                     }
                     onMove={
-                      canEditItem
+                      canEditFolder
                         ? (f) => {
                             setItemToMove({ type: 'folder', item: f });
                             setMoveModalOpen(true);
                           }
                         : undefined
                     }
-                    onDropItem={canEditItem ? handleDropItem : undefined}
+                    onDropItem={canEditFolder ? handleDropItem : undefined}
                     onDelete={
-                      canDeleteItem
+                      canDeleteFolder
                         ? (f) => {
                             setDeleteModal({
                               isOpen: true,
@@ -538,8 +569,8 @@ function MyDocumentsContent() {
                             ? 'Thùng rác'
                             : 'Tài liệu của tôi')
                     }
-                    canEdit={canEditItem}
-                    canDelete={canDeleteItem}
+                    canEdit={true}
+                    canDelete={true}
                     onPreview={(d) => {
                       setSelectedDoc(d);
                       setPreviewDocOpen(true);
@@ -548,44 +579,28 @@ function MyDocumentsContent() {
                       setSelectedDoc(d);
                       setDetailDocOpen(true);
                     }}
-                    onEdit={
-                      canEditItem
-                        ? (d) => {
-                            setEditingDoc(d);
-                            setEditDocOpen(true);
-                          }
-                        : undefined
-                    }
-                    onShare={
-                      canEditItem
-                        ? (d) => {
-                            setSharingDoc(d);
-                            setSharingFolder(null);
-                            setShareFolderOpen(true);
-                          }
-                        : undefined
-                    }
-                    onMove={
-                      canEditItem
-                        ? (d) => {
-                            setItemToMove({ type: 'document', item: d });
-                            setMoveModalOpen(true);
-                          }
-                        : undefined
-                    }
-                    onDelete={
-                      canDeleteItem
-                        ? (d) => {
-                            setDeleteModal({
-                              isOpen: true,
-                              type: 'document',
-                              id: d.id,
-                              name: d.title,
-                              loading: false,
-                            });
-                          }
-                        : undefined
-                    }
+                    onEdit={(d) => {
+                      setEditingDoc(d);
+                      setEditDocOpen(true);
+                    }}
+                    onShare={(d) => {
+                      setSharingDoc(d);
+                      setSharingFolder(null);
+                      setShareFolderOpen(true);
+                    }}
+                    onMove={(d) => {
+                      setItemToMove({ type: 'document', item: d });
+                      setMoveModalOpen(true);
+                    }}
+                    onDelete={(d) => {
+                      setDeleteModal({
+                        isOpen: true,
+                        type: 'document',
+                        id: d.id,
+                        name: d.title,
+                        loading: false,
+                      });
+                    }}
                   />
                 ))}
               </div>
@@ -613,7 +628,7 @@ function MyDocumentsContent() {
                       setDetailFolderOpen(true);
                     }}
                     onEdit={
-                      canEditItem
+                      canEditFolder
                         ? (f) => {
                             setEditingFolder(f);
                             setEditFolderOpen(true);
@@ -621,7 +636,7 @@ function MyDocumentsContent() {
                         : undefined
                     }
                     onShare={
-                      canEditItem
+                      canEditFolder
                         ? (f) => {
                             setSharingFolder(f);
                             setSharingDoc(null);
@@ -630,16 +645,16 @@ function MyDocumentsContent() {
                         : undefined
                     }
                     onMove={
-                      canEditItem
+                      canEditFolder
                         ? (f) => {
                             setItemToMove({ type: 'folder', item: f });
                             setMoveModalOpen(true);
                           }
                         : undefined
                     }
-                    onDropItem={canEditItem ? handleDropItem : undefined}
+                    onDropItem={canEditFolder ? handleDropItem : undefined}
                     onDelete={
-                      canDeleteItem
+                      canDeleteFolder
                         ? (f) => {
                             setDeleteModal({
                               isOpen: true,
@@ -671,8 +686,8 @@ function MyDocumentsContent() {
                         : 'Tài liệu của tôi'
                     }
                     showHeader={foldersToDisplay.length === 0}
-                    canEdit={canEditItem}
-                    canDelete={canDeleteItem}
+                    canEdit={true}
+                    canDelete={true}
                     onPreview={(d) => {
                       setSelectedDoc(d);
                       setPreviewDocOpen(true);
@@ -681,44 +696,28 @@ function MyDocumentsContent() {
                       setSelectedDoc(d);
                       setDetailDocOpen(true);
                     }}
-                    onEdit={
-                      canEditItem
-                        ? (d) => {
-                            setEditingDoc(d);
-                            setEditDocOpen(true);
-                          }
-                        : undefined
-                    }
-                    onShare={
-                      canEditItem
-                        ? (d) => {
-                            setSharingDoc(d);
-                            setSharingFolder(null);
-                            setShareFolderOpen(true);
-                          }
-                        : undefined
-                    }
-                    onMove={
-                      canEditItem
-                        ? (d) => {
-                            setItemToMove({ type: 'document', item: d });
-                            setMoveModalOpen(true);
-                          }
-                        : undefined
-                    }
-                    onDelete={
-                      canDeleteItem
-                        ? (d) => {
-                            setDeleteModal({
-                              isOpen: true,
-                              type: 'document',
-                              id: d.id,
-                              name: d.title,
-                              loading: false,
-                            });
-                          }
-                        : undefined
-                    }
+                    onEdit={(d) => {
+                      setEditingDoc(d);
+                      setEditDocOpen(true);
+                    }}
+                    onShare={(d) => {
+                      setSharingDoc(d);
+                      setSharingFolder(null);
+                      setShareFolderOpen(true);
+                    }}
+                    onMove={(d) => {
+                      setItemToMove({ type: 'document', item: d });
+                      setMoveModalOpen(true);
+                    }}
+                    onDelete={(d) => {
+                      setDeleteModal({
+                        isOpen: true,
+                        type: 'document',
+                        id: d.id,
+                        name: d.title,
+                        loading: false,
+                      });
+                    }}
                     onNavigateFolder={(id) => setCurrentFolderId(id)}
                   />
                 )}

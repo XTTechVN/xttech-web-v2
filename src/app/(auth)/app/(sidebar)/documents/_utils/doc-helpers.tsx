@@ -10,24 +10,147 @@ import {
 import type { DocumentItem } from '@/types';
 
 /**
- * Kiểm tra xem một tài liệu có phải là tài liệu được chia sẻ hay không:
- * 1. Có cờ isShared = true từ backend
- * 2. Phạm vi chia sẻ khác 'private' (ví dụ: 'all', 'department', 'user', 'internal')
- * 3. Có danh sách người nhận recipients > 0
- * 4. Không phải do người dùng hiện tại tạo ra (được người khác chia sẻ cho mình)
+ * Kiểm tra xem người dùng hiện tại có phải là CHỦ SỞ HỮU của tài liệu hay không.
+ * Quy tắc:
+ * - Chủ sở hữu là người tạo ra tài liệu (createdById khớp với currentUser.id hoặc email).
+ * - Hoặc backend trả về cờ isOwner === true / is_owner === true.
+ * - Quyền sở hữu TUYỆT ĐỐI KHÔNG bị thay đổi bởi việc chia sẻ cho người khác.
+ */
+export function isDocumentOwner(
+  doc: DocumentItem | null | undefined,
+  currentUser?: { id?: string | number; email?: string } | null,
+  myCategoryIds?: Set<number>
+): boolean {
+  if (!doc || !currentUser) return false;
+
+  // 1. Backend trả về cờ isOwner / is_owner trực tiếp
+  if (typeof (doc as any).isOwner === 'boolean') {
+    return (doc as any).isOwner;
+  }
+  if (typeof (doc as any).is_owner === 'boolean') {
+    return (doc as any).is_owner;
+  }
+
+  const currentUserId = currentUser.id ? String(currentUser.id) : null;
+  const currentUserEmail = currentUser.email?.trim().toLowerCase() || null;
+
+  const docCreatedById = doc.createdById
+    ? String(doc.createdById)
+    : doc.createdBy?.id
+    ? String(doc.createdBy.id)
+    : (doc as any)?.creatorId
+    ? String((doc as any).creatorId)
+    : (doc as any)?.user_id
+    ? String((doc as any).user_id)
+    : null;
+
+  // 2. So sánh ID người tạo
+  if (currentUserId && docCreatedById) {
+    return currentUserId === docCreatedById;
+  }
+
+  // 3. So sánh Email người tạo
+  const docCreatedByEmail = doc.createdBy?.email?.trim().toLowerCase();
+  if (currentUserEmail && docCreatedByEmail) {
+    return currentUserEmail === docCreatedByEmail;
+  }
+
+  // 4. Nếu tài liệu có thông tin người tạo mà không khớp -> Chắc chắn không phải chủ sở hữu
+  if (currentUserId && docCreatedById && currentUserId !== docCreatedById) {
+    return false;
+  }
+
+  // 5. Fallback: Nếu tài liệu nằm trong thư mục cá nhân thuộc sở hữu của currentUser
+  if (doc.categoryId && myCategoryIds && myCategoryIds.has(doc.categoryId)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Kiểm tra xem tài liệu có phải được người khác chia sẻ cho người dùng hiện tại hay không.
+ * Dùng cho mục "Được chia sẻ với tôi".
+ * Điều kiện:
+ * 1. Người dùng hiện tại KHÔNG PHẢI là chủ sở hữu của tài liệu (!isDocumentOwner).
+ * 2. Tài liệu được chia sẻ hợp lệ:
+ *    - currentUser nằm trong danh sách recipients (theo userId hoặc email).
+ *    - Hoặc shareScope là 'all' (toàn công ty) / 'department' / 'user' (nội bộ).
+ *    - Hoặc tài liệu nằm trong thư mục được chia sẻ (shared folder).
+ *    - Hoặc backend trả về isShared = true cho tài liệu mà currentUser không phải là owner.
+ */
+export function isDocumentSharedWithUser(
+  doc: DocumentItem | null | undefined,
+  currentUser?: { id?: string | number; email?: string } | null,
+  sharedCategoryIds?: Set<number>
+): boolean {
+  if (!doc || !currentUser) return false;
+
+  // TUYỆT ĐỐI KHÔNG hiển thị tài liệu do chính người dùng sở hữu trong mục Được chia sẻ với tôi
+  if (isDocumentOwner(doc, currentUser)) {
+    return false;
+  }
+
+  // Kiểm tra nếu tài liệu nằm trong thư mục được chia sẻ
+  if (doc.categoryId && sharedCategoryIds && sharedCategoryIds.has(doc.categoryId)) {
+    return true;
+  }
+
+  // Nếu backend đã gắn cờ isShared = true cho tài liệu này
+  if ((doc as any).isShared === true || (doc as any).is_shared === true) {
+    return true;
+  }
+
+  const currentUserId = currentUser.id ? String(currentUser.id) : null;
+  const currentUserEmail = currentUser.email?.trim().toLowerCase();
+
+  // Kiểm tra trong danh sách người nhận (recipients)
+  if (Array.isArray(doc.recipients) && doc.recipients.length > 0) {
+    const isRecipient = doc.recipients.some((r: any) => {
+      const rUid = r.userId || r.user_id || r.id || r.user?.id;
+      if (currentUserId && rUid && String(rUid) === currentUserId) return true;
+      const rEmail = r.email || r.user?.email;
+      if (currentUserEmail && rEmail && String(rEmail).trim().toLowerCase() === currentUserEmail) return true;
+      return false;
+    });
+    if (isRecipient) return true;
+  }
+
+  // Kiểm tra theo phạm vi chia sẻ
+  const scope = doc.shareScope || (doc as any).share_scope;
+  if (scope === 'all' || scope === 'department' || scope === 'internal' || scope === 'user') {
+    return true;
+  }
+  if (scope && scope !== 'private') {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Kiểm tra xem tài liệu có đang ở trạng thái đã chia sẻ ra ngoài hay không.
+ * CHỈ dùng để hiển thị icon/badge <Users /> "Đã chia sẻ" trên giao diện (FileCard, FileTable).
+ * TUYỆT ĐỐI KHÔNG dùng hàm này để xác định chủ sở hữu hay lọc ẩn tài liệu khỏi Tài liệu của tôi!
+ */
+export function isDocumentSharedOut(doc: DocumentItem | null | undefined): boolean {
+  if (!doc) return false;
+  if ((doc as any).isShared === true || (doc as any).is_shared === true) return true;
+  const scope = doc.shareScope || (doc as any).share_scope;
+  if (scope && scope !== 'private') return true;
+  if (Array.isArray(doc.recipients) && doc.recipients.length > 0) return true;
+  return false;
+}
+
+/**
+ * Helper kiểm tra trạng thái chia sẻ (Tương thích ngược với các nơi đang gọi).
  */
 export function isDocumentShared(
   doc: DocumentItem | null | undefined,
   currentUserId?: string | number
 ): boolean {
   if (!doc) return false;
-  if ((doc as any).isShared === true) return true;
-  if (doc.shareScope && doc.shareScope !== 'private') return true;
-  if (Array.isArray(doc.recipients) && doc.recipients.length > 0) return true;
-  if (currentUserId && doc.createdById && String(doc.createdById) !== String(currentUserId)) {
-    return true;
-  }
-  return false;
+  return isDocumentSharedOut(doc);
 }
 
 export interface DocumentPermissionsResult {
@@ -40,14 +163,14 @@ export interface DocumentPermissionsResult {
 }
 
 /**
- * Xác định quyền thao tác trên tài liệu:
- * - Nếu tài liệu KHÔNG được chia sẻ (tài liệu cá nhân của tôi):
- *   Chủ sở hữu có đầy đủ quyền xem, tải, sửa, xóa, di chuyển, chia sẻ.
- * - Nếu tài liệu ĐƯỢC CHIA SẺ:
- *   + Chỉ CHỦ SỞ HỮU (owner / người tạo) mới có quyền xóa và di chuyển.
- *   + Đối với NGƯỜI ĐƯỢC NHẬN (recipient): Ẩn 2 nút Xóa tài liệu và Di chuyển.
- *   + Nút Sửa: Nếu người nhận được cấp quyền sửa ('edit') thì hiện nút sửa; nếu không có quyền sửa (view-only) thì ẩn đi.
- *   + Nút Chia sẻ: Chỉ chủ sở hữu mới có quyền chia sẻ tiếp tài liệu.
+ * Xác định quyền thao tác trên tài liệu:
+ * - Chủ sở hữu: Có đầy đủ quyền xem, tải, chỉnh sửa, xóa, di chuyển, chia sẻ.
+ * - Admin / HR: Có ngoại lệ quyền quản trị trên toàn bộ tài liệu hệ thống.
+ * - Người nhận (Recipient):
+ *   + Nút Di chuyển: Ẩn hoàn toàn (chỉ chủ sở hữu hoặc admin/hr mới có quyền).
+ *   + Nút Xóa: Ẩn hoàn toàn (chỉ chủ sở hữu hoặc admin/hr mới có quyền xóa tài liệu gốc).
+ *   + Nút Chia sẻ: Ẩn hoàn toàn (chỉ chủ sở hữu mới có quyền chia sẻ tiếp).
+ *   + Nút Sửa: Chỉ hiện nếu người nhận được cấp quyền sửa ('edit'). Nếu quyền là 'view' (chỉ xem) thì ẩn đi.
  */
 export function getDocumentPermissions(
   doc: DocumentItem | null | undefined,
@@ -55,6 +178,8 @@ export function getDocumentPermissions(
   context?: {
     isSharedSection?: boolean;
     folderPermission?: 'view' | 'edit' | string;
+    canManageDocuments?: boolean;
+    myCategoryIds?: Set<number>;
   }
 ): DocumentPermissionsResult {
   if (!doc) {
@@ -68,42 +193,19 @@ export function getDocumentPermissions(
     };
   }
 
-  const currentUserId = currentUser?.id;
-  const currentUserEmail = currentUser?.email;
+  // 1. Kiểm tra quyền sở hữu
+  const isOwner = isDocumentOwner(doc, currentUser, context?.myCategoryIds);
 
-  // 1. Kiểm tra tài liệu có phải là tài liệu chia sẻ không
-  const isShared = Boolean(
-    context?.isSharedSection ||
-    isDocumentShared(doc, currentUserId)
-  );
+  // 2. Trạng thái đã chia sẻ (hiển thị badge icon)
+  const isShared = isDocumentSharedOut(doc) || Boolean(context?.isSharedSection);
 
-  // 2. Kiểm tra người dùng hiện tại có phải chủ sở hữu của tài liệu không
-  const isOwner = Boolean(
-    (doc as any).isOwner === true ||
-    (doc as any).is_owner === true ||
-    (currentUserId && (
-      (doc.createdById && String(doc.createdById) === String(currentUserId)) ||
-      (doc.createdBy?.id && String(doc.createdBy.id) === String(currentUserId))
-    )) ||
-    (!isShared && !context?.isSharedSection)
-  );
+  // 3. Kiểm tra vai trò quản trị viên (Admin hoặc HR)
+  const isAdminOrHR = Boolean(context?.canManageDocuments);
 
-  // Nếu không phải tài liệu chia sẻ (tài liệu cá nhân):
-  if (!isShared) {
-    return {
-      isShared: false,
-      isOwner: true,
-      canEdit: true,
-      canMove: true,
-      canDelete: true,
-      canShare: true,
-    };
-  }
-
-  // Nếu là tài liệu chia sẻ và người dùng là CHỦ (Owner):
+  // Nếu người dùng là CHỦ SỞ HỮU:
   if (isOwner) {
     return {
-      isShared: true,
+      isShared,
       isOwner: true,
       canEdit: true,
       canMove: true,
@@ -112,12 +214,22 @@ export function getDocumentPermissions(
     };
   }
 
-  // Nếu là tài liệu chia sẻ và người dùng là NGƯỜI ĐƯỢC NHẬN (Recipient):
-  // - Xóa và Di chuyển: Ẩn hoàn toàn (chỉ chủ mới có quyền)
-  // - Sửa: Kiểm tra quyền sửa của người nhận
+  // Nếu người dùng là ADMIN hoặc HR (ngoại lệ quản trị):
+  if (isAdminOrHR) {
+    return {
+      isShared,
+      isOwner: false,
+      canEdit: true,
+      canMove: true,
+      canDelete: true,
+      canShare: true,
+    };
+  }
+
+  // Nếu người dùng là NGƯỜI NHẬN (Recipient - không phải owner, không phải admin/hr):
   let hasEditPermission = false;
 
-  // A. Kiểm tra quyền gắn trực tiếp trên document object (nếu backend trả về)
+  // A. Kiểm tra quyền gắn trực tiếp trên document object (từ backend)
   const docPerm = (doc as any).permission || (doc as any).permission_level || (doc as any).permissionLevel;
   if (docPerm === 'edit' || docPerm === 'EDIT') {
     hasEditPermission = true;
@@ -127,16 +239,19 @@ export function getDocumentPermissions(
     hasEditPermission = true;
   }
 
-  // B. Kiểm tra trong danh sách người nhận (recipients) của tài liệu
+  // B. Kiểm tra quyền trong danh sách người nhận (recipients) của tài liệu
+  const currentUserId = currentUser?.id ? String(currentUser.id) : null;
+  const currentUserEmail = currentUser?.email?.trim().toLowerCase();
+
   if (!hasEditPermission && Array.isArray(doc.recipients) && (currentUserId || currentUserEmail)) {
     const myRecipient = doc.recipients.find((r: any) => {
       const matchId =
         currentUserId &&
-        String(r.userId || r.user_id || r.id || r.user?.id) === String(currentUserId);
+        String(r.userId || r.user_id || r.id || r.user?.id) === currentUserId;
       const matchEmail =
         currentUserEmail &&
         Boolean(r.email) &&
-        r.email.toLowerCase() === currentUserEmail.toLowerCase();
+        r.email.toLowerCase().trim() === currentUserEmail;
       return matchId || matchEmail;
     });
 
@@ -150,13 +265,13 @@ export function getDocumentPermissions(
     }
   }
 
-  // C. Kiểm tra kế thừa quyền từ thư mục cha nếu nằm trong thư mục chia sẻ
+  // C. Kiểm tra kế thừa quyền từ thư mục cha nếu nằm trong thư mục chia sẻ
   if (!hasEditPermission && context?.folderPermission === 'edit') {
     hasEditPermission = true;
   }
 
   return {
-    isShared: true,
+    isShared,
     isOwner: false,
     canEdit: hasEditPermission,
     canMove: false,
