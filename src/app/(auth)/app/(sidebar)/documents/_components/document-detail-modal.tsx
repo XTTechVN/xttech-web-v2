@@ -176,6 +176,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           userMap.set(uid, {
             id: uid,
             fullName: r.fullName || emp?.fullName || emp?.username || 'Nhân sự',
+            code: emp?.identifyCode || emp?.code || (r as any)?.identifyCode || (r as any)?.code,
             email: r.email || emp?.email,
             departmentName: r.departmentName || emp?.departmentName || emp?.department?.name,
             isRead: Boolean(r.isRead),
@@ -194,6 +195,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           userMap.set(sUid, {
             id: sUid,
             fullName: emp?.fullName || emp?.username || `Nhân sự #${sUid}`,
+            code: emp?.identifyCode || emp?.code,
             email: emp?.email,
             departmentName: emp?.departmentName || emp?.department?.name,
             isRead: false,
@@ -211,6 +213,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             userMap.set(sUid, {
               id: sUid,
               fullName: s.userName || s.user?.fullName || emp?.fullName || emp?.username || 'Nhân sự',
+              code: emp?.identifyCode || emp?.code || (s as any)?.code,
               email: s.user?.email || emp?.email,
               departmentName: s.departmentName || s.department?.name || emp?.departmentName,
               isRead: false,
@@ -680,12 +683,19 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                         {(u.fullName || 'U').charAt(0)}
                       </div>
                       <div className="min-w-0 truncate">
-                        <span className="font-medium text-slate-800 truncate block">
-                          {u.fullName}
-                        </span>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-medium text-slate-800 truncate block">
+                            {u.fullName}
+                          </span>
+                          {u.code && (
+                            <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 text-[10px] rounded font-mono font-medium border border-slate-200 shrink-0">
+                              {u.code}
+                            </span>
+                          )}
+                        </div>
                         {(u.departmentName || u.email) && (
                           <span className="text-[10px] text-slate-500 truncate block">
-                            {[u.departmentName, u.email].filter(Boolean).join(' • ')}
+                            {[u.email, u.departmentName].filter(Boolean).join(' • ')}
                           </span>
                         )}
                       </div>

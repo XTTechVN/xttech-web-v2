@@ -334,21 +334,30 @@ export const getDocumentShares = async (documentId: number): Promise<FolderShare
     const docRes = await api.get(`/api/v1/documents/${documentId}`);
     const docData = docRes.data?.data ?? docRes.data;
     if (Array.isArray(docData?.recipients)) {
-      return docData.recipients.map((r: any) => ({
-        id: r.id || r.userId,
-        categoryId: documentId,
-        userId: r.userId,
-        userName: r.fullName || r.userName || 'Người nhận',
-        user: {
-          id: r.userId,
-          fullName: r.fullName || r.userName || 'Người nhận',
-          email: r.email,
-          avatar: r.avatar,
-        },
-        departmentId: r.departmentId,
-        departmentName: r.departmentName,
-        permission: r.permission || 'view',
-      }));
+      return docData.recipients.map((r: any) => {
+        const u = r.user || {};
+        const name = r.fullName || r.full_name || r.userName || u.fullName || u.username || '';
+        const code = r.code || r.identifyCode || r.identify_code || u.code || u.identifyCode || '';
+        const email = r.email || u.email || '';
+        const avatar = r.avatar || u.avatar || null;
+        return {
+          id: r.id || r.userId || r.user_id,
+          categoryId: documentId,
+          userId: r.userId || r.user_id || u.id,
+          userName: name,
+          code,
+          user: {
+            id: r.userId || r.user_id || u.id,
+            fullName: name,
+            email,
+            avatar,
+            identifyCode: code,
+          },
+          departmentId: r.departmentId || r.department_id,
+          departmentName: r.departmentName || r.department_name,
+          permission: r.permission || 'view',
+        };
+      });
     }
     return [];
   } catch (error: any) {
