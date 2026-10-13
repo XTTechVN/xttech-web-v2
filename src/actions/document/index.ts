@@ -282,7 +282,7 @@ export const revokeDocumentCategoryShare = async (categoryId: number, shareId: n
 // 3.1. Phân quyền chia sẻ tài liệu (Document Sharing)
 // ==========================================
 
-// 4.4. Phân quyền chia sẻ tài liệu: Cập nhật người nhận qua PUT /api/v1/documents/{id} (hoặc POST /shares)
+// 4.4. Phân quyền chia sẻ tài liệu: Cập nhật người nhận qua PUT /api/v1/documents/{id}
 export const shareDocument = async (
   documentId: number,
   payload: {
@@ -296,20 +296,6 @@ export const shareDocument = async (
   }
 ): Promise<any> => {
   try {
-    // 1. Thử gọi API chuyên biệt POST /api/v1/documents/{id}/shares nếu chỉ thêm 1 user
-    if (payload.userId && !payload.recipientUserIds) {
-      try {
-        const res = await api.post(`/api/v1/documents/${documentId}/shares`, {
-          userId: payload.userId,
-          permission: payload.permission || 'view',
-        });
-        return res.data?.data ?? res.data;
-      } catch (err: any) {
-        // Fallback sang PUT /api/v1/documents/{id} bên dưới
-      }
-    }
-
-    // 2. Gửi request PUT /api/v1/documents/{id} cập nhật danh sách người nhận và phạm vi chia sẻ
     const updateData: Record<string, any> = {};
     if (payload.shareScope) {
       updateData.shareScope = payload.shareScope;
@@ -318,10 +304,16 @@ export const shareDocument = async (
     if (payload.recipientUserIds) {
       updateData.recipientUserIds = payload.recipientUserIds.map(String);
       updateData.recipient_user_ids = payload.recipientUserIds.map(String);
+    } else if (payload.userId) {
+      updateData.recipientUserIds = [String(payload.userId)];
+      updateData.recipient_user_ids = [String(payload.userId)];
     }
     if (payload.recipientDepartmentIds) {
       updateData.recipientDepartmentIds = payload.recipientDepartmentIds.map(Number);
       updateData.recipient_department_ids = payload.recipientDepartmentIds.map(Number);
+    } else if (payload.departmentId) {
+      updateData.recipientDepartmentIds = [Number(payload.departmentId)];
+      updateData.recipient_department_ids = [Number(payload.departmentId)];
     }
     if (payload.approverId) {
       updateData.approverId = payload.approverId;
@@ -336,38 +328,31 @@ export const shareDocument = async (
 };
 
 // 4.5. Xem danh sách những người đang được chia sẻ tài liệu
+// Backend lưu recipients trực tiếp trong chi tiết tài liệu GET /api/v1/documents/{id}
 export const getDocumentShares = async (documentId: number): Promise<FolderShare[]> => {
   try {
-    const res = await api.get(`/api/v1/documents/${documentId}/shares`);
-    const raw = res.data?.data ?? res.data;
-    if (Array.isArray(raw)) return raw;
-    if (Array.isArray(raw?.items)) return raw.items;
+    const docRes = await api.get(`/api/v1/documents/${documentId}`);
+    const docData = docRes.data?.data ?? docRes.data;
+    if (Array.isArray(docData?.recipients)) {
+      return docData.recipients.map((r: any) => ({
+        id: r.id || r.userId,
+        categoryId: documentId,
+        userId: r.userId,
+        userName: r.fullName || r.userName || 'Người nhận',
+        user: {
+          id: r.userId,
+          fullName: r.fullName || r.userName || 'Người nhận',
+          email: r.email,
+          avatar: r.avatar,
+        },
+        departmentId: r.departmentId,
+        departmentName: r.departmentName,
+        permission: r.permission || 'view',
+      }));
+    }
     return [];
   } catch (error: any) {
-    // Fallback: Lấy chi tiết tài liệu và extract mảng recipients
-    try {
-      const docRes = await api.get(`/api/v1/documents/${documentId}`);
-      const docData = docRes.data?.data ?? docRes.data;
-      if (Array.isArray(docData?.recipients)) {
-        return docData.recipients.map((r: any) => ({
-          id: r.id || r.userId,
-          categoryId: documentId,
-          userId: r.userId,
-          userName: r.fullName,
-          user: {
-            id: r.userId,
-            fullName: r.fullName,
-            email: r.email,
-            avatar: r.avatar,
-          },
-          departmentId: r.departmentId,
-          departmentName: r.departmentName,
-          permission: 'view',
-        }));
-      }
-    } catch (e) {
-      console.warn('Lỗi getDocumentShares fallback:', e);
-    }
+    console.warn('Lỗi getDocumentShares:', error);
     return [];
   }
 };
@@ -375,25 +360,20 @@ export const getDocumentShares = async (documentId: number): Promise<FolderShare
 // 4.6. Thu hồi quyền chia sẻ tài liệu
 export const revokeDocumentShare = async (documentId: number, shareId: number | string): Promise<void> => {
   try {
-    await api.delete(`/api/v1/documents/${documentId}/shares/${shareId}`);
-  } catch (error: any) {
-    // Fallback: Lấy tài liệu hiện tại, lọc bớt userId/departmentId và PUT cập nhật lại
-    try {
-      const docRes = await api.get(`/api/v1/documents/${documentId}`);
-      const docData = docRes.data?.data ?? docRes.data;
-      const currentRecipients: any[] = docData?.recipients || [];
-      const updatedUserIds = currentRecipients
-        .filter((r) => String(r.id) !== String(shareId) && String(r.userId) !== String(shareId))
-        .map((r) => String(r.userId))
-        .filter(Boolean);
+    const docRes = await api.get(`/api/v1/documents/${documentId}`);
+    const docData = docRes.data?.data ?? docRes.data;
+    const currentRecipients: any[] = docData?.recipients || [];
+    const updatedUserIds = currentRecipients
+      .filter((r) => String(r.id) !== String(shareId) && String(r.userId) !== String(shareId))
+      .map((r) => String(r.userId))
+      .filter(Boolean);
 
-      await api.put(`/api/v1/documents/${documentId}`, {
-        recipientUserIds: updatedUserIds,
-        recipient_user_ids: updatedUserIds,
-      });
-    } catch (e: any) {
-      throw new Error(extractErrorMessage(e, 'Không thể thu hồi quyền chia sẻ tài liệu'));
-    }
+    await api.put(`/api/v1/documents/${documentId}`, {
+      recipientUserIds: updatedUserIds,
+      recipient_user_ids: updatedUserIds,
+    });
+  } catch (e: any) {
+    throw new Error(extractErrorMessage(e, 'Không thể thu hồi quyền chia sẻ tài liệu'));
   }
 };
 

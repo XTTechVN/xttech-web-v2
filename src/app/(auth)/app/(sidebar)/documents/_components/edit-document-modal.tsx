@@ -5,7 +5,6 @@ import { Modal, Button, Input, Textarea, Select, MultiSelect } from '@/component
 import {
   updateDocument,
   getDocumentById,
-  getDocumentShares,
 } from '@/actions/document';
 import { getEmployees } from '@/actions/employee';
 import { getDepartments } from '@/actions/department';
@@ -100,12 +99,19 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
     enabled: Boolean(isOpen && doc?.id),
   });
 
-  // Fetch thêm shares của tài liệu nếu có
-  const { data: sharesData = [] } = useQuery({
-    queryKey: ['document-shares', doc?.id],
-    queryFn: () => (doc?.id ? getDocumentShares(doc.id) : []),
-    enabled: Boolean(isOpen && doc?.id),
-  });
+  // Trích xuất danh sách shares từ recipients trong chi tiết tài liệu
+  const sharesData = useMemo(() => {
+    if (Array.isArray(fullDoc?.recipients)) {
+      return fullDoc.recipients.map((r: any) => ({
+        id: r.id || r.userId,
+        userId: r.userId,
+        userName: r.fullName,
+        departmentId: r.departmentId,
+        departmentName: r.departmentName,
+      }));
+    }
+    return [];
+  }, [fullDoc]);
 
   const employees = employeesData?.items || [];
   const departments = useMemo(() => {

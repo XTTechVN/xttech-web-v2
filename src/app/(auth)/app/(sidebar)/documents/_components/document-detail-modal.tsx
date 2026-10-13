@@ -39,7 +39,6 @@ import {
   publishDocument,
   updateDocument,
   getDocumentById,
-  getDocumentShares,
 } from '@/actions/document';
 import { getEmployees } from '@/actions/employee';
 import { getDepartments } from '@/actions/department';
@@ -77,11 +76,20 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
     enabled: Boolean(isOpen && doc?.id),
   });
 
-  const { data: sharesData = [] } = useQuery({
-    queryKey: ['document-shares', doc?.id],
-    queryFn: () => (doc?.id ? getDocumentShares(doc.id) : []),
-    enabled: Boolean(isOpen && doc?.id),
-  });
+  const targetDoc = fullDoc || doc;
+
+  const sharesData = useMemo(() => {
+    if (Array.isArray(targetDoc?.recipients)) {
+      return targetDoc.recipients.map((r: any) => ({
+        id: r.id || r.userId,
+        userId: r.userId,
+        userName: r.fullName,
+        departmentId: r.departmentId,
+        departmentName: r.departmentName,
+      }));
+    }
+    return [];
+  }, [targetDoc]);
 
   const { data: employeesData } = useQuery({
     queryKey: ['employees', 'share-options'],
@@ -102,8 +110,6 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
     if (Array.isArray(raw?.items)) return raw.items;
     return [];
   }, [departmentsData]);
-
-  const targetDoc = fullDoc || doc;
 
   // Resolve danh sách phòng ban nhận
   const resolvedDepartments = useMemo(() => {

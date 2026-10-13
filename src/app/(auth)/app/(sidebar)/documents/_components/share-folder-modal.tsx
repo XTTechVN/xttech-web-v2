@@ -107,6 +107,22 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
     return [];
   }, [departmentsData]);
 
+  const employeeMap = useMemo(() => {
+    const map = new Map<string, any>();
+    employees.forEach((emp: any) => {
+      if (emp?.id) map.set(String(emp.id), emp);
+    });
+    return map;
+  }, [employees]);
+
+  const departmentMap = useMemo(() => {
+    const map = new Map<string, any>();
+    departments.forEach((dept: any) => {
+      if (dept?.id) map.set(String(dept.id), dept);
+    });
+    return map;
+  }, [departments]);
+
   // Extract existing shared IDs
   const existingUserIds = useMemo(() => {
     return shares
@@ -553,9 +569,16 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
                     {currentUser?.fullName?.charAt(0) || 'T'}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-semibold text-gray-900 truncate">
-                      {currentUser?.fullName || 'Tôi'} (Bạn)
-                    </span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-semibold text-gray-900 truncate">
+                        {currentUser?.fullName || 'Tôi'} (Bạn)
+                      </span>
+                      {(currentUser?.identifyCode || (currentUser as any)?.code) && (
+                        <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 text-[10px] rounded font-mono font-medium border border-slate-200 shrink-0">
+                          {currentUser?.identifyCode || (currentUser as any)?.code}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[11px] text-gray-400 truncate">
                       {currentUser?.email || 'Chủ sở hữu'}
                     </span>
@@ -587,17 +610,38 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
                   );
                   const isDept = !isAllSystem && Boolean(share.departmentId || share.department || share.departmentName);
 
+                  const emp = share.userId ? employeeMap.get(String(share.userId)) : null;
+                  const dept = share.departmentId ? departmentMap.get(String(share.departmentId)) : null;
+
                   const displayName = isAllSystem
                     ? 'Toàn bộ hệ thống'
                     : isDept
-                    ? share.departmentName || share.department?.name || `Phòng ban #${share.departmentId}`
-                    : share.userName || share.user?.fullName || share.user?.email || `Nhân sự #${share.userId}`;
+                    ? dept?.name || share.departmentName || share.department?.name || `Phòng ban #${share.departmentId}`
+                    : emp?.fullName || emp?.username || (share.userName && share.userName !== 'Người nhận' ? share.userName : '') || share.user?.fullName || `Nhân sự #${share.userId}`;
+
+                  const displayCode = isAllSystem
+                    ? null
+                    : isDept
+                    ? dept?.code || (share.department as any)?.code
+                    : emp?.identifyCode || emp?.code || (share as any).code || (share.user as any)?.identifyCode;
+
+                  const displayEmail = isAllSystem
+                    ? null
+                    : isDept
+                    ? null
+                    : emp?.email || share.user?.email;
+
+                  const displayDept = isAllSystem
+                    ? null
+                    : isDept
+                    ? null
+                    : emp?.departmentName || emp?.department?.name || share.departmentName || dept?.name;
 
                   const subText = isAllSystem
                     ? 'Tất cả nhân viên trên hệ thống'
                     : isDept
                     ? 'Toàn bộ nhân viên thuộc phòng ban'
-                    : share.user?.email || 'Nhân sự chỉ định';
+                    : [displayEmail, displayDept].filter(Boolean).join(' • ') || 'Nhân sự chỉ định';
 
                   const isEditing = share.permission === 'edit';
 
@@ -618,9 +662,16 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
                           </div>
                         )}
                         <div className="flex flex-col min-w-0">
-                          <span className="font-semibold text-gray-900 truncate">
-                            {displayName}
-                          </span>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-semibold text-gray-900 truncate">
+                              {displayName}
+                            </span>
+                            {displayCode && (
+                              <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 text-[10px] rounded font-mono font-medium border border-slate-200 shrink-0">
+                                {displayCode}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[11px] text-gray-400 truncate">
                             {subText}
                           </span>
