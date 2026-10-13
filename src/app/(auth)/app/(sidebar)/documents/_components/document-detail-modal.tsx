@@ -9,17 +9,12 @@ import {
   User,
   Calendar,
   Folder,
-  CheckCircle,
-  ShieldAlert,
   ShieldCheck,
   Building2,
   Users,
-  CheckCircle2,
   Globe,
   Eye,
   EyeOff,
-  XCircle,
-  Send,
   AlertCircle,
   Megaphone,
 } from 'lucide-react';
@@ -272,8 +267,6 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const isApproved = approvalStatus === 'approved';
   const isDraftOrRejected = approvalStatus === 'draft' || approvalStatus === 'rejected';
 
-  // Role nhân viên không trình duyệt tài liệu (chỉ cấp quản lý tạo tài liệu mới trình duyệt)
-  const canSubmitForApproval = canManageDoc && isCreator && isDraftOrRejected;
 
   const handleReview = async (status: 'approved' | 'rejected') => {
     try {
@@ -417,46 +410,30 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
           {/* Workflow Action Buttons (Left) */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-start flex-wrap">
-            {/* Chỉ người tạo thuộc cấp quản lý mới trình duyệt tài liệu; role nhân viên không duyệt */}
-            {canSubmitForApproval && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSubmitForApproval}
-                loading={submitLoading}
-                disabled={reviewLoading || submitLoading || publishLoading}
-                leftIcon={<Send size={14} className="text-sky-600" />}
-                className="border-sky-300 bg-sky-50/60 hover:bg-sky-50 text-sky-800 text-xs"
-              >
-                Trình duyệt tài liệu
-              </Button>
-            )}
 
             {/* Nếu có quyền duyệt và tài liệu chưa được phê duyệt */}
             {canApprove && !isApproved && (
-              <>
+              <div className="flex items-center gap-2.5">
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="danger"
+                  size="md"
                   onClick={() => setShowRejectPrompt(true)}
                   disabled={reviewLoading || submitLoading || publishLoading}
-                  leftIcon={<XCircle size={14} className="text-rose-600" />}
-                  className="border-rose-300 bg-rose-50/60 hover:bg-rose-50 text-rose-700 hover:text-rose-800 text-xs"
+                  className="h-10 px-5 rounded-lg bg-[#ff245a] hover:bg-[#e61a4d] text-white font-bold text-sm tracking-wide shadow-xs border-0 cursor-pointer"
                 >
                   Từ chối
                 </Button>
                 <Button
                   variant="primary"
-                  size="sm"
+                  size="md"
                   onClick={() => handleReview('approved')}
                   loading={reviewLoading}
                   disabled={reviewLoading || submitLoading || publishLoading}
-                  leftIcon={<CheckCircle2 size={14} />}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs border-emerald-600"
+                  className="h-10 px-5 rounded-lg bg-primary hover:bg-primary/90 text-white font-bold text-sm tracking-wide shadow-xs border-0 cursor-pointer"
                 >
-                  Phê duyệt
+                  Duyệt đề xuất
                 </Button>
-              </>
+              </div>
             )}
 
             {/* Nếu là cấp quản lý (Admin/HR/Super) và tài liệu đã được duyệt nhưng chưa ban hành */}
@@ -526,33 +503,6 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             </div>
           </div>
         )}
-        {/* Header file banner */}
-        <div className="p-4 rounded-lg bg-slate-50 border border-slate-200/80 flex items-start gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-800">
-                {doc.code}
-              </span>
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${docTypeInfo.badgeClass}`}>
-                {docTypeInfo.label}
-              </span>
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${statusInfo.badgeClass}`}>
-                {statusInfo.label}
-              </span>
-              {currentVersion?.versionNumber && (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                  v{currentVersion.versionNumber}
-                </span>
-              )}
-            </div>
-            <h3 className="text-sm font-bold text-slate-900 leading-snug">
-              {doc.title}
-            </h3>
-            {fileName && fileName !== doc.title && (
-              <p className="text-[11px] text-slate-600 mt-0.5">Tệp: {fileName}</p>
-            )}
-          </div>
-        </div>
 
         {/* Trích yếu nội dung */}
         {doc.summary && (

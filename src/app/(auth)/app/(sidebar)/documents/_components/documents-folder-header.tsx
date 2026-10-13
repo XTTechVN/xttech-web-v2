@@ -23,30 +23,30 @@ export const DocumentsFolderHeader: React.FC<DocumentsFolderHeaderProps> = ({
   onGoBack,
 }) => {
   return (
-    <div className="flex items-center justify-between pb-2 border-b border-slate-200/70">
-      <div className="flex items-center gap-3 min-w-0">
-        {/* Nút Quay lại 1 cấp (chỉ hiện khi đang ở trong thư mục con) */}
+    <div className="flex items-start justify-between pb-2.5 border-b border-slate-200/70">
+      <div className="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
+        {/* Nút Quay lại 1 cấp (tự thu gọn icon trên mobile, có text trên desktop) */}
         {currentFolderId !== null && (
           <Button
             variant="outline"
             size="sm"
             onClick={onGoBack}
-            leftIcon={<ArrowLeft size={15} />}
-            className="h-8 px-2.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 border-slate-200 bg-white hover:bg-slate-100 cursor-pointer shadow-2xs shrink-0"
+            className="h-8 px-2 sm:px-2.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 border-slate-200 bg-white hover:bg-slate-100 cursor-pointer shadow-2xs shrink-0 flex items-center justify-center gap-1.5 self-start"
             title={parentFolder ? `Quay lại ${parentFolder.name}` : 'Quay lại Tài liệu của tôi'}
           >
-            Quay lại
+            <ArrowLeft size={15} />
+            <span className="hidden sm:inline">Quay lại</span>
           </Button>
         )}
 
         {/* Thông tin thư mục hiện tại */}
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+        <div className="flex items-start gap-2.5 min-w-0 flex-1">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 self-start">
             {currentFolderId !== null ? <FolderOpen size={18} /> : <Folder size={18} />}
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-sm md:text-base font-bold text-slate-800 truncate leading-tight">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <h2 className="text-sm sm:text-base font-bold text-slate-800 truncate leading-tight max-w-[180px] xs:max-w-xs sm:max-w-md md:max-w-xl">
                 {currentFolder
                   ? currentFolder.name
                   : tab === 'shared'
@@ -56,7 +56,7 @@ export const DocumentsFolderHeader: React.FC<DocumentsFolderHeaderProps> = ({
                   : 'Tài liệu của tôi'}
               </h2>
               {currentFolder?.code && (
-                <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                <span className="text-[10px] sm:text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 truncate max-w-[140px] sm:max-w-none">
                   {currentFolder.code}
                 </span>
               )}
