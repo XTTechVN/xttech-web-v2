@@ -423,13 +423,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
 
   if (!doc) return null;
 
-  // Workflow states
-  const currentStatus = doc.status || 'draft';
-  const currentApprovalStatus = doc.approvalStatus || 'draft';
-  const isDraftOrRejected = currentApprovalStatus === 'draft' || currentApprovalStatus === 'rejected' || currentStatus === 'draft';
-  const isPending = currentApprovalStatus === 'pending' || currentStatus === 'pending';
-  const isApproved = (currentApprovalStatus === 'approved' || currentStatus === 'approved') && currentStatus !== 'published';
-  const isPublished = currentStatus === 'published';
+  if (!doc) return null;
 
   return (
     <Modal
@@ -445,66 +439,6 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
       className="m-2 max-w-2xl w-full"
     >
       <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-4 text-xs">
-        {/* Workflow Status Tracker Bar */}
-        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Tiến trình duyệt & Ban hành
-            </span>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
-                DOCUMENT_STATUS_MAP[currentStatus]?.badgeClass || 'bg-slate-100 text-slate-700 border-slate-200'
-              }`}>
-                {DOCUMENT_STATUS_MAP[currentStatus]?.label || currentStatus}
-              </span>
-              {currentApprovalStatus !== currentStatus && (
-                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
-                  APPROVAL_STATUS_MAP[currentApprovalStatus]?.badgeClass || 'bg-slate-100 text-slate-700 border-slate-200'
-                }`}>
-                  {APPROVAL_STATUS_MAP[currentApprovalStatus]?.label || currentApprovalStatus}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Stepper Timeline */}
-          <div className="grid grid-cols-4 gap-1 pt-1 text-center">
-            {/* Step 1: Soạn thảo */}
-            <div className={`p-2 rounded-xl border flex flex-col items-center gap-1 ${
-              isDraftOrRejected ? 'bg-amber-50 border-amber-300 text-amber-900 font-semibold' : 'bg-white border-slate-200 text-slate-400'
-            }`}>
-              <Edit3 size={14} className={isDraftOrRejected ? 'text-amber-600' : 'text-slate-400'} />
-              <span className="text-[10px]">1. Soạn thảo</span>
-            </div>
-
-            {/* Step 2: Chờ duyệt */}
-            <div className={`p-2 rounded-xl border flex flex-col items-center gap-1 ${
-              isPending ? 'bg-sky-50 border-sky-300 text-sky-900 font-semibold' : 'bg-white border-slate-200 text-slate-400'
-            }`}>
-              <Clock size={14} className={isPending ? 'text-sky-600' : 'text-slate-400'} />
-              <span className="text-[10px]">2. Chờ duyệt</span>
-            </div>
-
-            {/* Step 3: Đã duyệt */}
-            <div className={`p-2 rounded-xl border flex flex-col items-center gap-1 ${
-              isApproved ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-semibold' : 'bg-white border-slate-200 text-slate-400'
-            }`}>
-              <CheckCircle2 size={14} className={isApproved ? 'text-emerald-600' : 'text-slate-400'} />
-              <span className="text-[10px]">3. Đã duyệt</span>
-            </div>
-
-            {/* Step 4: Ban hành */}
-            <div className={`p-2 rounded-xl border flex flex-col items-center gap-1 ${
-              isPublished ? 'bg-teal-50 border-teal-300 text-teal-900 font-semibold' : 'bg-white border-slate-200 text-slate-400'
-            }`}>
-              <Megaphone size={14} className={isPublished ? 'text-teal-600' : 'text-slate-400'} />
-              <span className="text-[10px]">4. Ban hành</span>
-            </div>
-          </div>
-        </div>
-
-
-
         {/* Title & Code */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -581,7 +515,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
 
         {/* Recipients MultiSelect */}
         {shareScopeVal !== 'all' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <MultiSelect
                 label="Người nhận đích danh"
