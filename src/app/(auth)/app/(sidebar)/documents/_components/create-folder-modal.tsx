@@ -46,7 +46,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   } = useForm<FolderFormValues>({
     resolver: zodResolver(folderSchema),
     defaultValues: {
-      name: '',
+      name: 'New folder',
       code: '',
       description: '',
     },
@@ -61,7 +61,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       reset({
-        name: '',
+        name: 'New folder',
         code: '',
         description: '',
       });
