@@ -1,20 +1,21 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
-  Trash2,
   Search,
   RotateCcw,
   LayoutGrid,
   List,
   AlertCircle,
   SearchX,
+  Trash2,
 } from 'lucide-react';
 import { Select, Button } from '@/components';
 import { getTrashItems, restoreTrashItem, purgeTrashItem } from '@/actions/trash';
 import type { TrashItem, TrashItemType } from '@/types';
+import { TrashHeader } from './trash-header';
 import { TrashCard } from './trash-card';
 import { TrashListItem } from './trash-list-item';
 import { RestoreConfirmModal } from './restore-confirm-modal';
@@ -25,6 +26,11 @@ const ITEM_TYPE_OPTIONS = [
   { value: 'folder', label: 'Chỉ thư mục' },
   { value: 'document', label: 'Chỉ tài liệu' },
 ];
+
+/** Lấy tên hiển thị an toàn của mục trong thùng rác */
+const getItemDisplayName = (item: TrashItem): string => {
+  return item.title || (item as any).name || (item as any).folder_name || (item as any).fileName || 'mục';
+};
 
 export const TrashTab: React.FC = () => {
   const queryClient = useQueryClient();
@@ -75,11 +81,13 @@ export const TrashTab: React.FC = () => {
       });
     },
     onSuccess: (_, item) => {
-      const name = item.title || (item as any).name || (item as any).folder_name || 'mục';
+      const name = getItemDisplayName(item);
       toast.success(`Đã khôi phục ${item.itemType === 'folder' ? 'thư mục' : 'tài liệu'} "${name}" thành công!`);
+      // Đồng bộ toàn bộ các query liên quan
       queryClient.invalidateQueries({ queryKey: ['documents', 'trash'] });
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['document-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
       setIsRestoreOpen(false);
       setRestoreItem(null);
     },
@@ -100,7 +108,7 @@ export const TrashTab: React.FC = () => {
       });
     },
     onSuccess: (_, item) => {
-      const name = item.title || (item as any).name || (item as any).folder_name || 'mục';
+      const name = getItemDisplayName(item);
       toast.success(`Đã xóa vĩnh viễn ${item.itemType === 'folder' ? 'thư mục' : 'tài liệu'} "${name}"!`);
       queryClient.invalidateQueries({ queryKey: ['documents', 'trash'] });
       setIsPurgeOpen(false);
@@ -147,10 +155,46 @@ export const TrashTab: React.FC = () => {
 
   const hasActiveFilters = Boolean(search.trim() || itemTypeFilter !== 'all');
 
-  const handleResetFilters = () => {
+  const handleResetFilters = useCallback(() => {
     setSearch('');
     setItemTypeFilter('all');
-  };
+  }, []);
+
+  const handleOpenRestore = useCallback((item: TrashItem) => {
+    setRestoreItem(item);
+    setIsRestoreOpen(true);
+  }, []);
+
+  const handleCloseRestore = useCallback(() => {
+    if (!restoreMutation.isPending) {
+      setIsRestoreOpen(false);
+      setRestoreItem(null);
+    }
+  }, [restoreMutation.isPending]);
+
+  const handleConfirmRestore = useCallback(() => {
+    if (restoreItem) {
+      restoreMutation.mutate(restoreItem);
+    }
+  }, [restoreItem, restoreMutation]);
+
+  const handleOpenPurge = useCallback((item: TrashItem) => {
+    setPurgeItem(item);
+    setIsPurgeOpen(true);
+  }, []);
+
+  const handleClosePurge = useCallback(() => {
+    if (!purgeMutation.isPending) {
+      setIsPurgeOpen(false);
+      setPurgeItem(null);
+    }
+  }, [purgeMutation.isPending]);
+
+  const handleConfirmPurge = useCallback(() => {
+    if (purgeItem) {
+      purgeMutation.mutate(purgeItem);
+    }
+  }, [purgeItem, purgeMutation]);
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white select-none">
@@ -233,22 +277,12 @@ export const TrashTab: React.FC = () => {
 
       {/* 2. Nội dung chính toàn chiều rộng */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Tiêu đề mục Thùng rác */}
-        <div className="flex items-center justify-between pb-2 border-b border-slate-200/70">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
-              <Trash2 size={16} />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm md:text-base font-bold text-slate-800 tracking-tight leading-tight">
-                Thùng rác
-              </h2>
-              <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                {!isLoading && `${folderCount} thư mục • ${docCount} tài liệu`}
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Header đếm số lượng thư mục & tài liệu */}
+        <TrashHeader
+          folderCount={folderCount}
+          docCount={docCount}
+          isLoading={isLoading}
+        />
 
         {/* Nội dung danh sách / lưới */}
         {isLoading ? (
@@ -292,14 +326,8 @@ export const TrashTab: React.FC = () => {
               <TrashCard
                 key={`${item.itemType}-${item.id}`}
                 item={item}
-                onRestore={(it) => {
-                  setRestoreItem(it);
-                  setIsRestoreOpen(true);
-                }}
-                onPurge={(it) => {
-                  setPurgeItem(it);
-                  setIsPurgeOpen(true);
-                }}
+                onRestore={handleOpenRestore}
+                onPurge={handleOpenPurge}
                 isRestoring={activeRestoringId === item.id}
                 isPurging={activePurgingId === item.id}
               />
@@ -322,14 +350,8 @@ export const TrashTab: React.FC = () => {
               <TrashListItem
                 key={`${item.itemType}-${item.id}`}
                 item={item}
-                onRestore={(it) => {
-                  setRestoreItem(it);
-                  setIsRestoreOpen(true);
-                }}
-                onPurge={(it) => {
-                  setPurgeItem(it);
-                  setIsPurgeOpen(true);
-                }}
+                onRestore={handleOpenRestore}
+                onPurge={handleOpenPurge}
                 isRestoring={activeRestoringId === item.id}
                 isPurging={activePurgingId === item.id}
               />
@@ -341,32 +363,18 @@ export const TrashTab: React.FC = () => {
       {/* Restore Confirm Modal */}
       <RestoreConfirmModal
         isOpen={isRestoreOpen}
-        onClose={() => {
-          if (!restoreMutation.isPending) {
-            setIsRestoreOpen(false);
-            setRestoreItem(null);
-          }
-        }}
+        onClose={handleCloseRestore}
         item={restoreItem}
-        onConfirm={() => {
-          if (restoreItem) restoreMutation.mutate(restoreItem);
-        }}
+        onConfirm={handleConfirmRestore}
         loading={restoreMutation.isPending}
       />
 
       {/* Purge Confirm Modal */}
       <PurgeConfirmModal
         isOpen={isPurgeOpen}
-        onClose={() => {
-          if (!purgeMutation.isPending) {
-            setIsPurgeOpen(false);
-            setPurgeItem(null);
-          }
-        }}
+        onClose={handleClosePurge}
         item={purgeItem}
-        onConfirm={() => {
-          if (purgeItem) purgeMutation.mutate(purgeItem);
-        }}
+        onConfirm={handleConfirmPurge}
         loading={purgeMutation.isPending}
       />
     </div>
