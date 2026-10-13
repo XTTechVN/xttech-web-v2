@@ -12,10 +12,7 @@ import {
   updateDocument,
   deleteDocumentCategory,
   deleteDocument,
-  getDocumentCategoryShares,
-  revokeDocumentCategoryShare,
-  getDocumentShares,
-  revokeDocumentShare,
+  removeDocumentFromFolder,
 } from '@/actions/document';
 import {
   DOCUMENT_TYPE_MAP,
@@ -47,6 +44,7 @@ import { FolderCard } from './_components/folder-card';
 import { FolderTable } from './_components/folder-table';
 import { FileCard } from './_components/file-card';
 import { FileTable } from './_components/file-table';
+import { SaveToFolderModal } from './_components/save-to-folder-modal';
 
 // Icons & Utilities
 import { Folder } from 'lucide-react';
@@ -116,6 +114,7 @@ function MyDocumentsContent() {
   const [shareFolderOpen, setShareFolderOpen] = useState(false);
   const [sharingFolder, setSharingFolder] = useState<DocumentCategory | null>(null);
   const [sharingDoc, setSharingDoc] = useState<DocumentItem | null>(null);
+  const [saveToFolderDoc, setSaveToFolderDoc] = useState<DocumentItem | null>(null);
 
   const [moveModalOpen, setMoveModalOpen] = useState(false);
   const [itemToMove, setItemToMove] = useState<ItemToMoveState | null>(null);
@@ -160,6 +159,36 @@ function MyDocumentsContent() {
     tab,
   });
 
+  // Tập hợp toàn bộ ID của các thư mục thuộc cây thư mục chia sẻ
+  const allSharedCategoryIds = useMemo(() => {
+    const ids = new Set<number>();
+    const collect = (nodes: DocumentCategory[]) => {
+      for (const node of nodes) {
+        ids.add(node.id);
+        if (node.children && node.children.length > 0) {
+          collect(node.children);
+        }
+      }
+    };
+    collect(sharedFolders);
+    return ids;
+  }, [sharedFolders]);
+
+  // Tập hợp toàn bộ ID của các thư mục thuộc cây thư mục của tôi
+  const allMyCategoryIds = useMemo(() => {
+    const ids = new Set<number>();
+    const collect = (nodes: DocumentCategory[]) => {
+      for (const node of nodes) {
+        ids.add(node.id);
+        if (node.children && node.children.length > 0) {
+          collect(node.children);
+        }
+      }
+    };
+    collect(myFolders);
+    return ids;
+  }, [myFolders]);
+
   // 3. Fetch Documents for current folder & filters
   const {
     data: documentsData,
@@ -183,30 +212,6 @@ function MyDocumentsContent() {
     if (Array.isArray(documentsData?.items)) rawItems = documentsData.items;
     else if (Array.isArray(documentsData)) rawItems = documentsData as any;
     else if (Array.isArray((documentsData as any)?.data)) rawItems = (documentsData as any).data;
-
-    // Tập hợp toàn bộ ID của các thư mục thuộc cây thư mục chia sẻ
-    const allSharedCategoryIds = new Set<number>();
-    const collectSharedIds = (nodes: DocumentCategory[]) => {
-      for (const node of nodes) {
-        allSharedCategoryIds.add(node.id);
-        if (node.children && node.children.length > 0) {
-          collectSharedIds(node.children);
-        }
-      }
-    };
-    collectSharedIds(sharedFolders);
-
-    // Tập hợp toàn bộ ID của các thư mục thuộc cây thư mục của tôi
-    const allMyCategoryIds = new Set<number>();
-    const collectMyIds = (nodes: DocumentCategory[]) => {
-      for (const node of nodes) {
-        allMyCategoryIds.add(node.id);
-        if (node.children && node.children.length > 0) {
-          collectMyIds(node.children);
-        }
-      }
-    };
-    collectMyIds(myFolders);
 
     // PHÂN VÙNG: ĐƯỢC CHIA SẺ (tab === 'shared' hoặc đang ở trong thư mục con thuộc nhánh chia sẻ)
     if (isSharedSection) {
@@ -250,7 +255,7 @@ function MyDocumentsContent() {
       if (!isInFolder) return false;
       return isDocumentOwner(doc, currentUser, allMyCategoryIds);
     });
-  }, [documentsData, currentFolderId, isSharedSection, sharedFolders, myFolders, currentUser]);
+  }, [documentsData, currentFolderId, isSharedSection, allSharedCategoryIds, allMyCategoryIds, currentUser]);
 
   // Quyền thao tác thư mục: trong mục Được chia sẻ với tôi chỉ HR hoặc ADMIN được sửa/xóa folder
   const canEditFolder = !isSharedSection || canManageDocuments;
@@ -265,7 +270,22 @@ function MyDocumentsContent() {
     }
   };
 
-  // Delete Action (with fallback revoke share if 403)
+  // Handle gỡ lối tắt khỏi thư mục cá nhân
+  const handleRemoveFromFolder = async (doc: DocumentItem) => {
+    if (!currentFolderId) return;
+    try {
+      await removeDocumentFromFolder(doc.id, currentFolderId);
+      toast.success(`Đã gỡ tài liệu "${doc.title}" khỏi thư mục này`);
+      refetchDocuments();
+      refetchCategories();
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['document-categories'] });
+    } catch (error: any) {
+      toast.error(error.message || 'Không thể gỡ tài liệu khỏi thư mục');
+    }
+  };
+
+  // Delete Action
   const handleConfirmDelete = async () => {
     if (isSharedSection && !canManageDocuments) {
       toast.error('Bạn không có quyền xóa trong mục Được chia sẻ với tôi');
@@ -277,40 +297,8 @@ function MyDocumentsContent() {
       setDeleteModal((prev) => ({ ...prev, loading: true }));
 
       if (deleteModal.type === 'folder') {
-        try {
-          await deleteDocumentCategory(deleteModal.id);
-          toast.success(`Đã xóa thư mục "${deleteModal.name}"`);
-        } catch (catError: any) {
-          const errMsg = catError.message || '';
-          const isPermissionErr =
-            errMsg.includes('chủ sở hữu') ||
-            errMsg.includes('Quản trị viên') ||
-            errMsg.includes('FORBIDDEN') ||
-            errMsg.includes('403');
-
-          if (isPermissionErr) {
-            // Nếu không có quyền xóa thư mục gốc của người tạo, tự động gỡ bỏ khỏi mục Được chia sẻ với tôi
-            try {
-              const shares = await getDocumentCategoryShares(deleteModal.id);
-              const myShare = shares.find(
-                (s) =>
-                  String(s.userId) === String(currentUser?.id) ||
-                  (Boolean(currentUser?.email) &&
-                    s.user?.email?.toLowerCase() === currentUser?.email?.toLowerCase())
-              );
-              if (myShare?.id) {
-                await revokeDocumentCategoryShare(deleteModal.id, myShare.id);
-                toast.success(`Đã gỡ thư mục "${deleteModal.name}" khỏi mục Được chia sẻ với tôi`);
-              } else {
-                throw catError;
-              }
-            } catch (fallbackErr) {
-              throw catError;
-            }
-          } else {
-            throw catError;
-          }
-        }
+        await deleteDocumentCategory(deleteModal.id);
+        toast.success(`Đã xóa thư mục "${deleteModal.name}"`);
         refetchCategories();
         queryClient.invalidateQueries({ queryKey: ['documents', 'trash'] });
         queryClient.invalidateQueries({ queryKey: ['document-categories'] });
@@ -323,46 +311,18 @@ function MyDocumentsContent() {
           const perms = getDocumentPermissions(docToDelete, currentUser, {
             isSharedSection,
             canManageDocuments,
+            myCategoryIds: allMyCategoryIds,
+            currentFolderId,
           });
           if (!perms.canDelete && !canManageDocuments) {
-            toast.error('Chỉ chủ sở hữu tài liệu mới có quyền xóa');
+            toast.error('Chỉ chủ sở hữu tài liệu mới có quyền xóa tài liệu gốc');
             setDeleteModal((prev) => ({ ...prev, isOpen: false, loading: false }));
             return;
           }
         }
 
-        try {
-          await deleteDocument(deleteModal.id);
-          toast.success(`Đã xóa tài liệu "${deleteModal.name}"`);
-        } catch (docErr: any) {
-          const errMsg = docErr.message || '';
-          const isPermissionErr =
-            errMsg.includes('quyền') ||
-            errMsg.includes('FORBIDDEN') ||
-            errMsg.includes('403');
-
-          if (isPermissionErr) {
-            try {
-              const shares = await getDocumentShares(deleteModal.id);
-              const myShare = shares.find(
-                (s) =>
-                  String(s.userId) === String(currentUser?.id) ||
-                  (Boolean(currentUser?.email) &&
-                    s.user?.email?.toLowerCase() === currentUser?.email?.toLowerCase())
-              );
-              if (myShare?.id) {
-                await revokeDocumentShare(deleteModal.id, myShare.id);
-                toast.success(`Đã gỡ tài liệu "${deleteModal.name}" khỏi mục Được chia sẻ với tôi`);
-              } else {
-                throw docErr;
-              }
-            } catch (fallbackErr) {
-              throw docErr;
-            }
-          } else {
-            throw docErr;
-          }
-        }
+        await deleteDocument(deleteModal.id);
+        toast.success(`Đã xóa tài liệu "${deleteModal.name}"`);
         refetchDocuments();
         queryClient.invalidateQueries({ queryKey: ['documents', 'trash'] });
         queryClient.invalidateQueries({ queryKey: ['documents'] });
@@ -557,6 +517,8 @@ function MyDocumentsContent() {
                     key={`doc-${doc.id}`}
                     document={doc}
                     isSharedSection={isSharedSection}
+                    currentFolderId={currentFolderId}
+                    myCategoryIds={allMyCategoryIds}
                     isSelected={selectedItemKeys.has(`doc-${doc.id}`)}
                     onToggleSelect={(d) => toggleSelectItem('document', d.id)}
                     locationName={
@@ -569,8 +531,6 @@ function MyDocumentsContent() {
                             ? 'Thùng rác'
                             : 'Tài liệu của tôi')
                     }
-                    canEdit={true}
-                    canDelete={true}
                     onPreview={(d) => {
                       setSelectedDoc(d);
                       setPreviewDocOpen(true);
@@ -592,6 +552,8 @@ function MyDocumentsContent() {
                       setItemToMove({ type: 'document', item: d });
                       setMoveModalOpen(true);
                     }}
+                    onSaveToFolder={(d) => setSaveToFolderDoc(d)}
+                    onRemoveFromFolder={handleRemoveFromFolder}
                     onDelete={(d) => {
                       setDeleteModal({
                         isOpen: true,
@@ -674,6 +636,8 @@ function MyDocumentsContent() {
                   <FileTable
                     documents={documents}
                     isSharedSection={isSharedSection}
+                    currentFolderId={currentFolderId}
+                    myCategoryIds={allMyCategoryIds}
                     selectedKeys={selectedItemKeys}
                     onToggleSelect={(d) => toggleSelectItem('document', d.id)}
                     currentFolderName={
@@ -686,8 +650,6 @@ function MyDocumentsContent() {
                         : 'Tài liệu của tôi'
                     }
                     showHeader={foldersToDisplay.length === 0}
-                    canEdit={true}
-                    canDelete={true}
                     onPreview={(d) => {
                       setSelectedDoc(d);
                       setPreviewDocOpen(true);
@@ -709,6 +671,8 @@ function MyDocumentsContent() {
                       setItemToMove({ type: 'document', item: d });
                       setMoveModalOpen(true);
                     }}
+                    onSaveToFolder={(d) => setSaveToFolderDoc(d)}
+                    onRemoveFromFolder={handleRemoveFromFolder}
                     onDelete={(d) => {
                       setDeleteModal({
                         isOpen: true,
@@ -783,6 +747,14 @@ function MyDocumentsContent() {
         safeCategoryTree={safeCategoryTree}
         onRefetchCategories={refetchCategories}
         onRefetchDocuments={refetchDocuments}
+      />
+
+      {/* 4.1. Save To Folder Modal */}
+      <SaveToFolderModal
+        isOpen={Boolean(saveToFolderDoc)}
+        onClose={() => setSaveToFolderDoc(null)}
+        document={saveToFolderDoc}
+        onSuccess={refetchDocuments}
       />
 
       {/* 5. Floating Multi-Selection Bar */}

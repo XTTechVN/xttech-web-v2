@@ -4,6 +4,7 @@ import type {
   CreateDocumentCategoryPayload,
   UpdateDocumentCategoryPayload,
   DocumentItem,
+  DocumentVersion,
   GetDocumentsParams,
   GetInboxDocumentsParams,
   GetDocumentsResponse,
@@ -211,6 +212,23 @@ export const deleteDocument = async (id: number): Promise<void> => {
     await api.delete(`/api/v1/documents/${id}`);
   } catch (error: any) {
     throw new Error(extractErrorMessage(error, 'Không thể xóa tài liệu'));
+  }
+};
+
+// Tạo phiên bản mới cho tài liệu (Upload new version multipart/form-data)
+export const createDocumentVersion = async (
+  documentId: number,
+  formData: FormData
+): Promise<DocumentVersion> => {
+  try {
+    const res = await api.post(`/api/v1/documents/${documentId}/versions`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data?.data ?? res.data;
+  } catch (error: any) {
+    throw new Error(extractErrorMessage(error, 'Không thể tải lên phiên bản mới'));
   }
 };
 

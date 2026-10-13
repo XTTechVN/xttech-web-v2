@@ -180,6 +180,7 @@ function InboxPageContent() {
         queryClient.invalidateQueries({ queryKey: ['inbox-read-count'] });
         queryClient.invalidateQueries({ queryKey: ['inbox-total-count'] });
         queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+        queryClient.invalidateQueries({ queryKey: ['documents'] });
       } catch (err: any) {
         toast.error(err.message || 'Không thể đánh dấu đã đọc');
       } finally {
@@ -204,6 +205,7 @@ function InboxPageContent() {
       queryClient.invalidateQueries({ queryKey: ['inbox-read-count'] });
       queryClient.invalidateQueries({ queryKey: ['inbox-total-count'] });
       queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
     } catch (err: any) {
       toast.error(err.message || 'Không thể đánh dấu đã đọc');
     } finally {

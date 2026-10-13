@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, Eye, MoreVertical, Trash2, Folder, Users, FolderOpen, Share2, Edit3 } from 'lucide-react';
+import { Download, Eye, MoreVertical, Trash2, Folder, Users, FolderOpen, Share2, Edit3, Bookmark, FolderMinus } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DriveFileIcon, isDocumentShared, getDocumentPermissions } from '../_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
@@ -14,6 +14,8 @@ interface FileTableProps {
   documents: DocumentItem[];
   currentFolderName?: string;
   isSharedSection?: boolean;
+  currentFolderId?: number | null;
+  myCategoryIds?: Set<number>;
   selectedKeys?: Set<string>;
   onToggleSelect?: (document: DocumentItem) => void;
   onView: (document: DocumentItem) => void;
@@ -22,6 +24,8 @@ interface FileTableProps {
   onShare?: (document: DocumentItem) => void;
   onMove?: (document: DocumentItem) => void;
   onDelete?: (document: DocumentItem) => void;
+  onSaveToFolder?: (document: DocumentItem) => void;
+  onRemoveFromFolder?: (document: DocumentItem) => void;
   onNavigateFolder?: (folderId: number | null) => void;
   showHeader?: boolean;
   canEdit?: boolean;
@@ -51,6 +55,8 @@ export const FileTable: React.FC<FileTableProps> = ({
   documents,
   currentFolderName,
   isSharedSection,
+  currentFolderId,
+  myCategoryIds,
   showHeader = true,
   selectedKeys,
   onToggleSelect,
@@ -60,6 +66,8 @@ export const FileTable: React.FC<FileTableProps> = ({
   onShare,
   onMove,
   onDelete,
+  onSaveToFolder,
+  onRemoveFromFolder,
   onNavigateFolder,
   canEdit = true,
   canDelete = true,
@@ -109,6 +117,8 @@ export const FileTable: React.FC<FileTableProps> = ({
             isSharedSection: isSharedSection || currentFolderName?.includes('Được chia sẻ'),
             folderPermission: (doc.category as any)?.permission,
             canManageDocuments: canManage,
+            myCategoryIds,
+            currentFolderId,
           });
           const isShared = docPerms.isShared;
           const isOwner = docPerms.isOwner;
@@ -117,7 +127,7 @@ export const FileTable: React.FC<FileTableProps> = ({
           const isMenuOpen = openMenuDocId === doc.id;
 
           // Quyền thao tác:
-          // - Tài liệu chia sẻ: chỉ CHỦ SỞ HỮU mới có quyền Xóa và Di chuyển.
+          // - Tài liệu chia sẻ: chỉ CHỦ SỞ HỮU hoặc Admin/HR mới có quyền Xóa và Di chuyển.
           // - UI người nhận ẩn nút Xóa và Di chuyển.
           // - Nút Sửa: Chỉ hiện nếu người nhận có quyền sửa, không có thì ẩn đi.
           const canEditDoc = canEdit && docPerms.canEdit;
@@ -155,6 +165,15 @@ export const FileTable: React.FC<FileTableProps> = ({
                   }
                 ]
               : []),
+            ...(onSaveToFolder && docPerms.canSaveToFolder
+              ? [
+                  {
+                    label: 'Lưu vào thư mục cá nhân',
+                    icon: <Bookmark size={15} className="text-primary" />,
+                    onClick: () => onSaveToFolder(doc),
+                  }
+                ]
+              : []),
             ...(canEditDoc && onEdit
               ? [
                   {
@@ -179,6 +198,16 @@ export const FileTable: React.FC<FileTableProps> = ({
                     label: 'Di chuyển',
                     icon: <FolderOpen size={15} className="text-primary" />,
                     onClick: () => onMove(doc),
+                  }
+                ]
+              : []),
+            ...(onRemoveFromFolder && docPerms.canRemoveShortcut
+              ? [
+                  {
+                    label: 'Gỡ khỏi thư mục này',
+                    icon: <FolderMinus size={15} className="text-amber-600" />,
+                    danger: true,
+                    onClick: () => onRemoveFromFolder(doc),
                   }
                 ]
               : []),

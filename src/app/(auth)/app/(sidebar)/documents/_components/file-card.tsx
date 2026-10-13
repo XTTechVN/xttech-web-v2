@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, Eye, MoreVertical, Trash2, FolderOpen, Share2, Edit3, Users } from 'lucide-react';
+import { Download, Eye, MoreVertical, Trash2, FolderOpen, Share2, Edit3, Users, Bookmark, FolderMinus } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
 import { formatBytes, getFileVisualInfo, isDocumentShared, getDocumentPermissions } from '../_utils/doc-helpers';
@@ -14,6 +14,8 @@ interface FileCardProps {
   document: DocumentItem;
   locationName?: string;
   isSharedSection?: boolean;
+  currentFolderId?: number | null;
+  myCategoryIds?: Set<number>;
   isSelected?: boolean;
   onToggleSelect?: (document: DocumentItem) => void;
   onPreview?: (document: DocumentItem) => void;
@@ -22,6 +24,8 @@ interface FileCardProps {
   onShare?: (document: DocumentItem) => void;
   onMove?: (document: DocumentItem) => void;
   onDelete?: (document: DocumentItem) => void;
+  onSaveToFolder?: (document: DocumentItem) => void;
+  onRemoveFromFolder?: (document: DocumentItem) => void;
   canEdit?: boolean;
   canDelete?: boolean;
 }
@@ -30,6 +34,8 @@ export const FileCard: React.FC<FileCardProps> = ({
   document: doc,
   locationName,
   isSharedSection,
+  currentFolderId,
+  myCategoryIds,
   isSelected = false,
   onToggleSelect,
   onPreview,
@@ -38,6 +44,8 @@ export const FileCard: React.FC<FileCardProps> = ({
   onShare,
   onMove,
   onDelete,
+  onSaveToFolder,
+  onRemoveFromFolder,
   canEdit = true,
   canDelete = true,
 }) => {
@@ -69,11 +77,13 @@ export const FileCard: React.FC<FileCardProps> = ({
     isSharedSection: isSharedSection || locationName?.includes('Được chia sẻ'),
     folderPermission: (doc.category as any)?.permission,
     canManageDocuments: canManage,
+    myCategoryIds,
+    currentFolderId,
   });
   const isShared = docPerms.isShared;
 
   // Quyền thao tác theo quy tắc:
-  // - Tài liệu chia sẻ: chỉ CHỦ SỞ HỮU mới có quyền Xóa và Di chuyển.
+  // - Tài liệu chia sẻ: chỉ CHỦ SỞ HỮU hoặc Admin/HR mới có quyền Xóa và Di chuyển.
   // - UI người nhận ẩn nút Xóa và Di chuyển.
   // - Nút Sửa: Chỉ hiện nếu người nhận có quyền sửa, không có thì ẩn đi.
   const canEditDoc = canEdit && docPerms.canEdit;
@@ -123,6 +133,15 @@ export const FileCard: React.FC<FileCardProps> = ({
           }
         ]
       : []),
+    ...(onSaveToFolder && docPerms.canSaveToFolder
+      ? [
+          {
+            label: 'Lưu vào thư mục cá nhân',
+            icon: <Bookmark size={15} className="text-primary" />,
+            onClick: () => onSaveToFolder(doc),
+          }
+        ]
+      : []),
     ...(canEditDoc && onEdit
       ? [
           {
@@ -147,6 +166,16 @@ export const FileCard: React.FC<FileCardProps> = ({
             label: 'Di chuyển',
             icon: <FolderOpen size={15} className="text-primary" />,
             onClick: () => onMove(doc),
+          }
+        ]
+      : []),
+    ...(onRemoveFromFolder && docPerms.canRemoveShortcut
+      ? [
+          {
+            label: 'Gỡ khỏi thư mục này',
+            icon: <FolderMinus size={15} className="text-amber-600" />,
+            danger: true,
+            onClick: () => onRemoveFromFolder(doc),
           }
         ]
       : []),

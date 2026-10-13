@@ -160,17 +160,21 @@ export interface DocumentPermissionsResult {
   canMove: boolean;
   canDelete: boolean;
   canShare: boolean;
+  canSaveToFolder: boolean;
+  canRemoveShortcut: boolean;
 }
 
 /**
  * Xác định quyền thao tác trên tài liệu:
- * - Chủ sở hữu: Có đầy đủ quyền xem, tải, chỉnh sửa, xóa, di chuyển, chia sẻ.
+ * - Chủ sở hữu: Có đầy đủ quyền xem, tải, chỉnh sửa, xóa, di chuyển, chia sẻ, lưu vào thư mục.
  * - Admin / HR: Có ngoại lệ quyền quản trị trên toàn bộ tài liệu hệ thống.
  * - Người nhận (Recipient):
  *   + Nút Di chuyển: Ẩn hoàn toàn (chỉ chủ sở hữu hoặc admin/hr mới có quyền).
  *   + Nút Xóa: Ẩn hoàn toàn (chỉ chủ sở hữu hoặc admin/hr mới có quyền xóa tài liệu gốc).
- *   + Nút Chia sẻ: Ẩn hoàn toàn (chỉ chủ sở hữu mới có quyền chia sẻ tiếp).
- *   + Nút Sửa: Chỉ hiện nếu người nhận được cấp quyền sửa ('edit'). Nếu quyền là 'view' (chỉ xem) thì ẩn đi.
+ *   + Nút Chia sẻ: Ẩn hoàn toàn (chỉ chủ sở hữu hoặc admin/hr mới có quyền).
+ *   + Nút Sửa: Chỉ hiện nếu người nhận được cấp quyền sửa ('edit') đích danh trên tài liệu.
+ *   + Nút Lưu lối tắt: Cho phép lưu vào thư mục cá nhân của người dùng.
+ *   + Nút Gỡ lối tắt: Chỉ hiện khi đang ở trong thư mục cá nhân và tài liệu không phải tài liệu gốc do người dùng sở hữu.
  */
 export function getDocumentPermissions(
   doc: DocumentItem | null | undefined,
@@ -180,6 +184,7 @@ export function getDocumentPermissions(
     folderPermission?: 'view' | 'edit' | string;
     canManageDocuments?: boolean;
     myCategoryIds?: Set<number>;
+    currentFolderId?: number | null;
   }
 ): DocumentPermissionsResult {
   if (!doc) {
@@ -190,6 +195,8 @@ export function getDocumentPermissions(
       canMove: false,
       canDelete: false,
       canShare: false,
+      canSaveToFolder: false,
+      canRemoveShortcut: false,
     };
   }
 
@@ -202,6 +209,19 @@ export function getDocumentPermissions(
   // 3. Kiểm tra vai trò quản trị viên (Admin hoặc HR)
   const isAdminOrHR = Boolean(context?.canManageDocuments);
 
+  // Kiểm tra tài liệu có thể gỡ khỏi thư mục hiện tại không (khi đang ở trong thư mục cá nhân)
+  const isInPersonalFolder = Boolean(
+    context?.currentFolderId &&
+      context?.myCategoryIds &&
+      context.myCategoryIds.has(context.currentFolderId)
+  );
+  // Cho phép gỡ khỏi thư mục nếu tài liệu không phải tạo bởi người dùng (được lưu qua shortcut)
+  // hoặc tài liệu nằm trong savedFolders
+  const isSavedShortcut =
+    Array.isArray(doc.savedFolders) &&
+    Boolean(context?.currentFolderId && doc.savedFolders.includes(context.currentFolderId));
+  const canRemoveShortcut = isInPersonalFolder && (!isOwner || isSavedShortcut);
+
   // Nếu người dùng là CHỦ SỞ HỮU:
   if (isOwner) {
     return {
@@ -211,6 +231,8 @@ export function getDocumentPermissions(
       canMove: true,
       canDelete: true,
       canShare: true,
+      canSaveToFolder: true,
+      canRemoveShortcut,
     };
   }
 
@@ -223,6 +245,8 @@ export function getDocumentPermissions(
       canMove: true,
       canDelete: true,
       canShare: true,
+      canSaveToFolder: true,
+      canRemoveShortcut,
     };
   }
 
@@ -265,10 +289,8 @@ export function getDocumentPermissions(
     }
   }
 
-  // C. Kiểm tra kế thừa quyền từ thư mục cha nếu nằm trong thư mục chia sẻ
-  if (!hasEditPermission && context?.folderPermission === 'edit') {
-    hasEditPermission = true;
-  }
+  // Tuyệt đối KHÔNG tự động kế thừa quyền sửa tài liệu gốc từ thư mục cha
+  // Quyền sửa tài liệu chỉ căn cứ theo quyền sở hữu hoặc quyền edit đích danh
 
   return {
     isShared,
@@ -277,6 +299,8 @@ export function getDocumentPermissions(
     canMove: false,
     canDelete: false,
     canShare: false,
+    canSaveToFolder: true,
+    canRemoveShortcut,
   };
 }
 

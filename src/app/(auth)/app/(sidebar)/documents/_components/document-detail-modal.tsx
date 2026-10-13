@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Modal, Button, Textarea } from '@/components';
 import { RejectDocumentModal } from './reject-document-modal';
+import { UploadVersionModal } from './upload-version-modal';
 import {
   Download,
   FileText,
@@ -18,6 +19,8 @@ import {
   EyeOff,
   AlertCircle,
   Megaphone,
+  Send,
+  UploadCloud,
 } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import {
@@ -61,6 +64,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const [submitLoading, setSubmitLoading] = useState(false);
   const [publishLoading, setPublishLoading] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isUploadVersionOpen, setIsUploadVersionOpen] = useState(false);
   const currentUser = useAuthStore((state) => state.user);
   const { hasRole, isAdmin, isHR, isSuper, isManager } = usePermission();
 
@@ -271,53 +275,14 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const handleReview = async (status: 'approved' | 'rejected', note?: string) => {
     try {
       setReviewLoading(true);
-
-      // Nếu người dùng hiện tại có quyền duyệt (Admin, HR, Super) nhưng chưa khớp với approver_id của tài liệu,
-      // tự động đồng bộ approver_id lên tài liệu trước để thỏa mãn validation của backend FastAPI
-      if (currentUser?.id && String(currentApproverId) !== String(currentUser.id)) {
-        try {
-          await updateDocument(doc.id, {
-            approverId: String(currentUser.id),
-            approver_id: String(currentUser.id),
-          } as any);
-        } catch (syncErr) {
-          console.warn('Không thể tự động đồng bộ approver_id trước khi phê duyệt:', syncErr);
-        }
-      }
-
       const reviewNote = status === 'rejected' ? note?.trim() || undefined : undefined;
 
-      // Gọi API phê duyệt chuẩn POST /api/v1/documents/{id}/approve
-      try {
-        await reviewDocument(doc.id, {
-          action: status,
-          approvalStatus: status,
-          comment: reviewNote,
-          approvalNote: reviewNote,
-        });
-      } catch (reviewErr: any) {
-        const errMsg = String(reviewErr?.message || '');
-        const isPermissionIssue =
-          errMsg.includes('chỉ định') ||
-          errMsg.includes('FORBIDDEN') ||
-          errMsg.includes('quyền') ||
-          errMsg.includes('403');
-
-        // Nếu Backend vẫn báo không phải người chỉ định duyệt nhưng người dùng là Admin/HR/Super -> Fallback cập nhật trực tiếp qua updateDocument
-        if ((isAdmin || isHR || isSuper) && isPermissionIssue) {
-          await updateDocument(doc.id, {
-            approvalStatus: status,
-            approval_status: status,
-            approverId: String(currentUser?.id),
-            approver_id: String(currentUser?.id),
-            approvalNote: reviewNote,
-            approval_note: reviewNote,
-            status: status === 'approved' ? 'published' : 'draft',
-          } as any);
-        } else {
-          throw reviewErr;
-        }
-      }
+      await reviewDocument(doc.id, {
+        action: status,
+        approvalStatus: status,
+        comment: reviewNote,
+        approvalNote: reviewNote,
+      });
 
       toast.success(status === 'approved' ? 'Phê duyệt tài liệu thành công!' : 'Đã từ chối tài liệu');
       queryClient.invalidateQueries({ queryKey: ['documents'] });
@@ -412,34 +377,48 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
           {/* Workflow Action Buttons (Left) */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-start flex-wrap">
+            {/* 1. Trình duyệt tài liệu: khi ở trạng thái draft hoặc rejected */}
+            {isDraftOrRejected && (isCreator || canManageDoc) && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSubmitForApproval}
+                loading={submitLoading}
+                disabled={reviewLoading || submitLoading || publishLoading}
+                leftIcon={<Send size={14} />}
+                className="bg-primary hover:bg-primary/90 text-white font-medium text-xs cursor-pointer"
+              >
+                Trình duyệt tài liệu
+              </Button>
+            )}
 
-            {/* Nếu có quyền duyệt và tài liệu chưa được phê duyệt */}
-            {canApprove && !isApproved && (
-              <div className="flex items-center gap-2.5">
+            {/* 2. Phê duyệt hoặc Từ chối: chỉ khi ở trạng thái pending và là người được chỉ định hoặc Admin/HR */}
+            {approvalStatus === 'pending' && (isAssignedApprover || canManageDoc) && (
+              <div className="flex items-center gap-2">
                 <Button
                   variant="danger"
-                  size="md"
+                  size="sm"
                   onClick={() => setIsRejectModalOpen(true)}
                   disabled={reviewLoading || submitLoading || publishLoading}
-                  className="h-10 px-5 rounded-lg bg-[#ff245a] hover:bg-[#e61a4d] text-white font-bold text-sm tracking-wide shadow-xs border-0 cursor-pointer"
+                  className="px-4 rounded-lg bg-[#ff245a] hover:bg-[#e61a4d] text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer"
                 >
                   Từ chối
                 </Button>
                 <Button
                   variant="primary"
-                  size="md"
+                  size="sm"
                   onClick={() => handleReview('approved')}
                   loading={reviewLoading}
                   disabled={reviewLoading || submitLoading || publishLoading}
-                  className="h-10 px-5 rounded-lg bg-primary hover:bg-primary/90 text-white font-bold text-sm tracking-wide shadow-xs border-0 cursor-pointer"
+                  className="px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer"
                 >
                   Duyệt đề xuất
                 </Button>
               </div>
             )}
 
-            {/* Nếu là cấp quản lý (Admin/HR/Super) và tài liệu đã được duyệt nhưng chưa ban hành */}
-            {canManageDoc && isApproved && targetDoc.status !== 'published' && (
+            {/* 3. Ban hành văn bản chính thức: khi đã duyệt nhưng chưa ban hành */}
+            {isApproved && targetDoc.status !== 'published' && canManageDoc && (
               <Button
                 variant="outline"
                 size="sm"
@@ -454,8 +433,20 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             )}
           </div>
 
-          {/* Standard Download & Close (Right) */}
+          {/* Standard Download, Upload Version & Close (Right) */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            {(isCreator || canManageDoc) && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setIsUploadVersionOpen(true)}
+                leftIcon={<UploadCloud size={14} className="text-white" />}
+                disabled={reviewLoading || submitLoading || publishLoading}
+                className="text-xs text-white"
+              >
+                Tải phiên bản mới
+              </Button>
+            )}
             <Button variant="ghost" onClick={onClose} disabled={reviewLoading || submitLoading || publishLoading}>
               Đóng
             </Button>
@@ -711,6 +702,18 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
       documentTitle={targetDoc?.title}
       onConfirm={(reason) => handleReview('rejected', reason)}
       loading={reviewLoading}
+    />
+
+    {/* Modal tải lên phiên bản mới */}
+    <UploadVersionModal
+      isOpen={isUploadVersionOpen}
+      onClose={() => setIsUploadVersionOpen(false)}
+      document={targetDoc}
+      onSuccess={() => {
+        queryClient.invalidateQueries({ queryKey: ['document-detail', doc.id] });
+        queryClient.invalidateQueries({ queryKey: ['documents'] });
+        onSuccess?.();
+      }}
     />
   </>
   );
