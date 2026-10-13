@@ -89,9 +89,11 @@ export const createDocumentCategory = async (payload: CreateDocumentCategoryPayl
   try {
     const cleanPayload: Record<string, any> = {
       name: payload.name.trim(),
-      code: payload.code.trim().toUpperCase(),
     };
-    if (payload.description) cleanPayload.description = payload.description.trim();
+    if (payload.code?.trim()) {
+      cleanPayload.code = payload.code.trim().toUpperCase();
+    }
+    if (payload.description?.trim()) cleanPayload.description = payload.description.trim();
     if (payload.parentId) cleanPayload.parentId = payload.parentId;
 
     const res = await api.post('/api/v1/document-categories', cleanPayload);

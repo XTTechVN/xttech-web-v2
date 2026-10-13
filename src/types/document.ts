@@ -123,7 +123,7 @@ export interface GetDocumentsResponse {
 
 export interface CreateDocumentCategoryPayload {
   name: string;
-  code: string;
+  code?: string;
   description?: string;
   parentId?: number | null;
 }

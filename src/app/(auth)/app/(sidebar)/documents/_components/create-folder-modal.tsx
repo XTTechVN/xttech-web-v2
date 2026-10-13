@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Input, Textarea } from '@/components';
 import { createDocumentCategory } from '@/actions/document';
-import { generateSlugCode } from '../_utils/doc-helpers';
 import toast from 'react-hot-toast';
 import { FolderPlus } from 'lucide-react';
 import type { DocumentCategory } from '@/types';
@@ -35,7 +34,6 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   parentFolder = null,
   onSuccess,
 }) => {
-  const [isManualCode, setIsManualCode] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const {
@@ -48,7 +46,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   } = useForm<FolderFormValues>({
     resolver: zodResolver(folderSchema),
     defaultValues: {
-      name: 'New folder',
+      name: '',
       code: '',
       description: '',
     },
@@ -63,11 +61,10 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       reset({
-        name: 'New folder',
+        name: '',
         code: '',
         description: '',
       });
-      setIsManualCode(false);
     }
   }, [isOpen, reset]);
 
@@ -82,17 +79,14 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue('code', e.target.value.toUpperCase(), { shouldValidate: true });
-    setIsManualCode(true);
   };
 
   const handleFormSubmit = async (data: FolderFormValues) => {
-    const finalCode = (data.code?.trim() || generateSlugCode(data.name || 'New folder', 'DIR')).toUpperCase();
-
     try {
       setLoading(true);
       await createDocumentCategory({
         name: data.name.trim(),
-        code: finalCode,
+        code: data.code?.trim() ? data.code.trim().toUpperCase() : undefined,
         description: data.description?.trim() || undefined,
         parentId: parentId || null,
       });
@@ -123,7 +117,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
         <div>
           <Input
             label="Tên thư mục *"
-            placeholder="Ví dụ: New folder..."
+            placeholder="Ví dụ: Thư mục mới..."
             fullWidth
             value={nameVal}
             onChange={handleNameChange}
@@ -135,14 +129,14 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
         <div>
           <Input
             label="Mã thư mục (Code)"
-            placeholder="Nhập mã folder..."
+            placeholder="Nhập mã folder (tùy chọn)..."
             fullWidth
             value={codeVal}
             onChange={handleCodeChange}
             error={errors.code?.message}
           />
           <p className="text-[10px] text-slate-400 mt-1">
-            Mã định danh viết hoa, không dấu, ngăn cách bằng dấu gạch dưới (tự động tạo nếu để trống).
+            Mã định danh viết hoa, không dấu (để trống nếu muốn hệ thống tự động sinh).
           </p>
         </div>
 
