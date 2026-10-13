@@ -37,11 +37,35 @@ private enum AppClosedReminder {
 }
 
 @objc(NativeTrackingPlugin)
-public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
+public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDelegate {
+    // Metadata đăng ký plugin cho Capacitor 6+ (plugin nội bộ app phải đăng ký thủ công qua MainViewController)
+    public let identifier = "NativeTrackingPlugin"
+    public let jsName = "NativeTracking"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "startTracking", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "stopTracking", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "updateToken", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "checkPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "openSettings", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "ensureAlwaysPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getBatteryLevel", returnType: CAPPluginReturnPromise)
+    ]
+
     public static var shared: NativeTrackingPlugin?
 
     private var locationManager: CLLocationManager?
     private var isTracking = false
+    private var pendingPermissionCall: CAPPluginCall?
+
+    private func getOrCreateLocationManager() -> CLLocationManager {
+        if let lm = self.locationManager {
+            return lm
+        }
+        let lm = CLLocationManager()
+        lm.delegate = self
+        self.locationManager = lm
+        return lm
+    }
 
     private var accessToken: String?
     private var refreshToken: String?
@@ -176,9 +200,10 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
     }
 
     @objc func checkPermission(_ call: CAPPluginCall) {
+        let manager = getOrCreateLocationManager()
         let status: CLAuthorizationStatus
         if #available(iOS 14.0, *) {
-            status = locationManager?.authorizationStatus ?? CLLocationManager().authorizationStatus
+            status = manager.authorizationStatus
         } else {
             status = CLLocationManager.authorizationStatus()
         }
@@ -187,12 +212,22 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         let isWhenInUse = (status == .authorizedWhenInUse)
         var isPrecise = true
         if #available(iOS 14.0, *) {
-            isPrecise = (locationManager?.accuracyAuthorization ?? .fullAccuracy) == .fullAccuracy
+            isPrecise = (manager.accuracyAuthorization == .fullAccuracy)
         }
 
+        let statusStr: String = {
+            switch status {
+            case .authorizedAlways: return "always"
+            case .authorizedWhenInUse: return "whenInUse"
+            case .notDetermined: return "notDetermined"
+            default: return "denied"
+            }
+        }()
+
         call.resolve([
-            "status": isAlways ? "always" : isWhenInUse ? "whenInUse" : "denied",
+            "status": statusStr,
             "isAlways": isAlways,
+            "isWhenInUse": isWhenInUse,
             "isPrecise": isPrecise
         ])
     }
@@ -209,17 +244,18 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
         }
     }
 
-    /// Kiểm tra quyền Vị trí Luôn luôn. Nếu chưa có, hiển thị trực tiếp UIAlertController gốc của iOS
+    /// Kiểm tra quyền Vị trí Luôn luôn. Nếu chưa có, kích hoạt xin quyền iOS hoặc hiển thị hướng dẫn vào Cài đặt
     @objc func ensureAlwaysPermission(_ call: CAPPluginCall) {
+        let manager = getOrCreateLocationManager()
+
         let status: CLAuthorizationStatus
         if #available(iOS 14.0, *) {
-            status = locationManager?.authorizationStatus ?? CLLocationManager().authorizationStatus
+            status = manager.authorizationStatus
         } else {
             status = CLLocationManager.authorizationStatus()
         }
 
-        let isAlways = (status == .authorizedAlways)
-        if isAlways {
+        if status == .authorizedAlways {
             call.resolve([
                 "isAlways": true,
                 "action": "already_granted"
@@ -227,7 +263,44 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             return
         }
 
-        // Chưa có quyền Luôn luôn: Hiển thị Native Pop-up UIAlertController chuẩn iOS
+        // Hủy call cũ nếu có request trước đó đang chờ
+        if let previousCall = self.pendingPermissionCall {
+            previousCall.resolve(["isAlways": false, "action": "superseded"])
+            self.pendingPermissionCall = nil
+        }
+
+        // 1. Máy chưa từng được hỏi quyền (.notDetermined):
+        // BẮT BUỘC gọi requestAlwaysAuthorization() của iOS để hệ điều hành bung popup xin quyền gốc của Apple!
+        // Khi popup này xuất hiện, iOS sẽ lập tức đăng ký App vào Cài đặt -> Vị trí.
+        if status == .notDetermined {
+            self.pendingPermissionCall = call
+            DispatchQueue.main.async {
+                manager.requestAlwaysAuthorization()
+            }
+            return
+        }
+
+        // 2. Người dùng đã cấp quyền "Khi dùng ứng dụng" (.authorizedWhenInUse):
+        // Trong Cài đặt iPhone chắc chắn 100% ĐÃ CÓ mục "Vị trí".
+        // Hướng dẫn người dùng vào Cài đặt để nâng cấp lên "Luôn luôn".
+        if status == .authorizedWhenInUse {
+            showOpenSettingsAlert(
+                call: call,
+                title: "Yêu cầu quyền Vị trí \"Luôn luôn\"",
+                message: "Để duy trì chấm công và theo dõi lộ trình làm việc liên tục khi khóa màn hình, vui lòng cấp quyền vị trí \"Luôn luôn\" (Always) và bật \"Vị trí chính xác\" cho XTTech."
+            )
+            return
+        }
+
+        // 3. Đã bị từ chối (.denied hoặc .restricted):
+        showOpenSettingsAlert(
+            call: call,
+            title: "Quyền Vị trí đã bị từ chối",
+            message: "Ứng dụng XTTech cần quyền vị trí để hỗ trợ chấm công và định vị làm việc. Vui lòng mở Cài đặt để cấp lại quyền Vị trí."
+        )
+    }
+
+    private func showOpenSettingsAlert(call: CAPPluginCall, title: String, message: String) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else {
                 call.resolve(["isAlways": false, "action": "dismissed"])
@@ -235,8 +308,8 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             }
 
             let alert = UIAlertController(
-                title: "Yêu cầu quyền Vị trí \"Luôn luôn\"",
-                message: "Để duy trì chấm công và theo dõi lộ trình làm việc liên tục khi khóa màn hình, vui lòng cấp quyền vị trí \"Luôn luôn\" (Always) và bật \"Vị trí chính xác\" cho XTTech.",
+                title: title,
+                message: message,
                 preferredStyle: .alert
             )
 
@@ -265,6 +338,58 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
             self.bridge?.viewController?.present(alert, animated: true, completion: nil)
         }
+    }
+
+    // MARK: - CoreLocation Authorization Delegate
+    public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        handleAuthorizationChange(manager: manager)
+    }
+
+    public func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        handleAuthorizationChange(manager: manager)
+    }
+
+    private func handleAuthorizationChange(manager: CLLocationManager) {
+        let status: CLAuthorizationStatus
+        if #available(iOS 14.0, *) {
+            status = manager.authorizationStatus
+        } else {
+            status = CLLocationManager.authorizationStatus()
+        }
+
+        // Bỏ qua callback ban đầu khi hệ thống vừa khởi tạo delegate mà người dùng chưa đưa ra lựa chọn
+        guard status != .notDetermined else { return }
+
+        guard let call = self.pendingPermissionCall else { return }
+        self.pendingPermissionCall = nil
+
+        if status == .authorizedAlways {
+            call.resolve([
+                "isAlways": true,
+                "action": "already_granted"
+            ])
+            return
+        }
+
+        if status == .authorizedWhenInUse {
+            // Người dùng vừa chọn "Khi dùng ứng dụng" từ hộp thoại cấp quyền của Apple.
+            // Lúc này XTTech đã chính thức được iOS ghi nhận vào Cài đặt -> Vị trí.
+            // Hiển thị popup hướng dẫn mở Cài đặt để nâng cấp lên "Luôn luôn".
+            DispatchQueue.main.async { [weak self] in
+                self?.showOpenSettingsAlert(
+                    call: call,
+                    title: "Yêu cầu quyền Vị trí \"Luôn luôn\"",
+                    message: "Để duy trì chấm công và theo dõi lộ trình làm việc liên tục khi khóa màn hình, vui lòng cấp quyền vị trí \"Luôn luôn\" (Always) và bật \"Vị trí chính xác\" cho XTTech."
+                )
+            }
+            return
+        }
+
+        // Người dùng chọn từ chối (.denied hoặc .restricted)
+        call.resolve([
+            "isAlways": false,
+            "action": "denied"
+        ])
     }
 
     // MARK: - Battery Monitoring Engine
@@ -305,42 +430,39 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
 
     // MARK: - CoreLocation Active Tracking Engine (Chuẩn Live Location Zalo / Grab)
     private func setupLocationManager() {
-        if locationManager == nil {
-            locationManager = CLLocationManager()
-            locationManager?.delegate = self
-        }
+        let manager = getOrCreateLocationManager()
 
         // Cấu hình GPS phần cứng chất lượng cao nhất, không tự ý ngắt chip GPS
-        locationManager?.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager?.distanceFilter = kCLDistanceFilterNone
-        locationManager?.allowsBackgroundLocationUpdates = true
-        locationManager?.pausesLocationUpdatesAutomatically = false
-        locationManager?.activityType = .otherNavigation
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.distanceFilter = kCLDistanceFilterNone
+        manager.allowsBackgroundLocationUpdates = true
+        manager.pausesLocationUpdatesAutomatically = false
+        manager.activityType = .otherNavigation
 
         // Hiển thị viên thuốc màu xanh trên Status Bar / Dynamic Island (chuẩn Apple cho ứng dụng Live Tracking)
         if #available(iOS 11.0, *) {
-            locationManager?.showsBackgroundLocationIndicator = true
+            manager.showsBackgroundLocationIndicator = true
         }
 
         let status: CLAuthorizationStatus
         if #available(iOS 14.0, *) {
-            status = locationManager?.authorizationStatus ?? .notDetermined
+            status = manager.authorizationStatus
         } else {
             status = CLLocationManager.authorizationStatus()
         }
 
         if status == .notDetermined || status == .authorizedWhenInUse {
-            locationManager?.requestAlwaysAuthorization()
+            manager.requestAlwaysAuthorization()
         }
 
-        locationManager?.startUpdatingLocation()
+        manager.startUpdatingLocation()
 
         // Lưới an toàn cứu sinh: Giữ đánh thức SLC khi khởi động lại máy hoặc bị hệ thống kill
         if CLLocationManager.significantLocationChangeMonitoringAvailable() {
-            locationManager?.startMonitoringSignificantLocationChanges()
+            manager.startMonitoringSignificantLocationChanges()
         }
         // Visits: thêm một nguồn đánh thức hệ thống (vẫn hoạt động sau khi app bị vuốt tắt)
-        locationManager?.startMonitoringVisits()
+        manager.startMonitoringVisits()
 
         isTracking = true
         print("[NativeTracking iOS] Active Live-Tracking started (kCLLocationAccuracyBest, showsBackgroundLocationIndicator=true).")
@@ -527,7 +649,8 @@ public class NativeTrackingPlugin: CAPPlugin, CLLocationManagerDelegate {
             "accuracy": location.horizontalAccuracy,
             "speed": speed,
             "heading": heading,
-            "eventType": eventType
+            "eventType": eventType,
+            "platform": "ios"
         ]
         if let battery = getCurrentBatteryLevel() {
             payload["battery_level"] = battery

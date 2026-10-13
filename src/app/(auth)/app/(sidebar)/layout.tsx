@@ -22,8 +22,8 @@ import { useAuthStore } from '@/stores';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   // Chỉ tự động thu thập GPS và gửi ping định kỳ khi nhân viên ĐÃ CHECK-IN và CHƯA CHECK-OUT (đang trong ca làm)
-  const { isWorkingShift } = useMyTodayAttendance();
-  useLocationTracker({ enabled: isWorkingShift, intervalMs: 60000 });
+  const { isWorkingShift, isSuccess: isShiftStatusResolved } = useMyTodayAttendance();
+  useLocationTracker({ enabled: isWorkingShift, isStatusResolved: isShiftStatusResolved, intervalMs: 60000 });
 
   const path = usePathname();
   const pathSegments = path.split('/');

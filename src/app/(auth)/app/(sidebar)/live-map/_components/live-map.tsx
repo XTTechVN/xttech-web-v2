@@ -9,6 +9,7 @@ import { StaffLiveLocation, isStaffSignalLost } from '@/types';
 import { Battery, Gauge, Clock, Navigation } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { getFileUrl } from '@/utils';
+import { PlatformBadge } from '@/components';
 
 // Dynamic import Leaflet components for SSR safety
 const MapContainer = dynamic(
@@ -489,8 +490,11 @@ function StaffPopupContent({
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-bold text-slate-800 truncate !m-0 !p-0 leading-normal">
-            {staff.userName || 'Nhân viên'}
+          <div className="flex items-center justify-between gap-1 !m-0 !p-0 leading-normal">
+            <span className="text-xs font-bold text-slate-800 truncate">
+              {staff.userName || 'Nhân viên'}
+            </span>
+            <PlatformBadge platform={staff.platform} />
           </div>
           <div className="text-[10px] text-slate-500 truncate !m-0 !p-0 leading-normal">
             {staff.positionName || staff.departmentName || 'Nhân viên'}

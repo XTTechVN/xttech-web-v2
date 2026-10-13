@@ -7,8 +7,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
 
-        window = UIWindow(windowScene: windowScene)
-        window?.rootViewController = CAPBridgeViewController()
+        // Tránh tạo 2 Capacitor bridge (2 WebView + 2 instance plugin) nếu UIKit đã dựng window từ Main.storyboard
+        if window == nil {
+            window = UIWindow(windowScene: windowScene)
+            window?.rootViewController = MainViewController()
+        }
         window?.makeKeyAndVisible()
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)

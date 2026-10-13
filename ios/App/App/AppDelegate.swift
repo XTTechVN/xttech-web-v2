@@ -7,10 +7,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Nếu ứng dụng được iOS tự động đánh thức từ nền do sự kiện vị trí (Significant Location Changes)
-        if launchOptions?[UIApplication.LaunchOptionsKey.location] != nil {
-            NativeTrackingPlugin.handleLocationWakeUp()
-        }
+        // Khôi phục tracking ngay khi app khởi chạy (kể cả iOS đánh thức ngầm do Geofence / SLC / Visits).
+        // Không phụ thuộc launch key `.location` vì iOS không phải lúc nào cũng gửi kèm; hàm tự kiểm tra cờ tracking.
+        NativeTrackingPlugin.handleLocationWakeUp()
         return true
     }
 

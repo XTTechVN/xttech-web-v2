@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { StaffLiveLocation, StaffLiveStatus, STAFF_LIVE_STATUS_MAP, isStaffSignalLost } from '@/types';
 import { Search, Navigation, Battery, Gauge, Clock, Users, RefreshCw } from 'lucide-react';
-import { Input } from '@/components';
+import { Input, PlatformBadge } from '@/components';
 import dayjs from 'dayjs';
 import { getFileUrl } from '@/utils';
 
@@ -191,12 +191,15 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
                       <p className="text-[10px] text-slate-500 truncate">
                         {staff.positionName || staff.departmentName || 'Nhân viên'}
                       </p>
-                      {typeof staff.batteryLevel === 'number' && (
-                        <span className="text-[10px] text-slate-400 flex items-center gap-0.5 shrink-0">
-                          <Battery size={11} className={staff.batteryLevel < 20 ? 'text-rose-500' : 'text-slate-400'} />
-                          {staff.batteryLevel}%
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <PlatformBadge platform={staff.platform} />
+                        {typeof staff.batteryLevel === 'number' && (
+                          <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                            <Battery size={11} className={staff.batteryLevel < 20 ? 'text-rose-500' : 'text-slate-400'} />
+                            {staff.batteryLevel}%
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

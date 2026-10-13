@@ -1,3 +1,11 @@
+export type DevicePlatform = 'ios' | 'android' | 'web';
+
+export const DEVICE_PLATFORM_MAP: Record<DevicePlatform, string> = {
+  ios: 'iOS',
+  android: 'Android',
+  web: 'Web App',
+};
+
 export interface LocationPingPayload {
   latitude: number;
   longitude: number;
@@ -5,6 +13,7 @@ export interface LocationPingPayload {
   speed?: number;
   heading?: number;
   batteryLevel?: number;
+  platform?: DevicePlatform;
 }
 
 export type StaffLiveStatus = 'moving' | 'stationary' | 'app_closed' | 'offline';
@@ -34,6 +43,7 @@ export interface StaffLiveLocation {
   heading?: number;
   batteryLevel?: number;
   checkInTime?: string;
+  platform?: DevicePlatform;
   status: StaffLiveStatus;
   updatedAt: string;
 }

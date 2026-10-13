@@ -112,6 +112,7 @@ export default function AttendanceLiveMapPage() {
                 attendanceId: rawData.attendanceId ?? rawData.attendance_id,
                 batteryLevel: rawData.batteryLevel ?? rawData.battery_level,
                 checkInTime: rawData.checkInTime || rawData.check_in_time,
+                platform: rawData.platform || 'web',
                 updatedAt: rawData.updatedAt || rawData.updated_at,
               };
 

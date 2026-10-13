@@ -2,6 +2,25 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-13
+
+### Added (Hiển thị nhãn thiết bị điểm danh & phát định vị: iOS, Android, Web App)
+- **Component dùng chung ([`src/components/platform-badge/platform-badge.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/platform-badge/platform-badge.tsx)):**
+  - Tạo mới component `PlatformBadge` trực quan, hiển thị icon & nhãn cho từng nền tảng:
+    - 🍏 **iOS**: Badge màu slate xám với biểu tượng Apple logo.
+    - 🤖 **Android**: Badge màu emerald xanh lá với biểu tượng chú robot Android.
+    - 🌐 **Web App**: Badge màu xanh dương với biểu tượng quả địa cầu Globe.
+- **Danh sách nhân sự & Bản đồ trực tuyến ([`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/staff-list.tsx), [`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/live-map.tsx), [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx)):**
+  - Hiển thị `PlatformBadge` cạnh mức phần trăm pin trên từng card nhân sự trong danh sách Live Map.
+  - Hiển thị `PlatformBadge` trong popup chi tiết nhân sự khi click vào điểm đánh dấu trên bản đồ vệ tinh / đường phố.
+  - WebSocket auto-sync cập nhật nền tảng thời gian thực khi nhận sự kiện `STAFF_LOCATION_UPDATE`.
+- **Chấm công & Thu thập tọa độ nền ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx), [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts), [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java)):**
+  - Modal chấm công tự động phát hiện `Capacitor.getPlatform()` và gửi kèm `platform: 'ios' | 'android' | 'web'` khi Check-in / Check-out.
+  - Tự động gắn kèm `platform` vào các gói tin location-ping định kỳ trên cả Web, iOS native URLSession và Android Java Foreground Service.
+- **Types ([`types/attendance.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/attendance.ts), [`types/location.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/location.ts)):**
+  - Bổ sung type `DevicePlatform = 'ios' | 'android' | 'web'` và `DEVICE_PLATFORM_MAP`.
+  - Bổ sung `checkInPlatform`, `checkOutPlatform` vào `Attendance` và `platform` vào `StaffLiveLocation`, `LocationPingPayload`, `AutoTimekeepingData`.
+
 ## [Unreleased] - 2026-10-12
 
 ### Added (Phát hiện vuốt tắt app & tăng nguồn đánh thức định vị nền iOS)
@@ -16,6 +35,24 @@ All notable changes to the frontend project will be documented in this file.
   - Thêm trạng thái `app_closed` (badge "Đã tắt app"), `STAFF_LIVE_STATUS_MAP` và helper `isStaffSignalLost`.
 
 ### Fixed
+- **Khắc phục lỗi mất mục "Vị trí" trong Cài đặt iPhone trên thiết bị mới cài đặt ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
+  - **Nguyên nhân gốc rễ:** Trên iOS, mục "Vị trí" chỉ xuất hiện trong `Cài đặt > [Tên App]` sau khi ứng dụng đã gọi API xin quyền của hệ thống ít nhất một lần. Trước đây, hàm `ensureAlwaysPermission` khi thấy quyền chưa phải là `authorizedAlways` đã lập tức hiển thị Alert mở thẳng Cài đặt iPhone mà chưa từng gọi lệnh xin quyền của hệ điều hành. Đối với các máy mới cài đặt hoặc nhân viên mới đăng nhập (trạng thái `notDetermined`), người dùng bấm sang Cài đặt bị mất hoàn toàn mục "Vị trí", gây tắc nghẽn luồng chấm công.
+  - **Giải pháp xử lý:**
+    - Khi `status == .notDetermined`: Tự động gọi `locationManager.requestAlwaysAuthorization()` để iOS bung popup xin quyền hệ thống gốc của Apple ("Cho phép XTTech truy cập vị trí của bạn?"). Nhờ đó iOS ghi nhận và lưu vĩnh viễn mục "Vị trí" vào Cài đặt của app.
+    - Cài đặt delegate `locationManagerDidChangeAuthorization` và `didChangeAuthorization` (`CLLocationManagerDelegate`) để lắng nghe lựa chọn của người dùng:
+      - Sau khi người dùng chọn "Khi dùng ứng dụng" (`authorizedWhenInUse`), mục "Vị trí" đã có sẵn trong Cài đặt, app tiếp tục hiển thị Native Alert chuẩn dẫn người dùng vào Cài đặt để gạt chuyển sang "Luôn luôn" (Always).
+      - Bổ sung helper tập trung `getOrCreateLocationManager()`, quản lý an toàn vòng đời `CLLocationManager`.
+    - Chuẩn hóa `checkPermission` trả về đầy đủ các trạng thái `always`, `whenInUse`, `notDetermined`, `denied` và cờ `isWhenInUse`.
+- **[Root cause] Plugin `NativeTracking` chưa từng được đăng ký trên iOS:**
+  - Capacitor 6+ chỉ đăng ký plugin có trong `packageClassList` (đang rỗng), nên JS gọi `startTracking` bị lỗi và âm thầm fallback sang `navigator.geolocation` của WebView, vốn chỉ chạy khi app ở foreground. Hậu quả: toàn bộ GPS nền / geofence / app_closed chưa từng chạy.
+  - [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift) conform `CAPBridgedPlugin` (`identifier`, `jsName`, `pluginMethods`). Xoá `NativeTrackingPlugin.m` (macro `CAP_PLUGIN` cũ).
+  - Thêm [`MainViewController.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/MainViewController.swift): override `capacitorDidLoad()` → `registerPluginInstance(NativeTrackingPlugin())`. `Main.storyboard` và [`SceneDelegate.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/SceneDelegate.swift) dùng `MainViewController`.
+  - `SceneDelegate` chỉ tạo window khi `window == nil`, tránh dựng 2 bridge/WebView song song với storyboard.
+- **Race condition gọi `stopTracking` khi mở app ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts), [`useMyTodayAttendance.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useMyTodayAttendance.ts), [`layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/layout.tsx)):**
+  - Trước đây mỗi lần mở app, khi dữ liệu chấm công chưa tải xong, hook coi như "không trong ca" và gọi `stopTracking` native (xoá SLC/geofence/visits). Nay chỉ dừng khi trạng thái ca đã xác định (`isStatusResolved`).
+- **Khôi phục tracking khi app khởi chạy ([`AppDelegate.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/AppDelegate.swift)):** luôn gọi `handleLocationWakeUp()` (hàm tự kiểm tra cờ tracking), không phụ thuộc launch key `.location`.
+- **Khắc phục lệch Build Number trên CI/CD TestFlight ([`build-ios-signed.yml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/.github/workflows/build-ios-signed.yml)):**
+  - Thêm offset `BUILD_NUM=$(( ${{ github.run_number }} + 30 ))` vào quy trình đóng gói Xcode (`CURRENT_PROJECT_VERSION` và `CFBundleVersion`) nhằm đảm bảo các bản build mới luôn có số build vượt trội (> 50), tránh xung đột thụt lùi số phiên bản với các bản build 44 trước đó trên TestFlight.
 - Giải phóng instance standalone (tạo lúc iOS đánh thức app từ nền) khi Capacitor bridge load, tránh 2 `CLLocationManager` gửi ping trùng.
 
 ### Changed

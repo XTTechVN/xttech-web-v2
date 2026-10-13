@@ -11,7 +11,7 @@ export interface NativeTrackingPlugin {
   startTracking(options: { token: string; refreshToken?: string; apiUrl: string }): Promise<{ success: boolean }>;
   updateToken(options: { token: string; refreshToken?: string }): Promise<{ success: boolean }>;
   stopTracking(): Promise<{ success: boolean }>;
-  checkPermission?(): Promise<{ status: string; isAlways: boolean; isPrecise: boolean }>;
+  checkPermission?(): Promise<{ status: string; isAlways: boolean; isWhenInUse?: boolean; isPrecise: boolean }>;
   openSettings?(): Promise<{ success: boolean }>;
   ensureAlwaysPermission?(): Promise<{ isAlways: boolean; action: string }>;
   // Android Background Permissions & Auto-Start
@@ -30,6 +30,8 @@ export const NativeTracking = registerPlugin<NativeTrackingPlugin>('NativeTracki
 
 interface LocationTrackerOptions {
   enabled?: boolean;
+  /** Trạng thái ca đã được xác định chắc chắn (API đã trả về). Chưa xác định thì KHÔNG dừng native tracking */
+  isStatusResolved?: boolean;
   intervalMs?: number; // Mặc định 60 giây (60000ms) khi di chuyển trên Web
   heartbeatMs?: number; // Mặc định 3 phút (180000ms) gửi nhịp tim khi đứng yên
 }
@@ -42,7 +44,7 @@ export const isMobileDevice = () => {
   );
 }
 
-export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbeatMs = 180000, }: LocationTrackerOptions = {}) {
+export function useLocationTracker({ enabled = true, isStatusResolved = true, intervalMs = 60000, heartbeatMs = 180000, }: LocationTrackerOptions = {}) {
   const [isTracking, setIsTracking] = useState(false);
   const [lastPingTime, setLastPingTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +146,12 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
 
     try {
       const battery = await getBatteryLevel();
+      const clientPlatform =
+        Capacitor.getPlatform() === 'ios'
+          ? 'ios'
+          : Capacitor.getPlatform() === 'android'
+          ? 'android'
+          : 'web';
       await sendLocationPing({
         latitude: pos.latitude,
         longitude: pos.longitude,
@@ -151,6 +159,7 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
         speed: speed,
         heading: pos.heading,
         batteryLevel: battery,
+        platform: clientPlatform,
       });
 
       setLastPingTime(new Date());
@@ -238,7 +247,9 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
 
     if (!enabled) {
       setIsTracking(false);
-      if (isNative) {
+      // Chỉ dừng native khi đã biết chắc nhân viên không còn trong ca.
+      // Lúc đang tải dữ liệu chấm công hoặc API lỗi, `enabled` tạm thời = false nhưng KHÔNG được tắt GPS nền.
+      if (isNative && isStatusResolved) {
         NativeTracking.stopTracking().catch(() => { });
       }
       if (workerRef.current) {
@@ -310,7 +321,9 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
           }).catch(() => {});
         }
       }).catch((e: any) => {
-        console.warn('[NativeTracking] Start native tracking failed, falling back to Web Geolocation:', e);
+        // Native không khởi động được (vd: plugin chưa được đăng ký): Web Geolocation chỉ chạy khi app đang mở,
+        // KHÔNG thay thế được định vị nền -> ghi lỗi rõ ràng để không bị che giấu.
+        console.error('[NativeTracking] Native background tracking FAILED, chỉ còn định vị khi app đang mở:', e);
         startWebWatchPosition();
       });
     } else {
@@ -403,7 +416,7 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000, heartbe
       document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
       window.removeEventListener('focus', handleVisibilityOrFocus);
     };
-  }, [enabled, intervalMs, heartbeatMs, pingCurrentLocation, executePing, sendHeartbeat]);
+  }, [enabled, isStatusResolved, intervalMs, heartbeatMs, pingCurrentLocation, executePing, sendHeartbeat]);
 
   // Đồng bộ tức thời khi AccessToken / RefreshToken được cập nhật từ Web sang Native Service
   const accessToken = useAuthStore((state) => state.accessToken);
