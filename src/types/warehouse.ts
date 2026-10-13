@@ -14,9 +14,16 @@ export type ReceiptReason =
   | 'adjustment'
   | 'scrap';
 
+export type ImportReceiptReason = 'purchase' | 'offcut_return' | 'adjustment';
+export type ExportReceiptReason = 'production_issue' | 'rework_issue' | 'adjustment' | 'scrap';
+
 export type ReceiptStatus = 'draft' | 'approved' | 'cancelled';
 
 export type GlassOrderStatus = 'draft' | 'ordered' | 'delivered' | 'assembled';
+
+export type GlassPaneSource = 'door' | 'manual';
+
+export type ManualReason = 'spare' | 'replacement' | 'extra' | 'other';
 
 // Supplier
 export interface WarehouseSupplier {
@@ -44,6 +51,39 @@ export interface WarehouseSupplierCreatePayload {
   isActive?: boolean;
 }
 
+export interface SuppliedItemSummary {
+  itemId?: number | null;
+  itemCode: string;
+  itemName: string;
+  itemType: WarehouseItemType | string;
+  unit: string;
+  totalImportedQty: number;
+  lastUnitPrice: number;
+  lastImportDate: string;
+  currentStock: number;
+  availableStock: number;
+}
+
+export interface SupplierGlassOrderSummary {
+  id: number;
+  code: string;
+  projectId: number;
+  projectName?: string | null;
+  totalPanes: number;
+  totalAmount: number;
+  totalAreaM2: number;
+  expectedDate?: string | null;
+  status: GlassOrderStatus;
+  createdAt: string;
+}
+
+export interface SupplierDetailAnalyticsResponse {
+  supplier: WarehouseSupplier;
+  suppliedItems: SuppliedItemSummary[];
+  receipts: WarehouseReceipt[];
+  glassOrders: SupplierGlassOrderSummary[];
+}
+
 // Warehouse Item
 export interface WarehouseItem {
   id: number;
@@ -53,6 +93,8 @@ export interface WarehouseItem {
   unit: string;
   profileBarId?: number | null;
   colorId?: number | null;
+  colorName?: string | null;
+  brandName?: string | null;
   standardLengthMm: number;
   currentStock: number;
   reservedQty: number;
@@ -125,7 +167,11 @@ export interface WarehouseReceiptItemCreatePayload {
   offcutLengthMm?: number;
   itemCode: string;
   itemName: string;
+  itemType?: WarehouseItemType;
+  profileBarId?: number;
   unit: string;
+  colorId?: number;
+  colorName?: string;
   quantity: number;
   unitPrice?: number;
   note?: string;
@@ -160,20 +206,27 @@ export interface WarehouseReceiptCreatePayload {
   productionOrderId?: number;
   supplierId?: number;
   note?: string;
+  approveImmediately?: boolean;
   items: WarehouseReceiptItemCreatePayload[];
 }
 
 // Shortage Check
 export interface ShortageItemDetail {
+  itemId?: number | null;
+  profileBarId?: number | null;
   itemCode: string;
   itemName: string;
   itemType: string;
   unit: string;
+  colorId?: number | null;
+  colorName?: string | null;
+  estimatedPrice?: number;
   requiredQty: number;
   currentStock: number;
   reservedQty: number;
   availableQty: number;
   shortageQty: number;
+  isConfigured?: boolean;
 }
 
 export interface ShortageCheckResponse {
@@ -182,6 +235,7 @@ export interface ShortageCheckResponse {
   isFullyStocked: boolean;
   totalRequiredItems: number;
   totalShortageItems: number;
+  unconfiguredCount?: number;
   shortages: ShortageItemDetail[];
 }
 
@@ -189,8 +243,10 @@ export interface ShortageCheckResponse {
 export interface GlassOrderItem {
   id: number;
   glassOrderId: number;
-  positionId: number;
-  sourcePositionRevision: number;
+  positionId?: number | null;
+  sourcePositionRevision?: number | null;
+  paneSource: GlassPaneSource;
+  manualReason?: ManualReason | null;
   paneLabel?: string | null;
   widthMm: number;
   heightMm: number;
@@ -229,4 +285,41 @@ export interface GlassOrderGeneratePayload {
   supplierId: number;
   defaultUnitPrice?: number;
   note?: string;
+}
+
+export interface GlassPanePreviewItem {
+  positionId?: number | null;
+  sourcePositionRevision?: number;
+  paneLabel?: string | null;
+  widthMm: number;
+  heightMm: number;
+  glassType: string;
+  grindType?: string | null;
+  areaM2: number;
+  unitPrice: number;
+  positionCode?: string | null;
+  doorName?: string | null;
+  isMeasured?: boolean;
+  paneSource?: GlassPaneSource;
+  manualReason?: ManualReason | null;
+}
+
+export interface GlassOrderItemCreatePayload {
+  positionId?: number | null;
+  sourcePositionRevision?: number | null;
+  manualReason?: ManualReason | null;
+  paneLabel?: string | null;
+  widthMm: number;
+  heightMm: number;
+  glassType: string;
+  grindType?: string | null;
+  unitPrice: number;
+}
+
+export interface GlassOrderCreatePayload {
+  productionOrderId?: number | null;
+  supplierId: number;
+  expectedDate?: string | null;
+  note?: string | null;
+  items: GlassOrderItemCreatePayload[];
 }
