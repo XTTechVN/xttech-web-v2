@@ -269,7 +269,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
             if (folder) {
               await shareDocumentCategory(folder.id, {
                 departmentId: Number(deptId),
-                permission: permission === 'approve' ? 'view' : permission,
+                permission: permission,
               });
               successCount++;
             }
@@ -307,7 +307,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
 
           // Backend API /document-categories/{id}/shares yêu cầu departmentId hoặc userId.
           // Để chia sẻ cho toàn bộ hệ thống, ta chia sẻ cho tất cả các phòng ban (hoặc tất cả nhân sự)
-          const perm = permission === 'approve' ? 'view' : permission;
+          const perm = permission;
           let shareSuccessCount = 0;
 
           if (departments.length > 0) {
