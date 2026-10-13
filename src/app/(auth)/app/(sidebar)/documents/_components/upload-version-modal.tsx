@@ -126,7 +126,7 @@ export const UploadVersionModal: React.FC<UploadVersionModalProps> = ({
       size="md"
       footer={
         <div className="flex items-center justify-end gap-2 w-full">
-          <Button variant="secondary" onClick={handleClose} disabled={loading}>
+          <Button variant="danger" onClick={handleClose} disabled={loading}>
             Hủy
           </Button>
           <Button
@@ -141,16 +141,7 @@ export const UploadVersionModal: React.FC<UploadVersionModalProps> = ({
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {doc && (
-          <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-600">
-            <span className="font-semibold text-slate-800">Tài liệu:</span> {doc.title}
-            {doc.currentVersion && (
-              <span className="ml-2 font-mono text-primary font-medium">
-                (Phiên bản hiện tại: v{doc.currentVersion.versionNumber})
-              </span>
-            )}
-          </div>
-        )}
+       
 
         {/* File Upload Drop Area */}
         <div className="space-y-1.5">

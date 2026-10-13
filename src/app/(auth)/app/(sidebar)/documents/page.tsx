@@ -14,18 +14,8 @@ import {
   deleteDocument,
   removeDocumentFromFolder,
 } from '@/actions/document';
-import {
-  DOCUMENT_TYPE_MAP,
-  DOCUMENT_STATUS_MAP,
-  type DocumentCategory,
-  type DocumentItem,
-} from '@/types';
-import {
-  isDocumentOwner,
-  isDocumentSharedWithUser,
-  isDocumentSharedOut,
-  getDocumentPermissions,
-} from './_utils/doc-helpers';
+import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, type DocumentCategory, type DocumentItem } from '@/types';
+import { isDocumentOwner, isDocumentSharedWithUser, isDocumentSharedOut, getDocumentPermissions } from './_utils/doc-helpers';
 
 // Custom Hooks
 import { useDocumentSelection } from './_hooks/use-document-selection';
@@ -35,11 +25,7 @@ import { useFolderTree } from './_hooks/use-folder-tree';
 import { DocumentsToolbar } from './_components/documents-toolbar';
 import { DocumentsFolderHeader } from './_components/documents-folder-header';
 import { FloatingSelectionBar } from './_components/floating-selection-bar';
-import {
-  DocumentsModals,
-  type DeleteModalState,
-  type ItemToMoveState,
-} from './_components/documents-modals';
+import { DocumentsModals, type DeleteModalState, type ItemToMoveState } from './_components/documents-modals';
 import { FolderCard } from './_components/folder-card';
 import { FolderTable } from './_components/folder-table';
 import { FileCard } from './_components/file-card';
@@ -63,10 +49,7 @@ function MyDocumentsContent() {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   // Multi-Selection Hook (handles selection & Escape key)
-  const { selectedItemKeys, toggleSelectItem, clearSelection } = useDocumentSelection(
-    currentFolderId,
-    tab
-  );
+  const { selectedItemKeys, toggleSelectItem, clearSelection } = useDocumentSelection(currentFolderId, tab);
 
   // Search & Filter States
   const [search, setSearch] = useState('');
@@ -81,7 +64,7 @@ function MyDocumentsContent() {
         label: item.label,
       })),
     ],
-    []
+    [],
   );
 
   const statusOptions = useMemo(
@@ -92,7 +75,7 @@ function MyDocumentsContent() {
         label: item.label,
       })),
     ],
-    []
+    [],
   );
 
   const hasActiveFilters = Boolean(search || documentType || status);
@@ -143,21 +126,12 @@ function MyDocumentsContent() {
   });
 
   // 2. Folder Hierarchy & Shared Section Hook
-  const {
-    safeCategoryTree,
-    currentFolder,
-    parentFolder,
-    subFolders,
-    myFolders,
-    sharedFolders,
-    foldersToDisplay,
-    isSharedSection,
-    isDescendant,
-  } = useFolderTree({
-    categoryTree,
-    currentFolderId,
-    tab,
-  });
+  const { safeCategoryTree, currentFolder, parentFolder, subFolders, myFolders, sharedFolders, foldersToDisplay, isSharedSection, isDescendant } =
+    useFolderTree({
+      categoryTree,
+      currentFolderId,
+      tab,
+    });
 
   // Tập hợp toàn bộ ID của các thư mục thuộc cây thư mục chia sẻ
   const allSharedCategoryIds = useMemo(() => {
@@ -230,9 +204,7 @@ function MyDocumentsContent() {
       }
 
       // Đang ở trong một thư mục chia sẻ cụ thể:
-      return rawItems.filter(
-        (doc) => doc.categoryId === currentFolderId || doc.category?.id === currentFolderId
-      );
+      return rawItems.filter((doc) => doc.categoryId === currentFolderId || doc.category?.id === currentFolderId);
     }
 
     // PHÂN VÙNG: TÀI LIỆU CỦA TÔI (tab !== 'shared' và không nằm trong nhánh chia sẻ)
@@ -250,8 +222,7 @@ function MyDocumentsContent() {
     }
 
     return rawItems.filter((doc) => {
-      const isInFolder =
-        doc.categoryId === currentFolderId || doc.category?.id === currentFolderId;
+      const isInFolder = doc.categoryId === currentFolderId || doc.category?.id === currentFolderId;
       if (!isInFolder) return false;
       return isDocumentOwner(doc, currentUser, allMyCategoryIds);
     });
@@ -336,11 +307,7 @@ function MyDocumentsContent() {
   };
 
   // Drag and Drop move handler
-  const handleDropItem = async (
-    sourceType: 'folder' | 'document',
-    sourceId: number,
-    targetFolderId: number
-  ) => {
+  const handleDropItem = async (sourceType: 'folder' | 'document', sourceId: number, targetFolderId: number) => {
     if (sourceType === 'document') {
       const doc = documents.find((d) => d.id === sourceId);
       if (doc) {
@@ -397,8 +364,7 @@ function MyDocumentsContent() {
 
   const hasSubFolders = subFolders.length > 0;
   const hasDocuments = documents.length > 0;
-  const isEmptyState =
-    !hasSubFolders && !hasDocuments && !isLoadingCategories && !isLoadingDocuments;
+  const isEmptyState = !hasSubFolders && !hasDocuments && !isLoadingCategories && !isLoadingDocuments;
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white select-none">
@@ -460,10 +426,10 @@ function MyDocumentsContent() {
                       currentFolder
                         ? currentFolder.name
                         : tab === 'shared'
-                        ? 'Được chia sẻ với tôi'
-                        : tab === 'trash'
-                        ? 'Thùng rác'
-                        : 'Tài liệu của tôi'
+                          ? 'Được chia sẻ với tôi'
+                          : tab === 'trash'
+                            ? 'Thùng rác'
+                            : 'Tài liệu của tôi'
                     }
                     onOpen={(f) => setCurrentFolderId(f.id)}
                     onViewDetail={(f) => {
@@ -524,12 +490,7 @@ function MyDocumentsContent() {
                     locationName={
                       currentFolder
                         ? currentFolder.name
-                        : doc.category?.name ||
-                          (isSharedSection
-                            ? 'Được chia sẻ với tôi'
-                            : tab === 'trash'
-                            ? 'Thùng rác'
-                            : 'Tài liệu của tôi')
+                        : doc.category?.name || (isSharedSection ? 'Được chia sẻ với tôi' : tab === 'trash' ? 'Thùng rác' : 'Tài liệu của tôi')
                     }
                     onPreview={(d) => {
                       setSelectedDoc(d);
@@ -578,10 +539,10 @@ function MyDocumentsContent() {
                       currentFolder
                         ? currentFolder.name
                         : tab === 'shared'
-                        ? 'Được chia sẻ với tôi'
-                        : tab === 'trash'
-                        ? 'Thùng rác'
-                        : 'Tài liệu của tôi'
+                          ? 'Được chia sẻ với tôi'
+                          : tab === 'trash'
+                            ? 'Thùng rác'
+                            : 'Tài liệu của tôi'
                     }
                     showHeader={true}
                     onOpen={(f) => setCurrentFolderId(f.id)}
@@ -644,10 +605,10 @@ function MyDocumentsContent() {
                       currentFolder
                         ? currentFolder.name
                         : isSharedSection
-                        ? 'Được chia sẻ với tôi'
-                        : tab === 'trash'
-                        ? 'Thùng rác'
-                        : 'Tài liệu của tôi'
+                          ? 'Được chia sẻ với tôi'
+                          : tab === 'trash'
+                            ? 'Thùng rác'
+                            : 'Tài liệu của tôi'
                     }
                     showHeader={foldersToDisplay.length === 0}
                     onPreview={(d) => {
@@ -697,9 +658,7 @@ function MyDocumentsContent() {
               <Folder size={32} />
             </div>
             <h3 className="text-sm font-bold text-slate-800">
-              {currentFolder
-                ? `Thư mục "${currentFolder.name}" đang trống`
-                : 'Chưa có thư mục hoặc tài liệu nào'}
+              {currentFolder ? `Thư mục "${currentFolder.name}" đang trống` : 'Chưa có thư mục hoặc tài liệu nào'}
             </h3>
           </div>
         )}
@@ -758,10 +717,7 @@ function MyDocumentsContent() {
       />
 
       {/* 5. Floating Multi-Selection Bar */}
-      <FloatingSelectionBar
-        selectedCount={selectedItemKeys.size}
-        onClearSelection={clearSelection}
-      />
+      <FloatingSelectionBar selectedCount={selectedItemKeys.size} onClearSelection={clearSelection} />
     </div>
   );
 }

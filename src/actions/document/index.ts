@@ -53,16 +53,12 @@ export const getDocumentCategoryTree = async (): Promise<DocumentCategory[]> => 
     // Backend FastAPI có thể trả về camelCase ({ myFolders, sharedFolders })
     // hoặc snake_case ({ my_folders, shared_folders })
     const treeObj = raw?.data ?? raw;
-    const my = Array.isArray(treeObj?.myFolders)
-      ? treeObj.myFolders
-      : Array.isArray(treeObj?.my_folders)
-      ? treeObj.my_folders
-      : [];
+    const my = Array.isArray(treeObj?.myFolders) ? treeObj.myFolders : Array.isArray(treeObj?.my_folders) ? treeObj.my_folders : [];
     const shared = Array.isArray(treeObj?.sharedFolders)
       ? treeObj.sharedFolders
       : Array.isArray(treeObj?.shared_folders)
-      ? treeObj.shared_folders
-      : [];
+        ? treeObj.shared_folders
+        : [];
 
     const markedMy = my.map((item: DocumentCategory) => ({
       ...item,
@@ -107,9 +103,7 @@ function generateCategoryCode(name?: string): string {
 // Tạo mới thư mục
 export const createDocumentCategory = async (payload: CreateDocumentCategoryPayload): Promise<DocumentCategory> => {
   try {
-    const code = payload.code?.trim()
-      ? payload.code.trim().toUpperCase()
-      : generateCategoryCode(payload.name);
+    const code = payload.code?.trim() ? payload.code.trim().toUpperCase() : generateCategoryCode(payload.name);
 
     const cleanPayload: Record<string, any> = {
       name: payload.name.trim(),
@@ -216,10 +210,7 @@ export const deleteDocument = async (id: number): Promise<void> => {
 };
 
 // Tạo phiên bản mới cho tài liệu (Upload new version multipart/form-data)
-export const createDocumentVersion = async (
-  documentId: number,
-  formData: FormData
-): Promise<DocumentVersion> => {
+export const createDocumentVersion = async (documentId: number, formData: FormData): Promise<DocumentVersion> => {
   try {
     const res = await api.post(`/api/v1/documents/${documentId}/versions`, formData, {
       headers: {
@@ -311,7 +302,7 @@ export const shareDocument = async (
     departmentId?: number;
     permission?: string;
     approverId?: string;
-  }
+  },
 ): Promise<any> => {
   try {
     const updateData: Record<string, any> = {};
@@ -408,17 +399,13 @@ export const revokeDocumentShare = async (documentId: number, shareId: number | 
   }
 };
 
-
 // ==========================================
 // 4. Phê duyệt & Quy trình tài liệu (Approval Workflow)
 // ==========================================
 
 // 8.1. Trình duyệt tài liệu: POST /api/v1/documents/{id}/submit
 // Trạng thái duyệt sẽ chuyển thành pending
-export const submitDocument = async (
-  documentId: number,
-  payload?: { approverId?: string }
-): Promise<DocumentItem> => {
+export const submitDocument = async (documentId: number, payload?: { approverId?: string }): Promise<DocumentItem> => {
   try {
     const res = await api.post(`/api/v1/documents/${documentId}/submit`, payload || {});
     return res.data?.data ?? res.data;
@@ -462,10 +449,7 @@ export const reviewDocument = async (
 // 8.3. Ban hành văn bản chính thức: POST /api/v1/documents/{id}/publish
 // Request body (tùy chọn): { shareScope?: "all" | "department" | "private" }
 // Sau khi ban hành, trạng thái đổi thành published
-export const publishDocument = async (
-  documentId: number,
-  payload?: { shareScope?: string }
-): Promise<DocumentItem> => {
+export const publishDocument = async (documentId: number, payload?: { shareScope?: string }): Promise<DocumentItem> => {
   try {
     const res = await api.post(`/api/v1/documents/${documentId}/publish`, payload || {});
     return res.data?.data ?? res.data;
@@ -479,9 +463,7 @@ export const publishDocument = async (
 // ==========================================
 
 // 6.1. Lấy danh sách văn bản trong Hộp thư đến (Inbox): GET /api/v1/documents/inbox
-export const getInboxDocuments = async (
-  params?: GetInboxDocumentsParams,
-): Promise<GetDocumentsResponse> => {
+export const getInboxDocuments = async (params?: GetInboxDocumentsParams): Promise<GetDocumentsResponse> => {
   try {
     const res = await api.get('/api/v1/documents/inbox', { params });
     const rawData = res.data?.data ?? res.data;

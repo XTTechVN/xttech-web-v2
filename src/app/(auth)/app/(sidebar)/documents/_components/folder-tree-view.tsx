@@ -29,9 +29,7 @@ const TreeNode: React.FC<{
         style={{ paddingLeft: `${level * 14 + 8}px` }}
         className={cn(
           'flex items-center gap-1.5 py-1.5 pr-2 rounded-lg cursor-pointer transition-colors group',
-          isActive
-            ? 'bg-primary/10 text-primary font-semibold'
-            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+          isActive ? 'bg-primary/10 text-primary font-semibold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
         )}
       >
         {/* Toggle chevron */}
@@ -68,24 +66,14 @@ const TreeNode: React.FC<{
         <span className="truncate flex-1 min-w-0">{node.name}</span>
 
         {/* Badge of children count */}
-        {hasChildren && (
-          <span className="text-[10px] text-slate-400 px-1 rounded bg-slate-100">
-            {node.children?.length}
-          </span>
-        )}
+        {hasChildren && <span className="text-[10px] text-slate-400 px-1 rounded bg-slate-100">{node.children?.length}</span>}
       </div>
 
       {/* Nested Children */}
       {hasChildren && isOpen && (
         <div className="relative border-l border-slate-200/80 ml-4 space-y-0.5">
           {node.children?.map((child) => (
-            <TreeNode
-              key={child.id}
-              node={child}
-              activeCategoryId={activeCategoryId}
-              onSelectCategory={onSelectCategory}
-              level={level + 1}
-            />
+            <TreeNode key={child.id} node={child} activeCategoryId={activeCategoryId} onSelectCategory={onSelectCategory} level={level + 1} />
           ))}
         </div>
       )}
@@ -93,11 +81,7 @@ const TreeNode: React.FC<{
   );
 };
 
-export const FolderTreeView: React.FC<FolderTreeProps> = ({
-  categories = [],
-  activeCategoryId,
-  onSelectCategory,
-}) => {
+export const FolderTreeView: React.FC<FolderTreeProps> = ({ categories = [], activeCategoryId, onSelectCategory }) => {
   const safeCategories = Array.isArray(categories) ? categories : [];
 
   return (
@@ -107,9 +91,7 @@ export const FolderTreeView: React.FC<FolderTreeProps> = ({
         onClick={() => onSelectCategory(null)}
         className={cn(
           'flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer transition-colors text-xs font-medium',
-          activeCategoryId === null
-            ? 'bg-primary/10 text-primary font-semibold'
-            : 'text-slate-700 hover:bg-slate-100',
+          activeCategoryId === null ? 'bg-primary/10 text-primary font-semibold' : 'text-slate-700 hover:bg-slate-100',
         )}
       >
         <HardDrive size={16} className={activeCategoryId === null ? 'text-primary' : 'text-slate-500'} />
@@ -121,18 +103,10 @@ export const FolderTreeView: React.FC<FolderTreeProps> = ({
       {/* Category Tree list */}
       <div className="space-y-0.5">
         {safeCategories.length === 0 ? (
-          <div className="text-center py-4 text-xs text-slate-400">
-            Chưa có thư mục nào
-          </div>
+          <div className="text-center py-4 text-xs text-slate-400">Chưa có thư mục nào</div>
         ) : (
           safeCategories.map((cat) => (
-            <TreeNode
-              key={cat.id}
-              node={cat}
-              activeCategoryId={activeCategoryId}
-              onSelectCategory={onSelectCategory}
-              level={0}
-            />
+            <TreeNode key={cat.id} node={cat} activeCategoryId={activeCategoryId} onSelectCategory={onSelectCategory} level={0} />
           ))
         )}
       </div>

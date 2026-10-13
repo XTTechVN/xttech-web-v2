@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ChevronRight, Home, ChevronLeft, Folder } from 'lucide-react';
+import { Breadcrumb, type BreadcrumbItem, Button } from '@/components';
+import { Home, ChevronLeft, Folder } from 'lucide-react';
 import type { DocumentCategory } from '@/types';
 
 interface BreadcrumbBarProps {
@@ -22,54 +23,41 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
     return null;
   }
 
+  const items: BreadcrumbItem[] = [
+    {
+      label: 'Tài liệu của tôi',
+      icon: <Home size={14} className="text-slate-500" />,
+      onClick: () => onNavigate(null),
+    },
+    ...breadcrumbs.map((folder, index) => {
+      const isLast = index === breadcrumbs.length - 1;
+      return {
+        label: folder.name,
+        icon: <Folder size={14} className={isLast ? 'text-primary' : 'text-slate-500'} />,
+        onClick: () => onNavigate(folder.id),
+      };
+    }),
+  ];
+
   return (
-    <div className="flex items-center gap-1.5 text-sm select-none overflow-x-auto scrollbar-none py-0.5">
+    <div className="flex items-center gap-2 select-none overflow-x-auto scrollbar-none py-1">
       {/* Nút Quay lại 1 cấp khi đang trong thư mục con */}
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={onGoBack}
-        className="h-8 px-2.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 transition-all shrink-0 flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+        className="h-8 px-2.5 text-xs font-medium shrink-0 flex items-center gap-1.5"
         title="Quay lại thư mục trước"
       >
-        <ChevronLeft size={15} />
+        <ChevronLeft size={14} />
         <span className="hidden sm:inline">Quay lại</span>
-      </button>
+      </Button>
 
-      <div className="flex items-center gap-1.5 flex-1 min-w-0">
-        {/* Thư mục gốc: Tài liệu của tôi */}
-        <button
-          type="button"
-          onClick={() => onNavigate(null)}
-          className="h-8 px-2 rounded-md text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all shrink-0 cursor-pointer flex items-center gap-1.5"
-          title="Về thư mục gốc"
-        >
-          <Home size={14} className="text-slate-500" />
-          <span>Tài liệu của tôi</span>
-        </button>
-
-        {/* Cây thư mục con */}
-        {breadcrumbs.map((folder, index) => {
-          const isLast = index === breadcrumbs.length - 1;
-
-          return (
-            <React.Fragment key={folder.id}>
-              <ChevronRight size={14} className="text-slate-300 shrink-0" />
-              <button
-                type="button"
-                onClick={() => onNavigate(folder.id)}
-                className={`h-8 px-2.5 rounded-md text-xs font-medium transition-all max-w-[200px] truncate shrink-0 cursor-pointer flex items-center gap-1.5 ${isLast
-                  ? 'bg-primary/10 text-primary font-semibold'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  }`}
-                title={folder.name}
-              >
-                <Folder size={14} className={isLast ? 'text-primary fill-primary/20' : 'text-slate-500'} />
-                <span className="truncate">{folder.name}</span>
-              </button>
-            </React.Fragment>
-          );
-        })}
+      {/* Breadcrumb có sẵn trong hệ thống component chung */}
+      <div className="flex-1 min-w-0">
+        <Breadcrumb items={items} />
       </div>
     </div>
   );
 };
+

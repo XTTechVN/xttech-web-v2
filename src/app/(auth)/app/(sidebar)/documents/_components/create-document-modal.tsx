@@ -45,7 +45,6 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -241,7 +240,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       index === self.findIndex((t: any) => String(t.id) === String(emp.id))
     );
     return [
-      { value: '', label: '-- Không chỉ định / Để trống --' },
+      { value: '', label: 'Không chỉ định' },
       ...unique.map((emp: any) => {
         const roleName = getApproverRoleBadge(emp);
         return {
