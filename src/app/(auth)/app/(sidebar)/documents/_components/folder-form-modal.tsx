@@ -1,0 +1,246 @@
+'use client';
+
+import React, { useEffect } from 'react';
+import { Modal, Button, Input, Textarea } from '@/components';
+import { FolderPlus, Edit2, CheckCircle2 } from 'lucide-react';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import { createDocumentCategory, updateDocumentCategory } from '@/actions/document';
+import { showErrorToast } from '@/utils';
+import type { DocumentCategory } from '@/types';
+
+// Kiểu dữ liệu cho modal
+export interface FolderFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  submitText?: string;
+  initialData?: DocumentCategory | null;
+  parentId?: number | null;
+  parentFolder?: DocumentCategory | null;
+  onSuccess?: () => void;
+}
+
+// Validation schema dùng Zod theo chuẩn form-modal
+const folderSchema = z.object({
+  name: z.string().min(1, { message: 'Tên thư mục không được để trống' }),
+  code: z.string().optional(),
+  description: z.string().optional(),
+});
+
+type FolderFormValues = z.infer<typeof folderSchema>;
+
+export default function FolderFormModal({
+  isOpen,
+  onClose,
+  title,
+  submitText,
+  initialData,
+  parentId = null,
+  onSuccess,
+}: FolderFormModalProps) {
+  const queryClient = useQueryClient();
+  const isEdit = Boolean(initialData);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FolderFormValues>({
+    resolver: zodResolver(folderSchema),
+    defaultValues: {
+      name: '',
+      code: '',
+      description: '',
+    },
+  });
+
+  // Mutation tạo thư mục mới
+  const { mutate: createMutate, isPending: createIsPending } = useMutation({
+    mutationFn: (payload: { name: string; code?: string; description?: string; parentId?: number | null }) =>
+      createDocumentCategory({
+        name: payload.name.trim(),
+        code: payload.code?.trim() ? payload.code.trim().toUpperCase() : undefined,
+        description: payload.description?.trim() || undefined,
+        parentId: payload.parentId || null,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['document-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      toast.success('Đã tạo thư mục thành công!');
+      onSuccess?.();
+      onClose();
+      reset();
+    },
+    onError: (error: any) => {
+      showErrorToast(error, 'Thêm thư mục thất bại');
+    },
+  });
+
+  // Mutation cập nhật thư mục
+  const { mutate: updateMutate, isPending: updateIsPending } = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name: string; description?: string } }) =>
+      updateDocumentCategory(id, {
+        name: data.name.trim(),
+        description: data.description?.trim() || undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['document-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      toast.success('Cập nhật thư mục thành công!');
+      onSuccess?.();
+      onClose();
+      reset();
+    },
+    onError: (error: any) => {
+      showErrorToast(error, 'Cập nhật thư mục thất bại');
+    },
+  });
+
+  const isSubmitting = createIsPending || updateIsPending;
+
+  // Reset form khi đóng/mở hoặc thay đổi initialData
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        reset({
+          name: initialData.name || '',
+          code: initialData.code || '',
+          description: initialData.description || '',
+        });
+      } else {
+        reset({
+          name: 'New folder',
+          code: '',
+          description: '',
+        });
+      }
+    } else {
+      reset({
+        name: '',
+        code: '',
+        description: '',
+      });
+    }
+  }, [isOpen, initialData, reset]);
+
+  const nameVal = watch('name');
+  const codeVal = watch('code');
+  const descVal = watch('description');
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue('name', e.target.value, { shouldValidate: true });
+  };
+
+  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue('code', e.target.value.toUpperCase(), { shouldValidate: true });
+  };
+
+  const handleConfirm = (data: FolderFormValues) => {
+    if (initialData?.id) {
+      updateMutate({
+        id: initialData.id,
+        data: {
+          name: data.name,
+          description: data.description,
+        },
+      });
+    } else {
+      createMutate({
+        name: data.name,
+        code: data.code,
+        description: data.description,
+        parentId,
+      });
+    }
+  };
+
+  const modalTitle = title || (
+    <div className="flex items-center gap-2 text-slate-800">
+      {isEdit ? <Edit2 className="text-primary" size={18} /> : <FolderPlus className="text-primary" size={20} />}
+      <span>{isEdit ? 'Chỉnh sửa thư mục' : 'Tạo thư mục mới'}</span>
+    </div>
+  );
+
+  const defaultSubmitText = submitText || (isEdit ? 'Lưu thay đổi' : 'Tạo thư mục');
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={modalTitle}
+      className="m-2 max-w-md w-full"
+    >
+      <form onSubmit={handleSubmit(handleConfirm)} className="flex flex-col gap-4 text-xs">
+        <div className="flex flex-col gap-4 py-2">
+          {/* Tên thư mục */}
+          <div className="flex flex-col gap-1.5">
+            <Input
+              label="Tên thư mục *"
+              placeholder="Nhập tên thư mục..."
+              fullWidth
+              value={nameVal}
+              onChange={handleNameChange}
+              error={errors.name?.message}
+              autoFocus
+            />
+          </div>
+
+          {/* Mã thư mục (chỉ cần thiết khi tạo mới) */}
+          {!isEdit && (
+            <div className="flex flex-col gap-1.5">
+              <Input
+                label="Mã thư mục (Code)"
+                placeholder="Nhập mã folder (tùy chọn)..."
+                fullWidth
+                value={codeVal}
+                onChange={handleCodeChange}
+                error={errors.code?.message}
+              />
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                Mã định danh viết hoa, không dấu (để trống nếu muốn hệ thống tự động sinh).
+              </p>
+            </div>
+          )}
+
+          {/* Mô tả */}
+          <div className="flex flex-col gap-1.5">
+            <Textarea
+              label="Mô tả mục đích (Tùy chọn)"
+              fullWidth
+              rows={3}
+              placeholder="Mô tả nội dung tài liệu lưu trong thư mục này..."
+              value={descVal}
+              onChange={(e) => setValue('description', e.target.value)}
+              error={errors.description?.message}
+            />
+          </div>
+        </div>
+
+        {/* Nút Hủy / Xác nhận */}
+        <div className="flex gap-3 justify-end w-full mt-2">
+          <Button variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>
+            Hủy
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            type="submit"
+            leftIcon={<CheckCircle2 size={16} />}
+            disabled={isSubmitting}
+            loading={isSubmitting}
+          >
+            {defaultSubmitText}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+export { FolderFormModal };

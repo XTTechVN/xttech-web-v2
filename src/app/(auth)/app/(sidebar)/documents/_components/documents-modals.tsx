@@ -2,8 +2,7 @@ import React from 'react';
 import type { DocumentCategory, DocumentItem } from '@/types';
 
 // Modals
-import { CreateFolderModal } from './create-folder-modal';
-import { EditFolderModal } from './edit-folder-modal';
+import { FolderFormModal } from './folder-form-modal';
 import { FolderDetailModal } from './folder-detail-modal';
 import { CreateDocumentModal } from './create-document-modal';
 import { EditDocumentModal } from './edit-document-modal';
@@ -129,23 +128,17 @@ export const DocumentsModals: React.FC<DocumentsModalsProps> = ({
 }) => {
   return (
     <>
-      {/* 1. Create Folder Modal */}
-      <CreateFolderModal
-        isOpen={createFolderOpen}
-        onClose={() => setCreateFolderOpen(false)}
-        parentId={currentFolderId}
-        parentFolder={currentFolder}
-        onSuccess={onRefetchCategories}
-      />
-
-      {/* 2. Edit Folder Modal */}
-      <EditFolderModal
-        isOpen={editFolderOpen}
+      {/* 1. Folder Form Modal (Tạo mới & Chỉnh sửa thư mục dùng chung 1 modal theo chuẩn form-modal) */}
+      <FolderFormModal
+        isOpen={createFolderOpen || editFolderOpen}
         onClose={() => {
+          setCreateFolderOpen(false);
           setEditFolderOpen(false);
           setEditingFolder(null);
         }}
-        folder={editingFolder}
+        initialData={editingFolder}
+        parentId={currentFolderId}
+        parentFolder={currentFolder}
         onSuccess={onRefetchCategories}
       />
 
