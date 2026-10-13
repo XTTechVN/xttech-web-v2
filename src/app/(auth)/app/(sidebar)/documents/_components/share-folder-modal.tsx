@@ -211,6 +211,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
           shareScope: scope,
           recipientUserIds: shareTarget === 'user' ? selectedUserIds : [],
           recipientDepartmentIds: shareTarget === 'department' ? selectedDepartmentIds : [],
+          permission: permission,
         });
 
         toast.success('Đã cập nhật quyền chia sẻ tài liệu thành công!');

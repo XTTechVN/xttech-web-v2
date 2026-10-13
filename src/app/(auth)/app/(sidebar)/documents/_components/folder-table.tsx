@@ -99,7 +99,7 @@ export const FolderTable: React.FC<FolderTableProps> = ({
       {/* Danh sách hàng thư mục phẳng chuẩn Google Drive */}
       <div>
         {folders.map((folder) => {
-          const isOwner = folder.isOwner ?? (folder.createdById ? folder.createdById === user?.id : true);
+          const isOwner = folder.isOwner ?? (folder.createdById && user?.id ? String(folder.createdById) === String(user.id) : true);
           const ownerName = isOwner ? 'tôi' : folder.createdByName || 'Thành viên';
           const isShared = Boolean(
             folder.isShared ||
@@ -107,8 +107,14 @@ export const FolderTable: React.FC<FolderTableProps> = ({
             folder.isOwner === false ||
             folder.permission === 'view'
           );
-          const canEdit = canManage || (folder.isOwner !== false && folder.permission !== 'view');
-          const canShare = Boolean(onShare && (canManage || folder.isOwner !== false));
+          // Nếu là thư mục chia sẻ:
+          // - Chỉ chủ sở hữu mới có quyền Xóa và Di chuyển.
+          // - UI người nhận ẩn nút Xóa và Di chuyển.
+          // - Nút Đổi tên / Sửa: Chỉ hiện nếu người nhận có quyền sửa (folder.permission === 'edit'), còn lại ẩn đi.
+          const canEditFolder = isOwner !== false || folder.permission === 'edit';
+          const canMoveFolder = isOwner !== false;
+          const canDeleteFolder = isOwner !== false;
+          const canShareFolder = Boolean(onShare && isOwner !== false);
           const parentName = locationName || 'Drive của tôi';
           const isMenuOpen = openMenuFolderId === folder.id;
 
@@ -135,7 +141,7 @@ export const FolderTable: React.FC<FolderTableProps> = ({
               icon: <FolderOpen size={15} className="text-primary" />,
               onClick: () => onOpen(folder),
             },
-            ...(canShare && onShare
+            ...(canShareFolder && onShare
               ? [
                   {
                     label: 'Chia sẻ',
@@ -144,36 +150,32 @@ export const FolderTable: React.FC<FolderTableProps> = ({
                   },
                 ]
               : []),
-            ...(canEdit
+            ...(canEditFolder && onEdit
               ? [
-                  ...(onEdit
-                    ? [
-                        {
-                          label: 'Đổi tên / Sửa',
-                          icon: <Edit2 size={15} className="text-primary" />,
-                          onClick: () => onEdit(folder),
-                        },
-                      ]
-                    : []),
-                  ...(onMove
-                    ? [
-                        {
-                          label: 'Di chuyển',
-                          icon: <FolderOpen size={15} className="text-primary" />,
-                          onClick: () => onMove(folder),
-                        },
-                      ]
-                    : []),
-                  ...(onDelete
-                    ? [
-                        {
-                          label: 'Xóa thư mục',
-                          icon: <Trash2 size={15} className="text-rose-500" />,
-                          danger: true,
-                          onClick: () => onDelete(folder),
-                        },
-                      ]
-                    : []),
+                  {
+                    label: 'Đổi tên / Sửa',
+                    icon: <Edit2 size={15} className="text-primary" />,
+                    onClick: () => onEdit(folder),
+                  },
+                ]
+              : []),
+            ...(canMoveFolder && onMove
+              ? [
+                  {
+                    label: 'Di chuyển',
+                    icon: <FolderOpen size={15} className="text-primary" />,
+                    onClick: () => onMove(folder),
+                  },
+                ]
+              : []),
+            ...(canDeleteFolder && onDelete
+              ? [
+                  {
+                    label: 'Xóa thư mục',
+                    icon: <Trash2 size={15} className="text-rose-500" />,
+                    danger: true,
+                    onClick: () => onDelete(folder),
+                  }
                 ]
               : []),
           ];
@@ -184,8 +186,12 @@ export const FolderTable: React.FC<FolderTableProps> = ({
           return (
             <div
               key={folder.id}
-              draggable
+              draggable={canMoveFolder}
               onDragStart={(e) => {
+                if (!canMoveFolder) {
+                  e.preventDefault();
+                  return;
+                }
                 e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'folder', id: folder.id }));
                 e.dataTransfer.effectAllowed = 'move';
               }}

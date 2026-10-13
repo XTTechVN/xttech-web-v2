@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Download, Eye, MoreVertical, Trash2, Folder, Users, FolderOpen, Share2, Edit3 } from 'lucide-react';
 import type { DocumentItem } from '@/types';
-import { DriveFileIcon, isDocumentShared } from '../_utils/doc-helpers';
+import { DriveFileIcon, isDocumentShared, getDocumentPermissions } from '../_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import { useAuthStore } from '@/stores';
 import { cn } from '@/utils';
@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 interface FileTableProps {
   documents: DocumentItem[];
   currentFolderName?: string;
+  isSharedSection?: boolean;
   selectedKeys?: Set<string>;
   onToggleSelect?: (document: DocumentItem) => void;
   onView: (document: DocumentItem) => void;
@@ -48,6 +49,7 @@ function getAvatarStyle(name: string) {
 export const FileTable: React.FC<FileTableProps> = ({
   documents,
   currentFolderName,
+  isSharedSection,
   showHeader = true,
   selectedKeys,
   onToggleSelect,
@@ -100,11 +102,24 @@ export const FileTable: React.FC<FileTableProps> = ({
         {documents.map((doc) => {
           const currentVersion = doc.currentVersion;
           const fileName = currentVersion?.fileName || doc.title;
-          const isOwner = doc.createdById === user?.id;
+          const docPerms = getDocumentPermissions(doc, user, {
+            isSharedSection: isSharedSection || currentFolderName?.includes('Được chia sẻ'),
+            folderPermission: (doc.category as any)?.permission,
+          });
+          const isShared = docPerms.isShared;
+          const isOwner = docPerms.isOwner;
           const ownerName = isOwner ? 'tôi' : doc.createdBy?.fullName || doc.createdBy?.email || 'Thành viên';
-          const isShared = isDocumentShared(doc, user?.id);
           const folderName = doc.category?.name || currentFolderName || 'Drive của tôi';
           const isMenuOpen = openMenuDocId === doc.id;
+
+          // Quyền thao tác:
+          // - Tài liệu chia sẻ: chỉ CHỦ SỞ HỮU mới có quyền Xóa và Di chuyển.
+          // - UI người nhận ẩn nút Xóa và Di chuyển.
+          // - Nút Sửa: Chỉ hiện nếu người nhận có quyền sửa, không có thì ẩn đi.
+          const canEditDoc = canEdit && docPerms.canEdit;
+          const canShareDoc = canEdit && docPerms.canShare;
+          const canMoveDoc = canEdit && docPerms.canMove;
+          const canDeleteDoc = canDelete && docPerms.canDelete;
 
           const downloadUrl =
             currentVersion?.downloadUrl ||
@@ -136,7 +151,7 @@ export const FileTable: React.FC<FileTableProps> = ({
                   }
                 ]
               : []),
-            ...(canEdit && onEdit
+            ...(canEditDoc && onEdit
               ? [
                   {
                     label: 'Chỉnh sửa',
@@ -145,7 +160,7 @@ export const FileTable: React.FC<FileTableProps> = ({
                   }
                 ]
               : []),
-            ...(canEdit && onShare
+            ...(canShareDoc && onShare
               ? [
                   {
                     label: 'Chia sẻ',
@@ -154,7 +169,7 @@ export const FileTable: React.FC<FileTableProps> = ({
                   }
                 ]
               : []),
-            ...(canEdit && onMove
+            ...(canMoveDoc && onMove
               ? [
                   {
                     label: 'Di chuyển',
@@ -163,7 +178,7 @@ export const FileTable: React.FC<FileTableProps> = ({
                   }
                 ]
               : []),
-            ...(canDelete && onDelete
+            ...(canDeleteDoc && onDelete
               ? [
                   {
                     label: 'Xóa tài liệu',
@@ -180,9 +195,9 @@ export const FileTable: React.FC<FileTableProps> = ({
           return (
             <div
               key={doc.id}
-              draggable={canEdit}
+              draggable={canMoveDoc}
               onDragStart={(e) => {
-                if (!canEdit) {
+                if (!canMoveDoc) {
                   e.preventDefault();
                   return;
                 }

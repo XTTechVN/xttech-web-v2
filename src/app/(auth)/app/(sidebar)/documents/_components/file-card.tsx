@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Download, Eye, MoreVertical, Trash2, FolderOpen, Share2, Edit3, Users } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
-import { formatBytes, getFileVisualInfo, isDocumentShared } from '../_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo, isDocumentShared, getDocumentPermissions } from '../_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import { useAuthStore } from '@/stores';
 import { cn } from '@/utils';
@@ -12,6 +12,7 @@ import { cn } from '@/utils';
 interface FileCardProps {
   document: DocumentItem;
   locationName?: string;
+  isSharedSection?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (document: DocumentItem) => void;
   onPreview?: (document: DocumentItem) => void;
@@ -27,6 +28,7 @@ interface FileCardProps {
 export const FileCard: React.FC<FileCardProps> = ({
   document: doc,
   locationName,
+  isSharedSection,
   isSelected = false,
   onToggleSelect,
   onPreview,
@@ -59,7 +61,20 @@ export const FileCard: React.FC<FileCardProps> = ({
   }, [isMenuOpen]);
 
   const user = useAuthStore((state) => state.user);
-  const isShared = isDocumentShared(doc, user?.id);
+  const docPerms = getDocumentPermissions(doc, user, {
+    isSharedSection: isSharedSection || locationName?.includes('Được chia sẻ'),
+    folderPermission: (doc.category as any)?.permission,
+  });
+  const isShared = docPerms.isShared;
+
+  // Quyền thao tác theo quy tắc:
+  // - Tài liệu chia sẻ: chỉ CHỦ SỞ HỮU mới có quyền Xóa và Di chuyển.
+  // - UI người nhận ẩn nút Xóa và Di chuyển.
+  // - Nút Sửa: Chỉ hiện nếu người nhận có quyền sửa, không có thì ẩn đi.
+  const canEditDoc = canEdit && docPerms.canEdit;
+  const canShareDoc = canEdit && docPerms.canShare;
+  const canMoveDoc = canEdit && docPerms.canMove;
+  const canDeleteDoc = canDelete && docPerms.canDelete;
 
   const currentVersion = doc.currentVersion;
   const fileName = currentVersion?.fileName || doc.title;
@@ -103,7 +118,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           }
         ]
       : []),
-    ...(canEdit && onEdit
+    ...(canEditDoc && onEdit
       ? [
           {
             label: 'Chỉnh sửa',
@@ -112,7 +127,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           }
         ]
       : []),
-    ...(canEdit && onShare
+    ...(canShareDoc && onShare
       ? [
           {
             label: 'Chia sẻ',
@@ -121,7 +136,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           }
         ]
       : []),
-    ...(canEdit && onMove
+    ...(canMoveDoc && onMove
       ? [
           {
             label: 'Di chuyển',
@@ -130,7 +145,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           }
         ]
       : []),
-    ...(canDelete && onDelete
+    ...(canDeleteDoc && onDelete
       ? [
           {
             label: 'Xóa tài liệu',
@@ -149,9 +164,9 @@ export const FileCard: React.FC<FileCardProps> = ({
 
   return (
     <div
-      draggable={canEdit}
+      draggable={canMoveDoc}
       onDragStart={(e) => {
-        if (!canEdit) {
+        if (!canMoveDoc) {
           e.preventDefault();
           return;
         }

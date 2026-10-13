@@ -319,6 +319,9 @@ export const shareDocument = async (
       updateData.approverId = payload.approverId;
       updateData.approver_id = payload.approverId;
     }
+    if (payload.permission) {
+      updateData.permission = payload.permission;
+    }
 
     const res = await api.put(`/api/v1/documents/${documentId}`, updateData);
     return res.data?.data ?? res.data;

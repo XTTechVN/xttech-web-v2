@@ -60,7 +60,11 @@ export interface DocumentItem {
     id: number;
     name: string;
     code?: string;
+    permission?: 'view' | 'edit';
+    isShared?: boolean;
   } | null;
+  permission?: 'view' | 'edit' | string;
+  isOwner?: boolean;
   effectiveDate?: string | null;
   expirationDate?: string | null;
   approverId?: string | null;

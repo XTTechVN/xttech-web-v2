@@ -30,6 +30,141 @@ export function isDocumentShared(
   return false;
 }
 
+export interface DocumentPermissionsResult {
+  isShared: boolean;
+  isOwner: boolean;
+  canEdit: boolean;
+  canMove: boolean;
+  canDelete: boolean;
+  canShare: boolean;
+}
+
+/**
+ * Xác định quyền thao tác trên tài liệu:
+ * - Nếu tài liệu KHÔNG được chia sẻ (tài liệu cá nhân của tôi):
+ *   Chủ sở hữu có đầy đủ quyền xem, tải, sửa, xóa, di chuyển, chia sẻ.
+ * - Nếu tài liệu ĐƯỢC CHIA SẺ:
+ *   + Chỉ CHỦ SỞ HỮU (owner / người tạo) mới có quyền xóa và di chuyển.
+ *   + Đối với NGƯỜI ĐƯỢC NHẬN (recipient): Ẩn 2 nút Xóa tài liệu và Di chuyển.
+ *   + Nút Sửa: Nếu người nhận được cấp quyền sửa ('edit') thì hiện nút sửa; nếu không có quyền sửa (view-only) thì ẩn đi.
+ *   + Nút Chia sẻ: Chỉ chủ sở hữu mới có quyền chia sẻ tiếp tài liệu.
+ */
+export function getDocumentPermissions(
+  doc: DocumentItem | null | undefined,
+  currentUser?: { id?: string | number; email?: string } | null,
+  context?: {
+    isSharedSection?: boolean;
+    folderPermission?: 'view' | 'edit' | string;
+  }
+): DocumentPermissionsResult {
+  if (!doc) {
+    return {
+      isShared: false,
+      isOwner: false,
+      canEdit: false,
+      canMove: false,
+      canDelete: false,
+      canShare: false,
+    };
+  }
+
+  const currentUserId = currentUser?.id;
+  const currentUserEmail = currentUser?.email;
+
+  // 1. Kiểm tra tài liệu có phải là tài liệu chia sẻ không
+  const isShared = Boolean(
+    context?.isSharedSection ||
+    isDocumentShared(doc, currentUserId)
+  );
+
+  // 2. Kiểm tra người dùng hiện tại có phải chủ sở hữu của tài liệu không
+  const isOwner = Boolean(
+    (doc as any).isOwner === true ||
+    (doc as any).is_owner === true ||
+    (currentUserId && (
+      (doc.createdById && String(doc.createdById) === String(currentUserId)) ||
+      (doc.createdBy?.id && String(doc.createdBy.id) === String(currentUserId))
+    )) ||
+    (!isShared && !context?.isSharedSection)
+  );
+
+  // Nếu không phải tài liệu chia sẻ (tài liệu cá nhân):
+  if (!isShared) {
+    return {
+      isShared: false,
+      isOwner: true,
+      canEdit: true,
+      canMove: true,
+      canDelete: true,
+      canShare: true,
+    };
+  }
+
+  // Nếu là tài liệu chia sẻ và người dùng là CHỦ (Owner):
+  if (isOwner) {
+    return {
+      isShared: true,
+      isOwner: true,
+      canEdit: true,
+      canMove: true,
+      canDelete: true,
+      canShare: true,
+    };
+  }
+
+  // Nếu là tài liệu chia sẻ và người dùng là NGƯỜI ĐƯỢC NHẬN (Recipient):
+  // - Xóa và Di chuyển: Ẩn hoàn toàn (chỉ chủ mới có quyền)
+  // - Sửa: Kiểm tra quyền sửa của người nhận
+  let hasEditPermission = false;
+
+  // A. Kiểm tra quyền gắn trực tiếp trên document object (nếu backend trả về)
+  const docPerm = (doc as any).permission || (doc as any).permission_level || (doc as any).permissionLevel;
+  if (docPerm === 'edit' || docPerm === 'EDIT') {
+    hasEditPermission = true;
+  } else if (docPerm === 'view' || docPerm === 'VIEW') {
+    hasEditPermission = false;
+  } else if ((doc as any).canEdit === true || (doc as any).can_edit === true) {
+    hasEditPermission = true;
+  }
+
+  // B. Kiểm tra trong danh sách người nhận (recipients) của tài liệu
+  if (!hasEditPermission && Array.isArray(doc.recipients) && (currentUserId || currentUserEmail)) {
+    const myRecipient = doc.recipients.find((r: any) => {
+      const matchId =
+        currentUserId &&
+        String(r.userId || r.user_id || r.id || r.user?.id) === String(currentUserId);
+      const matchEmail =
+        currentUserEmail &&
+        Boolean(r.email) &&
+        r.email.toLowerCase() === currentUserEmail.toLowerCase();
+      return matchId || matchEmail;
+    });
+
+    if (myRecipient) {
+      const rPerm = (myRecipient as any).permission;
+      if (rPerm === 'edit' || rPerm === 'EDIT' || (myRecipient as any).canEdit === true) {
+        hasEditPermission = true;
+      } else if (rPerm === 'view' || rPerm === 'VIEW') {
+        hasEditPermission = false;
+      }
+    }
+  }
+
+  // C. Kiểm tra kế thừa quyền từ thư mục cha nếu nằm trong thư mục chia sẻ
+  if (!hasEditPermission && context?.folderPermission === 'edit') {
+    hasEditPermission = true;
+  }
+
+  return {
+    isShared: true,
+    isOwner: false,
+    canEdit: hasEditPermission,
+    canMove: false,
+    canDelete: false,
+    canShare: false,
+  };
+}
+
 
 // Định dạng dung lượng tệp
 export function formatBytes(bytes?: number, decimals = 1): string {

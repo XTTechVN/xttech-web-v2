@@ -19,7 +19,7 @@ import {
 } from '@/actions/document';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
-import { isDocumentShared } from './_utils/doc-helpers';
+import { isDocumentShared, getDocumentPermissions } from './_utils/doc-helpers';
 
 // Custom Hooks
 import { useDocumentSelection } from './_hooks/use-document-selection';
@@ -293,6 +293,16 @@ function MyDocumentsContent() {
           handleGoBack();
         }
       } else {
+        const docToDelete = documents.find((d) => d.id === deleteModal.id);
+        if (docToDelete) {
+          const perms = getDocumentPermissions(docToDelete, currentUser, { isSharedSection });
+          if (perms.isShared && !perms.isOwner) {
+            toast.error('Chỉ chủ sở hữu tài liệu mới có quyền xóa');
+            setDeleteModal((prev) => ({ ...prev, isOpen: false, loading: false }));
+            return;
+          }
+        }
+
         try {
           await deleteDocument(deleteModal.id);
           toast.success(`Đã xóa tài liệu "${deleteModal.name}"`);
@@ -343,6 +353,17 @@ function MyDocumentsContent() {
     sourceId: number,
     targetFolderId: number
   ) => {
+    if (sourceType === 'document') {
+      const doc = documents.find((d) => d.id === sourceId);
+      if (doc) {
+        const perms = getDocumentPermissions(doc, currentUser, { isSharedSection });
+        if (perms.isShared && !perms.isOwner) {
+          toast.error('Chỉ chủ sở hữu tài liệu mới có quyền di chuyển');
+          return;
+        }
+      }
+    }
+
     if (isSharedSection && !canManageDocuments) {
       toast.error('Bạn không có quyền di chuyển trong mục Được chia sẻ với tôi');
       return;
@@ -504,6 +525,7 @@ function MyDocumentsContent() {
                   <FileCard
                     key={`doc-${doc.id}`}
                     document={doc}
+                    isSharedSection={isSharedSection}
                     isSelected={selectedItemKeys.has(`doc-${doc.id}`)}
                     onToggleSelect={(d) => toggleSelectItem('document', d.id)}
                     locationName={
@@ -636,6 +658,7 @@ function MyDocumentsContent() {
                 {documents.length > 0 && (
                   <FileTable
                     documents={documents}
+                    isSharedSection={isSharedSection}
                     selectedKeys={selectedItemKeys}
                     onToggleSelect={(d) => toggleSelectItem('document', d.id)}
                     currentFolderName={
