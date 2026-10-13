@@ -10,7 +10,6 @@ import {
   type FrameConfig,
   type SashConfig,
 } from '@/components';
-import type { Door } from '@/types';
 
 interface DoorThumbnailProps {
   door?: { systemConfig?: any } | null;

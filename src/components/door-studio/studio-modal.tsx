@@ -187,6 +187,8 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           onSelectSashType={state.handleSelectSashType}
           onSplitMullion={state.handleSplitMullion}
           onCoupleFrame={state.handleCoupleFrame}
+          onSplitSashMullion={state.handleSplitSashMullion}
+          onDeleteSelected={state.handleDeleteSelected}
           onChangeTab={state.setActiveLeftTab}
           onSelectCell={state.setSelectedCellId}
           onUpdateDimension={state.handleUpdateDimension}
@@ -206,6 +208,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           defaultGlass={state.defaultGlass}
           aluminumColors={state.dynamicAluminumColors}
           onChangeFrameConfig={(updates) => state.setFrameConfig((prev) => ({ ...prev, ...updates }))}
+          isInsideSash={state.isSelectedInsideSash}
         />
       )}
 

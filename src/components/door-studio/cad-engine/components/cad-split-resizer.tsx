@@ -27,12 +27,14 @@ interface ActiveDragInfo {
   curDim2: number;
   badgeX: number;
   badgeY: number;
+  hasMoved: boolean;
 }
 
 /**
  * Component quản lý tương tác chuột cho Đố T (Mullions) và Vách ghép (Coupling Seams):
  * - Hover: Đổi con trỏ thành col-resize / row-resize, highlight đường chia.
- * - Giữ chuột phải (Right-Click Drag) hoặc chuột trái: Kéo trượt điều chỉnh tỉ lệ 2 ô liền kề.
+ * - Chuột trái hoặc chuột phải: Kéo trượt điều chỉnh tỉ lệ 2 ô liền kề mượt mà.
+ * - Click tĩnh (nhả chuột khi di chuyển < 3px): Mở modal chỉnh thông số đố.
  * - Realtime Live Badge: Hiển thị số đo milimet trực tiếp ngay tại vị trí kéo.
  */
 export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
@@ -52,6 +54,10 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
     startY: number;
     activeInfo: ActiveDragInfo;
     lastReportedDim1: number;
+    hasMoved: boolean;
+    isLeftClick: boolean;
+    mullionInfo?: MullionInfo;
+    svgEl?: SVGSVGElement | null;
   } | null>(null);
 
   // Global mousemove và mouseup khi đang kéo chuột
@@ -60,24 +66,36 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!dragRef.current) return;
-      const { startX, startY, activeInfo } = dragRef.current;
+      const { startX, startY, activeInfo, svgEl } = dragRef.current;
       const isVert = activeInfo.direction === 'vertical';
 
       const deltaScreen = isVert ? e.clientX - startX : e.clientY - startY;
-      // Quy đổi từ pixel màn hình sang milimet thực tế
-      const deltaMm = deltaScreen / (scale || 1);
+      const totalMovement = Math.hypot(e.clientX - startX, e.clientY - startY);
+
+      // Nếu di chuyển chưa quá 3px, xem như thao tác bấm tĩnh (click)
+      if (!dragRef.current.hasMoved) {
+        if (totalMovement < 3) return;
+        dragRef.current.hasMoved = true;
+      }
+
+      // Quy đổi chính xác từ pixel màn hình sang milimet thực tế bằng CTM
+      const ctm = svgEl?.getScreenCTM();
+      const pxToVb = ctm ? (isVert ? 1 / (ctm.a || 1) : 1 / (ctm.d || 1)) : 1;
+      const deltaMm = (deltaScreen * pxToVb) / (scale || 1);
+
       // Làm tròn theo bước nhảy 5mm chuẩn kỹ thuật
       const deltaSnapped = Math.round(deltaMm / 5) * 5;
 
-      // Giới hạn an toàn tối thiểu mỗi ô 100mm
-      const minDim = 100;
+      // Giới hạn an toàn thích ứng: tối thiểu từ 20mm tới 50mm tùy độ rộng ô
+      const minDim = Math.min(50, Math.max(20, Math.floor(activeInfo.totalDim * 0.15)));
       const maxDim = activeInfo.totalDim - minDim;
       const newDim1 = Math.max(minDim, Math.min(maxDim, activeInfo.initDim1 + deltaSnapped));
       const newDim2 = activeInfo.totalDim - newDim1;
 
-      // Cập nhật vị trí hiển thị badge
-      const updatedBadgeX = activeInfo.badgeX + (isVert ? deltaScreen : 0);
-      const updatedBadgeY = activeInfo.badgeY + (isVert ? 0 : deltaScreen);
+      // Cập nhật vị trí hiển thị badge theo viewBox
+      const deltaVb = deltaMm * (scale || 1);
+      const updatedBadgeX = activeInfo.badgeX + (isVert ? deltaVb : 0);
+      const updatedBadgeY = activeInfo.badgeY + (isVert ? 0 : deltaVb);
 
       setActiveDrag((prev) =>
         prev
@@ -87,6 +105,7 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
               curDim2: newDim2,
               badgeX: updatedBadgeX,
               badgeY: updatedBadgeY,
+              hasMoved: true,
             }
           : null
       );
@@ -108,16 +127,24 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
 
     const handleMouseUp = (e: MouseEvent) => {
       if (dragRef.current) {
-        const { activeInfo, lastReportedDim1 } = dragRef.current;
-        onResizeSplit?.({
-          parentNodeId: activeInfo.parentNodeId,
-          splitIndex: activeInfo.splitIndex,
-          direction: activeInfo.direction,
-          childId: activeInfo.childId,
-          nextChildId: activeInfo.nextChildId,
-          newDimension: lastReportedDim1,
-          isFinal: true,
-        });
+        const { activeInfo, lastReportedDim1, hasMoved, isLeftClick, mullionInfo } = dragRef.current;
+        if (!hasMoved) {
+          // Bấm tĩnh không rê chuột -> mở modal thông số nếu là click chuột trái
+          if (isLeftClick && mullionInfo) {
+            onSelectMullion?.(mullionInfo);
+          }
+        } else {
+          // Đã kéo rê -> chốt thông số cuối cùng lưu vào lịch sử hoàn tác
+          onResizeSplit?.({
+            parentNodeId: activeInfo.parentNodeId,
+            splitIndex: activeInfo.splitIndex,
+            direction: activeInfo.direction,
+            childId: activeInfo.childId,
+            nextChildId: activeInfo.nextChildId,
+            newDimension: lastReportedDim1,
+            isFinal: true,
+          });
+        }
       }
       dragRef.current = null;
       setActiveDrag(null);
@@ -130,7 +157,7 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [activeDrag, scale, onResizeSplit]);
+  }, [activeDrag, scale, onResizeSplit, onSelectMullion]);
 
   const handleStartDrag = (
     e: React.MouseEvent,
@@ -147,14 +174,15 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
       totalDimension: number;
       centerX: number;
       centerY: number;
+      mullionInfo?: MullionInfo;
     }
   ) => {
-    // Chặn chuột phải mở context menu
+    // Chặn menu chuột phải
     e.preventDefault();
     e.stopPropagation();
 
-    // Hỗ trợ cả kéo chuột phải (button 2) lẫn chuột trái (button 0)
-    if (e.button !== 2 && e.button !== 0) return;
+    // Hỗ trợ cả chuột trái (button 0) lẫn chuột phải (button 2)
+    if (e.button !== 0 && e.button !== 2) return;
 
     const activeInfo: ActiveDragInfo = {
       id: info.id,
@@ -171,13 +199,21 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
       curDim2: info.nextDimension,
       badgeX: info.centerX,
       badgeY: info.centerY,
+      hasMoved: false,
     };
+
+    const targetEl = e.currentTarget as SVGGraphicsElement;
+    const svgEl = targetEl.ownerSVGElement;
 
     dragRef.current = {
       startX: e.clientX,
       startY: e.clientY,
       activeInfo,
       lastReportedDim1: info.dimension,
+      hasMoved: false,
+      isLeftClick: e.button === 0,
+      mullionInfo: info.mullionInfo,
+      svgEl,
     };
 
     setActiveDrag(activeInfo);
@@ -185,8 +221,8 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
 
   return (
     <g key="split-resizer-layer">
-      {/* 1. Các thanh Đố T (Mullions) */}
-      {mullions.map((m, idx) => {
+      {/* 1. Các thanh Đố T (Mullions: gồm cả đố khung và đố cánh) */}
+      {mullions.map((m) => {
         const isHovered = hoveredId === m.info.id;
         const isSelected = selectedMullionId === m.info.id;
         const isDragging = activeDrag?.id === m.info.id;
@@ -207,26 +243,21 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
             onMouseLeave={() => setHoveredId((prev) => (prev === m.info.id ? null : prev))}
             onContextMenu={(e) => e.preventDefault()}
             onMouseDown={(e) => {
-              if (e.button === 2) {
-                // Chuột phải: Kích hoạt chế độ kéo trượt di chuyển đố tức thì
-                handleStartDrag(e, {
-                  id: m.info.id,
-                  type: 'mullion',
-                  direction: m.info.direction,
-                  parentNodeId: m.info.parentNodeId,
-                  splitIndex: m.info.mullionIndex,
-                  childId: m.info.childId,
-                  nextChildId: m.info.nextChildId || '',
-                  dimension: m.info.dimension,
-                  nextDimension: Math.max(100, m.info.totalDimension - m.info.dimension),
-                  totalDimension: m.info.totalDimension,
-                  centerX: m.x + m.w / 2,
-                  centerY: m.y + m.h / 2,
-                });
-              } else if (e.button === 0) {
-                // Chuột trái: Click để mở modal chỉnh thông số hoặc kéo thả nếu rê chuột
-                onSelectMullion?.(m.info);
-              }
+              handleStartDrag(e, {
+                id: m.info.id,
+                type: 'mullion',
+                direction: m.info.direction,
+                parentNodeId: m.info.parentNodeId,
+                splitIndex: m.info.mullionIndex,
+                childId: m.info.childId,
+                nextChildId: m.info.nextChildId || '',
+                dimension: m.info.dimension,
+                nextDimension: Math.max(20, m.info.totalDimension - m.info.dimension),
+                totalDimension: m.info.totalDimension,
+                centerX: m.x + m.w / 2,
+                centerY: m.y + m.h / 2,
+                mullionInfo: m.info,
+              });
             }}
           >
             {/* Hitbox trong suốt */}
@@ -310,7 +341,7 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
       })}
 
       {/* 3. Floating Dimension Badge Tooltip khi đang kéo */}
-      {activeDrag && (
+      {activeDrag && activeDrag.hasMoved && (
         <g transform={`translate(${activeDrag.badgeX}, ${activeDrag.badgeY})`} className="pointer-events-none select-none">
           {(() => {
             const isVert = activeDrag.direction === 'vertical';

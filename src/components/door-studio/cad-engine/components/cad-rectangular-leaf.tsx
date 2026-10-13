@@ -1,5 +1,5 @@
 import React from 'react';
-import { SashCornerJoint, GlassGrilleConfig } from '../../studio-types';
+import { SashCornerJoint, GlassGrilleConfig, SceneCellNode } from '../../studio-types';
 import { CAD_CONFIG } from '../cad-config';
 import { LeafCell } from '../cad-types';
 import { CadOpeningSymbol } from './cad-opening-symbol';
@@ -167,6 +167,7 @@ interface CadRectangularLeafProps {
   leaf: LeafCell;
   allLeaves: LeafCell[];
   isSelected: boolean;
+  selectedCellId?: string | null;
   sashD: number;
   beadW: number;
   mullionT: number;
@@ -205,6 +206,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
   leaf,
   allLeaves,
   isSelected,
+  selectedCellId,
   sashD,
   mullionT,
   frameD,
@@ -326,18 +328,262 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
           const dBead = isFixed
             ? Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(frameD * CAD_CONFIG.BEAD.FIXED_RATIO)))
             : Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash * CAD_CONFIG.BEAD.NORMAL_RATIO)));
+          const beadJoint = node.beadJoint || '90';
+          const hasBead = true;
           const innerX = isFixed ? cx : cx + dSash;
           const innerY = isFixed ? cy : cy + dSash;
           const innerW = Math.max(4, isFixed ? cw : cw - 2 * dSash);
           const innerH = Math.max(4, isFixed ? ch : ch - 2 * dSash);
 
-          const hasBead = node.paneType === 'glass';
-          const beadJoint = node.beadJoint || '90';
-          const bead = hasBead ? renderCadBead(innerX, innerY, innerW, innerH, `${node.id}-bead`, aluminumColor, dBead, beadJoint) : null;
-          const glassX = hasBead && bead ? bead.gx2 : innerX;
-          const glassY = hasBead && bead ? bead.gy2 : innerY;
-          const glassW = hasBead && bead ? bead.gw2 : innerW;
-          const glassH = hasBead && bead ? bead.gh2 : innerH;
+          const hasSashMullions = !isFixed && Boolean(node.sashMullions && node.sashMullions.count > 1);
+          const smCount = hasSashMullions ? (node.sashMullions?.count || 2) : 1;
+          const smDir = node.sashMullions?.direction || 'vertical';
+          const smPositions = node.sashMullions?.positions;
+          const smT = Math.max(14, Math.min(32, Math.round(dSash * 0.7)));
+
+          const paneFill =
+            node.paneType === 'screen'
+              ? 'url(#screen-mesh)'
+              : node.paneType === 'louver'
+                ? 'url(#louver-pattern)'
+                : node.paneType === 'panel'
+                  ? aluminumColor
+                  : '#b2f5ea';
+          const paneOpacity = node.paneType === 'glass' ? 0.85 : 0.95;
+
+          const totalMullionT = (smCount - 1) * smT;
+          const availSpanW = Math.max(10, innerW - (smDir === 'vertical' ? totalMullionT : 0));
+          const availSpanH = Math.max(10, innerH - (smDir === 'horizontal' ? totalMullionT : 0));
+          const totalPos =
+            smPositions && smPositions.length === smCount
+              ? smPositions.reduce((a, b) => a + b, 0)
+              : smCount;
+
+          interface SashSubPaneRenderItem {
+            id: string;
+            node: SceneCellNode;
+            x: number;
+            y: number;
+            w: number;
+            h: number;
+            bead: any;
+            gx: number;
+            gy: number;
+            gw: number;
+            gh: number;
+            paneFill: string;
+            paneOpacity: number;
+          }
+
+          interface SashMullionBarRenderItem {
+            id: string;
+            x: number;
+            y: number;
+            w: number;
+            h: number;
+          }
+
+          const sashSubPanes: SashSubPaneRenderItem[] = [];
+          const sashMullionBars: SashMullionBarRenderItem[] = [];
+
+          const traverseSashSubTree = (
+            currNode: SceneCellNode,
+            bx: number,
+            by: number,
+            bw: number,
+            bh: number
+          ) => {
+            if (
+              currNode.children &&
+              currNode.children.length > 0 &&
+              currNode.splitType === 'sash_mullion'
+            ) {
+              const isVert = currNode.splitDirection === 'vertical';
+              const count = currNode.children.length;
+              const mullionSpace = (count - 1) * smT;
+              const availSpace = Math.max(10, (isVert ? bw : bh) - mullionSpace);
+              const totalWeight = currNode.children.reduce(
+                (sum: number, c: SceneCellNode) => sum + ((isVert ? c.w : c.h) || 1),
+                0
+              );
+
+              let cur = 0;
+              let spanCur = 0;
+              currNode.children.forEach((child: SceneCellNode, idx: number) => {
+                const isLast = idx === count - 1;
+                const weight = (isVert ? child.w : child.h) || 1;
+                const ratio = totalWeight > 0 ? weight / totalWeight : 1 / count;
+                const childSpan = isLast ? availSpace - spanCur : Math.round(availSpace * ratio);
+                const cw = isVert ? childSpan : bw;
+                const ch = isVert ? bh : childSpan;
+                const cx = isVert ? bx + cur : bx;
+                const cy = isVert ? by : by + cur;
+
+                traverseSashSubTree(child, cx, cy, cw, ch);
+                cur += isVert ? cw : ch;
+                spanCur += isVert ? cw : ch;
+
+                if (idx < count - 1) {
+                  sashMullionBars.push({
+                    id: `${currNode.id}-sm-bar-${idx}`,
+                    x: isVert ? bx + cur : bx,
+                    y: isVert ? by : by + cur,
+                    w: isVert ? smT : bw,
+                    h: isVert ? bh : smT,
+                  });
+                  cur += smT;
+                }
+              });
+              return;
+            }
+
+            // Ô lá con trong cánh
+            const bead_i = hasBead
+              ? renderCadBead(bx, by, bw, bh, `${currNode.id}-bead`, aluminumColor, dBead, beadJoint)
+              : null;
+            const gx_i = bead_i ? bead_i.gx2 : bx;
+            const gy_i = bead_i ? bead_i.gy2 : by;
+            const gw_i = bead_i ? bead_i.gw2 : bw;
+            const gh_i = bead_i ? bead_i.gh2 : bh;
+
+            const pFill =
+              currNode.paneType === 'screen'
+                ? 'url(#screen-mesh)'
+                : currNode.paneType === 'louver'
+                  ? 'url(#louver-pattern)'
+                  : currNode.paneType === 'panel'
+                    ? aluminumColor
+                    : '#b2f5ea';
+            const pOpacity = currNode.paneType === 'glass' ? 0.85 : 0.95;
+
+            sashSubPanes.push({
+              id: currNode.id,
+              node: currNode,
+              x: bx,
+              y: by,
+              w: bw,
+              h: bh,
+              bead: bead_i,
+              gx: gx_i,
+              gy: gy_i,
+              gw: gw_i,
+              gh: gh_i,
+              paneFill: pFill,
+              paneOpacity: pOpacity,
+            });
+          };
+
+          // Khởi động duyệt đệ quy cây ô trong cánh
+          if (node.children && node.children.length > 0 && node.splitType === 'sash_mullion') {
+            traverseSashSubTree(node, innerX, innerY, innerW, innerH);
+          } else if (hasSashMullions) {
+            // Hỗ trợ cấu hình sashMullions phẳng cũ
+            if (smDir === 'vertical') {
+              let curX = innerX;
+              let spanCur = 0;
+              for (let i = 0; i < smCount; i++) {
+                const isLast = i === smCount - 1;
+                const ratio =
+                  smPositions && smPositions.length === smCount
+                    ? smPositions[i] / totalPos
+                    : 1 / smCount;
+                const wSub = isLast ? availSpanW - spanCur : Math.round(availSpanW * ratio);
+                spanCur += wSub;
+
+                const bead_i = hasBead
+                  ? renderCadBead(curX, innerY, wSub, innerH, `${node.id}-sm-bead-${i}`, aluminumColor, dBead, beadJoint)
+                  : null;
+                sashSubPanes.push({
+                  id: `${node.id}-sm-${i}`,
+                  node,
+                  x: curX,
+                  y: innerY,
+                  w: wSub,
+                  h: innerH,
+                  bead: bead_i,
+                  gx: bead_i ? bead_i.gx2 : curX,
+                  gy: bead_i ? bead_i.gy2 : innerY,
+                  gw: bead_i ? bead_i.gw2 : wSub,
+                  gh: bead_i ? bead_i.gh2 : innerH,
+                  paneFill,
+                  paneOpacity,
+                });
+
+                if (i < smCount - 1) {
+                  sashMullionBars.push({
+                    id: `${node.id}-sm-bar-${i}`,
+                    x: curX + wSub,
+                    y: innerY,
+                    w: smT,
+                    h: innerH,
+                  });
+                }
+                curX += wSub + smT;
+              }
+            } else {
+              let curY = innerY;
+              let spanCur = 0;
+              for (let i = 0; i < smCount; i++) {
+                const isLast = i === smCount - 1;
+                const ratio =
+                  smPositions && smPositions.length === smCount
+                    ? smPositions[i] / totalPos
+                    : 1 / smCount;
+                const hSub = isLast ? availSpanH - spanCur : Math.round(availSpanH * ratio);
+                spanCur += hSub;
+
+                const bead_i = hasBead
+                  ? renderCadBead(innerX, curY, innerW, hSub, `${node.id}-sm-bead-${i}`, aluminumColor, dBead, beadJoint)
+                  : null;
+                sashSubPanes.push({
+                  id: `${node.id}-sm-${i}`,
+                  node,
+                  x: innerX,
+                  y: curY,
+                  w: innerW,
+                  h: hSub,
+                  bead: bead_i,
+                  gx: bead_i ? bead_i.gx2 : innerX,
+                  gy: bead_i ? bead_i.gy2 : curY,
+                  gw: bead_i ? bead_i.gw2 : innerW,
+                  gh: bead_i ? bead_i.gh2 : hSub,
+                  paneFill,
+                  paneOpacity,
+                });
+
+                if (i < smCount - 1) {
+                  sashMullionBars.push({
+                    id: `${node.id}-sm-bar-${i}`,
+                    x: innerX,
+                    y: curY + hSub,
+                    w: innerW,
+                    h: smT,
+                  });
+                }
+                curY += hSub + smT;
+              }
+            }
+          } else {
+            // Ô đơn (chưa chia đố)
+            const beadSingle = hasBead
+              ? renderCadBead(innerX, innerY, innerW, innerH, `${node.id}-bead`, aluminumColor, dBead, beadJoint)
+              : null;
+            sashSubPanes.push({
+              id: node.id,
+              node,
+              x: innerX,
+              y: innerY,
+              w: innerW,
+              h: innerH,
+              bead: beadSingle,
+              gx: beadSingle ? beadSingle.gx2 : innerX,
+              gy: beadSingle ? beadSingle.gy2 : innerY,
+              gw: beadSingle ? beadSingle.gw2 : innerW,
+              gh: beadSingle ? beadSingle.gh2 : innerH,
+              paneFill,
+              paneOpacity,
+            });
+          }
 
           // Kiểm tra xem cánh này có nên vẽ tay nắm không
           const isSecondaryOfPair =
@@ -371,36 +617,88 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
           return (
             <g>
               {!isFixed && (
-                <CadSashBox sx={cx} sy={cy} sw={cw} sh={ch} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash} />
+                <g
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectCell(node.id);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <CadSashBox sx={cx} sy={cy} sw={cw} sh={ch} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash} />
+                </g>
               )}
 
-              {/* Nẹp kính */}
-              {bead?.el}
+              {/* 1. Các thanh đố cánh */}
+              {sashMullionBars.map((m) => (
+                <g key={m.id}>
+                  <rect
+                    x={m.x}
+                    y={m.y}
+                    width={m.w}
+                    height={m.h}
+                    fill={aluminumColor}
+                    stroke="#27272a"
+                    strokeWidth="0.7"
+                  />
+                  {m.w < m.h ? (
+                    <>
+                      <line x1={m.x} y1={m.y} x2={m.x} y2={m.y + m.h} stroke="#18181b" strokeWidth="0.5" />
+                      <line x1={m.x + m.w} y1={m.y} x2={m.x + m.w} y2={m.y + m.h} stroke="#18181b" strokeWidth="0.5" />
+                    </>
+                  ) : (
+                    <>
+                      <line x1={m.x} y1={m.y} x2={m.x + m.w} y2={m.y} stroke="#18181b" strokeWidth="0.5" />
+                      <line x1={m.x} y1={m.y + m.h} x2={m.x + m.w} y2={m.y + m.h} stroke="#18181b" strokeWidth="0.5" />
+                    </>
+                  )}
+                </g>
+              ))}
 
-              {/* Kính / Nan chớp / Lưới chống muỗi / Tấm Panel */}
-              <rect
-                x={glassX}
-                y={glassY}
-                width={glassW}
-                height={glassH}
-                fill={
-                  node.paneType === 'screen'
-                    ? 'url(#screen-mesh)'
-                    : node.paneType === 'louver'
-                      ? 'url(#louver-pattern)'
-                      : node.paneType === 'panel'
-                        ? aluminumColor
-                        : '#b2f5ea'
-                }
-                fillOpacity={node.paneType === 'glass' ? 0.85 : 0.95}
-                stroke="none"
-              />
+              {/* 2. Từng ô kính/pano con và nẹp kính tương ứng */}
+              {sashSubPanes.map((sub) => {
+                const isSubSelected = selectedCellId === sub.id;
+                return (
+                  <g key={sub.id}>
+                    {sub.bead?.el}
+                    <rect
+                      x={sub.gx}
+                      y={sub.gy}
+                      width={sub.gw}
+                      height={sub.gh}
+                      fill={sub.paneFill}
+                      fillOpacity={sub.paneOpacity}
+                      stroke="none"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectCell(sub.id);
+                      }}
+                      className="cursor-pointer"
+                    />
+                    {sub.node.paneType === 'glass' &&
+                      renderCadGrille(sub.gx, sub.gy, sub.gw, sub.gh, sub.node.grilleConfig || node.grilleConfig)}
 
-              {/* Kính nan đồng */}
-              {node.paneType === 'glass' && renderCadGrille(glassX, glassY, glassW, glassH, node.grilleConfig)}
+                    {/* Viền cam khi ô con này được chọn */}
+                    {isSubSelected && (
+                      <rect
+                        x={sub.x + 1}
+                        y={sub.y + 1}
+                        width={Math.max(2, sub.w - 2)}
+                        height={Math.max(2, sub.h - 2)}
+                        fill="none"
+                        stroke="#f59e0b"
+                        strokeWidth="1.8"
+                        strokeDasharray="4,2"
+                        pointerEvents="none"
+                      />
+                    )}
+                  </g>
+                );
+              })}
 
-              {/* Ký hiệu mở cửa */}
-              {!isFixed && <CadOpeningSymbol cx={glassX} cy={glassY} cw={glassW} ch={glassH} type={node.sashType} />}
+              {/* Ký hiệu mở cửa: Trùm lên toàn bộ diện tích cánh (Hình 5) */}
+              {!isFixed && (
+                <CadOpeningSymbol cx={innerX} cy={innerY} cw={innerW} ch={innerH} type={node.sashType} />
+              )}
 
               {/* Tay nắm */}
               {shouldRenderHandle && (
@@ -497,10 +795,10 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
               {/* Viền cam khi ô được chọn */}
               {isSelected && (
                 <rect
-                  x={glassX + 1}
-                  y={glassY + 1}
-                  width={Math.max(2, glassW - 2)}
-                  height={Math.max(2, glassH - 2)}
+                  x={innerX + 1}
+                  y={innerY + 1}
+                  width={Math.max(2, innerW - 2)}
+                  height={Math.max(2, innerH - 2)}
                   fill="none"
                   stroke="#f59e0b"
                   strokeWidth="1.5"

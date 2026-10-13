@@ -52,7 +52,21 @@ export const getVerticalSlices = (node: SceneCellNode): { id: string; w: number 
     ];
   }
 
-  // 4. Tìm kiếm sâu hơn trong các con
+  // 4. Nếu nút này có chia đố cánh theo phương dọc (sashMullions)
+  if (node.sashMullions?.direction === 'vertical' && node.sashMullions.count > 1) {
+    const count = node.sashMullions.count;
+    const positions = node.sashMullions.positions;
+    let sum = 0;
+    const result: { id: string; w: number }[] = [];
+    for (let i = 0; i < count; i++) {
+      const sw = positions && positions.length === count ? positions[i] : (i === count - 1 ? node.w - sum : Math.round(node.w / count));
+      sum += sw;
+      result.push({ id: `${node.id}-sm-${i}`, w: sw });
+    }
+    return result;
+  }
+
+  // 5. Tìm kiếm sâu hơn trong các con
   if (node.children) {
     for (const c of node.children) {
       const found = getVerticalSlices(c);
@@ -75,6 +89,15 @@ export const getHorizontalSlices = (node: SceneCellNode): SceneCellNode[] => {
       const sub = getHorizontalSlices(c);
       if (sub.length > 0) {
         result.push(...sub);
+      } else if (c.sashMullions?.direction === 'horizontal' && c.sashMullions.count > 1) {
+        const count = c.sashMullions.count;
+        const positions = c.sashMullions.positions;
+        let sum = 0;
+        for (let i = 0; i < count; i++) {
+          const sh = positions && positions.length === count ? positions[i] : (i === count - 1 ? c.h - sum : Math.round(c.h / count));
+          sum += sh;
+          result.push({ ...c, id: `${c.id}-sm-${i}`, h: sh });
+        }
       } else {
         result.push(c);
       }
@@ -92,6 +115,20 @@ export const getHorizontalSlices = (node: SceneCellNode): SceneCellNode[] => {
       }
     }
     if (best.length > 0) return best;
+  }
+
+  // 3. Nếu nút này có chia đố cánh theo phương ngang
+  if (node.sashMullions?.direction === 'horizontal' && node.sashMullions.count > 1) {
+    const count = node.sashMullions.count;
+    const positions = node.sashMullions.positions;
+    let sum = 0;
+    const result: SceneCellNode[] = [];
+    for (let i = 0; i < count; i++) {
+      const sh = positions && positions.length === count ? positions[i] : (i === count - 1 ? node.h - sum : Math.round(node.h / count));
+      sum += sh;
+      result.push({ ...node, id: `${node.id}-sm-${i}`, h: sh });
+    }
+    return result;
   }
 
   if (node.children) {
@@ -182,7 +219,7 @@ export const buildCadLayout = (
     }
 
     // 3. Phân chia đố T 90° hoặc cặp cánh đối xứng
-    if (node.children && node.children.length > 0) {
+    if (node.children && node.children.length > 0 && node.splitType !== 'sash_mullion') {
       const isVert = node.splitDirection === 'vertical';
       const count = node.children.length;
 
@@ -257,4 +294,107 @@ export const buildCadLayout = (
   traverse(rootCell, ox, oy, fw, fh, true);
 
   return { frames, mullions, couplingSeams, leaves };
+};
+
+/**
+ * Thu thập tất cả các thanh đố cánh (Sash Mullions) từ các ô lá (leaves)
+ * bao gồm cả phân chia phân tầng đệ quy nhiều cấp
+ */
+export const collectSashMullions = (leaves: LeafCell[], sashD: number): MullionBar[] => {
+  const result: MullionBar[] = [];
+
+  for (const leaf of leaves) {
+    const { node, x: cx, y: cy, w: cw, h: ch } = leaf;
+    const isFixed = node.sashType === 'fixed';
+    const isDouble = node.sashType === 'swing_double';
+    const isSliding = node.sashType === 'sliding';
+    if (isDouble) continue;
+
+    // Tính độ dày khung cánh thích ứng
+    const ratioW = isSliding ? 0.12 : 0.18;
+    const maxAllowedW = Math.max(8, Math.floor(cw * ratioW));
+    const maxAllowedH = Math.max(8, Math.floor(ch * 0.12));
+    const maxAllowed = Math.min(maxAllowedW, maxAllowedH);
+    const candidate = isSliding ? Math.round(sashD * 0.85) : sashD;
+    const dSash = Math.max(8, Math.min(candidate, maxAllowed));
+
+    const smT = Math.max(14, Math.min(32, Math.round(dSash * 0.7)));
+    const innerX = isFixed ? cx : cx + dSash;
+    const innerY = isFixed ? cy : cy + dSash;
+    const innerW = Math.max(4, isFixed ? cw : cw - 2 * dSash);
+    const innerH = Math.max(4, isFixed ? ch : ch - 2 * dSash);
+
+    const traverseSashSubTree = (
+      currNode: SceneCellNode,
+      bx: number,
+      by: number,
+      bw: number,
+      bh: number
+    ) => {
+      if (
+        currNode.children &&
+        currNode.children.length > 0 &&
+        currNode.splitType === 'sash_mullion'
+      ) {
+        const isVert = currNode.splitDirection === 'vertical';
+        const count = currNode.children.length;
+        const mullionSpace = (count - 1) * smT;
+        const availSpace = Math.max(10, (isVert ? bw : bh) - mullionSpace);
+        const totalWeight = currNode.children.reduce(
+          (sum: number, c: SceneCellNode) => sum + ((isVert ? c.w : c.h) || 1),
+          0
+        );
+
+        let cur = 0;
+        let spanCur = 0;
+        currNode.children.forEach((child: SceneCellNode, idx: number) => {
+          const isLast = idx === count - 1;
+          const weight = (isVert ? child.w : child.h) || 1;
+          const ratio = totalWeight > 0 ? weight / totalWeight : 1 / count;
+          const childSpan = isLast ? availSpace - spanCur : Math.round(availSpace * ratio);
+          const cwChild = isVert ? childSpan : bw;
+          const chChild = isVert ? bh : childSpan;
+          const cxChild = isVert ? bx + cur : bx;
+          const cyChild = isVert ? by : by + cur;
+
+          traverseSashSubTree(child, cxChild, cyChild, cwChild, chChild);
+          cur += isVert ? cwChild : chChild;
+          spanCur += isVert ? cwChild : chChild;
+
+          if (idx < count - 1) {
+            const nextChild = currNode.children![idx + 1];
+            const childDim = (isVert ? child.w : child.h) || 1;
+            const nextChildDim = (isVert ? nextChild.w : nextChild.h) || 1;
+
+            const barInfo: MullionInfo = {
+              id: `${currNode.id}-sm-${idx}`,
+              parentNodeId: currNode.id,
+              mullionIndex: idx,
+              direction: isVert ? 'vertical' : 'horizontal',
+              childId: child.id,
+              nextChildId: nextChild.id,
+              dimension: childDim,
+              totalDimension: childDim + nextChildDim,
+              cutType: 'inside_frame',
+            };
+
+            result.push({
+              x: isVert ? bx + cur : bx,
+              y: isVert ? by : by + cur,
+              w: isVert ? smT : bw,
+              h: isVert ? bh : smT,
+              info: barInfo,
+            });
+            cur += smT;
+          }
+        });
+      }
+    };
+
+    if (node.children && node.children.length > 0 && node.splitType === 'sash_mullion') {
+      traverseSashSubTree(node, innerX, innerY, innerW, innerH);
+    }
+  }
+
+  return result;
 };

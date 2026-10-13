@@ -12,6 +12,9 @@ import {
   ShortageCheckResponse,
   GlassOrder,
   GlassOrderGeneratePayload,
+  GlassPanePreviewItem,
+  GlassOrderCreatePayload,
+  SupplierDetailAnalyticsResponse,
 } from '@/types';
 
 // =========================================================================
@@ -34,6 +37,25 @@ export async function createWarehouseSupplier(
   payload: WarehouseSupplierCreatePayload
 ): Promise<WarehouseSupplier> {
   const response = await api.post('/api/v1/warehouse/suppliers', payload);
+  return response.data;
+}
+
+export async function updateWarehouseSupplier(
+  supplierId: number,
+  payload: Partial<WarehouseSupplierCreatePayload>
+): Promise<WarehouseSupplier> {
+  const response = await api.put(`/api/v1/warehouse/suppliers/${supplierId}`, payload);
+  return response.data;
+}
+
+export async function deleteWarehouseSupplier(supplierId: number): Promise<void> {
+  await api.delete(`/api/v1/warehouse/suppliers/${supplierId}`);
+}
+
+export async function getWarehouseSupplierAnalytics(
+  supplierId: number
+): Promise<SupplierDetailAnalyticsResponse> {
+  const response = await api.get(`/api/v1/warehouse/suppliers/${supplierId}/analytics`);
   return response.data;
 }
 
@@ -60,8 +82,20 @@ export async function createWarehouseItem(
   return response.data;
 }
 
+export async function updateWarehouseItem(
+  itemId: number,
+  payload: Partial<WarehouseItemCreatePayload>
+): Promise<WarehouseItem> {
+  const response = await api.put(`/api/v1/warehouse/items/${itemId}`, payload);
+  return response.data;
+}
+
+export async function deleteWarehouseItem(itemId: number): Promise<void> {
+  await api.delete(`/api/v1/warehouse/items/${itemId}`);
+}
+
 // =========================================================================
-// 3. OFFCUTS (KHO ĐỀ-XÊ)
+// 3. OFFCUTS (KHO NHÔM THỪA TÁI SỬ DỤNG)
 // =========================================================================
 export async function getWarehouseOffcuts(params?: {
   status?: string;
@@ -202,6 +236,27 @@ export async function getProjectGlassOrderDetail(
   orderId: number
 ): Promise<GlassOrder> {
   const response = await api.get(`/api/v1/projects/${projectId}/glass-orders/${orderId}`);
+  return response.data;
+}
+
+export async function previewProjectGlassPanes(
+  projectId: number,
+  params?: { productionOrderId?: number; defaultUnitPrice?: number }
+): Promise<GlassPanePreviewItem[]> {
+  const response = await api.get(`/api/v1/projects/${projectId}/glass-orders/preview-panes`, {
+    params: {
+      production_order_id: params?.productionOrderId,
+      default_unit_price: params?.defaultUnitPrice,
+    },
+  });
+  return response.data || [];
+}
+
+export async function createProjectGlassOrder(
+  projectId: number,
+  payload: GlassOrderCreatePayload
+): Promise<GlassOrder> {
+  const response = await api.post(`/api/v1/projects/${projectId}/glass-orders`, payload);
   return response.data;
 }
 

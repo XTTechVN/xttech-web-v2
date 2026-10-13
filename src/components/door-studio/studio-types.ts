@@ -88,6 +88,12 @@ export const GRILLE_COLORS: ColorSwatch[] = [
   { name: 'Đồng Cổ / Nâu', colorHex: '#78350F', code: 'brown' },
 ];
 
+export interface SashMullionConfig {
+  count: number;
+  direction: 'vertical' | 'horizontal';
+  positions?: number[];
+}
+
 export interface SceneCellNode {
   id: string;
   name?: string;
@@ -102,7 +108,7 @@ export interface SceneCellNode {
   beadType?: BeadType;
   beadJoint?: BeadJointType;
   splitDirection?: 'vertical' | 'horizontal';
-  splitType?: 'mullion' | 'coupling' | 'sash_pair';
+  splitType?: 'mullion' | 'coupling' | 'sash_pair' | 'sash_mullion';
   children?: SceneCellNode[];
   hasLock?: boolean;
   handleHeight?: number;
@@ -110,6 +116,7 @@ export interface SceneCellNode {
   mullionProfileId?: number;
   mullionCutType?: MullionCutType;
   grilleConfig?: GlassGrilleConfig;
+  sashMullions?: SashMullionConfig;
 }
 
 

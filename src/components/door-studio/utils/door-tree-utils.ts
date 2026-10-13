@@ -265,3 +265,30 @@ export const resizeCellInParent = (
   // Không tìm thấy ở cấp này, đệ quy xuống sâu hơn
   return { ...root, children: root.children.map((c) => resizeCellInParent(c, cellId, newValue, axis)) };
 };
+
+/**
+ * Kiểm tra một ô có nằm bên trong một cánh cửa hay không (ô kính/pano con của cánh hoặc cụm đố cánh)
+ */
+export const isInsideSash = (root: SceneCellNode, targetId: string): boolean => {
+  const findAncestors = (curr: SceneCellNode, path: SceneCellNode[]): SceneCellNode[] | null => {
+    if (curr.id === targetId) return path;
+    if (curr.children) {
+      for (const child of curr.children) {
+        const res = findAncestors(child, [...path, curr]);
+        if (res) return res;
+      }
+    }
+    return null;
+  };
+
+  const ancestors = findAncestors(root, []);
+  if (!ancestors || ancestors.length === 0) return false;
+
+  return ancestors.some(
+    (a) =>
+      a.splitType === 'sash_mullion' ||
+      a.splitType === 'sash_pair' ||
+      (Boolean(a.sashType) && a.sashType !== 'fixed')
+  );
+};
+
