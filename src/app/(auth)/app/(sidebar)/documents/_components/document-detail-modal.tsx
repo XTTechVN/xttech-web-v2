@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Modal, Button, Textarea } from '@/components';
+import { RejectDocumentModal } from './reject-document-modal';
 import {
   Download,
   FileText,
@@ -59,8 +60,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const [reviewLoading, setReviewLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [publishLoading, setPublishLoading] = useState(false);
-  const [showRejectPrompt, setShowRejectPrompt] = useState(false);
-  const [rejectNote, setRejectNote] = useState('');
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const currentUser = useAuthStore((state) => state.user);
   const { hasRole, isAdmin, isHR, isSuper, isManager } = usePermission();
 
@@ -268,7 +268,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const isDraftOrRejected = approvalStatus === 'draft' || approvalStatus === 'rejected';
 
 
-  const handleReview = async (status: 'approved' | 'rejected') => {
+  const handleReview = async (status: 'approved' | 'rejected', note?: string) => {
     try {
       setReviewLoading(true);
 
@@ -285,13 +285,15 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         }
       }
 
+      const reviewNote = status === 'rejected' ? note?.trim() || undefined : undefined;
+
       // Gọi API phê duyệt chuẩn POST /api/v1/documents/{id}/approve
       try {
         await reviewDocument(doc.id, {
           action: status,
           approvalStatus: status,
-          comment: status === 'rejected' ? rejectNote.trim() || undefined : undefined,
-          approvalNote: status === 'rejected' ? rejectNote.trim() || undefined : undefined,
+          comment: reviewNote,
+          approvalNote: reviewNote,
         });
       } catch (reviewErr: any) {
         const errMsg = String(reviewErr?.message || '');
@@ -308,8 +310,8 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             approval_status: status,
             approverId: String(currentUser?.id),
             approver_id: String(currentUser?.id),
-            approvalNote: status === 'rejected' ? rejectNote.trim() || undefined : undefined,
-            approval_note: status === 'rejected' ? rejectNote.trim() || undefined : undefined,
+            approvalNote: reviewNote,
+            approval_note: reviewNote,
             status: status === 'approved' ? 'published' : 'draft',
           } as any);
         } else {
@@ -321,8 +323,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['document-detail', doc.id] });
       queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
-      setShowRejectPrompt(false);
-      setRejectNote('');
+      setIsRejectModalOpen(false);
       onSuccess?.();
       onClose();
     } catch (error: any) {
@@ -396,7 +397,8 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   };
 
   return (
-    <Modal
+    <>
+      <Modal
       isOpen={isOpen}
       onClose={onClose}
       size="lg"
@@ -417,7 +419,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                 <Button
                   variant="danger"
                   size="md"
-                  onClick={() => setShowRejectPrompt(true)}
+                  onClick={() => setIsRejectModalOpen(true)}
                   disabled={reviewLoading || submitLoading || publishLoading}
                   className="h-10 px-5 rounded-lg bg-[#ff245a] hover:bg-[#e61a4d] text-white font-bold text-sm tracking-wide shadow-xs border-0 cursor-pointer"
                 >
@@ -472,37 +474,6 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
       }
     >
       <div className="space-y-4 text-xs">
-        {/* Rejection Prompt if toggled */}
-        {showRejectPrompt && (
-          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl space-y-2.5 animate-in fade-in duration-150">
-            <div className="flex items-center gap-2 text-rose-800 font-semibold text-xs">
-              <AlertCircle size={15} />
-              <span>Nhập lý do từ chối phê duyệt tài liệu</span>
-            </div>
-            <Textarea
-              placeholder="Ghi chú lý do từ chối để người soạn thảo nắm rõ..."
-              rows={2}
-              value={rejectNote}
-              onChange={(e) => setRejectNote(e.target.value)}
-              fullWidth
-              className="text-xs bg-white"
-            />
-            <div className="flex justify-end gap-2">
-              <Button size="xs" variant="outline" onClick={() => setShowRejectPrompt(false)} disabled={reviewLoading}>
-                Hủy bỏ
-              </Button>
-              <Button
-                size="xs"
-                variant="danger"
-                onClick={() => handleReview('rejected')}
-                loading={reviewLoading}
-                disabled={reviewLoading}
-              >
-                Xác nhận từ chối
-              </Button>
-            </div>
-          </div>
-        )}
 
         {/* Trích yếu nội dung */}
         {doc.summary && (
@@ -732,5 +703,15 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         )}
       </div>
     </Modal>
+
+    {/* Modal xác nhận từ chối phê duyệt (Form Modal có Zod validate) */}
+    <RejectDocumentModal
+      isOpen={isRejectModalOpen}
+      onClose={() => setIsRejectModalOpen(false)}
+      documentTitle={targetDoc?.title}
+      onConfirm={(reason) => handleReview('rejected', reason)}
+      loading={reviewLoading}
+    />
+  </>
   );
 };
