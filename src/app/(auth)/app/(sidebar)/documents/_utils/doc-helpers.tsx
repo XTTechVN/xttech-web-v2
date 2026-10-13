@@ -18,9 +18,10 @@ export function formatBytes(bytes?: number, decimals = 1): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
-// Tự động sinh mã tài liệu theo tên tài liệu
+// Tự động sinh mã tài liệu/thư mục theo tên
 export function generateSlugCode(text: string, prefix = 'DOC'): string {
-  if (!text) return `${prefix}_${Date.now().toString().slice(-4)}`;
+  const suffix = Date.now().toString().slice(-6);
+  if (!text) return `${prefix}_${suffix}`;
   // Remove accents
   const nonAccent = text
     .normalize('NFD')
@@ -32,9 +33,10 @@ export function generateSlugCode(text: string, prefix = 'DOC'): string {
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, '_')
     .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '');
+    .replace(/^_|_$/g, '')
+    .slice(0, 20);
 
-  return slug || `${prefix}_${Date.now().toString().slice(-4)}`;
+  return slug ? `${prefix}_${slug}_${suffix}` : `${prefix}_${suffix}`;
 }
 
 // Lấy đuôi file

@@ -84,15 +84,36 @@ export const getDocumentCategoryTree = async (): Promise<DocumentCategory[]> => 
   }
 };
 
+function generateCategoryCode(name?: string): string {
+  const suffix = Date.now().toString().slice(-6);
+  if (!name || !name.trim()) return `DIR_${suffix}`;
+  const nonAccent = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+
+  const slug = nonAccent
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 20);
+
+  return slug ? `DIR_${slug}_${suffix}` : `DIR_${suffix}`;
+}
+
 // Tạo mới thư mục
 export const createDocumentCategory = async (payload: CreateDocumentCategoryPayload): Promise<DocumentCategory> => {
   try {
+    const code = payload.code?.trim()
+      ? payload.code.trim().toUpperCase()
+      : generateCategoryCode(payload.name);
+
     const cleanPayload: Record<string, any> = {
       name: payload.name.trim(),
+      code,
     };
-    if (payload.code?.trim()) {
-      cleanPayload.code = payload.code.trim().toUpperCase();
-    }
     if (payload.description?.trim()) cleanPayload.description = payload.description.trim();
     if (payload.parentId) cleanPayload.parentId = payload.parentId;
 
