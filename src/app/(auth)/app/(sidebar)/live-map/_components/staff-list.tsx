@@ -19,18 +19,31 @@ interface StaffListProps {
 export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onViewRoute, isLoading = false, onRefresh}: StaffListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | StaffLiveStatus>('all');
-  const filteredStaff = staffLocations.filter((staff) => {
-    const name = staff.userName || '';
-    const dept = staff.departmentName || '';
-    const query = searchQuery.toLowerCase();
 
-    const matchesSearch =
-      name.toLowerCase().includes(query) ||
-      dept.toLowerCase().includes(query);
+  const getStatusPriority = (status: StaffLiveStatus): number => {
+    if (status === 'moving' || status === 'stationary') return 1; // Rank 1: Online
+    if (status === 'app_closed') return 2;                        // Rank 2: Tắt app
+    return 3;                                                     // Rank 3: Offline
+  };
 
-    const matchesStatus = statusFilter === 'all' || staff.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredStaff = staffLocations
+    .filter((staff) => {
+      const name = staff.userName || '';
+      const dept = staff.departmentName || '';
+      const query = searchQuery.toLowerCase();
+
+      const matchesSearch =
+        name.toLowerCase().includes(query) ||
+        dept.toLowerCase().includes(query);
+
+      const matchesStatus = statusFilter === 'all' || staff.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const priorityDiff = getStatusPriority(a.status) - getStatusPriority(b.status);
+      if (priorityDiff !== 0) return priorityDiff;
+      return (a.userName || '').localeCompare(b.userName || '', 'vi');
+    });
 
   const movingCount = staffLocations.filter((s) => s.status === 'moving').length;
   const stationaryCount = staffLocations.filter((s) => s.status === 'stationary').length;

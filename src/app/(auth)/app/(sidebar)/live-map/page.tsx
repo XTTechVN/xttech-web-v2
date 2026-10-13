@@ -132,6 +132,15 @@ export default function AttendanceLiveMapPage() {
                 const currentId = current?.userId || (current as any)?.user_id;
                 return currentId === targetUserId ? { ...current, ...updatedStaff } : current;
               });
+            } else if (payload.type === 'STAFF_CHECKOUT' && payload.data) {
+              const targetUserId: string = payload.data.userId || payload.data.user_id;
+              if (targetUserId) {
+                setStaffLocations((prev) => prev.filter((s) => (s.userId || (s as any).user_id) !== targetUserId));
+                setSelectedStaff((current) => {
+                  const currentId = current?.userId || (current as any)?.user_id;
+                  return currentId === targetUserId ? null : current;
+                });
+              }
             }
           } catch (e) {
             console.warn('Lỗi parse WebSocket message:', e);
