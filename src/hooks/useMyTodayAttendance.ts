@@ -1,23 +1,16 @@
 'use client';
 
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores';
 import { getAttendances } from '@/actions';
 import { Attendance } from '@/types';
-
-// Helper lấy ngày hiện tại theo giờ địa phương định dạng YYYY-MM-DD
-const getLocalDateString = (): string => {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+import { useLocalToday } from './use-local-today';
 
 export function useMyTodayAttendance() {
   const user = useAuthStore((state) => state.user);
-  const todayStr = useMemo(() => getLocalDateString(), []);
+  // Không dùng useMemo([]): app native giữ JS state qua đêm -> ngày bị đóng băng ở hôm qua,
+  // khiến ca hôm nay bị hiểu nhầm là "đã check-out" và Native Tracking bị dừng.
+  const todayStr = useLocalToday();
 
   const { data, isLoading, isSuccess, refetch } = useQuery({
     queryKey: ['my-today-attendance', user?.id, todayStr],

@@ -2,6 +2,17 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-14
+
+### Fixed (Live Tracking: nhân viên bị "Ngoại tuyến" bất đồng bộ giữa các thiết bị)
+- **Ngày "hôm nay" bị đóng băng qua đêm ([`useMyTodayAttendance.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useMyTodayAttendance.ts), [`use-local-today.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-local-today.ts)):**
+  - Nguyên nhân: `todayStr` dùng `useMemo([])` -> App native giữ JS state qua đêm nên vẫn truy vấn ca của hôm qua (đã check-out) -> `isWorkingShift = false` -> `NativeTracking.stopTracking()` ngay sau khi check-in hôm nay.
+  - Thêm hook dùng chung `useLocalToday` tự đồng bộ ngày khi app resume (`visibilitychange`/`focus`) và khi qua nửa đêm (kiểm tra mỗi 60s).
+- **Android heartbeat đứng yên bị ngưng khi CPU ngủ sâu ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java)):**
+  - Thay `ScheduledExecutorService` (không giữ CPU thức) bằng `AlarmManager.setAndAllowWhileIdle` + `PARTIAL_WAKE_LOCK` có timeout -> heartbeat vẫn chạy khi tắt màn hình / Doze, không cần quyền `SCHEDULE_EXACT_ALARM`.
+  - Heartbeat fallback sang vị trí cache hệ thống (<= 10 phút) khi chưa từng có fix GPS (trong nhà).
+  - Tách helper `getFreshLastKnownLocation` dùng chung cho khởi động & heartbeat (DRY).
+
 ## [Unreleased] - 2026-10-13
 
 ### Added (Hiển thị nhãn thiết bị điểm danh & phát định vị: iOS, Android, Web App)
