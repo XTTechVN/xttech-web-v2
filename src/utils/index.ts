@@ -8,3 +8,4 @@ export * from './error';
 export * from './string';
 export * from './route-metadata';
 export * from './file';
+export * from './navigation';

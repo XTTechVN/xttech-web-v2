@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { StaffLiveLocation, StaffLiveStatus, STAFF_LIVE_STATUS_MAP, isStaffSignalLost } from '@/types';
-import { Search, Navigation, Battery, Gauge, Clock, Users, RefreshCw } from 'lucide-react';
+import { Search, Navigation, Battery, Gauge, Clock, Users, RefreshCw, Compass } from 'lucide-react';
 import { Input, PlatformBadge } from '@/components';
 import dayjs from 'dayjs';
-import { getFileUrl } from '@/utils';
+import { getFileUrl, openGoogleMapsNavigation } from '@/utils';
 
 interface StaffListProps {
   staffLocations: StaffLiveLocation[];
@@ -229,18 +229,31 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
                     </span>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onViewRoute(staff);
-                    }}
-                    className="p-1 px-2 rounded-md bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-medium transition-colors flex items-center gap-1 cursor-pointer"
-                    title="Xem lộ trình trong ngày"
-                  >
-                    <Navigation size={10} />
-                    <span>Lộ trình</span>
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openGoogleMapsNavigation(staff.latitude, staff.longitude);
+                      }}
+                      className="p-1 px-1.5 rounded-md bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 text-slate-500 font-medium transition-colors flex items-center justify-center cursor-pointer"
+                      title="Mở Google Maps chỉ đường tới đây"
+                    >
+                      <Compass size={11} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewRoute(staff);
+                      }}
+                      className="p-1 px-2 rounded-md bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-medium transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Xem lộ trình trong ngày"
+                    >
+                      <Navigation size={10} />
+                      <span>Lộ trình</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             );
