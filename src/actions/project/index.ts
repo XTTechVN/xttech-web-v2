@@ -21,12 +21,28 @@ export const getProjects = async (params?: ProjectQueryParams): Promise<BaseResp
   }
 };
 
-export const getProjectQuotations = async (projectId: number, params?: any): Promise<BaseResponseWithPagination<any>> => {
+// snapshotItems backend lưu JSON thô (snake_case), chuyển key sang camelCase
+const snakeToCamel = (key: string): string =>
+  key.replace(/_([a-z0-9])/g, (_match, char: string) => char.toUpperCase());
+
+const normalizeProjectQuotation = <T extends { snapshotItems?: unknown }>(quotation: T): T => ({
+  ...quotation,
+  snapshotItems: Array.isArray(quotation.snapshotItems)
+    ? quotation.snapshotItems.map((item: Record<string, unknown>) =>
+        Object.fromEntries(Object.entries(item).map(([key, value]) => [snakeToCamel(key), value])),
+      )
+    : [],
+});
+
+export const getProjectQuotations = async (
+  projectId: number,
+  params?: import('@/types').ProjectQuotationQueryParams,
+): Promise<BaseResponseWithPagination<import('@/types').ProjectQuotationItem>> => {
   try {
     const response = await api.get(`/api/v1/projects/${projectId}/quotations`, { params });
     const { items, meta } = response.data;
     return {
-      items: items || [],
+      items: (items || []).map(normalizeProjectQuotation),
       meta: {
         total: meta?.total ?? 0,
         offset: meta?.offset ?? 0,
@@ -95,6 +111,45 @@ export const selectProjectQuotation = async (
   }
 };
 
+export const getProjectQuotation = async (
+  projectId: number,
+  quotationId: number,
+): Promise<import('@/types').ProjectQuotationDetail> => {
+  try {
+    const response = await api.get(`/api/v1/projects/${projectId}/quotations/${quotationId}`);
+    return normalizeProjectQuotation(response.data);
+  } catch (error) {
+    console.warn('API error getProjectQuotation', error);
+    throw error;
+  }
+};
+
+export const updateProjectQuotation = async (
+  projectId: number,
+  quotationId: number,
+  data: import('@/types').ProjectQuotationUpdatePayload,
+): Promise<import('@/types').ProjectQuotationItem> => {
+  try {
+    const response = await api.put(`/api/v1/projects/${projectId}/quotations/${quotationId}`, data);
+    return response.data;
+  } catch (error) {
+    console.warn('API error updateProjectQuotation', error);
+    throw error;
+  }
+};
+
+export const deleteProjectQuotation = async (
+  projectId: number,
+  quotationId: number,
+): Promise<import('@/types').ProjectQuotationItem> => {
+  try {
+    const response = await api.delete(`/api/v1/projects/${projectId}/quotations/${quotationId}`);
+    return response.data;
+  } catch (error) {
+    console.warn('API error deleteProjectQuotation', error);
+    throw error;
+  }
+};
 
 export const getProject = async (id: number): Promise<ProjectDetail> => {
   try {
