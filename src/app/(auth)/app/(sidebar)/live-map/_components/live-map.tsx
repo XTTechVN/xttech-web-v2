@@ -6,9 +6,9 @@ import dynamic from 'next/dynamic';
 import L from 'leaflet';
 import dayjs from 'dayjs';
 import { StaffLiveLocation, isStaffSignalLost } from '@/types';
-import { Battery, Gauge, Clock, Navigation } from 'lucide-react';
+import { Battery, Gauge, Clock, Navigation, Compass } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import { getFileUrl } from '@/utils';
+import { getFileUrl, openGoogleMapsNavigation } from '@/utils';
 import { PlatformBadge } from '@/components';
 
 // Dynamic import Leaflet components for SSR safety
@@ -524,14 +524,24 @@ function StaffPopupContent({
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => onViewRoute(staff)}
-        className="w-full h-7 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-      >
-        <Navigation size={12} />
-        <span>Xem lộ trình trong ngày</span>
-      </button>
+      <div className="flex items-center gap-1.5 pt-0.5">
+        <button
+          type="button"
+          onClick={() => onViewRoute(staff)}
+          className="flex-1 h-7 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+        >
+          <Navigation size={12} />
+          <span>Xem lộ trình trong ngày</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => openGoogleMapsNavigation(staff.latitude, staff.longitude)}
+          className="w-7 h-7 shrink-0 rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-200 transition-colors flex items-center justify-center cursor-pointer shadow-xs"
+          title="Mở Google Maps chỉ đường tới đây"
+        >
+          <Compass size={14} />
+        </button>
+      </div>
     </div>
   );
 }

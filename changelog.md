@@ -4,6 +4,13 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-10-14
 
+### Added (Chỉ đường / Dẫn đường tới vị trí nhân sự qua Google Maps)
+- **Tiện ích dẫn đường ([`src/utils/navigation.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/navigation.ts), [`src/utils/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/index.ts)):**
+  - Tạo mới hàm helper `openGoogleMapsNavigation(lat, lng)`: mở Google Maps chỉ đường bằng chuẩn Universal Directions URL (`https://www.google.com/maps/dir/?api=1&destination=lat,lng`), tự động deep link mở ứng dụng Google Maps trên Android/iOS hoặc tab mới trên Web.
+- **Bản đồ trực tiếp Live Map & Danh sách nhân sự ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/live-map.tsx), [`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/staff-list.tsx)):**
+  - Thêm icon điều hướng `Compass` bên cạnh nút "Xem lộ trình trong ngày" trên popup marker nhân viên.
+  - Thêm icon điều hướng `Compass` trong footer card nhân sự trên danh sách bên trái giúp quản lý mở nhanh chỉ đường tới nhân viên bất kỳ lúc nào.
+
 ### Fixed (Live Tracking: nhân viên bị "Ngoại tuyến" bất đồng bộ giữa các thiết bị)
 - **Ngày "hôm nay" bị đóng băng qua đêm ([`useMyTodayAttendance.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useMyTodayAttendance.ts), [`use-local-today.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-local-today.ts)):**
   - Nguyên nhân: `todayStr` dùng `useMemo([])` -> App native giữ JS state qua đêm nên vẫn truy vấn ca của hôm qua (đã check-out) -> `isWorkingShift = false` -> `NativeTracking.stopTracking()` ngay sau khi check-in hôm nay.
