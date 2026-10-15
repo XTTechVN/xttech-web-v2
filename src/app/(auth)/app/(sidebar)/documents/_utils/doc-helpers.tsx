@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  FileText,
-  FileSpreadsheet,
-  FileCode,
-  FileImage,
-  FileArchive,
-  File,
-} from 'lucide-react';
+import { FileText, FileSpreadsheet, FileCode, FileImage, FileArchive, File } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 
 /**
@@ -19,7 +12,7 @@ import type { DocumentItem } from '@/types';
 export function isDocumentOwner(
   doc: DocumentItem | null | undefined,
   currentUser?: { id?: string | number; email?: string } | null,
-  myCategoryIds?: Set<number>
+  myCategoryIds?: Set<number>,
 ): boolean {
   if (!doc || !currentUser) return false;
 
@@ -37,12 +30,12 @@ export function isDocumentOwner(
   const docCreatedById = doc.createdById
     ? String(doc.createdById)
     : doc.createdBy?.id
-    ? String(doc.createdBy.id)
-    : (doc as any)?.creatorId
-    ? String((doc as any).creatorId)
-    : (doc as any)?.user_id
-    ? String((doc as any).user_id)
-    : null;
+      ? String(doc.createdBy.id)
+      : (doc as any)?.creatorId
+        ? String((doc as any).creatorId)
+        : (doc as any)?.user_id
+          ? String((doc as any).user_id)
+          : null;
 
   // 2. So sánh ID người tạo
   if (currentUserId && docCreatedById) {
@@ -82,7 +75,7 @@ export function isDocumentOwner(
 export function isDocumentSharedWithUser(
   doc: DocumentItem | null | undefined,
   currentUser?: { id?: string | number; email?: string } | null,
-  sharedCategoryIds?: Set<number>
+  sharedCategoryIds?: Set<number>,
 ): boolean {
   if (!doc || !currentUser) return false;
 
@@ -145,10 +138,7 @@ export function isDocumentSharedOut(doc: DocumentItem | null | undefined): boole
 /**
  * Helper kiểm tra trạng thái chia sẻ (Tương thích ngược với các nơi đang gọi).
  */
-export function isDocumentShared(
-  doc: DocumentItem | null | undefined,
-  currentUserId?: string | number
-): boolean {
+export function isDocumentShared(doc: DocumentItem | null | undefined, currentUserId?: string | number): boolean {
   if (!doc) return false;
   return isDocumentSharedOut(doc);
 }
@@ -185,7 +175,7 @@ export function getDocumentPermissions(
     canManageDocuments?: boolean;
     myCategoryIds?: Set<number>;
     currentFolderId?: number | null;
-  }
+  },
 ): DocumentPermissionsResult {
   if (!doc) {
     return {
@@ -210,16 +200,10 @@ export function getDocumentPermissions(
   const isAdminOrHR = Boolean(context?.canManageDocuments);
 
   // Kiểm tra tài liệu có thể gỡ khỏi thư mục hiện tại không (khi đang ở trong thư mục cá nhân)
-  const isInPersonalFolder = Boolean(
-    context?.currentFolderId &&
-      context?.myCategoryIds &&
-      context.myCategoryIds.has(context.currentFolderId)
-  );
+  const isInPersonalFolder = Boolean(context?.currentFolderId && context?.myCategoryIds && context.myCategoryIds.has(context.currentFolderId));
   // Cho phép gỡ khỏi thư mục nếu tài liệu không phải tạo bởi người dùng (được lưu qua shortcut)
   // hoặc tài liệu nằm trong savedFolders
-  const isSavedShortcut =
-    Array.isArray(doc.savedFolders) &&
-    Boolean(context?.currentFolderId && doc.savedFolders.includes(context.currentFolderId));
+  const isSavedShortcut = Array.isArray(doc.savedFolders) && Boolean(context?.currentFolderId && doc.savedFolders.includes(context.currentFolderId));
   const canRemoveShortcut = isInPersonalFolder && (!isOwner || isSavedShortcut);
 
   // Nếu người dùng là CHỦ SỞ HỮU:
@@ -269,13 +253,8 @@ export function getDocumentPermissions(
 
   if (!hasEditPermission && Array.isArray(doc.recipients) && (currentUserId || currentUserEmail)) {
     const myRecipient = doc.recipients.find((r: any) => {
-      const matchId =
-        currentUserId &&
-        String(r.userId || r.user_id || r.id || r.user?.id) === currentUserId;
-      const matchEmail =
-        currentUserEmail &&
-        Boolean(r.email) &&
-        r.email.toLowerCase().trim() === currentUserEmail;
+      const matchId = currentUserId && String(r.userId || r.user_id || r.id || r.user?.id) === currentUserId;
+      const matchEmail = currentUserEmail && Boolean(r.email) && r.email.toLowerCase().trim() === currentUserEmail;
       return matchId || matchEmail;
     });
 
@@ -303,7 +282,6 @@ export function getDocumentPermissions(
     canRemoveShortcut,
   };
 }
-
 
 // Định dạng dung lượng tệp
 export function formatBytes(bytes?: number, decimals = 1): string {
@@ -410,15 +388,7 @@ export function getFileVisualInfo(filename?: string, mimeType?: string) {
 }
 
 // Icon tùy theo loại file
-export function DriveFileIcon({
-  filename,
-  mimeType,
-  size = 18,
-}: {
-  filename?: string;
-  mimeType?: string;
-  size?: number;
-}) {
+export function DriveFileIcon({ filename, mimeType, size = 18 }: { filename?: string; mimeType?: string; size?: number }) {
   const ext = getFileExtension(filename);
 
   // 1. PDF - Red document icon with folded corner
@@ -444,11 +414,7 @@ export function DriveFileIcon({
   }
 
   // 3. Excel / Sheets - Green spreadsheet icon
-  if (
-    ['xls', 'xlsx', 'csv'].includes(ext) ||
-    mimeType?.includes('excel') ||
-    mimeType?.includes('spreadsheet')
-  ) {
+  if (['xls', 'xlsx', 'csv'].includes(ext) || mimeType?.includes('excel') || mimeType?.includes('spreadsheet')) {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="shrink-0">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="#0F9D58" />
@@ -482,21 +448,12 @@ export function DriveFileIcon({
   }
 
   // 6. Image - Purple image icon
-  if (
-    ['png', 'jpg', 'jpeg', 'webp', 'svg', 'gif'].includes(ext) ||
-    mimeType?.startsWith('image/')
-  ) {
+  if (['png', 'jpg', 'jpeg', 'webp', 'svg', 'gif'].includes(ext) || mimeType?.startsWith('image/')) {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="shrink-0">
         <rect x="2.5" y="3.5" width="19" height="17" rx="3" fill="#AB47BC" />
         <circle cx="8" cy="8.5" r="1.8" fill="white" />
-        <path
-          d="M20 16l-5-5-8 7.5"
-          stroke="white"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <path d="M20 16l-5-5-8 7.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
@@ -567,15 +524,10 @@ export const isApproverEligible = (emp: any): boolean => {
 // Lấy badge chức vụ / vai trò của người duyệt
 export const getApproverRoleBadge = (emp: any): string => {
   if (Array.isArray(emp?.roles) && emp.roles.length > 0) {
-    const names = emp.roles
-      .map((r: any) => (typeof r === 'string' ? r : r.name || r.code))
-      .filter(Boolean);
+    const names = emp.roles.map((r: any) => (typeof r === 'string' ? r : r.name || r.code)).filter(Boolean);
     if (names.length > 0) return names.join(', ');
   }
   if (typeof emp?.role === 'string') return emp.role;
   if (emp?.role && typeof emp.role === 'object') return emp.role.name || emp.role.code || '';
   return 'Cán bộ duyệt';
 };
-
-
-
