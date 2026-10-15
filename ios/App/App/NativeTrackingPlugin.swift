@@ -20,9 +20,9 @@ private enum AppClosedReminder {
 
     static func schedule(group: DispatchGroup) {
         let content = UNMutableNotificationContent()
-        content.title = "XTTech đã bị tắt"
-        content.body = "Bạn đang trong ca làm việc. Mở lại ứng dụng để tiếp tục chia sẻ vị trí."
-        content.sound = .default
+        content.title = "⚠️ Cảnh báo ca làm việc!"
+        content.body = "Đang trong ca làm việc, vui lòng vào lại app XTTech và không đóng app!"
+        content.sound = UNNotificationSound(named: UNNotificationSoundName("nhac_out_app.wav"))
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
         group.enter()
