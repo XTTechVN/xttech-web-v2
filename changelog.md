@@ -3,6 +3,12 @@
 All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-10-15
+### Fixed (iOS/Android: Khắc phục lỗi bị Ngoại tuyến và mất mức pin do thoát app ngay sau khi chấm công)
+- **Kích hoạt Native Tracking tức thời ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx)):**
+  - Khi nhân viên check-in thành công qua API `autoTimekeeping`, gọi trực tiếp `await NativeTracking.startTracking(...)` ngay lập tức trên Foreground trước khi hiển thị Toast và đóng Modal.
+  - Loại bỏ hoàn toàn sự phụ thuộc vào chuỗi domino bất đồng bộ của React Query (`invalidateQueries` -> fetch `getAttendances` -> `layout.tsx` re-render -> `useEffect` hook).
+  - Ngăn chặn triệt để tình trạng iOS tạm dừng (suspend) tiến trình WKWebView khi nhân viên vuốt về Home hoặc tắt màn hình quá nhanh (< 0.5s), đảm bảo CoreLocation chạy ngầm được đăng ký 100% trong Foreground.
+  - Tương tự khi check-out thành công, gọi ngay `await NativeTracking.stopTracking()` để thu hồi GPS nền ngay lập tức.
 
 ### Fixed (Ô tìm kiếm bảng: dư khoảng trắng làm không ra kết quả)
 - **[`table-search.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-search.tsx):** `trim()` giá trị tìm kiếm (sau debounce) trước khi gọi `onChange`; ô nhập vẫn giữ nguyên nội dung người dùng đang gõ. Đi cùng bản vá chuẩn hóa Unicode NFC/NFD phía backend.

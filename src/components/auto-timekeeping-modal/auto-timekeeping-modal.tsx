@@ -11,6 +11,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { showErrorToast } from '@/utils';
 import { Capacitor } from '@capacitor/core';
 import { NativeTracking } from '@/hooks/useLocationTracker';
+import { useAuthStore } from '@/stores';
+import { BASE_API_URL } from '@/config';
 
 export interface AutoTimekeepingModalProps {
   open: boolean;
@@ -452,6 +454,25 @@ export default function AutoTimekeepingModal({ open, onClose, onSuccess, hasChec
         },
         capturedFile,
       );
+
+      // Kích hoạt hoặc dừng Native Tracking tức thời ngay trên Foreground
+      // Giúp iOS/Android bật GPS nền ngay lập tức, không bị trễ do chờ chuỗi domino React Query
+      if (Capacitor.isNativePlatform()) {
+        try {
+          if (type === 'check_in') {
+            const authState = useAuthStore.getState();
+            await NativeTracking.startTracking({
+              token: authState.accessToken,
+              refreshToken: authState.refreshToken,
+              apiUrl: BASE_API_URL,
+            });
+          } else if (type === 'check_out') {
+            await NativeTracking.stopTracking();
+          }
+        } catch (nativeErr) {
+          console.warn('[AutoTimekeepingModal] Không thể cập nhật Native Tracking tức thời:', nativeErr);
+        }
+      }
 
       await queryClient.invalidateQueries({ queryKey: ['my-today-attendance'] });
       await queryClient.invalidateQueries({ queryKey: ['attendances'] });
