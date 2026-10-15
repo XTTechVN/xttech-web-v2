@@ -6,7 +6,7 @@ import { getAccessories } from '@/actions';
 import { Modal, Button } from '@/components';
 import { formatAccessoryUnit } from '@/types';
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import { formatCurrency } from '@/utils';
+import { formatCurrency, includesSearchText } from '@/utils';
 
 interface AssignDoorAccessoriesModalProps {
   isOpen: boolean;
@@ -46,8 +46,8 @@ export function AssignDoorAccessoriesModal({
   };
 
   const filteredAccessories = allAccessories?.items.filter((acc) => 
-    acc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (acc.code && acc.code.toLowerCase().includes(searchTerm.toLowerCase()))
+    includesSearchText(acc.name, searchTerm) ||
+    (acc.code && includesSearchText(acc.code, searchTerm))
   ) || [];
 
   return (

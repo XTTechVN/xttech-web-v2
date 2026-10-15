@@ -1,5 +1,6 @@
 'use client';
 
+import { includesSearchText } from '@/utils';
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDoors, getMaterials } from '@/actions';
@@ -48,8 +49,8 @@ export function AssignDoorsModal({
   };
 
   const filteredDoors = allDoors?.items.filter((door) => 
-    door.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (door.code && door.code.toLowerCase().includes(searchTerm.toLowerCase()))
+    includesSearchText(door.name, searchTerm) ||
+    (door.code && includesSearchText(door.code, searchTerm))
   ) || [];
 
   return (
@@ -193,8 +194,8 @@ export function AssignMaterialsModal({
   };
 
   const filteredMaterials = allMaterials?.items.filter((material) => 
-    material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (material.code && material.code.toLowerCase().includes(searchTerm.toLowerCase()))
+    includesSearchText(material.name, searchTerm) ||
+    (material.code && includesSearchText(material.code, searchTerm))
   ) || [];
 
   return (

@@ -1,5 +1,6 @@
 'use client';
 
+import { includesSearchText } from '@/utils';
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getMaterials } from '@/actions';
@@ -45,8 +46,8 @@ export function AssignFormulaMaterialsModal({
   };
 
   const filteredMaterials = allMaterials?.items.filter((m) => 
-    m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (m.code && m.code.toLowerCase().includes(searchTerm.toLowerCase()))
+    includesSearchText(m.name, searchTerm) ||
+    (m.code && includesSearchText(m.code, searchTerm))
   ) || [];
 
   return (

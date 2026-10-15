@@ -20,3 +20,25 @@ export function getFileUrl(path?: string | null, fallback = ''): string {
   const formattedPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
   return `${cleanBase}${formattedPath}`;
 }
+
+/**
+ * Chuẩn hóa chuỗi để so sánh khi tìm kiếm phía client:
+ * gộp NFC/NFD, bỏ dấu tiếng Việt (kể cả đ/Đ), chuyển chữ thường và cắt khoảng trắng thừa.
+ */
+export function normalizeSearchText(text?: string | null): string {
+  if (!text) {
+    return '';
+  }
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim();
+}
+
+/** Kiểm tra 	ext có chứa query hay không, không phân biệt hoa/thường, dấu và dạng Unicode. */
+export function includesSearchText(text: string | null | undefined, query: string): boolean {
+  return normalizeSearchText(text).includes(normalizeSearchText(query));
+}

@@ -4,6 +4,12 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-10-15
 
+### Fixed (Ô tìm kiếm bảng: dư khoảng trắng làm không ra kết quả)
+- **[`table-search.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-search.tsx):** `trim()` giá trị tìm kiếm (sau debounce) trước khi gọi `onChange`; ô nhập vẫn giữ nguyên nội dung người dùng đang gõ. Đi cùng bản vá chuẩn hóa Unicode NFC/NFD phía backend.
+- **Lọc phía client không phân biệt dấu/Unicode:** thêm `normalizeSearchText`, `includesSearchText` vào [`string.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/string.ts) (gộp NFC/NFD, bỏ dấu, `đ`→`d`). Áp dụng cho `select.tsx`, `table-filters.tsx`, `search-select.tsx`, `staff-list.tsx`, 5 `relation-modals.tsx` (projects/configuration) và 2 modal payroll.
+- **[`table-search.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-search.tsx):** đồng bộ `value` từ component cha ngay lúc render, bỏ `setState` trong `useEffect`.
+- **Bộ lọc khoảng ngày nhập không ăn:** thêm [`table-date-input.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-date-input.tsx) giữ giá trị đang gõ ở state cục bộ, chỉ báo lên trang cha khi ngày hợp lệ (năm >= 1900) hoặc khi rời ô; dùng trong `DateRangeFilter` ([`table-filters.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-filters.tsx)).
+
 ### Fixed (Android WebView: Xử lý lỗi DNS ERR_NAME_NOT_RESOLVED & Màn hình Offline Fallback)
 - **Tự động thử lại thông minh (Auto-retry) ([`MainActivity.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/MainActivity.java)):**
   - Mở rộng `BridgeWebViewClient` thành `XtTechWebViewClient`.

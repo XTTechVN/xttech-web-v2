@@ -5,7 +5,7 @@ import { StaffLiveLocation, StaffLiveStatus, STAFF_LIVE_STATUS_MAP, isStaffSigna
 import { Search, Navigation, Battery, Gauge, Clock, Users, RefreshCw, Compass } from 'lucide-react';
 import { Input, PlatformBadge } from '@/components';
 import dayjs from 'dayjs';
-import { getFileUrl, openGoogleMapsNavigation } from '@/utils';
+import { getFileUrl, openGoogleMapsNavigation, includesSearchText } from '@/utils';
 
 interface StaffListProps {
   staffLocations: StaffLiveLocation[];
@@ -30,11 +30,10 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
     .filter((staff) => {
       const name = staff.userName || '';
       const dept = staff.departmentName || '';
-      const query = searchQuery.toLowerCase();
 
       const matchesSearch =
-        name.toLowerCase().includes(query) ||
-        dept.toLowerCase().includes(query);
+        includesSearchText(name, searchQuery) ||
+        includesSearchText(dept, searchQuery);
 
       const matchesStatus = statusFilter === 'all' || staff.status === statusFilter;
       return matchesSearch && matchesStatus;
