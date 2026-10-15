@@ -71,16 +71,13 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       const formData = new FormData();
       formData.append('file', file);
 
-      // Backend FastAPI yêu cầu dữ liệu thông tin tài liệu nằm trong trường 'document_data' (dạng JSON string)
+      // Chuẩn hóa 100% camelCase theo đúng convention của dự án
       const documentData: Record<string, any> = {
         title: data.title.trim(),
         documentType: data.documentType,
-        document_type: data.documentType,
         shareScope: 'private',
-        share_scope: 'private',
         status: 'draft',
         approvalStatus: 'draft',
-        approval_status: 'draft',
       };
 
       if (data.code?.trim()) {
@@ -88,32 +85,26 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       }
       const targetCatId = currentFolderId ? Number(currentFolderId) : data.categoryId ? Number(data.categoryId) : undefined;
       if (targetCatId) {
-        documentData.category_id = targetCatId;
         documentData.categoryId = targetCatId;
       }
       if (data.approverId?.trim()) {
-        documentData.approver_id = data.approverId.trim();
         documentData.approverId = data.approverId.trim();
       }
 
       formData.append('document_data', JSON.stringify(documentData));
       formData.append('title', data.title.trim());
-      formData.append('document_type', data.documentType);
       formData.append('documentType', data.documentType);
-      formData.append('share_scope', 'private');
       formData.append('shareScope', 'private');
       formData.append('status', 'draft');
-      formData.append('approval_status', 'draft');
+      formData.append('approvalStatus', 'draft');
 
       if (data.code?.trim()) {
         formData.append('code', data.code.trim().toUpperCase());
       }
       if (targetCatId) {
-        formData.append('category_id', String(targetCatId));
         formData.append('categoryId', String(targetCatId));
       }
       if (data.approverId?.trim()) {
-        formData.append('approver_id', data.approverId.trim());
         formData.append('approverId', data.approverId.trim());
       }
 

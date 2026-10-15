@@ -54,12 +54,12 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onCl
     isLoading: isLoadingShares,
     refetch: refetchShares,
   } = useQuery<FolderShare[]>({
-    queryKey: isDoc ? ['document-shares', targetId, document?.shareScope, (document as any)?.share_scope] : ['document-category-shares', targetId],
+    queryKey: isDoc ? ['document-shares', targetId, document?.shareScope] : ['document-category-shares', targetId],
     queryFn: async () => {
       if (!targetId) return [];
       if (isDoc && document) {
         const docShares = await getDocumentShares(document.id);
-        const docScope = document.shareScope || (document as any).share_scope;
+        const docScope = document.shareScope;
         if (docScope === 'all') {
           return [
             {
@@ -172,7 +172,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onCl
   useEffect(() => {
     if (isOpen) {
       if (isDoc && document) {
-        const docScope = document.shareScope || (document as any).share_scope;
+        const docScope = document.shareScope;
         if (docScope === 'all') {
           setShareTarget('all');
         } else if (docScope === 'department' || existingDepartmentIds.length > 0) {
@@ -312,7 +312,6 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onCl
           try {
             await updateDocumentCategory(folder.id, {
               shareScope: 'all',
-              share_scope: 'all',
             } as any);
           } catch (e) {
             // ignore
@@ -380,7 +379,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onCl
       setRevokingId(shareId);
       if (isDoc && document) {
         if (shareId === 'all_system') {
-          await updateDocument(document.id, { shareScope: 'private', share_scope: 'private' } as any);
+          await updateDocument(document.id, { shareScope: 'private' } as any);
         } else {
           await revokeDocumentShare(document.id, shareId);
         }

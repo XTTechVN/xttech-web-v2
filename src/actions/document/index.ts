@@ -145,11 +145,7 @@ export const deleteDocumentCategory = async (id: number): Promise<void> => {
 // Lấy danh sách tài liệu với bộ lọc và phân trang
 export const getDocuments = async (params?: GetDocumentsParams): Promise<GetDocumentsResponse> => {
   try {
-    const formattedParams: any = { ...params };
-    if (params?.categoryId !== undefined) {
-      formattedParams.category_id = params.categoryId;
-    }
-    const res = await api.get('/api/v1/documents', { params: formattedParams });
+    const res = await api.get('/api/v1/documents', { params });
     const rawData = res.data?.data ?? res.data;
     if (Array.isArray(rawData)) {
       return {
@@ -312,25 +308,19 @@ export const shareDocument = async (
     const updateData: Record<string, any> = {};
     if (payload.shareScope) {
       updateData.shareScope = payload.shareScope;
-      updateData.share_scope = payload.shareScope;
     }
     if (payload.recipientUserIds) {
       updateData.recipientUserIds = payload.recipientUserIds.map(String);
-      updateData.recipient_user_ids = payload.recipientUserIds.map(String);
     } else if (payload.userId) {
       updateData.recipientUserIds = [String(payload.userId)];
-      updateData.recipient_user_ids = [String(payload.userId)];
     }
     if (payload.recipientDepartmentIds) {
       updateData.recipientDepartmentIds = payload.recipientDepartmentIds.map(Number);
-      updateData.recipient_department_ids = payload.recipientDepartmentIds.map(Number);
     } else if (payload.departmentId) {
       updateData.recipientDepartmentIds = [Number(payload.departmentId)];
-      updateData.recipient_department_ids = [Number(payload.departmentId)];
     }
     if (payload.approverId) {
       updateData.approverId = payload.approverId;
-      updateData.approver_id = payload.approverId;
     }
     if (payload.permission) {
       updateData.permission = payload.permission;
@@ -395,8 +385,7 @@ export const revokeDocumentShare = async (documentId: number, shareId: number | 
 
     await api.put(`/api/v1/documents/${documentId}`, {
       recipientUserIds: updatedUserIds,
-      recipient_user_ids: updatedUserIds,
-      ...(updatedUserIds.length === 0 ? { shareScope: 'private', share_scope: 'private' } : {}),
+      ...(updatedUserIds.length === 0 ? { shareScope: 'private' } : {}),
     });
   } catch (e: any) {
     throw new Error(extractErrorMessage(e, 'Không thể thu hồi quyền chia sẻ tài liệu'));
@@ -434,13 +423,11 @@ export const reviewDocument = async (
 
     const body: Record<string, any> = {
       approvalStatus: status,
-      approval_status: status,
       action: status,
     };
     if (note) {
-      body.comment = note;
       body.approvalNote = note;
-      body.approval_note = note;
+      body.comment = note;
     }
 
     const res = await api.post(`/api/v1/documents/${documentId}/approve`, body);

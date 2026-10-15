@@ -99,7 +99,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
     if (!targetDoc) return [];
     const deptIds = new Set<number>();
     const rawDeptIds =
-      (targetDoc as any)?.recipientDepartmentIds || (targetDoc as any)?.recipient_department_ids || (targetDoc as any)?.departmentIds || [];
+      (targetDoc as any)?.recipientDepartmentIds || (targetDoc as any)?.departmentIds || [];
     if (Array.isArray(rawDeptIds)) {
       rawDeptIds.forEach((id: any) => {
         const num = Number(id);
@@ -114,7 +114,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
     }
     if (Array.isArray(targetDoc?.recipients)) {
       targetDoc.recipients.forEach((r: any) => {
-        const did = Number(r.departmentId || r.department_id);
+        const did = Number(r.departmentId);
         if (!isNaN(did) && did > 0) deptIds.add(did);
       });
     }
@@ -150,7 +150,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
 
     if (Array.isArray(targetDoc?.recipients)) {
       targetDoc.recipients.forEach((r: any) => {
-        const uid = String(r.userId || r.user_id || (r.user && r.user.id) || '');
+        const uid = String(r.userId || (r.user && r.user.id) || '');
         if (uid) {
           const emp = empMap.get(uid);
           userMap.set(uid, {
@@ -166,7 +166,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
       });
     }
 
-    const rawUserIds = (targetDoc as any)?.recipientUserIds || (targetDoc as any)?.recipient_user_ids || [];
+    const rawUserIds = (targetDoc as any)?.recipientUserIds || [];
     if (Array.isArray(rawUserIds)) {
       rawUserIds.forEach((uid: any) => {
         const sUid = String(uid);
@@ -209,7 +209,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
   if (!doc || !targetDoc) return null;
 
   // Xác định người duyệt và quyền duyệt
-  const currentApproverId = targetDoc?.approverId || targetDoc?.approver?.id || (targetDoc as any)?.approver_id;
+  const currentApproverId = targetDoc?.approverId || targetDoc?.approver?.id;
 
   const approverEmployee = currentApproverId ? employees.find((e: any) => String(e.id) === String(currentApproverId)) : null;
 
@@ -491,7 +491,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
                 <Users size={15} className="text-primary" />
                 <span>Đối tượng nhận văn bản</span>
               </span>
-              {targetDoc.shareScope === 'all' || (targetDoc as any)?.share_scope === 'all' ? (
+              {targetDoc.shareScope === 'all' ? (
                 <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20 flex items-center gap-1">
                   <Globe size={12} className="text-primary" />
                   Toàn thể công ty
@@ -503,7 +503,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
               )}
             </div>
 
-            {(targetDoc.shareScope === 'all' || (targetDoc as any)?.share_scope === 'all') && (
+            {targetDoc.shareScope === 'all' && (
               <p className="text-[11px] text-slate-500 italic">Văn bản được phát hành công khai cho toàn bộ nhân sự trong công ty.</p>
             )}
 

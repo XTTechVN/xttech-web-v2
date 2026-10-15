@@ -16,12 +16,9 @@ export function isDocumentOwner(
 ): boolean {
   if (!doc || !currentUser) return false;
 
-  // 1. Backend trả về cờ isOwner / is_owner trực tiếp
+  // 1. Backend trả về cờ isOwner trực tiếp
   if (typeof (doc as any).isOwner === 'boolean') {
     return (doc as any).isOwner;
-  }
-  if (typeof (doc as any).is_owner === 'boolean') {
-    return (doc as any).is_owner;
   }
 
   const currentUserId = currentUser.id ? String(currentUser.id) : null;
@@ -31,11 +28,7 @@ export function isDocumentOwner(
     ? String(doc.createdById)
     : doc.createdBy?.id
       ? String(doc.createdBy.id)
-      : (doc as any)?.creatorId
-        ? String((doc as any).creatorId)
-        : (doc as any)?.user_id
-          ? String((doc as any).user_id)
-          : null;
+      : null;
 
   // 2. So sánh ID người tạo
   if (currentUserId && docCreatedById) {
@@ -90,7 +83,7 @@ export function isDocumentSharedWithUser(
   }
 
   // Nếu backend đã gắn cờ isShared = true cho tài liệu này
-  if ((doc as any).isShared === true || (doc as any).is_shared === true) {
+  if ((doc as any).isShared === true) {
     return true;
   }
 
@@ -100,7 +93,7 @@ export function isDocumentSharedWithUser(
   // Kiểm tra trong danh sách người nhận (recipients)
   if (Array.isArray(doc.recipients) && doc.recipients.length > 0) {
     const isRecipient = doc.recipients.some((r: any) => {
-      const rUid = r.userId || r.user_id || r.id || r.user?.id;
+      const rUid = r.userId || r.id || r.user?.id;
       if (currentUserId && rUid && String(rUid) === currentUserId) return true;
       const rEmail = r.email || r.user?.email;
       if (currentUserEmail && rEmail && String(rEmail).trim().toLowerCase() === currentUserEmail) return true;
@@ -110,7 +103,7 @@ export function isDocumentSharedWithUser(
   }
 
   // Kiểm tra theo phạm vi chia sẻ
-  const scope = doc.shareScope || (doc as any).share_scope;
+  const scope = doc.shareScope;
   if (scope === 'all' || scope === 'department' || scope === 'internal' || scope === 'user') {
     return true;
   }
@@ -128,8 +121,8 @@ export function isDocumentSharedWithUser(
  */
 export function isDocumentSharedOut(doc: DocumentItem | null | undefined): boolean {
   if (!doc) return false;
-  if ((doc as any).isShared === true || (doc as any).is_shared === true) return true;
-  const scope = doc.shareScope || (doc as any).share_scope;
+  if ((doc as any).isShared === true) return true;
+  const scope = doc.shareScope;
   if (scope && scope !== 'private') return true;
   if (Array.isArray(doc.recipients) && doc.recipients.length > 0) return true;
   return false;
@@ -238,12 +231,12 @@ export function getDocumentPermissions(
   let hasEditPermission = false;
 
   // A. Kiểm tra quyền gắn trực tiếp trên document object (từ backend)
-  const docPerm = (doc as any).permission || (doc as any).permission_level || (doc as any).permissionLevel;
+  const docPerm = doc.permission || (doc as any).permissionLevel;
   if (docPerm === 'edit' || docPerm === 'EDIT') {
     hasEditPermission = true;
   } else if (docPerm === 'view' || docPerm === 'VIEW') {
     hasEditPermission = false;
-  } else if ((doc as any).canEdit === true || (doc as any).can_edit === true) {
+  } else if ((doc as any).canEdit === true) {
     hasEditPermission = true;
   }
 
@@ -253,7 +246,7 @@ export function getDocumentPermissions(
 
   if (!hasEditPermission && Array.isArray(doc.recipients) && (currentUserId || currentUserEmail)) {
     const myRecipient = doc.recipients.find((r: any) => {
-      const matchId = currentUserId && String(r.userId || r.user_id || r.id || r.user?.id) === currentUserId;
+      const matchId = currentUserId && String(r.userId || r.id || r.user?.id) === currentUserId;
       const matchEmail = currentUserEmail && Boolean(r.email) && r.email.toLowerCase().trim() === currentUserEmail;
       return matchId || matchEmail;
     });
@@ -291,27 +284,6 @@ export function formatBytes(bytes?: number, decimals = 1): string {
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-}
-
-// Tự động sinh mã tài liệu/thư mục theo tên
-export function generateSlugCode(text: string, prefix = 'DOC'): string {
-  const suffix = Date.now().toString().slice(-6);
-  if (!text) return `${prefix}_${suffix}`;
-  // Remove accents
-  const nonAccent = text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D');
-
-  const slug = nonAccent
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-    .slice(0, 20);
-
-  return slug ? `${prefix}_${slug}_${suffix}` : `${prefix}_${suffix}`;
 }
 
 // Lấy đuôi file

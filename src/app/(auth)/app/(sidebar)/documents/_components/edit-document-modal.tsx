@@ -129,14 +129,14 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
     // 1. Trích xuất danh sách ID người dùng nhận đích danh
     const userIdsSet = new Set<string>();
 
-    const rawUserIds = (targetDoc as any)?.recipientUserIds || (targetDoc as any)?.recipient_user_ids || [];
+    const rawUserIds = (targetDoc as any)?.recipientUserIds || [];
     if (Array.isArray(rawUserIds)) {
       rawUserIds.forEach((uid: any) => uid && userIdsSet.add(String(uid)));
     }
 
     if (Array.isArray(targetDoc.recipients)) {
       targetDoc.recipients.forEach((r: any) => {
-        const uid = r.userId || r.user_id || (r.user && r.user.id) || (typeof r === 'string' ? r : null);
+        const uid = r.userId || (r.user && r.user.id) || (typeof r === 'string' ? r : null);
         if (uid) userIdsSet.add(String(uid));
       });
     }
@@ -160,11 +160,11 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
           deptIdsSet.add(str);
         }
       } else if (typeof val === 'object') {
-        const id = val.id ?? val.departmentId ?? val.department_id ?? val.value;
+        const id = val.id ?? val.departmentId ?? val.value;
         if (id !== undefined && id !== null) {
           deptIdsSet.add(String(id));
-        } else if (val.name || val.departmentName || val.department_name) {
-          const name = val.name || val.departmentName || val.department_name;
+        } else if (val.name || val.departmentName) {
+          const name = val.name || val.departmentName;
           const match = departments.find((d: any) => String(d.name || '').toLowerCase() === String(name).toLowerCase());
           if (match?.id) deptIdsSet.add(String(match.id));
         }
@@ -174,11 +174,8 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
     // Quét từ các mảng ID phòng ban
     const rawDeptLists = [
       (targetDoc as any)?.recipientDepartmentIds,
-      (targetDoc as any)?.recipient_department_ids,
       (targetDoc as any)?.departmentIds,
-      (targetDoc as any)?.department_ids,
       (targetDoc as any)?.recipientDepartments,
-      (targetDoc as any)?.recipient_departments,
       (targetDoc as any)?.departments,
     ];
     rawDeptLists.forEach((list) => {
@@ -191,7 +188,6 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
     if (Array.isArray(targetDoc.recipients)) {
       targetDoc.recipients.forEach((r: any) => {
         addDept(r.departmentId);
-        addDept(r.department_id);
         addDept(r.department);
         if (r.departmentName && !r.departmentId) {
           addDept({ departmentName: r.departmentName });
@@ -203,7 +199,6 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
     if (Array.isArray(sharesData)) {
       sharesData.forEach((s: any) => {
         addDept(s.departmentId);
-        addDept(s.department_id);
         addDept(s.department);
       });
     }
@@ -211,7 +206,6 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
     if (Array.isArray((targetDoc as any)?.shares)) {
       (targetDoc as any).shares.forEach((s: any) => {
         addDept(s.departmentId);
-        addDept(s.department_id);
         addDept(s.department);
       });
     }
@@ -234,42 +228,30 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
       const payload: Record<string, any> = {
         title: data.title.trim(),
         documentType: data.documentType,
-        document_type: data.documentType,
         shareScope: data.shareScope || 'private',
-        share_scope: data.shareScope || 'private',
       };
 
       if (data.code?.trim()) payload.code = data.code.trim().toUpperCase();
       if (data.categoryId) {
         payload.categoryId = Number(data.categoryId);
-        payload.category_id = Number(data.categoryId);
       }
       if (data.summary !== undefined) payload.summary = data.summary?.trim() || null;
       if (data.approverId) {
         payload.approverId = data.approverId.trim();
-        payload.approver_id = data.approverId.trim();
       }
       if (data.effectiveDate) {
         payload.effectiveDate = data.effectiveDate.trim();
-        payload.effective_date = data.effectiveDate.trim();
       }
       if (data.expirationDate) {
         payload.expirationDate = data.expirationDate.trim();
-        payload.expiration_date = data.expirationDate.trim();
       }
 
-      // Luôn đồng bộ danh sách người nhận và phòng ban nhận đầy đủ các field
+      // Luôn đồng bộ danh sách người nhận và phòng ban nhận theo chuẩn camelCase
       const userIdsStr = selectedUserIds.map(String).filter(Boolean);
       payload.recipientUserIds = userIdsStr;
-      payload.recipient_user_ids = userIdsStr;
-      payload.userIds = userIdsStr;
-      payload.user_ids = userIdsStr;
 
       const deptIdsNum = selectedDepartmentIds.map(Number).filter((n) => !isNaN(n));
       payload.recipientDepartmentIds = deptIdsNum;
-      payload.recipient_department_ids = deptIdsNum;
-      payload.departmentIds = deptIdsNum;
-      payload.department_ids = deptIdsNum;
 
       await updateDocument(doc.id, payload);
       toast.success('Cập nhật thông tin tài liệu thành công!');

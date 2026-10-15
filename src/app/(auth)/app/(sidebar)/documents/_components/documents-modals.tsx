@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import type { DocumentCategory, DocumentItem } from '@/types';
+import type { DocumentModalsHook, DeleteModalState, ItemToMoveState } from '../_hooks/use-document-modals';
 
 // Modals
 import { FolderFormModal } from './folder-form-modal';
@@ -11,241 +14,159 @@ import { DocumentPreviewModal } from './document-preview-modal';
 import { MoveItemModal } from './move-item-modal';
 import { DeleteConfirmModal } from './delete-confirm-modal';
 import { ShareFolderModal } from './share-folder-modal';
+import { SaveToFolderModal } from './save-to-folder-modal';
 
-export interface DeleteModalState {
-  isOpen: boolean;
-  type: 'folder' | 'document';
-  id: number;
-  name: string;
-  loading: boolean;
-}
+export type { DeleteModalState, ItemToMoveState };
 
-export interface ItemToMoveState {
-  type: 'folder' | 'document';
-  item: DocumentCategory | DocumentItem;
-}
-
-interface DocumentsModalsProps {
-  // Folder Creation / Edit / Detail
-  createFolderOpen: boolean;
-  setCreateFolderOpen: (open: boolean) => void;
-  editFolderOpen: boolean;
-  setEditFolderOpen: (open: boolean) => void;
-  editingFolder: DocumentCategory | null;
-  setEditingFolder: (folder: DocumentCategory | null) => void;
-  detailFolderOpen: boolean;
-  setDetailFolderOpen: (open: boolean) => void;
-  selectedFolder: DocumentCategory | null;
-  setSelectedFolder: (folder: DocumentCategory | null) => void;
-
-  // Document Creation / Edit / Detail / Preview
-  createDocOpen: boolean;
-  setCreateDocOpen: (open: boolean) => void;
-  editDocOpen: boolean;
-  setEditDocOpen: (open: boolean) => void;
-  editingDoc: DocumentItem | null;
-  setEditingDoc: (doc: DocumentItem | null) => void;
-  detailDocOpen: boolean;
-  setDetailDocOpen: (open: boolean) => void;
-  previewDocOpen: boolean;
-  setPreviewDocOpen: (open: boolean) => void;
-  selectedDoc: DocumentItem | null;
-  setSelectedDoc: (doc: DocumentItem | null) => void;
-
-  // Move Modal
-  moveModalOpen: boolean;
-  setMoveModalOpen: (open: boolean) => void;
-  itemToMove: ItemToMoveState | null;
-  setItemToMove: (item: ItemToMoveState | null) => void;
-
-  // Share Modal
-  shareFolderOpen: boolean;
-  setShareFolderOpen: (open: boolean) => void;
-  sharingFolder: DocumentCategory | null;
-  setSharingFolder: (folder: DocumentCategory | null) => void;
-  sharingDoc: DocumentItem | null;
-  setSharingDoc: (doc: DocumentItem | null) => void;
-
-  // Delete Modal
-  deleteModal: DeleteModalState;
-  setDeleteModal: React.Dispatch<React.SetStateAction<DeleteModalState>>;
-  onConfirmDelete: () => void;
-
-  // Context & Callbacks
+export interface DocumentsModalsProps {
+  modals: DocumentModalsHook;
   currentFolderId: number | null;
   currentFolder: DocumentCategory | null;
   safeCategoryTree: DocumentCategory[];
+  onConfirmDelete: () => void;
   onRefetchCategories: () => void;
   onRefetchDocuments: () => void;
 }
 
 export const DocumentsModals: React.FC<DocumentsModalsProps> = ({
-  createFolderOpen,
-  setCreateFolderOpen,
-  editFolderOpen,
-  setEditFolderOpen,
-  editingFolder,
-  setEditingFolder,
-  detailFolderOpen,
-  setDetailFolderOpen,
-  selectedFolder,
-  setSelectedFolder,
-
-  createDocOpen,
-  setCreateDocOpen,
-  editDocOpen,
-  setEditDocOpen,
-  editingDoc,
-  setEditingDoc,
-  detailDocOpen,
-  setDetailDocOpen,
-  previewDocOpen,
-  setPreviewDocOpen,
-  selectedDoc,
-  setSelectedDoc,
-
-  moveModalOpen,
-  setMoveModalOpen,
-  itemToMove,
-  setItemToMove,
-
-  shareFolderOpen,
-  setShareFolderOpen,
-  sharingFolder,
-  setSharingFolder,
-  sharingDoc,
-  setSharingDoc,
-
-  deleteModal,
-  setDeleteModal,
-  onConfirmDelete,
-
+  modals,
   currentFolderId,
   currentFolder,
   safeCategoryTree,
+  onConfirmDelete,
   onRefetchCategories,
   onRefetchDocuments,
 }) => {
+  const { state, setters } = modals;
+
   return (
     <>
       {/* 1. Folder Form Modal (Tạo mới & Chỉnh sửa thư mục dùng chung 1 modal theo chuẩn form-modal) */}
       <FolderFormModal
-        isOpen={createFolderOpen || editFolderOpen}
+        isOpen={state.createFolderOpen || state.editFolderOpen}
         onClose={() => {
-          setCreateFolderOpen(false);
-          setEditFolderOpen(false);
-          setEditingFolder(null);
+          setters.setCreateFolderOpen(false);
+          setters.setEditFolderOpen(false);
+          setters.setEditingFolder(null);
         }}
-        initialData={editingFolder}
+        initialData={state.editingFolder}
         parentId={currentFolderId}
         parentFolder={currentFolder}
         onSuccess={onRefetchCategories}
       />
 
-      {/* 3. Create / Upload Document Modal */}
+      {/* 2. Create / Upload Document Modal */}
       <CreateDocumentModal
-        isOpen={createDocOpen}
-        onClose={() => setCreateDocOpen(false)}
+        isOpen={state.createDocOpen}
+        onClose={() => setters.setCreateDocOpen(false)}
         currentFolderId={currentFolderId}
         currentFolder={currentFolder}
         categories={safeCategoryTree}
         onSuccess={onRefetchDocuments}
       />
 
-      {/* 3.5 Edit Document Modal */}
+      {/* 3. Edit Document Modal */}
       <EditDocumentModal
-        isOpen={editDocOpen}
+        isOpen={state.editDocOpen}
         onClose={() => {
-          setEditDocOpen(false);
-          setEditingDoc(null);
+          setters.setEditDocOpen(false);
+          setters.setEditingDoc(null);
         }}
-        document={editingDoc}
+        document={state.editingDoc}
         categories={safeCategoryTree}
         onSuccess={onRefetchDocuments}
       />
 
       {/* 4. Document Detail Modal */}
       <DocumentDetailModal
-        isOpen={detailDocOpen}
+        isOpen={state.detailDocOpen}
         onClose={() => {
-          setDetailDocOpen(false);
-          setSelectedDoc(null);
+          setters.setDetailDocOpen(false);
+          setters.setSelectedDoc(null);
         }}
-        document={selectedDoc}
+        document={state.selectedDoc}
         onSuccess={onRefetchDocuments}
       />
 
-      {/* 4.5 Document Preview Modal */}
+      {/* 5. Document Preview Modal */}
       <DocumentPreviewModal
-        isOpen={previewDocOpen}
+        isOpen={state.previewDocOpen}
         onClose={() => {
-          setPreviewDocOpen(false);
-          setSelectedDoc(null);
+          setters.setPreviewDocOpen(false);
+          setters.setSelectedDoc(null);
         }}
-        document={selectedDoc}
+        document={state.selectedDoc}
       />
 
-      {/* 4.6 Move Item Modal */}
+      {/* 6. Move Item Modal */}
       <MoveItemModal
-        isOpen={moveModalOpen}
+        isOpen={state.moveModalOpen}
         onClose={() => {
-          setMoveModalOpen(false);
-          setItemToMove(null);
+          setters.setMoveModalOpen(false);
+          setters.setItemToMove(null);
         }}
-        type={itemToMove?.type || 'folder'}
-        item={itemToMove?.item || null}
+        type={state.itemToMove?.type || 'folder'}
+        item={state.itemToMove?.item || null}
         onSuccess={() => {
           onRefetchCategories();
           onRefetchDocuments();
         }}
       />
 
-      {/* 5. Delete Confirm Modal */}
+      {/* 7. Delete Confirm Modal */}
       <DeleteConfirmModal
-        isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal((prev) => ({ ...prev, isOpen: false }))}
-        title={deleteModal.type === 'folder' ? 'Xác nhận xóa thư mục' : 'Xác nhận xóa tài liệu'}
+        isOpen={state.deleteModal.isOpen}
+        onClose={() => setters.setDeleteModal((prev) => ({ ...prev, isOpen: false }))}
+        title={state.deleteModal.type === 'folder' ? 'Xác nhận xóa thư mục' : 'Xác nhận xóa tài liệu'}
         description={
-          deleteModal.type === 'folder' ? (
+          state.deleteModal.type === 'folder' ? (
             <>
               Bạn có chắc chắn muốn xóa thư mục{' '}
-              <strong className="text-gray-900 font-semibold">{deleteModal.name}</strong>?
+              <strong className="text-gray-900 font-semibold">{state.deleteModal.name}</strong>?
             </>
           ) : (
             <>
               Bạn có chắc chắn muốn xóa tài liệu{' '}
-              <strong className="text-gray-900 font-semibold">{deleteModal.name}</strong>?
+              <strong className="text-gray-900 font-semibold">{state.deleteModal.name}</strong>?
             </>
           )
         }
         onConfirm={onConfirmDelete}
-        loading={deleteModal.loading}
+        loading={state.deleteModal.loading}
       />
 
-      {/* 6. Share Folder / Document Modal */}
+      {/* 8. Share Folder / Document Modal */}
       <ShareFolderModal
-        isOpen={shareFolderOpen}
+        isOpen={state.shareFolderOpen}
         onClose={() => {
-          setShareFolderOpen(false);
-          setSharingFolder(null);
-          setSharingDoc(null);
+          setters.setShareFolderOpen(false);
+          setters.setSharingFolder(null);
+          setters.setSharingDoc(null);
         }}
-        folder={sharingFolder}
-        document={sharingDoc}
+        folder={state.sharingFolder}
+        document={state.sharingDoc}
         onSuccess={() => {
           onRefetchCategories();
           onRefetchDocuments();
         }}
       />
 
-      {/* 7. Folder Detail Modal */}
+      {/* 9. Folder Detail Modal */}
       <FolderDetailModal
-        isOpen={detailFolderOpen}
+        isOpen={state.detailFolderOpen}
         onClose={() => {
-          setDetailFolderOpen(false);
-          setSelectedFolder(null);
+          setters.setDetailFolderOpen(false);
+          setters.setSelectedFolder(null);
         }}
-        folder={selectedFolder}
+        folder={state.selectedFolder}
+      />
+
+      {/* 10. Save To Folder Modal (Shortcut) */}
+      <SaveToFolderModal
+        isOpen={Boolean(state.saveToFolderDoc)}
+        onClose={() => setters.setSaveToFolderDoc(null)}
+        document={state.saveToFolderDoc}
+        onSuccess={onRefetchDocuments}
       />
     </>
   );

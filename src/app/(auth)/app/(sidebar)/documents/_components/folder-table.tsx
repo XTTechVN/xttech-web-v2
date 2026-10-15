@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 interface FolderTableProps {
   folders: DocumentCategory[];
   locationName?: string;
+  isSharedSection?: boolean;
   showHeader?: boolean;
   activeFolderId?: number | null;
   selectedKeys?: Set<string>;
@@ -46,6 +47,7 @@ function getAvatarStyle(name: string) {
 export const FolderTable: React.FC<FolderTableProps> = ({
   folders,
   locationName,
+  isSharedSection = false,
   showHeader = false,
   activeFolderId,
   selectedKeys,
@@ -99,22 +101,31 @@ export const FolderTable: React.FC<FolderTableProps> = ({
       {/* Danh sách hàng thư mục phẳng chuẩn Google Drive */}
       <div>
         {folders.map((folder) => {
-          const isOwner = folder.isOwner ?? (folder.createdById && user?.id ? String(folder.createdById) === String(user.id) : true);
+          // Xác định quyền sở hữu và quyền thao tác trên thư mục:
+          const isOwner = Boolean(
+            !isSharedSection && (folder.isOwner ?? (folder.createdById && user?.id ? String(folder.createdById) === String(user.id) : true))
+          ) || Boolean(folder.createdById && user?.id && String(folder.createdById) === String(user.id));
+
           const ownerName = isOwner ? 'tôi' : folder.createdByName || 'Thành viên';
           const isShared = Boolean(
+            isSharedSection ||
             folder.isShared ||
             (folder.sharedWithCount && folder.sharedWithCount > 0) ||
             folder.isOwner === false ||
-            folder.permission === 'view'
+            folder.permission !== undefined
           );
-          // Nếu là thư mục chia sẻ:
-          // - Chỉ chủ sở hữu hoặc quản trị viên (canManage) mới có quyền Xóa và Di chuyển.
-          // - UI người nhận ẩn nút Xóa và Di chuyển.
-          // - Nút Đổi tên / Sửa: Chỉ hiện nếu người nhận có quyền sửa (folder.permission === 'edit') hoặc quản trị viên, còn lại ẩn đi.
-          const canEditFolder = isOwner !== false || folder.permission === 'edit' || canManage;
-          const canMoveFolder = isOwner !== false || canManage;
-          const canDeleteFolder = isOwner !== false || canManage;
-          const canShareFolder = Boolean(onShare && (isOwner !== false || canManage));
+
+          // QUY TẮC PHÂN QUYỀN THƯ MỤC:
+          // Backend quy định tại API PUT /api/v1/document-categories/{id}:
+          // "Chỉ chủ sở hữu thư mục hoặc Quản trị viên mới có quyền cập nhật" (FORBIDDEN nếu là người nhận)
+          // Vì vậy:
+          // - Nếu là người được chia sẻ: ẨN HOÀN TOÀN cả 4 nút: Sửa (Đổi tên), Xóa, Di chuyển, Chia sẻ.
+          // - Người nhận chỉ có 2 action: Mở thư mục và Xem chi tiết.
+          // - Khi vào BÊN TRONG thư mục: nếu có quyền 'edit' thì được phép Tải lên tài liệu & Tạo thư mục con.
+          const canDeleteFolder = isOwner || canManage;
+          const canMoveFolder = isOwner || canManage;
+          const canShareFolder = Boolean(onShare && (isOwner || canManage));
+          const canEditFolder = isOwner || canManage;
           const parentName = locationName || 'Drive của tôi';
           const isMenuOpen = openMenuFolderId === folder.id;
 

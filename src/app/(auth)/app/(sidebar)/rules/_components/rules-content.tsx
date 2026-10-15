@@ -26,6 +26,9 @@ import { ShareFolderModal } from '../../documents/_components/share-folder-modal
 import { FileText, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import { useQueryParam } from '@/hooks';
+import { showErrorToast } from '@/utils';
+
 const RULE_DOC_TYPES = ['regulation', 'rule', 'policy', 'procedure', 'guideline', 'standard', 'norm'];
 
 export function RulesContent() {
@@ -64,10 +67,10 @@ export function RulesContent() {
 
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
-  // Search & Filter States
-  const [search, setSearch] = useState('');
-  const [documentType, setDocumentType] = useState('');
-  const [status, setStatus] = useState('');
+  // Search & Filter States (URL sync via useQueryParam)
+  const [search, setSearch] = useQueryParam('search', '');
+  const [documentType, setDocumentType] = useQueryParam('type', '');
+  const [status, setStatus] = useQueryParam('status', '');
 
   // Options for existing Select component - Filtered for Rule/Policy document types
   const documentTypeOptions = useMemo(
@@ -142,7 +145,7 @@ export function RulesContent() {
     queryKey: ['documents', 'rules', { search, documentType, status }],
     queryFn: () =>
       getDocuments({
-        search: search.trim() || undefined,
+        search: search?.trim() || undefined,
         documentType: documentType || undefined,
         status: status || undefined,
         limit: 100,
@@ -170,7 +173,7 @@ export function RulesContent() {
       queryClient.invalidateQueries({ queryKey: ['documents', 'trash'] });
       setDeleteModal((prev) => ({ ...prev, isOpen: false, loading: false }));
     } catch (error: any) {
-      toast.error(error.message || 'Lỗi khi xóa');
+      showErrorToast(error, 'Lỗi khi xóa');
       setDeleteModal((prev) => ({ ...prev, loading: false }));
     }
   };
@@ -183,12 +186,12 @@ export function RulesContent() {
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white select-none">
       {/* Top Header & Navigation Bar Component */}
       <RulesHeader
-        search={search}
+        search={search || ''}
         onSearchChange={setSearch}
-        documentType={documentType}
+        documentType={documentType || ''}
         onDocumentTypeChange={setDocumentType}
         documentTypeOptions={documentTypeOptions}
-        status={status}
+        status={status || ''}
         onStatusChange={setStatus}
         statusOptions={statusOptions}
         hasActiveFilters={hasActiveFilters}

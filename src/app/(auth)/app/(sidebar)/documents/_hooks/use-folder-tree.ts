@@ -125,9 +125,35 @@ export function useFolderTree({ categoryTree, currentFolderId, tab }: UseFolderT
     return false;
   };
 
+  // Quyền hiệu lực của thư mục hiện tại (nếu thư mục con không có permission thì kế thừa từ thư mục cha gần nhất)
+  const currentFolderPermission = useMemo<'view' | 'edit' | undefined>(() => {
+    if (!currentFolderId) return undefined;
+    if (currentFolder?.permission) return currentFolder.permission;
+
+    // Tìm trong cây xem thư mục cha có permission không
+    const findInherited = (
+      nodes: DocumentCategory[],
+      targetId: number,
+      inherited?: 'view' | 'edit'
+    ): 'view' | 'edit' | undefined => {
+      for (const node of nodes) {
+        const perm = node.permission || inherited;
+        if (node.id === targetId) return perm;
+        if (node.children && node.children.length > 0) {
+          const res = findInherited(node.children, targetId, perm);
+          if (res) return res;
+        }
+      }
+      return undefined;
+    };
+
+    return findInherited(safeCategoryTree, currentFolderId);
+  }, [currentFolderId, currentFolder, safeCategoryTree]);
+
   return {
     safeCategoryTree,
     currentFolder,
+    currentFolderPermission,
     parentFolder,
     subFolders,
     myFolders,
