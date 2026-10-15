@@ -18,15 +18,7 @@ import { getDepartments } from '@/actions/department';
 import type { DocumentCategory, DocumentItem, FolderShare } from '@/types';
 import { useAuthStore } from '@/stores';
 import toast from 'react-hot-toast';
-import {
-  Building2,
-  User,
-  Globe,
-  Trash2,
-  Eye,
-  Edit3,
-  ShieldCheck,
-} from 'lucide-react';
+import { Building2, User, Globe, Trash2, Eye, Edit3, ShieldCheck } from 'lucide-react';
 import { cn } from '@/utils';
 
 interface ShareFolderModalProps {
@@ -37,13 +29,7 @@ interface ShareFolderModalProps {
   onSuccess?: () => void;
 }
 
-export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
-  isOpen,
-  onClose,
-  folder,
-  document,
-  onSuccess,
-}) => {
+export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onClose, folder, document, onSuccess }) => {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuthStore();
 
@@ -68,12 +54,32 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
     isLoading: isLoadingShares,
     refetch: refetchShares,
   } = useQuery<FolderShare[]>({
-    queryKey: isDoc ? ['document-shares', targetId] : ['document-category-shares', targetId],
-    queryFn: () => {
-      if (!targetId) return Promise.resolve([]);
-      if (isDoc && document) return getDocumentShares(document.id);
+    queryKey: isDoc ? ['document-shares', targetId, document?.shareScope, (document as any)?.share_scope] : ['document-category-shares', targetId],
+    queryFn: async () => {
+      if (!targetId) return [];
+      if (isDoc && document) {
+        const docShares = await getDocumentShares(document.id);
+        const docScope = document.shareScope || (document as any).share_scope;
+        if (docScope === 'all') {
+          return [
+            {
+              id: 'all_system',
+              categoryId: document.id,
+              userId: null,
+              departmentId: null,
+              permission: (document as any).permission || 'view',
+              userName: 'Toàn bộ hệ thống',
+              isSystem: true,
+              isAll: true,
+              shareType: 'all',
+            } as any,
+            ...docShares,
+          ];
+        }
+        return docShares;
+      }
       if (folder) return getDocumentCategoryShares(folder.id);
-      return Promise.resolve([]);
+      return [];
     },
     enabled: Boolean(isOpen && targetId),
   });
@@ -123,15 +129,11 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
 
   // Extract existing shared IDs
   const existingUserIds = useMemo(() => {
-    return shares
-      .filter((s) => Boolean(s.userId))
-      .map((s) => String(s.userId));
+    return shares.filter((s) => Boolean(s.userId)).map((s) => String(s.userId));
   }, [shares]);
 
   const existingDepartmentIds = useMemo(() => {
-    return shares
-      .filter((s) => Boolean(s.departmentId))
-      .map((s) => String(s.departmentId));
+    return shares.filter((s) => Boolean(s.departmentId)).map((s) => String(s.departmentId));
   }, [shares]);
 
   // Formatted options for MultiSelect
@@ -169,12 +171,22 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
   // Sync selected IDs on open or when shares change
   useEffect(() => {
     if (isOpen) {
+      if (isDoc && document) {
+        const docScope = document.shareScope || (document as any).share_scope;
+        if (docScope === 'all') {
+          setShareTarget('all');
+        } else if (docScope === 'department' || existingDepartmentIds.length > 0) {
+          setShareTarget('department');
+        } else {
+          setShareTarget('user');
+        }
+      }
       setSelectedUserIds(existingUserIds);
       setSelectedDepartmentIds(existingDepartmentIds);
       setPermission('view');
       setConfirmRevokeState(null);
     }
-  }, [isOpen, targetId, existingUserIds, existingDepartmentIds]);
+  }, [isOpen, targetId, existingUserIds, existingDepartmentIds, isDoc, document]);
 
   const invalidateShareQueries = () => {
     refetchShares();
@@ -198,14 +210,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
     if (isDoc && document) {
       try {
         setIsSubmitting(true);
-        const scope =
-          shareTarget === 'all'
-            ? 'all'
-            : shareTarget === 'department'
-            ? 'department'
-            : selectedUserIds.length > 0
-            ? 'user'
-            : 'private';
+        const scope = shareTarget === 'all' ? 'all' : shareTarget === 'department' ? 'department' : selectedUserIds.length > 0 ? 'user' : 'private';
 
         await shareDocument(document.id, {
           shareScope: scope,
@@ -374,7 +379,11 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
     try {
       setRevokingId(shareId);
       if (isDoc && document) {
-        await revokeDocumentShare(document.id, shareId);
+        if (shareId === 'all_system') {
+          await updateDocument(document.id, { shareScope: 'private', share_scope: 'private' } as any);
+        } else {
+          await revokeDocumentShare(document.id, shareId);
+        }
       } else if (folder) {
         await revokeDocumentCategoryShare(folder.id, shareId);
       }
@@ -393,30 +402,21 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
 
   return (
     <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size="lg"
-        title={`Chia sẻ ${isDoc ? 'tài liệu' : 'thư mục'} "${itemName.toUpperCase()}"`}
-      >
+      <Modal isOpen={isOpen} onClose={onClose} size="lg" title={`Chia sẻ ${isDoc ? 'tài liệu' : 'thư mục'} "${itemName.toUpperCase()}"`}>
         <form onSubmit={handleShareSubmit} className="space-y-6 pt-2 select-none">
           {/* Form thêm đối tượng chia sẻ */}
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Target Tab selector */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-700 select-none">
-                  Đối tượng chia sẻ
-                </label>
+                <label className="text-xs font-semibold text-gray-700 select-none">Đối tượng chia sẻ</label>
                 <div className="grid grid-cols-3 gap-1 p-1 bg-gray-100 rounded-md border border-gray-200">
                   <button
                     type="button"
                     onClick={() => setShareTarget('user')}
                     className={cn(
                       'flex items-center justify-center gap-1 py-1.5 px-2 rounded text-xs font-medium transition-all cursor-pointer truncate',
-                      shareTarget === 'user'
-                        ? 'bg-white text-primary shadow-xs font-semibold'
-                        : 'text-gray-600 hover:text-gray-900'
+                      shareTarget === 'user' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-gray-600 hover:text-gray-900',
                     )}
                   >
                     <User size={14} className="shrink-0" />
@@ -428,9 +428,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
                     onClick={() => setShareTarget('department')}
                     className={cn(
                       'flex items-center justify-center gap-1 py-1.5 px-2 rounded text-xs font-medium transition-all cursor-pointer truncate',
-                      shareTarget === 'department'
-                        ? 'bg-white text-primary shadow-xs font-semibold'
-                        : 'text-gray-600 hover:text-gray-900'
+                      shareTarget === 'department' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-gray-600 hover:text-gray-900',
                     )}
                   >
                     <Building2 size={14} className="shrink-0" />
@@ -442,9 +440,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
                     onClick={() => setShareTarget('all')}
                     className={cn(
                       'flex items-center justify-center gap-1 py-1.5 px-2 rounded text-xs font-medium transition-all cursor-pointer truncate',
-                      shareTarget === 'all'
-                        ? 'bg-white text-primary shadow-xs font-semibold'
-                        : 'text-gray-600 hover:text-gray-900'
+                      shareTarget === 'all' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-gray-600 hover:text-gray-900',
                     )}
                   >
                     <Globe size={14} className="shrink-0" />
@@ -455,12 +451,31 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
 
               {/* Lựa chọn quyền hạn */}
               <div className="flex flex-col gap-1.5">
-                <Select
-                  label="Quyền hạn"
-                  options={permissionOptions}
-                  value={permission}
-                  onChange={(e) => setPermission(e.target.value as 'view' | 'edit')}
-                />
+                <label className="text-xs font-semibold text-gray-700 select-none">Quyền hạn</label>
+                <div className="grid grid-cols-2 gap-1 p-1 bg-gray-100 rounded-md border border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setPermission('view')}
+                    className={cn(
+                      'flex items-center justify-center gap-1.5 py-1.5 px-2 rounded text-xs font-medium transition-all cursor-pointer truncate',
+                      permission === 'view' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-gray-600 hover:text-gray-900',
+                    )}
+                  >
+                    <Eye size={14} className="shrink-0" />
+                    <span className="truncate">Người xem</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPermission('edit')}
+                    className={cn(
+                      'flex items-center justify-center gap-1.5 py-1.5 px-2 rounded text-xs font-medium transition-all cursor-pointer truncate',
+                      permission === 'edit' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-gray-600 hover:text-gray-900',
+                    )}
+                  >
+                    <Edit3 size={14} className="shrink-0" />
+                    <span className="truncate">Người sửa</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -488,9 +503,17 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
             )}
 
             {shareTarget === 'all' && (
-              <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl flex items-center gap-2 text-xs font-semibold text-primary">
-                <Globe size={16} className="text-primary shrink-0" />
-                <span>{isDoc ? 'Tài liệu' : 'Thư mục'} sẽ được chia sẻ cho Tất cả người dùng trong hệ thống.</span>
+              <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl flex items-center gap-3 text-xs font-medium text-primary">
+                <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Globe size={18} />
+                </div>
+                <div>
+                  <p className="font-semibold text-primary">Chia sẻ toàn hệ thống</p>
+                  <p className="text-[11px] text-primary/80 mt-0.5">
+                    {isDoc ? 'Tài liệu' : 'Thư mục'} sẽ được mở cho Tất cả người dùng trong hệ thống với quyền{' '}
+                    <strong>{permission === 'edit' ? 'Người sửa (Upload & sửa)' : 'Người xem (Chỉ xem & tải)'}</strong>.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -498,12 +521,8 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
           {/* Danh sách những người đang có quyền truy cập */}
           <div className="pt-4 border-t border-gray-100 space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                Những người có quyền truy cập
-              </h4>
-              <span className="text-xs text-gray-400 font-medium">
-                {shares.length + 1} đối tượng
-              </span>
+              <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Những người có quyền truy cập</h4>
+              <span className="text-xs text-gray-400 font-medium">{shares.length + 1} đối tượng</span>
             </div>
 
             <div className="divide-y divide-gray-100 max-h-52 overflow-y-auto pr-1">
@@ -515,18 +534,14 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-semibold text-gray-900 truncate">
-                        {currentUser?.fullName || 'Tôi'} (Bạn)
-                      </span>
+                      <span className="font-semibold text-gray-900 truncate">{currentUser?.fullName || 'Tôi'} (Bạn)</span>
                       {(currentUser?.identifyCode || (currentUser as any)?.code) && (
                         <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 text-[10px] rounded font-mono font-medium border border-slate-200 shrink-0">
                           {currentUser?.identifyCode || (currentUser as any)?.code}
                         </span>
                       )}
                     </div>
-                    <span className="text-[11px] text-gray-400 truncate">
-                      {currentUser?.email || 'Chủ sở hữu'}
-                    </span>
+                    <span className="text-[11px] text-gray-400 truncate">{currentUser?.email || 'Chủ sở hữu'}</span>
                   </div>
                 </div>
 
@@ -538,20 +553,16 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
 
               {/* Shared List */}
               {isLoadingShares ? (
-                <div className="py-4 text-center text-xs text-gray-400">
-                  Đang tải danh sách...
-                </div>
+                <div className="py-4 text-center text-xs text-gray-400">Đang tải danh sách...</div>
               ) : shares.length === 0 ? (
-                <div className="py-4 text-center text-xs text-gray-400 italic">
-                  Chưa chia sẻ thư mục này cho ai khác.
-                </div>
+                <div className="py-4 text-center text-xs text-gray-400 italic">Chưa chia sẻ {isDoc ? 'tài liệu' : 'thư mục'} này cho ai khác.</div>
               ) : (
                 shares.map((share) => {
                   const isAllSystem = Boolean(
                     (share as any).isAll ||
-                      (share as any).isSystem ||
-                      (share as any).shareType === 'all' ||
-                      (!share.userId && !share.departmentId && !share.department)
+                    (share as any).isSystem ||
+                    (share as any).shareType === 'all' ||
+                    (!share.userId && !share.departmentId && !share.department),
                   );
                   const isDept = !isAllSystem && Boolean(share.departmentId || share.department || share.departmentName);
 
@@ -561,32 +572,32 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
                   const displayName = isAllSystem
                     ? 'Toàn bộ hệ thống'
                     : isDept
-                    ? dept?.name || share.departmentName || share.department?.name || `Phòng ban #${share.departmentId}`
-                    : emp?.fullName || emp?.username || (share.userName && share.userName !== 'Người nhận' ? share.userName : '') || share.user?.fullName || `Nhân sự #${share.userId}`;
+                      ? dept?.name || share.departmentName || share.department?.name || `Phòng ban #${share.departmentId}`
+                      : emp?.fullName ||
+                        emp?.username ||
+                        (share.userName && share.userName !== 'Người nhận' ? share.userName : '') ||
+                        share.user?.fullName ||
+                        `Nhân sự #${share.userId}`;
 
                   const displayCode = isAllSystem
                     ? null
                     : isDept
-                    ? dept?.code || (share.department as any)?.code
-                    : emp?.identifyCode || emp?.code || (share as any).code || (share.user as any)?.identifyCode;
+                      ? dept?.code || (share.department as any)?.code
+                      : emp?.identifyCode || emp?.code || (share as any).code || (share.user as any)?.identifyCode;
 
-                  const displayEmail = isAllSystem
-                    ? null
-                    : isDept
-                    ? null
-                    : emp?.email || share.user?.email;
+                  const displayEmail = isAllSystem ? null : isDept ? null : emp?.email || share.user?.email;
 
                   const displayDept = isAllSystem
                     ? null
                     : isDept
-                    ? null
-                    : emp?.departmentName || emp?.department?.name || share.departmentName || dept?.name;
+                      ? null
+                      : emp?.departmentName || emp?.department?.name || share.departmentName || dept?.name;
 
                   const subText = isAllSystem
                     ? 'Tất cả nhân viên trên hệ thống'
                     : isDept
-                    ? 'Toàn bộ nhân viên thuộc phòng ban'
-                    : [displayEmail, displayDept].filter(Boolean).join(' • ') || 'Nhân sự chỉ định';
+                      ? 'Toàn bộ nhân viên thuộc phòng ban'
+                      : [displayEmail, displayDept].filter(Boolean).join(' • ') || 'Nhân sự chỉ định';
 
                   const isEditing = share.permission === 'edit';
 
@@ -608,18 +619,14 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
                         )}
                         <div className="flex flex-col min-w-0">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="font-semibold text-gray-900 truncate">
-                              {displayName}
-                            </span>
+                            <span className="font-semibold text-gray-900 truncate">{displayName}</span>
                             {displayCode && (
                               <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 text-[10px] rounded font-mono font-medium border border-slate-200 shrink-0">
                                 {displayCode}
                               </span>
                             )}
                           </div>
-                          <span className="text-[11px] text-gray-400 truncate">
-                            {subText}
-                          </span>
+                          <span className="text-[11px] text-gray-400 truncate">{subText}</span>
                         </div>
                       </div>
 
@@ -627,9 +634,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
                         <span
                           className={cn(
                             'px-2 py-0.5 rounded text-[11px] font-medium border flex items-center gap-1',
-                            isEditing
-                              ? 'bg-blue-50 text-blue-700 border-blue-200'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            isEditing ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200',
                           )}
                         >
                           {isEditing ? <Edit3 size={11} /> : <Eye size={11} />}
@@ -654,23 +659,11 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
 
           {/* Nút hành động modal (Chuyển xuống dưới cùng) */}
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-100">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              className="px-4 text-xs font-medium"
-            >
+            <Button type="button" variant="outline" size="sm" onClick={onClose} className="px-4 text-xs font-medium">
               Hủy bỏ
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              loading={isSubmitting}
-              className="px-5 text-xs font-medium"
-            >
-              Chia sẻ thư mục
+            <Button type="submit" variant="primary" size="sm" loading={isSubmitting} className="px-5 text-xs font-medium">
+              Chia sẻ {isDoc ? 'tài liệu' : 'thư mục'}
             </Button>
           </div>
         </form>
@@ -678,20 +671,12 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
 
       {/* Modal Xác nhận thu hồi quyền */}
       {confirmRevokeState && (
-        <Modal
-          isOpen={Boolean(confirmRevokeState)}
-          onClose={() => setConfirmRevokeState(null)}
-          size="sm"
-          title="Xác nhận thu hồi quyền chia sẻ"
-        >
+        <Modal isOpen={Boolean(confirmRevokeState)} onClose={() => setConfirmRevokeState(null)} size="sm" title="Xác nhận thu hồi quyền chia sẻ">
           <div className="flex gap-4 items-center py-2 select-none">
             <div className="flex flex-col gap-1.5">
               <p className="text-gray-600 text-sm leading-relaxed">
-                Bạn có chắc chắn muốn thu hồi quyền chia sẻ của{' '}
-                <strong className="text-gray-900 font-semibold">
-                  {confirmRevokeState.name}
-                </strong>
-                {' '}đối với thư mục này không?
+                Bạn có chắc chắn muốn thu hồi quyền chia sẻ của <strong className="text-gray-900 font-semibold">{confirmRevokeState.name}</strong> đối
+                với {isDoc ? 'tài liệu' : 'thư mục'} này không?
               </p>
             </div>
           </div>
@@ -705,13 +690,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({
             >
               Hủy
             </Button>
-            <Button
-              type="button"
-              variant="danger"
-              size="sm"
-              loading={revokingId === confirmRevokeState.id}
-              onClick={handleRevokeConfirm}
-            >
+            <Button type="button" variant="danger" size="sm" loading={revokingId === confirmRevokeState.id} onClick={handleRevokeConfirm}>
               Xác nhận thu hồi
             </Button>
           </div>

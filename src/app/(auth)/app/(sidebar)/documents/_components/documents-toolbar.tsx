@@ -1,18 +1,18 @@
 import React from 'react';
-import { Button, Select, TableSearch } from '@/components';
+import { Button, TableSearch } from '@/components';
 import { FolderPlus, Upload, LayoutGrid, List, RotateCcw } from 'lucide-react';
 
 interface DocumentsToolbarProps {
   search: string;
   onSearchChange: (value: string) => void;
-  documentType: string;
-  onDocumentTypeChange: (value: string) => void;
-  documentTypeOptions: { value: string; label: string }[];
-  status: string;
-  onStatusChange: (value: string) => void;
-  statusOptions: { value: string; label: string }[];
-  hasActiveFilters: boolean;
-  onResetFilters: () => void;
+  documentType?: string;
+  onDocumentTypeChange?: (value: string) => void;
+  documentTypeOptions?: { value: string; label: string }[];
+  status?: string;
+  onStatusChange?: (value: string) => void;
+  statusOptions?: { value: string; label: string }[];
+  hasActiveFilters?: boolean;
+  onResetFilters?: () => void;
   viewMode: 'grid' | 'table';
   onViewModeChange: (mode: 'grid' | 'table') => void;
   canCreate: boolean;
@@ -23,12 +23,6 @@ interface DocumentsToolbarProps {
 export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
   search,
   onSearchChange,
-  documentType,
-  onDocumentTypeChange,
-  documentTypeOptions,
-  status,
-  onStatusChange,
-  statusOptions,
   hasActiveFilters,
   onResetFilters,
   viewMode,
@@ -43,34 +37,12 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
         {/* Left: Search, Filters & View Controls */}
         <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap flex-1 min-w-0">
           {/* Search Input */}
-          <div className="w-full sm:w-52 lg:w-64">
+          <div className="w-full sm:w-64 lg:w-72">
             <TableSearch
               placeholder="Tìm mã, tiêu đề..."
               value={search}
               onChange={onSearchChange}
               className="w-full"
-            />
-          </div>
-
-          {/* Document Type Filter */}
-          <div className="w-44 sm:w-48">
-            <Select
-              value={documentType}
-              onChange={(e) => onDocumentTypeChange(e.target.value)}
-              options={documentTypeOptions}
-              placeholder="Tất cả loại văn bản"
-              className="h-9 text-xs"
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div className="w-40 sm:w-44 hidden sm:block">
-            <Select
-              value={status}
-              onChange={(e) => onStatusChange(e.target.value)}
-              options={statusOptions}
-              placeholder="Tất cả trạng thái"
-              className="h-9 text-xs"
             />
           </div>
 
@@ -81,7 +53,7 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
               size="sm"
               onClick={onResetFilters}
               className="h-9 px-2.5 rounded-lg border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-500 hover:text-rose-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer shadow-2xs"
-              title="Đặt lại bộ lọc"
+              title="Đặt lại tìm kiếm"
             >
               <RotateCcw size={14} />
             </Button>
