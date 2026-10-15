@@ -16,12 +16,7 @@ interface InboxItemRowProps {
   currentUserId?: string;
 }
 
-export const InboxItemRow: React.FC<InboxItemRowProps> = ({
-  document: doc,
-  onOpenDetail,
-  onMarkAsRead,
-  currentUserId,
-}) => {
+export const InboxItemRow: React.FC<InboxItemRowProps> = ({ document: doc, onOpenDetail, onMarkAsRead, currentUserId }) => {
   const isRead = doc.isRead === true;
   const currentVersion = doc.currentVersion;
   const fileName = currentVersion?.fileName || doc.title;
@@ -37,14 +32,9 @@ export const InboxItemRow: React.FC<InboxItemRowProps> = ({
     badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
   };
 
-  const isAssignedToMeForApproval =
-    doc.approvalStatus === 'pending' &&
-    Boolean(currentUserId) &&
-    String(doc.approverId) === String(currentUserId);
+  const isAssignedToMeForApproval = doc.approvalStatus === 'pending' && Boolean(currentUserId) && String(doc.approverId) === String(currentUserId);
 
-  const downloadUrl =
-    currentVersion?.downloadUrl ||
-    (currentVersion?.filePath ? getFileUrl(currentVersion.filePath) : null);
+  const downloadUrl = currentVersion?.downloadUrl || (currentVersion?.filePath ? getFileUrl(currentVersion.filePath) : null);
 
   const handleDownload = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -60,9 +50,7 @@ export const InboxItemRow: React.FC<InboxItemRowProps> = ({
       onClick={() => onOpenDetail(doc)}
       className={cn(
         'group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:px-4 sm:py-3 border-b border-slate-100 transition-colors cursor-pointer select-none',
-        isRead
-          ? 'bg-white hover:bg-slate-50/80 text-slate-600'
-          : 'bg-sky-50/40 hover:bg-sky-50/70 text-slate-900 border-l-4 border-l-primary'
+        isRead ? 'bg-white hover:bg-slate-50/80 text-slate-600' : 'bg-sky-50/40 hover:bg-sky-50/70 text-slate-900 border-l-4 border-l-primary',
       )}
     >
       {/* Cột trái: Trạng thái Đọc/Chưa đọc + Loại + Mã + Tiêu đề */}
@@ -72,10 +60,7 @@ export const InboxItemRow: React.FC<InboxItemRowProps> = ({
           {isRead ? (
             <div className="w-2.5 h-2.5 rounded-full bg-slate-300" title="Đã đọc" />
           ) : (
-            <div
-              className="w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-primary/20 animate-pulse"
-              title="Chưa đọc"
-            />
+            <div className="w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-primary/20 animate-pulse" title="Chưa đọc" />
           )}
         </div>
 
@@ -88,14 +73,7 @@ export const InboxItemRow: React.FC<InboxItemRowProps> = ({
             </span>
 
             {/* Phân loại văn bản */}
-            <span
-              className={cn(
-                'text-[10px] font-medium px-2 py-0.5 rounded-full border',
-                docTypeInfo.badgeClass
-              )}
-            >
-              {docTypeInfo.label}
-            </span>
+            <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', docTypeInfo.badgeClass)}>{docTypeInfo.label}</span>
 
             {/* Badge cần duyệt đích danh */}
             {isAssignedToMeForApproval && (
@@ -107,14 +85,7 @@ export const InboxItemRow: React.FC<InboxItemRowProps> = ({
 
             {/* Trạng thái duyệt nếu đã có */}
             {!isAssignedToMeForApproval && doc.approvalStatus && doc.approvalStatus !== 'draft' && (
-              <span
-                className={cn(
-                  'text-[10px] font-medium px-2 py-0.5 rounded-full border',
-                  approvalInfo.badgeClass
-                )}
-              >
-                {approvalInfo.label}
-              </span>
+              <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', approvalInfo.badgeClass)}>{approvalInfo.label}</span>
             )}
           </div>
 
@@ -123,7 +94,7 @@ export const InboxItemRow: React.FC<InboxItemRowProps> = ({
             <h4
               className={cn(
                 'text-xs sm:text-sm truncate transition-colors',
-                isRead ? 'font-medium text-slate-700' : 'font-bold text-slate-900 group-hover:text-primary'
+                isRead ? 'font-medium text-slate-700' : 'font-bold text-slate-900 group-hover:text-primary',
               )}
             >
               {doc.title}
@@ -131,24 +102,14 @@ export const InboxItemRow: React.FC<InboxItemRowProps> = ({
           </div>
 
           {/* Tóm tắt nội dung */}
-          {doc.summary && (
-            <p className="text-[11px] text-slate-500 truncate max-w-2xl">
-              {doc.summary}
-            </p>
-          )}
+          {doc.summary && <p className="text-[11px] text-slate-500 truncate max-w-2xl">{doc.summary}</p>}
 
           {/* Tệp đính kèm info (mobile view hoặc khi có tệp) */}
           {currentVersion?.fileName && (
             <div className="inline-flex items-center gap-1.5 text-[11px] text-slate-500 bg-slate-100/70 hover:bg-slate-200/70 px-2 py-0.5 rounded-md border border-slate-200/60 shrink-0">
               <span className="shrink-0">{visualInfo.icon}</span>
-              <span className="truncate max-w-[200px] font-medium text-slate-700">
-                {currentVersion.fileName}
-              </span>
-              {currentVersion.fileSize ? (
-                <span className="text-[10px] text-slate-400">
-                  ({formatBytes(currentVersion.fileSize)})
-                </span>
-              ) : null}
+              <span className="truncate max-w-[200px] font-medium text-slate-700">{currentVersion.fileName}</span>
+              {currentVersion.fileSize ? <span className="text-[10px] text-slate-400">({formatBytes(currentVersion.fileSize)})</span> : null}
             </div>
           )}
         </div>
@@ -158,16 +119,10 @@ export const InboxItemRow: React.FC<InboxItemRowProps> = ({
       <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
         {/* Người gửi */}
         <div className="flex items-center gap-2 text-right">
-          <div className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">
-            {initial}
-          </div>
+          <div className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">{initial}</div>
           <div className="text-left sm:text-right">
-            <p className="text-xs font-semibold text-slate-700 truncate max-w-[130px]">
-              {senderName}
-            </p>
-            <p className="text-[10px] text-slate-400">
-              {dayjs(doc.createdAt).format('HH:mm - DD/MM/YYYY')}
-            </p>
+            <p className="text-xs font-semibold text-slate-700 truncate max-w-[130px]">{senderName}</p>
+            <p className="text-[10px] text-slate-400">{dayjs(doc.createdAt).format('HH:mm - DD/MM/YYYY')}</p>
           </div>
         </div>
 

@@ -67,13 +67,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
 
   // React Query Mutation để tạo mới tài liệu
   const createDocumentMutation = useMutation({
-    mutationFn: async ({
-      data,
-      file,
-    }: {
-      data: DocumentFormValues;
-      file: File;
-    }) => {
+    mutationFn: async ({ data, file }: { data: DocumentFormValues; file: File }) => {
       const formData = new FormData();
       formData.append('file', file);
 
@@ -92,7 +86,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       if (data.code?.trim()) {
         documentData.code = data.code.trim().toUpperCase();
       }
-      const targetCatId = currentFolderId ? Number(currentFolderId) : (data.categoryId ? Number(data.categoryId) : undefined);
+      const targetCatId = currentFolderId ? Number(currentFolderId) : data.categoryId ? Number(data.categoryId) : undefined;
       if (targetCatId) {
         documentData.category_id = targetCatId;
         documentData.categoryId = targetCatId;
@@ -203,11 +197,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
   };
 
   // Tạo thụt lề trực quan theo cấp bậc
-  const flattenCategories = (
-    cats: DocumentCategory[],
-    prefix = '',
-    visited = new Set<number>()
-  ): { id: number; name: string }[] => {
+  const flattenCategories = (cats: DocumentCategory[], prefix = '', visited = new Set<number>()): { id: number; name: string }[] => {
     let result: { id: number; name: string }[] = [];
     if (!Array.isArray(cats)) return result;
     cats.forEach((cat) => {
@@ -236,8 +226,8 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
 
   const approverOptions = useMemo(() => {
     const eligibleApprovers = employees.filter(isApproverEligible);
-    const unique = eligibleApprovers.filter((emp: any, index: number, self: any[]) =>
-      index === self.findIndex((t: any) => String(t.id) === String(emp.id))
+    const unique = eligibleApprovers.filter(
+      (emp: any, index: number, self: any[]) => index === self.findIndex((t: any) => String(t.id) === String(emp.id)),
     );
     return [
       { value: '', label: 'Không chỉ định' },

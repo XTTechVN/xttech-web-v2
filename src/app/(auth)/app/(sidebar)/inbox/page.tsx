@@ -5,10 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks';
 import { useAuthStore } from '@/stores';
 import { usePermission } from '@/hooks/user-permission';
-import {
-  getInboxDocuments,
-  markDocumentAsRead,
-} from '@/actions/document';
+import { getInboxDocuments, markDocumentAsRead } from '@/actions/document';
 import type { DocumentItem, GetDocumentsResponse } from '@/types';
 import { DOCUMENT_TYPE_MAP } from '@/types';
 
@@ -119,10 +116,7 @@ function InboxPageContent() {
   const displayItems = useMemo(() => {
     if (activeTab === 'need_action') {
       return rawItems.filter(
-        (doc) =>
-          doc.approvalStatus === 'pending' &&
-          Boolean(currentUser?.id) &&
-          String(doc.approverId) === String(currentUser?.id),
+        (doc) => doc.approvalStatus === 'pending' && Boolean(currentUser?.id) && String(doc.approverId) === String(currentUser?.id),
       );
     }
     return rawItems;
@@ -131,10 +125,7 @@ function InboxPageContent() {
   // Count items awaiting current user's approval
   const pendingReviewCount = useMemo(() => {
     return rawItems.filter(
-      (doc) =>
-        doc.approvalStatus === 'pending' &&
-        Boolean(currentUser?.id) &&
-        String(doc.approverId) === String(currentUser?.id),
+      (doc) => doc.approvalStatus === 'pending' && Boolean(currentUser?.id) && String(doc.approverId) === String(currentUser?.id),
     ).length;
   }, [rawItems, currentUser?.id]);
 
@@ -146,18 +137,13 @@ function InboxPageContent() {
 
   // Helper to optimistically update document read status in React Query cache
   const updateDocReadInCache = (docId: number) => {
-    queryClient.setQueriesData<GetDocumentsResponse>(
-      { queryKey: ['inbox-documents'] },
-      (oldData) => {
-        if (!oldData || !Array.isArray(oldData.items)) return oldData;
-        return {
-          ...oldData,
-          items: oldData.items.map((item) =>
-            item.id === docId ? { ...item, isRead: true } : item
-          ),
-        };
-      }
-    );
+    queryClient.setQueriesData<GetDocumentsResponse>({ queryKey: ['inbox-documents'] }, (oldData) => {
+      if (!oldData || !Array.isArray(oldData.items)) return oldData;
+      return {
+        ...oldData,
+        items: oldData.items.map((item) => (item.id === docId ? { ...item, isRead: true } : item)),
+      };
+    });
   };
 
   // Handle opening document detail and marking as read
@@ -170,7 +156,7 @@ function InboxPageContent() {
       pendingReadIdsRef.current.add(doc.id);
       try {
         await markDocumentAsRead(doc.id);
-        
+
         // Cập nhật ngay trong cache và state modal
         updateDocReadInCache(doc.id);
         setSelectedDoc((prev) => (prev && prev.id === doc.id ? { ...prev, isRead: true } : prev));
@@ -198,7 +184,7 @@ function InboxPageContent() {
     try {
       await markDocumentAsRead(docId);
       toast.success('Đã đánh dấu là đã đọc');
-      
+
       updateDocReadInCache(docId);
 
       queryClient.invalidateQueries({ queryKey: ['inbox-unread-count'] });
@@ -221,9 +207,7 @@ function InboxPageContent() {
       return;
     }
 
-    const idsToMark = unreadItems
-      .map((item) => item.id)
-      .filter((id) => !pendingReadIdsRef.current.has(id));
+    const idsToMark = unreadItems.map((item) => item.id).filter((id) => !pendingReadIdsRef.current.has(id));
 
     if (idsToMark.length === 0) return;
     idsToMark.forEach((id) => pendingReadIdsRef.current.add(id));
@@ -282,129 +266,119 @@ function InboxPageContent() {
         {/* Tabs navigation & Action buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
           <div className="flex items-center gap-1 overflow-x-auto select-none no-scrollbar">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('all');
-              setPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'all'
-                ? 'bg-primary text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <InboxIcon size={14} />
-            <span>Tất cả</span>
-            <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('all');
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'all' ? 'bg-primary text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              {totalCount}
-            </span>
-          </button>
+              <InboxIcon size={14} />
+              <span>Tất cả</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full ${activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}
+              >
+                {totalCount}
+              </span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('unread');
-              setPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'unread'
-                ? 'bg-rose-500 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Mail size={14} />
-            <span>Chưa đọc</span>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('unread');
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'unread' ? 'bg-rose-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Mail size={14} />
+              <span>Chưa đọc</span>
+              {unreadCount > 0 && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    activeTab === 'unread' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'
+                  }`}
+                >
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('need_action');
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'need_action' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Clock size={14} />
+              <span>Chờ tôi duyệt</span>
+              {pendingReviewCount > 0 && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    activeTab === 'need_action' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
+                  }`}
+                >
+                  {pendingReviewCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('read');
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'read' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <MailOpen size={14} />
+              <span>Đã đọc</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  activeTab === 'read' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                }`}
+              >
+                {readCount}
+              </span>
+            </button>
+          </div>
+
+          {/* Action Controls */}
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
             {unreadCount > 0 && (
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  activeTab === 'unread' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'
-                }`}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleMarkAllDisplayedAsRead}
+                leftIcon={<CheckCheck size={14} className="text-emerald-600" />}
+                className="text-xs h-8"
               >
-                {unreadCount}
-              </span>
+                Đọc tất cả trang này
+              </Button>
             )}
-          </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('need_action');
-              setPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'need_action'
-                ? 'bg-amber-500 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Clock size={14} />
-            <span>Chờ tôi duyệt</span>
-            {pendingReviewCount > 0 && (
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  activeTab === 'need_action' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
-                }`}
-              >
-                {pendingReviewCount}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('read');
-              setPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'read'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <MailOpen size={14} />
-            <span>Đã đọc</span>
-            <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                activeTab === 'read' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
-              }`}
-            >
-              {readCount}
-            </span>
-          </button>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-          {unreadCount > 0 && (
             <Button
               variant="outline"
               size="sm"
-              onClick={handleMarkAllDisplayedAsRead}
-              leftIcon={<CheckCheck size={14} className="text-emerald-600" />}
+              onClick={() => refetch()}
+              loading={isFetching}
+              leftIcon={<RotateCcw size={14} className={isFetching ? 'animate-spin' : ''} />}
               className="text-xs h-8"
             >
-              Đọc tất cả trang này
+              Làm mới
             </Button>
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            loading={isFetching}
-            leftIcon={<RotateCcw size={14} className={isFetching ? 'animate-spin' : ''} />}
-            className="text-xs h-8"
-          >
-            Làm mới
-          </Button>
+          </div>
         </div>
-      </div>
 
         {/* Search & Document Type Filter */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
@@ -432,12 +406,7 @@ function InboxPageContent() {
             </div>
 
             {(search || documentType || activeTab !== 'all') && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleResetFilters}
-                className="text-xs text-slate-500 hover:text-slate-800 shrink-0"
-              >
+              <Button variant="ghost" size="sm" onClick={handleResetFilters} className="text-xs text-slate-500 hover:text-slate-800 shrink-0">
                 Đặt lại
               </Button>
             )}
@@ -468,10 +437,10 @@ function InboxPageContent() {
               {activeTab === 'unread'
                 ? 'Tuyệt vời! Bạn không còn văn bản chưa đọc nào'
                 : activeTab === 'need_action'
-                ? 'Không có văn bản nào đang chờ bạn phê duyệt'
-                : activeTab === 'read'
-                ? 'Chưa có văn bản nào đã đọc'
-                : 'Hộp thư đến của bạn hiện đang trống'}
+                  ? 'Không có văn bản nào đang chờ bạn phê duyệt'
+                  : activeTab === 'read'
+                    ? 'Chưa có văn bản nào đã đọc'
+                    : 'Hộp thư đến của bạn hiện đang trống'}
             </h3>
 
             <p className="text-xs text-slate-500 max-w-sm">
@@ -505,10 +474,8 @@ function InboxPageContent() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 sm:px-5 border-t border-slate-100 bg-slate-50/50 text-xs text-slate-600">
             <div>
               Hiển thị <span className="font-semibold text-slate-800">{(page - 1) * limit + 1}</span> -{' '}
-              <span className="font-semibold text-slate-800">
-                {Math.min(page * limit, totalItems)}
-              </span>{' '}
-              trên tổng số <span className="font-semibold text-slate-800">{totalItems}</span> văn bản
+              <span className="font-semibold text-slate-800">{Math.min(page * limit, totalItems)}</span> trên tổng số{' '}
+              <span className="font-semibold text-slate-800">{totalItems}</span> văn bản
             </div>
 
             {totalPages > 1 && (
@@ -563,13 +530,7 @@ function InboxPageContent() {
 
 export default function InboxPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="w-full flex items-center justify-center min-h-[300px] text-slate-500 text-xs">
-          Đang tải Hộp thư đến...
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="w-full flex items-center justify-center min-h-[300px] text-slate-500 text-xs">Đang tải Hộp thư đến...</div>}>
       <InboxPageContent />
     </Suspense>
   );

@@ -26,12 +26,7 @@ const versionSchema = z.object({
 
 type VersionFormValues = z.infer<typeof versionSchema>;
 
-export const UploadVersionModal: React.FC<UploadVersionModalProps> = ({
-  isOpen,
-  onClose,
-  document: doc,
-  onSuccess,
-}) => {
+export const UploadVersionModal: React.FC<UploadVersionModalProps> = ({ isOpen, onClose, document: doc, onSuccess }) => {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -51,13 +46,7 @@ export const UploadVersionModal: React.FC<UploadVersionModalProps> = ({
   });
 
   const uploadVersionMutation = useMutation({
-    mutationFn: async ({
-      data,
-      file,
-    }: {
-      data: VersionFormValues;
-      file: File;
-    }) => {
+    mutationFn: async ({ data, file }: { data: VersionFormValues; file: File }) => {
       if (!doc?.id) throw new Error('Không tìm thấy tài liệu');
       const formData = new FormData();
       formData.append('file', file);
@@ -129,20 +118,13 @@ export const UploadVersionModal: React.FC<UploadVersionModalProps> = ({
           <Button variant="danger" onClick={handleClose} disabled={loading}>
             Hủy
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleSubmit(onSubmit)}
-            loading={loading}
-            disabled={loading}
-          >
+          <Button variant="primary" onClick={handleSubmit(onSubmit)} loading={loading} disabled={loading}>
             Tải lên phiên bản
           </Button>
         </div>
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-       
-
         {/* File Upload Drop Area */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-700 block">
@@ -154,33 +136,20 @@ export const UploadVersionModal: React.FC<UploadVersionModalProps> = ({
               fileError
                 ? 'border-rose-400 bg-rose-50/20'
                 : file
-                ? 'border-primary/50 bg-primary/5'
-                : 'border-slate-300 hover:border-primary/50 hover:bg-slate-50'
+                  ? 'border-primary/50 bg-primary/5'
+                  : 'border-slate-300 hover:border-primary/50 hover:bg-slate-50'
             }`}
           >
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-            />
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
             {file ? (
               <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      visualInfo?.bgColor || 'bg-slate-100'
-                    }`}
-                  >
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${visualInfo?.bgColor || 'bg-slate-100'}`}>
                     <FileUp size={20} className="text-primary" />
                   </div>
                   <div className="text-left min-w-0">
-                    <p className="text-xs font-medium text-slate-800 truncate">
-                      {file.name}
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      {formatBytes(file.size)}
-                    </p>
+                    <p className="text-xs font-medium text-slate-800 truncate">{file.name}</p>
+                    <p className="text-[11px] text-slate-500">{formatBytes(file.size)}</p>
                   </div>
                 </div>
                 <button
@@ -200,12 +169,8 @@ export const UploadVersionModal: React.FC<UploadVersionModalProps> = ({
                 <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-2">
                   <Upload size={20} />
                 </div>
-                <p className="text-xs font-medium text-slate-700">
-                  Nhấp để tải lên tệp phiên bản mới
-                </p>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Hỗ trợ PDF, DOCX, XLSX, hình ảnh (tối đa 50MB)
-                </p>
+                <p className="text-xs font-medium text-slate-700">Nhấp để tải lên tệp phiên bản mới</p>
+                <p className="text-[11px] text-slate-400 mt-1">Hỗ trợ PDF, DOCX, XLSX, hình ảnh (tối đa 50MB)</p>
               </div>
             )}
           </div>
@@ -214,26 +179,14 @@ export const UploadVersionModal: React.FC<UploadVersionModalProps> = ({
 
         {/* Số phiên bản (Tùy chọn) */}
         <div>
-          <label className="text-xs font-semibold text-slate-700 block mb-1">
-            Mã / Số phiên bản (Tùy chọn)
-          </label>
-          <Input
-            placeholder="Ví dụ: 1.1, 2.0 (Để trống hệ thống sẽ tự tính)"
-            {...register('versionNumber')}
-            error={errors.versionNumber?.message}
-          />
+          <label className="text-xs font-semibold text-slate-700 block mb-1">Mã / Số phiên bản (Tùy chọn)</label>
+          <Input placeholder="Ví dụ: 1.1, 2.0 (Để trống hệ thống sẽ tự tính)" {...register('versionNumber')} error={errors.versionNumber?.message} />
         </div>
 
         {/* Ghi chú tóm tắt thay đổi */}
         <div>
-          <label className="text-xs font-semibold text-slate-700 block mb-1">
-            Ghi chú thay đổi (Change Summary)
-          </label>
-          <Textarea
-            rows={3}
-            placeholder="Mô tả tóm tắt nội dung thay đổi hoặc cập nhật trong phiên bản này..."
-            {...register('changeSummary')}
-          />
+          <label className="text-xs font-semibold text-slate-700 block mb-1">Ghi chú thay đổi (Change Summary)</label>
+          <Textarea rows={3} placeholder="Mô tả tóm tắt nội dung thay đổi hoặc cập nhật trong phiên bản này..." {...register('changeSummary')} />
         </div>
       </form>
     </Modal>
