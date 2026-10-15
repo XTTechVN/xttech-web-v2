@@ -374,8 +374,6 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
 
   if (!doc) return null;
 
-  if (!doc) return null;
-
   return (
     <Modal
       isOpen={isOpen}

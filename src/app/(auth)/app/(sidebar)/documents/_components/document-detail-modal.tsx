@@ -209,19 +209,6 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
     return Array.from(userMap.values());
   }, [targetDoc, sharesData, employees]);
 
-  if (!doc || !targetDoc) return null;
-
-  // Xác định người duyệt và quyền duyệt
-  const currentApproverId = targetDoc?.approverId || targetDoc?.approver?.id;
-
-  const approverEmployee = currentApproverId ? employees.find((e: any) => String(e.id) === String(currentApproverId)) : null;
-
-  const approverDisplayName =
-    targetDoc?.approver?.fullName ||
-    approverEmployee?.fullName ||
-    approverEmployee?.username ||
-    (currentApproverId ? `Nhân sự #${currentApproverId}` : null);
-
   const approverSelectOptions = useMemo(() => {
     const eligibleApprovers = employees.filter(isApproverEligible);
     const unique = eligibleApprovers.filter(
@@ -238,6 +225,19 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
       }),
     ];
   }, [employees]);
+
+  if (!doc || !targetDoc) return null;
+
+  // Xác định người duyệt và quyền duyệt
+  const currentApproverId = targetDoc?.approverId || targetDoc?.approver?.id;
+
+  const approverEmployee = currentApproverId ? employees.find((e: any) => String(e.id) === String(currentApproverId)) : null;
+
+  const approverDisplayName =
+    targetDoc?.approver?.fullName ||
+    approverEmployee?.fullName ||
+    approverEmployee?.username ||
+    (currentApproverId ? `Nhân sự #${currentApproverId}` : null);
 
   const isAssignedApprover =
     Boolean(currentUser?.id) &&
@@ -711,17 +711,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
           </div>
         }
       >
-        <div className="flex flex-col gap-4 py-1 text-xs">
-          <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 text-sky-800 flex items-start gap-2.5">
-            <ShieldCheck size={18} className="text-sky-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-sky-900">Chỉ định người phê duyệt</p>
-              <p className="text-[11px] text-sky-700 mt-0.5">
-                Văn bản <strong>&quot;{targetDoc?.title}&quot;</strong> sẽ được gửi tới người phê duyệt bạn chọn bên dưới. Trạng thái văn bản sẽ chuyển thành <strong>Chờ phê duyệt</strong>.
-              </p>
-            </div>
-          </div>
-
+        <div className="flex flex-col gap-4 py-2 text-xs">
           <div>
             <Select
               label="Người có thẩm quyền phê duyệt *"
