@@ -16,16 +16,20 @@ export function TableSearch({ placeholder, value, onChange, className }: ITableS
   const searchDebounce = useDebounce(search, 300);
 
   useEffect(() => {
+    // Trim khoảng trắng thừa (gõ tay dễ dư dấu cách cuối làm backend không khớp)
+    const trimmedSearch = searchDebounce.trim();
     // Chỉ gọi onChange khi giá trị debounce thực sự khác với giá trị hiện tại từ bên ngoài
-    if (onChange && searchDebounce !== (value || '')) {
-      onChange(searchDebounce);
+    if (onChange && trimmedSearch !== (value || '')) {
+      onChange(trimmedSearch);
     }
   }, [searchDebounce]);
 
-  // Đồng bộ giá trị tìm kiếm từ component cha (ví dụ khi nhấn Reset)
-  useEffect(() => {
+  // Đồng bộ giá trị tìm kiếm từ component cha (ví dụ khi nhấn Reset) ngay trong lúc render
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     setSearch(value || '');
-  }, [value]);
+  }
 
   // Tự động chuyển các class độ rộng cố định (ví dụ: w-80) thành w-full trên mobile để tránh tràn màn hình
   const sanitizedClassName = className

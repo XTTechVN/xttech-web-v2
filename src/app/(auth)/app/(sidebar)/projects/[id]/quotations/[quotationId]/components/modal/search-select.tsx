@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, X, Check } from 'lucide-react';
 import { Modal } from '@/components';
+import { includesSearchText } from '@/utils/string';
 
 interface SearchSelectProps<T> {
   isOpen: boolean;
@@ -46,14 +47,10 @@ export function SearchSelect<T extends { id: string | number; name?: string | nu
 
   const filteredItems = useMemo(() => {
     if (!searchTerm.trim()) return items;
-    const term = searchTerm.toLowerCase();
     return items.filter((item) => {
       return searchKeys.some((key) => {
         const val = item[key];
-        if (typeof val === 'string') {
-          return val.toLowerCase().includes(term);
-        }
-        return false;
+        return typeof val === 'string' && includesSearchText(val, searchTerm);
       });
     });
   }, [items, searchTerm, searchKeys]);

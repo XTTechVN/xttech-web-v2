@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useRef, useMemo, useId, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/utils/cn';
+import { includesSearchText } from '@/utils/string';
 import { ChevronDown, Check } from 'lucide-react';
 
 export interface SelectOption {
@@ -143,9 +144,8 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
     // Filter options based on search query
     const filteredOptions = useMemo(() => {
-      if (!canSearch || !searchQuery) return options;
-      const query = searchQuery.toLowerCase().trim();
-      return options.filter((opt) => opt.label.toLowerCase().includes(query));
+      if (!canSearch || !searchQuery.trim()) return options;
+      return options.filter((opt) => includesSearchText(opt.label, searchQuery));
     }, [options, searchQuery, canSearch]);
 
     const handleSelectOption = (optValue: string | number) => {

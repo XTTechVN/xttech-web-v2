@@ -6,7 +6,7 @@ import { getAccessories, getExtraOptions, getFormulas } from '@/actions';
 import { Modal, Button } from '@/components';
 import { formatAccessoryUnit, EXTRA_OPTION_UNIT_MAP, type ExtraOptionUnit } from '@/types';
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import { formatCurrency } from '@/utils';
+import { formatCurrency, includesSearchText } from '@/utils';
 
 // ==========================================
 // 1. MODAL GÁN PHỤ KIỆN (ACCESSORIES)
@@ -49,8 +49,8 @@ export function AssignAccessoriesModal({
   };
 
   const filteredAccessories = allAccessories?.items.filter((acc) => 
-    acc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (acc.code && acc.code.toLowerCase().includes(searchTerm.toLowerCase()))
+    includesSearchText(acc.name, searchTerm) ||
+    (acc.code && includesSearchText(acc.code, searchTerm))
   ) || [];
 
   return (
@@ -195,8 +195,8 @@ export function AssignExtraOptionsModal({
   };
 
   const filteredExtraOptions = allExtraOptions?.items.filter((opt) => 
-    opt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (opt.code && opt.code.toLowerCase().includes(searchTerm.toLowerCase()))
+    includesSearchText(opt.name, searchTerm) ||
+    (opt.code && includesSearchText(opt.code, searchTerm))
   ) || [];
 
   return (
@@ -341,8 +341,8 @@ export function AssignFormulasModal({
   };
 
   const filteredFormulas = allFormulas?.items.filter((f) => 
-    (f.name && f.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (f.code && f.code.toLowerCase().includes(searchTerm.toLowerCase()))
+    (f.name && includesSearchText(f.name, searchTerm)) ||
+    (f.code && includesSearchText(f.code, searchTerm))
   ) || [];
 
   return (
