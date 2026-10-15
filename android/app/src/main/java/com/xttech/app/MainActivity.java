@@ -13,13 +13,21 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
 import android.webkit.CookieManager;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.getcapacitor.Bridge;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebViewClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +42,88 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NativeTrackingPlugin.class);
         registerPlugin(AppUpdatePlugin.class);
         super.onCreate(savedInstanceState);
+
+        // Đăng ký WebViewClient tùy biến để xử lý Auto-retry và Fallback màn hình mất mạng chuẩn UX
+        if (getBridge() != null) {
+            getBridge().setWebViewClient(new XtTechWebViewClient(getBridge()));
+        }
+
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && getBridge() != null && getBridge().getWebView() != null) {
             cookieManager.setAcceptThirdPartyCookies(getBridge().getWebView(), true);
+        }
+    }
+
+    /**
+     * Tùy biến WebViewClient để tăng cường độ tin cậy kết nối mạng:
+     * 1. Tự động retry ngầm 2 lần khi gặp lỗi DNS (ERR_NAME_NOT_RESOLVED) hoặc mất kết nối tạm thời.
+     * 2. Chỉ chuyển sang trang offline.html khi đã retry thất bại.
+     */
+    private static class XtTechWebViewClient extends BridgeWebViewClient {
+        private static final String CLIENT_TAG = "XtTechWebViewClient";
+        private static final int MAX_RETRY = 2;
+        private int retryCount = 0;
+        private final Bridge bridge;
+        private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+        public XtTechWebViewClient(Bridge bridge) {
+            super(bridge);
+            this.bridge = bridge;
+        }
+
+        @Override
+        public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+            super.onPageStarted(view, url, favicon);
+            if (url != null && !url.contains("offline.html")) {
+                retryCount = 0;
+            }
+        }
+
+        @Override
+        public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+            if (request != null && request.isForMainFrame()) {
+                int errorCode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? error.getErrorCode() : 0;
+                CharSequence description = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? error.getDescription() : "";
+                Log.w(CLIENT_TAG, "Lỗi tải trang chính: code=" + errorCode + " (" + description + "), retry=" + retryCount);
+
+                boolean isNetworkOrDnsError = (
+                    errorCode == WebViewClient.ERROR_HOST_LOOKUP ||
+                    errorCode == WebViewClient.ERROR_CONNECT ||
+                    errorCode == WebViewClient.ERROR_TIMEOUT ||
+                    errorCode == WebViewClient.ERROR_FAILED_SSL_HANDSHAKE
+                );
+
+                if (isNetworkOrDnsError && retryCount < MAX_RETRY) {
+                    retryCount++;
+                    Log.i(CLIENT_TAG, "Mạng/DNS chưa sẵn sàng. Tự động kết nối lại lần " + retryCount + " sau 2 giây...");
+                    mainHandler.postDelayed(() -> {
+                        if (view != null) {
+                            view.reload();
+                        }
+                    }, 2000);
+                    return;
+                }
+
+                // Đã hết số lần retry -> nạp trang errorPath kèm targetUrl chính xác để nút Thử lại reload đúng trang
+                String errorPath = bridge != null ? bridge.getErrorUrl() : null;
+                if (errorPath != null) {
+                    String failedUrl = request.getUrl() != null ? request.getUrl().toString() : "";
+                    String targetParam = failedUrl.isEmpty() ? "" : "?target=" + Uri.encode(failedUrl);
+                    view.loadUrl(errorPath + targetParam);
+                    return;
+                }
+            }
+
+            super.onReceivedError(view, request, error);
+        }
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            super.onPageFinished(view, url);
+            if (url != null && !url.contains("offline.html")) {
+                retryCount = 0;
+            }
         }
     }
 

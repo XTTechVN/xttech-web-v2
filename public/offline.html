@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Mất kết nối - XTTech</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background: linear-gradient(135deg, #0b1329 0%, #111e38 100%);
+        color: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 24px;
+        text-align: center;
+      }
+      .container {
+        max-width: 440px;
+        width: 100%;
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 32px 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .logo {
+        height: 48px;
+        margin-bottom: 24px;
+      }
+      .icon-wrapper {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.15);
+        border: 2px solid rgba(239, 68, 68, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        animation: pulse 2.5s infinite;
+      }
+      .icon-wrapper svg {
+        width: 38px;
+        height: 38px;
+        color: #f87171;
+      }
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+        }
+        50% {
+          transform: scale(1.05);
+          box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+        }
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #ffffff;
+      }
+      p.desc {
+        font-size: 14px;
+        line-height: 1.5;
+        color: #94a3b8;
+        margin-bottom: 20px;
+      }
+      .tips-box {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 24px;
+        text-align: left;
+        width: 100%;
+      }
+      .tips-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #cbd5e1;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .tips-list {
+        font-size: 12px;
+        color: #94a3b8;
+        line-height: 1.6;
+        padding-left: 18px;
+      }
+      .tips-list li {
+        margin-bottom: 4px;
+      }
+      .btn-retry {
+        width: 100%;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #ffffff;
+        font-size: 15px;
+        font-weight: 600;
+        border: none;
+        border-radius: 12px;
+        padding: 14px 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+      }
+      .btn-retry:active {
+        transform: scale(0.98);
+        background: #1e40af;
+      }
+      .countdown-text {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 14px;
+      }
+      .countdown-num {
+        color: #60a5fa;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <img src="image-xttech/logo-xttech.svg" alt="XTTech" class="logo" onerror="this.style.display='none'" />
+
+      <div class="icon-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 4.243a9 9 0 01-2.829-6.364 9 9 0 012.829-6.364m0 0L3 3m5.657 5.657a5 5 0 00-1.414 3.536 5 5 0 001.414 3.536" />
+        </svg>
+      </div>
+
+      <h1>Không thể kết nối máy chủ</h1>
+      <p class="desc">
+        Hệ thống không thể tải trang web (lỗi phân giải tên miền hoặc mạng không ổn định).
+      </p>
+
+      <div class="tips-box">
+        <div class="tips-title">
+          <span>💡</span> Gợi ý khắc phục:
+        </div>
+        <ul class="tips-list">
+          <li>Kiểm tra lại kết nối WiFi hoặc dữ liệu di động (4G/5G).</li>
+          <li>Nếu đang bật <b>DNS riêng tư (Private DNS / AdGuard)</b>, vui lòng chuyển sang <b>Tự động</b> hoặc <b>Tắt</b> trong Cài đặt mạng của máy.</li>
+        </ul>
+      </div>
+
+      <button id="retryBtn" class="btn-retry" onclick="triggerRetry()">
+        <svg id="retryIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+        </svg>
+        <span id="btnText">Thử lại ngay</span>
+      </button>
+
+      <div class="countdown-text">
+        Tự động kết nối lại sau <span id="countdown" class="countdown-num">5</span> giây...
+      </div>
+    </div>
+
+    <script>
+      let countdown = 5;
+      let isRetrying = false;
+
+      function getTargetUrl() {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const target = params.get('target');
+          if (target && (target.startsWith('http://') || target.startsWith('https://'))) {
+            return target;
+          }
+        } catch (e) {}
+
+        const stored = sessionStorage.getItem('last_target_url');
+        if (stored && (stored.startsWith('http://') || stored.startsWith('https://'))) return stored;
+
+        return 'https://xttech.vn/app/dashboard';
+      }
+
+      function triggerRetry() {
+        if (isRetrying) return;
+        isRetrying = true;
+
+        const btn = document.getElementById('retryBtn');
+        const btnText = document.getElementById('btnText');
+        const icon = document.getElementById('retryIcon');
+
+        btnText.innerText = 'Đang kết nối lại...';
+        icon.style.animation = 'spin 1s linear infinite';
+
+        setTimeout(() => {
+          window.location.replace(getTargetUrl());
+        }, 300);
+      }
+
+      const timer = setInterval(() => {
+        countdown--;
+        const el = document.getElementById('countdown');
+        if (el) el.innerText = countdown;
+
+        if (countdown <= 0) {
+          clearInterval(timer);
+          triggerRetry();
+        }
+      }, 1000);
+
+      window.addEventListener('online', () => {
+        triggerRetry();
+      });
+    </script>
+    <style>
+      @keyframes spin {
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </body>
+</html>
