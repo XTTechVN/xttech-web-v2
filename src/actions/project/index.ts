@@ -141,10 +141,9 @@ export const updateProjectQuotation = async (
 export const deleteProjectQuotation = async (
   projectId: number,
   quotationId: number,
-): Promise<import('@/types').ProjectQuotationItem> => {
+): Promise<void> => {
   try {
-    const response = await api.delete(`/api/v1/projects/${projectId}/quotations/${quotationId}`);
-    return response.data;
+    await api.delete(`/api/v1/projects/${projectId}/quotations/${quotationId}`);
   } catch (error) {
     console.warn('API error deleteProjectQuotation', error);
     throw error;
