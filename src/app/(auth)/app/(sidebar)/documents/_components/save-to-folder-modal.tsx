@@ -96,7 +96,7 @@ export const SaveToFolderModal: React.FC<SaveToFolderModalProps> = ({ isOpen, on
       size="md"
       footer={
         <div className="flex items-center justify-end gap-2 w-full">
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
+          <Button variant="danger" onClick={onClose} disabled={loading}>
             Hủy
           </Button>
           <Button variant="primary" onClick={handleConfirm} loading={loading} disabled={loading || !selectedFolderId || alreadySaved}>
