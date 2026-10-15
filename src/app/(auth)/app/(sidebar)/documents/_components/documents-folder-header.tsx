@@ -59,11 +59,6 @@ export const DocumentsFolderHeader: React.FC<DocumentsFolderHeaderProps> = ({
                   ? 'Thùng rác'
                   : 'Tài liệu của tôi'}
               </h2>
-              {currentFolder?.code && (
-                <span className="text-[10px] sm:text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 truncate max-w-[140px] sm:max-w-none">
-                  {currentFolder.code}
-                </span>
-              )}
             </div>
           </div>
         </div>

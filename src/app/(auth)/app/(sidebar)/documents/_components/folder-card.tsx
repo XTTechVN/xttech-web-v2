@@ -188,7 +188,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
           : 'bg-[#f0f4f9] hover:bg-[#e4ebf5] border border-transparent hover:border-slate-200/60 shadow-2xs hover:shadow-xs',
         isMenuOpen ? 'z-40 bg-[#e4ebf5] border-slate-200/80 shadow-xs' : 'active:scale-[0.99]',
       )}
-      title={`${folder.name} (${folder.code})`}
+      title={folder.name}
     >
       {/* Icon bên trái */}
       <div className="flex items-center gap-3 min-w-0 flex-1">

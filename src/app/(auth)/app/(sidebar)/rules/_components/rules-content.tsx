@@ -214,8 +214,8 @@ export function RulesContent() {
                 <h2 className="text-sm md:text-base font-bold text-slate-800 truncate leading-tight">
                   Quy chế & Quy định công ty
                 </h2>
-                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60 hidden sm:inline-flex items-center gap-1">
-                  <ShieldCheck size={12} />
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 hidden sm:inline-flex items-center gap-1">
+                  <ShieldCheck size={12} className="text-primary" />
                   Hiệu lực nội bộ
                 </span>
               </div>

@@ -2,29 +2,13 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Modal, Button, Input, Textarea, Select, MultiSelect } from '@/components';
-import {
-  updateDocument,
-  getDocumentById,
-} from '@/actions/document';
+import { updateDocument, getDocumentById } from '@/actions/document';
 import { getEmployees } from '@/actions/employee';
 import { getDepartments } from '@/actions/department';
-import {
-  DOCUMENT_TYPE_MAP,
-  SHARE_SCOPE_MAP,
-  DOCUMENT_STATUS_MAP,
-  APPROVAL_STATUS_MAP,
-} from '@/types';
+import { DOCUMENT_TYPE_MAP, SHARE_SCOPE_MAP, DOCUMENT_STATUS_MAP, APPROVAL_STATUS_MAP } from '@/types';
 import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '../_utils/doc-helpers';
 import toast from 'react-hot-toast';
-import {
-  Edit3,
-  FileUp,
-  X,
-  Clock,
-  Check,
-  CheckCircle2,
-  Megaphone,
-} from 'lucide-react';
+import { Edit3, FileUp, X, Clock, Check, CheckCircle2, Megaphone } from 'lucide-react';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -54,15 +38,7 @@ const editDocumentSchema = z.object({
 
 type EditDocumentFormValues = z.infer<typeof editDocumentSchema>;
 
-
-
-export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
-  isOpen,
-  onClose,
-  document: doc,
-  categories,
-  onSuccess,
-}) => {
+export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, onClose, document: doc, categories, onSuccess }) => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
@@ -311,11 +287,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   };
 
   // Flatten categories for select dropdown
-  const flattenCategories = (
-    cats: DocumentCategory[],
-    prefix = '',
-    visited = new Set<number>()
-  ): { id: number; name: string }[] => {
+  const flattenCategories = (cats: DocumentCategory[], prefix = '', visited = new Set<number>()): { id: number; name: string }[] => {
     let result: { id: number; name: string }[] = [];
     if (!Array.isArray(cats)) return result;
     cats.forEach((cat) => {
@@ -342,10 +314,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   );
 
   const folderOptions = useMemo(
-    () => [
-      { value: '', label: 'Thư mục gốc (Root)' },
-      ...flatCategoryList.map((cat) => ({ value: cat.id, label: cat.name })),
-    ],
+    () => [{ value: '', label: 'Thư mục gốc (Root)' }, ...flatCategoryList.map((cat) => ({ value: cat.id, label: cat.name }))],
     [flatCategoryList],
   );
 
