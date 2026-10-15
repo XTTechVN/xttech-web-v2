@@ -2,6 +2,26 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-15
+
+### Fixed (Android WebView: Xử lý lỗi DNS ERR_NAME_NOT_RESOLVED & Màn hình Offline Fallback)
+- **Tự động thử lại thông minh (Auto-retry) ([`MainActivity.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/MainActivity.java)):**
+  - Mở rộng `BridgeWebViewClient` thành `XtTechWebViewClient`.
+  - Tự động bắt các mã lỗi DNS/kết nối (`ERROR_HOST_LOOKUP`, `ERROR_CONNECT`, `ERROR_TIMEOUT`, `ERROR_FAILED_SSL_HANDSHAKE`).
+  - Tự động thử lại ngầm tối đa 2 lần (mỗi lần cách nhau 2 giây) để vượt qua tình trạng mạng/DNS chập chờn hoặc Private DNS lag lúc vừa mở app mà không làm gián đoạn trải nghiệm người dùng.
+- **Trang ngoại tuyến dự phòng đóng gói nội bộ ([`public/offline.html`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/public/offline.html)):**
+  - Đóng gói trang tĩnh `offline.html` vào APK assets (`android/app/src/main/assets/public/offline.html`), đảm bảo luôn hiển thị được ngay cả khi máy hoàn toàn không có internet.
+  - Giao diện Dark theme sang trọng chuẩn thương hiệu XTTech, hiển thị thông báo lỗi thân thiện kèm gợi ý tắt Private DNS / AdGuard.
+  - Tích hợp bộ đếm tự động kết nối lại sau 5s, sự kiện `window.addEventListener('online')` và nút bấm "Thử lại ngay" điều hướng chính xác về URL bị lỗi trước đó qua query `?target=`.
+- **Cấu hình Capacitor ([`capacitor.config.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/capacitor.config.ts)):**
+  - Khai báo `server.errorPath: 'offline.html'` để Capacitor tự động nạp trang ngoại tuyến nội bộ thay vì để lộ màn hình Chromium thô thiển của hệ điều hành Android.
+
+### Changed (Mở app vào thẳng Dashboard trên Android & iOS - Loại bỏ giật chớp trang Landing Page)
+- **Tối ưu URL khởi động WebView ([`capacitor.config.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/capacitor.config.ts), [`build.gradle`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/build.gradle)):**
+  - Cấu hình URL mặc định kết thúc bằng `/app/dashboard` cho cả nền tảng Android và iOS (thay vì root domain `/`).
+  - Cập nhật task tự động chuyển đổi URL trong `build.gradle` (Release: `https://xttech.vn/app/dashboard`, Debug: `https://dev-xt-web-v2.up.railway.app/app/dashboard`).
+  - Loại bỏ hoàn toàn độ trễ 1 giây tải trang Landing Page và cú giật chuyển hướng Client-side; người dùng mở app là vào thẳng Dashboard (hoặc tự động chuyển sang `/signin` nếu chưa đăng nhập).
+
 ## [Unreleased] - 2026-10-14
 
 ### Added (Chỉ đường / Dẫn đường tới vị trí nhân sự qua Google Maps)

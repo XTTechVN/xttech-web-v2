@@ -4,10 +4,16 @@ import { loadEnvConfig } from '@next/env';
 // Tự động nạp các biến môi trường từ .env, .env.local theo đúng chuẩn Next.js
 loadEnvConfig(process.cwd());
 
-const serverUrl =
+const rawUrl =
   process.env.CAPACITOR_SERVER_URL ||
   process.env.NEXT_PUBLIC_APP_URL ||
-  'https://dev-xt-web-v2.up.railway.app'; // Fallback mặc định nếu chưa cấu hình env
+  'https://xttech.vn';
+
+// Đảm bảo mở app là tải thẳng vào Dashboard, không qua Landing Page
+const cleanUrl = rawUrl.replace(/\/+$/, '');
+const serverUrl = cleanUrl.endsWith('/app/dashboard')
+  ? cleanUrl
+  : `${cleanUrl}/app/dashboard`;
 
 const config: CapacitorConfig = {
   appId: 'com.xttech.app2',
@@ -16,6 +22,7 @@ const config: CapacitorConfig = {
   server: {
     url: serverUrl,
     cleartext: true,
+    errorPath: 'offline.html',
   },
 };
 
