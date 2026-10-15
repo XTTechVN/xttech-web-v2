@@ -1,16 +1,16 @@
 'use client';
 
 import React from 'react';
-import type { Quotation } from '@/types';
+import type { Quotation, ProjectQuotationItem } from '@/types';
 
 interface ProjectSummaryProps {
-  quotations: Quotation[];
+  quotations: (Quotation | ProjectQuotationItem)[];
   formattedDate: string;
 }
 
 export function ProjectSummary({ quotations, formattedDate }: ProjectSummaryProps) {
   const maxDiscount = quotations.length > 0 
-    ? Math.max(...quotations.map(q => q.discountPercentage)) 
+    ? Math.max(...quotations.map(q => ((q as any).discountPercentage ?? (q as any).discountPercent ?? 0))) 
     : 0;
 
   return (
