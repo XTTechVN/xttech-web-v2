@@ -17,6 +17,7 @@ interface RulesHeaderProps {
   onResetFilters: () => void;
   viewMode: 'grid' | 'table';
   onViewModeChange: (mode: 'grid' | 'table') => void;
+  onCreateDocument?: () => void;
 }
 
 export const RulesHeader: React.FC<RulesHeaderProps> = ({
@@ -32,6 +33,7 @@ export const RulesHeader: React.FC<RulesHeaderProps> = ({
   onResetFilters,
   viewMode,
   onViewModeChange,
+  onCreateDocument,
 }) => {
   return (
     <div className="bg-white border-b border-slate-200/80 p-4 shrink-0 shadow-2xs">
@@ -116,6 +118,21 @@ export const RulesHeader: React.FC<RulesHeaderProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Right: Upload Rule action */}
+        {onCreateDocument && (
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="primary"
+              size="sm"
+              className="h-7 px-2.5 text-xs md:h-9 md:px-3 md:text-sm shrink-0"
+              onClick={onCreateDocument}
+              leftIcon={<Upload className="w-3.5 h-3.5 md:w-4 md:h-4" />}
+            >
+              Tải lên quy chế
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

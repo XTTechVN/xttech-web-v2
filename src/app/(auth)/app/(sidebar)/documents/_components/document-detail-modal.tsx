@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Modal, Button, Textarea } from '@/components';
+import { Modal, Button, Textarea, Select } from '@/components';
 import { RejectDocumentModal } from './reject-document-modal';
 import { UploadVersionModal } from './upload-version-modal';
 import {
@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, APPROVAL_STATUS_MAP, SHARE_SCOPE_MAP } from '@/types';
-import { formatBytes, getFileVisualInfo } from '../_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '../_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import dayjs from 'dayjs';
 import { reviewDocument, submitDocument, publishDocument, updateDocument, getDocumentById } from '@/actions/document';
@@ -49,6 +49,9 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
   const [publishLoading, setPublishLoading] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isUploadVersionOpen, setIsUploadVersionOpen] = useState(false);
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [selectedApproverId, setSelectedApproverId] = useState<string>('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const currentUser = useAuthStore((state) => state.user);
   const { hasRole, isAdmin, isHR, isSuper, isManager } = usePermission();
 
@@ -219,6 +222,23 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
     approverEmployee?.username ||
     (currentApproverId ? `Nhân sự #${currentApproverId}` : null);
 
+  const approverSelectOptions = useMemo(() => {
+    const eligibleApprovers = employees.filter(isApproverEligible);
+    const unique = eligibleApprovers.filter(
+      (emp: any, index: number, self: any[]) => index === self.findIndex((t: any) => String(t.id) === String(emp.id)),
+    );
+    return [
+      { value: '', label: '-- Chọn người phê duyệt --' },
+      ...unique.map((emp: any) => {
+        const roleName = getApproverRoleBadge(emp);
+        return {
+          value: String(emp.id),
+          label: `${emp.fullName || emp.username} (${roleName})`,
+        };
+      }),
+    ];
+  }, [employees]);
+
   const isAssignedApprover =
     Boolean(currentUser?.id) &&
     (String(currentApproverId) === String(currentUser?.id) ||
@@ -266,15 +286,36 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
     }
   };
 
-  const handleSubmitForApproval = async () => {
+  const handleOpenSubmitModal = () => {
+    setSelectedApproverId(currentApproverId ? String(currentApproverId) : '');
+    setSubmitError(null);
+    setIsSubmitModalOpen(true);
+  };
+
+  const handleConfirmSubmitForApproval = async () => {
+    if (!selectedApproverId) {
+      setSubmitError('Vui lòng chọn người phê duyệt tài liệu');
+      return;
+    }
+
     try {
       setSubmitLoading(true);
-      const approverPayload = currentApproverId ? { approverId: String(currentApproverId) } : undefined;
-      await submitDocument(doc.id, approverPayload);
+      // Đồng bộ cập nhật người duyệt vào tài liệu nếu khác người duyệt hiện tại
+      if (selectedApproverId !== String(currentApproverId)) {
+        try {
+          await updateDocument(doc.id, { approverId: selectedApproverId });
+        } catch (updateErr) {
+          console.warn('Could not pre-update approverId:', updateErr);
+        }
+      }
+
+      await submitDocument(doc.id, { approverId: selectedApproverId });
       toast.success('Đã trình duyệt tài liệu thành công!');
       queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['documents', 'rules'] });
       queryClient.invalidateQueries({ queryKey: ['document-detail', doc.id] });
       queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+      setIsSubmitModalOpen(false);
       onSuccess?.();
       onClose();
     } catch (error: any) {
@@ -348,7 +389,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={handleSubmitForApproval}
+                  onClick={handleOpenSubmitModal}
                   loading={submitLoading}
                   disabled={reviewLoading || submitLoading || publishLoading}
                   leftIcon={<Send size={14} />}
@@ -652,6 +693,72 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
           onSuccess?.();
         }}
       />
+
+      {/* Modal Chọn người duyệt khi ấn Trình duyệt tài liệu */}
+      <Modal
+        isOpen={isSubmitModalOpen}
+        onClose={() => {
+          if (!submitLoading) {
+            setIsSubmitModalOpen(false);
+            setSubmitError(null);
+          }
+        }}
+        size="md"
+        title={
+          <div className="flex items-center gap-2 text-slate-800">
+            <Send className="text-primary" size={18} />
+            <span className="font-semibold text-sm">Trình duyệt tài liệu</span>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4 py-1 text-xs">
+          <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 text-sky-800 flex items-start gap-2.5">
+            <ShieldCheck size={18} className="text-sky-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-sky-900">Chỉ định người phê duyệt</p>
+              <p className="text-[11px] text-sky-700 mt-0.5">
+                Văn bản <strong>&quot;{targetDoc?.title}&quot;</strong> sẽ được gửi tới người phê duyệt bạn chọn bên dưới. Trạng thái văn bản sẽ chuyển thành <strong>Chờ phê duyệt</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <Select
+              label="Người có thẩm quyền phê duyệt *"
+              fullWidth
+              value={selectedApproverId}
+              onChange={(e) => {
+                setSelectedApproverId(e.target.value);
+                if (submitError) setSubmitError(null);
+              }}
+              options={approverSelectOptions}
+              error={submitError || undefined}
+              placeholder="-- Chọn người phê duyệt --"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2.5 mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSubmitModalOpen(false)}
+              disabled={submitLoading}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleConfirmSubmitForApproval}
+              loading={submitLoading}
+              disabled={submitLoading}
+              leftIcon={<Send size={13} />}
+            >
+              Xác nhận trình duyệt
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };

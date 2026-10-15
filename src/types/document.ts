@@ -138,6 +138,34 @@ export interface UpdateDocumentCategoryPayload {
   parentId?: number | null;
 }
 
+// Nhóm 1: Tài liệu ban hành (Quy chế, Quy định, Chính sách, Quy trình, Quyết định, Thông báo, Hướng dẫn, Tiêu chuẩn, Định mức)
+export const RULE_DOC_TYPES = [
+  'regulation',   // Quy chế
+  'rule',         // Quy định
+  'policy',       // Chính sách
+  'procedure',    // Quy trình
+  'decision',     // Quyết định
+  'announcement', // Thông báo
+  'notice',       // Thông báo
+  'guideline',    // Hướng dẫn
+  'standard',     // Tiêu chuẩn
+  'norm',         // Định mức
+];
+
+// Nhóm 2: Tài liệu của tôi / Cá nhân (Báo cáo, Hợp đồng, Biểu mẫu, Khác)
+export const PERSONAL_DOC_TYPES = [
+  'work_report',  // Báo cáo công việc
+  'report',       // Báo cáo
+  'contract',     // Hợp đồng
+  'form',         // Biểu mẫu
+  'other',        // Khác
+];
+
+export const isRuleDocumentType = (type?: string | null): boolean => {
+  if (!type) return false;
+  return RULE_DOC_TYPES.includes(type);
+};
+
 export const DOCUMENT_TYPE_MAP: Record<string, { label: string; color: string; badgeClass: string }> = {
   regulation: { label: 'Quy chế', color: 'blue', badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' },
   rule: { label: 'Quy định', color: 'sky', badgeClass: 'bg-sky-50 text-sky-700 border-sky-200' },

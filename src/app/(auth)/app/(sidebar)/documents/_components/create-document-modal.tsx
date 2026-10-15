@@ -4,10 +4,10 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Modal, Button, Input, Select } from '@/components';
 import { createDocument } from '@/actions/document';
 import { getEmployees } from '@/actions/employee';
-import { DOCUMENT_TYPE_MAP } from '@/types';
+import { DOCUMENT_TYPE_MAP, RULE_DOC_TYPES, PERSONAL_DOC_TYPES } from '@/types';
 import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '../_utils/doc-helpers';
 import toast from 'react-hot-toast';
-import { Upload, FileUp, X } from 'lucide-react';
+import { Upload, FileUp, X, FileCheck } from 'lucide-react';
 import type { DocumentCategory } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -21,6 +21,7 @@ interface CreateDocumentModalProps {
   currentFolder?: DocumentCategory | null;
   categories: DocumentCategory[];
   onSuccess: () => void;
+  defaultGroup?: 'rules' | 'personal';
 }
 
 // Validation schema dùng Zod theo chuẩn form-modal
@@ -30,6 +31,8 @@ const documentSchema = z.object({
   code: z.string().optional(),
   categoryId: z.union([z.number(), z.string()]).optional(),
   approverId: z.string().optional(),
+  effectiveDate: z.string().optional(),
+  expirationDate: z.string().optional(),
 });
 
 type DocumentFormValues = z.infer<typeof documentSchema>;
@@ -41,8 +44,10 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
   currentFolder = null,
   categories,
   onSuccess,
+  defaultGroup = 'personal',
 }) => {
   const queryClient = useQueryClient();
+  const isRuleMode = defaultGroup === 'rules';
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,10 +63,12 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
     resolver: zodResolver(documentSchema),
     defaultValues: {
       title: '',
-      documentType: 'work_report',
+      documentType: isRuleMode ? 'regulation' : 'work_report',
       code: '',
       categoryId: currentFolderId || '',
       approverId: '',
+      effectiveDate: '',
+      expirationDate: '',
     },
   });
 
@@ -75,7 +82,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       const documentData: Record<string, any> = {
         title: data.title.trim(),
         documentType: data.documentType,
-        shareScope: 'private',
+        shareScope: isRuleMode ? 'all' : 'private',
         status: 'draft',
         approvalStatus: 'draft',
       };
@@ -90,11 +97,17 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       if (data.approverId?.trim()) {
         documentData.approverId = data.approverId.trim();
       }
+      if (data.effectiveDate) {
+        documentData.effectiveDate = data.effectiveDate;
+      }
+      if (data.expirationDate) {
+        documentData.expirationDate = data.expirationDate;
+      }
 
       formData.append('document_data', JSON.stringify(documentData));
       formData.append('title', data.title.trim());
       formData.append('documentType', data.documentType);
-      formData.append('shareScope', 'private');
+      formData.append('shareScope', isRuleMode ? 'all' : 'private');
       formData.append('status', 'draft');
       formData.append('approvalStatus', 'draft');
 
@@ -107,12 +120,19 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       if (data.approverId?.trim()) {
         formData.append('approverId', data.approverId.trim());
       }
+      if (data.effectiveDate) {
+        formData.append('effectiveDate', data.effectiveDate);
+      }
+      if (data.expirationDate) {
+        formData.append('expirationDate', data.expirationDate);
+      }
 
       return createDocument(formData);
     },
     onSuccess: () => {
-      toast.success('Tải lên và tạo tài liệu thành công!');
+      toast.success(isRuleMode ? 'Tải lên quy chế thành công!' : 'Tải lên tài liệu thành công!');
       queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['documents', 'rules'] });
       queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
       onSuccess();
       onClose();
@@ -129,6 +149,8 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
     register('documentType');
     register('code');
     register('categoryId');
+    register('effectiveDate');
+    register('expirationDate');
   }, [register]);
 
   useEffect(() => {
@@ -137,13 +159,26 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       setFileError(null);
       reset({
         title: '',
-        documentType: 'work_report',
+        documentType: defaultGroup === 'rules' ? 'regulation' : 'work_report',
         code: '',
         categoryId: currentFolderId ? Number(currentFolderId) : '',
         approverId: '',
+        effectiveDate: '',
+        expirationDate: '',
       });
     }
-  }, [isOpen, currentFolderId, reset]);
+  }, [isOpen, currentFolderId, defaultGroup, reset]);
+
+  // Options theo ngữ cảnh: nếu là Rules (Quy chế) thì chỉ có RULE_DOC_TYPES, ngược lại chỉ có PERSONAL_DOC_TYPES
+  const docTypeOptions = useMemo(() => {
+    const targetKeys = isRuleMode ? RULE_DOC_TYPES : PERSONAL_DOC_TYPES;
+    return targetKeys
+      .filter((key) => Boolean(DOCUMENT_TYPE_MAP[key]))
+      .map((key) => ({
+        value: key,
+        label: DOCUMENT_TYPE_MAP[key].label,
+      }));
+  }, [isRuleMode]);
 
   // Xử lý chọn file
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -234,15 +269,6 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
 
   const flatCategoryList = useMemo(() => flattenCategories(categories), [categories]);
 
-  const docTypeOptions = useMemo(
-    () =>
-      Object.entries(DOCUMENT_TYPE_MAP).map(([key, item]) => ({
-        value: key,
-        label: item.label,
-      })),
-    [],
-  );
-
   const folderOptions = useMemo(
     () => [{ value: '', label: 'Thư mục gốc (Root)' }, ...flatCategoryList.map((cat) => ({ value: cat.id, label: cat.name }))],
     [flatCategoryList],
@@ -253,6 +279,8 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
   const documentTypeVal = watch('documentType');
   const categoryIdVal = watch('categoryId');
   const approverIdVal = watch('approverId');
+  const effectiveDateVal = watch('effectiveDate');
+  const expirationDateVal = watch('expirationDate');
 
   return (
     <Modal
@@ -261,8 +289,8 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       size="lg"
       title={
         <div className="flex items-center gap-2 text-slate-800">
-          <Upload className="text-primary" size={20} />
-          <span>Tải lên & Tạo tài liệu mới</span>
+          {isRuleMode ? <FileCheck className="text-primary" size={20} /> : <Upload className="text-primary" size={20} />}
+          <span>{isRuleMode ? 'Tải lên & Ban hành quy chế / văn bản' : 'Tải lên & Tạo tài liệu mới'}</span>
         </div>
       }
       className="m-2 max-w-2xl w-full"
@@ -318,9 +346,9 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <Input
-              label="Tiêu đề tài liệu *"
+              label={isRuleMode ? 'Tiêu đề quy chế / văn bản *' : 'Tiêu đề tài liệu *'}
               fullWidth
-              placeholder="Ví dụ: Quy chế công tác phí 2026..."
+              placeholder={isRuleMode ? 'Ví dụ: Quy chế công tác phí 2026...' : 'Ví dụ: Báo cáo công việc tuần 42...'}
               value={titleVal}
               onChange={(e) => setValue('title', e.target.value, { shouldValidate: true })}
               error={errors.title?.message}
@@ -340,30 +368,67 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
           </div>
         </div>
 
-        {/* Document Type & Folder Destination */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <Select
-              label="Phân loại văn bản *"
-              fullWidth
-              value={documentTypeVal}
-              onChange={(e) => setValue('documentType', e.target.value, { shouldValidate: true })}
-              options={docTypeOptions}
-              error={errors.documentType?.message}
-            />
-          </div>
+        {/* Phân loại & Lưu trữ (Dành riêng cho ngữ cảnh Tài liệu của tôi vs Quy chế ban hành) */}
+        {isRuleMode ? (
+          <>
+            <div>
+              <Select
+                label="Phân loại văn bản quy chế / ban hành *"
+                fullWidth
+                value={documentTypeVal}
+                onChange={(e) => setValue('documentType', e.target.value, { shouldValidate: true })}
+                options={docTypeOptions}
+                error={errors.documentType?.message}
+              />
+            </div>
 
-          <div>
-            <Input
-              label="Lưu vào Thư mục"
-              fullWidth
-              readOnly
-              disabled
-              value={currentFolder ? currentFolder.name : 'Thư mục gốc (Root)'}
-              className="bg-slate-100 text-slate-700 font-medium cursor-not-allowed select-none"
-            />
+            {/* Ngày hiệu lực & Ngày hết hạn */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Input
+                  type="date"
+                  label="Ngày có hiệu lực (Tùy chọn)"
+                  fullWidth
+                  value={effectiveDateVal || ''}
+                  onChange={(e) => setValue('effectiveDate', e.target.value)}
+                />
+              </div>
+              <div>
+                <Input
+                  type="date"
+                  label="Ngày hết hạn (Tùy chọn)"
+                  fullWidth
+                  value={expirationDateVal || ''}
+                  onChange={(e) => setValue('expirationDate', e.target.value)}
+                />
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <Select
+                label="Phân loại tài liệu *"
+                fullWidth
+                value={documentTypeVal}
+                onChange={(e) => setValue('documentType', e.target.value, { shouldValidate: true })}
+                options={docTypeOptions}
+                error={errors.documentType?.message}
+              />
+            </div>
+
+            <div>
+              <Input
+                label="Lưu vào Thư mục"
+                fullWidth
+                readOnly
+                disabled
+                value={currentFolder ? currentFolder.name : 'Thư mục gốc (Root)'}
+                className="bg-slate-100 text-slate-700 font-medium cursor-not-allowed select-none"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Approver Selection */}
         <div>
@@ -383,7 +448,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
             Hủy
           </Button>
           <Button variant="primary" size="sm" type="submit" disabled={loading} loading={loading}>
-            Tải lên tài liệu
+            {isRuleMode ? 'Tải lên & Ban hành' : 'Tải lên tài liệu'}
           </Button>
         </div>
       </form>

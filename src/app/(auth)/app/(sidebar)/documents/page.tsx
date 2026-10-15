@@ -14,7 +14,7 @@ import {
   deleteDocument,
   removeDocumentFromFolder,
 } from '@/actions/document';
-import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, type DocumentCategory, type DocumentItem } from '@/types';
+import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, RULE_DOC_TYPES, type DocumentCategory, type DocumentItem } from '@/types';
 import { isDocumentOwner, isDocumentSharedWithUser, getDocumentPermissions } from './_utils/doc-helpers';
 
 // Custom Hooks
@@ -186,11 +186,16 @@ function MyDocumentsContent() {
       return rawItems.filter((doc) => {
         const isRoot = doc.categoryId === null || doc.categoryId === undefined;
         if (!isRoot) return false;
+        // Văn bản quy chế / ban hành sẽ được hiển thị tại mục Quy chế (/rules)
+        if (RULE_DOC_TYPES.includes(doc.documentType)) return false;
         return isDocumentOwner(doc, currentUser, allMyCategoryIds);
       });
     }
 
     return rawItems.filter((doc) => {
+      // Văn bản quy chế / ban hành sẽ được hiển thị tại mục Quy chế (/rules)
+      if (RULE_DOC_TYPES.includes(doc.documentType)) return false;
+
       // 1. Tài liệu gốc do chính mình tạo nằm trong thư mục này
       if (
         (doc.categoryId === currentFolderId || doc.category?.id === currentFolderId) &&

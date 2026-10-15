@@ -8,11 +8,12 @@ import {
   deleteDocument,
 } from '@/actions/document';
 import type { DocumentCategory, DocumentItem } from '@/types';
-import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
+import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, RULE_DOC_TYPES } from '@/types';
 
 // Subcomponents & Modals
 import { RulesHeader } from './rules-header';
 import { RulesEmptyState } from './rules-empty-state';
+import { CreateDocumentModal } from '../../documents/_components/create-document-modal';
 import { FileCard } from '../../documents/_components/file-card';
 import { FileTable } from '../../documents/_components/file-table';
 import { EditDocumentModal } from '../../documents/_components/edit-document-modal';
@@ -28,8 +29,6 @@ import toast from 'react-hot-toast';
 
 import { useQueryParam } from '@/hooks';
 import { showErrorToast } from '@/utils';
-
-const RULE_DOC_TYPES = ['regulation', 'rule', 'policy', 'procedure', 'guideline', 'standard', 'norm'];
 
 export function RulesContent() {
   const queryClient = useQueryClient();
@@ -98,6 +97,7 @@ export function RulesContent() {
   );
 
   // Modals
+  const [createDocOpen, setCreateDocOpen] = useState(false);
   const [editDocOpen, setEditDocOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<DocumentItem | null>(null);
   const [detailDocOpen, setDetailDocOpen] = useState(false);
@@ -202,6 +202,7 @@ export function RulesContent() {
         }}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        onCreateDocument={() => setCreateDocOpen(true)}
       />
 
       {/* Scrollable Main Views */}
@@ -323,10 +324,22 @@ export function RulesContent() {
         )}
 
         {/* Empty State Component */}
-        {isEmptyState && <RulesEmptyState />}
+        {isEmptyState && <RulesEmptyState onCreateDocument={() => setCreateDocOpen(true)} />}
       </div>
 
       {/* MODALS */}
+
+      {/* 1. Create Rule Document Modal */}
+      <CreateDocumentModal
+        isOpen={createDocOpen}
+        onClose={() => setCreateDocOpen(false)}
+        categories={safeCategoryTree}
+        defaultGroup="rules"
+        onSuccess={() => {
+          refetchDocuments();
+          queryClient.invalidateQueries({ queryKey: ['documents'] });
+        }}
+      />
 
       {/* 2. Edit Document Modal */}
       <EditDocumentModal
