@@ -11,9 +11,6 @@ interface EditFolderModalProps {
   onSuccess?: () => void;
 }
 
-/**
- * @deprecated Dùng FolderFormModal trực tiếp với initialData={folder}
- */
 export const EditFolderModal: React.FC<EditFolderModalProps> = ({ folder, ...rest }) => {
   return <FolderFormModal {...rest} initialData={folder} />;
 };
