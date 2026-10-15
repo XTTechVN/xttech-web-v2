@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button, Select, TableSearch } from '@/components';
-import { LayoutGrid, List, RotateCcw, Upload } from 'lucide-react';
+import { Columns2, List, RotateCcw, Upload } from 'lucide-react';
 
 interface RulesHeaderProps {
   search: string;
@@ -42,12 +42,7 @@ export const RulesHeader: React.FC<RulesHeaderProps> = ({
         <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap flex-1 min-w-0">
           {/* Search Input */}
           <div className="w-full sm:w-52 lg:w-64">
-            <TableSearch
-              placeholder="Tìm mã, tiêu đề quy chế..."
-              value={search}
-              onChange={onSearchChange}
-              className="w-full"
-            />
+            <TableSearch placeholder="Tìm mã, tiêu đề quy chế..." value={search} onChange={onSearchChange} className="w-full" />
           </div>
 
           {/* Document Type Filter */}
@@ -88,28 +83,24 @@ export const RulesHeader: React.FC<RulesHeaderProps> = ({
           {/* Divider */}
           <div className="h-5 w-px bg-slate-200 hidden sm:block shrink-0 mx-0.5" />
 
-          {/* View Switch: Grid vs Table List */}
-          <div className="flex items-center p-0.5 rounded-xl border border-slate-200 bg-slate-100/80 shrink-0">
+          {/* View Switch: 2 Cột vs Danh sách */}
+          <div className="flex items-center p-0.5 rounded-lg border border-slate-200 bg-slate-100/80 shrink-0">
             <button
               type="button"
               onClick={() => onViewModeChange('grid')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
-                viewMode === 'grid'
-                  ? 'bg-white text-primary shadow-xs font-semibold'
-                  : 'text-slate-500 hover:text-slate-800'
+                viewMode === 'grid' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800'
               }`}
-              title="Dạng lưới thẻ"
+              title="Cách 1: Dạng 2 Cột đọc nhanh (Split View: Danh sách trái - Trình đọc phải)"
             >
-              <LayoutGrid size={15} />
-              <span className="hidden xl:inline text-xs">Lưới</span>
+              <Columns2 size={15} />
+              <span className="hidden xl:inline text-xs">2 Cột</span>
             </button>
             <button
               type="button"
               onClick={() => onViewModeChange('table')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
-                viewMode === 'table'
-                  ? 'bg-white text-primary shadow-xs font-semibold'
-                  : 'text-slate-500 hover:text-slate-800'
+                viewMode === 'table' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Dạng danh sách"
             >

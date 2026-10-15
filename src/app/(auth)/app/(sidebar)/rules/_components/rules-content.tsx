@@ -2,19 +2,15 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  getDocumentCategoryTree,
-  getDocuments,
-  deleteDocument,
-} from '@/actions/document';
+import { getDocumentCategoryTree, getDocuments, deleteDocument } from '@/actions/document';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, RULE_DOC_TYPES } from '@/types';
 
 // Subcomponents & Modals
 import { RulesHeader } from './rules-header';
 import { RulesEmptyState } from './rules-empty-state';
+import { RulesSplitView } from './rules-split-view';
 import { CreateDocumentModal } from '../../documents/_components/create-document-modal';
-import { FileCard } from '../../documents/_components/file-card';
 import { FileTable } from '../../documents/_components/file-table';
 import { EditDocumentModal } from '../../documents/_components/edit-document-modal';
 import { DocumentDetailModal } from '../../documents/_components/document-detail-modal';
@@ -23,8 +19,6 @@ import { MoveItemModal } from '../../documents/_components/move-item-modal';
 import { DeleteConfirmModal } from '../../documents/_components/delete-confirm-modal';
 import { ShareFolderModal } from '../../documents/_components/share-folder-modal';
 
-// Icons
-import { FileText, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { useQueryParam } from '@/hooks';
@@ -82,7 +76,7 @@ export function RulesContent() {
           label: item.label,
         })),
     ],
-    []
+    [],
   );
 
   const statusOptions = useMemo(
@@ -93,7 +87,7 @@ export function RulesContent() {
         label: item.label,
       })),
     ],
-    []
+    [],
   );
 
   // Modals
@@ -207,29 +201,6 @@ export function RulesContent() {
 
       {/* Scrollable Main Views */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Title Bar */}
-        <div className="flex items-center justify-between pb-2 border-b border-slate-200/70">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <FileText size={18} />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm md:text-base font-bold text-slate-800 truncate leading-tight">
-                  Quy chế & Quy định công ty
-                </h2>
-                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 hidden sm:inline-flex items-center gap-1">
-                  <ShieldCheck size={12} className="text-primary" />
-                  Hiệu lực nội bộ
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                {documents.length} văn bản quy chế, quy định và chính sách ban hành
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Content: Grid or Table */}
         {(hasDocuments || isLoadingDocuments) && (
           <div className="space-y-3">
@@ -240,46 +211,34 @@ export function RulesContent() {
                 ))}
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {documents.map((doc) => (
-                  <FileCard
-                    key={`doc-${doc.id}`}
-                    document={doc}
-                    isSelected={selectedItemKeys.has(`doc-${doc.id}`)}
-                    onToggleSelect={(d) => toggleSelectItem('document', d.id)}
-                    locationName="Quy chế & Quy định"
-                    onPreview={(d) => {
-                      setSelectedDoc(d);
-                      setPreviewDocOpen(true);
-                    }}
-                    onView={(d) => {
-                      setSelectedDoc(d);
-                      setDetailDocOpen(true);
-                    }}
-                    onEdit={(d) => {
-                      setEditingDoc(d);
-                      setEditDocOpen(true);
-                    }}
-                    onShare={(d) => {
-                      setSharingDoc(d);
-                      setShareFolderOpen(true);
-                    }}
-                    onMove={(d) => {
-                      setItemToMove({ type: 'document', item: d });
-                      setMoveModalOpen(true);
-                    }}
-                    onDelete={(d) => {
-                      setDeleteModal({
-                        isOpen: true,
-                        type: 'document',
-                        id: d.id,
-                        name: d.title,
-                        loading: false,
-                      });
-                    }}
-                  />
-                ))}
-              </div>
+              <RulesSplitView
+                documents={documents}
+                onPreview={(d) => {
+                  setSelectedDoc(d);
+                  setPreviewDocOpen(true);
+                }}
+                onView={(d) => {
+                  setSelectedDoc(d);
+                  setDetailDocOpen(true);
+                }}
+                onEdit={(d) => {
+                  setEditingDoc(d);
+                  setEditDocOpen(true);
+                }}
+                onShare={(d) => {
+                  setSharingDoc(d);
+                  setShareFolderOpen(true);
+                }}
+                onDelete={(d) => {
+                  setDeleteModal({
+                    isOpen: true,
+                    type: 'document',
+                    id: d.id,
+                    name: d.title,
+                    loading: false,
+                  });
+                }}
+              />
             ) : (
               <div className="flex flex-col gap-0">
                 <FileTable
@@ -408,8 +367,7 @@ export function RulesContent() {
         title="Xóa văn bản quy chế"
         description={
           <>
-            Bạn có chắc chắn muốn chuyển văn bản{' '}
-            <strong className="text-gray-900 font-semibold">{deleteModal.name}</strong> vào thùng rác?
+            Bạn có chắc chắn muốn chuyển văn bản <strong className="text-gray-900 font-semibold">{deleteModal.name}</strong> vào thùng rác?
           </>
         }
         onClose={() => setDeleteModal((prev) => ({ ...prev, isOpen: false }))}
