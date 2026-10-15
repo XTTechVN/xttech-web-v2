@@ -222,9 +222,35 @@ function MyDocumentsContent() {
     }
 
     return rawItems.filter((doc) => {
-      const isInFolder = doc.categoryId === currentFolderId || doc.category?.id === currentFolderId;
-      if (!isInFolder) return false;
-      return isDocumentOwner(doc, currentUser, allMyCategoryIds);
+      // 1. Tài liệu gốc do chính mình tạo nằm trong thư mục này
+      if (
+        (doc.categoryId === currentFolderId || doc.category?.id === currentFolderId) &&
+        isDocumentOwner(doc, currentUser, allMyCategoryIds)
+      ) {
+        return true;
+      }
+
+      // 2. Tài liệu lưu lối tắt (Shortcut) vào thư mục này:
+      // - Hoặc có thuộc tính isShortcut / is_shortcut
+      // - Hoặc currentFolderId nằm trong mảng savedFolders / saved_folders
+      const isExplicitShortcut =
+        (doc as any).isShortcut === true ||
+        (doc as any).is_shortcut === true ||
+        (Array.isArray(doc.savedFolders) && doc.savedFolders.includes(currentFolderId)) ||
+        (Array.isArray((doc as any).saved_folders) && (doc as any).saved_folders.includes(currentFolderId));
+      if (isExplicitShortcut) return true;
+
+      // 3. Nếu tài liệu được Backend trả về khi truy vấn currentFolderId:
+      // - Nếu không phải owner (văn bản người khác gửi đến đã được lưu lối tắt vào đây)
+      // - Hoặc là owner nhưng categoryId gốc khác currentFolderId (lối tắt của chính mình)
+      if (!isDocumentOwner(doc, currentUser, allMyCategoryIds)) {
+        return true;
+      }
+      if (doc.categoryId !== currentFolderId && doc.category?.id !== currentFolderId) {
+        return true;
+      }
+
+      return false;
     });
   }, [documentsData, currentFolderId, isSharedSection, allSharedCategoryIds, allMyCategoryIds, currentUser]);
 

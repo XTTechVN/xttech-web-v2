@@ -145,7 +145,11 @@ export const deleteDocumentCategory = async (id: number): Promise<void> => {
 // Lấy danh sách tài liệu với bộ lọc và phân trang
 export const getDocuments = async (params?: GetDocumentsParams): Promise<GetDocumentsResponse> => {
   try {
-    const res = await api.get('/api/v1/documents', { params });
+    const formattedParams: any = { ...params };
+    if (params?.categoryId !== undefined) {
+      formattedParams.category_id = params.categoryId;
+    }
+    const res = await api.get('/api/v1/documents', { params: formattedParams });
     const rawData = res.data?.data ?? res.data;
     if (Array.isArray(rawData)) {
       return {
