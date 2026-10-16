@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { Edit3, FileUp, X, Clock, Check, CheckCircle2, Megaphone } from 'lucide-react';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '@/stores';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -44,6 +45,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<(string | number)[]>([]);
 
+  const currentUser = useAuthStore((state) => state.user);
   const {
     register,
     handleSubmit,
@@ -333,11 +335,15 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
   }, [employees]);
 
   const employeeOptions = useMemo(() => {
+    const creatorId = String(doc?.createdById || (doc as any)?.createdBy?.id || currentUser?.id || '');
+    const creatorEmail = ((doc as any)?.createdBy?.email || currentUser?.email || '').toLowerCase().trim();
     const seen = new Set<string | number>();
     return employees
       .filter((emp: any) => {
         if (!emp?.id || seen.has(emp.id)) return false;
         seen.add(emp.id);
+        if (creatorId && String(emp.id) === creatorId) return false;
+        if (creatorEmail && emp.email && emp.email.toLowerCase().trim() === creatorEmail) return false;
         return true;
       })
       .map((emp: any) => ({
@@ -345,7 +351,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
         label: emp.fullName || emp.username || 'Nhân sự',
         subLabel: emp.email || (emp.code ? `Mã: ${emp.code}` : undefined),
       }));
-  }, [employees]);
+  }, [employees, doc, currentUser]);
 
   const departmentOptions = useMemo(() => {
     const seen = new Set<string | number>();

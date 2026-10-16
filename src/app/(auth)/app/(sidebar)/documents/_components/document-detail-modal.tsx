@@ -236,8 +236,23 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
       });
     }
 
-    return Array.from(userMap.values());
-  }, [targetDoc, sharesData, employees]);
+    const creatorId = String(targetDoc?.createdById || doc?.createdById || targetDoc?.createdBy?.id || doc?.createdBy?.id || '');
+    const creatorEmail = (targetDoc?.createdBy?.email || doc?.createdBy?.email || '').toLowerCase().trim();
+    const creatorName = (targetDoc?.createdBy?.fullName || doc?.createdBy?.fullName || '').toLowerCase().trim();
+
+    // Loại bỏ Người tạo tài liệu khỏi danh sách người nhận vì người tạo mặc nhiên sở hữu tài liệu
+    return Array.from(userMap.values()).filter((u) => {
+      const isCreatorId = Boolean(creatorId && String(u.id) === creatorId);
+      const isCreatorEmail = Boolean(creatorEmail && u.email && u.email.toLowerCase().trim() === creatorEmail);
+      const isCreatorName = Boolean(creatorName && u.fullName && u.fullName.toLowerCase().trim() === creatorName);
+      const isCurrentOwner = Boolean(
+        (targetDoc?.isOwner || doc?.isOwner) &&
+        currentUser?.id &&
+        String(u.id) === String(currentUser.id)
+      );
+      return !isCreatorId && !isCreatorEmail && !isCreatorName && !isCurrentOwner;
+    });
+  }, [targetDoc, doc, sharesData, employees, currentUser]);
 
   const approverSelectOptions = useMemo(() => {
     const eligibleApprovers = employees.filter(isApproverEligible);

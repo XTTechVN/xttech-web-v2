@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { Upload, FileUp, X, FileCheck } from 'lucide-react';
 import type { DocumentCategory } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '@/stores';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -50,6 +51,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
   defaultGroup = 'personal',
 }) => {
   const queryClient = useQueryClient();
+  const currentUser = useAuthStore((state) => state.user);
   const isRuleMode = defaultGroup === 'rules';
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -310,12 +312,18 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
   }, [departmentsData]);
 
   const employeeOptions = useMemo(() => {
-    return employees.map((emp: any) => ({
-      value: String(emp.id),
-      label: emp.fullName || emp.username || 'Nhân sự',
-      subLabel: emp.email || (emp.code ? `Mã: ${emp.code}` : undefined),
-    }));
-  }, [employees]);
+    return employees
+      .filter((emp: any) => {
+        if (currentUser?.id && String(emp.id) === String(currentUser.id)) return false;
+        if (currentUser?.email && emp.email && emp.email.toLowerCase().trim() === currentUser.email.toLowerCase().trim()) return false;
+        return true;
+      })
+      .map((emp: any) => ({
+        value: String(emp.id),
+        label: emp.fullName || emp.username || 'Nhân sự',
+        subLabel: emp.email || (emp.code ? `Mã: ${emp.code}` : undefined),
+      }));
+  }, [employees, currentUser]);
 
   const shareScopeOptions = useMemo(
     () => [
