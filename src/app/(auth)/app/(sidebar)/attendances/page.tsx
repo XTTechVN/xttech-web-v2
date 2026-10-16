@@ -3,7 +3,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { getFileUrl, showErrorToast } from '@/utils';
@@ -569,17 +568,6 @@ export default function AttendancesPage() {
             <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)} leftIcon={<Plus size={16} />} className="px-3 gap-1.5 shrink-0">
               Thêm chấm công
             </Button>
-
-            <Link href="/app/attendances/adjustments" className="shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<FileEdit size={16} className="text-sky-600" />}
-                className="px-3 gap-1.5 text-slate-700 hover:bg-slate-50 border-slate-200 w-full"
-              >
-                Danh sách khiếu nại
-              </Button>
-            </Link>
           </div>
         </div>
 

@@ -4,7 +4,7 @@
 import React from 'react';
 
 // Next.js
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 // Third-party
 import toast from 'react-hot-toast';
@@ -29,7 +29,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathSegments = path.split('/');
   const lastPath = pathSegments[pathSegments.length - 1];
 
-  const router = useRouter();
   const { navigateTo } = usePageTransition();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [activeMenu, setActiveMenu] = React.useState(lastPath);

@@ -163,7 +163,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
       },
       {
         id: 'suggestions',
-        label: 'Góp ý & Đề xuất',
+        label: 'Sáng kiến & Đề xuất',
         icon: React.createElement(MessageSquarePlus, { size: 18 }),
         href: '/app/suggestions',
         roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
