@@ -86,6 +86,29 @@ export const DocumentsModals: React.FC<DocumentsModalsProps> = ({
         }}
         document={state.selectedDoc}
         onSuccess={onRefetchDocuments}
+        onEdit={(d) => {
+          setters.setDetailDocOpen(false);
+          setters.setEditingDoc(d);
+          setters.setEditDocOpen(true);
+        }}
+        onDelete={(d) => {
+          setters.setDetailDocOpen(false);
+          setters.setDeleteModal({
+            isOpen: true,
+            type: 'document',
+            id: d.id,
+            name: d.title,
+            loading: false,
+          });
+        }}
+        onShare={(d) => {
+          setters.setSharingDoc(d);
+          setters.setShareFolderOpen(true);
+        }}
+        onPreview={(d) => {
+          setters.setSelectedDoc(d);
+          setters.setPreviewDocOpen(true);
+        }}
       />
 
       {/* 5. Document Preview Modal */}

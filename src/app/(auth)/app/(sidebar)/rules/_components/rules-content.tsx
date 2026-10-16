@@ -182,18 +182,6 @@ export function RulesContent() {
       <RulesHeader
         search={search || ''}
         onSearchChange={setSearch}
-        documentType={documentType || ''}
-        onDocumentTypeChange={setDocumentType}
-        documentTypeOptions={documentTypeOptions}
-        status={status || ''}
-        onStatusChange={setStatus}
-        statusOptions={statusOptions}
-        hasActiveFilters={hasActiveFilters}
-        onResetFilters={() => {
-          setSearch('');
-          setDocumentType('');
-          setStatus('');
-        }}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onCreateDocument={() => setCreateDocOpen(true)}
@@ -323,6 +311,29 @@ export function RulesContent() {
         }}
         document={selectedDoc}
         onSuccess={refetchDocuments}
+        onEdit={(d) => {
+          setDetailDocOpen(false);
+          setEditingDoc(d);
+          setEditDocOpen(true);
+        }}
+        onDelete={(d) => {
+          setDetailDocOpen(false);
+          setDeleteModal({
+            isOpen: true,
+            type: 'document',
+            id: d.id,
+            name: d.title,
+            loading: false,
+          });
+        }}
+        onShare={(d) => {
+          setSharingDoc(d);
+          setShareFolderOpen(true);
+        }}
+        onPreview={(d) => {
+          setSelectedDoc(d);
+          setPreviewDocOpen(true);
+        }}
       />
 
       {/* 4. Document Preview Modal */}

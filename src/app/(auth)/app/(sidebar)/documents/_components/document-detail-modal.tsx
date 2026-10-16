@@ -21,6 +21,9 @@ import {
   Megaphone,
   Send,
   UploadCloud,
+  Edit3,
+  Trash2,
+  Share2,
 } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, APPROVAL_STATUS_MAP, SHARE_SCOPE_MAP } from '@/types';
@@ -40,9 +43,22 @@ interface DocumentDetailModalProps {
   onClose: () => void;
   document: DocumentItem | null;
   onSuccess?: () => void;
+  onEdit?: (doc: DocumentItem) => void;
+  onDelete?: (doc: DocumentItem) => void;
+  onShare?: (doc: DocumentItem) => void;
+  onPreview?: (doc: DocumentItem) => void;
 }
 
-export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen, onClose, document: doc, onSuccess }) => {
+export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
+  isOpen,
+  onClose,
+  document: doc,
+  onSuccess,
+  onEdit,
+  onDelete,
+  onShare,
+  onPreview,
+}) => {
   const queryClient = useQueryClient();
   const [reviewLoading, setReviewLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -375,15 +391,15 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
         onClose={onClose}
         size="lg"
         title={
-          <div className="flex items-center gap-2 text-slate-800">
-            <FileText className="text-primary" size={20} />
-            <span className="truncate">Chi tiết văn bản / tài liệu</span>
+          <div className="flex items-center gap-2 text-slate-800 min-w-0">
+            <FileText className="text-primary shrink-0" size={20} />
+            <span className="truncate">{doc?.title ? `Chi tiết: ${doc.title}` : 'Chi tiết văn bản / tài liệu'}</span>
           </div>
         }
         footer={
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
-            {/* Workflow Action Buttons (Left) */}
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-start flex-wrap">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 w-full">
+            {/* Cụm nút Quy trình & Sửa / Xóa (Trái) */}
+            <div className="flex items-center gap-2 flex-wrap justify-start">
               {/* 1. Trình duyệt tài liệu: khi ở trạng thái draft hoặc rejected */}
               {isDraftOrRejected && (isCreator || canManageDoc) && (
                 <Button
@@ -392,8 +408,8 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
                   onClick={handleOpenSubmitModal}
                   loading={submitLoading}
                   disabled={reviewLoading || submitLoading || publishLoading}
-                  leftIcon={<Send size={14} />}
-                  className="bg-primary hover:bg-primary/90 text-white font-medium text-xs cursor-pointer"
+                  leftIcon={<Send size={13} />}
+                  className="bg-primary hover:bg-primary/90 text-white font-medium text-xs cursor-pointer h-8.5"
                 >
                   Trình duyệt tài liệu
                 </Button>
@@ -401,13 +417,13 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
 
               {/* 2. Phê duyệt hoặc Từ chối: chỉ khi ở trạng thái pending và là người được chỉ định hoặc Admin/HR */}
               {approvalStatus === 'pending' && (isAssignedApprover || canManageDoc) && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <Button
                     variant="danger"
                     size="sm"
                     onClick={() => setIsRejectModalOpen(true)}
                     disabled={reviewLoading || submitLoading || publishLoading}
-                    className="px-4 rounded-lg bg-[#ff245a] hover:bg-[#e61a4d] text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer"
+                    className="px-3 rounded-lg bg-[#ff245a] hover:bg-[#e61a4d] text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer h-8.5"
                   >
                     Từ chối
                   </Button>
@@ -417,7 +433,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
                     onClick={() => handleReview('approved')}
                     loading={reviewLoading}
                     disabled={reviewLoading || submitLoading || publishLoading}
-                    className="px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer"
+                    className="px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer h-8.5"
                   >
                     Duyệt đề xuất
                   </Button>
@@ -432,101 +448,82 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
                   onClick={handlePublish}
                   loading={publishLoading}
                   disabled={reviewLoading || submitLoading || publishLoading}
-                  leftIcon={<Megaphone size={14} className="text-teal-600" />}
-                  className="border-teal-300 bg-teal-50/60 hover:bg-teal-50 text-teal-800 text-xs"
+                  leftIcon={<Megaphone size={13} className="text-teal-600" />}
+                  className="border-teal-300 bg-teal-50/60 hover:bg-teal-50 text-teal-800 text-xs h-8.5"
                 >
                   Ban hành văn bản
                 </Button>
               )}
+
+              {/* Nút Sửa ở footer */}
+              {onEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(doc)}
+                  leftIcon={<Edit3 size={13} className="text-primary" />}
+                  className="h-8.5 px-3 text-xs text-primary border-primary/30 hover:bg-primary/5 font-semibold"
+                >
+                  Sửa
+                </Button>
+              )}
+
+              {/* Nút Xóa ở footer */}
+              {onDelete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDelete(doc)}
+                  leftIcon={<Trash2 size={13} className="text-rose-600" />}
+                  className="h-8.5 px-3 text-xs text-rose-600 border-rose-200 hover:bg-rose-50 font-semibold"
+                >
+                  Xóa
+                </Button>
+              )}
             </div>
 
-            {/* Standard Download, Upload Version & Close (Right) */}
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            {/* Cụm nút Tải phiên bản, Tải tệp tin & Đóng (Phải) */}
+            <div className="flex items-center gap-2 flex-wrap justify-end">
               {(isCreator || canManageDoc) && (
                 <Button
                   variant="primary"
                   size="sm"
                   onClick={() => setIsUploadVersionOpen(true)}
-                  leftIcon={<UploadCloud size={14} className="text-white" />}
+                  leftIcon={<UploadCloud size={13} className="text-white" />}
                   disabled={reviewLoading || submitLoading || publishLoading}
-                  className="text-xs text-white"
+                  className="text-xs text-white h-8.5 px-2.5 sm:px-3 whitespace-nowrap shrink-0"
                 >
                   Tải phiên bản mới
                 </Button>
               )}
-              <Button variant="ghost" onClick={onClose} disabled={reviewLoading || submitLoading || publishLoading}>
-                Đóng
-              </Button>
               {downloadUrl && (
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={handleDownload}
-                  leftIcon={<Download size={15} />}
+                  leftIcon={<Download size={13} />}
                   disabled={reviewLoading || submitLoading || publishLoading}
+                  className="text-xs h-8.5 px-2.5 sm:px-3 whitespace-nowrap shrink-0"
                 >
                   Tải tệp tin
                 </Button>
               )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                disabled={reviewLoading || submitLoading || publishLoading}
+                className="text-xs h-8.5 px-3 shrink-0"
+              >
+                Đóng
+              </Button>
             </div>
           </div>
         }
       >
         <div className="space-y-4 text-xs">
-          {/* Trích yếu nội dung */}
-          {doc.summary && (
-            <div className="space-y-1">
-              <span className="font-semibold text-slate-700">Trích yếu nội dung:</span>
-              <p className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 leading-relaxed">{doc.summary}</p>
-            </div>
-          )}
-
-          {/* Thông tin hành chính & phê duyệt */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-lg bg-white border border-slate-200/80">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-slate-600">
-                <Folder size={14} className="text-slate-500 shrink-0" />
-                <span>Thư mục:</span>
-                <span className="font-semibold text-slate-800">{doc.category?.name || 'Thư mục gốc'}</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-slate-600">
-                <User size={14} className="text-slate-500 shrink-0" />
-                <span>Người tạo:</span>
-                <span className="font-semibold text-slate-800">{doc.createdBy?.fullName || 'CBNV'}</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-slate-600">
-                <Clock size={14} className="text-slate-500 shrink-0" />
-                <span>Ngày tạo:</span>
-                <span className="font-semibold text-slate-800">{dayjs(doc.createdAt).format('HH:mm - DD/MM/YYYY')}</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-slate-600">
-                <ShieldCheck size={14} className="text-slate-500 shrink-0" />
-                <span>Trạng thái duyệt:</span>
-                <span className={`font-semibold px-2 py-0.5 rounded text-[11px] ${approvalInfo.badgeClass}`}>{approvalInfo.label}</span>
-              </div>
-
-              {approverDisplayName && (
-                <div className="flex items-center gap-2 text-slate-600">
-                  <User size={14} className="text-slate-500 shrink-0" />
-                  <span>Người duyệt:</span>
-                  <span className="font-semibold text-slate-800">{approverDisplayName}</span>
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 text-slate-600">
-                <Calendar size={14} className="text-slate-500 shrink-0" />
-                <span>Phạm vi chia sẻ:</span>
-                <span className="font-semibold text-slate-800">{SHARE_SCOPE_MAP[doc.shareScope] || doc.shareScope || 'Cá nhân'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Đối tượng nhận văn bản */}
-          <div className="space-y-2.5 p-3.5 rounded-lg bg-white border border-slate-200/80">
+          {/* Ảnh 2: Đối tượng nhận văn bản (Đưa lên đầu) */}
+          <div className="space-y-2.5 p-3.5 rounded-lg bg-white border border-slate-200/80 shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
                 <Users size={15} className="text-primary" />
@@ -631,6 +628,59 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
             )}
           </div>
 
+          {/* Thông tin hành chính & phê duyệt */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-lg bg-white border border-slate-200/80">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-slate-600">
+                <Folder size={14} className="text-slate-500 shrink-0" />
+                <span>Thư mục:</span>
+                <span className="font-semibold text-slate-800">{doc.category?.name || 'Thư mục gốc'}</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600">
+                <User size={14} className="text-slate-500 shrink-0" />
+                <span>Người tạo:</span>
+                <span className="font-semibold text-slate-800">{doc.createdBy?.fullName || 'CBNV'}</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600">
+                <Clock size={14} className="text-slate-500 shrink-0" />
+                <span>Ngày tạo:</span>
+                <span className="font-semibold text-slate-800">{dayjs(doc.createdAt).format('HH:mm - DD/MM/YYYY')}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-slate-600">
+                <ShieldCheck size={14} className="text-slate-500 shrink-0" />
+                <span>Trạng thái duyệt:</span>
+                <span className={`font-semibold px-2 py-0.5 rounded text-[11px] ${approvalInfo.badgeClass}`}>{approvalInfo.label}</span>
+              </div>
+
+              {approverDisplayName && (
+                <div className="flex items-center gap-2 text-slate-600">
+                  <User size={14} className="text-slate-500 shrink-0" />
+                  <span>Người duyệt:</span>
+                  <span className="font-semibold text-slate-800">{approverDisplayName}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 text-slate-600">
+                <Calendar size={14} className="text-slate-500 shrink-0" />
+                <span>Phạm vi chia sẻ:</span>
+                <span className="font-semibold text-slate-800">{SHARE_SCOPE_MAP[doc.shareScope] || doc.shareScope || 'Cá nhân'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Trích yếu nội dung */}
+          {doc.summary && (
+            <div className="space-y-1">
+              <span className="font-semibold text-slate-700">Trích yếu nội dung:</span>
+              <p className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 leading-relaxed">{doc.summary}</p>
+            </div>
+          )}
+
           {/* Hiệu lực nếu có */}
           {(doc.effectiveDate || doc.expirationDate) && (
             <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">
@@ -670,6 +720,80 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ isOpen
               </div>
             </div>
           )}
+
+          {/* Ảnh đầu tiên: Thẻ thao tác & Thông tin văn bản (Để ở dưới cùng) */}
+          <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-50 border border-slate-200 shadow-2xs space-y-2.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-md border ${docTypeInfo.badgeClass}`}>
+                  {docTypeInfo.label}
+                </span>
+                {doc.code && (
+                  <span className="text-[10px] sm:text-[11px] font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-2xs">
+                    Số: {doc.code}
+                  </span>
+                )}
+                <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded border ${statusInfo.badgeClass}`}>
+                  {statusInfo.label}
+                </span>
+              </div>
+
+              {/* Các nút hành động: Xem trước, Chia sẻ, Sửa, Xóa */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {onPreview && (
+                  <button
+                    type="button"
+                    onClick={() => onPreview(doc)}
+                    className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors shadow-2xs cursor-pointer"
+                    title="Xem trước tài liệu"
+                  >
+                    <Eye size={13} className="text-primary" />
+                    <span className="hidden sm:inline">Xem trước</span>
+                  </button>
+                )}
+
+                {onShare && (
+                  <button
+                    type="button"
+                    onClick={() => onShare(doc)}
+                    className="inline-flex items-center justify-center w-7.5 h-7.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-2xs cursor-pointer"
+                    title="Chia sẻ văn bản"
+                  >
+                    <Share2 size={13} />
+                  </button>
+                )}
+
+                {onEdit && (
+                  <button
+                    type="button"
+                    onClick={() => onEdit(doc)}
+                    className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
+                    title="Chỉnh sửa văn bản"
+                  >
+                    <Edit3 size={13} />
+                    <span>Sửa</span>
+                  </button>
+                )}
+
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={() => onDelete(doc)}
+                    className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
+                    title="Xóa văn bản"
+                  >
+                    <Trash2 size={13} />
+                    <span>Xóa</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Tiêu đề văn bản */}
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
+              {doc.title}
+            </h3>
+          </div>
         </div>
       </Modal>
 

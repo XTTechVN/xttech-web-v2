@@ -32,9 +32,12 @@ interface RuleListItemProps {
   doc: DocumentItem;
   isSelected: boolean;
   onSelect: (id: number) => void;
+  onView: (doc: DocumentItem) => void;
+  onEdit?: (doc: DocumentItem) => void;
+  onDelete?: (doc: DocumentItem) => void;
 }
 
-const RuleListItem = React.memo<RuleListItemProps>(({ doc, isSelected, onSelect }) => {
+const RuleListItem = React.memo<RuleListItemProps>(({ doc, isSelected, onSelect, onView, onEdit, onDelete }) => {
   const itemType = DOCUMENT_TYPE_MAP[doc.documentType] || {
     label: doc.documentType || 'Văn bản',
     badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -48,15 +51,24 @@ const RuleListItem = React.memo<RuleListItemProps>(({ doc, isSelected, onSelect 
 
   const authorName = doc.approver?.fullName || doc.createdBy?.fullName || 'Ban Giám Đốc';
 
+  const handleClick = useCallback(() => {
+    // Trên mobile (< 1024px), ấn vào card mở thẳng modal chi tiết
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      onView(doc);
+    } else {
+      onSelect(doc.id);
+    }
+  }, [doc, onSelect, onView]);
+
   return (
     <div
       role="button"
       tabIndex={0}
-      onClick={() => onSelect(doc.id)}
+      onClick={handleClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onSelect(doc.id);
+          handleClick();
         }
       }}
       className={`group p-3 rounded-lg cursor-pointer transition-all border outline-none select-none ${
@@ -96,21 +108,54 @@ const RuleListItem = React.memo<RuleListItemProps>(({ doc, isSelected, onSelect 
         {doc.title}
       </h4>
 
-      {/* Dòng 3: Người ký & Mũi tên điều hướng */}
-      <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100/80">
-        <span className="truncate max-w-[200px] flex items-center gap-1">
+      {/* Dòng 3: Người ký & Các nút thao tác nhanh (Sửa, Xóa, Chi tiết) */}
+      <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100/80 gap-2">
+        <span className="truncate min-w-0 flex items-center gap-1">
           <User size={12} className="text-slate-400 shrink-0" />
-          <span>{authorName}</span>
+          <span className="truncate">{authorName}</span>
         </span>
 
-        <ChevronRight
-          size={14}
-          className={`transition-transform shrink-0 ${
-            isSelected
-              ? 'text-primary translate-x-0.5'
-              : 'text-slate-300 group-hover:text-slate-400'
-          }`}
-        />
+        <div className="flex items-center gap-1 shrink-0">
+          {onEdit && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(doc);
+              }}
+              className="p-1 rounded hover:bg-primary/10 text-slate-400 hover:text-primary transition-colors cursor-pointer"
+              title="Chỉnh sửa văn bản"
+            >
+              <Edit3 size={13} />
+            </button>
+          )}
+
+          {onDelete && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(doc);
+              }}
+              className="p-1 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+              title="Xóa văn bản"
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
+
+          <span className="flex items-center gap-0.5 text-primary text-[10px] font-medium ml-1">
+            <span className="lg:hidden">Chi tiết</span>
+            <ChevronRight
+              size={13}
+              className={`transition-transform shrink-0 ${
+                isSelected
+                  ? 'text-primary translate-x-0.5'
+                  : 'text-slate-300 group-hover:text-slate-400'
+              }`}
+            />
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -307,14 +352,6 @@ const RuleDetailReader: React.FC<RuleDetailReaderProps> = ({
           </div>
 
           <div>
-            <span className="text-slate-400 block mb-0.5">Đơn vị ban hành:</span>
-            <div className="flex items-center gap-1.5 font-semibold text-slate-800">
-              <Building2 size={13} className="text-slate-500" />
-              <span>{activeDoc.createdBy?.department?.name || 'Văn phòng Công ty'}</span>
-            </div>
-          </div>
-
-          <div>
             <span className="text-slate-400 block mb-0.5">Ngày có hiệu lực:</span>
             <div className="flex items-center gap-1.5 font-semibold text-slate-800">
               <CalendarDays size={13} className="text-slate-500" />
@@ -450,11 +487,11 @@ export const RulesSplitView: React.FC<RulesSplitViewProps> = ({
   if (!documents || documents.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[calc(100vh-230px)] min-h-[550px] pb-4">
+    <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 h-auto lg:h-[calc(100vh-230px)] lg:min-h-[550px] pb-4">
       {/* ========================================================
-          CỘT TRÁI (3/12): DANH SÁCH VĂN BẢN ĐIỀU HÀNH / THÔNG BÁO
+          CỘT TRÁI (3/12 TRÊN DESKTOP, FULL WIDTH TRÊN MOBILE)
           ======================================================== */}
-      <div className="col-span-1 lg:col-span-3 flex flex-col bg-white border border-slate-200/90 rounded-lg shadow-2xs overflow-hidden min-h-0 h-full">
+      <div className="w-full lg:col-span-3 flex flex-col bg-white border border-slate-200/90 rounded-lg shadow-2xs overflow-hidden min-h-0 h-auto lg:h-full">
         {/* Header danh sách bên trái */}
         <div className="p-3.5 border-b border-slate-200/80 bg-slate-50/70 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
@@ -466,23 +503,26 @@ export const RulesSplitView: React.FC<RulesSplitViewProps> = ({
           </span>
         </div>
 
-        {/* Danh sách cuộn độc lập (Mỗi phần tử được memo hóa) */}
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1.5 custom-scrollbar">
+        {/* Danh sách cuộn độc lập trên desktop, tự nhiên trên mobile */}
+        <div className="flex-1 lg:overflow-y-auto divide-y divide-slate-100 p-2 space-y-1.5 custom-scrollbar">
           {documents.map((doc) => (
             <RuleListItem
               key={doc.id}
               doc={doc}
               isSelected={activeDoc?.id === doc.id}
               onSelect={handleSelectDoc}
+              onView={onView}
+              onEdit={onEdit}
+              onDelete={onDelete}
             />
           ))}
         </div>
       </div>
 
       {/* ========================================================
-          CỘT PHẢI (9/12): TRÌNH ĐỌC NỘI DUNG CÔNG VĂN / VĂN BẢN
+          CỘT PHẢI (9/12): CHỈ HIỂN THỊ TRÊN DESKTOP (lg:flex), ẨN TRÊN MOBILE
           ======================================================== */}
-      <div className="col-span-1 lg:col-span-9 flex flex-col bg-white border border-slate-200/90 rounded-lg shadow-2xs overflow-hidden min-h-0 h-full">
+      <div className="hidden lg:flex lg:col-span-9 flex-col bg-white border border-slate-200/90 rounded-lg shadow-2xs overflow-hidden min-h-0 h-full">
         {activeDoc ? (
           <RuleDetailReader
             activeDoc={activeDoc}
