@@ -340,31 +340,48 @@ export const getDocumentShares = async (documentId: number): Promise<FolderShare
   try {
     const docRes = await api.get(`/api/v1/documents/${documentId}`);
     const docData = docRes.data?.data ?? docRes.data;
+    const creatorId = String(docData?.createdById || docData?.createdBy?.id || '');
+    const creatorEmail = (docData?.createdBy?.email || '').toLowerCase().trim();
+    const creatorName = (docData?.createdBy?.fullName || '').toLowerCase().trim();
+
     if (Array.isArray(docData?.recipients)) {
-      return docData.recipients.map((r: any) => {
-        const u = r.user || {};
-        const name = r.fullName || r.full_name || r.userName || u.fullName || u.username || '';
-        const code = r.code || r.identifyCode || r.identify_code || u.code || u.identifyCode || '';
-        const email = r.email || u.email || '';
-        const avatar = r.avatar || u.avatar || null;
-        return {
-          id: r.id || r.userId || r.user_id,
-          categoryId: documentId,
-          userId: r.userId || r.user_id || u.id,
-          userName: name,
-          code,
-          user: {
-            id: r.userId || r.user_id || u.id,
-            fullName: name,
-            email,
-            avatar,
-            identifyCode: code,
-          },
-          departmentId: r.departmentId || r.department_id,
-          departmentName: r.departmentName || r.department_name,
-          permission: r.permission || 'view',
-        };
-      });
+      return docData.recipients
+        .filter((r: any) => {
+          const u = r.user || {};
+          const uid = String(r.userId || r.user_id || u.id || '');
+          const uemail = (r.email || u.email || '').toLowerCase().trim();
+          const uname = (r.fullName || r.full_name || r.userName || u.fullName || u.username || '').toLowerCase().trim();
+
+          const isCreatorId = Boolean(creatorId && uid && uid === creatorId);
+          const isCreatorEmail = Boolean(creatorEmail && uemail && uemail === creatorEmail);
+          const isCreatorName = Boolean(creatorName && uname && uname === creatorName);
+
+          return !isCreatorId && !isCreatorEmail && !isCreatorName;
+        })
+        .map((r: any) => {
+          const u = r.user || {};
+          const name = r.fullName || r.full_name || r.userName || u.fullName || u.username || '';
+          const code = r.code || r.identifyCode || r.identify_code || u.code || u.identifyCode || '';
+          const email = r.email || u.email || '';
+          const avatar = r.avatar || u.avatar || null;
+          return {
+            id: r.id || r.userId || r.user_id,
+            categoryId: documentId,
+            userId: r.userId || r.user_id || u.id,
+            userName: name,
+            code,
+            user: {
+              id: r.userId || r.user_id || u.id,
+              fullName: name,
+              email,
+              avatar,
+              identifyCode: code,
+            },
+            departmentId: r.departmentId || r.department_id,
+            departmentName: r.departmentName || r.department_name,
+            permission: r.permission || 'view',
+          };
+        });
     }
     return [];
   } catch (error: any) {

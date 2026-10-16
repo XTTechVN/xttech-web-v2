@@ -127,28 +127,73 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onCl
     return map;
   }, [departments]);
 
+  const ownerId = String(
+    document?.createdById ||
+      (document as any)?.createdBy?.id ||
+      (document as any)?.creatorId ||
+      (folder as any)?.createdById ||
+      (folder as any)?.createdBy?.id ||
+      currentUser?.id ||
+      '',
+  );
+  const ownerEmail = (
+    (document as any)?.createdBy?.email ||
+    (folder as any)?.createdBy?.email ||
+    currentUser?.email ||
+    ''
+  ).toLowerCase().trim();
+  const ownerName =
+    (document as any)?.createdBy?.fullName ||
+    (folder as any)?.createdBy?.fullName ||
+    (folder as any)?.createdBy?.name ||
+    currentUser?.fullName ||
+    'Chủ sở hữu';
+
+  // Lọc bỏ Chủ sở hữu khỏi danh sách những người được chia sẻ
+  const filteredShares = useMemo(() => {
+    return shares.filter((s) => {
+      const uId = String(s.userId || (s.user as any)?.id || '');
+      const uEmail = (s.user?.email || '').toLowerCase().trim();
+      const uName = (s.userName || s.user?.fullName || '').toLowerCase().trim();
+
+      const isOwnerId = Boolean(ownerId && uId && uId === ownerId);
+      const isOwnerEmail = Boolean(ownerEmail && uEmail && uEmail === ownerEmail);
+      const isOwnerName = Boolean(ownerName && uName && uName === ownerName.toLowerCase().trim());
+      const isCurrent = Boolean(currentUser?.id && uId && uId === String(currentUser.id));
+
+      return !isOwnerId && !isOwnerEmail && !isOwnerName && !isCurrent;
+    });
+  }, [shares, ownerId, ownerEmail, ownerName, currentUser]);
+
   // Extract existing shared IDs
   const existingUserIds = useMemo(() => {
-    return shares.filter((s) => Boolean(s.userId)).map((s) => String(s.userId));
-  }, [shares]);
+    return filteredShares.filter((s) => Boolean(s.userId)).map((s) => String(s.userId));
+  }, [filteredShares]);
 
   const existingDepartmentIds = useMemo(() => {
-    return shares.filter((s) => Boolean(s.departmentId)).map((s) => String(s.departmentId));
-  }, [shares]);
+    return filteredShares.filter((s) => Boolean(s.departmentId)).map((s) => String(s.departmentId));
+  }, [filteredShares]);
 
   // Formatted options for MultiSelect
   const employeeOptions = useMemo(() => {
     const existingSet = new Set(existingUserIds);
-    return employees.map((emp: any) => {
-      const isShared = existingSet.has(String(emp.id));
-      const baseSub = emp.email || (emp.code ? `Mã: ${emp.code}` : '');
-      return {
-        value: String(emp.id),
-        label: emp.fullName || emp.username || 'Nhân sự',
-        subLabel: isShared ? `Đã chia sẻ${baseSub ? ` • ${baseSub}` : ''}` : baseSub,
-      };
-    });
-  }, [employees, existingUserIds]);
+    return employees
+      .filter((emp: any) => {
+        if (ownerId && String(emp.id) === ownerId) return false;
+        if (currentUser?.id && String(emp.id) === String(currentUser.id)) return false;
+        if (ownerEmail && emp.email && emp.email.toLowerCase().trim() === ownerEmail) return false;
+        return true;
+      })
+      .map((emp: any) => {
+        const isShared = existingSet.has(String(emp.id));
+        const baseSub = emp.email || (emp.code ? `Mã: ${emp.code}` : '');
+        return {
+          value: String(emp.id),
+          label: emp.fullName || emp.username || 'Nhân sự',
+          subLabel: isShared ? `Đã chia sẻ${baseSub ? ` • ${baseSub}` : ''}` : baseSub,
+        };
+      });
+  }, [employees, existingUserIds, ownerId, ownerEmail, currentUser]);
 
   const departmentOptions = useMemo(() => {
     const existingSet = new Set(existingDepartmentIds);
@@ -521,7 +566,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onCl
           <div className="pt-4 border-t border-gray-100 space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Những người có quyền truy cập</h4>
-              <span className="text-xs text-gray-400 font-medium">{shares.length + 1} đối tượng</span>
+              <span className="text-xs text-gray-400 font-medium">{filteredShares.length + 1} đối tượng</span>
             </div>
 
             <div className="divide-y divide-gray-100 max-h-52 overflow-y-auto pr-1">
@@ -529,18 +574,15 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onCl
               <div className="py-2 flex items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-7 h-7 rounded-full bg-gray-800 text-white flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                    {currentUser?.fullName?.charAt(0) || 'T'}
+                    {ownerName.charAt(0) || 'C'}
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-semibold text-gray-900 truncate">{currentUser?.fullName || 'Tôi'} (Bạn)</span>
-                      {(currentUser?.identifyCode || (currentUser as any)?.code) && (
-                        <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 text-[10px] rounded font-mono font-medium border border-slate-200 shrink-0">
-                          {currentUser?.identifyCode || (currentUser as any)?.code}
-                        </span>
-                      )}
+                      <span className="font-semibold text-gray-900 truncate">
+                        {ownerName} {ownerId && currentUser?.id && ownerId === String(currentUser.id) ? '(Bạn)' : ''}
+                      </span>
                     </div>
-                    <span className="text-[11px] text-gray-400 truncate">{currentUser?.email || 'Chủ sở hữu'}</span>
+                    <span className="text-[11px] text-gray-400 truncate">{ownerEmail || 'Chủ sở hữu'}</span>
                   </div>
                 </div>
 
@@ -553,10 +595,10 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onCl
               {/* Shared List */}
               {isLoadingShares ? (
                 <div className="py-4 text-center text-xs text-gray-400">Đang tải danh sách...</div>
-              ) : shares.length === 0 ? (
+              ) : filteredShares.length === 0 ? (
                 <div className="py-4 text-center text-xs text-gray-400 italic">Chưa chia sẻ {isDoc ? 'tài liệu' : 'thư mục'} này cho ai khác.</div>
               ) : (
-                shares.map((share) => {
+                filteredShares.map((share) => {
                   const isAllSystem = Boolean(
                     (share as any).isAll ||
                     (share as any).isSystem ||
