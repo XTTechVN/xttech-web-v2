@@ -26,6 +26,7 @@ import {
 import type { DocumentItem } from '@/types';
 import { getFileUrl } from '@/utils/string';
 import api from '@/utils/api';
+import { markDocumentAsRead } from '@/actions/document';
 import { formatBytes, getFileVisualInfo, getFileExtension } from '../_utils/doc-helpers';
 
 // Cấu hình Worker cho react-pdf
@@ -704,6 +705,12 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({ isOp
       setFileBuffer(null);
       setBufferError(null);
       return;
+    }
+
+    if (doc?.id) {
+      markDocumentAsRead(doc.id).catch((err) => {
+        console.debug('markDocumentAsRead in preview:', err?.message);
+      });
     }
 
     let isMounted = true;

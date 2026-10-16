@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Modal, Button, Textarea, Select } from '@/components';
 import { RejectDocumentModal } from './reject-document-modal';
 import { UploadVersionModal } from './upload-version-modal';
@@ -30,7 +30,7 @@ import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, APPROVAL_STATUS_MAP, SHARE_SCOP
 import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '../_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import dayjs from 'dayjs';
-import { reviewDocument, submitDocument, publishDocument, updateDocument, getDocumentById } from '@/actions/document';
+import { reviewDocument, submitDocument, publishDocument, updateDocument, getDocumentById, markDocumentAsRead } from '@/actions/document';
 import { getEmployees } from '@/actions/employee';
 import { getDepartments } from '@/actions/department';
 import { useAuthStore } from '@/stores';
@@ -79,6 +79,20 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   });
 
   const targetDoc = fullDoc || doc;
+
+  // Tự động gọi API đánh dấu đã đọc khi người dùng mở xem văn bản
+  useEffect(() => {
+    if (isOpen && doc?.id) {
+      markDocumentAsRead(doc.id)
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['documents'] });
+          queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+        })
+        .catch((err) => {
+          console.debug('markDocumentAsRead status:', err?.message);
+        });
+    }
+  }, [isOpen, doc?.id, queryClient]);
 
   const sharesData = useMemo(() => {
     if (Array.isArray(targetDoc?.recipients)) {
