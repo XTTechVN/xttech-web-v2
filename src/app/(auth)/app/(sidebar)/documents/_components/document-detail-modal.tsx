@@ -454,32 +454,6 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                   Ban hành văn bản
                 </Button>
               )}
-
-              {/* Nút Sửa ở footer */}
-              {onEdit && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(doc)}
-                  leftIcon={<Edit3 size={13} className="text-primary" />}
-                  className="h-8.5 px-3 text-xs text-primary border-primary/30 hover:bg-primary/5 font-semibold"
-                >
-                  Sửa
-                </Button>
-              )}
-
-              {/* Nút Xóa ở footer */}
-              {onDelete && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onDelete(doc)}
-                  leftIcon={<Trash2 size={13} className="text-rose-600" />}
-                  className="h-8.5 px-3 text-xs text-rose-600 border-rose-200 hover:bg-rose-50 font-semibold"
-                >
-                  Xóa
-                </Button>
-              )}
             </div>
 
             {/* Cụm nút Tải phiên bản, Tải tệp tin & Đóng (Phải) */}
@@ -522,7 +496,78 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         }
       >
         <div className="space-y-4 text-xs">
-          {/* Ảnh 2: Đối tượng nhận văn bản (Đưa lên đầu) */}
+          {/* Header Banner: Tag phân loại, Số hiệu, Trạng thái, Cụm nút Thao tác & Tiêu đề văn bản (Lên đầu) */}
+          <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-50 border border-slate-200 shadow-2xs space-y-2.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-md border ${docTypeInfo.badgeClass}`}>
+                  {docTypeInfo.label}
+                </span>
+                {doc.code && (
+                  <span className="text-[10px] sm:text-[11px] font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-2xs">
+                    Số: {doc.code}
+                  </span>
+                )}
+                <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded border ${statusInfo.badgeClass}`}>
+                  {statusInfo.label}
+                </span>
+              </div>
+
+              {/* Các nút hành động: Xem trước, Chia sẻ, Sửa, Xóa (Chỉ hiển thị icon) */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {onPreview && (
+                  <button
+                    type="button"
+                    onClick={() => onPreview(doc)}
+                    className="inline-flex items-center justify-center w-7.5 h-7.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-2xs cursor-pointer"
+                    title="Xem trước tài liệu"
+                  >
+                    <Eye size={13} className="text-primary" />
+                  </button>
+                )}
+
+                {onShare && (
+                  <button
+                    type="button"
+                    onClick={() => onShare(doc)}
+                    className="inline-flex items-center justify-center w-7.5 h-7.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-2xs cursor-pointer"
+                    title="Chia sẻ văn bản"
+                  >
+                    <Share2 size={13} />
+                  </button>
+                )}
+
+                {onEdit && (
+                  <button
+                    type="button"
+                    onClick={() => onEdit(doc)}
+                    className="inline-flex items-center justify-center w-7.5 h-7.5 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary transition-colors shadow-2xs cursor-pointer"
+                    title="Chỉnh sửa văn bản"
+                  >
+                    <Edit3 size={13} />
+                  </button>
+                )}
+
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={() => onDelete(doc)}
+                    className="inline-flex items-center justify-center w-7.5 h-7.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors shadow-2xs cursor-pointer"
+                    title="Xóa văn bản"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Tiêu đề văn bản */}
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
+              {doc.title}
+            </h3>
+          </div>
+
+          {/* Đối tượng nhận văn bản */}
           <div className="space-y-2.5 p-3.5 rounded-lg bg-white border border-slate-200/80 shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
@@ -720,80 +765,6 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
             </div>
           )}
-
-          {/* Ảnh đầu tiên: Thẻ thao tác & Thông tin văn bản (Để ở dưới cùng) */}
-          <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-50 border border-slate-200 shadow-2xs space-y-2.5">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-md border ${docTypeInfo.badgeClass}`}>
-                  {docTypeInfo.label}
-                </span>
-                {doc.code && (
-                  <span className="text-[10px] sm:text-[11px] font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-2xs">
-                    Số: {doc.code}
-                  </span>
-                )}
-                <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded border ${statusInfo.badgeClass}`}>
-                  {statusInfo.label}
-                </span>
-              </div>
-
-              {/* Các nút hành động: Xem trước, Chia sẻ, Sửa, Xóa */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {onPreview && (
-                  <button
-                    type="button"
-                    onClick={() => onPreview(doc)}
-                    className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors shadow-2xs cursor-pointer"
-                    title="Xem trước tài liệu"
-                  >
-                    <Eye size={13} className="text-primary" />
-                    <span className="hidden sm:inline">Xem trước</span>
-                  </button>
-                )}
-
-                {onShare && (
-                  <button
-                    type="button"
-                    onClick={() => onShare(doc)}
-                    className="inline-flex items-center justify-center w-7.5 h-7.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-2xs cursor-pointer"
-                    title="Chia sẻ văn bản"
-                  >
-                    <Share2 size={13} />
-                  </button>
-                )}
-
-                {onEdit && (
-                  <button
-                    type="button"
-                    onClick={() => onEdit(doc)}
-                    className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
-                    title="Chỉnh sửa văn bản"
-                  >
-                    <Edit3 size={13} />
-                    <span>Sửa</span>
-                  </button>
-                )}
-
-                {onDelete && (
-                  <button
-                    type="button"
-                    onClick={() => onDelete(doc)}
-                    className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
-                    title="Xóa văn bản"
-                  >
-                    <Trash2 size={13} />
-                    <span>Xóa</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Tiêu đề văn bản */}
-            <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
-              {doc.title}
-            </h3>
-          </div>
         </div>
       </Modal>
 

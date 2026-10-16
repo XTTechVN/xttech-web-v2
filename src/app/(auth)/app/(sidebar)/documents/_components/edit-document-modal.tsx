@@ -414,6 +414,20 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
           </div>
         </div>
 
+        {/* Trích yếu tóm tắt nội dung */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">
+            Trích yếu nội dung (Tùy chọn)
+          </label>
+          <textarea
+            rows={2}
+            className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none shadow-2xs"
+            placeholder="Tóm tắt ngắn gọn mục đích, nội dung chính của văn bản..."
+            value={summaryVal || ''}
+            onChange={(e) => setValue('summary', e.target.value)}
+          />
+        </div>
+
         {/* Document Type & Folder Destination */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>

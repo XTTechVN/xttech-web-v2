@@ -46,6 +46,14 @@ export interface DocumentRecipient {
   createdAt?: string;
 }
 
+export interface DocumentRecipientsResponse {
+  totalRecipients: number;
+  readCount: number;
+  unreadCount: number;
+  readPercentage: number;
+  recipients: DocumentRecipient[];
+}
+
 export interface DocumentItem {
   id: number;
   code: string;
@@ -73,6 +81,12 @@ export interface DocumentItem {
     fullName: string;
     email?: string;
   } | null;
+  issuingDepartmentId?: number | null;
+  issuingDepartment?: {
+    id: number;
+    name: string;
+    code?: string;
+  } | null;
   createdById?: string;
   createdBy?: {
     id: string;
@@ -86,6 +100,11 @@ export interface DocumentItem {
   approvalNote?: string | null;
   approvedAt?: string | null;
   supersededById?: number | null;
+  supersededBy?: {
+    id: number;
+    code?: string;
+    title?: string;
+  } | null;
   isRead?: boolean | null;
   readAt?: string | null;
   createdAt: string;

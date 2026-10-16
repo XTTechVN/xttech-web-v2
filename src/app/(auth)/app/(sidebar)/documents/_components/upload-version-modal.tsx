@@ -20,7 +20,7 @@ interface UploadVersionModalProps {
 }
 
 const versionSchema = z.object({
-  versionNumber: z.string().optional(),
+  versionNumber: z.string().min(1, { message: 'Vui lòng nhập số hiệu phiên bản mới (ví dụ: 1.1, 2.0)' }),
   changeSummary: z.string().optional(),
 });
 
@@ -177,10 +177,12 @@ export const UploadVersionModal: React.FC<UploadVersionModalProps> = ({ isOpen, 
           {fileError && <p className="text-[11px] text-rose-500">{fileError}</p>}
         </div>
 
-        {/* Số phiên bản (Tùy chọn) */}
+        {/* Số phiên bản (Bắt buộc) */}
         <div>
-          <label className="text-xs font-semibold text-slate-700 block mb-1">Mã / Số phiên bản (Tùy chọn)</label>
-          <Input placeholder="Ví dụ: 1.1, 2.0 (Để trống hệ thống sẽ tự tính)" {...register('versionNumber')} error={errors.versionNumber?.message} />
+          <label className="text-xs font-semibold text-slate-700 block mb-1">
+            Số hiệu phiên bản mới <span className="text-rose-500">*</span>
+          </label>
+          <Input placeholder="Ví dụ: 1.1, 2.0" {...register('versionNumber')} error={errors.versionNumber?.message} />
         </div>
 
         {/* Ghi chú tóm tắt thay đổi */}

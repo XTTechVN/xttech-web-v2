@@ -144,17 +144,14 @@ const RuleListItem = React.memo<RuleListItemProps>(({ doc, isSelected, onSelect,
             </button>
           )}
 
-          <span className="flex items-center gap-0.5 text-primary text-[10px] font-medium ml-1">
-            <span className="lg:hidden">Chi tiết</span>
-            <ChevronRight
-              size={13}
-              className={`transition-transform shrink-0 ${
-                isSelected
-                  ? 'text-primary translate-x-0.5'
-                  : 'text-slate-300 group-hover:text-slate-400'
-              }`}
-            />
-          </span>
+          <ChevronRight
+            size={13}
+            className={`transition-transform shrink-0 ml-1 ${
+              isSelected
+                ? 'text-primary translate-x-0.5'
+                : 'text-slate-300 group-hover:text-slate-400'
+            }`}
+          />
         </div>
       </div>
     </div>

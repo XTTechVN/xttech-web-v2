@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Modal, Button, Input, Select } from '@/components';
+import { Modal, Button, Input, Select, MultiSelect } from '@/components';
 import { createDocument } from '@/actions/document';
 import { getEmployees } from '@/actions/employee';
-import { DOCUMENT_TYPE_MAP, RULE_DOC_TYPES, PERSONAL_DOC_TYPES } from '@/types';
+import { getDepartments } from '@/actions/department';
+import { DOCUMENT_TYPE_MAP, RULE_DOC_TYPES, PERSONAL_DOC_TYPES, SHARE_SCOPE_MAP } from '@/types';
 import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '../_utils/doc-helpers';
 import toast from 'react-hot-toast';
 import { Upload, FileUp, X, FileCheck } from 'lucide-react';
@@ -28,8 +29,10 @@ interface CreateDocumentModalProps {
 const documentSchema = z.object({
   title: z.string().min(1, { message: 'Tiêu đề tài liệu không được để trống' }),
   documentType: z.string().min(1, { message: 'Vui lòng chọn loại văn bản' }),
+  summary: z.string().optional(),
   code: z.string().optional(),
   categoryId: z.union([z.number(), z.string()]).optional(),
+  shareScope: z.string().optional(),
   approverId: z.string().optional(),
   effectiveDate: z.string().optional(),
   expirationDate: z.string().optional(),
@@ -50,6 +53,8 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
   const isRuleMode = defaultGroup === 'rules';
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<(string | number)[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -64,8 +69,10 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
     defaultValues: {
       title: '',
       documentType: isRuleMode ? 'regulation' : 'work_report',
+      summary: '',
       code: '',
       categoryId: currentFolderId || '',
+      shareScope: isRuleMode ? 'all' : 'private',
       approverId: '',
       effectiveDate: '',
       expirationDate: '',
@@ -78,15 +85,26 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       const formData = new FormData();
       formData.append('file', file);
 
+      const userIdsStr = selectedUserIds.map(String).filter(Boolean);
+      const deptIdsNum = selectedDepartmentIds.map(Number).filter((n) => !isNaN(n));
+      const scope = data.shareScope || (isRuleMode ? 'all' : 'private');
+
       // Chuẩn hóa 100% camelCase theo đúng convention của dự án
       const documentData: Record<string, any> = {
         title: data.title.trim(),
         documentType: data.documentType,
-        shareScope: isRuleMode ? 'all' : 'private',
+        shareScope: scope,
         status: 'draft',
         approvalStatus: 'draft',
+        recipientUserIds: userIdsStr,
+        recipientDepartmentIds: deptIdsNum,
+        targetUserIds: userIdsStr,
+        targetDepartmentIds: deptIdsNum,
       };
 
+      if (data.summary?.trim()) {
+        documentData.summary = data.summary.trim();
+      }
       if (data.code?.trim()) {
         documentData.code = data.code.trim().toUpperCase();
       }
@@ -107,10 +125,13 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       formData.append('document_data', JSON.stringify(documentData));
       formData.append('title', data.title.trim());
       formData.append('documentType', data.documentType);
-      formData.append('shareScope', isRuleMode ? 'all' : 'private');
+      formData.append('shareScope', scope);
       formData.append('status', 'draft');
       formData.append('approvalStatus', 'draft');
 
+      if (data.summary?.trim()) {
+        formData.append('summary', data.summary.trim());
+      }
       if (data.code?.trim()) {
         formData.append('code', data.code.trim().toUpperCase());
       }
@@ -126,11 +147,21 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       if (data.expirationDate) {
         formData.append('expirationDate', data.expirationDate);
       }
+      if (userIdsStr.length > 0) {
+        formData.append('recipientUserIds', JSON.stringify(userIdsStr));
+        formData.append('targetUserIds', JSON.stringify(userIdsStr));
+      }
+      if (deptIdsNum.length > 0) {
+        formData.append('recipientDepartmentIds', JSON.stringify(deptIdsNum));
+        formData.append('targetDepartmentIds', JSON.stringify(deptIdsNum));
+      }
 
       return createDocument(formData);
     },
     onSuccess: () => {
       toast.success(isRuleMode ? 'Tải lên quy chế thành công!' : 'Tải lên tài liệu thành công!');
+      setSelectedUserIds([]);
+      setSelectedDepartmentIds([]);
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['documents', 'rules'] });
       queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
@@ -149,6 +180,8 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
     register('documentType');
     register('code');
     register('categoryId');
+    register('shareScope');
+    register('approverId');
     register('effectiveDate');
     register('expirationDate');
   }, [register]);
@@ -157,11 +190,14 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
     if (isOpen) {
       setFile(null);
       setFileError(null);
+      setSelectedUserIds([]);
+      setSelectedDepartmentIds([]);
       reset({
         title: '',
         documentType: defaultGroup === 'rules' ? 'regulation' : 'work_report',
         code: '',
         categoryId: currentFolderId ? Number(currentFolderId) : '',
+        shareScope: defaultGroup === 'rules' ? 'all' : 'private',
         approverId: '',
         effectiveDate: '',
         expirationDate: '',
@@ -244,11 +280,51 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
     enabled: isOpen,
   });
 
+  const { data: departmentsData } = useQuery({
+    queryKey: ['departments', 'create-share-options'],
+    queryFn: () => getDepartments({ limit: 100 }),
+    enabled: isOpen,
+  });
+
   const employees = useMemo(() => {
     if (Array.isArray(employeesData?.items)) return employeesData.items;
     if (Array.isArray(employeesData)) return employeesData;
     return [];
   }, [employeesData]);
+
+  const departmentOptions = useMemo(() => {
+    const raw = (departmentsData as any)?.data ?? departmentsData;
+    const depts: any[] = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
+    const seen = new Set<string | number>();
+    return depts
+      .filter((dept: any) => {
+        if (!dept?.id || seen.has(dept.id)) return false;
+        seen.add(dept.id);
+        return true;
+      })
+      .map((dept: any) => ({
+        value: String(dept.id),
+        label: dept.name,
+        subLabel: dept.code ? `[${dept.code}]` : undefined,
+      }));
+  }, [departmentsData]);
+
+  const employeeOptions = useMemo(() => {
+    return employees.map((emp: any) => ({
+      value: String(emp.id),
+      label: emp.fullName || emp.username || 'Nhân sự',
+      subLabel: emp.email || (emp.code ? `Mã: ${emp.code}` : undefined),
+    }));
+  }, [employees]);
+
+  const shareScopeOptions = useMemo(
+    () => [
+      { value: 'private', label: 'Cá nhân (Chỉ người tạo & người nhận)' },
+      { value: 'department', label: 'Nội bộ phòng ban' },
+      { value: 'all', label: 'Toàn thể công ty' },
+    ],
+    [],
+  );
 
   const approverOptions = useMemo(() => {
     const eligibleApprovers = employees.filter(isApproverEligible);
@@ -368,6 +444,20 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
           </div>
         </div>
 
+        {/* Trích yếu tóm tắt nội dung */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">
+            Trích yếu nội dung (Tùy chọn)
+          </label>
+          <textarea
+            rows={2}
+            className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none shadow-2xs"
+            placeholder="Tóm tắt ngắn gọn mục đích, nội dung chính của văn bản..."
+            value={watch('summary') || ''}
+            onChange={(e) => setValue('summary', e.target.value)}
+          />
+        </div>
+
         {/* Phân loại & Lưu trữ (Dành riêng cho ngữ cảnh Tài liệu của tôi vs Quy chế ban hành) */}
         {isRuleMode ? (
           <>
@@ -430,17 +520,57 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
           </div>
         )}
 
-        {/* Approver Selection */}
-        <div>
-          <Select
-            label="Người phê duyệt văn bản (Tùy chọn)"
-            fullWidth
-            value={approverIdVal || ''}
-            onChange={(e) => setValue('approverId', e.target.value)}
-            options={approverOptions}
-            placeholder="-- Chọn người phê duyệt nếu cần --"
-          />
+        {/* Share Scope & Approver */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Select
+              label="Phạm vi chia sẻ / nhận văn bản"
+              fullWidth
+              value={watch('shareScope') || (isRuleMode ? 'all' : 'private')}
+              onChange={(e) => setValue('shareScope', e.target.value)}
+              options={shareScopeOptions}
+            />
+          </div>
+
+          <div>
+            <Select
+              label="Người phê duyệt (Chỉ Admin / HR / Quản lý)"
+              fullWidth
+              value={approverIdVal || ''}
+              onChange={(e) => setValue('approverId', e.target.value)}
+              options={approverOptions}
+              placeholder="-- Chọn người phê duyệt nếu cần --"
+            />
+          </div>
         </div>
+
+        {/* Recipients MultiSelect khi không phải 'all' */}
+        {watch('shareScope') !== 'all' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <MultiSelect
+                label="Người nhận đích danh (Nhận trong Hộp thư đến)"
+                options={employeeOptions}
+                value={selectedUserIds}
+                onChange={setSelectedUserIds}
+                placeholder="Chọn nhân sự nhận..."
+                searchPlaceholder="Tìm tên hoặc email..."
+                fullWidth
+              />
+            </div>
+            <div>
+              <MultiSelect
+                label="Phòng ban nhận (Nhận trong Hộp thư đến)"
+                options={departmentOptions}
+                value={selectedDepartmentIds}
+                onChange={setSelectedDepartmentIds}
+                placeholder="Chọn phòng ban nhận..."
+                searchPlaceholder="Tìm tên phòng ban..."
+                fullWidth
+              />
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex gap-3 justify-end w-full mt-4">

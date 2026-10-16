@@ -142,7 +142,7 @@ export function RulesContent() {
         search: search?.trim() || undefined,
         documentType: documentType || undefined,
         status: status || undefined,
-        limit: 100,
+        limit: 1000, // Lấy toàn bộ không giới hạn
       }),
   });
 

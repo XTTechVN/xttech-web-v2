@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Eye, Download, Check, FileText, Clock, User, ShieldCheck, Mail, MailOpen } from 'lucide-react';
+import { Eye, Download, Check, FileText, Clock, User, ShieldCheck, Mail, MailOpen, FolderPlus } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, APPROVAL_STATUS_MAP } from '@/types';
 import { formatBytes, getFileVisualInfo } from '../../documents/_utils/doc-helpers';
@@ -13,10 +13,11 @@ interface InboxItemRowProps {
   document: DocumentItem;
   onOpenDetail: (doc: DocumentItem) => void;
   onMarkAsRead?: (docId: number, e: React.MouseEvent) => void;
+  onSaveToFolder?: (doc: DocumentItem, e: React.MouseEvent) => void;
   currentUserId?: string;
 }
 
-export const InboxItemRow: React.FC<InboxItemRowProps> = ({ document: doc, onOpenDetail, onMarkAsRead, currentUserId }) => {
+export const InboxItemRow: React.FC<InboxItemRowProps> = ({ document: doc, onOpenDetail, onMarkAsRead, onSaveToFolder, currentUserId }) => {
   const isRead = doc.isRead === true;
   const currentVersion = doc.currentVersion;
   const fileName = currentVersion?.fileName || doc.title;
@@ -145,10 +146,22 @@ export const InboxItemRow: React.FC<InboxItemRowProps> = ({ document: doc, onOpe
             <button
               type="button"
               onClick={handleDownload}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
               title="Tải tệp tin"
             >
               <Download size={15} />
+            </button>
+          )}
+
+          {/* Lưu lối tắt vào Thư mục của tôi */}
+          {onSaveToFolder && (
+            <button
+              type="button"
+              onClick={(e) => onSaveToFolder(doc, e)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
+              title="Lưu lối tắt vào Thư mục của tôi"
+            >
+              <FolderPlus size={15} />
             </button>
           )}
 
@@ -159,7 +172,7 @@ export const InboxItemRow: React.FC<InboxItemRowProps> = ({ document: doc, onOpe
               e.stopPropagation();
               onOpenDetail(doc);
             }}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
             title="Xem chi tiết"
           >
             <Eye size={15} />

@@ -10,6 +10,7 @@ import type {
   GetDocumentsResponse,
   FolderShare,
   ShareFolderPayload,
+  DocumentRecipientsResponse,
 } from '@/types';
 
 // Helper trích xuất thông báo lỗi chi tiết từ backend FastAPI / validator
@@ -396,32 +397,44 @@ export const revokeDocumentShare = async (documentId: number, shareId: number | 
 // 4. Phê duyệt & Quy trình tài liệu (Approval Workflow)
 // ==========================================
 
-// 8.1. Trình duyệt tài liệu: POST /api/v1/documents/{id}/submit
+// 8.1. Trình duyệt tài liệu: POST /api/v1/documents/{id}/submit (với fallback /submit-approval)
 // Trạng thái duyệt sẽ chuyển thành pending
 export const submitDocument = async (documentId: number, payload?: { approverId?: string }): Promise<DocumentItem> => {
   try {
-    const res = await api.post(`/api/v1/documents/${documentId}/submit`, payload || {});
-    return res.data?.data ?? res.data;
+    try {
+      const res = await api.post(`/api/v1/documents/${documentId}/submit`, payload || {});
+      return res.data?.data ?? res.data;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        const res = await api.post(`/api/v1/documents/${documentId}/submit-approval`, payload || {});
+        return res.data?.data ?? res.data;
+      }
+      throw err;
+    }
   } catch (error: any) {
     throw new Error(extractErrorMessage(error, 'Không thể trình duyệt tài liệu'));
   }
 };
 
 // 8.2. Phê duyệt hoặc Từ chối văn bản: POST /api/v1/documents/{id}/approve
+// Hỗ trợ cả schema { isApproved, approvalNote } và { action, comment }
 export const reviewDocument = async (
   documentId: number,
   payload: {
     action?: 'approved' | 'rejected';
     approvalStatus?: 'approved' | 'rejected';
+    isApproved?: boolean;
     comment?: string;
     approvalNote?: string;
   },
 ): Promise<DocumentItem> => {
   try {
-    const status = payload.approvalStatus || payload.action || 'approved';
-    const note = payload.comment || payload.approvalNote;
+    const status = payload.approvalStatus || payload.action || (payload.isApproved ? 'approved' : 'rejected');
+    const note = payload.comment || payload.approvalNote || '';
+    const isApproved = payload.isApproved !== undefined ? payload.isApproved : status === 'approved';
 
     const body: Record<string, any> = {
+      isApproved,
       approvalStatus: status,
       action: status,
     };
@@ -434,6 +447,16 @@ export const reviewDocument = async (
     return res.data?.data ?? res.data;
   } catch (error: any) {
     throw new Error(extractErrorMessage(error, 'Không thể xử lý phê duyệt tài liệu'));
+  }
+};
+
+// 5.2.C. Lấy danh sách Người nhận & Thống kê ai đã xem / chưa xem: GET /api/v1/documents/{id}/recipients
+export const getDocumentRecipients = async (documentId: number): Promise<DocumentRecipientsResponse> => {
+  try {
+    const res = await api.get(`/api/v1/documents/${documentId}/recipients`);
+    return res.data?.data ?? res.data;
+  } catch (error: any) {
+    throw new Error(extractErrorMessage(error, 'Không thể tải danh sách người nhận'));
   }
 };
 
