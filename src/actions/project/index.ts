@@ -372,9 +372,12 @@ export const measureProjectPosition = async (
 
 export const getProjectContracts = async (
   projectId: number,
+  params?: { kind?: 'main' | 'appendix'; status?: string; limit?: number },
 ): Promise<BaseResponseWithPagination<import('@/types').ProjectContractItem>> => {
   try {
-    const response = await api.get(`/api/v1/projects/${projectId}/contracts`);
+    const response = await api.get(`/api/v1/projects/${projectId}/contracts`, {
+      params: { limit: 100, ...params },
+    });
     const { items, meta } = response.data;
     return {
       items: items || [],
@@ -420,9 +423,13 @@ export const createProjectContractAppendix = async (
 export const signProjectContract = async (
   projectId: number,
   contractId: number,
+  data: { contractDate?: string; contractFileUrl?: string; note?: string } = {},
 ): Promise<import('@/types').ProjectContractItem> => {
   try {
-    const response = await api.post(`/api/v1/projects/${projectId}/contracts/${contractId}/sign`);
+    const response = await api.post(
+      `/api/v1/projects/${projectId}/contracts/${contractId}/sign`,
+      data,
+    );
     return response.data;
   } catch (error) {
     console.warn('API error signProjectContract', error);
