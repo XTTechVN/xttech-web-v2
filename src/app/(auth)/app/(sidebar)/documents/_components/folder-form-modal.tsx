@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { createDocumentCategory, updateDocumentCategory } from '@/actions/document';
 import { showErrorToast } from '@/utils';
 import type { DocumentCategory } from '@/types';
+import { invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
 
 // Kiểu dữ liệu cho modal
 export interface FolderFormModalProps {
@@ -71,8 +72,7 @@ export default function FolderFormModal({
         parentId: payload.parentId || null,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['document-categories'] });
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      invalidateDocumentQueries(queryClient);
       toast.success('Đã tạo thư mục thành công!');
       onSuccess?.();
       onClose();
@@ -91,8 +91,7 @@ export default function FolderFormModal({
         description: data.description?.trim() || undefined,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['document-categories'] });
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      invalidateDocumentQueries(queryClient);
       toast.success('Cập nhật thư mục thành công!');
       onSuccess?.();
       onClose();

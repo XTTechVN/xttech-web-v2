@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
-import { formatBytes, getFileVisualInfo } from '../../documents/_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import dayjs from 'dayjs';
 import {
@@ -246,62 +246,51 @@ const RuleDetailReader: React.FC<RuleDetailReaderProps> = ({
           </div>
         </div>
 
-        {/* Số hiệu & Tiêu đề lớn */}
-        <div className="mt-4">
-          <div className="flex items-center gap-2 flex-wrap mb-2">
-            <span
-              className={`text-xs font-semibold px-2.5 py-0.5 rounded-lg border ${typeInfo.badgeClass}`}
-            >
-              {typeInfo.label}
-            </span>
-
-            {activeDoc.code && (
-              <span className="text-xs font-mono font-bold text-slate-800 bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-2xs">
-                Số: {activeDoc.code}
+        {/* Số hiệu & Tiêu đề lớn kèm các nút thao tác bên phải */}
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap mb-2">
+              <span
+                className={`text-xs font-semibold px-2.5 py-0.5 rounded-lg border ${typeInfo.badgeClass}`}
+              >
+                {typeInfo.label}
               </span>
-            )}
+
+              {activeDoc.code && (
+                <span className="text-xs font-mono font-bold text-slate-800 bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-2xs">
+                  Số: {activeDoc.code}
+                </span>
+              )}
+            </div>
+
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-snug">
+              {activeDoc.title}
+            </h2>
           </div>
 
-          <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-snug">
-            {activeDoc.title}
-          </h2>
-        </div>
-
-        {/* Thanh thao tác chính */}
-        <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-200/60 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => onPreview(activeDoc)}
-              leftIcon={<Eye size={14} />}
-              className="h-8.5 text-xs font-semibold px-3 shadow-2xs cursor-pointer"
-            >
-              Đọc toàn màn hình
-            </Button>
-
+          {/* Các nút thao tác nằm bên phải tiêu đề */}
+          <div className="flex items-center gap-1.5 shrink-0 self-start sm:pt-1">
             {downloadUrl !== '#' && (
               <a
                 href={downloadUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors shadow-2xs"
+                className="inline-flex items-center gap-1.5 h-8.5 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors shadow-2xs"
+                title="Tải về tệp gốc"
               >
                 <Download size={14} />
-                <span>Tải về tệp gốc</span>
+                <span className="hidden md:inline">Tải về</span>
               </a>
             )}
-          </div>
 
-          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => onView(activeDoc)}
-              className="inline-flex items-center gap-1 h-8.5 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs transition-colors shadow-2xs cursor-pointer"
+              className="inline-flex items-center gap-1 h-8.5 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium transition-colors shadow-2xs cursor-pointer"
               title="Xem chi tiết & lịch sử phiên bản"
             >
               <Info size={14} />
-              <span className="hidden sm:inline">Chi tiết</span>
+              <span>Chi tiết</span>
             </button>
 
             <button
@@ -336,13 +325,13 @@ const RuleDetailReader: React.FC<RuleDetailReaderProps> = ({
 
       {/* 2. Thẻ thông tin hành chính & Trích yếu */}
       <div className="p-5 sm:p-6 space-y-5">
-        {/* Bảng thông tin hành chính */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 rounded-lg bg-slate-50 border border-slate-200/80 text-xs">
+        {/* Bảng thông tin hành chính: Chia grid 4 cột (3-3-3-3) trên 1 dòng */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-lg bg-slate-50 border border-slate-200/80 text-xs">
           <div>
             <span className="text-slate-400 block mb-0.5">Người ký duyệt:</span>
             <div className="flex items-center gap-1.5 font-semibold text-slate-800">
-              <User size={13} className="text-slate-500" />
-              <span>
+              <User size={13} className="text-slate-500 shrink-0" />
+              <span className="truncate">
                 {activeDoc.approver?.fullName || activeDoc.createdBy?.fullName || 'Ban Giám Đốc'}
               </span>
             </div>
@@ -351,17 +340,10 @@ const RuleDetailReader: React.FC<RuleDetailReaderProps> = ({
           <div>
             <span className="text-slate-400 block mb-0.5">Ngày có hiệu lực:</span>
             <div className="flex items-center gap-1.5 font-semibold text-slate-800">
-              <CalendarDays size={13} className="text-slate-500" />
+              <CalendarDays size={13} className="text-slate-500 shrink-0" />
               <span>{effectiveDateStr || 'Ngay khi ban hành'}</span>
             </div>
           </div>
-
-          {expirationDateStr && (
-            <div>
-              <span className="text-slate-400 block mb-0.5">Ngày hết hiệu lực:</span>
-              <span className="font-semibold text-slate-800">{expirationDateStr}</span>
-            </div>
-          )}
 
           <div>
             <span className="text-slate-400 block mb-0.5">Phạm vi áp dụng:</span>
@@ -374,6 +356,13 @@ const RuleDetailReader: React.FC<RuleDetailReaderProps> = ({
               v{currentVersion?.versionNumber || '1.0'}
             </span>
           </div>
+
+          {expirationDateStr && (
+            <div className="col-span-full pt-1.5 border-t border-slate-200/60 text-slate-500">
+              <span>Ngày hết hiệu lực: </span>
+              <span className="font-semibold text-slate-800">{expirationDateStr}</span>
+            </div>
+          )}
         </div>
 
         {/* Hộp Trích yếu / Tóm tắt nội dung */}

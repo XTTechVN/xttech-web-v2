@@ -3,7 +3,7 @@ import { Button, TableSearch } from '@/components';
 import { FolderPlus, Upload, LayoutGrid, List, RotateCcw } from 'lucide-react';
 
 interface DocumentsToolbarProps {
-  search: string;
+  search?: string;
   onSearchChange: (value: string) => void;
   documentType?: string;
   onDocumentTypeChange?: (value: string) => void;
@@ -21,7 +21,7 @@ interface DocumentsToolbarProps {
 }
 
 export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
-  search,
+  search = '',
   onSearchChange,
   hasActiveFilters,
   onResetFilters,

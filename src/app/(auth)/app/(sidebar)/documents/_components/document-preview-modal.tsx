@@ -27,7 +27,7 @@ import type { DocumentItem } from '@/types';
 import { getFileUrl } from '@/utils/string';
 import api from '@/utils/api';
 import { markDocumentAsRead } from '@/actions/document';
-import { formatBytes, getFileVisualInfo, getFileExtension } from '../_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo, getFileExtension } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
 
 // Cấu hình Worker cho react-pdf
 if (typeof window !== 'undefined') {

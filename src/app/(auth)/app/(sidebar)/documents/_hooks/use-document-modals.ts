@@ -132,6 +132,21 @@ export function useDocumentModals() {
     });
   }, []);
 
+  const openMoveItem = useCallback((type: 'folder' | 'document', item: DocumentCategory | DocumentItem) => {
+    setItemToMove({ type, item });
+    setMoveModalOpen(true);
+  }, []);
+
+  const openDeleteModal = useCallback((type: 'folder' | 'document', id: number, name: string) => {
+    setDeleteModal({
+      isOpen: true,
+      type,
+      id,
+      name,
+      loading: false,
+    });
+  }, []);
+
   return {
     // States
     state: {
@@ -189,8 +204,10 @@ export function useDocumentModals() {
       openSaveToFolder,
       openMoveFolder,
       openMoveDoc,
+      openMoveItem,
       openDeleteFolder,
       openDeleteDoc,
+      openDeleteModal,
     },
   };
 }

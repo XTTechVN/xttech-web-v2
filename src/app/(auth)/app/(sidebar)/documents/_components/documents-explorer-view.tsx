@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { DocumentCategory, DocumentItem } from '@/types';
-import type { DocumentModalsHook } from '../_hooks/use-document-modals';
+import type { DocumentModalsHook } from '@/app/(auth)/app/(sidebar)/documents/_hooks/use-document-modals';
 import { FolderCard } from './folder-card';
 import { FolderTable } from './folder-table';
 import { FileCard } from './file-card';

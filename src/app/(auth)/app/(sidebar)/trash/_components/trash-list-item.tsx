@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Folder, MoreVertical, RotateCcw, Trash2, FileText } from 'lucide-react';
 import type { TrashItem } from '@/types';
-import { getFileVisualInfo } from '../../documents/_utils/doc-helpers';
+import { getFileVisualInfo } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
 import { cn } from '@/utils';
 import dayjs from 'dayjs';
 

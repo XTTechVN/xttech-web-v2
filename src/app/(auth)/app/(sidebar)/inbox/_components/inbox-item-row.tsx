@@ -4,7 +4,7 @@ import React from 'react';
 import { Eye, Download, Check, FileText, Clock, User, ShieldCheck, Mail, MailOpen, FolderPlus } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, APPROVAL_STATUS_MAP } from '@/types';
-import { formatBytes, getFileVisualInfo } from '../../documents/_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import { cn } from '@/utils';
 import dayjs from 'dayjs';

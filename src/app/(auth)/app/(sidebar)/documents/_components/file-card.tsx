@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Download, Eye, MoreVertical, Trash2, FolderOpen, Share2, Edit3, Users, Bookmark, FolderMinus } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
-import { formatBytes, getFileVisualInfo, isDocumentShared, getDocumentPermissions } from '../_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo, isDocumentShared, getDocumentPermissions } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import { useAuthStore } from '@/stores';
 import { usePermission } from '@/hooks';

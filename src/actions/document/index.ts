@@ -467,15 +467,6 @@ export const reviewDocument = async (
   }
 };
 
-// 5.2.C. Lấy danh sách Người nhận & Thống kê ai đã xem / chưa xem: GET /api/v1/documents/{id}/recipients
-export const getDocumentRecipients = async (documentId: number): Promise<DocumentRecipientsResponse> => {
-  try {
-    const res = await api.get(`/api/v1/documents/${documentId}/recipients`);
-    return res.data?.data ?? res.data;
-  } catch (error: any) {
-    throw new Error(extractErrorMessage(error, 'Không thể tải danh sách người nhận'));
-  }
-};
 
 // 8.3. Ban hành văn bản chính thức: POST /api/v1/documents/{id}/publish
 // Request body (tùy chọn): { shareScope?: "all" | "department" | "private" }
@@ -513,6 +504,9 @@ export const getInboxDocuments = async (params?: GetInboxDocumentsParams): Promi
       limit: rawData?.limit || 10,
     };
   } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return getDocuments(params as any);
+    }
     throw new Error(extractErrorMessage(error, 'Không thể tải danh sách hộp thư đến'));
   }
 };

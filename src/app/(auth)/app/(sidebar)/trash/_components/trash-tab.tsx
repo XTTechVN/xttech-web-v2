@@ -20,6 +20,7 @@ import { TrashCard } from './trash-card';
 import { TrashListItem } from './trash-list-item';
 import { RestoreConfirmModal } from './restore-confirm-modal';
 import { PurgeConfirmModal } from './purge-confirm-modal';
+import { DOC_QUERY_KEYS, invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
 
 const ITEM_TYPE_OPTIONS = [
   { value: 'all', label: 'Tất cả loại mục' },
@@ -57,7 +58,7 @@ export const TrashTab: React.FC = () => {
     isError,
     refetch,
   } = useQuery<TrashItem[]>({
-    queryKey: ['documents', 'trash'],
+    queryKey: DOC_QUERY_KEYS.trash.root,
     queryFn: getTrashItems,
     staleTime: 0,
     refetchOnMount: 'always',
@@ -84,10 +85,8 @@ export const TrashTab: React.FC = () => {
       const name = getItemDisplayName(item);
       toast.success(`Đã khôi phục ${item.itemType === 'folder' ? 'thư mục' : 'tài liệu'} "${name}" thành công!`);
       // Đồng bộ toàn bộ các query liên quan
-      queryClient.invalidateQueries({ queryKey: ['documents', 'trash'] });
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['document-categories'] });
-      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+      invalidateDocumentQueries(queryClient);
+      queryClient.invalidateQueries({ queryKey: DOC_QUERY_KEYS.trash.root });
       setIsRestoreOpen(false);
       setRestoreItem(null);
     },
@@ -110,7 +109,8 @@ export const TrashTab: React.FC = () => {
     onSuccess: (_, item) => {
       const name = getItemDisplayName(item);
       toast.success(`Đã xóa vĩnh viễn ${item.itemType === 'folder' ? 'thư mục' : 'tài liệu'} "${name}"!`);
-      queryClient.invalidateQueries({ queryKey: ['documents', 'trash'] });
+      invalidateDocumentQueries(queryClient);
+      queryClient.invalidateQueries({ queryKey: DOC_QUERY_KEYS.trash.root });
       setIsPurgeOpen(false);
       setPurgeItem(null);
     },

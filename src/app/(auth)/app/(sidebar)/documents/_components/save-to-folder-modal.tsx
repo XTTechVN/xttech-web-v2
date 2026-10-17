@@ -9,6 +9,7 @@ import type { DocumentCategory, DocumentItem } from '@/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/utils';
 import { FolderTreeView } from './folder-tree-view';
+import { DOC_QUERY_KEYS, invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
 
 interface SaveToFolderModalProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ export const SaveToFolderModal: React.FC<SaveToFolderModalProps> = ({ isOpen, on
   }, [isOpen]);
 
   const { data: tree = [], isLoading } = useQuery({
-    queryKey: ['document-categories', 'tree'],
+    queryKey: DOC_QUERY_KEYS.categories.tree,
     queryFn: getDocumentCategoryTree,
     enabled: isOpen,
   });
@@ -61,11 +62,7 @@ export const SaveToFolderModal: React.FC<SaveToFolderModalProps> = ({ isOpen, on
     },
     onSuccess: () => {
       toast.success('Đã lưu lối tắt vào thư mục cá nhân thành công!');
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['document-categories'] });
-      if (doc?.id) {
-        queryClient.invalidateQueries({ queryKey: ['document-detail', doc.id] });
-      }
+      invalidateDocumentQueries(queryClient);
       onSuccess?.();
       onClose();
     },

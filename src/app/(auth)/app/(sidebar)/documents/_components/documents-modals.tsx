@@ -2,40 +2,42 @@
 
 import React from 'react';
 import type { DocumentCategory, DocumentItem } from '@/types';
-import type { DocumentModalsHook, DeleteModalState, ItemToMoveState } from '../_hooks/use-document-modals';
+import type { DocumentModalsHook, DeleteModalState, ItemToMoveState } from '@/app/(auth)/app/(sidebar)/documents/_hooks/use-document-modals';
 
 // Modals
-import { FolderFormModal } from './folder-form-modal';
-import { FolderDetailModal } from './folder-detail-modal';
-import { CreateDocumentModal } from './create-document-modal';
-import { EditDocumentModal } from './edit-document-modal';
-import { DocumentDetailModal } from './document-detail-modal';
-import { DocumentPreviewModal } from './document-preview-modal';
-import { MoveItemModal } from './move-item-modal';
-import { DeleteConfirmModal } from './delete-confirm-modal';
-import { ShareFolderModal } from './share-folder-modal';
-import { SaveToFolderModal } from './save-to-folder-modal';
+import { FolderFormModal } from '@/app/(auth)/app/(sidebar)/documents/_components/folder-form-modal';
+import { FolderDetailModal } from '@/app/(auth)/app/(sidebar)/documents/_components/folder-detail-modal';
+import { CreateDocumentModal } from '@/app/(auth)/app/(sidebar)/documents/_components/create-document-modal';
+import { EditDocumentModal } from '@/app/(auth)/app/(sidebar)/documents/_components/edit-document-modal';
+import { DocumentDetailModal } from '@/app/(auth)/app/(sidebar)/documents/_components/document-detail-modal';
+import { DocumentPreviewModal } from '@/app/(auth)/app/(sidebar)/documents/_components/document-preview-modal';
+import { MoveItemModal } from '@/app/(auth)/app/(sidebar)/documents/_components/move-item-modal';
+import { DeleteConfirmModal } from '@/app/(auth)/app/(sidebar)/documents/_components/delete-confirm-modal';
+import { ShareFolderModal } from '@/app/(auth)/app/(sidebar)/documents/_components/share-folder-modal';
+import { SaveToFolderModal } from '@/app/(auth)/app/(sidebar)/documents/_components/save-to-folder-modal';
 
 export type { DeleteModalState, ItemToMoveState };
 
 export interface DocumentsModalsProps {
   modals: DocumentModalsHook;
-  currentFolderId: number | null;
-  currentFolder: DocumentCategory | null;
+  currentFolderId?: number | null;
+  currentFolder?: DocumentCategory | null;
   safeCategoryTree: DocumentCategory[];
   onConfirmDelete: () => void;
-  onRefetchCategories: () => void;
-  onRefetchDocuments: () => void;
+  onRefetchCategories?: () => void;
+  onRefetchDocuments?: () => void;
+  defaultGroup?: 'rules' | 'personal';
 }
 
 export const DocumentsModals: React.FC<DocumentsModalsProps> = ({
   modals,
-  currentFolderId,
-  currentFolder,
+  currentFolderId = null,
+  currentFolder = null,
   safeCategoryTree,
   onConfirmDelete,
-  onRefetchCategories,
-  onRefetchDocuments,
+  onRefetchCategories = () => {},
+  onRefetchDocuments = () => {},
+  defaultGroup = 'personal',
 }) => {
   const { state, setters } = modals;
 
@@ -63,6 +65,7 @@ export const DocumentsModals: React.FC<DocumentsModalsProps> = ({
         currentFolder={currentFolder}
         categories={safeCategoryTree}
         onSuccess={onRefetchDocuments}
+        defaultGroup={defaultGroup}
       />
 
       {/* 3. Edit Document Modal */}

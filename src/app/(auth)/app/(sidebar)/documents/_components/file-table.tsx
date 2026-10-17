@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Download, Eye, MoreVertical, Trash2, Folder, Users, FolderOpen, Share2, Edit3, Bookmark, FolderMinus } from 'lucide-react';
 import type { DocumentItem } from '@/types';
-import { DriveFileIcon, isDocumentShared, getDocumentPermissions } from '../_utils/doc-helpers';
+import { DriveFileIcon, isDocumentShared, getDocumentPermissions } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import { useAuthStore } from '@/stores';
 import { usePermission } from '@/hooks';

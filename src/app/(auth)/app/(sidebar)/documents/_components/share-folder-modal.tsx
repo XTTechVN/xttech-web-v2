@@ -20,6 +20,7 @@ import { useAuthStore } from '@/stores';
 import toast from 'react-hot-toast';
 import { Building2, User, Globe, Trash2, Eye, Edit3, ShieldCheck } from 'lucide-react';
 import { cn } from '@/utils';
+import { DOC_QUERY_KEYS, invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
 
 interface ShareFolderModalProps {
   isOpen: boolean;
@@ -54,7 +55,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onCl
     isLoading: isLoadingShares,
     refetch: refetchShares,
   } = useQuery<FolderShare[]>({
-    queryKey: isDoc ? ['document-shares', targetId, document?.shareScope] : ['document-category-shares', targetId],
+    queryKey: isDoc ? DOC_QUERY_KEYS.documents.shares(targetId, document?.shareScope) : DOC_QUERY_KEYS.categories.shares(targetId),
     queryFn: async () => {
       if (!targetId) return [];
       if (isDoc && document) {
@@ -86,14 +87,14 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onCl
 
   // 2. Fetch Employees list
   const { data: employeesData } = useQuery({
-    queryKey: ['users', 'share-options'],
+    queryKey: DOC_QUERY_KEYS.options.employees,
     queryFn: () => getEmployees({ limit: 200 }),
     enabled: isOpen,
   });
 
   // 3. Fetch Departments list
   const { data: departmentsData } = useQuery({
-    queryKey: ['departments', 'share-options'],
+    queryKey: DOC_QUERY_KEYS.options.departments,
     queryFn: () => getDepartments({ limit: 100 }),
     enabled: isOpen,
   });
@@ -235,15 +236,7 @@ export const ShareFolderModal: React.FC<ShareFolderModalProps> = ({ isOpen, onCl
 
   const invalidateShareQueries = () => {
     refetchShares();
-    if (isDoc && document) {
-      queryClient.invalidateQueries({ queryKey: ['document-shares', document.id] });
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['document-detail', document.id] });
-      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
-    } else if (folder) {
-      queryClient.invalidateQueries({ queryKey: ['document-category-shares', folder.id] });
-      queryClient.invalidateQueries({ queryKey: ['document-categories'] });
-    }
+    invalidateDocumentQueries(queryClient);
   };
 
   // Handle Share Submit

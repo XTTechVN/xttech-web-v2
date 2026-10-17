@@ -1,20 +1,18 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Modal, Button, Input, Select, MultiSelect } from '@/components';
+import { Modal, Button, Input, Select } from '@/components';
 import { createDocument } from '@/actions/document';
-import { getEmployees } from '@/actions/employee';
-import { getDepartments } from '@/actions/department';
-import { DOCUMENT_TYPE_MAP, RULE_DOC_TYPES, PERSONAL_DOC_TYPES, SHARE_SCOPE_MAP } from '@/types';
-import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '../_utils/doc-helpers';
+import { DOCUMENT_TYPE_MAP, RULE_DOC_TYPES, PERSONAL_DOC_TYPES } from '@/types';
+import { formatBytes, getFileVisualInfo } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
 import toast from 'react-hot-toast';
 import { Upload, FileUp, X, FileCheck } from 'lucide-react';
 import type { DocumentCategory } from '@/types';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/stores';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
 
 interface CreateDocumentModalProps {
   isOpen: boolean;
@@ -26,17 +24,13 @@ interface CreateDocumentModalProps {
   defaultGroup?: 'rules' | 'personal';
 }
 
-// Validation schema dùng Zod theo chuẩn form-modal
+// Validation schema dùng Zod: Tạo ban đầu là bản nháp với các trường cơ bản
 const documentSchema = z.object({
-  title: z.string().min(1, { message: 'Tiêu đề tài liệu không được để trống' }),
+  title: z.string().min(1, { message: 'Tiêu đề không được để trống' }),
   documentType: z.string().min(1, { message: 'Vui lòng chọn loại văn bản' }),
   summary: z.string().optional(),
   code: z.string().optional(),
   categoryId: z.union([z.number(), z.string()]).optional(),
-  shareScope: z.string().optional(),
-  approverId: z.string().optional(),
-  effectiveDate: z.string().optional(),
-  expirationDate: z.string().optional(),
 });
 
 type DocumentFormValues = z.infer<typeof documentSchema>;
@@ -51,12 +45,9 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
   defaultGroup = 'personal',
 }) => {
   const queryClient = useQueryClient();
-  const currentUser = useAuthStore((state) => state.user);
   const isRuleMode = defaultGroup === 'rules';
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
-  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<(string | number)[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -74,22 +65,16 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       summary: '',
       code: '',
       categoryId: currentFolderId || '',
-      shareScope: isRuleMode ? 'all' : 'private',
-      approverId: '',
-      effectiveDate: '',
-      expirationDate: '',
     },
   });
 
-  // React Query Mutation để tạo mới tài liệu
+  // React Query Mutation để tạo mới tài liệu / quy chế dưới dạng BẢN NHÁP (draft)
   const createDocumentMutation = useMutation({
     mutationFn: async ({ data, file }: { data: DocumentFormValues; file: File }) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const userIdsStr = selectedUserIds.map(String).filter(Boolean);
-      const deptIdsNum = selectedDepartmentIds.map(Number).filter((n) => !isNaN(n));
-      const scope = data.shareScope || (isRuleMode ? 'all' : 'private');
+      const scope = isRuleMode ? 'all' : 'private';
 
       // Chuẩn hóa 100% camelCase theo đúng convention của dự án
       const documentData: Record<string, any> = {
@@ -98,10 +83,6 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
         shareScope: scope,
         status: 'draft',
         approvalStatus: 'draft',
-        recipientUserIds: userIdsStr,
-        recipientDepartmentIds: deptIdsNum,
-        targetUserIds: userIdsStr,
-        targetDepartmentIds: deptIdsNum,
       };
 
       if (data.summary?.trim()) {
@@ -113,15 +94,6 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       const targetCatId = currentFolderId ? Number(currentFolderId) : data.categoryId ? Number(data.categoryId) : undefined;
       if (targetCatId) {
         documentData.categoryId = targetCatId;
-      }
-      if (data.approverId?.trim()) {
-        documentData.approverId = data.approverId.trim();
-      }
-      if (data.effectiveDate) {
-        documentData.effectiveDate = data.effectiveDate;
-      }
-      if (data.expirationDate) {
-        documentData.expirationDate = data.expirationDate;
       }
 
       formData.append('document_data', JSON.stringify(documentData));
@@ -140,38 +112,17 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       if (targetCatId) {
         formData.append('categoryId', String(targetCatId));
       }
-      if (data.approverId?.trim()) {
-        formData.append('approverId', data.approverId.trim());
-      }
-      if (data.effectiveDate) {
-        formData.append('effectiveDate', data.effectiveDate);
-      }
-      if (data.expirationDate) {
-        formData.append('expirationDate', data.expirationDate);
-      }
-      if (userIdsStr.length > 0) {
-        formData.append('recipientUserIds', JSON.stringify(userIdsStr));
-        formData.append('targetUserIds', JSON.stringify(userIdsStr));
-      }
-      if (deptIdsNum.length > 0) {
-        formData.append('recipientDepartmentIds', JSON.stringify(deptIdsNum));
-        formData.append('targetDepartmentIds', JSON.stringify(deptIdsNum));
-      }
 
       return createDocument(formData);
     },
     onSuccess: () => {
-      toast.success(isRuleMode ? 'Tải lên quy chế thành công!' : 'Tải lên tài liệu thành công!');
-      setSelectedUserIds([]);
-      setSelectedDepartmentIds([]);
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['documents', 'rules'] });
-      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+      toast.success(isRuleMode ? 'Tải lên quy chế thành công (Bản nháp)!' : 'Tải lên tài liệu thành công (Bản nháp)!');
+      invalidateDocumentQueries(queryClient);
       onSuccess();
       onClose();
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Không thể tạo tài liệu');
+      toast.error(error.message || 'Không thể tạo văn bản');
     },
   });
 
@@ -182,32 +133,23 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
     register('documentType');
     register('code');
     register('categoryId');
-    register('shareScope');
-    register('approverId');
-    register('effectiveDate');
-    register('expirationDate');
   }, [register]);
 
   useEffect(() => {
     if (isOpen) {
       setFile(null);
       setFileError(null);
-      setSelectedUserIds([]);
-      setSelectedDepartmentIds([]);
       reset({
         title: '',
         documentType: defaultGroup === 'rules' ? 'regulation' : 'work_report',
+        summary: '',
         code: '',
         categoryId: currentFolderId ? Number(currentFolderId) : '',
-        shareScope: defaultGroup === 'rules' ? 'all' : 'private',
-        approverId: '',
-        effectiveDate: '',
-        expirationDate: '',
       });
     }
   }, [isOpen, currentFolderId, defaultGroup, reset]);
 
-  // Options theo ngữ cảnh: nếu là Rules (Quy chế) thì chỉ có RULE_DOC_TYPES, ngược lại chỉ có PERSONAL_DOC_TYPES
+  // Options phân loại theo ngữ cảnh: Rules vs Personal Documents
   const docTypeOptions = useMemo(() => {
     const targetKeys = isRuleMode ? RULE_DOC_TYPES : PERSONAL_DOC_TYPES;
     return targetKeys
@@ -246,125 +188,15 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
 
   const handleFormSubmit = async (data: DocumentFormValues) => {
     if (!file) {
-      setFileError('Vui lòng chọn tệp tài liệu đính kèm');
+      setFileError('Vui lòng chọn tệp văn bản đính kèm');
       return;
     }
-
-    try {
-      await createDocumentMutation.mutateAsync({
-        data,
-        file,
-      });
-    } catch (err) {
-      // Error handled by mutation
-    }
+    createDocumentMutation.mutate({ data, file });
   };
-
-  // Tạo thụt lề trực quan theo cấp bậc
-  const flattenCategories = (cats: DocumentCategory[], prefix = '', visited = new Set<number>()): { id: number; name: string }[] => {
-    let result: { id: number; name: string }[] = [];
-    if (!Array.isArray(cats)) return result;
-    cats.forEach((cat) => {
-      if (cat?.id && !visited.has(cat.id)) {
-        visited.add(cat.id);
-        result.push({ id: cat.id, name: `${prefix}${cat.name}` });
-      }
-      if (cat?.children && cat.children.length > 0) {
-        result = result.concat(flattenCategories(cat.children, `${prefix}— `, visited));
-      }
-    });
-    return result;
-  };
-
-  const { data: employeesData } = useQuery({
-    queryKey: ['users', 'approver-options'],
-    queryFn: () => getEmployees({ limit: 200 }),
-    enabled: isOpen,
-  });
-
-  const { data: departmentsData } = useQuery({
-    queryKey: ['departments', 'create-share-options'],
-    queryFn: () => getDepartments({ limit: 100 }),
-    enabled: isOpen,
-  });
-
-  const employees = useMemo(() => {
-    if (Array.isArray(employeesData?.items)) return employeesData.items;
-    if (Array.isArray(employeesData)) return employeesData;
-    return [];
-  }, [employeesData]);
-
-  const departmentOptions = useMemo(() => {
-    const raw = (departmentsData as any)?.data ?? departmentsData;
-    const depts: any[] = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
-    const seen = new Set<string | number>();
-    return depts
-      .filter((dept: any) => {
-        if (!dept?.id || seen.has(dept.id)) return false;
-        seen.add(dept.id);
-        return true;
-      })
-      .map((dept: any) => ({
-        value: String(dept.id),
-        label: dept.name,
-        subLabel: dept.code ? `[${dept.code}]` : undefined,
-      }));
-  }, [departmentsData]);
-
-  const employeeOptions = useMemo(() => {
-    return employees
-      .filter((emp: any) => {
-        if (currentUser?.id && String(emp.id) === String(currentUser.id)) return false;
-        if (currentUser?.email && emp.email && emp.email.toLowerCase().trim() === currentUser.email.toLowerCase().trim()) return false;
-        return true;
-      })
-      .map((emp: any) => ({
-        value: String(emp.id),
-        label: emp.fullName || emp.username || 'Nhân sự',
-        subLabel: emp.email || (emp.code ? `Mã: ${emp.code}` : undefined),
-      }));
-  }, [employees, currentUser]);
-
-  const shareScopeOptions = useMemo(
-    () => [
-      { value: 'private', label: 'Cá nhân (Chỉ người tạo & người nhận)' },
-      { value: 'department', label: 'Nội bộ phòng ban' },
-      { value: 'all', label: 'Toàn thể công ty' },
-    ],
-    [],
-  );
-
-  const approverOptions = useMemo(() => {
-    const eligibleApprovers = employees.filter(isApproverEligible);
-    const unique = eligibleApprovers.filter(
-      (emp: any, index: number, self: any[]) => index === self.findIndex((t: any) => String(t.id) === String(emp.id)),
-    );
-    return [
-      { value: '', label: 'Không chỉ định' },
-      ...unique.map((emp: any) => {
-        const roleName = getApproverRoleBadge(emp);
-        return {
-          value: String(emp.id),
-          label: `${emp.fullName || emp.username} (${roleName})`,
-        };
-      }),
-    ];
-  }, [employees]);
-
-  const flatCategoryList = useMemo(() => flattenCategories(categories), [categories]);
-
-  const folderOptions = useMemo(
-    () => [{ value: '', label: 'Thư mục gốc (Root)' }, ...flatCategoryList.map((cat) => ({ value: cat.id, label: cat.name }))],
-    [flatCategoryList],
-  );
 
   const titleVal = watch('title');
   const codeVal = watch('code');
   const documentTypeVal = watch('documentType');
-  const categoryIdVal = watch('categoryId');
-  const approverIdVal = watch('approverId');
-  const effectiveDateVal = watch('effectiveDate');
-  const expirationDateVal = watch('expirationDate');
 
   return (
     <Modal
@@ -374,13 +206,13 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
       title={
         <div className="flex items-center gap-2 text-slate-800">
           {isRuleMode ? <FileCheck className="text-primary" size={20} /> : <Upload className="text-primary" size={20} />}
-          <span>{isRuleMode ? 'Tải lên & Ban hành quy chế / văn bản' : 'Tải lên & Tạo tài liệu mới'}</span>
+          <span>{isRuleMode ? 'Tải lên quy chế / văn bản' : 'Tải lên & Tạo tài liệu mới'}</span>
         </div>
       }
       className="m-2 max-w-2xl w-full"
     >
       <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-4 text-xs">
-        {/* Upload Dropzone */}
+        {/* 1. Tệp đính kèm Dropzone */}
         <div>
           <label className="text-xs font-semibold text-gray-700 select-none block mb-1.5">
             Tệp đính kèm (PDF, DOCX, XLSX, Ảnh...) <span className="text-rose-500">*</span>
@@ -426,7 +258,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
           {fileError && <span className="text-xs text-red-500 mt-1 block">{fileError}</span>}
         </div>
 
-        {/* Title & Code */}
+        {/* 2. Tiêu đề * & Mã văn bản (Tùy chọn) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <Input
@@ -452,7 +284,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
           </div>
         </div>
 
-        {/* Trích yếu tóm tắt nội dung */}
+        {/* 3. Trích yếu nội dung (Tùy chọn) */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">
             Trích yếu nội dung (Tùy chọn)
@@ -466,119 +298,30 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
           />
         </div>
 
-        {/* Phân loại & Lưu trữ (Dành riêng cho ngữ cảnh Tài liệu của tôi vs Quy chế ban hành) */}
-        {isRuleMode ? (
-          <>
-            <div>
-              <Select
-                label="Phân loại văn bản quy chế / ban hành *"
-                fullWidth
-                value={documentTypeVal}
-                onChange={(e) => setValue('documentType', e.target.value, { shouldValidate: true })}
-                options={docTypeOptions}
-                error={errors.documentType?.message}
-              />
-            </div>
-
-            {/* Ngày hiệu lực & Ngày hết hạn */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <Input
-                  type="date"
-                  label="Ngày có hiệu lực (Tùy chọn)"
-                  fullWidth
-                  value={effectiveDateVal || ''}
-                  onChange={(e) => setValue('effectiveDate', e.target.value)}
-                />
-              </div>
-              <div>
-                <Input
-                  type="date"
-                  label="Ngày hết hạn (Tùy chọn)"
-                  fullWidth
-                  value={expirationDateVal || ''}
-                  onChange={(e) => setValue('expirationDate', e.target.value)}
-                />
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <Select
-                label="Phân loại tài liệu *"
-                fullWidth
-                value={documentTypeVal}
-                onChange={(e) => setValue('documentType', e.target.value, { shouldValidate: true })}
-                options={docTypeOptions}
-                error={errors.documentType?.message}
-              />
-            </div>
-
-            <div>
-              <Input
-                label="Lưu vào Thư mục"
-                fullWidth
-                readOnly
-                disabled
-                value={currentFolder ? currentFolder.name : 'Thư mục gốc (Root)'}
-                className="bg-slate-100 text-slate-700 font-medium cursor-not-allowed select-none"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Share Scope & Approver */}
+        {/* 4. Phân loại văn bản * & Lưu vào Thư mục */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <Select
-              label="Phạm vi chia sẻ / nhận văn bản"
+              label={isRuleMode ? 'Phân loại văn bản quy chế / ban hành *' : 'Phân loại tài liệu *'}
               fullWidth
-              value={watch('shareScope') || (isRuleMode ? 'all' : 'private')}
-              onChange={(e) => setValue('shareScope', e.target.value)}
-              options={shareScopeOptions}
+              value={documentTypeVal}
+              onChange={(e) => setValue('documentType', e.target.value, { shouldValidate: true })}
+              options={docTypeOptions}
+              error={errors.documentType?.message}
             />
           </div>
 
           <div>
-            <Select
-              label="Người phê duyệt (Chỉ Admin / HR / Quản lý)"
+            <Input
+              label="Lưu vào Thư mục"
               fullWidth
-              value={approverIdVal || ''}
-              onChange={(e) => setValue('approverId', e.target.value)}
-              options={approverOptions}
-              placeholder="-- Chọn người phê duyệt nếu cần --"
+              readOnly
+              disabled
+              value={currentFolder ? currentFolder.name : 'Thư mục gốc (Root)'}
+              className="bg-slate-100 text-slate-700 font-medium cursor-not-allowed select-none"
             />
           </div>
         </div>
-
-        {/* Recipients MultiSelect khi không phải 'all' */}
-        {watch('shareScope') !== 'all' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <MultiSelect
-                label="Người nhận đích danh (Nhận trong Hộp thư đến)"
-                options={employeeOptions}
-                value={selectedUserIds}
-                onChange={setSelectedUserIds}
-                placeholder="Chọn nhân sự nhận..."
-                searchPlaceholder="Tìm tên hoặc email..."
-                fullWidth
-              />
-            </div>
-            <div>
-              <MultiSelect
-                label="Phòng ban nhận (Nhận trong Hộp thư đến)"
-                options={departmentOptions}
-                value={selectedDepartmentIds}
-                onChange={setSelectedDepartmentIds}
-                placeholder="Chọn phòng ban nhận..."
-                searchPlaceholder="Tìm tên phòng ban..."
-                fullWidth
-              />
-            </div>
-          </div>
-        )}
 
         {/* Action Buttons */}
         <div className="flex gap-3 justify-end w-full mt-4">
@@ -586,7 +329,7 @@ export const CreateDocumentModal: React.FC<CreateDocumentModalProps> = ({
             Hủy
           </Button>
           <Button variant="primary" size="sm" type="submit" disabled={loading} loading={loading}>
-            {isRuleMode ? 'Tải lên & Ban hành' : 'Tải lên tài liệu'}
+            {isRuleMode ? 'Tải lên quy chế' : 'Tải lên tài liệu'}
           </Button>
         </div>
       </form>

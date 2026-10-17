@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Modal, Button, Input, Textarea } from '@/components';
 import { createDocumentVersion } from '@/actions/document';
-import { formatBytes, getFileVisualInfo } from '../_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
 import toast from 'react-hot-toast';
 import { Upload, FileUp, X } from 'lucide-react';
 import type { DocumentItem } from '@/types';
@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
 
 interface UploadVersionModalProps {
   isOpen: boolean;
@@ -63,10 +64,7 @@ export const UploadVersionModal: React.FC<UploadVersionModalProps> = ({ isOpen, 
     },
     onSuccess: () => {
       toast.success('Tải lên phiên bản mới thành công!');
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      if (doc?.id) {
-        queryClient.invalidateQueries({ queryKey: ['document-detail', doc.id] });
-      }
+      invalidateDocumentQueries(queryClient);
       onSuccess?.();
       handleClose();
     },

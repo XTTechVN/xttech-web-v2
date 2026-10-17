@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Modal, Button, Textarea, Select } from '@/components';
 import { RejectDocumentModal } from './reject-document-modal';
 import { UploadVersionModal } from './upload-version-modal';
@@ -27,16 +27,24 @@ import {
 } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, APPROVAL_STATUS_MAP, SHARE_SCOPE_MAP } from '@/types';
-import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '../_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
 import { getFileUrl } from '@/utils/string';
 import dayjs from 'dayjs';
-import { reviewDocument, submitDocument, publishDocument, updateDocument, getDocumentById, markDocumentAsRead } from '@/actions/document';
+import {
+  reviewDocument,
+  submitDocument,
+  publishDocument,
+  updateDocument,
+  getDocumentById,
+  markDocumentAsRead,
+} from '@/actions/document';
 import { getEmployees } from '@/actions/employee';
 import { getDepartments } from '@/actions/department';
 import { useAuthStore } from '@/stores';
 import { usePermission } from '@/hooks/user-permission';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { DOC_QUERY_KEYS, invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
 
 interface DocumentDetailModalProps {
   isOpen: boolean;
@@ -71,26 +79,36 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const currentUser = useAuthStore((state) => state.user);
   const { hasRole, isAdmin, isHR, isSuper, isManager } = usePermission();
 
+  // Quản lý văn bản & phê duyệt: Chỉ Admin, HR, Super Admin, Manager
+  const canManageDoc = isAdmin || isHR || isSuper || isManager || hasRole(['admin', 'hr', 'super', 'supper', 'super_admin', 'supper_admin']);
+
+  // Lưu ref tài liệu đã đánh dấu đọc để tránh gọi lặp khi modal re-render
+  const markedDocIdRef = useRef<number | null>(null);
+
   // Fetch chi tiết tài liệu đầy đủ kèm recipients & departments
   const { data: fullDoc } = useQuery({
-    queryKey: ['document-detail', doc?.id],
+    queryKey: DOC_QUERY_KEYS.documents.detail(doc?.id),
     queryFn: () => (doc?.id ? getDocumentById(doc.id) : null),
     enabled: Boolean(isOpen && doc?.id),
   });
 
   const targetDoc = fullDoc || doc;
 
-  // Tự động gọi API đánh dấu đã đọc khi người dùng mở xem văn bản
+  // Tự động gọi API đánh dấu đã đọc khi người dùng mở xem văn bản (chỉ 1 lần cho mỗi document ID)
   useEffect(() => {
-    if (isOpen && doc?.id) {
+    if (isOpen && doc?.id && markedDocIdRef.current !== doc.id) {
+      markedDocIdRef.current = doc.id;
       markDocumentAsRead(doc.id)
         .then(() => {
-          queryClient.invalidateQueries({ queryKey: ['documents'] });
-          queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+          // Chỉ làm mới danh sách tài liệu bên ngoài để cập nhật badge Đã đọc/Chưa đọc, KHÔNG làm mới toàn bộ root
+          queryClient.invalidateQueries({ queryKey: DOC_QUERY_KEYS.documents.list() });
         })
         .catch((err) => {
           console.debug('markDocumentAsRead status:', err?.message);
         });
+    }
+    if (!isOpen) {
+      markedDocIdRef.current = null;
     }
   }, [isOpen, doc?.id, queryClient]);
 
@@ -108,13 +126,13 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   }, [targetDoc]);
 
   const { data: employeesData } = useQuery({
-    queryKey: ['employees', 'share-options'],
+    queryKey: DOC_QUERY_KEYS.options.employees,
     queryFn: () => getEmployees({ limit: 200 }),
     enabled: isOpen,
   });
 
   const { data: departmentsData } = useQuery({
-    queryKey: ['departments', 'share-options'],
+    queryKey: DOC_QUERY_KEYS.options.departments,
     queryFn: () => getDepartments({ limit: 100 }),
     enabled: isOpen,
   });
@@ -184,7 +202,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
     if (Array.isArray(targetDoc?.recipients)) {
       targetDoc.recipients.forEach((r: any) => {
         const uid = String(r.userId || (r.user && r.user.id) || '');
-        if (uid) {
+        if (uid && !userMap.has(uid)) {
           const emp = empMap.get(uid);
           userMap.set(uid, {
             id: uid,
@@ -295,9 +313,6 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const isCreator =
     Boolean(currentUser?.id) && (String(targetDoc?.createdById) === String(currentUser?.id) || String(doc.createdById) === String(currentUser?.id));
 
-  // Quản lý văn bản & phê duyệt: Chỉ Admin, HR, Super Admin
-  const canManageDoc = isAdmin || isHR || isSuper || isManager || hasRole(['admin', 'hr', 'super', 'supper', 'super_admin', 'supper_admin']);
-
   // Role nhân viên không có quyền duyệt tài liệu (chỉ cấp quản lý mới được duyệt)
   const canApprove = canManageDoc;
 
@@ -318,9 +333,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
       });
 
       toast.success(status === 'approved' ? 'Phê duyệt tài liệu thành công!' : 'Đã từ chối tài liệu');
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['document-detail', doc.id] });
-      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+      invalidateDocumentQueries(queryClient);
       setIsRejectModalOpen(false);
       onSuccess?.();
       onClose();
@@ -356,10 +369,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
 
       await submitDocument(doc.id, { approverId: selectedApproverId });
       toast.success('Đã trình duyệt tài liệu thành công!');
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['documents', 'rules'] });
-      queryClient.invalidateQueries({ queryKey: ['document-detail', doc.id] });
-      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+      invalidateDocumentQueries(queryClient);
       setIsSubmitModalOpen(false);
       onSuccess?.();
       onClose();
@@ -375,9 +385,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
       setPublishLoading(true);
       await publishDocument(doc.id);
       toast.success('Đã ban hành văn bản chính thức!');
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['document-detail', doc.id] });
-      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+      invalidateDocumentQueries(queryClient);
       onSuccess?.();
       onClose();
     } catch (error: any) {
@@ -596,111 +604,113 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             </h3>
           </div>
 
-          {/* Đối tượng nhận văn bản */}
-          <div className="space-y-2.5 p-3.5 rounded-lg bg-white border border-slate-200/80 shadow-2xs">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
-                <Users size={15} className="text-primary" />
-                <span>Đối tượng nhận văn bản</span>
-              </span>
-              {targetDoc.shareScope === 'all' ? (
-                <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20 flex items-center gap-1">
-                  <Globe size={12} className="text-primary" />
-                  Toàn thể công ty
+          {/* Đối tượng nhận văn bản (Chỉ hiển thị cho cấp Quản lý / Admin / HR, ẩn với role Nhân viên) */}
+          {canManageDoc && (
+            <div className="space-y-2.5 p-3.5 rounded-lg bg-white border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
+                  <Users size={15} className="text-primary" />
+                  <span>Đối tượng nhận văn bản</span>
                 </span>
-              ) : (
-                <span className="text-[11px] text-slate-500 font-medium">
-                  {resolvedDepartments.length} phòng ban • {resolvedUsers.length} cá nhân
-                </span>
-              )}
-            </div>
-
-            {targetDoc.shareScope === 'all' && (
-              <p className="text-[11px] text-slate-500 italic">Văn bản được phát hành công khai cho toàn bộ nhân sự trong công ty.</p>
-            )}
-
-            {/* Danh sách phòng ban nhận */}
-            {resolvedDepartments.length > 0 && (
-              <div className="space-y-1.5 pt-1">
-                <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-                  <Building2 size={13} className="text-sky-600" />
-                  <span>Phòng ban nhận ({resolvedDepartments.length}):</span>
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {resolvedDepartments.map((dept) => (
-                    <span
-                      key={dept.id}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-50 text-sky-800 border border-sky-200/80 text-[11px] font-medium"
-                    >
-                      <Building2 size={12} className="text-sky-600" />
-                      <span>{dept.name}</span>
-                      {dept.code && <span className="text-[10px] text-sky-600">[{dept.code}]</span>}
-                    </span>
-                  ))}
-                </div>
+                {targetDoc.shareScope === 'all' ? (
+                  <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20 flex items-center gap-1">
+                    <Globe size={12} className="text-primary" />
+                    Toàn thể công ty
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    {resolvedDepartments.length} phòng ban • {resolvedUsers.length} cá nhân
+                  </span>
+                )}
               </div>
-            )}
 
-            {/* Danh sách cá nhân nhận */}
-            {resolvedUsers.length > 0 && (
-              <div className="space-y-1.5 pt-1">
-                <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-                  <User size={13} className="text-primary" />
-                  <span>Cá nhân đích danh ({resolvedUsers.length}):</span>
-                </span>
-                <div className="max-h-44 overflow-y-auto divide-y divide-slate-100 border border-slate-200/80 rounded-xl bg-slate-50/50">
-                  {resolvedUsers.map((u) => (
-                    <div key={u.id} className="p-2 flex items-center justify-between gap-2 text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center shrink-0 uppercase">
-                          {(u.fullName || 'U').charAt(0)}
-                        </div>
-                        <div className="min-w-0 truncate">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="font-medium text-slate-800 truncate block">{u.fullName}</span>
-                            {u.code && (
-                              <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 text-[10px] rounded font-mono font-medium border border-slate-200 shrink-0">
-                                {u.code}
+              {targetDoc.shareScope === 'all' && (
+                <p className="text-[11px] text-slate-500 italic">Văn bản được phát hành công khai cho toàn bộ nhân sự trong công ty.</p>
+              )}
+
+              {/* Danh sách phòng ban nhận */}
+              {resolvedDepartments.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
+                    <Building2 size={13} className="text-sky-600" />
+                    <span>Phòng ban nhận ({resolvedDepartments.length}):</span>
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {resolvedDepartments.map((dept) => (
+                      <span
+                        key={dept.id}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-50 text-sky-800 border border-sky-200/80 text-[11px] font-medium"
+                      >
+                        <Building2 size={12} className="text-sky-600" />
+                        <span>{dept.name}</span>
+                        {dept.code && <span className="text-[10px] text-sky-600">[{dept.code}]</span>}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Danh sách cá nhân nhận */}
+              {resolvedUsers.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
+                    <User size={13} className="text-primary" />
+                    <span>Cá nhân đích danh ({resolvedUsers.length}):</span>
+                  </span>
+                  <div className="max-h-44 overflow-y-auto divide-y divide-slate-100 border border-slate-200/80 rounded-xl bg-slate-50/50">
+                    {resolvedUsers.map((u) => (
+                      <div key={u.id} className="p-2 flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center shrink-0 uppercase">
+                            {(u.fullName || 'U').charAt(0)}
+                          </div>
+                          <div className="min-w-0 truncate">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="font-medium text-slate-800 truncate block">{u.fullName}</span>
+                              {u.code && (
+                                <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 text-[10px] rounded font-mono font-medium border border-slate-200 shrink-0">
+                                  {u.code}
+                                </span>
+                              )}
+                            </div>
+                            {(u.departmentName || u.email) && (
+                              <span className="text-[10px] text-slate-500 truncate block">
+                                {[u.email, u.departmentName].filter(Boolean).join(' • ')}
                               </span>
                             )}
                           </div>
-                          {(u.departmentName || u.email) && (
-                            <span className="text-[10px] text-slate-500 truncate block">
-                              {[u.email, u.departmentName].filter(Boolean).join(' • ')}
+                        </div>
+
+                        <div className="shrink-0 flex items-center gap-1">
+                          {u.isRead ? (
+                            <span
+                              title={u.readAt ? `Đã đọc lúc ${dayjs(u.readAt).format('HH:mm DD/MM')}` : 'Đã đọc'}
+                              className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200"
+                            >
+                              <Eye size={11} />
+                              <span>Đã đọc</span>
+                            </span>
+                          ) : (
+                            <span
+                              className="inline-flex items-center gap-1 text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full"
+                              title="Chưa đọc"
+                            >
+                              <EyeOff size={11} />
+                              <span>Chưa đọc</span>
                             </span>
                           )}
                         </div>
                       </div>
-
-                      <div className="shrink-0 flex items-center gap-1">
-                        {u.isRead ? (
-                          <span
-                            title={u.readAt ? `Đã đọc lúc ${dayjs(u.readAt).format('HH:mm DD/MM')}` : 'Đã đọc'}
-                            className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200"
-                          >
-                            <Eye size={11} />
-                            <span>Đã đọc</span>
-                          </span>
-                        ) : (
-                          <span
-                            className="inline-flex items-center gap-1 text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full"
-                            title="Chưa đọc"
-                          >
-                            <EyeOff size={11} />
-                            <span>Chưa đọc</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {targetDoc.shareScope !== 'all' && resolvedDepartments.length === 0 && resolvedUsers.length === 0 && (
-              <p className="text-[11px] text-slate-400 italic">Chưa có cá nhân hay phòng ban nào được chỉ định nhận văn bản này.</p>
-            )}
-          </div>
+              {targetDoc.shareScope !== 'all' && resolvedDepartments.length === 0 && resolvedUsers.length === 0 && (
+                <p className="text-[11px] text-slate-400 italic">Chưa có cá nhân hay phòng ban nào được chỉ định nhận văn bản này.</p>
+              )}
+            </div>
+          )}
 
           {/* Thông tin hành chính & phê duyệt */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-lg bg-white border border-slate-200/80">
@@ -812,8 +822,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         onClose={() => setIsUploadVersionOpen(false)}
         document={targetDoc}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['document-detail', doc.id] });
-          queryClient.invalidateQueries({ queryKey: ['documents'] });
+          invalidateDocumentQueries(queryClient);
           onSuccess?.();
         }}
       />

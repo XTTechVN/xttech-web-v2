@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Modal, Button, Input, Textarea, Select, MultiSelect } from '@/components';
-import { updateDocument, getDocumentById } from '@/actions/document';
+import { updateDocument, getDocumentById, submitDocument } from '@/actions/document';
 import { getEmployees } from '@/actions/employee';
 import { getDepartments } from '@/actions/department';
 import { DOCUMENT_TYPE_MAP, SHARE_SCOPE_MAP, DOCUMENT_STATUS_MAP, APPROVAL_STATUS_MAP } from '@/types';
-import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '../_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo, isApproverEligible, getApproverRoleBadge } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
 import toast from 'react-hot-toast';
-import { Edit3, FileUp, X, Clock, Check, CheckCircle2, Megaphone } from 'lucide-react';
+import { Edit3, FileUp, X, Clock, Check, CheckCircle2, Megaphone, Send } from 'lucide-react';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores';
@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import dayjs from 'dayjs';
+import { DOC_QUERY_KEYS, invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
 
 interface EditDocumentModalProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ type EditDocumentFormValues = z.infer<typeof editDocumentSchema>;
 export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, onClose, document: doc, categories, onSuccess }) => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+  const [submitAction, setSubmitAction] = useState<'save' | 'submit'>('save');
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<(string | number)[]>([]);
 
@@ -59,20 +61,20 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
 
   // Fetch employees & departments for selection
   const { data: employeesData } = useQuery({
-    queryKey: ['employees', 'share-options'],
+    queryKey: DOC_QUERY_KEYS.options.employees,
     queryFn: () => getEmployees({ limit: 200 }),
     enabled: isOpen,
   });
 
   const { data: departmentsData } = useQuery({
-    queryKey: ['departments', 'share-options'],
+    queryKey: DOC_QUERY_KEYS.options.departments,
     queryFn: () => getDepartments({ limit: 100 }),
     enabled: isOpen,
   });
 
   // Fetch chi tiết tài liệu đầy đủ kèm recipients & departments
   const { data: fullDoc } = useQuery({
-    queryKey: ['document-detail', doc?.id],
+    queryKey: DOC_QUERY_KEYS.documents.detail(doc?.id),
     queryFn: () => (doc?.id ? getDocumentById(doc.id) : null),
     enabled: Boolean(isOpen && doc?.id),
   });
@@ -220,9 +222,15 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
     setSelectedDepartmentIds(Array.from(deptIdsSet));
   }, [isOpen, doc, fullDoc, sharesData, departments, reset]);
 
-  // Submit update changes
-  const handleFormSubmit = async (data: EditDocumentFormValues) => {
+  // Submit update changes (Hỗ trợ cả lưu thông thường lẫn Trình duyệt chuyển sang pending)
+  const handleFormSubmit = async (data: EditDocumentFormValues, isSubmittingForApproval = false) => {
     if (!doc) return;
+
+    // Nếu người dùng chọn Lưu & Trình duyệt mà chưa chọn Người phê duyệt
+    if (isSubmittingForApproval && !data.approverId?.trim()) {
+      toast.error('Vui lòng chọn Người phê duyệt để trình duyệt văn bản sang trạng thái Chờ duyệt!');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -255,12 +263,28 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
       const deptIdsNum = selectedDepartmentIds.map(Number).filter((n) => !isNaN(n));
       payload.recipientDepartmentIds = deptIdsNum;
 
+      const isCurrentDraft = !doc.approvalStatus || doc.approvalStatus === 'draft' || doc.status === 'draft' || doc.approvalStatus === 'rejected';
+      const shouldPromoteToPending = isSubmittingForApproval || (Boolean(data.approverId?.trim()) && isCurrentDraft);
+
+      if (shouldPromoteToPending) {
+        payload.status = 'pending';
+        payload.approvalStatus = 'pending';
+      }
+
       await updateDocument(doc.id, payload);
-      toast.success('Cập nhật thông tin tài liệu thành công!');
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['document-detail', doc.id] });
-      queryClient.invalidateQueries({ queryKey: ['document-shares', doc.id] });
-      queryClient.invalidateQueries({ queryKey: ['inbox-documents'] });
+
+      if (shouldPromoteToPending && data.approverId?.trim()) {
+        try {
+          await submitDocument(doc.id, { approverId: data.approverId.trim() });
+        } catch (subErr) {
+          console.warn('submitDocument fallback warning:', subErr);
+        }
+        toast.success('Đã lưu và chuyển tài liệu sang trạng thái Chờ duyệt (Pending)!');
+      } else {
+        toast.success('Cập nhật thông tin tài liệu thành công!');
+      }
+
+      invalidateDocumentQueries(queryClient);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -268,6 +292,16 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
     } finally {
       setLoading(false);
     }
+  };
+
+  const onSaveDraft = (data: EditDocumentFormValues) => {
+    setSubmitAction('save');
+    return handleFormSubmit(data, false);
+  };
+
+  const onSubmitForApproval = (data: EditDocumentFormValues) => {
+    setSubmitAction('submit');
+    return handleFormSubmit(data, true);
   };
 
   // Flatten categories for select dropdown
@@ -393,7 +427,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
       }
       className="m-2 max-w-2xl w-full"
     >
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-4 text-xs">
+      <form onSubmit={handleSubmit(onSaveDraft)} className="flex flex-col gap-4 text-xs">
         {/* Title & Code */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -545,15 +579,43 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({ isOpen, on
           />
         </div>
 
-        {/* Standard Save & Cancel */}
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200/80">
-          <Button variant="outline" size="sm" onClick={onClose} disabled={loading}>
-            Hủy
-          </Button>
-          <Button variant="primary" size="sm" type="submit" disabled={loading} loading={loading}>
-            Lưu thay đổi
-          </Button>
-        </div>
+        {/* Action Buttons: Hỗ trợ Lưu bản nháp và Lưu & Trình duyệt (chuyển sang pending) */}
+        {(() => {
+          const isDraftOrRejected = !doc.approvalStatus || doc.approvalStatus === 'draft' || doc.status === 'draft' || doc.approvalStatus === 'rejected';
+
+          return (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200/80">
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <Button variant="outline" size="sm" onClick={onClose} disabled={loading}>
+                  Hủy
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  disabled={loading}
+                  loading={loading && submitAction === 'save'}
+                  onClick={handleSubmit(onSaveDraft)}
+                >
+                  {isDraftOrRejected ? 'Lưu bản nháp' : 'Lưu thay đổi'}
+                </Button>
+                {isDraftOrRejected && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    type="button"
+                    disabled={loading}
+                    loading={loading && submitAction === 'submit'}
+                    onClick={handleSubmit(onSubmitForApproval)}
+                    className="flex items-center gap-1.5"
+                  >
+                    <span>Lưu & Trình duyệt</span>
+                  </Button>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </form>
     </Modal>
   );

@@ -10,17 +10,12 @@ import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, RULE_DOC_TYPES } from '@/types'
 import { RulesHeader } from './rules-header';
 import { RulesEmptyState } from './rules-empty-state';
 import { RulesSplitView } from './rules-split-view';
-import { CreateDocumentModal } from '../../documents/_components/create-document-modal';
-import { FileTable } from '../../documents/_components/file-table';
-import { EditDocumentModal } from '../../documents/_components/edit-document-modal';
-import { DocumentDetailModal } from '../../documents/_components/document-detail-modal';
-import { DocumentPreviewModal } from '../../documents/_components/document-preview-modal';
-import { MoveItemModal } from '../../documents/_components/move-item-modal';
-import { DeleteConfirmModal } from '../../documents/_components/delete-confirm-modal';
-import { ShareFolderModal } from '../../documents/_components/share-folder-modal';
+import { FileTable } from '@/app/(auth)/app/(sidebar)/documents/_components/file-table';
+import { DocumentsModals } from '@/app/(auth)/app/(sidebar)/documents/_components/documents-modals';
+import { useDocumentModals } from '@/app/(auth)/app/(sidebar)/documents/_hooks/use-document-modals';
+import { DOC_QUERY_KEYS, invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
 
 import toast from 'react-hot-toast';
-
 import { useQueryParam } from '@/hooks';
 import { showErrorToast } from '@/utils';
 
@@ -90,36 +85,12 @@ export function RulesContent() {
     [],
   );
 
-  // Modals
-  const [createDocOpen, setCreateDocOpen] = useState(false);
-  const [editDocOpen, setEditDocOpen] = useState(false);
-  const [editingDoc, setEditingDoc] = useState<DocumentItem | null>(null);
-  const [detailDocOpen, setDetailDocOpen] = useState(false);
-  const [previewDocOpen, setPreviewDocOpen] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
-  const [shareFolderOpen, setShareFolderOpen] = useState(false);
-  const [sharingDoc, setSharingDoc] = useState<DocumentItem | null>(null);
+  // Modals hook tập trung
+  const modals = useDocumentModals();
 
-  const [moveModalOpen, setMoveModalOpen] = useState(false);
-  const [itemToMove, setItemToMove] = useState<{ type: 'folder' | 'document'; item: DocumentCategory | DocumentItem } | null>(null);
-
-  const [deleteModal, setDeleteModal] = useState<{
-    isOpen: boolean;
-    type: 'folder' | 'document';
-    id: number;
-    name: string;
-    loading: boolean;
-  }>({
-    isOpen: false,
-    type: 'document',
-    id: 0,
-    name: '',
-    loading: false,
-  });
-
-  // 1. Fetch Category Tree for Move Modal / Categories
+  // 1. Fetch Category Tree
   const { data: categoryTree = [] } = useQuery({
-    queryKey: ['document-categories', 'tree'],
+    queryKey: DOC_QUERY_KEYS.categories.tree,
     queryFn: getDocumentCategoryTree,
   });
 
@@ -131,19 +102,23 @@ export function RulesContent() {
   }, [categoryTree]);
 
   // 2. Fetch Documents for rules
+  const queryParams = useMemo(
+    () => ({
+      search: search?.trim() || undefined,
+      documentType: documentType || undefined,
+      status: status || undefined,
+      limit: 1000,
+    }),
+    [search, documentType, status],
+  );
+
   const {
     data: documentsData,
     isLoading: isLoadingDocuments,
     refetch: refetchDocuments,
   } = useQuery({
-    queryKey: ['documents', 'rules', { search, documentType, status }],
-    queryFn: () =>
-      getDocuments({
-        search: search?.trim() || undefined,
-        documentType: documentType || undefined,
-        status: status || undefined,
-        limit: 1000, // Lấy toàn bộ không giới hạn
-      }),
+    queryKey: DOC_QUERY_KEYS.documents.list({ ...queryParams, scope: 'rules' }),
+    queryFn: () => getDocuments(queryParams),
   });
 
   const documents = useMemo<DocumentItem[]>(() => {
@@ -158,23 +133,21 @@ export function RulesContent() {
 
   // Delete Action
   const handleConfirmDelete = async () => {
+    const { deleteModal } = modals.state;
     try {
-      setDeleteModal((prev) => ({ ...prev, loading: true }));
+      modals.setters.setDeleteModal((prev) => ({ ...prev, loading: true }));
       await deleteDocument(deleteModal.id);
       toast.success(`Đã xóa văn bản "${deleteModal.name}"`);
-      refetchDocuments();
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['documents', 'trash'] });
-      setDeleteModal((prev) => ({ ...prev, isOpen: false, loading: false }));
+      invalidateDocumentQueries(queryClient);
+      modals.setters.setDeleteModal((prev) => ({ ...prev, isOpen: false, loading: false }));
     } catch (error: any) {
       showErrorToast(error, 'Lỗi khi xóa');
-      setDeleteModal((prev) => ({ ...prev, loading: false }));
+      modals.setters.setDeleteModal((prev) => ({ ...prev, loading: false }));
     }
   };
 
   const hasDocuments = documents.length > 0;
   const isEmptyState = !hasDocuments && !isLoadingDocuments;
-  const hasActiveFilters = Boolean(search || documentType || status);
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white select-none">
@@ -184,7 +157,7 @@ export function RulesContent() {
         onSearchChange={setSearch}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        onCreateDocument={() => setCreateDocOpen(true)}
+        onCreateDocument={() => modals.actions.openCreateDoc()}
       />
 
       {/* Scrollable Main Views */}
@@ -201,31 +174,11 @@ export function RulesContent() {
             ) : viewMode === 'grid' ? (
               <RulesSplitView
                 documents={documents}
-                onPreview={(d) => {
-                  setSelectedDoc(d);
-                  setPreviewDocOpen(true);
-                }}
-                onView={(d) => {
-                  setSelectedDoc(d);
-                  setDetailDocOpen(true);
-                }}
-                onEdit={(d) => {
-                  setEditingDoc(d);
-                  setEditDocOpen(true);
-                }}
-                onShare={(d) => {
-                  setSharingDoc(d);
-                  setShareFolderOpen(true);
-                }}
-                onDelete={(d) => {
-                  setDeleteModal({
-                    isOpen: true,
-                    type: 'document',
-                    id: d.id,
-                    name: d.title,
-                    loading: false,
-                  });
-                }}
+                onPreview={modals.actions.openPreviewDoc}
+                onView={modals.actions.openDetailDoc}
+                onEdit={modals.actions.openEditDoc}
+                onShare={modals.actions.openShareDoc}
+                onDelete={(d) => modals.actions.openDeleteDoc(d.id, d.title)}
               />
             ) : (
               <div className="flex flex-col gap-0">
@@ -235,35 +188,12 @@ export function RulesContent() {
                   onToggleSelect={(d) => toggleSelectItem('document', d.id)}
                   currentFolderName="Quy chế & Quy định"
                   showHeader={true}
-                  onPreview={(d) => {
-                    setSelectedDoc(d);
-                    setPreviewDocOpen(true);
-                  }}
-                  onView={(d) => {
-                    setSelectedDoc(d);
-                    setDetailDocOpen(true);
-                  }}
-                  onEdit={(d) => {
-                    setEditingDoc(d);
-                    setEditDocOpen(true);
-                  }}
-                  onShare={(d) => {
-                    setSharingDoc(d);
-                    setShareFolderOpen(true);
-                  }}
-                  onMove={(d) => {
-                    setItemToMove({ type: 'document', item: d });
-                    setMoveModalOpen(true);
-                  }}
-                  onDelete={(d) => {
-                    setDeleteModal({
-                      isOpen: true,
-                      type: 'document',
-                      id: d.id,
-                      name: d.title,
-                      loading: false,
-                    });
-                  }}
+                  onPreview={modals.actions.openPreviewDoc}
+                  onView={modals.actions.openDetailDoc}
+                  onEdit={modals.actions.openEditDoc}
+                  onShare={modals.actions.openShareDoc}
+                  onMove={(d) => modals.actions.openMoveDoc(d)}
+                  onDelete={(d) => modals.actions.openDeleteDoc(d.id, d.title)}
                 />
               </div>
             )}
@@ -271,118 +201,16 @@ export function RulesContent() {
         )}
 
         {/* Empty State Component */}
-        {isEmptyState && <RulesEmptyState onCreateDocument={() => setCreateDocOpen(true)} />}
+        {isEmptyState && <RulesEmptyState onCreateDocument={() => modals.actions.openCreateDoc()} />}
       </div>
 
-      {/* MODALS */}
-
-      {/* 1. Create Rule Document Modal */}
-      <CreateDocumentModal
-        isOpen={createDocOpen}
-        onClose={() => setCreateDocOpen(false)}
-        categories={safeCategoryTree}
+      {/* Centralized Modals Container */}
+      <DocumentsModals
+        modals={modals}
+        safeCategoryTree={safeCategoryTree}
         defaultGroup="rules"
-        onSuccess={() => {
-          refetchDocuments();
-          queryClient.invalidateQueries({ queryKey: ['documents'] });
-        }}
-      />
-
-      {/* 2. Edit Document Modal */}
-      <EditDocumentModal
-        isOpen={editDocOpen}
-        onClose={() => {
-          setEditDocOpen(false);
-          setEditingDoc(null);
-        }}
-        document={editingDoc}
-        categories={safeCategoryTree}
-        onSuccess={() => {
-          refetchDocuments();
-        }}
-      />
-
-      {/* 3. Document Detail Modal */}
-      <DocumentDetailModal
-        isOpen={detailDocOpen}
-        onClose={() => {
-          setDetailDocOpen(false);
-          setSelectedDoc(null);
-        }}
-        document={selectedDoc}
-        onSuccess={refetchDocuments}
-        onEdit={(d) => {
-          setDetailDocOpen(false);
-          setEditingDoc(d);
-          setEditDocOpen(true);
-        }}
-        onDelete={(d) => {
-          setDetailDocOpen(false);
-          setDeleteModal({
-            isOpen: true,
-            type: 'document',
-            id: d.id,
-            name: d.title,
-            loading: false,
-          });
-        }}
-        onShare={(d) => {
-          setSharingDoc(d);
-          setShareFolderOpen(true);
-        }}
-        onPreview={(d) => {
-          setSelectedDoc(d);
-          setPreviewDocOpen(true);
-        }}
-      />
-
-      {/* 4. Document Preview Modal */}
-      <DocumentPreviewModal
-        isOpen={previewDocOpen}
-        onClose={() => {
-          setPreviewDocOpen(false);
-          setSelectedDoc(null);
-        }}
-        document={selectedDoc}
-      />
-
-      {/* 5. Move Item Modal */}
-      <MoveItemModal
-        isOpen={moveModalOpen}
-        onClose={() => {
-          setMoveModalOpen(false);
-          setItemToMove(null);
-        }}
-        type={itemToMove?.type || 'document'}
-        item={itemToMove?.item || null}
-        onSuccess={() => {
-          refetchDocuments();
-        }}
-      />
-
-      {/* 6. Share Modal */}
-      <ShareFolderModal
-        isOpen={shareFolderOpen}
-        onClose={() => {
-          setShareFolderOpen(false);
-          setSharingDoc(null);
-        }}
-        folder={null}
-        document={sharingDoc}
-      />
-
-      {/* 7. Delete Confirm Modal */}
-      <DeleteConfirmModal
-        isOpen={deleteModal.isOpen}
-        loading={deleteModal.loading}
-        title="Xóa văn bản quy chế"
-        description={
-          <>
-            Bạn có chắc chắn muốn chuyển văn bản <strong className="text-gray-900 font-semibold">{deleteModal.name}</strong> vào thùng rác?
-          </>
-        }
-        onClose={() => setDeleteModal((prev) => ({ ...prev, isOpen: false }))}
-        onConfirm={handleConfirmDelete}
+        onConfirmDelete={handleConfirmDelete}
+        onRefetchDocuments={refetchDocuments}
       />
     </div>
   );

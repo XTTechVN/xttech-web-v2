@@ -6,9 +6,10 @@ import { updateDocumentCategory, updateDocument, getDocumentCategoryTree } from 
 import toast from 'react-hot-toast';
 import { Folder, HardDrive, AlertCircle } from 'lucide-react';
 import type { DocumentCategory, DocumentItem } from '@/types';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/utils';
 import { FolderTreeView } from './folder-tree-view';
+import { DOC_QUERY_KEYS, invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
 
 interface MoveItemModalProps {
   isOpen: boolean;
@@ -44,6 +45,7 @@ export const MoveItemModal: React.FC<MoveItemModalProps> = ({
   item,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
 
@@ -55,7 +57,7 @@ export const MoveItemModal: React.FC<MoveItemModalProps> = ({
   }, [isOpen]);
 
   const { data: tree = [], isLoading: isFetchingTree } = useQuery({
-    queryKey: ['document-categories-tree'],
+    queryKey: DOC_QUERY_KEYS.categories.tree,
     queryFn: getDocumentCategoryTree,
     enabled: isOpen,
   });
@@ -118,6 +120,7 @@ export const MoveItemModal: React.FC<MoveItemModalProps> = ({
         }
         toast.success('Di chuyển tài liệu thành công');
       }
+      invalidateDocumentQueries(queryClient);
       onSuccess();
       onClose();
     } catch (error: any) {
