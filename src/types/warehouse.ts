@@ -227,6 +227,8 @@ export interface ShortageItemDetail {
   availableQty: number;
   shortageQty: number;
   isConfigured?: boolean;
+  usedOffcutsCount?: number;
+  offcutsDetail?: Array<Record<string, any>> | null;
 }
 
 export interface ShortageCheckResponse {
