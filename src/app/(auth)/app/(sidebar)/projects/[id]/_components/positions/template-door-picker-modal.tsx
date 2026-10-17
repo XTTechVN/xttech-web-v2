@@ -2,12 +2,12 @@
 
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getDoors, getDoorSeriesList, getBrands, createProjectPosition } from '@/actions';
+import { getDoors, getDoorSeriesList, getBrands, createProjectPosition, getProject } from '@/actions';
 import type { Door, ProjectFloor, ProjectDoorPosition } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 import { Search, ImageOff, Plus, Layers, ArrowLeft } from 'lucide-react';
 import { Modal, Button, Select, Input } from '@/components';
-import { DoorThumbnail } from '../../configuration/door-templates/_components/door-thumbnail';
+import { DoorThumbnail } from '../../../configuration/door-templates/_components/door-thumbnail';
 import { getDoorTypeConfig, normalizeDoorType } from '@/types';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
@@ -17,6 +17,8 @@ interface TemplateDoorPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
   projectId?: number;
+  defaultBrandId?: number | null;
+  defaultSeriesId?: number | null;
   floors?: ProjectFloor[];
   selectedFloorId?: number | 'all';
   existingPositions?: ProjectDoorPosition[];
@@ -79,6 +81,8 @@ export function TemplateDoorPickerModal({
   isOpen,
   onClose,
   projectId,
+  defaultBrandId: propDefaultBrandId,
+  defaultSeriesId: propDefaultSeriesId,
   floors = [],
   selectedFloorId = 'all',
   existingPositions = [],
@@ -96,6 +100,27 @@ export function TemplateDoorPickerModal({
   const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+
+  // Lấy dữ liệu cấu hình dự án để fill giá trị mặc định
+  const { data: project } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => (projectId ? getProject(projectId) : null),
+    enabled: !!projectId && isOpen,
+  });
+
+  const effectiveBrandId = propDefaultBrandId ?? project?.defaultBrandId ?? project?.defaultBrand?.id ?? null;
+  const effectiveSeriesId = propDefaultSeriesId ?? project?.defaultSeriesId ?? project?.defaultSeries?.id ?? null;
+
+  const initializedBrandRef = React.useRef(false);
+  const initializedSeriesRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      initializedBrandRef.current = false;
+      initializedSeriesRef.current = false;
+      setSelectedSeriesId(null);
+    }
+  }, [isOpen]);
 
   const handleClose = () => {
     setStep('select');
@@ -125,16 +150,21 @@ export function TemplateDoorPickerModal({
     }));
   }, [brandsList]);
 
-  // Tự động chọn brand đầu tiên nếu chưa chọn hoặc nếu brand hiện tại không nằm trong danh sách
+  // Tự động điền Hãng nhôm mặc định từ dự án
   React.useEffect(() => {
-    if (brandsList.length > 0) {
-      const isCurrentBrandValid = brandsList.some((b) => b.id === selectedBrandId);
-      if (!selectedBrandId || !isCurrentBrandValid) {
-        setSelectedBrandId(brandsList[0].id);
-        setSelectedSeriesId(null);
+    if (!isOpen || brandsList.length === 0) return;
+
+    if (!initializedBrandRef.current) {
+      const hasDefaultBrand = effectiveBrandId && brandsList.some((b) => b.id === effectiveBrandId);
+      const targetBrandId = hasDefaultBrand ? effectiveBrandId : brandsList[0]?.id;
+      if (targetBrandId) {
+        setSelectedBrandId(targetBrandId);
+      }
+      if (hasDefaultBrand || !project) {
+        initializedBrandRef.current = true;
       }
     }
-  }, [brandsList, selectedBrandId]);
+  }, [isOpen, brandsList, effectiveBrandId, project]);
 
   // Lấy danh sách Series theo Brand được chọn
   const { data: seriesData } = useQuery({
@@ -144,11 +174,25 @@ export function TemplateDoorPickerModal({
   });
   const seriesList = seriesData?.items || [];
   const seriesOptions = useMemo(() => {
-    return seriesList.map((s) => ({
-      value: s.id,
-      label: `${s.code} - ${s.name}`,
-    }));
+    return [...seriesList]
+      .sort((a, b) => `${a.code} - ${a.name}`.localeCompare(`${b.code} - ${b.name}`, 'vi', { sensitivity: 'base' }))
+      .map((s) => ({
+        value: s.id,
+        label: `${s.code} - ${s.name}`,
+      }));
   }, [seriesList]);
+
+  // Tự động điền Hệ nhôm mặc định từ dự án
+  React.useEffect(() => {
+    if (!isOpen || seriesList.length === 0) return;
+
+    if (!initializedSeriesRef.current) {
+      if (effectiveSeriesId && seriesList.some((s) => s.id === effectiveSeriesId)) {
+        setSelectedSeriesId(effectiveSeriesId);
+        initializedSeriesRef.current = true;
+      }
+    }
+  }, [isOpen, seriesList, effectiveSeriesId]);
 
   // Lấy danh sách Doors theo Brand
   const { data: doorsData, isLoading: isLoadingDoors } = useQuery({

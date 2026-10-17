@@ -34,7 +34,7 @@ import {
   ImageOff,
 } from 'lucide-react';
 import { TemplateDoorPickerModal } from './template-door-picker-modal';
-import { DoorThumbnail } from '../../configuration/door-templates/_components/door-thumbnail';
+import { DoorThumbnail } from '../../../configuration/door-templates/_components/door-thumbnail';
 
 interface ProjectFloorsPositionsProps {
   projectId: number;
