@@ -31,7 +31,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
   seriesId,
   onNavigateTab,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'bars' | 'beads' | 'glass' | 'grilles'>('bars');
+  const [activeSubTab, setActiveSubTab] = useState<'bars' | 'beads' | 'glass' | 'grilles' | 'gaskets'>('bars');
   const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
   const [selectedBeadIndex, setSelectedBeadIndex] = useState<number | null>(null);
   const [selectedGlassIndex, setSelectedGlassIndex] = useState<number | null>(null);
@@ -203,6 +203,19 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                   }`}
                 >
                   4. Kính nan đồng ({calcData.grilles.length})
+                </button>
+              )}
+              {calcData.gaskets && calcData.gaskets.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveSubTab('gaskets')}
+                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                    activeSubTab === 'gaskets'
+                      ? 'bg-pink-600/10 text-pink-700 border border-pink-500/25 font-bold shadow-2xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70 hover:text-slate-900'
+                  }`}
+                >
+                  5. Roan gắn kính ({calcData.gaskets.length})
                 </button>
               )}
             </div>
@@ -787,6 +800,94 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                     ))}
                   </tbody>
                 </table>
+              )}
+
+              {activeSubTab === 'gaskets' && (
+                <div className="space-y-3">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-gray-500 font-semibold text-xs bg-slate-50/50">
+                        <th className="py-2.5 px-3">Tên vật tư roan</th>
+                        <th className="py-2.5 px-3 text-center">Vị trí</th>
+                        <th className="py-2.5 px-3">Cách tính</th>
+                        <th className="py-2.5 px-3 text-right">Chiều dài (m)</th>
+                        <th className="py-2.5 px-3 text-center">ĐVT</th>
+                        <th className="py-2.5 px-3 text-right">Đơn giá (đ)</th>
+                        <th className="py-2.5 px-3 text-right">Thành tiền (đ)</th>
+                        <th className="py-2.5 px-3">Ghi chú</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 text-xs">
+                      {calcData.gaskets?.map((g, idx) => {
+                        const measureMap: Record<string, string> = {
+                          bead: 'Theo nẹp kính',
+                          glass_perimeter: 'Theo chu vi kính',
+                          glass_width: 'Theo chiều rộng kính',
+                          glass_height: 'Theo chiều cao kính',
+                          frame_perimeter: 'Theo chu vi khung',
+                          frame_width: 'Theo chiều rộng khung',
+                          frame_height: 'Theo chiều cao khung',
+                        };
+                        return (
+                          <tr key={idx} className="hover:bg-pink-50/20 transition-colors">
+                            <td className="py-2.5 px-3 font-medium text-gray-900">
+                              {g.name}
+                              {g.code && <span className="text-[11px] text-slate-400 block font-mono">{g.code}</span>}
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                  g.target === 'frame'
+                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                }`}
+                              >
+                                {g.target === 'frame' ? 'Khung' : 'Cánh'}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-gray-600">
+                              {measureMap[g.measure] || g.measure}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-bold text-gray-900">
+                              {g.lengthM}
+                            </td>
+                            <td className="py-2.5 px-3 text-center text-gray-600">{g.unit || 'm'}</td>
+                            <td className="py-2.5 px-3 text-right text-gray-700">
+                              {g.unitPrice ? g.unitPrice.toLocaleString('vi-VN') : '0'}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-bold text-pink-700">
+                              {g.totalPrice ? g.totalPrice.toLocaleString('vi-VN') : '0'} đ
+                            </td>
+                            <td className="py-2.5 px-3 text-gray-500 text-[11px]">{g.note || '-'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+
+                  {/* Tổng kết roan */}
+                  <div className="flex justify-end items-center gap-6 pt-3 border-t border-slate-200 text-xs font-semibold">
+                    <div className="text-slate-600">
+                      Tổng chiều dài roan:{' '}
+                      <span className="text-slate-900 font-bold">
+                        {calcData.totalGasketLengthM ||
+                          calcData.gaskets?.reduce((sum, it) => sum + it.lengthM, 0).toFixed(2)}{' '}
+                        m
+                      </span>
+                    </div>
+                    <div className="text-slate-600">
+                      Tổng chi phí roan:{' '}
+                      <span className="text-pink-700 font-bold text-sm">
+                        {(
+                          calcData.totalGasketPrice ||
+                          calcData.gaskets?.reduce((sum, it) => sum + it.totalPrice, 0) ||
+                          0
+                        ).toLocaleString('vi-VN')}{' '}
+                        đ
+                      </span>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </div>

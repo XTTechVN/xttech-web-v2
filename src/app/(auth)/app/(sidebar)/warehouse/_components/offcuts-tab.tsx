@@ -12,9 +12,9 @@ interface OffcutsTabProps {
 }
 
 const OFFCUT_STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = {
-  available: { label: 'Sẵn sàng dùng', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  available: { label: 'Sẵn sàng', bg: 'bg-emerald-50', text: 'text-emerald-700' },
   reserved: { label: 'Đã giữ chỗ Lệnh SX', bg: 'bg-amber-50', text: 'text-amber-700' },
-  consumed: { label: 'Đã cắt hết', bg: 'bg-slate-100', text: 'text-slate-500' },
+  consumed: { label: 'Đã sử dụng hết', bg: 'bg-slate-100', text: 'text-slate-500' },
 };
 
 export function OffcutsTab({ offcuts, loading, onOpenAddOffcut }: OffcutsTabProps) {
@@ -86,8 +86,8 @@ export function OffcutsTab({ offcuts, loading, onOpenAddOffcut }: OffcutsTabProp
             <thead className="bg-slate-100 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
               <tr>
                 <th className="p-3 w-28">Mã Nhôm Thừa</th>
-                <th className="p-3">Profile Bar ID</th>
-                <th className="p-3 text-center">Color ID</th>
+                <th className="p-3">Thanh Profile</th>
+                <th className="p-3">Màu Sắc</th>
                 <th className="p-3 text-right">Chiều Dài (mm)</th>
                 <th className="p-3">Vị Trí Lưu Kho</th>
                 <th className="p-3">Giữ Chỗ Bởi Kế Hoạch</th>
@@ -123,10 +123,28 @@ export function OffcutsTab({ offcuts, loading, onOpenAddOffcut }: OffcutsTabProp
                         #{item.id}
                       </td>
                       <td className="p-3 font-medium text-slate-800">
-                        Thanh Profile #{item.profileBarId}
+                        {item.profileBarCode ? (
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-slate-900">{item.profileBarCode}</span>
+                            {item.profileBarName && (
+                              <span className="text-[11px] text-slate-500">{item.profileBarName}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span>Thanh Profile #{item.profileBarId}</span>
+                        )}
                       </td>
-                      <td className="p-3 text-center font-mono text-slate-700">
-                        Màu #{item.colorId}
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="inline-block w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs shrink-0"
+                            style={{ backgroundColor: item.colorHex || '#cbd5e1' }}
+                            title={item.colorHex || undefined}
+                          />
+                          <span className="text-slate-700 font-medium">
+                            {item.colorName || item.colorCode || `Màu #${item.colorId}`}
+                          </span>
+                        </div>
                       </td>
                       <td className="p-3 text-right font-bold text-emerald-700 text-sm">
                         {item.lengthMm.toLocaleString('vi-VN')} mm
@@ -147,7 +165,7 @@ export function OffcutsTab({ offcuts, loading, onOpenAddOffcut }: OffcutsTabProp
                             Kế hoạch #{item.reservedByPlanId}
                           </span>
                         ) : (
-                          <span className="text-slate-400">Chưa gắn</span>
+                          <span className="text-slate-400">Chưa có kế hoạch</span>
                         )}
                       </td>
                       <td className="p-3 text-center">

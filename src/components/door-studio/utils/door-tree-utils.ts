@@ -1,4 +1,5 @@
 import { SceneCellNode, SashOpenType } from '../studio-types';
+import { getSashLayout } from '../core/sash-layout-catalog';
 
 export const updateNode = (
   root: SceneCellNode,
@@ -90,52 +91,121 @@ export const applySashTypeToCluster = (
   if (!targetNode) return { updatedRoot: root };
 
   const parentNode = findParentNode(root, targetId);
+  const layout = getSashLayout(newSashType);
 
-  // Nhận diện cụm cánh đôi (sash pair):
-  const isParentPair =
+  // 1. Nhận diện cụm cánh (sash cluster):
+  const isParentCluster =
     parentNode &&
     parentNode.children &&
-    parentNode.children.length === 2 &&
-    parentNode.splitDirection === 'vertical' &&
+    parentNode.children.length >= 2 &&
     (parentNode.splitType === 'sash_pair' ||
       parentNode.sashType === 'swing_double' ||
-      (parentNode.children.some((c) => c.sashType === 'swing_left') &&
-        parentNode.children.some((c) => c.sashType === 'swing_right')));
+      Boolean(parentNode.sashLayout));
 
-  const isTargetPair =
+  const isTargetCluster =
     targetNode.children &&
-    targetNode.children.length === 2 &&
-    targetNode.splitDirection === 'vertical' &&
+    targetNode.children.length >= 2 &&
     (targetNode.splitType === 'sash_pair' ||
       targetNode.sashType === 'swing_double' ||
-      (targetNode.children.some((c) => c.sashType === 'swing_left') &&
-        targetNode.children.some((c) => c.sashType === 'swing_right')));
+      Boolean(targetNode.sashLayout));
 
-  const pairContainer = isParentPair ? parentNode : isTargetPair ? targetNode : null;
+  const clusterContainer = isParentCluster ? parentNode : isTargetCluster ? targetNode : null;
+  const activeContainer = clusterContainer || targetNode;
 
-  // TRƯỜNG HỢP 1: Khoang đang là Cụm 2 cánh (pairContainer)
-  if (pairContainer && pairContainer.children && pairContainer.children.length === 2) {
-    const c0 = pairContainer.children[0];
-    const c1 = pairContainer.children[1];
+  // 2. NẾU LÀ CẤU HÌNH TRONG CATALOG (50+ KIỂU CÁNH WINDOVA)
+  if (layout) {
+    // 2.1: Cấu hình nhiều cánh (N >= 2)
+    if (layout.sashes.length > 1) {
+      const isVert = layout.layouter !== 'sliding-vertical' && layout.layouter !== 'v-equal';
+      const N = layout.sashes.length;
+      let sumSpan = 0;
+      let defaultSelectedId: string | undefined;
 
-    // 1.1: Giữ nguyên là Cửa 2 cánh mở quay
+      const newChildren: SceneCellNode[] = layout.sashes.map((sashDef, idx) => {
+        const isLast = idx === N - 1;
+        const totalSpan = isVert ? activeContainer.w : activeContainer.h;
+        const span = isLast ? totalSpan - sumSpan : Math.round(totalSpan / N);
+        sumSpan += span;
+
+        const cw = isVert ? span : activeContainer.w;
+        const ch = !isVert ? span : activeContainer.h;
+        const dirStr = Array.isArray(sashDef.huongMo) ? sashDef.huongMo.join(',') : sashDef.huongMo;
+        const childId = `${activeContainer.id}_sash_${idx}_${crypto.randomUUID().slice(0, 8)}`;
+
+        if (sashDef.hasHandle && !defaultSelectedId) {
+          defaultSelectedId = childId;
+        }
+
+        return {
+          id: childId,
+          w: cw,
+          h: ch,
+          sashType: dirStr,
+          paneType: targetNode.paneType || 'glass',
+          glassName: targetNode.glassName,
+          glassThickness: targetNode.glassThickness,
+          hasLock: sashDef.hasHandle,
+          handleHeight: sashDef.hasHandle ? Math.round(ch / 2) : undefined,
+          handleType: sashDef.hasHandle ? ((sashDef.handleType as any) || 'lever') : undefined,
+          sashZIndex: sashDef.zIndex,
+          sashArrow: sashDef.arrowType,
+          sashJoiner: sashDef.joiner,
+          sashJoinerPair: sashDef.joinerPair,
+          sashHingeSymbol: sashDef.hingeSymbol,
+        };
+      });
+
+      return {
+        updatedRoot: updateNode(root, activeContainer.id, {
+          sashType: newSashType,
+          sashLayout: layout.id,
+          splitDirection: isVert ? 'vertical' : 'horizontal',
+          splitType: 'sash_pair',
+          children: newChildren,
+        }),
+        nextSelectedId: defaultSelectedId || newChildren[0]?.id,
+      };
+    }
+
+    // 2.2: Cấu hình 1 cánh đơn trong Catalog
+    const singleDef = layout.sashes[0];
+    const dirStr = Array.isArray(singleDef.huongMo) ? singleDef.huongMo.join(',') : singleDef.huongMo;
+    const mergedNode: SceneCellNode = {
+      ...activeContainer,
+      sashType: dirStr,
+      sashLayout: layout.id,
+      splitDirection: undefined,
+      splitType: undefined,
+      children: [],
+      paneType: targetNode.paneType || activeContainer.paneType || 'glass',
+      glassName: targetNode.glassName || activeContainer.glassName,
+      glassThickness: targetNode.glassThickness || activeContainer.glassThickness,
+      hasLock: singleDef.hasHandle,
+      handleHeight: singleDef.hasHandle ? Math.round(activeContainer.h / 2) : undefined,
+      handleType: singleDef.hasHandle ? ((singleDef.handleType as any) || 'lever') : undefined,
+      sashZIndex: singleDef.zIndex,
+      sashArrow: singleDef.arrowType,
+      sashHingeSymbol: singleDef.hingeSymbol,
+    };
+
+    return {
+      updatedRoot: updateNode(root, activeContainer.id, mergedNode),
+      nextSelectedId: activeContainer.id,
+    };
+  }
+
+  // 3. TƯƠNG THÍCH NGƯỢC CÁC KIỂU CÁNH TRUYỀN THỐNG (swing_double, fixed, swing_left...)
+  if (clusterContainer && clusterContainer.children && clusterContainer.children.length >= 2) {
+    const c0 = clusterContainer.children[0];
+    const c1 = clusterContainer.children[1] || c0;
+
     if (newSashType === 'swing_double') {
       const updatedChildren: SceneCellNode[] = [
-        {
-          ...c0,
-          sashType: 'swing_left',
-          hasLock: false,
-        },
-        {
-          ...c1,
-          sashType: 'swing_right',
-          hasLock: true,
-          handleHeight: Math.round(c1.h / 2),
-          handleType: c1.handleType ?? 'lever',
-        },
+        { ...c0, sashType: 'swing_left', hasLock: false },
+        { ...c1, sashType: 'swing_right', hasLock: true, handleHeight: Math.round(c1.h / 2), handleType: c1.handleType ?? 'lever' },
       ];
       return {
-        updatedRoot: updateNode(root, pairContainer.id, {
+        updatedRoot: updateNode(root, clusterContainer.id, {
           sashType: 'swing_double',
           splitDirection: 'vertical',
           splitType: 'sash_pair',
@@ -145,35 +215,30 @@ export const applySashTypeToCluster = (
       };
     }
 
-    // 1.2: Cánh đơn hoặc vách cố định -> Hợp nhất cụm 2 cánh thành 1 cánh/ô duy nhất toàn khoang
     const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down', 'sliding'].includes(newSashType);
-    const activePaneType = targetNode.paneType || c0.paneType || 'glass';
-    const activeGlassName = targetNode.glassName || c0.glassName;
-    const activeGlassThickness = targetNode.glassThickness || c0.glassThickness;
-
     const mergedNode: SceneCellNode = {
-      ...pairContainer,
+      ...clusterContainer,
       sashType: newSashType,
+      sashLayout: undefined,
       splitDirection: undefined,
       splitType: undefined,
       children: [],
-      paneType: activePaneType,
-      glassName: activeGlassName,
-      glassThickness: activeGlassThickness,
+      paneType: targetNode.paneType || c0.paneType || 'glass',
+      glassName: targetNode.glassName || c0.glassName,
+      glassThickness: targetNode.glassThickness || c0.glassThickness,
       hasLock: sashHasHandle,
-      handleHeight: sashHasHandle ? Math.round(pairContainer.h / 2) : undefined,
+      handleHeight: sashHasHandle ? Math.round(clusterContainer.h / 2) : undefined,
       handleType: sashHasHandle ? targetNode.handleType || c1.handleType || 'lever' : undefined,
     };
 
     return {
-      updatedRoot: updateNode(root, pairContainer.id, mergedNode),
-      nextSelectedId: pairContainer.id,
+      updatedRoot: updateNode(root, clusterContainer.id, mergedNode),
+      nextSelectedId: clusterContainer.id,
     };
   }
 
-  // TRƯỜNG HỢP 2: Khoang đang là Ô đơn lẻ (chưa chia hoặc đã hợp nhất)
-  if (!pairContainer && (!targetNode.children || targetNode.children.length === 0)) {
-    // 2.1: Chuyển từ ô đơn lẻ sang Cửa 2 cánh mở quay
+  // 4. Ô ĐƠN LẺ CHUYỂN SANG swing_double HOẶC ĐỔI KIỂU ĐƠN
+  if (!clusterContainer && (!targetNode.children || targetNode.children.length === 0)) {
     if (newSashType === 'swing_double') {
       const halfW = Math.round(targetNode.w / 2);
       const newChildren: SceneCellNode[] = [
@@ -211,10 +276,10 @@ export const applySashTypeToCluster = (
       };
     }
 
-    // 2.2: Chuyển đổi giữa các kiểu cánh đơn / vách cố định cho ô đơn lẻ (bao gồm sliding)
     const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down', 'sliding'].includes(newSashType);
     const updates: Partial<SceneCellNode> = {
       sashType: newSashType,
+      sashLayout: undefined,
       hasLock: sashHasHandle,
       handleHeight: sashHasHandle ? Math.round(targetNode.h / 2) : undefined,
       handleType: sashHasHandle ? (targetNode.handleType ?? 'lever') : undefined,

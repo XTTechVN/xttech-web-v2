@@ -8,6 +8,8 @@ import {
 } from '../../studio-types';
 import { ProfileBar } from '@/types';
 import { DoorClosed, Shield, SlidersHorizontal, Layers, Check } from 'lucide-react';
+import { GasketConfigSection } from './gasket-config-section';
+import { CustomExtraConfigSection } from './custom-extra-config-section';
 
 interface ConfigSashTabProps {
   config: SashConfig;
@@ -371,6 +373,24 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* CỘT RỘNG TOÀN PHẦN (12 cols): Roan gắn kính — Cánh & Phụ kiện tùy biến — Cánh */}
+      <div className="xl:col-span-12 space-y-4 pt-1">
+        {/* 2. Roan gắn kính — Cánh */}
+        <GasketConfigSection
+          items={config.gaskets}
+          onChangeItems={(gaskets) => onChangeConfig({ gaskets })}
+          target="sash"
+        />
+
+        {/* 3. Phụ kiện tùy biến — Cánh */}
+        <CustomExtraConfigSection
+          items={config.extras}
+          onChangeItems={(extras) => onChangeConfig({ extras })}
+          profiles={profiles}
+          target="sash"
+        />
       </div>
     </div>
   );

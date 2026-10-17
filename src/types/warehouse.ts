@@ -125,7 +125,12 @@ export interface WarehouseItemCreatePayload {
 export interface WarehouseOffcut {
   id: number;
   profileBarId: number;
+  profileBarCode?: string | null;
+  profileBarName?: string | null;
   colorId: number;
+  colorCode?: string | null;
+  colorName?: string | null;
+  colorHex?: string | null;
   lengthMm: number;
   status: string;
   reservedByPlanId?: number | null;

@@ -10,6 +10,8 @@ import {
 } from '../../studio-types';
 import { ProfileBar } from '@/types';
 import { Layers, Shield, RefreshCw, Plus } from 'lucide-react';
+import { GasketConfigSection } from './gasket-config-section';
+import { CustomExtraConfigSection } from './custom-extra-config-section';
 
 interface ConfigFrameTabProps {
   config: FrameConfig;
@@ -739,6 +741,24 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
             </div>
           </div>
         </div>
+      </div>
+
+      {/* CỘT RỘNG TOÀN PHẦN (12 cols): Roan gắn kính — Khung & Phụ kiện tùy biến — Khung */}
+      <div className="xl:col-span-12 space-y-4 pt-1">
+        {/* 2. Roan gắn kính — Khung */}
+        <GasketConfigSection
+          items={config.gaskets}
+          onChangeItems={(gaskets) => onChangeConfig({ gaskets })}
+          target="frame"
+        />
+
+        {/* 3. Phụ kiện tùy biến — Khung */}
+        <CustomExtraConfigSection
+          items={config.extras}
+          onChangeItems={(extras) => onChangeConfig({ extras })}
+          profiles={profiles}
+          target="frame"
+        />
       </div>
     </div>
   );

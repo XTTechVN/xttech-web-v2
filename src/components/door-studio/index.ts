@@ -1,4 +1,5 @@
 export * from './studio-types';
+export * from './core/sash-layout-catalog';
 export * from './cad-engine/door-cad-renderer';
 export * from './panels/frame-shape-picker';
 export * from './panels/sash-type-picker';
