@@ -2,6 +2,47 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-17
+
+- **Nâng Cấp Form Thu Hồi Nhôm Thừa Tái Sử Dụng ([`offcut-form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/warehouse/_components/modals/offcut-form-modal.tsx)):**
+  - **Tự động điền Profile Bar:** Loại bỏ ô nhập số nguyên `profileBarId` thủ công; tự động liên kết và hiển thị mã profile bar khi thủ kho chọn mặt hàng profile gốc trong kho.
+  - **Selectbox Màu Sắc trực quan:** Chuyển ô nhập số `colorId` thành Selectbox tải dữ liệu từ danh mục bảng màu `brandColors`; tự động map với màu của mặt hàng được chọn đồng thời hiển thị chấm màu HEX trực quan (`currentColor.colorHex`).
+  - **Kiểm thử chất lượng:** TypeScript biên dịch 0 lỗi (`npx tsc --noEmit` exit 0).
+
+- **Hiển Thị Trực Quan Màu Sắc Thực Tế (HEX) & Mã Thanh Profile Cho Kho Nhôm Thừa Tái Sử Dụng ([`offcuts-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/warehouse/_components/offcuts-tab.tsx), [`warehouse.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/warehouse.ts)):**
+  - **Màu sắc thực tế:** Thay thế text thô `Màu #id` bằng chấm tròn màu trực quan hiển thị chuẩn mã màu HEX thực tế (`style={{ backgroundColor: item.colorHex }}`) kèm tên màu tiếng Việt thân thiện (`colorName` / `colorCode`).
+  - **Thanh profile chuẩn hóa:** Thay thế `Thanh Profile #id` bằng mã thanh nhôm in đậm (`profileBarCode`) kèm tên thanh nhôm (`profileBarName`), giúp thủ kho dễ dàng nhận diện loại phôi nhôm thừa tái sử dụng.
+  - **Kiểm thử chất lượng:** TypeScript biên dịch 0 lỗi (`npx tsc --noEmit` exit 0).
+
+- **Tích Hợp Cấu Hình Roan Gắn Kính & Phụ Kiện Tùy Biến Cho Khung Và Cánh (Door Studio BOM Engine) ([`gasket-config-section.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/config/gasket-config-section.tsx), [`custom-extra-config-section.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/config/custom-extra-config-section.tsx), [`config-frame-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/config/config-frame-tab.tsx), [`config-sash-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/config/config-sash-tab.tsx), [`results-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/results-tab-view.tsx), [`studio-types.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/studio-types.ts), [`door.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/door.ts)):**
+  - **Mục Roan Gắn Kính (Gaskets Config):**
+    - Cho phép cấu hình danh sách roan đệm chèn nẹp hoặc chu vi cho cả Khung (`FrameConfig.gaskets`) và Cánh (`SashConfig.gaskets`).
+    - Lựa chọn linh hoạt loại roan từ danh mục vật tư (`gasket_id`, tên roan hiển thị).
+    - Hỗ trợ 7 phương thức tính toán chiều dài tự động theo kích thước ô: *Theo nẹp kính (`bead`)*, *Theo chu vi kính (`glass_perimeter`)*, *Theo chiều rộng kính (`glass_width`)*, *Theo chiều cao kính (`glass_height`)*, *Theo chu vi khung (`frame_perimeter`)*, *Theo chiều rộng khung (`frame_width`)*, *Theo chiều cao khung (`frame_height`)*.
+    - Cấu hình số đường roan chèn (`countPerCell`, mặc định 1).
+  - **Mục Phụ Kiện Tùy Biến (Custom Extras Config):**
+    - Cho phép bổ sung thanh phụ trợ (như Ốp ray trên, Ray U inox, nẹp che rãnh) gắn liền với Khung hoặc Cánh.
+    - Thiết lập công thức chiều dài tự do theo biến hình học: `W`, `H` (kích thước ô), `W0`, `H0` (kích thước tổng bộ cửa), ví dụ: `W-47.6`.
+    - Cấu hình góc cắt 2 đầu Trái/Phải (`angle1`, `angle2`, mặc định 90°/90°).
+  - **Bổ Sung Tab Kết Quả BOM "5. Roan Gắn Kính":**
+    - Bảng chi tiết bóc tách vật tư roan: Tên roan, Vị trí áp dụng, Cách tính, Chiều dài (mét), Đơn giá, Thành tiền.
+    - Hiển thị tổng hợp chiều dài roan (mét) và tổng chi phí roan trên thanh tổng quan kết quả.
+  - **Kiểm thử chất lượng:** TypeScript biên dịch 0 lỗi (`npx tsc --noEmit` exit 0).
+
+- **Nâng Cấp Toàn Diện Thư Viện Kiểu Cánh Đầy Đủ (Sash Layout Catalog 77+ Mẫu) & Bộ Sinh Parametric Cho Door Studio ([`sash-layout-catalog.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/core/sash-layout-catalog.ts), [`sash-type-picker.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/sash-type-picker.tsx), [`door-tree-utils.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/utils/door-tree-utils.ts), [`cad-opening-symbol.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-opening-symbol.tsx), [`cad-rectangular-leaf.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-rectangular-leaf.tsx)):**
+  - **Thư viện cấu hình 77+ kiểu cánh chuẩn hóa:** Bổ sung đầy đủ 6 họ cửa theo chuẩn Windova và ngành nhôm kính Việt Nam (Cửa đi mở quay, Cửa sổ mở quay/hất/lật, Cửa lùa đa ray, Cửa gấp xếp N-R, Cửa trượt quay).
+  - **Giao diện SashTypePicker Lưới 3 Cột Chuẩn Windova (Ảnh 1 & 3):**
+    - Ô trên cùng tách biệt: *Vách kính cố định (ô fix)* viền kim loại xám mòi góc 45°.
+    - Lưới 3 cột (`grid-cols-3`) các thẻ hình vuông (`aspect-square`) viền vàng nâu, kính xanh ngọc, không chứa chữ rườm rà.
+    - Phân loại rõ ràng theo nhóm: *Cửa sổ, Cửa đi, Sổ lùa, Đi lùa, Gấp xếp, Trượt quay*.
+    - Thẻ được chọn hiển thị viền kép xanh dương nổi bật (`ring-2 ring-blue-500 border-blue-500`).
+  - **Khóa & Tay Nắm Chuyên Biệt Cho Cửa Lùa (Ảnh 2):**
+    - Thay thế icon tay gạt thông thường bằng **Khóa sập âm dài (Flush Lock)** màu đen cho các cánh mép ngoài giáp khung bao.
+    - Cặp cánh giữa đối đầu hiển thị **Tay nắm chữ D (D-Pull handle)** màu đen đối xứng hướng vào nhau.
+    - Hiển thị mũi tên trượt và biểu tượng quả trám (`2-chieu`) màu xanh lam (`#0284c7`) trên mặt kính cửa lùa.
+  - **Bộ chuyển đổi cây SceneCellNode linh hoạt (`applySashTypeToCluster`):** Tự động phân chia ô thành $N$ cánh con theo phương ngang/dọc, gán đúng chiều mở, tay nắm, `zIndex`, và cho phép hợp nhất ngược về ô đơn duy nhất hoặc vách cố định mượt mà.
+  - **Kiểm thử chất lượng:** TypeScript `npx tsc --noEmit` đạt 0 lỗi biên dịch; vượt qua 100% các bài test tự động cho catalog và cây layout.
+
 ## [Unreleased] - 2026-10-13
 
 ### Added & Enhanced

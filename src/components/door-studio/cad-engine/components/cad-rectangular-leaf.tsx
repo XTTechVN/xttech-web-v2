@@ -596,13 +596,61 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                 Math.abs(other.y - cy) < 10
             );
 
-          const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down'].includes(node.sashType || '');
+          const sashHasHandle = [
+            'swing_left',
+            'swing_right',
+            'tilt_turn',
+            'awning',
+            'tilt',
+            'tilt_down',
+            'le-trai-mo-ra',
+            'le-trai-mo-vao',
+            'le-phai-mo-ra',
+            'le-phai-mo-vao',
+            'mo-hat',
+            'mo-lat',
+            'gap-xep-le-trai',
+            'gap-xep-le-phai',
+            'lua-trai',
+            'lua-phai',
+            'canh-truot',
+          ].includes(node.sashType || '');
           const shouldRenderHandle = !isFixed && !isSecondaryOfPair && (node.hasLock ?? sashHasHandle);
 
-          const isBottomHandle = node.sashType === 'awning' || node.sashType === 'tilt';
+          const isBottomHandle =
+            node.sashType === 'awning' ||
+            node.sashType === 'tilt' ||
+            node.sashType === 'mo-hat' ||
+            node.sashType === 'mo-lat';
           const isTopHandle = node.sashType === 'tilt_down';
-          const isRightHandle = node.sashType === 'swing_left' || node.sashType === 'tilt_turn';
-          const isLeftHandle = node.sashType === 'swing_right';
+          const isRightHandle =
+            node.sashType === 'swing_left' ||
+            node.sashType === 'tilt_turn' ||
+            node.sashType === 'le-trai-mo-ra' ||
+            node.sashType === 'le-trai-mo-vao' ||
+            node.sashType === 'gap-xep-le-trai' ||
+            node.sashType === 'lua-trai';
+          const isLeftHandle =
+            node.sashType === 'swing_right' ||
+            node.sashType === 'le-phai-mo-ra' ||
+            node.sashType === 'le-phai-mo-vao' ||
+            node.sashType === 'gap-xep-le-phai' ||
+            node.sashType === 'lua-phai';
+
+          const isSlidingDoorSash =
+            node.sashType === 'sliding' ||
+            Boolean(node.sashType?.includes('lua')) ||
+            Boolean(node.sashArrow) ||
+            Boolean(node.sashZIndex !== undefined) ||
+            node.handleType === 'khoa-sap' ||
+            node.handleType === 'd-trai' ||
+            node.handleType === 'd-phai';
+
+          const isDHandle =
+            node.handleType === 'd-trai' ||
+            node.handleType === 'd-phai' ||
+            Boolean(node.sashJoiner) ||
+            Boolean(node.sashJoinerPair);
 
           const handleHVal = node.handleHeight || Math.round(node.h / 2);
           const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
@@ -700,94 +748,200 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                 <CadOpeningSymbol cx={innerX} cy={innerY} cw={innerW} ch={innerH} type={node.sashType} />
               )}
 
-              {/* Tay nắm */}
+              {/* Tay nắm & Khóa */}
               {shouldRenderHandle && (
                 <>
-                  {isBottomHandle && (
-                    <rect
-                      x={cx + cw / 2 - 8}
-                      y={cy + ch - dSash / 2 - 1.5}
-                      width={16}
-                      height={3.5}
-                      rx={1}
-                      fill={hardwareColor}
-                      stroke="#000"
-                      strokeWidth="0.5"
-                    />
-                  )}
-                  {isTopHandle && (
-                    <rect
-                      x={cx + cw / 2 - 8}
-                      y={cy + dSash / 2 - 1.5}
-                      width={16}
-                      height={3.5}
-                      rx={1}
-                      fill={hardwareColor}
-                      stroke="#000"
-                      strokeWidth="0.5"
-                    />
-                  )}
-                  {isRightHandle && (
-                    <g
-                      className="cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditDimension?.('handleHeight', node.id);
-                      }}
-                    >
-                      <rect
-                        x={cx + cw - dSash / 2 - plateW / 2}
-                        y={handleY - plateH / 2}
-                        width={plateW}
-                        height={plateH}
-                        rx={1.5}
-                        fill={hardwareColor}
-                        stroke="#000"
-                        strokeWidth="0.5"
-                      />
-                      <circle cx={cx + cw - dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
-                      <rect
-                        x={cx + cw - dSash / 2 - plateW / 2 + plateW / 2 - leverW}
-                        y={handleY - leverH / 2}
-                        width={leverW}
-                        height={leverH}
-                        rx={1.2}
-                        fill={hardwareColor}
-                        stroke="#000"
-                        strokeWidth="0.5"
-                      />
-                    </g>
-                  )}
-                  {isLeftHandle && (
-                    <g
-                      className="cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditDimension?.('handleHeight', node.id);
-                      }}
-                    >
-                      <rect
-                        x={cx + dSash / 2 - plateW / 2}
-                        y={handleY - plateH / 2}
-                        width={plateW}
-                        height={plateH}
-                        rx={1.5}
-                        fill={hardwareColor}
-                        stroke="#000"
-                        strokeWidth="0.5"
-                      />
-                      <circle cx={cx + dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
-                      <rect
-                        x={cx + dSash / 2 + plateW / 2}
-                        y={handleY - leverH / 2}
-                        width={leverW}
-                        height={leverH}
-                        rx={1.2}
-                        fill={hardwareColor}
-                        stroke="#000"
-                        strokeWidth="0.5"
-                      />
-                    </g>
+                  {isSlidingDoorSash ? (
+                    // CỬA LÙA: KHÓA SẬP ÂM DÀI HOẶC TAY NẮM CHỮ D (Theo Ảnh 2)
+                    isDHandle ? (
+                      // Tay nắm chữ D cho 2 cánh giữa khép đối đầu (như Ảnh 2)
+                      isRightHandle || node.sashJoiner || node.handleType === 'd-trai' ? (
+                        <g
+                          className="cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditDimension?.('handleHeight', node.id);
+                          }}
+                        >
+                          <rect
+                            x={cx + cw - dSash / 2 - 2}
+                            y={handleY - 14}
+                            width={4}
+                            height={28}
+                            rx={1}
+                            fill="#18181b"
+                            stroke="#000"
+                            strokeWidth="0.5"
+                          />
+                          <path
+                            d={`M ${cx + cw - dSash / 2 - 2} ${handleY - 11} C ${cx + cw - dSash / 2 - 11} ${handleY - 11}, ${cx + cw - dSash / 2 - 11} ${handleY + 11}, ${cx + cw - dSash / 2 - 2} ${handleY + 11} L ${cx + cw - dSash / 2 - 2} ${handleY + 8} C ${cx + cw - dSash / 2 - 8} ${handleY + 8}, ${cx + cw - dSash / 2 - 8} ${handleY - 8}, ${cx + cw - dSash / 2 - 2} ${handleY - 8} Z`}
+                            fill="#18181b"
+                            stroke="#000"
+                            strokeWidth="0.5"
+                          />
+                        </g>
+                      ) : (
+                        <g
+                          className="cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditDimension?.('handleHeight', node.id);
+                          }}
+                        >
+                          <rect
+                            x={cx + dSash / 2 - 2}
+                            y={handleY - 14}
+                            width={4}
+                            height={28}
+                            rx={1}
+                            fill="#18181b"
+                            stroke="#000"
+                            strokeWidth="0.5"
+                          />
+                          <path
+                            d={`M ${cx + dSash / 2 + 2} ${handleY - 11} C ${cx + dSash / 2 + 11} ${handleY - 11}, ${cx + dSash / 2 + 11} ${handleY + 11}, ${cx + dSash / 2 + 2} ${handleY + 11} L ${cx + dSash / 2 + 2} ${handleY + 8} C ${cx + dSash / 2 + 8} ${handleY + 8}, ${cx + dSash / 2 + 8} ${handleY - 8}, ${cx + dSash / 2 + 2} ${handleY - 8} Z`}
+                            fill="#18181b"
+                            stroke="#000"
+                            strokeWidth="0.5"
+                          />
+                        </g>
+                      )
+                    ) : (
+                      // Khóa sập âm dài màu đen (như 2 cánh ngoài cùng trong Ảnh 2)
+                      <g
+                        className="cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditDimension?.('handleHeight', node.id);
+                        }}
+                      >
+                        {(() => {
+                          const lockX = isRightHandle ? cx + cw - dSash / 2 : cx + dSash / 2;
+                          return (
+                            <>
+                              <rect
+                                x={lockX - 1.8}
+                                y={handleY - 15}
+                                width={3.6}
+                                height={30}
+                                rx={1}
+                                fill="#18181b"
+                                stroke="#000"
+                                strokeWidth="0.5"
+                              />
+                              <rect
+                                x={lockX - 0.9}
+                                y={handleY - 4.5}
+                                width={1.8}
+                                height={9}
+                                rx={0.4}
+                                fill="#334155"
+                              />
+                              <rect
+                                x={lockX - 1.2}
+                                y={handleY - 2}
+                                width={2.4}
+                                height={4}
+                                rx={0.5}
+                                fill="#f8fafc"
+                                stroke="#0f172a"
+                                strokeWidth="0.3"
+                              />
+                            </>
+                          );
+                        })()}
+                      </g>
+                    )
+                  ) : (
+                    // CỬA MỞ QUAY / HẤT / LẬT: TAY GẠT HOẶC TAY NGANG (Ảnh 3)
+                    <>
+                      {isBottomHandle && (
+                        <rect
+                          x={cx + cw / 2 - 8}
+                          y={cy + ch - dSash / 2 - 1.5}
+                          width={16}
+                          height={3.5}
+                          rx={1}
+                          fill={hardwareColor}
+                          stroke="#000"
+                          strokeWidth="0.5"
+                        />
+                      )}
+                      {isTopHandle && (
+                        <rect
+                          x={cx + cw / 2 - 8}
+                          y={cy + dSash / 2 - 1.5}
+                          width={16}
+                          height={3.5}
+                          rx={1}
+                          fill={hardwareColor}
+                          stroke="#000"
+                          strokeWidth="0.5"
+                        />
+                      )}
+                      {isRightHandle && (
+                        <g
+                          className="cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditDimension?.('handleHeight', node.id);
+                          }}
+                        >
+                          <rect
+                            x={cx + cw - dSash / 2 - plateW / 2}
+                            y={handleY - plateH / 2}
+                            width={plateW}
+                            height={plateH}
+                            rx={1.5}
+                            fill={hardwareColor}
+                            stroke="#000"
+                            strokeWidth="0.5"
+                          />
+                          <circle cx={cx + cw - dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
+                          <rect
+                            x={cx + cw - dSash / 2 - plateW / 2 + plateW / 2 - leverW}
+                            y={handleY - leverH / 2}
+                            width={leverW}
+                            height={leverH}
+                            rx={1.2}
+                            fill={hardwareColor}
+                            stroke="#000"
+                            strokeWidth="0.5"
+                          />
+                        </g>
+                      )}
+                      {isLeftHandle && (
+                        <g
+                          className="cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditDimension?.('handleHeight', node.id);
+                          }}
+                        >
+                          <rect
+                            x={cx + dSash / 2 - plateW / 2}
+                            y={handleY - plateH / 2}
+                            width={plateW}
+                            height={plateH}
+                            rx={1.5}
+                            fill={hardwareColor}
+                            stroke="#000"
+                            strokeWidth="0.5"
+                          />
+                          <circle cx={cx + dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
+                          <rect
+                            x={cx + dSash / 2 + plateW / 2}
+                            y={handleY - leverH / 2}
+                            width={leverW}
+                            height={leverH}
+                            rx={1.2}
+                            fill={hardwareColor}
+                            stroke="#000"
+                            strokeWidth="0.5"
+                          />
+                        </g>
+                      )}
+                    </>
                   )}
                 </>
               )}

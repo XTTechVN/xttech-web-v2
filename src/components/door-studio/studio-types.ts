@@ -26,7 +26,8 @@ export type SashOpenType =
   | 'tilt'
   | 'tilt_down'
   | 'tilt_turn'
-  | 'sliding';
+  | 'sliding'
+  | (string & {});
 
 export type PaneType = 'glass' | 'screen' | 'louver' | 'panel';
 export type BeadType = 'square' | 'bevel' | 'round';
@@ -112,11 +113,17 @@ export interface SceneCellNode {
   children?: SceneCellNode[];
   hasLock?: boolean;
   handleHeight?: number;
-  handleType?: 'lever' | 'pull' | 'crescent' | 'multipoint';
+  handleType?: 'lever' | 'pull' | 'crescent' | 'multipoint' | 'khoa-sap' | 'd-trai' | 'd-phai' | (string & {});
   mullionProfileId?: number;
   mullionCutType?: MullionCutType;
   grilleConfig?: GlassGrilleConfig;
   sashMullions?: SashMullionConfig;
+  sashLayout?: string;
+  sashZIndex?: number;
+  sashArrow?: string;
+  sashJoiner?: boolean;
+  sashJoinerPair?: boolean;
+  sashHingeSymbol?: string;
 }
 
 
@@ -289,6 +296,39 @@ export const DEFAULT_SAFETY_BARS_CONFIG: SafetyBarsConfig = {
   insetGapMm: 3,
 };
 
+export type GasketMeasureType =
+  | 'bead'            // Theo nẹp kính
+  | 'glass_perimeter' // Theo chu vi kính
+  | 'glass_width'     // Theo chiều rộng kính
+  | 'glass_height'    // Theo chiều cao kính
+  | 'frame_perimeter' // Theo chu vi khung
+  | 'frame_width'     // Theo chiều rộng khung
+  | 'frame_height';   // Theo chiều cao khung
+
+export interface DoorGasketConfigItem {
+  id: string;
+  gasketId?: number;
+  gasketCode?: string;
+  gasketName?: string;
+  measure: GasketMeasureType;
+  countPerCell: number; // Số lần/ô, mặc định 1
+  note?: string;
+  target: 'frame' | 'sash';
+}
+
+export interface DoorCustomExtraItem {
+  id: string;
+  profileId?: number;
+  profileCode?: string;
+  profileName?: string;
+  note?: string;
+  formulaLen: string; // Công thức dài (vd: W-47.6, H0, Ws-61...)
+  angle1: number;     // Góc trái, mặc định 90
+  angle2: number;     // Góc phải, mặc định 90
+  qty: number;        // Số lượng thanh, mặc định 1
+  target: 'frame' | 'sash';
+}
+
 export interface FrameConfig {
   isOpenBottom: boolean;
   cornerJoint: FrameCornerJoint;
@@ -308,6 +348,8 @@ export interface FrameConfig {
   isReversedWall: boolean;
   isReversedSash: boolean;
   archConfig?: ArchConfig;
+  gaskets?: DoorGasketConfigItem[];
+  extras?: DoorCustomExtraItem[];
 }
 
 export interface ArchConfig {
@@ -345,6 +387,8 @@ export interface SashConfig {
   mullionProfileId?: number;
   beadProfileId?: number;
   dynamicMullionProfileId?: number;
+  gaskets?: DoorGasketConfigItem[];
+  extras?: DoorCustomExtraItem[];
 }
 
 export const DEFAULT_FRAME_CONFIG: FrameConfig = {
@@ -361,6 +405,8 @@ export const DEFAULT_FRAME_CONFIG: FrameConfig = {
   isReversedWall: false,
   isReversedSash: false,
   archConfig: DEFAULT_ARCH_CONFIG,
+  gaskets: [],
+  extras: [],
 };
 
 export const DEFAULT_SASH_CONFIG: SashConfig = {
@@ -374,6 +420,8 @@ export const DEFAULT_SASH_CONFIG: SashConfig = {
   cornerJoint: '45',
   beadCornerJoint: '45',
   isNhomCo: false,
+  gaskets: [],
+  extras: [],
 };
 
 export interface DoorStudioState {

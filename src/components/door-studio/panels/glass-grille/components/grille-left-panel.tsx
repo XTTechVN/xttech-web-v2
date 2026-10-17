@@ -211,17 +211,27 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[11px] text-gray-600 block mb-0.5">Bề rộng nan:</label>
-            <select
-              value={barWidth}
-              onChange={(e) => setBarWidth(Number(e.target.value))}
-              className="w-full h-8 px-2 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-amber-500 font-bold"
-            >
-              {[6, 8, 10, 12, 16, 18, 20].map((wVal) => (
-                <option key={wVal} value={wVal}>
-                  {wVal} mm
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <input
+                type="number"
+                min={1}
+                max={50}
+                step={0.5}
+                value={barWidth || ''}
+                onChange={(e) => {
+                  const val = e.target.value === '' ? 0 : Number(e.target.value);
+                  setBarWidth(val);
+                }}
+                onBlur={() => {
+                  if (!barWidth || barWidth < 1) setBarWidth(6);
+                }}
+                className="w-full h-8 pl-2.5 pr-8 text-xs font-mono font-bold bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-amber-500"
+                placeholder="6"
+              />
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-gray-400 font-medium pointer-events-none">
+                mm
+              </span>
+            </div>
           </div>
           <div>
             <label className="text-[11px] text-gray-600 block mb-0.5">Màu nan:</label>

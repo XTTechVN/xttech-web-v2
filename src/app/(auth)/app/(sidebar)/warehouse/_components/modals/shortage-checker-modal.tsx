@@ -238,6 +238,11 @@ export function ShortageCheckerModal({
                                   Cần mở Door Studio cấu hình profile
                                 </p>
                               )}
+                              {Boolean(item.usedOffcutsCount && item.usedOffcutsCount > 0) && (
+                                <span className="inline-block mt-0.5 px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 rounded">
+                                  ✓ Tận dụng {item.usedOffcutsCount} thanh đề-xê
+                                </span>
+                              )}
                             </td>
                             <td className="p-3 text-slate-600">{item.colorName || '-'}</td>
                             <td className="p-3 text-center font-medium text-slate-700">
