@@ -20,9 +20,9 @@ export const DOC_QUERY_KEYS = {
     shares: (id?: number | string | null) => ['document-categories', 'shares', String(id || '')] as const,
   },
 
-  // 3. Quản lý Thùng rác
+  // 3. Quản lý Thùng rác (Tách key độc lập ['trash'] để không bị trùng prefix với ['documents'])
   trash: {
-    root: ['documents', 'trash'] as const,
+    root: ['trash'] as const,
   },
 
   // 4. Danh mục dùng chung (Nhân sự, Phòng ban)
@@ -35,8 +35,16 @@ export const DOC_QUERY_KEYS = {
 /**
  * Helper làm mới đồng bộ toàn bộ cache của module tài liệu sau mỗi thao tác (Tạo, Sửa, Xóa, Di chuyển, Phê duyệt, Ban hành)
  */
-export const invalidateDocumentQueries = (queryClient: QueryClient) => {
-  queryClient.invalidateQueries({ queryKey: DOC_QUERY_KEYS.documents.root });
-  queryClient.invalidateQueries({ queryKey: DOC_QUERY_KEYS.categories.root });
-  queryClient.invalidateQueries({ queryKey: DOC_QUERY_KEYS.trash.root });
+export const invalidateDocumentQueries = (
+  queryClient: QueryClient,
+  options?: { refetchType?: 'active' | 'inactive' | 'all' | 'none' }
+) => {
+  queryClient.invalidateQueries({
+    queryKey: DOC_QUERY_KEYS.documents.root,
+    refetchType: options?.refetchType ?? 'active',
+  });
+  queryClient.invalidateQueries({
+    queryKey: DOC_QUERY_KEYS.categories.root,
+    refetchType: options?.refetchType ?? 'active',
+  });
 };

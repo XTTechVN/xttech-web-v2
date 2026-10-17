@@ -60,9 +60,8 @@ export const TrashTab: React.FC = () => {
   } = useQuery<TrashItem[]>({
     queryKey: DOC_QUERY_KEYS.trash.root,
     queryFn: getTrashItems,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const trashItems: TrashItem[] = useMemo(() => {
@@ -84,9 +83,24 @@ export const TrashTab: React.FC = () => {
     onSuccess: (_, item) => {
       const name = getItemDisplayName(item);
       toast.success(`Đã khôi phục ${item.itemType === 'folder' ? 'thư mục' : 'tài liệu'} "${name}" thành công!`);
-      // Đồng bộ toàn bộ các query liên quan
-      invalidateDocumentQueries(queryClient);
-      queryClient.invalidateQueries({ queryKey: DOC_QUERY_KEYS.trash.root });
+
+      // Cập nhật trực tiếp cache Thùng rác để xóa item khỏi giao diện ngay lập tức mà KHÔNG gọi lại API trash
+      queryClient.setQueryData(DOC_QUERY_KEYS.trash.root, (old: any) => {
+        if (Array.isArray(old)) {
+          return old.filter((t: TrashItem) => t.id !== item.id);
+        }
+        if (old && Array.isArray(old.items)) {
+          return { ...old, items: old.items.filter((t: TrashItem) => t.id !== item.id) };
+        }
+        if (old && Array.isArray(old.data)) {
+          return { ...old, data: old.data.filter((t: TrashItem) => t.id !== item.id) };
+        }
+        return [];
+      });
+
+      // Đánh dấu các query tài liệu/thư mục cần cập nhật khi người dùng chuyển sang trang khác mà không kích hoạt gọi mạng lúc này
+      invalidateDocumentQueries(queryClient, { refetchType: 'none' });
+
       setIsRestoreOpen(false);
       setRestoreItem(null);
     },
@@ -109,8 +123,21 @@ export const TrashTab: React.FC = () => {
     onSuccess: (_, item) => {
       const name = getItemDisplayName(item);
       toast.success(`Đã xóa vĩnh viễn ${item.itemType === 'folder' ? 'thư mục' : 'tài liệu'} "${name}"!`);
-      invalidateDocumentQueries(queryClient);
-      queryClient.invalidateQueries({ queryKey: DOC_QUERY_KEYS.trash.root });
+
+      // Cập nhật trực tiếp cache Thùng rác để xóa item khỏi giao diện ngay lập tức mà KHÔNG gọi lại API trash
+      queryClient.setQueryData(DOC_QUERY_KEYS.trash.root, (old: any) => {
+        if (Array.isArray(old)) {
+          return old.filter((t: TrashItem) => t.id !== item.id);
+        }
+        if (old && Array.isArray(old.items)) {
+          return { ...old, items: old.items.filter((t: TrashItem) => t.id !== item.id) };
+        }
+        if (old && Array.isArray(old.data)) {
+          return { ...old, data: old.data.filter((t: TrashItem) => t.id !== item.id) };
+        }
+        return [];
+      });
+
       setIsPurgeOpen(false);
       setPurgeItem(null);
     },
