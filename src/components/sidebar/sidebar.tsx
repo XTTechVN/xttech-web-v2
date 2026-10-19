@@ -19,6 +19,7 @@ export interface SidebarItemProps {
   href?: string;
   disabled?: boolean;
   subItems?: SidebarSubItem[];
+  customRender?: (isCollapsed: boolean, activeId?: string) => React.ReactNode;
 }
 
 export interface SidebarSectionProps {
@@ -277,6 +278,10 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
               {/* Các liên kết trong nhóm */}
               <div className="space-y-1">
                 {section.items.map((item) => {
+                  if (item.customRender) {
+                    return <React.Fragment key={item.id}>{item.customRender(effectivelyCollapsed, activeId)}</React.Fragment>;
+                  }
+
                   const hasSubItems = item.subItems && item.subItems.length > 0;
                   const isSubMenuOpen = openSubMenus[item.id];
                   const isItemActive = activeId === item.id || (hasSubItems && item.subItems?.some((sub) => sub.id === activeId));

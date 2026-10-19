@@ -31,7 +31,7 @@ export function StatsCard({
         <div className="p-2 md:p-3 rounded-lg md:rounded-xl bg-primary/5 text-primary [&>svg]:w-4 [&>svg]:h-4 md:[&>svg]:w-5 md:[&>svg]:h-5">
           {icon}
         </div>
-        {trend !== undefined && trend !== 0 && (
+        {trend !== undefined && (
           <div
             className={`px-2 py-0.5 absolute right-0 top-0 rounded-full text-[10px] md:text-xs font-semibold flex items-center gap-0.5 md:gap-1 ${isUp ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}
           >

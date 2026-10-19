@@ -11,6 +11,7 @@ import {
   Sliders,
   SlidersHorizontal,
   ClockAlert,
+  Folder,
   Warehouse,
 } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
@@ -56,6 +57,16 @@ export const acceptedSections = [
   'live-map',
   'app-versions',
   'leave-request',
+  'documents-root',
+  'document-categories',
+  'documents-list',
+  'documents-my',
+  'documents-shared',
+  'documents-rule',
+  'documents-trash',
+  'rules',
+  'trash',
+  'inbox',
 ];
 
 
@@ -271,7 +282,46 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
   },
   // 4. Tiện ích & Hệ thống
   {
-    title: 'Hệ thống',
+    title: 'Cơ chế và tài liệu',
+    items: [
+      {
+        id: 'documents-root',
+        label: 'Cơ chế & Tài liệu',
+        icon: React.createElement(Folder, { size: 18 }),
+        href: '/app/documents',
+        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+        subItems: [
+          {
+            id: 'documents-my',
+            label: 'Tài liệu của tôi',
+            href: '/app/documents?tab=my',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+          },
+          {
+            id: 'documents-shared',
+            label: 'Được chia sẻ',
+            href: '/app/inbox',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+          },
+          {
+            id: 'documents-rule',
+            label: 'Tài liệu ban hành',
+            href: '/app/rules',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+          },
+          {
+            id: 'documents-trash',
+            label: 'Thùng rác',
+            href: '/app/trash',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+          },
+        ],
+      },
+    ],
+  },
+  // 5. Hệ thống
+  {
+    title: 'Hệ thống',
     items: [
       {
         id: 'app-versions',

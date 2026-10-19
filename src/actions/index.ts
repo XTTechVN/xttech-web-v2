@@ -91,4 +91,7 @@ export * from './gasket';
 export * from './accessory-combo';
 export * from './brass-pattern';
 export * from './brass-ornament';
+export * from './document';
+export * from './trash';
+
 export * from './warehouse';

@@ -79,8 +79,13 @@ export * from './dashboard';
 // Aluminum & Profile Master Data
 export * from './brand';
 export * from './door-series';
-export * from './profile';
+export * from './profile';https://github.com/XTTechVN/xttech-web-v2/pull/194/conflict?name=src%252Ftypes%252Findex.ts&ancestor_oid=c8c0c61e399a2c8a96d05e97f599de7db4bf2edc&base_oid=c3932c1990b69ddfb421d3fa1576d90cb65039a8&head_oid=bc174b416ec2e96f68c41e1bd38149b461dfca2b
 export * from './glass';
 export * from './gasket';
 export * from './accessory-combo';
+// Document & Category
+export * from './document';
+// Trash
+export * from './trash';
+
 export * from './warehouse';
