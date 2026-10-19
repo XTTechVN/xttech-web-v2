@@ -1,21 +1,33 @@
 'use client';
 
 import React from 'react';
-import { DoorCadRenderer } from '../../doors/_components/studio/cad-engine/door-cad-renderer';
-import type { SceneCellNode, FrameShape, FrameConfig, SashConfig } from '../../doors/_components/studio/studio-types';
-import { DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG } from '../../doors/_components/studio/studio-types';
-import type { Door } from '@/types';
+import {
+  DoorCadRenderer,
+  DEFAULT_FRAME_CONFIG,
+  DEFAULT_SASH_CONFIG,
+  type SceneCellNode,
+  type FrameShape,
+  type FrameConfig,
+  type SashConfig,
+} from '@/components';
 
 interface DoorThumbnailProps {
-  door: Door;
+  door?: { systemConfig?: any } | null;
+  systemConfig?: Record<string, any> | null;
+  hideDimensions?: boolean;
   className?: string;
 }
 
 /**
- * Đọc systemConfig của door và render SVG thumbnail bằng DoorCadRenderer.
+ * Đọc systemConfig của door hoặc config truyền trực tiếp và render SVG thumbnail bằng DoorCadRenderer.
  */
-export function DoorThumbnail({ door, className = '' }: DoorThumbnailProps) {
-  const sc = (door.systemConfig || {}) as Record<string, any>;
+export function DoorThumbnail({
+  door,
+  systemConfig: directConfig,
+  hideDimensions = true,
+  className = '',
+}: DoorThumbnailProps) {
+  const sc = (directConfig || door?.systemConfig || {}) as Record<string, any>;
 
   const w: number = sc.w || 800;
   const h: number = sc.h || 1200;
@@ -52,7 +64,7 @@ export function DoorThumbnail({ door, className = '' }: DoorThumbnailProps) {
   return (
     <div className={`w-full h-full ${className}`}>
       <DoorCadRenderer
-        hideDimensions
+        hideDimensions={hideDimensions}
         w={w}
         h={h}
         aluminumColor={aluminumColor}

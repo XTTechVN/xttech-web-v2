@@ -15,6 +15,7 @@ export interface TabsProps {
   activeTab: string;
   onChange: (value: string) => void;
   variant?: 'line' | 'pill';
+  size?: 'sm' | 'md';
   className?: string;
 }
 
@@ -23,6 +24,7 @@ const Tabs: React.FC<TabsProps> = ({
   activeTab,
   onChange,
   variant = 'line',
+  size = 'md',
   className,
 }) => {
   return (
@@ -44,7 +46,8 @@ const Tabs: React.FC<TabsProps> = ({
               disabled={tab.disabled}
               onClick={() => onChange(tab.value)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 select-none',
+                'flex items-center gap-2 font-medium transition-all duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 select-none',
+                size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm',
                 // Kiểu Line (Có gạch chân)
                 variant === 'line' && [
                   'border-b-2 hover:text-gray-900',

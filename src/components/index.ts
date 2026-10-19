@@ -25,4 +25,5 @@ export * from './logo';
 export * from './app-update-modal';
 export * from './auto-timekeeping-modal';
 export * from './page-loader';
+export * from './door-studio';
 

@@ -1,5 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Lexend:wght@300;400;500;600;700;800&display=swap');
 
 body {
+  font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.font-lexend {
   font-family: 'Lexend', sans-serif;
 }

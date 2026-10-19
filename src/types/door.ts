@@ -257,6 +257,19 @@ export interface AccessoryBOMItem {
   note?: string | null;
 }
 
+export interface GasketBOMItem {
+  gasketId?: number | null;
+  code?: string | null;
+  name: string;
+  measure: string;
+  lengthM: number;
+  unit: string;
+  unitPrice: number;
+  totalPrice: number;
+  target: string;
+  note?: string | null;
+}
+
 export interface DoorCalculateResponse {
   w: number;
   h: number;
@@ -269,6 +282,7 @@ export interface DoorCalculateResponse {
   cornerJoints?: CornerJointBOM[];
   grilles?: GlassGrilleBOM[];
   accessories?: AccessoryBOMItem[];
+  gaskets?: GasketBOMItem[];
   sashCounts: Record<string, number>;
   totalAluminumWeightKg: number;
   totalGlassAreaM2: number;
@@ -277,6 +291,8 @@ export interface DoorCalculateResponse {
   totalGrillePrice?: number;
   totalAccessoryQty?: number;
   totalAccessoryPrice?: number;
+  totalGasketLengthM?: number;
+  totalGasketPrice?: number;
   hasUnconfiguredJoints?: boolean;
 }
 

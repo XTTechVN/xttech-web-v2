@@ -94,3 +94,4 @@ export * from './brass-ornament';
 export * from './document';
 export * from './trash';
 
+export * from './warehouse';

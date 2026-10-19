@@ -7,7 +7,7 @@ import type { Door } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 import { Search, Plus, ImageOff, LayoutGrid } from 'lucide-react';
 import { AccessoryBrandSidebar } from '../accessories/_components';
-import { DoorStudioModal } from '../doors/_components/studio';
+import { DoorStudioModal } from '@/components';
 import { DoorThumbnail } from './_components/door-thumbnail';
 
 import { getDoorTypeConfig, normalizeDoorType } from '@/types';
