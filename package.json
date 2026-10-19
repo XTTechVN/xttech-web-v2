@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
-    "@capacitor/cli": "^8.5.1",
+    "@capacitor/cli": "^8.4.3",
     "@capacitor/core": "^8.5.1",
     "@capacitor/ios": "^8.5.1",
     "@cycjimmy/jsmpeg-player": "^6.1.2",
@@ -28,7 +28,7 @@
     "leaflet-geosearch": "^4.4.0",
     "lucide-react": "^1.0.1",
     "motion": "^12.38.0",
-    "next": "16.2.1",
+    "next": "^16.4.2",
     "node-onvif": "^0.1.7",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -36,9 +36,11 @@
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.6.0",
     "react-leaflet": "^5.0.0",
+    "react-pdf": "^11.0.0",
     "react-tooltip": "^5.30.0",
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.5.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3",
     "zustand": "^5.0.12"
   },
@@ -49,7 +51,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.1",
+    "eslint-config-next": "^14.2.35",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
