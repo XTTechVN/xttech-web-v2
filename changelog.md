@@ -11,6 +11,9 @@ All notable changes to the frontend project will be documented in this file.
 ### Changed (iOS: gửi ping bền hơn trên mạng yếu)
 - **[`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift):** tăng timeout request 5s → 15s (resource 8s → 25s); chỉ cho 1 ping chạy tại một thời điểm (tự hết hạn sau 30s để không bị kẹt), lần retry sau refresh token vẫn giữ quyền gửi.
 
+### Fixed (Tối ưu cơ chế refresh token chống Race Condition)
+- **[`api.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/api.ts):** Triển khai cơ chế Hàng đợi (Queue) và Khóa tương hỗ (Mutex Lock `isRefreshing`). Khi nhiều API cùng nhận mã 401, chỉ 1 request duy nhất được gọi `/auth/refresh`, các request còn lại được tạm giữ trong hàng đợi và tự động giải phóng với access token mới sau khi refresh hoàn tất. Loại bỏ vòng lặp `_retryCount < 3`, tuân thủ chuẩn Rule 13 `camelCase` (`newAccessToken`).
+
 ## [Unreleased] - 2026-10-15
 ### Fixed (iOS/Android: Khắc phục lỗi bị Ngoại tuyến và mất mức pin do thoát app ngay sau khi chấm công)
 - **Kích hoạt Native Tracking tức thời ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx)):**
