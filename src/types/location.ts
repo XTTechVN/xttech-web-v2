@@ -29,6 +29,35 @@ export const STAFF_LIVE_STATUS_MAP: Record<StaffLiveStatus, string> = {
 export const isStaffSignalLost = (status: StaffLiveStatus): boolean =>
   status === 'offline' || status === 'app_closed';
 
+/** Chẩn đoán thiết bị native (iOS) gửi kèm ping; mọi giá trị trạng thái là mã tiếng Anh từ Backend */
+export interface StaffDeviceDiagnostics {
+  appVersion?: string;
+  appBuild?: string;
+  osVersion?: string;
+  deviceModel?: string;
+  launchId?: string;
+  /** user_or_other | system_location */
+  launchReason?: string;
+  /** user_terminated | foreground_kill_suspected | background_kill_suspected | device_rebooted | app_updated */
+  previousExit?: string;
+  /** active | inactive | background */
+  appState?: string;
+  /** always | when_in_use | denied | restricted | not_determined | unknown */
+  authorizationStatus?: string;
+  isPreciseLocation?: boolean;
+  isLowPowerMode?: boolean;
+  /** available | denied | restricted | unknown */
+  backgroundRefreshStatus?: string;
+  lastPingHttpStatus?: number;
+  consecutiveFailures?: number;
+  lastFailureReason?: string;
+  receivedLocationCount?: number;
+  filteredLocationCount?: number;
+  lastLocationAgeSec?: number;
+  lastLocationErrorCode?: number;
+  exitMetrics?: Record<string, number>;
+}
+
 export interface StaffLiveLocation {
   userId: string;
   userName: string;
@@ -46,6 +75,7 @@ export interface StaffLiveLocation {
   platform?: DevicePlatform;
   status: StaffLiveStatus;
   updatedAt: string;
+  diagnostics?: StaffDeviceDiagnostics;
 }
 
 export interface StaffRoutePoint {

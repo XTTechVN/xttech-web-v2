@@ -10,6 +10,7 @@ import { Battery, Gauge, Clock, Navigation, Compass } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { getFileUrl, openGoogleMapsNavigation } from '@/utils';
 import { PlatformBadge } from '@/components';
+import { StaffDiagnostics } from './staff-diagnostics';
 
 // Dynamic import Leaflet components for SSR safety
 const MapContainer = dynamic(
@@ -523,6 +524,8 @@ function StaffPopupContent({
           <span>Cập nhật: {dayjs(staff.updatedAt).format('HH:mm:ss')}</span>
         </div>
       </div>
+
+      <StaffDiagnostics diagnostics={staff.diagnostics} />
 
       <div className="flex items-center gap-1.5 pt-0.5">
         <button

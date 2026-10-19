@@ -7,6 +7,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Chẩn đoán: ghi nhận lý do khởi chạy (iOS đánh thức do vị trí hay người dùng mở) và suy luận lý do lần chạy trước kết thúc.
+        // Phải chạy TRƯỚC khi khôi phục tracking để các ping đầu tiên đã mang đủ thông tin.
+        TrackingDiagnostics.shared.start(launchedBySystem: launchOptions?[.location] != nil)
+
         // Khôi phục tracking ngay khi app khởi chạy (kể cả iOS đánh thức ngầm do Geofence / SLC / Visits).
         // Không phụ thuộc launch key `.location` vì iOS không phải lúc nào cũng gửi kèm; hàm tự kiểm tra cờ tracking.
         NativeTrackingPlugin.handleLocationWakeUp()

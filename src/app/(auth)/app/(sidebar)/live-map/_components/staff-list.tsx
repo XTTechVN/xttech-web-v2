@@ -6,6 +6,7 @@ import { Search, Navigation, Battery, Gauge, Clock, Users, RefreshCw, Compass } 
 import { Input, PlatformBadge } from '@/components';
 import dayjs from 'dayjs';
 import { getFileUrl, openGoogleMapsNavigation, includesSearchText } from '@/utils';
+import { StaffDiagnostics } from './staff-diagnostics';
 
 interface StaffListProps {
   staffLocations: StaffLiveLocation[];
@@ -215,6 +216,14 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
                     </div>
                   </div>
                 </div>
+
+                {isOffline && (
+                  <StaffDiagnostics
+                    diagnostics={staff.diagnostics}
+                    maxSignals={isSelected ? undefined : 2}
+                    hideDeviceSummary={!isSelected}
+                  />
+                )}
 
                 <div className="flex items-center justify-between pt-1 border-t border-slate-100/80 text-[10px] text-slate-500">
                   <div className="flex items-center gap-2">
