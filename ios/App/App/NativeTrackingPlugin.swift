@@ -87,16 +87,41 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
     private let prefsKeyApiUrl = "xttech_ios_api_url"
     private let prefsKeyIsTracking = NativeTrackingPlugin.prefsKeyIsTrackingShared
 
+    // Timeout mạng nền: đủ rộng cho 4G yếu, vẫn nằm trong thời gian CPU nền (~30s) do beginBackgroundTask cấp
+    private let networkRequestTimeout: TimeInterval = 15.0
+    private let networkResourceTimeout: TimeInterval = 25.0
+
+    // Chống gửi chồng ping: chỉ cho 1 ping chạy tại một thời điểm (tự hết hạn để không bị kẹt nếu request treo)
+    private let pingStateLock = NSLock()
+    private var pingInFlightSince: Date?
+    private let pingInFlightMaxAge: TimeInterval = 30.0
+
     // Custom URLSession tối ưu riêng cho tác vụ nền (Background Network)
     private lazy var backgroundSession: URLSession = {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 5.0
-        config.timeoutIntervalForResource = 8.0
+        config.timeoutIntervalForRequest = networkRequestTimeout
+        config.timeoutIntervalForResource = networkResourceTimeout
         config.waitsForConnectivity = false
         config.allowsCellularAccess = true
         config.httpMaximumConnectionsPerHost = 2
         return URLSession(configuration: config)
     }()
+
+    private func beginPingIfIdle() -> Bool {
+        pingStateLock.lock()
+        defer { pingStateLock.unlock() }
+        if let startedAt = pingInFlightSince, Date().timeIntervalSince(startedAt) < pingInFlightMaxAge {
+            return false
+        }
+        pingInFlightSince = Date()
+        return true
+    }
+
+    private func finishPing() {
+        pingStateLock.lock()
+        pingInFlightSince = nil
+        pingStateLock.unlock()
+    }
 
     public override func load() {
         super.load()
@@ -523,16 +548,20 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
     // MARK: - CLLocationManagerDelegate (Active Live-Tracking Delegate)
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard isTracking, let location = locations.last else { return }
+        let diagnostics = TrackingDiagnostics.shared
 
         // Bỏ qua tọa độ cũ đã lưu cache quá 30 giây
         if abs(location.timestamp.timeIntervalSinceNow) > 30.0 {
+            diagnostics.recordLocationUpdate(isFiltered: true)
             return
         }
 
         // Bỏ qua tọa độ sai số quá lớn (> 200m)
         if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 200.0 {
+            diagnostics.recordLocationUpdate(isFiltered: true)
             return
         }
+        diagnostics.recordLocationUpdate(isFiltered: false)
 
         refreshAnchorRegionIfNeeded(around: location)
 
@@ -582,6 +611,7 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        TrackingDiagnostics.shared.recordLocationError(error)
         print("[NativeTracking iOS] Location manager error: \(error.localizedDescription)")
     }
 
@@ -636,7 +666,7 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         request.httpMethod = "POST"
         request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.timeoutInterval = 5.0
+        request.timeoutInterval = networkRequestTimeout
 
         if let token = self.accessToken, !token.isEmpty {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -656,6 +686,7 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
             payload["battery_level"] = battery
             payload["batteryLevel"] = battery
         }
+        payload["diagnostics"] = TrackingDiagnostics.shared.snapshot(locationManager: self.locationManager)
 
         guard let httpBody = try? JSONSerialization.data(withJSONObject: payload, options: []) else { return nil }
         request.httpBody = httpBody
@@ -664,7 +695,13 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
 
     private func sendPing(location: CLLocation, isHeartbeat: Bool, retryCount: Int = 0) {
         let speed = isHeartbeat ? 0.0 : max(0.0, location.speed)
-        guard let request = makePingRequest(location: location, speed: speed, eventType: PingEventType.location) else { return }
+        let isRetry = retryCount > 0
+        guard let request = makePingRequest(location: location, speed: speed, eventType: PingEventType.location) else {
+            if isRetry { finishPing() }
+            return
+        }
+        // Ping đang bay thì bỏ qua (vị trí mới sẽ tới sau); lần retry sau refresh token đã giữ quyền sở hữu
+        guard isRetry || beginPingIfIdle() else { return }
 
         // Yêu cầu iOS cấp quyền CPU chạy nền an toàn
         var bgTaskId: UIBackgroundTaskIdentifier = .invalid
@@ -686,23 +723,35 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         }
 
         let task = self.backgroundSession.dataTask(with: request) { [weak self] data, response, error in
+            var isHandingOffToRetry = false
             defer {
                 endBgTask()
+                if !isHandingOffToRetry { self?.finishPing() }
             }
             guard let self = self else { return }
-            if let httpResponse = response as? HTTPURLResponse {
-                if (200...299).contains(httpResponse.statusCode) {
-                    DispatchQueue.main.async {
-                        self.lastPingTime = Date()
-                    }
-                } else if httpResponse.statusCode == 401 && retryCount == 0 {
-                    self.refreshAccessToken { success in
-                        if success {
-                            DispatchQueue.main.async {
-                                self.sendPing(location: location, isHeartbeat: isHeartbeat, retryCount: 1)
-                            }
-                        }
-                    }
+            guard let httpResponse = response as? HTTPURLResponse else {
+                TrackingDiagnostics.shared.recordPingFailure(statusCode: nil, error: error)
+                return
+            }
+            if (200...299).contains(httpResponse.statusCode) {
+                TrackingDiagnostics.shared.recordPingSuccess(statusCode: httpResponse.statusCode)
+                DispatchQueue.main.async {
+                    self.lastPingTime = Date()
+                }
+                return
+            }
+
+            TrackingDiagnostics.shared.recordPingFailure(statusCode: httpResponse.statusCode, error: nil)
+            guard httpResponse.statusCode == 401 && !isRetry else { return }
+            isHandingOffToRetry = true
+            self.refreshAccessToken { success in
+                guard success else {
+                    TrackingDiagnostics.shared.recordTokenRefreshFailure()
+                    self.finishPing()
+                    return
+                }
+                DispatchQueue.main.async {
+                    self.sendPing(location: location, isHeartbeat: isHeartbeat, retryCount: 1)
                 }
             }
         }
@@ -728,7 +777,7 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         request.httpMethod = "POST"
         request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.timeoutInterval = 5.0
+        request.timeoutInterval = networkRequestTimeout
 
         let payload = ["refreshToken": refreshToken]
         guard let httpBody = try? JSONSerialization.data(withJSONObject: payload, options: []) else {

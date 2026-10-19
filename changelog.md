@@ -2,6 +2,15 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-19
+### Added (Chẩn đoán nguyên nhân nhân viên bị Ngoại tuyến)
+- **iOS ([`TrackingDiagnostics.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/TrackingDiagnostics.swift)):** thu thập quyền vị trí, Low Power Mode, Background Refresh, lý do khởi động lại app, suy đoán lần thoát trước (bị kill/reboot/update), tình trạng gửi ping (HTTP, số lần lỗi liên tiếp), tuổi vị trí, lỗi CoreLocation và MetricKit exit metrics; gửi kèm mỗi ping (`diagnostics`).
+- **Live Map ([`diagnostic-signals.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/diagnostic-signals.ts), [`staff-diagnostics.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/staff-diagnostics.tsx)):** hiển thị tín hiệu chẩn đoán (tiếng Việt) trong popup và danh sách mất tín hiệu.
+- **Lưu ý:** cần build lại bản iOS để có dữ liệu; Swift chưa được biên dịch trên Windows.
+
+### Changed (iOS: gửi ping bền hơn trên mạng yếu)
+- **[`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift):** tăng timeout request 5s → 15s (resource 8s → 25s); chỉ cho 1 ping chạy tại một thời điểm (tự hết hạn sau 30s để không bị kẹt), lần retry sau refresh token vẫn giữ quyền gửi.
+
 ## [Unreleased] - 2026-10-15
 ### Fixed (iOS/Android: Khắc phục lỗi bị Ngoại tuyến và mất mức pin do thoát app ngay sau khi chấm công)
 - **Kích hoạt Native Tracking tức thời ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx)):**
