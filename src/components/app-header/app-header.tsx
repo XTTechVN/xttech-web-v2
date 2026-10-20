@@ -7,7 +7,6 @@ import { cn } from '@/utils';
 import { AppBreadcrumb } from './app-breadcrumb';
 import { HeaderProfile } from './header-profile';
 import { HeaderSearch } from './header-search';
-
 export interface AppHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   onMenuClick?: () => void;
   userRole?: UserRole;
@@ -35,7 +34,6 @@ export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(({ onM
 
         {/* Right side: Notifications & User profile */}
         <div className="flex items-center gap-2">
-          {/* <InstallPwaButton className="inline-flex" /> */}
           <HeaderProfile userRole={userRole} />
         </div>
       </div>

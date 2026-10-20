@@ -85,6 +85,7 @@ export * from './gasket';
 export * from './accessory-combo';
 // Document & Category
 export * from './document';
+export * from './document-rule';
 // Trash
 export * from './trash';
 
