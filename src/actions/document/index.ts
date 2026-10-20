@@ -11,7 +11,10 @@ import type {
   FolderShare,
   ShareFolderPayload,
   DocumentRecipientsResponse,
+  PublishDocumentPayload,
 } from '@/types';
+
+export * from './rules';
 
 // Helper trích xuất thông báo lỗi chi tiết từ backend FastAPI / validator
 export const extractErrorMessage = (error: any, fallbackMessage: string): string => {
@@ -471,7 +474,7 @@ export const reviewDocument = async (
 // 8.3. Ban hành văn bản chính thức: POST /api/v1/documents/{id}/publish
 // Request body (tùy chọn): { shareScope?: "all" | "department" | "private" }
 // Sau khi ban hành, trạng thái đổi thành published
-export const publishDocument = async (documentId: number, payload?: { shareScope?: string }): Promise<DocumentItem> => {
+export const publishDocument = async (documentId: number, payload?: PublishDocumentPayload): Promise<DocumentItem> => {
   try {
     const res = await api.post(`/api/v1/documents/${documentId}/publish`, payload || {});
     return res.data?.data ?? res.data;

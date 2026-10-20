@@ -41,8 +41,10 @@ export interface DocumentRecipient {
   email?: string;
   departmentName?: string;
   avatar?: string;
+  user?: { id: string; fullName: string; email?: string; avatar?: string | null } | null;
   isRead: boolean;
   readAt?: string | null;
+  acknowledgedAt?: string | null;
   createdAt?: string;
 }
 
@@ -96,6 +98,8 @@ export interface DocumentItem {
   currentVersion?: DocumentVersion | null;
   versions?: DocumentVersion[];
   recipients?: DocumentRecipient[];
+  recipientDepartments?: { id: number; name: string }[];
+  recipientDepartmentIds?: number[];
   savedFolders?: number[];
   approvalNote?: string | null;
   approvedAt?: string | null;
@@ -107,8 +111,29 @@ export interface DocumentItem {
   } | null;
   isRead?: boolean | null;
   readAt?: string | null;
+  requiresAcknowledgement?: boolean;
+  isAcknowledged?: boolean | null;
+  supersededByDoc?: DocumentShortInfo | null;
+  supersedesId?: number | null;
+  supersedesDoc?: DocumentShortInfo | null;
+  supersedesDocs?: DocumentShortInfo[];
+  recipientStats?: DocumentRecipientStats | null;
+  canAcknowledge?: boolean;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface DocumentShortInfo {
+  id: number;
+  code: string;
+  title: string;
+  status: string;
+}
+
+export interface DocumentRecipientStats {
+  totalRecipients: number;
+  readCount: number;
+  unreadCount: number;
 }
 
 export interface GetDocumentsParams {

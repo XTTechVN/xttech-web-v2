@@ -1,91 +1,43 @@
 'use client';
 
 import React from 'react';
-import { Button, TableSearch } from '@/components';
-import { LayoutGrid, List, Upload } from 'lucide-react';
+import { Search, Plus, ScrollText } from 'lucide-react';
+import { Button } from '@/components';
 
 interface RulesHeaderProps {
   search: string;
   onSearchChange: (value: string) => void;
-  documentType?: string;
-  onDocumentTypeChange?: (value: string) => void;
-  documentTypeOptions?: { value: string; label: string }[];
-  status?: string;
-  onStatusChange?: (value: string) => void;
-  statusOptions?: { value: string; label: string }[];
-  hasActiveFilters?: boolean;
-  onResetFilters?: () => void;
-  viewMode: 'grid' | 'table';
-  onViewModeChange: (mode: 'grid' | 'table') => void;
-  onCreateDocument?: () => void;
+  onCreate: () => void;
 }
 
-export const RulesHeader: React.FC<RulesHeaderProps> = ({
-  search,
-  onSearchChange,
-  viewMode,
-  onViewModeChange,
-  onCreateDocument,
-}) => {
-  return (
-    <div className="bg-white border-b border-slate-200/80 p-3 sm:p-4 shrink-0 shadow-2xs">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
-        {/* Tìm kiếm */}
-        <div className="w-full sm:w-64 lg:w-80">
-          <TableSearch
-            placeholder="Tìm mã, tiêu đề quy chế..."
-            value={search}
-            onChange={onSearchChange}
-            className="w-full"
-          />
-        </div>
-
-        {/* Hàng nút: Tải lên quy chế + Toggle Dạng lưới / Ô vs Danh sách (cùng 1 dòng trên mobile & desktop) */}
-        <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
-          {onCreateDocument && (
-            <Button
-              variant="primary"
-              size="sm"
-              className="h-8.5 sm:h-9 px-3 text-xs sm:text-sm font-semibold shrink-0"
-              onClick={onCreateDocument}
-              leftIcon={<Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-            >
-              Tải lên quy chế
-            </Button>
-          )}
-
-          {/* Switch Dạng lưới / Ô vs Danh sách */}
-          <div className="flex items-center p-0.5 rounded-lg border border-slate-200 bg-slate-100/80 shrink-0">
-            <button
-              type="button"
-              onClick={() => onViewModeChange('grid')}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer ${
-                viewMode === 'grid'
-                  ? 'bg-white text-primary shadow-xs font-semibold'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-              title="Dạng lưới / ô"
-            >
-              <LayoutGrid size={15} />
-              <span className="hidden md:inline text-xs">Lưới</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onViewModeChange('table')}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer ${
-                viewMode === 'table'
-                  ? 'bg-white text-primary shadow-xs font-semibold'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-              title="Dạng danh sách"
-            >
-              <List size={15} />
-              <span className="hidden md:inline text-xs">Danh sách</span>
-            </button>
-          </div>
-        </div>
+export const RulesHeader: React.FC<RulesHeaderProps> = ({ search, onSearchChange, onCreate }) => (
+  <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4">
+    <div className="flex items-center gap-3 min-w-0">
+      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+        <ScrollText size={20} />
+      </div>
+      <div className="min-w-0">
+        <h1 className="text-base font-bold text-slate-800 leading-tight">Cơ chế &amp; Quy định</h1>
+        <p className="text-xs text-slate-500 truncate">
+          Quy chế, quy định, chính sách, quy trình, quyết định, thông báo, hướng dẫn, định mức
+        </p>
       </div>
     </div>
-  );
-};
 
+    <div className="flex items-center gap-2 w-full sm:w-auto">
+      <div className="relative flex-1 sm:w-72">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          id="rules-search-input"
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Tìm theo mã, tiêu đề, trích yếu..."
+          className="w-full h-9 pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+        />
+      </div>
+      <Button id="rules-create-button" size="sm" leftIcon={<Plus size={14} />} onClick={onCreate}>
+        Soạn cơ chế
+      </Button>
+    </div>
+  </div>
+);

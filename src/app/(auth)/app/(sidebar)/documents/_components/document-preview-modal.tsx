@@ -558,6 +558,8 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ file, downloadUrl, onDownload }) 
               setError(null);
             }}
             onLoadError={(err) => setError(err.message || 'Không thể hiển thị tệp PDF.')}
+            onSourceError={(err) => setError(err.message || 'Không thể kết nối hoặc tải tệp PDF từ máy chủ.')}
+            error={null}
             loading={
               <div className="my-auto flex flex-col items-center justify-center gap-3 text-slate-400 py-16">
                 <Loader2 size={36} className="animate-spin text-rose-500" />

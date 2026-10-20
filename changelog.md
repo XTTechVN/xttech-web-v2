@@ -2,7 +2,21 @@
 
 All notable changes to the frontend project will be documented in this file.
 
-## [Unreleased] - 2026-10-17
+## [Unreleased] - 2026-10-19
+
+- **Giao Diện Card Lưới Hiện Đại Cho Tab "Cơ Chế Hiện Hành" & Menu Thao Tác 3 Chấm ([`rules-card-grid.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-card-grid.tsx), [`rules-page-content.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-page-content.tsx)):**
+  - **Chuyển đổi giao diện tab "Cơ chế hiện hành":** Chuyển từ table sang giao diện lưới Card trực quan theo phong cách Google Drive / Workspace hiện đại.
+  - **Chuẩn hóa Icon theo đúng định dạng tệp (`DriveFileIcon`):** Hiển thị đúng biểu tượng Google Drive đặc trưng cho từng loại tệp (Word màu xanh dương `.docx`, PDF màu đỏ `.pdf`, Excel màu xanh lá `.xlsx`, Image màu tím, Text màu xám) dựa trên tên tệp và `mimeType` thực tế của phiên bản tài liệu.
+  - **Khung Preview Mô Phỏng Trang Giấy Văn Bản A4:** Thay thế ô xám placeholder cũ bằng mô phỏng trang văn bản A4 màu trắng sắc nét, có Quốc hiệu, Tiêu đề in hoa trang trọng, trích yếu hoặc dòng văn bản căn chỉnh đều, watermark chìm `XT-TECH`, và số trang.
+  - **Tối Giản Hiệu Ứng Hover:** Loại bỏ hoàn toàn nút đè và lớp phủ tối khi hover vào preview; khi rê chuột thì toàn bộ Card chỉ xuất hiện một lớp shadow nhẹ nhàng, tinh tế và chuyển màu tiêu đề sang màu chính (`hover:shadow-md hover:border-slate-300`).
+  - **Hành vi tương tác:**
+    - Click vào thân Card: Mở trực tiếp trình xem văn bản (`DocumentPreviewModal`) và tự động gọi API đánh dấu đã đọc (`markDocumentAsRead`).
+    - Click menu 3 chấm: Mở dropdown gồm: *Xem văn bản*, *Chi tiết & Lịch sử*, *Soạn cơ chế thay thế*, *Chỉnh sửa*, *Xóa văn bản*.
+  - **Chuẩn hóa tab "Soạn thảo":** Tiếp tục dùng Table chuẩn hóa từ component chung (`TableHeader`, `TableBody`, `TablePagination`) từ `@/components/table`.
+  - **Sửa lỗi quyền nút "Đã đọc và hiểu":** Chỉ hiển thị cho người nhận đích thực (`doc.canAcknowledge`), không hiển thị cho Super Admin/người soạn nếu không phải người nhận.
+  - **Xóa cascade an toàn:** Super Admin có thể xóa văn bản ở mọi trạng thái; hệ thống tự động dọn dẹp các bản ghi liên quan tránh lỗi phụ thuộc.
+  - **Bắt lỗi PDF 403:** Xử lý ngoại lệ trong `PdfViewer` bằng `onSourceError` giúp tránh lỗi runtime crash.
+
 
 - **Nâng Cấp Form Thu Hồi Nhôm Thừa Tái Sử Dụng ([`offcut-form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/warehouse/_components/modals/offcut-form-modal.tsx)):**
   - **Tự động điền Profile Bar:** Loại bỏ ô nhập số nguyên `profileBarId` thủ công; tự động liên kết và hiển thị mã profile bar khi thủ kho chọn mặt hàng profile gốc trong kho.
