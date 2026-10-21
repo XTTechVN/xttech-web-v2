@@ -34,6 +34,13 @@ const FAILURE_REASON_MAP: Record<string, string> = {
   refresh_failed: 'làm mới phiên đăng nhập thất bại',
 };
 
+/** Mã lỗi CLError của iOS (domain kCLErrorDomain) */
+const LOCATION_ERROR_MAP: Record<number, string> = {
+  0: 'Chưa xác định được vị trí (tạm thời)',
+  1: 'Hệ thống từ chối cấp vị trí (quyền bị tắt, hoặc máy chưa mở khóa sau khi khởi động)',
+  2: 'Lỗi mạng khi lấy vị trí',
+};
+
 const PREVIOUS_EXIT_SIGNAL_MAP: Record<string, Omit<DiagnosticSignal, 'id'>> = {
   background_kill_suspected: {
     severity: 'danger',
@@ -140,7 +147,8 @@ function buildLocationStreamSignals(diagnostics: StaffDeviceDiagnostics): Diagno
     signals.push({ id: 'high-filter', severity: 'warning', label: `${percent}% điểm vị trí bị loại (sai số lớn hoặc quá cũ)` });
   }
   if (lastLocationErrorCode !== undefined) {
-    signals.push({ id: 'location-error', severity: 'warning', label: `Lỗi CoreLocation mã ${lastLocationErrorCode}` });
+    const errorLabel = LOCATION_ERROR_MAP[lastLocationErrorCode] ?? `Lỗi CoreLocation mã ${lastLocationErrorCode}`;
+    signals.push({ id: 'location-error', severity: 'warning', label: errorLabel });
   }
   return signals;
 }
