@@ -2,6 +2,12 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-21
+### Fixed (iOS: bị đẩy sang trang offline / báo "lỗi DNS" khi mở app)
+- **[WebViewErrorGuard.swift](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/WebViewErrorGuard.swift) (mới), [MainViewController.swift](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/MainViewController.swift):** Capacitor iOS nạp `offline.html` với MỌI lỗi điều hướng (kể cả -999 / Frame load interrupted khi redirect), làm web chấm công và tracking real-time dừng. Nay bỏ qua lỗi vặt, tự thử lại 2 lần với lỗi DNS / timeout / không kết nối được, chỉ khi thất bại mới nạp `offline.html` kèm `reason`, `code`, `target`.
+- **[offline.html](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/public/offline.html):** hiển thị đúng nguyên nhân (DNS, mất mạng, timeout, kết nối thất bại, TLS) và mã lỗi thay vì ghi cứng "lỗi DNS". Backend/native truyền mã tiếng Anh, trang tự dịch sang tiếng Việt.
+- **Lưu ý:** cần build lại bản iOS; Swift chưa được biên dịch trên Windows.
+
 ## [Unreleased] - 2026-10-19
 ### Added (Chẩn đoán nguyên nhân nhân viên bị Ngoại tuyến)
 - **iOS ([`TrackingDiagnostics.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/TrackingDiagnostics.swift)):** thu thập quyền vị trí, Low Power Mode, Background Refresh, lý do khởi động lại app, suy đoán lần thoát trước (bị kill/reboot/update), tình trạng gửi ping (HTTP, số lần lỗi liên tiếp), tuổi vị trí, lỗi CoreLocation và MetricKit exit metrics; gửi kèm mỗi ping (`diagnostics`).
