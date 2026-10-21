@@ -412,8 +412,20 @@ export type ProjectQuotationUpdatePayload = Partial<ProjectQuotationPreviewReque
   note?: string;
 };
 
-export interface ProjectQuotationClonePayload {
-  newName: string;
+export interface ProjectQuotationSyncPayload {
+  note?: string;
+  customSellingPrices?: Record<number, number>;
+  customAccessoryPrices?: Record<number, number>;
+}
+
+export interface QuotationDiffSummary {
+  addedCount: number;
+  modifiedCount: number;
+  removedCount: number;
+  unchangedCount: number;
+  addedPositionIds: number[];
+  removedPositionIds: number[];
+  modifiedPositionIds: number[];
 }
 
 export interface ProjectQuotationQueryParams {
@@ -462,6 +474,10 @@ export interface ProjectQuotationItem {
   totalProfit: number;
   effectiveMarginPercent: number;
   snapshotItems: QuotationDoorItemSnapshot[];
+  floorIds: number[];
+  isOutdated: boolean;
+  outdatedReason?: string | null;
+  diffSummary?: QuotationDiffSummary | null;
   createdAt: string;
   updatedAt: string;
   note?: string | null;

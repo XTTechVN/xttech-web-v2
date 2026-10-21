@@ -286,19 +286,15 @@ export interface ContractMilestoneInput {
 }
 
 export interface ContractCreatePayload {
-  quotationId: number;
+  quotationId?: number;
   contractName?: string;
   contractDate?: string;
   milestones?: ContractMilestoneInput[];
   note?: string;
 }
 
-export interface ContractAppendixCreatePayload {
-  parentContractId: number;
-  quotationId: number;
-  contractName?: string;
-  contractDate?: string;
-  milestones?: ContractMilestoneInput[];
+export interface ContractCancelPayload {
+  reason?: string;
   note?: string;
 }
 
@@ -315,6 +311,8 @@ export interface ProjectContractItem {
   totalAmount: number;
   paidAmount: number;
   remainingAmount: number;
+  replacedContractCode?: string | null;
+  inheritedPaidAmount: number;
   contractFileUrl?: string | null;
   note?: string | null;
   createdAt: string;

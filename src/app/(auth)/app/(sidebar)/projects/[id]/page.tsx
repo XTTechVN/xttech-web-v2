@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { getProject, getProjectQuotations } from '@/actions';
+import { getProject } from '@/actions';
 import {
   TabOverview,
   TabPositions,
@@ -39,14 +39,6 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     queryFn: () => getProject(projectId),
     enabled: !!projectId,
   });
-
-  const { data: quotationsData } = useQuery({
-    queryKey: ['project_quotations', projectId],
-    queryFn: () => getProjectQuotations(projectId),
-    enabled: !!projectId,
-  });
-
-  const quotations = quotationsData?.items || [];
 
   if (isLoading) {
     return (
@@ -166,7 +158,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
 
       {/* Tab 4: Hợp đồng */}
       {activeTab === 'contracts' && (
-        <TabContracts projectId={projectId} quotations={quotations} />
+        <TabContracts projectId={projectId} />
       )}
 
       {/* Tab 5: Sản xuất */}

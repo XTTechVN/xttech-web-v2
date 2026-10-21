@@ -82,31 +82,28 @@ export const createProjectQuotationOfficial = async (
   }
 };
 
-export const cloneProjectQuotation = async (
+export const getActiveProjectQuotation = async (
   projectId: number,
-  quotationId: number,
-  newName?: string,
-): Promise<import('@/types').ProjectQuotationItem> => {
+): Promise<import('@/types').ProjectQuotationDetail | null> => {
   try {
-    const response = await api.post(`/api/v1/projects/${projectId}/quotations/${quotationId}/clone`, {
-      newName: newName || 'Bản sao báo giá',
-    });
-    return response.data;
-  } catch (error) {
-    console.warn('API error cloneProjectQuotation', error);
+    const response = await api.get(`/api/v1/projects/${projectId}/quotations/active`);
+    return normalizeProjectQuotation(response.data);
+  } catch (error: unknown) {
+    if ((error as { response?: { status?: number } })?.response?.status === 404) return null;
+    console.warn('API error getActiveProjectQuotation', error);
     throw error;
   }
 };
 
-export const selectProjectQuotation = async (
+export const syncProjectQuotation = async (
   projectId: number,
-  quotationId: number,
-): Promise<import('@/types').ProjectQuotationItem> => {
+  data: import('@/types').ProjectQuotationSyncPayload = {},
+): Promise<import('@/types').ProjectQuotationDetail> => {
   try {
-    const response = await api.post(`/api/v1/projects/${projectId}/quotations/${quotationId}/select`);
-    return response.data;
+    const response = await api.post(`/api/v1/projects/${projectId}/quotations/sync`, data);
+    return normalizeProjectQuotation(response.data);
   } catch (error) {
-    console.warn('API error selectProjectQuotation', error);
+    console.warn('API error syncProjectQuotation', error);
     throw error;
   }
 };
@@ -407,15 +404,19 @@ export const createProjectContract = async (
   }
 };
 
-export const createProjectContractAppendix = async (
+export const cancelProjectContract = async (
   projectId: number,
-  data: import('@/types').ContractAppendixCreatePayload,
+  contractId: number,
+  data: import('@/types').ContractCancelPayload = {},
 ): Promise<import('@/types').ProjectContractItem> => {
   try {
-    const response = await api.post(`/api/v1/projects/${projectId}/contracts/appendices`, data);
+    const response = await api.post(
+      `/api/v1/projects/${projectId}/contracts/${contractId}/cancel`,
+      data,
+    );
     return response.data;
   } catch (error) {
-    console.warn('API error createProjectContractAppendix', error);
+    console.warn('API error cancelProjectContract', error);
     throw error;
   }
 };
