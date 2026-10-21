@@ -3,10 +3,12 @@
 import React, { useState } from 'react';
 import { AlertCircle, FilePlus2 } from 'lucide-react';
 import { Button } from '@/components';
-import type { PaymentTransactionItem, ProjectContractItem } from '@/types';
+import type { ContractTerms, PaymentTransactionItem, ProjectContractItem } from '@/types';
 import { CancelContractModal } from './modals/cancel-contract-modal';
 import { ContractFormModal } from './modals/contract-form-modal';
 import { ContractList } from './components/contract-list';
+import { ContractPreviewModal } from './modals/contract-preview-modal';
+import { ContractTermsModal } from './modals/contract-terms-modal';
 import { LedgerSummary } from './components/ledger-summary';
 import { PaymentTransactionModal } from './modals/payment-transaction-modal';
 import { ReversalModal } from './modals/reversal-modal';
@@ -28,11 +30,13 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
     transactions,
     ledger,
     quotation,
+    project,
     isLoadingContracts,
     isLoadingTransactions,
     createContract,
     signContract,
     cancelContract,
+    updateContract,
     createTransaction,
     reverseTransaction,
   } = useProjectContracts(projectId);
@@ -40,6 +44,8 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
   const [isContractModalOpen, setIsContractModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [cancelingContract, setCancelingContract] = useState<ProjectContractItem | null>(null);
+  const [editingTermsContract, setEditingTermsContract] = useState<ProjectContractItem | null>(null);
+  const [previewingContract, setPreviewingContract] = useState<ProjectContractItem | null>(null);
   const [reversingTransaction, setReversingTransaction] = useState<PaymentTransactionItem | null>(null);
 
   const liveContract = findLiveContract(contracts);
@@ -53,6 +59,12 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
     cancelContract.mutate(
       { contractId: contract.id, reason },
       { onSuccess: () => setCancelingContract(null) },
+    );
+
+  const handleSaveTerms = (contract: ProjectContractItem, contractTerms: ContractTerms) =>
+    updateContract.mutate(
+      { contractId: contract.id, payload: { contractTerms } },
+      { onSuccess: () => setEditingTermsContract(null) },
     );
 
   const handleCollect = (payload: Parameters<typeof createTransaction.mutate>[0]) =>
@@ -105,6 +117,8 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
             isSigning={signContract.isPending}
             onSign={(contract) => signContract.mutate(contract.id)}
             onCancel={setCancelingContract}
+            onEditTerms={setEditingTermsContract}
+            onPreview={setPreviewingContract}
           />
         </div>
 
@@ -123,6 +137,7 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
       <ContractFormModal
         isOpen={isContractModalOpen}
         quotation={quotation}
+        project={project}
         liveContract={liveContract}
         collectedAmount={ledger?.totalCollected ?? 0}
         isSubmitting={createContract.isPending}
@@ -134,6 +149,18 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
         isSubmitting={cancelContract.isPending}
         onClose={() => setCancelingContract(null)}
         onConfirm={handleCancel}
+      />
+      <ContractTermsModal
+        contract={editingTermsContract}
+        isSubmitting={updateContract.isPending}
+        onClose={() => setEditingTermsContract(null)}
+        onSave={handleSaveTerms}
+      />
+      <ContractPreviewModal
+        contract={previewingContract}
+        project={project}
+        quotationCode={quotation?.id === previewingContract?.quotationId ? quotation?.code : null}
+        onClose={() => setPreviewingContract(null)}
       />
       <PaymentTransactionModal
         isOpen={isTransactionModalOpen}

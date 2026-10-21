@@ -404,6 +404,20 @@ export const createProjectContract = async (
   }
 };
 
+export const updateProjectContract = async (
+  projectId: number,
+  contractId: number,
+  data: import('@/types').ContractUpdatePayload,
+): Promise<import('@/types').ProjectContractItem> => {
+  try {
+    const response = await api.patch(`/api/v1/projects/${projectId}/contracts/${contractId}`, data);
+    return response.data;
+  } catch (error) {
+    console.warn('API error updateProjectContract', error);
+    throw error;
+  }
+};
+
 export const cancelProjectContract = async (
   projectId: number,
   contractId: number,

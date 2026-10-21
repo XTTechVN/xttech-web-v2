@@ -4,8 +4,10 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   cancelProjectContract,
+  updateProjectContract,
   createPaymentTransaction,
   createProjectContract,
+  getProject,
   getProjectContracts,
   getProjectLedgerSummary,
   getProjectPaymentTransactions,
@@ -17,6 +19,7 @@ import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
 import type {
   ContractCreatePayload,
+  ContractUpdatePayload,
   PaymentTransactionCreatePayload,
   PaymentTransactionItem,
   ProjectContractItem,
@@ -67,6 +70,11 @@ export function useProjectContracts(projectId: number) {
     queryFn: () => getProjectPaymentTransactions(projectId),
     enabled,
   });
+  const { data: project } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => getProject(projectId),
+    enabled,
+  });
   const { quotation } = useActiveQuotation(projectId);
 
   const contracts: ProjectContractItem[] = contractsData?.items ?? [];
@@ -92,6 +100,16 @@ export function useProjectContracts(projectId: number) {
       toast.success(`Đã ký hợp đồng ${res.contractCode}, báo giá được khóa`);
     },
     onError: (err) => showErrorToast(err, 'Lỗi khi ký hợp đồng'),
+  });
+
+  const updateContract = useMutation({
+    mutationFn: ({ contractId, payload }: { contractId: number; payload: ContractUpdatePayload }) =>
+      updateProjectContract(projectId, contractId, payload),
+    onSuccess: (res) => {
+      invalidateContractQueries(projectId);
+      toast.success(`Đã lưu điều khoản hợp đồng ${res.contractCode}`);
+    },
+    onError: (err) => showErrorToast(err, 'Lỗi khi lưu điều khoản hợp đồng'),
   });
 
   const cancelContract = useMutation({
@@ -129,11 +147,13 @@ export function useProjectContracts(projectId: number) {
     transactions,
     ledger,
     quotation,
+    project,
     isLoadingContracts,
     isLoadingTransactions,
     createContract,
     signContract,
     cancelContract,
+    updateContract,
     createTransaction,
     reverseTransaction,
   };

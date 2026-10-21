@@ -285,7 +285,42 @@ export interface ContractMilestoneInput {
   note?: string;
 }
 
+export interface ContractTerms {
+  // Nội dung soạn thảo gộp chung (Cơ chế, Điều khoản, Chính sách)
+  content?: string;
+  // Dữ liệu cũ tách 3 phần: chỉ đọc để gộp khi hiển thị, sẽ bị bỏ khi lưu lại
+  mechanism?: string;
+  clauses?: string;
+  policy?: string;
+  // Các khóa do hệ thống quản lý (thay thế, hủy...) được giữ nguyên khi gửi lại
+  [systemKey: string]: unknown;
+}
+
+// Thông tin Bên A hiển thị trên hợp đồng (camelCase ở UI, được chuyển đổi khi lưu - xem contract-party.ts)
+export interface ContractPartyA {
+  name: string;
+  identityCard: string;
+  birthDate: string;
+  identityIssuedDate: string;
+  address: string;
+  siteAddress: string;
+  phone: string;
+}
+
+// Dữ liệu thô của snapshot hai bên do backend lưu (khóa dạng snake_case)
+export interface ContractPartySnapshot {
+  party_a?: Record<string, string | null | undefined>;
+}
+
+export interface ContractUpdatePayload {
+  contractName?: string;
+  contractTerms?: ContractTerms;
+  note?: string;
+}
+
 export interface ContractCreatePayload {
+  contractTerms?: ContractTerms;
+  partyAOverride?: Record<string, string>;
   quotationId?: number;
   contractName?: string;
   contractDate?: string;
@@ -313,6 +348,8 @@ export interface ProjectContractItem {
   remainingAmount: number;
   replacedContractCode?: string | null;
   inheritedPaidAmount: number;
+  contractTerms?: ContractTerms | null;
+  partySnapshot?: ContractPartySnapshot | null;
   contractFileUrl?: string | null;
   note?: string | null;
   createdAt: string;

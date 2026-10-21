@@ -73,3 +73,7 @@ export const PAYMENT_MILESTONE_STATUS_MAP: Record<string, { label: string; varia
   completed: { label: 'Đã thu đủ', variant: 'success' },
   overdue: { label: 'Quá hạn', variant: 'danger' },
 };
+
+// Nội dung soạn thảo của hợp đồng (Cơ chế, Điều khoản, Chính sách gộp chung) lưu ở khóa này trong contractTerms
+export const CONTRACT_TERMS_PLACEHOLDER =
+  'Cơ chế thực hiện, điều khoản giao hàng - nghiệm thu - bảo hành, chính sách hỗ trợ sau bán hàng...';

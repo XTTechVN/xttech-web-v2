@@ -27,3 +27,4 @@ export * from './auto-timekeeping-modal';
 export * from './page-loader';
 export * from './door-studio';
 
+export * from './rich-text-editor';

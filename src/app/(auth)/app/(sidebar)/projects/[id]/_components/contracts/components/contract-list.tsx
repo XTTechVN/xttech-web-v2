@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, CheckCircle2, Printer } from 'lucide-react';
 import { Badge, Button } from '@/components';
 import {
   CONTRACT_KIND_MAP,
@@ -19,6 +19,8 @@ interface ContractListProps {
   isSigning: boolean;
   onSign: (contract: ProjectContractItem) => void;
   onCancel: (contract: ProjectContractItem) => void;
+  onEditTerms: (contract: ProjectContractItem) => void;
+  onPreview: (contract: ProjectContractItem) => void;
 }
 
 export function ContractList({
@@ -28,6 +30,8 @@ export function ContractList({
   isSigning,
   onSign,
   onCancel,
+  onEditTerms,
+  onPreview,
 }: ContractListProps) {
   if (isLoading) {
     return <p className="text-xs text-slate-400 text-center py-6">Đang tải danh sách hợp đồng...</p>;
@@ -50,6 +54,8 @@ export function ContractList({
           isSigning={isSigning}
           onSign={onSign}
           onCancel={onCancel}
+          onEditTerms={onEditTerms}
+          onPreview={onPreview}
         />
       ))}
     </div>
@@ -62,9 +68,19 @@ interface ContractRowProps {
   isSigning: boolean;
   onSign: (contract: ProjectContractItem) => void;
   onCancel: (contract: ProjectContractItem) => void;
+  onEditTerms: (contract: ProjectContractItem) => void;
+  onPreview: (contract: ProjectContractItem) => void;
 }
 
-function ContractRow({ contract, isOutdatedQuotation, isSigning, onSign, onCancel }: ContractRowProps) {
+function ContractRow({
+  contract,
+  isOutdatedQuotation,
+  isSigning,
+  onSign,
+  onCancel,
+  onEditTerms,
+  onPreview,
+}: ContractRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const status = CONTRACT_STATUS_MAP[contract.status];
   const isCancelled = contract.status === 'cancelled';
@@ -103,6 +119,17 @@ function ContractRow({ contract, isOutdatedQuotation, isSigning, onSign, onCance
           </div>
 
           <div className="flex items-center gap-1.5">
+            <Button variant="outline" size="sm" className="h-7 text-[11px] px-2" onClick={() => onPreview(contract)}>
+              <Printer size={12} className="mr-1" /> Xem / In
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-[11px] px-2"
+              onClick={() => onEditTerms(contract)}
+            >
+              {isDraft ? 'Soạn điều khoản' : 'Xem điều khoản'}
+            </Button>
             {isDraft && (
               <Button
                 variant="primary"
