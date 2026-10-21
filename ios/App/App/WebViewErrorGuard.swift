@@ -73,7 +73,14 @@ final class WebViewErrorGuard: NSObject, WKNavigationDelegate {
     // MARK: - Xử lý lỗi
     private func handleFailure(of webView: WKWebView, error: NSError) {
         let failedURL = error.userInfo[NSURLErrorFailingURLErrorKey] as? URL ?? serverURL
-        guard !isNegligible(error), !isErrorPage(failedURL) else { return }
+        guard !isErrorPage(failedURL) else { return }
+
+        // Lỗi vặt chỉ được bỏ qua khi webview đã có trang hiển thị; nếu chưa có thì sẽ thành màn trắng
+        if isNegligible(error) {
+            guard webView.url == nil else { return }
+            showErrorPage(in: webView, failedURL: serverURL, reason: Reason.unknown, code: error.code)
+            return
+        }
 
         let reason = Self.reason(for: error)
         if Reason.retryable.contains(reason), retryCount < Self.maxRetryCount, let url = failedURL {

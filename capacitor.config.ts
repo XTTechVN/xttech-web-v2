@@ -15,6 +15,10 @@ const serverUrl = cleanUrl.endsWith('/app/dashboard')
   ? cleanUrl
   : `${cleanUrl}/app/dashboard`;
 
+// Capacitor coi mọi điều hướng top-level KHÔNG bắt đầu bằng serverUrl (/app/dashboard) là link ngoài:
+// huỷ điều hướng và mở Safari (vd: redirect sang /login, /app/projects...). Cần cho phép cả domain.
+const serverHost = new URL(serverUrl).hostname;
+
 const config: CapacitorConfig = {
   appId: 'com.xttech.app2',
   appName: 'XTTech',
@@ -23,7 +27,9 @@ const config: CapacitorConfig = {
     url: serverUrl,
     cleartext: true,
     errorPath: 'offline.html',
+    allowNavigation: [serverHost, `*.${serverHost}`],
   },
 };
+
 
 export default config;

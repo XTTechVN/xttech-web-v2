@@ -6,6 +6,8 @@ All notable changes to the frontend project will be documented in this file.
 ### Fixed (iOS: bị đẩy sang trang offline / báo "lỗi DNS" khi mở app)
 - **[WebViewErrorGuard.swift](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/WebViewErrorGuard.swift) (mới), [MainViewController.swift](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/MainViewController.swift):** Capacitor iOS nạp `offline.html` với MỌI lỗi điều hướng (kể cả -999 / Frame load interrupted khi redirect), làm web chấm công và tracking real-time dừng. Nay bỏ qua lỗi vặt, tự thử lại 2 lần với lỗi DNS / timeout / không kết nối được, chỉ khi thất bại mới nạp `offline.html` kèm `reason`, `code`, `target`.
 - **[offline.html](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/public/offline.html):** hiển thị đúng nguyên nhân (DNS, mất mạng, timeout, kết nối thất bại, TLS) và mã lỗi thay vì ghi cứng "lỗi DNS". Backend/native truyền mã tiếng Anh, trang tự dịch sang tiếng Việt.
+- **Nguyên nhân gốc ([capacitor.config.ts](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/capacitor.config.ts)):** `server.url` bị đổi thành `/app/dashboard` ở commit cce4f37; Capacitor coi mọi điều hướng top-level không bắt đầu bằng URL này (redirect `/login`, `/app/...`) là link ngoài, huỷ và mở Safari, sinh lỗi 102 rồi rơi vào `offline.html`. Đã thêm `allowNavigation` theo hostname (đồng bộ iOS/Android `capacitor.config.json`).
+- **`WebViewErrorGuard`:** lỗi vặt chỉ bị bỏ qua khi webview đã có trang; nếu chưa có trang nào thì nạp trang lỗi để không bị màn trắng.
 - **Lưu ý:** cần build lại bản iOS; Swift chưa được biên dịch trên Windows.
 
 ## [Unreleased] - 2026-10-19
