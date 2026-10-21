@@ -44,28 +44,28 @@ export function TabOverview({ projectId, project }: TabOverviewProps) {
 
   // Lấy danh sách hệ nhôm theo brand đang chọn
   const { data: seriesData, isLoading: isLoadingSeries } = useQuery({
-    queryKey: ['door-series', currentBrandId],
+    queryKey: ['project-overview-door-series', currentBrandId],
     queryFn: async () => {
       if (!currentBrandId) return [];
       const res = await getDoorSeriesList({
         limit: 100,
         brandId: Number(currentBrandId),
       });
-      return res?.items || [];
+      return Array.isArray(res) ? res : (res?.items || []);
     },
     enabled: !!currentBrandId,
   });
 
   // Lấy danh sách màu sắc theo brand đang chọn
   const { data: colorsData, isLoading: isLoadingColors } = useQuery({
-    queryKey: ['brand-colors', currentBrandId],
+    queryKey: ['project-overview-brand-colors', currentBrandId],
     queryFn: async () => {
       if (!currentBrandId) return [];
       const res = await getBrandColors({
         limit: 100,
         brandId: Number(currentBrandId),
       });
-      return res?.items || [];
+      return Array.isArray(res) ? res : (res?.items || []);
     },
     enabled: !!currentBrandId,
   });
@@ -95,34 +95,37 @@ export function TabOverview({ projectId, project }: TabOverviewProps) {
 
   // Convert options cho CompactSelect (Sắp xếp A-Z theo Tiếng Việt)
   const brandOptions: CompactSelectOption[] = useMemo(() => {
-    return (brandsData || [])
-      .map((b) => ({
+    const list = Array.isArray(brandsData) ? brandsData : ((brandsData as any)?.items || []);
+    return list
+      .map((b: any) => ({
         value: b.id,
         label: `${b.name}${b.originCountry ? ` (${b.originCountry})` : ''}`,
         sublabel: b.barLengthMm ? `${(b.barLengthMm / 1000).toFixed(2)}m` : undefined,
       }))
-      .sort((a, b) => a.label.localeCompare(b.label, 'vi', { sensitivity: 'base' }));
+      .sort((a: any, b: any) => a.label.localeCompare(b.label, 'vi', { sensitivity: 'base' }));
   }, [brandsData]);
 
   const seriesOptions: CompactSelectOption[] = useMemo(() => {
-    return (seriesData || [])
-      .map((s) => ({
+    const list = Array.isArray(seriesData) ? seriesData : ((seriesData as any)?.items || []);
+    return list
+      .map((s: any) => ({
         value: s.id,
         label: `${s.name}${s.aluminumThickness ? ` - Dày ${s.aluminumThickness} mm` : ''}`,
         sublabel: s.aluminumThickness ? `${s.aluminumThickness} mm` : undefined,
       }))
-      .sort((a, b) => a.label.localeCompare(b.label, 'vi', { sensitivity: 'base' }));
+      .sort((a: any, b: any) => a.label.localeCompare(b.label, 'vi', { sensitivity: 'base' }));
   }, [seriesData]);
 
   const colorOptions: CompactSelectOption[] = useMemo(() => {
-    return (colorsData || [])
-      .map((c) => ({
+    const list = Array.isArray(colorsData) ? colorsData : ((colorsData as any)?.items || []);
+    return list
+      .map((c: any) => ({
         value: c.id,
         label: `${c.name}${c.surfaceType ? ` (${c.surfaceType})` : ''}`,
         colorHex: c.colorHex,
         sublabel: c.pricePerKg ? `${c.pricePerKg.toLocaleString('vi-VN')} đ/kg` : undefined,
       }))
-      .sort((a, b) => a.label.localeCompare(b.label, 'vi', { sensitivity: 'base' }));
+      .sort((a: any, b: any) => a.label.localeCompare(b.label, 'vi', { sensitivity: 'base' }));
   }, [colorsData]);
 
   const brandText = brand?.name

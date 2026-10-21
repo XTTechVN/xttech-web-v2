@@ -7,6 +7,7 @@ import { Button, Modal, Select } from '@/components';
 import { ShortageCheckResponse, WarehouseReceiptItemCreatePayload } from '@/types';
 import { checkProjectMaterialShortage, getProjects } from '@/actions';
 import { toDisplayUnit } from '../../_utils/unit-mapping';
+import { buildShortagePurchaseItems, getPurchasableShortages } from '../../_utils/shortage-purchase';
 
 interface ShortageCheckerModalProps {
   isOpen: boolean;
@@ -66,7 +67,7 @@ export function ShortageCheckerModal({
 
   const handleCreateJitPurchase = () => {
     if (!shortageResult || shortageResult.shortages.length === 0) return;
-    const validShortages = shortageResult.shortages.filter((s) => s.isConfigured !== false);
+    const validShortages = getPurchasableShortages(shortageResult.shortages);
     if (validShortages.length === 0) {
       toast.error('Tất cả mặt hàng thiếu hụt đều chưa được gán profile trong thiết kế cửa!');
       return;
@@ -79,19 +80,7 @@ export function ShortageCheckerModal({
     const projText = proj
       ? `${proj.code ? `[${proj.code}] ` : ''}${proj.name}`
       : `#${shortageResult.projectId}`;
-    const itemsToBuy: WarehouseReceiptItemCreatePayload[] = validShortages.map((s) => ({
-      itemId: s.itemId || undefined,
-      itemCode: s.itemCode,
-      itemName: s.itemName,
-      itemType: (s.itemType as any) || 'profile',
-      profileBarId: s.profileBarId || undefined,
-      unit: toDisplayUnit(s.unit),
-      colorId: s.colorId || undefined,
-      colorName: s.colorName || undefined,
-      quantity: s.shortageQty,
-      unitPrice: s.estimatedPrice || 0,
-      note: `Mua bù thiếu hụt DA ${projText}`,
-    }));
+    const itemsToBuy = buildShortagePurchaseItems(validShortages, projText);
     onOpenReceiptWithShortages(itemsToBuy);
     onClose();
   };

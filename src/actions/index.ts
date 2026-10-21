@@ -34,8 +34,6 @@ export * from './door';
 // Accessories
 export * from './accessory';
 
-// Quotations
-export * from './quotation';
 
 // Materials
 export * from './material';

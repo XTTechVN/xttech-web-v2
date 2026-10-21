@@ -2,24 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getProject } from '@/actions';
-import {
-  TabOverview,
-  TabPositions,
-  TabQuotations,
-  TabContracts,
-  TabProduction,
-} from './_components';
-import { 
-  FolderOpen, 
-  Loader2,
-  Layers,
-  Calculator,
-  FileText,
-  CheckCircle2,
-} from 'lucide-react';
+import { TabOverview, TabPositions, TabQuotations, TabContracts, TabProduction, } from './_components';
+import { FolderOpen, Loader2, Layers, Calculator, FileText, CheckCircle2, } from 'lucide-react';
 import { Badge } from '@/components';
 import { PROJECT_STATUS_MAP } from '@/config';
 
@@ -28,7 +14,6 @@ interface ProjectDetailPageProps {
 }
 
 export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
-  const router = useRouter();
   const { id } = React.use(params);
   const projectId = Number(id);
 

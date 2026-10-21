@@ -1,6 +1,6 @@
 import api from '@/utils/api';
 import type { BaseResponseWithPagination } from '@/components';
-import type { Project, ProjectCreate, ProjectDetail, ProjectQueryParams, ProjectUpdate, QuotationQueryParams, Quotation } from '@/types';
+import type { Project, ProjectCreate, ProjectDetail, ProjectQueryParams, ProjectUpdate } from '@/types';
 
 export const getProjects = async (params?: ProjectQueryParams): Promise<BaseResponseWithPagination<Project>> => {
   try {
@@ -588,6 +588,46 @@ export const getProjectProgressMatrix = async (
   }
 };
 
+export const getProjectQuotationSheet = async (
+  projectId: number,
+  quotationId: number,
+  accessoryMode?: import('@/types').QuotationAccessoryMode,
+): Promise<import('@/types').QuotationSheet> => {
+  try {
+    const response = await api.get(
+      `/api/v1/projects/${projectId}/quotations/${quotationId}/sheet`,
+      { params: { accessory_mode: accessoryMode } },
+    );
+    return response.data;
+  } catch (error) {
+    console.warn('API error getProjectQuotationSheet', error);
+    throw error;
+  }
+};
 
+export const exportProjectQuotationExcel = async (
+  projectId: number,
+  quotationId: number,
+  filename: string,
+  accessoryMode?: import('@/types').QuotationAccessoryMode,
+): Promise<void> => {
+  try {
+    const response = await api.get(
+      `/api/v1/projects/${projectId}/quotations/${quotationId}/export-excel`,
+      { params: { accessory_mode: accessoryMode }, responseType: 'blob' },
+    );
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.warn('API error exportProjectQuotationExcel', error);
+    throw error;
+  }
+};
 
-
+export * from './manufacture';

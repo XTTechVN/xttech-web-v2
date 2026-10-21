@@ -1,3 +1,4 @@
+import type { ProgressStepCode } from './cutting-plan';
 import type { Customer } from './customer';
 import type { User } from './user';
 import type { Brand, BrandColor } from './brand';
@@ -454,24 +455,106 @@ export interface ProductionOrder {
   items?: ProductionOrderItem[];
 }
 
+export interface ProgressStepStatus {
+  isDone: boolean;
+  isCurrent: boolean;
+  updatedAt?: string | null;
+  updatedByName?: string | null;
+  note?: string | null;
+  evidenceCount: number;
+}
+
 export interface ProgressMatrixItem {
-  floorId: number;
+  positionId: number;
+  positionCode: string;
+  positionName?: string | null;
+  doorName: string;
   floorName: string;
-  positions: {
-    id: number;
-    code: string;
-    name: string;
-    areaM2: number;
-    status: string;
-  }[];
+  width: number;
+  height: number;
+  areaM2: number;
+  currentStatus: ProgressStepCode;
+  surveyed: ProgressStepStatus;
+  producing: ProgressStepStatus;
+  factoryDone: ProgressStepStatus;
+  delivered: ProgressStepStatus;
+  installed: ProgressStepStatus;
+  accepted: ProgressStepStatus;
 }
 
 export interface ProjectProgressMatrix {
   projectId: number;
+  items: ProgressMatrixItem[];
   totalPositions: number;
   factoryProgressPercent: number;
-  overallProgressPercent: number;
-  matrix: ProgressMatrixItem[];
+  overallWeightedProgressPercent: number;
+}
+
+export interface ProductionSheetProfileItem {
+  profileCode: string;
+  profileName: string;
+  cutLengthMm: number;
+  cutAngle: string;
+  quantity: number;
+  barType: string;
+  weightKg?: number | null;
+  stockSource?: string | null;
+}
+
+export interface ProductionSheetGlassItem {
+  glassName: string;
+  widthMm: number;
+  heightMm: number;
+  areaM2: number;
+  quantity: number;
+}
+
+export interface ProductionSheetGasketItem {
+  code?: string;
+  name?: string;
+  lengthM?: number;
+  unit?: string;
+}
+
+export interface ProductionSheetAccessoryItem {
+  accessoryCode?: string | null;
+  accessoryName: string;
+  quantity: number;
+  unit: string;
+}
+
+export interface ProductionSheetReinforcementItem {
+  accessoryCode?: string | null;
+  accessoryName?: string | null;
+  name?: string | null;
+  qty?: number;
+  quantity?: number;
+  unit?: string;
+}
+
+export interface ProductionSheet {
+  orderCode: string;
+  orderName: string;
+  positionId: number;
+  positionCode: string;
+  positionName?: string | null;
+  doorName: string;
+  floorName: string;
+  width: number;
+  height: number;
+  areaM2: number;
+  brandName?: string | null;
+  seriesName?: string | null;
+  colorName?: string | null;
+  imagePath?: string | null;
+  totalWeightKg: number;
+  isEstimated: boolean;
+  profiles: ProductionSheetProfileItem[];
+  glasses: ProductionSheetGlassItem[];
+  gaskets: ProductionSheetGasketItem[];
+  accessories: ProductionSheetAccessoryItem[];
+  reinforcements: ProductionSheetReinforcementItem[];
+  systemConfig?: Record<string, any> | null;
 }
 
 

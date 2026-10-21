@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Printer } from 'lucide-react';
 import { Button } from '@/components';
+import { useFitPaperScale } from '@/hooks/use-fit-paper-scale';
 import type { ContractTerms } from '@/types';
 import { CONTRACT_DOCUMENT_CSS } from '../utils/contract-document-style';
 import { printContractHtml } from '../utils/contract-print';
@@ -17,31 +18,9 @@ interface ContractPreviewProps {
   scale?: number;
 }
 
-const PAPER_WIDTH_PX = 794; // 210mm ở 96dpi
-const PANE_PADDING_PX = 24;
-
-// Tự tính tỉ lệ để trang A4 luôn vừa chiều ngang khung, không cần thanh cuộn ngang
-function useAutoScale(isEnabled: boolean) {
-  const paneRef = useRef<HTMLDivElement>(null);
-  const [autoScale, setAutoScale] = useState(1);
-
-  useEffect(() => {
-    const pane = paneRef.current;
-    if (!isEnabled || !pane) return;
-
-    const observer = new ResizeObserver(([entry]) =>
-      setAutoScale(Math.min(1, (entry.contentRect.width - PANE_PADDING_PX) / PAPER_WIDTH_PX)),
-    );
-    observer.observe(pane);
-    return () => observer.disconnect();
-  }, [isEnabled]);
-
-  return { paneRef, autoScale };
-}
-
 export function ContractPreview({ source, terms, printTitle, scale }: ContractPreviewProps) {
   const paperRef = useRef<HTMLDivElement>(null);
-  const { paneRef, autoScale } = useAutoScale(scale === undefined);
+  const { paneRef, fitScale } = useFitPaperScale(scale === undefined);
 
   const handlePrint = () => {
     if (!paperRef.current) return;
@@ -58,7 +37,7 @@ export function ContractPreview({ source, terms, printTitle, scale }: ContractPr
       </div>
       <div ref={paneRef} className="flex-1 min-h-0 overflow-auto no-scrollbar rounded-lg bg-slate-200 p-3">
         <style>{CONTRACT_DOCUMENT_CSS}</style>
-        <div className="mx-auto w-fit shadow-lg" style={{ zoom: scale ?? autoScale }}>
+        <div className="mx-auto w-fit shadow-lg" style={{ zoom: scale ?? fitScale }}>
           <ContractDocument ref={paperRef} source={source} terms={terms} />
         </div>
       </div>

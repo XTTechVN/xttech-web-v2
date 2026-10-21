@@ -7,9 +7,12 @@ import type { ProjectQuotationDetail } from '@/types';
 
 export const activeQuotationKey = (projectId: number) => ['project_quotation_active', projectId];
 
-// Làm mới mọi dữ liệu phụ thuộc báo giá hiện hành (báo giá, dự án)
+export const quotationSheetKey = (projectId: number) => ['project_quotation_sheet', projectId];
+
+// Làm mới mọi dữ liệu phụ thuộc báo giá hiện hành (báo giá, bảng báo giá, dự án)
 export const invalidateQuotationQueries = (projectId: number) => {
   queryClient.invalidateQueries({ queryKey: activeQuotationKey(projectId) });
+  queryClient.invalidateQueries({ queryKey: quotationSheetKey(projectId) });
   queryClient.invalidateQueries({ queryKey: ['project', projectId] });
 };
 
