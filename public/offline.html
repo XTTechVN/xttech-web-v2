@@ -151,18 +151,14 @@
       </div>
 
       <h1>Không thể kết nối máy chủ</h1>
-      <p class="desc">
-        Hệ thống không thể tải trang web (lỗi phân giải tên miền hoặc mạng không ổn định).
-      </p>
+      <p class="desc" id="errorDesc">Hệ thống không thể tải trang web.</p>
+      <p class="desc" id="errorCode" style="display: none; font-size: 12px"></p>
 
       <div class="tips-box">
         <div class="tips-title">
           <span>💡</span> Gợi ý khắc phục:
         </div>
-        <ul class="tips-list">
-          <li>Kiểm tra lại kết nối WiFi hoặc dữ liệu di động (4G/5G).</li>
-          <li>Nếu đang bật <b>DNS riêng tư (Private DNS / AdGuard)</b>, vui lòng chuyển sang <b>Tự động</b> hoặc <b>Tắt</b> trong Cài đặt mạng của máy.</li>
-        </ul>
+        <ul class="tips-list" id="errorTips"></ul>
       </div>
 
       <button id="retryBtn" class="btn-retry" onclick="triggerRetry()">
@@ -181,6 +177,55 @@
     <script>
       let countdown = 5;
       let isRetrying = false;
+
+      const TIP_WIFI = 'Kiểm tra lại kết nối WiFi hoặc dữ liệu di động (4G/5G).';
+      const TIP_PRIVATE_DNS =
+        'Nếu đang bật <b>DNS riêng tư (Private DNS / AdGuard)</b>, vui lòng chuyển sang <b>Tự động</b> hoặc <b>Tắt</b> trong Cài đặt mạng của máy.';
+
+      // Native truyền mã lỗi tiếng Anh (reason); trang này chịu trách nhiệm dịch sang tiếng Việt
+      const ERROR_INFO = {
+        dns: {
+          desc: 'Không phân giải được tên miền máy chủ (lỗi DNS).',
+          tips: [TIP_WIFI, TIP_PRIVATE_DNS],
+        },
+        no_network: {
+          desc: 'Thiết bị đang không có kết nối mạng.',
+          tips: [TIP_WIFI, 'Tắt Chế độ máy bay nếu đang bật.'],
+        },
+        timeout: {
+          desc: 'Máy chủ phản hồi quá chậm hoặc mạng không ổn định.',
+          tips: [TIP_WIFI, 'Thử chuyển đổi giữa WiFi và dữ liệu di động.'],
+        },
+        connect_failed: {
+          desc: 'Không thể kết nối tới máy chủ hoặc kết nối bị ngắt giữa chừng.',
+          tips: [TIP_WIFI, 'Nếu đang dùng VPN hoặc DNS riêng tư, hãy thử tắt đi.'],
+        },
+        tls: {
+          desc: 'Kết nối bảo mật (SSL/TLS) với máy chủ thất bại.',
+          tips: ['Kiểm tra ngày giờ của thiết bị đã đặt tự động.', 'Không dùng WiFi công cộng yêu cầu đăng nhập.'],
+        },
+        unknown: {
+          desc: 'Không thể tải trang web do lỗi không xác định.',
+          tips: [TIP_WIFI],
+        },
+      };
+
+      function renderErrorInfo() {
+        const params = new URLSearchParams(window.location.search);
+        const reason = params.get('reason');
+        const code = params.get('code');
+        const info = ERROR_INFO[reason] || ERROR_INFO.unknown;
+
+        document.getElementById('errorDesc').innerText = info.desc;
+        document.getElementById('errorTips').innerHTML = info.tips.map((tip) => '<li>' + tip + '</li>').join('');
+
+        if (!code) return;
+        const codeEl = document.getElementById('errorCode');
+        codeEl.innerText = 'Mã lỗi: ' + (reason || 'unknown') + ' (' + code + ')';
+        codeEl.style.display = 'block';
+      }
+
+      renderErrorInfo();
 
       function getTargetUrl() {
         try {
