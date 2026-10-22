@@ -21,6 +21,7 @@ export * from './customer';
 
 // Project
 export * from './project';
+export * from './cutting-plan';
 
 // Door
 export * from './door';

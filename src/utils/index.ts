@@ -7,3 +7,5 @@ export * from './toast';
 export * from './error';
 export * from './string';
 export * from './route-metadata';
+export * from './html';
+export * from './print';

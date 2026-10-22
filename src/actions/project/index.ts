@@ -1,6 +1,6 @@
 import api from '@/utils/api';
 import type { BaseResponseWithPagination } from '@/components';
-import type { Project, ProjectCreate, ProjectDetail, ProjectQueryParams, ProjectUpdate, QuotationQueryParams, Quotation } from '@/types';
+import type { Project, ProjectCreate, ProjectDetail, ProjectQueryParams, ProjectUpdate } from '@/types';
 
 export const getProjects = async (params?: ProjectQueryParams): Promise<BaseResponseWithPagination<Project>> => {
   try {
@@ -82,31 +82,28 @@ export const createProjectQuotationOfficial = async (
   }
 };
 
-export const cloneProjectQuotation = async (
+export const getActiveProjectQuotation = async (
   projectId: number,
-  quotationId: number,
-  newName?: string,
-): Promise<import('@/types').ProjectQuotationItem> => {
+): Promise<import('@/types').ProjectQuotationDetail | null> => {
   try {
-    const response = await api.post(`/api/v1/projects/${projectId}/quotations/${quotationId}/clone`, {
-      newName: newName || 'Bản sao báo giá',
-    });
-    return response.data;
-  } catch (error) {
-    console.warn('API error cloneProjectQuotation', error);
+    const response = await api.get(`/api/v1/projects/${projectId}/quotations/active`);
+    return normalizeProjectQuotation(response.data);
+  } catch (error: unknown) {
+    if ((error as { response?: { status?: number } })?.response?.status === 404) return null;
+    console.warn('API error getActiveProjectQuotation', error);
     throw error;
   }
 };
 
-export const selectProjectQuotation = async (
+export const syncProjectQuotation = async (
   projectId: number,
-  quotationId: number,
-): Promise<import('@/types').ProjectQuotationItem> => {
+  data: import('@/types').ProjectQuotationSyncPayload = {},
+): Promise<import('@/types').ProjectQuotationDetail> => {
   try {
-    const response = await api.post(`/api/v1/projects/${projectId}/quotations/${quotationId}/select`);
-    return response.data;
+    const response = await api.post(`/api/v1/projects/${projectId}/quotations/sync`, data);
+    return normalizeProjectQuotation(response.data);
   } catch (error) {
-    console.warn('API error selectProjectQuotation', error);
+    console.warn('API error syncProjectQuotation', error);
     throw error;
   }
 };
@@ -407,15 +404,33 @@ export const createProjectContract = async (
   }
 };
 
-export const createProjectContractAppendix = async (
+export const updateProjectContract = async (
   projectId: number,
-  data: import('@/types').ContractAppendixCreatePayload,
+  contractId: number,
+  data: import('@/types').ContractUpdatePayload,
 ): Promise<import('@/types').ProjectContractItem> => {
   try {
-    const response = await api.post(`/api/v1/projects/${projectId}/contracts/appendices`, data);
+    const response = await api.patch(`/api/v1/projects/${projectId}/contracts/${contractId}`, data);
     return response.data;
   } catch (error) {
-    console.warn('API error createProjectContractAppendix', error);
+    console.warn('API error updateProjectContract', error);
+    throw error;
+  }
+};
+
+export const cancelProjectContract = async (
+  projectId: number,
+  contractId: number,
+  data: import('@/types').ContractCancelPayload = {},
+): Promise<import('@/types').ProjectContractItem> => {
+  try {
+    const response = await api.post(
+      `/api/v1/projects/${projectId}/contracts/${contractId}/cancel`,
+      data,
+    );
+    return response.data;
+  } catch (error) {
+    console.warn('API error cancelProjectContract', error);
     throw error;
   }
 };
@@ -573,6 +588,46 @@ export const getProjectProgressMatrix = async (
   }
 };
 
+export const getProjectQuotationSheet = async (
+  projectId: number,
+  quotationId: number,
+  accessoryMode?: import('@/types').QuotationAccessoryMode,
+): Promise<import('@/types').QuotationSheet> => {
+  try {
+    const response = await api.get(
+      `/api/v1/projects/${projectId}/quotations/${quotationId}/sheet`,
+      { params: { accessory_mode: accessoryMode } },
+    );
+    return response.data;
+  } catch (error) {
+    console.warn('API error getProjectQuotationSheet', error);
+    throw error;
+  }
+};
 
+export const exportProjectQuotationExcel = async (
+  projectId: number,
+  quotationId: number,
+  filename: string,
+  accessoryMode?: import('@/types').QuotationAccessoryMode,
+): Promise<void> => {
+  try {
+    const response = await api.get(
+      `/api/v1/projects/${projectId}/quotations/${quotationId}/export-excel`,
+      { params: { accessory_mode: accessoryMode }, responseType: 'blob' },
+    );
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.warn('API error exportProjectQuotationExcel', error);
+    throw error;
+  }
+};
 
-
+export * from './manufacture';
