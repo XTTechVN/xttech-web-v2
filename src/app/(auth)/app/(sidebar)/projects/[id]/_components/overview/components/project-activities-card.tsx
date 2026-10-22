@@ -78,3 +78,4 @@ export function ProjectActivitiesCard({ activities, isLoading }: ProjectActiviti
     </div>
   );
 }
+
