@@ -14,18 +14,21 @@ import { Tabs } from '@/components';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
 import type { ProductionOrder, ProjectProgressMatrix } from '@/types';
-import { CreateProductionOrderModal } from './create-production-order-modal';
-import { CuttingPlanModal } from './cutting-plan-modal';
-import { DailyProgressPanel } from './daily-progress-panel';
-import { ProductionOrdersPanel } from './production-orders-panel';
-import { ProductionSheetsModal } from './production-sheets-modal';
-import { ProductionSummaryCards } from './production-summary-cards';
+import {
+  DailyProgressPanel,
+  ProductionOrdersPanel,
+  ProductionSummaryCards,
+} from './components';
+import {
+  CreateProductionOrderModal,
+  CuttingPlanModal,
+  ProductionSheetsModal,
+} from './modals';
+import type { ProductionTab } from './types';
 
 interface ProjectProductionProgressProps {
   projectId: number;
 }
-
-type ProductionTab = 'orders' | 'daily';
 
 const PRODUCTION_TABS = [
   { value: 'orders', label: 'Lệnh sản xuất', icon: <Factory size={14} /> },

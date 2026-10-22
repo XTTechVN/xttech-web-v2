@@ -7,9 +7,8 @@ import type { AccessoryCombo } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
-import { ComboToolbar, ComboTable } from './_components';
+import { ComboToolbar, ComboTable, ComboModal } from './_components';
 import { AccessoryBrandSidebar } from '../accessories/_components';
-import { ComboModal } from '../accessories/_components/combo-modal';
 
 const PAGE_SIZE = 20;
 

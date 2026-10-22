@@ -46,14 +46,11 @@ function ComboSkeleton() {
     <>
       {Array.from({ length: 6 }).map((_, i) => (
         <tr key={i} className="animate-pulse">
-          <td className="py-4 px-4"><div className="w-4 h-4 bg-slate-100 rounded" /></td>
-          <td className="py-4 px-4"><div className="h-4 bg-slate-100 rounded w-28" /></td>
-          <td className="py-4 px-4"><div className="h-4 bg-slate-100 rounded w-48" /></td>
-          <td className="py-4 px-4 text-center"><div className="h-4 bg-slate-100 rounded w-8 mx-auto" /></td>
-          <td className="py-4 px-4 text-right"><div className="h-4 bg-slate-100 rounded w-20 ml-auto" /></td>
-          <td className="py-4 px-4 text-center"><div className="h-5 bg-slate-100 rounded w-16 mx-auto" /></td>
-          <td className="py-4 px-4 text-center"><div className="h-5 bg-slate-100 rounded w-16 mx-auto" /></td>
-          <td className="py-4 px-4 text-right"><div className="h-5 bg-slate-100 rounded w-12 ml-auto" /></td>
+          {Array.from({ length: 8 }).map((__, colIdx) => (
+            <td key={colIdx} className="py-4 px-4">
+              <div className="h-4 bg-slate-100 rounded w-full" />
+            </td>
+          ))}
         </tr>
       ))}
     </>
@@ -63,14 +60,12 @@ function ComboSkeleton() {
 function ComboEmptyState({ search }: { search: string }) {
   return (
     <tr>
-      <td colSpan={8} className="py-16 text-center text-slate-400">
+      <td colSpan={9} className="py-16 text-center text-slate-400">
         <div className="flex flex-col items-center gap-2">
           <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
             <PackageOpen size={22} className="text-slate-400" />
           </div>
-          <p className="text-sm font-semibold text-slate-600">
-            {search ? 'Không tìm thấy combo phù hợp' : 'Chưa có gói combo nào'}
-          </p>
+          <p className="text-sm font-semibold text-slate-600">{search ? 'Không tìm thấy combo phù hợp' : 'Chưa có gói combo nào'}</p>
           <p className="text-xs text-slate-400">Nhấn &quot;Thêm combo mới&quot; để tạo gói combo đầu tiên.</p>
         </div>
       </td>
@@ -96,70 +91,39 @@ function ComboRow({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['accessory-combos'] }),
     onError: (err) => showErrorToast(err, 'Lỗi khi cập nhật mặc định'),
   });
+
+  const af = combo.applyFor || 'khung';
+  const cfg = APPLY_FOR_LABEL[af] || APPLY_FOR_LABEL.khac;
+
   return (
     <React.Fragment>
-      <tr
-        className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
-        onClick={onToggle}
-      >
-        {/* Toggle */}
+      <tr className="hover:bg-slate-50/80 transition-colors group cursor-pointer" onClick={onToggle}>
         <td className="py-3.5 px-4 text-slate-400">
-          <ChevronRight
-            size={14}
-            className={`transition-transform duration-150 ${isExpanded ? 'rotate-90 text-primary' : ''}`}
-          />
+          <ChevronRight size={14} className={`transition-transform duration-150 ${isExpanded ? 'rotate-90 text-primary' : ''}`} />
         </td>
-
-        {/* Mã gói */}
         <td className="py-3.5 px-4">
           <span className="font-mono font-bold text-xs text-primary">{combo.code}</span>
         </td>
-
-        {/* Tên gói */}
         <td className="py-3.5 px-4">
-          <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors">
-            {combo.name}
-          </span>
-          {combo.description && (
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-xs">{combo.description}</p>
-          )}
+          <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors">{combo.name}</span>
+          {combo.description && <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-xs">{combo.description}</p>}
         </td>
-
-        {/* Dành cho */}
         <td className="py-3.5 px-4 text-center">
-          {(() => {
-            const af = combo.applyFor || 'khung';
-            const cfg = APPLY_FOR_LABEL[af] || APPLY_FOR_LABEL.khac;
-            return (
-              <div className="flex flex-col items-center gap-0.5">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border ${cfg.cls}`}>
-                  {cfg.label}
-                </span>
-                {af === 'huong_mo' && combo.openingType && (
-                  <span className="text-[10px] text-amber-500 font-medium">
-                    {OPENING_TYPE_LABEL[combo.openingType] || combo.openingType}
-                  </span>
-                )}
-              </div>
-            );
-          })()}
+          <div className="flex flex-col items-center gap-0.5">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border ${cfg.cls}`}>{cfg.label}</span>
+            {af === 'huong_mo' && combo.openingType && (
+              <span className="text-[10px] text-amber-500 font-medium">{OPENING_TYPE_LABEL[combo.openingType] || combo.openingType}</span>
+            )}
+          </div>
         </td>
-
-        {/* Số món */}
         <td className="py-3.5 px-4 text-center">
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
             {combo.comboItems?.length ?? 0} món
           </span>
         </td>
-
-        {/* Tổng giá */}
         <td className="py-3.5 px-4 text-right">
-          <span className="font-semibold text-emerald-700 text-sm whitespace-nowrap">
-            {formatCurrency(combo.totalComboPrice || 0)}
-          </span>
+          <span className="font-semibold text-emerald-700 text-sm whitespace-nowrap">{formatCurrency(combo.totalComboPrice || 0)}</span>
         </td>
-
-        {/* Mặc định */}
         <td className="py-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
@@ -170,52 +134,27 @@ function ComboRow({
           >
             <motion.div
               animate={isSettingDefault ? { rotate: 360 } : { rotate: 0 }}
-              transition={isSettingDefault
-                ? { repeat: Infinity, duration: 0.7, ease: 'linear' }
-                : { duration: 0.2 }
-              }
+              transition={isSettingDefault ? { repeat: Infinity, duration: 0.7, ease: 'linear' } : { duration: 0.2 }}
             >
-              <Star
-                size={18}
-                className={combo.isDefault
-                  ? 'fill-primary text-primary'
-                  : 'text-slate-300 hover:text-slate-400'
-                }
-              />
+              <Star size={18} className={combo.isDefault ? 'fill-primary text-primary' : 'text-slate-300 hover:text-slate-400'} />
             </motion.div>
           </button>
         </td>
-
-        {/* Trạng thái */}
         <td className="py-3.5 px-4 text-center">
           <span
             className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${
-              combo.isActive
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                : 'bg-slate-100 text-slate-600 border-slate-200'
+              combo.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'
             }`}
           >
             {combo.isActive ? 'Hoạt động' : 'Tạm ngưng'}
           </span>
         </td>
-
-        {/* Thao tác */}
         <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-end gap-1">
-            <button
-              type="button"
-              onClick={onEdit}
-              className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-md transition-colors cursor-pointer"
-              title="Chỉnh sửa"
-            >
+            <button type="button" onClick={onEdit} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-md transition-colors cursor-pointer" title="Chỉnh sửa">
               <Pencil size={15} />
             </button>
-            <button
-              type="button"
-              onClick={onDelete}
-              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
-              title="Xóa"
-            >
+            <button type="button" onClick={onDelete} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer" title="Xóa">
               <Trash2 size={15} />
             </button>
           </div>
@@ -238,39 +177,20 @@ function ComboRow({
                   <div className="flex flex-col gap-1.5">
                     {(combo.comboItems || []).map((item, idx) => (
                       <div key={idx} className="flex items-center gap-3 py-1.5 px-3 bg-white rounded-lg border border-slate-100 shadow-2xs">
-                        {/* Số thứ tự */}
                         <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold flex items-center justify-center shrink-0">
                           {idx + 1}
                         </span>
-
-                        {/* Code badge */}
                         {item.accessoryCode && (
                           <span className="font-mono text-[11px] font-bold text-primary bg-primary/8 border border-primary/15 px-1.5 py-0.5 rounded shrink-0">
                             {item.accessoryCode}
                           </span>
                         )}
-
-                        {/* Tên */}
-                        <span className="flex-1 text-xs text-slate-700 font-medium min-w-0 truncate">
-                          {item.accessoryName || '—'}
-                        </span>
-
-                        {/* Phân loại */}
-                        {item.category && (
-                          <span className="text-[11px] text-slate-400 shrink-0 hidden sm:block">{item.category}</span>
-                        )}
-
-                        {/* SL + đơn vị */}
+                        <span className="flex-1 text-xs text-slate-700 font-medium min-w-0 truncate">{item.accessoryName || '—'}</span>
+                        {item.category && <span className="text-[11px] text-slate-400 shrink-0 hidden sm:block">{item.category}</span>}
                         <span className="text-[11px] font-semibold text-slate-600 shrink-0 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5">
                           ×{item.quantity} {item.unit || ''}
                         </span>
-
-                        {/* Ghi chú */}
-                        {item.note && (
-                          <span className="text-[11px] text-slate-400 italic shrink-0 hidden md:block max-w-[140px] truncate">
-                            {item.note}
-                          </span>
-                        )}
+                        {item.note && <span className="text-[11px] text-slate-400 italic shrink-0 hidden md:block max-w-[140px] truncate">{item.note}</span>}
                       </div>
                     ))}
                   </div>
@@ -284,19 +204,8 @@ function ComboRow({
   );
 }
 
-export function ComboTable({
-  combos,
-  isLoading,
-  search,
-  total,
-  offset,
-  pageSize,
-  onEdit,
-  onDelete,
-  onPageChange,
-}: ComboTableProps) {
+export function ComboTable({ combos, isLoading, search, total, offset, pageSize, onEdit, onDelete, onPageChange }: ComboTableProps) {
   const [expandedId, setExpandedId] = React.useState<number | null>(null);
-
   const hasNext = offset + pageSize < total;
   const hasPrev = offset > 0;
   const currentPage = Math.floor(offset / pageSize) + 1;
@@ -340,7 +249,6 @@ export function ComboTable({
         </table>
       </div>
 
-      {/* Pagination */}
       {total > pageSize && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50/50">
           <span className="text-xs text-slate-500">

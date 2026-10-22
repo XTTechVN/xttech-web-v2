@@ -22,6 +22,18 @@ interface DoorUpdateModalProps {
 
 type DoorUpdateFormValues = Omit<DoorUpdate, 'imagePath'>;
 
+const DOOR_TYPE_OPTIONS = [
+  { value: 'casement_door', label: 'Cửa đi mở quay' },
+  { value: 'sliding_door', label: 'Cửa đi lùa' },
+  { value: 'casement_window', label: 'Cửa sổ mở quay' },
+  { value: 'sliding_window', label: 'Cửa sổ lùa' },
+  { value: 'folding_door', label: 'Cửa gấp xếp' },
+  { value: 'sliding_casement_door', label: 'Cửa trượt quay' },
+  { value: 'glass_wall', label: 'Vách kính' },
+  { value: 'curtain_wall', label: 'Mặt dựng' },
+  { value: 'composite', label: 'Tổng hợp' },
+];
+
 export function DoorUpdateModal({
   isOpen,
   onClose,
@@ -29,39 +41,23 @@ export function DoorUpdateModal({
   submitText = 'Xác nhận lưu',
   initialData,
 }: DoorUpdateModalProps) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    formState: { errors },
-  } = useForm<DoorUpdateFormValues>();
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<DoorUpdateFormValues>();
 
   const [existingImages, setExistingImages] = useState<DoorImage[]>([]);
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const [primaryImageId, setPrimaryImageId] = useState<number | null>(null);
-
   const [newImages, setNewImages] = useState<NewImageItem[]>([]);
   const [selectedNewPrimaryIdx, setSelectedNewPrimaryIdx] = useState<number | null>(null);
 
   const { mutate: updateMutation, isPending: updateIsPending } = useMutation({
-    mutationFn: ({
-      id,
-      data,
-      files,
-      deletedImageIds,
-    }: {
-      id: number;
-      data: DoorUpdate;
-      files?: File[];
-      deletedImageIds?: number[];
-    }) => updateDoor(id, { data, files, deletedImageIds }),
+    mutationFn: ({ id, data, files, deletedImageIds }: { id: number; data: DoorUpdate; files?: File[]; deletedImageIds?: number[] }) =>
+      updateDoor(id, { data, files, deletedImageIds }),
     onSuccess: async () => {
       if (initialData?.id && primaryImageId && !selectedNewPrimaryIdx) {
         try {
           await setPrimaryDoorImage(initialData.id, primaryImageId);
-        } catch (e) {
-          console.warn('Lỗi khi cập nhật ảnh chính', e);
+        } catch {
+          // ignore primary image sync warning
         }
       }
       queryClient.invalidateQueries({ queryKey: ['doors'] });
@@ -71,9 +67,7 @@ export function DoorUpdateModal({
       onClose();
       reset();
     },
-    onError: (error) => {
-      showErrorToast(error, 'Cập nhật loại cửa thất bại');
-    },
+    onError: (error) => showErrorToast(error, 'Cập nhật loại cửa thất bại'),
   });
 
   useEffect(() => {
@@ -84,28 +78,24 @@ export function DoorUpdateModal({
         code: initialData.code || '',
         specification: initialData.specification || '',
       });
-
       const images = initialData.images || [];
       setExistingImages(images);
       setDeletedImageIds([]);
       setNewImages([]);
       setSelectedNewPrimaryIdx(null);
-
       const primary = images.find((img) => img.isPrimary);
-      setPrimaryImageId(primary ? primary.id : images.length > 0 ? images[0].id : null);
+      setPrimaryImageId(primary ? primary.id : images[0]?.id ?? null);
     }
   }, [isOpen, initialData, reset]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-
     const items: NewImageItem[] = files.map((file) => ({
-      id: `${file.name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       file,
       previewUrl: URL.createObjectURL(file),
     }));
-
     setNewImages((prev) => [...prev, ...items]);
     e.target.value = '';
   };
@@ -114,65 +104,37 @@ export function DoorUpdateModal({
     setDeletedImageIds((prev) => [...prev, imageId]);
     const remaining = existingImages.filter((img) => img.id !== imageId);
     setExistingImages(remaining);
-
     if (primaryImageId === imageId) {
-      if (remaining.length > 0) {
-        setPrimaryImageId(remaining[0].id);
-      } else if (newImages.length > 0) {
+      if (remaining.length > 0) setPrimaryImageId(remaining[0].id);
+      else if (newImages.length > 0) {
         setPrimaryImageId(null);
         setSelectedNewPrimaryIdx(0);
-      } else {
-        setPrimaryImageId(null);
-      }
+      } else setPrimaryImageId(null);
     }
   };
 
   const handleRemoveNewImage = (indexToRemove: number) => {
     const item = newImages[indexToRemove];
-    if (item) {
-      URL.revokeObjectURL(item.previewUrl);
-    }
+    if (item) URL.revokeObjectURL(item.previewUrl);
     setNewImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-
     if (selectedNewPrimaryIdx === indexToRemove) {
       if (existingImages.length > 0) {
         setSelectedNewPrimaryIdx(null);
         setPrimaryImageId(existingImages[0].id);
-      } else {
-        setSelectedNewPrimaryIdx(0);
-      }
+      } else setSelectedNewPrimaryIdx(0);
     } else if (selectedNewPrimaryIdx !== null && selectedNewPrimaryIdx > indexToRemove) {
       setSelectedNewPrimaryIdx((prev) => (prev !== null ? prev - 1 : null));
     }
   };
 
-  const handleSelectExistingPrimary = (imgId: number) => {
-    setPrimaryImageId(imgId);
-    setSelectedNewPrimaryIdx(null);
-  };
-
-  const handleSelectNewPrimary = (idx: number) => {
-    setSelectedNewPrimaryIdx(idx);
-    setPrimaryImageId(null);
-  };
-
   const handleConfirm = (data: DoorUpdateFormValues) => {
     if (!initialData) return;
-    const payload: DoorUpdate = {
-      name: data.name,
-      type: data.type,
-      code: data.code,
-      specification: data.specification?.trim() || '',
-    };
-
     const filesToUpload: File[] = [];
     if (newImages.length > 0) {
       if (selectedNewPrimaryIdx !== null && newImages[selectedNewPrimaryIdx]) {
         filesToUpload.push(newImages[selectedNewPrimaryIdx].file);
         newImages.forEach((img, idx) => {
-          if (idx !== selectedNewPrimaryIdx) {
-            filesToUpload.push(img.file);
-          }
+          if (idx !== selectedNewPrimaryIdx) filesToUpload.push(img.file);
         });
       } else {
         newImages.forEach((img) => filesToUpload.push(img.file));
@@ -181,26 +143,22 @@ export function DoorUpdateModal({
 
     updateMutation({
       id: initialData.id,
-      data: payload,
+      data: { name: data.name, type: data.type, code: data.code, specification: data.specification?.trim() || '' },
       files: filesToUpload.length > 0 ? filesToUpload : undefined,
       deletedImageIds: deletedImageIds.length > 0 ? deletedImageIds : undefined,
     });
   };
 
-  let currentMainPreview: string | null = null;
-  if (selectedNewPrimaryIdx !== null && newImages[selectedNewPrimaryIdx]) {
-    currentMainPreview = newImages[selectedNewPrimaryIdx].previewUrl;
-  } else if (primaryImageId) {
-    const found = existingImages.find((img) => img.id === primaryImageId);
-    if (found) {
-      currentMainPreview = getFileUrl(found.imagePath);
+  const currentMainPreview = (() => {
+    if (selectedNewPrimaryIdx !== null && newImages[selectedNewPrimaryIdx]) return newImages[selectedNewPrimaryIdx].previewUrl;
+    if (primaryImageId) {
+      const found = existingImages.find((img) => img.id === primaryImageId);
+      if (found) return getFileUrl(found.imagePath);
     }
-  } else if (existingImages.length > 0) {
-    const first = existingImages[0];
-    currentMainPreview = getFileUrl(first.imagePath);
-  } else if (initialData?.imagePath) {
-    currentMainPreview = getFileUrl(initialData.imagePath);
-  }
+    if (existingImages.length > 0) return getFileUrl(existingImages[0].imagePath);
+    if (initialData?.imagePath) return getFileUrl(initialData.imagePath);
+    return null;
+  })();
 
   const totalImageCount = existingImages.length + newImages.length;
 
@@ -208,70 +166,42 @@ export function DoorUpdateModal({
     <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-2xl w-full">
       <form onSubmit={handleSubmit(handleConfirm)}>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-          {/* Cột trái: Ảnh & Preview */}
           <div className="md:col-span-5 flex flex-col items-center gap-3 w-full">
             <div className="w-full flex items-center justify-between">
-              <span className="text-gray-700 text-xs font-semibold self-start">
-                Hình ảnh ({totalImageCount})
-              </span>
-              {totalImageCount > 0 && (
-                <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-md font-medium">
-                  Đã chọn ảnh chính
-                </span>
-              )}
+              <span className="text-gray-700 text-xs font-semibold self-start">Hình ảnh ({totalImageCount})</span>
+              {totalImageCount > 0 && <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-md font-medium">Đã chọn ảnh chính</span>}
             </div>
 
-            {/* Khung xem ảnh chính được chọn */}
             <div className="w-full aspect-square max-w-50 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
-              {currentMainPreview ? (
-                <img src={currentMainPreview} alt="Preview" className="w-full h-full object-cover" />
-              ) : (
-                <Columns className="w-10 h-10 text-gray-300" />
-              )}
-              {currentMainPreview && (
-                <div className="absolute top-2 left-2 bg-primary text-white text-[10px] font-medium px-2 py-0.5 rounded shadow">
-                  Ảnh chính
-                </div>
-              )}
+              {currentMainPreview ? <img src={currentMainPreview} alt="Preview" className="w-full h-full object-cover" /> : <Columns className="w-10 h-10 text-gray-300" />}
+              {currentMainPreview && <div className="absolute top-2 left-2 bg-primary text-white text-[10px] font-medium px-2 py-0.5 rounded shadow">Ảnh chính</div>}
             </div>
 
             <label className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 transition shadow-xs w-full justify-center">
               <Upload size={16} />
               <span>Thêm ảnh mới</span>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleFileChange}
-              />
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
             </label>
 
-            {/* Danh sách toàn bộ ảnh (hiện có + mới upload) */}
             {totalImageCount > 0 && (
               <div className="w-full flex flex-col gap-1.5 mt-1">
                 <span className="text-[11px] text-gray-500">Nhấn vào ảnh để chọn làm ảnh chính:</span>
                 <div className="grid grid-cols-3 gap-2.5 max-h-52 overflow-y-auto p-1.5 border border-gray-100 rounded-lg bg-gray-50/50">
-                  {/* Render ảnh hiện có */}
                   {existingImages.map((img) => {
                     const isPrimary = primaryImageId === img.id && selectedNewPrimaryIdx === null;
-                    const src = getFileUrl(img.imagePath);
                     return (
                       <div
                         key={`existing-${img.id}`}
-                        onClick={() => handleSelectExistingPrimary(img.id)}
+                        onClick={() => {
+                          setPrimaryImageId(img.id);
+                          setSelectedNewPrimaryIdx(null);
+                        }}
                         className={`relative aspect-square rounded-xl border overflow-hidden cursor-pointer group transition-all ${
-                          isPrimary
-                            ? 'border-primary ring-2 ring-primary/40 shadow-xs'
-                            : 'border-gray-200 hover:border-gray-400 opacity-85 hover:opacity-100'
+                          isPrimary ? 'border-primary ring-2 ring-primary/40 shadow-xs' : 'border-gray-200 hover:border-gray-400 opacity-85 hover:opacity-100'
                         }`}
                       >
-                        <img src={src} alt={img.name || 'Door'} className="w-full h-full object-cover" />
-                        {isPrimary && (
-                          <div className="absolute inset-x-0 bottom-0 bg-primary/95 text-white text-[10px] text-center font-medium py-0.5 leading-none">
-                            Chính
-                          </div>
-                        )}
+                        <img src={getFileUrl(img.imagePath)} alt={img.name || 'Door'} className="w-full h-full object-cover" />
+                        {isPrimary && <div className="absolute inset-x-0 bottom-0 bg-primary/95 text-white text-[10px] text-center font-medium py-0.5 leading-none">Chính</div>}
                         <button
                           type="button"
                           onClick={(e) => {
@@ -287,28 +217,24 @@ export function DoorUpdateModal({
                     );
                   })}
 
-                  {/* Render ảnh mới thêm */}
                   {newImages.map((img, idx) => {
                     const isPrimary = selectedNewPrimaryIdx === idx;
                     return (
                       <div
                         key={img.id}
-                        onClick={() => handleSelectNewPrimary(idx)}
+                        onClick={() => {
+                          setSelectedNewPrimaryIdx(idx);
+                          setPrimaryImageId(null);
+                        }}
                         className={`relative aspect-square rounded-xl border overflow-hidden cursor-pointer group transition-all ${
-                          isPrimary
-                            ? 'border-primary ring-2 ring-primary/40 shadow-xs'
-                            : 'border-blue-200 hover:border-blue-400 opacity-90 hover:opacity-100'
+                          isPrimary ? 'border-primary ring-2 ring-primary/40 shadow-xs' : 'border-blue-200 hover:border-blue-400 opacity-90 hover:opacity-100'
                         }`}
                       >
                         <img src={img.previewUrl} alt={`New upload ${idx}`} className="w-full h-full object-cover" />
                         {isPrimary ? (
-                          <div className="absolute inset-x-0 bottom-0 bg-primary/95 text-white text-[10px] text-center font-medium py-0.5 leading-none">
-                            Chính (Mới)
-                          </div>
+                          <div className="absolute inset-x-0 bottom-0 bg-primary/95 text-white text-[10px] text-center font-medium py-0.5 leading-none">Chính (Mới)</div>
                         ) : (
-                          <div className="absolute inset-x-0 top-0 bg-emerald-600/85 text-white text-[9px] text-center py-0.5 leading-none font-medium">
-                            Mới
-                          </div>
+                          <div className="absolute inset-x-0 top-0 bg-emerald-600/85 text-white text-[9px] text-center py-0.5 leading-none font-medium">Mới</div>
                         )}
                         <button
                           type="button"
@@ -329,63 +255,25 @@ export function DoorUpdateModal({
             )}
           </div>
 
-          {/* Cột phải: Thông tin nhập */}
           <div className="md:col-span-7 flex flex-col space-y-4">
-            <Input
-              label="Tên cửa *"
-              placeholder="Nhập tên cửa"
-              fullWidth
-              {...register('name', { required: true })}
-              error={errors.name ? 'Tên cửa không được để trống' : undefined}
-            />
-            <Input
-              label="Mã cửa *"
-              placeholder="Nhập mã sản phẩm cửa"
-              fullWidth
-              {...register('code', { required: true })}
-              error={errors.code ? 'Mã cửa không được để trống' : undefined}
-            />
+            <Input label="Tên cửa *" placeholder="Nhập tên cửa" fullWidth {...register('name', { required: true })} error={errors.name ? 'Tên cửa không được để trống' : undefined} />
+            <Input label="Mã cửa *" placeholder="Nhập mã sản phẩm cửa" fullWidth {...register('code', { required: true })} error={errors.code ? 'Mã cửa không được để trống' : undefined} />
             <Select
               label="Phân loại *"
               placeholder="Chọn phân loại"
               fullWidth
               value={watch('type') || ''}
               {...register('type', { required: true })}
-              options={[
-                { value: 'casement_door', label: 'Cửa đi mở quay' },
-                { value: 'sliding_door', label: 'Cửa đi lùa' },
-                { value: 'casement_window', label: 'Cửa sổ mở quay' },
-                { value: 'sliding_window', label: 'Cửa sổ lùa' },
-                { value: 'folding_door', label: 'Cửa gấp xếp' },
-                { value: 'sliding_casement_door', label: 'Cửa trượt quay' },
-                { value: 'glass_wall', label: 'Vách kính' },
-                { value: 'curtain_wall', label: 'Mặt dựng' },
-                { value: 'composite', label: 'Tổng hợp' },
-              ]}
+              options={DOOR_TYPE_OPTIONS}
               error={errors.type ? 'Vui lòng chọn phân loại cửa' : undefined}
             />
-            <Input
-              label="Thông số kỹ thuật"
-              placeholder="Nhập thông số kỹ thuật"
-              fullWidth
-              {...register('specification')}
-              error={errors.specification ? 'Thông số kỹ thuật không hợp lệ' : undefined}
-            />
+            <Input label="Thông số kỹ thuật" placeholder="Nhập thông số kỹ thuật" fullWidth {...register('specification')} />
           </div>
         </div>
 
         <div className="flex gap-2 justify-end w-full mt-6 pt-4 border-t border-gray-150">
-          <Button variant="outline" size="sm" onClick={onClose}>
-            Hủy
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<CheckCircle2 size={16} />}
-            type="submit"
-            disabled={updateIsPending}
-            loading={updateIsPending}
-          >
+          <Button variant="outline" size="sm" onClick={onClose}>Hủy</Button>
+          <Button variant="primary" size="sm" leftIcon={<CheckCircle2 size={16} />} type="submit" disabled={updateIsPending} loading={updateIsPending}>
             {submitText}
           </Button>
         </div>

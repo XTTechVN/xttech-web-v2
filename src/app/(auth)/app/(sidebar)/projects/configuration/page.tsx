@@ -2,17 +2,35 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
-import DoorsTab from './doors';
-import BrandTab from './brand';
-import SeriesTab from './series';
-import ProfileBarsTab from './profile-bars';
-import GlassGasketsTab from './glass-gaskets';
-import AccessoriesTab from './accessories';
-import AccessoryCombosTab from './accessory-combos';
-import DoorTemplatesTab from './door-templates';
-import { Columns, ListChecks, Building2, ShieldCheck, Layers, Ruler, PackageOpen, LayoutGrid } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import {
+  Columns,
+  ListChecks,
+  Building2,
+  ShieldCheck,
+  Layers,
+  Ruler,
+  PackageOpen,
+  LayoutGrid,
+} from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { usePermission } from '@/hooks';
+import { Skeleton } from '@/components';
+
+const ConfigTabFallback = () => (
+  <div className="p-4">
+    <Skeleton className="h-96 w-full rounded-xl" />
+  </div>
+);
+
+const BrandTab = dynamic(() => import('./brand'), { loading: ConfigTabFallback });
+const SeriesTab = dynamic(() => import('./series'), { loading: ConfigTabFallback });
+const ProfileBarsTab = dynamic(() => import('./profile-bars'), { loading: ConfigTabFallback });
+const GlassGasketsTab = dynamic(() => import('./glass-gaskets'), { loading: ConfigTabFallback });
+const DoorsTab = dynamic(() => import('./doors'), { loading: ConfigTabFallback });
+const DoorTemplatesTab = dynamic(() => import('./door-templates'), { loading: ConfigTabFallback });
+const AccessoriesTab = dynamic(() => import('./accessories'), { loading: ConfigTabFallback });
+const AccessoryCombosTab = dynamic(() => import('./accessory-combos'), { loading: ConfigTabFallback });
 
 interface ConfigTab {
   id: string;
@@ -84,12 +102,10 @@ const TABS: ConfigTab[] = [
 ];
 
 function ProjectConfigurationContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const urlTab = searchParams.get('tab');
   const { hasRole } = usePermission();
 
-  // Lọc các Tab mà người dùng hiện tại có quyền truy cập
   const availableTabs = useMemo(() => {
     return TABS.filter((tab) => hasRole(tab.roles));
   }, [hasRole]);
@@ -102,14 +118,12 @@ function ProjectConfigurationContent() {
     return 'brand';
   });
 
-  // Đồng bộ khi URL search param thay đổi
   useEffect(() => {
     if (urlTab && availableTabs.some((t) => t.id === urlTab) && urlTab !== activeTab) {
       setActiveTab(urlTab);
     }
   }, [urlTab, availableTabs, activeTab]);
 
-  // Đảm bảo activeTab luôn là một tab hợp lệ trong availableTabs
   useEffect(() => {
     if (availableTabs.length > 0 && !availableTabs.some((t) => t.id === activeTab)) {
       setActiveTab(availableTabs[0].id);
@@ -119,16 +133,8 @@ function ProjectConfigurationContent() {
   const currentTab = availableTabs.find((t) => t.id === activeTab) || availableTabs[0];
   const ActiveComponent = currentTab?.component || BrandTab;
 
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-    router.replace(`/app/projects/configuration?tab=${tabId}`, { scroll: false });
-  };
-
   return (
     <div className="flex flex-col gap-4 text-black">
-      {/* Tab Content */}
       <div className="min-h-[400px]">
         {ActiveComponent && <ActiveComponent />}
       </div>
@@ -138,7 +144,13 @@ function ProjectConfigurationContent() {
 
 export default function ProjectConfigurationPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-500 font-medium">Đang tải cấu hình dự án...</div>}>
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-slate-500 font-medium">
+          Đang tải cấu hình dự án...
+        </div>
+      }
+    >
       <ProjectConfigurationContent />
     </Suspense>
   );
