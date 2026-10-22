@@ -28,6 +28,7 @@ All notable changes to the frontend project will be documented in this file.
 
 ### Fixed
 - **Đồng bộ Cache & State:** Thêm `scopedUserId` vào `queryKey` danh sách dự án và đồng bộ `totalProjects` thực tế từ bảng lên [`projects/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/page.tsx).
+- **Sửa hành vi nút In trên bảng Lệnh sản xuất ([`production-orders-panel.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/production/components/production-orders-panel.tsx)):** Bấm icon `<Printer />` sẽ gọi trực tiếp `getCuttingPlan` và `printCuttingPlan` để in ngay Sơ đồ cắt thanh nhôm (thay vì mở nhầm modal Chi tiết).
 - **Sửa lỗi In Thẻ Sản Xuất A4 ([`production-sheet-print.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/production/utils/production-sheet-print.ts), [`production-sheets-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/production/modals/production-sheets-modal.tsx)):** Thay cơ chế `window.print()` trực tiếp trên DOM chính bằng in qua `iframe` ẩn độc lập kế thừa stylesheet ứng dụng, khắc phục triệt để lỗi khoảng trắng đầu trang và lỗi mất phân trang khi in nhiều bộ cửa.
 - **Tuân thủ Rule 13 & Rule 5:** Loại bỏ hoàn toàn fallback `snake_case` (`surface_color`, `accessory_color`, v.v.) và các câu lệnh `console.log`/`console.warn`/`console.error` trong toàn bộ module `projects`.
 

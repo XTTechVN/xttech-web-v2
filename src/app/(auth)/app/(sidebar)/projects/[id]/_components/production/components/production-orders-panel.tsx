@@ -1,13 +1,17 @@
 'use client';
 
-import React from 'react';
-import { Factory, FileText, Plus, Printer, Scissors, XCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import { Factory, FileText, Loader2, Plus, Printer, Scissors, XCircle } from 'lucide-react';
+import { getCuttingPlan } from '@/actions';
 import { Badge, Button } from '@/components';
+import { showErrorToast } from '@/utils';
 import type { ProductionOrder } from '@/types';
 import {
   formatProductionDate,
   ORDER_STATUS_LABEL,
   ORDER_STATUS_VARIANT,
+  printCuttingPlan,
 } from '../utils';
 
 interface ProductionOrdersPanelProps {
@@ -22,6 +26,7 @@ interface ProductionOrdersPanelProps {
 }
 
 export function ProductionOrdersPanel({
+  projectId,
   orders,
   isLoading,
   onCreate,
@@ -29,6 +34,26 @@ export function ProductionOrdersPanel({
   onOpenSheets,
   onCancel,
 }: ProductionOrdersPanelProps) {
+  const [printingOrderId, setPrintingOrderId] = useState<number | null>(null);
+
+  const handlePrintCuttingPlan = async (order: ProductionOrder) => {
+    setPrintingOrderId(order.id);
+    try {
+      const plan = await getCuttingPlan(projectId, order.id);
+      if (!plan) {
+        toast.error(
+          `Lệnh ${order.code} chưa có sơ đồ cắt. Vui lòng bấm "Thanh cắt" để tối ưu trước khi in.`,
+        );
+        return;
+      }
+      await printCuttingPlan(order, plan);
+    } catch (error) {
+      showErrorToast(error, 'Lỗi khi tải sơ đồ cắt để in');
+    } finally {
+      setPrintingOrderId(null);
+    }
+  };
+
   return (
     <div className="space-y-4 rounded-lg border border-slate-200/60 bg-white p-5 shadow-xs">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -74,6 +99,8 @@ export function ProductionOrdersPanel({
             <tbody className="divide-y divide-slate-100 text-xs">
               {orders.map((order) => {
                 const isOpen = order.status !== 'completed' && order.status !== 'cancelled';
+                const isPrinting = printingOrderId === order.id;
+
                 return (
                   <tr key={order.id} className="transition-colors hover:bg-slate-50/60">
                     <td className="px-3 py-3 font-mono font-bold text-primary">{order.code}</td>
@@ -128,11 +155,16 @@ export function ProductionOrdersPanel({
                         )}
                         <button
                           type="button"
-                          title="In Thẻ cắt & Lắp ráp A4"
-                          onClick={() => onOpenSheets(order)}
-                          className="cursor-pointer rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-primary"
+                          title="In sơ đồ cắt"
+                          disabled={isPrinting}
+                          onClick={() => handlePrintCuttingPlan(order)}
+                          className="cursor-pointer rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-primary disabled:opacity-50"
                         >
-                          <Printer size={14} />
+                          {isPrinting ? (
+                            <Loader2 size={14} className="animate-spin text-primary" />
+                          ) : (
+                            <Printer size={14} />
+                          )}
                         </button>
                         {isOpen && (
                           <button
@@ -156,4 +188,3 @@ export function ProductionOrdersPanel({
     </div>
   );
 }
-
