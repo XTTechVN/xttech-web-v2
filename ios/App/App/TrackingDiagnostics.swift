@@ -191,6 +191,9 @@ final class TrackingDiagnostics: NSObject {
         receivedLocationCount += 1
         if isFiltered {
             filteredLocationCount += 1
+        } else {
+            // Đã nhận lại điểm hợp lệ: lỗi CoreLocation trước đó chỉ là tạm thời, không còn cần cảnh báo
+            lastLocationErrorCode = nil
         }
         lastLocationAt = Date()
     }
