@@ -105,11 +105,19 @@ const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
       }
     }, [isOpen, updatePosition]);
 
-    // Update internal state when controlled value changes
+    // Update internal state when controlled value changes (with shallow comparison to prevent infinite loop)
     useEffect(() => {
-      if (value !== undefined) {
-        setSelectedValues(Array.isArray(value) ? value : []);
-      }
+      if (value === undefined) return;
+      const nextValues = Array.isArray(value) ? value : [];
+      setSelectedValues((prev) => {
+        if (
+          prev.length === nextValues.length &&
+          prev.every((val, idx) => String(val) === String(nextValues[idx]))
+        ) {
+          return prev;
+        }
+        return nextValues;
+      });
     }, [value]);
 
     // Close on click outside (check both container and portal dropdown)

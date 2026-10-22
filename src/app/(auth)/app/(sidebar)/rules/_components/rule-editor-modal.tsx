@@ -43,6 +43,8 @@ const SCOPE_OPTIONS = [
   { value: 'user', label: 'Theo cá nhân' },
 ];
 
+const EMPTY_ARRAY: (string | number)[] = [];
+
 const buildDefaults = (doc: DocumentItem | null, supersedingDoc?: DocumentItem | null): RuleFormValues => {
   if (doc) {
     return {
@@ -135,8 +137,10 @@ export const RuleEditorModal: React.FC<RuleEditorModalProps> = ({
   );
 
   const currentShareScope = watch('shareScope');
-  const selectedDeptIds = watch('recipientDepartmentIds') ?? [];
-  const selectedUserIds = watch('recipientUserIds') ?? [];
+  const rawDeptIds = watch('recipientDepartmentIds');
+  const rawUserIds = watch('recipientUserIds');
+  const selectedDeptIds = Array.isArray(rawDeptIds) ? rawDeptIds : EMPTY_ARRAY;
+  const selectedUserIds = Array.isArray(rawUserIds) ? rawUserIds : EMPTY_ARRAY;
 
   const onValid = (values: RuleFormValues) => {
     if (!doc && !file) {
