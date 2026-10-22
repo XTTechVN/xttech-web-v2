@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { ArrowRight, Image as ImageIcon, Loader2, Trash2, Upload, Video } from 'lucide-react';
+import React, {useState } from 'react';
+import { ArrowRight, Loader2, Trash2, Upload, Video } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { uploadProgressEvidence } from '@/actions';
 import { Button, Modal, Textarea } from '@/components';
@@ -27,20 +27,20 @@ export function ProgressUpdateModal({
   currentStep,
   onSuccess,
 }: ProgressUpdateModalProps) {
-  const [targetStep, setTargetStep] = useState<ProgressStepCode | null>(null);
   const [note, setNote] = useState('');
   const [evidenceMedia, setEvidenceMedia] = useState<EvidenceMediaItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    if (currentStep) {
-      setTargetStep(getNextStep(currentStep));
-    }
+  const targetStep = currentStep ? getNextStep(currentStep) : null;
+
+  const handleCloseModal = () => {
     setNote('');
     setEvidenceMedia([]);
-  }, [currentStep, isOpen]);
-
+    onClose();
+  };
   const advance = useAdvanceProgress(projectId, () => {
+    setNote('');
+    setEvidenceMedia([]);
     onSuccess();
     onClose();
   });
@@ -91,7 +91,7 @@ export function ProgressUpdateModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleCloseModal}
       title="Cập nhật tiến độ & Nghiệm thu cửa"
       size="md"
     >
@@ -212,7 +212,7 @@ export function ProgressUpdateModal({
 
         {/* Action buttons */}
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-          <Button variant="outline" size="sm" onClick={onClose} disabled={advance.isPending}>
+          <Button variant="outline" size="sm" onClick={handleCloseModal} disabled={advance.isPending}>
             Hủy
           </Button>
           <Button
