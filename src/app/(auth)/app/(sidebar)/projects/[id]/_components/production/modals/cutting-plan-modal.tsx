@@ -108,6 +108,7 @@ export function CuttingPlanModal({ projectId, order, onClose }: CuttingPlanModal
       onClose={onClose}
       title={`Tối ưu thanh cắt - ${order?.code ?? ''}`}
       className="w-full max-w-4xl"
+      size="lg"
     >
       <div className="space-y-4">
         {cutting.isLoading && (

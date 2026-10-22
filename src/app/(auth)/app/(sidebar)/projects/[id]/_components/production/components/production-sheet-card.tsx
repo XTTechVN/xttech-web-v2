@@ -109,7 +109,7 @@ export function ProductionSheetCard({
       </div>
 
       <div className="mt-4 grid grid-cols-12 gap-5">
-        <div className="col-span-12 space-y-4 md:col-span-5 print:col-span-5">
+        <div className="production-sheet-left-col col-span-12 space-y-4 md:col-span-5 print:col-span-5">
           <div className="flex min-h-[300px] items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white p-2">
             {rootCell ? (
               <div className="h-[290px] w-full">
@@ -165,13 +165,13 @@ export function ProductionSheetCard({
           <ProductionSheetLeftTables sheet={sheet} combinedAccessories={combinedAccessories} />
         </div>
 
-        <div className="col-span-12 md:col-span-7 print:col-span-7">
+        <div className="production-sheet-right-col col-span-12 md:col-span-7 print:col-span-7">
           <ProductionSheetProfilesTable sheet={sheet} />
         </div>
       </div>
 
       <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-3 text-[11px] text-slate-400">
-        <span className="italic font-medium text-slate-600">Cửa vững nhà an!</span>
+        <span className="italic font-medium text-slate-600">Thương hiệu cửa số 2 miền bắc</span>
         <span>Ngày xuất: {printDate}</span>
       </div>
     </div>

@@ -19,6 +19,7 @@ All notable changes to the frontend project will be documented in this file.
   - **Tối ưu Network & Render:** Chỉ fetch danh sách khách hàng khi mở modal tạo/sửa dự án (`enabled: isOpen`); memoize `columns` và `renderCard` trong [`projects/_components/table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/table.tsx).
   - **Chuẩn hóa kích thước Component ($\le 300$ dòng):** Tái cấu trúc toàn bộ các file vượt ngưỡng 300 dòng trong `projects/`, `projects/[id]/`, và `projects/configuration/` (100% file trong module đạt $\le 300$ dòng).
   - **Di chuyển đúng kiến trúc thư mục:** Chuyển `combo-modal.tsx` và `searchable-select.tsx` về đúng `projects/configuration/accessory-combos/_components/`.
+  - **Nâng cấp UX Modal Cập Nhật Tiến Độ & Nghiệm Thu ([`progress-update-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/production/modals/progress-update-modal.tsx)):** Đưa khối "Ảnh / Video nghiệm thu" lên đầu modal và hỗ trợ kéo thả (Drag & Drop) trực tiếp nhiều tệp hình ảnh/video từ bên ngoài vào.
 
 ### Removed
 - **Dọn dẹp ~4,500 dòng Dead Code:**
@@ -27,6 +28,7 @@ All notable changes to the frontend project will be documented in this file.
 
 ### Fixed
 - **Đồng bộ Cache & State:** Thêm `scopedUserId` vào `queryKey` danh sách dự án và đồng bộ `totalProjects` thực tế từ bảng lên [`projects/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/page.tsx).
+- **Sửa lỗi In Thẻ Sản Xuất A4 ([`production-sheet-print.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/production/utils/production-sheet-print.ts), [`production-sheets-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/production/modals/production-sheets-modal.tsx)):** Thay cơ chế `window.print()` trực tiếp trên DOM chính bằng in qua `iframe` ẩn độc lập kế thừa stylesheet ứng dụng, khắc phục triệt để lỗi khoảng trắng đầu trang và lỗi mất phân trang khi in nhiều bộ cửa.
 - **Tuân thủ Rule 13 & Rule 5:** Loại bỏ hoàn toàn fallback `snake_case` (`surface_color`, `accessory_color`, v.v.) và các câu lệnh `console.log`/`console.warn`/`console.error` trong toàn bộ module `projects`.
 
 ## [Unreleased] - 2026-10-19
