@@ -5,15 +5,8 @@ import toast from 'react-hot-toast';
 import { advanceDoorProgress } from '@/actions';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
-import type { EvidenceMediaItem, ProgressStepCode } from '@/types';
-import { PROGRESS_STEP_LABEL } from '../production-labels';
-
-interface AdvanceVariables {
-  positionIds: number[];
-  targetStep: ProgressStepCode;
-  note?: string;
-  evidenceMedia?: EvidenceMediaItem[];
-}
+import type { AdvanceVariables } from '../types';
+import { PROGRESS_STEP_LABEL } from '../utils';
 
 // Chuyển nhiều cửa sang mốc tiến độ kế tiếp; làm mới ma trận, lệnh sản xuất và trạng thái dự án
 export function useAdvanceProgress(projectId: number, onDone?: () => void) {

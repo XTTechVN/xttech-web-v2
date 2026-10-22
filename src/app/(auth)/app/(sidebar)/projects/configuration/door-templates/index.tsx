@@ -3,16 +3,13 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDoors, getDoorSeriesList, getBrands } from '@/actions';
-import type { Door } from '@/types';
+import { getDoorTypeConfig, normalizeDoorType, type Door } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 import { Search, Plus, ImageOff, LayoutGrid } from 'lucide-react';
 import { AccessoryBrandSidebar } from '../accessories/_components';
 import { DoorStudioModal } from '@/components';
 import { DoorThumbnail } from './_components/door-thumbnail';
 
-import { getDoorTypeConfig, normalizeDoorType } from '@/types';
-
-// ─── Door type tabs theo schema API mới ──────────────────────────────────────────
 const DOOR_TYPES: Array<{ value: string | null; label: string }> = [
   { value: null, label: 'Tất cả' },
   { value: 'casement_door', label: 'Cửa đi mở quay' },
@@ -26,31 +23,22 @@ const DOOR_TYPES: Array<{ value: string | null; label: string }> = [
   { value: 'composite', label: 'Tổng hợp' },
 ];
 
-// Helper kiểm tra door có khớp với type tab không (hỗ trợ cả legacy aliases cd/cs/ck)
 function matchDoorType(doorType: string | null | undefined, filterType: string | null): boolean {
   if (!filterType) return true;
   if (!doorType) return false;
   return normalizeDoorType(doorType) === normalizeDoorType(filterType);
 }
 
-// ─── Card ─────────────────────────────────────────────────────────────────────
-function DoorCard({
-  door,
-  onClick,
-}: {
-  door: Door;
-  onClick: () => void;
-}) {
+function DoorCard({ door, onClick }: { door: Door; onClick: () => void }) {
   const [imgError, setImgError] = useState(false);
-  const hasSvg = !!(door.systemConfig as any)?.rootCell;
+  const hasSvg = Boolean((door.systemConfig as Record<string, unknown> | undefined)?.rootCell);
 
-  // Fallback image from imagePath / images[]
   const imgUrl = (() => {
     const primary = door.images?.find((i) => i.isPrimary);
     const path = primary?.imagePath ?? door.imagePath;
     if (!path) return null;
     if (path.startsWith('http')) return path;
-    return `${BASE_MINIO_URL}/${path.startsWith('/') ? path.slice(1) : path}`;
+    return `${BASE_MINIO_URL}/${path.replace(/^\//, '')}`;
   })();
 
   const typeConfig = getDoorTypeConfig(door.type);
@@ -61,10 +49,8 @@ function DoorCard({
       onClick={onClick}
       className="group flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-primary hover:shadow-md transition-all text-left cursor-pointer"
     >
-      {/* Thumbnail */}
       <div className="aspect-[4/3] w-full bg-slate-50 flex items-center justify-center overflow-hidden relative">
         {hasSvg ? (
-          /* SVG bản vẽ từ systemConfig */
           <div className="w-full h-full p-1.5 group-hover:scale-105 transition-transform duration-300">
             <DoorThumbnail door={door} />
           </div>
@@ -83,7 +69,6 @@ function DoorCard({
         )}
       </div>
 
-      {/* Info */}
       <div className="p-3 border-t border-slate-100 flex flex-col gap-1.5">
         {door.type && (
           <div>
@@ -100,28 +85,20 @@ function DoorCard({
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function DoorTemplatesTab() {
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
   const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-
-  // Modals
   const [studioDoor, setStudioDoor] = useState<Door | null>(null);
   const [isStudioOpen, setIsStudioOpen] = useState(false);
 
-  // Brands
   const { data: brandsData } = useQuery({
     queryKey: ['brands', 'aluminum'],
-    queryFn: async () => {
-      const res = await getBrands({ limit: 9999, offset: 0, allowDeleted: false, brandType: 'aluminum' });
-      return res.items || [];
-    },
+    queryFn: async () => (await getBrands({ limit: 9999, offset: 0, allowDeleted: false, brandType: 'aluminum' })).items || [],
   });
   const brandsList = brandsData || [];
 
-  // Auto-select first brand
   const sortedBrands = useMemo(
     () => [...brandsList].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })),
     [brandsList],
@@ -132,59 +109,31 @@ export default function DoorTemplatesTab() {
     }
   }, [sortedBrands, selectedBrandId]);
 
-  // Series
   const { data: seriesData } = useQuery({
     queryKey: ['door-series', selectedBrandId],
-    queryFn: () =>
-      getDoorSeriesList({
-        brandId: selectedBrandId || undefined,
-        limit: 9999,
-        offset: 0,
-      }),
+    queryFn: () => getDoorSeriesList({ brandId: selectedBrandId || undefined, limit: 9999, offset: 0 }),
     enabled: selectedBrandId !== null,
   });
   const seriesList = seriesData?.items || [];
 
-  // Reset series when brand changes
-  React.useEffect(() => {
-    setSelectedSeriesId(null);
-  }, [selectedBrandId]);
-
-  // Doors — fetch all, không lọc type ở server để count tabs chính xác
-  // Doors — chỉ lọc theo brand, tất cả cứ còn lại lọc ở frontend
   const { data: doorsData, isLoading } = useQuery({
     queryKey: ['door-templates', selectedBrandId],
-    queryFn: () =>
-      getDoors({
-        brandId: selectedBrandId || undefined,
-        limit: 9999,
-        offset: 0,
-      }),
+    queryFn: () => getDoors({ brandId: selectedBrandId || undefined, limit: 9999, offset: 0 }),
     enabled: selectedBrandId !== null,
   });
   const allDoors = doorsData?.items || [];
 
-  // Client-side filter: series + type + search
   const filteredDoors = useMemo(() => {
     let result = allDoors;
-    if (selectedSeriesId) {
-      result = result.filter((d) => d.doorSeriesId === selectedSeriesId);
-    }
-    if (selectedType) {
-      result = result.filter((d) => matchDoorType(d.type, selectedType));
-    }
+    if (selectedSeriesId) result = result.filter((d) => d.doorSeriesId === selectedSeriesId);
+    if (selectedType) result = result.filter((d) => matchDoorType(d.type, selectedType));
     if (search.trim()) {
       const q = search.toLowerCase();
-      result = result.filter(
-        (d) =>
-          d.name.toLowerCase().includes(q) ||
-          (d.code && d.code.toLowerCase().includes(q)),
-      );
+      result = result.filter((d) => d.name.toLowerCase().includes(q) || Boolean(d.code && d.code.toLowerCase().includes(q)));
     }
     return result;
   }, [allDoors, selectedSeriesId, selectedType, search]);
 
-  // Group by series
   const grouped = useMemo(() => {
     const map = new Map<string, Door[]>();
     for (const door of filteredDoors) {
@@ -195,26 +144,18 @@ export default function DoorTemplatesTab() {
     return map;
   }, [filteredDoors]);
 
-  // Thống kê số lượng theo từng tab (có tính cả series filter nếu chọn)
   const tabCounts = useMemo(() => {
-    const baseList = selectedSeriesId
-      ? allDoors.filter((d) => d.doorSeriesId === selectedSeriesId)
-      : allDoors;
-
-    const counts: Record<string, number> = {
-      all: baseList.length,
-    };
-    DOOR_TYPES.forEach((t) => {
-      if (t.value) {
-        counts[t.value] = baseList.filter((d) => matchDoorType(d.type, t.value)).length;
-      }
-    });
+    const baseList = selectedSeriesId ? allDoors.filter((d) => d.doorSeriesId === selectedSeriesId) : allDoors;
+    const counts: Record<string, number> = { all: baseList.length };
+    for (const d of baseList) {
+      const norm = d.type ? normalizeDoorType(d.type) : null;
+      if (norm) counts[norm] = (counts[norm] || 0) + 1;
+    }
     return counts;
   }, [allDoors, selectedSeriesId]);
 
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
-      {/* Brand sidebar */}
       <AccessoryBrandSidebar
         brands={brandsList}
         selectedBrandId={selectedBrandId}
@@ -224,12 +165,9 @@ export default function DoorTemplatesTab() {
         }}
       />
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col gap-0 min-w-0 w-full">
-        {/* Top bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Series select */}
             {seriesList.length > 0 && (
               <select
                 value={selectedSeriesId ?? ''}
@@ -243,7 +181,6 @@ export default function DoorTemplatesTab() {
               </select>
             )}
 
-            {/* Search */}
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -268,7 +205,6 @@ export default function DoorTemplatesTab() {
           </button>
         </div>
 
-        {/* Door type tabs */}
         <div className="flex items-center gap-1 px-4 pt-2.5 pb-0 overflow-x-auto [scrollbar-width:none]">
           {DOOR_TYPES.map((t) => {
             const count = t.value ? (tabCounts[t.value] || 0) : tabCounts.all;
@@ -279,17 +215,11 @@ export default function DoorTemplatesTab() {
                 type="button"
                 onClick={() => setSelectedType(t.value)}
                 className={`shrink-0 px-3.5 py-2 text-xs font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
-                  isSelected
-                    ? 'border-primary text-primary font-bold'
-                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                  isSelected ? 'border-primary text-primary font-bold' : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
                 <span>{t.label}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                    isSelected ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'
-                  }`}
-                >
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${isSelected ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'}`}>
                   {count}
                 </span>
               </button>
@@ -298,7 +228,6 @@ export default function DoorTemplatesTab() {
         </div>
         <div className="h-px bg-slate-200 mx-4 mb-4" />
 
-        {/* Grid content */}
         <div className="px-4 pb-6 flex flex-col gap-6">
           {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
@@ -325,7 +254,6 @@ export default function DoorTemplatesTab() {
           ) : (
             Array.from(grouped.entries()).map(([seriesName, doors]) => (
               <div key={seriesName}>
-                {/* Series header */}
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs font-bold text-slate-600 uppercase tracking-wider border border-slate-200 rounded px-2 py-0.5 bg-slate-50">
                     {seriesName}
@@ -334,7 +262,6 @@ export default function DoorTemplatesTab() {
                   <span className="text-[11px] text-slate-400">{doors.length} mẫu</span>
                 </div>
 
-                {/* Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {doors.map((door) => (
                     <DoorCard

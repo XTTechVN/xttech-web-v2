@@ -22,20 +22,20 @@ const BAR_TYPE_MAP: Record<string, string> = {
   COVER: 'Ốp / Nắp đậy',
   CORNER: 'Ke góc',
   OTHER: 'Khác',
-  frame: 'Khung bao',
-  sash: 'Cánh cửa',
-  mullion: 'Đố chia / Đố động',
-  bead: 'Nẹp kính',
-  track: 'Ray trượt',
-  cover: 'Ốp / Nắp đậy',
-  corner: 'Ke góc',
-  other: 'Khác',
 };
 
+const COLUMNS: Array<{ field: SortField; label: string; align: 'left' | 'center'; width: string }> = [
+  { field: 'code', label: 'Mã thanh', align: 'left', width: 'w-36' },
+  { field: 'name', label: 'Mô tả / Tên thanh profile', align: 'left', width: 'min-w-[200px]' },
+  { field: 'series', label: 'Hệ nhôm', align: 'center', width: 'w-36' },
+  { field: 'barType', label: 'Loại thanh', align: 'center', width: 'w-36' },
+  { field: 'weight', label: 'Trọng lượng', align: 'center', width: 'w-32' },
+  { field: 'length', label: 'Chiều dài', align: 'center', width: 'w-32' },
+  { field: 'status', label: 'Trạng thái', align: 'center', width: 'w-32' },
+];
+
 function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
-  if (!active) {
-    return <ArrowUpDown size={12} className="text-slate-300 group-hover/th:text-slate-500 transition-colors shrink-0" />;
-  }
+  if (!active) return <ArrowUpDown size={12} className="text-slate-300 group-hover/th:text-slate-500 transition-colors shrink-0" />;
   return order === 'asc' ? (
     <ArrowUp size={12} className="text-primary font-bold shrink-0" />
   ) : (
@@ -43,18 +43,13 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
   );
 }
 
-export function ProfileBarTable({
-  profileBars,
-  onEdit,
-  onDelete,
-}: ProfileBarTableProps) {
+export function ProfileBarTable({ profileBars, onEdit, onDelete }: ProfileBarTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
+    if (sortField === field) setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    else {
       setSortField(field);
       setSortOrder('asc');
     }
@@ -62,7 +57,6 @@ export function ProfileBarTable({
 
   const sortedBars = useMemo(() => {
     if (!sortField) return profileBars;
-
     return [...profileBars].sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
@@ -72,15 +66,16 @@ export function ProfileBarTable({
         case 'name':
           comparison = (a.name || '').localeCompare(b.name || '', 'vi', { sensitivity: 'base' });
           break;
-        case 'series': {
-          const nameA = a.doorSeries?.name || a.doorSeries?.code || '';
-          const nameB = b.doorSeries?.name || b.doorSeries?.code || '';
-          comparison = nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
+        case 'series':
+          comparison = (a.doorSeries?.name || a.doorSeries?.code || '').localeCompare(
+            b.doorSeries?.name || b.doorSeries?.code || '',
+            'vi',
+            { sensitivity: 'base' },
+          );
           break;
-        }
         case 'barType': {
-          const typeA = BAR_TYPE_MAP[a.barType?.toUpperCase()] || BAR_TYPE_MAP[a.barType] || a.barType || '';
-          const typeB = BAR_TYPE_MAP[b.barType?.toUpperCase()] || BAR_TYPE_MAP[b.barType] || b.barType || '';
+          const typeA = BAR_TYPE_MAP[a.barType?.toUpperCase()] || a.barType || '';
+          const typeB = BAR_TYPE_MAP[b.barType?.toUpperCase()] || b.barType || '';
           comparison = typeA.localeCompare(typeB, 'vi', { sensitivity: 'base' });
           break;
         }
@@ -90,14 +85,9 @@ export function ProfileBarTable({
         case 'length':
           comparison = (Number(a.barLengthMm) || 6000) - (Number(b.barLengthMm) || 6000);
           break;
-        case 'status': {
-          const statusA = a.isActive !== false ? 1 : 0;
-          const statusB = b.isActive !== false ? 1 : 0;
-          comparison = statusA - statusB;
+        case 'status':
+          comparison = (a.isActive !== false ? 1 : 0) - (b.isActive !== false ? 1 : 0);
           break;
-        }
-        default:
-          comparison = 0;
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
@@ -109,105 +99,28 @@ export function ProfileBarTable({
         <table className="w-full text-left border-collapse select-none">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              {/* Cột 1: Mã thanh */}
-              <th
-                onClick={() => handleSort('code')}
-                className="py-3 px-4 w-36 cursor-pointer group/th hover:text-slate-800 transition-colors"
-                title="Sắp xếp theo Mã thanh"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span>Mã thanh</span>
-                  <SortIcon active={sortField === 'code'} order={sortOrder} />
-                </div>
-              </th>
-
-              {/* Cột 2: Tên thanh */}
-              <th
-                onClick={() => handleSort('name')}
-                className="py-3 px-4 min-w-[200px] cursor-pointer group/th hover:text-slate-800 transition-colors"
-                title="Sắp xếp theo Tên thanh profile"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span>Mô tả / Tên thanh profile</span>
-                  <SortIcon active={sortField === 'name'} order={sortOrder} />
-                </div>
-              </th>
-
-              {/* Cột 3: Hệ nhôm */}
-              <th
-                onClick={() => handleSort('series')}
-                className="py-3 px-4 text-center w-36 cursor-pointer group/th hover:text-slate-800 transition-colors"
-                title="Sắp xếp theo Hệ nhôm"
-              >
-                <div className="flex items-center justify-center gap-1.5">
-                  <span>Hệ nhôm</span>
-                  <SortIcon active={sortField === 'series'} order={sortOrder} />
-                </div>
-              </th>
-
-              {/* Cột 4: Loại thanh */}
-              <th
-                onClick={() => handleSort('barType')}
-                className="py-3 px-4 text-center w-36 cursor-pointer group/th hover:text-slate-800 transition-colors"
-                title="Sắp xếp theo Loại thanh"
-              >
-                <div className="flex items-center justify-center gap-1.5">
-                  <span>Loại thanh</span>
-                  <SortIcon active={sortField === 'barType'} order={sortOrder} />
-                </div>
-              </th>
-
-              {/* Cột 5: Trọng lượng */}
-              <th
-                onClick={() => handleSort('weight')}
-                className="py-3 px-4 text-center w-32 cursor-pointer group/th hover:text-slate-800 transition-colors"
-                title="Sắp xếp theo Trọng lượng"
-              >
-                <div className="flex items-center justify-center gap-1.5">
-                  <span>Trọng lượng</span>
-                  <SortIcon active={sortField === 'weight'} order={sortOrder} />
-                </div>
-              </th>
-
-              {/* Cột 6: Chiều dài */}
-              <th
-                onClick={() => handleSort('length')}
-                className="py-3 px-4 text-center w-32 cursor-pointer group/th hover:text-slate-800 transition-colors"
-                title="Sắp xếp theo Chiều dài"
-              >
-                <div className="flex items-center justify-center gap-1.5">
-                  <span>Chiều dài</span>
-                  <SortIcon active={sortField === 'length'} order={sortOrder} />
-                </div>
-              </th>
-
-              {/* Cột 7: Trạng thái */}
-              <th
-                onClick={() => handleSort('status')}
-                className="py-3 px-4 text-center w-32 cursor-pointer group/th hover:text-slate-800 transition-colors"
-                title="Sắp xếp theo Trạng thái"
-              >
-                <div className="flex items-center justify-center gap-1.5">
-                  <span>Trạng thái</span>
-                  <SortIcon active={sortField === 'status'} order={sortOrder} />
-                </div>
-              </th>
-
-              {/* Cột 8: Hành động */}
+              {COLUMNS.map((col) => (
+                <th
+                  key={col.field}
+                  onClick={() => handleSort(col.field)}
+                  className={`py-3 px-4 ${col.width} cursor-pointer group/th hover:text-slate-800 transition-colors`}
+                >
+                  <div className={`flex items-center gap-1.5 ${col.align === 'center' ? 'justify-center' : ''}`}>
+                    <span>{col.label}</span>
+                    <SortIcon active={sortField === col.field} order={sortOrder} />
+                  </div>
+                </th>
+              ))}
               <th className="py-3 px-4 text-right w-24">Hành động</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm">
             {sortedBars.map((bar) => {
-              const typeLabel = BAR_TYPE_MAP[bar.barType?.toUpperCase()] || BAR_TYPE_MAP[bar.barType] || bar.barType || '—';
+              const typeLabel = BAR_TYPE_MAP[bar.barType?.toUpperCase()] || bar.barType || '—';
               const seriesLabel = bar.doorSeries?.name || bar.doorSeries?.code || '—';
 
               return (
-                <tr
-                  key={bar.id}
-                  className="hover:bg-slate-50/80 transition-colors group"
-                >
-                  {/* Cột 1: Mã thanh & Mặt cắt */}
+                <tr key={bar.id} className="hover:bg-slate-50/80 transition-colors group">
                   <td className="py-3.5 px-4 font-semibold text-slate-800 text-xs">
                     <div className="flex items-center gap-2.5">
                       {bar.sectionLibrary ? (
@@ -215,11 +128,7 @@ export function ProfileBarTable({
                           title={`Mặt cắt: ${bar.sectionLibrary.name}`}
                           className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center p-1 shrink-0 shadow-2xs"
                         >
-                          <svg
-                            viewBox={bar.sectionLibrary.viewBox || '0 0 100 100'}
-                            className="w-full h-full stroke-slate-700 fill-none"
-                            strokeWidth="1.5"
-                          >
+                          <svg viewBox={bar.sectionLibrary.viewBox || '0 0 100 100'} className="w-full h-full stroke-slate-700 fill-none" strokeWidth="1.5">
                             <path d={bar.sectionLibrary.svgPathData} />
                           </svg>
                         </div>
@@ -235,62 +144,43 @@ export function ProfileBarTable({
                     </div>
                   </td>
 
-                  {/* Cột 2: Tên thanh profile */}
                   <td className="py-3.5 px-4">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-sm">
-                        {bar.name}
-                      </span>
-                      {bar.doorSeries?.name ? (
-                        <span className="text-xs text-slate-400 mt-0.5">
-                          Hệ: {bar.doorSeries.name}
-                        </span>
-                      ) : null}
+                      <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-sm">{bar.name}</span>
+                      {bar.doorSeries?.name && <span className="text-xs text-slate-400 mt-0.5">Hệ: {bar.doorSeries.name}</span>}
                     </div>
                   </td>
 
-                  {/* Cột 3: Hệ nhôm */}
                   <td className="py-3.5 px-4 text-center">
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
                       {seriesLabel}
                     </span>
                   </td>
 
-                  {/* Cột 4: Loại thanh */}
                   <td className="py-3.5 px-4 text-center">
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
                       {typeLabel}
                     </span>
                   </td>
 
-                  {/* Cột 5: Trọng lượng (kg/m) */}
                   <td className="py-3.5 px-4 text-center">
-                    <span className="text-xs font-semibold text-slate-700">
-                      {bar.weightPerM ? `${bar.weightPerM} kg/m` : '—'}
-                    </span>
+                    <span className="text-xs font-semibold text-slate-700">{bar.weightPerM ? `${bar.weightPerM} kg/m` : '—'}</span>
                   </td>
 
-                  {/* Cột 6: Chiều dài (mm) */}
                   <td className="py-3.5 px-4 text-center">
-                    <span className="text-xs font-medium text-slate-600">
-                      {bar.barLengthMm ? `${bar.barLengthMm.toLocaleString()} mm` : '6,000 mm'}
-                    </span>
+                    <span className="text-xs font-medium text-slate-600">{bar.barLengthMm ? `${bar.barLengthMm.toLocaleString()} mm` : '6,000 mm'}</span>
                   </td>
 
-                  {/* Cột 7: Trạng thái */}
                   <td className="py-3.5 px-4 text-center">
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${
-                        bar.isActive !== false
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-slate-100 text-slate-600 border-slate-200'
+                        bar.isActive !== false ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'
                       }`}
                     >
                       {bar.isActive !== false ? 'Hoạt động' : 'Tạm ngưng'}
                     </span>
                   </td>
 
-                  {/* Cột 8: Thao tác */}
                   <td className="py-3.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button
