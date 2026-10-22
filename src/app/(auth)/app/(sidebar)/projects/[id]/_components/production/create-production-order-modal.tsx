@@ -10,6 +10,9 @@ import { showErrorToast } from '@/utils';
 import type { ProjectDoorPosition } from '@/types';
 import { cn } from '@/utils/cn';
 
+import { PROGRESS_STEP_LABEL } from './production-labels';
+import type { ProgressStepCode } from '@/types';
+
 interface CreateProductionOrderModalProps {
   projectId: number;
   isOpen: boolean;
@@ -54,6 +57,12 @@ export function CreateProductionOrderModal({
       toast.error(`Bộ cửa ${position.code} chưa chốt số đo thực tế! Không thể đưa vào Lệnh sản xuất.`);
       return;
     }
+    const isSurveyed = !position.status || position.status === 'surveyed';
+    if (!isSurveyed) {
+      const stepName = PROGRESS_STEP_LABEL[position.status as ProgressStepCode] || position.status;
+      toast.error(`Bộ cửa ${position.code} hiện ở mốc "${stepName}". Không thể tạo thêm lệnh sản xuất.`);
+      return;
+    }
     setSelectedIds((prev) =>
       prev.includes(position.id) ? prev.filter((id) => id !== position.id) : [...prev, position.id],
     );
@@ -73,26 +82,42 @@ export function CreateProductionOrderModal({
             <span className="text-xs font-bold text-slate-700">
               Chọn các bộ cửa đưa vào lệnh ({selectedIds.length} đã chọn) *
             </span>
-            <span className="text-[11px] font-medium text-slate-400">(Chỉ chọn cửa đã chốt số đo)</span>
+            <span className="text-[11px] font-medium text-slate-400">(Chỉ chọn cửa đã chốt số đo & chờ sản xuất)</span>
           </div>
           <div className="max-h-56 space-y-1.5 overflow-y-auto rounded-lg border border-slate-200 p-2">
             {positions.map((position) => {
               const isMeasured = !!position.isMeasured;
+              const isSurveyed = !position.status || position.status === 'surveyed';
+              const isAvailable = isMeasured && isSurveyed;
               const isSelected = selectedIds.includes(position.id);
+              const stepName = PROGRESS_STEP_LABEL[position.status as ProgressStepCode] || position.status;
+
               return (
                 <div
                   key={position.id}
                   onClick={() => toggle(position)}
-                  title={isMeasured ? undefined : 'Chưa chốt số đo thực tế - Không thể đưa vào lệnh sản xuất'}
+                  title={
+                    !isMeasured
+                      ? 'Chưa chốt số đo thực tế - Không thể đưa vào lệnh sản xuất'
+                      : !isSurveyed
+                      ? `Đang ở mốc "${stepName}" - Không thể tạo thêm lệnh sản xuất`
+                      : undefined
+                  }
                   className={cn(
                     'flex items-center justify-between rounded border p-2 text-xs transition-colors',
-                    !isMeasured && 'cursor-not-allowed select-none border-slate-100 bg-slate-50/70 text-slate-400 opacity-60',
-                    isMeasured && !isSelected && 'cursor-pointer border-slate-200/60 text-slate-700 hover:bg-slate-50',
-                    isMeasured && isSelected && 'cursor-pointer border-primary/30 bg-primary/10 font-semibold text-primary',
+                    !isAvailable && 'cursor-not-allowed select-none border-slate-100 bg-slate-50/70 text-slate-400 opacity-60',
+                    isAvailable && !isSelected && 'cursor-pointer border-slate-200/60 text-slate-700 hover:bg-slate-50',
+                    isAvailable && isSelected && 'cursor-pointer border-primary/30 bg-primary/10 font-semibold text-primary',
                   )}
                 >
                   <div className="flex min-w-0 items-center gap-2">
-                    <input type="checkbox" disabled={!isMeasured} checked={isSelected} onChange={() => undefined} className="rounded text-primary" />
+                    <input
+                      type="checkbox"
+                      disabled={!isAvailable}
+                      checked={isSelected}
+                      onChange={() => undefined}
+                      className="rounded text-primary"
+                    />
                     <span className="font-bold">{position.code}</span>
                     <span className="truncate">
                       - {position.description || DOOR_TYPE_LABEL[position.doorType] || position.doorType}
@@ -102,10 +127,16 @@ export function CreateProductionOrderModal({
                     <span
                       className={cn(
                         'rounded border px-1.5 py-0.5 text-[10px] font-medium',
-                        isMeasured ? 'border-emerald-200/60 bg-emerald-50 text-emerald-600' : 'border-amber-200/60 bg-amber-50 text-amber-600',
+                        !isMeasured && 'border-amber-200/60 bg-amber-50 text-amber-600',
+                        isMeasured && isSurveyed && 'border-emerald-200/60 bg-emerald-50 text-emerald-600',
+                        isMeasured && !isSurveyed && 'border-purple-200/60 bg-purple-50 text-purple-600',
                       )}
                     >
-                      {isMeasured ? 'Đã chốt số đo' : 'Chờ đo thực tế'}
+                      {!isMeasured
+                        ? 'Chờ đo thực tế'
+                        : isSurveyed
+                        ? 'Chờ sản xuất'
+                        : stepName}
                     </span>
                     <span className="text-slate-500">{position.width}x{position.height} mm</span>
                   </div>
