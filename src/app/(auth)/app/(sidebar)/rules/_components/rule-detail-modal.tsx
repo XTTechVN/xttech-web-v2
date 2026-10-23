@@ -296,7 +296,7 @@ export const RuleDetailModal: React.FC<RuleDetailModalProps> = ({
             Ban hành
           </Button>
         )}
-        {doc.status === 'published' && handlers.onReplace && (
+        {actions.canReplace && handlers.onReplace && (
           <Button
             id="rule-action-replace"
             variant="outline"

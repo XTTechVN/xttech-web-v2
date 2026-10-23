@@ -6,9 +6,12 @@ export type RulesTab = 'current' | 'drafts' | 'to_process';
 export const RULES_TAB_VALUES: RulesTab[] = ['current', 'drafts', 'to_process'];
 
 // Tab "Cơ chế hiện hành": chip -> scope backend. Hai tab còn lại dùng scope cố định.
-export type CurrentScopeChip = Extract<RulesScope, 'all' | 'mine' | 'department' | 'company'>;
+export type CurrentScopeChip = Extract<RulesScope, 'all' | 'company' | 'department' | 'user' | 'mine'>;
 
-export const CURRENT_SCOPE_CHIPS: CurrentScopeChip[] = ['all', 'mine', 'department', 'company'];
+export const CURRENT_SCOPE_CHIPS: CurrentScopeChip[] = ['all', 'company', 'department', 'user', 'mine'];
+
+// Đối với nhân viên thường: không hiện chip 'user' quản lý, chỉ hiện all, company, department, mine
+export const EMPLOYEE_SCOPE_CHIPS: CurrentScopeChip[] = ['all', 'company', 'department', 'mine'];
 
 export const RULES_QUERY_KEYS = {
   root: ['document-rules'] as const,

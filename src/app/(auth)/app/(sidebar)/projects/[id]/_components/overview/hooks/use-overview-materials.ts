@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { getBrands, getDoorSeriesList, getBrandColors, updateProject } from '@/actions';
@@ -23,6 +23,11 @@ export const formatSurfaceType = (surfaceType?: string | null): string => {
 export function useOverviewMaterials(projectId: number, project?: ProjectDetail) {
   const queryClient = useQueryClient();
   const [updatingField, setUpdatingField] = useState<string | null>(null);
+  const [shouldFetchCatalogs, setShouldFetchCatalogs] = useState(false);
+
+  const enableCatalogs = useCallback(() => {
+    setShouldFetchCatalogs(true);
+  }, []);
 
   const currentBrandId = project?.defaultBrandId || project?.defaultBrand?.id;
 
@@ -33,6 +38,7 @@ export function useOverviewMaterials(projectId: number, project?: ProjectDetail)
       const items = Array.isArray(res?.items) ? res.items : [];
       return items.filter((b) => !b.brandType || b.brandType === 'aluminum' || b.brandType === 'both');
     },
+    enabled: shouldFetchCatalogs,
     staleTime: 60_000,
   });
 
@@ -46,7 +52,7 @@ export function useOverviewMaterials(projectId: number, project?: ProjectDetail)
       });
       return Array.isArray(res?.items) ? res.items : [];
     },
-    enabled: Boolean(currentBrandId),
+    enabled: shouldFetchCatalogs && Boolean(currentBrandId),
   });
 
   const { data: colorsData, isLoading: isLoadingColors } = useQuery({
@@ -59,7 +65,7 @@ export function useOverviewMaterials(projectId: number, project?: ProjectDetail)
       });
       return Array.isArray(res?.items) ? res.items : [];
     },
-    enabled: Boolean(currentBrandId),
+    enabled: shouldFetchCatalogs && Boolean(currentBrandId),
   });
 
   const handleUpdate = async (field: string, payload: Partial<ProjectUpdate>) => {
@@ -125,6 +131,7 @@ export function useOverviewMaterials(projectId: number, project?: ProjectDetail)
     brandOptions,
     seriesOptions,
     colorOptions,
+    enableCatalogs,
     handleUpdate,
   };
 }

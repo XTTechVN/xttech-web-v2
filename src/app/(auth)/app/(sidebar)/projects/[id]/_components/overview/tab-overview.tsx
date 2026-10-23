@@ -27,6 +27,7 @@ export function TabOverview({ projectId, project, onSelectTab }: TabOverviewProp
     brandOptions,
     seriesOptions,
     colorOptions,
+    enableCatalogs,
     handleUpdate,
   } = useOverviewMaterials(projectId, project);
 
@@ -57,6 +58,7 @@ export function TabOverview({ projectId, project, onSelectTab }: TabOverviewProp
           brandOptions={brandOptions}
           seriesOptions={seriesOptions}
           colorOptions={colorOptions}
+          onEnableCatalogs={enableCatalogs}
           onUpdate={handleUpdate}
         />
 

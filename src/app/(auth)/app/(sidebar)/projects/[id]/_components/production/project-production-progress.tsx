@@ -20,6 +20,7 @@ import {
   ProductionSummaryCards,
 } from './components';
 import {
+  CancelProductionOrderModal,
   CreateProductionOrderModal,
   CuttingPlanModal,
   ProductionSheetsModal,
@@ -40,6 +41,7 @@ export function ProjectProductionProgress({ projectId }: ProjectProductionProgre
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [cuttingOrder, setCuttingOrder] = useState<ProductionOrder | null>(null);
   const [sheetsOrder, setSheetsOrder] = useState<ProductionOrder | null>(null);
+  const [cancellingOrder, setCancellingOrder] = useState<ProductionOrder | null>(null);
 
   const { data: ordersData, isLoading: isLoadingOrders } = useQuery({
     queryKey: ['production_orders', projectId],
@@ -55,17 +57,24 @@ export function ProjectProductionProgress({ projectId }: ProjectProductionProgre
 
   const { data: positionsData } = useQuery({
     queryKey: ['project_positions', projectId, 'all'],
-    queryFn: () => getProjectPositions(projectId, { limit: 100 }),
+    queryFn: () => getProjectPositions(projectId, { limit: 9999 }),
     enabled: !!projectId,
   });
 
-  const { mutate: cancelOrder } = useMutation({
-    mutationFn: (orderId: number) => cancelProductionOrder(projectId, orderId),
+  const { mutate: cancelOrder, isPending: isCancelling } = useMutation({
+    mutationFn: ({ orderId, note }: { orderId: number; note?: string }) =>
+      cancelProductionOrder(projectId, orderId, note),
     onSuccess: () => {
-      ['production_orders', 'progress_matrix', 'cutting_plan'].forEach((key) =>
-        queryClient.invalidateQueries({ queryKey: [key, projectId] }),
-      );
+      [
+        'production_orders',
+        'progress_matrix',
+        'cutting_plan',
+        'project_positions',
+        'project',
+      ].forEach((key) => queryClient.invalidateQueries({ queryKey: [key, projectId] }));
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success('Đã hủy lệnh sản xuất');
+      setCancellingOrder(null);
     },
     onError: (err) => showErrorToast(err, 'Lỗi hủy lệnh'),
   });
@@ -74,7 +83,7 @@ export function ProjectProductionProgress({ projectId }: ProjectProductionProgre
   const positions = positionsData?.items ?? [];
 
   const handleCancel = (order: ProductionOrder) => {
-    if (confirm(`Hủy lệnh sản xuất ${order.code}?`)) cancelOrder(order.id);
+    setCancellingOrder(order);
   };
 
   return (
@@ -125,6 +134,12 @@ export function ProjectProductionProgress({ projectId }: ProjectProductionProgre
         order={sheetsOrder}
         isOpen={!!sheetsOrder}
         onClose={() => setSheetsOrder(null)}
+      />
+      <CancelProductionOrderModal
+        order={cancellingOrder}
+        isPending={isCancelling}
+        onClose={() => setCancellingOrder(null)}
+        onConfirm={(orderId, note) => cancelOrder({ orderId, note })}
       />
     </div>
   );

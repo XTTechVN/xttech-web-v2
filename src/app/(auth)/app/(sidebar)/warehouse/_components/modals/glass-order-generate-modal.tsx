@@ -29,7 +29,7 @@ export function GlassOrderGenerateModal({
   onSuccess,
 }: GlassOrderGenerateModalProps) {
   const [selectedSupplierId, setSelectedSupplierId] = useState<number | undefined>(
-    glassSuppliers[0]?.id
+    glassSuppliers[0]?.id,
   );
   const [defaultUnitPrice, setDefaultUnitPrice] = useState('350000');
   const [expectedDate, setExpectedDate] = useState('');
@@ -39,7 +39,6 @@ export function GlassOrderGenerateModal({
   const [isLoadingPanes, setIsLoadingPanes] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sync default supplier when modal opens or supplier list loads
   useEffect(() => {
     if (isOpen && glassSuppliers.length > 0) {
       if (!selectedSupplierId || !glassSuppliers.some((s) => s.id === selectedSupplierId)) {
@@ -100,7 +99,6 @@ export function GlassOrderGenerateModal({
     }
   }, [projectId, productionOrderId]);
 
-  // Only fetch when opening modal or changing project/productionOrderId
   useEffect(() => {
     if (isOpen && projectId) {
       fetchPreviewPanes();
@@ -118,7 +116,6 @@ export function GlassOrderGenerateModal({
   };
 
   const summary = useMemo(() => {
-    const totalPanes = panes.length;
     let manualCount = 0;
     let unmeasuredCount = 0;
     let totalArea = 0;
@@ -128,15 +125,12 @@ export function GlassOrderGenerateModal({
       const area = (p.widthMm * p.heightMm) / 1_000_000.0;
       totalArea += area;
       totalAmount += Math.round(area * p.unitPrice);
-      if (p.paneSource === 'manual' || !p.positionId) {
-        manualCount++;
-      } else if (p.isMeasured === false) {
-        unmeasuredCount++;
-      }
+      if (p.paneSource === 'manual' || !p.positionId) manualCount++;
+      else if (p.isMeasured === false) unmeasuredCount++;
     }
 
     return {
-      totalPanes,
+      totalPanes: panes.length,
       manualCount,
       unmeasuredCount,
       totalArea: Number(totalArea.toFixed(3)),
@@ -155,29 +149,25 @@ export function GlassOrderGenerateModal({
       return;
     }
 
-    // 🛑 Chặn đặt kính cho cửa chưa đo thực tế ô chờ
     const unmeasuredPanes = panes.filter(
-      (p) => (p.paneSource === 'door' || p.positionId) && p.isMeasured === false
+      (p) => (p.paneSource === 'door' || p.positionId) && p.isMeasured === false,
     );
     if (unmeasuredPanes.length > 0) {
-      const unmeasuredCodes = Array.from(
-        new Set(unmeasuredPanes.map((p) => p.positionCode || 'N/A'))
-      ).join(', ');
+      const codes = Array.from(new Set(unmeasuredPanes.map((p) => p.positionCode || 'N/A'))).join(', ');
       toast.error(
-        `Không thể tạo đơn kính: Các cửa [${unmeasuredCodes}] chưa được khảo sát đo ô chờ thực tế (chưa có kích thước chuẩn)!`
+        `Không thể tạo đơn kính: Các cửa [${codes}] chưa được khảo sát đo ô chờ thực tế (chưa có kích thước chuẩn)!`,
       );
       return;
     }
 
-    // 🛑 Kiểm tra tính hợp lệ của kính lẻ (phải có lý do và nhãn)
     const invalidManualPanes = panes.filter(
       (p) =>
         (p.paneSource === 'manual' || !p.positionId) &&
-        (!p.manualReason || !p.paneLabel || p.paneLabel.trim().length < 2)
+        (!p.manualReason || !p.paneLabel || p.paneLabel.trim().length < 2),
     );
     if (invalidManualPanes.length > 0) {
       toast.error(
-        'Ô kính lẻ bắt buộc phải chọn Lý do đặt kính và nhập Ký hiệu/nhãn tấm kính (ít nhất 2 ký tự)!'
+        'Ô kính lẻ bắt buộc phải chọn Lý do đặt kính và nhập Ký hiệu/nhãn tấm kính (ít nhất 2 ký tự)!',
       );
       return;
     }
@@ -237,13 +227,7 @@ export function GlassOrderGenerateModal({
         </span>
       </div>
       <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onClose}
-          disabled={isSubmitting}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>
           Hủy
         </Button>
         <Button

@@ -11,11 +11,13 @@ export interface RuleAvailableActions {
   canSubmit: boolean;
   canReview: boolean;
   canPublish: boolean;
+  canReplace: boolean;
   canAcknowledge: boolean;
   canPublishCompany: boolean;
 }
 
-const isSameUser = (a?: string | null, b?: string | null): boolean => Boolean(a) && Boolean(b) && String(a) === String(b);
+const isSameUser = (a?: string | null, b?: string | null): boolean =>
+  Boolean(a) && Boolean(b) && String(a) === String(b);
 
 // Quyết định các thao tác khả dụng theo trạng thái văn bản + vai trò người dùng (đồng bộ với backend)
 export const getRuleActions = (doc: DocumentItem, ctx: RuleActionContext): RuleAvailableActions => {
@@ -30,11 +32,12 @@ export const getRuleActions = (doc: DocumentItem, ctx: RuleActionContext): RuleA
   const isUnapproved = isDraft || isPending;
 
   return {
-    canEdit: isDraft && (isCreator || ctx.isManager),
-    canDelete: ctx.isManager || (isUnapproved && isCreator),
-    canSubmit: isDraft && isCreator,
-    canReview: isPending && !isCreator && (isApprover || ctx.isManager),
-    canPublish: isApproved && (isCreator || isApprover || ctx.isManager),
+    canEdit: isDraft && ctx.isManager && (isCreator || ctx.isManager),
+    canDelete: ctx.isManager && (isUnapproved || ctx.isManager),
+    canSubmit: isDraft && ctx.isManager && isCreator,
+    canReview: isPending && ctx.isManager && !isCreator && isApprover,
+    canPublish: isApproved && ctx.isManager,
+    canReplace: isPublished && ctx.isManager,
     canAcknowledge:
       doc.canAcknowledge !== undefined
         ? doc.canAcknowledge

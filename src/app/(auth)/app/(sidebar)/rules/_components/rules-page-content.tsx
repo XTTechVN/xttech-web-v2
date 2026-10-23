@@ -11,6 +11,7 @@ import { DeleteConfirmModal } from '@/app/(auth)/app/(sidebar)/documents/_compon
 import { useRulesFilters } from '../_hooks/use-rules-filters';
 import { useRulesList, useRulesSummary } from '../_hooks/use-rules-queries';
 import { useRuleActions } from '../_hooks/use-rule-actions';
+import { useRulesShareOptions } from '../_hooks/use-rules-share-options';
 import { RULES_QUERY_KEYS } from '../_utils/rules-constants';
 import { RulesHeader } from './rules-header';
 import { RulesTabs } from './rules-tabs';
@@ -36,9 +37,10 @@ interface EditorState {
 export function RulesPageContent() {
   const queryClient = useQueryClient();
   const { user, isManager } = usePermission();
-  const filters = useRulesFilters();
+  const filters = useRulesFilters(isManager);
   const { data: summary } = useRulesSummary();
   const { data: list, isLoading } = useRulesList(filters.params);
+  const { departmentOptions, employeeOptions } = useRulesShareOptions(isManager);
 
   const [detailDoc, setDetailDoc] = useState<DocumentItem | null>(null);
   const [editor, setEditor] = useState<EditorState>({ isOpen: false, doc: null, supersedingDoc: null });
@@ -84,26 +86,45 @@ export function RulesPageContent() {
     queryClient.invalidateQueries({ queryKey: RULES_QUERY_KEYS.root });
   };
 
+  const isGridMode = filters.tab === 'current' && filters.viewMode === 'grid';
+
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white">
-      <RulesHeader search={filters.search} onSearchChange={filters.setSearch} onCreate={() => openEditor(null)} />
-      <RulesTabs activeTab={filters.tab} summary={summary} onChange={filters.setTab} />
+      <RulesHeader
+        search={filters.search}
+        canCreate={isManager}
+        viewMode={filters.viewMode}
+        showViewSwitcher={filters.tab === 'current'}
+        onSearchChange={filters.setSearch}
+        onViewModeChange={filters.setViewMode}
+        onCreate={() => openEditor(null)}
+      />
+      <RulesTabs activeTab={filters.tab} canManage={isManager} summary={summary} onChange={filters.setTab} />
       <RulesFilterBar
         tab={filters.tab}
         chip={filters.chip}
+        canManage={isManager}
         documentType={filters.documentType}
         status={filters.status}
         isUnreadOnly={filters.isUnreadOnly}
         isExpiringOnly={filters.isExpiringOnly}
         expiringSoonCount={summary?.expiringSoonCount ?? 0}
+        departmentIds={filters.departmentIds}
+        recipientUserIds={filters.recipientUserIds}
+        departmentOptions={departmentOptions}
+        employeeOptions={employeeOptions}
+        hasActiveFilters={filters.hasActiveFilters}
         onChipChange={filters.setChip}
         onDocumentTypeChange={filters.setDocumentType}
         onStatusChange={filters.setStatus}
         onUnreadOnlyChange={filters.setUnreadOnly}
         onExpiringOnlyChange={filters.setExpiringOnly}
+        onDepartmentIdsChange={filters.setDepartmentIds}
+        onRecipientUserIdsChange={filters.setRecipientUserIds}
+        onResetFilters={filters.resetFilters}
       />
 
-      {filters.tab === 'current' ? (
+      {isGridMode ? (
         <RulesCardGrid
           items={list?.items ?? []}
           total={list?.total ?? 0}

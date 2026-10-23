@@ -82,10 +82,6 @@ export function ProgressUpdateModal({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) void processUploadFiles(e.target.files);
-  };
-
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -95,23 +91,16 @@ export function ProgressUpdateModal({
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDragging(false);
-    }
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    if (isUploading) return;
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    if (!isUploading && e.dataTransfer.files?.length) {
       void processUploadFiles(e.dataTransfer.files);
     }
-  };
-
-  const handleRemoveMedia = (index: number) => {
-    setEvidenceMedia((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = () => {
@@ -135,7 +124,6 @@ export function ProgressUpdateModal({
       size="md"
     >
       <div className="space-y-4">
-        {/* 1. Đưa phần Ảnh / Video nghiệm thu lên đầu + Hỗ trợ Kéo & Thả */}
         <div>
           <div className="mb-1.5 flex items-center justify-between">
             <label className="text-xs font-semibold text-slate-700">
@@ -157,7 +145,7 @@ export function ProgressUpdateModal({
               accept="image/*,video/*"
               className="hidden"
               disabled={isUploading}
-              onChange={handleFileChange}
+              onChange={(e) => e.target.files && void processUploadFiles(e.target.files)}
             />
           </div>
 
@@ -166,11 +154,7 @@ export function ProgressUpdateModal({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            onClick={() => {
-              if (!isUploading && evidenceMedia.length === 0) {
-                fileInputRef.current?.click();
-              }
-            }}
+            onClick={() => !isUploading && evidenceMedia.length === 0 && fileInputRef.current?.click()}
             className={cn(
               'rounded-lg border-2 border-dashed p-3 transition-all',
               isDragging
@@ -208,7 +192,7 @@ export function ProgressUpdateModal({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRemoveMedia(idx);
+                          setEvidenceMedia((prev) => prev.filter((_, i) => i !== idx));
                         }}
                         className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-rose-600 cursor-pointer"
                         title="Xóa tệp này"
@@ -238,7 +222,6 @@ export function ProgressUpdateModal({
           </div>
         </div>
 
-        {/* 2. Banner tiến trình: Mốc hiện tại -> Mốc mới */}
         <div className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50 p-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-500">Mốc hiện tại:</span>
@@ -255,7 +238,6 @@ export function ProgressUpdateModal({
           </div>
         </div>
 
-        {/* 3. Các bộ cửa áp dụng */}
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-slate-700">
             Các bộ cửa áp dụng ({selectedPositions.length} cửa):
@@ -272,7 +254,6 @@ export function ProgressUpdateModal({
           </div>
         </div>
 
-        {/* 4. Ghi chú / Nhận xét chất lượng / Nghiệm thu */}
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-slate-700">
             Ghi chú / Nhận xét chất lượng / Nghiệm thu:

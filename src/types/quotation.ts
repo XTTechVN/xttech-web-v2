@@ -175,6 +175,7 @@ export interface QuotationSheetRow {
   unitPrice: number;
   amount: number;
   imagePath?: string | null;
+  systemConfig?: Record<string, unknown> | null;
 }
 
 export interface QuotationSheetFloor {

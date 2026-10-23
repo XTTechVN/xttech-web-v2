@@ -25,6 +25,10 @@ export function useCuttingPlan(projectId: number, orderId: number | null) {
   const refreshAll = () => {
     queryClient.invalidateQueries({ queryKey });
     queryClient.invalidateQueries({ queryKey: ['production_orders', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['order_shortage', projectId, orderId] });
+    queryClient.invalidateQueries({ queryKey: ['warehouse_items'] });
+    queryClient.invalidateQueries({ queryKey: ['warehouse_receipts'] });
+    queryClient.invalidateQueries({ queryKey: ['warehouse_offcuts'] });
   };
 
   const createMutation = useMutation({

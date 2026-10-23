@@ -21,6 +21,18 @@ export const getProjects = async (params?: ProjectQueryParams): Promise<BaseResp
   }
 };
 
+export const getProjectStats = async (params?: {
+  userId?: string;
+}): Promise<import('@/types').ProjectStatsResponse> => {
+  try {
+    const response = await api.get('/api/v1/projects/stats', { params });
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error getProjectStats', error);
+    throw error;
+  }
+};
+
 // snapshotItems backend lưu JSON thô (snake_case), chuyển key sang camelCase
 const snakeToCamel = (key: string): string =>
   key.replace(/_([a-z0-9])/g, (_match, char: string) => char.toUpperCase());
@@ -550,9 +562,12 @@ export const createProductionOrder = async (
 export const cancelProductionOrder = async (
   projectId: number,
   orderId: number,
+  note?: string,
 ): Promise<void> => {
   try {
-    await api.post(`/api/v1/projects/${projectId}/production-orders/${orderId}/cancel`);
+    await api.post(`/api/v1/projects/${projectId}/production-orders/${orderId}/cancel`, {
+      note: note || undefined,
+    });
   } catch (error) {
     console.warn('API error cancelProductionOrder', error);
     throw error;

@@ -1,5 +1,6 @@
 import type { QuotationSheet, QuotationSheetRow } from '@/types';
 import { getFileUrl } from '@/utils';
+import { DoorThumbnail } from '../../../../configuration/door-templates/_components/door-thumbnail';
 import {
   SHEET_UNIT_LABELS,
   floorLetter,
@@ -26,6 +27,8 @@ interface ItemRowProps {
 
 function ItemRow({ row, identitySpan = 1, isIdentityMerged = false }: ItemRowProps) {
   const isDoor = row.rowType === 'door';
+  const hasCad = isDoor && Boolean(row.systemConfig?.rootCell);
+
   return (
     <tr className={ROW_CLASS[row.rowType]}>
       {!isIdentityMerged && (
@@ -34,8 +37,17 @@ function ItemRow({ row, identitySpan = 1, isIdentityMerged = false }: ItemRowPro
             {isDoor ? row.orderNumber : ''}
           </td>
           <td className="qt-center" rowSpan={identitySpan}>
-            {row.imagePath && (
-              <img className="qt-thumb" src={getFileUrl(row.imagePath)} alt={row.positionCode} />
+            {hasCad ? (
+              <DoorThumbnail
+                systemConfig={row.systemConfig}
+                hideDimensions
+                className="qt-thumb"
+              />
+            ) : (
+              isDoor &&
+              row.imagePath && (
+                <img className="qt-thumb" src={getFileUrl(row.imagePath)} alt={row.positionCode} />
+              )
             )}
           </td>
           <td className="qt-center" rowSpan={identitySpan}>
