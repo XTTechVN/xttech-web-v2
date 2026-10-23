@@ -129,7 +129,8 @@ export function useProjectPositions(projectId: number) {
         measureNote,
       }),
     onSuccess: (res: MeasurePositionResponse) => {
-      queryClient.invalidateQueries({ queryKey: ['project_positions', projectId] });
+      invalidatePositionsAndProject();
+      queryClient.invalidateQueries({ queryKey: ['progress_matrix', projectId] });
       if (res.toleranceExceeded && res.warningMessage) {
         toast.error('Dung sai vượt ngưỡng hợp đồng!', { duration: 5000 });
       } else {
