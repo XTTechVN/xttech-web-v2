@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useId } from 'react';
 import {
   DoorCadRenderer,
   DEFAULT_FRAME_CONFIG,
@@ -27,6 +27,7 @@ export function DoorThumbnail({
   hideDimensions = true,
   className = '',
 }: DoorThumbnailProps) {
+  const svgId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const sc = (directConfig || door?.systemConfig || {}) as Record<string, any>;
 
   const w: number = sc.w || 800;
@@ -63,6 +64,7 @@ export function DoorThumbnail({
   return (
     <div className={`w-full h-full ${className}`}>
       <DoorCadRenderer
+        id={svgId}
         hideDimensions={hideDimensions}
         w={w}
         h={h}

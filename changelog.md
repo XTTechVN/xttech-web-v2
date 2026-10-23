@@ -4,6 +4,13 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-10-23
 
+### Fixed
+- **Hiển thị hình ảnh bản vẽ CAD 2D của cửa trên Xem trước báo giá & In/PDF (`projects/[id]/_components/quotations/`):**
+  - [`quotation.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/quotation.ts): Bổ sung trường `systemConfig?: Record<string, unknown> | null` vào `QuotationSheetRow`.
+  - [`quotation-sheet-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/%5Bid%5D/_components/quotations/components/quotation-sheet-table.tsx): Ưu tiên hiển thị [`DoorThumbnail`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/door-templates/_components/door-thumbnail.tsx) (`hideDimensions`) ở các dòng cửa (`row.rowType === 'door'`) có `row.systemConfig?.rootCell`, và fallback sang `<img src={getFileUrl(row.imagePath)} />` nếu không có bản vẽ CAD.
+  - [`quotation-document-style.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/%5Bid%5D/_components/quotations/utils/quotation-document-style.ts): Định nghĩa CSS thuần tường minh cho `.qt-thumb` và `.qt-thumb svg` (`width: 100%; height: 22mm; max-height: 22mm`) đảm bảo khi in qua iframe độc lập (không nạp Tailwind CSS) hình vẽ SVG không bị tràn kích thước.
+  - [`door-thumbnail.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/door-templates/_components/door-thumbnail.tsx): Truyền `id={useId().replace(/[^a-zA-Z0-9_-]/g, '')}` duy nhất và sạch ký tự đặc biệt xuống `DoorCadRenderer` để tránh xung đột `clipPath` (`#door-inner-clip-...`) khi render hoặc in nhiều cửa trên cùng một trang báo giá.
+
 ### Changed
 - **Thiết kế lại Giao diện "Cơ chế hiện hành" & Bộ lọc Quản lý theo Google Stitch (`rules/`):**
   - [`rules-header.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-header.tsx): Bổ sung nút chuyển đổi chế độ xem `Lưới` (`grid`) / `Danh sách` (`list`) cạnh thanh tìm kiếm và nút `+ Soạn cơ chế`.

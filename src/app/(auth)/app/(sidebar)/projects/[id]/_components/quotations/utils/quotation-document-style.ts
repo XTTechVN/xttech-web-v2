@@ -36,7 +36,8 @@ export const QUOTATION_DOCUMENT_CSS = `
 .qt-accessory td { font-style: italic; }
 .qt-sum td { background: #d9d9d9; font-weight: bold; }
 .qt-payable td { background: #d9d9d9; font-weight: bold; color: #c00000; }
-.qt-thumb { display: block; max-width: 100%; max-height: 22mm; margin: 0 auto; object-fit: contain; }
+.qt-thumb { display: block; width: 100%; max-width: 100%; height: 22mm; max-height: 22mm; margin: 0 auto; object-fit: contain; }
+.qt-thumb svg { display: block; width: 100%; height: 22mm; max-width: 100%; max-height: 22mm; margin: 0 auto; }
 .qt-words, .qt-advance { margin: 6pt 0 0; }
 .qt-notes-title { margin: 8pt 0 2pt; font-weight: bold; }
 .qt-notes { margin: 0; white-space: pre-wrap; }
