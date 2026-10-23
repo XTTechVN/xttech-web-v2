@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getProject } from '@/actions';
 import { TabOverview } from './_components/overview';
@@ -44,15 +45,29 @@ const PROJECT_TABS = [
   { value: 'production', label: 'Sản xuất', icon: <CheckCircle2 size={14} /> },
 ];
 
+const VALID_TABS = new Set(PROJECT_TABS.map((t) => t.value));
+
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
-  const { id } = React.use(params);
-  const projectId = Number(id);
+function ProjectDetailContent({ projectId }: { projectId: number }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<string>('overview');
+  const rawTab = searchParams.get('tab');
+  const activeTab = rawTab && VALID_TABS.has(rawTab) ? rawTab : 'overview';
+
+  const handleSelectTab = useCallback(
+    (nextTab: string) => {
+      if (!VALID_TABS.has(nextTab)) return;
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', nextTab);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
 
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['project', projectId],
@@ -133,7 +148,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               <button
                 key={tab.value}
                 type="button"
-                onClick={() => setActiveTab(tab.value)}
+                onClick={() => handleSelectTab(tab.value)}
                 className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded text-xs transition-all whitespace-nowrap cursor-pointer select-none ${
                   isActive
                     ? 'bg-white text-slate-900 font-semibold shadow-xs'
@@ -151,12 +166,23 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       </div>
 
       {activeTab === 'overview' && (
-        <TabOverview projectId={projectId} project={project} onSelectTab={setActiveTab} />
+        <TabOverview projectId={projectId} project={project} onSelectTab={handleSelectTab} />
       )}
       {activeTab === 'positions' && <TabPositions projectId={projectId} />}
       {activeTab === 'quotations' && <TabQuotations projectId={projectId} />}
       {activeTab === 'contracts' && <TabContracts projectId={projectId} />}
       {activeTab === 'production' && <TabProduction projectId={projectId} />}
     </div>
+  );
+}
+
+export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+  const { id } = React.use(params);
+  const projectId = Number(id);
+
+  return (
+    <Suspense fallback={<TabFallback />}>
+      <ProjectDetailContent projectId={projectId} />
+    </Suspense>
   );
 }

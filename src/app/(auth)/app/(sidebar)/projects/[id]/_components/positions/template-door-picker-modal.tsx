@@ -2,15 +2,19 @@
 
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { ArrowLeft, ImageOff, Layers, Plus, Search } from 'lucide-react';
+import { ImageOff, Layers, Plus, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { createProjectPosition } from '@/actions';
-import { Button, Input, Modal, Select } from '@/components';
+import { bulkCreateProjectPositions, createProjectPosition } from '@/actions';
+import { Modal, Select } from '@/components';
 import { BASE_MINIO_URL } from '@/config';
 import { getDoorTypeConfig, type Door, type ProjectDoorPosition, type ProjectFloor } from '@/types';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
 import { DoorThumbnail } from '../../../configuration/door-templates/_components/door-thumbnail';
+import {
+  normalizeBulkBaseCode,
+  TemplateDoorInfoStep,
+} from './components/template-door-info-step';
 import { DOOR_TYPE_FILTERS, useTemplateDoorPicker } from './hooks/use-template-door-picker';
 
 export interface TemplateDoorPickerModalProps {
@@ -40,6 +44,9 @@ export function TemplateDoorPickerModal({
   const [newCode, setNewCode] = useState('');
   const [description, setDescription] = useState('');
   const [targetFloorId, setTargetFloorId] = useState<number>(0);
+  const [width, setWidth] = useState<number>(1200);
+  const [height, setHeight] = useState<number>(2200);
+  const [quantity, setQuantity] = useState<number>(1);
 
   const picker = useTemplateDoorPicker({
     isOpen,
@@ -53,50 +60,90 @@ export function TemplateDoorPickerModal({
     setSelectedDoor(null);
     setNewCode('');
     setDescription('');
+    setQuantity(1);
     onClose();
   };
 
   const { mutate: createPositionMutate, isPending: isSubmitting } = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (!selectedDoor || !projectId) throw new Error('Thiếu thông tin mẫu cửa hoặc dự án');
-      const sc = (selectedDoor.systemConfig || {}) as Record<string, unknown>;
-      return createProjectPosition(projectId, {
+      const rawConfig = (selectedDoor.systemConfig || {}) as Record<string, unknown>;
+      const validWidth = Number(width) > 0 ? Number(width) : Number(rawConfig.w) || 1200;
+      const validHeight = Number(height) > 0 ? Number(height) : Number(rawConfig.h) || 2200;
+      const validQty = Math.max(1, Math.min(100, Math.floor(Number(quantity) || 1)));
+
+      const clonedConfig: Record<string, unknown> = {
+        ...structuredClone(rawConfig),
+        w: validWidth,
+        h: validHeight,
+        width: validWidth,
+        height: validHeight,
+      };
+
+      if (validQty === 1) {
+        const created = await createProjectPosition(projectId, {
+          projectId,
+          code: newCode.trim(),
+          floorId: targetFloorId ? Number(targetFloorId) : undefined,
+          templateDoorId: selectedDoor.id,
+          description: description.trim() || selectedDoor.name,
+          doorType: selectedDoor.type || 'door',
+          width: validWidth,
+          height: validHeight,
+          brandId: selectedDoor.doorSeries?.brandId || undefined,
+          doorSeriesId: selectedDoor.doorSeriesId || undefined,
+          systemConfig: clonedConfig,
+        });
+        return [created];
+      }
+
+      return bulkCreateProjectPositions(projectId, {
         projectId,
-        code: newCode.trim(),
+        baseCode: normalizeBulkBaseCode(newCode),
+        quantity: validQty,
         floorId: targetFloorId ? Number(targetFloorId) : undefined,
         templateDoorId: selectedDoor.id,
         description: description.trim() || selectedDoor.name,
         doorType: selectedDoor.type || 'door',
-        width: Number(sc.w) || 1200,
-        height: Number(sc.h) || 2200,
+        width: validWidth,
+        height: validHeight,
         brandId: selectedDoor.doorSeries?.brandId || undefined,
         doorSeriesId: selectedDoor.doorSeriesId || undefined,
-        systemConfig: sc,
+        systemConfig: clonedConfig,
       });
     },
-    onSuccess: (newPos) => {
+    onSuccess: (createdList) => {
       queryClient.invalidateQueries({ queryKey: ['project_positions', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      toast.success(`Đã thêm cửa ${newPos.code} vào dự án`);
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      if (createdList.length === 1) {
+        toast.success(`Đã thêm cửa ${createdList[0].code} vào dự án`);
+      } else {
+        toast.success(`Đã thêm hàng loạt ${createdList.length} bộ cửa vào dự án`);
+      }
       handleClose();
     },
     onError: (err) => showErrorToast(err, 'Lỗi thêm cửa vào dự án'),
   });
 
   const handlePickDoor = (door: Door) => {
+    const sc = (door.systemConfig || {}) as Record<string, unknown>;
+    const defaultW = Number(sc.w) || Number(sc.width) || 1200;
+    const defaultH = Number(sc.h) || Number(sc.height) || 2200;
     if (projectId) {
       setSelectedDoor(door);
       setNewCode('');
       setDescription(door.name || '');
+      setWidth(defaultW);
+      setHeight(defaultH);
+      setQuantity(1);
       setTargetFloorId(typeof selectedFloorId === 'number' ? selectedFloorId : floors?.[0]?.id || 0);
       setStep('info');
     } else if (onSelectDoor) {
-      onSelectDoor(door);
+      onSelectDoor(door, defaultW, defaultH);
       handleClose();
     }
   };
-
-  const selectedDoorConfig = (selectedDoor?.systemConfig || {}) as Record<string, unknown>;
 
   return (
     <Modal
@@ -107,74 +154,25 @@ export function TemplateDoorPickerModal({
       className={step === 'select' ? 'md:max-w-6xl xl:max-w-7xl md:w-[94vw] p-0 overflow-hidden' : 'max-w-lg w-full p-0 overflow-hidden'}
     >
       {step === 'info' ? (
-        <div className="flex flex-col">
-          <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-            <button
-              type="button"
-              onClick={() => setStep('select')}
-              className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-primary font-medium cursor-pointer transition-colors"
-            >
-              <ArrowLeft size={14} /> Chọn mẫu khác
-            </button>
-          </div>
-
-          <div className="p-4 space-y-3.5">
-            <div className="flex items-center gap-3 p-2.5 bg-slate-50/70 border border-slate-200/80 rounded-lg">
-              <div className="w-14 h-14 bg-white border border-slate-200 rounded shrink-0 flex items-center justify-center overflow-hidden p-1">
-                {selectedDoor && <DoorThumbnail door={selectedDoor} hideDimensions className="w-full h-full" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="text-xs font-bold text-slate-800 truncate">{selectedDoor?.name}</h4>
-                <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                  Mẫu: {selectedDoor?.code} • Kích thước: {Number(selectedDoorConfig.w) || 1200} × {Number(selectedDoorConfig.h) || 2200} mm
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3.5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
-                <Input
-                  label="Mã cửa (Code) *"
-                  placeholder="Nhập mã cửa (VD: D1-01)"
-                  value={newCode}
-                  onChange={(e) => setNewCode(e.target.value)}
-                  autoFocus
-                  fullWidth
-                />
-
-                {floors.length > 0 && (
-                  <div className="flex flex-col gap-1.5 w-full">
-                    <label className="text-xs font-semibold text-gray-700 select-none">Tầng bố trí *</label>
-                    <select
-                      value={targetFloorId}
-                      onChange={(e) => setTargetFloorId(Number(e.target.value))}
-                      className="w-full h-10 px-3 text-base md:text-sm bg-white border border-gray-200 rounded-md outline-none hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 text-gray-900 transition-all duration-200"
-                    >
-                      {floors.map((fl) => (
-                        <option key={fl.id} value={fl.id}>{fl.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              <Input label="Mô tả" placeholder="VD: Cửa đi phòng khách" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth />
-            </div>
-          </div>
-
-          <div className="p-3 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50/50">
-            <Button variant="outline" size="sm" onClick={() => setStep('select')}>Quay lại</Button>
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={!newCode.trim() || isSubmitting}
-              loading={isSubmitting}
-              onClick={() => createPositionMutate()}
-            >
-              Thêm vào dự án
-            </Button>
-          </div>
-        </div>
+        <TemplateDoorInfoStep
+          selectedDoor={selectedDoor}
+          newCode={newCode}
+          onChangeCode={setNewCode}
+          targetFloorId={targetFloorId}
+          onChangeFloorId={setTargetFloorId}
+          floors={floors}
+          width={width}
+          onChangeWidth={setWidth}
+          height={height}
+          onChangeHeight={setHeight}
+          quantity={quantity}
+          onChangeQuantity={setQuantity}
+          description={description}
+          onChangeDescription={setDescription}
+          isSubmitting={isSubmitting}
+          onBack={() => setStep('select')}
+          onSubmit={() => createPositionMutate()}
+        />
       ) : (
         <div className="flex flex-col h-[80vh]">
           <div className="p-3 border-b border-slate-200 bg-slate-50/70 flex flex-wrap items-center justify-between gap-3">

@@ -68,9 +68,9 @@ export interface ProjectCreate {
   latitude?: number;
   longitude?: number;
   address?: string;
-  defaultBrandId?: number;
-  defaultSeriesId?: number;
-  defaultColorId?: number;
+  defaultBrandId?: number | null;
+  defaultSeriesId?: number | null;
+  defaultColorId?: number | null;
   startDate?: string;
   targetDate?: string;
   handoverDate?: string;
@@ -85,9 +85,9 @@ export interface ProjectUpdate {
   latitude?: number;
   longitude?: number;
   address?: string;
-  defaultBrandId?: number;
-  defaultSeriesId?: number;
-  defaultColorId?: number;
+  defaultBrandId?: number | null;
+  defaultSeriesId?: number | null;
+  defaultColorId?: number | null;
   startDate?: string;
   targetDate?: string;
   handoverDate?: string;
@@ -102,6 +102,15 @@ export interface ProjectQueryParams {
   code?: string;
   offset?: number;
   limit?: number;
+}
+
+export interface ProjectStatsResponse {
+  total: number;
+  planning: number;
+  quoting: number;
+  inProgress: number;
+  completed: number;
+  cancelled: number;
 }
 
 export interface ProjectActivity {
@@ -231,6 +240,7 @@ export interface ProjectDoorPositionBulkCreate {
   colorId?: number;
   glassId?: number;
   gasketId?: number;
+  systemConfig?: Record<string, any>;
 }
 
 export interface ProjectDoorPositionUpdate {

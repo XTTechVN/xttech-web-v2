@@ -15,6 +15,7 @@ interface MaterialStandardCardProps {
   brandOptions: CompactSelectOption[];
   seriesOptions: CompactSelectOption[];
   colorOptions: CompactSelectOption[];
+  onEnableCatalogs?: () => void;
   onUpdate: (field: string, payload: Partial<ProjectUpdate>) => void;
 }
 
@@ -28,6 +29,7 @@ export function MaterialStandardCard({
   brandOptions,
   seriesOptions,
   colorOptions,
+  onEnableCatalogs,
   onUpdate,
 }: MaterialStandardCardProps) {
   const brand = project.defaultBrand;
@@ -64,11 +66,12 @@ export function MaterialStandardCard({
             options={brandOptions}
             isLoading={updatingField === 'brand' || isLoadingBrands}
             placeholder="Chọn hãng nhôm"
+            onOpen={onEnableCatalogs}
             onChange={(val) => {
               onUpdate('brand', {
                 defaultBrandId: Number(val),
-                defaultSeriesId: undefined,
-                defaultColorId: undefined,
+                defaultSeriesId: null,
+                defaultColorId: null,
               });
             }}
           />
@@ -91,6 +94,7 @@ export function MaterialStandardCard({
             placeholder={currentBrandId ? 'Chọn hệ nhôm' : 'Cần chọn hãng trước'}
             disabled={!currentBrandId}
             emptyText={currentBrandId ? 'Hãng này chưa có hệ nhôm' : 'Vui lòng chọn hãng nhôm'}
+            onOpen={onEnableCatalogs}
             onChange={(val) => {
               onUpdate('series', { defaultSeriesId: Number(val) });
             }}
@@ -115,6 +119,7 @@ export function MaterialStandardCard({
             placeholder={currentBrandId ? 'Chọn màu sơn' : 'Cần chọn hãng trước'}
             disabled={!currentBrandId}
             emptyText={currentBrandId ? 'Hãng này chưa có màu sơn' : 'Vui lòng chọn hãng nhôm'}
+            onOpen={onEnableCatalogs}
             onChange={(val) => {
               onUpdate('color', { defaultColorId: Number(val) });
             }}

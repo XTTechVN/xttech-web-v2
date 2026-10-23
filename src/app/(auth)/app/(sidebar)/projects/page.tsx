@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { FolderOpen, CheckCircle2, Clock, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { StatsCard } from '@/components';
-import { getCustomers, getProjects, deleteProject } from '@/actions';
+import { getCustomers, getProjectStats, deleteProject } from '@/actions';
 import { usePermission } from '@/hooks';
 import type { Project } from '@/types';
 import queryClient from '@/utils/query';
@@ -28,24 +28,10 @@ const Page = () => {
     staleTime: 60_000,
   });
 
-  // Lấy thống kê dự án theo quyền truy cập
+  // Lấy thống kê dự án nhẹ từ endpoint агреgate /projects/stats
   const { data: projectsStatsData } = useQuery({
     queryKey: ['projects', 'stats-summary', scopedUserId],
-    queryFn: async () => {
-      const res = await getProjects({ limit: 500, userId: scopedUserId });
-      const items = res.items || [];
-      const total = res.meta?.total ?? items.length;
-      let completed = 0;
-      let inProgress = 0;
-      for (const item of items) {
-        if (item.status === 'completed') {
-          completed += 1;
-        } else if (item.status !== 'cancelled') {
-          inProgress += 1;
-        }
-      }
-      return { total, inProgress, completed };
-    },
+    queryFn: () => getProjectStats({ userId: scopedUserId }),
     staleTime: 30_000,
   });
 

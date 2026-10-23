@@ -38,9 +38,10 @@ export function CreateProductionOrderModal({
         dueDate: dueDate || undefined,
       }),
     onSuccess: (order) => {
-      ['production_orders', 'progress_matrix', 'project_positions'].forEach((key) =>
+      ['production_orders', 'progress_matrix', 'project_positions', 'project'].forEach((key) =>
         queryClient.invalidateQueries({ queryKey: [key, projectId] }),
       );
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success(`Đã lập lệnh sản xuất ${order.code}`);
       setSelectedIds([]);
       onClose();

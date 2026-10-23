@@ -5,10 +5,11 @@ import { FolderOpen, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { updateProjectPosition } from '@/actions';
 import { Button, DoorStudioModal } from '@/components';
-import type { Door, ProjectDoorPosition } from '@/types';
+import type { Door, ProjectDoorPosition, ProjectFloor } from '@/types';
 import { FloorSidebar } from './components/floor-sidebar';
 import { PositionCard } from './components/position-card';
 import { useProjectPositions } from './hooks/use-project-positions';
+import { ConfirmDeleteModal } from './modals/confirm-delete-modal';
 import { FloorCreateModal } from './modals/floor-create-modal';
 import { PositionEditModal } from './modals/position-edit-modal';
 import { PositionMeasureModal } from './modals/position-measure-modal';
@@ -44,6 +45,8 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
   const [editingBasicPos, setEditingBasicPos] = useState<ProjectDoorPosition | null>(null);
   const [measuringPos, setMeasuringPos] = useState<ProjectDoorPosition | null>(null);
   const [qrModalPos, setQrModalPos] = useState<ProjectDoorPosition | null>(null);
+  const [floorToDelete, setFloorToDelete] = useState<ProjectFloor | null>(null);
+  const [positionToDelete, setPositionToDelete] = useState<ProjectDoorPosition | null>(null);
 
   const [isStudioOpen, setIsStudioOpen] = useState(false);
   const [studioDoor, setStudioDoor] = useState<Door | null>(null);
@@ -105,11 +108,7 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
         isLoading={isLoadingFloors}
         onSelectFloor={setSelectedFloorId}
         onAddFloorClick={() => setIsFloorModalOpen(true)}
-        onDeleteFloor={(floor) => {
-          if (confirm(`Bạn có chắc muốn xóa tầng ${floor.name}?`)) {
-            deleteFloorMutation.mutate(floor.id);
-          }
-        }}
+        onDeleteFloor={(floor) => setFloorToDelete(floor)}
       />
 
       <div className="flex-1 w-full bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs space-y-4">
@@ -166,11 +165,7 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
                 onMeasure={setMeasuringPos}
                 onQrCode={setQrModalPos}
                 onDuplicate={(p) => duplicatePositionMutation.mutate(p)}
-                onDelete={(p) => {
-                  if (confirm(`Xóa bộ cửa ${p.code}?`)) {
-                    deletePositionMutation.mutate(p.id);
-                  }
-                }}
+                onDelete={(p) => setPositionToDelete(p)}
               />
             ))}
           </div>
@@ -213,6 +208,47 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
       />
 
       <PositionQrModal position={qrModalPos} onClose={() => setQrModalPos(null)} />
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(floorToDelete)}
+        title="Xác nhận xóa tầng"
+        description={
+          <>
+            Bạn có chắc chắn muốn xóa tầng{' '}
+            <strong className="text-slate-900 font-semibold">{floorToDelete?.name}</strong>?
+          </>
+        }
+        isPending={deleteFloorMutation.isPending}
+        onClose={() => setFloorToDelete(null)}
+        onConfirm={() => {
+          if (floorToDelete) {
+            deleteFloorMutation.mutate(floorToDelete.id, {
+              onSettled: () => setFloorToDelete(null),
+            });
+          }
+        }}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(positionToDelete)}
+        title="Xác nhận xóa vị trí cửa"
+        description={
+          <>
+            Bạn có chắc chắn muốn xóa vị trí cửa{' '}
+            <strong className="text-slate-900 font-semibold">{positionToDelete?.code}</strong>
+            {positionToDelete?.description ? ` (${positionToDelete.description})` : ''}?
+          </>
+        }
+        isPending={deletePositionMutation.isPending}
+        onClose={() => setPositionToDelete(null)}
+        onConfirm={() => {
+          if (positionToDelete) {
+            deletePositionMutation.mutate(positionToDelete.id, {
+              onSettled: () => setPositionToDelete(null),
+            });
+          }
+        }}
+      />
 
       <DoorStudioModal
         isOpen={isStudioOpen}

@@ -23,6 +23,7 @@ export function useAdvanceProgress(projectId: number, onDone?: () => void) {
       queryClient.invalidateQueries({ queryKey: ['production_orders', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project_positions', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success(
         `Đã cập nhật ${variables.positionIds.length} cửa: ${PROGRESS_STEP_LABEL[variables.targetStep]}`,
       );
