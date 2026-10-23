@@ -2,6 +2,15 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-23
+
+### Changed
+- **Phân quyền Soạn thảo & Phê duyệt Cơ chế (`rules/`):**
+  - [`rules-header.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-header.tsx), [`rules-page-content.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-page-content.tsx): Chỉ hiển thị nút `+ Soạn cơ chế` cho nhóm quyền `hr`, `admin`, `super` (`isManager`).
+  - [`rules-tabs.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-tabs.tsx), [`use-rules-filters.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_hooks/use-rules-filters.ts): Ẩn hoàn toàn tab `Soạn thảo` và `Chờ tôi xử lý` đối với nhân viên thường (`!isManager`) và khóa điều hướng URL về tab `current`.
+  - [`rule-permissions.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_utils/rule-permissions.ts), [`rules-card-grid.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-card-grid.tsx), [`rule-detail-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rule-detail-modal.tsx): Bổ sung cờ `canReplace` (chỉ hiển thị nút `Soạn cơ chế thay thế` cho `hr`/`admin`/`super`); giới hạn `canReview` chỉ hiển thị khung Thẩm định & Phê duyệt cho đúng người được gửi yêu cầu duyệt (`isApprover && ctx.isManager`).
+  - [`use-rules-share-options.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_hooks/use-rules-share-options.ts): Loại bỏ fallback lấy nhân viên thường trong danh sách chọn người phê duyệt cơ chế, chỉ giữ các nhân sự có thẩm quyền (`isApproverEligible`).
+
 ## [Unreleased] - 2026-10-22
 
 ### Added

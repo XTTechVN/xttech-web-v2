@@ -36,7 +36,7 @@ interface EditorState {
 export function RulesPageContent() {
   const queryClient = useQueryClient();
   const { user, isManager } = usePermission();
-  const filters = useRulesFilters();
+  const filters = useRulesFilters(isManager);
   const { data: summary } = useRulesSummary();
   const { data: list, isLoading } = useRulesList(filters.params);
 
@@ -86,8 +86,8 @@ export function RulesPageContent() {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white">
-      <RulesHeader search={filters.search} onSearchChange={filters.setSearch} onCreate={() => openEditor(null)} />
-      <RulesTabs activeTab={filters.tab} summary={summary} onChange={filters.setTab} />
+      <RulesHeader search={filters.search} canCreate={isManager} onSearchChange={filters.setSearch} onCreate={() => openEditor(null)} />
+      <RulesTabs activeTab={filters.tab} canManage={isManager} summary={summary} onChange={filters.setTab} />
       <RulesFilterBar
         tab={filters.tab}
         chip={filters.chip}

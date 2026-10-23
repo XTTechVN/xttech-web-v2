@@ -13,13 +13,16 @@ import {
   type RulesTab,
 } from '../_utils/rules-constants';
 
-const toTab = (value?: string): RulesTab => (RULES_TAB_VALUES.includes(value as RulesTab) ? (value as RulesTab) : 'current');
+const toTab = (value?: string, canManage = false): RulesTab => {
+  if (!canManage) return 'current';
+  return RULES_TAB_VALUES.includes(value as RulesTab) ? (value as RulesTab) : 'current';
+};
 
 const toChip = (value?: string): CurrentScopeChip =>
   CURRENT_SCOPE_CHIPS.includes(value as CurrentScopeChip) ? (value as CurrentScopeChip) : 'all';
 
 // Toàn bộ trạng thái bộ lọc được đồng bộ lên URL để chia sẻ / F5 không mất ngữ cảnh
-export function useRulesFilters() {
+export function useRulesFilters(canManage = false) {
   const [rawTab, setTab] = useQueryParam('tab', 'current');
   const [rawChip, setChip] = useQueryParam('scope', 'all');
   const [search, setSearch] = useQueryParam('search', '');
@@ -29,7 +32,7 @@ export function useRulesFilters() {
   const [expiring, setExpiring] = useQueryParam('expiring', '');
   const [rawOffset, setOffset] = useQueryParam('offset', '0');
 
-  const tab = toTab(rawTab);
+  const tab = toTab(rawTab, canManage);
   const chip = toChip(rawChip);
   const offset = Number(rawOffset) || 0;
   const isCurrentTab = tab === 'current';

@@ -106,6 +106,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
   const actions = context ? getRuleActions(doc, context) : null;
   const canEdit = actions?.canEdit ?? false;
   const canDelete = actions?.canDelete ?? false;
+  const canReplace = actions?.canReplace ?? false;
 
   const currentVersion = doc.currentVersion;
   const fileName = currentVersion?.fileName || doc.title;
@@ -186,7 +187,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
                   <span>Chi tiết &amp; Lịch sử</span>
                 </button>
 
-                {doc.status === 'published' && onReplace && (
+                {canReplace && onReplace && (
                   <button
                     type="button"
                     onClick={() => {

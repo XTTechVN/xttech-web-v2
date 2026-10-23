@@ -6,11 +6,17 @@ import { Button } from '@/components';
 
 interface RulesHeaderProps {
   search: string;
+  canCreate?: boolean;
   onSearchChange: (value: string) => void;
   onCreate: () => void;
 }
 
-export const RulesHeader: React.FC<RulesHeaderProps> = ({ search, onSearchChange, onCreate }) => (
+export const RulesHeader: React.FC<RulesHeaderProps> = ({
+  search,
+  canCreate = false,
+  onSearchChange,
+  onCreate,
+}) => (
   <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4">
     <div className="flex items-center gap-3 min-w-0">
       <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -35,9 +41,11 @@ export const RulesHeader: React.FC<RulesHeaderProps> = ({ search, onSearchChange
           className="w-full h-9 pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
         />
       </div>
-      <Button id="rules-create-button" size="sm" leftIcon={<Plus size={14} />} onClick={onCreate}>
-        Soạn cơ chế
-      </Button>
+      {canCreate && (
+        <Button id="rules-create-button" size="sm" leftIcon={<Plus size={14} />} onClick={onCreate}>
+          Soạn cơ chế
+        </Button>
+      )}
     </div>
   </div>
 );

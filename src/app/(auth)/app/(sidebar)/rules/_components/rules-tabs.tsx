@@ -8,6 +8,7 @@ import type { RulesTab } from '../_utils/rules-constants';
 
 interface RulesTabsProps {
   activeTab: RulesTab;
+  canManage?: boolean;
   summary?: DocumentRulesSummary;
   onChange: (tab: RulesTab) => void;
 }
@@ -20,7 +21,12 @@ interface TabDefinition {
   badgeClass: string;
 }
 
-export const RulesTabs: React.FC<RulesTabsProps> = ({ activeTab, summary, onChange }) => {
+export const RulesTabs: React.FC<RulesTabsProps> = ({
+  activeTab,
+  canManage = false,
+  summary,
+  onChange,
+}) => {
   const tabs: TabDefinition[] = [
     {
       value: 'current',
@@ -45,8 +51,13 @@ export const RulesTabs: React.FC<RulesTabsProps> = ({ activeTab, summary, onChan
     },
   ];
 
-  // Tab "Chờ tôi xử lý" chỉ hiện khi có việc cần xử lý (hoặc đang đứng ở tab đó)
-  const visibleTabs = tabs.filter((tab) => tab.value !== 'to_process' || tab.count > 0 || activeTab === 'to_process');
+  // Chỉ hr/admin/super mới thấy tab "Soạn thảo" và "Chờ tôi xử lý"
+  const visibleTabs = tabs.filter((tab) => {
+    if (tab.value === 'current') return true;
+    if (!canManage) return false;
+    if (tab.value === 'to_process') return tab.count > 0 || activeTab === 'to_process';
+    return true;
+  });
 
   return (
     <div className="flex gap-1 border-b border-slate-200 px-4 mt-3 overflow-x-auto" role="tablist">

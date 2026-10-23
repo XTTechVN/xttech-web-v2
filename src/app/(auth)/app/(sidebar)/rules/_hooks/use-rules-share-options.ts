@@ -34,22 +34,11 @@ export function useRulesShareOptions(isEnabled: boolean, excludeUserId?: string)
 
   const approverOptions = useMemo<SelectOption[]>(() => {
     const employees: any[] = employeesData?.items || [];
-    const eligible = employees.filter((emp) => emp?.id && String(emp.id) !== excludeUserId && isApproverEligible(emp));
-
-    if (eligible.length > 0) {
-      return eligible.map((emp) => ({
-        value: String(emp.id),
-        label: `${emp.fullName || emp.username} [${getApproverRoleBadge(emp)}]`,
-        subLabel: emp.email,
-      }));
-    }
-
-    // Fallback: Nếu chưa có nhân sự khác mang role admin/hr, hiển thị nhân sự khác
     return employees
-      .filter((emp) => emp?.id && String(emp.id) !== excludeUserId)
+      .filter((emp) => emp?.id && String(emp.id) !== excludeUserId && isApproverEligible(emp))
       .map((emp) => ({
         value: String(emp.id),
-        label: `${emp.fullName || emp.username} (${emp.email || 'Nhân sự'})`,
+        label: `${emp.fullName || emp.username} [${getApproverRoleBadge(emp)}]`,
         subLabel: emp.email,
       }));
   }, [employeesData, excludeUserId]);
