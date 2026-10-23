@@ -1,7 +1,9 @@
 import type { DocumentItem } from './document';
 
 // Góc nhìn danh sách cơ chế (khớp RulesScope ở backend)
-export type RulesScope = 'all' | 'mine' | 'department' | 'company' | 'drafts' | 'to_process';
+export type RulesScope = 'all' | 'mine' | 'department' | 'company' | 'user' | 'drafts' | 'to_process';
+
+export type RulesViewMode = 'grid' | 'list';
 
 export interface GetDocumentRulesParams {
   scope?: RulesScope;
@@ -9,6 +11,8 @@ export interface GetDocumentRulesParams {
   status?: string;
   isRead?: boolean;
   expiringSoon?: boolean;
+  departmentIds?: string;
+  recipientUserIds?: string;
   search?: string;
   offset?: number;
   limit?: number;
@@ -26,6 +30,8 @@ export interface DocumentRulesSummary {
   draftCount: number;
   pendingActionCount: number;
   expiringSoonCount: number;
+  publishedCount?: number;
+  readRate?: number;
 }
 
 export interface DocumentApprovalLog {
@@ -69,9 +75,10 @@ export const APPROVAL_ACTION_MAP: Record<string, string> = {
 // Nhãn các tab / chip của trang cơ chế
 export const RULES_SCOPE_LABEL_MAP: Record<RulesScope, string> = {
   all: 'Tất cả',
-  mine: 'Gửi cho tôi',
-  department: 'Phòng ban',
   company: 'Toàn công ty',
+  department: 'Theo phòng ban',
+  user: 'Theo cá nhân',
+  mine: 'Gửi cho tôi',
   drafts: 'Soạn thảo',
   to_process: 'Chờ tôi xử lý',
 };
