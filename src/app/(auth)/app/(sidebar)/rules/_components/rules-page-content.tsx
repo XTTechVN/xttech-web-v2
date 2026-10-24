@@ -5,22 +5,18 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { DocumentItem } from '@/types';
 import { usePermission } from '@/hooks';
 import { markDocumentAsRead } from '@/actions/document';
-import { DocumentPreviewModal } from '@/app/(auth)/app/(sidebar)/documents/_components/document-preview-modal';
-import { RejectDocumentModal } from '@/app/(auth)/app/(sidebar)/documents/_components/reject-document-modal';
-import { DeleteConfirmModal } from '@/app/(auth)/app/(sidebar)/documents/_components/delete-confirm-modal';
+import { DocumentPreviewModal, RejectDocumentModal, ConfirmActionModal } from '@/components/documents';
+import { RULES_QUERY_KEYS } from '@/utils';
 import { useRulesFilters } from '../_hooks/use-rules-filters';
 import { useRulesList, useRulesSummary } from '../_hooks/use-rules-queries';
 import { useRuleActions } from '../_hooks/use-rule-actions';
 import { useRulesShareOptions } from '../_hooks/use-rules-share-options';
-import { RULES_QUERY_KEYS } from '../_utils/rules-constants';
 import { RulesHeader } from './rules-header';
 import { RulesTabs } from './rules-tabs';
 import { RulesFilterBar } from './rules-filter-bar';
 import { RulesTable } from './rules-table';
 import { RulesCardGrid } from './rules-card-grid';
-import { RuleDetailModal } from './rule-detail-modal';
-import { RuleEditorModal } from './rule-editor-modal';
-import { RulePublishModal } from './rule-publish-modal';
+import { RuleDetailModal, RuleEditorModal, RulePublishModal } from './modals';
 
 const EMPTY_HINTS = {
   current: 'Chưa có cơ chế nào khớp với bộ lọc hiện tại.',
@@ -212,7 +208,7 @@ export function RulesPageContent() {
         }}
       />
 
-      <DeleteConfirmModal
+      <ConfirmActionModal
         isOpen={Boolean(deleteDoc)}
         onClose={() => setDeleteDoc(null)}
         title="Xác nhận xóa văn bản"

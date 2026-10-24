@@ -1,26 +1,16 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
-import {
-  Search,
-  RotateCcw,
-  LayoutGrid,
-  List,
-  AlertCircle,
-  SearchX,
-  Trash2,
-} from 'lucide-react';
+import React from 'react';
+import { Search, RotateCcw, LayoutGrid, List, AlertCircle, SearchX, Trash2 } from 'lucide-react';
 import { Select, Button } from '@/components';
-import { getTrashItems, restoreTrashItem, purgeTrashItem } from '@/actions/trash';
-import type { TrashItem, TrashItemType } from '@/types';
+import type { TrashItemType } from '@/types';
+import { toExplorerItemKey } from '@/hooks';
+import { ExplorerContextMenu, ConfirmActionModal } from '@/components/documents';
 import { TrashHeader } from './trash-header';
 import { TrashCard } from './trash-card';
 import { TrashListItem } from './trash-list-item';
-import { RestoreConfirmModal } from './restore-confirm-modal';
-import { PurgeConfirmModal } from './purge-confirm-modal';
-import { DOC_QUERY_KEYS, invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
+import { useTrashExplorer } from '../_hooks/use-trash-explorer';
+import { getTrashItemDisplayName } from '../_utils/trash-helpers';
 
 const ITEM_TYPE_OPTIONS = [
   { value: 'all', label: 'Tất cả loại mục' },
@@ -28,214 +18,61 @@ const ITEM_TYPE_OPTIONS = [
   { value: 'document', label: 'Chỉ tài liệu' },
 ];
 
-/** Lấy tên hiển thị an toàn của mục trong thùng rác */
-const getItemDisplayName = (item: TrashItem): string => {
-  return item.title || (item as any).name || (item as any).folder_name || (item as any).fileName || 'mục';
-};
-
 export const TrashTab: React.FC = () => {
-  const queryClient = useQueryClient();
-
-  // Toolbar & View state
-  const [search, setSearch] = useState('');
-  const [itemTypeFilter, setItemTypeFilter] = useState<'all' | TrashItemType>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-  // Modal states
-  const [restoreItem, setRestoreItem] = useState<TrashItem | null>(null);
-  const [isRestoreOpen, setIsRestoreOpen] = useState(false);
-
-  const [purgeItem, setPurgeItem] = useState<TrashItem | null>(null);
-  const [isPurgeOpen, setIsPurgeOpen] = useState(false);
-
-  const [activeRestoringId, setActiveRestoringId] = useState<number | null>(null);
-  const [activePurgingId, setActivePurgingId] = useState<number | null>(null);
-
-  // 1. Fetch Trash Items
   const {
-    data: rawTrashItems = [],
+    currentFolderId,
+    setCurrentFolderId,
+    currentFolder,
+    parentFolder,
+    breadcrumbs,
+    search,
+    setSearch,
+    itemTypeFilter,
+    setItemTypeFilter,
+    viewMode,
+    setViewMode,
+    filteredItems,
+    folderCount,
+    docCount,
+    hasAnyTrash,
+    hasActiveFilters,
     isLoading,
     isError,
-    refetch,
-  } = useQuery<TrashItem[]>({
-    queryKey: DOC_QUERY_KEYS.trash.root,
-    queryFn: getTrashItems,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
+    refetchAll,
+    handleGoBack,
+    handleResetFilters,
+    selectedItemKeys,
+    clearSelection,
+    handleSelectItem,
+    handleContextMenuItem,
+    handleContextMenuBackground,
+    contextMenu,
+    closeContextMenu,
+    resolvedContextMenu,
+    restoreModal,
+    setRestoreModal,
+    purgeModal,
+    setPurgeModal,
+    openSingleRestore,
+    openSinglePurge,
+    openEmptyTrashModal,
+    restoreMutation,
+    purgeMutation,
+    activeRestoringId,
+    activePurgingId,
+  } = useTrashExplorer();
 
-  const trashItems: TrashItem[] = useMemo(() => {
-    if (Array.isArray(rawTrashItems)) return rawTrashItems;
-    if (Array.isArray((rawTrashItems as any)?.items)) return (rawTrashItems as any).items;
-    if (Array.isArray((rawTrashItems as any)?.data)) return (rawTrashItems as any).data;
-    return [];
-  }, [rawTrashItems]);
-
-  // 2. Mutations
-  const restoreMutation = useMutation({
-    mutationFn: async (item: TrashItem) => {
-      setActiveRestoringId(item.id);
-      return restoreTrashItem({
-        itemType: item.itemType,
-        itemId: item.id,
-      });
-    },
-    onSuccess: (_, item) => {
-      const name = getItemDisplayName(item);
-      toast.success(`Đã khôi phục ${item.itemType === 'folder' ? 'thư mục' : 'tài liệu'} "${name}" thành công!`);
-
-      // Cập nhật trực tiếp cache Thùng rác để xóa item khỏi giao diện ngay lập tức mà KHÔNG gọi lại API trash
-      queryClient.setQueryData(DOC_QUERY_KEYS.trash.root, (old: any) => {
-        if (Array.isArray(old)) {
-          return old.filter((t: TrashItem) => t.id !== item.id);
-        }
-        if (old && Array.isArray(old.items)) {
-          return { ...old, items: old.items.filter((t: TrashItem) => t.id !== item.id) };
-        }
-        if (old && Array.isArray(old.data)) {
-          return { ...old, data: old.data.filter((t: TrashItem) => t.id !== item.id) };
-        }
-        return [];
-      });
-
-      // Đánh dấu các query tài liệu/thư mục cần cập nhật khi người dùng chuyển sang trang khác mà không kích hoạt gọi mạng lúc này
-      invalidateDocumentQueries(queryClient, { refetchType: 'none' });
-
-      setIsRestoreOpen(false);
-      setRestoreItem(null);
-    },
-    onError: (err: any) => {
-      toast.error(err.message || 'Không thể khôi phục mục đã chọn');
-    },
-    onSettled: () => {
-      setActiveRestoringId(null);
-    },
-  });
-
-  const purgeMutation = useMutation({
-    mutationFn: async (item: TrashItem) => {
-      setActivePurgingId(item.id);
-      return purgeTrashItem({
-        itemType: item.itemType,
-        itemId: item.id,
-      });
-    },
-    onSuccess: (_, item) => {
-      const name = getItemDisplayName(item);
-      toast.success(`Đã xóa vĩnh viễn ${item.itemType === 'folder' ? 'thư mục' : 'tài liệu'} "${name}"!`);
-
-      // Cập nhật trực tiếp cache Thùng rác để xóa item khỏi giao diện ngay lập tức mà KHÔNG gọi lại API trash
-      queryClient.setQueryData(DOC_QUERY_KEYS.trash.root, (old: any) => {
-        if (Array.isArray(old)) {
-          return old.filter((t: TrashItem) => t.id !== item.id);
-        }
-        if (old && Array.isArray(old.items)) {
-          return { ...old, items: old.items.filter((t: TrashItem) => t.id !== item.id) };
-        }
-        if (old && Array.isArray(old.data)) {
-          return { ...old, data: old.data.filter((t: TrashItem) => t.id !== item.id) };
-        }
-        return [];
-      });
-
-      setIsPurgeOpen(false);
-      setPurgeItem(null);
-    },
-    onError: (err: any) => {
-      toast.error(err.message || 'Không thể xóa vĩnh viễn mục đã chọn');
-    },
-    onSettled: () => {
-      setActivePurgingId(null);
-    },
-  });
-
-  // Filter items
-  const filteredItems = useMemo(() => {
-    return trashItems.filter((item) => {
-      if (itemTypeFilter !== 'all' && item.itemType !== itemTypeFilter) {
-        return false;
-      }
-      if (search.trim()) {
-        const q = search.toLowerCase().trim();
-        const title = (item.title || (item as any).name || (item as any).folder_name || '').toLowerCase();
-        const code = (item.code || '').toLowerCase();
-        const fileName = (item.fileName || '').toLowerCase();
-        const category = (item.categoryName || '').toLowerCase();
-        const deletedBy = (item.deletedByName || '').toLowerCase();
-
-        if (!title.includes(q) && !code.includes(q) && !fileName.includes(q) && !category.includes(q) && !deletedBy.includes(q)) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [trashItems, search, itemTypeFilter]);
-
-  const folderCount = useMemo(
-    () => filteredItems.filter((i) => i.itemType === 'folder').length,
-    [filteredItems]
-  );
-  const docCount = useMemo(
-    () => filteredItems.filter((i) => i.itemType === 'document').length,
-    [filteredItems]
-  );
-
-  const hasActiveFilters = Boolean(search.trim() || itemTypeFilter !== 'all');
-
-  const handleResetFilters = useCallback(() => {
-    setSearch('');
-    setItemTypeFilter('all');
-  }, []);
-
-  const handleOpenRestore = useCallback((item: TrashItem) => {
-    setRestoreItem(item);
-    setIsRestoreOpen(true);
-  }, []);
-
-  const handleCloseRestore = useCallback(() => {
-    if (!restoreMutation.isPending) {
-      setIsRestoreOpen(false);
-      setRestoreItem(null);
-    }
-  }, [restoreMutation.isPending]);
-
-  const handleConfirmRestore = useCallback(() => {
-    if (restoreItem) {
-      restoreMutation.mutate(restoreItem);
-    }
-  }, [restoreItem, restoreMutation]);
-
-  const handleOpenPurge = useCallback((item: TrashItem) => {
-    setPurgeItem(item);
-    setIsPurgeOpen(true);
-  }, []);
-
-  const handleClosePurge = useCallback(() => {
-    if (!purgeMutation.isPending) {
-      setIsPurgeOpen(false);
-      setPurgeItem(null);
-    }
-  }, [purgeMutation.isPending]);
-
-  const handleConfirmPurge = useCallback(() => {
-    if (purgeItem) {
-      purgeMutation.mutate(purgeItem);
-    }
-  }, [purgeItem, purgeMutation]);
+  const restoreSingle = restoreModal.items[0];
+  const restoreIsBulk = restoreModal.items.length > 1;
+  const purgeSingle = purgeModal.items[0];
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white select-none">
-      {/* 1. Thanh công cụ Tìm kiếm, Bộ lọc & Nút chuyển chế độ xem (Lưới / Danh sách) */}
       <div className="bg-white border-b border-slate-200/80 p-4 shrink-0 shadow-2xs">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          {/* Trái: Tìm kiếm & Lọc loại mục */}
           <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap flex-1 min-w-0">
-            {/* Input tìm kiếm */}
             <div className="relative w-full sm:w-60 md:w-72">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-              />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="text"
                 value={search}
@@ -245,7 +82,6 @@ export const TrashTab: React.FC = () => {
               />
             </div>
 
-            {/* Bộ lọc loại mục */}
             <div className="w-44 sm:w-48 shrink-0">
               <Select
                 value={itemTypeFilter}
@@ -256,7 +92,6 @@ export const TrashTab: React.FC = () => {
               />
             </div>
 
-            {/* Nút đặt lại bộ lọc */}
             {hasActiveFilters && (
               <Button
                 variant="outline"
@@ -270,15 +105,12 @@ export const TrashTab: React.FC = () => {
             )}
           </div>
 
-          {/* Phải: Chuyển chế độ xem [ ⊞ Lưới | ☰ Danh sách ] */}
           <div className="flex items-center p-0.5 rounded-xl border border-slate-200 bg-slate-100/80 shrink-0">
             <button
               type="button"
               onClick={() => setViewMode('grid')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
-                viewMode === 'grid'
-                  ? 'bg-white text-primary shadow-xs font-semibold'
-                  : 'text-slate-500 hover:text-slate-800'
+                viewMode === 'grid' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Dạng lưới"
             >
@@ -289,9 +121,7 @@ export const TrashTab: React.FC = () => {
               type="button"
               onClick={() => setViewMode('list')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
-                viewMode === 'list'
-                  ? 'bg-white text-primary shadow-xs font-semibold'
-                  : 'text-slate-500 hover:text-slate-800'
+                viewMode === 'list' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Dạng danh sách"
             >
@@ -302,16 +132,28 @@ export const TrashTab: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Nội dung chính toàn chiều rộng */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Header đếm số lượng thư mục & tài liệu */}
+      <div
+        onClick={() => {
+          closeContextMenu();
+          if (selectedItemKeys.size > 0) clearSelection();
+        }}
+        onContextMenu={handleContextMenuBackground}
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+      >
         <TrashHeader
+          currentFolderId={currentFolderId}
+          currentFolder={currentFolder}
+          parentFolder={parentFolder}
+          breadcrumbs={breadcrumbs}
           folderCount={folderCount}
           docCount={docCount}
           isLoading={isLoading}
+          hasAnyTrash={hasAnyTrash}
+          onGoBack={handleGoBack}
+          onNavigateFolder={setCurrentFolderId}
+          onEmptyTrash={openEmptyTrashModal}
         />
 
-        {/* Nội dung danh sách / lưới */}
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
@@ -325,7 +167,7 @@ export const TrashTab: React.FC = () => {
                 <AlertCircle size={24} />
               </div>
               <p className="font-semibold text-slate-800 text-sm">Không thể tải thùng rác</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()} leftIcon={<RotateCcw size={14} />}>
+              <Button variant="outline" size="sm" onClick={refetchAll} leftIcon={<RotateCcw size={14} />}>
                 Thử lại
               </Button>
             </div>
@@ -337,71 +179,111 @@ export const TrashTab: React.FC = () => {
                 {hasActiveFilters ? <SearchX size={22} /> : <Trash2 size={24} />}
               </div>
               <p className="font-semibold text-slate-800 text-sm">
-                {hasActiveFilters ? 'Không tìm thấy kết quả phù hợp' : 'Thùng rác trống'}
+                {hasActiveFilters
+                  ? 'Không tìm thấy kết quả phù hợp'
+                  : currentFolder
+                    ? `Thư mục "${currentFolder.name}" đang trống`
+                    : 'Thùng rác trống'}
               </p>
               <p className="text-xs text-slate-400">
-                {hasActiveFilters
-                  ? 'Thử thay đổi từ khóa hoặc xóa bộ lọc tìm kiếm.'
-                  : 'Không có tài liệu hoặc thư mục nào trong thùng rác.'}
+                {hasActiveFilters ? 'Thử thay đổi từ khóa hoặc xóa bộ lọc tìm kiếm.' : 'Không có tài liệu hoặc thư mục nào tại đây.'}
               </p>
             </div>
           </div>
         ) : viewMode === 'grid' ? (
-          /* 1. HIỂN THỊ DẠNG LƯỚI THẺ (GRID) */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredItems.map((item) => (
-              <TrashCard
-                key={`${item.itemType}-${item.id}`}
-                item={item}
-                onRestore={handleOpenRestore}
-                onPurge={handleOpenPurge}
-                isRestoring={activeRestoringId === item.id}
-                isPurging={activePurgingId === item.id}
-              />
-            ))}
+            {filteredItems.map((item) => {
+              const key = toExplorerItemKey(item.itemType, item.id);
+              return (
+                <TrashCard
+                  key={key}
+                  item={item}
+                  isSelected={selectedItemKeys.has(key)}
+                  onSelectItem={handleSelectItem}
+                  onOpenFolder={setCurrentFolderId}
+                  onContextMenuItem={handleContextMenuItem}
+                  onRestore={openSingleRestore}
+                  onPurge={openSinglePurge}
+                  isRestoring={activeRestoringId === item.id}
+                  isPurging={activePurgingId === item.id}
+                />
+              );
+            })}
           </div>
         ) : (
-          /* 2. HIỂN THỊ DẠNG DANH SÁCH (GOOGLE DRIVE STYLE LIST) */
           <div className="flex flex-col gap-0 border-t border-slate-200/80">
-            {/* Table Header kiểu Google Drive */}
             <div className="flex items-center justify-between py-2.5 px-3.5 border-b border-slate-200 text-xs font-medium text-slate-600 select-none">
               <div className="flex-1 min-w-[260px] pr-3">Tên</div>
-              <div className="w-56 hidden sm:block">Lần sửa đổi gần đây nhất</div>
+              <div className="w-56 hidden sm:block">Thời gian xóa</div>
               <div className="w-44 hidden md:block">Chủ sở hữu</div>
               <div className="w-48 hidden lg:block">Vị trí</div>
               <div className="w-20 text-right"></div>
             </div>
 
-            {/* Rows */}
-            {filteredItems.map((item) => (
-              <TrashListItem
-                key={`${item.itemType}-${item.id}`}
-                item={item}
-                onRestore={handleOpenRestore}
-                onPurge={handleOpenPurge}
-                isRestoring={activeRestoringId === item.id}
-                isPurging={activePurgingId === item.id}
-              />
-            ))}
+            {filteredItems.map((item) => {
+              const key = toExplorerItemKey(item.itemType, item.id);
+              return (
+                <TrashListItem
+                  key={key}
+                  item={item}
+                  isSelected={selectedItemKeys.has(key)}
+                  onSelectItem={handleSelectItem}
+                  onOpenFolder={setCurrentFolderId}
+                  onContextMenuItem={handleContextMenuItem}
+                  onRestore={openSingleRestore}
+                  onPurge={openSinglePurge}
+                  isRestoring={activeRestoringId === item.id}
+                  isPurging={activePurgingId === item.id}
+                />
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Restore Confirm Modal */}
-      <RestoreConfirmModal
-        isOpen={isRestoreOpen}
-        onClose={handleCloseRestore}
-        item={restoreItem}
-        onConfirm={handleConfirmRestore}
+      <ExplorerContextMenu
+        isOpen={contextMenu.isOpen}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        title={resolvedContextMenu.title}
+        items={resolvedContextMenu.items}
+        onClose={closeContextMenu}
+      />
+
+      <ConfirmActionModal
+        isOpen={restoreModal.isOpen && restoreModal.items.length > 0}
+        onClose={() => { if (!restoreMutation.isPending) setRestoreModal((prev) => ({ ...prev, isOpen: false })); }}
+        title="Xác nhận khôi phục"
+        description={
+          restoreIsBulk ? (
+            <>Bạn có chắc chắn muốn khôi phục <strong className="text-gray-900 font-semibold">{restoreModal.items.length} mục đã chọn</strong> từ thùng rác?</>
+          ) : (
+            <>Bạn có chắc chắn muốn khôi phục {restoreSingle?.itemType === 'folder' ? 'thư mục' : 'tài liệu'} <strong className="text-gray-900 font-semibold">{restoreSingle ? getTrashItemDisplayName(restoreSingle) : ''}</strong>?</>
+          )
+        }
+        confirmText={restoreIsBulk ? `Khôi phục (${restoreModal.items.length})` : 'Xác nhận khôi phục'}
+        variant="primary"
+        onConfirm={() => restoreMutation.mutate(restoreModal.items)}
         loading={restoreMutation.isPending}
       />
 
-      {/* Purge Confirm Modal */}
-      <PurgeConfirmModal
-        isOpen={isPurgeOpen}
-        onClose={handleClosePurge}
-        item={purgeItem}
-        onConfirm={handleConfirmPurge}
+      <ConfirmActionModal
+        isOpen={purgeModal.isOpen && (purgeModal.mode === 'emptyAll' || purgeModal.items.length > 0)}
+        onClose={() => { if (!purgeMutation.isPending) setPurgeModal((prev) => ({ ...prev, isOpen: false })); }}
+        title={purgeModal.mode === 'emptyAll' ? 'Dọn sạch thùng rác' : 'Xác nhận xóa vĩnh viễn'}
+        description={
+          purgeModal.mode === 'emptyAll' ? (
+            <>Bạn có chắc chắn muốn <strong className="text-gray-900 font-semibold">dọn sạch toàn bộ thùng rác</strong>? Tất cả thư mục và tài liệu trong thùng rác sẽ bị xóa vĩnh viễn.</>
+          ) : purgeModal.mode === 'bulk' || purgeModal.items.length > 1 ? (
+            <>Bạn có chắc chắn muốn xóa vĩnh viễn <strong className="text-gray-900 font-semibold">{purgeModal.items.length} mục đã chọn</strong>?</>
+          ) : (
+            <>Bạn có chắc chắn muốn xóa vĩnh viễn {purgeSingle?.itemType === 'folder' ? 'thư mục' : 'tài liệu'} <strong className="text-gray-900 font-semibold">{purgeSingle ? getTrashItemDisplayName(purgeSingle) : ''}</strong>?</>
+          )
+        }
+        warningNote="* Hành động này không thể hoàn tác. Dữ liệu và các tệp đính kèm sẽ bị xóa vĩnh viễn khỏi hệ thống."
+        confirmText={purgeModal.mode === 'emptyAll' ? 'Dọn sạch ngay' : purgeModal.items.length > 1 ? `Xóa vĩnh viễn (${purgeModal.items.length})` : 'Xác nhận xóa'}
+        variant="danger"
+        onConfirm={() => purgeMutation.mutate({ mode: purgeModal.mode, items: purgeModal.items })}
         loading={purgeMutation.isPending}
       />
     </div>

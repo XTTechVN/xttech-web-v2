@@ -2,7 +2,7 @@
 
 import React, { useRef } from 'react';
 import { FileUp, X } from 'lucide-react';
-import { formatBytes, getFileVisualInfo } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
+import { formatBytes, getFileVisualInfo } from '@/utils';
 
 interface RuleFilePickerProps {
   file: File | null;
