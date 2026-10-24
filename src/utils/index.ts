@@ -9,3 +9,5 @@ export * from './string';
 export * from './route-metadata';
 export * from './html';
 export * from './print';
+export * from './document-query-keys';
+export * from './document';

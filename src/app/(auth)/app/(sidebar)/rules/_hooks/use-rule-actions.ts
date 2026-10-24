@@ -10,14 +10,12 @@ import {
   submitDocument,
 } from '@/actions/document';
 import type { PublishDocumentPayload } from '@/types';
-import { invalidateDocumentQueries } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
-import { RULES_QUERY_KEYS } from '../_utils/rules-constants';
+import { invalidateDocumentQueries, RULES_QUERY_KEYS } from '@/utils';
 
 interface UseRuleActionsOptions {
   onDone?: () => void;
 }
 
-// Gom toàn bộ mutation nghiệp vụ của cơ chế: gửi duyệt, duyệt/từ chối, ban hành, xác nhận, xóa
 export function useRuleActions({ onDone }: UseRuleActionsOptions = {}) {
   const queryClient = useQueryClient();
 

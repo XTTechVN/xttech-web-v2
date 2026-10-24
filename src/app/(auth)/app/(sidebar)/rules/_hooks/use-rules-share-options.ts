@@ -4,8 +4,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getEmployees } from '@/actions/employee';
 import { getDepartments } from '@/actions/department';
-import { getApproverRoleBadge, isApproverEligible } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-helpers';
-import { DOC_QUERY_KEYS } from '@/app/(auth)/app/(sidebar)/documents/_utils/doc-query-keys';
+import { getApproverRoleBadge, isApproverEligible, DOC_QUERY_KEYS } from '@/utils';
 
 interface SelectOption {
   value: string;
@@ -19,7 +18,6 @@ const toDepartmentList = (raw: any): any[] => {
   return Array.isArray(source?.items) ? source.items : [];
 };
 
-// Nguồn lựa chọn dùng chung cho form soạn thảo & ban hành: người duyệt, nhân sự nhận, phòng ban nhận
 export function useRulesShareOptions(isEnabled: boolean, excludeUserId?: string) {
   const { data: employeesData } = useQuery({
     queryKey: DOC_QUERY_KEYS.options.employees,

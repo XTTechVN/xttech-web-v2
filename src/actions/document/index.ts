@@ -194,6 +194,51 @@ export const createDocument = async (formData: FormData): Promise<DocumentItem> 
   }
 };
 
+export interface BulkUploadDocumentsResult {
+  success: boolean;
+  totalFiles: number;
+  uploadedCount: number;
+  createdFoldersCount: number;
+  documents: DocumentItem[];
+}
+
+export interface BulkUploadDocumentsPayload {
+  files: File[];
+  relativePaths?: string[];
+  categoryId?: number | null;
+  shareScope?: string;
+}
+
+// Tải lên hàng loạt tệp tin hoặc toàn bộ thư mục (giữ nguyên cấu trúc thư mục con)
+export const bulkUploadDocuments = async (
+  input: FormData | BulkUploadDocumentsPayload,
+): Promise<BulkUploadDocumentsResult> => {
+  try {
+    let formData: FormData;
+    if (input instanceof FormData) {
+      formData = input;
+    } else {
+      formData = new FormData();
+      input.files.forEach((file) => formData.append('files', file));
+      if (input.relativePaths && input.relativePaths.length > 0) {
+        formData.append('relative_paths', JSON.stringify(input.relativePaths));
+      }
+      if (input.categoryId !== undefined && input.categoryId !== null) {
+        formData.append('category_id', String(input.categoryId));
+      }
+      formData.append('share_scope', input.shareScope || 'private');
+    }
+    const res = await api.post('/api/v1/documents/bulk-upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data?.data ?? res.data;
+  } catch (error: any) {
+    throw new Error(extractErrorMessage(error, 'Không thể tải tệp lên'));
+  }
+};
+
 // Cập nhật thông tin tài liệu
 export const updateDocument = async (id: number, data: Partial<DocumentItem>): Promise<DocumentItem> => {
   try {
@@ -201,6 +246,23 @@ export const updateDocument = async (id: number, data: Partial<DocumentItem>): P
     return res.data?.data ?? res.data;
   } catch (error: any) {
     throw new Error(extractErrorMessage(error, 'Không thể cập nhật tài liệu'));
+  }
+};
+
+// Nhân bản tài liệu sang thư mục đích (Copy & Paste)
+export const copyDocument = async (
+  documentId: number,
+  targetCategoryId: number | null,
+  title?: string,
+): Promise<DocumentItem> => {
+  try {
+    const res = await api.post(`/api/v1/documents/${documentId}/copy`, {
+      targetCategoryId,
+      ...(title ? { title } : {}),
+    });
+    return res.data?.data ?? res.data;
+  } catch (error: any) {
+    throw new Error(extractErrorMessage(error, 'Không thể sao chép tài liệu'));
   }
 };
 

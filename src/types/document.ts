@@ -121,6 +121,7 @@ export interface DocumentItem {
   canAcknowledge?: boolean;
   createdAt: string;
   updatedAt?: string;
+  deletedAt?: string | null;
 }
 
 export interface DocumentShortInfo {
@@ -149,6 +150,7 @@ export interface GetDocumentsParams {
   offset?: number;
   limit?: number;
   isRead?: boolean;
+  isDeleted?: boolean;
 }
 
 export interface GetInboxDocumentsParams {
