@@ -147,10 +147,10 @@ export const FileCard: React.FC<FileCardProps> = ({
         onContextMenuItem(e, doc);
       }}
       className={cn(
-        'group relative flex items-center justify-between gap-4 p-4 rounded-lg cursor-pointer select-none transition-all duration-150',
+        'group relative flex items-center justify-between gap-4 p-4 rounded-lg cursor-pointer select-none',
         isSelected
-          ? 'bg-primary/15 border-primary shadow-xs ring-2 ring-primary/60 text-primary'
-          : 'bg-[#f0f4f9] hover:bg-[#e4ebf5] border border-transparent hover:border-slate-200/60 shadow-2xs hover:shadow-xs',
+          ? 'bg-primary/15 border-primary shadow-xs ring-2 ring-primary/60 text-primary transition-none'
+          : 'bg-[#f0f4f9] hover:bg-[#e4ebf5] border border-transparent hover:border-slate-200/60 shadow-2xs hover:shadow-xs transition-colors duration-100',
         isCut && 'opacity-55 border-dashed border-amber-500/70',
         isMenuOpen ? 'z-40 bg-[#e4ebf5] border-slate-200/80 shadow-xs' : 'active:scale-[0.99]',
       )}
