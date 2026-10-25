@@ -2,7 +2,15 @@
 
 All notable changes to the frontend project will be documented in this file.
 
-## [Unreleased] - 2026-10-24
+## [Unreleased] - 2026-10-25
+
+### Fixed & Optimized (Tối ưu Hiệu năng Tương tác Thẻ & Khắc phục Trượt Menu Chuột Phải - `documents`)
+- **Tối ưu phản hồi chọn tệp/thư mục (Zero Delay Selection):**
+  - [`file-card.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/file-card.tsx), [`folder-card.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/folder-card.tsx): Gỡ bỏ `transition-all duration-150` ở container bao bọc; bổ sung `transition-none` khi `isSelected: true` và `transition-colors duration-100` khi hover. Viền `border-primary` và vòng `ring-2` bật sáng tức thì 0ms khi click chuột, loại bỏ hoàn toàn độ trễ thị giác fade-in.
+- **Khắc phục lỗi trượt vị trí Menu Chuột Phải (`ExplorerContextMenu`):**
+  - [`explorer-context-menu.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/explorer-context-menu.tsx): Loại bỏ cụm class `animate-in fade-in zoom-in-95 duration-100`. Ngăn ngừa thuộc tính `duration-100` kích hoạt `transition-duration: 0.1s` kết hợp với `transition-property: all` mặc định của trình duyệt làm menu bị trượt từ tọa độ cũ sang tọa độ mới khi click chuột phải liên tiếp. Giữ nguyên cơ chế tái sử dụng DOM (DOM reuse) của React để đạt hiệu năng tối đa (Zero DOM Thrashing, không re-bind event listeners).
+
+## [2.1.2] - 2026-10-24
 
 ### Changed & Refactored (Tái cấu trúc Kiến trúc Sạch Hệ sinh thái Quản lý Tài liệu theo Rule 16 - `documents`, `inbox`, `rules`, `trash`)
 - **Thiết lập Quy chuẩn Kiến trúc Frontend (Rule 16 trong [`.agents/rules/rule.md`](file:///e:/hoc_ve_fullstash/xttech/.agents/rules/rule.md#L219)):**

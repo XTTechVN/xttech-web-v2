@@ -69,7 +69,7 @@ export const ExplorerContextMenu: React.FC<ExplorerContextMenuProps> = ({
         e.stopPropagation();
       }}
       onClick={(e) => e.stopPropagation()}
-      className="fixed z-[9999] w-56 rounded-xl bg-white shadow-2xl ring-1 ring-slate-900/10 border border-slate-200/90 py-1.5 select-none animate-in fade-in zoom-in-95 duration-100"
+      className="fixed z-[9999] w-56 rounded-xl bg-white shadow-2xl ring-1 ring-slate-900/10 border border-slate-200/90 py-1.5 select-none"
     >
       {title && (
         <div className="px-3.5 py-1.5 mb-1 border-b border-slate-100 text-[11px] font-semibold text-slate-500 truncate">
