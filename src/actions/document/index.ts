@@ -239,6 +239,66 @@ export const bulkUploadDocuments = async (
   }
 };
 
+export interface EnsureFoldersResult {
+  success: boolean;
+  folderMap: Record<string, number>;
+  createdCount: number;
+}
+
+// Khởi tạo hoặc phân giải sẵn cây thư mục trước khi tải tệp song song
+export const ensureDocumentFolders = async (
+  baseCategoryId: number | null,
+  folderPaths: string[],
+): Promise<EnsureFoldersResult> => {
+  try {
+    const res = await api.post('/api/v1/documents/ensure-folders', {
+      baseCategoryId,
+      folderPaths,
+    });
+    return res.data?.data ?? res.data;
+  } catch (error: any) {
+    throw new Error(extractErrorMessage(error, 'Không thể khởi tạo cấu trúc thư mục'));
+  }
+};
+
+// Tải lên một tệp tin đơn lẻ trong luồng hàng đợi song song
+export const uploadSingleDocumentItem = async (params: {
+  file: File;
+  categoryId?: number | null;
+  shareScope?: string;
+  title?: string;
+  signal?: AbortSignal;
+  onProgress?: (percent: number) => void;
+}): Promise<any> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', params.file);
+    if (params.categoryId !== undefined && params.categoryId !== null) {
+      formData.append('category_id', String(params.categoryId));
+    }
+    formData.append('share_scope', params.shareScope || 'private');
+    if (params.title) {
+      formData.append('title', params.title);
+    }
+
+    const res = await api.post('/api/v1/documents/upload-item', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      signal: params.signal,
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && params.onProgress) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          params.onProgress(percent);
+        }
+      },
+    });
+    return res.data?.data ?? res.data;
+  } catch (error: any) {
+    throw new Error(extractErrorMessage(error, `Không thể tải lên "${params.file.name}"`));
+  }
+};
+
 // Cập nhật thông tin tài liệu
 export const updateDocument = async (id: number, data: Partial<DocumentItem>): Promise<DocumentItem> => {
   try {

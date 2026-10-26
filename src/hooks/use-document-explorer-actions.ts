@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { QueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { removeDocumentFromFolder } from '@/actions/document';
@@ -133,7 +133,7 @@ export function useDocumentExplorerActions({
   const copyItems = useCallback((entries: ClipboardEntry[]) => {
     if (entries.length === 0) return;
     const docs = entries.filter((item) => item.type === 'document');
-    if (docs.length === 0) return void toast('Thư mục không hỗ trợ nhân bản. Hãy dùng Ctrl+X để cắt và di chuyển thư mục.', { icon: 'ℹ️' });
+    if (docs.length === 0) return void toast('Thư mục không sao chép được', { icon: 'ℹ️' });
     setClipboard({ mode: 'copy', items: docs });
     const skipped = entries.length - docs.length;
     toast.success(`Đã sao chép ${docs.length} tài liệu${skipped > 0 ? ` (bỏ qua ${skipped} thư mục)` : ''}. Nhấn Ctrl+V tại thư mục đích để dán.`);
@@ -245,13 +245,14 @@ export function useDocumentExplorerActions({
 
   const handleDropItem = useCallback(
     async (sourceType: 'folder' | 'document', sourceId: number, targetFolderId: number) => {
+      if (sourceType === 'folder' && sourceId === targetFolderId) return;
       if (isSharedSection && !canManageDocuments) return void toast.error('Bạn không có quyền di chuyển trong mục Được chia sẻ với tôi');
       const draggedKey = toExplorerItemKey(sourceType, sourceId);
       const isBulkDrag = selectedItemKeys.has(draggedKey) && selectedItemKeys.size > 1;
       const entries = buildClipboardEntries(isBulkDrag ? selectedItemKeys : new Set([draggedKey])).filter(
         (it) => it.canMove && (it.type !== 'folder' || (it.id !== targetFolderId && !isDescendant(safeCategoryTree, it.id, targetFolderId))),
       );
-      if (entries.length === 0) return void toast.error('Không thể di chuyển tới vị trí đích này');
+      if (entries.length === 0) return;
       try {
         await executeExplorerDrop(entries, targetFolderId, queryClient);
       } catch (error: unknown) {
@@ -275,40 +276,65 @@ export function useDocumentExplorerActions({
     [currentFolderId, queryClient],
   );
 
+  const hotkeyActionsRef = useRef({
+    hasOpenModal: modals.hasOpenModal,
+    hasContextMenu: contextMenu.isOpen,
+    selectedCount: selectedItemKeys.size,
+    hasClipboard: Boolean(clipboard?.items.length),
+    onCloseContextMenu: closeContextMenu,
+    onClearSelection: clearSelection,
+    onClearClipboard: clearClipboard,
+    onSelectAll: () => selectAll(orderedKeys),
+    onCopySelected: handleCopySelected,
+    onCutSelected: handleCutSelected,
+    onPasteToCurrentFolder: () => void pasteItems(currentFolderId),
+    onDeleteSelected: handleOpenDeleteSelected,
+    onOpenFocusedItem: handleOpenFocusedItem,
+    onRenameFocusedItem: handleRenameFocusedItem,
+  });
+
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) =>
-      handleExplorerKeyDown(e, {
-        hasOpenModal: modals.hasOpenModal,
-        hasContextMenu: contextMenu.isOpen,
-        selectedCount: selectedItemKeys.size,
-        hasClipboard: Boolean(clipboard?.items.length),
-        onCloseContextMenu: closeContextMenu,
-        onClearSelection: clearSelection,
-        onClearClipboard: clearClipboard,
-        onSelectAll: () => selectAll(orderedKeys),
-        onCopySelected: handleCopySelected,
-        onCutSelected: handleCutSelected,
-        onPasteToCurrentFolder: () => void pasteItems(currentFolderId),
-        onDeleteSelected: handleOpenDeleteSelected,
-        onOpenFocusedItem: handleOpenFocusedItem,
-        onRenameFocusedItem: handleRenameFocusedItem,
-      });
+    hotkeyActionsRef.current = {
+      hasOpenModal: modals.hasOpenModal,
+      hasContextMenu: contextMenu.isOpen,
+      selectedCount: selectedItemKeys.size,
+      hasClipboard: Boolean(clipboard?.items.length),
+      onCloseContextMenu: closeContextMenu,
+      onClearSelection: clearSelection,
+      onClearClipboard: clearClipboard,
+      onSelectAll: () => selectAll(orderedKeys),
+      onCopySelected: handleCopySelected,
+      onCutSelected: handleCutSelected,
+      onPasteToCurrentFolder: () => void pasteItems(currentFolderId),
+      onDeleteSelected: handleOpenDeleteSelected,
+      onOpenFocusedItem: handleOpenFocusedItem,
+      onRenameFocusedItem: handleRenameFocusedItem,
+    };
+  });
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => handleExplorerKeyDown(e, hotkeyActionsRef.current);
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [
-    modals.hasOpenModal, contextMenu.isOpen, selectedItemKeys.size, clipboard?.items.length,
-    closeContextMenu, clearSelection, clearClipboard, selectAll, orderedKeys,
-    handleCopySelected, handleCutSelected, pasteItems, currentFolderId,
-    handleOpenDeleteSelected, handleOpenFocusedItem, handleRenameFocusedItem,
-  ]);
+  }, []);
+
+  const handlePasteToCurrentFolder = useCallback(
+    () => void pasteItems(currentFolderId),
+    [pasteItems, currentFolderId],
+  );
+
+  const handlePasteIntoFolder = useCallback(
+    (folder: DocumentCategory) => void pasteItems(folder.id),
+    [pasteItems],
+  );
 
   return {
     orderedKeys, contextMenu, closeContextMenu, handleSelectItem,
     handleContextMenuFolder, handleContextMenuDoc, handleContextMenuBackground,
     isFolderOwnerOrAdmin, clipboard, isPasting, cutKeySet, clearClipboard,
     handleCopySelected, handleCutSelected, handleCopySingleDoc, handleCutSingleDoc, handleCutSingleFolder,
-    handlePasteToCurrentFolder: () => void pasteItems(currentFolderId),
-    handlePasteIntoFolder: (folder: DocumentCategory) => void pasteItems(folder.id),
+    handlePasteToCurrentFolder,
+    handlePasteIntoFolder,
     handleOpenMoveSelected, handleOpenDeleteSelected, handleConfirmDelete, handleDropItem, handleRemoveFromFolder,
   };
 }
