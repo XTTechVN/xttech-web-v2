@@ -160,7 +160,7 @@ export const FolderTable: React.FC<FolderTableProps> = ({
               className={cn(
                 'group relative flex items-center justify-between py-3 px-3.5 border-b border-gray-100 transition-colors cursor-pointer text-xs text-slate-800',
                 isSelected
-                  ? 'bg-primary/15 border-l-2 border-primary text-primary font-medium'
+                  ? 'bg-primary/10 text-primary font-medium'
                   : isActive
                     ? 'bg-primary/10 border-l-2 border-primary text-primary'
                     : dragOverFolderId === folder.id
