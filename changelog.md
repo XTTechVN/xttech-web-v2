@@ -4,6 +4,15 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-10-26
 
+### Changed & Refactored (Tinh gọn Modal Chỉnh sửa Tài liệu Cá nhân Chuẩn Google Drive - `documents`)
+- **Tinh gọn Form & Giao diện ([`edit-document-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/modals/edit-document-modal.tsx)):**
+  - Loại bỏ hoàn toàn các trường hành chính không phù hợp với tài liệu cá nhân: *Phạm vi chia sẻ, Người phê duyệt, Người nhận đích danh, Phòng ban nhận, Ngày bắt đầu/hết hiệu lực, Nút Lưu & Trình duyệt*.
+  - Giữ lại các trường cốt lõi: Tiêu đề tài liệu (đổi tên file), Phân loại văn bản, Mã văn bản, Thư mục lưu trữ và Trích yếu/Ghi chú.
+  - Tối ưu kích thước modal từ `max-w-2xl` xuống `max-w-lg`, chỉ giữ 2 nút hành động chuẩn: `[Hủy]` và `[Lưu thay đổi]`.
+  - Cắt giảm 2 lời gọi API không cần thiết khi mở modal (`getEmployees` và `getDepartments`), giúp modal mở lên tức thì 0ms không độ trễ.
+- **Dọn dẹp Tầng Tiện ích ([`edit-document-helpers.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/modals/edit-document-helpers.ts)):**
+  - Xóa bỏ hơn 230 dòng mã helper thừa liên quan đến phân tách người nhận, phòng ban và phê duyệt; bổ sung hàm `saveDocumentPersonalInfo()` cập nhật dữ liệu tài liệu cá nhân chuẩn xác và an toàn.
+
 ### Added (Hỗ trợ Kéo & Thả Tệp và Thư mục Chuẩn Google Drive - Bỏ qua Popup Trình duyệt)
 - **Tiện ích Kéo thả Đệ quy ([`document-drag-drop.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/document-drag-drop.ts)):**
   - Xây dựng hàm `parseDataTransferEntries()` và `hasFileTransfer()`: Duyệt đệ quy toàn bộ cây thư mục và tệp tin từ đối tượng `DataTransferItem` bằng API `webkitGetAsEntry()`, xử lý phân trang 100 entries/lần của Chromium. Xuất danh sách `File[]` kèm đường dẫn tương đối `relativePaths` để server tự động giữ nguyên cấu trúc thư mục con mà không làm trình duyệt kích hoạt popup bảo mật xác nhận.
