@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import type { DocumentExplorerHook } from '@/hooks/use-document-explorer';
 import { FolderCard } from './folder-card';
@@ -9,7 +9,9 @@ import { FileCard } from './file-card';
 import { FileTable } from './file-table';
 import { ExplorerContextMenu } from './explorer-context-menu';
 import { resolveExplorerContextMenu } from './explorer-menu-builder';
-import { Folder } from 'lucide-react';
+import { Folder, UploadCloud } from 'lucide-react';
+import { hasFileTransfer } from '@/utils';
+import toast from 'react-hot-toast';
 
 interface DocumentsExplorerViewProps {
   explorer: DocumentExplorerHook;
@@ -63,6 +65,7 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
     folderInputRef,
     handleFilesChange,
     handleFolderChange,
+    handleDroppedDataTransfer,
     handleOpenMoveSelected,
     handleOpenDeleteSelected,
     handleDropItem,
@@ -183,6 +186,54 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
     onDelete: (d: DocumentItem) => modals.actions.openDeleteDoc(d.id, d.title),
   };
 
+  const [isDragOverFiles, setIsDragOverFiles] = useState(false);
+  const dragCounterRef = useRef(0);
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    if (!hasFileTransfer(e.dataTransfer)) return;
+    e.preventDefault();
+    dragCounterRef.current += 1;
+    if (dragCounterRef.current === 1) {
+      setIsDragOverFiles(true);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (!hasFileTransfer(e.dataTransfer)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    if (!hasFileTransfer(e.dataTransfer)) return;
+    e.preventDefault();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0;
+      setIsDragOverFiles(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      if (!hasFileTransfer(e.dataTransfer)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current = 0;
+      setIsDragOverFiles(false);
+
+      if (!canCreate && !canEditFolder) {
+        toast.error('Bạn không có quyền tải tệp vào thư mục này');
+        return;
+      }
+
+      if (handleDroppedDataTransfer) {
+        void handleDroppedDataTransfer(e.dataTransfer);
+      }
+    },
+    [canCreate, canEditFolder, handleDroppedDataTransfer],
+  );
+
   return (
     <div
       onClick={() => {
@@ -190,8 +241,26 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
         if (selectedItemKeys.size > 0) clearSelection();
       }}
       onContextMenu={handleContextMenuBackground}
-      className="min-h-[60vh] space-y-3"
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className="relative min-h-[60vh] space-y-3"
     >
+      {isDragOverFiles && (
+        <div className="absolute inset-0 z-50 pointer-events-none rounded-2xl border-2 border-dashed border-primary bg-primary/10 backdrop-blur-[2px] flex flex-col items-center justify-center p-8 transition-all animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center text-primary mb-3">
+            <UploadCloud size={32} className="animate-bounce" />
+          </div>
+          <h3 className="text-base font-semibold text-primary">
+            Thả tệp hoặc thư mục vào đây để tải lên
+          </h3>
+          <p className="text-xs text-slate-600 mt-1">
+            {currentFolder ? `Tải vào thư mục "${currentFolder.name}"` : 'Tải vào Drive của tôi'} • Tự động giữ nguyên cấu trúc thư mục con
+          </p>
+        </div>
+      )}
+
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFilesChange} />
       <input
         ref={folderInputRef}

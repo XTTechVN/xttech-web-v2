@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import type { QueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { bulkUploadDocuments } from '@/actions/document';
-import { showErrorToast, invalidateDocumentQueries } from '@/utils';
+import { showErrorToast, invalidateDocumentQueries, parseDataTransferEntries } from '@/utils';
 
 interface UseDocumentBulkUploadOptions {
   queryClient: QueryClient;
@@ -34,7 +34,7 @@ export function useDocumentBulkUpload({
   }, [isUploading]);
 
   const executeBulkUpload = useCallback(
-    async (files: File[], isFolder: boolean) => {
+    async (files: File[], isFolder: boolean, customRelativePaths?: string[]) => {
       if (files.length === 0 || isUploading) return;
       setIsUploading(true);
       const loadingToastId = toast.loading(
@@ -44,9 +44,11 @@ export function useDocumentBulkUpload({
       );
 
       try {
-        const relativePaths = isFolder
-          ? files.map((f) => (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name)
-          : files.map((f) => f.name);
+        const relativePaths =
+          customRelativePaths ||
+          (isFolder
+            ? files.map((f) => (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name)
+            : files.map((f) => f.name));
 
         const result = await bulkUploadDocuments({
           files,
@@ -99,6 +101,24 @@ export function useDocumentBulkUpload({
     [executeBulkUpload],
   );
 
+  const handleDroppedDataTransfer = useCallback(
+    async (dataTransfer: DataTransfer) => {
+      if (isUploading) return;
+      try {
+        const { files, relativePaths } = await parseDataTransferEntries(dataTransfer);
+        if (files.length === 0) {
+          toast.error('Thư mục hoặc tệp được thả vào không có nội dung');
+          return;
+        }
+        const hasFolders = relativePaths.some((p) => p.includes('/'));
+        await executeBulkUpload(files, hasFolders, relativePaths);
+      } catch (error: unknown) {
+        showErrorToast(error, 'Không thể đọc tệp hoặc thư mục được thả vào');
+      }
+    },
+    [isUploading, executeBulkUpload],
+  );
+
   return {
     isUploading,
     fileInputRef,
@@ -107,5 +127,6 @@ export function useDocumentBulkUpload({
     triggerFolderUpload,
     handleFilesChange,
     handleFolderChange,
+    handleDroppedDataTransfer,
   };
 }

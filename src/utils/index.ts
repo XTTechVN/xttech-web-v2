@@ -11,3 +11,4 @@ export * from './html';
 export * from './print';
 export * from './document-query-keys';
 export * from './document';
+export * from './document-drag-drop';

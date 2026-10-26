@@ -165,7 +165,7 @@ export const FileTable: React.FC<FileTableProps> = ({
               }}
               className={cn(
                 'group relative flex items-center justify-between py-3 px-3.5 border-b border-gray-100 hover:bg-[#f1f3f4] transition-colors cursor-pointer text-xs text-slate-800',
-                isSelected && 'bg-primary/15 border-l-2 border-primary text-primary font-medium',
+                isSelected && 'bg-primary/10  text-primary font-medium',
                 isCut && 'opacity-55 border-dashed',
                 isMenuOpen && 'z-40 bg-[#f1f3f4]',
               )}
