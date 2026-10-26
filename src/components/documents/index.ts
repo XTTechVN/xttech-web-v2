@@ -10,4 +10,6 @@ export * from './documents-toolbar';
 export * from './documents-folder-header';
 export * from './documents-explorer-view';
 export * from './document-explorer-page-layout';
+export * from './explorer-drag-badge';
+export * from './upload-progress-drawer';
 export * from './modals';

@@ -9,8 +9,11 @@ import { FileCard } from './file-card';
 import { FileTable } from './file-table';
 import { ExplorerContextMenu } from './explorer-context-menu';
 import { resolveExplorerContextMenu } from './explorer-menu-builder';
+import { ExplorerDragBadge } from './explorer-drag-badge';
+import { UploadProgressDrawer } from './upload-progress-drawer';
 import { Folder, UploadCloud } from 'lucide-react';
 import { hasFileTransfer } from '@/utils';
+import { useExplorerPointerDrag } from '@/hooks';
 import toast from 'react-hot-toast';
 
 interface DocumentsExplorerViewProps {
@@ -71,6 +74,11 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
     handleDropItem,
     handleRemoveFromFolder,
     modals,
+    uploadQueue,
+    isDrawerOpen,
+    closeDrawer,
+    retryItem,
+    cancelItem,
   } = explorer;
 
   const tab = tabOverride ?? explorerTab;
@@ -152,39 +160,105 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
     ],
   );
 
-  const commonFolderProps = {
-    isSharedSection,
-    cutKeys: cutKeySet,
-    hasClipboard,
-    onContextMenuItem: handleContextMenuFolder,
-    locationName,
-    onOpen: (f: DocumentCategory) => setCurrentFolderId(f.id),
-    onViewDetail: modals.actions.openDetailFolder,
-    onEdit: modals.actions.openEditFolder,
-    onShare: modals.actions.openShareFolder,
-    onMove: modals.actions.openMoveFolder,
-    onCut: handleCutSingleFolder,
-    onPasteIntoFolder: handlePasteIntoFolder,
+  const { dragState, startDragTracking, badgeRef } = useExplorerPointerDrag({
+    selectedItemKeys,
     onDropItem: canEditFolder ? handleDropItem : undefined,
-    onDelete: (f: DocumentCategory) => modals.actions.openDeleteFolder(f.id, f.name),
-  };
+  });
 
-  const commonDocProps = {
-    isSharedSection,
-    currentFolderId,
-    myCategoryIds: allMyCategoryIds,
-    onContextMenuItem: handleContextMenuDoc,
-    onPreview: modals.actions.openPreviewDoc,
-    onView: modals.actions.openDetailDoc,
-    onEdit: modals.actions.openEditDoc,
-    onShare: modals.actions.openShareDoc,
-    onMove: modals.actions.openMoveDoc,
-    onCopy: handleCopySingleDoc,
-    onCut: handleCutSingleDoc,
-    onSaveToFolder: modals.actions.openSaveToFolder,
-    onRemoveFromFolder: handleRemoveFromFolder,
-    onDelete: (d: DocumentItem) => modals.actions.openDeleteDoc(d.id, d.title),
-  };
+  const commonFolderProps = useMemo(
+    () => ({
+      isSharedSection,
+      cutKeys: cutKeySet,
+      hasClipboard,
+      onContextMenuItem: handleContextMenuFolder,
+      locationName,
+      onOpen: (f: DocumentCategory) => setCurrentFolderId(f.id),
+      onViewDetail: modals.actions.openDetailFolder,
+      onEdit: modals.actions.openEditFolder,
+      onShare: modals.actions.openShareFolder,
+      onMove: modals.actions.openMoveFolder,
+      onCut: handleCutSingleFolder,
+      onPasteIntoFolder: handlePasteIntoFolder,
+      onDropItem: canEditFolder ? handleDropItem : undefined,
+      onDelete: (f: DocumentCategory) => modals.actions.openDeleteFolder(f.id, f.name),
+      onStartDrag: startDragTracking,
+    }),
+    [
+      isSharedSection,
+      cutKeySet,
+      hasClipboard,
+      handleContextMenuFolder,
+      locationName,
+      setCurrentFolderId,
+      modals.actions.openDetailFolder,
+      modals.actions.openEditFolder,
+      modals.actions.openShareFolder,
+      modals.actions.openMoveFolder,
+      handleCutSingleFolder,
+      handlePasteIntoFolder,
+      canEditFolder,
+      handleDropItem,
+      modals.actions.openDeleteFolder,
+      startDragTracking,
+    ],
+  );
+
+  const commonDocProps = useMemo(
+    () => ({
+      isSharedSection,
+      currentFolderId,
+      myCategoryIds: allMyCategoryIds,
+      onContextMenuItem: handleContextMenuDoc,
+      onPreview: modals.actions.openPreviewDoc,
+      onView: modals.actions.openDetailDoc,
+      onEdit: modals.actions.openEditDoc,
+      onShare: modals.actions.openShareDoc,
+      onMove: modals.actions.openMoveDoc,
+      onCopy: handleCopySingleDoc,
+      onCut: handleCutSingleDoc,
+      onSaveToFolder: modals.actions.openSaveToFolder,
+      onRemoveFromFolder: handleRemoveFromFolder,
+      onDelete: (d: DocumentItem) => modals.actions.openDeleteDoc(d.id, d.title),
+      onStartDrag: startDragTracking,
+    }),
+    [
+      isSharedSection,
+      currentFolderId,
+      allMyCategoryIds,
+      handleContextMenuDoc,
+      modals.actions.openPreviewDoc,
+      modals.actions.openDetailDoc,
+      modals.actions.openEditDoc,
+      modals.actions.openShareDoc,
+      modals.actions.openMoveDoc,
+      handleCopySingleDoc,
+      handleCutSingleDoc,
+      modals.actions.openSaveToFolder,
+      handleRemoveFromFolder,
+      modals.actions.openDeleteDoc,
+      startDragTracking,
+    ],
+  );
+
+  const handleSelectFolder = useCallback(
+    (e: React.MouseEvent | React.PointerEvent, f: DocumentCategory) => handleSelectItem(e, 'folder', f.id),
+    [handleSelectItem],
+  );
+
+  const handleSelectDoc = useCallback(
+    (e: React.MouseEvent | React.PointerEvent, d: DocumentItem) => handleSelectItem(e, 'document', d.id),
+    [handleSelectItem],
+  );
+
+  const handleToggleFolder = useCallback(
+    (f: DocumentCategory) => toggleSelectItem('folder', f.id),
+    [toggleSelectItem],
+  );
+
+  const handleToggleDoc = useCallback(
+    (d: DocumentItem) => toggleSelectItem('document', d.id),
+    [toggleSelectItem],
+  );
 
   const [isDragOverFiles, setIsDragOverFiles] = useState(false);
   const dragCounterRef = useRef(0);
@@ -236,7 +310,9 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
 
   return (
     <div
-      onClick={() => {
+      onClick={(e) => {
+        const target = e.target as HTMLElement | null;
+        if (target && target.closest('[data-explorer-item="true"]')) return;
         closeContextMenu();
         if (selectedItemKeys.size > 0) clearSelection();
       }}
@@ -296,8 +372,9 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
               folder={folder}
               isSelected={selectedItemKeys.has(`folder-${folder.id}`)}
               isCut={cutKeySet?.has(`folder-${folder.id}`)}
-              onToggleSelect={() => toggleSelectItem('folder', folder.id)}
-              onSelectItem={(e, f) => handleSelectItem(e, 'folder', f.id)}
+              isDragTarget={dragState.hoverFolderId === folder.id}
+              onToggleSelect={handleToggleFolder}
+              onSelectItem={handleSelectFolder}
               {...commonFolderProps}
             />
           ))}
@@ -307,8 +384,8 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
               document={doc}
               isSelected={selectedItemKeys.has(`doc-${doc.id}`)}
               isCut={cutKeySet?.has(`doc-${doc.id}`)}
-              onToggleSelect={() => toggleSelectItem('document', doc.id)}
-              onSelectItem={(e, d) => handleSelectItem(e, 'document', d.id)}
+              onToggleSelect={handleToggleDoc}
+              onSelectItem={handleSelectDoc}
               locationName={currentFolder ? currentFolder.name : doc.category?.name || locationName}
               {...commonDocProps}
             />
@@ -320,8 +397,9 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
             <FolderTable
               folders={foldersToDisplay}
               selectedKeys={selectedItemKeys}
-              onToggleSelect={(f) => toggleSelectItem('folder', f.id)}
-              onSelectItem={(e, f) => handleSelectItem(e, 'folder', f.id)}
+              hoverFolderId={dragState.hoverFolderId}
+              onToggleSelect={handleToggleFolder}
+              onSelectItem={handleSelectFolder}
               showHeader={true}
               {...commonFolderProps}
             />
@@ -331,8 +409,8 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
               documents={documents}
               selectedKeys={selectedItemKeys}
               cutKeys={cutKeySet}
-              onToggleSelect={(d) => toggleSelectItem('document', d.id)}
-              onSelectItem={(e, d) => handleSelectItem(e, 'document', d.id)}
+              onToggleSelect={handleToggleDoc}
+              onSelectItem={handleSelectDoc}
               currentFolderName={locationName}
               showHeader={foldersToDisplay.length === 0}
               onNavigateFolder={setCurrentFolderId}
@@ -349,6 +427,22 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
         title={menuTitle}
         items={menuItems}
         onClose={closeContextMenu}
+      />
+
+      <ExplorerDragBadge
+        ref={badgeRef}
+        isDragging={dragState.isDragging}
+        count={dragState.count}
+        title={dragState.title}
+        type={dragState.sourceType}
+      />
+
+      <UploadProgressDrawer
+        items={uploadQueue}
+        isOpen={isDrawerOpen}
+        onClose={closeDrawer}
+        onRetryItem={retryItem}
+        onCancelItem={cancelItem}
       />
     </div>
   );
