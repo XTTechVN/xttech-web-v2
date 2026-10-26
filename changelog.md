@@ -4,6 +4,13 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-10-26
 
+### Fixed & Enhanced (Sửa lỗi Hiển thị Cây Thư mục Con & Tài liệu Bên trong Thư mục Được Chia sẻ - `documents`)
+- **Hiển thị 100% Tài liệu & Cây Thư mục Con Khi Nhận Chia sẻ Thư mục Chuẩn Google Drive:**
+  - **Khắc phục lỗi "Chỉ nhìn thấy thư mục cha, không thấy thư mục con và tài liệu bên trong":**
+    - **Frontend Hook ([`use-document-explorer.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-document-explorer.ts)):** Sửa điều kiện `queryFn`: Chỉ gọi `getInboxDocuments(queryParams)` khi người dùng đang đứng ở thư mục gốc của tab "Được chia sẻ" (`tab === 'shared' && currentFolderId === null`). Khi người dùng mở bất kỳ thư mục nào (`currentFolderId !== null`), hệ thống luôn gọi API chuẩn `getDocuments(queryParams)` để lấy trọn vẹn danh sách tài liệu bên trong thư mục đó theo phân quyền thư mục kế thừa.
+    - **Kế thừa Phân quyền Đệ quy ([`src/actions/document/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/document/index.ts)):** Cập nhật hàm `getDocumentCategoryTree`: Sử dụng hàm đệ quy `markSharedNodes` để gán `isShared: true` và kế thừa quyền hạn `permission` (`view` / `edit`) cho toàn bộ cây thư mục con `children`, loại bỏ hoàn toàn các thuộc tính snake_case cũ theo Rule 13.
+    - **Phòng thủ 2 lớp trên Backend Repository ([`document_repository.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/repositories/document/document_repository.py)):** Bổ sung Recursive CTE phân quyền thư mục chia sẻ vào hàm `get_inbox_documents` khi client truyền `category_id`, đảm bảo cả hai luồng truy vấn API (`/api/v1/documents` và `/api/v1/documents/inbox`) đều hiển thị đầy đủ tài liệu trong các thư mục được chia sẻ.
+
 ### Added & Architected (Triển khai Tính năng Tải Thư mục ZIP Đệ quy & Tái Sử dụng Panel Tiến trình Chuẩn Google Drive - `documents`)
 - **Tải Xuống Thư mục Dưới Dạng Tệp Nén ZIP Bảo Toàn 100% Cấu Trúc Cây Thư Mục Con:**
   - **Kiến trúc Zero-RAM Spooling & Streaming Chunk trên Backend ([`document_category_service.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/services/document/document_category_service.py), [`categories.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/api/v1/document/categories.py)):**
