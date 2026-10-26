@@ -22,6 +22,7 @@ interface FolderCardProps {
   onContextMenuItem?: (e: React.MouseEvent, folder: DocumentCategory) => void;
   onOpen: (folder: DocumentCategory) => void;
   onViewDetail?: (folder: DocumentCategory) => void;
+  onDownload?: (folder: DocumentCategory) => void;
   onEdit?: (folder: DocumentCategory) => void;
   onMove?: (folder: DocumentCategory) => void;
   onCut?: (folder: DocumentCategory) => void;
@@ -47,6 +48,7 @@ const FolderCardComponent: React.FC<FolderCardProps> = ({
   onContextMenuItem,
   onOpen,
   onViewDetail,
+  onDownload,
   onEdit,
   onMove,
   onCut,
@@ -89,6 +91,7 @@ const FolderCardComponent: React.FC<FolderCardProps> = ({
       canPaste: Boolean(hasClipboard && (isOwnerOrAdmin || folder.permission === 'edit')),
       onOpen,
       onViewDetail,
+      onDownload,
       onPasteIntoFolder,
       onShare,
       onEdit,
@@ -104,6 +107,7 @@ const FolderCardComponent: React.FC<FolderCardProps> = ({
     hasClipboard,
     onOpen,
     onViewDetail,
+    onDownload,
     onPasteIntoFolder,
     onEdit,
     onCut,

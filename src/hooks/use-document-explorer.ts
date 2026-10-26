@@ -174,6 +174,7 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
     selectAll,
     clearSelection,
     handleGoBack,
+    startDownloadFolder: bulkUpload.startDownloadFolder,
   });
 
   return {

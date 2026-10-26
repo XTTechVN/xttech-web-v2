@@ -11,21 +11,23 @@ import {
   RotateCcw,
   FileText,
   FolderUp,
+  FolderArchive,
 } from 'lucide-react';
 
-export type UploadItemStatus = 'pending' | 'uploading' | 'success' | 'error' | 'cancelled';
+export type UploadItemStatus = 'pending' | 'compressing' | 'uploading' | 'success' | 'error' | 'cancelled';
 
 export interface QueueUploadItem {
   id: string;
-  file: File;
+  file?: File;
   relativePath?: string;
-  targetCategoryId: number | null;
+  targetCategoryId?: number | null;
   title: string;
   size: number;
   progress: number;
   status: UploadItemStatus;
   errorMessage?: string;
   abortController?: AbortController;
+  direction?: 'upload' | 'download';
 }
 
 interface UploadProgressDrawerProps {
@@ -60,6 +62,10 @@ export const UploadProgressDrawer: React.FC<UploadProgressDrawerProps> = ({
   const errorCount = items.filter((i) => i.status === 'error').length;
   const isAllFinished = items.every((i) => i.status === 'success' || i.status === 'error' || i.status === 'cancelled');
 
+  const hasDownload = items.some((i) => i.direction === 'download');
+  const isAllDownload = items.every((i) => i.direction === 'download');
+  const isCompressing = items.some((i) => i.status === 'compressing');
+
   const totalBytes = items.reduce((acc, it) => acc + it.size, 0);
   const loadedBytes = items.reduce((acc, it) => {
     if (it.status === 'success') return acc + it.size;
@@ -68,9 +74,26 @@ export const UploadProgressDrawer: React.FC<UploadProgressDrawerProps> = ({
   }, 0);
   const totalPercent = totalBytes > 0 ? Math.round((loadedBytes * 100) / totalBytes) : 0;
 
+  const getHeaderTitle = () => {
+    if (isAllDownload) {
+      if (!isAllFinished) {
+        if (isCompressing && loadedBytes === 0) return 'Đang chuẩn bị tải xuống';
+        return totalCount === 1 ? 'Đang tải xuống...' : `Đang tải xuống (${completedCount}/${totalCount})`;
+      }
+      if (errorCount > 0) return totalCount === 1 ? 'Tải xuống thất bại' : `Tải xuống hoàn tất với ${errorCount} lỗi`;
+      return totalCount === 1 ? 'Đã hoàn tất tải xuống' : `Đã hoàn tất tải xuống ${completedCount} mục`;
+    }
+    if (hasDownload) {
+      if (!isAllFinished) return `Đang truyền tải (${completedCount}/${totalCount})`;
+      return errorCount > 0 ? `Hoàn tất với ${errorCount} lỗi` : `Đã hoàn tất ${completedCount} mục`;
+    }
+    if (!isAllFinished) return `Đang tải lên (${completedCount}/${totalCount})`;
+    return errorCount > 0 ? `Hoàn tất với ${errorCount} tệp lỗi` : `Đã tải lên ${completedCount} tệp`;
+  };
+
   return (
     <aside
-      aria-label="Tiến trình tải lên tài liệu"
+      aria-label="Tiến trình truyền tải tài liệu"
       className="fixed bottom-4 right-4 z-[9990] w-96 max-w-[calc(100vw-32px)] bg-white rounded-2xl shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col select-none animate-in fade-in slide-in-from-bottom-4 duration-200"
     >
       {/* Header */}
@@ -86,14 +109,14 @@ export const UploadProgressDrawer: React.FC<UploadProgressDrawerProps> = ({
 
           <div className="flex flex-col min-w-0">
             <span className="text-xs font-semibold truncate">
-              {!isAllFinished
-                ? `Đang tải lên (${completedCount}/${totalCount})`
-                : errorCount > 0
-                  ? `Hoàn tất với ${errorCount} tệp lỗi`
-                  : `Đã tải lên ${completedCount} tệp`}
+              {getHeaderTitle()}
             </span>
             <span className="text-[10px] text-slate-400 font-medium">
-              {!isAllFinished ? `${totalPercent}% • ${formatFileSize(loadedBytes)} / ${formatFileSize(totalBytes)}` : 'Đã đồng bộ vào explorer'}
+              {!isAllFinished
+                ? isCompressing && totalBytes === 0
+                  ? 'Đang chuẩn bị dữ liệu...'
+                  : `${totalPercent}% • ${formatFileSize(loadedBytes)} / ${formatFileSize(totalBytes)}`
+                : 'Đã hoàn tất truyền tải'}
             </span>
           </div>
         </div>
@@ -142,8 +165,10 @@ export const UploadProgressDrawer: React.FC<UploadProgressDrawerProps> = ({
                     <CheckCircle2 size={16} className="text-emerald-600" />
                   ) : item.status === 'error' ? (
                     <AlertCircle size={16} className="text-rose-500" />
-                  ) : item.status === 'uploading' ? (
+                  ) : item.status === 'compressing' || item.status === 'uploading' ? (
                     <Loader2 size={15} className="text-primary animate-spin" />
+                  ) : item.direction === 'download' ? (
+                    <FolderArchive size={15} className="text-amber-600" />
                   ) : item.relativePath?.includes('/') ? (
                     <FolderUp size={15} className="text-primary" />
                   ) : (
@@ -156,16 +181,27 @@ export const UploadProgressDrawer: React.FC<UploadProgressDrawerProps> = ({
                     {item.title}
                   </span>
                   <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                    <span>{formatFileSize(item.size)}</span>
-                    {item.status === 'uploading' && (
-                      <span className="text-primary font-semibold">
-                        • {item.progress}%
-                      </span>
-                    )}
-                    {item.status === 'error' && (
-                      <span className="text-rose-500 font-medium truncate max-w-[140px]">
-                        • {item.errorMessage || 'Lỗi'}
-                      </span>
+                    {item.status === 'compressing' ? (
+                      <span className="text-primary font-medium">Đang nén...</span>
+                    ) : (
+                      <>
+                        {item.size > 0 && <span>{formatFileSize(item.size)}</span>}
+                        {item.status === 'uploading' && (
+                          <span className="text-primary font-semibold">
+                            • {item.progress}%
+                          </span>
+                        )}
+                        {item.status === 'success' && (
+                          <span className="text-emerald-600 font-medium">
+                            {item.direction === 'download' ? 'Đã tải về máy' : 'Đã tải lên'}
+                          </span>
+                        )}
+                        {item.status === 'error' && (
+                          <span className="text-rose-500 font-medium truncate max-w-[140px]">
+                            • {item.errorMessage || 'Lỗi'}
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -183,7 +219,7 @@ export const UploadProgressDrawer: React.FC<UploadProgressDrawerProps> = ({
                     <RotateCcw size={14} />
                   </button>
                 )}
-                {(item.status === 'pending' || item.status === 'uploading') && (
+                {(item.status === 'pending' || item.status === 'compressing' || item.status === 'uploading') && (
                   <button
                     type="button"
                     onClick={() => onCancelItem(item.id)}

@@ -27,6 +27,7 @@ interface FolderTableRowProps {
   onContextMenuItem?: (e: React.MouseEvent, folder: DocumentCategory) => void;
   onOpen: (folder: DocumentCategory) => void;
   onViewDetail?: (folder: DocumentCategory) => void;
+  onDownload?: (folder: DocumentCategory) => void;
   onEdit?: (folder: DocumentCategory) => void;
   onMove?: (folder: DocumentCategory) => void;
   onCut?: (folder: DocumentCategory) => void;
@@ -58,6 +59,7 @@ const FolderTableRowComponent: React.FC<FolderTableRowProps> = ({
   onContextMenuItem,
   onOpen,
   onViewDetail,
+  onDownload,
   onEdit,
   onMove,
   onCut,
@@ -95,6 +97,7 @@ const FolderTableRowComponent: React.FC<FolderTableRowProps> = ({
       canPaste: Boolean(hasClipboard && (isOwnerOrAdmin || folder.permission === 'edit')),
       onOpen,
       onViewDetail,
+      onDownload,
       onPasteIntoFolder,
       onShare,
       onEdit,
@@ -109,6 +112,7 @@ const FolderTableRowComponent: React.FC<FolderTableRowProps> = ({
     hasClipboard,
     onOpen,
     onViewDetail,
+    onDownload,
     onPasteIntoFolder,
     onShare,
     onEdit,
@@ -261,6 +265,7 @@ interface FolderTableProps {
   onContextMenuItem?: (e: React.MouseEvent, folder: DocumentCategory) => void;
   onOpen: (folder: DocumentCategory) => void;
   onViewDetail?: (folder: DocumentCategory) => void;
+  onDownload?: (folder: DocumentCategory) => void;
   onEdit?: (folder: DocumentCategory) => void;
   onMove?: (folder: DocumentCategory) => void;
   onCut?: (folder: DocumentCategory) => void;
@@ -287,6 +292,7 @@ export const FolderTable: React.FC<FolderTableProps> = ({
   onContextMenuItem,
   onOpen,
   onViewDetail,
+  onDownload,
   onEdit,
   onMove,
   onCut,
@@ -353,6 +359,7 @@ export const FolderTable: React.FC<FolderTableProps> = ({
               onContextMenuItem={onContextMenuItem}
               onOpen={onOpen}
               onViewDetail={onViewDetail}
+              onDownload={onDownload}
               onEdit={onEdit}
               onMove={onMove}
               onCut={onCut}

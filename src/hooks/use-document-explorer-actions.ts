@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { QueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { removeDocumentFromFolder } from '@/actions/document';
+import { removeDocumentFromFolder, downloadCategoryZip } from '@/actions/document';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import {
   getDocumentPermissions,
@@ -49,12 +49,14 @@ interface UseDocumentExplorerActionsProps {
   selectAll: (orderedKeys: string[]) => void;
   clearSelection: () => void;
   handleGoBack: () => void;
+  startDownloadFolder?: (folderId: number, folderName: string) => Promise<void>;
 }
 
 export function useDocumentExplorerActions({
   queryClient, currentUser, canManageDocuments, isSharedSection, currentFolderId, setCurrentFolderId,
   safeCategoryTree, isDescendant, foldersToDisplay, documents, allMyCategoryIds, canCreate,
   modals, selectedItemKeys, handleItemClick, handleContextMenuSelect, selectAll, clearSelection, handleGoBack,
+  startDownloadFolder,
 }: UseDocumentExplorerActionsProps) {
   const [contextMenu, setContextMenu] = useState<ExplorerContextMenuState>({
     isOpen: false, x: 0, y: 0, targetType: 'background',
@@ -328,6 +330,23 @@ export function useDocumentExplorerActions({
     [pasteItems],
   );
 
+  const handleDownloadFolder = useCallback(
+    async (folder: DocumentCategory) => {
+      if (startDownloadFolder) {
+        await startDownloadFolder(folder.id, folder.name);
+        return;
+      }
+      const toastId = toast.loading(`Đang nén và chuẩn bị tải thư mục "${folder.name}"...`);
+      try {
+        await downloadCategoryZip(folder.id, folder.name);
+        toast.success(`Đã tải xuống thư mục "${folder.name}"`, { id: toastId });
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message || err?.message || 'Lỗi khi tải xuống thư mục', { id: toastId });
+      }
+    },
+    [startDownloadFolder],
+  );
+
   return {
     orderedKeys, contextMenu, closeContextMenu, handleSelectItem,
     handleContextMenuFolder, handleContextMenuDoc, handleContextMenuBackground,
@@ -335,6 +354,7 @@ export function useDocumentExplorerActions({
     handleCopySelected, handleCutSelected, handleCopySingleDoc, handleCutSingleDoc, handleCutSingleFolder,
     handlePasteToCurrentFolder,
     handlePasteIntoFolder,
+    handleDownloadFolder,
     handleOpenMoveSelected, handleOpenDeleteSelected, handleConfirmDelete, handleDropItem, handleRemoveFromFolder,
   };
 }
