@@ -57,28 +57,34 @@ export const getDocumentCategoryTree = async (): Promise<DocumentCategory[]> => 
     // Backend FastAPI có thể trả về camelCase ({ myFolders, sharedFolders })
     // hoặc snake_case ({ my_folders, shared_folders })
     const treeObj = raw?.data ?? raw;
-    const my = Array.isArray(treeObj?.myFolders) ? treeObj.myFolders : Array.isArray(treeObj?.my_folders) ? treeObj.my_folders : [];
-    const shared = Array.isArray(treeObj?.sharedFolders)
-      ? treeObj.sharedFolders
-      : Array.isArray(treeObj?.shared_folders)
-        ? treeObj.shared_folders
-        : [];
+    const my = Array.isArray(treeObj?.myFolders) ? treeObj.myFolders : [];
+    const shared = Array.isArray(treeObj?.sharedFolders) ? treeObj.sharedFolders : [];
 
-    const markedMy = my.map((item: DocumentCategory) => ({
-      ...item,
-      isOwner: item.isOwner ?? true,
-      permission: item.permission || 'edit',
-      isShared: false,
-    }));
+    const markMyNodes = (items: DocumentCategory[]): DocumentCategory[] =>
+      items.map((item: DocumentCategory) => ({
+        ...item,
+        isOwner: item.isOwner ?? true,
+        permission: item.permission || 'edit',
+        isShared: false,
+        children: Array.isArray(item.children) ? markMyNodes(item.children) : [],
+      }));
 
-    const markedShared = shared.map((item: DocumentCategory) => ({
-      ...item,
-      isOwner: item.isOwner ?? false,
-      permission: item.permission || 'view',
-      isShared: true,
-    }));
+    const markSharedNodes = (
+      items: DocumentCategory[],
+      inheritedPerm: 'view' | 'edit' = 'view',
+    ): DocumentCategory[] =>
+      items.map((item: DocumentCategory) => {
+        const perm = (item.permission as 'view' | 'edit') || inheritedPerm;
+        return {
+          ...item,
+          isOwner: item.isOwner ?? false,
+          permission: perm,
+          isShared: true,
+          children: Array.isArray(item.children) ? markSharedNodes(item.children, perm) : [],
+        };
+      });
 
-    return [...markedMy, ...markedShared];
+    return [...markMyNodes(my), ...markSharedNodes(shared)];
   } catch (error: any) {
     console.warn('Lỗi getDocumentCategoryTree:', error);
     return [];

@@ -121,7 +121,10 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
     refetch: refetchDocuments,
   } = useQuery({
     queryKey: DOC_QUERY_KEYS.documents.list({ ...queryParams, tab }),
-    queryFn: () => (tab === 'shared' ? getInboxDocuments(queryParams) : getDocuments(queryParams)),
+    queryFn: () =>
+      tab === 'shared' && currentFolderId === null
+        ? getInboxDocuments(queryParams)
+        : getDocuments(queryParams),
   });
 
   const documents = useMemo(
