@@ -2,7 +2,17 @@
 
 All notable changes to the frontend project will be documented in this file.
 
-## [Unreleased] - 2026-10-25
+## [Unreleased] - 2026-10-26
+
+### Added (Hỗ trợ Kéo & Thả Tệp và Thư mục Chuẩn Google Drive - Bỏ qua Popup Trình duyệt)
+- **Tiện ích Kéo thả Đệ quy ([`document-drag-drop.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/document-drag-drop.ts)):**
+  - Xây dựng hàm `parseDataTransferEntries()` và `hasFileTransfer()`: Duyệt đệ quy toàn bộ cây thư mục và tệp tin từ đối tượng `DataTransferItem` bằng API `webkitGetAsEntry()`, xử lý phân trang 100 entries/lần của Chromium. Xuất danh sách `File[]` kèm đường dẫn tương đối `relativePaths` để server tự động giữ nguyên cấu trúc thư mục con mà không làm trình duyệt kích hoạt popup bảo mật xác nhận.
+- **Tầng Hook Tải lên Hàng loạt ([`use-document-bulk-upload.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-document-bulk-upload.ts)):**
+  - Mở rộng hàm `executeBulkUpload` hỗ trợ `customRelativePaths` và bổ sung hàm `handleDroppedDataTransfer()` tự động phân tích các tệp tin/thư mục được kéo thả vào vùng làm việc.
+- **Giao diện Drag Overlay Thông minh ([`documents-explorer-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/documents-explorer-view.tsx)):**
+  - Lắng nghe các sự kiện `onDragEnter`, `onDragOver`, `onDragLeave`, `onDrop` với cơ chế đếm `dragCounterRef` chống hiện tượng giật/nhấp nháy overlay khi rê chuột qua các phần tử con.
+  - Tự động nhận diện `Files` từ hệ điều hành để tránh kích hoạt nhầm khi kéo thả di chuyển tài liệu nội bộ.
+  - Hiển thị Drag Overlay cao cấp: viền nét đứt `border-primary`, nền mờ `backdrop-blur-[2px]`, icon `UploadCloud` hiệu ứng bounce sinh động và hướng dẫn chi tiết.
 
 ### Fixed & Optimized (Tối ưu Hiệu năng Tương tác Thẻ & Khắc phục Trượt Menu Chuột Phải - `documents`)
 - **Tối ưu phản hồi chọn tệp/thư mục (Zero Delay Selection):**
