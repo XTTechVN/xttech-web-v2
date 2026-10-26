@@ -299,6 +299,42 @@ export const uploadSingleDocumentItem = async (params: {
   }
 };
 
+// Tải xuống toàn bộ thư mục dưới dạng file ZIP
+export const downloadCategoryZip = async (
+  categoryId: number,
+  categoryName: string,
+  options?: {
+    onProgress?: (loaded: number, total: number) => void;
+    signal?: AbortSignal;
+  },
+): Promise<void> => {
+  try {
+    const res = await api.get(`/api/v1/document-categories/${categoryId}/download-zip`, {
+      responseType: 'blob',
+      signal: options?.signal,
+      onDownloadProgress: (progressEvent) => {
+        if (options?.onProgress) {
+          options.onProgress(progressEvent.loaded || 0, progressEvent.total || 0);
+        }
+      },
+    });
+    const blob = new Blob([res.data], { type: 'application/zip' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${categoryName || 'folder'}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED') {
+      throw error;
+    }
+    throw new Error(extractErrorMessage(error, 'Không thể tải xuống thư mục'));
+  }
+};
+
 // Cập nhật thông tin tài liệu
 export const updateDocument = async (id: number, data: Partial<DocumentItem>): Promise<DocumentItem> => {
   try {

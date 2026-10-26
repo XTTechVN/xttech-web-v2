@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { QueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { ensureDocumentFolders, uploadSingleDocumentItem } from '@/actions/document';
+import { ensureDocumentFolders, uploadSingleDocumentItem, downloadCategoryZip } from '@/actions/document';
 import { showErrorToast, invalidateDocumentQueries, parseDataTransferEntries } from '@/utils';
 import type { QueueUploadItem } from '@/components/documents/upload-progress-drawer';
 
@@ -28,12 +28,51 @@ export function useDocumentBulkUpload({
   const activeWorkersRef = useRef(0);
   const queueRef = useRef<QueueUploadItem[]>([]);
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
+  const autoCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     queueRef.current = uploadQueue;
   });
 
-  const isUploading = uploadQueue.some((i) => i.status === 'uploading' || i.status === 'pending');
+  // Tự động đóng modal tiến trình sau 2.5s khi toàn bộ tác vụ hoàn tất thành công (không có lỗi)
+  useEffect(() => {
+    if (!isDrawerOpen || uploadQueue.length === 0) {
+      if (autoCloseTimerRef.current) {
+        clearTimeout(autoCloseTimerRef.current);
+        autoCloseTimerRef.current = null;
+      }
+      return;
+    }
+
+    const isRunning = uploadQueue.some(
+      (it) => it.status === 'pending' || it.status === 'uploading' || it.status === 'compressing',
+    );
+    const hasSuccess = uploadQueue.some((it) => it.status === 'success');
+    const hasError = uploadQueue.some((it) => it.status === 'error');
+
+    if (!isRunning && hasSuccess && !hasError) {
+      if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
+      autoCloseTimerRef.current = setTimeout(() => {
+        setIsDrawerOpen(false);
+        setUploadQueue((prev) =>
+          prev.filter((it) => it.status === 'pending' || it.status === 'uploading' || it.status === 'compressing'),
+        );
+      }, 2000);
+    } else if (isRunning || hasError) {
+      if (autoCloseTimerRef.current) {
+        clearTimeout(autoCloseTimerRef.current);
+        autoCloseTimerRef.current = null;
+      }
+    }
+
+    return () => {
+      if (autoCloseTimerRef.current) {
+        clearTimeout(autoCloseTimerRef.current);
+      }
+    };
+  }, [uploadQueue, isDrawerOpen]);
+
+  const isUploading = uploadQueue.some((i) => i.status === 'uploading' || i.status === 'pending' || i.status === 'compressing');
 
   const updateItemStatus = useCallback(
     (id: string, updates: Partial<QueueUploadItem>) => {
@@ -50,8 +89,10 @@ export function useDocumentBulkUpload({
 
     try {
       while (true) {
-        const nextItem = queueRef.current.find((it) => it.status === 'pending');
-        if (!nextItem) break;
+        const nextItem = queueRef.current.find(
+          (it) => it.status === 'pending' && (!it.direction || it.direction === 'upload') && Boolean(it.file),
+        );
+        if (!nextItem || !nextItem.file) break;
 
         const controller = new AbortController();
         abortControllersRef.current.set(nextItem.id, controller);
@@ -239,13 +280,75 @@ export function useDocumentBulkUpload({
     [executeBulkUpload],
   );
 
+  const startDownloadFolder = useCallback(
+    async (folderId: number, folderName: string) => {
+      const itemId = `download-${folderId}-${Date.now()}`;
+      const controller = new AbortController();
+      abortControllersRef.current.set(itemId, controller);
+
+      const newItem: QueueUploadItem = {
+        id: itemId,
+        title: `${folderName}.zip`,
+        size: 0,
+        progress: 0,
+        status: 'compressing',
+        direction: 'download',
+        abortController: controller,
+      };
+
+      // Chỉ giữ lại các tác vụ đang thực sự chạy, loại bỏ 100% lịch sử cũ đã xong hoặc đã hủy
+      setUploadQueue((prev) => {
+        const activeRunningItems = prev.filter(
+          (it) => it.status === 'uploading' || it.status === 'compressing' || it.status === 'pending',
+        );
+        return [newItem, ...activeRunningItems];
+      });
+      setIsDrawerOpen(true);
+
+      try {
+        await downloadCategoryZip(folderId, folderName, {
+          signal: controller.signal,
+          onProgress: (loaded, total) => {
+            const percent = total > 0 ? Math.round((loaded * 100) / total) : 50;
+            updateItemStatus(itemId, {
+              status: 'uploading',
+              size: total || loaded,
+              progress: percent,
+            });
+          },
+        });
+        updateItemStatus(itemId, { status: 'success', progress: 100 });
+        toast.success(`Đã tải xuống thư mục "${folderName}"!`);
+      } catch (err: any) {
+        if (controller.signal.aborted) {
+          updateItemStatus(itemId, { status: 'cancelled' });
+        } else {
+          updateItemStatus(itemId, {
+            status: 'error',
+            errorMessage: err?.message || 'Lỗi khi tải thư mục',
+          });
+          toast.error(err?.message || 'Không thể tải xuống thư mục');
+        }
+      } finally {
+        abortControllersRef.current.delete(itemId);
+      }
+    },
+    [updateItemStatus],
+  );
+
   return {
     isUploading,
     uploadQueue,
     isDrawerOpen,
-    closeDrawer: () => setIsDrawerOpen(false),
+    closeDrawer: () => {
+      setIsDrawerOpen(false);
+      setUploadQueue((prev) =>
+        prev.filter((it) => it.status === 'pending' || it.status === 'uploading' || it.status === 'compressing'),
+      );
+    },
     retryItem,
     cancelItem,
+    startDownloadFolder,
     fileInputRef,
     folderInputRef,
     triggerFilesUpload,
