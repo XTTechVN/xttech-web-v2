@@ -1,10 +1,14 @@
 import React from 'react';
-import { Button, TableSearch } from '@/components';
+import { Button, TableSearch, Select } from '@/components';
 import { FolderPlus, FileUp, FolderUp, LayoutGrid, List, RotateCcw } from 'lucide-react';
+import type { DocumentItemTypeFilter } from '@/hooks/use-document-explorer';
 
 interface DocumentsToolbarProps {
   search?: string;
   onSearchChange: (value: string) => void;
+  itemTypeFilter?: DocumentItemTypeFilter;
+  onItemTypeFilterChange?: (value: DocumentItemTypeFilter) => void;
+  itemTypeOptions?: { value: string; label: string }[];
   documentType?: string;
   onDocumentTypeChange?: (value: string) => void;
   documentTypeOptions?: { value: string; label: string }[];
@@ -25,6 +29,9 @@ interface DocumentsToolbarProps {
 export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
   search = '',
   onSearchChange,
+  itemTypeFilter = 'all',
+  onItemTypeFilterChange,
+  itemTypeOptions = [],
   hasActiveFilters,
   onResetFilters,
   viewMode,
@@ -39,12 +46,22 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
     <div className="bg-white border-b border-slate-200/80 p-4 shrink-0 shadow-2xs">
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap flex-1 min-w-0">
-          <div className="w-full sm:w-64 lg:w-72">
+          <div className="w-full sm:w-60 md:w-72">
             <TableSearch
               placeholder="Tìm mã, tiêu đề..."
               value={search}
               onChange={onSearchChange}
               className="w-full"
+            />
+          </div>
+
+          <div className="w-44 sm:w-48 shrink-0">
+            <Select
+              value={itemTypeFilter}
+              onChange={(e) => onItemTypeFilterChange?.(e.target.value as DocumentItemTypeFilter)}
+              options={itemTypeOptions}
+              placeholder="Tất cả loại mục"
+              className="h-9 text-xs"
             />
           </div>
 
@@ -54,7 +71,7 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
               size="sm"
               onClick={onResetFilters}
               className="h-9 px-2.5 rounded-lg border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-500 hover:text-rose-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer shadow-2xs"
-              title="Đặt lại tìm kiếm"
+              title="Đặt lại bộ lọc"
             >
               <RotateCcw size={14} />
             </Button>

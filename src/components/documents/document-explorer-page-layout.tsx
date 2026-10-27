@@ -21,6 +21,9 @@ export const DocumentExplorerPageLayout: React.FC<DocumentExplorerPageLayoutProp
       <DocumentsToolbar
         search={explorer.search}
         onSearchChange={explorer.setSearch}
+        itemTypeFilter={explorer.itemTypeFilter}
+        onItemTypeFilterChange={explorer.setItemTypeFilter}
+        itemTypeOptions={explorer.itemTypeOptions}
         documentType={explorer.documentType}
         onDocumentTypeChange={explorer.setDocumentType}
         documentTypeOptions={explorer.documentTypeOptions}
