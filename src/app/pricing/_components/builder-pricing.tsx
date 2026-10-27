@@ -179,8 +179,8 @@ const BuiderSpicing = () => {
   const { header, plans, featureGroups, addOns, footerNote } = PRICING_DATA;
 
   return (
-    <div className="w-full bg-white p-4 lg:p-2 font-sans text-[#0A192F]">
-      <div className="max-w-7xl mx-auto space-y-6">
+  <div className="w-full bg-white px-20 py-4 font-sans text-[#0A192F]">
+      <div className="w-full space-y-4">
         
         {/* HEADER TOP SECTION */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -214,7 +214,7 @@ const BuiderSpicing = () => {
         </div>
 
         {/* PRICING MATRIX CONTAINER */}
-        <div className="bg-white border border-gray-200/80 rounded-lg overflow-hidden shadow-sm">
+        <div className="bg-white border border-gray-200/80 rounded-lg overflow-visible shadow-sm">
           
           {/* HEADER ROW - PRICE CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-5 border-b border-gray-200/80 divide-y md:divide-y-0 md:divide-x divide-gray-200/80">
@@ -242,6 +242,12 @@ const BuiderSpicing = () => {
                     : "bg-white text-[#0A192F]"
                 }`}
               >
+                {/* Badge Bán chạy nhất */}
+                 {plan.isPopular && (
+                  <div className="absolute -top-3 right-6 bg-red-500 text-white text-sm font-extrabold px-3 py-1 rounded-full whitespace-nowrap shadow-sm z-20">
+                    Bán chạy nhất
+                  </div>
+                )}
                 <div>
                   {/* Plan Name */}
                   <span
