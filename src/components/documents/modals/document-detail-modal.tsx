@@ -152,10 +152,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
     Boolean(currentUser?.id) &&
     (String(targetDoc.createdById) === String(currentUser?.id) || String(doc.createdById) === String(currentUser?.id));
 
-  const docPerms = useMemo(
-    () => getDocumentPermissions(targetDoc, currentUser, { canManageDocuments: canManageDoc }),
-    [targetDoc, currentUser, canManageDoc]
-  );
+  const docPerms = getDocumentPermissions(targetDoc, currentUser, { canManageDocuments: canManageDoc });
   const canEditDoc = docPerms.canEdit;
 
   const approvalStatus = targetDoc.approvalStatus || doc.approvalStatus || 'draft';
