@@ -18,6 +18,7 @@ export interface ModalProps {
   closeOnOverlayClick?: boolean;
   disabled?: boolean;
   className?: string;
+  containerClassName?: string;
   bodyClassName?: string;
   fullScreenMobile?: boolean;
 }
@@ -32,6 +33,7 @@ const Modal: React.FC<ModalProps> = ({
   closeOnOverlayClick = true,
   disabled = false,
   className,
+  containerClassName,
   bodyClassName,
   fullScreenMobile = true,
 }) => {
@@ -82,7 +84,8 @@ const Modal: React.FC<ModalProps> = ({
         <div
           className={cn(
             'fixed inset-0 z-50 flex items-center justify-center outline-none',
-            isFullScreenMobile ? 'max-md:p-0 overflow-x-hidden max-md:overflow-hidden md:overflow-y-auto' : 'overflow-x-hidden overflow-y-auto'
+            isFullScreenMobile ? 'max-md:p-0 overflow-x-hidden max-md:overflow-hidden md:overflow-y-auto' : 'overflow-x-hidden overflow-y-auto',
+            containerClassName
           )}
         >
           {/* Overlay / Backdrop */}

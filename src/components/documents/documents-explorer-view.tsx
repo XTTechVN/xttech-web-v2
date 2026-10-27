@@ -365,8 +365,17 @@ export const DocumentsExplorerView: React.FC<DocumentsExplorerViewProps> = ({
             <Folder size={32} />
           </div>
           <h3 className="text-sm font-bold text-slate-800">
-            {currentFolder ? `Thư mục "${currentFolder.name}" đang trống` : 'Chưa có thư mục hoặc tài liệu nào'}
+            {explorer.hasActiveFilters
+              ? 'Không tìm thấy mục nào phù hợp với bộ lọc'
+              : currentFolder
+                ? `Thư mục "${currentFolder.name}" đang trống`
+                : 'Chưa có thư mục hoặc tài liệu nào'}
           </h3>
+          <p className="text-xs text-slate-500 mt-1">
+            {explorer.hasActiveFilters
+              ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.'
+              : 'Thư mục hiện tại chưa chứa tệp hoặc thư mục con nào.'}
+          </p>
         </div>
       ) : isLoadingDocuments ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import {
-  Building2, Calendar, Clock, Edit3, Eye, EyeOff, Folder, Globe, Share2, ShieldCheck, Trash2, User, Users,
+  Building2, Calendar, Clock, Eye, EyeOff, Folder, Globe, ShieldCheck, User, Users,
 } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, APPROVAL_STATUS_MAP, SHARE_SCOPE_MAP } from '@/types';
@@ -31,10 +31,6 @@ export const DocumentDetailBody: React.FC<DocumentDetailBodyProps> = ({
   approverDisplayName,
   resolvedDepartments,
   resolvedUsers,
-  onPreview,
-  onShare,
-  onEdit,
-  onDelete,
 }) => {
   const docTypeInfo = DOCUMENT_TYPE_MAP[doc.documentType] || {
     label: doc.documentType || 'Văn bản',
@@ -50,71 +46,98 @@ export const DocumentDetailBody: React.FC<DocumentDetailBodyProps> = ({
   };
 
   return (
-    <div className="space-y-4 text-xs">
+    <div className="space-y-3.5 text-xs">
+      {/* Khối 1: Thông tin tiêu đề và badges */}
       <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-50 border border-slate-200 shadow-2xs space-y-2.5">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-md border ${docTypeInfo.badgeClass}`}>
-              {docTypeInfo.label}
+        {/* Hàng 1: Danh sách nhãn trạng thái */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-md border ${docTypeInfo.badgeClass}`}>
+            {docTypeInfo.label}
+          </span>
+          {doc.code && (
+            <span className="text-[10px] sm:text-[11px] font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-2xs">
+              Số: {doc.code}
             </span>
-            {doc.code && (
-              <span className="text-[10px] sm:text-[11px] font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-2xs">
-                Số: {doc.code}
-              </span>
-            )}
-            <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded border ${statusInfo.badgeClass}`}>
-              {statusInfo.label}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 shrink-0">
-            {onPreview && (
-              <button
-                type="button"
-                onClick={() => onPreview(doc)}
-                className="inline-flex items-center justify-center w-7.5 h-7.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-2xs cursor-pointer"
-                title="Xem trước tài liệu"
-              >
-                <Eye size={13} className="text-primary" />
-              </button>
-            )}
-            {onShare && (
-              <button
-                type="button"
-                onClick={() => onShare(doc)}
-                className="inline-flex items-center justify-center w-7.5 h-7.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-2xs cursor-pointer"
-                title="Chia sẻ văn bản"
-              >
-                <Share2 size={13} />
-              </button>
-            )}
-            {onEdit && (
-              <button
-                type="button"
-                onClick={() => onEdit(doc)}
-                className="inline-flex items-center justify-center w-7.5 h-7.5 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary transition-colors shadow-2xs cursor-pointer"
-                title="Chỉnh sửa văn bản"
-              >
-                <Edit3 size={13} />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                type="button"
-                onClick={() => onDelete(doc)}
-                className="inline-flex items-center justify-center w-7.5 h-7.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors shadow-2xs cursor-pointer"
-                title="Xóa văn bản"
-              >
-                <Trash2 size={13} />
-              </button>
-            )}
-          </div>
+          )}
+          <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded border ${statusInfo.badgeClass}`}>
+            {statusInfo.label}
+          </span>
         </div>
-        <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">{doc.title}</h3>
+
+        {/* Hàng 2: Tên tài liệu */}
+        <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug break-words">
+          {doc.title}
+        </h3>
       </div>
 
+      {/* Khối 2: Thông tin chung (đặt trước Đối tượng nhận văn bản như ảnh 2) */}
+      <div className="p-3.5 sm:p-4 rounded-xl bg-white border border-slate-200/80 shadow-2xs divide-y divide-slate-100 space-y-0">
+        <div className="flex items-center justify-between py-2.5 text-xs first:pt-0 last:pb-0">
+          <div className="flex items-center gap-2 text-slate-500 font-medium">
+            <Folder size={15} className="text-slate-400 shrink-0" />
+            <span>Thư mục</span>
+          </div>
+          <span className="font-semibold text-slate-800 text-right truncate max-w-[60%]">
+            {doc.category?.name || 'Thư mục gốc'}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between py-2.5 text-xs first:pt-0 last:pb-0">
+          <div className="flex items-center gap-2 text-slate-500 font-medium">
+            <User size={15} className="text-slate-400 shrink-0" />
+            <span>Người tạo</span>
+          </div>
+          <span className="font-semibold text-slate-800 text-right truncate max-w-[60%]">
+            {doc.createdBy?.fullName || 'CBNV'}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between py-2.5 text-xs first:pt-0 last:pb-0">
+          <div className="flex items-center gap-2 text-slate-500 font-medium">
+            <Clock size={15} className="text-slate-400 shrink-0" />
+            <span>Ngày tạo</span>
+          </div>
+          <span className="font-semibold text-slate-800 text-right">
+            {dayjs(doc.createdAt).format('HH:mm - DD/MM/YYYY')}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between py-2.5 text-xs first:pt-0 last:pb-0">
+          <div className="flex items-center gap-2 text-slate-500 font-medium">
+            <ShieldCheck size={15} className="text-slate-400 shrink-0" />
+            <span>Trạng thái duyệt</span>
+          </div>
+          <span className={`font-semibold px-2.5 py-0.5 rounded text-[11px] ${approvalInfo.badgeClass}`}>
+            {approvalInfo.label}
+          </span>
+        </div>
+
+        {approverDisplayName && (
+          <div className="flex items-center justify-between py-2.5 text-xs first:pt-0 last:pb-0">
+            <div className="flex items-center gap-2 text-slate-500 font-medium">
+              <User size={15} className="text-slate-400 shrink-0" />
+              <span>Người duyệt</span>
+            </div>
+            <span className="font-semibold text-slate-800 text-right truncate max-w-[60%]">
+              {approverDisplayName}
+            </span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between py-2.5 text-xs first:pt-0 last:pb-0">
+          <div className="flex items-center gap-2 text-slate-500 font-medium">
+            <Calendar size={15} className="text-slate-400 shrink-0" />
+            <span>Phạm vi chia sẻ</span>
+          </div>
+          <span className="font-semibold text-slate-800 text-right">
+            {SHARE_SCOPE_MAP[doc.shareScope] || doc.shareScope || 'Cá nhân'}
+          </span>
+        </div>
+      </div>
+
+      {/* Khối 3: Đối tượng nhận văn bản (đặt sau Thông tin chung) */}
       {canManageDoc && (
-        <div className="space-y-2.5 p-3.5 rounded-lg bg-white border border-slate-200/80 shadow-2xs">
+        <div className="space-y-3 p-3.5 sm:p-4 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
               <Users size={15} className="text-primary" />
@@ -133,9 +156,11 @@ export const DocumentDetailBody: React.FC<DocumentDetailBodyProps> = ({
           </div>
 
           {targetDoc.shareScope === 'all' && (
-            <p className="text-[11px] text-slate-500 italic">
-              Văn bản được phát hành công khai cho toàn bộ nhân sự trong công ty.
-            </p>
+            <div className="p-3 rounded-xl border border-dashed border-primary/20 bg-primary/5">
+              <p className="text-[11px] text-primary italic">
+                Văn bản được phát hành công khai cho toàn bộ nhân sự trong công ty.
+              </p>
+            </div>
           )}
 
           {resolvedDepartments.length > 0 && (
@@ -212,56 +237,14 @@ export const DocumentDetailBody: React.FC<DocumentDetailBodyProps> = ({
           )}
 
           {targetDoc.shareScope !== 'all' && resolvedDepartments.length === 0 && resolvedUsers.length === 0 && (
-            <p className="text-[11px] text-slate-400 italic">
-              Chưa có cá nhân hay phòng ban nào được chỉ định nhận văn bản này.
-            </p>
+            <div className="p-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+              <p className="text-[11px] text-slate-500 italic">
+                Chưa có cá nhân hay phòng ban nào được chỉ định nhận văn bản này.
+              </p>
+            </div>
           )}
         </div>
       )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-lg bg-white border border-slate-200/80">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-slate-600">
-            <Folder size={14} className="text-slate-500 shrink-0" />
-            <span>Thư mục:</span>
-            <span className="font-semibold text-slate-800">{doc.category?.name || 'Thư mục gốc'}</span>
-          </div>
-          <div className="flex items-center gap-2 text-slate-600">
-            <User size={14} className="text-slate-500 shrink-0" />
-            <span>Người tạo:</span>
-            <span className="font-semibold text-slate-800">{doc.createdBy?.fullName || 'CBNV'}</span>
-          </div>
-          <div className="flex items-center gap-2 text-slate-600">
-            <Clock size={14} className="text-slate-500 shrink-0" />
-            <span>Ngày tạo:</span>
-            <span className="font-semibold text-slate-800">{dayjs(doc.createdAt).format('HH:mm - DD/MM/YYYY')}</span>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-slate-600">
-            <ShieldCheck size={14} className="text-slate-500 shrink-0" />
-            <span>Trạng thái duyệt:</span>
-            <span className={`font-semibold px-2 py-0.5 rounded text-[11px] ${approvalInfo.badgeClass}`}>
-              {approvalInfo.label}
-            </span>
-          </div>
-          {approverDisplayName && (
-            <div className="flex items-center gap-2 text-slate-600">
-              <User size={14} className="text-slate-500 shrink-0" />
-              <span>Người duyệt:</span>
-              <span className="font-semibold text-slate-800">{approverDisplayName}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 text-slate-600">
-            <Calendar size={14} className="text-slate-500 shrink-0" />
-            <span>Phạm vi chia sẻ:</span>
-            <span className="font-semibold text-slate-800">
-              {SHARE_SCOPE_MAP[doc.shareScope] || doc.shareScope || 'Cá nhân'}
-            </span>
-          </div>
-        </div>
-      </div>
 
       {doc.summary && (
         <div className="space-y-1">

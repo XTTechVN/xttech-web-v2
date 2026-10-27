@@ -1,4 +1,4 @@
-'use client';
+  'use client';
 
 import React from 'react';
 import { Search, RotateCcw, LayoutGrid, List, AlertCircle, SearchX, Trash2 } from 'lucide-react';
@@ -68,10 +68,11 @@ export const TrashTab: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white select-none">
-      <div className="bg-white border-b border-slate-200/80 p-4 shrink-0 shadow-2xs">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap flex-1 min-w-0">
-            <div className="relative w-full sm:w-60 md:w-72">
+      <div className="bg-white border-b border-slate-200/80 p-3 sm:p-4 shrink-0 shadow-2xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
+          {/* Dòng 1 trên mobile: Tìm kiếm chiếm full 1 dòng */}
+          <div className="w-full sm:w-60 md:w-72">
+            <div className="relative w-full">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="text"
@@ -81,53 +82,60 @@ export const TrashTab: React.FC = () => {
                 className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
             </div>
-
-            <div className="w-44 sm:w-48 shrink-0">
-              <Select
-                value={itemTypeFilter}
-                onChange={(e) => setItemTypeFilter(e.target.value as 'all' | TrashItemType)}
-                options={ITEM_TYPE_OPTIONS}
-                placeholder="Tất cả loại mục"
-                className="h-9 text-xs"
-              />
-            </div>
-
-            {hasActiveFilters && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleResetFilters}
-                className="h-9 px-2.5 rounded-lg border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-500 hover:text-rose-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer shadow-2xs"
-                title="Đặt lại bộ lọc"
-              >
-                <RotateCcw size={14} />
-              </Button>
-            )}
           </div>
 
-          <div className="flex items-center p-0.5 rounded-xl border border-slate-200 bg-slate-100/80 shrink-0">
-            <button
-              type="button"
-              onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
-                viewMode === 'grid' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800'
-              }`}
-              title="Dạng lưới"
-            >
-              <LayoutGrid size={15} />
-              <span className="text-xs">Lưới</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('list')}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
-                viewMode === 'list' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800'
-              }`}
-              title="Dạng danh sách"
-            >
-              <List size={15} />
-              <span className="text-xs">Danh sách</span>
-            </button>
+          {/* Dòng 2 trên mobile: Lọc chiếm phần còn lại bên trái, Cụm Lưới/Danh sách giữ kích thước chuẩn bên phải không rớt dòng */}
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-1 min-w-0 justify-between sm:justify-end">
+            <div className="flex-1 min-w-0 sm:w-44 md:w-48 sm:flex-none flex items-center gap-1.5">
+              <div className="w-full min-w-0">
+                <Select
+                  value={itemTypeFilter}
+                  onChange={(e) => setItemTypeFilter(e.target.value as 'all' | TrashItemType)}
+                  options={ITEM_TYPE_OPTIONS}
+                  placeholder="Tất cả loại mục"
+                  className="h-9 text-xs w-full"
+                />
+              </div>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetFilters}
+                  className="h-9 px-2 rounded-lg border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-500 hover:text-rose-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer shadow-2xs"
+                  title="Đặt lại bộ lọc"
+                >
+                  <RotateCcw size={14} />
+                </Button>
+              )}
+            </div>
+
+            <div className="h-5 w-px bg-slate-200 hidden sm:block shrink-0 mx-0.5" />
+
+            <div className="flex items-center p-0.5 rounded-xl border border-slate-200 bg-slate-100/80 shrink-0 whitespace-nowrap">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all cursor-pointer ${
+                  viewMode === 'grid' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Dạng lưới"
+              >
+                <LayoutGrid size={15} />
+                <span className="hidden sm:inline text-xs">Lưới</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all cursor-pointer ${
+                  viewMode === 'list' ? 'bg-white text-primary shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Dạng danh sách"
+              >
+                <List size={15} />
+                <span className="hidden sm:inline text-xs">Danh sách</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
