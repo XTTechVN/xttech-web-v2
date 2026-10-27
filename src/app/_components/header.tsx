@@ -27,11 +27,11 @@ export const Header = () => {
           </Heading>
         </div>
         <nav className="hidden md:flex items-center gap-8">
-          <Link href="#features" className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">
-            Tính năng
-          </Link>
           <Link href="#" className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">
             Về chúng tôi
+          </Link>
+          <Link href="/pricing" className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">
+            Giá
           </Link>
           <Link href="#contact" className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">
             Liên hệ
