@@ -134,93 +134,113 @@ export const DocumentDetailFooter: React.FC<{
   onPublish,
   onOpenUploadVersion,
   onClose,
-}) => (
-  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 w-full">
-    <div className="flex items-center gap-2 flex-wrap justify-start">
-      {isDraftOrRejected && (isCreator || canManageDoc) && (
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={onOpenSubmitModal}
-          loading={submitLoading}
-          disabled={isActionBusy}
-          leftIcon={<Send size={13} />}
-          className="bg-primary hover:bg-primary/90 text-white font-medium text-xs cursor-pointer h-8.5"
-        >
-          Trình duyệt tài liệu
-        </Button>
-      )}
+}) => {
+  const canUploadVersion = isCreator || canManageDoc;
+  const canDownload = Boolean(downloadUrl);
+  const hasBothSecondary = canUploadVersion && canDownload;
 
-      {approvalStatus === 'pending' && (isAssignedApprover || canManageDoc) && (
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={onOpenRejectModal}
-            disabled={isActionBusy}
-            className="px-3 rounded-lg bg-[#ff245a] hover:bg-[#e61a4d] text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer h-8.5"
-          >
-            Từ chối
-          </Button>
+  return (
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 w-full">
+      {/* Cụm nút hành động chính (Trình duyệt, Duyệt, Ban hành) */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+        {isDraftOrRejected && (isCreator || canManageDoc) && (
           <Button
             variant="primary"
             size="sm"
-            onClick={onApprove}
-            loading={reviewLoading}
+            onClick={onOpenSubmitModal}
+            loading={submitLoading}
             disabled={isActionBusy}
-            className="px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer h-8.5"
+            leftIcon={<Send size={15} />}
+            className="w-full sm:w-auto h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg bg-primary hover:bg-primary/90 text-white font-semibold sm:font-medium text-xs sm:text-xs cursor-pointer shadow-xs justify-center"
           >
-            Duyệt đề xuất
+            Trình duyệt tài liệu
           </Button>
-        </div>
-      )}
+        )}
 
-      {isApproved && !isPublished && canManageDoc && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onPublish}
-          loading={publishLoading}
-          disabled={isActionBusy}
-          leftIcon={<Megaphone size={13} className="text-teal-600" />}
-          className="border-teal-300 bg-teal-50/60 hover:bg-teal-50 text-teal-800 text-xs h-8.5"
-        >
-          Ban hành văn bản
-        </Button>
-      )}
-    </div>
+        {approvalStatus === 'pending' && (isAssignedApprover || canManageDoc) && (
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={onOpenRejectModal}
+              disabled={isActionBusy}
+              className="h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg px-3 bg-[#ff245a] hover:bg-[#e61a4d] text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer justify-center"
+            >
+              Từ chối
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onApprove}
+              loading={reviewLoading}
+              disabled={isActionBusy}
+              className="h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer justify-center"
+            >
+              Duyệt đề xuất
+            </Button>
+          </div>
+        )}
 
-    <div className="flex items-center gap-2 flex-wrap justify-end">
-      {(isCreator || canManageDoc) && (
+        {isApproved && !isPublished && canManageDoc && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onPublish}
+            loading={publishLoading}
+            disabled={isActionBusy}
+            leftIcon={<Megaphone size={14} className="text-teal-600" />}
+            className="w-full sm:w-auto h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg border-teal-300 bg-teal-50/60 hover:bg-teal-50 text-teal-800 text-xs font-semibold sm:font-normal justify-center"
+          >
+            Ban hành văn bản
+          </Button>
+        )}
+      </div>
+
+      {/* Cụm nút phụ (Tải phiên bản mới, Tải tệp tin, Đóng) */}
+      <div
+        className={`${
+          hasBothSecondary
+            ? 'grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto'
+            : 'flex items-center gap-2 w-full sm:w-auto justify-end'
+        }`}
+      >
+        {canUploadVersion && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={onOpenUploadVersion}
+            leftIcon={<UploadCloud size={15} className="text-white" />}
+            disabled={isActionBusy}
+            className="h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg text-xs text-white px-2.5 sm:px-3 whitespace-nowrap justify-center flex-1 sm:flex-none shadow-xs"
+          >
+            Tải phiên bản mới
+          </Button>
+        )}
+        {downloadUrl && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(downloadUrl, '_blank', 'noopener,noreferrer')}
+            leftIcon={<Download size={15} />}
+            disabled={isActionBusy}
+            className="h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg text-xs px-2.5 sm:px-3 whitespace-nowrap bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 justify-center flex-1 sm:flex-none shadow-2xs"
+          >
+            Tải tệp tin
+          </Button>
+        )}
         <Button
-          variant="primary"
+          variant="ghost"
           size="sm"
-          onClick={onOpenUploadVersion}
-          leftIcon={<UploadCloud size={13} className="text-white" />}
+          onClick={onClose}
           disabled={isActionBusy}
-          className="text-xs text-white h-8.5 px-2.5 sm:px-3 whitespace-nowrap shrink-0"
+          className="hidden sm:inline-flex text-xs h-8.5 px-3 shrink-0"
         >
-          Tải phiên bản mới
+          Đóng
         </Button>
-      )}
-      {downloadUrl && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.open(downloadUrl, '_blank', 'noopener,noreferrer')}
-          leftIcon={<Download size={13} />}
-          disabled={isActionBusy}
-          className="text-xs h-8.5 px-2.5 sm:px-3 whitespace-nowrap shrink-0"
-        >
-          Tải tệp tin
-        </Button>
-      )}
-      <Button variant="ghost" size="sm" onClick={onClose} disabled={isActionBusy} className="text-xs h-8.5 px-3 shrink-0">
-        Đóng
-      </Button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const SubmitApprovalModal: React.FC<{
   isOpen: boolean;
