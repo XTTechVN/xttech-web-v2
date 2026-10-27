@@ -42,9 +42,16 @@ export function PositionCard({
         <span className="font-semibold text-[11px] text-slate-700 truncate" title={pos.code}>
           {pos.code}
         </span>
-        <Badge variant={statusConfig.variant} size="sm">
-          {statusConfig.label}
-        </Badge>
+        {pos.designOptionId ? (
+          // Cửa của phương án đang chào khách: chưa là cửa chính thức (chưa đo, chưa in tem QR)
+          <Badge variant="info" size="sm" title="Cửa thuộc phương án thiết kế khách chưa chọn">
+            Phương án
+          </Badge>
+        ) : (
+          <Badge variant={statusConfig.variant} size="sm">
+            {statusConfig.label}
+          </Badge>
+        )}
       </div>
 
       <div

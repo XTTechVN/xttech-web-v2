@@ -14,13 +14,19 @@ export const invalidateQuotationQueries = (projectId: number) => {
   queryClient.invalidateQueries({ queryKey: activeQuotationKey(projectId) });
   queryClient.invalidateQueries({ queryKey: quotationSheetKey(projectId) });
   queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+  queryClient.invalidateQueries({ queryKey: ['project_overview', projectId] });
+  queryClient.invalidateQueries({ queryKey: ['design_options', projectId] });
+  queryClient.invalidateQueries({ queryKey: ['project_positions', projectId] });
+  queryClient.invalidateQueries({ queryKey: ['quotation_overview'] });
+  queryClient.invalidateQueries({ queryKey: ['project_quotations', projectId] });
 };
 
-// Báo giá hiện hành duy nhất của dự án, dùng chung cho tab Báo giá và tab Hợp đồng
-export function useActiveQuotation(projectId: number) {
+// Báo giá hiện hành của dự án (cửa chính thức), hoặc của một phương án thiết kế đang chào khách.
+// Dùng chung cho tab Báo giá và tab Hợp đồng.
+export function useActiveQuotation(projectId: number, designOptionId?: number | null) {
   const { data, isLoading } = useQuery<ProjectQuotationDetail | null>({
-    queryKey: activeQuotationKey(projectId),
-    queryFn: () => getActiveProjectQuotation(projectId),
+    queryKey: [...activeQuotationKey(projectId), designOptionId ?? 'official'],
+    queryFn: () => getActiveProjectQuotation(projectId, designOptionId),
     enabled: !!projectId,
   });
 

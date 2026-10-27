@@ -5,10 +5,17 @@ type BadgeVariant = NonNullable<BadgeProps['variant']>;
 // Backend trả mã tiếng Anh, frontend chịu trách nhiệm hiển thị tiếng Việt
 export const QUOTATION_STATUS_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
   draft: { label: 'Bản nháp', variant: 'default' },
+  pending_approval: { label: 'Chờ admin duyệt', variant: 'warning' },
+  approved: { label: 'Admin đã duyệt', variant: 'info' },
   sent: { label: 'Đã gửi khách', variant: 'primary' },
   accepted: { label: 'Khách đồng ý', variant: 'success' },
   rejected: { label: 'Khách từ chối', variant: 'danger' },
+  superseded: { label: 'Đã được thay bằng phiên bản mới', variant: 'default' },
+  not_chosen: { label: 'Phương án không được chọn', variant: 'default' },
 };
+
+// Còn sửa tại chỗ được (sửa sẽ quay về nháp, phải trình duyệt lại); trạng thái khác: lưu sẽ tạo phiên bản mới
+export const EDITABLE_QUOTATION_STATUSES = ['draft', 'pending_approval', 'approved'];
 
 export const CONTRACT_STATUS_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
   draft: { label: 'Chưa ký', variant: 'default' },

@@ -9,6 +9,9 @@ export const ROLE_CODES = {
   TECHNICIAN: 'technician',
   EMPLOYEE: 'employee',
   ACCOUNTANT: 'accountant',
+  WORKSHOP: 'workshop',
+  INSTALLER: 'installer',
+  WARRANTY: 'warranty',
 };
 
 export function usePermission() {

@@ -21,7 +21,11 @@ const PREVIEW_DEBOUNCE_MS = 500;
  * Trạng thái form cấu thành giá + tính thử giá real-time (debounce).
  * Form luôn đồng bộ với báo giá hiện hành mỗi khi báo giá được lưu / đồng bộ.
  */
-export function useQuotationForm(projectId: number, quotation: ProjectQuotationDetail | null) {
+export function useQuotationForm(
+  projectId: number,
+  quotation: ProjectQuotationDetail | null,
+  designOptionId: number | null = null,
+) {
   const [config, setConfig] = useState<ProjectQuotationPreviewRequest>(DEFAULT_PRICING_CONFIG);
   const [name, setName] = useState(DEFAULT_QUOTATION_NAME);
   const [note, setNote] = useState('');
@@ -51,7 +55,7 @@ export function useQuotationForm(projectId: number, quotation: ProjectQuotationD
   };
 
   const isMissingFloors = config.scopeType === 'by_floor' && !config.floorIds?.length;
-  const { previewResult, isCalculating } = usePricePreview(projectId, config, isMissingFloors);
+  const { previewResult, isCalculating } = usePricePreview(projectId, config, isMissingFloors, designOptionId);
 
   return {
     config,
@@ -71,6 +75,7 @@ function usePricePreview(
   projectId: number,
   config: ProjectQuotationPreviewRequest,
   isMissingFloors: boolean,
+  designOptionId: number | null,
 ) {
   const {
     mutate: calculatePreview,
@@ -84,9 +89,10 @@ function usePricePreview(
 
   useEffect(() => {
     if (isMissingFloors || !projectId) return;
-    const timer = setTimeout(() => calculatePreview(config), PREVIEW_DEBOUNCE_MS);
+    // Báo giá phương án tính trên cửa chính thức + cửa của phương án đó
+    const timer = setTimeout(() => calculatePreview({ ...config, designOptionId }), PREVIEW_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [config, isMissingFloors, projectId, calculatePreview]);
+  }, [config, isMissingFloors, projectId, designOptionId, calculatePreview]);
 
   return { previewResult, isCalculating };
 }

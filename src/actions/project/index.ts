@@ -96,9 +96,12 @@ export const createProjectQuotationOfficial = async (
 
 export const getActiveProjectQuotation = async (
   projectId: number,
+  designOptionId?: number | null,
 ): Promise<import('@/types').ProjectQuotationDetail | null> => {
   try {
-    const response = await api.get(`/api/v1/projects/${projectId}/quotations/active`);
+    const response = await api.get(`/api/v1/projects/${projectId}/quotations/active`, {
+      params: designOptionId ? { designOptionId } : undefined,
+    });
     return normalizeProjectQuotation(response.data);
   } catch (error: unknown) {
     if ((error as { response?: { status?: number } })?.response?.status === 404) return null;
@@ -646,3 +649,7 @@ export const exportProjectQuotationExcel = async (
 };
 
 export * from './manufacture';
+
+export * from './handover';
+
+export * from './quotation-approval';

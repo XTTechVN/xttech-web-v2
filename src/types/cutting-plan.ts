@@ -56,10 +56,14 @@ export interface ReturnOffcutsResult {
 
 // Tiến độ từng cửa (khớp ProgressStepCode của backend)
 export type ProgressStepCode =
+  | 'draft'
+  | 'awaiting_measure'
   | 'surveyed'
   | 'producing'
   | 'factory_done'
+  | 'delivering'
   | 'delivered'
+  | 'installing'
   | 'installed'
   | 'accepted';
 
@@ -67,6 +71,13 @@ export interface EvidenceMediaItem {
   url: string;
   name?: string;
   type?: 'image' | 'video' | string;
+}
+
+export interface RevertProgressPayload {
+  positionIds: number[];
+  targetStep: ProgressStepCode;
+  reason: string;
+  evidenceMedia?: EvidenceMediaItem[];
 }
 
 export interface AdvanceProgressPayload {

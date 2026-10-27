@@ -4,6 +4,8 @@ import React, { useMemo, useState } from 'react';
 import { BarChart3, FileText, Wallet } from 'lucide-react';
 import { Skeleton, Tabs } from '@/components';
 import type { QuotationDoorItemSnapshot } from '@/types';
+import { DesignOptionsBar } from './components/design-options-bar';
+import { QuotationApprovalBar } from './components/quotation-approval-bar';
 import { QuotationConfigForm } from './components/quotation-config-form';
 import { QuotationDoorsTable } from './components/quotation-doors-table';
 import { QuotationPreviewPanel } from './components/quotation-preview-panel';
@@ -28,9 +30,10 @@ const EMPTY_ITEMS: QuotationDoorItemSnapshot[] = [];
 
 export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricingProps) {
   const [activeTab, setActiveTab] = useState('config');
-  const api = useProjectQuotation(projectId);
-  const { quotation } = api;
-  const form = useQuotationForm(projectId, quotation);
+  const [optionId, setOptionId] = useState<number | null>(null);
+  const api = useProjectQuotation(projectId, optionId);
+  const { quotation, isEditable } = api;
+  const form = useQuotationForm(projectId, quotation, optionId);
 
   const items = useMemo(
     () => (Array.isArray(quotation?.snapshotItems) ? quotation.snapshotItems : EMPTY_ITEMS),
@@ -44,8 +47,10 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
 
   return (
     <div className="space-y-4">
+      <DesignOptionsBar projectId={projectId} selectedId={optionId} onSelect={setOptionId} />
       {quotation && (
         <>
+          <QuotationApprovalBar projectId={projectId} quotation={quotation} />
           <QuotationStatusBanner
             quotation={quotation}
             isSyncing={api.isSyncing}
@@ -75,7 +80,7 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
             result={form.previewResult}
             isCalculating={form.isCalculating}
             isMissingFloors={form.isMissingFloors}
-            saveLabel={quotation ? 'Cập nhật báo giá' : 'Lập báo giá'}
+            saveLabel={!quotation ? 'Lập báo giá' : isEditable ? 'Cập nhật báo giá' : 'Lập phiên bản mới'}
             isSaving={api.isSaving}
             isSaveDisabled={isLocked || !form.name.trim() || form.isMissingFloors}
             onSave={() =>
@@ -94,7 +99,7 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
           <QuotationDoorsTable
             items={items}
             isSeparated={isSeparated}
-            isLocked={isLocked}
+            isLocked={!isEditable}
             isSaving={api.isSavingPrices}
             drafts={drafts}
             onSave={() =>

@@ -11,6 +11,8 @@ import type { ProgressStepCode, ProjectDoorPosition } from '@/types';
 import { cn } from '@/utils/cn';
 import { DOOR_TYPE_LABEL, PROGRESS_STEP_LABEL } from '../utils';
 
+const REWORKABLE_STATUSES = ['factory_done', 'delivering', 'delivered', 'installing', 'installed'];
+
 interface CreateProductionOrderModalProps {
   projectId: number;
   isOpen: boolean;
@@ -28,6 +30,8 @@ export function CreateProductionOrderModal({
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [isRework, setIsRework] = useState(false);
+  const [reworkReason, setReworkReason] = useState('');
 
   const { mutate: createOrder, isPending } = useMutation({
     mutationFn: () =>
@@ -36,6 +40,8 @@ export function CreateProductionOrderModal({
         positionIds: selectedIds,
         startDate: startDate || undefined,
         dueDate: dueDate || undefined,
+        kind: isRework ? 'rework' : 'normal',
+        reworkReason: isRework ? reworkReason.trim() : undefined,
       }),
     onSuccess: (order) => {
       ['production_orders', 'progress_matrix', 'project_positions', 'project'].forEach((key) =>
@@ -49,7 +55,23 @@ export function CreateProductionOrderModal({
     onError: (err) => showErrorToast(err, 'Lỗi lập lệnh sản xuất'),
   });
 
+  // Lệnh thường: cửa đã đo & chờ sản xuất. Lệnh làm lại: cửa đã sản xuất xong nhưng chưa nghiệm thu.
+  const isEligible = (position: ProjectDoorPosition): boolean =>
+    isRework
+      ? REWORKABLE_STATUSES.includes(position.status)
+      : !!position.isMeasured && (!position.status || position.status === 'surveyed');
+
   const toggle = (position: ProjectDoorPosition) => {
+    if (isRework) {
+      if (!isEligible(position)) {
+        toast.error(`Bộ cửa ${position.code} chưa sản xuất xong hoặc đã nghiệm thu nên không thể làm lại.`);
+        return;
+      }
+      setSelectedIds((prev) =>
+        prev.includes(position.id) ? prev.filter((id) => id !== position.id) : [...prev, position.id],
+      );
+      return;
+    }
     if (!position.isMeasured) {
       toast.error(
         `Bộ cửa ${position.code} chưa chốt số đo thực tế! Không thể đưa vào Lệnh sản xuất.`,
@@ -85,6 +107,25 @@ export function CreateProductionOrderModal({
           onChange={(e) => setOrderName(e.target.value)}
           fullWidth
         />
+        <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-700">
+          <input
+            type="checkbox"
+            checked={isRework}
+            onChange={(e) => {
+              setIsRework(e.target.checked);
+              setSelectedIds([]);
+            }}
+          />
+          Lệnh làm lại (cửa lỗi / sai số đã sản xuất xong)
+        </label>
+        {isRework && (
+          <Input
+            label="Lý do làm lại *"
+            value={reworkReason}
+            onChange={(e) => setReworkReason(e.target.value)}
+            fullWidth
+          />
+        )}
         <div className="grid grid-cols-2 gap-3">
           <Input
             type="date"
@@ -115,7 +156,7 @@ export function CreateProductionOrderModal({
             {positions.map((position) => {
               const isMeasured = !!position.isMeasured;
               const isSurveyed = !position.status || position.status === 'surveyed';
-              const isAvailable = isMeasured && isSurveyed;
+              const isAvailable = isEligible(position);
               const isSelected = selectedIds.includes(position.id);
               const stepName =
                 PROGRESS_STEP_LABEL[position.status as ProgressStepCode] || position.status;
@@ -188,7 +229,12 @@ export function CreateProductionOrderModal({
           <Button
             variant="primary"
             size="sm"
-            disabled={!orderName.trim() || selectedIds.length === 0 || isPending}
+            disabled={
+              !orderName.trim() ||
+              selectedIds.length === 0 ||
+              isPending ||
+              (isRework && reworkReason.trim().length < 3)
+            }
             loading={isPending}
             onClick={() => createOrder()}
           >

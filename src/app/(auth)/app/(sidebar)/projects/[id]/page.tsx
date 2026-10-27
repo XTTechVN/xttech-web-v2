@@ -14,6 +14,8 @@ import {
   Calculator,
   FileText,
   CheckCircle2,
+  ClipboardCheck,
+  ShieldCheck,
 } from 'lucide-react';
 import { Badge, Skeleton } from '@/components';
 import { PROJECT_STATUS_MAP } from '@/config';
@@ -37,12 +39,23 @@ const TabProduction = dynamic(
   { loading: TabFallback },
 );
 
+const TabAcceptance = dynamic(
+  () => import('./_components/acceptance').then((m) => m.TabAcceptance),
+  { loading: TabFallback },
+);
+const TabWarranty = dynamic(
+  () => import('./_components/warranty').then((m) => m.TabWarranty),
+  { loading: TabFallback },
+);
+
 const PROJECT_TABS = [
   { value: 'overview', label: 'Thông tin', icon: <FolderOpen size={14} /> },
   { value: 'positions', label: 'Thiết kế', icon: <Layers size={14} /> },
   { value: 'quotations', label: 'Báo giá', icon: <Calculator size={14} /> },
   { value: 'contracts', label: 'Hợp đồng', icon: <FileText size={14} /> },
   { value: 'production', label: 'Sản xuất', icon: <CheckCircle2 size={14} /> },
+  { value: 'acceptance', label: 'Nghiệm thu', icon: <ClipboardCheck size={14} /> },
+  { value: 'warranty', label: 'Bảo hành', icon: <ShieldCheck size={14} /> },
 ];
 
 const VALID_TABS = new Set(PROJECT_TABS.map((t) => t.value));
@@ -172,6 +185,8 @@ function ProjectDetailContent({ projectId }: { projectId: number }) {
       {activeTab === 'quotations' && <TabQuotations projectId={projectId} />}
       {activeTab === 'contracts' && <TabContracts projectId={projectId} />}
       {activeTab === 'production' && <TabProduction projectId={projectId} />}
+      {activeTab === 'acceptance' && <TabAcceptance projectId={projectId} />}
+      {activeTab === 'warranty' && <TabWarranty projectId={projectId} />}
     </div>
   );
 }

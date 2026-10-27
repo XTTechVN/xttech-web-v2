@@ -16,7 +16,18 @@ import {
 } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
-export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician' | 'accountant' | 'employee';
+export type UserRole =
+  | 'super'
+  | 'admin'
+  | 'hr'
+  | 'sale'
+  | 'technician'
+  | 'accountant'
+  | 'employee'
+  // Vai trò thi công dự án: thợ xưởng, thợ lắp đặt, nhân viên bảo hành
+  | 'workshop'
+  | 'installer'
+  | 'warranty';
 
 export const acceptedSections = [
   'dashboard',
@@ -32,6 +43,7 @@ export const acceptedSections = [
   'departments',
   'projects',
   'projects-root',
+  'quotations',
   'warehouse',
   'customers',
   'customers-root',
@@ -196,7 +208,14 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Dự án',
         icon: React.createElement(FolderKanban, { size: 18 }),
         href: '/app/projects',
-        roles: ['super', 'admin', 'sale', 'accountant', 'hr'],
+        roles: ['super', 'admin', 'sale', 'accountant', 'hr', 'technician', 'workshop', 'installer', 'warranty'],
+      },
+      {
+        id: 'quotations',
+        label: 'Duyệt báo giá',
+        icon: React.createElement(FileText, { size: 18 }),
+        href: '/app/quotations',
+        roles: ['super', 'admin'],
       },
       {
         id: 'warehouse',
