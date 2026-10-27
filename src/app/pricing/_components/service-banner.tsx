@@ -3,7 +3,7 @@ import { ShieldCheck, RefreshCw, Zap, ArrowRight } from 'lucide-react';
 
 const ServiceBanner = () => {
   return (
-    <div className="w-full bg-[#F4F5F0] py-12 px-6 lg:px-16 font-sans">
+    <div className="w-full bg-white py-12 px-6 lg:px-16 font-sans">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-start lg:items-center justify-between gap-12">
         
         {/* Phần bên trái: Tiêu đề & Mô tả */}

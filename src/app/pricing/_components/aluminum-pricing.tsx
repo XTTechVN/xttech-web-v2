@@ -168,7 +168,7 @@ const AluminumPricingSection = () => {
   const { header, plans, featureGroups, addOns, footerNote } = PRICING_DATA;
 
   return (
-    <div className="w-full bg-[#F5F6F0] p-4 lg:p-2 font-sans text-[#0A192F]">
+    <div className="w-full bg-white p-4 lg:p-2 font-sans text-[#0A192F]">
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* HEADER TOP SECTION */}
