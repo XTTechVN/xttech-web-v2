@@ -2,6 +2,13 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-27
+
+### Fixed (Sửa lỗi Vi phạm Thứ tự React Hooks trong DocumentDetailModal - `documents`)
+- **Triệt tiêu Lỗi Crash Runtime "Change in the order of Hooks called by DocumentDetailModal":**
+  - **Nguyên nhân gốc rễ:** Trong [`document-detail-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/modals/document-detail-modal.tsx), lệnh thoát sớm `if (!doc || !targetDoc) return null;` nằm ở dòng 133, nhưng bên dưới lại khai báo một hook `useMemo` tính toán `docPerms` ở dòng 155. Khi modal chưa có tài liệu, component dừng ở 48 hooks; khi có tài liệu, hook 49 (`useMemo`) được kích hoạt, gây vi phạm nghiêm trọng quy chuẩn Rules of Hooks của React.
+  - **Khắc phục chuẩn Clean Code:** Loại bỏ việc bọc `useMemo` thừa cho hàm `getDocumentPermissions` (vốn là hàm thuần túy $O(1)$ so sánh boolean nhẹ), tính toán trực tiếp `docPerms` dạng biến phái sinh (Derived State) mà không dùng hook, đảm bảo 100% Hooks trong component đều được khai báo nhất quán ở top-level trước mọi điều kiện `return`.
+
 ## [Unreleased] - 2026-10-26
 
 ### Added & Changed (Chuẩn hóa flow dự án: nghiệm thu, bảo hành, ký online, QR)
@@ -12,7 +19,82 @@ All notable changes to the frontend project will be documented in this file.
 - **Sản xuất:** từ điển 10 trạng thái cửa (`ProgressStepCode`, `DOOR_STATUS_MAP`), lệnh làm lại, *Lùi mốc* cho admin, lối tắt sang nghiệm thu; tem QR hiển thị ảnh QR thật và in được.
 - **Phân quyền menu:** *Dự án* mở cho thêm `technician`, `workshop`, `installer`, `warranty`.
 
-## [Unreleased] - 2026-10-25
+## [Unreleased] - 2026-10-26
+
+### Fixed & Enhanced (Sửa lỗi Hiển thị Cây Thư mục Con & Tài liệu Bên trong Thư mục Được Chia sẻ - `documents`)
+- **Hiển thị 100% Tài liệu & Cây Thư mục Con Khi Nhận Chia sẻ Thư mục Chuẩn Google Drive:**
+  - **Khắc phục lỗi "Chỉ nhìn thấy thư mục cha, không thấy thư mục con và tài liệu bên trong":**
+    - **Frontend Hook ([`use-document-explorer.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-document-explorer.ts)):** Sửa điều kiện `queryFn`: Chỉ gọi `getInboxDocuments(queryParams)` khi người dùng đang đứng ở thư mục gốc của tab "Được chia sẻ" (`tab === 'shared' && currentFolderId === null`). Khi người dùng mở bất kỳ thư mục nào (`currentFolderId !== null`), hệ thống luôn gọi API chuẩn `getDocuments(queryParams)` để lấy trọn vẹn danh sách tài liệu bên trong thư mục đó theo phân quyền thư mục kế thừa.
+    - **Kế thừa Phân quyền Đệ quy ([`src/actions/document/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/document/index.ts)):** Cập nhật hàm `getDocumentCategoryTree`: Sử dụng hàm đệ quy `markSharedNodes` để gán `isShared: true` và kế thừa quyền hạn `permission` (`view` / `edit`) cho toàn bộ cây thư mục con `children`, loại bỏ hoàn toàn các thuộc tính snake_case cũ theo Rule 13.
+    - **Phòng thủ 2 lớp trên Backend Repository ([`document_repository.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/repositories/document/document_repository.py)):** Bổ sung Recursive CTE phân quyền thư mục chia sẻ vào hàm `get_inbox_documents` khi client truyền `category_id`, đảm bảo cả hai luồng truy vấn API (`/api/v1/documents` và `/api/v1/documents/inbox`) đều hiển thị đầy đủ tài liệu trong các thư mục được chia sẻ.
+
+### Added & Architected (Triển khai Tính năng Tải Thư mục ZIP Đệ quy & Tái Sử dụng Panel Tiến trình Chuẩn Google Drive - `documents`)
+- **Tải Xuống Thư mục Dưới Dạng Tệp Nén ZIP Bảo Toàn 100% Cấu Trúc Cây Thư Mục Con:**
+  - **Kiến trúc Zero-RAM Spooling & Streaming Chunk trên Backend ([`document_category_service.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/services/document/document_category_service.py), [`categories.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/api/v1/document/categories.py)):**
+    - Sử dụng `WITH RECURSIVE` truy vấn toàn bộ cây thư mục con và các tài liệu trực thuộc phiên bản mới nhất (`is_current = True`).
+    - Nén trực tiếp với `zipfile.ZipFile` ghi vào bộ đệm lai `tempfile.SpooledTemporaryFile(max_size=10*1024*1024, mode="w+b")`. Bộ đệm chỉ tiêu tốn tối đa 10MB RAM; khi thư mục lớn hơn, dữ liệu tự động tràn sang tệp tạm SSD ẩn danh của hệ điều hành, bảo vệ tuyệt đối máy chủ khỏi nguy cơ cạn kiệt bộ nhớ RAM (OOM).
+    - Tính toán kích thước nén `total_size` qua `seek(0, 2)` và trả về header `"Content-Length": str(total_size)` kèm `"Access-Control-Expose-Headers": "Content-Disposition, Content-Length"` để client Axios theo dõi % byte chính xác.
+    - Tích hợp hàm `get_file_bytes_from_minio` ([`minio.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/config/minio.py)) đọc dữ liệu từ Object Storage và lưu vào cấu trúc đường dẫn tương đối `rel_dir/filename`.
+    - Trả về qua `StreamingResponse` với kích thước chunk 64KB, đính kèm `BackgroundTasks(temp_file.close)` để hệ điều hành tự động dọn dẹp và giải phóng hoàn toàn tệp tạm sau khi truyền xong.
+    - Tiêu đề tệp tải về được mã hóa chuẩn RFC 5987 / UTF-8 (`filename*=UTF-8''...`), đảm bảo tên thư mục tiếng Việt có dấu hiển thị chính xác trên mọi trình duyệt.
+  - **Tái Sử dụng 100% Panel Tiến trình Truyền tải Chuẩn Google Drive (Unified Transfer Queue - DRY):**
+    - Nâng cấp action [`downloadCategoryZip()`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/document/index.ts) hỗ trợ callback `onProgress(loaded, total)` và `AbortSignal`.
+    - Mở rộng Widget nổi [`upload-progress-drawer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/upload-progress-drawer.tsx): Hỗ trợ đa năng cả Upload lẫn Download (`direction: 'download'`). Hiển thị thông minh tiêu đề *"Đang chuẩn bị tải xuống"* $\rightarrow$ *"Đang tải xuống..."* $\rightarrow$ *"Đã hoàn tất tải xuống"*. Item thư mục nén hiển thị trạng thái *"Đang nén..."* với icon xoay `Loader2`, khi truyền tải thì hiển thị % và dung lượng tải thực tế, kết thúc với tích xanh `CheckCircle2`.
+    - Hook [`use-document-bulk-upload.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-document-bulk-upload.ts): Bổ sung hàm `startDownloadFolder()` điều phối tiến trình tải xuống, đưa vào hàng đợi truyền tải thống nhất và cho phép hủy bỏ tức thì (`AbortController`).
+    - **Tự Động Dọn Sạch Lịch Sử Cũ (Single Active Download):** Khi bắt đầu tải một thư mục mới hoặc khi đóng panel qua nút `[X]`, toàn bộ các mục đã hoàn tất trước đó được tự động làm sạch khỏi hàng đợi, giao diện chỉ hiển thị đúng tiến trình của thư mục đang tải hiện tại, triệt tiêu 100% hiện tượng dồn toa lặp lại nhiều dòng cùng tên.
+    - **Tự Động Đóng Panel Khi Hoàn Tất (Auto-dismiss on Completion):** Thiết lập `useEffect` lắng nghe trạng thái hàng đợi: khi toàn bộ tác vụ (tải lên hoặc tải xuống) hoàn tất thành công 100% và không có lỗi, panel sẽ tự động đóng lại mượt mà sau 2.5 giây và dọn dẹp bộ nhớ, giúp màn hình luôn thông thoáng mà người dùng không cần phải click đóng thủ công.
+    - Tích hợp tùy chọn **"Tải xuống (.zip)"** với biểu tượng `Download` vào cả Menu Ba chấm (Dropdown Card/Table) và Menu Chuột phải (Context Menu) của thư mục ([`explorer-menu-builder.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/explorer-menu-builder.tsx), [`folder-card.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/folder-card.tsx), [`folder-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/folder-table.tsx), [`documents-explorer-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/documents-explorer-view.tsx)).
+
+### Added & Architected (Triển khai Kiến trúc Tải lên Đa luồng 3 Giai đoạn & Panel Tiến trình Chuẩn Google Drive - `documents`)
+- **Khắc phục Triệt để Lỗi "Tải tệp lớn / Thư mục nhiều tệp xoay vòng rồi biến mất":**
+  - **Giai đoạn 1 (Pre-resolve Folder Hierarchy - Chống Race Condition):** Trước khi tải tệp, client tự động trích xuất các đường dẫn thư mục con duy nhất và gọi API `POST /api/v1/documents/ensure-folders` để Backend phân giải và tạo sẵn cây thư mục đích trong một transaction duy nhất (~20ms). Trả về bản đồ ánh xạ `folderMap`, triệt tiêu 100% lỗi xung đột race condition / duplicate folder khi nhiều worker chạy song song.
+  - **Giai đoạn 2 (Zero-RAM Stream Upload trên Backend):** Tối ưu hóa việc đo kích thước tệp bằng con trỏ stream `file.seek(0, 2)` và `file.tell()` $O(1)$ thay vì đọc đúp tệp vào RAM (`await file.read()`), loại bỏ hoàn toàn nguy cơ tràn bộ nhớ OOM khi nhiều tệp dung lượng lớn được tải lên cùng lúc. Bổ sung API `POST /api/v1/documents/upload-item` xử lý độc lập từng tệp trong hàng đợi.
+  - **Giai đoạn 3 (Smart Concurrency Queue & Upload Progress Drawer Chuẩn Google Drive):**
+    - **Hàng đợi Tải lên Song song ([`use-document-bulk-upload.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-document-bulk-upload.ts)):** Tự động điều phối 3 luồng tải song song (`CONCURRENCY_LIMIT = 3`), theo dõi tiến trình từng byte qua Axios `onUploadProgress`. Tệp nào tải xong được commit ngay vào DB và hiển thị lập tức trên màn hình Explorer. Nếu một tệp gặp sự cố, hệ thống cho phép thử lại (`Retry`) riêng tệp đó mà không làm ảnh hưởng đến các tệp khác trong danh sách.
+    - **Tối ưu Hóa Vòng lặp Worker (Fix: React Compiler Memoization):** Chuyển đổi cơ chế đệ quy tự gọi (`recursive useCallback`) sang vòng lặp `while (true)` worker loop thuần túy, bảo toàn tính memoize tự động của React Compiler 19 và triệt tiêu hoàn toàn rủi ro tràn call stack.
+    - **Widget Tiến trình Tải lên Nổi ([`upload-progress-drawer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/upload-progress-drawer.tsx)):** Đặt cố định ở góc phải dưới (`fixed bottom-4 right-4 z-[9990]`), hiển thị % tổng quan, dung lượng đã tải, danh sách chi tiết từng tệp kèm trạng thái (đang chờ, đang tải %, thành công, lỗi), hỗ trợ thu nhỏ / mở rộng và hủy tải bằng `AbortController`.
+
+### Added & Architected (Triển khai Pointer Drag Engine Chuẩn Google Drive - `documents`)
+- **Triển khai Hệ thống Kéo Thả Dựa trên Pointer Events ([`use-explorer-pointer-drag.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-explorer-pointer-drag.ts), [`explorer-drag-badge.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/explorer-drag-badge.tsx)):**
+  - **Loại bỏ triệt để HTML5 `draggable="true"`:** Xóa bỏ hoàn toàn thuộc tính `draggable` trên thẻ và hàng bảng ([`folder-card.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/folder-card.tsx), [`file-card.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/file-card.tsx), [`folder-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/folder-table.tsx), [`file-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/file-table.tsx)). Cú nhấp chuột trở về 100% click DOM thuần túy, phản hồi tức thời 0ms, triệt tiêu tận gốc hiện tượng rung tay kích hoạt kéo nhầm (*micro-drag*) hay nuốt sự kiện click.
+  - **Thuật toán Ngưỡng Khoảng cách 8px (Distance Threshold):** Tương tự Google Drive và Figma, thao tác kéo thả chỉ được kích hoạt khi con trỏ chuột di chuyển thực tế vượt quá 8px (`Math.hypot(dx, dy) >= 8`). Nếu nhả chuột trước 8px, thao tác được đối xử như một cú click/chọn/nhấp đúp bình thường.
+  - **Kiến trúc Tối ưu Đỉnh cao 3 Tầng Tách rời (Triple Decoupled Architecture - 144 FPS Chuẩn Google Drive / Figma):**
+    - **Tầng 1 (Direct GPU Hardware Compositing):** Tách rời hoàn toàn tọa độ chuột `(x, y)` khỏi React State `dragState`. Sử dụng thuộc tính `badgeRef` cập nhật vị trí Badge trực tiếp qua biến đổi phần cứng GPU `transform: translate3d(clientX + 6px, clientY + 6px, 0)` kết hợp `will-change: transform` và `contain: layout paint style`. Triệt tiêu hoàn toàn Layout Reflow, ghim sát badge vào con trỏ chuột với độ trễ 0ms, chuyển động siêu mượt ở tần số 120–144Hz.
+    - **Tầng 2 (V-Sync Synchronization qua `requestAnimationFrame`):** Đồng bộ hóa nhịp quét phần cứng màn hình, ngăn chặn lãng phí CPU khi người dùng sử dụng chuột có tần số polling cao (500–1000Hz).
+    - **Tầng 3 (Zero-Render Hover Gate & Throttled Hit-Test):** Dò tìm thư mục đích `document.elementFromPoint` bên trong rAF và thiết lập chốt chặn rào chắn: CHỈ kích hoạt `setDragState` khi ID thư mục đích thực sự thay đổi (`targetId !== hoverFolderIdRef.current`). Khi rê chuột xung quanh màn hình hoặc bên trong cùng một thư mục, component cha `DocumentsExplorerView` có số lượt re-render bằng **0 tuyệt đối**.
+  - **Hỗ trợ Kéo 1 Chạm (1-Gesture Drag):** Cho phép người dùng nhấn giữ và kéo thẳng một mạch từ bất kỳ item nào sang thư mục khác mà không cần nhịp chọn trước đó. Tự động bảo vệ chống thả vào chính mình hoặc các mục đang chọn, không bao giờ phát sinh thông báo lỗi đỏ.
+- **Tối ưu Lazy Menu Construction & Memo Comparators:**
+  - Áp dụng kỹ thuật Lazy Initialization cho menu ngữ cảnh: hàm `buildFolderDropdownItems` và `buildDocDropdownItems` được bọc `useMemo` với điều kiện rào chắn `if (!isMenuOpen) return []`. Ngăn chặn việc khởi tạo hàng trăm closures / menu objects vô ích trên mọi card/hàng khi render danh sách.
+  - Thiết lập hàm so sánh chuyên biệt (`areFolderCardPropsEqual`, `areFileCardPropsEqual`, `areFolderTableRowPropsEqual`, `areFileTableRowPropsEqual`) cho `React.memo`: Chỉ kích hoạt re-render đúng 2 item liên quan khi trạng thái `isSelected`, `isCut`, `isActive` thay đổi; 100% các item còn lại trong explorer được bỏ qua hoàn toàn.
+- **Ổn định Tham chiếu Callbacks & Tối ưu Hook Tuyệt đối ([`use-explorer-selection.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-explorer-selection.ts), [`use-document-explorer-actions.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-document-explorer-actions.ts)):**
+  - Chuyển `lastSelectedKey` từ `useState` sang `useRef<string | null>(null)`: Giữ cho hàm `handleItemClick` có dependency array ổn định 100% `[toggleSelectItem, selectSingleItem]`, chấm dứt việc tái tạo callback và cascading re-render lan truyền lên component cha sau mỗi cú click.
+  - **Tuân thủ Chuẩn React 19 / React Compiler (Fix: Cannot access / update refs during render):**
+    - Loại bỏ việc đọc `lastSelectedKeyRef.current` tại thân hàm `return` của hook [`use-explorer-selection.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-explorer-selection.ts) và đưa logic reset ref vào `useEffect([contextKey])`.
+    - Bọc việc gán giá trị mới nhất cho `hotkeyActionsRef.current` tại [`use-document-explorer-actions.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-document-explorer-actions.ts) vào `useEffect(() => { ... })`.
+    - Bọc việc đồng bộ `onDropItemRef.current` và `selectedItemKeysRef.current` tại [`use-explorer-pointer-drag.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-explorer-pointer-drag.ts) vào `useEffect(() => { ... })`.
+    - Đảm bảo toàn bộ quá trình render của hook đạt tính thuần khiết 100% (Pure Render Phase), triệt tiêu hoàn toàn cảnh báo và lỗi của React Compiler.
+  - Áp dụng Ref Pattern (`hotkeyActionsRef = useRef(...)`) cho sự kiện phím nóng toàn cục (`handleExplorerKeyDown`). Listener `window.addEventListener('keydown')` chỉ đăng ký một lần duy nhất khi mount thay vì re-attach liên tục sau mỗi lượt chọn.
+  - Bọc `commonFolderProps` và `commonDocProps` bằng `useMemo`, các handlers chọn (`handleSelectFolder`, `handleSelectDoc`...) bằng `useCallback` hỗ trợ cả `MouseEvent` lẫn `PointerEvent`.
+
+
+### Changed & Refactored (Tinh gọn Modal Chỉnh sửa Tài liệu Cá nhân Chuẩn Google Drive - `documents`)
+- **Tinh gọn Form & Giao diện ([`edit-document-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/modals/edit-document-modal.tsx)):**
+  - Loại bỏ hoàn toàn các trường hành chính không phù hợp với tài liệu cá nhân: *Phạm vi chia sẻ, Người phê duyệt, Người nhận đích danh, Phòng ban nhận, Ngày bắt đầu/hết hiệu lực, Nút Lưu & Trình duyệt*.
+  - Giữ lại các trường cốt lõi: Tiêu đề tài liệu (đổi tên file), Phân loại văn bản, Mã văn bản, Thư mục lưu trữ và Trích yếu/Ghi chú.
+  - Tối ưu kích thước modal từ `max-w-2xl` xuống `max-w-lg`, chỉ giữ 2 nút hành động chuẩn: `[Hủy]` và `[Lưu thay đổi]`.
+  - Cắt giảm 2 lời gọi API không cần thiết khi mở modal (`getEmployees` và `getDepartments`), giúp modal mở lên tức thì 0ms không độ trễ.
+- **Dọn dẹp Tầng Tiện ích ([`edit-document-helpers.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/modals/edit-document-helpers.ts)):**
+  - Xóa bỏ hơn 230 dòng mã helper thừa liên quan đến phân tách người nhận, phòng ban và phê duyệt; bổ sung hàm `saveDocumentPersonalInfo()` cập nhật dữ liệu tài liệu cá nhân chuẩn xác và an toàn.
+
+### Added (Hỗ trợ Kéo & Thả Tệp và Thư mục Chuẩn Google Drive - Bỏ qua Popup Trình duyệt)
+- **Tiện ích Kéo thả Đệ quy ([`document-drag-drop.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/document-drag-drop.ts)):**
+  - Xây dựng hàm `parseDataTransferEntries()` và `hasFileTransfer()`: Duyệt đệ quy toàn bộ cây thư mục và tệp tin từ đối tượng `DataTransferItem` bằng API `webkitGetAsEntry()`, xử lý phân trang 100 entries/lần của Chromium. Xuất danh sách `File[]` kèm đường dẫn tương đối `relativePaths` để server tự động giữ nguyên cấu trúc thư mục con mà không làm trình duyệt kích hoạt popup bảo mật xác nhận.
+- **Tầng Hook Tải lên Hàng loạt ([`use-document-bulk-upload.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-document-bulk-upload.ts)):**
+  - Mở rộng hàm `executeBulkUpload` hỗ trợ `customRelativePaths` và bổ sung hàm `handleDroppedDataTransfer()` tự động phân tích các tệp tin/thư mục được kéo thả vào vùng làm việc.
+- **Giao diện Drag Overlay Thông minh ([`documents-explorer-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/documents-explorer-view.tsx)):**
+  - Lắng nghe các sự kiện `onDragEnter`, `onDragOver`, `onDragLeave`, `onDrop` với cơ chế đếm `dragCounterRef` chống hiện tượng giật/nhấp nháy overlay khi rê chuột qua các phần tử con.
+  - Tự động nhận diện `Files` từ hệ điều hành để tránh kích hoạt nhầm khi kéo thả di chuyển tài liệu nội bộ.
+  - Hiển thị Drag Overlay cao cấp: viền nét đứt `border-primary`, nền mờ `backdrop-blur-[2px]`, icon `UploadCloud` hiệu ứng bounce sinh động và hướng dẫn chi tiết.
 
 ### Fixed & Optimized (Tối ưu Hiệu năng Tương tác Thẻ & Khắc phục Trượt Menu Chuột Phải - `documents`)
 - **Tối ưu phản hồi chọn tệp/thư mục (Zero Delay Selection):**

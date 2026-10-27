@@ -135,9 +135,20 @@ export function getDocumentPermissions(
     };
   }
 
+  const canEditByFolder = context?.folderPermission === 'edit';
+  const canEditByRecipient = hasRecipientEditRight(doc, currentUser);
+  const canEdit = canEditByFolder || canEditByRecipient;
+  const canMove = canEditByFolder;
+
   return {
-    isShared, isOwner: false, canEdit: hasRecipientEditRight(doc, currentUser),
-    canMove: false, canDelete: false, canShare: false, canSaveToFolder: true, canRemoveShortcut,
+    isShared,
+    isOwner: false,
+    canEdit,
+    canMove,
+    canDelete: false,
+    canShare: false,
+    canSaveToFolder: true,
+    canRemoveShortcut,
   };
 }
 

@@ -21,6 +21,9 @@ export const DocumentExplorerPageLayout: React.FC<DocumentExplorerPageLayoutProp
       <DocumentsToolbar
         search={explorer.search}
         onSearchChange={explorer.setSearch}
+        itemTypeFilter={explorer.itemTypeFilter}
+        onItemTypeFilterChange={explorer.setItemTypeFilter}
+        itemTypeOptions={explorer.itemTypeOptions}
         documentType={explorer.documentType}
         onDocumentTypeChange={explorer.setDocumentType}
         documentTypeOptions={explorer.documentTypeOptions}
@@ -59,6 +62,7 @@ export const DocumentExplorerPageLayout: React.FC<DocumentExplorerPageLayoutProp
         currentFolderId={explorer.currentFolderId}
         currentFolder={explorer.currentFolder}
         safeCategoryTree={explorer.safeCategoryTree}
+        existingFolders={explorer.subFolders}
         onConfirmDelete={explorer.handleConfirmDelete}
         onRefetchCategories={explorer.refetchCategories}
         onRefetchDocuments={explorer.refetchDocuments}

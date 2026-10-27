@@ -18,6 +18,7 @@ export interface DocumentsModalsProps {
   currentFolderId?: number | null;
   currentFolder?: DocumentCategory | null;
   safeCategoryTree: DocumentCategory[];
+  existingFolders?: DocumentCategory[];
   onConfirmDelete: () => void;
   onRefetchCategories?: () => void;
   onRefetchDocuments?: () => void;
@@ -28,6 +29,7 @@ export const DocumentsModals: React.FC<DocumentsModalsProps> = ({
   currentFolderId = null,
   currentFolder = null,
   safeCategoryTree,
+  existingFolders,
   onConfirmDelete,
   onRefetchCategories = () => {},
   onRefetchDocuments = () => {},
@@ -71,6 +73,7 @@ export const DocumentsModals: React.FC<DocumentsModalsProps> = ({
         initialData={state.editingFolder}
         parentId={currentFolderId}
         parentFolder={currentFolder}
+        existingFolders={existingFolders}
         onSuccess={onRefetchCategories}
       />
 

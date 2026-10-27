@@ -57,28 +57,34 @@ export const getDocumentCategoryTree = async (): Promise<DocumentCategory[]> => 
     // Backend FastAPI có thể trả về camelCase ({ myFolders, sharedFolders })
     // hoặc snake_case ({ my_folders, shared_folders })
     const treeObj = raw?.data ?? raw;
-    const my = Array.isArray(treeObj?.myFolders) ? treeObj.myFolders : Array.isArray(treeObj?.my_folders) ? treeObj.my_folders : [];
-    const shared = Array.isArray(treeObj?.sharedFolders)
-      ? treeObj.sharedFolders
-      : Array.isArray(treeObj?.shared_folders)
-        ? treeObj.shared_folders
-        : [];
+    const my = Array.isArray(treeObj?.myFolders) ? treeObj.myFolders : [];
+    const shared = Array.isArray(treeObj?.sharedFolders) ? treeObj.sharedFolders : [];
 
-    const markedMy = my.map((item: DocumentCategory) => ({
-      ...item,
-      isOwner: item.isOwner ?? true,
-      permission: item.permission || 'edit',
-      isShared: false,
-    }));
+    const markMyNodes = (items: DocumentCategory[]): DocumentCategory[] =>
+      items.map((item: DocumentCategory) => ({
+        ...item,
+        isOwner: item.isOwner ?? true,
+        permission: item.permission || 'edit',
+        isShared: false,
+        children: Array.isArray(item.children) ? markMyNodes(item.children) : [],
+      }));
 
-    const markedShared = shared.map((item: DocumentCategory) => ({
-      ...item,
-      isOwner: item.isOwner ?? false,
-      permission: item.permission || 'view',
-      isShared: true,
-    }));
+    const markSharedNodes = (
+      items: DocumentCategory[],
+      inheritedPerm: 'view' | 'edit' = 'view',
+    ): DocumentCategory[] =>
+      items.map((item: DocumentCategory) => {
+        const perm = (item.permission as 'view' | 'edit') || inheritedPerm;
+        return {
+          ...item,
+          isOwner: item.isOwner ?? false,
+          permission: perm,
+          isShared: true,
+          children: Array.isArray(item.children) ? markSharedNodes(item.children, perm) : [],
+        };
+      });
 
-    return [...markedMy, ...markedShared];
+    return [...markMyNodes(my), ...markSharedNodes(shared)];
   } catch (error: any) {
     console.warn('Lỗi getDocumentCategoryTree:', error);
     return [];
@@ -236,6 +242,102 @@ export const bulkUploadDocuments = async (
     return res.data?.data ?? res.data;
   } catch (error: any) {
     throw new Error(extractErrorMessage(error, 'Không thể tải tệp lên'));
+  }
+};
+
+export interface EnsureFoldersResult {
+  success: boolean;
+  folderMap: Record<string, number>;
+  createdCount: number;
+}
+
+// Khởi tạo hoặc phân giải sẵn cây thư mục trước khi tải tệp song song
+export const ensureDocumentFolders = async (
+  baseCategoryId: number | null,
+  folderPaths: string[],
+): Promise<EnsureFoldersResult> => {
+  try {
+    const res = await api.post('/api/v1/documents/ensure-folders', {
+      baseCategoryId,
+      folderPaths,
+    });
+    return res.data?.data ?? res.data;
+  } catch (error: any) {
+    throw new Error(extractErrorMessage(error, 'Không thể khởi tạo cấu trúc thư mục'));
+  }
+};
+
+// Tải lên một tệp tin đơn lẻ trong luồng hàng đợi song song
+export const uploadSingleDocumentItem = async (params: {
+  file: File;
+  categoryId?: number | null;
+  shareScope?: string;
+  title?: string;
+  signal?: AbortSignal;
+  onProgress?: (percent: number) => void;
+}): Promise<any> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', params.file);
+    if (params.categoryId !== undefined && params.categoryId !== null) {
+      formData.append('category_id', String(params.categoryId));
+    }
+    formData.append('share_scope', params.shareScope || 'private');
+    if (params.title) {
+      formData.append('title', params.title);
+    }
+
+    const res = await api.post('/api/v1/documents/upload-item', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      signal: params.signal,
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && params.onProgress) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          params.onProgress(percent);
+        }
+      },
+    });
+    return res.data?.data ?? res.data;
+  } catch (error: any) {
+    throw new Error(extractErrorMessage(error, `Không thể tải lên "${params.file.name}"`));
+  }
+};
+
+// Tải xuống toàn bộ thư mục dưới dạng file ZIP
+export const downloadCategoryZip = async (
+  categoryId: number,
+  categoryName: string,
+  options?: {
+    onProgress?: (loaded: number, total: number) => void;
+    signal?: AbortSignal;
+  },
+): Promise<void> => {
+  try {
+    const res = await api.get(`/api/v1/document-categories/${categoryId}/download-zip`, {
+      responseType: 'blob',
+      signal: options?.signal,
+      onDownloadProgress: (progressEvent) => {
+        if (options?.onProgress) {
+          options.onProgress(progressEvent.loaded || 0, progressEvent.total || 0);
+        }
+      },
+    });
+    const blob = new Blob([res.data], { type: 'application/zip' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${categoryName || 'folder'}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED') {
+      throw error;
+    }
+    throw new Error(extractErrorMessage(error, 'Không thể tải xuống thư mục'));
   }
 };
 

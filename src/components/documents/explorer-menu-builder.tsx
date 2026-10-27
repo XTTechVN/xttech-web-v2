@@ -18,6 +18,7 @@ export function buildFolderDropdownItems(params: {
   canPaste: boolean;
   onOpen: (folder: DocumentCategory) => void;
   onViewDetail?: (folder: DocumentCategory) => void;
+  onDownload?: (folder: DocumentCategory) => void;
   onPasteIntoFolder?: (folder: DocumentCategory) => void;
   onShare?: (folder: DocumentCategory) => void;
   onEdit?: (folder: DocumentCategory) => void;
@@ -25,10 +26,11 @@ export function buildFolderDropdownItems(params: {
   onMove?: (folder: DocumentCategory) => void;
   onDelete?: (folder: DocumentCategory) => void;
 }): ExplorerContextMenuItem[] {
-  const { folder, canEdit, canMove, canShare, canDelete, canPaste, onOpen, onViewDetail, onPasteIntoFolder, onShare, onEdit, onCut, onMove, onDelete } = params;
+  const { folder, canEdit, canMove, canShare, canDelete, canPaste, onOpen, onViewDetail, onDownload, onPasteIntoFolder, onShare, onEdit, onCut, onMove, onDelete } = params;
   return [
     { label: 'Mở thư mục', icon: <FolderOpen size={15} className="text-primary" />, shortcut: 'Enter', onClick: () => onOpen(folder) },
-    ...(onViewDetail ? [{ label: 'Xem chi tiết', icon: <Eye size={15} className="text-primary" />, onClick: () => onViewDetail(folder), dividerAfter: true }] : []),
+    ...(onViewDetail ? [{ label: 'Xem chi tiết', icon: <Eye size={15} className="text-primary" />, onClick: () => onViewDetail(folder) }] : []),
+    ...(onDownload ? [{ label: 'Tải xuống (.zip)', icon: <Download size={15} className="text-primary" />, onClick: () => onDownload(folder), dividerAfter: true }] : []),
     ...(canPaste && onPasteIntoFolder ? [{ label: 'Dán vào thư mục này', icon: <ClipboardPaste size={15} className="text-emerald-600" />, shortcut: 'Ctrl+V', onClick: () => onPasteIntoFolder(folder), dividerAfter: true }] : []),
     ...(canShare && onShare ? [{ label: 'Chia sẻ', icon: <Share2 size={15} className="text-primary" />, onClick: () => onShare(folder) }] : []),
     ...(canEdit && onEdit ? [{ label: 'Đổi tên / Sửa', icon: <Edit2 size={15} className="text-primary" />, shortcut: 'F2', onClick: () => onEdit(folder) }] : []),
@@ -82,19 +84,23 @@ export function buildSingleFolderMenuItems(params: {
   hasClipboard: boolean;
   modals: DocumentModalsHook;
   onNavigateFolder: (id: number | null) => void;
+  onDownloadFolder?: (folder: DocumentCategory) => void;
   onCutFolder: (folder: DocumentCategory) => void;
   onPasteIntoFolder: (folder: DocumentCategory) => void;
 }): ExplorerContextMenuItem[] {
-  const { folder, isOwnerOrAdmin, hasClipboard, modals, onNavigateFolder, onCutFolder, onPasteIntoFolder } = params;
+  const { folder, isOwnerOrAdmin, hasClipboard, modals, onNavigateFolder, onDownloadFolder, onCutFolder, onPasteIntoFolder } = params;
+  const canEditFolder = isOwnerOrAdmin || folder.permission === 'edit';
+  const canMoveFolder = isOwnerOrAdmin || folder.permission === 'edit';
   return buildFolderDropdownItems({
     folder,
-    canEdit: isOwnerOrAdmin,
-    canMove: isOwnerOrAdmin,
+    canEdit: canEditFolder,
+    canMove: canMoveFolder,
     canShare: isOwnerOrAdmin,
     canDelete: isOwnerOrAdmin,
-    canPaste: hasClipboard && (isOwnerOrAdmin || folder.permission === 'edit'),
+    canPaste: hasClipboard && canEditFolder,
     onOpen: (f) => onNavigateFolder(f.id),
     onViewDetail: modals.actions.openDetailFolder,
+    onDownload: onDownloadFolder,
     onPasteIntoFolder,
     onShare: modals.actions.openShareFolder,
     onEdit: modals.actions.openEditFolder,
@@ -111,15 +117,16 @@ export function buildSingleDocMenuItems(params: {
   canManageDocuments: boolean;
   myCategoryIds: Set<number>;
   currentFolderId: number | null;
+  currentFolderPermission?: 'view' | 'edit' | string;
   modals: DocumentModalsHook;
   onCopyDoc: (doc: DocumentItem) => void;
   onCutDoc: (doc: DocumentItem) => void;
   onRemoveFromFolder: (doc: DocumentItem) => void;
 }): ExplorerContextMenuItem[] {
-  const { doc, user, isSharedSection, canManageDocuments, myCategoryIds, currentFolderId, modals, onCopyDoc, onCutDoc, onRemoveFromFolder } = params;
+  const { doc, user, isSharedSection, canManageDocuments, myCategoryIds, currentFolderId, currentFolderPermission, modals, onCopyDoc, onCutDoc, onRemoveFromFolder } = params;
   const perms = getDocumentPermissions(doc, user, {
     isSharedSection,
-    folderPermission: (doc.category as any)?.permission,
+    folderPermission: (doc.category as any)?.permission || currentFolderPermission,
     canManageDocuments,
     myCategoryIds,
     currentFolderId,
@@ -198,6 +205,7 @@ export function resolveExplorerContextMenu(params: {
   canManageDocuments: boolean;
   allMyCategoryIds: Set<number>;
   currentFolderId: number | null;
+  currentFolderPermission?: 'view' | 'edit' | string;
   modals: DocumentModalsHook;
   isFolderOwnerOrAdmin: (folder: DocumentCategory) => boolean;
   onNavigateFolder: (id: number | null) => void;
@@ -214,6 +222,7 @@ export function resolveExplorerContextMenu(params: {
   onCopySingleDoc: (doc: DocumentItem) => void;
   onCutSingleDoc: (doc: DocumentItem) => void;
   onCutSingleFolder: (folder: DocumentCategory) => void;
+  onDownloadFolder?: (folder: DocumentCategory) => void;
   onRemoveFromFolder: (doc: DocumentItem) => void;
 }): { menuTitle?: string; menuItems: ExplorerContextMenuItem[] } {
   const { contextMenu, locationName, canCreate, hasClipboard, totalItems, selectedCount } = params;
@@ -256,6 +265,7 @@ export function resolveExplorerContextMenu(params: {
         hasClipboard,
         modals: params.modals,
         onNavigateFolder: params.onNavigateFolder,
+        onDownloadFolder: params.onDownloadFolder,
         onCutFolder: params.onCutSingleFolder,
         onPasteIntoFolder: params.onPasteIntoFolder,
       }),
@@ -272,6 +282,7 @@ export function resolveExplorerContextMenu(params: {
         canManageDocuments: params.canManageDocuments,
         myCategoryIds: params.allMyCategoryIds,
         currentFolderId: params.currentFolderId,
+        currentFolderPermission: params.currentFolderPermission,
         modals: params.modals,
         onCopyDoc: params.onCopySingleDoc,
         onCutDoc: params.onCutSingleDoc,

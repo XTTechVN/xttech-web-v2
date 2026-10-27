@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Users } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
@@ -21,11 +21,12 @@ interface FileCardProps {
   locationName?: string;
   isSharedSection?: boolean;
   currentFolderId?: number | null;
+  currentFolderPermission?: 'view' | 'edit' | string;
   myCategoryIds?: Set<number>;
   isSelected?: boolean;
   isCut?: boolean;
   onToggleSelect?: (document: DocumentItem) => void;
-  onSelectItem?: (e: React.MouseEvent, document: DocumentItem) => void;
+  onSelectItem?: (e: React.MouseEvent | React.PointerEvent, document: DocumentItem) => void;
   onContextMenuItem?: (e: React.MouseEvent, document: DocumentItem) => void;
   onPreview?: (document: DocumentItem) => void;
   onView: (document: DocumentItem) => void;
@@ -39,13 +40,15 @@ interface FileCardProps {
   onRemoveFromFolder?: (document: DocumentItem) => void;
   canEdit?: boolean;
   canDelete?: boolean;
+  onStartDrag?: (e: React.PointerEvent, item: { type: 'document'; id: number; title: string; canMove: boolean }) => void;
 }
 
-export const FileCard: React.FC<FileCardProps> = ({
+const FileCardComponent: React.FC<FileCardProps> = ({
   document: doc,
   locationName,
   isSharedSection,
   currentFolderId,
+  currentFolderPermission,
   myCategoryIds,
   isSelected = false,
   isCut = false,
@@ -64,6 +67,7 @@ export const FileCard: React.FC<FileCardProps> = ({
   onRemoveFromFolder,
   canEdit = true,
   canDelete = true,
+  onStartDrag,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const user = useAuthStore((state) => state.user);
@@ -72,7 +76,7 @@ export const FileCard: React.FC<FileCardProps> = ({
 
   const docPerms = getDocumentPermissions(doc, user, {
     isSharedSection: isSharedSection || locationName?.includes('Được chia sẻ'),
-    folderPermission: (doc.category as any)?.permission,
+    folderPermission: (doc.category as any)?.permission || currentFolderPermission,
     canManageDocuments: canManage,
     myCategoryIds,
     currentFolderId,
@@ -95,13 +99,32 @@ export const FileCard: React.FC<FileCardProps> = ({
     else onView(doc);
   };
 
-  const menuItems = buildDocDropdownItems({
+  const menuItems = useMemo(() => {
+    if (!isMenuOpen) return [];
+    return buildDocDropdownItems({
+      doc,
+      downloadUrl,
+      perms: docPerms,
+      canEditProp: canEdit,
+      canDeleteProp: canDelete,
+      onOpenPrimary: openDocumentPrimary,
+      onView,
+      onCopy,
+      onCut,
+      onSaveToFolder,
+      onEdit,
+      onShare,
+      onMove,
+      onRemoveFromFolder,
+      onDelete,
+    });
+  }, [
+    isMenuOpen,
     doc,
     downloadUrl,
-    perms: docPerms,
-    canEditProp: canEdit,
-    canDeleteProp: canDelete,
-    onOpenPrimary: openDocumentPrimary,
+    docPerms,
+    canEdit,
+    canDelete,
     onView,
     onCopy,
     onCut,
@@ -111,7 +134,7 @@ export const FileCard: React.FC<FileCardProps> = ({
     onMove,
     onRemoveFromFolder,
     onDelete,
-  });
+  ]);
 
   const subText = locationName
     ? `trong ${locationName}`
@@ -119,17 +142,25 @@ export const FileCard: React.FC<FileCardProps> = ({
 
   return (
     <div
-      draggable={canMoveDoc}
-      onDragStart={(e) => {
-        if (!canMoveDoc) return void e.preventDefault();
-        e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'document', id: doc.id }));
-        e.dataTransfer.effectAllowed = 'move';
+      data-explorer-item="true"
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        const target = e.target as HTMLElement | null;
+        if (target && target.closest('button, [role="button"], [data-no-select="true"]')) return;
+        e.stopPropagation();
+        if (onSelectItem) {
+          onSelectItem(e, doc);
+        } else if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          onToggleSelect?.(doc);
+        }
+        onStartDrag?.(e, { type: 'document', id: doc.id, title: doc.title, canMove: canMoveDoc });
       }}
       onClick={(e) => {
-        if (onSelectItem) return void onSelectItem(e, doc);
+        e.stopPropagation();
+        if (onSelectItem) return;
         if (e.ctrlKey || e.metaKey) {
           e.preventDefault();
-          e.stopPropagation();
           onToggleSelect?.(doc);
           return;
         }
@@ -149,8 +180,8 @@ export const FileCard: React.FC<FileCardProps> = ({
       className={cn(
         'group relative flex items-center justify-between gap-4 p-4 rounded-lg cursor-pointer select-none',
         isSelected
-          ? 'bg-primary/15 border-primary shadow-xs ring-2 ring-primary/60 text-primary transition-none'
-          : 'bg-[#f0f4f9] hover:bg-[#e4ebf5] border border-transparent hover:border-slate-200/60 shadow-2xs hover:shadow-xs transition-colors duration-100',
+          ? 'bg-primary/15 border-primary shadow-xs ring-2 ring-primary/60 text-primary'
+          : 'bg-[#f0f4f9] hover:bg-[#e4ebf5] border border-transparent hover:border-slate-200/60 shadow-2xs hover:shadow-xs',
         isCut && 'opacity-55 border-dashed border-amber-500/70',
         isMenuOpen ? 'z-40 bg-[#e4ebf5] border-slate-200/80 shadow-xs' : 'active:scale-[0.99]',
       )}
@@ -167,19 +198,37 @@ export const FileCard: React.FC<FileCardProps> = ({
         </div>
 
         <div className="flex flex-col min-w-0 flex-1">
-          <span className="truncate text-sm font-medium text-slate-800 group-hover:text-primary transition-colors leading-tight">
+          <span className="truncate text-sm font-medium text-slate-800 group-hover:text-primary leading-tight">
             {doc.title}
           </span>
           <span className="text-[11px] text-slate-500 truncate mt-0.5">{subText}</span>
         </div>
       </div>
 
-      <ExplorerActionDropdown
-        items={menuItems}
-        isOpen={isMenuOpen}
-        onToggle={() => setIsMenuOpen((prev) => !prev)}
-        onClose={() => setIsMenuOpen(false)}
-      />
+      <div data-no-select="true" onClick={(e) => e.stopPropagation()}>
+        <ExplorerActionDropdown
+          items={menuItems}
+          isOpen={isMenuOpen}
+          onToggle={() => setIsMenuOpen((prev) => !prev)}
+          onClose={() => setIsMenuOpen(false)}
+        />
+      </div>
     </div>
   );
 };
+
+function areFileCardPropsEqual(prev: FileCardProps, next: FileCardProps): boolean {
+  return (
+    prev.document.id === next.document.id &&
+    prev.isSelected === next.isSelected &&
+    prev.isCut === next.isCut &&
+    prev.locationName === next.locationName &&
+    prev.document.title === next.document.title &&
+    prev.document.updatedAt === next.document.updatedAt &&
+    prev.document.currentVersion?.id === next.document.currentVersion?.id &&
+    prev.isSharedSection === next.isSharedSection
+  );
+}
+
+export const FileCard = React.memo<FileCardProps>(FileCardComponent, areFileCardPropsEqual);
+FileCard.displayName = 'FileCard';

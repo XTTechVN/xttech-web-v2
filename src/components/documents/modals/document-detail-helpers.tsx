@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Download, Megaphone, Send, UploadCloud } from 'lucide-react';
-import { Button, Modal, Select } from '@/components';
+import { Download, Edit3,Check, Megaphone, Send, UploadCloud, X } from 'lucide-react';
+import { Button, Modal, Select, Tooltip } from '@/components';
 import type { DocumentItem } from '@/types';
 
 export function resolveDetailDepartments(targetDoc: DocumentItem | null, departments: any[]) {
@@ -100,6 +100,7 @@ export const DocumentDetailFooter: React.FC<{
   isDraftOrRejected: boolean;
   isCreator: boolean;
   canManageDoc: boolean;
+  canEditDoc?: boolean;
   approvalStatus: string;
   isAssignedApprover: boolean;
   isApproved: boolean;
@@ -114,11 +115,13 @@ export const DocumentDetailFooter: React.FC<{
   onApprove: () => void;
   onPublish: () => void;
   onOpenUploadVersion: () => void;
+  onEdit?: () => void;
   onClose: () => void;
 }> = ({
   isDraftOrRejected,
   isCreator,
   canManageDoc,
+  canEditDoc = false,
   approvalStatus,
   isAssignedApprover,
   isApproved,
@@ -127,100 +130,113 @@ export const DocumentDetailFooter: React.FC<{
   submitLoading,
   reviewLoading,
   publishLoading,
-  downloadUrl,
   onOpenSubmitModal,
   onOpenRejectModal,
   onApprove,
   onPublish,
   onOpenUploadVersion,
+  onEdit,
   onClose,
-}) => (
-  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 w-full">
-    <div className="flex items-center gap-2 flex-wrap justify-start">
-      {isDraftOrRejected && (isCreator || canManageDoc) && (
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={onOpenSubmitModal}
-          loading={submitLoading}
-          disabled={isActionBusy}
-          leftIcon={<Send size={13} />}
-          className="bg-primary hover:bg-primary/90 text-white font-medium text-xs cursor-pointer h-8.5"
-        >
-          Trình duyệt tài liệu
-        </Button>
-      )}
+}) => {
+  const canUploadVersion = isCreator || canManageDoc;
+  const canSubmit = isDraftOrRejected && (isCreator || canManageDoc);
+  const isPending = approvalStatus === 'pending' && (isAssignedApprover || canManageDoc);
+  const canPublishDoc = isApproved && !isPublished && canManageDoc;
 
-      {approvalStatus === 'pending' && (isAssignedApprover || canManageDoc) && (
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={onOpenRejectModal}
-            disabled={isActionBusy}
-            className="px-3 rounded-lg bg-[#ff245a] hover:bg-[#e61a4d] text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer h-8.5"
+  return (
+    <div className="flex items-center justify-end gap-2 w-full">
+      {/* 1. Trình duyệt tài liệu */}
+      {canSubmit && (
+        <Tooltip content="Trình duyệt tài liệu" position="top">
+          <button
+            type="button"
+            onClick={onOpenSubmitModal}
+            disabled={isActionBusy || submitLoading}
+            title="Trình duyệt tài liệu"
+            className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg bg-primary hover:bg-primary/90 active:scale-95 text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-medium text-xs shrink-0"
           >
-            Từ chối
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onApprove}
-            loading={reviewLoading}
-            disabled={isActionBusy}
-            className="px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer h-8.5"
+            <Send size={16} className="shrink-0" />
+            <span className="hidden sm:inline">Trình duyệt tài liệu</span>
+          </button>
+        </Tooltip>
+      )}
+
+      {/* 2. Chờ duyệt: Từ chối & Duyệt đề xuất */}
+      {isPending && (
+        <>
+          <Tooltip content="Từ chối đề xuất" position="top">
+            <button
+              type="button"
+              onClick={onOpenRejectModal}
+              disabled={isActionBusy}
+              title="Từ chối"
+              className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg bg-[#ff245a] hover:bg-[#e61a4d] active:scale-95 text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-semibold text-xs shrink-0"
+            >
+              <X size={16} className="shrink-0" />
+              <span className="hidden sm:inline">Từ chối</span>
+            </button>
+          </Tooltip>
+
+          <Tooltip content="Duyệt đề xuất" position="top">
+            <button
+              type="button"
+              onClick={onApprove}
+              disabled={isActionBusy || reviewLoading}
+              title="Duyệt đề xuất"
+              className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-semibold text-xs shrink-0"
+            >
+              <Check size={16} className="shrink-0" />
+              <span className="hidden sm:inline">Duyệt đề xuất</span>
+            </button>
+          </Tooltip>
+        </>
+      )}
+
+      {/* 3. Ban hành văn bản */}
+      {canPublishDoc && (
+        <Tooltip content="Ban hành văn bản" position="top">
+          <button
+            type="button"
+            onClick={onPublish}
+            disabled={isActionBusy || publishLoading}
+            title="Ban hành văn bản"
+            className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg border border-teal-300 bg-teal-50/70 hover:bg-teal-100 text-teal-800 flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-semibold text-xs shrink-0"
           >
-            Duyệt đề xuất
-          </Button>
-        </div>
+            <Megaphone size={16} className="shrink-0 text-teal-600" />
+            <span className="hidden sm:inline">Ban hành văn bản</span>
+          </button>
+        </Tooltip>
       )}
 
-      {isApproved && !isPublished && canManageDoc && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onPublish}
-          loading={publishLoading}
-          disabled={isActionBusy}
-          leftIcon={<Megaphone size={13} className="text-teal-600" />}
-          className="border-teal-300 bg-teal-50/60 hover:bg-teal-50 text-teal-800 text-xs h-8.5"
-        >
-          Ban hành văn bản
-        </Button>
+      {/* 4. Tải phiên bản mới */}
+      {canUploadVersion && (
+        <Tooltip content="Tải phiên bản mới" position="top">
+          <button
+            type="button"
+            onClick={onOpenUploadVersion}
+            disabled={isActionBusy}
+            title="Tải phiên bản mới"
+            className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 hover:text-slate-900 flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer disabled:opacity-50 font-medium text-xs shrink-0"
+          >
+            <UploadCloud size={16} className="shrink-0" />
+            <span className="hidden sm:inline">Tải phiên bản mới</span>
+          </button>
+        </Tooltip>
       )}
-    </div>
 
-    <div className="flex items-center gap-2 flex-wrap justify-end">
-      {(isCreator || canManageDoc) && (
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={onOpenUploadVersion}
-          leftIcon={<UploadCloud size={13} className="text-white" />}
-          disabled={isActionBusy}
-          className="text-xs text-white h-8.5 px-2.5 sm:px-3 whitespace-nowrap shrink-0"
-        >
-          Tải phiên bản mới
-        </Button>
-      )}
-      {downloadUrl && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.open(downloadUrl, '_blank', 'noopener,noreferrer')}
-          leftIcon={<Download size={13} />}
-          disabled={isActionBusy}
-          className="text-xs h-8.5 px-2.5 sm:px-3 whitespace-nowrap shrink-0"
-        >
-          Tải tệp tin
-        </Button>
-      )}
-      <Button variant="ghost" size="sm" onClick={onClose} disabled={isActionBusy} className="text-xs h-8.5 px-3 shrink-0">
+      {/* 5. Nút Đóng trên desktop */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onClose}
+        disabled={isActionBusy}
+        className="hidden sm:inline-flex text-xs h-9 px-3 shrink-0"
+      >
         Đóng
       </Button>
     </div>
-  </div>
-);
+  );
+};
 
 export const SubmitApprovalModal: React.FC<{
   isOpen: boolean;

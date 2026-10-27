@@ -23,6 +23,14 @@ interface UseDocumentExplorerOptions {
   defaultFolderId?: number | null;
 }
 
+export type DocumentItemTypeFilter = 'all' | 'folder' | 'document';
+
+export const DOCUMENT_ITEM_TYPE_OPTIONS = [
+  { value: 'all', label: 'Tất cả loại mục' },
+  { value: 'folder', label: 'Chỉ thư mục' },
+  { value: 'document', label: 'Chỉ tài liệu' },
+];
+
 const DOCUMENT_TYPE_OPTIONS = [
   { value: '', label: 'Tất cả loại văn bản' },
   ...Object.entries(DOCUMENT_TYPE_MAP).map(([key, item]) => ({ value: key, label: item.label })),
@@ -42,6 +50,7 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
   const [currentFolderId, setCurrentFolderId] = useState<number | null>(defaultFolderId);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [filterUnreadOnly, setFilterUnreadOnly] = useState<boolean>(false);
+  const [itemTypeFilter, setItemTypeFilter] = useState<DocumentItemTypeFilter>('all');
 
   const {
     selectedItemKeys,
@@ -65,11 +74,12 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
   const status = rawStatus || '';
   const setStatus = useCallback((v: string) => setRawStatus(v), [setRawStatus]);
 
-  const hasActiveFilters = Boolean(search || documentType || status);
+  const hasActiveFilters = Boolean(search || documentType || status || itemTypeFilter !== 'all');
   const handleResetFilters = useCallback(() => {
     setSearch('');
     setDocumentType('');
     setStatus('');
+    setItemTypeFilter('all');
     setFilterUnreadOnly(false);
   }, [setSearch, setDocumentType, setStatus]);
 
@@ -93,13 +103,24 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
     subFolders,
     myFolders,
     sharedFolders,
-    foldersToDisplay,
+    foldersToDisplay: rawFoldersToDisplay,
     isSharedSection,
     isDescendant,
   } = useMemo(
     () => resolveFolderTreeContext({ categoryTree, currentFolderId, tab }),
     [categoryTree, currentFolderId, tab],
   );
+
+  const foldersToDisplay = useMemo(() => {
+    if (itemTypeFilter === 'document') return [];
+    if (!search?.trim()) return rawFoldersToDisplay;
+    const q = search.toLowerCase().trim();
+    return rawFoldersToDisplay.filter(
+      (f) =>
+        (f.name && f.name.toLowerCase().includes(q)) ||
+        (f.code && f.code.toLowerCase().includes(q)),
+    );
+  }, [rawFoldersToDisplay, itemTypeFilter, search]);
 
   const allSharedCategoryIds = useMemo(() => collectCategoryIds(sharedFolders), [sharedFolders]);
   const allMyCategoryIds = useMemo(() => collectCategoryIds(myFolders), [myFolders]);
@@ -121,10 +142,13 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
     refetch: refetchDocuments,
   } = useQuery({
     queryKey: DOC_QUERY_KEYS.documents.list({ ...queryParams, tab }),
-    queryFn: () => (tab === 'shared' ? getInboxDocuments(queryParams) : getDocuments(queryParams)),
+    queryFn: () =>
+      tab === 'shared' && currentFolderId === null
+        ? getInboxDocuments(queryParams)
+        : getDocuments(queryParams),
   });
 
-  const documents = useMemo(
+  const rawDocuments = useMemo(
     () =>
       filterExplorerDocuments(
         documentsData,
@@ -137,13 +161,13 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
     [documentsData, currentFolderId, isSharedSection, allSharedCategoryIds, allMyCategoryIds, currentUser],
   );
 
-  const unreadCount = useMemo(() => documents.filter((d) => d.isRead === false).length, [documents]);
-  const displayedDocuments = useMemo(
-    () => (filterUnreadOnly ? documents.filter((d) => d.isRead === false) : documents),
-    [documents, filterUnreadOnly],
-  );
+  const unreadCount = useMemo(() => rawDocuments.filter((d) => d.isRead === false).length, [rawDocuments]);
+  const displayedDocuments = useMemo(() => {
+    if (itemTypeFilter === 'folder') return [];
+    return filterUnreadOnly ? rawDocuments.filter((d) => d.isRead === false) : rawDocuments;
+  }, [rawDocuments, filterUnreadOnly, itemTypeFilter]);
 
-  const canEditCurrentFolder = !isSharedSection || canManageDocuments;
+  const canEditCurrentFolder = !isSharedSection || canManageDocuments || currentFolderPermission === 'edit';
   const canDeleteCurrentFolder = !isSharedSection || canManageDocuments;
   const canCreate =
     !isSharedSection ||
@@ -160,6 +184,7 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
     canManageDocuments,
     isSharedSection,
     currentFolderId,
+    currentFolderPermission,
     setCurrentFolderId,
     safeCategoryTree,
     isDescendant,
@@ -174,6 +199,7 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
     selectAll,
     clearSelection,
     handleGoBack,
+    startDownloadFolder: bulkUpload.startDownloadFolder,
   });
 
   return {
@@ -213,11 +239,16 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
     parentFolder,
     subFolders,
     foldersToDisplay,
+    rawFoldersToDisplay,
     isSharedSection,
     allMyCategoryIds,
     allSharedCategoryIds,
-    documents,
+    documents: displayedDocuments,
+    rawDocuments,
     displayedDocuments,
+    itemTypeFilter,
+    setItemTypeFilter,
+    itemTypeOptions: DOCUMENT_ITEM_TYPE_OPTIONS,
     isLoadingDocuments,
     refetchDocuments,
     canEditCurrentFolder,

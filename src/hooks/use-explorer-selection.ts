@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export const toExplorerItemKey = (type: 'folder' | 'document', id: number): string =>
   `${type === 'folder' ? 'folder' : 'doc'}-${id}`;
@@ -18,15 +18,18 @@ export const parseExplorerItemKey = (
 
 export function useExplorerSelection(currentFolderId: number | null, tab: string | null = null) {
   const [selectedItemKeys, setSelectedItemKeys] = useState<Set<string>>(() => new Set());
-  const [lastSelectedKey, setLastSelectedKey] = useState<string | null>(null);
+  const lastSelectedKeyRef = useRef<string | null>(null);
 
   const contextKey = `${tab ?? ''}::${currentFolderId ?? 'root'}`;
   const [prevContextKey, setPrevContextKey] = useState(contextKey);
   if (contextKey !== prevContextKey) {
     setPrevContextKey(contextKey);
     if (selectedItemKeys.size > 0) setSelectedItemKeys(new Set());
-    if (lastSelectedKey !== null) setLastSelectedKey(null);
   }
+
+  useEffect(() => {
+    lastSelectedKeyRef.current = null;
+  }, [contextKey]);
 
   const toggleSelectItem = useCallback((type: 'folder' | 'document', id: number) => {
     const key = toExplorerItemKey(type, id);
@@ -36,27 +39,28 @@ export function useExplorerSelection(currentFolderId: number | null, tab: string
       else next.add(key);
       return next;
     });
-    setLastSelectedKey(key);
+    lastSelectedKeyRef.current = key;
   }, []);
 
   const selectSingleItem = useCallback((type: 'folder' | 'document', id: number) => {
     const key = toExplorerItemKey(type, id);
     setSelectedItemKeys(new Set([key]));
-    setLastSelectedKey(key);
+    lastSelectedKeyRef.current = key;
   }, []);
 
   const handleItemClick = useCallback(
     (
-      e: React.MouseEvent,
+      e: React.MouseEvent | React.PointerEvent,
       type: 'folder' | 'document',
       id: number,
       orderedKeys: string[] = [],
     ) => {
       e.stopPropagation();
       const key = toExplorerItemKey(type, id);
+      const lastKey = lastSelectedKeyRef.current;
 
-      if (e.shiftKey && lastSelectedKey && orderedKeys.length > 0) {
-        const startIdx = orderedKeys.indexOf(lastSelectedKey);
+      if (e.shiftKey && lastKey && orderedKeys.length > 0) {
+        const startIdx = orderedKeys.indexOf(lastKey);
         const endIdx = orderedKeys.indexOf(key);
         if (startIdx !== -1 && endIdx !== -1) {
           const [from, to] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
@@ -77,7 +81,7 @@ export function useExplorerSelection(currentFolderId: number | null, tab: string
 
       selectSingleItem(type, id);
     },
-    [lastSelectedKey, toggleSelectItem, selectSingleItem],
+    [toggleSelectItem, selectSingleItem],
   );
 
   const handleContextMenuSelect = useCallback(
@@ -86,7 +90,7 @@ export function useExplorerSelection(currentFolderId: number | null, tab: string
       if (selectedItemKeys.has(key)) return selectedItemKeys;
       const next = new Set([key]);
       setSelectedItemKeys(next);
-      setLastSelectedKey(key);
+      lastSelectedKeyRef.current = key;
       return next;
     },
     [selectedItemKeys],
@@ -98,12 +102,11 @@ export function useExplorerSelection(currentFolderId: number | null, tab: string
 
   const clearSelection = useCallback(() => {
     setSelectedItemKeys(new Set());
-    setLastSelectedKey(null);
+    lastSelectedKeyRef.current = null;
   }, []);
 
   return {
     selectedItemKeys,
-    lastSelectedKey,
     toggleSelectItem,
     selectSingleItem,
     handleItemClick,
