@@ -48,12 +48,13 @@ interface UseDocumentExplorerActionsProps {
   handleContextMenuSelect: (type: 'folder' | 'document', id: number) => Set<string>;
   selectAll: (orderedKeys: string[]) => void;
   clearSelection: () => void;
+  currentFolderPermission?: 'view' | 'edit' | string;
   handleGoBack: () => void;
   startDownloadFolder?: (folderId: number, folderName: string) => Promise<void>;
 }
 
 export function useDocumentExplorerActions({
-  queryClient, currentUser, canManageDocuments, isSharedSection, currentFolderId, setCurrentFolderId,
+  queryClient, currentUser, canManageDocuments, isSharedSection, currentFolderId, currentFolderPermission, setCurrentFolderId,
   safeCategoryTree, isDescendant, foldersToDisplay, documents, allMyCategoryIds, canCreate,
   modals, selectedItemKeys, handleItemClick, handleContextMenuSelect, selectAll, clearSelection, handleGoBack,
   startDownloadFolder,
@@ -100,8 +101,20 @@ export function useDocumentExplorerActions({
   );
 
   const getDocPerms = useCallback(
-    (doc: DocumentItem) => getDocumentPermissions(doc, currentUser, { isSharedSection, canManageDocuments, myCategoryIds: allMyCategoryIds, currentFolderId }),
-    [currentUser, isSharedSection, canManageDocuments, allMyCategoryIds, currentFolderId],
+    (doc: DocumentItem) => {
+      const folderPerm =
+        doc.categoryId === currentFolderId
+          ? currentFolderPermission
+          : (doc.categoryId ? findFolderWithPermission(safeCategoryTree, doc.categoryId)?.effectivePermission : undefined);
+      return getDocumentPermissions(doc, currentUser, {
+        isSharedSection,
+        folderPermission: folderPerm,
+        canManageDocuments,
+        myCategoryIds: allMyCategoryIds,
+        currentFolderId,
+      });
+    },
+    [currentUser, isSharedSection, canManageDocuments, allMyCategoryIds, currentFolderId, currentFolderPermission, safeCategoryTree],
   );
 
   const resolveSelectedObjects = useCallback(
@@ -116,8 +129,20 @@ export function useDocumentExplorerActions({
     (keys: Set<string> = selectedItemKeys): ClipboardEntry[] => {
       const { selectedFolders, selectedDocs } = resolveSelectedObjects(keys);
       return [
-        ...selectedFolders.map((f) => ({ type: 'folder' as const, id: f.id, name: f.name, parentId: f.parentId ?? null, canMove: isFolderOwnerOrAdmin(f) })),
-        ...selectedDocs.map((d) => ({ type: 'document' as const, id: d.id, name: d.title, parentId: d.categoryId ?? null, canMove: getDocPerms(d).canMove || canManageDocuments })),
+        ...selectedFolders.map((f) => ({
+          type: 'folder' as const,
+          id: f.id,
+          name: f.name,
+          parentId: f.parentId ?? null,
+          canMove: isFolderOwnerOrAdmin(f) || f.permission === 'edit',
+        })),
+        ...selectedDocs.map((d) => ({
+          type: 'document' as const,
+          id: d.id,
+          name: d.title,
+          parentId: d.categoryId ?? null,
+          canMove: getDocPerms(d).canMove || canManageDocuments,
+        })),
       ];
     },
     [selectedItemKeys, resolveSelectedObjects, isFolderOwnerOrAdmin, getDocPerms, canManageDocuments],
