@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Check, Megaphone, Send, UploadCloud, X } from 'lucide-react';
+import { Download, Edit3,Check, Megaphone, Send, UploadCloud, X } from 'lucide-react';
 import { Button, Modal, Select, Tooltip } from '@/components';
 import type { DocumentItem } from '@/types';
 
@@ -100,6 +100,7 @@ export const DocumentDetailFooter: React.FC<{
   isDraftOrRejected: boolean;
   isCreator: boolean;
   canManageDoc: boolean;
+  canEditDoc?: boolean;
   approvalStatus: string;
   isAssignedApprover: boolean;
   isApproved: boolean;
@@ -114,11 +115,13 @@ export const DocumentDetailFooter: React.FC<{
   onApprove: () => void;
   onPublish: () => void;
   onOpenUploadVersion: () => void;
+  onEdit?: () => void;
   onClose: () => void;
 }> = ({
   isDraftOrRejected,
   isCreator,
   canManageDoc,
+  canEditDoc = false,
   approvalStatus,
   isAssignedApprover,
   isApproved,
@@ -132,6 +135,7 @@ export const DocumentDetailFooter: React.FC<{
   onApprove,
   onPublish,
   onOpenUploadVersion,
+  onEdit,
   onClose,
 }) => {
   const canUploadVersion = isCreator || canManageDoc;

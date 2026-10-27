@@ -167,7 +167,7 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
     return filterUnreadOnly ? rawDocuments.filter((d) => d.isRead === false) : rawDocuments;
   }, [rawDocuments, filterUnreadOnly, itemTypeFilter]);
 
-  const canEditCurrentFolder = !isSharedSection || canManageDocuments;
+  const canEditCurrentFolder = !isSharedSection || canManageDocuments || currentFolderPermission === 'edit';
   const canDeleteCurrentFolder = !isSharedSection || canManageDocuments;
   const canCreate =
     !isSharedSection ||
@@ -184,6 +184,7 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
     canManageDocuments,
     isSharedSection,
     currentFolderId,
+    currentFolderPermission,
     setCurrentFolderId,
     safeCategoryTree,
     isDescendant,

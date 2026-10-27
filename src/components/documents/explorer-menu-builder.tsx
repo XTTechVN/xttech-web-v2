@@ -89,13 +89,15 @@ export function buildSingleFolderMenuItems(params: {
   onPasteIntoFolder: (folder: DocumentCategory) => void;
 }): ExplorerContextMenuItem[] {
   const { folder, isOwnerOrAdmin, hasClipboard, modals, onNavigateFolder, onDownloadFolder, onCutFolder, onPasteIntoFolder } = params;
+  const canEditFolder = isOwnerOrAdmin || folder.permission === 'edit';
+  const canMoveFolder = isOwnerOrAdmin || folder.permission === 'edit';
   return buildFolderDropdownItems({
     folder,
-    canEdit: isOwnerOrAdmin,
-    canMove: isOwnerOrAdmin,
+    canEdit: canEditFolder,
+    canMove: canMoveFolder,
     canShare: isOwnerOrAdmin,
     canDelete: isOwnerOrAdmin,
-    canPaste: hasClipboard && (isOwnerOrAdmin || folder.permission === 'edit'),
+    canPaste: hasClipboard && canEditFolder,
     onOpen: (f) => onNavigateFolder(f.id),
     onViewDetail: modals.actions.openDetailFolder,
     onDownload: onDownloadFolder,
@@ -115,15 +117,16 @@ export function buildSingleDocMenuItems(params: {
   canManageDocuments: boolean;
   myCategoryIds: Set<number>;
   currentFolderId: number | null;
+  currentFolderPermission?: 'view' | 'edit' | string;
   modals: DocumentModalsHook;
   onCopyDoc: (doc: DocumentItem) => void;
   onCutDoc: (doc: DocumentItem) => void;
   onRemoveFromFolder: (doc: DocumentItem) => void;
 }): ExplorerContextMenuItem[] {
-  const { doc, user, isSharedSection, canManageDocuments, myCategoryIds, currentFolderId, modals, onCopyDoc, onCutDoc, onRemoveFromFolder } = params;
+  const { doc, user, isSharedSection, canManageDocuments, myCategoryIds, currentFolderId, currentFolderPermission, modals, onCopyDoc, onCutDoc, onRemoveFromFolder } = params;
   const perms = getDocumentPermissions(doc, user, {
     isSharedSection,
-    folderPermission: (doc.category as any)?.permission,
+    folderPermission: (doc.category as any)?.permission || currentFolderPermission,
     canManageDocuments,
     myCategoryIds,
     currentFolderId,
@@ -202,6 +205,7 @@ export function resolveExplorerContextMenu(params: {
   canManageDocuments: boolean;
   allMyCategoryIds: Set<number>;
   currentFolderId: number | null;
+  currentFolderPermission?: 'view' | 'edit' | string;
   modals: DocumentModalsHook;
   isFolderOwnerOrAdmin: (folder: DocumentCategory) => boolean;
   onNavigateFolder: (id: number | null) => void;
@@ -278,6 +282,7 @@ export function resolveExplorerContextMenu(params: {
         canManageDocuments: params.canManageDocuments,
         myCategoryIds: params.allMyCategoryIds,
         currentFolderId: params.currentFolderId,
+        currentFolderPermission: params.currentFolderPermission,
         modals: params.modals,
         onCopyDoc: params.onCopySingleDoc,
         onCutDoc: params.onCutSingleDoc,

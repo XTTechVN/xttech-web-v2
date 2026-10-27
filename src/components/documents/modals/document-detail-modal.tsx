@@ -12,6 +12,7 @@ import {
   getApproverRoleBadge,
   DOC_QUERY_KEYS,
   invalidateDocumentQueries,
+  getDocumentPermissions,
 } from '@/utils';
 import {
   reviewDocument,
@@ -151,6 +152,12 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
     Boolean(currentUser?.id) &&
     (String(targetDoc.createdById) === String(currentUser?.id) || String(doc.createdById) === String(currentUser?.id));
 
+  const docPerms = useMemo(
+    () => getDocumentPermissions(targetDoc, currentUser, { canManageDocuments: canManageDoc }),
+    [targetDoc, currentUser, canManageDoc]
+  );
+  const canEditDoc = docPerms.canEdit;
+
   const approvalStatus = targetDoc.approvalStatus || doc.approvalStatus || 'draft';
   const isApproved = approvalStatus === 'approved';
   const isDraftOrRejected = approvalStatus === 'draft' || approvalStatus === 'rejected';
@@ -229,6 +236,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             isDraftOrRejected={isDraftOrRejected}
             isCreator={isCreator}
             canManageDoc={canManageDoc}
+            canEditDoc={canEditDoc}
             approvalStatus={approvalStatus}
             isAssignedApprover={isAssignedApprover}
             isApproved={isApproved}
@@ -247,6 +255,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             onApprove={() => handleReview('approved')}
             onPublish={handlePublish}
             onOpenUploadVersion={() => setIsUploadVersionOpen(true)}
+            onEdit={onEdit ? () => onEdit(targetDoc) : undefined}
             onClose={onClose}
           />
         }
