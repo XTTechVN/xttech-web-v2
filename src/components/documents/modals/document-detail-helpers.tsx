@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Download, Megaphone, Send, UploadCloud } from 'lucide-react';
-import { Button, Modal, Select } from '@/components';
+import { Check, Megaphone, Send, UploadCloud, X } from 'lucide-react';
+import { Button, Modal, Select, Tooltip } from '@/components';
 import type { DocumentItem } from '@/types';
 
 export function resolveDetailDepartments(targetDoc: DocumentItem | null, departments: any[]) {
@@ -127,7 +127,6 @@ export const DocumentDetailFooter: React.FC<{
   submitLoading,
   reviewLoading,
   publishLoading,
-  downloadUrl,
   onOpenSubmitModal,
   onOpenRejectModal,
   onApprove,
@@ -136,108 +135,101 @@ export const DocumentDetailFooter: React.FC<{
   onClose,
 }) => {
   const canUploadVersion = isCreator || canManageDoc;
-  const canDownload = Boolean(downloadUrl);
-  const hasBothSecondary = canUploadVersion && canDownload;
+  const canSubmit = isDraftOrRejected && (isCreator || canManageDoc);
+  const isPending = approvalStatus === 'pending' && (isAssignedApprover || canManageDoc);
+  const canPublishDoc = isApproved && !isPublished && canManageDoc;
 
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 w-full">
-      {/* Cụm nút hành động chính (Trình duyệt, Duyệt, Ban hành) */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-        {isDraftOrRejected && (isCreator || canManageDoc) && (
-          <Button
-            variant="primary"
-            size="sm"
+    <div className="flex items-center justify-end gap-2 w-full">
+      {/* 1. Trình duyệt tài liệu */}
+      {canSubmit && (
+        <Tooltip content="Trình duyệt tài liệu" position="top">
+          <button
+            type="button"
             onClick={onOpenSubmitModal}
-            loading={submitLoading}
-            disabled={isActionBusy}
-            leftIcon={<Send size={15} />}
-            className="w-full sm:w-auto h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg bg-primary hover:bg-primary/90 text-white font-semibold sm:font-medium text-xs sm:text-xs cursor-pointer shadow-xs justify-center"
+            disabled={isActionBusy || submitLoading}
+            title="Trình duyệt tài liệu"
+            className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg bg-primary hover:bg-primary/90 active:scale-95 text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-medium text-xs shrink-0"
           >
-            Trình duyệt tài liệu
-          </Button>
-        )}
+            <Send size={16} className="shrink-0" />
+            <span className="hidden sm:inline">Trình duyệt tài liệu</span>
+          </button>
+        </Tooltip>
+      )}
 
-        {approvalStatus === 'pending' && (isAssignedApprover || canManageDoc) && (
-          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
-            <Button
-              variant="danger"
-              size="sm"
+      {/* 2. Chờ duyệt: Từ chối & Duyệt đề xuất */}
+      {isPending && (
+        <>
+          <Tooltip content="Từ chối đề xuất" position="top">
+            <button
+              type="button"
               onClick={onOpenRejectModal}
               disabled={isActionBusy}
-              className="h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg px-3 bg-[#ff245a] hover:bg-[#e61a4d] text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer justify-center"
+              title="Từ chối"
+              className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg bg-[#ff245a] hover:bg-[#e61a4d] active:scale-95 text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-semibold text-xs shrink-0"
             >
-              Từ chối
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
+              <X size={16} className="shrink-0" />
+              <span className="hidden sm:inline">Từ chối</span>
+            </button>
+          </Tooltip>
+
+          <Tooltip content="Duyệt đề xuất" position="top">
+            <button
+              type="button"
               onClick={onApprove}
-              loading={reviewLoading}
-              disabled={isActionBusy}
-              className="h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs tracking-wide shadow-xs border-0 cursor-pointer justify-center"
+              disabled={isActionBusy || reviewLoading}
+              title="Duyệt đề xuất"
+              className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-semibold text-xs shrink-0"
             >
-              Duyệt đề xuất
-            </Button>
-          </div>
-        )}
+              <Check size={16} className="shrink-0" />
+              <span className="hidden sm:inline">Duyệt đề xuất</span>
+            </button>
+          </Tooltip>
+        </>
+      )}
 
-        {isApproved && !isPublished && canManageDoc && (
-          <Button
-            variant="outline"
-            size="sm"
+      {/* 3. Ban hành văn bản */}
+      {canPublishDoc && (
+        <Tooltip content="Ban hành văn bản" position="top">
+          <button
+            type="button"
             onClick={onPublish}
-            loading={publishLoading}
-            disabled={isActionBusy}
-            leftIcon={<Megaphone size={14} className="text-teal-600" />}
-            className="w-full sm:w-auto h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg border-teal-300 bg-teal-50/60 hover:bg-teal-50 text-teal-800 text-xs font-semibold sm:font-normal justify-center"
+            disabled={isActionBusy || publishLoading}
+            title="Ban hành văn bản"
+            className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg border border-teal-300 bg-teal-50/70 hover:bg-teal-100 text-teal-800 flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-semibold text-xs shrink-0"
           >
-            Ban hành văn bản
-          </Button>
-        )}
-      </div>
+            <Megaphone size={16} className="shrink-0 text-teal-600" />
+            <span className="hidden sm:inline">Ban hành văn bản</span>
+          </button>
+        </Tooltip>
+      )}
 
-      {/* Cụm nút phụ (Tải phiên bản mới, Tải tệp tin, Đóng) */}
-      <div
-        className={`${
-          hasBothSecondary
-            ? 'grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto'
-            : 'flex items-center gap-2 w-full sm:w-auto justify-end'
-        }`}
-      >
-        {canUploadVersion && (
-          <Button
-            variant="primary"
-            size="sm"
+      {/* 4. Tải phiên bản mới */}
+      {canUploadVersion && (
+        <Tooltip content="Tải phiên bản mới" position="top">
+          <button
+            type="button"
             onClick={onOpenUploadVersion}
-            leftIcon={<UploadCloud size={15} className="text-white" />}
             disabled={isActionBusy}
-            className="h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg text-xs text-white px-2.5 sm:px-3 whitespace-nowrap justify-center flex-1 sm:flex-none shadow-xs"
+            title="Tải phiên bản mới"
+            className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 hover:text-slate-900 flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer disabled:opacity-50 font-medium text-xs shrink-0"
           >
-            Tải phiên bản mới
-          </Button>
-        )}
-        {downloadUrl && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(downloadUrl, '_blank', 'noopener,noreferrer')}
-            leftIcon={<Download size={15} />}
-            disabled={isActionBusy}
-            className="h-10.5 sm:h-8.5 rounded-xl sm:rounded-lg text-xs px-2.5 sm:px-3 whitespace-nowrap bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 justify-center flex-1 sm:flex-none shadow-2xs"
-          >
-            Tải tệp tin
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClose}
-          disabled={isActionBusy}
-          className="hidden sm:inline-flex text-xs h-8.5 px-3 shrink-0"
-        >
-          Đóng
-        </Button>
-      </div>
+            <UploadCloud size={16} className="shrink-0" />
+            <span className="hidden sm:inline">Tải phiên bản mới</span>
+          </button>
+        </Tooltip>
+      )}
+
+      {/* 5. Nút Đóng trên desktop */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onClose}
+        disabled={isActionBusy}
+        className="hidden sm:inline-flex text-xs h-9 px-3 shrink-0"
+      >
+        Đóng
+      </Button>
     </div>
   );
 };
