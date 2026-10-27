@@ -2,6 +2,13 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-27
+
+### Fixed (Sửa lỗi Vi phạm Thứ tự React Hooks trong DocumentDetailModal - `documents`)
+- **Triệt tiêu Lỗi Crash Runtime "Change in the order of Hooks called by DocumentDetailModal":**
+  - **Nguyên nhân gốc rễ:** Trong [`document-detail-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/modals/document-detail-modal.tsx), lệnh thoát sớm `if (!doc || !targetDoc) return null;` nằm ở dòng 133, nhưng bên dưới lại khai báo một hook `useMemo` tính toán `docPerms` ở dòng 155. Khi modal chưa có tài liệu, component dừng ở 48 hooks; khi có tài liệu, hook 49 (`useMemo`) được kích hoạt, gây vi phạm nghiêm trọng quy chuẩn Rules of Hooks của React.
+  - **Khắc phục chuẩn Clean Code:** Loại bỏ việc bọc `useMemo` thừa cho hàm `getDocumentPermissions` (vốn là hàm thuần túy $O(1)$ so sánh boolean nhẹ), tính toán trực tiếp `docPerms` dạng biến phái sinh (Derived State) mà không dùng hook, đảm bảo 100% Hooks trong component đều được khai báo nhất quán ở top-level trước mọi điều kiện `return`.
+
 ## [Unreleased] - 2026-10-26
 
 ### Fixed & Enhanced (Sửa lỗi Hiển thị Cây Thư mục Con & Tài liệu Bên trong Thư mục Được Chia sẻ - `documents`)
