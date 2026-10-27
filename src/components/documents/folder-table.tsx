@@ -84,17 +84,19 @@ const FolderTableRowComponent: React.FC<FolderTableRowProps> = ({
       folder.permission !== undefined,
   );
   const isOwnerOrAdmin = isOwner || canManage;
+  const canEditFolder = isOwnerOrAdmin || folder.permission === 'edit';
+  const canMoveFolder = isOwnerOrAdmin || folder.permission === 'edit';
   const parentName = locationName || 'Drive của tôi';
 
   const menuItems = useMemo(() => {
     if (!isMenuOpen) return [];
     return buildFolderDropdownItems({
       folder,
-      canEdit: isOwnerOrAdmin,
-      canMove: isOwnerOrAdmin,
+      canEdit: canEditFolder,
+      canMove: canMoveFolder,
       canShare: Boolean(onShare && isOwnerOrAdmin),
       canDelete: isOwnerOrAdmin,
-      canPaste: Boolean(hasClipboard && (isOwnerOrAdmin || folder.permission === 'edit')),
+      canPaste: Boolean(hasClipboard && canEditFolder),
       onOpen,
       onViewDetail,
       onDownload,
@@ -108,6 +110,8 @@ const FolderTableRowComponent: React.FC<FolderTableRowProps> = ({
   }, [
     isMenuOpen,
     folder,
+    canEditFolder,
+    canMoveFolder,
     isOwnerOrAdmin,
     hasClipboard,
     onOpen,
@@ -129,7 +133,7 @@ const FolderTableRowComponent: React.FC<FolderTableRowProps> = ({
         if (e.button === 0 && !(e.target as HTMLElement).closest('[data-no-select="true"]')) {
           e.stopPropagation();
           onSelectItem?.(e, folder);
-          onStartDrag?.(e, { type: 'folder', id: folder.id, title: folder.name, canMove: isOwnerOrAdmin });
+          onStartDrag?.(e, { type: 'folder', id: folder.id, title: folder.name, canMove: canMoveFolder });
         }
       }}
       onClick={(e) => {

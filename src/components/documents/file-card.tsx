@@ -21,6 +21,7 @@ interface FileCardProps {
   locationName?: string;
   isSharedSection?: boolean;
   currentFolderId?: number | null;
+  currentFolderPermission?: 'view' | 'edit' | string;
   myCategoryIds?: Set<number>;
   isSelected?: boolean;
   isCut?: boolean;
@@ -47,6 +48,7 @@ const FileCardComponent: React.FC<FileCardProps> = ({
   locationName,
   isSharedSection,
   currentFolderId,
+  currentFolderPermission,
   myCategoryIds,
   isSelected = false,
   isCut = false,
@@ -74,7 +76,7 @@ const FileCardComponent: React.FC<FileCardProps> = ({
 
   const docPerms = getDocumentPermissions(doc, user, {
     isSharedSection: isSharedSection || locationName?.includes('Được chia sẻ'),
-    folderPermission: (doc.category as any)?.permission,
+    folderPermission: (doc.category as any)?.permission || currentFolderPermission,
     canManageDocuments: canManage,
     myCategoryIds,
     currentFolderId,

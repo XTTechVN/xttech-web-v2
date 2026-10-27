@@ -26,15 +26,12 @@ export function useDocumentBulkUpload({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const folderInputRef = useRef<HTMLInputElement | null>(null);
   const activeWorkersRef = useRef(0);
-  const queueRef = useRef<QueueUploadItem[]>([]);
+  const pendingQueueRef = useRef<QueueUploadItem[]>([]);
+  const allTasksMapRef = useRef<Map<string, QueueUploadItem>>(new Map());
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
   const autoCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    queueRef.current = uploadQueue;
-  });
-
-  // Tự động đóng modal tiến trình sau 2.5s khi toàn bộ tác vụ hoàn tất thành công (không có lỗi)
+  // Tự động đóng modal tiến trình sau 2s khi toàn bộ tác vụ hoàn tất thành công (không có lỗi)
   useEffect(() => {
     if (!isDrawerOpen || uploadQueue.length === 0) {
       if (autoCloseTimerRef.current) {
@@ -54,9 +51,14 @@ export function useDocumentBulkUpload({
       if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
       autoCloseTimerRef.current = setTimeout(() => {
         setIsDrawerOpen(false);
-        setUploadQueue((prev) =>
-          prev.filter((it) => it.status === 'pending' || it.status === 'uploading' || it.status === 'compressing'),
-        );
+        setUploadQueue((prev) => {
+          const remaining = prev.filter(
+            (it) => it.status === 'pending' || it.status === 'uploading' || it.status === 'compressing',
+          );
+          allTasksMapRef.current.clear();
+          remaining.forEach((it) => allTasksMapRef.current.set(it.id, it));
+          return remaining;
+        });
       }, 2000);
     } else if (isRunning || hasError) {
       if (autoCloseTimerRef.current) {
@@ -76,6 +78,10 @@ export function useDocumentBulkUpload({
 
   const updateItemStatus = useCallback(
     (id: string, updates: Partial<QueueUploadItem>) => {
+      const task = allTasksMapRef.current.get(id);
+      if (task) {
+        Object.assign(task, updates);
+      }
       setUploadQueue((prev) =>
         prev.map((item) => (item.id === id ? { ...item, ...updates } : item)),
       );
@@ -84,64 +90,67 @@ export function useDocumentBulkUpload({
   );
 
   const runWorker = useCallback(async () => {
-    if (activeWorkersRef.current >= CONCURRENCY_LIMIT) return;
-    activeWorkersRef.current += 1;
+    while (pendingQueueRef.current.length > 0) {
+      // Atomic shift: lấy task ra khỏi đầu hàng đợi ngay lập tức (miễn nhiễm race condition)
+      const nextItem = pendingQueueRef.current.shift();
+      if (!nextItem || !nextItem.file) continue;
 
-    try {
-      while (true) {
-        const nextItem = queueRef.current.find(
-          (it) => it.status === 'pending' && (!it.direction || it.direction === 'upload') && Boolean(it.file),
-        );
-        if (!nextItem || !nextItem.file) break;
+      const controller = new AbortController();
+      abortControllersRef.current.set(nextItem.id, controller);
 
-        const controller = new AbortController();
-        abortControllersRef.current.set(nextItem.id, controller);
+      updateItemStatus(nextItem.id, { status: 'uploading', progress: 0 });
 
-        updateItemStatus(nextItem.id, { status: 'uploading', progress: 0 });
+      try {
+        await uploadSingleDocumentItem({
+          file: nextItem.file,
+          categoryId: nextItem.targetCategoryId,
+          title: nextItem.title,
+          signal: controller.signal,
+          onProgress: (percent) => updateItemStatus(nextItem.id, { progress: percent }),
+        });
 
-        try {
-          await uploadSingleDocumentItem({
-            file: nextItem.file,
-            categoryId: nextItem.targetCategoryId,
-            title: nextItem.title,
-            signal: controller.signal,
-            onProgress: (percent) => updateItemStatus(nextItem.id, { progress: percent }),
+        updateItemStatus(nextItem.id, { status: 'success', progress: 100 });
+        invalidateDocumentQueries(queryClient);
+      } catch (err: any) {
+        if (controller.signal.aborted) {
+          updateItemStatus(nextItem.id, { status: 'cancelled' });
+        } else {
+          updateItemStatus(nextItem.id, {
+            status: 'error',
+            errorMessage: err?.message || 'Lỗi khi tải tệp',
           });
+        }
+      } finally {
+        abortControllersRef.current.delete(nextItem.id);
+      }
+    }
+  }, [queryClient, updateItemStatus]);
 
-          updateItemStatus(nextItem.id, { status: 'success', progress: 100 });
-          invalidateDocumentQueries(queryClient);
-        } catch (err: any) {
-          if (controller.signal.aborted) {
-            updateItemStatus(nextItem.id, { status: 'cancelled' });
-          } else {
-            updateItemStatus(nextItem.id, {
-              status: 'error',
-              errorMessage: err?.message || 'Lỗi khi tải tệp',
-            });
+  const dispatchWorkers = useCallback(() => {
+    const pendingCount = pendingQueueRef.current.length;
+    if (pendingCount === 0) return;
+
+    const availableSlots = CONCURRENCY_LIMIT - activeWorkersRef.current;
+    if (availableSlots <= 0) return;
+
+    const workersToSpawn = Math.min(pendingCount, availableSlots);
+    for (let i = 0; i < workersToSpawn; i++) {
+      activeWorkersRef.current += 1;
+      void runWorker().finally(() => {
+        activeWorkersRef.current -= 1;
+        if (activeWorkersRef.current === 0 && pendingQueueRef.current.length === 0) {
+          const allItems = Array.from(allTasksMapRef.current.values());
+          const uploadItems = allItems.filter((it) => it.direction !== 'download');
+          const successes = uploadItems.filter((it) => it.status === 'success').length;
+          const errors = uploadItems.filter((it) => it.status === 'error').length;
+          if (successes > 0 && errors === 0) {
+            toast.success(`Đã tải lên toàn bộ ${successes} tệp thành công!`);
           }
-        } finally {
-          abortControllersRef.current.delete(nextItem.id);
+          onSuccess?.();
         }
-      }
-    } finally {
-      activeWorkersRef.current -= 1;
-      if (activeWorkersRef.current === 0 && queueRef.current.length > 0) {
-        const successes = queueRef.current.filter((it) => it.status === 'success').length;
-        const errors = queueRef.current.filter((it) => it.status === 'error').length;
-        if (successes > 0 && errors === 0) {
-          toast.success(`Đã tải lên toàn bộ ${successes} tệp thành công!`);
-        }
-        onSuccess?.();
-      }
+      });
     }
-  }, [queryClient, onSuccess, updateItemStatus]);
-
-  const dispatchQueueWorkers = useCallback(() => {
-    const slots = CONCURRENCY_LIMIT - activeWorkersRef.current;
-    for (let i = 0; i < slots; i++) {
-      void runWorker();
-    }
-  }, [runWorker]);
+  }, [runWorker, onSuccess]);
 
   const executeBulkUpload = useCallback(
     async (files: File[], isFolder: boolean, customRelativePaths?: string[]) => {
@@ -197,28 +206,35 @@ export function useDocumentBulkUpload({
         };
       });
 
+      newItems.forEach((it) => {
+        allTasksMapRef.current.set(it.id, it);
+        pendingQueueRef.current.push(it);
+      });
+
       setUploadQueue((prev) => [...prev, ...newItems]);
       setIsDrawerOpen(true);
+      dispatchWorkers();
     },
-    [currentFolderId],
+    [currentFolderId, dispatchWorkers],
   );
-
-  useEffect(() => {
-    const hasPending = uploadQueue.some((it) => it.status === 'pending');
-    if (hasPending && activeWorkersRef.current < CONCURRENCY_LIMIT) {
-      dispatchQueueWorkers();
-    }
-  }, [uploadQueue, dispatchQueueWorkers]);
 
   const retryItem = useCallback(
     (id: string) => {
+      const task = allTasksMapRef.current.get(id);
+      if (!task || !task.file) return;
       updateItemStatus(id, { status: 'pending', progress: 0, errorMessage: undefined });
+      pendingQueueRef.current.push(task);
+      dispatchWorkers();
     },
-    [updateItemStatus],
+    [updateItemStatus, dispatchWorkers],
   );
 
   const cancelItem = useCallback(
     (id: string) => {
+      const idx = pendingQueueRef.current.findIndex((it) => it.id === id);
+      if (idx !== -1) {
+        pendingQueueRef.current.splice(idx, 1);
+      }
       const controller = abortControllersRef.current.get(id);
       if (controller) {
         controller.abort();
@@ -296,6 +312,8 @@ export function useDocumentBulkUpload({
         abortController: controller,
       };
 
+      allTasksMapRef.current.set(itemId, newItem);
+
       // Chỉ giữ lại các tác vụ đang thực sự chạy, loại bỏ 100% lịch sử cũ đã xong hoặc đã hủy
       setUploadQueue((prev) => {
         const activeRunningItems = prev.filter(
@@ -342,9 +360,14 @@ export function useDocumentBulkUpload({
     isDrawerOpen,
     closeDrawer: () => {
       setIsDrawerOpen(false);
-      setUploadQueue((prev) =>
-        prev.filter((it) => it.status === 'pending' || it.status === 'uploading' || it.status === 'compressing'),
-      );
+      setUploadQueue((prev) => {
+        const remaining = prev.filter(
+          (it) => it.status === 'pending' || it.status === 'uploading' || it.status === 'compressing',
+        );
+        allTasksMapRef.current.clear();
+        remaining.forEach((it) => allTasksMapRef.current.set(it.id, it));
+        return remaining;
+      });
     },
     retryItem,
     cancelItem,

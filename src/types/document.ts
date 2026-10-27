@@ -43,6 +43,7 @@ export interface DocumentRecipient {
   avatar?: string;
   user?: { id: string; fullName: string; email?: string; avatar?: string | null } | null;
   isRead: boolean;
+  permission?: 'view' | 'edit' | string;
   readAt?: string | null;
   acknowledgedAt?: string | null;
   createdAt?: string;

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Download, Megaphone, Send, UploadCloud } from 'lucide-react';
+import { Download, Edit3, Megaphone, Send, UploadCloud } from 'lucide-react';
 import { Button, Modal, Select } from '@/components';
 import type { DocumentItem } from '@/types';
 
@@ -100,6 +100,7 @@ export const DocumentDetailFooter: React.FC<{
   isDraftOrRejected: boolean;
   isCreator: boolean;
   canManageDoc: boolean;
+  canEditDoc?: boolean;
   approvalStatus: string;
   isAssignedApprover: boolean;
   isApproved: boolean;
@@ -114,11 +115,13 @@ export const DocumentDetailFooter: React.FC<{
   onApprove: () => void;
   onPublish: () => void;
   onOpenUploadVersion: () => void;
+  onEdit?: () => void;
   onClose: () => void;
 }> = ({
   isDraftOrRejected,
   isCreator,
   canManageDoc,
+  canEditDoc = false,
   approvalStatus,
   isAssignedApprover,
   isApproved,
@@ -133,6 +136,7 @@ export const DocumentDetailFooter: React.FC<{
   onApprove,
   onPublish,
   onOpenUploadVersion,
+  onEdit,
   onClose,
 }) => (
   <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 w-full">
@@ -191,17 +195,31 @@ export const DocumentDetailFooter: React.FC<{
     </div>
 
     <div className="flex items-center gap-2 flex-wrap justify-end">
-      {(isCreator || canManageDoc) && (
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={onOpenUploadVersion}
-          leftIcon={<UploadCloud size={13} className="text-white" />}
-          disabled={isActionBusy}
-          className="text-xs text-white h-8.5 px-2.5 sm:px-3 whitespace-nowrap shrink-0"
-        >
-          Tải phiên bản mới
-        </Button>
+      {(isCreator || canManageDoc || canEditDoc) && (
+        <>
+          {onEdit && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onEdit}
+              leftIcon={<Edit3 size={13} className="text-primary" />}
+              disabled={isActionBusy}
+              className="text-xs h-8.5 px-2.5 sm:px-3 whitespace-nowrap shrink-0"
+            >
+              Chỉnh sửa
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={onOpenUploadVersion}
+            leftIcon={<UploadCloud size={13} className="text-white" />}
+            disabled={isActionBusy}
+            className="text-xs text-white h-8.5 px-2.5 sm:px-3 whitespace-nowrap shrink-0"
+          >
+            Tải phiên bản mới
+          </Button>
+        </>
       )}
       {downloadUrl && (
         <Button

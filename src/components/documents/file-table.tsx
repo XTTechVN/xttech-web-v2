@@ -23,6 +23,7 @@ interface FileTableRowProps {
   currentFolderName?: string;
   isSharedSection?: boolean;
   currentFolderId?: number | null;
+  currentFolderPermission?: 'view' | 'edit' | string;
   myCategoryIds?: Set<number>;
   isSelected: boolean;
   isCut: boolean;
@@ -55,6 +56,7 @@ const FileTableRowComponent: React.FC<FileTableRowProps> = ({
   currentFolderName,
   isSharedSection,
   currentFolderId,
+  currentFolderPermission,
   myCategoryIds,
   isSelected,
   isCut,
@@ -83,7 +85,7 @@ const FileTableRowComponent: React.FC<FileTableRowProps> = ({
   const fileName = currentVersion?.fileName || doc.title;
   const docPerms = getDocumentPermissions(doc, user, {
     isSharedSection: isSharedSection || currentFolderName?.includes('Được chia sẻ'),
-    folderPermission: (doc.category as any)?.permission,
+    folderPermission: (doc.category as any)?.permission || currentFolderPermission,
     canManageDocuments: canManage,
     myCategoryIds,
     currentFolderId,
@@ -282,6 +284,7 @@ interface FileTableProps {
   currentFolderName?: string;
   isSharedSection?: boolean;
   currentFolderId?: number | null;
+  currentFolderPermission?: 'view' | 'edit' | string;
   myCategoryIds?: Set<number>;
   selectedKeys?: Set<string>;
   cutKeys?: Set<string>;
@@ -310,6 +313,7 @@ export const FileTable: React.FC<FileTableProps> = ({
   currentFolderName,
   isSharedSection,
   currentFolderId,
+  currentFolderPermission,
   myCategoryIds,
   showHeader = true,
   selectedKeys,
@@ -369,6 +373,7 @@ export const FileTable: React.FC<FileTableProps> = ({
               currentFolderName={currentFolderName}
               isSharedSection={isSharedSection}
               currentFolderId={currentFolderId}
+              currentFolderPermission={currentFolderPermission}
               myCategoryIds={myCategoryIds}
               isSelected={selectedKeys?.has(key) ?? false}
               isCut={cutKeys?.has(key) ?? false}

@@ -79,16 +79,18 @@ const FolderCardComponent: React.FC<FolderCardProps> = ({
   );
 
   const isOwnerOrAdmin = isActualOwner || canManage;
+  const canEditFolder = isOwnerOrAdmin || folder.permission === 'edit';
+  const canMoveFolder = isOwnerOrAdmin || folder.permission === 'edit';
 
   const menuItems = useMemo(() => {
     if (!isMenuOpen) return [];
     return buildFolderDropdownItems({
       folder,
-      canEdit: isOwnerOrAdmin,
-      canMove: isOwnerOrAdmin,
+      canEdit: canEditFolder,
+      canMove: canMoveFolder,
       canShare: Boolean(onShare && isOwnerOrAdmin),
       canDelete: isOwnerOrAdmin,
-      canPaste: Boolean(hasClipboard && (isOwnerOrAdmin || folder.permission === 'edit')),
+      canPaste: Boolean(hasClipboard && canEditFolder),
       onOpen,
       onViewDetail,
       onDownload,
@@ -102,6 +104,8 @@ const FolderCardComponent: React.FC<FolderCardProps> = ({
   }, [
     isMenuOpen,
     folder,
+    canEditFolder,
+    canMoveFolder,
     isOwnerOrAdmin,
     onShare,
     hasClipboard,
@@ -130,7 +134,7 @@ const FolderCardComponent: React.FC<FolderCardProps> = ({
           e.preventDefault();
           onToggleSelect?.(folder);
         }
-        onStartDrag?.(e, { type: 'folder', id: folder.id, title: folder.name, canMove: isOwnerOrAdmin });
+        onStartDrag?.(e, { type: 'folder', id: folder.id, title: folder.name, canMove: canMoveFolder });
       }}
       onClick={(e) => {
         e.stopPropagation();
