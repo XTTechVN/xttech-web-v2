@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import React from 'react';
 import { Modal, Button } from '@/components';
@@ -14,6 +14,7 @@ export interface ConfirmActionModalProps {
   confirmText?: string;
   cancelText?: string;
   variant?: 'danger' | 'primary';
+  containerClassName?: string;
 }
 
 export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
@@ -27,9 +28,16 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
   confirmText = 'Xác nhận xóa',
   cancelText = 'Hủy',
   variant = 'danger',
+  containerClassName,
 }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-md w-full">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      className="m-2 max-w-md w-full"
+      containerClassName={containerClassName}
+    >
       <div className="flex flex-col gap-2 py-2">
         <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
         {warningNote && <p className="text-xs text-rose-500 font-medium">{warningNote}</p>}

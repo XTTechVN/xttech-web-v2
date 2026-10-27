@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Modal, Button, Input, Textarea } from '@/components';
-import { FolderPlus, Edit2, CheckCircle2 } from 'lucide-react';
+import { FolderPlus, Edit2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -20,6 +20,7 @@ export interface FolderFormModalProps {
   initialData?: DocumentCategory | null;
   parentId?: number | null;
   parentFolder?: DocumentCategory | null;
+  existingFolders?: DocumentCategory[];
   onSuccess?: () => void;
 }
 
@@ -38,6 +39,8 @@ export function FolderFormModal({
   submitText,
   initialData,
   parentId = null,
+  parentFolder,
+  existingFolders,
   onSuccess,
 }: FolderFormModalProps) {
   const queryClient = useQueryClient();
@@ -110,7 +113,22 @@ export function FolderFormModal({
   const codeVal = watch('code');
   const descVal = watch('description');
 
-  const handleConfirm = (data: FolderFormValues) => {
+  const siblingFolders = useMemo(() => {
+    if (existingFolders !== undefined) return existingFolders;
+    if (parentFolder?.children && parentFolder.children.length > 0) return parentFolder.children;
+    return [];
+  }, [existingFolders, parentFolder]);
+
+  const isDuplicateLive = useMemo(() => {
+    const trimmed = nameVal?.trim().toLowerCase();
+    if (!trimmed) return false;
+    return siblingFolders.some((f) => {
+      if (initialData?.id && f.id === initialData.id) return false;
+      return f.name.trim().toLowerCase() === trimmed;
+    });
+  }, [nameVal, siblingFolders, initialData]);
+
+  const executeSubmit = (data: FolderFormValues) => {
     if (initialData?.id) {
       updateMutate({ id: initialData.id, data: { name: data.name, description: data.description } });
     } else {
@@ -128,8 +146,13 @@ export function FolderFormModal({
   const defaultSubmitText = submitText || (isEdit ? 'Lưu thay đổi' : 'Tạo thư mục');
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} className="m-2 max-w-md w-full">
-      <form onSubmit={handleSubmit(handleConfirm)} className="flex flex-col gap-4 text-xs">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={modalTitle}
+      className="m-2 max-w-md w-full"
+    >
+      <form onSubmit={handleSubmit(executeSubmit)} className="flex flex-col gap-4 text-xs">
         <div className="flex flex-col gap-4 py-2">
           <div className="flex flex-col gap-1.5">
             <Input
@@ -141,6 +164,12 @@ export function FolderFormModal({
               error={errors.name?.message}
               autoFocus
             />
+            {isDuplicateLive && (
+              <p className="text-[12px] text-amber-600 flex items-center gap-1.5 font-medium mt-1">
+                <AlertTriangle size={14} className="shrink-0 text-amber-500" />
+                <span>Tên thư mục này đã tồn tại trong thư mục hiện tại</span>
+              </p>
+            )}
           </div>
 
           {!isEdit && (
