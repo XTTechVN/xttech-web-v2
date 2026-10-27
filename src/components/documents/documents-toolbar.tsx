@@ -55,36 +55,38 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto flex-1 min-w-0">
-            <div className="flex-1 sm:w-44 md:w-48 sm:flex-none min-w-0">
-              <Select
-                value={itemTypeFilter}
-                onChange={(e) => onItemTypeFilterChange?.(e.target.value as DocumentItemTypeFilter)}
-                options={itemTypeOptions}
-                placeholder="Tất cả loại mục"
-                className="h-9 text-xs"
-              />
-            </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-1 min-w-0 justify-between sm:justify-end">
+            <div className="flex-1 sm:w-44 md:w-48 sm:flex-none min-w-0 flex items-center gap-1.5">
+              <div className="w-full min-w-0">
+                <Select
+                  value={itemTypeFilter}
+                  onChange={(e) => onItemTypeFilterChange?.(e.target.value as DocumentItemTypeFilter)}
+                  options={itemTypeOptions}
+                  placeholder="Tất cả loại mục"
+                  className="h-9 text-xs w-full"
+                />
+              </div>
 
-            {hasActiveFilters && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onResetFilters}
-                className="h-9 px-2.5 rounded-lg border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-500 hover:text-rose-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer shadow-2xs"
-                title="Đặt lại bộ lọc"
-              >
-                <RotateCcw size={14} />
-              </Button>
-            )}
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onResetFilters}
+                  className="h-9 px-2 rounded-lg border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-500 hover:text-rose-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer shadow-2xs"
+                  title="Đặt lại bộ lọc"
+                >
+                  <RotateCcw size={14} />
+                </Button>
+              )}
+            </div>
 
             <div className="h-5 w-px bg-slate-200 hidden sm:block shrink-0 mx-0.5" />
 
-            <div className="flex items-center p-0.5 rounded-xl border border-slate-200 bg-slate-100/80 shrink-0 ml-auto sm:ml-0">
+            <div className="flex items-center p-0.5 rounded-xl border border-slate-200 bg-slate-100/80 shrink-0 whitespace-nowrap">
               <button
                 type="button"
                 onClick={() => onViewModeChange('grid')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
+                className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all cursor-pointer ${
                   viewMode === 'grid'
                     ? 'bg-white text-primary shadow-xs font-semibold'
                     : 'text-slate-500 hover:text-slate-800'
@@ -92,12 +94,12 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
                 title="Dạng thư mục & lưới"
               >
                 <LayoutGrid size={15} />
-                <span className="hidden xl:inline text-xs">Lưới</span>
+                <span className="hidden sm:inline text-xs">Lưới</span>
               </button>
               <button
                 type="button"
                 onClick={() => onViewModeChange('table')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
+                className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all cursor-pointer ${
                   viewMode === 'table'
                     ? 'bg-white text-primary shadow-xs font-semibold'
                     : 'text-slate-500 hover:text-slate-800'
@@ -105,7 +107,7 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
                 title="Dạng danh sách Google Drive"
               >
                 <List size={15} />
-                <span className="hidden xl:inline text-xs">Danh sách</span>
+                <span className="hidden sm:inline text-xs">Danh sách</span>
               </button>
             </div>
           </div>
