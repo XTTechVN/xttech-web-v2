@@ -4,6 +4,18 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-10-27
 
+### Added (Tạo Thư Mục Mới Trực Tiếp Inline Bên Trong Cây Thư Mục Khi Di Chuyển - `documents`)
+- **Trải Nghiệm Tạo & Sửa Tên Thư Mục Tại Chỗ Chuẩn File Explorer ([`folder-tree-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/folder-tree-view.tsx), [`move-item-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/modals/move-item-modal.tsx)):**
+  - **In-Tree In-Place Editing:** Khi bấm `+ Thư mục mới`, thay vì mở thanh nhập rời rạc bên ngoài, một hàng thư mục mới được chèn **trực tiếp ngay bên trong cây thư mục** tại vị trí đang chọn (thư mục cha tự động mở ra nếu đang đóng). Có sẵn icon thư mục và ô `input` inline để người dùng gõ tên trực tiếp tại chỗ với text được bôi đen sẵn giống Windows / macOS.
+  - **Phím tắt & Thao tác:** Nhấn `Enter` hoặc icon `[✓]` để xác nhận tạo, `Esc` hoặc icon `[✕]` để hủy bỏ.
+  - **Tự Động Chọn Đích (Auto-Select):** Sau khi tạo thành công, thư mục mới được đưa vào cây thư mục và tự động chọn luôn làm vị trí đích (`selectedFolderId = created.id`).
+  - **Khắc Phục 2 Dòng Thư Mục Gốc:** Loại bỏ hoàn toàn sự trùng lặp giữa hai mục *"Thư mục gốc (Tài liệu của tôi)"* và *"Thư mục gốc (Tất cả)"*, giao diện cây thư mục trở nên thống nhất và thanh thoát.
+
+### Changed & Fixed (Ẩn nút "Lưu vào thư mục cá nhân" trong Tài liệu Cá nhân - `documents`)
+- **Tối ưu Logic Hiển thị Quyền `canSaveToFolder` ([`document-permissions.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/document-permissions.ts)):**
+  - **Vấn đề:** Trước đây thuộc tính `canSaveToFolder` luôn trả về `true` cho mọi trường hợp, khiến tùy chọn "Lưu vào thư mục cá nhân" luôn xuất hiện trong menu ngữ cảnh (Context Menu chuột phải) và Menu ba chấm, ngay cả khi người dùng đang ở trong "Tài liệu của tôi" / thư mục cá nhân của chính mình.
+  - **Khắc phục:** Cập nhật điều kiện `canSaveToFolder = !isPersonalSection && !isOwner`. Nút "Lưu vào thư mục cá nhân" sẽ tự động được ẩn hoàn toàn khi đang ở mục tài liệu cá nhân (`!context.isSharedSection`) hoặc với tài liệu do chính mình sở hữu, chỉ hiển thị khi xem các tài liệu từ mục "Được chia sẻ" / bên ngoài để tạo lối tắt vào Drive cá nhân theo chuẩn Google Drive.
+
 ### Fixed (Sửa lỗi Vi phạm Thứ tự React Hooks trong DocumentDetailModal - `documents`)
 - **Triệt tiêu Lỗi Crash Runtime "Change in the order of Hooks called by DocumentDetailModal":**
   - **Nguyên nhân gốc rễ:** Trong [`document-detail-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/modals/document-detail-modal.tsx), lệnh thoát sớm `if (!doc || !targetDoc) return null;` nằm ở dòng 133, nhưng bên dưới lại khai báo một hook `useMemo` tính toán `docPerms` ở dòng 155. Khi modal chưa có tài liệu, component dừng ở 48 hooks; khi có tài liệu, hook 49 (`useMemo`) được kích hoạt, gây vi phạm nghiêm trọng quy chuẩn Rules of Hooks của React.

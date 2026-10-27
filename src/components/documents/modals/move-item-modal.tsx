@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo } from 'react';
 import { Modal, Button } from '@/components';
-import { updateDocumentCategory, updateDocument, getDocumentCategoryTree } from '@/actions/document';
+import { updateDocumentCategory, updateDocument, getDocumentCategoryTree, createDocumentCategory } from '@/actions/document';
 import toast from 'react-hot-toast';
-import { Folder, HardDrive, AlertCircle } from 'lucide-react';
+import { Folder, HardDrive, AlertCircle, FolderPlus } from 'lucide-react';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn, isDescendant, DOC_QUERY_KEYS, invalidateDocumentQueries } from '@/utils';
@@ -24,6 +24,7 @@ interface MoveItemModalProps {
   onSuccess: () => void;
 }
 
+
 export const MoveItemModal: React.FC<MoveItemModalProps> = ({
   isOpen,
   onClose,
@@ -35,11 +36,16 @@ export const MoveItemModal: React.FC<MoveItemModalProps> = ({
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
+  const [creatingParentId, setCreatingParentId] = useState<number | null | undefined>(undefined);
+  const [createFolderLoading, setCreateFolderLoading] = useState(false);
   const [prevOpen, setPrevOpen] = useState(isOpen);
 
   if (isOpen !== prevOpen) {
     setPrevOpen(isOpen);
-    if (isOpen) setSelectedFolderId(null);
+    if (isOpen) {
+      setSelectedFolderId(null);
+      setCreatingParentId(undefined);
+    }
   }
 
   const { data: tree = [], isLoading: isFetchingTree } = useQuery({
@@ -124,6 +130,24 @@ export const MoveItemModal: React.FC<MoveItemModalProps> = ({
     }
   };
 
+  const handleCreateFolderConfirm = async (name: string, parentId: number | null) => {
+    try {
+      setCreateFolderLoading(true);
+      const created = await createDocumentCategory({
+        name,
+        parentId,
+      });
+      toast.success(`Đã tạo thư mục "${created.name}"`);
+      setCreatingParentId(undefined);
+      await queryClient.invalidateQueries({ queryKey: DOC_QUERY_KEYS.categories.tree });
+      setSelectedFolderId(created.id);
+    } catch (error: any) {
+      toast.error(error?.message || 'Không thể tạo thư mục mới');
+    } finally {
+      setCreateFolderLoading(false);
+    }
+  };
+
   if (targetList.length === 0) return null;
 
   return (
@@ -163,35 +187,33 @@ export const MoveItemModal: React.FC<MoveItemModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-2">Chọn vị trí đích:</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-xs font-semibold text-slate-700">Chọn vị trí đích:</label>
+            <button
+              type="button"
+              onClick={() => setCreatingParentId(selectedFolderId)}
+              className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium px-2 py-0.5 rounded hover:bg-primary/5 transition-colors cursor-pointer"
+              title="Tạo thư mục mới tại vị trí đang chọn"
+            >
+              <FolderPlus size={14} />
+              <span>Thư mục mới</span>
+            </button>
+          </div>
+
           <div className="border border-slate-200 rounded-lg max-h-[40vh] overflow-y-auto bg-white p-2">
             {isFetchingTree ? (
               <div className="text-xs text-slate-500 text-center py-4">Đang tải cấu trúc thư mục...</div>
             ) : (
-              <div className="space-y-1">
-                <div
-                  onClick={() => setSelectedFolderId(null)}
-                  className={cn(
-                    'flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer transition-colors select-none text-xs',
-                    selectedFolderId === null
-                      ? 'bg-primary/10 text-primary font-semibold'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-                  )}
-                >
-                  <HardDrive size={15} className={selectedFolderId === null ? 'text-primary' : 'text-slate-500'} />
-                  <span>Thư mục gốc (Tài liệu của tôi)</span>
-                </div>
-
-                {tree.length > 0 && (
-                  <div className="mt-2 pl-1 border-l border-slate-100 ml-4">
-                    <FolderTreeView
-                      categories={tree}
-                      activeCategoryId={selectedFolderId}
-                      onSelectCategory={setSelectedFolderId}
-                    />
-                  </div>
-                )}
-              </div>
+              <FolderTreeView
+                categories={tree}
+                activeCategoryId={selectedFolderId}
+                onSelectCategory={setSelectedFolderId}
+                rootLabel="Thư mục gốc (Tài liệu của tôi)"
+                creatingParentId={creatingParentId}
+                onCreateConfirm={handleCreateFolderConfirm}
+                onCreateCancel={() => setCreatingParentId(undefined)}
+                isCreatingLoading={createFolderLoading}
+              />
             )}
           </div>
         </div>
