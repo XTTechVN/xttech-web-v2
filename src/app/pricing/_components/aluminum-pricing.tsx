@@ -7,117 +7,15 @@ import { Check, ExternalLink, Zap, Layers } from 'lucide-react';
 const ACCENT = '#d6ff3d';
 
 type BillingCycle = 'month' | 'year';
-type ButtonVariant = 'outline' | 'solid' | 'accent';
+import {
+  ALUMINUM_PRICING_DATA,
+  formatVnd,
+  savePercent,
+  type ButtonVariant,
+  type PricingPlan as Plan,
+} from './mock-data';
 
-/* ---------- Helpers ---------- */
-// Format kiểu Việt Nam: 4900000 -> "4.900.000đ" (tự viết để SSR/CSR không lệch)
-const formatVnd = (n: number) => `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}đ`;
-
-// % tiết kiệm khi trả năm so với trả 12 tháng lẻ
-const savePercent = (monthly: number, yearly: number) => Math.round((1 - yearly / (monthly * 12)) * 100);
-
-// 1. DỮ LIỆU XƯỞNG NHÔM & NỘI THẤT
-const PRICING_DATA = {
-  header: {
-    title: 'Xưởng Nhôm & Nội Thất',
-    badge: 'Số bộ cửa',
-    subTitle: 'XMS Fab — Quản lý báo giá, sản xuất, lắp đặt',
-    slug: '/bang-gia-xuong-nhom',
-    resetNote: 'Reset mùng 1 hàng tháng',
-  },
-  plans: [
-    {
-      id: 'free',
-      name: 'Miễn phí',
-      monthly: null as number | null,
-      yearly: null as number | null,
-      yearlyOnly: false,
-      priceSubText: 'Mãi mãi, không cần thẻ',
-      buttonText: 'Dùng thử 20 cửa miễn phí',
-      buttonVariant: 'outline' as ButtonVariant,
-      isPopular: false,
-      // bold = phần nhấn mạnh (số liệu), rest = phần mô tả đi kèm
-      highlights: [
-        { bold: '20 bộ cửa', rest: 'tổng cả đời' },
-        { bold: '3 nhân sự', rest: '' },
-        { bold: '3 GB', rest: 'lưu trữ' },
-        { bold: 'Thử 3 hệ nhôm', rest: 'Xingfa, PMA, Việt Pháp' },
-        { bold: '20 đơn', rest: 'báo giá & đặt hàng' },
-        { bold: 'Sản xuất cơ bản', rest: 'xem tiến độ' },
-        { bold: 'Hỗ trợ', rest: 'cộng đồng' },
-      ],
-    },
-    {
-      id: 'gon',
-      name: 'Gọn',
-      monthly: 590000 as number | null,
-      yearly: 5900000 as number | null,
-      yearlyOnly: false,
-      priceSubText: null as string | null,
-      buttonText: 'Chọn Gọn',
-      buttonVariant: 'solid' as ButtonVariant,
-      isPopular: false,
-      highlights: [
-        { bold: '100 bộ cửa', rest: '/ tháng, reset mùng 1' },
-        { bold: '10 nhân sự', rest: '' },
-        { bold: '20 GB', rest: 'lưu trữ' },
-        { bold: '10 hệ nhôm', rest: 'tùy chọn' },
-        { bold: '100 đơn', rest: '/ tháng' },
-        { bold: 'Sản xuất đầy đủ', rest: 'giao việc' },
-        { bold: 'Chat', rest: 'hỗ trợ 24h' },
-      ],
-    },
-    {
-      id: 'tai-cau-truc',
-      name: 'Tái cấu trúc',
-      monthly: 1290000 as number | null,
-      yearly: 12900000 as number | null,
-      yearlyOnly: false,
-      priceSubText: null as string | null,
-      buttonText: 'Chọn Tái Cấu Trúc',
-      buttonVariant: 'accent' as ButtonVariant,
-      isPopular: true,
-      highlights: [
-        { bold: '500 bộ cửa', rest: '/ tháng' },
-        { bold: '20 nhân sự', rest: '' },
-        { bold: '100 GB', rest: 'lưu trữ' },
-        { bold: 'Toàn bộ hệ nhôm', rest: 'không giới hạn' },
-        { bold: '500 đơn', rest: '/ tháng' },
-        { bold: 'Sản xuất full', rest: 'QR + bảo hành' },
-        { bold: 'Hỗ trợ ưu tiên', rest: '1-1' },
-      ],
-    },
-    {
-      id: 'tong-thau',
-      name: 'Tổng thầu',
-      // 2.490.000 x 12 ≈ 29.9tr nên không có % tiết kiệm (badge tự ẩn)
-      monthly: 2490000 as number | null,
-      yearly: 29900000 as number | null,
-      yearlyOnly: false,
-      priceSubText: null as string | null,
-      buttonText: 'Liên hệ Tổng Thầu',
-      buttonVariant: 'outline' as ButtonVariant,
-      isPopular: false,
-      highlights: [
-        { bold: 'Bộ cửa không giới hạn', rest: '' },
-        { bold: 'Nhân sự không giới hạn', rest: '' },
-        { bold: '1 TB', rest: 'lưu trữ (1024 GB)' },
-        { bold: 'Toàn bộ hệ nhôm', rest: '+ Custom' },
-        { bold: 'Đơn hàng không giới hạn', rest: '' },
-        { bold: 'Sản xuất full', rest: '+ API' },
-        { bold: 'Quản lý', rest: 'tài khoản riêng' },
-      ],
-    },
-  ],
-  addOns: [
-    { text: '+100 cửa', price: '99k' },
-    { text: '+10 nhân sự', price: '99k' },
-    { text: '+20GB', price: '99k' },
-  ],
-  footerNote: '* Áp dụng cho G1/G2, tự động cộng vào tháng sau',
-};
-
-type Plan = (typeof PRICING_DATA.plans)[number];
+const PRICING_DATA = ALUMINUM_PRICING_DATA;
 
 interface PriceView {
   price: string;

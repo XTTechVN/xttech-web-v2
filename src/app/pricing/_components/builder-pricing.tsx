@@ -7,115 +7,15 @@ import { Check, ExternalLink, Zap, Layers } from 'lucide-react';
 const ACCENT = '#d6ff3d';
 
 type BillingCycle = 'month' | 'year';
-type ButtonVariant = 'outline' | 'solid' | 'accent';
+import {
+  BUILDER_PRICING_DATA,
+  formatVnd,
+  savePercent,
+  type ButtonVariant,
+  type PricingPlan as Plan,
+} from './mock-data';
 
-/* ---------- Helpers ---------- */
-// Format kiểu Việt Nam: 4900000 -> "4.900.000đ" (tự viết để SSR/CSR không lệch)
-const formatVnd = (n: number) => `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}đ`;
-
-// % tiết kiệm khi trả năm so với trả 12 tháng lẻ
-const savePercent = (monthly: number, yearly: number) => Math.round((1 - yearly / (monthly * 12)) * 100);
-
-// 1. DỮ LIỆU MOCKUP NGÀNH XÂY DỰNG & ĐỘI THỢ
-const PRICING_DATA = {
-  header: {
-    title: 'Ngành xây dựng và đội thợ',
-    badge: 'Số công trình',
-    subTitle: 'XMS Build — Công trình, kho bãi, nhân công',
-    slug: '/bang-gia-xay-dung',
-    resetNote: 'Reset mùng 1 hàng tháng',
-  },
-  plans: [
-    {
-      id: 'free',
-      name: 'Miễn phí',
-      monthly: null as number | null,
-      yearly: null as number | null,
-      yearlyOnly: false,
-      priceSubText: 'Mãi mãi, không cần thẻ',
-      buttonText: 'Dùng thử 10 công trình miễn phí',
-      buttonVariant: 'outline' as ButtonVariant,
-      isPopular: false,
-      highlights: [
-        { bold: '10 công trình', rest: 'tổng cả đời' },
-        { bold: '3 nhân sự', rest: '' },
-        { bold: '3 GB', rest: 'lưu trữ' },
-        { bold: '10 dự án', rest: 'và kho vật tư' },
-        { bold: 'Thử 3 người', rest: 'chấm công GPS' },
-        { bold: 'Kế toán', rest: 'chỉ xem' },
-        { bold: 'Hỗ trợ', rest: 'cộng đồng' },
-      ],
-    },
-    {
-      id: 'doi-nho',
-      name: 'Đội nhỏ',
-      monthly: 490000 as number | null,
-      yearly: 4900000 as number | null,
-      yearlyOnly: false,
-      priceSubText: null as string | null,
-      buttonText: 'Chọn Đội Nhỏ',
-      buttonVariant: 'solid' as ButtonVariant,
-      isPopular: false,
-      highlights: [
-        { bold: '100 công trình', rest: '/ tháng, reset mùng 1' },
-        { bold: '10 nhân sự', rest: '' },
-        { bold: '20 GB', rest: 'lưu trữ' },
-        { bold: '50 dự án', rest: 'và kho vật tư' },
-        { bold: '10 người', rest: 'chấm công GPS' },
-        { bold: '100 HĐ', rest: 'kế toán giao việc' },
-        { bold: 'Chat', rest: 'hỗ trợ 24h' },
-      ],
-    },
-    {
-      id: 'doi-lon',
-      name: 'Đội lớn',
-      monthly: 990000 as number | null,
-      yearly: 9900000 as number | null,
-      yearlyOnly: false,
-      priceSubText: null as string | null,
-      buttonText: 'Chọn Đội Lớn',
-      buttonVariant: 'accent' as ButtonVariant,
-      isPopular: true,
-      highlights: [
-        { bold: '500 công trình', rest: '/ tháng' },
-        { bold: '30 nhân sự', rest: '' },
-        { bold: '100 GB', rest: 'lưu trữ' },
-        { bold: '200 dự án', rest: 'và kho vật tư' },
-        { bold: '20 người', rest: 'chấm công GPS' },
-        { bold: '500 HĐ', rest: 'kế toán QR + bảo hành' },
-        { bold: 'Hỗ trợ ưu tiên', rest: '1-1' },
-      ],
-    },
-    {
-      id: 'tong-thau',
-      name: 'Tổng thầu',
-      monthly: null as number | null,
-      yearly: 24900000 as number | null,
-      yearlyOnly: true,
-      priceSubText: null as string | null,
-      buttonText: 'Liên hệ Tổng Thầu',
-      buttonVariant: 'outline' as ButtonVariant,
-      isPopular: false,
-      highlights: [
-        { bold: 'Công trình không giới hạn', rest: '∞' },
-        { bold: 'Nhân sự không giới hạn', rest: '' },
-        { bold: '1 TB', rest: 'lưu trữ (1024 GB)' },
-        { bold: 'Full dự án & kho vật tư', rest: '' },
-        { bold: 'Chấm công GPS', rest: 'không giới hạn' },
-        { bold: 'Kế toán Full', rest: 'toàn diện' },
-        { bold: 'Quản lý', rest: 'tài khoản riêng' },
-      ],
-    },
-  ],
-  addOns: [
-    { text: '+100 công trình', price: '99k' },
-    { text: '+10 nhân sự', price: '99k' },
-    { text: '+20GB', price: '99k' },
-  ],
-  footerNote: '* Áp dụng cho gói 1 gói 2 tự động cộng vào tháng sau',
-};
-
-type Plan = (typeof PRICING_DATA.plans)[number];
+const PRICING_DATA = BUILDER_PRICING_DATA;
 
 interface PriceView {
   price: string;

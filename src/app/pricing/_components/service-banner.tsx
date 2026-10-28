@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, RefreshCw, Zap, CreditCard, Rocket, Layers, HardHat, Briefcase } from 'lucide-react';
+import { CreditCard, Rocket, Layers, HardHat, Briefcase } from 'lucide-react';
 
 interface ServiceBannerProps {
   activeMainTab?: string;
@@ -53,21 +53,6 @@ const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceB
             ))}
           </div>
 
-          {/* Bottom Action Badges / Features */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm sm:px-4">
-              <ShieldCheck className="h-4 w-4 text-primary" />
-              Không giới hạn ẩn, minh bạch
-            </div>
-            <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm sm:px-4">
-              <RefreshCw className="h-4 w-4 text-primary" />
-              Tự động reset
-            </div>
-            <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm sm:px-4">
-              <Zap className="h-4 w-4 fill-primary text-primary" />
-              Mua thêm lẻ 99k
-            </div>
-          </div>
         </div>
 
         {/* Phần bên phải: Tab chính + Thẻ xem trước giá */}

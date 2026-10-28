@@ -1,5 +1,6 @@
 import React from 'react';
-import { ArrowUpRight, Building2, Check, GraduationCap, Rocket, Video, type LucideIcon } from 'lucide-react';
+import { ArrowUpRight, Check } from 'lucide-react';
+import { IMPLEMENTATION_PRICING_PLANS as plans, type ImplementationPlan as Plan } from './mock-data';
 
 /*
   Màu dùng trong file:
@@ -8,84 +9,6 @@ import { ArrowUpRight, Building2, Check, GraduationCap, Rocket, Video, type Luci
   Muốn đổi accent chỉ cần sửa hằng số ACCENT bên dưới.
 */
 const ACCENT = '#d6ff3d';
-
-/* ---------- Mock data ---------- */
-type Plan = {
-  id: string;
-  name: string;
-  icon: LucideIcon;
-  iconBg: string;
-  iconColor: string;
-  price: string;
-  unit: string;
-  oldPrice?: string;
-  subtitle?: string;
-  features: string[];
-  cta: string;
-  highlight?: boolean;
-  badge?: string;
-  promo?: string;
-  note?: string;
-};
-
-const plans: Plan[] = [
-  {
-    id: 'self',
-    name: 'Tự học',
-    icon: GraduationCap,
-    iconBg: 'bg-primary/10',
-    iconColor: 'text-primary',
-    price: '0đ',
-    unit: '/mãi mãi',
-    features: ['Kho video 120+ bài', 'Tài liệu & biểu mẫu', 'Cộng đồng hỗ trợ'],
-    cta: 'Bắt đầu học',
-  },
-  {
-    id: 'online',
-    name: 'Đồng hành Online',
-    icon: Video,
-    iconBg: 'bg-primary/10',
-    iconColor: 'text-primary',
-    price: '5tr',
-    unit: '/3 tháng',
-    subtitle: '12 buổi 1-1 qua Meet, setup hệ thống',
-    features: ['Setup 10 hệ nhóm / 50 công trình', 'Quy trình báo giá → nghiệm thu', 'Bàn giao quản trị viên'],
-    cta: 'Chọn gói Online',
-  },
-  {
-    id: 'onsite',
-    name: 'Đào tạo tận xưởng',
-    icon: Building2,
-    iconBg: 'bg-primary/10',
-    iconColor: 'text-primary',
-    price: '8tr',
-    unit: '/ngày',
-    subtitle: 'Chuyên gia đến tận nơi, cầm tay chỉ việc',
-    features: ['Đào tạo 2 ca: văn phòng + xưởng', 'Chuẩn hóa kho, mã hàng', 'Kèm 1 tháng G2'],
-    cta: 'Đặt lịch xưởng',
-  },
-  {
-    id: 'full',
-    name: 'Tái cấu trúc toàn diện',
-    icon: Rocket,
-    iconBg: 'bg-white/15',
-    iconColor: 'text-[#d6ff3d]',
-    price: '15tr',
-    oldPrice: '30tr',
-    unit: '/lần',
-    promo: 'Tặng 1 tháng G2 • Combo G4 = 44.9tr năm đầu',
-    features: [
-      'Audit xưởng 3 ngày, vẽ lại flow',
-      'Tái cấu trúc nhân sự + KPI',
-      'Bàn giao Tổng Thầu G4 full không giới hạn',
-      'Bảo hành vận hành 12 tháng',
-    ],
-    cta: 'Nhận combo 44.9tr năm đầu',
-    highlight: true,
-    badge: 'BEST VALUE • TIẾT KIỆM 50%',
-    note: 'Chỉ 5 suất / tháng • Đã bao gồm G4 1TB + 1 tháng G2',
-  },
-];
 
 /* ---------- Cards ---------- */
 const NormalCard = ({ plan }: { plan: Plan }) => {

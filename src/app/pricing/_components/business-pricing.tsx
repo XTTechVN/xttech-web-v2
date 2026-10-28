@@ -7,115 +7,15 @@ import { Check, ExternalLink, Zap, Layers } from 'lucide-react';
 const ACCENT = '#d6ff3d';
 
 type BillingCycle = 'month' | 'year';
-type ButtonVariant = 'outline' | 'solid' | 'accent';
+import {
+  BUSINESS_PRICING_DATA,
+  formatVnd,
+  savePercent,
+  type ButtonVariant,
+  type PricingPlan as Plan,
+} from './mock-data';
 
-/* ---------- Helpers ---------- */
-// Format kiểu Việt Nam: 4900000 -> "4.900.000đ" (tự viết để SSR/CSR không lệch)
-const formatVnd = (n: number) => `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}đ`;
-
-// % tiết kiệm khi trả năm so với trả 12 tháng lẻ
-const savePercent = (monthly: number, yearly: number) => Math.round((1 - yearly / (monthly * 12)) * 100);
-
-// 1. DỮ LIỆU NGÀNH HCNS, KẾ TOÁN, KINH DOANH
-const PRICING_DATA = {
-  header: {
-    title: 'HCNS, Kế Toán, Kinh doanh',
-    badge: 'Nhân sự + Hóa đơn',
-    subTitle: 'XMS Biz — CRM & Office, nhân sự, hóa đơn',
-    slug: '/bang-gia-hcns-ke-toan',
-    resetNote: 'Reset mùng 1 hàng tháng',
-  },
-  plans: [
-    {
-      id: 'free',
-      name: 'Miễn phí',
-      monthly: null as number | null,
-      yearly: null as number | null,
-      yearlyOnly: false,
-      priceSubText: 'Mãi mãi, không cần thẻ',
-      buttonText: 'Dùng thử 10 công trình miễn phí',
-      buttonVariant: 'outline' as ButtonVariant,
-      isPopular: false,
-      highlights: [
-        { bold: '10 công trình', rest: 'tổng cả đời' },
-        { bold: '3 nhân sự', rest: '' },
-        { bold: '3 GB', rest: 'lưu trữ' },
-        { bold: '10 dự án', rest: 'và kho vật tư' },
-        { bold: 'Thử 3 người', rest: 'chấm công GPS' },
-        { bold: 'Báo cáo lãi lỗ', rest: 'chỉ xem' },
-        { bold: 'Hỗ trợ', rest: 'cộng đồng' },
-      ],
-    },
-    {
-      id: 'van-phong',
-      name: 'Văn phòng',
-      monthly: 390000 as number | null,
-      yearly: 3900000 as number | null,
-      yearlyOnly: false,
-      priceSubText: null as string | null,
-      buttonText: 'Chọn Văn Phòng',
-      buttonVariant: 'solid' as ButtonVariant,
-      isPopular: false,
-      highlights: [
-        { bold: '50 công trình', rest: '/ tháng, reset mùng 1' },
-        { bold: '10 nhân sự', rest: '' },
-        { bold: '20 GB', rest: 'lưu trữ' },
-        { bold: '50 dự án', rest: 'và kho vật tư' },
-        { bold: '10 người', rest: 'chấm công GPS' },
-        { bold: 'Báo cáo lãi lỗ', rest: 'chi tiết' },
-        { bold: 'Chat', rest: 'hỗ trợ 24h' },
-      ],
-    },
-    {
-      id: 'van-hanh',
-      name: 'Vận hành',
-      monthly: 790000 as number | null,
-      yearly: 7900000 as number | null,
-      yearlyOnly: false,
-      priceSubText: null as string | null,
-      buttonText: 'Chọn Vận Hành',
-      buttonVariant: 'accent' as ButtonVariant,
-      isPopular: true,
-      highlights: [
-        { bold: '200 công trình', rest: '/ tháng' },
-        { bold: '20 nhân sự', rest: '' },
-        { bold: '100 GB', rest: 'lưu trữ' },
-        { bold: '200 dự án', rest: 'và kho vật tư' },
-        { bold: '20 người', rest: 'chấm công GPS' },
-        { bold: 'Báo cáo lãi lỗ', rest: 'Full + Xuất' },
-        { bold: 'Hỗ trợ ưu tiên', rest: '1-1' },
-      ],
-    },
-    {
-      id: 'tong-thau',
-      name: 'Tổng thầu',
-      monthly: null as number | null,
-      yearly: 19900000 as number | null,
-      yearlyOnly: true,
-      priceSubText: null as string | null,
-      buttonText: 'Liên hệ Tổng Thầu',
-      buttonVariant: 'outline' as ButtonVariant,
-      isPopular: false,
-      highlights: [
-        { bold: 'Công trình không giới hạn', rest: '∞' },
-        { bold: 'Nhân sự không giới hạn', rest: '' },
-        { bold: '1 TB', rest: 'lưu trữ (1024 GB)' },
-        { bold: 'Full dự án & kho vật tư', rest: '' },
-        { bold: 'Chấm công GPS', rest: 'không giới hạn' },
-        { bold: 'Báo cáo lãi lỗ', rest: 'Full + Kế toán' },
-        { bold: 'Quản lý', rest: 'tài khoản riêng' },
-      ],
-    },
-  ],
-  addOns: [
-    { text: '+100 công trình', price: '99k' },
-    { text: '+10 nhân sự', price: '99k' },
-    { text: '+20GB', price: '99k' },
-  ],
-  footerNote: '* Áp dụng cho G1/G2, tự động cộng vào tháng sau',
-};
-
-type Plan = (typeof PRICING_DATA.plans)[number];
+const PRICING_DATA = BUSINESS_PRICING_DATA;
 
 interface PriceView {
   price: string;
@@ -164,7 +64,7 @@ const MAX_SAVE = Math.max(
   0,
   ...PRICING_DATA.plans
     .filter((p) => !p.yearlyOnly && p.monthly !== null && p.yearly !== null)
-    .map((p) => savePercent(p.monthly as number, p.yearly as number))
+    .map((p) => savePercent(p.monthly as number, p.yearly as number)),
 );
 
 /* ---------- Công tắc Theo tháng / Theo năm ---------- */
@@ -191,10 +91,7 @@ const CycleToggle = ({ value, onChange }: { value: BillingCycle; onChange: (v: B
           >
             {opt.label}
             {opt.id === 'year' && MAX_SAVE > 0 && (
-              <span
-                className="rounded-full px-1.5 py-0.5 text-[10px] font-extrabold text-primary"
-                style={{ backgroundColor: ACCENT }}
-              >
+              <span className="rounded-full px-1.5 py-0.5 text-[10px] font-extrabold text-primary" style={{ backgroundColor: ACCENT }}>
                 -{MAX_SAVE}%
               </span>
             )}
@@ -281,11 +178,7 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
       <ul className={`mt-6 space-y-3.5 border-t pt-5 ${dark ? 'border-white/20' : 'border-primary/10'}`}>
         {plan.highlights.map((h, i) => (
           <li key={i} className="flex gap-2.5 text-sm leading-snug">
-            <Check
-              className={`mt-0.5 h-4 w-4 shrink-0 ${dark ? '' : 'text-primary'}`}
-              style={dark ? { color: ACCENT } : undefined}
-              strokeWidth={3}
-            />
+            <Check className={`mt-0.5 h-4 w-4 shrink-0 ${dark ? '' : 'text-primary'}`} style={dark ? { color: ACCENT } : undefined} strokeWidth={3} />
             <span className={dark ? 'text-white/75' : 'text-gray-500'}>
               <b className={`font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{h.bold}</b>
               {h.rest && ` ${h.rest}`}
@@ -349,10 +242,7 @@ const BusinessPricing = () => {
               <span>Hết lưu lượng? Mua thêm lẻ</span>
             </div>
             {addOns.map((addOn) => (
-              <div
-                key={addOn.text}
-                className="flex items-center gap-1 rounded-full bg-primary/5 px-3 py-1.5 text-xs font-medium text-gray-700"
-              >
+              <div key={addOn.text} className="flex items-center gap-1 rounded-full bg-primary/5 px-3 py-1.5 text-xs font-medium text-gray-700">
                 <span>{addOn.text}</span>
                 <span className="font-bold text-primary">{addOn.price}</span>
               </div>
