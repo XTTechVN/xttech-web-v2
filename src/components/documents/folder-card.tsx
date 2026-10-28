@@ -160,9 +160,9 @@ const FolderCardComponent: React.FC<FolderCardProps> = ({
       className={cn(
         'group relative flex items-center justify-between gap-4 p-4 rounded-lg cursor-pointer select-none transition-none',
         isSelected
-          ? 'bg-primary/15 border-primary shadow-xs ring-2 ring-primary/60 text-primary'
+          ? 'bg-primary/10 ring-2 ring-primary/60 text-primary'
           : isActive
-            ? 'bg-primary/10 border-primary shadow-xs ring-1 ring-primary/30'
+            ? 'bg-primary/10 border-primary shadow-xs ring-1 ring-primary/20'
             : isDragTarget
               ? 'bg-primary/20 border-primary ring-2 ring-primary/50'
               : 'bg-[#f0f4f9] hover:bg-[#e4ebf5] border border-transparent hover:border-slate-200/60 shadow-2xs hover:shadow-xs',

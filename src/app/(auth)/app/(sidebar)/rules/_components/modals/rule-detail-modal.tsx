@@ -206,26 +206,41 @@ export const RuleDetailModal: React.FC<RuleDetailModalProps> = ({
         </section>
       </div>
 
-      <div className="flex flex-wrap gap-2 justify-end w-full mt-4 pt-3 border-t border-slate-100">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 w-full mt-4 pt-3 border-t border-slate-100">
         {actions.canDelete && (
           <Button
             variant="ghost"
             size="sm"
             leftIcon={<Trash2 size={14} className="text-rose-600" />}
             disabled={isBusy}
-            className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+            className="w-full sm:w-auto text-rose-600 hover:bg-rose-50 hover:text-rose-700 justify-center"
             onClick={() => handlers.onDelete(doc)}
           >
             Xóa văn bản
           </Button>
         )}
         {actions.canEdit && (
-          <Button id="rule-action-edit" variant="outline" size="sm" leftIcon={<FilePen size={14} />} disabled={isBusy} onClick={() => handlers.onEdit(doc)}>
+          <Button
+            id="rule-action-edit"
+            variant="outline"
+            size="sm"
+            leftIcon={<FilePen size={14} />}
+            disabled={isBusy}
+            className="w-full sm:w-auto justify-center"
+            onClick={() => handlers.onEdit(doc)}
+          >
             Sửa &amp; gửi duyệt
           </Button>
         )}
         {actions.canPublish && (
-          <Button id="rule-action-publish" size="sm" leftIcon={<Megaphone size={14} />} disabled={isBusy} onClick={() => handlers.onPublish(doc)}>
+          <Button
+            id="rule-action-publish"
+            size="sm"
+            leftIcon={<Megaphone size={14} />}
+            disabled={isBusy}
+            className="w-full sm:w-auto justify-center"
+            onClick={() => handlers.onPublish(doc)}
+          >
             Ban hành
           </Button>
         )}
@@ -236,18 +251,33 @@ export const RuleDetailModal: React.FC<RuleDetailModalProps> = ({
             size="sm"
             leftIcon={<RefreshCw size={14} className="text-amber-600" />}
             disabled={isBusy}
-            className="text-amber-700 border-amber-300 hover:bg-amber-50"
+            className="w-full sm:w-auto justify-center text-amber-700 border-amber-300 hover:bg-amber-50"
             onClick={() => handlers.onReplace!(doc)}
           >
             Soạn cơ chế thay thế
           </Button>
         )}
         {actions.canAcknowledge && (
-          <Button id="rule-action-acknowledge" size="sm" leftIcon={<ShieldCheck size={14} />} loading={isBusy} disabled={isBusy} onClick={() => handlers.onAcknowledge(doc)}>
+          <Button
+            id="rule-action-acknowledge"
+            size="sm"
+            leftIcon={<ShieldCheck size={14} />}
+            loading={isBusy}
+            disabled={isBusy}
+            className="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white"
+            onClick={() => handlers.onAcknowledge(doc)}
+          >
             Đã đọc và hiểu
           </Button>
         )}
-        <Button id="rule-action-preview" variant="outline" size="sm" leftIcon={<Eye size={14} />} onClick={() => handlers.onPreview(doc)}>
+        <Button
+          id="rule-action-preview"
+          variant="outline"
+          size="sm"
+          leftIcon={<Eye size={14} />}
+          className="w-full sm:w-auto justify-center"
+          onClick={() => handlers.onPreview(doc)}
+        >
           Xem văn bản
         </Button>
       </div>

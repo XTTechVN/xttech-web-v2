@@ -4,6 +4,33 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-10-27
 
+### Enhanced & Redesigned (Tối Ưu Hóa Trải Nghiệm Mobile Chuẩn Google Stitch - Trang Cơ Chế & Quy Định - `rules`)
+- **Tối Ưu Hóa Giao Diện Di Động & Trải Nghiệm Chạm (Touch-Friendly Adaptive UI):**
+  - **Dựa trên bản thiết kế Google Stitch Mobile (`8f67424235184e8c91c60042f6f40569`):** Nâng cấp toàn diện trang Cơ chế & Quy định (Tài liệu ban hành) sang chuẩn Responsive linh hoạt, loại bỏ hoàn toàn tình trạng vỡ layout, tràn ngang hoặc chiếm dụng diện tích dọc trên điện thoại.
+  - **Header Tinh Gọn ([`rules-header.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-header.tsx)):** Thu gọn tiêu đề trên mobile, ẩn phụ đề dài dòng, ô tìm kiếm co dãn thông minh, nút "Soạn cơ chế" tự động rút gọn nhãn trên màn hình nhỏ.
+  - **Tabs & Dải Chỉ Số Nhanh KPI ([`rules-tabs.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-tabs.tsx)):** Hỗ trợ cuộn ngang mượt mà (`no-scrollbar`), mở khóa dải thống kê KPI mini (*Đang hiệu lực*, *Chưa đọc*, *Sắp hết hạn*) trên cả thiết bị di động thay vì ẩn hoàn toàn như trước đây.
+  - **Thanh Lọc Nhanh & Bottom Sheet Bộ Lọc ([`rules-filter-bar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-filter-bar.tsx)):**
+    - Trên Mobile: Tinh gọn thành 1 thanh cuộn ngang với nút **"Bộ lọc"** (kèm badge số lượng bộ lọc đang chọn) cùng các quick chip tiện dụng (*Tất cả*, *Chưa đọc*, *Sắp hết hạn*, *Toàn công ty*).
+    - Tích hợp **Bottom Sheet Modal** mở từ dưới lên, cho phép tùy chọn đầy đủ các bộ lọc chuyên sâu (Phạm vi, Loại văn bản, Trạng thái, Phòng ban, Nhân sự) mà không làm vỡ hay choán hết màn hình chính.
+    - Trên Desktop: Bảo toàn 100% giao diện thanh lọc 2 hàng đầy đủ hiện tại.
+  - **Card Quy Chế Tối Ưu Cảm Ứng ([`rule-card.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rule-card.tsx), [`rules-card-grid.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-card-grid.tsx)):**
+    - Ẩn khung xem trước A4 cồng kềnh `h-32` trên mobile nhỏ, giúp giảm chiều cao mỗi thẻ từ >400px xuống ~125px siêu gọn gàng.
+    - Bổ sung nút CTA nhanh "Xem" trực tiếp trên card di động, tăng touch target cho nút ba chấm (>44px).
+  - **Bảng Dữ Liệu ([`rules-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/rules-table.tsx)):** Bổ sung chỉ báo hướng dẫn vuốt ngang trên điện thoại và điều chỉnh padding container.
+  - **Modal Chi Tiết ([`rule-detail-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/rules/_components/modals/rule-detail-modal.tsx)):** Các nút thao tác (Xem văn bản, Phê duyệt, Ban hành, Từ chối, Xóa) tự động dàn đều full-width trên mobile giúp bấm dễ dàng bằng ngón tay cái.
+
+### Added (Tạo Thư Mục Mới Trực Tiếp Inline Bên Trong Cây Thư Mục Khi Di Chuyển - `documents`)
+- **Trải Nghiệm Tạo & Sửa Tên Thư Mục Tại Chỗ Chuẩn File Explorer ([`folder-tree-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/folder-tree-view.tsx), [`move-item-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/modals/move-item-modal.tsx)):**
+  - **In-Tree In-Place Editing:** Khi bấm `+ Thư mục mới`, thay vì mở thanh nhập rời rạc bên ngoài, một hàng thư mục mới được chèn **trực tiếp ngay bên trong cây thư mục** tại vị trí đang chọn (thư mục cha tự động mở ra nếu đang đóng). Có sẵn icon thư mục và ô `input` inline để người dùng gõ tên trực tiếp tại chỗ với text được bôi đen sẵn giống Windows / macOS.
+  - **Phím tắt & Thao tác:** Nhấn `Enter` hoặc icon `[✓]` để xác nhận tạo, `Esc` hoặc icon `[✕]` để hủy bỏ.
+  - **Tự Động Chọn Đích (Auto-Select):** Sau khi tạo thành công, thư mục mới được đưa vào cây thư mục và tự động chọn luôn làm vị trí đích (`selectedFolderId = created.id`).
+  - **Khắc Phục 2 Dòng Thư Mục Gốc:** Loại bỏ hoàn toàn sự trùng lặp giữa hai mục *"Thư mục gốc (Tài liệu của tôi)"* và *"Thư mục gốc (Tất cả)"*, giao diện cây thư mục trở nên thống nhất và thanh thoát.
+
+### Changed & Fixed (Ẩn nút "Lưu vào thư mục cá nhân" trong Tài liệu Cá nhân - `documents`)
+- **Tối ưu Logic Hiển thị Quyền `canSaveToFolder` ([`document-permissions.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/document-permissions.ts)):**
+  - **Vấn đề:** Trước đây thuộc tính `canSaveToFolder` luôn trả về `true` cho mọi trường hợp, khiến tùy chọn "Lưu vào thư mục cá nhân" luôn xuất hiện trong menu ngữ cảnh (Context Menu chuột phải) và Menu ba chấm, ngay cả khi người dùng đang ở trong "Tài liệu của tôi" / thư mục cá nhân của chính mình.
+  - **Khắc phục:** Cập nhật điều kiện `canSaveToFolder = !isPersonalSection && !isOwner`. Nút "Lưu vào thư mục cá nhân" sẽ tự động được ẩn hoàn toàn khi đang ở mục tài liệu cá nhân (`!context.isSharedSection`) hoặc với tài liệu do chính mình sở hữu, chỉ hiển thị khi xem các tài liệu từ mục "Được chia sẻ" / bên ngoài để tạo lối tắt vào Drive cá nhân theo chuẩn Google Drive.
+
 ### Fixed (Sửa lỗi Vi phạm Thứ tự React Hooks trong DocumentDetailModal - `documents`)
 - **Triệt tiêu Lỗi Crash Runtime "Change in the order of Hooks called by DocumentDetailModal":**
   - **Nguyên nhân gốc rễ:** Trong [`document-detail-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/documents/modals/document-detail-modal.tsx), lệnh thoát sớm `if (!doc || !targetDoc) return null;` nằm ở dòng 133, nhưng bên dưới lại khai báo một hook `useMemo` tính toán `docPerms` ở dòng 155. Khi modal chưa có tài liệu, component dừng ở 48 hooks; khi có tài liệu, hook 49 (`useMemo`) được kích hoạt, gây vi phạm nghiêm trọng quy chuẩn Rules of Hooks của React.

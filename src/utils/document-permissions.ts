@@ -128,10 +128,19 @@ export function getDocumentPermissions(
   const isShortcut = Boolean(context?.currentFolderId && doc.savedFolders?.includes(context.currentFolderId));
   const canRemoveShortcut = inPersonal && (!isOwner || isShortcut);
 
+  const isPersonalSection = !context?.isSharedSection;
+  const canSaveToFolder = !isPersonalSection && !isOwner;
+
   if (isOwner || isAdminOrHR) {
     return {
-      isShared, isOwner, canEdit: true, canMove: true, canDelete: true,
-      canShare: true, canSaveToFolder: true, canRemoveShortcut,
+      isShared,
+      isOwner,
+      canEdit: true,
+      canMove: true,
+      canDelete: true,
+      canShare: true,
+      canSaveToFolder,
+      canRemoveShortcut,
     };
   }
 
@@ -147,7 +156,7 @@ export function getDocumentPermissions(
     canMove,
     canDelete: false,
     canShare: false,
-    canSaveToFolder: true,
+    canSaveToFolder,
     canRemoveShortcut,
   };
 }

@@ -75,22 +75,22 @@ export const RuleCard: React.FC<RuleCardProps> = ({
     <div
       onClick={() => onPreview(doc)}
       className={cn(
-        'group relative flex flex-col justify-between rounded-xl border bg-white p-3.5 transition-all cursor-pointer hover:shadow-md hover:border-primary/40',
+        'group relative flex flex-col justify-between rounded-xl border bg-white p-3 sm:p-3.5 transition-all cursor-pointer hover:shadow-md hover:border-primary/40 shadow-2xs',
         isUnread ? 'border-primary/40 bg-sky-50/15' : 'border-slate-200',
       )}
     >
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2 sm:gap-2.5">
         <div className="flex items-center justify-between gap-1.5">
           <div className="flex items-center gap-1.5 min-w-0">
             {isUnread && <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" title="Chưa đọc" />}
             <RuleTypeBadge type={doc.documentType} />
-            <span className="font-mono text-[11px] font-semibold text-slate-500 truncate" title={doc.code}>
+            <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-slate-500 truncate" title={doc.code}>
               {doc.code}
             </span>
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <span className={cn('px-1.5 py-0.5 rounded text-[9.5px] font-bold border', fileExt.badgeClass)}>
+            <span className={cn('px-1.5 py-0.5 rounded text-[9px] sm:text-[9.5px] font-bold border', fileExt.badgeClass)}>
               {fileExt.ext}
             </span>
             <div className="relative" ref={menuRef} onClick={(e) => e.stopPropagation()}>
@@ -98,9 +98,9 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                 type="button"
                 title="Thao tác"
                 onClick={() => setMenuOpen((prev) => !prev)}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="p-1.5 sm:p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
               >
-                <MoreVertical size={15} />
+                <MoreVertical size={16} className="sm:w-[15px] sm:h-[15px]" />
               </button>
               {menuOpen && (
                 <div className="absolute right-0 top-full mt-1 w-48 rounded-lg bg-white shadow-xl border border-slate-200 py-1 z-30 text-xs">
@@ -171,7 +171,8 @@ export const RuleCard: React.FC<RuleCardProps> = ({
           </div>
         </div>
 
-        <div className="relative w-full h-32 rounded-lg bg-[#f0f4f9] border border-slate-200/80 p-2 overflow-hidden flex items-center justify-center">
+        {/* Khung xem trước A4 chỉ hiển thị từ màn hình sm trở lên để tránh chiếm diện tích dọc trên điện thoại */}
+        <div className="hidden sm:flex relative w-full h-32 rounded-lg bg-[#f0f4f9] border border-slate-200/80 p-2 overflow-hidden items-center justify-center">
           {isImage && downloadUrl ? (
             <div className="w-full h-full rounded bg-white overflow-hidden shadow-2xs">
               <img src={downloadUrl} alt={doc.title} className="w-full h-full object-cover" />
@@ -221,14 +222,14 @@ export const RuleCard: React.FC<RuleCardProps> = ({
         <div>
           <h3
             className={cn(
-              'text-[13px] line-clamp-2 leading-snug group-hover:text-primary transition-colors min-h-[36px]',
+              'text-[13px] sm:text-[13px] line-clamp-2 leading-snug group-hover:text-primary transition-colors min-h-0 sm:min-h-[36px]',
               isUnread ? 'font-bold text-slate-900' : 'font-semibold text-slate-800',
             )}
             title={doc.title}
           >
             {doc.title}
           </h3>
-          <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 min-h-[30px] leading-relaxed">
+          <p className="hidden sm:block text-[11px] text-slate-500 line-clamp-2 mt-1 min-h-[30px] leading-relaxed">
             {doc.summary || 'Văn bản ban hành chính thức áp dụng theo quy định của công ty.'}
           </p>
         </div>
@@ -236,7 +237,7 @@ export const RuleCard: React.FC<RuleCardProps> = ({
         <TargetScopeBox doc={doc} />
       </div>
 
-      <div className="flex items-end justify-between gap-2 pt-3 mt-3 border-t border-slate-100 text-[11px] text-slate-500">
+      <div className="flex items-center justify-between gap-2 pt-2.5 sm:pt-3 mt-2 sm:mt-3 border-t border-slate-100 text-[11px] text-slate-500">
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex items-center gap-1 text-slate-600 font-medium">
             <Calendar size={11} className="text-slate-400 shrink-0" />
@@ -253,7 +254,21 @@ export const RuleCard: React.FC<RuleCardProps> = ({
           )}
         </div>
 
-        <CardReadCompliance doc={doc} />
+        <div className="flex items-center gap-2 shrink-0">
+          <CardReadCompliance doc={doc} />
+          {/* Nút Xem nhanh trên mobile */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPreview(doc);
+            }}
+            className="sm:hidden inline-flex items-center gap-1 px-2 py-1 rounded bg-primary text-white text-[10px] font-semibold shadow-2xs hover:bg-primary/90"
+          >
+            <Eye size={11} />
+            <span>Xem</span>
+          </button>
+        </div>
       </div>
     </div>
   );
