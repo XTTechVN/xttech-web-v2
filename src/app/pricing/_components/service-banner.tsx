@@ -101,39 +101,46 @@ const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceB
             {/* Pricing Cards Grid */}
             <div className="mb-4 grid grid-cols-3 gap-2 sm:gap-3">
               {/* Gói 1 */}
-              <div className="flex flex-col justify-between rounded-xl border border-primary/10 bg-primary/5 p-2 text-center sm:p-3">
+              <div className="group flex cursor-pointer flex-col justify-between rounded-xl border border-primary/10 bg-primary/5 p-2 text-center transition-all duration-300 hover:scale-105 hover:bg-primary hover:text-white hover:shadow-lg sm:p-3">
                 <div>
-                  <div className="text-base font-bold text-primary sm:text-lg">590k</div>
-                  <div className="mt-0.5 text-[10px] text-gray-400 line-through">~5.9tr/năm</div>
+                  <div className="text-base font-bold text-primary transition-colors group-hover:text-[#d6ff3d] sm:text-lg">
+                    590k
+                  </div>
+                  <div className="mt-0.5 text-[10px] text-gray-400 line-through transition-colors group-hover:text-white/70">
+                    ~5.9tr/năm
+                  </div>
                 </div>
-                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary sm:text-[10px]">
+                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary transition-all group-hover:bg-[#d6ff3d] group-hover:text-primary sm:text-[10px]">
                   Tiết kiệm 1.18tr
                 </div>
               </div>
 
-              {/* Gói 2 (Highlighted) */}
-              <div className="flex flex-col justify-between rounded-xl bg-primary p-2 text-center text-white shadow-md sm:p-3">
+              {/* Gói 2 */}
+              <div className="group flex cursor-pointer flex-col justify-between rounded-xl border border-primary/10 bg-primary/5 p-2 text-center transition-all duration-300 hover:scale-105 hover:bg-primary hover:text-white hover:shadow-lg sm:p-3">
                 <div>
-                  <div className="text-base font-bold sm:text-lg" style={{ color: ACCENT }}>
+                  <div className="text-base font-bold text-primary transition-colors group-hover:text-[#d6ff3d] sm:text-lg">
                     1.29tr
                   </div>
-                  <div className="mt-0.5 text-[10px] text-white/60 line-through">~12.9tr/năm</div>
+                  <div className="mt-0.5 text-[10px] text-gray-400 line-through transition-colors group-hover:text-white/70">
+                    ~12.9tr/năm
+                  </div>
                 </div>
-                <div
-                  className="mt-2 rounded px-1 py-0.5 text-[9px] font-bold text-primary sm:text-[10px]"
-                  style={{ backgroundColor: ACCENT }}
-                >
+                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary transition-all group-hover:bg-[#d6ff3d] group-hover:text-primary sm:text-[10px]">
                   Tiết kiệm 2.58tr
                 </div>
               </div>
 
               {/* Gói 3 */}
-              <div className="flex flex-col justify-between rounded-xl border border-primary/10 bg-primary/5 p-2 text-center sm:p-3">
+              <div className="group flex cursor-pointer flex-col justify-between rounded-xl border border-primary/10 bg-primary/5 p-2 text-center transition-all duration-300 hover:scale-105 hover:bg-primary hover:text-white hover:shadow-lg sm:p-3">
                 <div>
-                  <div className="text-sm font-bold text-primary sm:text-base">29.9tr</div>
-                  <div className="mt-0.5 text-[10px] font-medium text-gray-500">Tổng Thầu</div>
+                  <div className="text-sm font-bold text-primary transition-colors group-hover:text-[#d6ff3d] sm:text-base">
+                    29.9tr
+                  </div>
+                  <div className="mt-0.5 text-[10px] font-medium text-gray-500 transition-colors group-hover:text-white/80">
+                    Tổng Thầu
+                  </div>
                 </div>
-                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary sm:text-[10px]">
+                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary transition-all group-hover:bg-[#d6ff3d] group-hover:text-primary sm:text-[10px]">
                   1TB • ∞
                 </div>
               </div>

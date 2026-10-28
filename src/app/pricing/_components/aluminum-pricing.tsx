@@ -109,17 +109,16 @@ const CycleToggle = ({ value, onChange }: { value: BillingCycle; onChange: (v: B
 /* ---------- Nút CTA của thẻ gói ---------- */
 const PlanButton = ({ plan }: { plan: Plan }) => {
   const styles: Record<ButtonVariant, string> = {
-    outline: 'border-2 border-primary bg-white text-primary hover:bg-primary/5',
-    solid: 'border-2 border-primary bg-primary text-white hover:bg-primary/90',
-    accent: 'border-2 text-primary hover:brightness-95',
+    outline: 'border-2 border-primary bg-white text-primary group-hover:border-[#d6ff3d] group-hover:bg-[#d6ff3d] group-hover:text-primary',
+    solid: 'border-2 border-primary bg-primary text-white group-hover:border-[#d6ff3d] group-hover:bg-[#d6ff3d] group-hover:text-primary',
+    accent: 'border-2 border-primary/20 bg-primary/10 text-primary group-hover:border-[#d6ff3d] group-hover:bg-[#d6ff3d] group-hover:text-primary',
   };
   return (
     <button
       type="button"
-      className={`flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-bold transition-all ${
+      className={`flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-bold transition-all duration-300 ${
         styles[plan.buttonVariant]
       }`}
-      style={plan.buttonVariant === 'accent' ? { backgroundColor: ACCENT, borderColor: ACCENT } : undefined}
     >
       {plan.buttonText}
     </button>
@@ -129,49 +128,42 @@ const PlanButton = ({ plan }: { plan: Plan }) => {
 /* ---------- Thẻ một gói ---------- */
 const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
   const view = getPriceView(plan, cycle);
-  const dark = plan.isPopular;
+  const isPopular = plan.isPopular;
 
   return (
     <div
-      className={`group relative flex h-full w-[280px] shrink-0 snap-center flex-col rounded-3xl border p-6 transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl sm:w-auto sm:shrink sm:snap-align-none ${
-        dark
-          ? 'border-primary bg-primary pt-9 text-white shadow-xl hover:shadow-primary/30 lg:z-10 lg:-my-4'
-          : 'border-primary/10 bg-white text-gray-900 shadow-sm hover:border-primary/30 hover:shadow-lg'
+      className={`group relative flex h-full w-[280px] shrink-0 snap-center flex-col rounded-3xl border border-primary/10 bg-white p-6 text-gray-900 shadow-sm transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:border-primary hover:bg-primary hover:text-white hover:shadow-2xl hover:shadow-primary/30 sm:w-auto sm:shrink sm:snap-align-none ${
+        isPopular ? 'pt-9 lg:z-10' : ''
       }`}
     >
-      {dark && (
+      {isPopular && (
         <div
-          className="absolute -top-3.5 left-6 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-extrabold text-primary shadow-sm transition-transform duration-300 group-hover:scale-105"
-          style={{ backgroundColor: ACCENT }}
+          className="absolute -top-3.5 left-6 whitespace-nowrap rounded-full bg-primary px-3.5 py-1.5 text-xs font-extrabold text-white shadow-sm transition-transform duration-300 group-hover:scale-105"
+          
         >
           Bán chạy nhất
         </div>
       )}
 
-      <h3 className="text-lg font-bold">{plan.name}</h3>
+      <h3 className="text-lg font-bold transition-colors duration-300 group-hover:text-white">{plan.name}</h3>
 
-      {/* Giá với hiệu ứng hover mềm mại */}
+      {/* Giá với hiệu ứng hover */}
       <div className="group/price mt-3 flex cursor-pointer flex-wrap items-baseline gap-x-1.5">
         <span
-          className={`inline-block origin-left text-3xl font-extrabold tracking-tight transition-all duration-300 ease-out group-hover:scale-105 group-hover/price:scale-110 ${
-            dark ? 'group-hover/price:text-[#d6ff3d]' : 'group-hover/price:text-primary'
-          }`}
+          className="inline-block origin-left text-3xl font-extrabold tracking-tight text-primary transition-all duration-300 ease-out group-hover:scale-105 group-hover:text-[#d6ff3d]"
         >
           {view.price}
         </span>
         {view.unit && (
           <span
-            className={`text-sm transition-colors duration-300 ${
-              dark ? 'text-white/70 group-hover/price:text-white' : 'text-gray-500 group-hover/price:text-gray-700'
-            }`}
+            className="text-sm text-gray-500 transition-colors duration-300 group-hover:text-white/80"
           >
             {view.unit}
           </span>
         )}
       </div>
       <p
-        className={`mb-5 mt-2 min-h-[18px] text-xs transition-opacity duration-300 ${dark ? 'font-bold' : 'text-gray-500'}`}
-        style={dark ? { color: ACCENT } : undefined}
+        className="mb-5 mt-2 min-h-[18px] text-xs text-gray-500 transition-colors duration-300 group-hover:font-semibold group-hover:text-[#d6ff3d]"
       >
         {view.note}
       </p>
@@ -179,16 +171,15 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
       <PlanButton plan={plan} />
 
       {/* Danh sách tính năng nổi bật */}
-      <ul className={`mt-6 space-y-3.5 border-t pt-5 ${dark ? 'border-white/20' : 'border-primary/10'}`}>
+      <ul className="mt-6 space-y-3.5 border-t border-primary/10 pt-5 transition-colors duration-300 group-hover:border-white/20">
         {plan.highlights.map((h) => (
           <li key={h.bold} className="flex gap-2.5 text-sm leading-snug">
             <Check
-              className={`mt-0.5 h-4 w-4 shrink-0 ${dark ? '' : 'text-primary'}`}
-              style={dark ? { color: ACCENT } : undefined}
+              className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-colors duration-300 group-hover:text-[#d6ff3d]"
               strokeWidth={3}
             />
-            <span className={dark ? 'text-white/75' : 'text-gray-500'}>
-              <b className={`font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>{h.bold}</b>
+            <span className="text-gray-500 transition-colors duration-300 group-hover:text-white/80">
+              <b className="font-bold text-gray-900 transition-colors duration-300 group-hover:text-white">{h.bold}</b>
               {h.rest && ` ${h.rest}`}
             </span>
           </li>

@@ -176,7 +176,7 @@ export const Hero = () => {
             className="group relative flex h-11 w-11 items-center justify-center rounded-full bg-[#0068FF] text-white shadow-lg shadow-blue-500/30 transition-transform duration-300 hover:scale-110"
           >
             <span className="text-base font-black tracking-tight">Z</span>
-            <span className="pointer-events-none absolute right-13 whitespace-nowrap rounded-lg bg-gray-900 px-2.5 py-1 text-xs text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute right-13 whitespace-nowrap rounded-lg bg-blue-600 px-2.5 py-1 text-xs text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
               Zalo: 0865 853 327 - quyenn
             </span>
           </a>
@@ -192,7 +192,7 @@ export const Hero = () => {
             <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
             </svg>
-            <span className="pointer-events-none absolute right-13 whitespace-nowrap rounded-lg bg-gray-900 px-2.5 py-1 text-xs text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute right-13 whitespace-nowrap rounded-lg bg-blue-700 px-2.5 py-1 text-xs text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
               Facebook: Vũ Quyên
             </span>
           </a>
@@ -208,7 +208,7 @@ export const Hero = () => {
             <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
               <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
             </svg>
-            <span className="pointer-events-none absolute right-13 whitespace-nowrap rounded-lg bg-gray-900 px-2.5 py-1 text-xs text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute right-13 whitespace-nowrap rounded-lg bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] px-2.5 py-1 text-xs text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
               Instagram: @vquyeen_27
             </span>
           </a>
@@ -220,7 +220,7 @@ export const Hero = () => {
             className="group relative flex h-11 w-11 items-center justify-center rounded-full bg-[#EA4335] text-white shadow-lg shadow-red-500/30 transition-transform duration-300 hover:scale-110"
           >
             <Mail className="h-5 w-5" />
-            <span className="pointer-events-none absolute right-13 whitespace-nowrap rounded-lg bg-gray-900 px-2.5 py-1 text-xs text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute right-13 whitespace-nowrap rounded-lg bg-[#EA4335] px-2.5 py-1 text-xs text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
               quyentph2705@gmail.com
             </span>
           </a>
@@ -281,7 +281,7 @@ export const Hero = () => {
             {/* Tiêu đề chính */}
             <h1 className="mt-6 text-4xl font-black tracking-tight text-gray-900 sm:text-6xl lg:leading-[1.15]">
               Tiên phong số hóa <br />
-              <span className="text-primary">ngành nhôm kính & xây dựng</span>
+              <span className="text-primary">ngành nhôm & xây dựng</span>
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-gray-600 sm:text-lg">
@@ -560,61 +560,72 @@ export const Hero = () => {
 
             <div className="relative z-10 grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
               {/* Mockup Dashboard CAD */}
-              <div className="lg:col-span-6">
-                <div className="relative mx-auto max-w-md rounded-2xl border border-white/20 bg-gradient-to-b from-gray-900/90 to-gray-950 p-4 shadow-2xl backdrop-blur-md">
-                  <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
-                      <div className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-                      <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                      <span className="ml-2 text-xs font-semibold text-gray-300">XTTech CAD Studio v2.4</span>
+              <div className="w-full lg:col-span-6">
+                <div className="relative mx-auto w-full max-w-xl rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-b from-gray-900/95 via-gray-900 to-gray-950 p-3 sm:p-5 shadow-2xl backdrop-blur-md">
+                  {/* Window Bar */}
+                  <div className="mb-3 sm:mb-4 flex items-center justify-between border-b border-white/10 pb-2.5 sm:pb-3">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-red-500" />
+                      <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-amber-500" />
+                      <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-emerald-500" />
+                      <span className="ml-1.5 sm:ml-2 text-xs sm:text-sm font-bold text-gray-200">XTTech CAD Studio v2.4</span>
                     </div>
-                    <span className="text-[10px] text-white/50">Dự án: Biệt thự Louis Riverside</span>
+                    <span className="truncate text-[10px] sm:text-xs text-white/60">Dự án: Biệt thự Louis Riverside</span>
                   </div>
 
-                  <div className="grid grid-cols-12 gap-2 text-xs">
-                    <div className="col-span-3 space-y-1.5 rounded-lg bg-white/5 p-2 text-[10px] text-white/70">
-                      <div className="font-bold text-white">DANH MỤC</div>
-                      <div className="rounded bg-primary px-1.5 py-1 text-white">Vị trí tầng 1</div>
-                      <div className="px-1.5 py-1 text-white/60">Tầng 2 (4 cửa)</div>
-                      <div className="px-1.5 py-1 text-white/60">Tầng 3 (6 cửa)</div>
-                      <div className="mt-3 font-bold text-white">VẬT TƯ KHO</div>
-                      <div className="px-1.5 py-1 text-white/60">Xingfa Nhập</div>
-                      <div className="px-1.5 py-1 text-white/60">Phụ kiện Kinlong</div>
+                  {/* Window Content */}
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-12 sm:gap-3">
+                    {/* Sidebar */}
+                    <div className="col-span-1 flex flex-wrap gap-1 sm:col-span-4 sm:flex-col sm:space-y-2 rounded-xl bg-white/5 p-2.5 sm:p-3 text-[11px] sm:text-xs text-white/70">
+                      <div className="w-full font-bold text-white uppercase text-[10px] sm:text-xs tracking-wider">DANH MỤC</div>
+                      <div className="rounded-lg bg-primary px-2.5 py-1.5 font-medium text-white shadow-sm">Vị trí tầng 1</div>
+                      <div className="px-2.5 py-1 text-white/70">Tầng 2 (4 cửa)</div>
+                      <div className="px-2.5 py-1 text-white/70">Tầng 3 (6 cửa)</div>
+                      <div className="w-full mt-2 sm:mt-3 font-bold text-white uppercase text-[10px] sm:text-xs tracking-wider">VẬT TƯ KHO</div>
+                      <div className="px-2.5 py-1 text-white/70">Xingfa Nhập</div>
+                      <div className="px-2.5 py-1 text-white/70">Phụ kiện Kinlong</div>
                     </div>
 
-                    <div className="col-span-9 rounded-lg bg-white/10 p-2.5">
-                      <div className="flex items-center justify-between text-[11px] text-white/80 border-b border-white/10 pb-1.5 mb-2">
-                        <span className="font-bold">Báo giá: DA-2026-00091</span>
-                        <span className="text-[#d6ff3d] font-semibold">Tự tính mBOM & Thẻ A4</span>
+                    {/* Main Workspace */}
+                    <div className="col-span-1 rounded-xl bg-white/10 p-2.5 sm:col-span-8 sm:p-3.5 flex flex-col justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center justify-between gap-1 border-b border-white/10 pb-2 mb-2.5 text-xs">
+                          <span className="font-bold text-white">Báo giá: DA-2026-00091</span>
+                          <span className="text-[#d6ff3d] font-bold text-[11px] sm:text-xs">Tự tính mBOM & Thẻ A4</span>
+                        </div>
+
+                        {/* 3 Cửa preview */}
+                        <div className="grid grid-cols-3 gap-2 sm:gap-2.5 py-1 sm:py-2">
+                          <div className="rounded-lg border border-primary/40 bg-white/5 p-2 sm:p-2.5 text-center transition-transform hover:scale-105">
+                            <div className="mx-auto h-14 sm:h-16 w-9 sm:w-10 rounded border-2 border-amber-500/70 bg-amber-500/10 mb-1.5 shadow-inner" />
+                            <span className="block text-[10px] sm:text-[11px] font-medium text-white/90">Cửa C1 (2.4x2m)</span>
+                          </div>
+                          <div className="rounded-lg border border-primary/40 bg-white/5 p-2 sm:p-2.5 text-center transition-transform hover:scale-105">
+                            <div className="mx-auto h-14 sm:h-16 w-11 sm:w-12 rounded border-2 border-blue-500/70 bg-blue-500/10 mb-1.5 shadow-inner" />
+                            <span className="block text-[10px] sm:text-[11px] font-medium text-white/90">Cửa Sổ S2</span>
+                          </div>
+                          <div className="rounded-lg border border-primary/40 bg-white/5 p-2 sm:p-2.5 text-center transition-transform hover:scale-105">
+                            <div className="mx-auto h-14 sm:h-16 w-10 sm:w-11 rounded border-2 border-emerald-500/70 bg-emerald-500/10 mb-1.5 shadow-inner" />
+                            <span className="block text-[10px] sm:text-[11px] font-medium text-white/90">Vách Kính V1</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2 py-2">
-                        <div className="rounded border border-primary/40 bg-white/5 p-2 text-center">
-                          <div className="mx-auto h-12 w-8 rounded border border-amber-500/70 bg-amber-500/10 mb-1" />
-                          <span className="text-[9px] text-white/80">Cửa C1 (2.4x2m)</span>
-                        </div>
-                        <div className="rounded border border-primary/40 bg-white/5 p-2 text-center">
-                          <div className="mx-auto h-12 w-10 rounded border border-blue-500/70 bg-blue-500/10 mb-1" />
-                          <span className="text-[9px] text-white/80">Cửa Sổ S2</span>
-                        </div>
-                        <div className="rounded border border-primary/40 bg-white/5 p-2 text-center">
-                          <div className="mx-auto h-12 w-9 rounded border border-emerald-500/70 bg-emerald-500/10 mb-1" />
-                          <span className="text-[9px] text-white/80">Vách Kính V1</span>
-                        </div>
-                      </div>
-                      <div className="mt-2 rounded bg-black/40 p-2 text-[10px] text-white/70 flex items-center justify-between">
-                        <span>Tổng chi phí vốn: 184.500.000đ</span>
+
+                      {/* Footer bar */}
+                      <div className="mt-3 rounded-lg bg-black/50 p-2 sm:p-2.5 text-[11px] sm:text-xs text-white/80 flex flex-wrap items-center justify-between gap-1 border border-white/5">
+                        <span className="text-white/80">Vốn: <b className="text-white">184.500.000đ</b></span>
                         <span className="text-[#d6ff3d] font-bold">Lãi gộp: 32.4%</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="absolute -bottom-4 -right-4 rounded-xl border border-white/30 bg-primary/95 p-3 shadow-2xl backdrop-blur-md text-white text-[11px] max-w-[200px]">
-                    <div className="flex items-center gap-1.5 font-bold text-[#d6ff3d]">
-                      <Sparkles className="h-3.5 w-3.5" />
+                  {/* Floating Badge Mobile App - Responsive */}
+                  <div className="mt-3 sm:mt-0 sm:absolute sm:-bottom-5 sm:-right-5 rounded-2xl border border-white/30 bg-[#045863]/95 p-3.5 shadow-2xl backdrop-blur-md text-white sm:max-w-[220px]">
+                    <div className="flex items-center gap-1.5 font-bold text-[#d6ff3d] text-xs sm:text-sm">
+                      <Sparkles className="h-4 w-4 shrink-0 text-[#d6ff3d]" />
                       <span>Đồng bộ Mobile App</span>
                     </div>
-                    <p className="mt-1 text-[10px] text-white/80 leading-tight">
+                    <p className="mt-1 text-[11px] text-white/90 leading-snug">
                       Thợ xưởng nhận ngay Thẻ cắt A4 và quét mã QR bàn giao tại chân công trình.
                     </p>
                   </div>
