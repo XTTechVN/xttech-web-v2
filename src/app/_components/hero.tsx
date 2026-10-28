@@ -266,7 +266,7 @@ export const Hero = () => {
       </div>
 
       {/* ===================== HERO TOP SECTION ===================== */}
-      <section className="relative overflow-hidden pt-8 pb-14 lg:pt-14 lg:pb-20">
+      <section id="about" className="scroll-mt-20 relative overflow-hidden pt-8 pb-14 lg:pt-14 lg:pb-20">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/10 via-white to-white" />
         <div className="pointer-events-none absolute top-12 left-1/2 -z-10 h-72 w-96 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
@@ -668,7 +668,7 @@ export const Hero = () => {
       </section>
 
       {/* ===================== CÂU CHUYỆN & SỨ MỆNH ===================== */}
-      <section className="bg-gray-50/60 py-16 lg:py-24">
+      <section className="bg-gray-50/60 py-3 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
             <div className="space-y-6 lg:col-span-6">
@@ -688,25 +688,6 @@ export const Hero = () => {
                 XTTech ra đời với mục tiêu trở thành **hệ điều hành phân xưởng thông minh**, chuẩn hóa toàn bộ tri thức kỹ thuật thành công nghệ tự
                 động hóa, giúp chủ doanh nghiệp dễ dàng mở rộng quy mô mà vẫn kiểm soát tối đa từng đồng chi phí.
               </p>
-
-              {/* Mạng xã hội hỗ trợ nhanh */}
-              <div className="pt-2">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Kênh kết nối của chúng tôi:</span>
-                <div className="mt-2.5 flex items-center gap-3">
-                  {SOCIAL_LINKS.map((s) => (
-                    <a
-                      key={s.name}
-                      href={s.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-primary shadow-sm transition-all hover:bg-primary hover:text-white"
-                      title={s.name}
-                    >
-                      {s.icon}
-                    </a>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Cột phải: 2 Card Tầm nhìn & Sứ mệnh */}
@@ -754,7 +735,7 @@ export const Hero = () => {
               <Layers className="h-3.5 w-3.5" />
               <span>Giá trị cốt lõi</span>
             </div>
-            <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">Vì sao doanh nghiệp chọn XTTech?</h2>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-primary sm:text-4xl">Vì sao doanh nghiệp chọn XTTech?</h2>
             <p className="mt-3 text-sm text-gray-600 sm:text-base">
               Chúng tôi không chỉ cung cấp công cụ, chúng tôi chuyển giao cả phương pháp quản trị hiện đại đã được kiểm chứng.
             </p>
