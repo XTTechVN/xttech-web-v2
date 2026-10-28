@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ClipboardCheck, Link2, PenLine, Plus, XCircle } from 'lucide-react';
+import { ClipboardCheck, Link2, PenLine, Play, Plus, XCircle } from 'lucide-react';
+import { Image as AntdImage, Modal as AntdModal } from 'antd';
 import toast from 'react-hot-toast';
 import {
   cancelProjectAcceptance,
@@ -27,6 +28,12 @@ const STATUS_MAP: Record<AcceptanceStatus, { label: string; variant: 'warning' |
 const mediaUrl = (url: string): string =>
   url.startsWith('http') ? url : `${BASE_MINIO_URL}/${url.replace(/^\//, '')}`;
 
+const isVideoUrl = (url: string, type?: string): boolean => {
+  if (type === 'video') return true;
+  const cleanUrl = url.split('?')[0].toLowerCase();
+  return cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.avi');
+};
+
 interface TabAcceptanceProps {
   projectId: number;
 }
@@ -34,6 +41,7 @@ interface TabAcceptanceProps {
 export function TabAcceptance({ projectId }: TabAcceptanceProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [signing, setSigning] = useState<ProjectAcceptance | null>(null);
+  const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
 
   const { data: acceptances = [], isLoading } = useQuery({
     queryKey: ['project_acceptances', projectId],
@@ -155,17 +163,45 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
             </p>
             {acceptance.note && <p className="text-xs italic text-slate-500">{acceptance.note}</p>}
 
-            <div className="flex flex-wrap gap-2">
-              {acceptance.photos.map((photo) => (
-                 
-                <img
-                  key={photo.url}
-                  src={mediaUrl(photo.url)}
-                  alt={photo.name ?? 'Ảnh nghiệm thu'}
-                  className="h-16 w-16 rounded-md border border-slate-200 object-cover"
-                />
-              ))}
-            </div>
+            <AntdImage.PreviewGroup>
+              <div className="flex flex-wrap gap-2">
+                {acceptance.photos.map((photo, pIdx) => {
+                  const url = mediaUrl(photo.url);
+                  const isVideo = isVideoUrl(photo.url, photo.type);
+
+                  if (isVideo) {
+                    return (
+                      <div
+                        key={photo.url || pIdx}
+                        onClick={() => setPreviewVideoUrl(url)}
+                        className="group relative flex h-16 w-16 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-900 text-white transition hover:border-primary"
+                        title={photo.name ?? 'Xem video nghiệm thu'}
+                      >
+                        <video src={url} className="h-full w-full object-cover opacity-70" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10">
+                          <Play size={18} className="fill-white text-white drop-shadow" />
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={photo.url || pIdx}
+                      className="h-16 w-16 overflow-hidden rounded-md border border-slate-200 [&_.ant-image]:h-full [&_.ant-image]:w-full"
+                    >
+                      <AntdImage
+                        src={url}
+                        alt={photo.name ?? 'Ảnh nghiệm thu'}
+                        width={64}
+                        height={64}
+                        className="!h-full !w-full object-cover"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </AntdImage.PreviewGroup>
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {(['company', 'customer'] as const).map((party) => {
@@ -202,6 +238,29 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
         installedPositions={installedPositions}
       />
       <CustomerSignModal projectId={projectId} acceptance={signing} onClose={() => setSigning(null)} />
+
+      <AntdModal
+        open={Boolean(previewVideoUrl)}
+        onCancel={() => setPreviewVideoUrl(null)}
+        footer={null}
+        destroyOnHidden
+        centered
+        width={720}
+        title="Video nghiệm thu thực tế"
+      >
+        {previewVideoUrl && (
+          <div className="flex justify-center p-2">
+            <video
+              src={previewVideoUrl}
+              controls
+              autoPlay
+              className="max-h-[70vh] w-full rounded-lg bg-black object-contain shadow"
+            >
+              Trình duyệt của bạn không hỗ trợ phát thẻ video.
+            </video>
+          </div>
+        )}
+      </AntdModal>
     </div>
   );
 }
