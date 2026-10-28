@@ -5,6 +5,7 @@ import ServiceBanner from './service-banner';
 import PricingTabs from './pricing-tabs';
 import InforBanner from './infor-banner';
 import PricingSection from './pricing';
+import Combo from './combo';
 
 const PricingPageWrapper = () => {
   const [activeMainTab, setActiveMainTab] = useState('bang-gia');
@@ -28,6 +29,7 @@ const PricingPageWrapper = () => {
         <div>
           <InforBanner />
           <PricingSection />
+          <Combo/>
         </div>
       )}
     </div>

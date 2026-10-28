@@ -37,9 +37,9 @@ const PricingTabs = () => {
 
   return (
     <div className="w-full">
-      {/* Tab Buttons */}
-      <div className="w-full bg-white px-20 pt-6 pb-2">
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* Tab Buttons – cùng padding + max-width với các section pricing để thẳng lề */}
+      <div className="w-full bg-white px-4 pb-2 pt-6 sm:px-8 lg:px-16 xl:px-24">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-2">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -48,15 +48,15 @@ const PricingTabs = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 cursor-pointer
+                  flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-200
                   ${
                     isActive
-                      ? 'bg-primary text-white shadow-md scale-[1.02]'
-                      : 'bg-[#F4F5F0] text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                      ? 'scale-[1.02] bg-primary text-white shadow-md'
+                      : 'bg-primary/5 text-gray-600 hover:bg-primary/10 hover:text-primary'
                   }
                 `}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
                 <span className="hidden sm:inline">{tab.label}</span>
                 <span className="sm:hidden">{tab.shortLabel}</span>
               </button>
@@ -66,9 +66,7 @@ const PricingTabs = () => {
       </div>
 
       {/* Active Pricing Section */}
-      <div className="transition-all duration-300">
-        {ActiveComponent && <ActiveComponent />}
-      </div>
+      <div className="transition-all duration-300">{ActiveComponent && <ActiveComponent />}</div>
     </div>
   );
 };

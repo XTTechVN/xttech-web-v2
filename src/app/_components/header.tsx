@@ -10,9 +10,9 @@ import { getFileUrl } from '@/utils';
 import useAuthStore from '@/stores/useAuthStore';
 
 const NAV_LINKS = [
-  { href: '#', label: 'Về chúng tôi' },
+  { href: '/#about', label: 'Về chúng tôi' },
   { href: '/pricing', label: 'Giá' },
-  { href: '#contact', label: 'Liên hệ' },
+  { href: '/#contact', label: 'Liên hệ' },
 ];
 
 export const Header = () => {
