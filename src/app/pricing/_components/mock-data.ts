@@ -159,7 +159,7 @@ export const BUILDER_PRICING_DATA: PricingSectionData = {
       yearly: null,
       yearlyOnly: false,
       priceSubText: 'Mãi mãi, không cần thẻ',
-      buttonText: 'Dùng thử 10 công trình miễn phí',
+      buttonText: 'Dùng thử 10 công trình',
       buttonVariant: 'outline',
       isPopular: false,
       highlights: [
@@ -258,7 +258,7 @@ export const BUSINESS_PRICING_DATA: PricingSectionData = {
       yearly: null,
       yearlyOnly: false,
       priceSubText: 'Mãi mãi, không cần thẻ',
-      buttonText: 'Dùng thử 10 công trình miễn phí',
+      buttonText: 'Dùng thử 10 miễn phí',
       buttonVariant: 'outline',
       isPopular: false,
       highlights: [
@@ -411,7 +411,7 @@ export const IMPLEMENTATION_PRICING_PLANS: ImplementationPlan[] = [
       'Bàn giao Tổng Thầu G4 full không giới hạn',
       'Bảo hành vận hành 12 tháng',
     ],
-    cta: 'Nhận combo 44.9tr năm đầu',
+    cta: 'Nhận combo 44.9tr ',
     highlight: true,
     badge: 'BEST VALUE • TIẾT KIỆM 50%',
     note: 'Chỉ 5 suất / tháng • Đã bao gồm G4 1TB + 1 tháng G2',

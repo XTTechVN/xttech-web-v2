@@ -23,6 +23,7 @@ import {
   ChevronUp,
   ChevronDown,
   Mail,
+  MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components';
 
@@ -175,7 +176,7 @@ export const Hero = () => {
             title="Zalo: 0865 853 327"
             className="group relative flex h-11 w-11 items-center justify-center rounded-full bg-[#0068FF] text-white shadow-lg shadow-blue-500/30 transition-transform duration-300 hover:scale-110"
           >
-            <span className="text-base font-black tracking-tight">Z</span>
+            <MessageCircle className="h-5 w-5" />
             <span className="pointer-events-none absolute right-13 whitespace-nowrap rounded-lg bg-blue-600 px-2.5 py-1 text-xs text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
               Zalo: 0865 853 327 - quyenn
             </span>

@@ -28,7 +28,7 @@ export const Footer = () => {
 
           {/* Cột 2: Điều hướng */}
           <div className="flex flex-col gap-3 lg:col-span-2 lg:pl-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900">Giải pháp</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Giải pháp</h3>
             <ul className="flex flex-col space-y-2 text-sm">
               <li>
                 <Link href="/#about" className="text-gray-600 hover:text-primary transition-colors">Về chúng tôi</Link>
@@ -49,7 +49,7 @@ export const Footer = () => {
 
           {/* Cột 3: Pháp lý & Chính sách */}
           <div className="flex flex-col gap-3 lg:col-span-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900">Pháp lý & Chính sách</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Pháp lý & Chính sách</h3>
             <ul className="flex flex-col space-y-2 text-sm">
               <li>
                 <Link href="#" className="inline-flex items-center gap-1.5 text-gray-600 hover:text-primary transition-colors">
@@ -71,7 +71,7 @@ export const Footer = () => {
 
           {/* Cột 4: Liên hệ */}
           <div className="flex flex-col gap-3 lg:col-span-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900">Liên hệ</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Liên hệ</h3>
             <ul className="flex flex-col space-y-2.5 text-sm">
               <li>
                 <a href="tel:0865853327" className="group flex items-start gap-2 text-gray-600 hover:text-primary transition-colors">
@@ -87,7 +87,7 @@ export const Footer = () => {
                   <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <div>
                     <span className="block font-medium text-gray-900">Email hỗ trợ</span>
-                    <span>contact@xttech.vn</span>
+                    <span>xttechvn@gmail.com</span>
                   </div>
                 </a>
               </li>
