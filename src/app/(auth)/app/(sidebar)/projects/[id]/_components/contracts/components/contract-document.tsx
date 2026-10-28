@@ -6,7 +6,24 @@ import type { ContractTerms } from '@/types';
 import { sanitizeRichHtml } from '@/utils';
 import { readTermsContent } from '../utils/contract-terms';
 import { buildContractValues, fillContractVariables, type ContractDocumentSource } from '../utils/contract-values';
-import { ContractPaymentSection } from './contract-payment-section';
+import { buildPaymentSectionHtml, ContractPaymentSection } from './contract-payment-section';
+
+const PAYMENT_TAG_REGEX = /<p>\s*(\$phuong_thuc_thanh_toan)\s*<\/p>/i;
+const PAYMENT_VAR_REGEX = /\$phuong_thuc_thanh_toan/i;
+const TWO_COL_SPLIT_REGEX = /\s{3,}/;
+
+function ContractLine({ text }: { text: string }) {
+  const parts = text.split(TWO_COL_SPLIT_REGEX);
+  if (parts.length === 2 && parts[0] && parts[1]) {
+    return (
+      <div className="ct-row-2col">
+        <span className="ct-col">{parts[0]}</span>
+        <span className="ct-col">{parts[1]}</span>
+      </div>
+    );
+  }
+  return <p className="ct-line">{text}</p>;
+}
 
 interface ContractDocumentProps {
   source: ContractDocumentSource;
@@ -17,7 +34,20 @@ interface ContractDocumentProps {
 export function ContractDocument({ source, terms, ref }: ContractDocumentProps) {
   const values = buildContractValues(source);
   const fillText = (text: string) => fillContractVariables(text, values, 'text');
-  const bodyHtml = fillContractVariables(sanitizeRichHtml(readTermsContent(terms)), values, 'html');
+
+  const rawTerms = readTermsContent(terms);
+  const sanitizedTerms = sanitizeRichHtml(rawTerms);
+  const hasPaymentPlaceholder = PAYMENT_VAR_REGEX.test(sanitizedTerms);
+
+  let contentWithPayment = sanitizedTerms;
+  if (hasPaymentPlaceholder) {
+    const paymentHtml = buildPaymentSectionHtml(source, values);
+    contentWithPayment = PAYMENT_TAG_REGEX.test(sanitizedTerms)
+      ? sanitizedTerms.replace(PAYMENT_TAG_REGEX, paymentHtml)
+      : sanitizedTerms.replace(PAYMENT_VAR_REGEX, paymentHtml);
+  }
+
+  const bodyHtml = fillContractVariables(contentWithPayment, values, 'html');
   const { partyA: partyATemplate, partyB, article1, paymentNotice, signing } = CONTRACT_TEMPLATE;
   const customerName = source.partyA.name.trim().toUpperCase() || fillText('$ten_khach_hang');
 
@@ -31,7 +61,7 @@ export function ContractDocument({ source, terms, ref }: ContractDocumentProps) 
 
       {CONTRACT_TEMPLATE.legalBases.map((line) => (
         <p key={line} className="ct-line">
-          - {line}
+          <em>- {line}</em>
         </p>
       ))}
       <p className="ct-line">{fillText(CONTRACT_TEMPLATE.meetingLine)}</p>
@@ -40,18 +70,14 @@ export function ContractDocument({ source, terms, ref }: ContractDocumentProps) 
         {partyATemplate.heading} {customerName}
       </p>
       {partyATemplate.lines.map((line) => (
-        <p key={line} className="ct-line">
-          {fillText(line)}
-        </p>
+        <ContractLine key={line} text={fillText(line)} />
       ))}
 
       <p className="ct-heading">
         {partyB.heading} {partyB.name}
       </p>
       {partyB.lines.map((line) => (
-        <p key={line} className="ct-line">
-          {line}
-        </p>
+        <ContractLine key={line} text={line} />
       ))}
       <p className="ct-line">{CONTRACT_TEMPLATE.agreementLine}</p>
 
@@ -67,7 +93,7 @@ export function ContractDocument({ source, terms, ref }: ContractDocumentProps) 
         </p>
       )}
 
-      <ContractPaymentSection source={source} values={values} />
+      {!hasPaymentPlaceholder && <ContractPaymentSection source={source} values={values} />}
 
       <div className="ct-notice">
         <div className="ct-notice-text">
@@ -78,10 +104,9 @@ export function ContractDocument({ source, terms, ref }: ContractDocumentProps) 
             </p>
           ))}
         </div>
-        <img className="ct-qr" src={paymentNotice.qrImageUrl} alt="Mã QR tài khoản công ty" />
       </div>
 
-      <p className="ct-line ct-center">{fillText(signing.placeLine)}</p>
+      <p className="ct-line ct-right"><em>{fillText(signing.placeLine)}</em></p>
       <table className="ct-sign">
         <tbody>
           <tr>

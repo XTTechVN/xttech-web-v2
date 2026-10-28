@@ -30,7 +30,7 @@ const InforBanner = () => {
             {/* Main Title */}
             <h2 className="text-3xl font-extrabold leading-[1.15] tracking-tight text-white lg:text-5xl">
               Không chỉ phần mềm, <br className="hidden sm:block" />
-              chúng tôi đồng hành <span style={{ color: ACCENT }}>tái cấu trúc xưởng</span>
+              chúng tôi đồng hành tái cấu trúc xưởng
             </h2>
 
             {/* Description */}

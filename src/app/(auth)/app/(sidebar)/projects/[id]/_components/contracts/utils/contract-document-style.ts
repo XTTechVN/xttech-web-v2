@@ -14,17 +14,21 @@ export const CONTRACT_DOCUMENT_CSS = `
 }
 .ct-page * { box-sizing: border-box; }
 .ct-center { text-align: center; }
+.ct-right { text-align: right; }
 .ct-national { margin: 0; font-weight: bold; text-align: center; }
 .ct-motto { text-decoration: underline; }
 .ct-title { margin: 14pt 0 2pt; font-size: 16pt; font-weight: bold; text-align: center; }
 .ct-number { margin: 0 0 10pt; font-weight: bold; text-align: center; }
 .ct-line { margin: 0 0 3pt; white-space: pre-wrap; }
+.ct-row-2col { display: flex; align-items: baseline; margin: 0 0 3pt; }
+.ct-col { flex: 1; min-width: 0; }
 .ct-heading { margin: 10pt 0 3pt; font-weight: bold; }
 .ct-article { margin: 12pt 0 4pt; font-weight: bold; text-transform: uppercase; }
 .ct-body { margin: 0; }
 .ct-body p { margin: 0 0 4pt; }
-.ct-body ul, .ct-body ol { margin: 0 0 4pt; padding-left: 22pt; }
-.ct-body li { margin: 0 0 2pt; }
+.ct-body ul { margin: 0 0 4pt; padding-left: 22pt; list-style-type: disc !important; }
+.ct-body ol { margin: 0 0 4pt; padding-left: 22pt; list-style-type: decimal !important; }
+.ct-body li { margin: 0 0 2pt; display: list-item !important; }
 .ct-body h3, .ct-body h4 { margin: 8pt 0 4pt; font-size: 13pt; font-weight: bold; text-transform: uppercase; }
 .ct-body blockquote { margin: 0 0 4pt 16pt; font-style: italic; }
 .ct-hint { margin: 12pt 0; padding: 8pt; border: 1px dashed #94a3b8; color: #64748b; font-size: 11pt; font-style: italic; text-align: center; }

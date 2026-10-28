@@ -52,6 +52,12 @@ export const CONTRACT_TEMPLATE = {
     installmentLine:
       'Lần $lan: Bên A thanh toán $ten_dot ($phan_tram% giá trị hợp đồng), số tiền tương ứng: $so_tien (Bằng chữ: $so_tien_bang_chu).',
     dueDateLabel: 'Hạn thanh toán:',
+    terms: [
+      'Nếu quá hạn Bên A sẽ phải chịu trả lãi theo lãi suất ngân hàng trả với mức 0,3%/tháng tính theo số tiền chậm thanh toán.',
+      'Bên B thực hiện hóa đơn giá trị gia tăng cho Bên A theo khối lượng nghiệm thu và quy định pháp luật thuế hiện hành.',
+      'Bên A có thể thanh toán thành nhiều lần cho từng đợt thanh toán bằng hình thức chuyển khoản/tiền mặt với điều kiện thanh toán của Bên A, miễn đảm bảo tổng giá trị thanh toán đúng theo tiến độ và tỷ lệ nêu trên.',
+      'Các khoản thanh toán lẻ, thanh toán nhiều lần được xem là một phần nghĩa vụ thanh toán của từng đợt theo hợp đồng và có giá trị pháp lý tương đương. Biên bản bàn giao/nghiệm thu khối lượng chỉ là cơ sở đối chiếu công nợ kế toán; quyền sở hữu sản phẩm chỉ chính thức chuyển giao cho Bên A sau khi Bên B nhận đủ 100% giá trị hợp đồng. Trường hợp Bên A vi phạm nghĩa vụ thanh toán quá thời hạn quy định, Bên B được quyền đơn phương tạm ngừng quyền sử dụng hoặc thu hồi lại tài sản bảo lưu, Bên A có trách nhiệm phối hợp thực hiện và chịu mọi chi phí tháo dỡ, vận chuyển phát sinh.',
+    ],
   },
   paymentNotice: {
     heading: 'CHÚ Ý: Khách hàng ứng tiền hoặc thanh toán tiền chuyển khoản vào đúng tài khoản của công ty:',

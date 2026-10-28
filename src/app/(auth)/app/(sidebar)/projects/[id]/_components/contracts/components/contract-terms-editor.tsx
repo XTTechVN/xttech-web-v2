@@ -22,13 +22,16 @@ export function ContractTermsEditor({ terms, isReadOnly = false, onChange }: Con
 
   return (
     <div className="space-y-2.5">
-      {!isReadOnly && (
-        <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+        <span>
+          Mẹo: Dùng biến <code className="bg-slate-100 text-blue-600 px-1 py-0.5 rounded font-mono font-medium">$phuong_thuc_thanh_toan</code> để chèn bảng đợt thanh toán vào vị trí bạn muốn (mặc định tại Điều 4).
+        </span>
+        {!isReadOnly && (
           <Button variant="outline" size="sm" className="h-7 text-[11px] px-2" onClick={handleLoadDefault}>
             <RotateCcw size={12} className="mr-1" /> Nạp lại điều khoản mặc định
           </Button>
-        </div>
-      )}
+        )}
+      </div>
       <RichTextEditor
         value={readTermsContent(terms)}
         placeholder={CONTRACT_TERMS_PLACEHOLDER}
