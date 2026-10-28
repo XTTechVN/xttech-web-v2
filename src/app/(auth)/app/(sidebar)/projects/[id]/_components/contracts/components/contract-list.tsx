@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, CheckCircle2, Printer } from 'lucide-react';
+import { ChevronDown, CheckCircle2, Link2, Printer } from 'lucide-react';
 import { Badge, Button } from '@/components';
 import {
   CONTRACT_KIND_MAP,
@@ -17,7 +17,9 @@ interface ContractListProps {
   isLoading: boolean;
   isOutdatedQuotation: boolean;
   isSigning: boolean;
+  isRequestingSigning: boolean;
   onSign: (contract: ProjectContractItem) => void;
+  onRequestSigning: (contract: ProjectContractItem) => void;
   onCancel: (contract: ProjectContractItem) => void;
   onEditTerms: (contract: ProjectContractItem) => void;
   onPreview: (contract: ProjectContractItem) => void;
@@ -28,7 +30,9 @@ export function ContractList({
   isLoading,
   isOutdatedQuotation,
   isSigning,
+  isRequestingSigning,
   onSign,
+  onRequestSigning,
   onCancel,
   onEditTerms,
   onPreview,
@@ -52,7 +56,9 @@ export function ContractList({
           contract={contract}
           isOutdatedQuotation={isOutdatedQuotation}
           isSigning={isSigning}
+          isRequestingSigning={isRequestingSigning}
           onSign={onSign}
+          onRequestSigning={onRequestSigning}
           onCancel={onCancel}
           onEditTerms={onEditTerms}
           onPreview={onPreview}
@@ -66,7 +72,9 @@ interface ContractRowProps {
   contract: ProjectContractItem;
   isOutdatedQuotation: boolean;
   isSigning: boolean;
+  isRequestingSigning: boolean;
   onSign: (contract: ProjectContractItem) => void;
+  onRequestSigning: (contract: ProjectContractItem) => void;
   onCancel: (contract: ProjectContractItem) => void;
   onEditTerms: (contract: ProjectContractItem) => void;
   onPreview: (contract: ProjectContractItem) => void;
@@ -76,7 +84,9 @@ function ContractRow({
   contract,
   isOutdatedQuotation,
   isSigning,
+  isRequestingSigning,
   onSign,
+  onRequestSigning,
   onCancel,
   onEditTerms,
   onPreview,
@@ -85,6 +95,7 @@ function ContractRow({
   const status = CONTRACT_STATUS_MAP[contract.status];
   const isCancelled = contract.status === 'cancelled';
   const isDraft = contract.status === 'draft';
+  const isAwaitingSignature = isDraft || contract.status === 'sent';
   const hasPayments = !!contract.payments?.length;
 
   return (
@@ -101,6 +112,19 @@ function ContractRow({
             </Badge>
           </div>
           <div className="text-xs font-medium text-slate-700 truncate">{contract.contractName}</div>
+          {contract.replacedByContractId && (
+            <div className="text-[11px] font-medium text-amber-600">
+              Đã outdate — được thay bằng hợp đồng mới, lịch sử thanh toán/sản xuất đã chuyển sang hợp đồng mới
+            </div>
+          )}
+          {!!contract.signatures?.length && (
+            <div className="text-[11px] text-emerald-700">
+              Chữ ký số:{' '}
+              {contract.signatures
+                .map((sig) => `${sig.party === 'company' ? 'Công ty' : 'Khách hàng'} – ${sig.signerName}`)
+                .join(' · ')}
+            </div>
+          )}
           {contract.replacedContractCode && (
             <div className="text-[11px] text-slate-400">
               Thay thế {contract.replacedContractCode}
@@ -130,7 +154,20 @@ function ContractRow({
             >
               {isDraft ? 'Soạn điều khoản' : 'Xem điều khoản'}
             </Button>
-            {isDraft && (
+            {isAwaitingSignature && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px] px-2"
+                loading={isRequestingSigning}
+                disabled={isOutdatedQuotation}
+                onClick={() => onRequestSigning(contract)}
+                title="Gửi email + sao chép link để khách ký điện tử"
+              >
+                <Link2 size={12} className="mr-1" /> Gửi link ký online
+              </Button>
+            )}
+            {isAwaitingSignature && (
               <Button
                 variant="primary"
                 size="sm"

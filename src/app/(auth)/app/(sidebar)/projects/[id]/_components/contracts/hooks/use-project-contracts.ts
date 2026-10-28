@@ -11,6 +11,7 @@ import {
   getProjectContracts,
   getProjectLedgerSummary,
   getProjectPaymentTransactions,
+  requestContractSigning,
   reversePaymentTransaction,
   signProjectContract,
 } from '@/actions';
@@ -102,6 +103,21 @@ export function useProjectContracts(projectId: number) {
     onError: (err) => showErrorToast(err, 'Lỗi khi ký hợp đồng'),
   });
 
+  // Gửi link ký online cho khách: gửi email và sao chép link để gửi qua Zalo/SMS
+  const requestSigning = useMutation({
+    mutationFn: (contractId: number) => requestContractSigning(projectId, contractId),
+    onSuccess: async (res) => {
+      invalidateContractQueries(projectId);
+      await navigator.clipboard?.writeText(res.signingUrl).catch(() => undefined);
+      toast.success(
+        res.emailSent
+          ? `Đã gửi email link ký tới ${res.recipientEmail} (đã sao chép link)`
+          : 'Đã tạo link ký và sao chép — chưa gửi được email (khách chưa có email)',
+      );
+    },
+    onError: (err) => showErrorToast(err, 'Lỗi khi tạo link ký online'),
+  });
+
   const updateContract = useMutation({
     mutationFn: ({ contractId, payload }: { contractId: number; payload: ContractUpdatePayload }) =>
       updateProjectContract(projectId, contractId, payload),
@@ -152,6 +168,7 @@ export function useProjectContracts(projectId: number) {
     isLoadingTransactions,
     createContract,
     signContract,
+    requestSigning,
     cancelContract,
     updateContract,
     createTransaction,

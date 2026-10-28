@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { CheckCircle2, ChevronRight, X } from 'lucide-react';
 import { Button } from '@/components';
+import { usePermission } from '@/hooks';
 import { cn } from '@/utils/cn';
 import type {
   ProgressMatrixItem,
@@ -11,6 +13,7 @@ import type {
   ProjectProgressMatrix,
 } from '@/types';
 import { ProgressUpdateModal } from '../modals/progress-update-modal';
+import { RevertProgressModal } from '../modals/revert-progress-modal';
 import {
   DISPLAY_STEPS_ORDER,
   getNextStep,
@@ -34,6 +37,8 @@ export function DailyProgressPanel({
 }: DailyProgressPanelProps) {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isRevertModalOpen, setIsRevertModalOpen] = useState(false);
+  const { isAdmin } = usePermission();
 
   const matrixItemMap = useMemo(() => {
     const map = new Map<number, ProgressMatrixItem>();
@@ -189,9 +194,20 @@ export function DailyProgressPanel({
                 {PROGRESS_STEP_LABEL[nextStep]}
               </span>
             </div>
+          ) : selectedStep === 'installed' ? (
+            <Link
+              href="?tab=acceptance"
+              className="border-l border-slate-700 pl-3 text-[11px] font-semibold text-emerald-300 hover:underline"
+            >
+              Lắp xong → lập biên bản nghiệm thu (2 bên ký) ở tab Nghiệm thu
+            </Link>
           ) : (
             <span className="border-l border-slate-700 pl-3 text-[11px] text-amber-300">
-              (Đã đạt mốc nghiệm thu cao nhất)
+              {selectedStep === 'accepted'
+                ? '(Đã nghiệm thu)'
+                : selectedStep === 'surveyed'
+                  ? '(Chờ lập lệnh sản xuất)'
+                  : '(Chưa thể cập nhật tại đây)'}
             </span>
           )}
 
@@ -207,6 +223,17 @@ export function DailyProgressPanel({
               Cập nhật tiến độ
             </Button>
 
+            {isAdmin && selectedStep !== 'draft' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsRevertModalOpen(true)}
+                className="text-xs font-semibold text-amber-300 hover:bg-slate-800"
+                title="Lùi mốc (admin, bắt buộc lý do)"
+              >
+                Lùi mốc
+              </Button>
+            )}
             <button
               type="button"
               onClick={() => setSelectedIds([])}
@@ -218,6 +245,15 @@ export function DailyProgressPanel({
           </div>
         </div>
       )}
+
+      <RevertProgressModal
+        projectId={projectId}
+        isOpen={isRevertModalOpen}
+        onClose={() => setIsRevertModalOpen(false)}
+        selectedPositions={selectedPositions}
+        currentStep={selectedStep ?? undefined}
+        onSuccess={() => setSelectedIds([])}
+      />
 
       <ProgressUpdateModal
         projectId={projectId}

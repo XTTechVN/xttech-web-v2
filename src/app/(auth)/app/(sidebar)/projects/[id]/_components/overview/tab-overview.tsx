@@ -6,6 +6,7 @@ import { useOverviewMaterials, useOverviewSummary } from './hooks';
 import {
   MaterialStandardCard,
   ProjectActivitiesCard,
+  ProjectDualProgressCard,
   ProjectKpiSummaryCard,
   ProjectPipelineCard,
   ProjectProgressCard,
@@ -71,6 +72,8 @@ export function TabOverview({ projectId, project, onSelectTab }: TabOverviewProp
 
       {/* Cột phải: Tiến trình 5 bước, Chỉ số Tài chính & Tiến độ 6 mốc, Nhật ký hoạt động */}
       <div className="lg:col-span-8 flex flex-col gap-5">
+        <ProjectDualProgressCard projectId={projectId} onSelectTab={onSelectTab} />
+
         <ProjectPipelineCard
           project={project}
           quotationsCount={quotations.length}

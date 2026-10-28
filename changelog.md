@@ -11,6 +11,16 @@ All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-10-26
 
+### Added & Changed (Chuẩn hóa flow dự án: nghiệm thu, bảo hành, ký online, QR)
+- **Trang công khai:** `/qr/[token]` (thông tin bộ cửa, thanh nhôm, ảnh, tiến độ; đăng nhập thì báo tiến độ theo vai trò) và `/sign/[token]` (khách xem và ký hợp đồng / biên bản nghiệm thu bằng chữ ký vẽ tay).
+- **Tab dự án mới:** *Nghiệm thu* (`_components/acceptance`) và *Bảo hành* (`_components/warranty`); thành phần dùng chung `_components/shared` (`EvidenceUploader`, `SignatureFields`) và `components/signature-pad`.
+- **Tổng quan:** `ProjectDualProgressCard` hiển thị tiến độ sản xuất và thanh toán tách riêng + việc cần làm tiếp; dashboard admin/kế toán thêm `ProjectReportCard`.
+- **Hợp đồng:** nút *Gửi link ký online*, hiển thị chữ ký số và hợp đồng đã outdate; báo giá có trạng thái `superseded`.
+- **Sản xuất:** từ điển 10 trạng thái cửa (`ProgressStepCode`, `DOOR_STATUS_MAP`), lệnh làm lại, *Lùi mốc* cho admin, lối tắt sang nghiệm thu; tem QR hiển thị ảnh QR thật và in được.
+- **Phân quyền menu:** *Dự án* mở cho thêm `technician`, `workshop`, `installer`, `warranty`.
+
+## [Unreleased] - 2026-10-26
+
 ### Fixed & Enhanced (Sửa lỗi Hiển thị Cây Thư mục Con & Tài liệu Bên trong Thư mục Được Chia sẻ - `documents`)
 - **Hiển thị 100% Tài liệu & Cây Thư mục Con Khi Nhận Chia sẻ Thư mục Chuẩn Google Drive:**
   - **Khắc phục lỗi "Chỉ nhìn thấy thư mục cha, không thấy thư mục con và tài liệu bên trong":**

@@ -14,6 +14,7 @@ import type {
   ProjectQuotationPreviewRequest,
   ProjectQuotationUpdatePayload,
 } from '@/types';
+import { EDITABLE_QUOTATION_STATUSES } from '@/config';
 import { invalidateQuotationQueries, useActiveQuotation } from '../../hooks/use-active-quotation';
 
 export interface SaveQuotationInput {
@@ -23,11 +24,14 @@ export interface SaveQuotationInput {
 }
 
 /**
- * Báo giá hiện hành duy nhất của dự án ("Single Living Quotation"):
- * lập lần đầu, sửa tại chỗ, hoặc đồng bộ lại khi dữ liệu cửa thay đổi.
+ * Báo giá hiện hành của dòng báo giá (cửa chính thức hoặc một phương án thiết kế):
+ * lập lần đầu, sửa tại chỗ khi còn nháp / chờ duyệt / đã duyệt (sửa xong phải trình lại),
+ * hoặc lập phiên bản mới khi báo giá đã gửi khách / khách đã quyết định / đã khóa theo hợp đồng.
  */
-export function useProjectQuotation(projectId: number) {
-  const { quotation, isLoading } = useActiveQuotation(projectId);
+export function useProjectQuotation(projectId: number, designOptionId: number | null = null) {
+  const { quotation, isLoading } = useActiveQuotation(projectId, designOptionId);
+  const isEditable =
+    !!quotation && !quotation.isLocked && EDITABLE_QUOTATION_STATUSES.includes(quotation.status);
 
   const { data: floors = [] } = useQuery<ProjectFloor[]>({
     queryKey: ['project_floors', projectId],
@@ -37,10 +41,11 @@ export function useProjectQuotation(projectId: number) {
 
   const { mutate: saveQuotation, isPending: isSaving } = useMutation({
     mutationFn: ({ config, name, note }: SaveQuotationInput) =>
-      quotation
+      quotation && isEditable
         ? updateProjectQuotation(projectId, quotation.id, { ...config, name, note })
         : createProjectQuotationOfficial(projectId, {
             ...config,
+            designOptionId,
             projectId,
             name,
             note: note || undefined,
@@ -53,7 +58,7 @@ export function useProjectQuotation(projectId: number) {
   });
 
   const { mutate: syncQuotation, isPending: isSyncing } = useMutation({
-    mutationFn: () => syncProjectQuotation(projectId),
+    mutationFn: () => syncProjectQuotation(projectId, { designOptionId }),
     onSuccess: (res) => {
       invalidateQuotationQueries(projectId);
       toast.success(`Đã đồng bộ báo giá ${res.code} (v${res.version}) theo dữ liệu cửa mới nhất`);
@@ -73,6 +78,7 @@ export function useProjectQuotation(projectId: number) {
 
   return {
     quotation,
+    isEditable,
     floors,
     isLoading,
     saveQuotation,

@@ -35,6 +35,7 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
     isLoadingTransactions,
     createContract,
     signContract,
+    requestSigning,
     cancelContract,
     updateContract,
     createTransaction,
@@ -51,6 +52,15 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
   const liveContract = findLiveContract(contracts);
   const signedContract = contracts.find((c) => c.status !== 'cancelled' && isContractSigned(c));
   const isOutdatedQuotation = !!quotation?.isOutdated;
+  // Chỉ lập hợp đồng từ báo giá khách đã đồng ý và chưa gắn với hợp đồng đang hiệu lực
+  const isQuotationAccepted = quotation?.status === 'accepted';
+  const canCreateContract =
+    isQuotationAccepted && !isOutdatedQuotation && liveContract?.quotationId !== quotation?.id;
+  const createHint = !quotation
+    ? 'Cần lập báo giá trước khi lập hợp đồng'
+    : !isQuotationAccepted
+      ? 'Báo giá cần được admin duyệt và khách đồng ý trước khi lập hợp đồng'
+      : undefined;
 
   const handleCreate = (payload: Parameters<typeof createContract.mutate>[0]) =>
     createContract.mutate(payload, { onSuccess: () => setIsContractModalOpen(false) });
@@ -93,14 +103,22 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
               variant="primary"
               size="sm"
               leftIcon={<FilePlus2 size={14} />}
-              disabled={!quotation}
-              title={quotation ? undefined : 'Cần lập báo giá trước khi lập hợp đồng'}
+              disabled={!canCreateContract}
+              title={createHint}
               onClick={() => setIsContractModalOpen(true)}
               className="h-7.5 text-xs font-semibold px-2.5"
             >
               {liveContract ? 'Lập hợp đồng thay thế' : 'Lập hợp đồng'}
             </Button>
           </div>
+
+          {quotation && !isQuotationAccepted && !isOutdatedQuotation && (
+            <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-lg text-[11px] text-sky-800 flex items-start gap-1.5">
+              <AlertCircle size={14} className="text-sky-600 shrink-0 mt-px" />
+              Báo giá {quotation.code} chưa được khách đồng ý. Trình admin duyệt và gửi khách ở tab Báo giá, khách
+              đồng ý xong mới lập được hợp đồng.
+            </div>
+          )}
 
           {isOutdatedQuotation && (
             <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-800 flex items-start gap-1.5">
@@ -116,6 +134,8 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
             isOutdatedQuotation={isOutdatedQuotation}
             isSigning={signContract.isPending}
             onSign={(contract) => signContract.mutate(contract.id)}
+            isRequestingSigning={requestSigning.isPending}
+            onRequestSigning={(contract) => requestSigning.mutate(contract.id)}
             onCancel={setCancelingContract}
             onEditTerms={setEditingTermsContract}
             onPreview={setPreviewingContract}

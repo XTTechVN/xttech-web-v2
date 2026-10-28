@@ -1,4 +1,5 @@
 import type { ProgressStepCode } from './cutting-plan';
+import type { ESignature } from './handover';
 import type { Customer } from './customer';
 import type { User } from './user';
 import type { Brand, BrandColor } from './brand';
@@ -41,6 +42,8 @@ export interface Project {
   startDate: string | null;
   targetDate: string | null;
   handoverDate: string | null;
+  warrantyMonths?: number;
+  warrantyStartDate?: string | null;
   warrantyEndDate: string | null;
   totalPositions: number;
   totalAreaM2: number;
@@ -91,6 +94,7 @@ export interface ProjectUpdate {
   startDate?: string;
   targetDate?: string;
   handoverDate?: string;
+  warrantyMonths?: number;
   warrantyEndDate?: string;
 }
 
@@ -142,10 +146,17 @@ export interface ProjectActivityQueryParams {
 // Module 002: Tầng & Vị trí cửa
 export type DoorPositionStatus =
   | 'draft'
+  | 'awaiting_measure'
   | 'surveyed'
   | 'designed'
   | 'approved'
   | 'producing'
+  | 'factory_done'
+  | 'delivering'
+  | 'delivered'
+  | 'installing'
+  | 'installed'
+  | 'accepted'
   | 'completed'
   | 'cancelled';
 
@@ -192,10 +203,15 @@ export interface ProjectDoorPosition {
   gasketId?: number | null;
   status: DoorPositionStatus;
   qrCodeToken: string;
+  qrUrl?: string | null;
   revision: number;
   isMeasured?: boolean;
   measuredAt?: string | null;
   measureNote?: string | null;
+  /** Đã nằm trong hợp đồng đang cho phép sản xuất (null: dự án chưa có hợp đồng đã ký) */
+  isContracted?: boolean | null;
+  /** Cửa thuộc phương án thiết kế đang chào khách (null = cửa chính thức) */
+  designOptionId?: number | null;
   systemConfig?: Record<string, any> | null;
   createdAt: string;
   updatedAt: string;
@@ -358,7 +374,9 @@ export interface ProjectContractItem {
   paidAmount: number;
   remainingAmount: number;
   replacedContractCode?: string | null;
+  replacedByContractId?: number | null;
   inheritedPaidAmount: number;
+  signatures?: ESignature[];
   contractTerms?: ContractTerms | null;
   partySnapshot?: ContractPartySnapshot | null;
   contractFileUrl?: string | null;
@@ -432,6 +450,8 @@ export interface ProductionOrderCreatePayload {
   dueDate?: string;
   positionIds: number[];
   note?: string;
+  kind?: 'normal' | 'rework';
+  reworkReason?: string;
 }
 
 export interface ProductionOrderItem {
@@ -454,6 +474,8 @@ export interface ProductionOrder {
   code: string;
   name: string;
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  kind?: 'normal' | 'rework';
+  reworkReason?: string | null;
   startDate?: string | null;
   dueDate?: string | null;
   note?: string | null;

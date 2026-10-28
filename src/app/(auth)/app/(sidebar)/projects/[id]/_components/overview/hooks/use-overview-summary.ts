@@ -12,10 +12,14 @@ import {
 import type { ProgressStepCode } from '@/types';
 
 const INITIAL_STEP_COUNTS: Record<ProgressStepCode, number> = {
+  draft: 0,
+  awaiting_measure: 0,
   surveyed: 0,
   producing: 0,
   factory_done: 0,
+  delivering: 0,
   delivered: 0,
+  installing: 0,
   installed: 0,
   accepted: 0,
 };
