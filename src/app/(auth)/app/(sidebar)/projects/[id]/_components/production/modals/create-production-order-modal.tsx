@@ -44,9 +44,13 @@ export function CreateProductionOrderModal({
         reworkReason: isRework ? reworkReason.trim() : undefined,
       }),
     onSuccess: (order) => {
-      ['production_orders', 'progress_matrix', 'project_positions', 'project'].forEach((key) =>
-        queryClient.invalidateQueries({ queryKey: [key, projectId] }),
-      );
+      [
+        'production_orders',
+        'progress_matrix',
+        'project_positions',
+        'project',
+        'project_overview',
+      ].forEach((key) => queryClient.invalidateQueries({ queryKey: [key, projectId] }));
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success(`Đã lập lệnh sản xuất ${order.code}`);
       setSelectedIds([]);

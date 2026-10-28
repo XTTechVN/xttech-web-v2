@@ -112,8 +112,16 @@ export function TemplateDoorPickerModal({
       });
     },
     onSuccess: (createdList) => {
-      queryClient.invalidateQueries({ queryKey: ['project_positions', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      [
+        'project_positions',
+        'project',
+        'project_overview',
+        'project_quotation_active',
+        'project_quotation_sheet',
+        'project_quotations',
+        'progress_matrix',
+        'design_options',
+      ].forEach((key) => queryClient.invalidateQueries({ queryKey: [key, projectId] }));
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       if (createdList.length === 1) {
         toast.success(`Đã thêm cửa ${createdList[0].code} vào dự án`);

@@ -71,6 +71,7 @@ export function ProjectProductionProgress({ projectId }: ProjectProductionProgre
         'cutting_plan',
         'project_positions',
         'project',
+        'project_overview',
       ].forEach((key) => queryClient.invalidateQueries({ queryKey: [key, projectId] }));
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success('Đã hủy lệnh sản xuất');
