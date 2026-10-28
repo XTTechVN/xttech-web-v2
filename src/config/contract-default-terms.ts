@@ -1,4 +1,4 @@
-// Nội dung mặc định từ Điều 2 đến Điều 6 của hợp đồng (Điều 1 đã cố định trong CONTRACT_TEMPLATE).
+// Nội dung mặc định từ Điều 2 đến Điều 7 của hợp đồng (Điều 1 đã cố định trong CONTRACT_TEMPLATE).
 // HTML chỉ dùng các thẻ được sanitizeRichHtml cho phép; $biến được thay khi xem trước và in.
 
 const heading = (text: string): string => `<h3>${text}</h3>`;
@@ -38,7 +38,31 @@ export const DEFAULT_CONTRACT_TERMS_HTML = [
     'Bên A phải báo ngày lắp đặt cho Bên B trước 7 ngày để Bên B tiến hành lắp đặt và bàn giao đúng tiến độ.',
   ]),
 
-  heading('ĐIỀU 4: QUYỀN VÀ TRÁCH NHIỆM CỦA HAI BÊN'),
+  heading('ĐIỀU 4: PHƯƠNG THỨC THANH TOÁN'),
+  paragraph('$phuong_thuc_thanh_toan'),
+  bulletList([
+    'Nếu quá hạn Bên A sẽ phải chịu trả lãi theo lãi suất ngân hàng trả với mức 0,3%/tháng tính theo số tiền chậm thanh toán.',
+    'Bên B thực hiện hóa đơn giá trị gia tăng cho Bên A theo khối lượng nghiệm thu và quy định pháp luật thuế hiện hành.',
+    'Bên A có thể thanh toán thành nhiều lần cho từng đợt thanh toán bằng hình thức chuyển khoản/tiền mặt với điều kiện thanh toán của Bên A, miễn đảm bảo tổng giá trị thanh toán đúng theo tiến độ và tỷ lệ nêu trên.',
+    'Các khoản thanh toán lẻ, thanh toán nhiều lần được xem là một phần nghĩa vụ thanh toán của từng đợt theo hợp đồng và có giá trị pháp lý tương đương. Biên bản bàn giao/nghiệm thu khối lượng chỉ là cơ sở đối chiếu công nợ kế toán; quyền sở hữu sản phẩm chỉ chính thức chuyển giao cho Bên A sau khi Bên B nhận đủ 100% giá trị hợp đồng. Trường hợp Bên A vi phạm nghĩa vụ thanh toán quá thời hạn quy định, Bên B được quyền đơn phương tạm ngừng quyền sử dụng hoặc thu hồi lại tài sản bảo lưu, Bên A có trách nhiệm phối hợp thực hiện và chịu mọi chi phí tháo dỡ, vận chuyển phát sinh.',
+  ]),
+  paragraph('<strong>Việc bàn giao công trình chỉ được xem là hoàn tất khi đáp ứng đầy đủ các điều kiện sau:</strong>'),
+  bulletList([
+    'Hai bên ký Biên bản bàn giao khối lượng hoàn thành sản phẩm/công trình;',
+    'Bên A hoàn thành nghĩa vụ thanh toán theo hợp đồng;',
+    'Bên B thực hiện bàn giao chìa khóa chính, hồ sơ liên quan và quyền sử dụng công trình cho Bên A.',
+  ]),
+  paragraph('<strong>Trường hợp Bên A chậm thanh toán quá thời hạn quy định:</strong>'),
+  bulletList([
+    'Bên B có quyền tạm giữ chìa khóa chính, chỉ bàn giao chìa phụ để Bên A kiểm tra, vận hành thử nghiệm sản phẩm (nếu cần);',
+    'Trong thời gian Bên A chưa hoàn thành nghĩa vụ thanh toán, công trình được xác định là chưa hoàn tất việc chuyển giao toàn bộ quyền sử dụng cho Bên A;',
+    'Bên B có quyền tạm ngừng thực hiện các nghĩa vụ liên quan như bàn giao hoàn toàn công trình, bảo hành hoặc hỗ trợ các kĩ thuật khác cho đến khi Bên A hoàn tất nghĩa vụ thanh toán theo hợp đồng.',
+  ]),
+  paragraph(
+    'Sau thời hạn 07 ngày kể từ ngày hai bên ký Biên bản bàn giao công trình và Phiếu đề nghị thanh toán, nếu Bên A vẫn chưa hoàn tất đầy đủ nghĩa vụ thanh toán mà không có lý do chính đáng, thì Bên B có quyền tạm dừng thực hiện nghĩa vụ bảo hành, bàn giao chìa khóa chính hoặc các hạng mục liên quan khác (nếu có) và các quyền lợi liên quan theo Hợp đồng cho đến khi Bên A hoàn tất đầy đủ nghĩa vụ thanh toán.',
+  ),
+
+  heading('ĐIỀU 5: QUYỀN VÀ TRÁCH NHIỆM CỦA HAI BÊN'),
   paragraph('<strong>1. Quyền và Trách nhiệm của bên A:</strong>'),
   bulletList([
     'Bên A có trách nhiệm thực hiện nghĩa vụ thanh toán theo quy định tại Điều 4 của hợp đồng.',
@@ -59,13 +83,13 @@ export const DEFAULT_CONTRACT_TERMS_HTML = [
     'Cung cấp hóa đơn chứng từ đầy đủ theo quy định của pháp luật.',
   ]),
 
-  heading('ĐIỀU 5: BẢO HÀNH SẢN PHẨM'),
+  heading('ĐIỀU 6: BẢO HÀNH SẢN PHẨM'),
   bulletList([
     'Cửa nhôm FV: phụ kiện bảo hành 24 tháng, nước sơn bảo hành 10 năm ngoài trời, 15 năm trong nhà kể từ ngày lắp đặt.',
     'Từ khi lắp đặt và nghiệm thu xong, sau 03 tháng bảo trì lần đầu tiên và sau đó 12 tháng bảo trì lần tiếp theo, bảo trì trong vòng 05 năm.',
   ]),
 
-  heading('ĐIỀU 6: ĐIỀU KHOẢN CHUNG'),
+  heading('ĐIỀU 7: ĐIỀU KHOẢN CHUNG'),
   bulletList([
     'Hai bên cam kết thực hiện đầy đủ và kịp thời các điều khoản đã ghi trong Hợp đồng này. Mọi sửa đổi bổ sung hợp đồng này phải được lập thành văn bản và có xác nhận của hai bên.',
     'Hai bên cam kết nghiêm túc thực hiện nội dung hợp đồng trên tinh thần hợp tác tôn trọng hiểu biết lẫn nhau và cùng ký kết trong lúc còn rất minh mẫn sáng suốt. Nếu một trong hai bên đơn phương hủy hợp đồng thì sẽ chịu bồi thường 70% dự toán công trình.',

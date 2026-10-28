@@ -34,6 +34,7 @@ export const CONTRACT_VARIABLES: { key: string; label: string }[] = [
   { key: 'ten_du_an', label: 'Tên dự án' },
   { key: 'tong_gia_tri', label: 'Tổng giá trị' },
   { key: 'tong_gia_tri_bang_chu', label: 'Tổng giá trị bằng chữ' },
+  { key: 'phuong_thuc_thanh_toan', label: 'Phương thức thanh toán' },
   { key: 'lich_thanh_toan', label: 'Lịch thanh toán' },
   { key: 'so_lan_thanh_toan', label: 'Số lần thanh toán' },
   { key: 'ngay_thang_nam', label: 'Ngày tháng năm' },
