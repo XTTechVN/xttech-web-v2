@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { createProductionOrder } from '@/actions';
@@ -8,8 +8,9 @@ import { Button, Input, Modal } from '@/components';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
 import type { ProgressStepCode, ProjectDoorPosition } from '@/types';
-import { cn } from '@/utils/cn';
-import { DOOR_TYPE_LABEL, PROGRESS_STEP_LABEL } from '../utils';
+import {  PROGRESS_STEP_LABEL } from '../utils';
+import { ProductionDoorItem } from '../components/production-door-item';
+
 
 const REWORKABLE_STATUSES = ['factory_done', 'delivering', 'delivered', 'installing', 'installed'];
 
@@ -102,7 +103,7 @@ export function CreateProductionOrderModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Lập Lệnh sản xuất theo đợt thi công"
-      className="w-full max-w-lg"
+      className="w-full max-w-4xl"
     >
       <div className="space-y-4">
         <Input
@@ -149,80 +150,92 @@ export function CreateProductionOrderModal({
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700">
-              Chọn các bộ cửa đưa vào lệnh ({selectedIds.length} đã chọn) *
-            </span>
+            <div>
+              <span className="text-xs font-bold text-slate-800">
+                Chọn các bộ cửa đưa vào lệnh
+              </span>
+              <span className="ml-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                {selectedIds.length} đã chọn
+              </span>
+            </div>
             <span className="text-[11px] font-medium text-slate-400">
-              (Chỉ chọn cửa đã chốt số đo &amp; chờ sản xuất)
+              {isRework
+                ? '(Chỉ chọn cửa đã hoàn thành xuất xưởng hoặc đang lắp đặt)'
+                : '(Chỉ chọn cửa đã chốt số đo & chờ sản xuất)'}
             </span>
           </div>
-          <div className="max-h-56 space-y-1.5 overflow-y-auto rounded-lg border border-slate-200 p-2">
-            {positions.map((position) => {
-              const isMeasured = !!position.isMeasured;
-              const isSurveyed = !position.status || position.status === 'surveyed';
-              const isAvailable = isEligible(position);
-              const isSelected = selectedIds.includes(position.id);
-              const stepName =
-                PROGRESS_STEP_LABEL[position.status as ProgressStepCode] || position.status;
 
-              return (
-                <div
-                  key={position.id}
-                  onClick={() => toggle(position)}
-                  title={
-                    !isMeasured
-                      ? 'Chưa chốt số đo thực tế - Không thể đưa vào lệnh sản xuất'
-                      : !isSurveyed
-                        ? `Đang ở mốc "${stepName}" - Không thể tạo thêm lệnh sản xuất`
-                        : undefined
-                  }
-                  className={cn(
-                    'flex items-center justify-between rounded border p-2 text-xs transition-colors',
-                    !isAvailable &&
-                      'cursor-not-allowed select-none border-slate-100 bg-slate-50/70 text-slate-400 opacity-60',
-                    isAvailable &&
-                      !isSelected &&
-                      'cursor-pointer border-slate-200/60 text-slate-700 hover:bg-slate-50',
-                    isAvailable &&
-                      isSelected &&
-                      'cursor-pointer border-primary/30 bg-primary/10 font-semibold text-primary',
-                  )}
-                >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <input
-                      type="checkbox"
-                      disabled={!isAvailable}
-                      checked={isSelected}
-                      onChange={() => undefined}
-                      className="rounded text-primary"
-                    />
-                    <span className="font-bold">{position.code}</span>
-                    <span className="truncate">
-                      - {position.description || DOOR_TYPE_LABEL[position.doorType] || position.doorType}
-                    </span>
+          <div className="max-h-[380px] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/40 p-3 space-y-4">
+            {positions.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">
+                Dự án chưa có vị trí cửa nào.
+              </div>
+            ) : (
+              (() => {
+                const grouped = positions.reduce((acc, pos) => {
+                  const floorName = pos.floor?.name || 'Tầng khác';
+                  if (!acc[floorName]) acc[floorName] = [];
+                  acc[floorName].push(pos);
+                  return acc;
+                }, {} as Record<string, typeof positions>);
+
+                return Object.entries(grouped).map(([floorName, floorPositions]) => (
+                  <div key={floorName} className="space-y-2">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">
+                      {floorName}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                      {floorPositions.map((position) => {
+                        const isMeasured = Boolean(position.isMeasured);
+                        const isSurveyed = !position.status || position.status === 'surveyed';
+                        const isAvailable = isEligible(position);
+                        const isSelected = selectedIds.includes(position.id);
+                        const stepName =
+                          PROGRESS_STEP_LABEL[position.status as ProgressStepCode] || position.status;
+
+                        let statusLabel = '';
+                        let statusVariant: 'amber' | 'emerald' | 'purple' | 'slate' = 'slate';
+                        let tooltip: string | undefined;
+
+                        if (isRework) {
+                          statusLabel = isAvailable ? stepName : 'Chưa thể làm lại';
+                          statusVariant = isAvailable ? 'purple' : 'slate';
+                          tooltip = !isAvailable
+                            ? 'Chưa sản xuất xong hoặc đã nghiệm thu - Không thể làm lại'
+                            : undefined;
+                        } else {
+                          if (!isMeasured) {
+                            statusLabel = 'Chờ đo thực tế';
+                            statusVariant = 'amber';
+                            tooltip = 'Chưa chốt số đo thực tế - Không thể đưa vào lệnh sản xuất';
+                          } else if (isSurveyed) {
+                            statusLabel = 'Chờ sản xuất';
+                            statusVariant = 'emerald';
+                          } else {
+                            statusLabel = stepName;
+                            statusVariant = 'purple';
+                            tooltip = `Đang ở mốc "${stepName}" - Không thể tạo thêm lệnh sản xuất`;
+                          }
+                        }
+
+                        return (
+                          <ProductionDoorItem
+                            key={position.id}
+                            position={position}
+                            isSelected={isSelected}
+                            isAvailable={isAvailable}
+                            onToggle={toggle}
+                            statusLabel={statusLabel}
+                            statusVariant={statusVariant}
+                            tooltip={tooltip}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span
-                      className={cn(
-                        'rounded border px-1.5 py-0.5 text-[10px] font-medium',
-                        !isMeasured && 'border-amber-200/60 bg-amber-50 text-amber-600',
-                        isMeasured &&
-                          isSurveyed &&
-                          'border-emerald-200/60 bg-emerald-50 text-emerald-600',
-                        isMeasured &&
-                          !isSurveyed &&
-                          'border-purple-200/60 bg-purple-50 text-purple-600',
-                      )}
-                    >
-                      {!isMeasured ? 'Chờ đo thực tế' : isSurveyed ? 'Chờ sản xuất' : stepName}
-                    </span>
-                    <span className="text-slate-500">
-                      {position.width}x{position.height} mm
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                ));
+              })()
+            )}
           </div>
         </div>
 
