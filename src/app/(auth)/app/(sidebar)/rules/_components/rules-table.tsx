@@ -211,9 +211,14 @@ export const RulesTable: React.FC<RulesTableProps> = ({
 
   return (
     <div className="flex-1 min-h-0 flex flex-col bg-white">
-      <div className="flex-1 overflow-auto px-4 custom-scrollbar">
+      <div className="flex-1 overflow-auto px-2.5 sm:px-4 pt-1 sm:pt-0 custom-scrollbar">
+        {/* Chỉ báo cuộn ngang trên điện thoại */}
+        <div className="md:hidden flex items-center justify-between text-[11px] text-slate-400 pb-1.5 px-0.5">
+          <span>* Vuốt ngang để xem đủ cột thông tin</span>
+        </div>
+
         <div className="w-full bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xs">
-          <div className="overflow-x-auto w-full">
+          <div className="overflow-x-auto w-full custom-scrollbar">
             <table className="table w-full border-collapse">
               <TableHeader columns={columns} select={false} />
               {isLoading && items.length === 0 ? (
@@ -239,7 +244,7 @@ export const RulesTable: React.FC<RulesTableProps> = ({
         )}
       </div>
 
-      <div className="p-4 border-t border-slate-100">
+      <div className="p-2.5 sm:p-4 border-t border-slate-100">
         <TablePagination
           currentPage={currentPage}
           totalPages={totalPages}

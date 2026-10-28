@@ -65,8 +65,8 @@ export const RulesTabs: React.FC<RulesTabsProps> = ({
   const readRate = summary?.readRate ?? 100;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 mt-3">
-      <div className="flex gap-1 overflow-x-auto -mb-px" role="tablist">
+    <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-200 px-3 sm:px-4 mt-2 sm:mt-3">
+      <div className="flex gap-1 overflow-x-auto no-scrollbar -mb-px" role="tablist">
         {visibleTabs.map((tab) => {
           const isActive = tab.value === activeTab;
           return (
@@ -78,7 +78,7 @@ export const RulesTabs: React.FC<RulesTabsProps> = ({
               aria-selected={isActive}
               onClick={() => onChange(tab.value)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap cursor-pointer select-none transition-colors',
+                'flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 text-xs font-medium border-b-2 whitespace-nowrap cursor-pointer select-none transition-colors shrink-0',
                 isActive
                   ? 'border-primary text-primary font-semibold'
                   : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300',
@@ -89,7 +89,7 @@ export const RulesTabs: React.FC<RulesTabsProps> = ({
               {tab.count > 0 && (
                 <span
                   className={cn(
-                    'min-w-5 h-5 px-1.5 rounded-full text-[10px] font-bold flex items-center justify-center',
+                    'min-w-4.5 h-4.5 sm:min-w-5 sm:h-5 px-1 sm:px-1.5 rounded-full text-[9px] sm:text-[10px] font-bold flex items-center justify-center shrink-0',
                     tab.badgeClass,
                   )}
                 >
@@ -101,25 +101,25 @@ export const RulesTabs: React.FC<RulesTabsProps> = ({
         })}
       </div>
 
-      {/* KPI Summary Strip */}
+      {/* KPI Summary Strip - Desktop and Mobile responsive */}
       {summary && (
-        <div className="hidden lg:flex items-center gap-2 py-1.5">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-[11px] font-medium text-emerald-700">
-            <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
-            <span>Đang hiệu lực:</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 py-1.5 overflow-x-auto no-scrollbar shrink-0">
+          <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-[10px] sm:text-[11px] font-medium text-emerald-700 whitespace-nowrap shrink-0">
+            <CheckCircle2 size={11} className="text-emerald-600 shrink-0" />
+            <span className="hidden xs:inline">Đang hiệu lực:</span>
             <strong className="font-bold text-emerald-800">{publishedCount}</strong>
           </div>
 
           <div
             className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium',
+              'inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border text-[10px] sm:text-[11px] font-medium whitespace-nowrap shrink-0',
               unreadCount > 0
-                ? 'bg-rose-50 border-rose-200/80 text-rose-700'
+                ? 'bg-rose-50 border-rose-200/80 text-rose-700 font-semibold'
                 : 'bg-slate-50 border-slate-200 text-slate-600',
             )}
           >
-            <AlertCircle size={12} className={cn('shrink-0', unreadCount > 0 ? 'text-rose-500' : 'text-slate-400')} />
-            <span>Chưa đọc:</span>
+            <AlertCircle size={11} className={cn('shrink-0', unreadCount > 0 ? 'text-rose-500' : 'text-slate-400')} />
+            <span className="hidden xs:inline">Chưa đọc:</span>
             <strong className={cn('font-bold', unreadCount > 0 ? 'text-rose-800' : 'text-slate-700')}>
               {unreadCount}
             </strong>
@@ -127,22 +127,22 @@ export const RulesTabs: React.FC<RulesTabsProps> = ({
 
           <div
             className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium',
+              'inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border text-[10px] sm:text-[11px] font-medium whitespace-nowrap shrink-0',
               expiringCount > 0
                 ? 'bg-amber-50 border-amber-200/80 text-amber-700'
                 : 'bg-slate-50 border-slate-200 text-slate-600',
             )}
           >
-            <Clock size={12} className={cn('shrink-0', expiringCount > 0 ? 'text-amber-500' : 'text-slate-400')} />
-            <span>Sắp hết hiệu lực:</span>
+            <Clock size={11} className={cn('shrink-0', expiringCount > 0 ? 'text-amber-500' : 'text-slate-400')} />
+            <span className="hidden xs:inline">Sắp hết hạn:</span>
             <strong className={cn('font-bold', expiringCount > 0 ? 'text-amber-800' : 'text-slate-700')}>
               {expiringCount}
             </strong>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-50/70 border border-primary/20 text-[11px] font-medium text-primary">
-            <BarChart3 size={12} className="text-primary shrink-0" />
-            <span>Tỷ lệ đã đọc:</span>
+          <div className="hidden sm:inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-teal-50/70 border border-primary/20 text-[10px] sm:text-[11px] font-medium text-primary whitespace-nowrap shrink-0">
+            <BarChart3 size={11} className="text-primary shrink-0" />
+            <span>Tỷ lệ đọc:</span>
             <strong className="font-bold">{readRate}%</strong>
           </div>
         </div>

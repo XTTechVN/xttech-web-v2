@@ -7,3 +7,5 @@ export * from './cutting-shortage-panel';
 export * from './production-sheet-card';
 export * from './production-sheet-tables';
 
+export * from './production-door-item';
+

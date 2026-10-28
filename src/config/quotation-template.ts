@@ -1,6 +1,6 @@
 // Nội dung cố định của bảng báo giá (theo file MauBaoGiaDuToan.xlsx)
 export const QUOTATION_TEMPLATE = {
-  logoUrl: '/image-xttech/logo-xttech.svg',
+  logoUrl: '/image-xttech/logo-xtwindow.jpg',
   companyName: 'CÔNG TY TNHH THƯƠNG MẠI VÀ XÂY DỰNG CƠ SỞ HẠ TẦNG XUÂN TIỆP',
   companyLines: [
     'Trụ sở: TDP Quý Kim 2, (tại nhà ông Bùi Đức Tiệp), phường Nam Đồ Sơn, Hải Phòng.',
