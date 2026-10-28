@@ -36,7 +36,7 @@ const Combo = ({
   className = '',
 }: ComboStripProps) => {
   return (
-    <div className="w-full bg-white px- py-6 sm:px-8 lg:px-16 xl:px-24">
+    <div className="w-full bg-white px-4 py-6 sm:px-8 lg:px-16 xl:px-24">
       <div className={`mx-auto w-full max-w-7xl flex flex-col gap-3 rounded-2xl border border-dashed border-primary/25 bg-primary/5 px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:px-5 ${className}`}>
       <span className="text-xs font-bold text-primary">{label}</span>
 
@@ -44,7 +44,7 @@ const Combo = ({
         {chips.map((chip) => (
           <span
             key={chip.before}
-            className="rounded-full border border-primary/10 bg-white px-3.5 py-1.5 text-xs text-gray-700"
+            className="max-w-full rounded-xl border border-primary/10 bg-white px-3.5 py-2 text-xs leading-relaxed text-gray-700 sm:rounded-full sm:py-1.5"
           >
             {chip.before}
             {chip.strong && <strong className="font-bold text-gray-900">{chip.strong}</strong>}

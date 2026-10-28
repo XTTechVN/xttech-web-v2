@@ -1,60 +1,80 @@
 import React from 'react';
-import { ShieldCheck, RefreshCw, Zap, CreditCard, Rocket } from 'lucide-react';
+import { ShieldCheck, RefreshCw, Zap, CreditCard, Rocket, Layers, HardHat, Briefcase } from 'lucide-react';
 
 interface ServiceBannerProps {
   activeMainTab?: string;
   onMainTabChange?: (tabId: string) => void;
 }
 
+/* Màu nhấn (lime) – dùng chung với section Pricing */
+const ACCENT = '#d6ff3d';
+
 const MAIN_TABS = [
   { id: 'bang-gia', label: 'Bảng giá', icon: CreditCard },
   { id: 'trien-khai', label: 'Triển khai', icon: Rocket },
 ];
 
+/* 3 ngành hiển thị dưới tiêu đề – khớp với 3 tab ở PricingTabs */
+const INDUSTRIES = [
+  { label: 'Nhôm Kính & Nội Thất', icon: Layers },
+  { label: 'Xây dựng & Đội thợ', icon: HardHat },
+  { label: 'HCNS, Kế Toán, Kinh doanh', icon: Briefcase },
+];
+
 const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceBannerProps) => {
   return (
-    <div className="w-full bg-white py-4 px-4 lg:px-4 font-sans">
-      <div className="w-full px-4 sm:px-8 lg:px-20 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 lg:gap-12">
+    // Cùng padding + max-width với tab / bảng giá để thẳng lề
+    <div className="w-full bg-white px-4 py-6 font-sans sm:px-8 lg:px-16 xl:px-24">
+      {/* Giới hạn bề rộng + gap cố định => 2 cột không bị đẩy ra xa nhau */}
+      <div className="mx-auto flex w-full max-w-7xl flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between lg:gap-14">
         {/* Phần bên trái: Tiêu đề & Mô tả */}
-        <div className="flex-1 max-w-2xl flex flex-col gap-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
           {/* Top Badge */}
-          <span className="uppercase text-primary font-bold text-xs sm:text-sm">XT Tech • Mindmap Pricing • Google One Style</span>
+          <span className="text-xs font-bold uppercase text-primary sm:text-sm">
+            XT Tech • Mindmap Pricing • Google One Style
+          </span>
 
           {/* Main Title */}
-          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-black tracking-tight leading-[1.15] mb-4 lg:mb-6">
-            Bảng giá minh bạch kiểu <span className="text-primary">Google One</span> cho 3 ngành
+          <h1 className="mb-2 text-2xl font-extrabold leading-[1.15] tracking-tight text-gray-900 sm:text-4xl xl:text-5xl">
+            Bảng giá minh bạch kiểu <span className="text-primary">Google One</span> cho ngành{' '}
+            <span className="text-primary">Nhôm Kính</span>, Xây dựng & Kinh doanh
           </h1>
 
-          {/* Description */}
-          <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-4 lg:mb-8">
-            Thiết kế theo yêu cầu: màu <span className="bg-[#0A192F] text-white px-1.5 py-0.5 rounded text-xs font-mono font-medium">#0A192F</span> +{' '}
-            <span className="bg-primary text-[#0A192F] px-1.5 py-0.5 rounded text-xs font-mono font-bold">#CCFF00</span> như mindmap. Mỗi ô dùng số
-            giới hạn + icon check, không dùng chữ Có/Không. Highlight cột Tái Cấu Trúc là Bán chạy nhất.
-          </p>
+          {/* 3 ngành áp dụng */}
+          <div className="mb-4 flex flex-wrap items-center gap-2 lg:mb-6">
+            {INDUSTRIES.map(({ label, icon: Icon }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary sm:text-sm"
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </span>
+            ))}
+          </div>
 
           {/* Bottom Action Badges / Features */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-2 bg-white border border-gray-200 px-3 sm:px-4 py-2 rounded-full text-xs font-medium text-gray-700 shadow-xs">
-              <ShieldCheck className="w-4 h-4 text-gray-500" />
+            <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm sm:px-4">
+              <ShieldCheck className="h-4 w-4 text-primary" />
               Không giới hạn ẩn, minh bạch
             </div>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 px-3 sm:px-4 py-2 rounded-full text-xs font-medium text-gray-700 shadow-xs">
-              <RefreshCw className="w-4 h-4 text-gray-500" />
+            <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm sm:px-4">
+              <RefreshCw className="h-4 w-4 text-primary" />
               Tự động reset
             </div>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 px-3 sm:px-4 py-2 rounded-full text-xs font-medium text-gray-700 shadow-xs">
-              <Zap className="w-4 h-4 text-primary fill-primary" />
+            <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm sm:px-4">
+              <Zap className="h-4 w-4 fill-primary text-primary" />
               Mua thêm lẻ 99k
             </div>
           </div>
         </div>
 
         {/* Phần bên phải: Tab chính + Thẻ xem trước giá */}
-        <div className="w-full lg:w-auto flex flex-col gap-4">
-          
+        <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[520px]">
           {/* 2 Tab chính: Bảng giá / Triển khai */}
           {onMainTabChange && (
-            <div className="flex items-center gap-1 bg-[#F4F5F0] p-1 rounded-xl w-full sm:w-fit">
+            <div className="flex w-full items-center gap-1 rounded-xl bg-primary/5 p-1 sm:w-fit">
               {MAIN_TABS.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeMainTab === tab.id;
@@ -63,15 +83,15 @@ const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceB
                     key={tab.id}
                     onClick={() => onMainTabChange(tab.id)}
                     className={`
-                      flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer
+                      flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold transition-all duration-200 sm:flex-none sm:px-6
                       ${
                         isActive
                           ? 'bg-primary text-white shadow-md'
-                          : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-white/60'
+                          : 'bg-transparent text-gray-500 hover:bg-white/70 hover:text-primary'
                       }
                     `}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                    <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
                     {tab.label}
                   </button>
                 );
@@ -80,45 +100,64 @@ const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceB
           )}
 
           {/* Thẻ xem trước giá theo năm */}
-          <div className="w-full lg:w-auto bg-white border border-gray-200/80 rounded-2xl p-4 sm:p-6 shadow-sm relative">
+          <div className="relative w-full rounded-2xl border border-primary/10 bg-white p-4 shadow-sm sm:p-6">
             {/* Badge -20% */}
-            <div className="absolute -top-3 right-6 bg-primary text-[#0A192F] text-xs font-bold px-3 py-1 rounded-full shadow-xs">-20%</div>
+            <div
+              className="absolute -top-3 right-6 rounded-full px-3 py-1 text-xs font-bold text-primary shadow-sm"
+              style={{ backgroundColor: ACCENT }}
+            >
+              -20%
+            </div>
 
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Tiết kiệm khi trả theo năm</div>
+            <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Tiết kiệm khi trả theo năm
+            </div>
 
             {/* Pricing Cards Grid */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
+            <div className="mb-4 grid grid-cols-3 gap-2 sm:gap-3">
               {/* Gói 1 */}
-              <div className="bg-[#F4F5F0] border border-gray-100 rounded-xl p-2 sm:p-3 text-center flex flex-col justify-between">
+              <div className="flex flex-col justify-between rounded-xl border border-primary/10 bg-primary/5 p-2 text-center sm:p-3">
                 <div>
-                  <div className="text-base sm:text-lg font-bold text-[#0A192F]">590k</div>
-                  <div className="text-[10px] text-gray-400 line-through mt-0.5">~5.9tr/năm</div>
+                  <div className="text-base font-bold text-primary sm:text-lg">590k</div>
+                  <div className="mt-0.5 text-[10px] text-gray-400 line-through">~5.9tr/năm</div>
                 </div>
-                <div className="text-[9px] sm:text-[10px] font-medium text-emerald-600 mt-2 bg-emerald-50 py-0.5 px-1 rounded">Tiết kiệm 1.18tr</div>
+                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary sm:text-[10px]">
+                  Tiết kiệm 1.18tr
+                </div>
               </div>
 
-              {/* Gói 2 (Highlighted Dark) */}
-              <div className="bg-[#0A192F] text-white rounded-xl p-2 sm:p-3 text-center flex flex-col justify-between shadow-md">
+              {/* Gói 2 (Highlighted) */}
+              <div className="flex flex-col justify-between rounded-xl bg-primary p-2 text-center text-white shadow-md sm:p-3">
                 <div>
-                  <div className="text-base sm:text-lg font-bold text-primary">1.29tr</div>
-                  <div className="text-[10px] text-gray-300 line-through mt-0.5">~12.9tr/năm</div>
+                  <div className="text-base font-bold sm:text-lg" style={{ color: ACCENT }}>
+                    1.29tr
+                  </div>
+                  <div className="mt-0.5 text-[10px] text-white/60 line-through">~12.9tr/năm</div>
                 </div>
-                <div className="text-[9px] sm:text-[10px] font-medium text-primary mt-2 bg-white/10 py-0.5 px-1 rounded">Tiết kiệm 2.58tr</div>
+                <div
+                  className="mt-2 rounded px-1 py-0.5 text-[9px] font-bold text-primary sm:text-[10px]"
+                  style={{ backgroundColor: ACCENT }}
+                >
+                  Tiết kiệm 2.58tr
+                </div>
               </div>
 
               {/* Gói 3 */}
-              <div className="bg-[#F4F5F0] border border-gray-100 rounded-xl p-2 sm:p-3 text-center flex flex-col justify-between">
+              <div className="flex flex-col justify-between rounded-xl border border-primary/10 bg-primary/5 p-2 text-center sm:p-3">
                 <div>
-                  <div className="text-sm sm:text-base font-bold text-[#0A192F]">29.9tr</div>
-                  <div className="text-[10px] text-gray-500 mt-0.5 font-medium">Tổng Thầu</div>
+                  <div className="text-sm font-bold text-primary sm:text-base">29.9tr</div>
+                  <div className="mt-0.5 text-[10px] font-medium text-gray-500">Tổng Thầu</div>
                 </div>
-                <div className="text-[9px] sm:text-[10px] font-medium text-gray-500 mt-2 bg-gray-200/60 py-0.5 px-1 rounded">1TB • ∞</div>
+                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary sm:text-[10px]">
+                  1TB • ∞
+                </div>
               </div>
             </div>
 
             {/* Footer Note */}
-            <div className="text-[10px] sm:text-[11px] text-gray-400 leading-relaxed border-t border-gray-100 pt-3">
-              * Gói Tổng Thầu chỉ có theo năm. Giá đã bao gồm VAT, hỗ trợ 1-1. Mua thêm lẻ áp dụng khi vượt hạn mức.
+            <div className="border-t border-gray-100 pt-3 text-[10px] leading-relaxed text-gray-400 sm:text-[11px]">
+              * Gói Tổng Thầu chỉ có theo năm. Giá đã bao gồm VAT, hỗ trợ 1-1. Mua thêm lẻ áp dụng khi vượt hạn
+              mức.
             </div>
           </div>
         </div>
