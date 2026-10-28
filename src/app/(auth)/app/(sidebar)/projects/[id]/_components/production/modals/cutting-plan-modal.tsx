@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, FileOutput, Printer, Recycle, Scissors, ShoppingCart } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, FileOutput, Printer, Recycle, Scissors, ShoppingCart } from 'lucide-react';
 import { Badge, Button, Modal } from '@/components';
 import { getWarehouseItems, getWarehouseSuppliers } from '@/actions';
 import queryClient from '@/utils/query';
@@ -54,6 +54,10 @@ export function CuttingPlanModal({ projectId, order, onClose }: CuttingPlanModal
 
   const groups = useMemo(() => (plan ? groupBarsByProfile(plan.bars) : []), [plan]);
   const returnableBars = useMemo(() => (plan ? getReturnableBars(plan) : []), [plan]);
+  const returnedBarsCount = useMemo(
+    () => (plan ? plan.bars.filter((b) => b.isOffcutReturned).length : 0),
+    [plan],
+  );
 
   const isOrderCompleted = order?.status === 'completed';
   const isOrderActive = order?.status === 'in_progress';
@@ -190,10 +194,21 @@ export function CuttingPlanModal({ projectId, order, onClose }: CuttingPlanModal
               ))}
             </div>
 
+            {isOrderCompleted && returnedBarsCount > 0 && !canReturnOffcuts && (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
+                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                <span>
+                  Lệnh sản xuất đã hoàn thành. Hệ thống đã tự động nhập <strong>{returnedBarsCount}</strong> đoạn nhôm dư (≥ 1m) vào kho tái sử dụng.
+                </span>
+              </div>
+            )}
+
             {canReturnOffcuts && (
               <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
                 <span>
-                  Lệnh đã xong: tích các cây còn đoạn dư từ 1 m để thủ kho nhập lại kho.
+                  {returnedBarsCount > 0
+                    ? `Đã tự động nhập ${returnedBarsCount} đoạn. Còn ${returnableBars.length} đoạn dư có thể trả bổ sung:`
+                    : 'Lệnh đã xong: tích các cây còn đoạn dư từ 1 m để thủ kho nhập lại kho.'}
                 </span>
                 <Button
                   variant="outline"

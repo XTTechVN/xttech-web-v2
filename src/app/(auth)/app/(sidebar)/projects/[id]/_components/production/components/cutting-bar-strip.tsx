@@ -59,7 +59,14 @@ export function CuttingBarStrip({
       <span className="w-24 shrink-0 text-right font-mono text-slate-500">
         {Math.round(bar.stockLengthMm)} mm
       </span>
-      {isReturnSelectable && (
+      {bar.isOffcutReturned ? (
+        <span
+          className="inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 border border-emerald-200"
+          title="Đoạn dư đã được lưu vào kho tái sử dụng"
+        >
+          Đã về kho
+        </span>
+      ) : isReturnSelectable ? (
         <input
           type="checkbox"
           checked={isReturnSelected}
@@ -67,7 +74,7 @@ export function CuttingBarStrip({
           aria-label={`Trả đoạn dư cây ${index} về kho`}
           className="rounded text-primary"
         />
-      )}
+      ) : null}
     </div>
   );
 }

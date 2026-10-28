@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { AlertTriangle, CalendarClock, Plus, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Play, Plus, ShieldCheck } from 'lucide-react';
+import { Image as AntdImage, Modal as AntdModal } from 'antd';
 import toast from 'react-hot-toast';
 import { cancelWarrantyVisit, getProjectWarranty, startWarrantyVisit } from '@/actions';
 import { Badge, Button, Skeleton } from '@/components';
@@ -32,6 +33,12 @@ const formatVnd = (value: number): string =>
 const mediaUrl = (url: string): string =>
   url.startsWith('http') ? url : `${BASE_MINIO_URL}/${url.replace(/^\//, '')}`;
 
+const isVideoUrl = (url: string, type?: string): boolean => {
+  if (type === 'video') return true;
+  const cleanUrl = url.split('?')[0].toLowerCase();
+  return cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.avi');
+};
+
 interface TabWarrantyProps {
   projectId: number;
 }
@@ -40,6 +47,7 @@ export function TabWarranty({ projectId }: TabWarrantyProps) {
   const [editing, setEditing] = useState<WarrantyVisit | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [completing, setCompleting] = useState<WarrantyVisit | null>(null);
+  const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
 
   const { data: summary, isLoading } = useQuery({
     queryKey: ['project_warranty', projectId],
@@ -204,17 +212,45 @@ export function TabWarranty({ projectId }: TabWarrantyProps) {
               {visit.issueDescription && <p className="text-xs text-slate-600">Sự cố: {visit.issueDescription}</p>}
               {visit.resultNote && <p className="text-xs text-emerald-700">Kết quả: {visit.resultNote}</p>}
               {visit.photos.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {visit.photos.map((photo) => (
-                     
-                    <img
-                      key={photo.url}
-                      src={mediaUrl(photo.url)}
-                      alt={photo.name ?? 'Ảnh bảo hành'}
-                      className="h-16 w-16 rounded-md border border-slate-200 object-cover"
-                    />
-                  ))}
-                </div>
+                <AntdImage.PreviewGroup>
+                  <div className="flex flex-wrap gap-2">
+                    {visit.photos.map((photo, pIdx) => {
+                      const url = mediaUrl(photo.url);
+                      const isVideo = isVideoUrl(photo.url, photo.type);
+
+                      if (isVideo) {
+                        return (
+                          <div
+                            key={photo.url || pIdx}
+                            onClick={() => setPreviewVideoUrl(url)}
+                            className="group relative flex h-16 w-16 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-900 text-white transition hover:border-primary"
+                            title={photo.name ?? 'Xem video bảo hành'}
+                          >
+                            <video src={url} className="h-full w-full object-cover opacity-70" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10">
+                              <Play size={18} className="fill-white text-white drop-shadow" />
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={photo.url || pIdx}
+                          className="h-16 w-16 overflow-hidden rounded-md border border-slate-200 [&_.ant-image]:h-full [&_.ant-image]:w-full"
+                        >
+                          <AntdImage
+                            src={url}
+                            alt={photo.name ?? 'Ảnh bảo hành'}
+                            width={64}
+                            height={64}
+                            className="!h-full !w-full object-cover"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </AntdImage.PreviewGroup>
               )}
             </div>
           );
@@ -233,6 +269,29 @@ export function TabWarranty({ projectId }: TabWarrantyProps) {
         onClose={() => setIsFormOpen(false)}
       />
       <CompleteVisitModal projectId={projectId} visit={completing} onClose={() => setCompleting(null)} />
+
+      <AntdModal
+        open={Boolean(previewVideoUrl)}
+        onCancel={() => setPreviewVideoUrl(null)}
+        footer={null}
+        destroyOnHidden
+        centered
+        width={720}
+        title="Video bảo hành thực tế"
+      >
+        {previewVideoUrl && (
+          <div className="flex justify-center p-2">
+            <video
+              src={previewVideoUrl}
+              controls
+              autoPlay
+              className="max-h-[70vh] w-full rounded-lg bg-black object-contain shadow"
+            >
+              Trình duyệt của bạn không hỗ trợ phát thẻ video.
+            </video>
+          </div>
+        )}
+      </AntdModal>
     </div>
   );
 }
