@@ -209,6 +209,9 @@ export interface QuotationSheetFloor {
   floorId: number;
   floorName: string;
   rows: QuotationSheetRow[];
+  totalQuantity: number;
+  totalAreaM2: number;
+  totalAmount: number;
 }
 
 export interface QuotationSheet {

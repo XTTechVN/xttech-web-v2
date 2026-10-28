@@ -68,7 +68,15 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
   const cancel = useMutation({
     mutationFn: (acceptanceId: number) => cancelProjectAcceptance(projectId, acceptanceId),
     onSuccess: () => {
-      void refresh();
+      [
+        'project_acceptances',
+        'progress_matrix',
+        'project_positions',
+        'project',
+        'project_overview',
+        'project_warranty',
+      ].forEach((key) => queryClient.invalidateQueries({ queryKey: [key, projectId] }));
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success('Đã hủy biên bản nghiệm thu');
     },
     onError: (error) => showErrorToast(error, 'Không hủy được biên bản'),

@@ -62,6 +62,13 @@ export function useProjectPositions(projectId: number) {
   const invalidatePositionsAndProject = () => {
     queryClient.invalidateQueries({ queryKey: ['project_positions', projectId] });
     queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['projects'] });
+    queryClient.invalidateQueries({ queryKey: ['project_overview', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['project_quotation_active', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['project_quotation_sheet', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['project_quotations', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['progress_matrix', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['design_options', projectId] });
   };
 
   const createFloorMutation = useMutation({

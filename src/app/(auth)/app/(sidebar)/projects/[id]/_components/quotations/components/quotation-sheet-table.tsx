@@ -124,7 +124,15 @@ export function QuotationSheetTable({ sheet }: { sheet: QuotationSheet }) {
       </thead>
       <tbody>
         {sheet.floors.map((floor, index) => (
-          <FloorRows key={floor.floorId} letter={floorLetter(index)} name={floor.floorName} rows={floor.rows} />
+          <FloorRows
+            key={floor.floorId}
+            letter={floorLetter(index)}
+            name={floor.floorName}
+            rows={floor.rows}
+            totalQuantity={floor.totalQuantity}
+            totalAreaM2={floor.totalAreaM2}
+            totalAmount={floor.totalAmount}
+          />
         ))}
         {sheet.extraRows.map((row, index) => (
           <ItemRow key={`extra-${index}`} row={row} />
@@ -156,14 +164,32 @@ export function QuotationSheetTable({ sheet }: { sheet: QuotationSheet }) {
   );
 }
 
-function FloorRows({ letter, name, rows }: { letter: string; name: string; rows: QuotationSheetRow[] }) {
+function FloorRows({
+  letter,
+  name,
+  rows,
+  totalQuantity,
+  totalAreaM2,
+  totalAmount,
+}: {
+  letter: string;
+  name: string;
+  rows: QuotationSheetRow[];
+  totalQuantity?: number;
+  totalAreaM2?: number;
+  totalAmount?: number;
+}) {
   return (
     <>
       <tr className="qt-floor">
         <td className="qt-center">{letter}</td>
-        <td className="qt-left" colSpan={COLUMN_COUNT - 1}>
+        <td className="qt-left" colSpan={6}>
           {name}
         </td>
+        <td className="qt-center">{totalQuantity ? totalQuantity : ''}</td>
+        <td className="qt-center">{totalAreaM2 ? formatSheetNumber(totalAreaM2, 2) : ''}</td>
+        <td className="qt-center"></td>
+        <td className="qt-right">{totalAmount ? formatSheetNumber(totalAmount) : ''}</td>
       </tr>
       {rows.map((row, index) => {
         const isAccessoryFollowing = row.rowType === 'door' && rows[index + 1]?.rowType === 'accessory';

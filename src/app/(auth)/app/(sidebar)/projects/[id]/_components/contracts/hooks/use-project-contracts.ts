@@ -38,6 +38,7 @@ const invalidateContractQueries = (projectId: number) => {
     queryClient.invalidateQueries({ queryKey: keyOf(projectId) }),
   );
   invalidateQuotationQueries(projectId);
+  queryClient.invalidateQueries({ queryKey: ['projects'] });
 };
 
 export const isContractSigned = (contract: ProjectContractItem): boolean =>
