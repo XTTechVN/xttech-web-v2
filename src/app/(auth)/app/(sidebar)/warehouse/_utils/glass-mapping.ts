@@ -15,11 +15,18 @@ export const MANUAL_REASON_OPTIONS: Array<{ value: string; label: string }> = [
 ];
 
 export const GRIND_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'grind_edge', label: 'Mài xiết cạnh (Tiêu chuẩn)' },
+  { value: 'grind_edge', label: 'Mài xiết cạnh' },
   { value: 'grind_flat', label: 'Mài bóng phẳng' },
   { value: 'grind_bevel', label: 'Mài vát cạnh' },
   { value: 'no_grind', label: 'Không mài' },
 ];
+
+export const GRIND_LABEL_MAP: Record<string, string> = {
+  grind_edge: 'Mài xiết cạnh',
+  grind_flat: 'Mài bóng phẳng',
+  grind_bevel: 'Mài vát cạnh',
+  no_grind: 'Không mài',
+};
 
 export const GLASS_ORDER_STATUS_MAP: Record<
   GlassOrderStatus,

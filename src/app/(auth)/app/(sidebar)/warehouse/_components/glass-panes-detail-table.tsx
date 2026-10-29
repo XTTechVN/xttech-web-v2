@@ -4,7 +4,7 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { GlassOrderItem } from '@/types';
 
-import { MANUAL_REASON_MAP } from '../_utils/glass-mapping';
+import { MANUAL_REASON_MAP, GRIND_LABEL_MAP } from '../_utils/glass-mapping';
 
 interface GlassPanesDetailTableProps {
   items: GlassOrderItem[];
@@ -56,7 +56,7 @@ export function GlassPanesDetailTable({ items }: GlassPanesDetailTableProps) {
                     {item.areaM2.toFixed(3)} m²
                   </td>
                   <td className="p-2.5 text-slate-600">
-                    {item.grindType || 'Mài xiết cạnh'}
+                    {GRIND_LABEL_MAP[item.grindType || ''] || item.grindType || 'Mài xiết cạnh'}
                   </td>
                   <td className="p-2.5 text-center">
                     {isManual ? (

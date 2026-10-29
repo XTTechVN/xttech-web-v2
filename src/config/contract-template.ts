@@ -68,7 +68,6 @@ export const CONTRACT_TEMPLATE = {
       '- Nếu khách hàng thanh toán bằng tiền mặt thì phải nhận được hóa đơn thanh toán có dấu của công ty.',
       '- Các khoản thanh toán chỉ được xem là hợp lệ khi được chuyển đúng tài khoản công ty hoặc có phiếu thu xác nhận hợp lệ do công ty phát hành.',
     ],
-    qrImageUrl: '/contracts/vietinbank-qr.png',
   },
   signing: {
     placeLine: 'Hải Phòng, $ngay_thang_nam',

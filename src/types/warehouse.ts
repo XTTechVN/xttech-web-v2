@@ -272,7 +272,7 @@ export interface GlassOrder {
   code: string;
   projectId: number;
   productionOrderId?: number | null;
-  supplierId: number;
+  supplierId?: number | null;
   status: GlassOrderStatus;
   totalPanes: number;
   totalAreaM2: number;
@@ -289,7 +289,7 @@ export interface GlassOrder {
 
 export interface GlassOrderGeneratePayload {
   productionOrderId?: number;
-  supplierId: number;
+  supplierId?: number;
   defaultUnitPrice?: number;
   note?: string;
 }
@@ -325,7 +325,7 @@ export interface GlassOrderItemCreatePayload {
 
 export interface GlassOrderCreatePayload {
   productionOrderId?: number | null;
-  supplierId: number;
+  supplierId?: number | null;
   expectedDate?: string | null;
   note?: string | null;
   items: GlassOrderItemCreatePayload[];

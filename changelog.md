@@ -2,7 +2,37 @@
 
 All notable changes to the frontend project will be documented in this file.
 
-## [Unreleased] - 2026-10-27
+## [Unreleased] - 2026-10-29
+
+### Added & Redesigned (Tái Thiết Kế Chuẩn Modern Liquid Glass & Linear UI - Trang Bảng Giá `pricing`)
+- **Tái Thiết Kế Toàn Diện Phong Cách Light Liquid Glass (Glassmorphism 2.0):**
+  - **Khắc Phục Màu Nền Hover Card Sang Màu Primary Sâu Thẳm (`#045863`):**
+    - Sửa triệt để lỗi xung đột CSS giữa `background-image: linear-gradient` và `background-color`.
+    - Bổ sung `hover:from-[#045863] hover:via-[#045863] hover:to-[#03454e] hover:bg-[#045863]` tại cả [industry-pricing-section.tsx](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/industry-pricing-section.tsx) và [pricing.tsx](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/pricing.tsx).
+    - Khi hover, nền thẻ chuyển đổi hoàn toàn sang màu xanh đậm thương hiệu Deep Teal (#045863), tạo độ tương phản cực đại giúp chữ trắng tinh (`text-white`), giá tiền vàng chanh dạ quang (`#d6ff3d`) và nút CTA dạ quang hiển thị sắc nét, không còn hiện tượng chữ trắng chìm trên nền nhạt.
+  - **Tái Thiết Kế Nền Công Nghệ & Vi Mạch Điện Tử Tối Giản ([aluminum-3d-background.tsx](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/aluminum-3d-background.tsx)):**
+    - Loại bỏ hoàn toàn các khối hộp 3D màu mè và nhãn chữ thô gây rối mắt.
+    - Thay thế bằng **Mạng lưới Vi Mạch Điện Tử & Công Nghệ Số (Digital Tech PCB Traces & Cyber Grid)** đơn sắc 100% theo tông màu Primary (`#045863`).
+    - Tích hợp các đường mạch điện tử góc 45°/90°, xung nhịp dữ liệu (Data pulses) phát sáng nhẹ lướt dọc theo đường mạch và các điểm nút hàn vi mạch tương tác mượt mà theo con trỏ chuột, mang lại vẻ đẹp công nghệ cao (High-tech / Modern SaaS) tinh tế, sang trọng.
+  - **Khắc Phục Lỗi Cắt Huy Hiệu (Fixed Badge Clipping):**
+    - Loại bỏ thuộc tính `overflow-hidden` ở container ngoài cùng của thẻ bảng giá tại [industry-pricing-section.tsx](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/industry-pricing-section.tsx) và [pricing.tsx](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/pricing.tsx).
+    - Huy hiệu "★ Phổ biến nhất" và "★ BEST VALUE" (`-top-3.5`) hiển thị trọn vẹn, không còn bị cắt góc trên; lớp hiệu ứng lóe sáng (flare overlay) được cô lập bên trong thẻ với bo góc riêng `rounded-3xl overflow-hidden`.
+  - **Hiệu Ứng Hover Đổi Nền Sang Màu Primary (`--color-primary: #045863`):**
+    - Khi hover vào bất kỳ thẻ bảng giá nào (cả phần mềm lẫn dịch vụ triển khai), nền thẻ lập tức chuyển sang màu xanh chủ đạo `bg-primary` (#045863), viền sáng đồng bộ và đổ bóng sâu có màu (`shadow-2xl shadow-primary/45`).
+    - Hệ thống chữ và icon tự động đảo màu sang bảng tương phản cao: tiêu đề màu trắng tinh khiết, giá tiền chuyển màu vàng chanh dạ quang đặc trưng `#d6ff3d`, nút bấm CTA chuyển nền `#d6ff3d` chữ xanh đậm `text-primary` siêu bắt mắt, icon tích điểm checkmark chuyển sang `#d6ff3d`, ngôi sao huy hiệu chuyển màu tương phản mượt mà.
+  - **Nền Động 3D Chuyên Biệt Cho Ngành Nhôm Kính & Xây Dựng ([aluminum-3d-background.tsx](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/aluminum-3d-background.tsx)):**
+    - Tích hợp hiệu ứng 3D trực quan với các thanh nhôm định hình 3D (khung bao, cánh cửa, đố kính) và các tấm kính cường lực kiến trúc (glass panes) lơ lửng, tự xoay nhẹ trong không gian trường nhìn perspective.
+    - Hỗ trợ tương tác di chuyển chuột mượt mà (Mouse Parallax Inertia) với các điểm nút tọa độ CNC drafting, chạy 60fps trên Canvas 2D/3D matrix projection siêu nhẹ mà không cần nạp thêm thư viện nặng Three.js.
+  - **Chuyển Màu Nền Trắng Sáng Tự Nhiên & Đồng Bộ Màu Chủ Đạo Hệ Thống (`--color-primary: #045863`):**
+    - Trang chính [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/page.tsx) và [`pricing-page-wrapper.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/pricing-page-wrapper.tsx) chuyển sang nền trắng (`bg-white`) kết hợp nền mờ quang học nhẹ [`liquid-glass-background.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/liquid-glass-background.tsx) với ánh sáng khuếch tán êm dịu từ màu chủ đạo `primary` (#045863).
+    - Toàn bộ typography, pill badge, thanh điều hướng và button tại trạng thái tĩnh đều sử dụng chuẩn màu thương hiệu `primary` (#045863).
+  - **Hiệu Ứng Hover Động Cho Toàn Bộ Thẻ (Hover-Activated Primary Teal Focus):**
+    - Loại bỏ việc cố định màu xanh neon trên 1 thẻ đơn lẻ. Thay vào đó, **tất cả các thẻ** ([`industry-pricing-section.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/industry-pricing-section.tsx) và [`pricing.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/pricing.tsx)) ở trạng thái tĩnh đều có giao diện kính mờ trắng tinh tế (`bg-white/90 backdrop-blur-xl border-primary/15`).
+    - Khi người dùng **hover vào bất kỳ thẻ nào**, thẻ đó sẽ tự động chuyển đổi sang hiệu ứng nổi bật: nền chuyển sang màu xanh chủ đạo `primary` (`#045863`), chữ chuyển trắng, mức giá và các icon tích điểm/nút bấm chuyển sang màu nhấn dạ quang `#d6ff3d`, thẻ nâng nhẹ 3D (`-translate-y-2 scale-[1.02]`) và phát bóng đổ `shadow-2xl shadow-primary/30`.
+  - **Component Định Giá Tái Sử Dụng Chuẩn DRY ([`industry-pricing-section.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/industry-pricing-section.tsx)):** Hợp nhất 3 file bị trùng lặp logic 95% trước đó ([`aluminum-pricing.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/aluminum-pricing.tsx), [`builder-pricing.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/builder-pricing.tsx), [`business-pricing.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/business-pricing.tsx)) thành một component dùng chung tinh gọn, loại bỏ gần 800 dòng code thừa.
+  - **Bảo toàn 100% Mockup Data:** Mọi dữ liệu gốc từ [`mock-data.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/pricing/_components/mock-data.ts) được giữ nguyên vẹn.
+
+## [2026-10-27]
 
 ### Enhanced & Redesigned (Tối Ưu Hóa Trải Nghiệm Mobile Chuẩn Google Stitch - Trang Cơ Chế & Quy Định - `rules`)
 - **Tối Ưu Hóa Giao Diện Di Động & Trải Nghiệm Chạm (Touch-Friendly Adaptive UI):**

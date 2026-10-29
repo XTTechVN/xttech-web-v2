@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { Button, Input, Modal, Select } from '@/components';
-import { WarehouseSupplier } from '@/types';
+import { WarehouseSupplier, ProjectFloor } from '@/types';
 import { previewProjectGlassPanes, createProjectGlassOrder } from '@/actions';
+import { getProjectFloors } from '@/actions/project';
 import {
   GlassOrderPanesEditor,
   EditablePaneItem,
@@ -28,10 +29,7 @@ export function GlassOrderGenerateModal({
   glassSuppliers,
   onSuccess,
 }: GlassOrderGenerateModalProps) {
-  const [selectedSupplierId, setSelectedSupplierId] = useState<number | undefined>(
-    glassSuppliers[0]?.id,
-  );
-  const [defaultUnitPrice, setDefaultUnitPrice] = useState('350000');
+  const [selectedSupplierId, setSelectedSupplierId] = useState<number | undefined>(undefined);
   const [expectedDate, setExpectedDate] = useState('');
   const [orderNote, setOrderNote] = useState('');
   const [panes, setPanes] = useState<EditablePaneItem[]>([]);
@@ -39,28 +37,36 @@ export function GlassOrderGenerateModal({
   const [isLoadingPanes, setIsLoadingPanes] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && glassSuppliers.length > 0) {
-      if (!selectedSupplierId || !glassSuppliers.some((s) => s.id === selectedSupplierId)) {
-        setSelectedSupplierId(glassSuppliers[0].id);
-      }
-    }
-  }, [isOpen, glassSuppliers, selectedSupplierId]);
+  // Filters
+  const [floors, setFloors] = useState<ProjectFloor[]>([]);
+  const [selectedFloorId, setSelectedFloorId] = useState<number | undefined>(undefined);
+  const [filterGlassType, setFilterGlassType] = useState<string>('');
 
-  const defaultPriceRef = useRef(defaultUnitPrice);
-  defaultPriceRef.current = defaultUnitPrice;
+  // Load project floors
+  useEffect(() => {
+    if (isOpen && projectId) {
+      getProjectFloors(projectId)
+        .then((data) => setFloors(data || []))
+        .catch(() => setFloors([]));
+    }
+  }, [isOpen, projectId]);
 
   const fetchPreviewPanes = useCallback(async () => {
     if (!projectId) return;
     setIsLoadingPanes(true);
     try {
-      const price = Number(defaultPriceRef.current) || 350000;
       const data = await previewProjectGlassPanes(projectId, {
         productionOrderId,
-        defaultUnitPrice: price,
+        defaultUnitPrice: 0,
+        floorId: selectedFloorId,
       });
 
-      const initialPanes: EditablePaneItem[] = data.map((item, idx) => ({
+      // Filter by glass type if selected
+      const filteredData = filterGlassType
+        ? data.filter((item) => item.glassType === filterGlassType)
+        : data;
+
+      const initialPanes: EditablePaneItem[] = filteredData.map((item, idx) => ({
         tempId: `preview_${idx}_${Date.now()}`,
         positionId: item.positionId,
         positionCode: item.positionCode,
@@ -73,12 +79,12 @@ export function GlassOrderGenerateModal({
         heightMm: item.heightMm,
         glassType: item.glassType,
         grindType: item.grindType || 'grind_edge',
-        unitPrice: item.unitPrice || price,
+        unitPrice: 0,
         isMeasured: item.isMeasured !== false,
       }));
 
       const doorMap = new Map<number, DoorOption>();
-      for (const item of data) {
+      for (const item of filteredData) {
         if (item.positionId && !doorMap.has(item.positionId)) {
           doorMap.set(item.positionId, {
             id: item.positionId,
@@ -97,7 +103,7 @@ export function GlassOrderGenerateModal({
     } finally {
       setIsLoadingPanes(false);
     }
-  }, [projectId, productionOrderId]);
+  }, [projectId, productionOrderId, selectedFloorId, filterGlassType]);
 
   useEffect(() => {
     if (isOpen && projectId) {
@@ -106,25 +112,28 @@ export function GlassOrderGenerateModal({
       setPanes([]);
       setOrderNote('');
       setExpectedDate('');
+      setSelectedFloorId(undefined);
+      setFilterGlassType('');
     }
   }, [isOpen, projectId, productionOrderId, fetchPreviewPanes]);
 
-  const handleApplyUnitPriceToAll = () => {
-    const price = Number(defaultUnitPrice) || 0;
-    setPanes((prev) => prev.map((p) => ({ ...p, unitPrice: price })));
-    toast.success(`Đã áp dụng đơn giá ${price.toLocaleString('vi-VN')} đ/m² cho toàn bộ ô kính`);
-  };
+  // Unique glass types extracted from all available panes or known doors for filter dropdown
+  const availableGlassTypes = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of panes) {
+      if (p.glassType) set.add(p.glassType);
+    }
+    return Array.from(set);
+  }, [panes]);
 
   const summary = useMemo(() => {
     let manualCount = 0;
     let unmeasuredCount = 0;
     let totalArea = 0;
-    let totalAmount = 0;
 
     for (const p of panes) {
       const area = (p.widthMm * p.heightMm) / 1_000_000.0;
       totalArea += area;
-      totalAmount += Math.round(area * p.unitPrice);
       if (p.paneSource === 'manual' || !p.positionId) manualCount++;
       else if (p.isMeasured === false) unmeasuredCount++;
     }
@@ -134,14 +143,13 @@ export function GlassOrderGenerateModal({
       manualCount,
       unmeasuredCount,
       totalArea: Number(totalArea.toFixed(3)),
-      totalAmount,
     };
   }, [panes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projectId || !selectedSupplierId) {
-      toast.error('Vui lòng chọn nhà máy tôi kính');
+    if (!projectId) {
+      toast.error('Dự án không hợp lệ');
       return;
     }
     if (panes.length === 0) {
@@ -190,7 +198,7 @@ export function GlassOrderGenerateModal({
             heightMm: p.heightMm,
             glassType: p.glassType,
             grindType: p.grindType,
-            unitPrice: p.unitPrice,
+            unitPrice: 0,
           };
         }),
       });
@@ -220,10 +228,7 @@ export function GlassOrderGenerateModal({
           </span>
         )}
         <span>
-          Diện tích: <b className="text-emerald-700">{summary.totalArea} m²</b>
-        </span>
-        <span>
-          Tổng tiền: <b className="text-emerald-700">{summary.totalAmount.toLocaleString('vi-VN')} đ</b>
+          Tổng diện tích: <b className="text-emerald-700">{summary.totalArea} m²</b>
         </span>
       </div>
       <div className="flex items-center gap-2">
@@ -256,50 +261,46 @@ export function GlassOrderGenerateModal({
         onSubmit={handleSubmit}
         className="flex flex-col h-full md:h-[84vh] space-y-4"
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg items-end">
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Nhà Máy Tôi Kính <span className="text-red-500">*</span>
+              Lọc Theo Tầng
             </label>
             <Select
-              value={selectedSupplierId || ''}
-              onChange={(e) => setSelectedSupplierId(Number(e.target.value))}
-              options={glassSuppliers.map((s) => ({
-                value: s.id,
-                label: `${s.name} (${s.phone || 'Chưa có SĐT'})`,
-              }))}
-              required
+              value={selectedFloorId ? String(selectedFloorId) : ''}
+              onChange={(e) => setSelectedFloorId(e.target.value ? Number(e.target.value) : undefined)}
+              options={[
+                { value: '', label: '— Tất cả các tầng —' },
+                ...floors.map((f) => ({
+                  value: String(f.id),
+                  label: f.name,
+                })),
+              ]}
               className="text-xs h-8"
             />
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Đơn Giá Bình Quân (đ/m²)
+              Lọc Loại Kính
             </label>
-            <div className="flex items-center gap-1.5">
-              <Input
-                type="number"
-                value={defaultUnitPrice}
-                onChange={(e) => setDefaultUnitPrice(e.target.value)}
-                step="1000"
-                className="text-xs h-8"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleApplyUnitPriceToAll}
-                className="text-xs h-8 px-2 whitespace-nowrap text-emerald-600 border-emerald-300 hover:bg-emerald-50"
-              >
-                Áp dụng
-              </Button>
-            </div>
+            <Select
+              value={filterGlassType}
+              onChange={(e) => setFilterGlassType(e.target.value)}
+              options={[
+                { value: '', label: '— Tất cả loại kính —' },
+                ...availableGlassTypes.map((gt) => ({
+                  value: gt,
+                  label: gt,
+                })),
+              ]}
+              className="text-xs h-8"
+            />
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Ngày Hẹn Giao Dự Kiến
+              Ngày Hẹn Giao Kính
             </label>
             <Input
               type="date"
@@ -309,15 +310,15 @@ export function GlassOrderGenerateModal({
             />
           </div>
 
-          <div className="md:col-span-3">
+          <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Ghi Chú Đơn Hàng (Nếu có)
+              Ghi Chú Đơn
             </label>
             <Input
               type="text"
               value={orderNote}
               onChange={(e) => setOrderNote(e.target.value)}
-              placeholder="VD: Giao hàng vào giờ hành chính, kèm nẹp kính..."
+              placeholder="VD: Giao trước 10h, kèm nẹp..."
               className="text-xs h-8"
             />
           </div>

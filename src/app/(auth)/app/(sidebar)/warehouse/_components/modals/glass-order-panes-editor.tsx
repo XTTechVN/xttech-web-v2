@@ -101,7 +101,7 @@ export function GlassOrderPanesEditor({
       heightMm: 1000,
       glassType: 'Kính dán an toàn 8.38mm trắng trong',
       grindType: 'grind_edge',
-      unitPrice: panes[0]?.unitPrice || 350000,
+      unitPrice: 0,
       isMeasured: true,
     };
     onChange([...panes, newPane]);
@@ -153,8 +153,6 @@ export function GlassOrderPanesEditor({
               <th className="px-2 py-2 text-center font-medium text-slate-600 w-20">Cao (mm)</th>
               <th className="px-2 py-2 text-right font-medium text-slate-600 w-16">S (m²)</th>
               <th className="px-2 py-2 text-left font-medium text-slate-600 w-32">Mài cạnh</th>
-              <th className="px-2 py-2 text-right font-medium text-slate-600 w-24">Đơn giá (đ)</th>
-              <th className="px-2 py-2 text-right font-medium text-slate-600 w-24">Thành tiền (đ)</th>
               <th className="px-1 py-2 text-center font-medium text-slate-600 w-8">Xóa</th>
             </tr>
           </thead>
@@ -168,7 +166,6 @@ export function GlassOrderPanesEditor({
             ) : (
               panes.map((pane, idx) => {
                 const area = (pane.widthMm * pane.heightMm) / 1_000_000.0;
-                const lineTotal = Math.round(area * pane.unitPrice);
                 const isManual = pane.paneSource === 'manual' || !pane.positionId;
                 const isUnmeasured = !isManual && pane.isMeasured === false;
 
@@ -253,19 +250,6 @@ export function GlassOrderPanesEditor({
                         options={GRIND_OPTIONS}
                         className="text-xs h-7 py-0 px-2"
                       />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        value={pane.unitPrice || ''}
-                        onChange={(e) => handleUpdateField(idx, 'unitPrice', Number(e.target.value))}
-                        className="text-xs h-7 px-1 text-right"
-                        min={0}
-                        step={1000}
-                      />
-                    </td>
-                    <td className="px-2 py-1.5 text-right font-semibold text-emerald-600">
-                      {lineTotal.toLocaleString('vi-VN')}
                     </td>
                     <td className="px-1 py-1 text-center">
                       <button
