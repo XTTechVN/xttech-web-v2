@@ -241,12 +241,14 @@ export async function getProjectGlassOrderDetail(
 
 export async function previewProjectGlassPanes(
   projectId: number,
-  params?: { productionOrderId?: number; defaultUnitPrice?: number }
+  params?: { productionOrderId?: number; defaultUnitPrice?: number; floorId?: number; glassId?: number }
 ): Promise<GlassPanePreviewItem[]> {
   const response = await api.get(`/api/v1/projects/${projectId}/glass-orders/preview-panes`, {
     params: {
       production_order_id: params?.productionOrderId,
       default_unit_price: params?.defaultUnitPrice,
+      floor_id: params?.floorId,
+      glass_id: params?.glassId,
     },
   });
   return response.data || [];

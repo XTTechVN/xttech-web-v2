@@ -1,6 +1,6 @@
 import type { CuttingBar, EvidenceMediaItem, ProgressStepCode } from '@/types';
 
-export type ProductionTab = 'orders' | 'daily';
+export type ProductionTab = 'orders' | 'daily' | 'glass';
 
 export type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
 

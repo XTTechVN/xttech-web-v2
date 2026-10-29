@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { CalendarCheck2, Factory } from 'lucide-react';
+import { CalendarCheck2, Factory, Layers } from 'lucide-react';
 import {
   cancelProductionOrder,
   getProductionOrders,
@@ -18,6 +18,7 @@ import {
   DailyProgressPanel,
   ProductionOrdersPanel,
   ProductionSummaryCards,
+  ProjectGlassOrdersPanel,
 } from './components';
 import {
   CancelProductionOrderModal,
@@ -34,6 +35,7 @@ interface ProjectProductionProgressProps {
 const PRODUCTION_TABS = [
   { value: 'orders', label: 'Lệnh sản xuất', icon: <Factory size={14} /> },
   { value: 'daily', label: 'Tiến độ hằng ngày', icon: <CalendarCheck2 size={14} /> },
+  { value: 'glass', label: 'Đặt kính tôi', icon: <Layers size={14} /> },
 ];
 
 export function ProjectProductionProgress({ projectId }: ProjectProductionProgressProps) {
@@ -108,13 +110,15 @@ export function ProjectProductionProgress({ projectId }: ProjectProductionProgre
           onOpenSheets={setSheetsOrder}
           onCancel={handleCancel}
         />
-      ) : (
+      ) : activeTab === 'daily' ? (
         <DailyProgressPanel
           projectId={projectId}
           matrix={progressMatrix}
           positions={positions}
           isLoading={isLoadingMatrix}
         />
+      ) : (
+        <ProjectGlassOrdersPanel projectId={projectId} />
       )}
 
       <CreateProductionOrderModal
