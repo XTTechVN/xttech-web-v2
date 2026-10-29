@@ -34,8 +34,9 @@ interface ProjectProductionProgressProps {
 
 const PRODUCTION_TABS = [
   { value: 'orders', label: 'Lệnh sản xuất', icon: <Factory size={14} /> },
-  { value: 'daily', label: 'Tiến độ hằng ngày', icon: <CalendarCheck2 size={14} /> },
   { value: 'glass', label: 'Đặt kính tôi', icon: <Layers size={14} /> },
+  { value: 'daily', label: 'Tiến độ hằng ngày', icon: <CalendarCheck2 size={14} /> },
+  
 ];
 
 export function ProjectProductionProgress({ projectId }: ProjectProductionProgressProps) {
