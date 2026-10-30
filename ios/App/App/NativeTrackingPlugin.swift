@@ -58,6 +58,11 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
     private var pendingPermissionCall: CAPPluginCall?
 
     private func getOrCreateLocationManager() -> CLLocationManager {
+        // CLLocationManager phải được tạo trên main thread (có run loop) để didUpdateLocations luôn được gọi.
+        // Capacitor chạy plugin method trên hàng đợi nền nên cần chuyển sang main khi tạo lần đầu.
+        if !Thread.isMainThread {
+            return DispatchQueue.main.sync { self.getOrCreateLocationManager() }
+        }
         if let lm = self.locationManager {
             return lm
         }
@@ -73,6 +78,15 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
     private var lastPingTime: Date = Date.distantPast
     private var lastSentLocation: CLLocation?
     private var lastBatteryLevel: Double = -1.0
+
+    // Nhịp tim độc lập với callback GPS: iOS có thể ngừng gọi didUpdateLocations nhưng tiến trình vẫn sống
+    private let heartbeatInterval: TimeInterval = 60.0
+    private var heartbeatTimer: DispatchSourceTimer?
+
+    // Thử lại có giới hạn khi gửi thất bại: không gửi lại trước mốc này (tăng dần 5s, 10s... tối đa 30s)
+    private var retryNotBefore: Date = Date.distantPast
+    private var pingFailureStreak = 0
+    private let maxRetryBackoff: TimeInterval = 30.0
 
     // Geofence neo: nguồn đánh thức app của iOS sau khi bị vuốt tắt (force-quit) khi nhân viên rời đi
     private var anchorCenter: CLLocation?
@@ -211,6 +225,8 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.isTracking = false
+            self.stopHeartbeatTimer()
+            self.resetRetryBackoff()
             self.locationManager?.stopUpdatingLocation()
             if CLLocationManager.significantLocationChangeMonitoringAvailable() {
                 self.locationManager?.stopMonitoringSignificantLocationChanges()
@@ -225,6 +241,22 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
     }
 
     @objc func checkPermission(_ call: CAPPluginCall) {
+        // Capacitor gọi plugin method trên hàng đợi nền: chuyển sang main để thao tác với CLLocationManager
+        DispatchQueue.main.async {
+            self.resolvePermissionStatus(call)
+        }
+    }
+
+    private static func authorizationStatusString(_ status: CLAuthorizationStatus) -> String {
+        switch status {
+        case .authorizedAlways: return "always"
+        case .authorizedWhenInUse: return "whenInUse"
+        case .notDetermined: return "notDetermined"
+        default: return "denied"
+        }
+    }
+
+    private func resolvePermissionStatus(_ call: CAPPluginCall) {
         let manager = getOrCreateLocationManager()
         let status: CLAuthorizationStatus
         if #available(iOS 14.0, *) {
@@ -240,14 +272,7 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
             isPrecise = (manager.accuracyAuthorization == .fullAccuracy)
         }
 
-        let statusStr: String = {
-            switch status {
-            case .authorizedAlways: return "always"
-            case .authorizedWhenInUse: return "whenInUse"
-            case .notDetermined: return "notDetermined"
-            default: return "denied"
-            }
-        }()
+        let statusStr = NativeTrackingPlugin.authorizationStatusString(status)
 
         call.resolve([
             "status": statusStr,
@@ -271,6 +296,13 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
 
     /// Kiểm tra quyền Vị trí Luôn luôn. Nếu chưa có, kích hoạt xin quyền iOS hoặc hiển thị hướng dẫn vào Cài đặt
     @objc func ensureAlwaysPermission(_ call: CAPPluginCall) {
+        // pendingPermissionCall và CLLocationManager chỉ được chạm tới trên main thread (tránh race với delegate callback)
+        DispatchQueue.main.async {
+            self.resolveAlwaysPermission(call)
+        }
+    }
+
+    private func resolveAlwaysPermission(_ call: CAPPluginCall) {
         let manager = getOrCreateLocationManager()
 
         let status: CLAuthorizationStatus
@@ -385,6 +417,12 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         // Bỏ qua callback ban đầu khi hệ thống vừa khởi tạo delegate mà người dùng chưa đưa ra lựa chọn
         guard status != .notDetermined else { return }
 
+        // Báo JS mỗi khi quyền thay đổi (kể cả khi không có popup xin quyền đang chờ) để web hiển thị cảnh báo
+        notifyListeners("permissionChanged", data: [
+            "status": NativeTrackingPlugin.authorizationStatusString(status),
+            "isAlways": status == .authorizedAlways
+        ])
+
         guard let call = self.pendingPermissionCall else { return }
         self.pendingPermissionCall = nil
 
@@ -456,6 +494,8 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
     // MARK: - CoreLocation Active Tracking Engine (Chuẩn Live Location Zalo / Grab)
     private func setupLocationManager() {
         let manager = getOrCreateLocationManager()
+        // Mọi đường khởi tạo (kể cả iOS đánh thức ngầm) đều phải bật theo dõi pin trước khi gửi ping
+        enableBatteryMonitoringIfNeeded()
 
         // Cấu hình GPS phần cứng chất lượng cao nhất, không tự ý ngắt chip GPS
         manager.desiredAccuracy = kCLLocationAccuracyBest
@@ -489,15 +529,75 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         // Visits: thêm một nguồn đánh thức hệ thống (vẫn hoạt động sau khi app bị vuốt tắt)
         manager.startMonitoringVisits()
 
+        startHeartbeatTimer()
+
         isTracking = true
         print("[NativeTracking iOS] Active Live-Tracking started (kCLLocationAccuracyBest, showsBackgroundLocationIndicator=true).")
     }
 
     private func releaseLocationManager() {
         isTracking = false
+        stopHeartbeatTimer()
         locationManager?.stopUpdatingLocation()
         locationManager?.delegate = nil
         locationManager = nil
+    }
+
+    // MARK: - Heartbeat Timer & Retry Backoff
+    /// Chạy trên main queue. Chỉ gửi khi đã quá `heartbeatInterval` kể từ lần gửi cuối (GPS bình thường thì không bao giờ kích hoạt)
+    private func startHeartbeatTimer() {
+        stopHeartbeatTimer()
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.main)
+        timer.schedule(deadline: .now() + heartbeatInterval, repeating: heartbeatInterval, leeway: .seconds(5))
+        timer.setEventHandler { [weak self] in
+            self?.heartbeatTick()
+        }
+        timer.resume()
+        heartbeatTimer = timer
+    }
+
+    private func stopHeartbeatTimer() {
+        heartbeatTimer?.cancel()
+        heartbeatTimer = nil
+    }
+
+    private func heartbeatTick() {
+        guard isTracking else { return }
+        let now = Date()
+        guard now >= retryNotBefore, now.timeIntervalSince(lastPingTime) >= heartbeatInterval else { return }
+        // Dùng điểm đã gửi gần nhất để không làm "giật lùi" vị trí trên Live Map
+        let location: CLLocation
+        if let sent = lastSentLocation {
+            location = sent
+        } else if let cached = locationManager?.location {
+            // Điểm cache của hệ thống có thể rất cũ: gắn sai số lớn để server chỉ làm mới trạng thái sống, không đổi vị trí
+            location = CLLocation(
+                coordinate: cached.coordinate,
+                altitude: cached.altitude,
+                horizontalAccuracy: max(cached.horizontalAccuracy, 1000.0),
+                verticalAccuracy: cached.verticalAccuracy,
+                timestamp: cached.timestamp
+            )
+        } else {
+            return
+        }
+        lastPingTime = now
+        sendPing(location: location, isHeartbeat: true)
+    }
+
+    /// Gọi trên main thread
+    private func registerPingFailure() {
+        pingFailureStreak += 1
+        let backoff = min(maxRetryBackoff, 5.0 * Double(pingFailureStreak))
+        retryNotBefore = Date().addingTimeInterval(backoff)
+        // Cho phép gửi lại ngay khi hết thời gian chờ (không bắt chờ thêm 60s throttle của chế độ đứng yên)
+        lastPingTime = Date().addingTimeInterval(-heartbeatInterval)
+    }
+
+    /// Gọi trên main thread
+    private func resetRetryBackoff() {
+        pingFailureStreak = 0
+        retryNotBefore = Date.distantPast
     }
 
     // MARK: - Anchor Geofence Engine (đánh thức app sau force-quit khi rời khỏi vị trí)
@@ -538,6 +638,9 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
                 standalone.accessToken = defaults.string(forKey: "xttech_ios_access_token")
                 standalone.refreshToken = defaults.string(forKey: "xttech_ios_refresh_token")
                 standalone.apiUrl = defaults.string(forKey: "xttech_ios_api_url")
+                // Instance standalone không chạy load(): phải tự bật theo dõi pin để ping không thiếu batteryLevel
+                standalone.enableBatteryMonitoringIfNeeded()
+                _ = standalone.getCurrentBatteryLevel()
                 standalone.setupLocationManager()
                 shared = standalone
             }
@@ -556,9 +659,17 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
             return
         }
 
-        // Bỏ qua tọa độ sai số quá lớn (> 200m)
-        if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 200.0 {
+        // Tọa độ không hợp lệ (accuracy âm): bỏ qua hoàn toàn
+        if location.horizontalAccuracy < 0 {
             diagnostics.recordLocationUpdate(isFiltered: true)
+            return
+        }
+
+        // Sai số quá lớn (> 200m, vd người dùng tắt "Vị trí chính xác"): không dùng làm tọa độ/lộ trình,
+        // nhưng vẫn gửi nhịp tim để server biết thiết bị còn sống và nhận được bản chẩn đoán
+        if location.horizontalAccuracy > 200.0 {
+            diagnostics.recordLocationUpdate(isFiltered: true)
+            sendLowAccuracyHeartbeatIfDue(location)
             return
         }
         diagnostics.recordLocationUpdate(isFiltered: false)
@@ -592,6 +703,11 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
             }
         }
 
+        // Đang trong thời gian chờ thử lại sau khi gửi thất bại
+        if now < retryNotBefore {
+            return
+        }
+
         // Điều tiết tần suất gửi (Throttling Engine):
         if isMoving {
             // Khi di chuyển ngoài đường: Gửi thời gian thực mỗi 3.0 giây / lần (chuẩn Live-Map như Zalo / Grab)
@@ -608,6 +724,15 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         self.lastPingTime = now
         self.lastSentLocation = location
         sendPing(location: location, isHeartbeat: !isMoving)
+    }
+
+    /// Gửi nhịp tim cho điểm sai số lớn: tối đa 1 lần / heartbeatInterval, KHÔNG cập nhật điểm neo (lastSentLocation)
+    /// để không làm sai lệch bộ lọc di chuyển. Server giữ nguyên tọa độ tốt gần nhất và chỉ làm mới trạng thái sống.
+    private func sendLowAccuracyHeartbeatIfDue(_ location: CLLocation) {
+        let now = Date()
+        guard now >= retryNotBefore, now.timeIntervalSince(lastPingTime) >= heartbeatInterval else { return }
+        lastPingTime = now
+        sendPing(location: location, isHeartbeat: true)
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -731,22 +856,35 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
             guard let self = self else { return }
             guard let httpResponse = response as? HTTPURLResponse else {
                 TrackingDiagnostics.shared.recordPingFailure(statusCode: nil, error: error)
+                DispatchQueue.main.async { self.registerPingFailure() }
                 return
             }
             if (200...299).contains(httpResponse.statusCode) {
                 TrackingDiagnostics.shared.recordPingSuccess(statusCode: httpResponse.statusCode)
                 DispatchQueue.main.async {
                     self.lastPingTime = Date()
+                    self.resetRetryBackoff()
                 }
+                self.notifyListeners("locationUpdate", data: [
+                    "latitude": location.coordinate.latitude,
+                    "longitude": location.coordinate.longitude,
+                    "speed": speed,
+                    "timestamp": Date().timeIntervalSince1970
+                ])
                 return
             }
 
             TrackingDiagnostics.shared.recordPingFailure(statusCode: httpResponse.statusCode, error: nil)
-            guard httpResponse.statusCode == 401 && !isRetry else { return }
+            guard httpResponse.statusCode == 401 && !isRetry else {
+                DispatchQueue.main.async { self.registerPingFailure() }
+                return
+            }
             isHandingOffToRetry = true
             self.refreshAccessToken { success in
                 guard success else {
                     TrackingDiagnostics.shared.recordTokenRefreshFailure()
+                    self.notifyListeners("authError", data: ["code": "UNAUTHORIZED"])
+                    DispatchQueue.main.async { self.registerPingFailure() }
                     self.finishPing()
                     return
                 }

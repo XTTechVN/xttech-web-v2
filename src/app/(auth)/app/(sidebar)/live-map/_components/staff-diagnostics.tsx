@@ -11,6 +11,8 @@ import {
 
 interface StaffDiagnosticsProps {
   diagnostics?: StaffDeviceDiagnostics;
+  /** Đã check-in nhưng thiết bị chưa gửi ping nào lên server */
+  awaitingFirstPing?: boolean;
   /** Giới hạn số tín hiệu hiển thị (dùng cho danh sách rút gọn) */
   maxSignals?: number;
   /** Ẩn dòng thông tin phiên bản app / thiết bị */
@@ -24,13 +26,13 @@ const SEVERITY_CLASS_MAP: Record<DiagnosticSeverity, string> = {
 };
 
 /** Hiển thị tín hiệu chẩn đoán thiết bị giúp admin xác định nguyên nhân nhân viên mất tín hiệu */
-export function StaffDiagnostics({ diagnostics, maxSignals, hideDeviceSummary = false }: StaffDiagnosticsProps) {
-  const signals = buildDiagnosticSignals(diagnostics);
+export function StaffDiagnostics({ diagnostics, awaitingFirstPing = false, maxSignals, hideDeviceSummary = false }: StaffDiagnosticsProps) {
+  const signals = buildDiagnosticSignals(diagnostics, { awaitingFirstPing });
   const visibleSignals = maxSignals ? signals.slice(0, maxSignals) : signals;
   const hiddenCount = signals.length - visibleSignals.length;
   const deviceSummary = hideDeviceSummary ? null : formatDeviceSummary(diagnostics);
 
-  if (!diagnostics || (visibleSignals.length === 0 && !deviceSummary)) return null;
+  if (visibleSignals.length === 0 && !deviceSummary) return null;
 
   return (
     <div className="space-y-1" data-testid="staff-diagnostics">
