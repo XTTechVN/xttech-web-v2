@@ -5,10 +5,12 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import L from 'leaflet';
 import dayjs from 'dayjs';
-import { StaffLiveLocation } from '@/types';
-import { Battery, Gauge, Clock, Navigation } from 'lucide-react';
+import { StaffLiveLocation, isStaffSignalLost } from '@/types';
+import { Battery, Gauge, Clock, Navigation, Compass } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import { getFileUrl } from '@/utils';
+import { getFileUrl, openGoogleMapsNavigation } from '@/utils';
+import { PlatformBadge } from '@/components';
+import { StaffDiagnostics } from './staff-diagnostics';
 
 // Dynamic import Leaflet components for SSR safety
 const MapContainer = dynamic(
@@ -81,7 +83,7 @@ export function LiveMap({
   const createCustomStaffIcon = (staff: StaffLiveLocation) => {
     const isSelected = selectedStaff?.userId === staff.userId;
     const isMoving = staff.status === 'moving';
-    const isOffline = staff.status === 'offline';
+    const isOffline = isStaffSignalLost(staff.status);
     const isCloseZoom = currentZoom >= 13;
 
     const ringColor = isOffline
@@ -139,7 +141,7 @@ export function LiveMap({
   const createClusterIcon = (cluster: StaffCluster) => {
     const count = cluster.staffList.length;
     const hasMoving = cluster.staffList.some((s) => s.status === 'moving');
-    const allOffline = cluster.staffList.every((s) => s.status === 'offline');
+    const allOffline = cluster.staffList.every((s) => isStaffSignalLost(s.status));
 
     const badgeColor = allOffline
       ? 'bg-slate-500 ring-slate-300'
@@ -489,12 +491,15 @@ function StaffPopupContent({
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="text-xs font-bold text-slate-800 truncate">
-            {staff.userName || 'Nhân viên'}
-          </h4>
-          <p className="text-[10px] text-slate-500 truncate">
+          <div className="flex items-center justify-between gap-1 !m-0 !p-0 leading-normal">
+            <span className="text-xs font-bold text-slate-800 truncate">
+              {staff.userName || 'Nhân viên'}
+            </span>
+            <PlatformBadge platform={staff.platform} />
+          </div>
+          <div className="text-[10px] text-slate-500 truncate !m-0 !p-0 leading-normal">
             {staff.positionName || staff.departmentName || 'Nhân viên'}
-          </p>
+          </div>
         </div>
       </div>
 
@@ -520,14 +525,26 @@ function StaffPopupContent({
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => onViewRoute(staff)}
-        className="w-full h-7 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-      >
-        <Navigation size={12} />
-        <span>Xem lộ trình trong ngày</span>
-      </button>
+      <StaffDiagnostics diagnostics={staff.diagnostics} />
+
+      <div className="flex items-center gap-1.5 pt-0.5">
+        <button
+          type="button"
+          onClick={() => onViewRoute(staff)}
+          className="flex-1 h-7 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+        >
+          <Navigation size={12} />
+          <span>Xem lộ trình trong ngày</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => openGoogleMapsNavigation(staff.latitude, staff.longitude)}
+          className="w-7 h-7 shrink-0 rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-200 transition-colors flex items-center justify-center cursor-pointer shadow-xs"
+          title="Mở Google Maps chỉ đường tới đây"
+        >
+          <Compass size={14} />
+        </button>
+      </div>
     </div>
   );
 }

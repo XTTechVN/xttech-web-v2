@@ -14,6 +14,7 @@ import LiveStaffWidget from '../_components/live-staff-widget';
 import ProjectReportCard from '../_components/project-report-card';
 import { Users, CheckCircle2, ClockAlert, FolderGit2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { DepartmentRosterWidget } from '../_components/department-roster-widget';
 
 export const AdminDashboard = () => {
   const router = useRouter();
@@ -76,6 +77,7 @@ export const AdminDashboard = () => {
           recentAdjustments={data?.recentPendingAdjustments}
           isAdminOrHr={true}
         />
+        <DepartmentRosterWidget />
         <SystemHistory />
       </div>
 

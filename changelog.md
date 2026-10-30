@@ -2,6 +2,221 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-21
+### Fixed (iOS: bị đẩy sang trang offline / báo "lỗi DNS" khi mở app)
+- **[WebViewErrorGuard.swift](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/WebViewErrorGuard.swift) (mới), [MainViewController.swift](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/MainViewController.swift):** Capacitor iOS nạp `offline.html` với MỌI lỗi điều hướng (kể cả -999 / Frame load interrupted khi redirect), làm web chấm công và tracking real-time dừng. Nay bỏ qua lỗi vặt, tự thử lại 2 lần với lỗi DNS / timeout / không kết nối được, chỉ khi thất bại mới nạp `offline.html` kèm `reason`, `code`, `target`.
+- **[offline.html](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/public/offline.html):** hiển thị đúng nguyên nhân (DNS, mất mạng, timeout, kết nối thất bại, TLS) và mã lỗi thay vì ghi cứng "lỗi DNS". Backend/native truyền mã tiếng Anh, trang tự dịch sang tiếng Việt.
+- **Nguyên nhân gốc ([capacitor.config.ts](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/capacitor.config.ts)):** `server.url` bị đổi thành `/app/dashboard` ở commit cce4f37; Capacitor coi mọi điều hướng top-level không bắt đầu bằng URL này (redirect `/login`, `/app/...`) là link ngoài, huỷ và mở Safari, sinh lỗi 102 rồi rơi vào `offline.html`. Đã thêm `allowNavigation` theo hostname (đồng bộ iOS/Android `capacitor.config.json`).
+- **`WebViewErrorGuard`:** lỗi vặt chỉ bị bỏ qua khi webview đã có trang; nếu chưa có trang nào thì nạp trang lỗi để không bị màn trắng.
+- **Lưu ý:** cần build lại bản iOS; Swift chưa được biên dịch trên Windows.
+
+## [Unreleased] - 2026-10-19
+### Added (Chẩn đoán nguyên nhân nhân viên bị Ngoại tuyến)
+- **iOS ([`TrackingDiagnostics.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/TrackingDiagnostics.swift)):** thu thập quyền vị trí, Low Power Mode, Background Refresh, lý do khởi động lại app, suy đoán lần thoát trước (bị kill/reboot/update), tình trạng gửi ping (HTTP, số lần lỗi liên tiếp), tuổi vị trí, lỗi CoreLocation và MetricKit exit metrics; gửi kèm mỗi ping (`diagnostics`).
+- **Live Map ([`diagnostic-signals.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/diagnostic-signals.ts), [`staff-diagnostics.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/staff-diagnostics.tsx)):** hiển thị tín hiệu chẩn đoán (tiếng Việt) trong popup và danh sách mất tín hiệu.
+- **Lưu ý:** cần build lại bản iOS để có dữ liệu; Swift chưa được biên dịch trên Windows.
+
+### Changed (iOS: gửi ping bền hơn trên mạng yếu)
+- **[`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift):** tăng timeout request 5s → 15s (resource 8s → 25s); chỉ cho 1 ping chạy tại một thời điểm (tự hết hạn sau 30s để không bị kẹt), lần retry sau refresh token vẫn giữ quyền gửi.
+
+### Fixed (Tối ưu cơ chế refresh token chống Race Condition)
+- **[`api.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/api.ts):** Triển khai cơ chế Hàng đợi (Queue) và Khóa tương hỗ (Mutex Lock `isRefreshing`). Khi nhiều API cùng nhận mã 401, chỉ 1 request duy nhất được gọi `/auth/refresh`, các request còn lại được tạm giữ trong hàng đợi và tự động giải phóng với access token mới sau khi refresh hoàn tất. Loại bỏ vòng lặp `_retryCount < 3`, tuân thủ chuẩn Rule 13 `camelCase` (`newAccessToken`).
+
+## [Unreleased] - 2026-10-15
+### Fixed (iOS/Android: Khắc phục lỗi bị Ngoại tuyến và mất mức pin do thoát app ngay sau khi chấm công)
+- **Kích hoạt Native Tracking tức thời ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx)):**
+  - Khi nhân viên check-in thành công qua API `autoTimekeeping`, gọi trực tiếp `await NativeTracking.startTracking(...)` ngay lập tức trên Foreground trước khi hiển thị Toast và đóng Modal.
+  - Loại bỏ hoàn toàn sự phụ thuộc vào chuỗi domino bất đồng bộ của React Query (`invalidateQueries` -> fetch `getAttendances` -> `layout.tsx` re-render -> `useEffect` hook).
+  - Ngăn chặn triệt để tình trạng iOS tạm dừng (suspend) tiến trình WKWebView khi nhân viên vuốt về Home hoặc tắt màn hình quá nhanh (< 0.5s), đảm bảo CoreLocation chạy ngầm được đăng ký 100% trong Foreground.
+  - Tương tự khi check-out thành công, gọi ngay `await NativeTracking.stopTracking()` để thu hồi GPS nền ngay lập tức.
+
+### Fixed (Ô tìm kiếm bảng: dư khoảng trắng làm không ra kết quả)
+- **[`table-search.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-search.tsx):** `trim()` giá trị tìm kiếm (sau debounce) trước khi gọi `onChange`; ô nhập vẫn giữ nguyên nội dung người dùng đang gõ. Đi cùng bản vá chuẩn hóa Unicode NFC/NFD phía backend.
+- **[`table-search.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-search.tsx) tự xóa dấu cách đang gõ:** `onChange` trả giá trị đã `trim()` làm `value` của cha đổi và ghi đè ô nhập. Nay chỉ đồng bộ từ cha khi giá trị khác bản trim của nội dung đang gõ; tăng debounce 300ms lên 500ms.
+- **Lọc phía client không phân biệt dấu/Unicode:** thêm `normalizeSearchText`, `includesSearchText` vào [`string.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/string.ts) (gộp NFC/NFD, bỏ dấu, `đ`→`d`). Áp dụng cho `select.tsx`, `table-filters.tsx`, `search-select.tsx`, `staff-list.tsx`, 5 `relation-modals.tsx` (projects/configuration) và 2 modal payroll.
+- **[`table-search.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-search.tsx):** đồng bộ `value` từ component cha ngay lúc render, bỏ `setState` trong `useEffect`.
+- **Bộ lọc khoảng ngày nhập không ăn:** thêm [`table-date-input.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-date-input.tsx) giữ giá trị đang gõ ở state cục bộ, chỉ báo lên trang cha khi ngày hợp lệ (năm >= 1900) hoặc khi rời ô; dùng trong `DateRangeFilter` ([`table-filters.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/table/table-filters.tsx)).
+
+### Fixed (Android WebView: Xử lý lỗi DNS ERR_NAME_NOT_RESOLVED & Màn hình Offline Fallback)
+- **Tự động thử lại thông minh (Auto-retry) ([`MainActivity.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/MainActivity.java)):**
+  - Mở rộng `BridgeWebViewClient` thành `XtTechWebViewClient`.
+  - Tự động bắt các mã lỗi DNS/kết nối (`ERROR_HOST_LOOKUP`, `ERROR_CONNECT`, `ERROR_TIMEOUT`, `ERROR_FAILED_SSL_HANDSHAKE`).
+  - Tự động thử lại ngầm tối đa 2 lần (mỗi lần cách nhau 2 giây) để vượt qua tình trạng mạng/DNS chập chờn hoặc Private DNS lag lúc vừa mở app mà không làm gián đoạn trải nghiệm người dùng.
+- **Trang ngoại tuyến dự phòng đóng gói nội bộ ([`public/offline.html`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/public/offline.html)):**
+  - Đóng gói trang tĩnh `offline.html` vào APK assets (`android/app/src/main/assets/public/offline.html`), đảm bảo luôn hiển thị được ngay cả khi máy hoàn toàn không có internet.
+  - Giao diện Dark theme sang trọng chuẩn thương hiệu XTTech, hiển thị thông báo lỗi thân thiện kèm gợi ý tắt Private DNS / AdGuard.
+  - Tích hợp bộ đếm tự động kết nối lại sau 5s, sự kiện `window.addEventListener('online')` và nút bấm "Thử lại ngay" điều hướng chính xác về URL bị lỗi trước đó qua query `?target=`.
+- **Cấu hình Capacitor ([`capacitor.config.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/capacitor.config.ts)):**
+  - Khai báo `server.errorPath: 'offline.html'` để Capacitor tự động nạp trang ngoại tuyến nội bộ thay vì để lộ màn hình Chromium thô thiển của hệ điều hành Android.
+
+### Changed (Mở app vào thẳng Dashboard trên Android & iOS - Loại bỏ giật chớp trang Landing Page)
+- **Tối ưu URL khởi động WebView ([`capacitor.config.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/capacitor.config.ts), [`build.gradle`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/build.gradle)):**
+  - Cấu hình URL mặc định kết thúc bằng `/app/dashboard` cho cả nền tảng Android và iOS (thay vì root domain `/`).
+  - Cập nhật task tự động chuyển đổi URL trong `build.gradle` (Release: `https://xttech.vn/app/dashboard`, Debug: `https://dev-xt-web-v2.up.railway.app/app/dashboard`).
+  - Loại bỏ hoàn toàn độ trễ 1 giây tải trang Landing Page và cú giật chuyển hướng Client-side; người dùng mở app là vào thẳng Dashboard (hoặc tự động chuyển sang `/signin` nếu chưa đăng nhập).
+
+## [Unreleased] - 2026-10-14
+
+### Added (Chỉ đường / Dẫn đường tới vị trí nhân sự qua Google Maps)
+- **Tiện ích dẫn đường ([`src/utils/navigation.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/navigation.ts), [`src/utils/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/index.ts)):**
+  - Tạo mới hàm helper `openGoogleMapsNavigation(lat, lng)`: mở Google Maps chỉ đường bằng chuẩn Universal Directions URL (`https://www.google.com/maps/dir/?api=1&destination=lat,lng`), tự động deep link mở ứng dụng Google Maps trên Android/iOS hoặc tab mới trên Web.
+- **Bản đồ trực tiếp Live Map & Danh sách nhân sự ([`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/live-map.tsx), [`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/staff-list.tsx)):**
+  - Thêm icon điều hướng `Compass` bên cạnh nút "Xem lộ trình trong ngày" trên popup marker nhân viên.
+  - Thêm icon điều hướng `Compass` trong footer card nhân sự trên danh sách bên trái giúp quản lý mở nhanh chỉ đường tới nhân viên bất kỳ lúc nào.
+
+### Fixed (Live Tracking: nhân viên bị "Ngoại tuyến" bất đồng bộ giữa các thiết bị)
+- **Ngày "hôm nay" bị đóng băng qua đêm ([`useMyTodayAttendance.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useMyTodayAttendance.ts), [`use-local-today.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/use-local-today.ts)):**
+  - Nguyên nhân: `todayStr` dùng `useMemo([])` -> App native giữ JS state qua đêm nên vẫn truy vấn ca của hôm qua (đã check-out) -> `isWorkingShift = false` -> `NativeTracking.stopTracking()` ngay sau khi check-in hôm nay.
+  - Thêm hook dùng chung `useLocalToday` tự đồng bộ ngày khi app resume (`visibilitychange`/`focus`) và khi qua nửa đêm (kiểm tra mỗi 60s).
+- **Android heartbeat đứng yên bị ngưng khi CPU ngủ sâu ([`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java)):**
+  - Thay `ScheduledExecutorService` (không giữ CPU thức) bằng `AlarmManager.setAndAllowWhileIdle` + `PARTIAL_WAKE_LOCK` có timeout -> heartbeat vẫn chạy khi tắt màn hình / Doze, không cần quyền `SCHEDULE_EXACT_ALARM`.
+  - Heartbeat fallback sang vị trí cache hệ thống (<= 10 phút) khi chưa từng có fix GPS (trong nhà).
+  - Tách helper `getFreshLastKnownLocation` dùng chung cho khởi động & heartbeat (DRY).
+
+## [Unreleased] - 2026-10-13
+
+### Added (Hiển thị nhãn thiết bị điểm danh & phát định vị: iOS, Android, Web App)
+- **Component dùng chung ([`src/components/platform-badge/platform-badge.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/platform-badge/platform-badge.tsx)):**
+  - Tạo mới component `PlatformBadge` trực quan, hiển thị icon & nhãn cho từng nền tảng:
+    - 🍏 **iOS**: Badge màu slate xám với biểu tượng Apple logo.
+    - 🤖 **Android**: Badge màu emerald xanh lá với biểu tượng chú robot Android.
+    - 🌐 **Web App**: Badge màu xanh dương với biểu tượng quả địa cầu Globe.
+- **Danh sách nhân sự & Bản đồ trực tuyến ([`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/staff-list.tsx), [`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/live-map.tsx), [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx)):**
+  - Hiển thị `PlatformBadge` cạnh mức phần trăm pin trên từng card nhân sự trong danh sách Live Map.
+  - Hiển thị `PlatformBadge` trong popup chi tiết nhân sự khi click vào điểm đánh dấu trên bản đồ vệ tinh / đường phố.
+  - WebSocket auto-sync cập nhật nền tảng thời gian thực khi nhận sự kiện `STAFF_LOCATION_UPDATE`.
+- **Chấm công & Thu thập tọa độ nền ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx), [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts), [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`TrackingLocationService.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/TrackingLocationService.java)):**
+  - Modal chấm công tự động phát hiện `Capacitor.getPlatform()` và gửi kèm `platform: 'ios' | 'android' | 'web'` khi Check-in / Check-out.
+  - Tự động gắn kèm `platform` vào các gói tin location-ping định kỳ trên cả Web, iOS native URLSession và Android Java Foreground Service.
+- **Types ([`types/attendance.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/attendance.ts), [`types/location.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/location.ts)):**
+  - Bổ sung type `DevicePlatform = 'ios' | 'android' | 'web'` và `DEVICE_PLATFORM_MAP`.
+  - Bổ sung `checkInPlatform`, `checkOutPlatform` vào `Attendance` và `platform` vào `StaffLiveLocation`, `LocationPingPayload`, `AutoTimekeepingData`.
+
+### Changed (Tối ưu Trực quan Live Map & Đồng bộ Checkout Realtime)
+- **Sắp xếp thứ tự nhân sự ([`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/staff-list.tsx)):**
+  - Tự động sắp xếp danh sách nhân sự trên bản đồ theo 3 nhóm rõ ràng: **Rank 1: Online (`moving`, `stationary`) -> Rank 2: Tắt app (`app_closed`) -> Rank 3: Mất tín hiệu/Offline (`offline`)**.
+  - Các nhân sự trong cùng một nhóm trạng thái được sắp xếp theo thứ tự bảng chữ cái tiếng Việt (A-Z) giúp quản lý dễ dàng tra cứu.
+- **Xử lý Checkout thời gian thực ([`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx)):**
+  - Lắng nghe sự kiện WebSocket `STAFF_CHECKOUT`: Khi nhân viên hoàn tất check-out ca làm việc, hệ thống lập tức gỡ bỏ thông tin và marker của nhân viên đó khỏi danh sách và bản đồ Live Map mà không cần tải lại trang.
+
+## [Unreleased] - 2026-10-12
+
+### Added (Phát hiện vuốt tắt app & tăng nguồn đánh thức định vị nền iOS)
+- **Geofence neo + Visits ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+  - Luôn duy trì một geofence bán kính 150m quanh vị trí tốt gần nhất (đặt lại sau mỗi 100m di chuyển, cùng identifier nên không cộng dồn region).
+  - Bật `startMonitoringVisits()`. Cùng với SLC, đây là các nguồn để iOS đánh thức lại app sau force-quit khi nhân viên rời khỏi vị trí.
+  - `didExitRegion` / `didVisit`: bật lại GPS liên tục và đặt neo mới.
+- **Phát hiện vuốt tắt app ([`AppDelegate.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/AppDelegate.swift)):**
+  - `applicationWillTerminate` gọi `NativeTrackingPlugin.handleAppWillTerminate()`: gửi ping `eventType = app_closed` và đặt local notification nhắc mở lại app (chờ tối đa 3 giây).
+  - `startTracking` xin quyền thông báo; `load()` / `stopTracking` xoá notification nhắc nhở.
+- **Live Map ([`location.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/location.ts), [`staff-list.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/staff-list.tsx), [`live-map.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/_components/live-map.tsx), [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/live-map/page.tsx)):**
+  - Thêm trạng thái `app_closed` (badge "Đã tắt app"), `STAFF_LIVE_STATUS_MAP` và helper `isStaffSignalLost`.
+
+### Fixed
+- **Khắc phục lỗi mất mục "Vị trí" trong Cài đặt iPhone trên thiết bị mới cài đặt ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
+  - **Nguyên nhân gốc rễ:** Trên iOS, mục "Vị trí" chỉ xuất hiện trong `Cài đặt > [Tên App]` sau khi ứng dụng đã gọi API xin quyền của hệ thống ít nhất một lần. Trước đây, hàm `ensureAlwaysPermission` khi thấy quyền chưa phải là `authorizedAlways` đã lập tức hiển thị Alert mở thẳng Cài đặt iPhone mà chưa từng gọi lệnh xin quyền của hệ điều hành. Đối với các máy mới cài đặt hoặc nhân viên mới đăng nhập (trạng thái `notDetermined`), người dùng bấm sang Cài đặt bị mất hoàn toàn mục "Vị trí", gây tắc nghẽn luồng chấm công.
+  - **Giải pháp xử lý:**
+    - Khi `status == .notDetermined`: Tự động gọi `locationManager.requestAlwaysAuthorization()` để iOS bung popup xin quyền hệ thống gốc của Apple ("Cho phép XTTech truy cập vị trí của bạn?"). Nhờ đó iOS ghi nhận và lưu vĩnh viễn mục "Vị trí" vào Cài đặt của app.
+    - Cài đặt delegate `locationManagerDidChangeAuthorization` và `didChangeAuthorization` (`CLLocationManagerDelegate`) để lắng nghe lựa chọn của người dùng:
+      - Sau khi người dùng chọn "Khi dùng ứng dụng" (`authorizedWhenInUse`), mục "Vị trí" đã có sẵn trong Cài đặt, app tiếp tục hiển thị Native Alert chuẩn dẫn người dùng vào Cài đặt để gạt chuyển sang "Luôn luôn" (Always).
+      - Bổ sung helper tập trung `getOrCreateLocationManager()`, quản lý an toàn vòng đời `CLLocationManager`.
+    - Chuẩn hóa `checkPermission` trả về đầy đủ các trạng thái `always`, `whenInUse`, `notDetermined`, `denied` và cờ `isWhenInUse`.
+- **[Root cause] Plugin `NativeTracking` chưa từng được đăng ký trên iOS:**
+  - Capacitor 6+ chỉ đăng ký plugin có trong `packageClassList` (đang rỗng), nên JS gọi `startTracking` bị lỗi và âm thầm fallback sang `navigator.geolocation` của WebView, vốn chỉ chạy khi app ở foreground. Hậu quả: toàn bộ GPS nền / geofence / app_closed chưa từng chạy.
+  - [`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift) conform `CAPBridgedPlugin` (`identifier`, `jsName`, `pluginMethods`). Xoá `NativeTrackingPlugin.m` (macro `CAP_PLUGIN` cũ).
+  - Thêm [`MainViewController.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/MainViewController.swift): override `capacitorDidLoad()` → `registerPluginInstance(NativeTrackingPlugin())`. `Main.storyboard` và [`SceneDelegate.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/SceneDelegate.swift) dùng `MainViewController`.
+  - `SceneDelegate` chỉ tạo window khi `window == nil`, tránh dựng 2 bridge/WebView song song với storyboard.
+- **Race condition gọi `stopTracking` khi mở app ([`useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts), [`useMyTodayAttendance.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useMyTodayAttendance.ts), [`layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/layout.tsx)):**
+  - Trước đây mỗi lần mở app, khi dữ liệu chấm công chưa tải xong, hook coi như "không trong ca" và gọi `stopTracking` native (xoá SLC/geofence/visits). Nay chỉ dừng khi trạng thái ca đã xác định (`isStatusResolved`).
+- **Khôi phục tracking khi app khởi chạy ([`AppDelegate.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/AppDelegate.swift)):** luôn gọi `handleLocationWakeUp()` (hàm tự kiểm tra cờ tracking), không phụ thuộc launch key `.location`.
+- **Khắc phục lệch Build Number trên CI/CD TestFlight ([`build-ios-signed.yml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/.github/workflows/build-ios-signed.yml)):**
+  - Thêm offset `BUILD_NUM=$(( ${{ github.run_number }} + 30 ))` vào quy trình đóng gói Xcode (`CURRENT_PROJECT_VERSION` và `CFBundleVersion`) nhằm đảm bảo các bản build mới luôn có số build vượt trội (> 50), tránh xung đột thụt lùi số phiên bản với các bản build 44 trước đó trên TestFlight.
+- Giải phóng instance standalone (tạo lúc iOS đánh thức app từ nền) khi Capacitor bridge load, tránh 2 `CLLocationManager` gửi ping trùng.
+
+### Changed
+- Tách `makePingRequest` dùng chung cho ping định kỳ và ping `app_closed`; payload có thêm `eventType`.
+
+## [Unreleased] - 2026-10-09
+
+### Fixed (Tối Ưu Hoá Tầng Mạng Nền Và Chế Độ Định Vị Nền iOS Chống Nghẽn Khi Khóa Màn Hình)
+- **Tách Biệt Dedicated Background URLSession ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+  - Khởi tạo instance `backgroundSession` với cấu hình `URLSessionConfiguration` chuyên trách cho tiến trình chạy ngầm.
+  - Thiết lập `timeoutIntervalForRequest = 5.0s`, `timeoutIntervalForResource = 8.0s`, `waitsForConnectivity = false` và `httpMaximumConnectionsPerHost = 2` để giải phóng socket ngay tức thì, triệt tiêu triệt để hiện tượng treo lơ lửng gói tin HTTP khi iPhone bị khóa màn hình.
+  - Hạ `request.timeoutInterval` từ 15.0s xuống 5.0s cho cả `sendPing` và `refreshAccessToken`.
+- **Đồng Bộ Chu Kỳ `beginBackgroundTask` An Toàn:**
+  - Đóng gói logic giải phóng task `endBgTask` luôn được kích hoạt an toàn trên Main Thread ngay khi request hoàn tất (thành công, lỗi hoặc timeout), ngăn chặn hệ điều hành iOS đánh dấu app vi phạm "CPU background execution time limit".
+- **Chuẩn Hóa CoreLocation Activity Type:**
+  - Chuyển đổi `activityType` từ `.automotiveNavigation` (chỉ xe ô tô) sang `.otherNavigation` (tương thích đa phương tiện: đi bộ, xe máy, phương tiện cá nhân), giúp iOS CoreLocation không tự ý bóp trễ nhịp quét GPS khi nhân viên di chuyển chậm hoặc ở trong không gian làm việc.
+
+## [Unreleased] - 2026-10-03
+
+### Added (Bắt Buộc Quyền Vị Trí "Luôn Luôn" Bằng Pop-up Native iOS UIAlertController Khi Chấm Công)
+- **Phương Thức Native Bridge Mới ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m), [`NativeTrackingPlugin.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/NativeTrackingPlugin.java)):**
+  - **`ensureAlwaysPermission`:** Kiểm tra trực tiếp quyền vị trí từ `CLLocationManager`. Nếu đã có quyền `authorizedAlways`, trả về `isAlways: true` ngay lập tức.
+  - **Native iOS Alert chuẩn 100%:** Nếu chưa có quyền "Luôn luôn", khởi tạo và hiển thị trực tiếp `UIAlertController` gốc của hệ điều hành iOS (phong cách kính mờ, typography chuẩn Apple).
+  - **Hai nút hành động Native:** Nút *"Hủy"* và nút *"Mở Cài đặt"* tự động mở `UIApplication.openSettingsURLString` dẫn người dùng vào trang cài đặt quyền của XTTech.
+- **Tích Hợp Tinh Gọn Tại Các Điểm Chấm Công:**
+  - **Trang chủ ([`quick-attendance-card.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/quick-attendance-card.tsx)):** Gọi `await NativeTracking.ensureAlwaysPermission()`; nếu chưa cấp quyền thì dừng lại, không mở modal chấm công.
+  - **Bảng công ([`payroll/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/payroll/page.tsx)):** Kiểm tra trước khi mở modal check-in.
+  - **Modal Chấm công ([`auto-timekeeping-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/auto-timekeeping-modal/auto-timekeeping-modal.tsx)):** Tự động đóng modal nếu chưa có quyền "Luôn luôn" trên iOS, chặn mở camera và lấy vị trí GPS khi chưa đủ điều kiện chạy ngầm.
+
+### Fixed & Added (Hiển Thị Phần Trăm Pin iPhone / Android Trên Live Map)
+- **Tích Hợp API Đọc Pin Native Qua Capacitor ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift), [`NativeTrackingPlugin.m`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.m), [`NativeTrackingPlugin.java`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/android/app/src/main/java/com/xttech/app/NativeTrackingPlugin.java)):**
+  - **Khắc phục lỗi iOS WebKit cấm `navigator.getBattery()`:** Thêm phương thức bridge `getBatteryLevel` vào Capacitor Plugin cho cả iOS (Swift) và Android (Java) để Webview có thể truy xuất mức pin thực tế của phần cứng.
+  - **Cơ chế đọc pin an toàn trên iOS:** Luôn kích hoạt `UIDevice.current.isBatteryMonitoringEnabled = true` trên Main Thread, bổ sung cơ chế fallback lưu giữ mốc pin hợp lệ gần nhất khi hệ thống chưa kịp đọc giá trị mới (tránh bị trả về `-1.0 Unknown`).
+  - **Chuẩn hóa Payload:** Gửi đồng thời cả hai khóa `batteryLevel` (camelCase) và `battery_level` (snake_case) trong gói tin tọa độ của `NativeTrackingPlugin.swift`.
+- **Cập nhật Hook Định Vị ([`src/hooks/useLocationTracker.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/hooks/useLocationTracker.ts)):**
+  - Tự động gọi `NativeTracking.getBatteryLevel()` khi chạy trên nền tảng Native (`Capacitor.isNativePlatform()`), lấy chính xác mức pin để đính kèm vào ping tọa độ.
+
+## [Unreleased] - 2026-09-29
+
+### Fixed & Refactored (Nâng Cấp Kiến Trúc iOS Active Live-Tracking Engine Chuẩn Zalo / Grab)
+- **Tái Cấu Trúc Toàn Diện Native CoreLocation Plugin ([`NativeTrackingPlugin.swift`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/NativeTrackingPlugin.swift)):**
+  - **Duy trì nguồn điện GPS vệ tinh liên tục:** Cố định `desiredAccuracy = kCLLocationAccuracyBest`, `pausesLocationUpdatesAutomatically = false`, `allowsBackgroundLocationUpdates = true` và `showsBackgroundLocationIndicator = true` (viên thuốc màu xanh trên Dynamic Island / Status Bar).
+  - **Loại bỏ triệt để 3 bẫy kỹ thuật gây mất dấu và độ trễ:**
+    - Xóa bỏ hoàn toàn cơ chế hạ cấp GPS xuống `HundredMeters` khi đứng yên (vốn làm ngắt nguồn chip GPS khiến xe di chuyển 2km không hay biết).
+    - Xóa bỏ hoàn toàn sự phụ thuộc vào `CMMotionActivityManager` (vốn bị iOS suspend/đóng băng khi khóa màn hình bỏ túi).
+    - Xóa bỏ hàng rào địa lý ảo `CLCircularRegion` (vốn có độ trễ 3 - 5 phút từ Apple).
+  - **Bộ Điều Tiết Nhịp Thông Minh (Throttling Engine):**
+    - Khi đứng yên trong văn phòng: Tự động throttle, chỉ gửi 1 gói nhịp tim mỗi 60 giây (duy trì trạng thái Online 100%, không tốn pin, không làm nóng máy).
+    - Ngay khi bước ra đường / lên xe di chuyển (> 10m hoặc vận tốc $\ge$ 0.8 m/s): Lập tức chuyển sang nhịp gửi thời gian thực 3 giây/lần. Bản đồ Live-Map cập nhật từng mét chuẩn xác.
+- **Tự Động Tăng Build Number Trong CI/CD ([`build-ios-signed.yml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/.github/workflows/build-ios-signed.yml)):**
+  - Đồng bộ `CFBundleVersion` với `${{ github.run_number }}` bằng `PlistBuddy` và biến môi trường `CURRENT_PROJECT_VERSION`, loại bỏ lỗi Apple TestFlight từ chối do trùng phiên bản build.
+
+## [Unreleased] - 2026-09-25
+
+### Fixed & Added (Tích Hợp Native Capacitor Filesystem & Share Xuất File Mobile App)
+- **Tích Hợp Native Plugin `@capacitor/filesystem` & `@capacitor/share` ([`src/utils/file.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/file.ts)):**
+  - Khắc phục triệt để và toàn diện vấn đề Android WebView trong ứng dụng Capacitor không bắt được download `blob:` URL hoặc bị lỗi quyền hạn `NotAllowedError`.
+  - **Tự động nhận diện nền tảng (`Capacitor.isNativePlatform()`):**
+    - **Trên Native Mobile App (Capacitor Android / iOS):** Tự động chuyển đổi `Blob` sang Base64 Data URL, ghi trực tiếp vào bộ nhớ tạm an toàn của app (`Directory.Cache` qua `Filesystem.writeFile`), sau đó kích hoạt khay chia sẻ native của hệ điều hành (`Share.share({ url: fileUri })`). Cho phép người dùng mở xem ngay bằng Excel/WPS Office, gửi qua Zalo, Gmail, lưu vào Google Drive hoặc thiết bị.
+    - **Trên Web Desktop / Mobile Browser:** Tự động fallback về Web Share API hoặc thẻ `<a> download` truyền thống về thư mục Downloads.
+  - Đồng bộ cấu hình Native Android Gradle thông qua `npx cap sync android`.
+- **Tối ưu Luồng Lưu & Xuất Báo Giá ([`quotation-editor.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/quotations/[quotationId]/components/editor/quotation-editor.tsx)):**
+  - Chuyển `handleExportExcel` sang luồng bất đồng bộ tuần tự chuẩn (`mutateAsync` -> `exportQuotation`) giúp phản hồi mượt mà và thông báo trạng thái chính xác.
+- **Đồng bộ Tái Sử Dụng Toàn Hệ Thống:**
+  - Cập nhật hàm xuất báo giá `exportQuotation` ([`src/actions/quotation/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/quotation/index.ts)).
+  - Cập nhật hàm xuất danh sách khách hàng `exportCustomersExcel` ([`src/actions/customer/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/customer/index.ts)).
+  - Cập nhật hàm xuất chấm công `exportAttendanceReport` ([`src/actions/report/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/report/index.ts)).
+  - Cập nhật hàm tải file Excel mẫu `downloadProjectImportTemplate` ([`src/actions/import-export/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/import-export/index.ts)).
+
+### Added (Department Roster / Bảng Lịch Làm Việc & Hiện Diện Phòng Ban)
+- **Giao diện Quyển Lịch Tháng Toàn Màn Hình & Popup Chi Tiết ([`department-calendar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/roster/_components/department-calendar.tsx), [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/attendances/roster/page.tsx)):**
+  - **Quyển Lịch Tháng Trực Quan (Full-width Month Calendar):** Thiết kế dạng quyển lịch tháng chuẩn, chiếm trọn chiều rộng màn hình, không bị chật hẹp. Hỗ trợ chuyển tháng linh hoạt (`<`, `>`), nút quay lại `"Hôm nay"` và đánh dấu nổi bật ngày hiện tại.
+  - **Tóm Tắt Ngày Trực Tiếp Trên Ô Lịch & Stacked Avatars:** Mỗi ô ngày hiển thị badge số lượng người đi làm (`🟢 X người đi làm`) hoặc nghỉ ca (`Nghỉ ca`), cùng cụm ảnh đại diện xếp chồng chéo (-space-x-1.5) của 2-3 nhân viên kèm huy hiệu `+Y`, giúp quyển lịch trực quan, sống động và không bị trống trải.
+  - **Tối Ưu Hiệu Năng Truy Vấn Tháng:** Sử dụng API `GET /department-roster/month` tải toàn bộ tổng quan tháng trong 1 query duy nhất, ánh xạ O(1) qua Map vào các ô lịch ngày, loại bỏ hoàn toàn tải lặp.
+  - **Popup/Modal Xem Nhanh Khi Click:** Khi nhấp vào bất kỳ ngày nào trong lịch, modal popup tinh gọn mở ra hiển thị danh sách nhân sự đi làm trong ngày đó.
+  - **Thông Báo Lưu Ý Lịch Dự Kiến (Future Date Disclaimer):** Khi xem ngày trong tương lai (`selectedDate > today`), modal tự động hiển thị banner cảnh báo tinh tế: *"Lịch làm việc dự kiến: Dữ liệu được tính toán dựa trên ca làm việc và đơn nghỉ phép đã duyệt tính đến thời điểm hiện tại. Lịch có thể thay đổi nếu nhân sự phát sinh đơn xin nghỉ hoặc điều chỉnh ca trước ngày này."*
+  - **Tích Hợp Chấm Công Thực Tế Cho Ngày Quá Khứ:** Đối với các ngày đã qua (`date < today`), ô lịch hiển thị trực tiếp số lượng có mặt/vắng (`🟢 X/Y có mặt` kèm badge đỏ nếu có vắng). Modal chi tiết hiển thị trạng thái thực tế từng người (`Có mặt`, `Đi muộn`, `Vắng mặt`, `Quên checkout`) cùng khung giờ quẹt thẻ thực tế.
+  - **Tối Ưu & Tái Cấu Trúc Header Toolbar Liền Mạch:** Thiết kế lại cụm tiêu đề trang với Card bo cong trắng tinh tế, icon `Calendar` trang nhã, phân cấp chữ chuẩn mực (`Lịch làm việc phòng ban`), kết hợp nhãn lọc `🏢 Phòng ban: [Dropdown]`. Thanh điều khiển lịch được gom cụm chặt chẽ: `[ < ] [ Hôm nay ] [ > ]` ngay cạnh `Tháng MM / YYYY`, loại bỏ hoàn toàn cảm giác thô ráp và đứt gãy layout.
+  - **Trọng Tâm Danh Sách Đi Làm:** Chỉ hiển thị người có đi làm (ca cố định hoặc làm linh hoạt Part-time), phân biệt rõ ràng ca sáng/chiều/hành chính và giờ làm tự do, tích hợp nút gọi điện nhanh `tel:...`, loại bỏ hoàn toàn các trường dữ liệu rác hoặc người nghỉ.
+- **Widget Hiện Diện Linh Hoạt ([`department-roster-widget.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/dashboard/_components/department-roster-widget.tsx)):** Nhúng widget trực tiếp vào Dashboard Mobile (`EmployeeDashboard`), bổ sung nút tắt *"Lịch đi làm"* trên `QuickActionsGrid` và menu con *"Lịch làm việc phòng ban"* trong Sidebar Chấm công.
+- **Tái Cấu Trúc Co-location Chuẩn Kiến Trúc Next.js:** Chuyển toàn bộ các private components về đúng phạm vi sử dụng (`attendances/roster/_components/` và `dashboard/_components/`), giải phóng thư mục `src/components` để chỉ giữ lại các UI Design System components dùng chung.
+
+### Fixed (Page Loader Wave Animation)
+- **Khắc Phục Lỗi Thiếu Mảng Màu Sóng Nước Khi Nạp Trang ([`page-loader.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/page-loader/page-loader.tsx)):**
+  - Khôi phục thuộc tính tọa độ `d` cho mảng thân sóng SVG thứ nhất (`#5A949C`), loại bỏ tình trạng rỗng ruột / hiển thị nền trắng đứt đoạn khi animation cuộn sóng lặp vô tận chạy qua.
+
 ## [Unreleased] - 2026-10-29
 
 ### Added & Redesigned (Tái Thiết Kế Chuẩn Modern Liquid Glass & Linear UI - Trang Bảng Giá `pricing`)

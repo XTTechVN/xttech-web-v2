@@ -1,10 +1,12 @@
 package com.xttech.app;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -17,6 +19,7 @@ import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.util.Log;
 import android.os.IBinder;
 
@@ -31,8 +34,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class TrackingLocationService extends Service implements LocationListener {
     private static final String TAG = "TrackingLocService";
@@ -42,6 +43,18 @@ public class TrackingLocationService extends Service implements LocationListener
     public static final String ACTION_START = "com.xttech.app.ACTION_START_TRACKING";
     public static final String ACTION_STOP = "com.xttech.app.ACTION_STOP_TRACKING";
     public static final String ACTION_UPDATE_TOKEN = "com.xttech.app.ACTION_UPDATE_TOKEN";
+    private static final String ACTION_HEARTBEAT_ALARM = "com.xttech.app.ACTION_HEARTBEAT_ALARM";
+
+    // Nhịp kiểm tra heartbeat (Doze có thể giãn tối đa ~9 phút, vẫn dưới ngưỡng offline 15 phút của Backend)
+    private static final long HEARTBEAT_CHECK_INTERVAL_MS = 60_000L;
+    // Chỉ gửi heartbeat khi đã quá 3 phút không có ping nào
+    private static final long HEARTBEAT_PING_INTERVAL_MS = 180_000L;
+    // Giữ CPU thức đủ lâu để luồng mạng kịp nhận việc sau khi Alarm đánh thức thiết bị
+    private static final long HEARTBEAT_WAKELOCK_TIMEOUT_MS = 20_000L;
+    // Vị trí cache khi khởi động: chỉ nhận nếu mới trong 60 giây (tránh điểm cũ sai lệch)
+    private static final long STARTUP_CACHE_MAX_AGE_MS = 60_000L;
+    // Vị trí cache cho heartbeat khi chưa từng có fix (trong nhà mất GPS): nới rộng 10 phút
+    private static final long HEARTBEAT_CACHE_MAX_AGE_MS = 600_000L;
 
     public static final String PREFS_NAME = "xttech_native_tracking_prefs";
     public static final String KEY_TOKEN = "access_token";
@@ -49,10 +62,12 @@ public class TrackingLocationService extends Service implements LocationListener
     public static final String KEY_API_URL = "api_url";
 
     private LocationManager locationManager;
-    private ScheduledExecutorService heartbeatScheduler;
+    private AlarmManager alarmManager;
+    private boolean isHeartbeatReceiverRegistered = false;
     private final java.util.concurrent.ExecutorService networkExecutor = Executors.newSingleThreadExecutor();
 
-    private long lastPingTime = 0;
+    // Ghi từ luồng mạng, đọc từ luồng main (Alarm) -> volatile để luôn thấy giá trị mới nhất
+    private volatile long lastPingTime = 0;
     private Location lastLocation = null;
     private boolean isTracking = false;
 
@@ -60,6 +75,7 @@ public class TrackingLocationService extends Service implements LocationListener
     public void onCreate() {
         super.onCreate();
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         createNotificationChannel();
     }
 
@@ -122,7 +138,7 @@ public class TrackingLocationService extends Service implements LocationListener
         isTracking = true;
 
         requestLocationUpdates();
-        startHeartbeatTimer();
+        startHeartbeatAlarm();
         Log.i(TAG, "Native Tracking Service started successfully.");
     }
 
@@ -136,10 +152,7 @@ public class TrackingLocationService extends Service implements LocationListener
             }
         }
 
-        if (heartbeatScheduler != null && !heartbeatScheduler.isShutdown()) {
-            heartbeatScheduler.shutdownNow();
-            heartbeatScheduler = null;
-        }
+        stopHeartbeatAlarm();
 
         stopForeground(true);
         stopSelf();
@@ -181,25 +194,9 @@ public class TrackingLocationService extends Service implements LocationListener
             }
 
             // 3. Lấy vị trí gần nhất ngay khi khởi động (CHỈ chấp nhận nếu mới trong vòng 60 giây)
-            Location lastKnown = null;
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                lastKnown = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            }
-            if (lastKnown == null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                lastKnown = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            }
+            Location lastKnown = getFreshLastKnownLocation(STARTUP_CACHE_MAX_AGE_MS);
             if (lastKnown != null) {
-                long cacheAgeMs = System.currentTimeMillis() - lastKnown.getTime();
-                // Triệt tiêu Stale Cache: Nếu điểm cache đã quá 60 giây -> bỏ qua hoàn toàn
-                if (cacheAgeMs >= 0 && cacheAgeMs <= 60000L) {
-                    float speed = lastKnown.hasSpeed() ? lastKnown.getSpeed() : 0.0f;
-                    float maxAcc = speed >= 1.0f ? 70.0f : 80.0f;
-                    if (!lastKnown.hasAccuracy() || lastKnown.getAccuracy() <= maxAcc) {
-                        onLocationChanged(lastKnown);
-                    }
-                } else {
-                    Log.i(TAG, "Ignoring stale lastKnown location (age: " + (cacheAgeMs / 1000) + "s)");
-                }
+                onLocationChanged(lastKnown);
             }
         } catch (SecurityException se) {
             Log.e(TAG, "SecurityException requesting location updates", se);
@@ -208,26 +205,126 @@ public class TrackingLocationService extends Service implements LocationListener
         }
     }
 
-    private void startHeartbeatTimer() {
-        if (heartbeatScheduler != null && !heartbeatScheduler.isShutdown()) {
-            heartbeatScheduler.shutdownNow();
-        }
-        heartbeatScheduler = Executors.newSingleThreadScheduledExecutor();
-
-        // Kiểm tra nhịp tim định kỳ mỗi 60 giây (Nếu quá 3 phút không có ping di chuyển -> gửi heartbeat đứng yên)
-        heartbeatScheduler.scheduleWithFixedDelay(() -> {
-            try {
-                long elapsed = System.currentTimeMillis() - lastPingTime;
-                if (elapsed >= 180000) { // 3 phút
-                    if (lastLocation != null) {
-                        Log.d(TAG, "Heartbeat: sending stationary ping (standing still > 3m)");
-                        sendPingToBackend(lastLocation, true);
-                    }
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Heartbeat executor error", e);
+    /**
+     * Lấy vị trí cache gần nhất của hệ thống (ưu tiên GPS, sau đó Network).
+     * Chỉ trả về nếu đủ mới (<= maxAgeMs) và đủ chính xác, ngược lại trả về null.
+     */
+    @Nullable
+    private Location getFreshLastKnownLocation(long maxAgeMs) {
+        if (locationManager == null) return null;
+        try {
+            Location lastKnown = null;
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                lastKnown = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             }
-        }, 60, 60, TimeUnit.SECONDS);
+            if (lastKnown == null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                lastKnown = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            }
+            if (lastKnown == null) return null;
+
+            long cacheAgeMs = System.currentTimeMillis() - lastKnown.getTime();
+            // Triệt tiêu Stale Cache: điểm cache quá cũ -> bỏ qua hoàn toàn
+            if (cacheAgeMs < 0 || cacheAgeMs > maxAgeMs) {
+                Log.i(TAG, "Ignoring stale lastKnown location (age: " + (cacheAgeMs / 1000) + "s)");
+                return null;
+            }
+
+            float speed = lastKnown.hasSpeed() ? lastKnown.getSpeed() : 0.0f;
+            float maxAcc = speed >= 1.0f ? 70.0f : 80.0f;
+            if (lastKnown.hasAccuracy() && lastKnown.getAccuracy() > maxAcc) return null;
+            return lastKnown;
+        } catch (SecurityException se) {
+            Log.e(TAG, "SecurityException reading lastKnown location", se);
+            return null;
+        }
+    }
+
+    // ===================== HEARTBEAT (AlarmManager) =====================
+    // Không dùng ScheduledExecutorService: executor KHÔNG giữ CPU thức, khi tắt màn hình CPU ngủ sâu
+    // thì đồng hồ executor cũng dừng -> thiết bị đứng yên không gửi được heartbeat -> Admin thấy "Ngoại tuyến".
+    // AlarmManager.setAndAllowWhileIdle đánh thức CPU (kể cả trong Doze) và không cần quyền SCHEDULE_EXACT_ALARM.
+
+    private final BroadcastReceiver heartbeatReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!ACTION_HEARTBEAT_ALARM.equals(intent.getAction())) return;
+            acquireHeartbeatWakeLock();
+            scheduleNextHeartbeat();
+            runHeartbeatCheck();
+        }
+    };
+
+    private void startHeartbeatAlarm() {
+        if (!isHeartbeatReceiverRegistered) {
+            ContextCompat.registerReceiver(
+                    this,
+                    heartbeatReceiver,
+                    new IntentFilter(ACTION_HEARTBEAT_ALARM),
+                    ContextCompat.RECEIVER_NOT_EXPORTED
+            );
+            isHeartbeatReceiverRegistered = true;
+        }
+        scheduleNextHeartbeat();
+    }
+
+    private void stopHeartbeatAlarm() {
+        if (alarmManager != null) {
+            alarmManager.cancel(buildHeartbeatPendingIntent());
+        }
+        if (!isHeartbeatReceiverRegistered) return;
+        try {
+            unregisterReceiver(heartbeatReceiver);
+        } catch (IllegalArgumentException ignored) {
+            // Receiver đã được gỡ trước đó
+        }
+        isHeartbeatReceiverRegistered = false;
+    }
+
+    private void scheduleNextHeartbeat() {
+        if (alarmManager == null || !isTracking) return;
+        long triggerAt = SystemClock.elapsedRealtime() + HEARTBEAT_CHECK_INTERVAL_MS;
+        alarmManager.setAndAllowWhileIdle(
+                AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                triggerAt,
+                buildHeartbeatPendingIntent()
+        );
+    }
+
+    private PendingIntent buildHeartbeatPendingIntent() {
+        Intent intent = new Intent(ACTION_HEARTBEAT_ALARM).setPackage(getPackageName());
+        return PendingIntent.getBroadcast(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+    }
+
+    /** Alarm chỉ giữ CPU thức trong onReceive -> tự giữ thêm để luồng mạng kịp xử lý (tự nhả theo timeout) */
+    private void acquireHeartbeatWakeLock() {
+        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (powerManager == null) return;
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK, "XTTech::HeartbeatAlarmWakeLock");
+        wakeLock.setReferenceCounted(false);
+        wakeLock.acquire(HEARTBEAT_WAKELOCK_TIMEOUT_MS);
+    }
+
+    private void runHeartbeatCheck() {
+        if (!isTracking) return;
+        long elapsed = System.currentTimeMillis() - lastPingTime;
+        if (elapsed < HEARTBEAT_PING_INTERVAL_MS) return;
+
+        // Chưa từng có fix (trong nhà mất GPS, minDistance chặn update khi đứng yên) -> thử vị trí cache của hệ thống
+        Location heartbeatLocation = lastLocation != null
+                ? lastLocation
+                : getFreshLastKnownLocation(HEARTBEAT_CACHE_MAX_AGE_MS);
+        if (heartbeatLocation == null) {
+            Log.w(TAG, "Heartbeat skipped: no location fix available yet");
+            return;
+        }
+        Log.d(TAG, "Heartbeat: sending stationary ping (no ping for " + (elapsed / 1000) + "s)");
+        sendPingToBackend(heartbeatLocation, true);
     }
 
     private long lastGpsFixTime = 0;
@@ -326,6 +423,7 @@ public class TrackingLocationService extends Service implements LocationListener
             payload.put("speed", (double) speed);
             if (loc.hasBearing()) payload.put("heading", (double) loc.getBearing());
             if (batteryLevel >= 0) payload.put("battery_level", (double) batteryLevel);
+            payload.put("platform", "android");
 
             byte[] postData = payload.toString().getBytes(StandardCharsets.UTF_8);
             try (OutputStream os = conn.getOutputStream()) {

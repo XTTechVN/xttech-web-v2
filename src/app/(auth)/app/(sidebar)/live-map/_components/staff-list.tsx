@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { StaffLiveLocation } from '@/types';
-import { Search, Navigation, Battery, Gauge, Clock, Users, RefreshCw } from 'lucide-react';
-import { Input } from '@/components';
+import { StaffLiveLocation, StaffLiveStatus, STAFF_LIVE_STATUS_MAP, isStaffSignalLost } from '@/types';
+import { Search, Navigation, Battery, Gauge, Clock, Users, RefreshCw, Compass } from 'lucide-react';
+import { Input, PlatformBadge } from '@/components';
 import dayjs from 'dayjs';
-import { getFileUrl } from '@/utils';
+import { getFileUrl, openGoogleMapsNavigation, includesSearchText } from '@/utils';
+import { StaffDiagnostics } from './staff-diagnostics';
 
 interface StaffListProps {
   staffLocations: StaffLiveLocation[];
@@ -18,19 +19,31 @@ interface StaffListProps {
 
 export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onViewRoute, isLoading = false, onRefresh}: StaffListProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'moving' | 'stationary' | 'offline'>('all');
-  const filteredStaff = staffLocations.filter((staff) => {
-    const name = staff.userName || '';
-    const dept = staff.departmentName || '';
-    const query = searchQuery.toLowerCase();
+  const [statusFilter, setStatusFilter] = useState<'all' | StaffLiveStatus>('all');
 
-    const matchesSearch =
-      name.toLowerCase().includes(query) ||
-      dept.toLowerCase().includes(query);
+  const getStatusPriority = (status: StaffLiveStatus): number => {
+    if (status === 'moving' || status === 'stationary') return 1; // Rank 1: Online
+    if (status === 'app_closed') return 2;                        // Rank 2: Tắt app
+    return 3;                                                     // Rank 3: Offline
+  };
 
-    const matchesStatus = statusFilter === 'all' || staff.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredStaff = staffLocations
+    .filter((staff) => {
+      const name = staff.userName || '';
+      const dept = staff.departmentName || '';
+
+      const matchesSearch =
+        includesSearchText(name, searchQuery) ||
+        includesSearchText(dept, searchQuery);
+
+      const matchesStatus = statusFilter === 'all' || staff.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const priorityDiff = getStatusPriority(a.status) - getStatusPriority(b.status);
+      if (priorityDiff !== 0) return priorityDiff;
+      return (a.userName || '').localeCompare(b.userName || '', 'vi');
+    });
 
   const movingCount = staffLocations.filter((s) => s.status === 'moving').length;
   const stationaryCount = staffLocations.filter((s) => s.status === 'stationary').length;
@@ -65,7 +78,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm theo tên hoặc phòng ban..."
-            className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-slate-200 focus:bg-white"
+            className="pl-8 h-8 text-xs rounded-lg bg-slate-50 border-slate-200 focus:bg-white"
           />
         </div>
 
@@ -73,7 +86,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
         <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[11px]">
           <button
             onClick={() => setStatusFilter('all')}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
+            className={`px-1.5 py-0.5 rounded-md font-medium transition-colors cursor-pointer shrink-0 ${
               statusFilter === 'all' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -81,7 +94,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
           </button>
           <button
             onClick={() => setStatusFilter('moving')}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
+            className={`px-1.5 py-0.5 rounded-md font-medium transition-colors cursor-pointer shrink-0 ${
               statusFilter === 'moving' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -89,7 +102,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
           </button>
           <button
             onClick={() => setStatusFilter('stationary')}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
+            className={`px-1.5 py-0.5 rounded-md font-medium transition-colors cursor-pointer shrink-0 ${
               statusFilter === 'stationary' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -120,7 +133,8 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
           filteredStaff.map((staff, index) => {
             const isSelected = selectedStaff?.userId === staff.userId;
             const isMoving = staff.status === 'moving';
-            const isOffline = staff.status === 'offline';
+            const isOffline = isStaffSignalLost(staff.status);
+            const isAppClosed = staff.status === 'app_closed';
             const uniqueKey = staff.userId ? `${staff.userId}-${index}` : `staff-${index}`;
 
             return (
@@ -165,8 +179,14 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
 
                       {/* Badge trạng thái trực quan */}
                       {isOffline ? (
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 shrink-0">
-                          Ngoại tuyến
+                        <span
+                          className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-md border shrink-0 ${
+                            isAppClosed
+                              ? 'bg-rose-50 text-rose-600 border-rose-200'
+                              : 'bg-slate-100 text-slate-500 border-slate-200'
+                          }`}
+                        >
+                          {STAFF_LIVE_STATUS_MAP[staff.status]}
                         </span>
                       ) : isMoving ? (
                         <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 shrink-0 flex items-center gap-1">
@@ -184,15 +204,26 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
                       <p className="text-[10px] text-slate-500 truncate">
                         {staff.positionName || staff.departmentName || 'Nhân viên'}
                       </p>
-                      {typeof staff.batteryLevel === 'number' && (
-                        <span className="text-[10px] text-slate-400 flex items-center gap-0.5 shrink-0">
-                          <Battery size={11} className={staff.batteryLevel < 20 ? 'text-rose-500' : 'text-slate-400'} />
-                          {staff.batteryLevel}%
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <PlatformBadge platform={staff.platform} />
+                        {typeof staff.batteryLevel === 'number' && (
+                          <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                            <Battery size={11} className={staff.batteryLevel < 20 ? 'text-rose-500' : 'text-slate-400'} />
+                            {staff.batteryLevel}%
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                {isOffline && (
+                  <StaffDiagnostics
+                    diagnostics={staff.diagnostics}
+                    maxSignals={isSelected ? undefined : 2}
+                    hideDeviceSummary={!isSelected}
+                  />
+                )}
 
                 <div className="flex items-center justify-between pt-1 border-t border-slate-100/80 text-[10px] text-slate-500">
                   <div className="flex items-center gap-2">
@@ -206,18 +237,31 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
                     </span>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onViewRoute(staff);
-                    }}
-                    className="p-1 px-2 rounded-md bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-medium transition-colors flex items-center gap-1 cursor-pointer"
-                    title="Xem lộ trình trong ngày"
-                  >
-                    <Navigation size={10} />
-                    <span>Lộ trình</span>
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openGoogleMapsNavigation(staff.latitude, staff.longitude);
+                      }}
+                      className="p-1 px-1.5 rounded-md bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 text-slate-500 font-medium transition-colors flex items-center justify-center cursor-pointer"
+                      title="Mở Google Maps chỉ đường tới đây"
+                    >
+                      <Compass size={11} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewRoute(staff);
+                      }}
+                      className="p-1 px-2 rounded-md bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-medium transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Xem lộ trình trong ngày"
+                    >
+                      <Navigation size={10} />
+                      <span>Lộ trình</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             );

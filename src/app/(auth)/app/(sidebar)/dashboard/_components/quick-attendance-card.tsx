@@ -7,6 +7,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { MyAttendanceToday } from '@/types';
 import { AutoTimekeepingModal } from '@/components';
 import { Clock, CheckCircle2, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { NativeTracking } from '@/hooks/useLocationTracker';
 
 
 interface QuickAttendanceCardProps {
@@ -36,16 +38,31 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
       ? `${attendance.workShiftStart.slice(0, 5)} - ${attendance.workShiftEnd.slice(0, 5)}`
       : 'Thời gian làm việc linh hoạt';
 
-  const handlePunchClick = () => {
+  const handlePunchClick = async () => {
+    // Nếu là iPhone và chuẩn bị check-in vào ca: Kiểm tra quyền Luôn luôn (Always) qua Native Alert của iOS
+    if (Capacitor.getPlatform() === 'ios' && !isCurrentlyWorking && NativeTracking.ensureAlwaysPermission) {
+      try {
+        const res = await NativeTracking.ensureAlwaysPermission();
+        if (!res.isAlways) {
+          return; // Dừng lại, Native Alert của iOS đã hiển thị và xử lý
+        }
+      } catch (err) {
+        console.warn('[QuickAttendanceCard] Lỗi kiểm tra quyền vị trí iOS:', err);
+      }
+    }
     setIsOpenModal(true);
   };
 
-  const handleTimekeepingSuccess = () => {
+  const handleCloseModal = React.useCallback(() => {
+    setIsOpenModal(false);
+  }, []);
+
+  const handleTimekeepingSuccess = React.useCallback(() => {
     setIsOpenModal(false);
     queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
     queryClient.invalidateQueries({ queryKey: ['attendances'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard-live-locations'] });
-  };
+  }, [queryClient]);
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/95 via-primary to-primary/85 text-white p-4.5 shadow-md">
@@ -154,7 +171,7 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
       {/* Modal Chấm công tự động (Khuôn mặt + Vị trí GPS) */}
       <AutoTimekeepingModal
         open={isOpenModal}
-        onClose={() => setIsOpenModal(false)}
+        onClose={handleCloseModal}
         onSuccess={handleTimekeepingSuccess}
         hasCheckedIn={isCurrentlyWorking}
       />
