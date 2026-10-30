@@ -62,11 +62,8 @@ export interface CustomerQueryParams {
 
 export interface CustomerExportQueryParams {
   fromDate?: string;
-  from_date?: string;
   toDate?: string;
-  to_date?: string;
   staffId?: string;
-  staff_id?: string;
 }
 
 

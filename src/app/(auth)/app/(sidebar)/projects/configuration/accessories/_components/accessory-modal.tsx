@@ -1,0 +1,294 @@
+'use client';
+
+import React, { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Modal, Input, Button } from '@/components';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import queryClient from '@/utils/query';
+import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils';
+import { createAccessory, updateAccessory, getAccessoryCategories } from '@/actions';
+import type { Accessory, AccessoryCreate, AccessoryUpdate, Brand, AccessoryCategory } from '@/types';
+import { BASE_MINIO_URL } from '@/config';
+import { ImagePlus, X } from 'lucide-react';
+
+interface AccessoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  accessory?: Accessory | null;
+  brands: Brand[];
+  defaultBrandId: number | null;
+}
+
+const UNIT_OPTIONS = [
+  { value: 'set', label: 'Bộ (Set)' },
+  { value: 'pcs', label: 'Cái (Pcs)' },
+  { value: 'unit', label: 'Chiếc (Unit)' },
+  { value: 'pair', label: 'Đôi / Cặp (Pair)' },
+  { value: 'roll', label: 'Cuộn (Roll)' },
+  { value: 'box', label: 'Hộp (Box)' },
+  { value: 'meter', label: 'Mét (Meter)' },
+  { value: 'sheet', label: 'Tấm (Sheet)' },
+];
+
+const COLOR_OPTIONS = [
+  { value: 'silver', label: 'Bạc ánh kim / Silver' },
+  { value: 'black', label: 'Đen tuyền / Black' },
+  { value: 'white', label: 'Trắng sứ / White' },
+  { value: 'gold', label: 'Vàng Champagne / Gold' },
+  { value: 'grey', label: 'Xám ghi / Grey' },
+  { value: 'brown', label: 'Nâu cafe / Brown' },
+  { value: 'other', label: 'Khác / Other' },
+];
+
+const DEFAULT_VALUES: AccessoryCreate = {
+  brandId: 0,
+  categoryId: undefined,
+  code: '',
+  name: '',
+  specification: '',
+  unit: 'pcs',
+  color: 'silver',
+  unitPrice: 0,
+  costPrice: 0,
+  retailPrice: 0,
+  salePrice: 0,
+  isActive: true,
+};
+
+export function AccessoryModal({ isOpen, onClose, accessory, brands, defaultBrandId }: AccessoryModalProps) {
+  const isEdit = Boolean(accessory);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const { register, handleSubmit, reset } = useForm<AccessoryCreate>({
+    defaultValues: { ...DEFAULT_VALUES, brandId: defaultBrandId || 0 },
+  });
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ['accessory-categories'],
+    queryFn: async () => await getAccessoryCategories({ limit: 9999, offset: 0, allowDeleted: false }),
+    enabled: isOpen,
+  });
+
+  const categories = React.useMemo(() => {
+    if (!categoriesData) return [];
+    if (Array.isArray(categoriesData)) return categoriesData;
+    const items = (categoriesData as { items?: AccessoryCategory[] }).items;
+    return Array.isArray(items) ? items : [];
+  }, [categoriesData]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedFile(null);
+    setPreviewUrl(null);
+
+    if (accessory) {
+      reset({
+        brandId: accessory.brandId ?? defaultBrandId ?? 0,
+        categoryId: accessory.categoryId ?? undefined,
+        code: accessory.code || '',
+        name: accessory.name || '',
+        specification: accessory.specification || '',
+        unit: accessory.unit || 'pcs',
+        color: accessory.color || 'silver',
+        unitPrice: accessory.unitPrice ?? accessory.salePrice ?? 0,
+        costPrice: accessory.costPrice ?? 0,
+        retailPrice: accessory.retailPrice ?? 0,
+        salePrice: accessory.salePrice ?? accessory.unitPrice ?? 0,
+        isActive: accessory.isActive,
+      });
+    } else {
+      reset({
+        ...DEFAULT_VALUES,
+        brandId: defaultBrandId || (brands[0]?.id ?? 0),
+        categoryId: categories[0]?.id,
+      });
+    }
+  }, [isOpen, accessory, defaultBrandId]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const clearFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const existingImageUrl = accessory?.imagePath
+    ? accessory.imagePath.startsWith('http')
+      ? accessory.imagePath
+      : `${BASE_MINIO_URL}/${accessory.imagePath.replace(/^\//, '')}`
+    : null;
+
+  const displayImage = previewUrl || existingImageUrl;
+
+  const { mutate: createMutate, isPending: isCreating } = useMutation({
+    mutationFn: (data: AccessoryCreate) => createAccessory({ data, file: selectedFile || undefined }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accessories'] });
+      toast.success('Thêm phụ kiện thành công');
+      onClose();
+    },
+    onError: (err) => showErrorToast(err, 'Lỗi khi thêm phụ kiện mới'),
+  });
+
+  const { mutate: updateMutate, isPending: isUpdating } = useMutation({
+    mutationFn: (data: AccessoryUpdate) => updateAccessory(accessory!.id, { data, file: selectedFile || undefined }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accessories'] });
+      toast.success('Cập nhật phụ kiện thành công');
+      onClose();
+    },
+    onError: (err) => showErrorToast(err, 'Lỗi khi cập nhật phụ kiện'),
+  });
+
+  const onSubmit = (data: AccessoryCreate) => {
+    const price = Number(data.unitPrice) || 0;
+    const payload = {
+      ...data,
+      brandId: Number(data.brandId),
+      categoryId: data.categoryId ? Number(data.categoryId) : undefined,
+      unitPrice: price,
+      salePrice: price,
+      retailPrice: price,
+      costPrice: Number(data.costPrice) || 0,
+    };
+    if (isEdit) updateMutate(payload);
+    else createMutate(payload);
+  };
+
+  const isPending = isCreating || isUpdating;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="lg" title={isEdit ? 'Chỉnh sửa phụ kiện' : 'Thêm phụ kiện mới'}>
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1.5">Hình ảnh</label>
+          <div className="flex items-center gap-3">
+            <div className="relative w-20 h-20 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
+              {displayImage ? (
+                <>
+                  <img src={displayImage} alt="preview" className="w-full h-full object-contain" />
+                  {selectedFile && (
+                    <button
+                      type="button"
+                      onClick={clearFile}
+                      className="absolute top-0.5 right-0.5 w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition cursor-pointer"
+                    >
+                      <X size={10} />
+                    </button>
+                  )}
+                </>
+              ) : (
+                <ImagePlus size={22} className="text-slate-300" />
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-slate-200 rounded-lg text-slate-700 bg-white hover:bg-slate-50 hover:border-primary hover:text-primary transition cursor-pointer"
+              >
+                <ImagePlus size={13} />
+                {displayImage ? 'Đổi ảnh' : 'Chọn ảnh'}
+              </button>
+              <p className="text-[11px] text-slate-400">JPG, PNG, WebP. Tối đa 5MB.</p>
+              {selectedFile && <p className="text-[11px] text-emerald-600 font-medium truncate max-w-[180px]">✓ {selectedFile.name}</p>}
+            </div>
+          </div>
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFileChange} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Hãng phụ kiện <span className="text-rose-500">*</span>
+            </label>
+            <select
+              {...register('brandId', { required: true })}
+              className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition"
+            >
+              {brands.map((b) => (
+                <option key={b.id} value={b.id}>{b.name} ({b.code})</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Danh mục phụ kiện</label>
+            <select
+              {...register('categoryId')}
+              className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition"
+            >
+              <option value="">-- Chưa chọn danh mục --</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <Input label="Mã phụ kiện" placeholder="VD: BL-A30, BM001..." required {...register('code', { required: true })} />
+          <Input label="Tên phụ kiện" placeholder="VD: Bản lề chữ A 12 inch..." required {...register('name', { required: true })} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <Input label="Quy cách / Chi tiết kỹ thuật" placeholder="VD: 12 inch, dày 2.5mm..." {...register('specification')} />
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Đơn vị tính <span className="text-rose-500">*</span>
+            </label>
+            <select
+              {...register('unit', { required: true })}
+              className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition"
+            >
+              {UNIT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Màu sắc</label>
+            <select
+              {...register('color')}
+              className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition"
+            >
+              {COLOR_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <Input type="number" label="Đơn giá (VNĐ)" placeholder="VD: 85000" {...register('unitPrice')} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <Input type="number" label="Giá vốn / nhập (VNĐ)" placeholder="VD: 65000" {...register('costPrice')} />
+          <div className="flex items-center pt-5">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700">
+              <input type="checkbox" {...register('isActive')} className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary accent-primary" />
+              <span className="font-semibold">Kích hoạt hoạt động phụ kiện này</span>
+            </label>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100 mt-2">
+          <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isPending}>Hủy</Button>
+          <Button type="submit" variant="primary" size="sm" loading={isPending} className="px-5 font-semibold">
+            {isEdit ? 'Lưu thay đổi' : 'Thêm phụ kiện'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

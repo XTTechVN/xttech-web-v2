@@ -1,17 +1,36 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import DoorsPage from './doors/page';
-import MaterialsPage from './materials/page';
-import AccessoriesPage from './accessories/page';
-import ExtraOptionsPage from './extra-options/page';
-import FormulasPage from './formulas/page';
-import { Columns, ListChecks, Settings, Calculator, LayoutGrid, UploadCloud } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
+import dynamic from 'next/dynamic';
+import {
+  Columns,
+  ListChecks,
+  Building2,
+  ShieldCheck,
+  Layers,
+  Ruler,
+  PackageOpen,
+  LayoutGrid,
+} from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { usePermission } from '@/hooks';
-import { Button } from '@/components';
-import { ProjectImportModal } from './_components/import-modal';
+import { Skeleton } from '@/components';
+
+const ConfigTabFallback = () => (
+  <div className="p-4">
+    <Skeleton className="h-96 w-full rounded-xl" />
+  </div>
+);
+
+const BrandTab = dynamic(() => import('./brand'), { loading: ConfigTabFallback });
+const SeriesTab = dynamic(() => import('./series'), { loading: ConfigTabFallback });
+const ProfileBarsTab = dynamic(() => import('./profile-bars'), { loading: ConfigTabFallback });
+const GlassGasketsTab = dynamic(() => import('./glass-gaskets'), { loading: ConfigTabFallback });
+const DoorsTab = dynamic(() => import('./doors'), { loading: ConfigTabFallback });
+const DoorTemplatesTab = dynamic(() => import('./door-templates'), { loading: ConfigTabFallback });
+const AccessoriesTab = dynamic(() => import('./accessories'), { loading: ConfigTabFallback });
+const AccessoryCombosTab = dynamic(() => import('./accessory-combos'), { loading: ConfigTabFallback });
 
 interface ConfigTab {
   id: string;
@@ -21,56 +40,90 @@ interface ConfigTab {
   roles: string[];
 }
 
+const ALL_ROLES = ['super', 'admin', 'accountant', 'hr', 'sale', 'employee', 'technician'];
+
 const TABS: ConfigTab[] = [
+  {
+    id: 'brand',
+    label: 'Hãng cung cấp',
+    component: BrandTab,
+    icon: <Building2 size={16} />,
+    roles: ALL_ROLES,
+  },
+  {
+    id: 'series',
+    label: 'Hệ nhôm',
+    component: SeriesTab,
+    icon: <Layers size={16} />,
+    roles: ALL_ROLES,
+  },
+  {
+    id: 'profile-bars',
+    label: 'Thanh profile',
+    component: ProfileBarsTab,
+    icon: <Ruler size={16} />,
+    roles: ALL_ROLES,
+  },
+  {
+    id: 'glass-gaskets',
+    label: 'Kính, Panel & Lưới muỗi',
+    component: GlassGasketsTab,
+    icon: <ShieldCheck size={16} />,
+    roles: ALL_ROLES,
+  },
   {
     id: 'doors',
     label: 'Biên dạng cửa',
-    component: DoorsPage,
+    component: DoorsTab,
     icon: <Columns size={16} />,
-    roles: ['super', 'admin', 'sale', 'accountant', 'hr'],
+    roles: ALL_ROLES,
   },
   {
-    id: 'materials',
-    label: 'Hệ nhôm',
-    component: MaterialsPage,
+    id: 'door-templates',
+    label: 'Mẫu cửa',
+    component: DoorTemplatesTab,
     icon: <LayoutGrid size={16} />,
-    roles: ['super', 'admin', 'accountant', 'hr'],
+    roles: ALL_ROLES,
   },
   {
     id: 'accessories',
     label: 'Phụ kiện',
-    component: AccessoriesPage,
+    component: AccessoriesTab,
     icon: <ListChecks size={16} />,
-    roles: ['super', 'admin', 'accountant', 'hr'],
+    roles: ALL_ROLES,
   },
   {
-    id: 'extra-options',
-    label: 'Tùy chọn phát sinh',
-    component: ExtraOptionsPage,
-    icon: <Settings size={16} />,
-    roles: ['super', 'admin', 'accountant', 'hr'],
-  },
-  {
-    id: 'formulas',
-    label: 'Công thức',
-    component: FormulasPage,
-    icon: <Calculator size={16} />,
-    roles: ['super', 'admin', 'accountant', 'hr'],
+    id: 'accessory-combos',
+    label: 'Combo phụ kiện',
+    component: AccessoryCombosTab,
+    icon: <PackageOpen size={16} />,
+    roles: ALL_ROLES,
   },
 ];
 
-export default function ProjectConfigurationPage() {
-  const router = useRouter();
+function ProjectConfigurationContent() {
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get('tab');
   const { hasRole } = usePermission();
 
-  // Lọc các Tab mà người dùng hiện tại có quyền truy cập
   const availableTabs = useMemo(() => {
     return TABS.filter((tab) => hasRole(tab.roles));
   }, [hasRole]);
 
-  const [activeTab, setActiveTab] = useState<string>('doors');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (urlTab === 'aluminum') return 'brand';
+    if (urlTab && TABS.some((t) => t.id === urlTab)) {
+      return urlTab;
+    }
+    return 'brand';
+  });
 
-  // Đảm bảo activeTab luôn là một tab hợp lệ trong availableTabs
+  useEffect(() => {
+    if (urlTab && availableTabs.some((t) => t.id === urlTab) && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab, availableTabs, activeTab]);
+
   useEffect(() => {
     if (availableTabs.length > 0 && !availableTabs.some((t) => t.id === activeTab)) {
       setActiveTab(availableTabs[0].id);
@@ -78,66 +131,27 @@ export default function ProjectConfigurationPage() {
   }, [availableTabs, activeTab]);
 
   const currentTab = availableTabs.find((t) => t.id === activeTab) || availableTabs[0];
-  const ActiveComponent = currentTab?.component || DoorsPage;
-
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-    router.push('/app/projects/configuration');
-  };
+  const ActiveComponent = currentTab?.component || BrandTab;
 
   return (
     <div className="flex flex-col gap-4 text-black">
-      {/* Tab Navigation & Excel Actions */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {availableTabs.length > 1 && (
-          <div className="flex overflow-x-auto scrollbar-none gap-2 sm:gap-4 p-1">
-            {availableTabs.map((tab) => {
-              const isActive = tab.id === (currentTab?.id || activeTab);
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 cursor-pointer ${
-                    isActive
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-slate-600 hover:text-primary hover:bg-slate-100'
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Nút Nhập dữ liệu */}
-        <div className="flex items-center gap-2 self-end md:self-auto shrink-0 px-1">
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<UploadCloud size={14} />}
-            onClick={() => setIsImportModalOpen(true)}
-            className="h-9 px-3 text-xs md:text-sm font-semibold shrink-0"
-          >
-            Nhập dữ liệu
-          </Button>
-        </div>
-      </div>
-
-      {/* Tab Content */}
       <div className="min-h-[400px]">
         {ActiveComponent && <ActiveComponent />}
       </div>
-
-      {/* Modal Nhập dữ liệu Excel */}
-      <ProjectImportModal
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-      />
     </div>
   );
 }
 
+export default function ProjectConfigurationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-slate-500 font-medium">
+          Đang tải cấu hình dự án...
+        </div>
+      }
+    >
+      <ProjectConfigurationContent />
+    </Suspense>
+  );
+}

@@ -24,7 +24,7 @@ export default function ShiftsPage() {
   const totalShifts = shiftsData?.meta?.total || allShifts.length || 0;
   const activeShifts = allShifts.filter((s: any) => s.status === 'active').length || totalShifts;
   const morningOrDayShifts =
-    allShifts.filter((s: any) => (s.shiftType || s.shift_type) === 'morning' || (s.shiftType || s.shift_type) === 'full_day').length;
+    allShifts.filter((s: any) => s.shiftType === 'morning' || s.shiftType === 'full_day').length;
   const totalDepartments = departmentData?.meta?.total || 0;
 
   const shiftStats = [
@@ -59,7 +59,7 @@ export default function ShiftsPage() {
   ];
 
   return (
-    <div className="flex w-full h-full flex-1 flex-col gap-4">
+    <div className="p-4 flex w-full h-full flex-1 flex-col gap-4">
       {/* Khối thống kê Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {shiftStats.map((stat, index) => (

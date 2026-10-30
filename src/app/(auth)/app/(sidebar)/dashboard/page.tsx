@@ -34,23 +34,26 @@ const Dashboard = () => {
     }
   }, []);
 
-  switch (userRole) {
-    case 'super':
-    case 'admin':
-      return <AdminDashboard />;
-    case 'hr':
-      return <HRDashboard />;
-    case 'sale':
-      return <SaleDashboard />;
-    case 'technician':
-      return <TechnicianDashboard />;
-    case 'accountant':
-      return <AccountantDashboard />;
-    case 'employee':
-      return <EmployeeDashboard />;
-    default:
-      return <EmployeeDashboard />;
-  }
+  const renderDashboard = () => {
+    switch (userRole) {
+      case 'super':
+      case 'admin':
+        return <AdminDashboard />;
+      case 'hr':
+        return <HRDashboard />;
+      case 'sale':
+        return <SaleDashboard />;
+      case 'technician':
+        return <TechnicianDashboard />;
+      case 'accountant':
+        return <AccountantDashboard />;
+      case 'employee':
+      default:
+        return <EmployeeDashboard />;
+    }
+  };
+
+  return <div className="p-4">{renderDashboard()}</div>;
 };
 
 export default Dashboard;

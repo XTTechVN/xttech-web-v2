@@ -1,0 +1,95 @@
+export type MaterialType = 'glass' | 'panel' | 'screen_mesh';
+
+export interface GlassCategory {
+  id: number;
+  code: string;
+  name: string;
+  materialType?: MaterialType;
+  description?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GlassCategoryCreate {
+  code: string;
+  name: string;
+  materialType?: MaterialType;
+  description?: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export interface GlassCategoryUpdate {
+  code?: string;
+  name?: string;
+  materialType?: MaterialType;
+  description?: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export interface GlassCategoryQueryParams {
+  search?: string;
+  materialType?: MaterialType;
+  isActive?: boolean;
+  offset?: number;
+  limit?: number;
+}
+
+export interface Glass {
+  id: number;
+  categoryId: number;
+  code: string;
+  name: string;
+  glassType: 'cuong_luc' | 'dan_an_toan' | 'kinh_hop' | 'trang' | string;
+  thicknessMm: number;
+  unitPrice: number;
+  weightPerM2: number;
+  maxWidthMm?: number | null;
+  maxHeightMm?: number | null;
+  isDefault: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  category?: GlassCategory | null;
+}
+
+export interface GlassCreate {
+  categoryId: number;
+  code: string;
+  name: string;
+  glassType?: string;
+  thicknessMm: number;
+  unitPrice: number;
+  weightPerM2?: number;
+  maxWidthMm?: number | null;
+  maxHeightMm?: number | null;
+  isDefault?: boolean;
+  isActive?: boolean;
+}
+
+export interface GlassUpdate {
+  categoryId?: number;
+  code?: string;
+  name?: string;
+  glassType?: string;
+  thicknessMm?: number;
+  unitPrice?: number;
+  weightPerM2?: number;
+  maxWidthMm?: number | null;
+  maxHeightMm?: number | null;
+  isDefault?: boolean;
+  isActive?: boolean;
+}
+
+export interface GlassQueryParams {
+  search?: string;
+  categoryId?: number;
+  glassType?: string;
+  isDefault?: boolean;
+  isActive?: boolean;
+  offset?: number;
+  limit?: number;
+}

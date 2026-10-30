@@ -34,8 +34,6 @@ export * from './door';
 // Accessories
 export * from './accessory';
 
-// Quotations
-export * from './quotation';
 
 // Materials
 export * from './material';
@@ -82,4 +80,16 @@ export * from './accessory-category';
 // Dashboard
 export * from './dashboard';
 
+// Aluminum & Profile Master Data
+export * from './brand';
+export * from './door-series';
+export * from './profile';
+export * from './glass';
+export * from './gasket';
+export * from './accessory-combo';
+export * from './brass-pattern';
+export * from './brass-ornament';
+export * from './document';
+export * from './trash';
 
+export * from './warehouse';

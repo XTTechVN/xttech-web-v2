@@ -1,43 +1,46 @@
 'use client';
 
-import { StatsCard } from '@/components';
-
-// Các thành phần dùng riêng cho dự án
-import Table from './_components/table';
-import { ProjectFormModal, ProjectDeleteModal } from './_components/modals';
-
-// Icons thư viện lucide-react
-import { FolderOpen, CheckCircle2, Clock, Users } from 'lucide-react';
-
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { getCustomers, deleteProject } from '@/actions';
-import type { Project } from '@/types';
+import { FolderOpen, CheckCircle2, Clock, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { StatsCard } from '@/components';
+import { getCustomers, getProjectStats, deleteProject } from '@/actions';
+import { usePermission } from '@/hooks';
+import type { Project } from '@/types';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
+import { Table, ProjectFormModal, ProjectDeleteModal } from './_components';
 
 const Page = () => {
   const router = useRouter();
+  const { user, isSaleOnly } = usePermission();
+  const scopedUserId = isSaleOnly && user?.id ? user.id : undefined;
 
-  // Lấy danh sách khách hàng
-  const { data: customerData } = useQuery({
-    queryKey: ['customers'],
+  // Lấy tổng số khách hàng nhẹ (limit = 1 chỉ đọc meta.total)
+  const { data: customerMeta } = useQuery({
+    queryKey: ['customers', 'total-count'],
     queryFn: async () => {
-      const res = await getCustomers({ limit: 9999 });
-      return res.items;
+      const res = await getCustomers({ limit: 1 });
+      return res.meta?.total ?? 0;
     },
+    staleTime: 60_000,
   });
 
-  // State quản lý các modal tập trung
+  // Lấy thống kê dự án nhẹ từ endpoint агреgate /projects/stats
+  const { data: projectsStatsData } = useQuery({
+    queryKey: ['projects', 'stats-summary', scopedUserId],
+    queryFn: () => getProjectStats({ userId: scopedUserId }),
+    staleTime: 30_000,
+  });
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
-  // Mutation xóa dự án
   const { mutate: deleteProjectMutation, isPending: isDeleting } = useMutation({
     mutationFn: (id: number) => deleteProject(id),
     onSuccess: () => {
@@ -51,75 +54,84 @@ const Page = () => {
     },
   });
 
-  const totalProjects = 0;
-  const totalCustomers = customerData?.length || 0;
+  const projectStats = useMemo(
+    () => [
+      {
+        title: 'Tổng số dự án',
+        value: projectsStatsData?.total ?? 0,
+        icon: <FolderOpen />,
+        trend: 0,
+        trendDirection: 'up' as const,
+      },
+      {
+        title: 'Đang thực hiện',
+        value: projectsStatsData?.inProgress ?? 0,
+        icon: <Clock />,
+        trend: 0,
+        trendDirection: 'up' as const,
+      },
+      {
+        title: 'Hoàn thành',
+        value: projectsStatsData?.completed ?? 0,
+        icon: <CheckCircle2 />,
+        trend: 0,
+        trendDirection: 'up' as const,
+      },
+      {
+        title: 'Khách hàng',
+        value: customerMeta ?? 0,
+        icon: <Users />,
+        trend: 0,
+        trendDirection: 'up' as const,
+      },
+    ],
+    [projectsStatsData, customerMeta],
+  );
 
-  const projectStats = [
-    {
-      title: 'Tổng số dự án',
-      value: totalProjects,
-      icon: <FolderOpen />,
-      trend: 0,
-      trendDirection: 'up' as const,
-    },
-    {
-      title: 'Đang thực hiện',
-      value: totalProjects,
-      icon: <Clock />,
-      trend: 0,
-      trendDirection: 'up' as const,
-    },
-    {
-      title: 'Hoàn thành',
-      value: 0,
-      icon: <CheckCircle2 />,
-      trend: 0,
-      trendDirection: 'up' as const,
-    },
-    {
-      title: 'Khách hàng',
-      value: totalCustomers,
-      icon: <Users />,
-      trend: 0,
-      trendDirection: 'up' as const,
-    },
-  ];
-
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = useCallback(() => {
     setSelectedProject(null);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleOpenEditModal = (project: Project) => {
+  const handleOpenEditModal = useCallback((project: Project) => {
     setSelectedProject(project);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleOpenDeleteModal = (project: Project) => {
+  const handleOpenDeleteModal = useCallback((project: Project) => {
     setProjectToDelete(project);
     setIsDeleteOpen(true);
-  };
+  }, []);
 
-  const handleViewProject = (project: Project) => {
-    router.push(`/app/projects/${project.id}`);
-  };
+  const handleViewProject = useCallback(
+    (project: Project) => {
+      router.push(`/app/projects/${project.id}`);
+    },
+    [router],
+  );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="p-4 flex flex-col gap-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {projectStats.map((stat, index) => (
-          <StatsCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={stat.trend} trendDirection={stat.trendDirection} />
+        {projectStats.map((stat) => (
+          <StatsCard
+            key={stat.title}
+            title={stat.title}
+            value={stat.value}
+            icon={stat.icon}
+            trend={stat.trend}
+            trendDirection={stat.trendDirection}
+          />
         ))}
       </div>
+
       <Table
-        customers={customerData}
         onViewClick={handleViewProject}
         onEditClick={handleOpenEditModal}
         onDeleteClick={handleOpenDeleteModal}
         onAddClick={handleOpenCreateModal}
       />
 
-      {/* Modal Zone */}
       <ProjectFormModal
         isOpen={isFormOpen}
         onClose={() => {
@@ -128,18 +140,7 @@ const Page = () => {
         }}
         title={selectedProject ? 'Sửa dự án' : 'Thêm dự án mới'}
         submitText={selectedProject ? 'Xác nhận lưu' : 'Xác nhận tạo'}
-        initialData={
-          selectedProject
-            ? {
-                id: selectedProject.id,
-                name: selectedProject.name,
-                customerId: selectedProject.customerId,
-                address: selectedProject.address,
-                note: selectedProject.note,
-              }
-            : undefined
-        }
-        customers={customerData}
+        initialData={selectedProject || undefined}
       />
 
       <ProjectDeleteModal

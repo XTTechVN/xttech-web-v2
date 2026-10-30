@@ -8,7 +8,7 @@ function RolesPageContent() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div ref={containerRef} className="w-full flex flex-col gap-4">
+    <div ref={containerRef} className="w-full flex flex-col gap-4 p-4">
       {/* Roles Data Grid / Table */}
       <RoleTable />
     </div>

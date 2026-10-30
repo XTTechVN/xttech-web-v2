@@ -1,114 +1,109 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { getProject, getProjectQuotations, getCustomers, deleteProject, updateQuotation } from '@/actions';
-import { Heading, Button } from '@/components';
-import { ProjectFormModal, ProjectDeleteModal } from '../_components/modals';
-import { QuotationCreateModal } from '../_components/quotation-modals';
-import { ProjectInfo, QuotationsList, ProjectSummary, CustomerInfo, OwnerInfo } from './_components';
-import queryClient from '@/utils/query';
-import toast from 'react-hot-toast';
-import { showErrorToast } from '@/utils';
-import { 
-  FolderOpen, 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { getProject } from '@/actions';
+import { TabOverview } from './_components/overview';
+import {
+  FolderOpen,
   Loader2,
-  Edit,
-  Trash2
+  Layers,
+  Calculator,
+  FileText,
+  CheckCircle2,
+  ClipboardCheck,
+  ShieldCheck,
 } from 'lucide-react';
+import { Badge, Skeleton } from '@/components';
+import { PROJECT_STATUS_MAP } from '@/config';
+
+const TabFallback = () => <Skeleton className="h-64 w-full rounded-xl" />;
+
+const TabPositions = dynamic(
+  () => import('./_components/positions').then((m) => m.TabPositions),
+  { loading: TabFallback },
+);
+const TabQuotations = dynamic(
+  () => import('./_components/quotations').then((m) => m.TabQuotations),
+  { loading: TabFallback },
+);
+const TabContracts = dynamic(
+  () => import('./_components/contracts').then((m) => m.TabContracts),
+  { loading: TabFallback },
+);
+const TabProduction = dynamic(
+  () => import('./_components/production').then((m) => m.TabProduction),
+  { loading: TabFallback },
+);
+
+const TabAcceptance = dynamic(
+  () => import('./_components/acceptance').then((m) => m.TabAcceptance),
+  { loading: TabFallback },
+);
+const TabWarranty = dynamic(
+  () => import('./_components/warranty').then((m) => m.TabWarranty),
+  { loading: TabFallback },
+);
+
+const PROJECT_TABS = [
+  { value: 'overview', label: 'Thông tin', icon: <FolderOpen size={14} /> },
+  { value: 'positions', label: 'Thiết kế', icon: <Layers size={14} /> },
+  { value: 'quotations', label: 'Báo giá', icon: <Calculator size={14} /> },
+  { value: 'contracts', label: 'Hợp đồng', icon: <FileText size={14} /> },
+  { value: 'production', label: 'Sản xuất', icon: <CheckCircle2 size={14} /> },
+  { value: 'acceptance', label: 'Nghiệm thu', icon: <ClipboardCheck size={14} /> },
+  { value: 'warranty', label: 'Bảo hành', icon: <ShieldCheck size={14} /> },
+];
+
+const VALID_TABS = new Set(PROJECT_TABS.map((t) => t.value));
 
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+function ProjectDetailContent({ projectId }: { projectId: number }) {
   const router = useRouter();
-  const { id } = React.use(params);
-  const projectId = Number(id);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  // State modals
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isQuotationFormOpen, setIsQuotationFormOpen] = useState(false);
+  const rawTab = searchParams.get('tab');
+  const activeTab = rawTab && VALID_TABS.has(rawTab) ? rawTab : 'overview';
 
-  // Lấy chi tiết dự án
+  const handleSelectTab = useCallback(
+    (nextTab: string) => {
+      if (!VALID_TABS.has(nextTab)) return;
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', nextTab);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['project', projectId],
     queryFn: () => getProject(projectId),
-    enabled: !!projectId,
+    enabled: Boolean(projectId),
   });
-
-  // Lấy danh sách báo giá của dự án
-  const { data: quotationsData, isLoading: isLoadingQuotations } = useQuery({
-    queryKey: ['project_quotations', projectId],
-    queryFn: () => getProjectQuotations(projectId),
-    enabled: !!projectId,
-  });
-
-  // Lấy danh sách khách hàng (cho modal sửa)
-  const { data: customerData } = useQuery({
-    queryKey: ['customers'],
-    queryFn: async () => {
-      const res = await getCustomers({ limit: 9999 });
-      return res.items;
-    },
-  });
-
-  // Mutation xóa dự án
-  const { mutate: deleteProjectMutation, isPending: isDeleting } = useMutation({
-    mutationFn: () => deleteProject(projectId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      toast.success('Xóa dự án thành công');
-      setIsDeleteOpen(false);
-      router.push('/app/projects');
-    },
-    onError: (error) => {
-      showErrorToast(error, 'Xóa dự án thất bại');
-    },
-  });
-
-  // Mutation duyệt/hủy duyệt báo giá
-  const { mutateAsync: changeQuotationStatus } = useMutation({
-    mutationFn: ({ quotationId, status }: { quotationId: number; status: 'approved' | 'pending' }) => 
-      updateQuotation(quotationId, { status }),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['project_quotations', projectId] });
-      toast.success(variables.status === 'approved' ? 'Duyệt báo giá thành công' : 'Hủy duyệt báo giá thành công');
-    },
-    onError: (error: any) => {
-      showErrorToast(error, 'Có lỗi xảy ra');
-    },
-  });
-
-  const quotations = quotationsData?.items || [];
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-100 p-6 text-center">
-        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
-        <p className="text-slate-500 text-sm">Đang tải thông tin dự án...</p>
+      <div className="flex flex-col items-center justify-center min-h-[300px] p-6 text-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin mb-3" />
+        <p className="text-slate-500 text-xs">Đang tải thông tin dự án...</p>
       </div>
     );
   }
 
   if (error || !project) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-100 p-6 text-center">
-        <div className="p-4 rounded-full bg-red-50 text-red-500 mb-4">
-          <FolderOpen size={48} />
-        </div>
-        <Heading size="h2" className="text-xl font-semibold text-slate-800 mb-2">
-          Không tìm thấy dự án
-        </Heading>
-        <p className="text-slate-500 mb-6 max-w-md text-sm">
-          {error ? (error as any).message : 'Dự án bạn đang tìm kiếm không tồn tại hoặc đã bị xóa khỏi hệ thống.'}
-        </p>
-        <Link 
+      <div className="flex flex-col items-center justify-center min-h-[300px] p-6 text-center">
+        <p className="text-slate-600 mb-4 text-sm font-medium">Không tìm thấy dự án</p>
+        <Link
           href="/app/projects"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all font-semibold shadow-sm text-sm"
+          className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:brightness-110 transition-all"
         >
           Quay lại danh sách
         </Link>
@@ -116,107 +111,93 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     );
   }
 
-  const formattedDate = project.createdAt
-    ? new Date(project.createdAt).toLocaleDateString('vi-VN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : '—';
+  const statusConfig = PROJECT_STATUS_MAP[project.status] || {
+    label: project.status,
+    variant: 'default' as const,
+  };
 
   return (
-    <div className="flex flex-col gap-6 text-slate-800">
-      {/* Header & Breadcrumb & Action Buttons */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between pb-5 border-b border-slate-200/80">
-        <div className="flex flex-col gap-1">
-          <span className="text-[10px] font-bold text-slate-400">Quản lý dự án</span>
-          <Heading size="h1" className="text-primary text-2xl md:text-3xl font-bold mt-0.5">
-            {project.name}
-          </Heading>
+    <div className="p-4 sm:p-6 flex flex-col gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200/70">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-lg sm:text-xl font-bold text-primary font-lexend tracking-tight capitalize truncate">
+              {project.name}
+            </h1>
+            {project.status && (
+              <Badge variant={statusConfig.variant} size="sm" className="font-medium rounded">
+                {statusConfig.label}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500 font-normal mt-0.5 flex-wrap">
+            {project.customer?.name && (
+              <span className="text-slate-700 font-medium">{project.customer.name}</span>
+            )}
+            {(project.customer?.address || project.address) && (
+              <>
+                <span className="text-slate-300">-</span>
+                <span>{project.customer?.address || project.address}</span>
+              </>
+            )}
+            {project.customer?.phone && (
+              <>
+                <span className="text-slate-300">-</span>
+                <a
+                  href={`tel:${project.customer.phone}`}
+                  className="hover:text-primary transition-colors"
+                >
+                  {project.customer.phone}
+                </a>
+              </>
+            )}
+          </div>
         </div>
-        
-        {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0 md:mt-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            leftIcon={<Edit size={16} />}
-            onClick={() => setIsFormOpen(true)}
-            className="h-9 px-3 text-sm font-semibold hover:text-primary hover:border-primary/30"
-          >
-            Chỉnh sửa
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            leftIcon={<Trash2 size={16} />}
-            onClick={() => setIsDeleteOpen(true)}
-            className="h-9 px-3 text-sm font-semibold border-red-200 text-red-650 hover:bg-red-50"
-          >
-            Xóa dự án
-          </Button>
+
+        <div className="inline-flex p-1 bg-slate-100/90 rounded-md border border-slate-200/70 gap-1 overflow-x-auto shrink-0">
+          {PROJECT_TABS.map((tab) => {
+            const isActive = tab.value === activeTab;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => handleSelectTab(tab.value)}
+                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded text-xs transition-all whitespace-nowrap cursor-pointer select-none ${
+                  isActive
+                    ? 'bg-white text-slate-900 font-semibold shadow-xs'
+                    : 'text-slate-600 font-medium hover:text-slate-900 hover:bg-white/50'
+                }`}
+              >
+                <span className={`shrink-0 ${isActive ? 'text-primary' : 'text-slate-400'}`}>
+                  {tab.icon}
+                </span>
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Main Content Layout (2/3 & 1/3 Grid) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Project Details & Quotations (2/3) */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <ProjectInfo project={project} formattedDate={formattedDate} />
-          <QuotationsList 
-            projectId={projectId} 
-            quotations={quotations} 
-            isLoadingQuotations={isLoadingQuotations} 
-            onAddClick={() => setIsQuotationFormOpen(true)}
-            onStatusChange={async (quotationId, status) => {
-              await changeQuotationStatus({ quotationId, status });
-            }}
-          />
-        </div>
-
-        {/* Right Column: Summaries & Client Info (1/3) */}
-        <div className="lg:col-span-1 flex flex-col gap-6">
-          <ProjectSummary quotations={quotations} formattedDate={formattedDate} />
-          <CustomerInfo customer={project.customer} />
-          <OwnerInfo user={project.user} />
-        </div>
-      </div>
-
-      {/* Form Modal */}
-      <ProjectFormModal 
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        title="Chỉnh sửa thông tin dự án"
-        submitText="Lưu thay đổi"
-        customers={customerData}
-        initialData={project ? {
-          id: project.id,
-          name: project.name,
-          address: project.address || '',
-          note: project.note || '',
-          customerId: project.customerId
-        } : undefined}
-      />
-
-      {/* Delete Modal */}
-      <ProjectDeleteModal 
-        isOpen={isDeleteOpen}
-        onClose={() => setIsDeleteOpen(false)}
-        projectName={project?.name}
-        onConfirm={deleteProjectMutation}
-        isPending={isDeleting}
-      />
-
-      {/* Quotation Create Modal */}
-      <QuotationCreateModal 
-        isOpen={isQuotationFormOpen}
-        onClose={() => setIsQuotationFormOpen(false)}
-        title="Tạo báo giá mới"
-        defaultProjectId={projectId}
-      />
+      {activeTab === 'overview' && (
+        <TabOverview projectId={projectId} project={project} onSelectTab={handleSelectTab} />
+      )}
+      {activeTab === 'positions' && <TabPositions projectId={projectId} />}
+      {activeTab === 'quotations' && <TabQuotations projectId={projectId} />}
+      {activeTab === 'contracts' && <TabContracts projectId={projectId} />}
+      {activeTab === 'production' && <TabProduction projectId={projectId} />}
+      {activeTab === 'acceptance' && <TabAcceptance projectId={projectId} />}
+      {activeTab === 'warranty' && <TabWarranty projectId={projectId} />}
     </div>
+  );
+}
+
+export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+  const { id } = React.use(params);
+  const projectId = Number(id);
+
+  return (
+    <Suspense fallback={<TabFallback />}>
+      <ProjectDetailContent projectId={projectId} />
+    </Suspense>
   );
 }

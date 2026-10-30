@@ -54,7 +54,7 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
         {/* Vùng phải: Các công cụ global & nút hành động */}
         <div className="flex items-center gap-6">
           {/* Thanh tìm kiếm */}
-          {/* {onSearchChange && (
+          {onSearchChange && (
             <div className="relative w-64 hidden sm:block">
               <span className="absolute inset-y-0 left-3.5 flex items-center text-slate-400">
                 <Search size={16} />
@@ -67,7 +67,7 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
                 className="h-10 pl-10 pr-4 w-full rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-primary focus:bg-white transition-all duration-200"
               />
             </div>
-          )} */}
+          )}
 
           {/* Cụm Notification & Message */}
           <div className="flex items-center gap-2">

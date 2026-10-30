@@ -17,6 +17,7 @@ export interface DropdownProps {
   align?: 'left' | 'right';
   triggerOn?: 'click' | 'hover';
   className?: string;
+  menuClassName?: string;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -25,6 +26,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   align = 'left',
   triggerOn = 'click',
   className,
+  menuClassName,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -58,7 +60,8 @@ const Dropdown: React.FC<DropdownProps> = ({
         <div
           className={cn(
             'absolute z-50 pt-2 w-56 focus:outline-none transition-all duration-200',
-            align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left'
+            align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left',
+            menuClassName
           )}
         >
           <div className="rounded-md bg-white shadow-lg ring-1 ring-black/5 divide-y divide-gray-100 overflow-hidden border border-gray-100 py-1">
