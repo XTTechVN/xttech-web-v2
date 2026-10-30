@@ -3,6 +3,7 @@
 > Phạm vi: theo dõi vị trí nhân sự thời gian thực trên app iOS (Capacitor).
 > File nguồn chính: ios/App/App/NativeTrackingPlugin.swift, NativeTrackingPlugin.m, AppDelegate.swift, SceneDelegate.swift, Info.plist, src/hooks/useLocationTracker.ts, src/app/(auth)/app/(sidebar)/live-map/page.tsx.
 > Tài liệu liên quan: livemap-and-gps-fix-log.md (lịch sử lỗi, chủ yếu cho Android và Web).
+> Lưu ý (cập nhật 30/10/2026): mã hiện tại KHÔNG dùng CoreMotion và KHÔNG có chế độ moving/stationary với timer 120s. Phân biệt di chuyển bằng speed >= 0.8 m/s hoặc dịch chuyển >= 10m so với điểm đã gửi. Throttle: 3s khi di chuyển, 60s khi đứng yên. Có thêm heartbeat timer 60s độc lập với callback GPS, thử lại có backoff (5s, 10s... tối đa 30s) sau khi gửi thất bại, và điểm có accuracy > 200m vẫn gửi nhịp tim (server giữ tọa độ tốt gần nhất). Native phát sự kiện locationUpdate và authError lên JS sau khi gửi ping. Các thao tác CLLocationManager (checkPermission, ensureAlwaysPermission) chạy trên main thread. Refresh token: server /auth/refresh chỉ trả access token mới, không xoay vòng refresh token.
 
 ---
 
@@ -56,7 +57,7 @@ Event phát về JS qua notifyListeners:
 - permissionChanged: khi người dùng đổi quyền vị trí.
 
 ### 2.2 NativeTrackingPlugin.m
-Chỉ khai báo CAP_PLUGIN và liệt kê 5 method ở trên. Thêm method Swift mới mà quên khai báo ở đây thì JS sẽ không gọi được.
+File này không còn tồn tại trong ios/App/App. Plugin được đăng ký bằng code trong MainViewController (registerPluginInstance) và danh sách method nằm ở mảng pluginMethods của NativeTrackingPlugin.swift. Thêm method mới cho JS phải thêm vào mảng này, rồi cập nhật interface trong useLocationTracker.ts.
 
 ### 2.3 AppDelegate.swift
 Trong didFinishLaunchingWithOptions, nếu launchOptions[.location] có giá trị thì app được iOS đánh thức do sự kiện vị trí khi ở nền (SLC hoặc region exit). Lúc đó gọi NativeTrackingPlugin.handleLocationWakeUp().
@@ -234,3 +235,4 @@ Phần này nằm ngoài iOS nhưng liên quan trực tiếp:
 | Ngày | Nội dung |
 |---|---|
 | 28/10/2026 | Tạo tài liệu từ việc đọc code hiện tại (NativeTrackingPlugin.swift, .m, AppDelegate, SceneDelegate, Info.plist, useLocationTracker.ts, live-map/page.tsx). |
+| 30/10/2026 | Đồng bộ với code: bỏ CoreMotion và .m, thêm heartbeat timer, backoff thử lại, sự kiện locationUpdate/authError, main thread cho CLLocationManager, cờ awaitingFirstPing phía server, tầng dự phòng định vị mạng khi check-in. |

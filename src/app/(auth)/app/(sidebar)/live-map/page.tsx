@@ -23,6 +23,14 @@ const LiveMap = dynamic(
 import { getFileUrl, showErrorToast } from '@/utils';
 import { Users, X, Route } from 'lucide-react';
 
+/** Gộp bản cập nhật realtime vào bản ghi cũ; giá trị rỗng (pin, chẩn đoán) không được ghi đè giá trị đã biết */
+const mergeLiveStaff = (previous: StaffLiveLocation, next: StaffLiveLocation): StaffLiveLocation => ({
+  ...previous,
+  ...next,
+  batteryLevel: next.batteryLevel ?? previous.batteryLevel,
+  diagnostics: next.diagnostics ?? previous.diagnostics,
+});
+
 export default function AttendanceLiveMapPage() {
   const [staffLocations, setStaffLocations] = useState<StaffLiveLocation[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<StaffLiveLocation | null>(null);
@@ -57,7 +65,7 @@ export default function AttendanceLiveMapPage() {
         if (!current) return null;
         const currentId = current.userId;
         const fresh = data.find((s) => s.userId === currentId);
-        return fresh ? { ...current, ...fresh } : current;
+        return fresh ? mergeLiveStaff(current, fresh) : current;
       });
     } catch (err) {
       if (!isBackground) {
@@ -120,7 +128,7 @@ export default function AttendanceLiveMapPage() {
                 const index = prev.findIndex((s) => s.userId === targetUserId);
                 if (index >= 0) {
                   const clone = [...prev];
-                  clone[index] = { ...clone[index], ...updatedStaff };
+                  clone[index] = mergeLiveStaff(clone[index], updatedStaff);
                   return clone;
                 } else {
                   return [updatedStaff, ...prev];
@@ -130,7 +138,7 @@ export default function AttendanceLiveMapPage() {
               // Tự động cập nhật selectedStaff khi nhân viên này di chuyển
               setSelectedStaff((current) => {
                 const currentId = current?.userId || (current as any)?.user_id;
-                return currentId === targetUserId ? { ...current, ...updatedStaff } : current;
+                return currentId === targetUserId && current ? mergeLiveStaff(current, updatedStaff) : current;
               });
             } else if (payload.type === 'STAFF_CHECKOUT' && payload.data) {
               const targetUserId: string = payload.data.userId || payload.data.user_id;

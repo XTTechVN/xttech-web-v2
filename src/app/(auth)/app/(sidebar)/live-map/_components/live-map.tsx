@@ -525,7 +525,7 @@ function StaffPopupContent({
         </div>
       </div>
 
-      <StaffDiagnostics diagnostics={staff.diagnostics} />
+      <StaffDiagnostics diagnostics={staff.diagnostics} awaitingFirstPing={staff.awaitingFirstPing} />
 
       <div className="flex items-center gap-1.5 pt-0.5">
         <button

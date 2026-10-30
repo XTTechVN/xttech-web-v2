@@ -165,16 +165,26 @@ function buildExitMetricSignals(diagnostics: StaffDeviceDiagnostics): Diagnostic
 }
 
 /** Tổng hợp các tín hiệu đáng ngờ từ chẩn đoán thiết bị, sắp xếp mức độ nghiêm trọng giảm dần */
-export function buildDiagnosticSignals(diagnostics?: StaffDeviceDiagnostics): DiagnosticSignal[] {
-  if (!diagnostics) return [];
+export function buildDiagnosticSignals(
+  diagnostics?: StaffDeviceDiagnostics,
+  options: { awaitingFirstPing?: boolean } = {},
+): DiagnosticSignal[] {
+  const awaitingSignals: DiagnosticSignal[] = options.awaitingFirstPing
+    ? [{ id: 'awaiting-first-ping', severity: 'warning', label: 'Đã check-in nhưng chưa nhận được tín hiệu nào từ thiết bị' }]
+    : [];
 
   return [
-    ...buildPermissionSignals(diagnostics),
-    ...buildSystemSignals(diagnostics),
-    ...buildLifecycleSignals(diagnostics),
-    ...buildTransportSignals(diagnostics),
-    ...buildLocationStreamSignals(diagnostics),
-    ...buildExitMetricSignals(diagnostics),
+    ...awaitingSignals,
+    ...(diagnostics
+      ? [
+          ...buildPermissionSignals(diagnostics),
+          ...buildSystemSignals(diagnostics),
+          ...buildLifecycleSignals(diagnostics),
+          ...buildTransportSignals(diagnostics),
+          ...buildLocationStreamSignals(diagnostics),
+          ...buildExitMetricSignals(diagnostics),
+        ]
+      : []),
   ].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
 }
 

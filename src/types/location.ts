@@ -76,6 +76,8 @@ export interface StaffLiveLocation {
   status: StaffLiveStatus;
   updatedAt: string;
   diagnostics?: StaffDeviceDiagnostics;
+  /** Đã check-in nhưng thiết bị chưa gửi ping nào lên server (bản ghi live mới chỉ có mốc xuất phát) */
+  awaitingFirstPing?: boolean;
 }
 
 export interface StaffRoutePoint {
