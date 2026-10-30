@@ -1,11 +1,13 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
+import { includesSearchText } from '@/utils';
 import { useState, useRef, useEffect } from 'react';
 import { PlusCircle, Search, Check, Calendar, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 import type { ITableFilterProps } from './types';
+import { TableDateInput } from './table-date-input';
 
 interface FacetedFilterProps {
   filter: ITableFilterProps;
@@ -68,7 +70,7 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
 
   // Lọc các lựa chọn dựa trên truy vấn tìm kiếm
   const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchQuery.toLowerCase()),
+    includesSearchText(option.label, searchQuery),
   );
 
   // Tìm lựa chọn đang được chọn hiện tại
@@ -195,6 +197,9 @@ function FacetedFilter({ filter }: FacetedFilterProps) {
   );
 }
 
+const DATE_INPUT_CLASSNAME =
+  'w-full text-xs h-8 px-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary focus:bg-white';
+
 function DateRangeFilter({ filter }: { filter: ITableFilterProps }) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownAlign, setDropdownAlign] = useState<'left' | 'right'>('left');
@@ -317,26 +322,20 @@ function DateRangeFilter({ filter }: { filter: ITableFilterProps }) {
               <label className="text-[11px] font-semibold text-gray-500 block mb-1">
                 Từ ngày
               </label>
-              <input
-                type="date"
-                value={startDate || ''}
-                onChange={(e) =>
-                  filter.onDateRangeChange?.(e.target.value || undefined, endDate)
-                }
-                className="w-full text-xs h-8 px-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary focus:bg-white"
+              <TableDateInput
+                value={startDate}
+                onCommit={(nextValue) => filter.onDateRangeChange?.(nextValue, endDate)}
+                className={DATE_INPUT_CLASSNAME}
               />
             </div>
             <div>
               <label className="text-[11px] font-semibold text-gray-500 block mb-1">
                 Đến ngày
               </label>
-              <input
-                type="date"
-                value={endDate || ''}
-                onChange={(e) =>
-                  filter.onDateRangeChange?.(startDate, e.target.value || undefined)
-                }
-                className="w-full text-xs h-8 px-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary focus:bg-white"
+              <TableDateInput
+                value={endDate}
+                onCommit={(nextValue) => filter.onDateRangeChange?.(startDate, nextValue)}
+                className={DATE_INPUT_CLASSNAME}
               />
             </div>
           </div>

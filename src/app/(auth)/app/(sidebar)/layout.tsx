@@ -4,7 +4,7 @@
 import React from 'react';
 
 // Next.js
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 // Third-party
 import toast from 'react-hot-toast';
@@ -22,14 +22,13 @@ import { useAuthStore } from '@/stores';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   // Chỉ tự động thu thập GPS và gửi ping định kỳ khi nhân viên ĐÃ CHECK-IN và CHƯA CHECK-OUT (đang trong ca làm)
-  const { isWorkingShift } = useMyTodayAttendance();
-  useLocationTracker({ enabled: isWorkingShift, intervalMs: 60000 });
+  const { isWorkingShift, isSuccess: isShiftStatusResolved } = useMyTodayAttendance();
+  useLocationTracker({ enabled: isWorkingShift, isStatusResolved: isShiftStatusResolved, intervalMs: 60000 });
 
   const path = usePathname();
   const pathSegments = path.split('/');
   const lastPath = pathSegments[pathSegments.length - 1];
 
-  const router = useRouter();
   const { navigateTo } = usePageTransition();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [activeMenu, setActiveMenu] = React.useState(lastPath);

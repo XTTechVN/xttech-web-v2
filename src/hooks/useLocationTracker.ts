@@ -11,8 +11,9 @@ export interface NativeTrackingPlugin {
   startTracking(options: { token: string; refreshToken?: string; apiUrl: string }): Promise<{ success: boolean }>;
   updateToken(options: { token: string; refreshToken?: string }): Promise<{ success: boolean }>;
   stopTracking(): Promise<{ success: boolean }>;
-  checkPermission?(): Promise<{ status: string; isAlways: boolean; isPrecise: boolean }>;
+  checkPermission?(): Promise<{ status: string; isAlways: boolean; isWhenInUse?: boolean; isPrecise: boolean }>;
   openSettings?(): Promise<{ success: boolean }>;
+  ensureAlwaysPermission?(): Promise<{ isAlways: boolean; action: string }>;
   // Android Background Permissions & Auto-Start
   checkAndroidPermissions?(): Promise<{
     isIgnoringBatteryOptimizations: boolean;
@@ -23,11 +24,14 @@ export interface NativeTrackingPlugin {
   requestIgnoreBatteryOptimization?(): Promise<{ success: boolean }>;
   requestBackgroundLocation?(): Promise<{ success: boolean }>;
   openAutoStartSettings?(): Promise<{ success: boolean; manufacturer?: string }>;
+  getBatteryLevel?(): Promise<{ level: number }>;
 }
 export const NativeTracking = registerPlugin<NativeTrackingPlugin>('NativeTracking');
 
 interface LocationTrackerOptions {
   enabled?: boolean;
+  /** Trạng thái ca đã được xác định chắc chắn (API đã trả về). Chưa xác định thì KHÔNG dừng native tracking */
+  isStatusResolved?: boolean;
   intervalMs?: number; // Mặc định 60 giây (60000ms) khi di chuyển trên Web
   heartbeatMs?: number; // Mặc định 3 phút (180000ms) gửi nhịp tim khi đứng yên
 }
@@ -40,7 +44,7 @@ export const isMobileDevice = () => {
   );
 }
 
-export function useLocationTracker({ enabled = true, intervalMs = 60000 }: LocationTrackerOptions = {}) {
+export function useLocationTracker({ enabled = true, isStatusResolved = true, intervalMs = 60000, heartbeatMs = 180000, }: LocationTrackerOptions = {}) {
   const [isTracking, setIsTracking] = useState(false);
   const [lastPingTime, setLastPingTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +65,17 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000 }: Locat
   // Đọc mức pin thiết bị nếu được hỗ trợ (có cache lại mức pin gần nhất)
   const getBatteryLevel = async (): Promise<number | undefined> => {
     try {
-      if ('getBattery' in navigator) {
+      // 1. Ưu tiên đọc từ Native Plugin trên iOS/Android
+      if (Capacitor.isNativePlatform() && NativeTracking.getBatteryLevel) {
+        const res = await NativeTracking.getBatteryLevel();
+        if (res && typeof res.level === 'number' && res.level >= 0) {
+          const level = Math.round(res.level);
+          lastBatteryRef.current = level;
+          return level;
+        }
+      }
+      // 2. Fallback cho trình duyệt Web hỗ trợ Battery API (Chrome, Edge...)
+      if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
         const nav = navigator as unknown as { getBattery: () => Promise<{ level: number }> };
         const battery = await nav.getBattery();
         const level = Math.round(battery.level * 100);
@@ -132,6 +146,12 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000 }: Locat
 
     try {
       const battery = await getBatteryLevel();
+      const clientPlatform =
+        Capacitor.getPlatform() === 'ios'
+          ? 'ios'
+          : Capacitor.getPlatform() === 'android'
+          ? 'android'
+          : 'web';
       await sendLocationPing({
         latitude: pos.latitude,
         longitude: pos.longitude,
@@ -139,6 +159,7 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000 }: Locat
         speed: speed,
         heading: pos.heading,
         batteryLevel: battery,
+        platform: clientPlatform,
       });
 
       setLastPingTime(new Date());
@@ -213,7 +234,9 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000 }: Locat
 
     if (!enabled) {
       setIsTracking(false);
-      if (isNative) {
+      // Chỉ dừng native khi đã biết chắc nhân viên không còn trong ca.
+      // Lúc đang tải dữ liệu chấm công hoặc API lỗi, `enabled` tạm thời = false nhưng KHÔNG được tắt GPS nền.
+      if (isNative && isStatusResolved) {
         NativeTracking.stopTracking().catch(() => { });
       }
       if (workerRef.current) {
@@ -290,7 +313,9 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000 }: Locat
           }).catch(() => {});
         }
       }).catch((e: any) => {
-        console.warn('[NativeTracking] Start native tracking failed, falling back to Web Geolocation:', e);
+        // Native không khởi động được (vd: plugin chưa được đăng ký): Web Geolocation chỉ chạy khi app đang mở,
+        // KHÔNG thay thế được định vị nền -> ghi lỗi rõ ràng để không bị che giấu.
+        console.error('[NativeTracking] Native background tracking FAILED, chỉ còn định vị khi app đang mở:', e);
         startWebWatchPosition();
       });
 
@@ -402,7 +427,7 @@ export function useLocationTracker({ enabled = true, intervalMs = 60000 }: Locat
       document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
       window.removeEventListener('focus', handleVisibilityOrFocus);
     };
-  }, [enabled, intervalMs, pingCurrentLocation]);
+  }, [enabled, isStatusResolved, intervalMs, heartbeatMs, pingCurrentLocation, executePing]);
 
   // Đồng bộ tức thời khi AccessToken / RefreshToken được cập nhật từ Web sang Native Service
   const accessToken = useAuthStore((state) => state.accessToken);

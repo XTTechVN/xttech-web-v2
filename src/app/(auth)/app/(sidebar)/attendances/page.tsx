@@ -3,13 +3,13 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { getFileUrl, showErrorToast } from '@/utils';
 import { Pencil, Trash2, Eye, Clock, FileEdit, Calendar, UserCheck, Users, UserCheck2, Plus, MessageSquareWarning, Route } from 'lucide-react';
 
 import { Button, TableData, TableAction, Badge, Heading, ITableColumn, ITableFilterProps, Avatar, Modal } from '@/components';
+import { Image } from 'antd';
 import { useQueryParam } from '@/hooks';
 import { deleteAttendance, getAttendances, getDepartments, getAdjustmentRequests } from '@/actions';
 import { Attendance, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
@@ -247,12 +247,29 @@ export default function AttendancesPage() {
       label: 'Nhân sự',
       minWidth: '180px',
       cell: (row) => {
-        const avatar = row.user?.avatar;
-        const avatarSrc = getFileUrl(avatar);
+        const fullName = row.user?.fullName || row.user?.username || 'Chưa cập nhật';
+        const avatarSrc = getFileUrl(row.user?.avatar);
         return (
-          <div className="flex items-center gap-2.5 min-w-0">
-            <Avatar src={avatarSrc} name={row.user?.fullName || 'NV'} size="sm" />
-            <span className="font-semibold text-slate-800 text-sm truncate">{row.user?.fullName || '-'}</span>
+           <div className="flex items-center gap-2.5 min-w-0">
+            {avatarSrc ? (
+              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-200 cursor-pointer">
+                <Image
+                  src={avatarSrc}
+                  alt={fullName}
+                  className="w-full h-full object-cover"
+                  rootClassName="w-full h-full"
+                  preview={{  cover: false }}
+                />
+              </div>
+            ) : (
+              <Avatar name={fullName} size="sm" />
+            )}
+            <span 
+              className="font-semibold text-slate-800 text-sm truncate" 
+              title={fullName}
+            >
+              {fullName}
+            </span>
           </div>
         );
       },
@@ -267,15 +284,17 @@ export default function AttendancesPage() {
 
         return (
           <div className="flex items-center gap-2">
-            {imgSrc ? (
-              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                <img src={imgSrc} alt={row.user?.fullName || 'Check In'} className="object-cover w-full h-full" />
-              </div>
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
-                <Clock className="w-4 h-4" />
-              </div>
-            )}
+            <Image.PreviewGroup>
+              {imgSrc ? (
+                <div className="relative w-8 h-8 rounded-full border border-slate-200 shrink-0 cursor-pointer overflow-hidden">
+                  <Image src={imgSrc} alt={row.user?.fullName || 'Check In'} rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: false }} />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
+                  <Clock className="w-4 h-4" />
+                </div>
+              )}
+            </Image.PreviewGroup>
             <div className="flex flex-col">
               <span className="font-medium text-slate-700 text-sm">{row.checkIn ? row.checkIn.slice(0, 5) : '--:--'}</span>
               {row.isLate && <span className="text-[10px] text-slate-500 font-semibold">Muộn {row.lateMinutes ?? 0}p</span>}
@@ -294,15 +313,15 @@ export default function AttendancesPage() {
 
         return (
           <div className="flex items-center gap-2">
-            {imgSrc ? (
-              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                <img src={imgSrc} alt={row.user?.fullName || 'Check Out'} className="object-cover w-full h-full" />
-              </div>
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
-                <Clock className="w-4 h-4" />
-              </div>
-            )}
+              {imgSrc ? (
+                <div className="relative w-8 h-8 rounded-full border border-slate-200 shrink-0 cursor-pointer overflow-hidden">
+                  <Image src={imgSrc} alt={row.user?.fullName || 'Check Out'} rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ cover: false }} />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400 border border-slate-200/60">
+                  <Clock className="w-4 h-4" />
+                </div>
+              )}
             <div className="flex flex-col">
               <span className="font-medium text-slate-700 text-sm">{row.checkOut ? row.checkOut.slice(0, 5) : '--:--'}</span>
               {row.isEarlyLeave && <span className="text-[10px] text-slate-500 font-semibold">Về sớm {row.earlyLeaveMinutes ?? 0}p</span>}
@@ -564,17 +583,6 @@ export default function AttendancesPage() {
             <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)} leftIcon={<Plus size={16} />} className="px-3 gap-1.5 shrink-0">
               Thêm chấm công
             </Button>
-
-            <Link href="/app/attendances/adjustments" className="shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<FileEdit size={16} className="text-sky-600" />}
-                className="px-3 gap-1.5 text-slate-700 hover:bg-slate-50 border-slate-200 w-full"
-              >
-                Danh sách khiếu nại
-              </Button>
-            </Link>
           </div>
         </div>
 

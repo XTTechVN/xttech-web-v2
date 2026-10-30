@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { getLiveLocations } from '@/actions';
-import { StaffLiveLocation } from '@/types';
+import { StaffLiveLocation, STAFF_LIVE_STATUS_MAP } from '@/types';
 import { BASE_WS_URL } from '@/config';
 import dynamic from 'next/dynamic';
 import { StaffList } from './_components/staff-list';
@@ -112,6 +112,7 @@ export default function AttendanceLiveMapPage() {
                 attendanceId: rawData.attendanceId,
                 batteryLevel: rawData.batteryLevel,
                 checkInTime: rawData.checkInTime,
+                platform: rawData.platform || 'web',
                 updatedAt: rawData.updatedAt,
               };
 
@@ -131,6 +132,15 @@ export default function AttendanceLiveMapPage() {
                 const currentId = current?.userId || (current as any)?.user_id;
                 return currentId === targetUserId ? { ...current, ...updatedStaff } : current;
               });
+            } else if (payload.type === 'STAFF_CHECKOUT' && payload.data) {
+              const targetUserId: string = payload.data.userId || payload.data.user_id;
+              if (targetUserId) {
+                setStaffLocations((prev) => prev.filter((s) => (s.userId || (s as any).user_id) !== targetUserId));
+                setSelectedStaff((current) => {
+                  const currentId = current?.userId || (current as any)?.user_id;
+                  return currentId === targetUserId ? null : current;
+                });
+              }
             }
           } catch (e) {
             console.warn('Lỗi parse WebSocket message:', e);
@@ -269,12 +279,14 @@ export default function AttendanceLiveMapPage() {
                       className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-md ${
                         selectedStaff.status === 'offline'
                           ? 'bg-slate-100 text-slate-500'
-                          : selectedStaff.status === 'moving'
-                            ? 'bg-amber-50 text-amber-700'
-                            : 'bg-emerald-50 text-emerald-700'
+                          : selectedStaff.status === 'app_closed'
+                            ? 'bg-rose-50 text-rose-600'
+                            : selectedStaff.status === 'moving'
+                              ? 'bg-amber-50 text-amber-700'
+                              : 'bg-emerald-50 text-emerald-700'
                       }`}
                     >
-                      {selectedStaff.status === 'offline' ? 'Ngoại tuyến' : selectedStaff.status === 'moving' ? 'Di chuyển' : 'Đứng yên'}
+                      {STAFF_LIVE_STATUS_MAP[selectedStaff.status] || selectedStaff.status}
                     </span>
                   </div>
                   <p className="text-[10px] text-slate-500 truncate mt-0.5">

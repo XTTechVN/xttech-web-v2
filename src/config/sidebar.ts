@@ -69,6 +69,7 @@ export const acceptedSections = [
   'live-map',
   'app-versions',
   'leave-request',
+  'attendances-roster',
   'documents-root',
   'document-categories',
   'documents-list',
@@ -163,6 +164,12 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
             roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
           },
           {
+            id: 'attendances-roster',
+            label: 'Lịch làm việc phòng ban',
+            href: '/app/attendances/roster',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+          },
+          {
             id: 'attendances-reports',
             label: 'Báo cáo thống kê',
             href: '/app/attendances/reports',
@@ -192,7 +199,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
       },
       {
         id: 'suggestions',
-        label: 'Góp ý & Đề xuất',
+        label: 'Sáng kiến & Đề xuất',
         icon: React.createElement(MessageSquarePlus, { size: 18 }),
         href: '/app/suggestions',
         roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],

@@ -1,3 +1,4 @@
+import { includesSearchText } from '@/utils';
 import { useState } from 'react';
 import { Modal, Button, Badge, Avatar, Input, Select, TableData, TableAction, ITableColumn } from '@/components';
 import { toast } from 'react-hot-toast';
@@ -126,9 +127,9 @@ export default function PayrollTransferHistoryModal({ open, onClose }: Props) {
 
   const filteredData = mockTransferHistory.filter((item) => {
     const matchSearch =
-      item.code.toLowerCase().includes(search.toLowerCase()) ||
-      item.period.toLowerCase().includes(search.toLowerCase()) ||
-      item.executor.name.toLowerCase().includes(search.toLowerCase());
+      includesSearchText(item.code, search) ||
+      includesSearchText(item.period, search) ||
+      includesSearchText(item.executor.name, search);
     const matchStatus = statusFilter === 'all' || item.status === statusFilter;
     return matchSearch && matchStatus;
   });

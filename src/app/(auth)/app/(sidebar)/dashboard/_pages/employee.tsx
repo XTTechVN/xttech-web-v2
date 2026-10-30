@@ -10,6 +10,7 @@ import QuickAttendanceCard from '../_components/quick-attendance-card';
 import QuickActionsGrid from '../_components/quick-actions-grid';
 import WeeklyAttendanceChart from '../_components/weekly-attendance-chart';
 import LiveStaffWidget from '../_components/live-staff-widget';
+import { DepartmentRosterWidget } from '../_components/department-roster-widget';
 import { Clock, CheckCircle2, Users, Navigation } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -64,6 +65,7 @@ export const EmployeeDashboard = () => {
           pendingLeavesCount={data?.pendingLeavesCount}
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
         />
+        <DepartmentRosterWidget />
         <PersonalAttendanceHistory />
       </div>
 

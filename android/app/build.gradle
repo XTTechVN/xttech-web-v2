@@ -70,7 +70,7 @@ gradle.taskGraph.whenReady { taskGraph ->
     def isRelease = taskGraph.allTasks.any { it.name.toLowerCase().contains("release") }
     def isDebug = taskGraph.allTasks.any { it.name.toLowerCase().contains("debug") }
 
-    def targetUrl = isRelease ? "https://xttech.vn" : (isDebug ? "https://dev-xt-web-v2.up.railway.app" : null)
+    def targetUrl = isRelease ? "https://xttech.vn/app/dashboard" : (isDebug ? "https://dev-xt-web-v2.up.railway.app/app/dashboard" : null)
     if (targetUrl != null) {
         def configFile = file('src/main/assets/capacitor.config.json')
         if (configFile.exists()) {

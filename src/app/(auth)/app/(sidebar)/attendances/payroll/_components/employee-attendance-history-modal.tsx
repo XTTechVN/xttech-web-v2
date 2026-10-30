@@ -1,3 +1,4 @@
+import { includesSearchText } from '@/utils';
 import React, { useState } from 'react';
 import { Modal, Button, Badge, Avatar, Select, Input, TableData, ITableColumn } from '@/components';
 import { getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
@@ -164,8 +165,8 @@ export default function EmployeeAttendanceHistoryModal({ open, employee, onClose
   const filteredLogs = dailyLogs.filter((log) => {
     const matchSearch =
       log.date.includes(search) ||
-      log.shiftName.toLowerCase().includes(search.toLowerCase()) ||
-      (log.note && log.note.toLowerCase().includes(search.toLowerCase()));
+      includesSearchText(log.shiftName, search) ||
+      (log.note && includesSearchText(log.note, search));
     const matchStatus = statusFilter === 'all' || log.status === statusFilter;
     return matchSearch && matchStatus;
   });

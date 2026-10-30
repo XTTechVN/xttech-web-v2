@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { UserPlus, Briefcase, UserMinus, ShieldAlert, Users, Loader2 } from 'lucide-react';
+import { UserPlus, Briefcase, UserMinus, Users, Loader2 } from 'lucide-react';
 import { TableData, TableAction } from '@/components/table';
 import { Modal, Button, Badge, Avatar, Input } from '@/components';
 import { getEmployees, revokePositions, getUsers } from '@/actions';
@@ -412,8 +412,7 @@ export const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> =
         title="Xác nhận gỡ nhân sự"
         className="m-2 max-w-md w-full"
       >
-        <div className="flex gap-3 items-start py-2">
-          <ShieldAlert className="w-6 h-6 text-amber-500 shrink-0 mt-0.5" />
+        <div className="py-2">
           <p className="text-gray-600 text-sm leading-relaxed">
             Bạn có chắc chắn muốn gỡ nhân sự{' '}
             <strong className="text-gray-900 font-semibold">

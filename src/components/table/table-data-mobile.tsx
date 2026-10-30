@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { useInfiniteScroll } from '@/hooks';
@@ -55,18 +55,19 @@ export function TableDataMobile<T>({
     threshold: 300, // Kích hoạt fetch trước khi chạm đáy 300px
   });
 
-  // Gom toàn bộ items từ tất cả các trang đã tải về thành 1 mảng phẳng duy nhất & khử trùng lặp theo id nếu có
-  const rawItems = data?.pages?.flatMap((page) => page?.items || []) || [];
-  const seenIds = new Set<string | number>();
-  const items = rawItems.filter((item) => {
-    const id = (item as any)?.id;
-    if (id !== undefined && id !== null) {
-      if (seenIds.has(id)) return false;
-      seenIds.add(id);
+  // Gom toàn bộ items từ các trang đã tải thành 1 mảng phẳng và loại bỏ bản ghi trùng id
+  // (tránh lặp card khi bản ghi bị trượt ranh giới trang giữa các lần fetch offset)
+  const items = useMemo(() => {
+    const flatItems = data?.pages?.flatMap((page) => page?.items || []) || [];
+    const seenIds = new Set<unknown>();
+    return flatItems.filter((item) => {
+      const itemId = (item as { id?: unknown } | null)?.id;
+      if (itemId === undefined || itemId === null) return true;
+      if (seenIds.has(itemId)) return false;
+      seenIds.add(itemId);
       return true;
-    }
-    return true;
-  });
+    });
+  }, [data]);
 
   if (isLoading) {
     return (
@@ -95,7 +96,7 @@ export function TableDataMobile<T>({
           {/* Danh sách các Cards */}
           <div className="flex flex-col gap-3">
             {items.map((item, index) => (
-              <div key={`${(item as any)?.id ?? 'item'}-${index}`} className="w-full">
+              <div key={(item as any)?.id ?? index} className="w-full">
                 {renderCard(item, index)}
               </div>
             ))}
