@@ -20,6 +20,28 @@ import AttendanceDetailModal from '../_components/attendance-modal';
 import OvertimeModal from '../_components/overtime-modal';
 import { getFileUrl } from '@/utils';
 
+// Get first day and last day of current month
+const getCurrentMonthRange = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+
+  const formatDate = (d: Date) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  return {
+    startDate: formatDate(firstDay),
+    endDate: formatDate(lastDay),
+  };
+};
+
 const formatTime = (value?: string | null): string => {
   if (!value) return '--:--';
   if (value.includes('T')) return value.substring(11, 16);
@@ -38,13 +60,30 @@ export default function PayrollDataPage() {
 
   const user = useAuthStore((state) => state.user);
 
+  const monthRange = useMemo(() => getCurrentMonthRange(), []);
+
   const { data: attendances, isLoading: isLoadingAttendances } = useQuery({
     queryKey: ['attendances', user?.id],
     queryFn: () => getAttendances({ userId: user!.id, limit: 100 }),
     enabled: !!user?.id,
   });
 
+  // Chấm công của riêng nhân viên đang đăng nhập, giới hạn trong tháng hiện tại -> dùng cho stat cards
+  const { data: monthlyAttendances } = useQuery({
+    queryKey: ['attendances', 'monthly', user?.id, monthRange.startDate, monthRange.endDate],
+    queryFn: () =>
+      getAttendances({
+        userId: user!.id,
+        startDate: monthRange.startDate,
+        endDate: monthRange.endDate,
+        limit: 100,
+      }),
+    enabled: !!user?.id,
+  });
+
   const myAttendances = useMemo(() => attendances?.items ?? [], [attendances?.items]);
+
+  const myMonthlyAttendances = useMemo(() => monthlyAttendances?.items ?? [], [monthlyAttendances?.items]);
 
   // Ưu tiên tìm phiên chấm công đang mở (đã check-in nhưng chưa check-out)
   const activeOpenAttendance = useMemo(() => {
@@ -133,7 +172,7 @@ export default function PayrollDataPage() {
     let overtimeCount = 0;
     let lateCount = 0;
 
-    for (const a of myAttendances) {
+    for (const a of myMonthlyAttendances) {
       if (a.status !== 'absent') workingDays++;
       if (a.status === 'leave') leaveDays++;
       if (a.status === 'absent') absenceDays++;
@@ -178,7 +217,7 @@ export default function PayrollDataPage() {
         trendDirection: lateCount > 0 ? 1 : -1,
       },
     ];
-  }, [myAttendances]);
+  }, [myMonthlyAttendances]);
 
   const attendanceColumns: ITableColumn<Attendance>[] = [
     {
@@ -412,7 +451,7 @@ export default function PayrollDataPage() {
   };
 
   return (
-    <div className="w-full flex flex-col gap-4">
+    <div className="w-full flex flex-col gap-4 p-4">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {payrollStats.map((stat, i) => (
           <StatCart

@@ -11,6 +11,7 @@ import QuickActionsGrid from '../_components/quick-actions-grid';
 import PendingApprovalsCard from '../_components/pending-approvals-card';
 import WeeklyAttendanceChart from '../_components/weekly-attendance-chart';
 import LiveStaffWidget from '../_components/live-staff-widget';
+import ProjectReportCard from '../_components/project-report-card';
 import { Users, CheckCircle2, ClockAlert, FolderGit2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { DepartmentRosterWidget } from '../_components/department-roster-widget';
@@ -100,6 +101,7 @@ export const AdminDashboard = () => {
         <div className="grid grid-cols-12 gap-4 min-w-0">
           {/* Cột trái (8 cols): Biểu đồ thật & Bảng duyệt đơn khẩn cấp */}
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
+            <ProjectReportCard />
             <WeeklyAttendanceChart
               data={data?.weeklyStats}
               todayCount={data?.todayAttendancesCount}

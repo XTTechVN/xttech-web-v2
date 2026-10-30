@@ -28,8 +28,8 @@ export const exportAttendanceReport = async (params: AttendanceReportQueryParams
   );
 
   const disposition = response.headers['content-disposition'];
-  const from = params.fromDate || params.from_date || '';
-  const to = params.toDate || params.to_date || '';
+  const from = params.fromDate || '';
+  const to = params.toDate || '';
   const defaultFileName = `bao_cao_cham_cong_${from}_${to}.xlsx`;
   const fileName = getFilenameFromContentDisposition(disposition, defaultFileName);
 

@@ -23,7 +23,7 @@ const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   }
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="p-4 flex flex-col gap-4 w-full">
       {/* Page Header */}
       <div className="flex flex-col gap-3">
         <h1 className="text-2xl md:text-3xl font-extrabold text-primary tracking-tight">{customer.name}</h1>

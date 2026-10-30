@@ -1,5 +1,5 @@
 // Thành phần dùng riêng cho trang
-import { Header, Hero, Features, Footer } from './_components';
+import { Header, Hero, Footer } from './_components';
 
 export default function Home() {
   return (
@@ -7,7 +7,6 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
-        <Features />
       </main>
       <Footer />
     </div>

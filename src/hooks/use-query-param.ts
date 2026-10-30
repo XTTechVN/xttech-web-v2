@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 
 /**
  * Custom hook giúp đồng bộ state với URL query parameter trong Next.js App Router.
@@ -11,7 +11,6 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
  */
 export function useQueryParam(key: string, defaultValue?: string) {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
 
   // Lấy giá trị hiện tại từ URL, xử lý dấu cộng '+' thành khoảng trắng nếu có

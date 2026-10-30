@@ -164,7 +164,7 @@ export const useLeaveRequestStore = create<LeaveRequestState>((set) => ({
       formErrors: {},
     }),
   initEditForm: (request: LeaveRequest) => {
-    const shiftId = request.workShiftId ?? (request as any).work_shift_id ?? null;
+    const shiftId = request.workShiftId ?? null;
     const uId = request.userId || (request.user?.id ? String(request.user.id) : '');
     set({
       isEditing: true,

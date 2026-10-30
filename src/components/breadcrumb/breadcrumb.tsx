@@ -6,6 +6,7 @@ import { ChevronRight } from 'lucide-react';
 export interface BreadcrumbItem {
   label: string;
   href?: string;
+  onClick?: () => void;
   icon?: React.ReactNode;
 }
 
@@ -52,6 +53,15 @@ const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
                     {item.icon && <span className="inline-flex align-text-bottom">{item.icon}</span>}
                     {item.label}
                   </Link>
+                ) : item.onClick ? (
+                  <button
+                    type="button"
+                    onClick={item.onClick}
+                    className="hover:text-primary transition-colors flex items-center gap-1 truncate max-w-[150px] cursor-pointer"
+                  >
+                    {item.icon && <span className="inline-flex align-text-bottom">{item.icon}</span>}
+                    {item.label}
+                  </button>
                 ) : (
                   <span className="flex items-center gap-1 truncate max-w-[150px]">
                     {item.icon && <span className="inline-flex align-text-bottom">{item.icon}</span>}

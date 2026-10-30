@@ -27,7 +27,7 @@ interface PositionModalFormProps {
 function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionModalFormProps) {
   // Lấy thông tin vị trí và phòng ban hiện tại của nhân sự (nếu có)
   const currentPos = (employee.positions && employee.positions.length > 0) ? (employee.positions[0] as any) : null;
-  const currentDeptId = currentPos ? (currentPos.departmentId || currentPos.department_id || currentPos.department?.id) : null;
+  const currentDeptId = currentPos ? (currentPos.departmentId || currentPos.department?.id) : null;
 
   // Khởi tạo phòng ban ban đầu
   const [selectedDeptId, setSelectedDeptId] = useState<string>(() => {
@@ -66,7 +66,7 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
   const filteredPositions = useMemo(() => {
     if (!selectedDeptId) return [];
     return allPositions.filter(
-      (p: any) => String(p.departmentId || p.department_id || p.department?.id) === String(selectedDeptId)
+      (p: any) => String(p.departmentId || p.department?.id) === String(selectedDeptId)
     );
   }, [allPositions, selectedDeptId]);
 
@@ -158,7 +158,7 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
             // Khi đổi sang phòng ban khác, bỏ chọn vị trí cũ nếu không thuộc phòng ban mới
             if (selectedPositionId) {
               const pos = allPositions.find((p) => Number(p.id) === selectedPositionId);
-              const posDeptId = pos ? String((pos as any).departmentId || (pos as any).department_id || (pos as any).department?.id) : '';
+              const posDeptId = pos ? String((pos as any).departmentId || (pos as any).department?.id) : '';
               if (posDeptId !== newDeptId) {
                 setSelectedPositionId(null);
               }

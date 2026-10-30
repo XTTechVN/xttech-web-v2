@@ -9,11 +9,25 @@ import {
   Building2,
   MessageSquarePlus,
   Sliders,
+  SlidersHorizontal,
   ClockAlert,
+  Folder,
+  Warehouse,
 } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
-export type UserRole = 'super' | 'admin' | 'hr' | 'sale' | 'technician' | 'accountant' | 'employee';
+export type UserRole =
+  | 'super'
+  | 'admin'
+  | 'hr'
+  | 'sale'
+  | 'technician'
+  | 'accountant'
+  | 'employee'
+  // Vai trò thi công dự án: thợ xưởng, thợ lắp đặt, nhân viên bảo hành
+  | 'workshop'
+  | 'installer'
+  | 'warranty';
 
 export const acceptedSections = [
   'dashboard',
@@ -28,13 +42,24 @@ export const acceptedSections = [
   'suggestions',
   'departments',
   'projects',
+  'projects-root',
+  'quotations',
+  'warehouse',
   'customers',
   'customers-root',
   'providers',
   'customer-providers',
   'configurations',
+  'configurations-root',
+  'brand',
+  'series',
+  'profile-bars',
+  'glass-gaskets',
+  'aluminum',
   'doors',
+  'door-templates',
   'accessories',
+  'accessory-combos',
   'materials',
   'quotations',
   'extra-options',
@@ -45,7 +70,18 @@ export const acceptedSections = [
   'app-versions',
   'leave-request',
   'attendances-roster',
+  'documents-root',
+  'document-categories',
+  'documents-list',
+  'documents-my',
+  'documents-shared',
+  'documents-rule',
+  'documents-trash',
+  'rules',
+  'trash',
+  'inbox',
 ];
+
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
   roles?: UserRole[];
@@ -175,22 +211,74 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
     title: 'Dự án & Đối tác',
     items: [
       {
-        id: 'projects-root',
-        label: 'Quản lý dự án',
+        id: 'projects',
+        label: 'Dự án',
         icon: React.createElement(FolderKanban, { size: 18 }),
         href: '/app/projects',
-        roles: ['super', 'admin', 'sale', 'accountant', 'hr'],
+        roles: ['super', 'admin', 'sale', 'accountant', 'hr', 'technician', 'workshop', 'installer', 'warranty'],
+      },
+      {
+        id: 'quotations',
+        label: 'Duyệt báo giá',
+        icon: React.createElement(FileText, { size: 18 }),
+        href: '/app/quotations',
+        roles: ['super', 'admin'],
+      },
+      {
+        id: 'warehouse',
+        label: 'Quản lý kho',
+        icon: React.createElement(Warehouse, { size: 18 }),
+        href: '/app/warehouse',
+        roles: ['super', 'admin', 'technician', 'accountant'],
+      },
+      {
+        id: 'configurations-root',
+
+        label: 'Cấu hình dự án',
+        icon: React.createElement(SlidersHorizontal, { size: 18 }),
+        href: '/app/projects/configuration',
+        roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
         subItems: [
           {
-            id: 'projects',
-            label: 'Danh sách dự án',
-            href: '/app/projects',
-            roles: ['super', 'admin', 'sale', 'accountant', 'hr'],
+            id: 'brand',
+            label: 'Hãng cung cấp',
+            href: '/app/projects/configuration?tab=brand',
+            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
           },
           {
-            id: 'configurations',
-            label: 'Cấu hình dự án',
-            href: '/app/projects/configuration',
+            id: 'series',
+            label: 'Hệ nhôm',
+            href: '/app/projects/configuration?tab=series',
+            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+          },
+          {
+            id: 'profile-bars',
+            label: 'Thanh profile',
+            href: '/app/projects/configuration?tab=profile-bars',
+            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+          },
+          {
+            id: 'glass-gaskets',
+            label: 'Kính & Gioăng keo',
+            href: '/app/projects/configuration?tab=glass-gaskets',
+            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+          },
+          {
+            id: 'accessories',
+            label: 'Phụ kiện',
+            href: '/app/projects/configuration?tab=accessories',
+            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+          },
+          {
+            id: 'accessory-combos',
+            label: 'Combo phụ kiện',
+            href: '/app/projects/configuration?tab=accessory-combos',
+            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+          },
+          {
+            id: 'door-templates',
+            label: 'Mẫu cửa',
+            href: '/app/projects/configuration?tab=door-templates',
             roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
           },
         ],
@@ -220,7 +308,46 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
   },
   // 4. Tiện ích & Hệ thống
   {
-    title: 'Hệ thống',
+    title: 'Cơ chế và tài liệu',
+    items: [
+      {
+        id: 'documents-root',
+        label: 'Cơ chế & Tài liệu',
+        icon: React.createElement(Folder, { size: 18 }),
+        href: '/app/documents',
+        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+        subItems: [
+          {
+            id: 'documents-my',
+            label: 'Tài liệu của tôi',
+            href: '/app/documents?tab=my',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+          },
+          {
+            id: 'documents-shared',
+            label: 'Được chia sẻ',
+            href: '/app/inbox',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+          },
+          {
+            id: 'documents-rule',
+            label: 'Tài liệu ban hành',
+            href: '/app/rules',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+          },
+          {
+            id: 'documents-trash',
+            label: 'Thùng rác',
+            href: '/app/trash',
+            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+          },
+        ],
+      },
+    ],
+  },
+  // 5. Hệ thống
+  {
+    title: 'Hệ thống',
     items: [
       {
         id: 'app-versions',

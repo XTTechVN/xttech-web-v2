@@ -5,7 +5,7 @@ import { ReportStatsCards, ReportActionBar, ReportTable } from './_components';
 
 export default function AttendanceReportPage() {
   return (
-    <div className="w-full flex flex-col gap-4">
+    <div className="w-full flex flex-col gap-4 p-4">
       {/* Thẻ thống kê tổng quan */}
       <ReportStatsCards />
 

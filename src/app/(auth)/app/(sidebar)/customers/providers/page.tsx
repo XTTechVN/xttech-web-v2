@@ -90,7 +90,7 @@ export default function CustomerProvidersPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="p-4 flex flex-col gap-4">
       {/* Khối thống kê 4 thẻ chuẩn hệ thống */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat, index) => (

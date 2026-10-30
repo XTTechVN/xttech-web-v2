@@ -16,7 +16,6 @@ const lexend = Lexend({
   weight: ['400', '500', '600', '700', '800', '900'],
 });
 
-
 // 1. Cấu hình Viewport để màn hình không bị phóng to thu nhỏ lung tung
 export const viewport: Viewport = {
   width: 'device-width',
@@ -39,12 +38,9 @@ export const metadata: Metadata = {
       { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/icon.svg', type: 'image/svg+xml' },
     ],
-    apple: [
-      { url: '/favicon/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-    ],
+    apple: [{ url: '/favicon/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
 };
-
 
 export default function RootLayout({
   children,
@@ -52,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased scroll-smooth`} suppressHydrationWarning>
       <body className="bg-white antialiased min-h-screen" suppressHydrationWarning>
         {children}
         <Toaster position="top-center" />
