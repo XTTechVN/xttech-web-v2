@@ -90,7 +90,7 @@ export function ProjectProductionProgress({ projectId }: ProjectProductionProgre
     setCancellingOrder(order);
   };
 
-  return (
+  return ( 
     <div className="space-y-5">
       <ProductionSummaryCards matrix={progressMatrix} fallbackTotal={positions.length} />
 
