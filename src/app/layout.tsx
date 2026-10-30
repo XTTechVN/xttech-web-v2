@@ -1,19 +1,29 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist_Mono, Lexend } from 'next/font/google';
+import localFont from 'next/font/local';
 import { Toaster } from 'react-hot-toast';
 import { AppUpdateModal } from '@/components';
 
 import './globals.css';
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: '../../public/fonts/geist-mono-latin.woff2',
   variable: '--font-geist-mono',
-  subsets: ['latin'],
+  display: 'swap',
 });
 
-const lexend = Lexend({
+const lexend = localFont({
+  src: [
+    {
+      path: '../../public/fonts/lexend-vietnamese.woff2',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/lexend-latin.woff2',
+      style: 'normal',
+    },
+  ],
   variable: '--font-lexend',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
+  display: 'swap',
 });
 
 // 1. Cấu hình Viewport để màn hình không bị phóng to thu nhỏ lung tung
