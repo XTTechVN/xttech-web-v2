@@ -2,6 +2,18 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-10-30
+### Fixed (Door Studio: Tối ưu lọc profile trực tiếp theo barType, tự động điền mặc định, sửa Đố động & Nối khung)
+- **Chuẩn hóa lọc trực tiếp theo `barType` (KISS / YAGNI):**
+  - Loại bỏ file helper thừa, thực hiện lọc trực tiếp theo chuẩn enum `barType` (`FRAME`, `SASH`/`SCREEN_SASH`, `MULLION`, `DYNAMIC_MULLION`, `COUPLING`, `BEAD`) tại từng component.
+- **[`config-sash-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/config/config-sash-tab.tsx):**
+  - Sửa lỗi dropdown **Đố động (Astragal)** gán nhầm sang `mullionProfiles` dẫn đến danh sách bị rỗng. Nay sử dụng đúng `p.barType === 'DYNAMIC_MULLION'` và hiển thị nhãn thân thiện `(Hệ này không có đố động)` khi hệ không hỗ trợ.
+- **[`config-frame-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/config/config-frame-tab.tsx):**
+  - Sửa lỗi dropdown **Nối khung (Coupling)** map nhầm sang `frameProfiles`. Nay dùng đúng `p.barType === 'COUPLING'` và hiển thị `(Hệ này không có nối khung)` nếu hệ không có thanh nối riêng.
+- **[`useDoorStudioState.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/hooks/useDoorStudioState.ts):**
+  - Loại bỏ hoàn toàn hardcode `seriesId = 1` ở state khởi tạo.
+  - Tự động điền sẵn thanh khung bao (`FRAME`) và thanh cánh (`SASH`), nẹp kính (`BEAD`) đầu tiên của hệ nhôm vào 4 cạnh và cấu hình ngay khi tải hệ nhôm, giúp người dùng không phải chọn thủ công từng ô trống.
+
 ## [Unreleased] - 2026-10-21
 ### Fixed (iOS: bị đẩy sang trang offline / báo "lỗi DNS" khi mở app)
 - **[WebViewErrorGuard.swift](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/WebViewErrorGuard.swift) (mới), [MainViewController.swift](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/ios/App/App/MainViewController.swift):** Capacitor iOS nạp `offline.html` với MỌI lỗi điều hướng (kể cả -999 / Frame load interrupted khi redirect), làm web chấm công và tracking real-time dừng. Nay bỏ qua lỗi vặt, tự thử lại 2 lần với lỗi DNS / timeout / không kết nối được, chỉ khi thất bại mới nạp `offline.html` kèm `reason`, `code`, `target`.

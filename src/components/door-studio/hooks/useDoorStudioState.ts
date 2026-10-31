@@ -53,7 +53,7 @@ export function useDoorStudioState({
   const [aluminumColor, setAluminumColor] = useState<string>('#955F20');
   const [hardwareColor, setHardwareColor] = useState<string>('#1E293B');
   const [frameShape, setFrameShape] = useState<FrameShape>('rect');
-  const [seriesId, setSeriesId] = useState<number | undefined>(1);
+  const [seriesId, setSeriesId] = useState<number | undefined>(() => door?.doorSeriesId || (door?.systemConfig as any)?.seriesId || undefined);
   const prevSeriesIdRef = useRef<number | undefined>(undefined);
   const [selectedComboIds, setSelectedComboIds] = useState<number[]>([]);
   const [selectedAccessories, setSelectedAccessories] = useState<SelectedAccessoryItem[]>([]);
@@ -96,7 +96,7 @@ export function useDoorStudioState({
   const { data: profilesData } = useQuery({
     queryKey: ['profile-bars', seriesId],
     queryFn: () => getProfileBars({ seriesId: seriesId || undefined, limit: 300 }),
-    enabled: isOpen,
+    enabled: isOpen && !!seriesId,
   });
   const availableProfiles = useMemo(() => profilesData?.items || [], [profilesData]);
 
@@ -189,6 +189,61 @@ export function useDoorStudioState({
       }
     }
   }, [seriesId, availableBrandColors, aluminumColor]);
+
+  // Tự động điền sẵn thanh khung bao và thanh cánh đầu tiên của Hệ nhôm vào các cạnh
+  useEffect(() => {
+    if (!availableProfiles || availableProfiles.length === 0) return;
+
+    const defaultFrame = availableProfiles.find((p) => p.barType === 'FRAME');
+    const defaultSash = availableProfiles.find(
+      (p) => p.barType === 'SASH' || p.barType === 'SCREEN_SASH'
+    );
+    const defaultBead = availableProfiles.find((p) => p.barType === 'BEAD');
+    const defaultMullion = availableProfiles.find((p) => p.barType === 'MULLION');
+
+    // 1. Tự động gán Khung bao mặc định nếu chưa chọn hoặc profile hiện tại không thuộc hệ này
+    const isFrameValid =
+      frameConfig.leftEdge?.profileId &&
+      availableProfiles.some((p) => p.id === frameConfig.leftEdge?.profileId);
+
+    if (!isFrameValid && defaultFrame) {
+      setFrameConfig((prev) => {
+        if (prev.leftEdge?.profileId === defaultFrame.id) return prev;
+        return {
+          ...prev,
+          leftEdge: { ...prev.leftEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
+          topEdge: { ...prev.topEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
+          rightEdge: { ...prev.rightEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
+          bottomEdge: prev.isOpenBottom
+            ? prev.bottomEdge
+            : { ...prev.bottomEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
+          beadProfileId: prev.beadProfileId || defaultBead?.id,
+          mullionProfileId: prev.mullionProfileId || defaultMullion?.id,
+        };
+      });
+    }
+
+    // 2. Tự động gán Cánh cửa mặc định nếu chưa chọn hoặc profile hiện tại không thuộc hệ này
+    const isSashValid =
+      sashConfig.leftProfileId &&
+      availableProfiles.some((p) => p.id === sashConfig.leftProfileId);
+
+    if (!isSashValid && defaultSash) {
+      setSashConfig((prev) => {
+        if (prev.leftProfileId === defaultSash.id) return prev;
+        return {
+          ...prev,
+          leftProfileId: defaultSash.id,
+          topProfileId: defaultSash.id,
+          rightProfileId: defaultSash.id,
+          bottomProfileId: defaultSash.id,
+          beadProfileId: prev.beadProfileId || defaultBead?.id,
+          mullionProfileId: prev.mullionProfileId || defaultMullion?.id,
+        };
+      });
+    }
+  }, [availableProfiles, frameConfig.leftEdge?.profileId, sashConfig.leftProfileId]);
+
 
   // Khởi tạo hoặc nạp lại state khi sửa cửa cũ, HOẶC reset toàn bộ khi thêm cửa mới
   useEffect(() => {

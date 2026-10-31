@@ -13,6 +13,7 @@ import { Layers, Shield, RefreshCw, Plus } from 'lucide-react';
 import { GasketConfigSection } from './gasket-config-section';
 import { CustomExtraConfigSection } from './custom-extra-config-section';
 
+
 interface ConfigFrameTabProps {
   config: FrameConfig;
   onChangeConfig: (updates: Partial<FrameConfig>) => void;
@@ -23,8 +24,15 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
   const frameProfiles = profiles.filter((p) => p.barType === 'FRAME');
   const mullionProfiles = profiles.filter((p) => p.barType === 'MULLION');
   const beadProfiles = profiles.filter((p) => p.barType === 'BEAD');
+  const couplingProfiles = profiles.filter((p) => p.barType === 'COUPLING');
   const auxiliaryProfiles = profiles.filter(
-    (p) => p.barType !== 'FRAME' && p.barType !== 'SASH' && p.barType !== 'MULLION' && p.barType !== 'BEAD'
+    (p) =>
+      p.barType !== 'FRAME' &&
+      p.barType !== 'SASH' &&
+      p.barType !== 'SCREEN_SASH' &&
+      p.barType !== 'MULLION' &&
+      p.barType !== 'BEAD' &&
+      p.barType !== 'COUPLING'
   );
 
   const leftEdge = config?.leftEdge ?? { offsetMm: 0 };
@@ -701,8 +709,10 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                 onChange={(e) => onChangeConfig({ couplingProfileId: Number(e.target.value) })}
                 className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
               >
-                <option value="">Chọn profile nối khung...</option>
-                {frameProfiles.map((p) => (
+                <option value="">
+                  {couplingProfiles.length > 0 ? 'Chọn profile nối khung...' : '(Hệ này không có nối khung)'}
+                </option>
+                {couplingProfiles.map((p) => (
                   <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
                 ))}
               </select>
