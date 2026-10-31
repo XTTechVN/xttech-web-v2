@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ClipboardCheck, Link2, PenLine, Play, Plus, XCircle } from 'lucide-react';
+import { CheckCircle2, ClipboardCheck, Link2, PenLine, Play, Plus, XCircle } from 'lucide-react';
 import { Image as AntdImage, Modal as AntdModal } from 'antd';
 import toast from 'react-hot-toast';
 import {
@@ -58,8 +58,6 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
   );
   const installedPositions = (installedData?.items ?? []).filter((p) => !pendingPositionIds.has(p.id));
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['project_acceptances', projectId] });
-
   const sendLink = useMutation({
     mutationFn: (acceptanceId: number) => sendAcceptanceSigningLink(projectId, acceptanceId),
     onSuccess: async (result) => {
@@ -100,8 +98,8 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
             <ClipboardCheck size={16} className="text-primary" /> Nghiệm thu bàn giao
           </div>
           <p className="text-[11px] text-slate-500">
-            Biên bản cần ảnh thực tế + chữ ký số của đại diện công ty và khách hàng. Dự án hoàn thành khi 100% cửa đã
-            nghiệm thu (không phụ thuộc đã thu đủ tiền).
+            Biên bản cần ảnh thực tế + chữ ký số của đại diện công ty và khách hàng. Các cửa đánh dấu &ldquo;Không
+            đạt&rdquo; sẽ giữ trạng thái Đã lắp đặt để lập biên bản nghiệm thu lại vào đợt sau.
           </p>
         </div>
         <Button
@@ -110,7 +108,7 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
           disabled={installedPositions.length === 0}
           onClick={() => setIsFormOpen(true)}
         >
-          Lập biên bản ({installedPositions.length} cửa đã lắp xong)
+          Lập biên bản ({installedPositions.length} cửa chờ nghiệm thu)
         </Button>
       </div>
 
@@ -122,12 +120,28 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
 
       {acceptances.map((acceptance) => {
         const status = STATUS_MAP[acceptance.status];
+        const items = acceptance.items && acceptance.items.length > 0 ? acceptance.items : [];
+        const passedCount = items.filter((it) => it.result === 'passed').length;
+        const failedCount = items.filter((it) => it.result === 'failed').length;
+
         return (
           <div key={acceptance.id} className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm font-bold text-slate-800">{acceptance.code}</span>
                 <Badge variant={status.variant}>{status.label}</Badge>
+                {items.length > 0 && (
+                  <>
+                    <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
+                      {passedCount} Đạt
+                    </span>
+                    {failedCount > 0 && (
+                      <span className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 border border-red-200">
+                        {failedCount} Không đạt
+                      </span>
+                    )}
+                  </>
+                )}
                 <span className="text-[11px] text-slate-400">
                   {new Date(acceptance.createdAt).toLocaleString('vi-VN')}
                 </span>
@@ -158,10 +172,53 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
               )}
             </div>
 
-            <p className="text-xs text-slate-600">
-              {acceptance.positionCodes.length} bộ cửa: {acceptance.positionCodes.join(', ')}
-            </p>
-            {acceptance.note && <p className="text-xs italic text-slate-500">{acceptance.note}</p>}
+            {items.length > 0 ? (
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                {items.map((item) => {
+                  const isPassed = item.result === 'passed';
+                  return (
+                    <div
+                      key={item.positionId}
+                      className={`flex items-start justify-between gap-2 rounded-md border px-2.5 py-1.5 text-xs ${
+                        isPassed
+                          ? 'border-emerald-200/70 bg-emerald-50/20'
+                          : 'border-red-200 bg-red-50/40'
+                      }`}
+                    >
+                      <div className="min-w-0 space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          {isPassed ? (
+                            <CheckCircle2 size={13} className="shrink-0 text-emerald-600" />
+                          ) : (
+                            <XCircle size={13} className="shrink-0 text-red-600" />
+                          )}
+                          <span className="font-bold text-slate-800">{item.positionCode}</span>
+                          {item.doorName && <span className="truncate text-slate-500">· {item.doorName}</span>}
+                        </div>
+                        {item.note && (
+                          <p className={`pl-5 text-[11px] ${isPassed ? 'text-slate-600' : 'font-medium text-red-700'}`}>
+                            Ghi chú: {item.note}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                          isPassed ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                        }`}
+                      >
+                        {isPassed ? 'Đạt' : 'Không đạt'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-600">
+                {acceptance.positionCodes.length} bộ cửa: {acceptance.positionCodes.join(', ')}
+              </p>
+            )}
+
+            {acceptance.note && <p className="text-xs italic text-slate-500">Ghi chú biên bản: {acceptance.note}</p>}
 
             <AntdImage.PreviewGroup>
               <div className="flex flex-wrap gap-2">
@@ -210,7 +267,6 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
                   <div key={party} className="rounded-md border border-slate-200 p-2 text-center">
                     {signature ? (
                       <>
-                        { }
                         <img src={signature.signatureImage} alt={signature.signerName} className="mx-auto h-12 object-contain" />
                         <div className="text-[11px] font-semibold text-slate-800">{signature.signerName}</div>
                         <div className="text-[10px] text-slate-400">
@@ -249,16 +305,13 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
         title="Video nghiệm thu thực tế"
       >
         {previewVideoUrl && (
-          <div className="flex justify-center p-2">
-            <video
-              src={previewVideoUrl}
-              controls
-              autoPlay
-              className="max-h-[70vh] w-full rounded-lg bg-black object-contain shadow"
-            >
-              Trình duyệt của bạn không hỗ trợ phát thẻ video.
-            </video>
-          </div>
+          <video
+            key={previewVideoUrl}
+            src={previewVideoUrl}
+            controls
+            autoPlay
+            className="max-h-[75vh] w-full rounded-lg bg-black"
+          />
         )}
       </AntdModal>
     </div>

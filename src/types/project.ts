@@ -436,6 +436,7 @@ export interface PaymentTransactionCreatePayload {
   transactionType?: 'collection' | 'refund';
   paymentMethod?: string;
   bankReference?: string;
+  receiptImage?: string;
   note?: string;
 }
 
@@ -510,7 +511,7 @@ export interface ProgressMatrixItem {
   surveyed: ProgressStepStatus;
   producing: ProgressStepStatus;
   factoryDone: ProgressStepStatus;
-  delivered: ProgressStepStatus;
+  delivered?: ProgressStepStatus;
   installed: ProgressStepStatus;
   accepted: ProgressStepStatus;
 }

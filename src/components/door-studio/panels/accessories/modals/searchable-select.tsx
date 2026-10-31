@@ -93,7 +93,7 @@ export function SearchableSelect({
         ref={triggerRef}
         type="button"
         onClick={handleOpen}
-        className="w-full h-9 px-2.5 border border-gray-200 rounded-md text-xs bg-white focus:outline-none focus:border-primary text-gray-800 flex items-center justify-between gap-1 hover:border-primary/50 transition"
+        className="w-full h-9 px-2.5 border border-gray-200 rounded-md text-xs bg-white focus:outline-none focus:border-primary text-gray-800 flex items-center justify-between gap-1 hover:border-primary/50 transition cursor-pointer"
       >
         <span className="truncate text-left flex-1">
           {selected ? selected.label : <span className="text-gray-400">{placeholder}</span>}
@@ -142,7 +142,7 @@ export function SearchableSelect({
                       setIsOpen(false);
                       setQuery('');
                     }}
-                    className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition-colors ${
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition-colors cursor-pointer ${
                       opt.value === value ? 'bg-primary/5 text-primary font-semibold' : 'text-slate-800'
                     }`}
                   >

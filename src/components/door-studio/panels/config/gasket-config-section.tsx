@@ -12,14 +12,25 @@ interface GasketConfigSectionProps {
   target: 'frame' | 'sash';
 }
 
-const MEASURE_OPTIONS: { id: GasketMeasureType; label: string }[] = [
-  { id: 'bead', label: 'Theo nẹp kính' },
-  { id: 'glass_perimeter', label: 'Theo chu vi kính' },
-  { id: 'glass_width', label: 'Theo chiều rộng kính' },
-  { id: 'glass_height', label: 'Theo chiều cao kính' },
-  { id: 'frame_perimeter', label: 'Theo chu vi khung' },
-  { id: 'frame_width', label: 'Theo chiều rộng khung' },
-  { id: 'frame_height', label: 'Theo chiều cao khung' },
+const FRAME_MEASURE_OPTIONS: { id: GasketMeasureType; label: string }[] = [
+  { id: 'bead', label: 'Theo nẹp kính ô fix' },
+  { id: 'glass_perimeter', label: 'Theo chu vi kính ô fix' },
+  { id: 'glass_width', label: 'Theo chiều rộng kính ô fix' },
+  { id: 'glass_height', label: 'Theo chiều cao kính ô fix' },
+  { id: 'frame_perimeter', label: 'Theo chu vi khung bao' },
+  { id: 'frame_width', label: 'Theo chiều rộng khung bao' },
+  { id: 'frame_height', label: 'Theo chiều cao khung bao' },
+];
+
+const SASH_MEASURE_OPTIONS: { id: GasketMeasureType; label: string }[] = [
+  { id: 'bead', label: 'Theo nẹp kính cánh' },
+  { id: 'glass_perimeter', label: 'Theo chu vi kính cánh' },
+  { id: 'glass_width', label: 'Theo chiều rộng kính cánh' },
+  { id: 'glass_height', label: 'Theo chiều cao kính cánh' },
+  { id: 'sash_perimeter', label: 'Theo chu vi cánh (tất cả cánh)' },
+  { id: 'sash_width', label: 'Theo chiều rộng cánh' },
+  { id: 'sash_height', label: 'Theo chiều cao cánh' },
+  { id: 'frame_perimeter', label: 'Theo chu vi khung bao' },
 ];
 
 export const GasketConfigSection: React.FC<GasketConfigSectionProps> = ({
@@ -163,7 +174,7 @@ export const GasketConfigSection: React.FC<GasketConfigSectionProps> = ({
                     onChange={(e) => handleUpdateItem(row.id, { measure: e.target.value as GasketMeasureType })}
                     className="w-full h-7 px-2 text-xs rounded border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-pink-500"
                   >
-                    {MEASURE_OPTIONS.map((opt) => (
+                    {(target === 'frame' ? FRAME_MEASURE_OPTIONS : SASH_MEASURE_OPTIONS).map((opt) => (
                       <option key={opt.id} value={opt.id}>
                         {opt.label}
                       </option>
@@ -200,6 +211,9 @@ export const GasketConfigSection: React.FC<GasketConfigSectionProps> = ({
               </div>
             </div>
           ))}
+          <div className="text-[11px] text-slate-400 italic pt-0.5">
+            * Ghi chú: Cách tính Chiều rộng / Chiều cao tính 1 cạnh cho mỗi ô. Nếu dán roan cả 2 cạnh (trên + dưới hoặc trái + phải), vui lòng đặt Số lần/ô = 2.
+          </div>
         </div>
       )}
     </div>

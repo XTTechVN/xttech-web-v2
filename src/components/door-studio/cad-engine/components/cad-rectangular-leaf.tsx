@@ -1,5 +1,5 @@
 import React from 'react';
-import { SashCornerJoint, GlassGrilleConfig, SceneCellNode, SashConfig } from '../../studio-types';
+import { SashCornerJoint, GlassGrilleConfig, SceneCellNode, SashConfig, FrameConfig } from '../../studio-types';
 import { CAD_CONFIG } from '../cad-config';
 import { LeafCell } from '../cad-types';
 import { CadOpeningSymbol } from './cad-opening-symbol';
@@ -180,6 +180,8 @@ interface CadRectangularLeafProps {
   sashJoint: SashCornerJoint;
   isOpenBottom: boolean;
   sashConfig?: SashConfig;
+  frameConfig?: FrameConfig;
+  reversalD?: number;
   onSelectCell: (cellId: string | null) => void;
   onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
 }
@@ -215,6 +217,8 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
   sashJoint,
   isOpenBottom,
   sashConfig,
+  frameConfig,
+  reversalD,
   onSelectCell,
   onEditDimension,
 }) => {
@@ -231,13 +235,17 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
   const scale = fh / (h || 1);
 
   // Tính độ dịch chuyển hình học cho cánh chuyển động thủy lực (Ảnh 3, Ảnh 4)
-  const dHoNen = !isFixed && isHydraulic ? Math.round(hoNenMm * scale) : 0;
+  const dHoNen = !isFixed && isHydraulic && isOpenBottom ? Math.round(hoNenMm * scale) : 0;
   const dNgamDoc = !isFixed && isHydraulic ? Math.round(ngamDocMm * scale) : 0;
   const dNgamNgang = !isFixed && isHydraulic ? Math.round(ngamNgangMm * scale) : 0;
 
   // Tọa độ Y và chiều cao H sau khi áp dụng Hở nền và Ngậm dọc
   const effectiveCy = cy - dNgamDoc;
   const effectiveCh = ch - dHoNen + dNgamDoc;
+
+  // Cấu hình Đảo khung (Reversal - C3208)
+  const reversalMode = frameConfig?.reversalMode ?? (frameConfig?.isReversedWall ? 'wall' : frameConfig?.isReversedSash ? 'sash' : 'none');
+  const dReversal = reversalD ?? Math.max(3, Math.round(28 * scale));
 
   return (
     <g
@@ -250,26 +258,36 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
       {/* Case A: 2 cánh mở quay đối xứng (swing_double) */}
       {isDouble ? (
         (() => {
+          const hasReversalSash = reversalMode === 'sash';
+          const revD = hasReversalSash
+            ? Math.max(3, Math.min(dReversal, Math.floor((Math.min(cw, effectiveCh) - 20) / 2)))
+            : 0;
+
+          const doubleBoxX = cx + revD;
+          const doubleBoxY = effectiveCy + revD;
+          const doubleBoxW = Math.max(10, cw - 2 * revD);
+          const doubleBoxH = Math.max(10, effectiveCh - 2 * revD);
+
           const astW = Math.max(
             CAD_CONFIG.MULLION.ASTRAGAL_MIN_PX,
             Math.min(CAD_CONFIG.MULLION.ASTRAGAL_MAX_PX, Math.round(mullionT * CAD_CONFIG.MULLION.ASTRAGAL_RATIO))
           );
-          const totalW = cw + 2 * dNgamNgang;
+          const totalW = doubleBoxW + 2 * dNgamNgang;
           const s1W = Math.floor((totalW - astW) / 2);
           const s2W = totalW - astW - s1W;
-          const dSash1 = getAdaptiveSashD(s1W, effectiveCh, sashD);
-          const dSash2 = getAdaptiveSashD(s2W, effectiveCh, sashD);
-          const s1X = cx - dNgamNgang;
+          const dSash1 = getAdaptiveSashD(s1W, doubleBoxH, sashD);
+          const dSash2 = getAdaptiveSashD(s2W, doubleBoxH, sashD);
+          const s1X = doubleBoxX - dNgamNgang;
           const s2X = s1X + s1W + astW;
           const pane1W = Math.max(4, s1W - 2 * dSash1);
           const pane2W = Math.max(4, s2W - 2 * dSash2);
-          const paneH1 = Math.max(4, effectiveCh - 2 * dSash1);
-          const paneH2 = Math.max(4, effectiveCh - 2 * dSash2);
+          const paneH1 = Math.max(4, doubleBoxH - 2 * dSash1);
+          const paneH2 = Math.max(4, doubleBoxH - 2 * dSash2);
 
           const beadJoint = node.beadJoint || '90';
           const bead1 = renderCadBead(
             s1X + dSash1,
-            effectiveCy + dSash1,
+            doubleBoxY + dSash1,
             pane1W,
             paneH1,
             `${node.id}-bead-1`,
@@ -280,7 +298,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
 
           const bead2 = renderCadBead(
             s2X + dSash2,
-            effectiveCy + dSash2,
+            doubleBoxY + dSash2,
             pane2W,
             paneH2,
             `${node.id}-bead-2`,
@@ -292,10 +310,10 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
           // Cao độ tay nắm
           const handleHVal = node.handleHeight || (isHydraulic ? 1050 : Math.round(node.h / 2));
           const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
-          const bottomBound = effectiveCy + effectiveCh - dSash2 - 10;
-          const topBound = effectiveCy + dSash2 + 20;
+          const bottomBound = doubleBoxY + doubleBoxH - dSash2 - 10;
+          const topBound = doubleBoxY + dSash2 + 20;
           const handleY = Math.max(topBound, Math.min(bottomBound, lockYCalc));
-          const pullLen = Math.round(Math.min(effectiveCh - 40, Math.max(70, 750 * scale)));
+          const pullLen = Math.round(Math.min(doubleBoxH - 40, Math.max(70, 750 * scale)));
           const pullW = Math.max(3.5, Math.min(6, Math.round(32 * scale)));
           const plateW = 4.5;
           const plateH = 22;
@@ -308,18 +326,31 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
 
           return (
             <g>
+              {/* Khung thanh đảo cho ô 2 cánh (nếu có reversalMode === 'sash') */}
+              {hasReversalSash && (
+                <CadSashBox
+                  sx={cx}
+                  sy={effectiveCy}
+                  sw={cw}
+                  sh={effectiveCh}
+                  aluminumColor={aluminumColor}
+                  joint="45"
+                  effectiveSashD={revD}
+                />
+              )}
+
               {/* Cánh trái */}
-              <CadSashBox sx={s1X} sy={effectiveCy} sw={s1W} sh={effectiveCh} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash1} />
+              <CadSashBox sx={s1X} sy={doubleBoxY} sw={s1W} sh={doubleBoxH} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash1} />
               {bead1.el}
               <rect x={bead1.gx2} y={bead1.gy2} width={bead1.gw2} height={bead1.gh2} fill="#b2f5ea" fillOpacity={0.85} stroke="none" />
               {renderCadGrille(bead1.gx2, bead1.gy2, bead1.gw2, bead1.gh2, node.grilleConfig)}
               <CadOpeningSymbol cx={bead1.gx2} cy={bead1.gy2} cw={bead1.gw2} ch={bead1.gh2} type="swing_left" />
 
               {/* Đố động giữa 2 cánh */}
-              <rect x={s1X + s1W} y={effectiveCy} width={astW} height={effectiveCh} fill={aluminumColor} stroke="#27272a" strokeWidth="0.7" />
+              <rect x={s1X + s1W} y={doubleBoxY} width={astW} height={doubleBoxH} fill={aluminumColor} stroke="#27272a" strokeWidth="0.7" />
 
               {/* Cánh phải */}
-              <CadSashBox sx={s2X} sy={effectiveCy} sw={s2W} sh={effectiveCh} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash2} />
+              <CadSashBox sx={s2X} sy={doubleBoxY} sw={s2W} sh={doubleBoxH} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash2} />
               {bead2.el}
               <rect x={bead2.gx2} y={bead2.gy2} width={bead2.gw2} height={bead2.gh2} fill="#b2f5ea" fillOpacity={0.85} stroke="none" />
               {renderCadGrille(bead2.gx2, bead2.gy2, bead2.gw2, bead2.gh2, node.grilleConfig)}
@@ -331,7 +362,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                   className="cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEditDimension?.('handleHeight', node.id);
+                    // Drag handled by CadSplitResizer
                   }}
                 >
                   {/* Tay nắm cánh trái (mép trong cánh trái) */}
@@ -395,7 +426,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                   className="cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEditDimension?.('handleHeight', node.id);
+                    // Drag handled by CadSplitResizer
                   }}
                 >
                   <rect x={plateX} y={plateY} width={plateW} height={plateH} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
@@ -409,7 +440,21 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
       ) : (
         /* Case B: Single sash hoặc fixed pane */
         (() => {
-          const dSash = isFixed ? 0 : getAdaptiveSashD(cw, ch, sashD);
+          // Xử lý Đảo khung (Reversal)
+          const hasReversalWall = isFixed && reversalMode === 'wall';
+          const hasReversalSash = !isFixed && reversalMode === 'sash';
+          const hasReversal = hasReversalWall || hasReversalSash;
+
+          const baseReversalD = Math.max(3, Math.min(dReversal, Math.floor((Math.min(cw, ch) - 10) / 2)));
+          const revD = hasReversal ? baseReversalD : 0;
+
+          // Hộp cánh (Sash Box)
+          const sashBoxX = hasReversalSash ? cx + revD : cx;
+          const sashBoxY = hasReversalSash ? effectiveCy + revD : effectiveCy;
+          const sashBoxW = Math.max(4, hasReversalSash ? cw - 2 * revD : cw);
+          const sashBoxH = Math.max(4, hasReversalSash ? effectiveCh - 2 * revD : effectiveCh);
+
+          const dSash = isFixed ? 0 : getAdaptiveSashD(sashBoxW, sashBoxH, sashD);
           const dBead = isFixed
             ? Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(frameD * 0.35))
             : beadW;
@@ -417,10 +462,12 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
           const hasBead = true;
           const effY = isFixed ? cy : effectiveCy;
           const effH = isFixed ? ch : effectiveCh;
-          const innerX = isFixed ? cx : cx + dSash;
-          const innerY = isFixed ? cy : effY + dSash;
-          const innerW = Math.max(4, isFixed ? cw : cw - 2 * dSash);
-          const innerH = Math.max(4, isFixed ? ch : effH - 2 * dSash);
+
+          // Vùng lòng trong (inner) để đặt Nẹp kính & Kính
+          const innerX = isFixed ? (hasReversalWall ? cx + revD : cx) : sashBoxX + dSash;
+          const innerY = isFixed ? (hasReversalWall ? cy + revD : cy) : sashBoxY + dSash;
+          const innerW = Math.max(4, isFixed ? (hasReversalWall ? cw - 2 * revD : cw) : sashBoxW - 2 * dSash);
+          const innerH = Math.max(4, isFixed ? (hasReversalWall ? ch - 2 * revD : ch) : sashBoxH - 2 * dSash);
 
           const hasSashMullions = !isFixed && Boolean(node.sashMullions && node.sashMullions.count > 1);
           const smCount = hasSashMullions ? (node.sashMullions?.count || 2) : 1;
@@ -741,11 +788,11 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
 
           const handleHVal = node.handleHeight || (isHydraulic ? 1050 : Math.round(node.h / 2));
           const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
-          const bottomBound = effY + effH - dSash - 10;
-          const topBound = effY + dSash + 20;
+          const bottomBound = sashBoxY + sashBoxH - dSash - 10;
+          const topBound = sashBoxY + dSash + 20;
           const handleY = Math.max(topBound, Math.min(bottomBound, lockYCalc));
 
-          const pullLen = Math.round(Math.min(effH - 40, Math.max(70, 750 * scale)));
+          const pullLen = Math.round(Math.min(sashBoxH - 40, Math.max(70, 750 * scale)));
           const pullW = Math.max(3.5, Math.min(6, Math.round(32 * scale)));
           const plateW = 4.5;
           const plateH = 22;
@@ -754,6 +801,33 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
 
           return (
             <g>
+              {/* Khung thanh đảo cho ô Fix (Đảo vách) */}
+              {hasReversalWall && (
+                <CadSashBox
+                  sx={cx}
+                  sy={cy}
+                  sw={cw}
+                  sh={ch}
+                  aluminumColor={aluminumColor}
+                  joint="45"
+                  effectiveSashD={revD}
+                />
+              )}
+
+              {/* Khung thanh đảo cho ô Cánh (Đảo cánh) */}
+              {hasReversalSash && (
+                <CadSashBox
+                  sx={cx}
+                  sy={effectiveCy}
+                  sw={cw}
+                  sh={effectiveCh}
+                  aluminumColor={aluminumColor}
+                  joint="45"
+                  effectiveSashD={revD}
+                />
+              )}
+
+              {/* Khung cánh cửa */}
               {!isFixed && (
                 <g
                   onClick={(e) => {
@@ -762,7 +836,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                   }}
                   className="cursor-pointer"
                 >
-                  <CadSashBox sx={cx} sy={effY} sw={cw} sh={effH} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash} />
+                  <CadSashBox sx={sashBoxX} sy={sashBoxY} sw={sashBoxW} sh={sashBoxH} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash} />
                 </g>
               )}
 
@@ -850,11 +924,11 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                           className="cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onEditDimension?.('handleHeight', node.id);
+                            // Drag handled by CadSplitResizer
                           }}
                         >
                           <rect
-                            x={cx + cw - dSash / 2 - 2}
+                            x={sashBoxX + sashBoxW - dSash / 2 - 2}
                             y={handleY - 14}
                             width={4}
                             height={28}
@@ -864,7 +938,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                             strokeWidth="0.5"
                           />
                           <path
-                            d={`M ${cx + cw - dSash / 2 - 2} ${handleY - 11} C ${cx + cw - dSash / 2 - 11} ${handleY - 11}, ${cx + cw - dSash / 2 - 11} ${handleY + 11}, ${cx + cw - dSash / 2 - 2} ${handleY + 11} L ${cx + cw - dSash / 2 - 2} ${handleY + 8} C ${cx + cw - dSash / 2 - 8} ${handleY + 8}, ${cx + cw - dSash / 2 - 8} ${handleY - 8}, ${cx + cw - dSash / 2 - 2} ${handleY - 8} Z`}
+                            d={`M ${sashBoxX + sashBoxW - dSash / 2 - 2} ${handleY - 11} C ${sashBoxX + sashBoxW - dSash / 2 - 11} ${handleY - 11}, ${sashBoxX + sashBoxW - dSash / 2 - 11} ${handleY + 11}, ${sashBoxX + sashBoxW - dSash / 2 - 2} ${handleY + 11} L ${sashBoxX + sashBoxW - dSash / 2 - 2} ${handleY + 8} C ${sashBoxX + sashBoxW - dSash / 2 - 8} ${handleY + 8}, ${sashBoxX + sashBoxW - dSash / 2 - 8} ${handleY - 8}, ${sashBoxX + sashBoxW - dSash / 2 - 2} ${handleY - 8} Z`}
                             fill="#18181b"
                             stroke="#000"
                             strokeWidth="0.5"
@@ -875,11 +949,11 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                           className="cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onEditDimension?.('handleHeight', node.id);
+                            // Drag handled by CadSplitResizer
                           }}
                         >
                           <rect
-                            x={cx + dSash / 2 - 2}
+                            x={sashBoxX + dSash / 2 - 2}
                             y={handleY - 14}
                             width={4}
                             height={28}
@@ -889,7 +963,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                             strokeWidth="0.5"
                           />
                           <path
-                            d={`M ${cx + dSash / 2 + 2} ${handleY - 11} C ${cx + dSash / 2 + 11} ${handleY - 11}, ${cx + dSash / 2 + 11} ${handleY + 11}, ${cx + dSash / 2 + 2} ${handleY + 11} L ${cx + dSash / 2 + 2} ${handleY + 8} C ${cx + dSash / 2 + 8} ${handleY + 8}, ${cx + dSash / 2 + 8} ${handleY - 8}, ${cx + dSash / 2 + 2} ${handleY - 8} Z`}
+                            d={`M ${sashBoxX + dSash / 2 + 2} ${handleY - 11} C ${sashBoxX + dSash / 2 + 11} ${handleY - 11}, ${sashBoxX + dSash / 2 + 11} ${handleY + 11}, ${sashBoxX + dSash / 2 + 2} ${handleY + 11} L ${sashBoxX + dSash / 2 + 2} ${handleY + 8} C ${sashBoxX + dSash / 2 + 8} ${handleY + 8}, ${sashBoxX + dSash / 2 + 8} ${handleY - 8}, ${sashBoxX + dSash / 2 + 2} ${handleY - 8} Z`}
                             fill="#18181b"
                             stroke="#000"
                             strokeWidth="0.5"
@@ -902,11 +976,11 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                         className="cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onEditDimension?.('handleHeight', node.id);
+                          // Drag handled by CadSplitResizer
                         }}
                       >
                         {(() => {
-                          const lockX = isRightHandle ? cx + cw - dSash / 2 : cx + dSash / 2;
+                          const lockX = isRightHandle ? sashBoxX + sashBoxW - dSash / 2 : sashBoxX + dSash / 2;
                           return (
                             <>
                               <rect
@@ -947,8 +1021,8 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                     <>
                       {isBottomHandle && (
                         <rect
-                          x={cx + cw / 2 - 8}
-                          y={cy + ch - dSash / 2 - 1.5}
+                          x={sashBoxX + sashBoxW / 2 - 8}
+                          y={sashBoxY + sashBoxH - dSash / 2 - 1.5}
                           width={16}
                           height={3.5}
                           rx={1}
@@ -959,8 +1033,8 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                       )}
                       {isTopHandle && (
                         <rect
-                          x={cx + cw / 2 - 8}
-                          y={cy + dSash / 2 - 1.5}
+                          x={sashBoxX + sashBoxW / 2 - 8}
+                          y={sashBoxY + dSash / 2 - 1.5}
                           width={16}
                           height={3.5}
                           rx={1}
@@ -974,13 +1048,13 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                           className="cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onEditDimension?.('handleHeight', node.id);
+                            // Drag handled by CadSplitResizer
                           }}
                         >
                           {isHydraulic ? (
                             <>
                               <rect
-                                x={cx + cw - dSash / 2 - pullW / 2}
+                                x={sashBoxX + sashBoxW - dSash / 2 - pullW / 2}
                                 y={handleY - pullLen / 2}
                                 width={pullW}
                                 height={pullLen}
@@ -990,7 +1064,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                                 strokeWidth="0.6"
                               />
                               <rect
-                                x={cx + cw - dSash / 2 - pullW / 2 - 1.5}
+                                x={sashBoxX + sashBoxW - dSash / 2 - pullW / 2 - 1.5}
                                 y={handleY - pullLen * 0.35 - 1.5}
                                 width={pullW + 3}
                                 height={3}
@@ -998,7 +1072,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                                 fill="#334155"
                               />
                               <rect
-                                x={cx + cw - dSash / 2 - pullW / 2 - 1.5}
+                                x={sashBoxX + sashBoxW - dSash / 2 - pullW / 2 - 1.5}
                                 y={handleY + pullLen * 0.35 - 1.5}
                                 width={pullW + 3}
                                 height={3}
@@ -1009,7 +1083,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                           ) : (
                             <>
                               <rect
-                                x={cx + cw - dSash / 2 - plateW / 2}
+                                x={sashBoxX + sashBoxW - dSash / 2 - plateW / 2}
                                 y={handleY - plateH / 2}
                                 width={plateW}
                                 height={plateH}
@@ -1018,9 +1092,9 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                                 stroke="#000"
                                 strokeWidth="0.5"
                               />
-                              <circle cx={cx + cw - dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
+                              <circle cx={sashBoxX + sashBoxW - dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
                               <rect
-                                x={cx + cw - dSash / 2 - plateW / 2 + plateW / 2 - leverW}
+                                x={sashBoxX + sashBoxW - dSash / 2 - plateW / 2 + plateW / 2 - leverW}
                                 y={handleY - leverH / 2}
                                 width={leverW}
                                 height={leverH}
@@ -1038,13 +1112,13 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                           className="cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onEditDimension?.('handleHeight', node.id);
+                            // Drag handled by CadSplitResizer
                           }}
                         >
                           {isHydraulic ? (
                             <>
                               <rect
-                                x={cx + dSash / 2 - pullW / 2}
+                                x={sashBoxX + dSash / 2 - pullW / 2}
                                 y={handleY - pullLen / 2}
                                 width={pullW}
                                 height={pullLen}
@@ -1054,7 +1128,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                                 strokeWidth="0.6"
                               />
                               <rect
-                                x={cx + dSash / 2 - pullW / 2 - 1.5}
+                                x={sashBoxX + dSash / 2 - pullW / 2 - 1.5}
                                 y={handleY - pullLen * 0.35 - 1.5}
                                 width={pullW + 3}
                                 height={3}
@@ -1062,7 +1136,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                                 fill="#334155"
                               />
                               <rect
-                                x={cx + dSash / 2 - pullW / 2 - 1.5}
+                                x={sashBoxX + dSash / 2 - pullW / 2 - 1.5}
                                 y={handleY + pullLen * 0.35 - 1.5}
                                 width={pullW + 3}
                                 height={3}
@@ -1073,7 +1147,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                           ) : (
                             <>
                               <rect
-                                x={cx + dSash / 2 - plateW / 2}
+                                x={sashBoxX + dSash / 2 - plateW / 2}
                                 y={handleY - plateH / 2}
                                 width={plateW}
                                 height={plateH}
@@ -1082,9 +1156,9 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                                 stroke="#000"
                                 strokeWidth="0.5"
                               />
-                              <circle cx={cx + dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
+                              <circle cx={sashBoxX + dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
                               <rect
-                                x={cx + dSash / 2 + plateW / 2}
+                                x={sashBoxX + dSash / 2 + plateW / 2}
                                 y={handleY - leverH / 2}
                                 width={leverW}
                                 height={leverH}

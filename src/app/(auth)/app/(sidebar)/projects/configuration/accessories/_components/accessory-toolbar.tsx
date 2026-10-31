@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '@/components';
 import { TableSearch } from '@/components/table';
-import { Plus, FolderTree } from 'lucide-react';
+import { Plus, FolderTree, Download, Upload } from 'lucide-react';
 import type { AccessoryCategory } from '@/types';
 
 interface AccessoryToolbarProps {
@@ -11,6 +11,9 @@ interface AccessoryToolbarProps {
   onSearchChange: (val: string) => void;
   onAddClick: () => void;
   onManageCategoriesClick?: () => void;
+  onExportExcelClick?: () => void;
+  onImportExcelClick?: () => void;
+  isExporting?: boolean;
   categoryList?: AccessoryCategory[];
   selectedCategoryId?: number | null;
   onCategoryChange?: (categoryId: number | null) => void;
@@ -21,6 +24,9 @@ export function AccessoryToolbar({
   onSearchChange,
   onAddClick,
   onManageCategoriesClick,
+  onExportExcelClick,
+  onImportExcelClick,
+  isExporting = false,
   categoryList = [],
   selectedCategoryId,
   onCategoryChange,
@@ -51,7 +57,30 @@ export function AccessoryToolbar({
         )}
       </div>
 
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2 flex-wrap">
+        {onExportExcelClick && (
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Download size={15} />}
+            loading={isExporting}
+            onClick={onExportExcelClick}
+          >
+            Xuất Excel
+          </Button>
+        )}
+
+        {onImportExcelClick && (
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Upload size={15} />}
+            onClick={onImportExcelClick}
+          >
+            Nhập Excel
+          </Button>
+        )}
+
         {onManageCategoriesClick && (
           <Button
             variant="outline"
@@ -76,4 +105,3 @@ export function AccessoryToolbar({
     </div>
   );
 }
-

@@ -200,6 +200,7 @@ export function useDoorStudioState({
     );
     const defaultBead = availableProfiles.find((p) => p.barType === 'BEAD');
     const defaultMullion = availableProfiles.find((p) => p.barType === 'MULLION');
+    const defaultReversal = availableProfiles.find((p) => p.barType === 'REVERSAL');
 
     // 1. Tự động gán Khung bao mặc định nếu chưa chọn hoặc profile hiện tại không thuộc hệ này
     const isFrameValid =
@@ -221,6 +222,8 @@ export function useDoorStudioState({
           mullionProfileId: prev.mullionProfileId || defaultMullion?.id,
           mullionVertProfileId: prev.mullionVertProfileId || prev.mullionProfileId || defaultMullion?.id,
           mullionHorizProfileId: prev.mullionHorizProfileId || prev.mullionProfileId || defaultMullion?.id,
+          reversalProfileId: prev.reversalProfileId || defaultReversal?.id,
+          reversalProfileCode: prev.reversalProfileCode || defaultReversal?.code,
         };
       });
     }
@@ -581,16 +584,21 @@ export function useDoorStudioState({
   const handleUpdateDimension = (
     target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight',
     value: number,
-    cellId?: string
+    cellId?: string,
+    isFinal: boolean = true
   ) => {
     if (target === 'w') {
       handleChangeDimension(value, h);
     } else if (target === 'h') {
       handleChangeDimension(w, value);
     } else if (target === 'handleHeight' && cellId) {
-      const clampedVal = Math.max(200, Math.min(h - 100, value));
-      pushState(updateNode(rootCell, cellId, { handleHeight: clampedVal }));
-      toast.success(`Đã cập nhật cao độ khóa: ${clampedVal} mm`);
+      const clampedVal = Math.max(100, Math.min(h - 80, value));
+      const updatedRoot = updateNode(rootCell, cellId, { handleHeight: clampedVal });
+      if (isFinal) {
+        pushState(updatedRoot);
+      } else {
+        setRootCell(updatedRoot);
+      }
     } else if (target === 'cell-h' && cellId) {
       const tryH = resizeCellInParent(rootCell, cellId, value, 'h');
       pushState(tryH);

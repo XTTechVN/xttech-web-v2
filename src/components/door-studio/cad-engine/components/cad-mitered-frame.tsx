@@ -40,7 +40,7 @@ export const CadMiteredFrame: React.FC<CadMiteredFrameProps> = ({
     );
   }
 
-  const isOpenBottom = (frameConfig?.isOpenBottom ?? false) || isHydraulic;
+  const isOpenBottom = frameConfig?.isOpenBottom !== undefined ? frameConfig.isOpenBottom : isHydraulic;
   const cornerJoint = frameConfig?.cornerJoint ?? '45';
 
   // 1. Trường hợp Khung hở 3 cạnh (chạm sàn - Open Bottom): không có thanh đáy

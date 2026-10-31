@@ -820,13 +820,16 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                     <tbody className="divide-y divide-gray-100 text-xs">
                       {calcData.gaskets?.map((g, idx) => {
                         const measureMap: Record<string, string> = {
-                          bead: 'Theo nẹp kính',
-                          glass_perimeter: 'Theo chu vi kính',
-                          glass_width: 'Theo chiều rộng kính',
-                          glass_height: 'Theo chiều cao kính',
-                          frame_perimeter: 'Theo chu vi khung',
-                          frame_width: 'Theo chiều rộng khung',
-                          frame_height: 'Theo chiều cao khung',
+                          bead: g.target === 'frame' ? 'Theo nẹp kính ô fix' : 'Theo nẹp kính cánh',
+                          glass_perimeter: g.target === 'frame' ? 'Theo chu vi kính ô fix' : 'Theo chu vi kính cánh',
+                          glass_width: g.target === 'frame' ? 'Theo chiều rộng kính ô fix' : 'Theo chiều rộng kính cánh',
+                          glass_height: g.target === 'frame' ? 'Theo chiều cao kính ô fix' : 'Theo chiều cao kính cánh',
+                          frame_perimeter: 'Theo chu vi khung bao',
+                          frame_width: 'Theo chiều rộng khung bao',
+                          frame_height: 'Theo chiều cao khung bao',
+                          sash_perimeter: 'Theo chu vi cánh',
+                          sash_width: 'Theo chiều rộng cánh',
+                          sash_height: 'Theo chiều cao cánh',
                         };
                         return (
                           <tr key={idx} className="hover:bg-pink-50/20 transition-colors">
