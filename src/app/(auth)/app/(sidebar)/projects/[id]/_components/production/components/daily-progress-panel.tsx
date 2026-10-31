@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, ChevronRight, X } from 'lucide-react';
 import { Button } from '@/components';
@@ -46,10 +46,13 @@ export function DailyProgressPanel({
     return map;
   }, [matrix]);
 
-  const getDoorStatus = (pos: ProjectDoorPosition): string => {
-    const matrixItem = matrixItemMap.get(pos.id);
-    return matrixItem?.currentStatus || pos.status || 'draft';
-  };
+  const getDoorStatus = useCallback(
+    (pos: ProjectDoorPosition): string => {
+      const matrixItem = matrixItemMap.get(pos.id);
+      return matrixItem?.currentStatus || pos.status || 'draft';
+    },
+    [matrixItemMap],
+  );
 
   const groupedDoors = useMemo(() => {
     const groups = new Map<string, ProjectDoorPosition[]>();
@@ -60,13 +63,13 @@ export function DailyProgressPanel({
       groups.set(status, list);
     });
     return groups;
-  }, [positions, matrixItemMap]);
+  }, [positions, getDoorStatus]);
 
   const selectedStep = useMemo(() => {
     if (selectedIds.length === 0) return null;
     const firstSelected = positions.find((p) => p.id === selectedIds[0]);
     return firstSelected ? (getDoorStatus(firstSelected) as ProgressStepCode) : null;
-  }, [selectedIds, positions, matrixItemMap]);
+  }, [selectedIds, positions, getDoorStatus]);
 
   const toggleSelect = (id: number) => {
     const clickedDoor = positions.find((p) => p.id === id);
@@ -121,7 +124,7 @@ export function DailyProgressPanel({
     <div className="space-y-6 pb-20">
       {DISPLAY_STEPS_ORDER.map((stepKey) => {
         const stepDoors = groupedDoors.get(stepKey) || [];
-        if (stepDoors.length === 0) return null;
+        const hasDoors = stepDoors.length > 0;
 
         const config = STEP_SECTION_CONFIG[stepKey] || {
           label: PROGRESS_STEP_LABEL[stepKey as ProgressStepCode] || stepKey,
@@ -129,7 +132,7 @@ export function DailyProgressPanel({
         };
         const totalArea = stepDoors.reduce((acc, cur) => acc + (cur.areaM2 || 0), 0);
         const isAllSelectedInGroup =
-          stepDoors.length > 0 && stepDoors.every((d) => selectedIds.includes(d.id));
+          hasDoors && stepDoors.every((d) => selectedIds.includes(d.id));
 
         return (
           <div key={stepKey} className="space-y-3">
@@ -145,9 +148,9 @@ export function DailyProgressPanel({
               <div className="h-px flex-1 bg-slate-200" />
               <div className="flex items-center gap-3">
                 <span className="text-[11px] text-slate-400">
-                  {stepDoors.length} mẫu · {totalArea.toFixed(1)} m²
+                  {hasDoors ? `${stepDoors.length} mẫu · ${totalArea.toFixed(1)} m²` : '0 mẫu'}
                 </span>
-                {stepKey !== 'accepted' && (
+                {hasDoors && stepKey !== 'accepted' && (
                   <button
                     type="button"
                     onClick={() => handleSelectAllInStep(stepDoors)}
@@ -159,17 +162,23 @@ export function DailyProgressPanel({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {stepDoors.map((door) => (
-                <DoorProgressCard
-                  key={door.id}
-                  position={door}
-                  matrixItem={matrixItemMap.get(door.id)}
-                  isSelected={selectedIds.includes(door.id)}
-                  onToggle={toggleSelect}
-                />
-              ))}
-            </div>
+            {hasDoors ? (
+              <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {stepDoors.map((door) => (
+                  <DoorProgressCard
+                    key={door.id}
+                    position={door}
+                    matrixItem={matrixItemMap.get(door.id)}
+                    isSelected={selectedIds.includes(door.id)}
+                    onToggle={toggleSelect}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="py-4 text-center text-xs text-slate-400 bg-slate-50/60 rounded-lg border border-dashed border-slate-200">
+                Không có cửa nào trong giai đoạn này
+              </div>
+            )}
           </div>
         );
       })}
@@ -266,4 +275,3 @@ export function DailyProgressPanel({
     </div>
   );
 }
-

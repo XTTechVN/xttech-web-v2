@@ -124,6 +124,10 @@ export interface SceneCellNode {
   sashJoiner?: boolean;
   sashJoinerPair?: boolean;
   sashHingeSymbol?: string;
+  isHydraulic?: boolean;
+  hoNenMm?: number;
+  ngamNgangMm?: number;
+  ngamDocMm?: number;
 }
 
 
@@ -368,6 +372,8 @@ export interface SashConfig {
   hasScreenSash: boolean;
   family: string;
   sashStyle: 'standard' | 'slim';
+  isHydraulic?: boolean;
+  hoNenMm: number;
   ngamNgangMm: number;
   ngamDocMm: number;
   truDoDongMm: number;
@@ -413,8 +419,10 @@ export const DEFAULT_SASH_CONFIG: SashConfig = {
   hasScreenSash: false,
   family: 'Cửa sổ mở quay/Hất',
   sashStyle: 'standard',
-  ngamNgangMm: 0,
-  ngamDocMm: 0,
+  isHydraulic: false,
+  hoNenMm: 8,
+  ngamNgangMm: 5,
+  ngamDocMm: 5,
   truDoDongMm: 0,
   offsetMm: { left: 0, top: 0, right: 0, bottom: 0 },
   cornerJoint: '45',

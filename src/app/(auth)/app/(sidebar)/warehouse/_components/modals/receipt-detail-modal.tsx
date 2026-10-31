@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button } from '@/components';
 import { WarehouseReceipt } from '@/types';
 import { RECEIPT_REASON_MAP, RECEIPT_STATUS_MAP } from '@/config';
-import { Package, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
+import { Package, CheckCircle2, XCircle, RefreshCw, FileSpreadsheet, Printer } from 'lucide-react';
 import { getWarehouseReceiptDetail } from '@/actions';
 import { showErrorToast } from '@/utils';
-import { toDisplayUnit } from '../../_utils/unit-mapping';
+import { toDisplayUnit, exportReceiptToExcel, printReceiptDocument } from '../../_utils';
 
 interface ReceiptDetailModalProps {
   isOpen: boolean;
@@ -79,7 +79,7 @@ export const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
       title={`Chi tiết phiếu ${receipt.code}`}
       size="lg"
       footer={
-        <div className="flex items-center justify-between w-full">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full gap-2">
           <div className="flex items-center gap-2">
             {receipt.status === 'draft' && (
               <>
@@ -105,9 +105,31 @@ export const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
               </>
             )}
           </div>
-          <Button variant="outline" size="sm" onClick={onClose}>
-            Đóng
-          </Button>
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
+              onClick={() => exportReceiptToExcel(activeReceipt)}
+              title="Xuất file Excel danh mục mặt hàng trong phiếu"
+            >
+              <FileSpreadsheet size={14} className="mr-1.5 text-emerald-600" />
+              Xuất Excel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-slate-700 border-slate-300 hover:bg-slate-100 hover:text-slate-900"
+              onClick={() => printReceiptDocument(activeReceipt)}
+              title="In phiếu xuất/nhập kho theo mẫu biểu xưởng"
+            >
+              <Printer size={14} className="mr-1.5 text-slate-500" />
+              In phiếu
+            </Button>
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Đóng
+            </Button>
+          </div>
         </div>
       }
     >

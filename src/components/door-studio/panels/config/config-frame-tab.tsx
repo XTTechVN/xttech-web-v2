@@ -13,6 +13,7 @@ import { Layers, Shield, RefreshCw, Plus } from 'lucide-react';
 import { GasketConfigSection } from './gasket-config-section';
 import { CustomExtraConfigSection } from './custom-extra-config-section';
 
+
 interface ConfigFrameTabProps {
   config: FrameConfig;
   onChangeConfig: (updates: Partial<FrameConfig>) => void;
@@ -23,8 +24,15 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
   const frameProfiles = profiles.filter((p) => p.barType === 'FRAME');
   const mullionProfiles = profiles.filter((p) => p.barType === 'MULLION');
   const beadProfiles = profiles.filter((p) => p.barType === 'BEAD');
+  const couplingProfiles = profiles.filter((p) => p.barType === 'COUPLING');
   const auxiliaryProfiles = profiles.filter(
-    (p) => p.barType !== 'FRAME' && p.barType !== 'SASH' && p.barType !== 'MULLION' && p.barType !== 'BEAD'
+    (p) =>
+      p.barType !== 'FRAME' &&
+      p.barType !== 'SASH' &&
+      p.barType !== 'SCREEN_SASH' &&
+      p.barType !== 'MULLION' &&
+      p.barType !== 'BEAD' &&
+      p.barType !== 'COUPLING'
   );
 
   const leftEdge = config?.leftEdge ?? { offsetMm: 0 };
@@ -381,7 +389,16 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
               <button
                 key={item.id}
                 type="button"
-                onClick={() => onChangeConfig({ mullionMode: item.id as any })}
+                onClick={() => {
+                  const mode = item.id as 'none' | 'single' | 'separate';
+                  const basePid = config.mullionProfileId || mullionProfiles[0]?.id;
+                  onChangeConfig({
+                    mullionMode: mode,
+                    mullionProfileId: basePid,
+                    mullionVertProfileId: config.mullionVertProfileId || basePid,
+                    mullionHorizProfileId: config.mullionHorizProfileId || basePid,
+                  });
+                }}
                 className={`p-2 rounded-lg border text-xs font-medium text-center transition-all cursor-pointer ${
                   config.mullionMode === item.id
                     ? 'border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary/30'
@@ -393,19 +410,97 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
             ))}
           </div>
 
-          {config.mullionMode !== 'none' && (
+          {config.mullionMode === 'single' && (
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
-              <div className="font-medium text-[11px] text-slate-700">Chọn Profile Đố T:</div>
+              <div className="flex items-center justify-between font-medium text-[11px] text-slate-700">
+                <span>Chọn Profile Đố T (Dùng chung):</span>
+                {config.mullionProfileId && (
+                  <span className="text-[10px] text-primary font-mono font-bold">
+                    {profiles.find((p) => p.id === config.mullionProfileId)?.sectionHeightMm
+                      ? `Bản ${profiles.find((p) => p.id === config.mullionProfileId)?.sectionHeightMm} mm`
+                      : ''}
+                  </span>
+                )}
+              </div>
               <select
                 value={config.mullionProfileId || ''}
-                onChange={(e) => onChangeConfig({ mullionProfileId: Number(e.target.value) })}
+                onChange={(e) => {
+                  const pid = Number(e.target.value) || undefined;
+                  onChangeConfig({
+                    mullionProfileId: pid,
+                    mullionVertProfileId: pid,
+                    mullionHorizProfileId: pid,
+                  });
+                }}
                 className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
               >
                 <option value="">Chọn profile đố...</option>
                 {mullionProfiles.map((p) => (
-                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.code} - {p.name}
+                  </option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {config.mullionMode === 'separate' && (
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+              {/* Đố Dọc */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between font-medium text-[11px] text-slate-700">
+                  <span className="flex items-center gap-1.5 font-semibold text-primary">
+                    <span className="w-1.5 h-3 bg-primary rounded-[1px] inline-block" /> Profile Đố Dọc:
+                  </span>
+                  {(config.mullionVertProfileId || config.mullionProfileId) && (
+                    <span className="text-[10.5px] text-primary font-mono font-bold">
+                      Bản {profiles.find((p) => p.id === (config.mullionVertProfileId || config.mullionProfileId))?.sectionHeightMm || 55} mm
+                    </span>
+                  )}
+                </div>
+                <select
+                  value={config.mullionVertProfileId || config.mullionProfileId || ''}
+                  onChange={(e) =>
+                    onChangeConfig({ mullionVertProfileId: Number(e.target.value) || undefined })
+                  }
+                  className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
+                >
+                  <option value="">Chọn profile đố dọc...</option>
+                  {mullionProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.code} - {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Đố Ngang */}
+              <div className="space-y-1.5 pt-2 border-t border-slate-200/60">
+                <div className="flex items-center justify-between font-medium text-[11px] text-slate-700">
+                  <span className="flex items-center gap-1.5 font-semibold text-emerald-700">
+                    <span className="w-3 h-1.5 bg-emerald-600 rounded-[1px] inline-block" /> Profile Đố Ngang:
+                  </span>
+                  {(config.mullionHorizProfileId || config.mullionProfileId) && (
+                    <span className="text-[10.5px] text-emerald-700 font-mono font-bold">
+                      Bản {profiles.find((p) => p.id === (config.mullionHorizProfileId || config.mullionProfileId))?.sectionHeightMm || 55} mm
+                    </span>
+                  )}
+                </div>
+                <select
+                  value={config.mullionHorizProfileId || config.mullionProfileId || ''}
+                  onChange={(e) =>
+                    onChangeConfig({ mullionHorizProfileId: Number(e.target.value) || undefined })
+                  }
+                  className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
+                >
+                  <option value="">Chọn profile đố ngang...</option>
+                  {mullionProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.code} - {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
 
@@ -701,8 +796,10 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                 onChange={(e) => onChangeConfig({ couplingProfileId: Number(e.target.value) })}
                 className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
               >
-                <option value="">Chọn profile nối khung...</option>
-                {frameProfiles.map((p) => (
+                <option value="">
+                  {couplingProfiles.length > 0 ? 'Chọn profile nối khung...' : '(Hệ này không có nối khung)'}
+                </option>
+                {couplingProfiles.map((p) => (
                   <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
                 ))}
               </select>

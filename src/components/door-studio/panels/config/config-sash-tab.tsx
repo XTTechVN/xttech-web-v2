@@ -22,9 +22,14 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
   onChangeConfig,
   profiles,
 }) => {
-  const sashProfiles = profiles.filter((p) => p.barType === 'SASH');
+  const sashProfiles = profiles.filter(
+    (p) => p.barType === 'SASH' || p.barType === 'SCREEN_SASH'
+  );
   const mullionProfiles = profiles.filter((p) => p.barType === 'MULLION');
   const beadProfiles = profiles.filter((p) => p.barType === 'BEAD');
+  const dynamicMullionProfiles = profiles.filter(
+    (p) => p.barType === 'DYNAMIC_MULLION'
+  );
 
   const offsetMm = config?.offsetMm ?? { left: 0, top: 0, right: 0, bottom: 0 };
 
@@ -365,8 +370,10 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
                 onChange={(e) => onChangeConfig({ dynamicMullionProfileId: Number(e.target.value) })}
                 className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
               >
-                <option value="">Chọn profile đố động...</option>
-                {mullionProfiles.map((p) => (
+                <option value="">
+                  {dynamicMullionProfiles.length > 0 ? 'Chọn profile đố động...' : '(Hệ này không có đố động)'}
+                </option>
+                {dynamicMullionProfiles.map((p) => (
                   <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
                 ))}
               </select>

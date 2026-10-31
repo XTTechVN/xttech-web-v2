@@ -30,3 +30,5 @@ export * from './door-studio';
 export * from './signature-pad';
 
 export * from './rich-text-editor';
+export * from './customers';
+export * from './warehouse';

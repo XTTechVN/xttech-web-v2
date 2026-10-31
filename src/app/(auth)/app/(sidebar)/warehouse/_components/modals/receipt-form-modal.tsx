@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { X, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
-import { Button, Modal } from '@/components';
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { Button, Modal, SupplierFormModal } from '@/components';
 import { showErrorToast } from '@/utils';
 import {
   ReceiptType,
@@ -27,6 +27,7 @@ interface ReceiptFormModalProps {
   initialType?: ReceiptType;
   initialReason?: ReceiptReason;
   initialSupplierId?: number;
+  onSupplierCreated?: (newSupplier: WarehouseSupplier) => void;
 }
 
 export function ReceiptFormModal({
@@ -39,25 +40,31 @@ export function ReceiptFormModal({
   initialType = 'import',
   initialReason = 'purchase',
   initialSupplierId,
+  onSupplierCreated,
 }: ReceiptFormModalProps) {
   const [receiptType, setReceiptType] = useState<ReceiptType>(initialType);
   const [receiptReason, setReceiptReason] = useState<ReceiptReason>(initialReason);
   const [supplierId, setSupplierId] = useState<number | undefined>(initialSupplierId);
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const [addedSuppliers, setAddedSuppliers] = useState<WarehouseSupplier[]>([]);
+
+  const combinedSuppliers = useMemo(() => {
+    if (addedSuppliers.length === 0) return suppliersList;
+    const existingIds = new Set(suppliersList.map((s) => s.id));
+    const newOnes = addedSuppliers.filter((s) => !existingIds.has(s.id));
+    return [...newOnes, ...suppliersList];
+  }, [suppliersList, addedSuppliers]);
 
   const handleReceiptTypeChange = (newType: ReceiptType) => {
     setReceiptType(newType);
     if (newType === 'import') {
-      const validImportReasons: ReceiptReason[] = ['purchase', 'offcut_return', 'adjustment'];
-      if (!validImportReasons.includes(receiptReason)) {
-        setReceiptReason('purchase');
-      }
+      const validImport: ReceiptReason[] = ['purchase', 'offcut_return', 'adjustment'];
+      if (!validImport.includes(receiptReason)) setReceiptReason('purchase');
     } else {
-      const validExportReasons: ReceiptReason[] = ['production_issue', 'rework_issue', 'adjustment', 'scrap'];
-      if (!validExportReasons.includes(receiptReason)) {
-        setReceiptReason('production_issue');
-      }
+      const validExport: ReceiptReason[] = ['production_issue', 'rework_issue', 'adjustment', 'scrap'];
+      if (!validExport.includes(receiptReason)) setReceiptReason('production_issue');
     }
   };
 
@@ -73,7 +80,6 @@ export function ReceiptFormModal({
     },
   ]);
 
-  // Đồng bộ vật tư khi mở modal hoặc nhận danh sách từ JIT check
   useEffect(() => {
     if (!isOpen) return;
     if (initialItems && initialItems.length > 0) {
@@ -99,7 +105,6 @@ export function ReceiptFormModal({
       setReceiptType('import');
       setReceiptReason('purchase');
 
-      // Tự động gợi ý nhà cung cấp tương ứng
       const hasAlu = initialItems.some(
         (i) => i.itemCode.startsWith('XF') || i.itemCode.startsWith('ALU')
       );
@@ -111,6 +116,14 @@ export function ReceiptFormModal({
   }, [isOpen, initialItems, itemsList, suppliersList]);
 
   if (!isOpen) return null;
+
+  const handleSupplierCreated = (newSupplier?: WarehouseSupplier) => {
+    if (newSupplier) {
+      setAddedSuppliers((prev) => [newSupplier, ...prev]);
+      setSupplierId(newSupplier.id);
+      onSupplierCreated?.(newSupplier);
+    }
+  };
 
   const handleAddRow = () => {
     setRows((prev) => [
@@ -155,9 +168,7 @@ export function ReceiptFormModal({
   };
 
   const handleRowChange = (id: string, field: keyof FormRowItem, value: any) => {
-    setRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
-    );
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
   };
 
   const totalAmount = rows.reduce(
@@ -253,47 +264,55 @@ export function ReceiptFormModal({
   );
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={titleNode}
-      size="xl"
-      className="md:h-[88vh] md:max-h-[88vh]"
-      bodyClassName="flex flex-col p-4 overflow-hidden"
-      footer={footerNode}
-    >
-      <form
-        id="receipt-form"
-        onSubmit={(e) => { e.preventDefault(); handleSaveReceipt(false); }}
-        noValidate
-        className="flex flex-col h-full min-h-0 space-y-4"
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={titleNode}
+        size="xl"
+        className="md:h-[88vh] md:max-h-[88vh]"
+        bodyClassName="flex flex-col p-4 overflow-hidden"
+        footer={footerNode}
       >
-        <ReceiptFormHeader
-          receiptType={receiptType}
-          setReceiptType={handleReceiptTypeChange}
-          receiptReason={receiptReason}
-          setReceiptReason={setReceiptReason}
-          supplierId={supplierId}
-          setSupplierId={setSupplierId}
-          suppliersList={suppliersList}
-          note={note}
-          setNote={setNote}
-        />
-
-        {/* Dynamic Table */}
-        <div className="flex-1 min-h-0 flex flex-col">
-          <ReceiptItemsTable
-            rows={rows}
-            itemsList={itemsList}
-            onAddRow={handleAddRow}
-            onRemoveRow={handleRemoveRow}
-            onSelectPredefinedItem={handleSelectPredefinedItem}
-            onRowChange={handleRowChange}
-            onImportRows={setRows}
-            totalAmount={totalAmount}
+        <form
+          id="receipt-form"
+          onSubmit={(e) => { e.preventDefault(); handleSaveReceipt(false); }}
+          noValidate
+          className="flex flex-col h-full min-h-0 space-y-4"
+        >
+          <ReceiptFormHeader
+            receiptType={receiptType}
+            setReceiptType={handleReceiptTypeChange}
+            receiptReason={receiptReason}
+            setReceiptReason={setReceiptReason}
+            supplierId={supplierId}
+            setSupplierId={setSupplierId}
+            suppliersList={combinedSuppliers}
+            note={note}
+            setNote={setNote}
+            onOpenCreateSupplier={() => setShowSupplierModal(true)}
           />
-        </div>
-      </form>
-    </Modal>
+
+          <div className="flex-1 min-h-0 flex flex-col">
+            <ReceiptItemsTable
+              rows={rows}
+              itemsList={itemsList}
+              onAddRow={handleAddRow}
+              onRemoveRow={handleRemoveRow}
+              onSelectPredefinedItem={handleSelectPredefinedItem}
+              onRowChange={handleRowChange}
+              onImportRows={setRows}
+              totalAmount={totalAmount}
+            />
+          </div>
+        </form>
+      </Modal>
+
+      <SupplierFormModal
+        isOpen={showSupplierModal}
+        onClose={() => setShowSupplierModal(false)}
+        onSuccess={handleSupplierCreated}
+      />
+    </>
   );
 }

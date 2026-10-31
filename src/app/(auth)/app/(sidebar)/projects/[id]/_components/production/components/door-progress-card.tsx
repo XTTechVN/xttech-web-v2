@@ -86,6 +86,12 @@ export function DoorProgressCard({
             </span>
           )}
         </div>
+
+        {position.measureNote && (
+          <p className="mt-1 text-[10px] text-slate-500 break-words leading-tight">
+            <span className="font-medium text-slate-600">Ghi chú:</span> {position.measureNote}
+          </p>
+        )}
       </div>
     </div>
   );

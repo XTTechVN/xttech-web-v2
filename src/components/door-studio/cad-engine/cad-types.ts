@@ -1,4 +1,5 @@
 import { SceneCellNode, FrameShape, FrameConfig, SashConfig, MullionInfo } from '../studio-types';
+import { ProfileBar } from '@/types/profile';
 
 export interface ResizeSplitParams {
   parentNodeId: string;
@@ -27,6 +28,7 @@ export interface DoorCadRendererProps {
   onResizeSplit?: (params: ResizeSplitParams) => void;
   frameConfig?: FrameConfig;
   sashConfig?: SashConfig;
+  availableProfiles?: ProfileBar[];
 }
 
 export interface LeafCell {
@@ -72,4 +74,13 @@ export interface FrameBox {
 export interface CurvedFramePaths {
   outerPath: string;
   innerPath: string;
+}
+
+export interface VerticalSlice {
+  id: string;
+  w: number;
+  xStart: number;
+  xEnd: number;
+  isHybrid?: boolean;
+  editableCellId?: string;
 }

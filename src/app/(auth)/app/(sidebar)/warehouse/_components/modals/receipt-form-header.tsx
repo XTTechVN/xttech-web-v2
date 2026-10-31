@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Plus } from 'lucide-react';
 import { Select, Input } from '@/components';
 import { ReceiptType, ReceiptReason, WarehouseSupplier } from '@/types';
 import { getReceiptReasonOptions } from '@/config';
@@ -15,6 +16,7 @@ interface ReceiptFormHeaderProps {
   suppliersList: WarehouseSupplier[];
   note: string;
   setNote: (note: string) => void;
+  onOpenCreateSupplier?: () => void;
 }
 
 export const ReceiptFormHeader: React.FC<ReceiptFormHeaderProps> = ({
@@ -27,6 +29,7 @@ export const ReceiptFormHeader: React.FC<ReceiptFormHeaderProps> = ({
   suppliersList,
   note,
   setNote,
+  onOpenCreateSupplier,
 }) => {
   const reasonOptions = getReceiptReasonOptions(receiptType);
 
@@ -62,14 +65,29 @@ export const ReceiptFormHeader: React.FC<ReceiptFormHeaderProps> = ({
           <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
             Nhà Cung Cấp <span className="text-red-500">*</span>
           </label>
-          <Select
-            value={supplierId || ''}
-            onChange={(e) => setSupplierId(e.target.value ? Number(e.target.value) : undefined)}
-            options={[
-              { value: '', label: '-- Chọn nhà cung cấp * --' },
-              ...suppliersList.map((s) => ({ value: s.id, label: `${s.name} (${s.phone})` })),
-            ]}
-          />
+          <div className="flex items-center gap-1.5">
+            <div className="flex-1 min-w-0">
+              <Select
+                value={supplierId || ''}
+                onChange={(e) => setSupplierId(e.target.value ? Number(e.target.value) : undefined)}
+                options={[
+                  { value: '', label: '-- Chọn nhà cung cấp * --' },
+                  ...suppliersList.map((s) => ({ value: s.id, label: `${s.name} (${s.phone})` })),
+                ]}
+              />
+            </div>
+            {onOpenCreateSupplier && (
+              <button
+                type="button"
+                onClick={onOpenCreateSupplier}
+                className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors shadow-2xs cursor-pointer"
+                title="Tạo mới nhà cung cấp"
+                aria-label="Tạo mới nhà cung cấp"
+              >
+                <Plus size={18} />
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <div>

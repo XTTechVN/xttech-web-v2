@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { DoorCadRenderer, ResizeSplitParams } from '../cad-engine/door-cad-renderer';
 import { FrameShape, SceneCellNode, FrameConfig, SashConfig, MullionInfo } from '../studio-types';
+import { ProfileBar } from '@/types/profile';
 import { Plus, Minus, Target, Check, X } from 'lucide-react';
 
 interface CanvasCadViewProps {
@@ -20,6 +21,7 @@ interface CanvasCadViewProps {
   onResizeSplit?: (params: ResizeSplitParams) => void;
   frameConfig?: FrameConfig;
   sashConfig?: SashConfig;
+  availableProfiles?: ProfileBar[];
 }
 
 export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
@@ -37,6 +39,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
   onResizeSplit,
   frameConfig,
   sashConfig,
+  availableProfiles,
 }) => {
   const [zoom, setZoom] = useState<number>(1);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -402,6 +405,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
                 onResizeSplit={onResizeSplit}
                 frameConfig={frameConfig}
                 sashConfig={sashConfig}
+                availableProfiles={availableProfiles}
               />
             </div>
           </div>

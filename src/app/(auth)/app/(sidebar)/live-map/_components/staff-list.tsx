@@ -217,13 +217,13 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
                   </div>
                 </div>
 
-                {isOffline && (
-                  <StaffDiagnostics
-                    diagnostics={staff.diagnostics}
-                    maxSignals={isSelected ? undefined : 2}
-                    hideDeviceSummary={!isSelected}
-                  />
-                )}
+                {/* Hiển thị chẩn đoán cho mọi nhân viên (không chỉ khi ngoại tuyến) để thấy cảnh báo sớm */}
+                <StaffDiagnostics
+                  diagnostics={staff.diagnostics}
+                  awaitingFirstPing={staff.awaitingFirstPing}
+                  maxSignals={isSelected ? undefined : 2}
+                  hideDeviceSummary={!isSelected}
+                />
 
                 <div className="flex items-center justify-between pt-1 border-t border-slate-100/80 text-[10px] text-slate-500">
                   <div className="flex items-center gap-2">
