@@ -308,6 +308,7 @@ export interface ContractMilestoneInput {
   milestoneOrder: number;
   installmentName: string;
   percentage: number;
+  expectedAmount?: number;
   dueDate?: string;
   note?: string;
 }

@@ -1,6 +1,6 @@
 import React from 'react';
-import { SceneCellNode } from '../../studio-types';
-import { LeafCell } from '../cad-types';
+import { SceneCellNode, SashConfig } from '../../studio-types';
+import { LeafCell, MullionBar, VerticalSlice } from '../cad-types';
 
 interface CadDimensionOverlayProps {
   w: number;
@@ -12,9 +12,11 @@ interface CadDimensionOverlayProps {
   frameD: number;
   sashD: number;
   isOpenBottom: boolean;
-  vertSlices: { id: string; w: number }[];
+  vertSlices: VerticalSlice[];
   horizSlices: SceneCellNode[];
   leaves: LeafCell[];
+  mullions?: MullionBar[];
+  sashConfig?: SashConfig;
   onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
 }
 
@@ -37,6 +39,8 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
   vertSlices,
   horizSlices,
   leaves,
+  mullions,
+  sashConfig,
   onEditDimension,
 }) => {
   const hasVertSubDims = vertSlices.length > 1;
@@ -46,6 +50,15 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
   const dimBotY = oy + fh + (hasVertSubDims ? 44 : 26);
   const dimSubRightX = ox + fw + 20;
   const dimRightX = ox + fw + (hasHorizSubDims ? 44 : 26);
+
+  // Lọc và sắp xếp các đố ngang / đố dọc từ cây layout để gióng thước chuẩn vào tim đố
+  const horizMullions = (mullions || [])
+    .filter((m) => m.info.direction === 'horizontal')
+    .sort((a, b) => a.y - b.y);
+
+  const vertMullions = (mullions || [])
+    .filter((m) => m.info.direction === 'vertical')
+    .sort((a, b) => a.x - b.x);
 
   // Tìm ô cánh có lắp khóa để vẽ đường gióng cao độ tay nắm
   const lockLeaf = leaves.find(
@@ -62,37 +75,57 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
         <g stroke="#2563eb" strokeWidth="0.8">
           {(() => {
             const totalW = vertSlices.reduce((sum, s) => sum + s.w, 0) || w;
-            let accumW = 0;
+            const count = vertSlices.length;
             return vertSlices.map((child, idx) => {
-              const isLast = idx === vertSlices.length - 1;
-              const childWScale = isLast ? fw - accumW : Math.round((child.w / totalW) * fw);
-              const curX = ox + accumW;
-              accumW += childWScale;
+              const isLast = idx === count - 1;
+              const leftX = idx === 0 ? ox : ox + Math.round((child.xStart / totalW) * fw);
+              const rightX = isLast ? ox + fw : ox + Math.round((child.xEnd / totalW) * fw);
+              const segW = rightX - leftX;
+
+              // Tự động tối ưu cỡ chữ chống đè chữ khi chia nhiều ô
+              const showText = segW >= 16;
+              const fontSize = segW < 32 ? (segW < 22 ? '7' : '8') : '9.5';
+              const isEditable = !child.isHybrid && Boolean(child.editableCellId || child.id);
 
               return (
                 <g key={idx}>
-                  <line x1={curX} y1={oy + fh} x2={curX} y2={dimSubBotY} strokeDasharray="2,2" />
-                  <line x1={curX + childWScale} y1={oy + fh} x2={curX + childWScale} y2={dimSubBotY} strokeDasharray="2,2" />
-                  <line x1={curX} y1={dimSubBotY} x2={curX + childWScale} y2={dimSubBotY} strokeWidth="0.9" />
-                  <circle cx={curX} cy={dimSubBotY} r={2} fill="#2563eb" />
-                  <circle cx={curX + childWScale} cy={dimSubBotY} r={2} fill="#2563eb" />
-                  <text
-                    x={curX + childWScale / 2}
-                    y={dimSubBotY - 3}
-                    textAnchor="middle"
-                    fontSize="9.5"
-                    fill="#1e40af"
-                    fontFamily="system-ui, sans-serif"
-                    fontWeight="700"
-                    paintOrder="stroke"
-                    stroke="#ffffff"
-                    strokeWidth="3.5"
-                    strokeLinejoin="round"
-                    className="cursor-pointer hover:fill-red-600 hover:font-bold"
-                    onClick={() => onEditDimension?.('cell', child.id)}
-                  >
-                    {child.w}
-                  </text>
+                  <line x1={leftX} y1={oy + fh} x2={leftX} y2={dimSubBotY} strokeDasharray="2,2" />
+                  <line x1={rightX} y1={oy + fh} x2={rightX} y2={dimSubBotY} strokeDasharray="2,2" />
+                  <line x1={leftX} y1={dimSubBotY} x2={rightX} y2={dimSubBotY} strokeWidth="0.9" />
+                  <circle cx={leftX} cy={dimSubBotY} r={2} fill="#2563eb" />
+                  <circle cx={rightX} cy={dimSubBotY} r={2} fill="#2563eb" />
+                  {showText && (
+                    <text
+                      x={(leftX + rightX) / 2}
+                      y={dimSubBotY - 3}
+                      textAnchor="middle"
+                      fontSize={fontSize}
+                      fill="#1e40af"
+                      fontFamily="system-ui, sans-serif"
+                      fontWeight="700"
+                      paintOrder="stroke"
+                      stroke="#ffffff"
+                      strokeWidth="3.5"
+                      strokeLinejoin="round"
+                      className={
+                        isEditable
+                          ? 'cursor-pointer hover:fill-red-600 hover:font-bold'
+                          : 'cursor-default select-none'
+                      }
+                      onClick={() => {
+                        if (isEditable) {
+                          onEditDimension?.('cell', child.editableCellId || child.id);
+                        }
+                      }}
+                    >
+                      <title>
+                        {child.isHybrid
+                          ? `Khoảng cách định vị đố/cánh: ${child.w} mm`
+                          : `Kích thước ô: ${child.w} mm (Nhấp để sửa)`}
+                      </title>
+                      {child.w}
+                    </text>
+                  )}
                 </g>
               );
             });
@@ -105,21 +138,37 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
         <g stroke="#2563eb" strokeWidth="0.8">
           {(() => {
             let accumH = 0;
+            const count = horizSlices.length;
             return horizSlices.map((child, idx) => {
               const childHScale = Math.round((child.h / h) * fh);
-              const curY = oy + accumH;
+              const fallbackCurY = oy + accumH;
               accumH += childHScale;
+
+              // Gióng chuẩn vào tim đố ngang (Center of Horizontal Mullion)
+              const topY =
+                idx === 0
+                  ? oy
+                  : horizMullions[idx - 1]
+                    ? Math.round(horizMullions[idx - 1].y + horizMullions[idx - 1].h / 2)
+                    : fallbackCurY;
+
+              const botY =
+                idx === count - 1
+                  ? oy + fh
+                  : horizMullions[idx]
+                    ? Math.round(horizMullions[idx].y + horizMullions[idx].h / 2)
+                    : fallbackCurY + childHScale;
 
               return (
                 <g key={idx}>
-                  <line x1={ox + fw} y1={curY} x2={dimSubRightX} y2={curY} strokeDasharray="2,2" />
-                  <line x1={ox + fw} y1={curY + childHScale} x2={dimSubRightX} y2={curY + childHScale} strokeDasharray="2,2" />
-                  <line x1={dimSubRightX} y1={curY} x2={dimSubRightX} y2={curY + childHScale} strokeWidth="0.9" />
-                  <circle cx={dimSubRightX} cy={curY} r={2} fill="#2563eb" />
-                  <circle cx={dimSubRightX} cy={curY + childHScale} r={2} fill="#2563eb" />
+                  <line x1={ox + fw} y1={topY} x2={dimSubRightX} y2={topY} strokeDasharray="2,2" />
+                  <line x1={ox + fw} y1={botY} x2={dimSubRightX} y2={botY} strokeDasharray="2,2" />
+                  <line x1={dimSubRightX} y1={topY} x2={dimSubRightX} y2={botY} strokeWidth="0.9" />
+                  <circle cx={dimSubRightX} cy={topY} r={2} fill="#2563eb" />
+                  <circle cx={dimSubRightX} cy={botY} r={2} fill="#2563eb" />
                   <text
                     x={dimSubRightX - 3}
-                    y={curY + childHScale / 2}
+                    y={(topY + botY) / 2}
                     fontSize="9.5"
                     fill="#1e40af"
                     fontFamily="system-ui, sans-serif"
@@ -130,7 +179,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
                     stroke="#ffffff"
                     strokeWidth="3.5"
                     strokeLinejoin="round"
-                    transform={`rotate(-90, ${dimSubRightX - 3}, ${curY + childHScale / 2})`}
+                    transform={`rotate(-90, ${dimSubRightX - 3}, ${(topY + botY) / 2})`}
                     className="cursor-pointer hover:fill-red-600 hover:font-bold"
                     onClick={() => onEditDimension?.('cell-h', child.id)}
                   >
@@ -200,10 +249,12 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
       {/* 5. Cao độ tay nắm khóa (Lock Height: Left) */}
       {lockLeaf &&
         (() => {
-          const handleHVal = lockLeaf.node.handleHeight || Math.round(lockLeaf.node.h / 2);
+          const isHydraulic = Boolean(sashConfig?.isHydraulic || lockLeaf.node.isHydraulic);
+          const handleHVal = lockLeaf.node.handleHeight || (isHydraulic ? 1050 : Math.round(lockLeaf.node.h / 2));
           const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
-          const bottomBound = isOpenBottom ? oy + fh - sashD - 10 : oy + fh - frameD - sashD - 10;
-          const lockY = Math.max(oy + frameD + 10, Math.min(bottomBound, lockYCalc));
+          const bottomBound = lockLeaf.y + lockLeaf.h - sashD - 10;
+          const topBound = lockLeaf.y + sashD + 20;
+          const lockY = Math.max(topBound, Math.min(bottomBound, lockYCalc));
           const dimLeftX = ox - 26;
 
           return (

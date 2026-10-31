@@ -59,10 +59,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   const isLeftSelected = selectedCellId === leftNode.id;
   const isRightSelected = selectedCellId === effectiveRightNode.id;
   const dSash = sashD;
-  const dBead = Math.max(
-    CAD_CONFIG.BEAD.MIN_W,
-    Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash * CAD_CONFIG.BEAD.NORMAL_RATIO))
-  );
+  const dBead = Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(dSash * 0.25));
 
   const pathSashOuter = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD, isOpenBottom);
   const pathSashInner = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD + dSash, isOpenBottom);
@@ -347,8 +344,8 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
   const isFixed = node.sashType === 'fixed';
   const dSash = isFixed ? 0 : sashD;
   const dBead = isFixed
-    ? Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(frameD * CAD_CONFIG.BEAD.FIXED_RATIO)))
-    : Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash * CAD_CONFIG.BEAD.NORMAL_RATIO)));
+    ? Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(frameD * 0.35))
+    : Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(dSash * 0.25));
 
   const pathSashOuter = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD, isOpenBottom);
   const pathSashInner = dSash > 0 ? getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD + dSash, isOpenBottom) : pathSashOuter;

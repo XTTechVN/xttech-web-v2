@@ -44,6 +44,7 @@ export const FULL_STATUS_ORDER: ProgressStepCode[] = [
 ];
 
 export const DISPLAY_STEPS_ORDER: ProgressStepCode[] = [
+  'surveyed',
   'producing',
   'factory_done',
   'delivering',
@@ -51,9 +52,6 @@ export const DISPLAY_STEPS_ORDER: ProgressStepCode[] = [
   'installing',
   'installed',
   'accepted',
-  'surveyed',
-  'awaiting_measure',
-  'draft',
 ];
 
 export const STEP_SECTION_CONFIG: Record<string, StepSectionConfig> = {

@@ -208,7 +208,9 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           defaultGlass={state.defaultGlass}
           aluminumColors={state.dynamicAluminumColors}
           onChangeFrameConfig={(updates) => state.setFrameConfig((prev) => ({ ...prev, ...updates }))}
+          onChangeSashConfig={(updates) => state.setSashConfig((prev) => ({ ...prev, ...updates }))}
           isInsideSash={state.isSelectedInsideSash}
+          availableProfiles={state.availableProfiles}
         />
       )}
 
@@ -293,6 +295,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           rootCell={state.rootCell}
           frameConfig={state.frameConfig}
           sashConfig={state.sashConfig}
+          availableProfiles={state.availableProfiles}
           selectedCellId={null}
           onSelectCell={() => {}}
         />

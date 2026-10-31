@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Input, Button, Modal, Select } from '@/components';
-import { CheckCircle2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { CheckCircle2, Plus } from 'lucide-react';
+import { CustomerFormModal } from '@/components/customers';
+import { useForm, Controller } from 'react-hook-form';
 import {
   createProject,
   updateProject,
@@ -71,12 +72,28 @@ export function ProjectFormModal({
   initialData,
   customers,
 }: ProjectFormModalProps) {
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<ProjectFormInputs>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    control,
+    formState: { errors },
+  } = useForm<ProjectFormInputs>({
     defaultValues: DEFAULT_FORM_VALUES,
   });
 
   const isEdit = Boolean(initialData?.id);
   const selectedBrandId = watch('defaultBrandId');
+  const [isCreateCustomerOpen, setIsCreateCustomerOpen] = useState(false);
+  const [createdCustomers, setCreatedCustomers] = useState<Customer[]>([]);
+
+  const handleCustomerCreated = (newCustomer: Customer) => {
+    setCreatedCustomers((prev) => [newCustomer, ...prev]);
+    setValue('customerId', String(newCustomer.id), { shouldValidate: true, shouldDirty: true });
+    queryClient.invalidateQueries({ queryKey: ['customers', 'select-options'] });
+  };
 
   const { data: fetchedCustomers } = useQuery({
     queryKey: ['customers', 'select-options'],
@@ -176,13 +193,19 @@ export function ProjectFormModal({
   };
 
   const customerOptions = useMemo(() => {
-    const list = [...(customers ?? fetchedCustomers ?? [])];
+    const list = [...(customers ?? fetchedCustomers ?? []), ...createdCustomers];
     const initialCustomer = initialData?.customer;
     if (initialCustomer?.id && initialCustomer.name && !list.some((c) => c.id === initialCustomer.id)) {
       list.push({ id: initialCustomer.id, name: initialCustomer.name });
     }
-    return toSortedOptions(list, true);
-  }, [customers, fetchedCustomers, initialData]);
+    const uniqueMap = new Map<number, { id: number; name?: string | null }>();
+    list.forEach((item) => {
+      if (item?.id && !uniqueMap.has(item.id)) {
+        uniqueMap.set(item.id, item);
+      }
+    });
+    return toSortedOptions(Array.from(uniqueMap.values()), true);
+  }, [customers, fetchedCustomers, createdCustomers, initialData]);
 
   const brandOptions = useMemo(() => toSortedOptions(brandsData), [brandsData]);
   const seriesOptions = useMemo(() => toSortedOptions(seriesData), [seriesData]);
@@ -191,76 +214,115 @@ export function ProjectFormModal({
   const isSubmitting = isCreating || isUpdating;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-2xl w-full">
-      <form onSubmit={handleSubmit(handleConfirm)}>
-        <div className="flex flex-col space-y-4 max-h-[75vh] overflow-y-auto px-1 py-1">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Tên dự án *"
-              placeholder="Nhập tên dự án"
-              fullWidth
-              {...register('name', { required: true })}
-              error={errors.name ? 'Tên dự án không được để trống' : undefined}
-            />
-            <Input label="Mã dự án" placeholder={isEdit ? '' : 'VD: DA-2026-0001'} fullWidth disabled={isEdit} {...register('code')} />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-              label="Khách hàng *"
-              placeholder="Chọn khách hàng"
-              fullWidth
-              disabled={isEdit}
-              value={watch('customerId') || (initialData?.customerId ? String(initialData.customerId) : '')}
-              {...register('customerId', { required: !isEdit })}
-              options={customerOptions}
-              error={errors.customerId ? 'Vui lòng chọn khách hàng' : undefined}
-            />
-            <Select
-              label="Trạng thái dự án"
-              placeholder="Chọn trạng thái"
-              fullWidth
-              disabled={isEdit}
-              value={watch('status') || initialData?.status || 'surveying'}
-              {...register('status')}
-              options={PROJECT_STATUS_OPTIONS}
-            />
-          </div>
-
-          <Input label="Địa chỉ công trình" placeholder="Nhập địa chỉ công trình" fullWidth {...register('address')} />
-
-          <div className="border-t border-slate-100 pt-3">
-            <span className="text-xs font-bold text-slate-500 block mb-2">Cấu hình nhôm mặc định</span>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Select label="Hãng nhôm" placeholder="Chọn hãng" fullWidth value={watch('defaultBrandId') || ''} {...register('defaultBrandId')} options={brandOptions} />
-              <Select label="Hệ nhôm" placeholder="Chọn hệ" fullWidth value={watch('defaultSeriesId') || ''} {...register('defaultSeriesId')} options={seriesOptions} />
-              <Select label="Màu nhôm" placeholder="Chọn màu" fullWidth value={watch('defaultColorId') || ''} {...register('defaultColorId')} options={colorOptions} />
+    <>
+      <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-2xl w-full">
+        <form onSubmit={handleSubmit(handleConfirm)}>
+          <div className="flex flex-col space-y-4 max-h-[75vh] overflow-y-auto px-1 py-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Tên dự án *"
+                placeholder="Nhập tên dự án"
+                fullWidth
+                {...register('name', { required: true })}
+                error={errors.name ? 'Tên dự án không được để trống' : undefined}
+              />
+              <Input label="Mã dự án" placeholder={isEdit ? '' : 'VD: DA-2026-0001'} fullWidth disabled={isEdit} {...register('code')} />
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-700 select-none">
+                  Khách hàng *
+                </label>
+                <div className="flex items-start gap-2">
+                  <div className="flex-1">
+                    <Controller
+                      name="customerId"
+                      control={control}
+                      rules={{
+                        validate: (val) => {
+                          if (isEdit) return true;
+                          return Boolean(val && String(val).trim() !== '') || 'Vui lòng chọn khách hàng';
+                        },
+                      }}
+                      render={({ field, fieldState: { error } }) => (
+                        <Select
+                          placeholder="Chọn khách hàng"
+                          fullWidth
+                          disabled={isEdit}
+                          value={field.value !== undefined && field.value !== null ? String(field.value) : ''}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          options={customerOptions}
+                          error={error?.message}
+                        />
+                      )}
+                    />
+                  </div>
+                  {!isEdit && (
+                    <button
+                      type="button"
+                      onClick={() => setIsCreateCustomerOpen(true)}
+                      className="h-10 w-10 shrink-0 flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer shadow-2xs"
+                      title="Tạo mới khách hàng"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <Select
+                label="Trạng thái dự án"
+                placeholder="Chọn trạng thái"
+                fullWidth
+                disabled={isEdit}
+                value={watch('status') || initialData?.status || 'surveying'}
+                {...register('status')}
+                options={PROJECT_STATUS_OPTIONS}
+              />
+            </div>
+
+            <Input label="Địa chỉ công trình" placeholder="Nhập địa chỉ công trình" fullWidth {...register('address')} />
+
+            <div className="border-t border-slate-100 pt-3">
+              <span className="text-xs font-bold text-slate-500 block mb-2">Cấu hình nhôm mặc định</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Select label="Hãng nhôm" placeholder="Chọn hãng" fullWidth value={watch('defaultBrandId') || ''} {...register('defaultBrandId')} options={brandOptions} />
+                <Select label="Hệ nhôm" placeholder="Chọn hệ" fullWidth value={watch('defaultSeriesId') || ''} {...register('defaultSeriesId')} options={seriesOptions} />
+                <Select label="Màu nhôm" placeholder="Chọn màu" fullWidth value={watch('defaultColorId') || ''} {...register('defaultColorId')} options={colorOptions} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input type="date" label="Ngày bắt đầu" fullWidth {...register('startDate')} />
+              <Input type="date" label="Dự kiến hoàn thành" fullWidth {...register('targetDate')} />
+            </div>
+
+            <Input label="Ghi chú" placeholder="Nhập ghi chú yêu cầu thiết kế / khảo sát..." fullWidth {...register('note')} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input type="date" label="Ngày bắt đầu" fullWidth {...register('startDate')} />
-            <Input type="date" label="Dự kiến hoàn thành" fullWidth {...register('targetDate')} />
+          <div className="flex gap-2 justify-end w-full mt-5 pt-3 border-t border-slate-100">
+            <Button variant="outline" size="sm" onClick={onClose} type="button">Hủy</Button>
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<CheckCircle2 size={16} />}
+              type="submit"
+              disabled={isSubmitting}
+              loading={isSubmitting}
+            >
+              {submitText}
+            </Button>
           </div>
+        </form>
+      </Modal>
 
-          <Input label="Ghi chú" placeholder="Nhập ghi chú yêu cầu thiết kế / khảo sát..." fullWidth {...register('note')} />
-        </div>
-
-        <div className="flex gap-2 justify-end w-full mt-5 pt-3 border-t border-slate-100">
-          <Button variant="outline" size="sm" onClick={onClose} type="button">Hủy</Button>
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<CheckCircle2 size={16} />}
-            type="submit"
-            disabled={isSubmitting}
-            loading={isSubmitting}
-          >
-            {submitText}
-          </Button>
-        </div>
-      </form>
-    </Modal>
+      <CustomerFormModal
+        isOpen={isCreateCustomerOpen}
+        onClose={() => setIsCreateCustomerOpen(false)}
+        title="Thêm khách hàng mới"
+        submitText="Xác nhận tạo"
+        onSuccessCallback={handleCustomerCreated}
+      />
+    </>
   );
 }
-

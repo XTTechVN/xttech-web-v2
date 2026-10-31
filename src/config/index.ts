@@ -7,3 +7,4 @@ export * from './quotation-contract';
 export * from './contract-template';
 export * from './contract-default-terms';
 export * from './quotation-template';
+export * from './customer';

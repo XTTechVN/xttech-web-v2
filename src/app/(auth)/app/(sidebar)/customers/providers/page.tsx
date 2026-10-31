@@ -9,7 +9,7 @@ import { getCustomerProviders, deleteCustomerProvider } from '@/actions';
 import type { CustomerProvider } from '@/types';
 import toast from 'react-hot-toast';
 import CustomerProviderTable from './_components/table';
-import CustomerProviderFormModal from '../_components/provider-form-modal';
+import { CustomerProviderFormModal } from '@/components/customers';
 
 export default function CustomerProvidersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);

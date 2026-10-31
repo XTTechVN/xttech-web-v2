@@ -1,5 +1,5 @@
 import React from 'react';
-import { SashCornerJoint, GlassGrilleConfig, SceneCellNode } from '../../studio-types';
+import { SashCornerJoint, GlassGrilleConfig, SceneCellNode, SashConfig } from '../../studio-types';
 import { CAD_CONFIG } from '../cad-config';
 import { LeafCell } from '../cad-types';
 import { CadOpeningSymbol } from './cad-opening-symbol';
@@ -179,21 +179,17 @@ interface CadRectangularLeafProps {
   hardwareColor: string;
   sashJoint: SashCornerJoint;
   isOpenBottom: boolean;
+  sashConfig?: SashConfig;
   onSelectCell: (cellId: string | null) => void;
   onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
 }
 
 /**
- * Tính độ dày khung cánh thích ứng động theo kích thước ô cánh để tránh chiếm quá nhiều diện tích kính
+ * Đảm bảo độ dày cánh sashD không vượt quá kích thước ô để tránh âm diện tích kính
  */
-const getAdaptiveSashD = (cellW: number, cellH: number, isDoubleChild: boolean, isSliding: boolean, sashD: number) => {
-  const ratioW = isSliding ? 0.12 : isDoubleChild ? 0.16 : 0.18;
-  const maxAllowedW = Math.max(8, Math.floor(cellW * ratioW));
-  const maxAllowedH = Math.max(8, Math.floor(cellH * 0.12));
-  const maxAllowed = Math.min(maxAllowedW, maxAllowedH);
-
-  const candidate = isSliding ? Math.round(sashD * 0.85) : sashD;
-  return Math.max(8, Math.min(candidate, maxAllowed));
+const getAdaptiveSashD = (cellW: number, cellH: number, sashD: number) => {
+  const maxSafeD = Math.max(2, Math.floor((Math.min(cellW, cellH) - 6) / 2));
+  return Math.max(2, Math.min(sashD, maxSafeD));
 };
 
 /**
@@ -208,6 +204,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
   isSelected,
   selectedCellId,
   sashD,
+  beadW,
   mullionT,
   frameD,
   h,
@@ -217,6 +214,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
   hardwareColor,
   sashJoint,
   isOpenBottom,
+  sashConfig,
   onSelectCell,
   onEditDimension,
 }) => {
@@ -224,6 +222,22 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
   const isFixed = node.sashType === 'fixed';
   const isDouble = node.sashType === 'swing_double';
   const isSliding = node.sashType === 'sliding';
+
+  // Thông số Cửa Thủy Lực & Co giãn hình học cánh (!isFixed)
+  const isHydraulic = Boolean(sashConfig?.isHydraulic || node.isHydraulic);
+  const hoNenMm = node.hoNenMm ?? sashConfig?.hoNenMm ?? 8;
+  const ngamDocMm = node.ngamDocMm ?? sashConfig?.ngamDocMm ?? 5;
+  const ngamNgangMm = node.ngamNgangMm ?? sashConfig?.ngamNgangMm ?? 5;
+  const scale = fh / (h || 1);
+
+  // Tính độ dịch chuyển hình học cho cánh chuyển động thủy lực (Ảnh 3, Ảnh 4)
+  const dHoNen = !isFixed && isHydraulic ? Math.round(hoNenMm * scale) : 0;
+  const dNgamDoc = !isFixed && isHydraulic ? Math.round(ngamDocMm * scale) : 0;
+  const dNgamNgang = !isFixed && isHydraulic ? Math.round(ngamNgangMm * scale) : 0;
+
+  // Tọa độ Y và chiều cao H sau khi áp dụng Hở nền và Ngậm dọc
+  const effectiveCy = cy - dNgamDoc;
+  const effectiveCh = ch - dHoNen + dNgamDoc;
 
   return (
     <g
@@ -237,47 +251,52 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
       {isDouble ? (
         (() => {
           const astW = Math.max(
-            CAD_CONFIG.MULLION.ASTRAGAL_MIN,
-            Math.min(CAD_CONFIG.MULLION.ASTRAGAL_MAX, Math.round(mullionT * CAD_CONFIG.MULLION.ASTRAGAL_RATIO))
+            CAD_CONFIG.MULLION.ASTRAGAL_MIN_PX,
+            Math.min(CAD_CONFIG.MULLION.ASTRAGAL_MAX_PX, Math.round(mullionT * CAD_CONFIG.MULLION.ASTRAGAL_RATIO))
           );
-          const s1W = Math.floor((cw - astW) / 2);
-          const s2W = cw - astW - s1W;
-          const dSash1 = getAdaptiveSashD(s1W, ch, true, false, sashD);
-          const dSash2 = getAdaptiveSashD(s2W, ch, true, false, sashD);
-          const s1X = cx;
-          const s2X = cx + s1W + astW;
+          const totalW = cw + 2 * dNgamNgang;
+          const s1W = Math.floor((totalW - astW) / 2);
+          const s2W = totalW - astW - s1W;
+          const dSash1 = getAdaptiveSashD(s1W, effectiveCh, sashD);
+          const dSash2 = getAdaptiveSashD(s2W, effectiveCh, sashD);
+          const s1X = cx - dNgamNgang;
+          const s2X = s1X + s1W + astW;
           const pane1W = Math.max(4, s1W - 2 * dSash1);
           const pane2W = Math.max(4, s2W - 2 * dSash2);
-          const paneH1 = Math.max(4, ch - 2 * dSash1);
-          const paneH2 = Math.max(4, ch - 2 * dSash2);
+          const paneH1 = Math.max(4, effectiveCh - 2 * dSash1);
+          const paneH2 = Math.max(4, effectiveCh - 2 * dSash2);
 
           const beadJoint = node.beadJoint || '90';
           const bead1 = renderCadBead(
             s1X + dSash1,
-            cy + dSash1,
+            effectiveCy + dSash1,
             pane1W,
             paneH1,
             `${node.id}-bead-1`,
             aluminumColor,
-            Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash1 * CAD_CONFIG.BEAD.NORMAL_RATIO))),
+            beadW,
             beadJoint
           );
 
           const bead2 = renderCadBead(
             s2X + dSash2,
-            cy + dSash2,
+            effectiveCy + dSash2,
             pane2W,
             paneH2,
             `${node.id}-bead-2`,
             aluminumColor,
-            Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash2 * CAD_CONFIG.BEAD.NORMAL_RATIO))),
+            beadW,
             beadJoint
           );
 
-          // Tay nắm trên cánh phải
-          const handleHVal = node.handleHeight || Math.round(node.h / 2);
+          // Cao độ tay nắm
+          const handleHVal = node.handleHeight || (isHydraulic ? 1050 : Math.round(node.h / 2));
           const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
-          const handleY = Math.max(cy + dSash2 + 20, Math.min(cy + ch - dSash2 - 20, lockYCalc));
+          const bottomBound = effectiveCy + effectiveCh - dSash2 - 10;
+          const topBound = effectiveCy + dSash2 + 20;
+          const handleY = Math.max(topBound, Math.min(bottomBound, lockYCalc));
+          const pullLen = Math.round(Math.min(effectiveCh - 40, Math.max(70, 750 * scale)));
+          const pullW = Math.max(3.5, Math.min(6, Math.round(32 * scale)));
           const plateW = 4.5;
           const plateH = 22;
           const leverW = 14;
@@ -290,56 +309,124 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
           return (
             <g>
               {/* Cánh trái */}
-              <CadSashBox sx={s1X} sy={cy} sw={s1W} sh={ch} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash1} />
+              <CadSashBox sx={s1X} sy={effectiveCy} sw={s1W} sh={effectiveCh} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash1} />
               {bead1.el}
               <rect x={bead1.gx2} y={bead1.gy2} width={bead1.gw2} height={bead1.gh2} fill="#b2f5ea" fillOpacity={0.85} stroke="none" />
               {renderCadGrille(bead1.gx2, bead1.gy2, bead1.gw2, bead1.gh2, node.grilleConfig)}
               <CadOpeningSymbol cx={bead1.gx2} cy={bead1.gy2} cw={bead1.gw2} ch={bead1.gh2} type="swing_left" />
 
               {/* Đố động giữa 2 cánh */}
-              <rect x={cx + s1W} y={cy} width={astW} height={ch} fill={aluminumColor} stroke="#27272a" strokeWidth="0.7" />
+              <rect x={s1X + s1W} y={effectiveCy} width={astW} height={effectiveCh} fill={aluminumColor} stroke="#27272a" strokeWidth="0.7" />
 
               {/* Cánh phải */}
-              <CadSashBox sx={s2X} sy={cy} sw={s2W} sh={ch} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash2} />
+              <CadSashBox sx={s2X} sy={effectiveCy} sw={s2W} sh={effectiveCh} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash2} />
               {bead2.el}
               <rect x={bead2.gx2} y={bead2.gy2} width={bead2.gw2} height={bead2.gh2} fill="#b2f5ea" fillOpacity={0.85} stroke="none" />
               {renderCadGrille(bead2.gx2, bead2.gy2, bead2.gw2, bead2.gh2, node.grilleConfig)}
               <CadOpeningSymbol cx={bead2.gx2} cy={bead2.gy2} cw={bead2.gw2} ch={bead2.gh2} type="swing_right" />
 
-              {/* Tay gạt khóa */}
-              <g
-                className="cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditDimension?.('handleHeight', node.id);
-                }}
-              >
-                <rect x={plateX} y={plateY} width={plateW} height={plateH} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
-                <circle cx={plateX + plateW / 2} cy={handleY + 5.5} r={1} fill="#111" />
-                <rect x={leverX} y={leverY} width={leverW} height={leverH} rx={1.2} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
-              </g>
+              {/* Tay nắm & Khóa: Nếu Cửa Thủy Lực thì hiển thị Cặp tay nắm ống tròn dài (Ảnh 2) */}
+              {isHydraulic ? (
+                <g
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditDimension?.('handleHeight', node.id);
+                  }}
+                >
+                  {/* Tay nắm cánh trái (mép trong cánh trái) */}
+                  <rect
+                    x={s1X + s1W - dSash1 / 2 - pullW / 2}
+                    y={handleY - pullLen / 2}
+                    width={pullW}
+                    height={pullLen}
+                    rx={pullW / 2}
+                    fill={hardwareColor}
+                    stroke="#0f172a"
+                    strokeWidth="0.6"
+                  />
+                  <rect
+                    x={s1X + s1W - dSash1 / 2 - pullW / 2 - 1.5}
+                    y={handleY - pullLen * 0.35 - 1.5}
+                    width={pullW + 3}
+                    height={3}
+                    rx={0.8}
+                    fill="#334155"
+                  />
+                  <rect
+                    x={s1X + s1W - dSash1 / 2 - pullW / 2 - 1.5}
+                    y={handleY + pullLen * 0.35 - 1.5}
+                    width={pullW + 3}
+                    height={3}
+                    rx={0.8}
+                    fill="#334155"
+                  />
+
+                  {/* Tay nắm cánh phải (mép trong cánh phải) */}
+                  <rect
+                    x={s2X + dSash2 / 2 - pullW / 2}
+                    y={handleY - pullLen / 2}
+                    width={pullW}
+                    height={pullLen}
+                    rx={pullW / 2}
+                    fill={hardwareColor}
+                    stroke="#0f172a"
+                    strokeWidth="0.6"
+                  />
+                  <rect
+                    x={s2X + dSash2 / 2 - pullW / 2 - 1.5}
+                    y={handleY - pullLen * 0.35 - 1.5}
+                    width={pullW + 3}
+                    height={3}
+                    rx={0.8}
+                    fill="#334155"
+                  />
+                  <rect
+                    x={s2X + dSash2 / 2 - pullW / 2 - 1.5}
+                    y={handleY + pullLen * 0.35 - 1.5}
+                    width={pullW + 3}
+                    height={3}
+                    rx={0.8}
+                    fill="#334155"
+                  />
+                </g>
+              ) : (
+                <g
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditDimension?.('handleHeight', node.id);
+                  }}
+                >
+                  <rect x={plateX} y={plateY} width={plateW} height={plateH} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
+                  <circle cx={plateX + plateW / 2} cy={handleY + 5.5} r={1} fill="#111" />
+                  <rect x={leverX} y={leverY} width={leverW} height={leverH} rx={1.2} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
+                </g>
+              )}
             </g>
           );
         })()
       ) : (
         /* Case B: Single sash hoặc fixed pane */
         (() => {
-          const dSash = isFixed ? 0 : getAdaptiveSashD(cw, ch, false, isSliding, sashD);
+          const dSash = isFixed ? 0 : getAdaptiveSashD(cw, ch, sashD);
           const dBead = isFixed
-            ? Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(frameD * CAD_CONFIG.BEAD.FIXED_RATIO)))
-            : Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash * CAD_CONFIG.BEAD.NORMAL_RATIO)));
+            ? Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(frameD * 0.35))
+            : beadW;
           const beadJoint = node.beadJoint || '90';
           const hasBead = true;
+          const effY = isFixed ? cy : effectiveCy;
+          const effH = isFixed ? ch : effectiveCh;
           const innerX = isFixed ? cx : cx + dSash;
-          const innerY = isFixed ? cy : cy + dSash;
+          const innerY = isFixed ? cy : effY + dSash;
           const innerW = Math.max(4, isFixed ? cw : cw - 2 * dSash);
-          const innerH = Math.max(4, isFixed ? ch : ch - 2 * dSash);
+          const innerH = Math.max(4, isFixed ? ch : effH - 2 * dSash);
 
           const hasSashMullions = !isFixed && Boolean(node.sashMullions && node.sashMullions.count > 1);
           const smCount = hasSashMullions ? (node.sashMullions?.count || 2) : 1;
           const smDir = node.sashMullions?.direction || 'vertical';
           const smPositions = node.sashMullions?.positions;
-          const smT = Math.max(14, Math.min(32, Math.round(dSash * 0.7)));
+          const smT = Math.max(CAD_CONFIG.MULLION.MIN_RENDER_PX, mullionT);
 
           const paneFill =
             node.paneType === 'screen'
@@ -652,11 +739,14 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
             Boolean(node.sashJoiner) ||
             Boolean(node.sashJoinerPair);
 
-          const handleHVal = node.handleHeight || Math.round(node.h / 2);
+          const handleHVal = node.handleHeight || (isHydraulic ? 1050 : Math.round(node.h / 2));
           const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
-          const bottomBound = isOpenBottom ? oy + fh - dSash - 10 : oy + fh - frameD - dSash - 10;
-          const handleY = Math.max(cy + dSash + 20, Math.min(bottomBound, lockYCalc));
+          const bottomBound = effY + effH - dSash - 10;
+          const topBound = effY + dSash + 20;
+          const handleY = Math.max(topBound, Math.min(bottomBound, lockYCalc));
 
+          const pullLen = Math.round(Math.min(effH - 40, Math.max(70, 750 * scale)));
+          const pullW = Math.max(3.5, Math.min(6, Math.round(32 * scale)));
           const plateW = 4.5;
           const plateH = 22;
           const leverW = 14;
@@ -672,7 +762,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                   }}
                   className="cursor-pointer"
                 >
-                  <CadSashBox sx={cx} sy={cy} sw={cw} sh={ch} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash} />
+                  <CadSashBox sx={cx} sy={effY} sw={cw} sh={effH} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={dSash} />
                 </g>
               )}
 
@@ -887,27 +977,60 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                             onEditDimension?.('handleHeight', node.id);
                           }}
                         >
-                          <rect
-                            x={cx + cw - dSash / 2 - plateW / 2}
-                            y={handleY - plateH / 2}
-                            width={plateW}
-                            height={plateH}
-                            rx={1.5}
-                            fill={hardwareColor}
-                            stroke="#000"
-                            strokeWidth="0.5"
-                          />
-                          <circle cx={cx + cw - dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
-                          <rect
-                            x={cx + cw - dSash / 2 - plateW / 2 + plateW / 2 - leverW}
-                            y={handleY - leverH / 2}
-                            width={leverW}
-                            height={leverH}
-                            rx={1.2}
-                            fill={hardwareColor}
-                            stroke="#000"
-                            strokeWidth="0.5"
-                          />
+                          {isHydraulic ? (
+                            <>
+                              <rect
+                                x={cx + cw - dSash / 2 - pullW / 2}
+                                y={handleY - pullLen / 2}
+                                width={pullW}
+                                height={pullLen}
+                                rx={pullW / 2}
+                                fill={hardwareColor}
+                                stroke="#0f172a"
+                                strokeWidth="0.6"
+                              />
+                              <rect
+                                x={cx + cw - dSash / 2 - pullW / 2 - 1.5}
+                                y={handleY - pullLen * 0.35 - 1.5}
+                                width={pullW + 3}
+                                height={3}
+                                rx={0.8}
+                                fill="#334155"
+                              />
+                              <rect
+                                x={cx + cw - dSash / 2 - pullW / 2 - 1.5}
+                                y={handleY + pullLen * 0.35 - 1.5}
+                                width={pullW + 3}
+                                height={3}
+                                rx={0.8}
+                                fill="#334155"
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <rect
+                                x={cx + cw - dSash / 2 - plateW / 2}
+                                y={handleY - plateH / 2}
+                                width={plateW}
+                                height={plateH}
+                                rx={1.5}
+                                fill={hardwareColor}
+                                stroke="#000"
+                                strokeWidth="0.5"
+                              />
+                              <circle cx={cx + cw - dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
+                              <rect
+                                x={cx + cw - dSash / 2 - plateW / 2 + plateW / 2 - leverW}
+                                y={handleY - leverH / 2}
+                                width={leverW}
+                                height={leverH}
+                                rx={1.2}
+                                fill={hardwareColor}
+                                stroke="#000"
+                                strokeWidth="0.5"
+                              />
+                            </>
+                          )}
                         </g>
                       )}
                       {isLeftHandle && (
@@ -918,27 +1041,60 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                             onEditDimension?.('handleHeight', node.id);
                           }}
                         >
-                          <rect
-                            x={cx + dSash / 2 - plateW / 2}
-                            y={handleY - plateH / 2}
-                            width={plateW}
-                            height={plateH}
-                            rx={1.5}
-                            fill={hardwareColor}
-                            stroke="#000"
-                            strokeWidth="0.5"
-                          />
-                          <circle cx={cx + dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
-                          <rect
-                            x={cx + dSash / 2 + plateW / 2}
-                            y={handleY - leverH / 2}
-                            width={leverW}
-                            height={leverH}
-                            rx={1.2}
-                            fill={hardwareColor}
-                            stroke="#000"
-                            strokeWidth="0.5"
-                          />
+                          {isHydraulic ? (
+                            <>
+                              <rect
+                                x={cx + dSash / 2 - pullW / 2}
+                                y={handleY - pullLen / 2}
+                                width={pullW}
+                                height={pullLen}
+                                rx={pullW / 2}
+                                fill={hardwareColor}
+                                stroke="#0f172a"
+                                strokeWidth="0.6"
+                              />
+                              <rect
+                                x={cx + dSash / 2 - pullW / 2 - 1.5}
+                                y={handleY - pullLen * 0.35 - 1.5}
+                                width={pullW + 3}
+                                height={3}
+                                rx={0.8}
+                                fill="#334155"
+                              />
+                              <rect
+                                x={cx + dSash / 2 - pullW / 2 - 1.5}
+                                y={handleY + pullLen * 0.35 - 1.5}
+                                width={pullW + 3}
+                                height={3}
+                                rx={0.8}
+                                fill="#334155"
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <rect
+                                x={cx + dSash / 2 - plateW / 2}
+                                y={handleY - plateH / 2}
+                                width={plateW}
+                                height={plateH}
+                                rx={1.5}
+                                fill={hardwareColor}
+                                stroke="#000"
+                                strokeWidth="0.5"
+                              />
+                              <circle cx={cx + dSash / 2} cy={handleY + 5.5} r={1} fill="#111" />
+                              <rect
+                                x={cx + dSash / 2 + plateW / 2}
+                                y={handleY - leverH / 2}
+                                width={leverW}
+                                height={leverH}
+                                rx={1.2}
+                                fill={hardwareColor}
+                                stroke="#000"
+                                strokeWidth="0.5"
+                              />
+                            </>
+                          )}
                         </g>
                       )}
                     </>

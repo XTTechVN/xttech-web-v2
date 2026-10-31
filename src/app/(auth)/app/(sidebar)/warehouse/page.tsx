@@ -246,6 +246,7 @@ export default function WarehouseManagementPage() {
         itemsList={items}
         suppliersList={suppliers}
         initialItems={prefilledReceiptItems}
+        onSupplierCreated={(newSup) => setSuppliers((prev) => [newSup, ...prev])}
       />
       <OffcutFormModal
         isOpen={showOffcutModal}

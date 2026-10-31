@@ -219,6 +219,8 @@ export function useDoorStudioState({
             : { ...prev.bottomEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
           beadProfileId: prev.beadProfileId || defaultBead?.id,
           mullionProfileId: prev.mullionProfileId || defaultMullion?.id,
+          mullionVertProfileId: prev.mullionVertProfileId || prev.mullionProfileId || defaultMullion?.id,
+          mullionHorizProfileId: prev.mullionHorizProfileId || prev.mullionProfileId || defaultMullion?.id,
         };
       });
     }
@@ -412,7 +414,7 @@ export function useDoorStudioState({
   };
 
   const handleSplitMullion = (count: number, direction: 'vertical' | 'horizontal') => {
-    const countClamped = Math.max(2, Math.min(6, count));
+    const countClamped = Math.max(2, Math.min(20, count));
     const targetNode = selectedCellId ? findNode(rootCell, selectedCellId) : null;
     const target = targetNode || rootCell;
 
@@ -455,7 +457,7 @@ export function useDoorStudioState({
       return;
     }
 
-    const countClamped = Math.max(2, Math.min(6, count));
+    const countClamped = Math.max(2, Math.min(20, count));
     const target = targetNode;
 
     // Tính toán chia đều vị trí

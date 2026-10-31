@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { SashCornerJoint } from '../studio-types';
+import { SashCornerJoint, SceneCellNode } from '../studio-types';
 import { CAD_CONFIG } from './cad-config';
 import { DoorCadRendererProps } from './cad-types';
 import { getCurvedFramePaths } from './cad-geometry';
@@ -38,6 +38,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   onResizeSplit,
   frameConfig,
   sashConfig,
+  availableProfiles,
 }) => {
   // Aspect ratio của bộ cửa thực tế
   const aspect = w / (h || 1);
@@ -50,49 +51,125 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   const vbW = hideDimensions ? 400 : aspect >= 1.25 ? Math.min(780, Math.max(540, Math.round(520 * Math.sqrt(aspect / 1.1)))) : 540;
   const vbH = hideDimensions ? 400 : aspect <= 0.8 ? Math.min(680, Math.max(500, Math.round(500 * Math.sqrt(0.9 / aspect)))) : 500;
 
-  // Vùng vẽ tối đa dành cho khung cửa (chừa lề cho thước đo)
-  const availW = hideDimensions ? vbW - 16 : vbW - 110;
-  const availH = hideDimensions ? vbH - 16 : vbH - 95;
+  // Dimensions & slices definition
+  const vertSlices = getVerticalSlices(rootCell);
+  const horizSlices = getHorizontalSlices(rootCell);
+  const hasVertSubDims = !hideDimensions && vertSlices.length > 1;
+  const hasHorizSubDims = !hideDimensions && horizSlices.length > 1;
+
+  // Kiểm tra ô cánh có lắp khóa/tay nắm để dành khoảng lề cho thước cao độ tay nắm bên trái
+  const hasLockHandle = (node: SceneCellNode): boolean => {
+    if (!node.children || node.children.length === 0) {
+      const isSwing =
+        node.sashType === 'swing_left' ||
+        node.sashType === 'swing_right' ||
+        node.sashType === 'swing_double';
+      return (node.hasLock ?? isSwing) && node.hasLock !== false && isSwing;
+    }
+    return node.children.some(hasLockHandle);
+  };
+  const hasLockRuler = !hideDimensions && hasLockHandle(rootCell);
+
+  // Kích thước lề dành cho thước đo 2 bên và trên dưới
+  const leftRulerW = hasLockRuler ? 38 : 0;
+  const rightRulerW = hasHorizSubDims ? 55 : 36;
+  const bottomRulerH = hasVertSubDims ? 55 : 36;
+  const topRulerH = 12;
+
+  // Vùng vẽ tối đa dành cho khung cửa (chừa lề đối xứng và cân đối cho các tầng thước đo)
+  const availW = hideDimensions ? vbW - 16 : vbW - (leftRulerW + rightRulerW + 28);
+  const availH = hideDimensions ? vbH - 16 : vbH - (topRulerH + bottomRulerH + 20);
   const scale = Math.min(availW / w, availH / h);
 
   const fw = Math.round(w * scale);
   const fh = Math.round(h * scale);
 
-  // Căn giữa cửa trong viewBox
-  const ox = hideDimensions ? Math.round((vbW - fw) / 2) : Math.round((vbW - 55 - fw) / 2) + 20;
-  const oy = hideDimensions ? Math.round((vbH - fh) / 2) : Math.round((vbH - 50 - fh) / 2) + 10;
+  // Căn giữa cửa cân đối hoàn hảo trong viewBox theo kích thước bao của cửa và các thước
+  const totalContentW = leftRulerW + fw + rightRulerW;
+  const ox = hideDimensions ? Math.round((vbW - fw) / 2) : Math.round((vbW - totalContentW) / 2) + leftRulerW;
+
+  const totalContentH = topRulerH + fh + bottomRulerH;
+  const oy = hideDimensions ? Math.round((vbH - fh) / 2) : Math.round((vbH - totalContentH) / 2) + topRulerH;
   const baseDim = Math.min(fw, fh);
 
-  // Khung bao ngoài: lấy theo cấu hình CAD_CONFIG
-  const frameD = Math.max(
-    CAD_CONFIG.FRAME.MIN_D,
-    Math.min(CAD_CONFIG.FRAME.MAX_D, Math.round(baseDim * CAD_CONFIG.FRAME.SCALE_RATIO))
+  // 1. Khung bao (FRAME): Ưu tiên lấy theo sectionHeightMm của profile được chọn, fallback về mặc định chuẩn mm
+  const selectedFrameProfile = availableProfiles?.find(
+    (p) =>
+      p.id === frameConfig?.leftEdge?.profileId ||
+      p.id === frameConfig?.topEdge?.profileId ||
+      p.id === frameConfig?.rightEdge?.profileId ||
+      p.id === frameConfig?.bottomEdge?.profileId
   );
+  const frameMm =
+    selectedFrameProfile?.sectionHeightMm && selectedFrameProfile.sectionHeightMm > 0
+      ? selectedFrameProfile.sectionHeightMm
+      : CAD_CONFIG.FRAME.DEFAULT_MM;
+  const frameD = Math.max(CAD_CONFIG.FRAME.MIN_RENDER_PX, Math.round(frameMm * scale));
 
+  // 2. Khung cánh (SASH): Ưu tiên lấy theo sectionHeightMm của profile cánh được chọn
   const isSlim = sashConfig?.sashStyle === 'slim';
   const isDoorUnit = h >= 1800;
-  const defaultSashRatio = isDoorUnit ? CAD_CONFIG.SASH.DOOR_RATIO : CAD_CONFIG.SASH.WINDOW_RATIO;
-  const sashD = isSlim
-    ? Math.max(CAD_CONFIG.SASH.SLIM_MIN_D, Math.round(frameD * CAD_CONFIG.SASH.SLIM_RATIO))
-    : Math.max(
-        isDoorUnit ? CAD_CONFIG.SASH.DOOR_MIN_D : CAD_CONFIG.SASH.WINDOW_MIN_D,
-        Math.min(
-          isDoorUnit ? CAD_CONFIG.SASH.DOOR_MAX_D : CAD_CONFIG.SASH.WINDOW_MAX_D,
-          Math.round(frameD * defaultSashRatio)
-        )
-      );
+  const selectedSashProfile = availableProfiles?.find(
+    (p) =>
+      p.id === sashConfig?.leftProfileId ||
+      p.id === sashConfig?.topProfileId ||
+      p.id === sashConfig?.rightProfileId ||
+      p.id === sashConfig?.bottomProfileId
+  );
+  const defaultSashMm = isSlim
+    ? CAD_CONFIG.SASH.SLIM_DEFAULT_MM
+    : isDoorUnit
+      ? CAD_CONFIG.SASH.DOOR_DEFAULT_MM
+      : CAD_CONFIG.SASH.WINDOW_DEFAULT_MM;
+  const sashMm =
+    selectedSashProfile?.sectionHeightMm && selectedSashProfile.sectionHeightMm > 0
+      ? selectedSashProfile.sectionHeightMm
+      : defaultSashMm;
+  const sashD = Math.max(CAD_CONFIG.SASH.MIN_RENDER_PX, Math.round(sashMm * scale));
 
-  const beadW = isSlim
-    ? Math.max(CAD_CONFIG.BEAD.MIN_W * 0.75, Math.round(sashD * CAD_CONFIG.BEAD.SLIM_RATIO))
-    : Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(sashD * CAD_CONFIG.BEAD.NORMAL_RATIO)));
+  // 3. Nẹp kính (BEAD): Lấy theo profile nẹp hoặc mm mặc định
+  const selectedBeadProfile = availableProfiles?.find(
+    (p) => p.id === sashConfig?.beadProfileId || p.id === frameConfig?.beadProfileId
+  );
+  const defaultBeadMm = isSlim ? CAD_CONFIG.BEAD.SLIM_DEFAULT_MM : CAD_CONFIG.BEAD.DEFAULT_MM;
+  const beadMm =
+    selectedBeadProfile?.sectionHeightMm && selectedBeadProfile.sectionHeightMm > 0
+      ? selectedBeadProfile.sectionHeightMm
+      : defaultBeadMm;
+  const beadW = Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(beadMm * scale));
 
   const sashJoint: SashCornerJoint = sashConfig?.cornerJoint ?? '45';
 
-  // Đố tĩnh T: lấy theo cấu hình CAD_CONFIG
-  const mullionT = Math.max(
-    CAD_CONFIG.MULLION.MIN_T,
-    Math.min(CAD_CONFIG.MULLION.MAX_T, Math.round(frameD * CAD_CONFIG.MULLION.SCALE_RATIO))
+  // 4. Đố tĩnh (MULLION): Lấy theo profile đố hoặc mm mặc định (Hỗ trợ Dọc / Ngang riêng)
+  const isMullionSeparate = frameConfig?.mullionMode === 'separate';
+  const vertMullionProfile = availableProfiles?.find(
+    (p) =>
+      p.id ===
+      (isMullionSeparate
+        ? (frameConfig?.mullionVertProfileId || frameConfig?.mullionProfileId)
+        : frameConfig?.mullionProfileId)
   );
+  const horizMullionProfile = availableProfiles?.find(
+    (p) =>
+      p.id ===
+      (isMullionSeparate
+        ? (frameConfig?.mullionHorizProfileId || frameConfig?.mullionProfileId)
+        : frameConfig?.mullionProfileId)
+  );
+
+  const defaultMullionMm = CAD_CONFIG.MULLION.DEFAULT_MM;
+  const vertMullionMm =
+    vertMullionProfile?.sectionHeightMm && vertMullionProfile.sectionHeightMm > 0
+      ? vertMullionProfile.sectionHeightMm
+      : defaultMullionMm;
+  const horizMullionMm =
+    horizMullionProfile?.sectionHeightMm && horizMullionProfile.sectionHeightMm > 0
+      ? horizMullionProfile.sectionHeightMm
+      : defaultMullionMm;
+
+  const vertMullionT = Math.max(CAD_CONFIG.MULLION.MIN_RENDER_PX, Math.round(vertMullionMm * scale));
+  const horizMullionT = Math.max(CAD_CONFIG.MULLION.MIN_RENDER_PX, Math.round(horizMullionMm * scale));
+  const mullionT = Math.max(vertMullionT, horizMullionT);
 
   const isOpenBottom = frameConfig?.isOpenBottom ?? false;
 
@@ -109,15 +186,27 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   const clipId = `door-inner-clip-${id || 'root'}`;
 
   // Xây dựng sơ đồ khung, đố và ô lá từ cây scene
-  const { frames, mullions, couplingSeams, leaves } = buildCadLayout(rootCell, ox, oy, fw, fh, frameD, mullionT);
+  const isHydraulic = Boolean(sashConfig?.isHydraulic);
+  const { frames, mullions, couplingSeams, leaves, bottomSills } = buildCadLayout(
+    rootCell,
+    ox,
+    oy,
+    fw,
+    fh,
+    frameD,
+    mullionT,
+    {
+      isOpenBottom,
+      isHydraulic,
+      vertMullionT,
+      horizMullionT,
+      frameConfig,
+    }
+  );
 
   // Thu thập toàn bộ đố cánh (kể cả phân chia đệ quy) và hợp nhất vào danh sách đố tương tác
   const sashMullions = collectSashMullions(leaves, sashD);
   const allMullions = [...mullions, ...sashMullions];
-
-  // Dimensions positioning (Crisp CAD Style)
-  const vertSlices = getVerticalSlices(rootCell);
-  const horizSlices = getHorizontalSlices(rootCell);
 
   const isCurvedDouble = Boolean(
     curvedPaths &&
@@ -184,20 +273,36 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
           />
         </g>
       ) : (
-        frames.map((fb) => (
-          <CadMiteredFrame
-            key={fb.id}
-            fx={fb.x}
-            fy={fb.y}
-            fwBox={fb.w}
-            fhBox={fb.h}
-            aluminumColor={aluminumColor}
-            frameD={frameD}
-            frameShape={frameShape}
-            framesCount={frames.length}
-            frameConfig={frameConfig}
-          />
-        ))
+        <>
+          {frames.map((fb) => (
+            <CadMiteredFrame
+              key={fb.id}
+              fx={fb.x}
+              fy={fb.y}
+              fwBox={fb.w}
+              fhBox={fb.h}
+              aluminumColor={aluminumColor}
+              frameD={frameD}
+              frameShape={frameShape}
+              framesCount={frames.length}
+              frameConfig={frameConfig}
+              isHydraulic={isHydraulic}
+            />
+          ))}
+          {/* Thanh đáy ô fix chạm sàn cho cửa thủy lực */}
+          {bottomSills?.map((sill, idx) => (
+            <rect
+              key={`bottom-sill-${idx}`}
+              x={sill.x}
+              y={sill.y}
+              width={sill.w}
+              height={sill.h}
+              fill={aluminumColor}
+              stroke="#27272a"
+              strokeWidth="0.8"
+            />
+          ))}
+        </>
       )}
 
       {/* Vùng lòng cửa: Đố chia ô, Khung cánh, Kính, Nẹp, Tay nắm — Tự động cắt theo lòng vòm cong */}
@@ -264,6 +369,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
               hardwareColor={hardwareColor}
               sashJoint={sashJoint}
               isOpenBottom={isOpenBottom}
+              sashConfig={sashConfig}
               onSelectCell={onSelectCell}
               onEditDimension={onEditDimension}
             />
@@ -307,6 +413,8 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
           vertSlices={vertSlices}
           horizSlices={horizSlices}
           leaves={leaves}
+          mullions={allMullions}
+          sashConfig={sashConfig}
           onEditDimension={onEditDimension}
         />
       )}

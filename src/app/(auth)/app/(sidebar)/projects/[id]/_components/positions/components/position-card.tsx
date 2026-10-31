@@ -95,6 +95,12 @@ export function PositionCard({
           <span className="truncate block">{pos.floor?.name || 'Tầng 1'}</span>
         </div>
 
+        {pos.measureNote && (
+          <p className="text-[11px] text-slate-500 break-words leading-tight">
+            <span className="font-medium text-slate-600">Ghi chú:</span> {pos.measureNote}
+          </p>
+        )}
+
         <div className="pt-2.5 border-t border-slate-100 grid grid-cols-5 gap-1.5">
           <button
             type="button"

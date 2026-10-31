@@ -1,43 +1,35 @@
 // ============================================================================
-// BẢNG THÔNG SỐ TỶ LỆ HÌNH HỌC CAD (DỄ DÀNG CHỈNH SỬA TẠI ĐÂY)
+// BẢNG THÔNG SỐ TỶ LỆ HÌNH HỌC CAD (THEO MM THỰC TẾ & RENDER CHUẨN XÁC)
 // ============================================================================
 export const CAD_CONFIG = {
   // 1. KHUNG BAO NGOÀI (FRAME)
   FRAME: {
-    SCALE_RATIO: 0.026, // Tỷ lệ độ dày khung bao theo kích thước tổng thể
-    MIN_D: 7,           // Độ dày tối thiểu (px)
-    MAX_D: 10,          // Độ dày tối đa (px)
+    DEFAULT_MM: 55,       // Kích thước mặt nhìn khung bao tiêu chuẩn (mm)
+    MIN_RENDER_PX: 2,     // Độ dày tối thiểu (px) trên canvas để bảo toàn nét vẽ
   },
 
   // 2. KHUNG CÁNH (SASH)
   SASH: {
-    DOOR_RATIO: 1.4,    // Cánh cửa đi so với khung bao (85-90mm vs 55-66mm)
-    WINDOW_RATIO: 1.15, // Cánh cửa sổ so với khung bao
-    SLIM_RATIO: 0.75,   // Hệ cánh Slim thanh mảnh
-    DOOR_MIN_D: 14,     // Độ dày tối thiểu cánh cửa đi (px)
-    DOOR_MAX_D: 18,     // Độ dày tối đa cánh cửa đi (px)
-    WINDOW_MIN_D: 11,   // Độ dày tối thiểu cánh cửa sổ (px)
-    WINDOW_MAX_D: 14,   // Độ dày tối đa cánh cửa sổ (px)
-    SLIM_MIN_D: 7,      // Độ dày tối thiểu cánh slim (px)
+    DOOR_DEFAULT_MM: 85,  // Kích thước mặt nhìn cánh cửa đi tiêu chuẩn (mm)
+    WINDOW_DEFAULT_MM: 65,// Kích thước mặt nhìn cánh cửa sổ tiêu chuẩn (mm)
+    SLIM_DEFAULT_MM: 28,  // Kích thước mặt nhìn cánh hệ Slim thanh mảnh (mm)
+    MIN_RENDER_PX: 2,     // Độ dày tối thiểu (px) trên canvas
   },
 
-  // 3. NẸP KÍNH (GLAZING BEAD) - ĐÃ TĂNG ĐỘ DÀY ĐẸP MẮT
+  // 3. NẸP KÍNH (GLAZING BEAD)
   BEAD: {
-    NORMAL_RATIO: 0.28,     // Tỷ lệ nẹp so với bản cánh (cũ: 0.20 -> mới: 0.28)
-    SLIM_RATIO: 0.22,       // Tỷ lệ nẹp hệ Slim (cũ: 0.18 -> mới: 0.22)
-    FIXED_RATIO: 0.35,      // Tỷ lệ nẹp vách kính cố định so với khung bao (cũ: 0.25 -> mới: 0.35)
-    MIN_W: 4,               // Độ dày nẹp tối thiểu (px) (cũ: 2px -> mới: 4px)
-    MAX_W: 6.5,             // Độ dày nẹp tối đa (px) (cũ: 2.8-5px -> mới: 6.5px)
-    MAX_PANE_PERCENT: 0.10, // Giới hạn diện tích nẹp chiếm tối đa 10% lòng cánh
+    DEFAULT_MM: 18,       // Kích thước mặt nhìn nẹp kính tiêu chuẩn (mm)
+    SLIM_DEFAULT_MM: 12,  // Kích thước mặt nhìn nẹp kính hệ Slim (mm)
+    MIN_RENDER_PX: 1.5,   // Độ dày tối thiểu nẹp kính khi vẽ trên canvas (px)
+    MAX_PANE_PERCENT: 0.15,// Giới hạn nẹp không vượt quá 15% kích thước cạnh ô kính
   },
 
   // 4. ĐỐ TĨNH (MULLION) & ĐỐ ĐỘNG (ASTRAGAL)
   MULLION: {
-    SCALE_RATIO: 1.0,       // Độ dày đố tĩnh T so với khung bao
-    MIN_T: 7,
-    MAX_T: 10,
-    ASTRAGAL_RATIO: 0.5,    // Đố động giữa 2 cánh so với đố tĩnh
-    ASTRAGAL_MIN: 4,
-    ASTRAGAL_MAX: 7,
+    DEFAULT_MM: 55,       // Kích thước bản đố chia tiêu chuẩn (mm)
+    MIN_RENDER_PX: 2,     // Độ dày tối thiểu (px) trên canvas
+    ASTRAGAL_RATIO: 0.6,  // Bản rộng đố động giữa 2 cánh so với đố tĩnh
+    ASTRAGAL_MIN_PX: 2,
+    ASTRAGAL_MAX_PX: 15,
   },
 };

@@ -58,9 +58,11 @@ interface DrawTabViewProps {
   onOpenGrilleModal?: (cell: SceneCellNode) => void;
   availableGlasses?: Glass[];
   availableBeads?: ProfileBar[];
+  availableProfiles?: ProfileBar[];
   defaultGlass?: Glass | null;
   aluminumColors?: ColorSwatch[];
   onChangeFrameConfig?: (updates: Partial<FrameConfig>) => void;
+  onChangeSashConfig?: (updates: Partial<SashConfig>) => void;
   isInsideSash?: boolean;
 }
 
@@ -105,9 +107,11 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
   onOpenGrilleModal,
   availableGlasses,
   availableBeads,
+  availableProfiles,
   defaultGlass,
   aluminumColors,
   onChangeFrameConfig,
+  onChangeSashConfig,
   isInsideSash,
 }) => {
   const [rightTab, setRightTab] = useState<'inspector' | 'bom'>('inspector');
@@ -152,6 +156,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
           onChangeTab={onChangeTab}
           aluminumColors={aluminumColors}
           isInsideSash={isInsideSash}
+          sashConfig={sashConfig}
+          onChangeSashConfig={onChangeSashConfig}
         />
       </div>
 
@@ -172,6 +178,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
           onSelectCell={handleCanvasSelectCell}
           onUpdateDimension={onUpdateDimension}
           onResizeSplit={onResizeSplit}
+          availableProfiles={availableProfiles}
         />
 
         {/* Floating Action Pill Bar trên Mobile & Tablet (< lg) */}
@@ -389,6 +396,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   onChangeTab={onChangeTab}
                   aluminumColors={aluminumColors}
                   isInsideSash={isInsideSash}
+                  sashConfig={sashConfig}
+                  onChangeSashConfig={onChangeSashConfig}
                 />
               )}
 
