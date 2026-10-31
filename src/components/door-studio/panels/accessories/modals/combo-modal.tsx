@@ -2,22 +2,26 @@
 
 import React, { useEffect, useMemo } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
-import { Modal, Input, Button } from '@/components';
+import { Modal } from '@/components/modal';
+import { Input } from '@/components/input';
+import { Button } from '@/components/button';
 import { Plus, Trash2, Layers, Calculator } from 'lucide-react';
 import { SearchableSelect } from './searchable-select';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
 import { showErrorToast, formatCurrency } from '@/utils';
-import { createAccessoryCombo, updateAccessoryCombo, getAccessories } from '@/actions';
+import { createAccessoryCombo, updateAccessoryCombo, getAccessories, getBrands } from '@/actions';
 import type { Accessory, AccessoryCombo, AccessoryComboCreate } from '@/types';
 
-interface ComboModalProps {
+export interface ComboModalProps {
   isOpen: boolean;
   onClose: () => void;
   combo?: AccessoryCombo | null;
   accessories?: Accessory[];
   brandId?: number | null;
+  defaultApplyFor?: 'khung' | 'canh' | 'huong_mo' | 'khac';
+  onCreated?: (combo: AccessoryCombo) => void;
 }
 
 const DEFAULT_VALUES: AccessoryComboCreate = {
@@ -26,6 +30,7 @@ const DEFAULT_VALUES: AccessoryComboCreate = {
   doorTypeId: null,
   applyFor: 'khung',
   openingType: null,
+  brandId: null,
   comboItems: [],
   totalComboPrice: 0,
   isDefault: false,
@@ -38,7 +43,7 @@ const OPENING_TYPE_OPTIONS = [
   { value: '2_canh_mo', label: '2 cánh mở' },
   { value: '1_canh_quay_trai', label: '1 cánh quay (trái)' },
   { value: '1_canh_quay_phai', label: '1 cánh quay (phải)' },
-  { value: 'mo_hat_khong_song', label: 'Mở hát (không song)' },
+  { value: 'mo_hat_khong_song', label: 'Mở hất (không song)' },
   { value: 'mo_lat_khong_song', label: 'Mở lật (không song)' },
   { value: 'lat_xuong', label: 'Lật xuống' },
   { value: 'quay_va_lat', label: 'Quay & Lật' },
@@ -46,19 +51,61 @@ const OPENING_TYPE_OPTIONS = [
   { value: 'canh_truot_ngang', label: 'Cánh trượt ngang' },
 ];
 
-export function ComboModal({ isOpen, onClose, combo, accessories: initialAccessories, brandId }: ComboModalProps) {
+export function ComboModal({
+  isOpen,
+  onClose,
+  combo,
+  accessories: initialAccessories,
+  brandId,
+  defaultApplyFor = 'khung',
+  onCreated,
+}: ComboModalProps) {
   const isEdit = Boolean(combo);
 
-  const { data: fetchedAccessories } = useQuery({
-    queryKey: ['all-accessories-dropdown', brandId],
-    queryFn: async () => (await getAccessories({ limit: 9999, brandId: brandId || undefined })).items,
+  const { register, control, handleSubmit, reset, setValue, watch } = useForm<AccessoryComboCreate>({
+    defaultValues: DEFAULT_VALUES,
+  });
+
+  const applyFor = watch('applyFor');
+  const formBrandId = watch('brandId');
+  const effectiveBrandId = formBrandId ? Number(formBrandId) : brandId || null;
+
+  // Query danh sách hãng phụ kiện để cho phép chọn hãng ngay trong modal
+  const { data: accessoryBrandsData } = useQuery({
+    queryKey: ['brands', 'accessory'],
+    queryFn: async () => {
+      const res = await getBrands({ limit: 9999, offset: 0, allowDeleted: false, brandType: 'accessory' });
+      if (res.items && res.items.length > 0) return res.items;
+      const allRes = await getBrands({ limit: 9999, offset: 0, allowDeleted: false });
+      return allRes.items || [];
+    },
     enabled: isOpen,
   });
 
-  const accessories = useMemo(
-    () => (initialAccessories && initialAccessories.length > 0 ? initialAccessories : fetchedAccessories || []),
-    [initialAccessories, fetchedAccessories],
-  );
+  const brandOptions = useMemo(() => {
+    const list = accessoryBrandsData ?? [];
+    return [...list].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
+  }, [accessoryBrandsData]);
+
+  const { data: fetchedAccessories } = useQuery({
+    queryKey: ['all-accessories-dropdown', effectiveBrandId],
+    queryFn: async () => (await getAccessories({ limit: 9999, brandId: effectiveBrandId || undefined })).items,
+    enabled: isOpen,
+  });
+
+  const accessories = useMemo(() => {
+    if (fetchedAccessories && fetchedAccessories.length > 0) {
+      return fetchedAccessories;
+    }
+    if (initialAccessories && initialAccessories.length > 0) {
+      if (effectiveBrandId) {
+        const byBrand = initialAccessories.filter((a) => a.brandId === effectiveBrandId);
+        if (byBrand.length > 0) return byBrand;
+      }
+      return initialAccessories;
+    }
+    return [];
+  }, [initialAccessories, fetchedAccessories, effectiveBrandId]);
 
   const accessoryPriceMap = useMemo(() => {
     const map = new Map<number, number>();
@@ -75,11 +122,6 @@ export function ComboModal({ isOpen, onClose, combo, accessories: initialAccesso
     [accessories],
   );
 
-  const { register, control, handleSubmit, reset, setValue, watch } = useForm<AccessoryComboCreate>({
-    defaultValues: DEFAULT_VALUES,
-  });
-
-  const applyFor = watch('applyFor');
   const { fields, append, remove } = useFieldArray({ control, name: 'comboItems' });
   const comboItems = useWatch({ control, name: 'comboItems' });
 
@@ -102,6 +144,7 @@ export function ComboModal({ isOpen, onClose, combo, accessories: initialAccesso
         doorTypeId: combo.doorTypeId ?? null,
         applyFor: combo.applyFor ?? 'khung',
         openingType: combo.openingType ?? null,
+        brandId: combo.brandId ?? brandId ?? null,
         comboItems:
           items.length > 0
             ? items.map((item) => ({
@@ -115,9 +158,16 @@ export function ComboModal({ isOpen, onClose, combo, accessories: initialAccesso
         isActive: combo.isActive ?? true,
       });
     } else {
-      reset({ ...DEFAULT_VALUES, comboItems: [{ accessoryId: defaultAccId, quantity: 1, note: '' }] });
+      reset({
+        ...DEFAULT_VALUES,
+        applyFor: defaultApplyFor,
+        brandId: brandId ?? brandOptions[0]?.id ?? null,
+        comboItems: [{ accessoryId: defaultAccId, quantity: 1, note: '' }],
+      });
     }
-  }, [combo, isOpen, reset, accessories]);
+    // Chỉ khởi tạo lại form khi mở modal hoặc chuyển đổi đối tượng combo đang sửa
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [combo, isOpen, reset, defaultApplyFor, brandId]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: AccessoryComboCreate) => {
@@ -130,15 +180,20 @@ export function ComboModal({ isOpen, onClose, combo, accessories: initialAccesso
         note: item.note || '',
       }));
       const doorTypeId = data.doorTypeId ? Number(data.doorTypeId) : null;
+      const resolvedBrandId = data.brandId ? Number(data.brandId) : brandId || combo?.brandId || null;
 
       if (isEdit && combo) {
-        return updateAccessoryCombo(combo.id, { ...data, doorTypeId, brandId: brandId || combo.brandId || null });
+        return updateAccessoryCombo(combo.id, { ...data, doorTypeId, brandId: resolvedBrandId });
       }
-      return createAccessoryCombo({ ...data, doorTypeId, brandId: brandId || null });
+      return createAccessoryCombo({ ...data, doorTypeId, brandId: resolvedBrandId });
     },
-    onSuccess: () => {
+    onSuccess: (savedCombo) => {
       queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
+      queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
       toast.success(isEdit ? 'Cập nhật gói combo thành công' : 'Thêm gói combo thành công');
+      if (!isEdit && savedCombo) {
+        onCreated?.(savedCombo);
+      }
       onClose();
     },
     onError: (err) => showErrorToast(err, isEdit ? 'Lỗi khi cập nhật' : 'Lỗi khi tạo mới'),
@@ -152,12 +207,27 @@ export function ComboModal({ isOpen, onClose, combo, accessories: initialAccesso
           <Input label="Tên thương mại gói *" placeholder="VD: Combo Cửa đi 1 cánh Kinlong" {...register('name', { required: true })} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Hãng phụ kiện</label>
+            <select
+              {...register('brandId')}
+              className="w-full h-9 px-2.5 border border-slate-200 rounded-md text-xs bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition cursor-pointer"
+            >
+              <option value="">-- Tất cả / Chưa chọn hãng --</option>
+              {brandOptions.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} ({b.code})
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Dành cho</label>
             <select
               {...register('applyFor')}
-              className="w-full h-9 px-2.5 border border-slate-200 rounded-md text-xs bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition"
+              className="w-full h-9 px-2.5 border border-slate-200 rounded-md text-xs bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition cursor-pointer"
             >
               <option value="khung">Khung cửa</option>
               <option value="canh">Cánh cửa</option>
@@ -171,7 +241,7 @@ export function ComboModal({ isOpen, onClose, combo, accessories: initialAccesso
               <label className="block text-xs font-semibold text-slate-700 mb-1">Kiểu mở cánh</label>
               <select
                 {...register('openingType')}
-                className="w-full h-9 px-2.5 border border-slate-200 rounded-md text-xs bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition"
+                className="w-full h-9 px-2.5 border border-slate-200 rounded-md text-xs bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition cursor-pointer"
               >
                 {OPENING_TYPE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>

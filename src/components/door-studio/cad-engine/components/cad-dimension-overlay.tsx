@@ -17,6 +17,7 @@ interface CadDimensionOverlayProps {
   leaves: LeafCell[];
   mullions?: MullionBar[];
   sashConfig?: SashConfig;
+  selectedCellId?: string | null;
   onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
 }
 
@@ -41,6 +42,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
   leaves,
   mullions,
   sashConfig,
+  selectedCellId,
   onEditDimension,
 }) => {
   const hasVertSubDims = vertSlices.length > 1;
@@ -60,13 +62,67 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
     .filter((m) => m.info.direction === 'vertical')
     .sort((a, b) => a.x - b.x);
 
-  // Tìm ô cánh có lắp khóa để vẽ đường gióng cao độ tay nắm
-  const lockLeaf = leaves.find(
-    (l) =>
-      (l.node.hasLock ?? (l.node.sashType === 'swing_left' || l.node.sashType === 'swing_right')) &&
-      (l.node.sashType === 'swing_left' || l.node.sashType === 'swing_right') &&
-      l.node.hasLock !== false
-  );
+  // Tìm tất cả các ô cánh có lắp khóa bên hông để vẽ đường gióng cao độ tay nắm (hỗ trợ nhiều khóa lệch nhau)
+  const SIDE_HANDLE_SASH_TYPES = [
+    'swing_left',
+    'swing_right',
+    'swing_double',
+    'tilt_turn',
+    'le-trai-mo-ra',
+    'le-trai-mo-vao',
+    'le-phai-mo-ra',
+    'le-phai-mo-vao',
+    'gap-xep-le-trai',
+    'gap-xep-le-phai',
+    'lua-trai',
+    'lua-phai',
+    'canh-truot',
+    'sliding',
+  ];
+
+  const lockLeaves = leaves.filter((l) => {
+    if (l.node.sashType === 'fixed') return false;
+    const isBottomOrTop =
+      l.node.sashType === 'awning' ||
+      l.node.sashType === 'tilt' ||
+      l.node.sashType === 'mo-hat' ||
+      l.node.sashType === 'mo-lat' ||
+      l.node.sashType === 'tilt_down';
+    if (isBottomOrTop) return false;
+
+    const isSecondaryOfPair =
+      l.node.sashType === 'swing_left' &&
+      l.node.hasLock !== true &&
+      leaves.some(
+        (other) =>
+          other.node.id !== l.node.id &&
+          other.node.sashType === 'swing_right' &&
+          Math.abs(other.y - l.y) < 10
+      );
+    if (isSecondaryOfPair) return false;
+
+    const defaultHasHandle = SIDE_HANDLE_SASH_TYPES.includes(l.node.sashType || '');
+    return (l.node.hasLock ?? defaultHasHandle) && l.node.hasLock !== false;
+  });
+
+  const isGlobalHydraulic = Boolean(sashConfig?.isHydraulic);
+  const lockRulerItems = (() => {
+    const map = new Map<number, { handleHVal: number; lockY: number; leaf: LeafCell }>();
+    for (const l of lockLeaves) {
+      const isHyd = Boolean(isGlobalHydraulic || l.node.isHydraulic);
+      const handleHVal = l.node.handleHeight || (isHyd ? 1050 : Math.round(l.node.h / 2));
+      const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
+      const bottomBound = l.y + l.h - sashD - 10;
+      const topBound = l.y + sashD + 20;
+      const lockY = Math.max(topBound, Math.min(bottomBound, lockYCalc));
+
+      const existing = map.get(handleHVal);
+      if (!existing || l.node.id === selectedCellId) {
+        map.set(handleHVal, { handleHVal, lockY, leaf: l });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.handleHVal - b.handleHVal);
+  })();
 
   return (
     <>
@@ -246,46 +302,41 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
         </text>
       </g>
 
-      {/* 5. Cao độ tay nắm khóa (Lock Height: Left) */}
-      {lockLeaf &&
-        (() => {
-          const isHydraulic = Boolean(sashConfig?.isHydraulic || lockLeaf.node.isHydraulic);
-          const handleHVal = lockLeaf.node.handleHeight || (isHydraulic ? 1050 : Math.round(lockLeaf.node.h / 2));
-          const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
-          const bottomBound = lockLeaf.y + lockLeaf.h - sashD - 10;
-          const topBound = lockLeaf.y + sashD + 20;
-          const lockY = Math.max(topBound, Math.min(bottomBound, lockYCalc));
-          const dimLeftX = ox - 26;
+      {/* 5. Cao độ tay nắm khóa (Lock Height: Left - Hỗ trợ hiển thị nhiều khóa lệch nhau) */}
+      {lockRulerItems.map((item, idx) => {
+        const dimLeftX = ox - (lockRulerItems.length > 1 ? 20 + idx * 22 : 26);
+        const isTargetSelected = selectedCellId === item.leaf.node.id;
 
-          return (
-            <g stroke="#2563eb" strokeWidth="0.8">
-              <line x1={ox} y1={oy + fh} x2={dimLeftX} y2={oy + fh} strokeDasharray="2,2" />
-              <line x1={ox} y1={lockY} x2={dimLeftX} y2={lockY} strokeDasharray="2,2" />
-              <line x1={dimLeftX} y1={oy + fh} x2={dimLeftX} y2={lockY} strokeWidth="1" />
-              <circle cx={dimLeftX} cy={oy + fh} r={2} fill="#2563eb" />
-              <circle cx={dimLeftX} cy={lockY} r={2} fill="#2563eb" />
-              <text
-                x={dimLeftX - 4}
-                y={(oy + fh + lockY) / 2}
-                fontSize="9.5"
-                fill="#1e40af"
-                fontFamily="system-ui, sans-serif"
-                fontWeight="700"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                paintOrder="stroke"
-                stroke="#ffffff"
-                strokeWidth="3.5"
-                strokeLinejoin="round"
-                transform={`rotate(-90, ${dimLeftX - 4}, ${(oy + fh + lockY) / 2})`}
-                className="cursor-pointer hover:fill-red-600 hover:font-bold"
-                onClick={() => onEditDimension?.('handleHeight', lockLeaf.node.id)}
-              >
-                {handleHVal}
-              </text>
-            </g>
-          );
-        })()}
+        return (
+          <g key={`lock-ruler-${item.leaf.node.id}-${item.handleHVal}`} stroke="#2563eb" strokeWidth="0.8">
+            <line x1={ox} y1={oy + fh} x2={dimLeftX} y2={oy + fh} strokeDasharray="2,2" />
+            <line x1={ox} y1={item.lockY} x2={dimLeftX} y2={item.lockY} strokeDasharray="2,2" />
+            <line x1={dimLeftX} y1={oy + fh} x2={dimLeftX} y2={item.lockY} strokeWidth={isTargetSelected ? '1.1' : '1'} />
+            <circle cx={dimLeftX} cy={oy + fh} r={2} fill="#2563eb" />
+            <circle cx={dimLeftX} cy={item.lockY} r={2} fill="#2563eb" />
+            <text
+              x={dimLeftX - 4}
+              y={(oy + fh + item.lockY) / 2}
+              fontSize="9.5"
+              fill={isTargetSelected ? '#dc2626' : '#1e40af'}
+              fontFamily="system-ui, sans-serif"
+              fontWeight="700"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              paintOrder="stroke"
+              stroke="#ffffff"
+              strokeWidth="3.5"
+              strokeLinejoin="round"
+              transform={`rotate(-90, ${dimLeftX - 4}, ${(oy + fh + item.lockY) / 2})`}
+              className="cursor-pointer hover:fill-red-600 hover:font-bold"
+              onClick={() => onEditDimension?.('handleHeight', item.leaf.node.id)}
+            >
+              <title>{`Cao độ tay nắm khóa: ${item.handleHVal} mm (Nhấp để sửa)`}</title>
+              {item.handleHVal}
+            </text>
+          </g>
+        );
+      })}
     </>
   );
 };

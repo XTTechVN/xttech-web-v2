@@ -14,6 +14,7 @@ interface SashTypePickerProps {
   selectedCellId: string | null;
   isInsideSash?: boolean;
   sashConfig?: SashConfig;
+  isOpenBottom?: boolean;
   onChangeSashConfig?: (updates: Partial<SashConfig>) => void;
   onSelectSashType: (sashType: SashOpenType) => void;
   onSplitSashMullion?: (count: number, direction: 'vertical' | 'horizontal') => void;
@@ -319,6 +320,7 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
   selectedCellId,
   isInsideSash = false,
   sashConfig,
+  isOpenBottom = false,
   onChangeSashConfig,
   onSelectSashType,
   onSplitSashMullion,
@@ -664,7 +666,7 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
                 onChangeSashConfig?.({
                   ngamNgangMm: 5,
                   ngamDocMm: 5,
-                  hoNenMm: 8,
+                  ...(isOpenBottom ? { hoNenMm: 8 } : { hoNenMm: 0 }),
                 })
               }
               className="text-[11px] text-emerald-600 hover:text-emerald-800 hover:underline font-semibold cursor-pointer"
@@ -672,7 +674,7 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
               Mặc định
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className={`grid ${isOpenBottom ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
             <div className="space-y-1 text-center">
               <div className="text-[10.5px] text-emerald-700 font-medium">Ngậm ngang</div>
               <input
@@ -691,15 +693,17 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
                 className="w-full h-7 px-1 text-center text-xs font-bold rounded-lg border border-emerald-300 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-800 shadow-2xs"
               />
             </div>
-            <div className="space-y-1 text-center">
-              <div className="text-[10.5px] text-emerald-700 font-medium">Hở nền</div>
-              <input
-                type="number"
-                value={sashConfig?.hoNenMm ?? 8}
-                onChange={(e) => onChangeSashConfig?.({ hoNenMm: Number(e.target.value) })}
-                className="w-full h-7 px-1 text-center text-xs font-bold rounded-lg border border-emerald-300 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-800 shadow-2xs"
-              />
-            </div>
+            {isOpenBottom && (
+              <div className="space-y-1 text-center">
+                <div className="text-[10.5px] text-emerald-700 font-medium">Hở nền</div>
+                <input
+                  type="number"
+                  value={sashConfig?.hoNenMm ?? 8}
+                  onChange={(e) => onChangeSashConfig?.({ hoNenMm: Number(e.target.value) })}
+                  className="w-full h-7 px-1 text-center text-xs font-bold rounded-lg border border-emerald-300 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-800 shadow-2xs"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

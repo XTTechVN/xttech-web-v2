@@ -153,3 +153,109 @@ export const getCurvedFramePaths = (
   if (!outerPath || !innerPath) return null;
   return { outerPath, innerPath };
 };
+
+
+export interface SlidingSashLayout {
+  x: number;
+  w: number;
+  trackIndex: number;
+  zIndex: number;
+}
+
+/**
+ * Tính toán hình học cánh cửa lùa (Sliding Sashes) chồng đè thực tế (Overlap/Đè gối):
+ * - 2 cánh (2 ray): Cánh 0 ray trong, Cánh 1 ray ngoài đè lên Cánh 0 một khoảng overlap
+ * - 3 cánh (3 ray): 3 cánh bậc thang gối đầu nối tiếp (Ảnh 1)
+ * - 4 cánh (2 ray khép giữa): 2 cánh ngoài cùng ray trong, 2 cánh giữa ray ngoài khép mí tại tâm (Ảnh 2)
+ * - 6 cánh (3 ray khép giữa): 3 cánh trái và 3 cánh phải đối xứng trượt khép mí tại tâm
+ */
+export const computeSlidingSashes = (
+  innerX: number,
+  innerWidth: number,
+  count: number,
+  overlap: number,
+  layoutId?: string
+): SlidingSashLayout[] => {
+  if (count <= 1) {
+    return [{ x: innerX, w: innerWidth, trackIndex: 0, zIndex: 0 }];
+  }
+
+  // Khống chế overlap không vượt quá 45% chiều rộng cánh
+  const maxSafeOverlap = Math.max(10, Math.floor(innerWidth / (count * 2)));
+  const safeOverlap = Math.min(overlap, maxSafeOverlap);
+
+  // 1. Cửa lùa 2 cánh (2 ray)
+  if (count === 2) {
+    const wSash = Math.round((innerWidth + safeOverlap) / 2);
+    return [
+      { x: innerX, w: wSash, trackIndex: 0, zIndex: 0 },
+      { x: innerX + innerWidth - wSash, w: wSash, trackIndex: 1, zIndex: 1 },
+    ];
+  }
+
+  // 2. Cửa lùa 3 cánh (3 ray trượt nối tiếp - Ảnh 1)
+  if (count === 3) {
+    const wSash = Math.round((innerWidth + 2 * safeOverlap) / 3);
+    const step = wSash - safeOverlap;
+    return [
+      { x: innerX, w: wSash, trackIndex: 0, zIndex: 0 },
+      { x: innerX + step, w: wSash, trackIndex: 1, zIndex: 1 },
+      { x: innerX + innerWidth - wSash, w: wSash, trackIndex: 2, zIndex: 2 },
+    ];
+  }
+
+  // 3. Cửa lùa 4 cánh
+  if (count === 4) {
+    // 4 cánh 4 ray trượt nối tiếp một phía
+    if (layoutId === 'so-lua-4-canh') {
+      const wSash = Math.round((innerWidth + 3 * safeOverlap) / 4);
+      const step = wSash - safeOverlap;
+      return [
+        { x: innerX, w: wSash, trackIndex: 0, zIndex: 0 },
+        { x: innerX + step, w: wSash, trackIndex: 1, zIndex: 1 },
+        { x: innerX + 2 * step, w: wSash, trackIndex: 2, zIndex: 2 },
+        { x: innerX + innerWidth - wSash, w: wSash, trackIndex: 3, zIndex: 3 },
+      ];
+    }
+
+    // Mặc định: 4 cánh 2 ray khép giữa (Ảnh 2)
+    // 2 cánh ngoài cùng (0, 3) ở ray trong (track 0, zIndex 0)
+    // 2 cánh giữa (1, 2) ở ray ngoài (track 1, zIndex 1) khép mí tại midX
+    const wSash = Math.round((innerWidth + 2 * safeOverlap) / 4);
+    const midX = innerX + Math.round(innerWidth / 2);
+    return [
+      { x: innerX, w: wSash, trackIndex: 0, zIndex: 0 },
+      { x: midX - wSash, w: wSash, trackIndex: 1, zIndex: 1 },
+      { x: midX, w: wSash, trackIndex: 1, zIndex: 1 },
+      { x: innerX + innerWidth - wSash, w: wSash, trackIndex: 0, zIndex: 0 },
+    ];
+  }
+
+  // 4. Cửa lùa 6 cánh (3 ray khép giữa)
+  if (count === 6 && (!layoutId || layoutId.includes('chia-doi'))) {
+    const wSash = Math.round((innerWidth + 4 * safeOverlap) / 6);
+    const midX = innerX + Math.round(innerWidth / 2);
+    return [
+      // Nửa trái
+      { x: innerX, w: wSash, trackIndex: 0, zIndex: 0 },
+      { x: innerX + (wSash - safeOverlap), w: wSash, trackIndex: 1, zIndex: 1 },
+      { x: midX - wSash, w: wSash, trackIndex: 2, zIndex: 2 },
+      // Nửa phải
+      { x: midX, w: wSash, trackIndex: 2, zIndex: 2 },
+      { x: midX + (wSash - safeOverlap), w: wSash, trackIndex: 1, zIndex: 1 },
+      { x: innerX + innerWidth - wSash, w: wSash, trackIndex: 0, zIndex: 0 },
+    ];
+  }
+
+  // 5. Cấu hình lùa đa cánh tổng quát (Cascade Sliding)
+  const totalOverlaps = count - 1;
+  const wSash = Math.round((innerWidth + totalOverlaps * safeOverlap) / count);
+  const step = wSash - safeOverlap;
+
+  return Array.from({ length: count }, (_, i) => ({
+    x: i === count - 1 ? innerX + innerWidth - wSash : innerX + i * step,
+    w: wSash,
+    trackIndex: i,
+    zIndex: i,
+  }));
+};

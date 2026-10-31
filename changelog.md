@@ -3,6 +3,170 @@
 All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-10-31
+### Changed & Enhanced (Door Studio CAD: Hỗ trợ Nhấn giữ & Kéo-thả trực tiếp Icon Tay nắm / Khóa để chỉnh cao độ khóa real-time)
+- **Tích hợp Kéo-thả dọc (`ns-resize`) trực tiếp trên Tay nắm khóa ([`cad-split-resizer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-split-resizer.tsx), [`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/door-cad-renderer.tsx), [`useDoorStudioState.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/hooks/useDoorStudioState.ts)):**
+  - Tái sử dụng bộ máy kéo chuột quy đổi tọa độ `getScreenCTM()` và `Floating Dimension Badge` trong `CadSplitResizer` để tạo vùng bắt chuột (`HandleDragZone`) bao quanh mọi icon tay nắm/khóa trên cánh cửa (Mở quay 1 cánh / 2 cánh, Cửa lùa khóa sập / chữ D, Cửa thủy lực, Cửa vòm).
+  - Loại bỏ việc bật modal nhập số khi bấm vào icon khóa trên cánh cửa ([`cad-rectangular-leaf.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-rectangular-leaf.tsx), [`cad-curved-door.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-curved-door.tsx)).
+  - Khi người dùng giữ chuột (hoặc chạm cảm ứng) và kéo lên/xuống trên icon khóa:
+    - Tự động quy đổi sang milimet theo bước nhảy `5mm`, giới hạn an toàn trong phạm vi chiều cao của cánh cửa tương ứng.
+    - Cập nhật **real-time** vị trí khóa trên cánh, đường thước đo cao độ khóa bên trái và nhãn nổi `▲ Cao độ khóa: ... mm ▼`.
+    - Khi nhả chuột (`isFinal = true`) mới lưu trạng thái cuối vào lịch sử hoàn tác (`Undo / Redo`).
+
+### Added & Enhanced (Cấu hình Vật tư: Xuất Excel & Modal Nhập Excel Tương tác Trực tiếp cho Thanh Profile, Kính & Gioăng, Phụ kiện)
+- **Types & API Actions ([`import-export.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/import-export.ts), [`actions/profile/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/profile/index.ts), [`actions/glass/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/glass/index.ts), [`actions/accessory/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/accessory/index.ts)):**
+  - Khai báo đầy đủ các interface `camelCase` chuẩn Quy chuẩn 13 cho Preview Row (`CREATE` | `UPDATE` | `ERROR`), Diff `oldData` và Payload `BulkUpsert` của cả 3 màn hình vật tư.
+  - Bổ sung các hàm gọi API `exportProfileBarsExcel`, `previewProfileBarsExcel`, `bulkUpsertProfileBars`, `exportGlassGasketsExcel`, `previewGlassGasketsExcel`, `bulkUpsertGlassGaskets`, `exportAccessoriesExcel`, `previewAccessoriesExcel`, `bulkUpsertAccessories`.
+- **Modal Xem trước, Sửa trực tiếp (Inline Edit) & Tự động Validate lại thời gian thực:**
+  1. **Thanh Profile ([`profile-bar-excel-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/modals/profile-bar-excel-modal.tsx), [`profile-bar-excel-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/modals/profile-bar-excel-table.tsx), [`profile-bar-toolbar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-bar-toolbar.tsx), [`profile-bars/index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/index.tsx)):**
+     - Hỗ trợ lọc theo tab `Tất cả`, `Thêm mới`, `Cập nhật`, `Lỗi`; chỉnh sửa trực tiếp mọi ô dữ liệu, tự động lọc dropdown **Hệ nhôm** theo **Hãng nhôm** được chọn, hiển thị giá trị cũ (`Cũ: ...`) khi cập nhật và tự động chuyển dòng `ERROR` sang hợp lệ ngay khi sửa xong.
+  2. **Kính, Tấm Pano, Lưới & Gioăng ([`glass-gasket-excel-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/glass-gaskets/_components/modals/glass-gasket-excel-modal.tsx), [`glass-gasket-excel-tables.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/glass-gaskets/_components/modals/glass-gasket-excel-tables.tsx), [`gasket-excel-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/glass-gaskets/_components/modals/gasket-excel-table.tsx), [`glass-gasket-excel-utils.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/glass-gaskets/_components/modals/glass-gasket-excel-utils.ts), [`glass-toolbar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/glass-gaskets/_components/glass-toolbar.tsx), [`glass-gaskets/index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/glass-gaskets/index.tsx)):**
+     - Hỗ trợ chuyển đổi mượt mà giữa 2 Sheet (`Sheet 1: Kính / Tấm / Lưới` và `Sheet 2: Gioăng / Keo`), tự động lọc dropdown **Nhóm chủng loại** theo **Loại vật tư** (`glass`, `panel`, `screen_mesh`), cho phép thêm dòng trực tiếp hoặc xóa dòng ngay trong Modal.
+  3. **Phụ kiện ([`accessory-excel-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/_components/modals/accessory-excel-modal.tsx), [`accessory-excel-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/_components/modals/accessory-excel-table.tsx), [`accessory-toolbar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/_components/accessory-toolbar.tsx), [`accessories/index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/index.tsx)):**
+     - Hỗ trợ xuất Excel theo bộ lọc hiện tại (Hãng, Danh mục, Từ khóa) và nhập Excel có kiểm tra đối chiếu mã phụ kiện, chọn Hãng, Danh mục, Đơn vị tính, Màu sắc trực tiếp trong bảng.
+     - Bổ sung nút **"Xóa toàn bộ ({counts.total})"** trên cả 3 Modal Nhập Excel giúp xóa nhanh toàn bộ các dòng dữ liệu đang nhập trong bảng tạm chỉ với 1 cú nhấp chuột.
+
+### Added & Enhanced (Door Studio - Tab Phụ kiện: Cho phép Tạo nhanh Gói Combo Phụ kiện trực tiếp ngay khi vẽ cửa)
+- **Tái sử dụng & Nâng cấp `ComboModal` dùng chung ([`combo-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/accessories/modals/combo-modal.tsx), [`searchable-select.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/accessories/modals/searchable-select.tsx)):**
+  - Chuyển `ComboModal` và `SearchableSelect` sang tầng component dùng chung (`src/components/door-studio/panels/accessories/modals/`), dùng chung cho cả màn hình Cấu hình Gói Combo ([`accessory-combos/index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessory-combos/index.tsx)) và Tab Phụ kiện trong Door Studio ([`accessories-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/accessories-tab-view.tsx)).
+  - Hỗ trợ chọn trực tiếp **Hãng phụ kiện** ngay trong Modal (tự động lọc danh sách phụ kiện theo hãng đang chọn), nhận diện tự động phân loại `defaultApplyFor` (`khung`, `canh`, `huong_mo`) theo tab đang mở, đồng bộ cache `['accessory-combos']` & `['accessory-combos-list']` và xóa bỏ các file trùng lặp cũ (Zero Dead Code).
+- **Nút "+ Tạo combo" & Tự động chọn Combo vừa tạo trong Door Studio ([`accessories-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/accessories-tab-view.tsx), [`types.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/accessories/types.ts)):**
+  - Bổ sung nút **"+ Tạo combo"** trên thanh công cụ tìm kiếm và trong màn hình Empty State của tab Phụ kiện.
+  - Tự động tích chọn (`onToggleCombo`) gói combo vừa tạo mới vào bộ cửa đang thiết kế ngay sau khi lưu thành công.
+  - Nâng cấp `detectComboCategory` ưu tiên đọc trực tiếp trường `combo.applyFor` (`khung`, `canh`, `huong_mo`) từ CSDL để phân nhóm chính xác tuyệt đối.
+
+### Added & Changed (Nghiệm thu & Bàn giao: Refactor cấu trúc Nghiệm thu từng bộ cửa Đạt / Không đạt & Ghi chú riêng)
+- **Types & Interfaces ([`handover.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/handover.ts)):**
+  - Bổ sung kiểu `AcceptanceItemResult` (`'passed' | 'failed'`), `AcceptanceItemInput`, `AcceptanceItem` và cập nhật `ProjectAcceptance`, `AcceptanceCreatePayload`, `PublicSigningView`.
+- **Modal Tạo Biên bản Nghiệm thu ([`acceptance-form-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/acceptance/modals/acceptance-form-modal.tsx)):**
+  - Cho phép chọn các bộ cửa đưa vào đợt nghiệm thu, chọn kết quả từng cửa (**Đạt** / **Không đạt**) và nhập ghi chú riêng cho từng bộ cửa (bắt buộc nhập lý do khi chọn **Không đạt**).
+  - Hiển thị bộ đếm trực quan số lượng cửa Đạt / Chưa đạt ngay trên đầu danh sách.
+- **Tab Nghiệm thu & Trang Ký Xác nhận Công khai ([`tab-acceptance.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/acceptance/tab-acceptance.tsx), [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/sign/[token]/page.tsx)):**
+  - Hiển thị chi tiết danh sách từng bộ cửa trong mỗi biên bản nghiệm thu kèm badge trạng thái **Đạt** (xanh) / **Không đạt** (đỏ) và ghi chú nghiệm thu của từng cửa.
+  - Các bộ cửa **Không đạt** giữ nguyên trạng thái `installed` sau khi ký biên bản, tự động sẵn sàng xuất hiện lại khi tạo biên bản nghiệm thu đợt tiếp theo.
+
+### Changed & Fixed (Cấu hình: Gộp Component dùng chung `BrandSidebar` & Xử lý triệt để lỗi React Compiler / Impure Render)
+- **Tạo Component dùng chung [`brand-sidebar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/brand-sidebar.tsx) (export qua [`projects/_components/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/index.ts)):**
+  - Hợp nhất 3 component bị lặp lại (`SeriesBrandSidebar`, `ProfileBarSidebar`, `AccessoryBrandSidebar`) thành một component dùng chung `BrandSidebar` đặt tại tầng `projects/_components` và tái sử dụng thống nhất trên toàn bộ 5 màn hình: Hệ nhôm ([`series/index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/series/index.tsx)), Thanh nhôm ([`profile-bars/index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/index.tsx)), Phụ kiện ([`accessories/index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/index.tsx)), Gói Combo Phụ kiện ([`accessory-combos/index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessory-combos/index.tsx)), và Mẫu cửa ([`door-templates/index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/door-templates/index.tsx)).
+  - Xóa bỏ hoàn toàn 3 file trùng lặp cũ (`series-brand-sidebar.tsx`, `profile-bar-sidebar.tsx`, `accessory-brand-sidebar.tsx`) và loại bỏ import chéo giữa các route con (Tuân thủ Quy chuẩn 16 - Zero Dead Code & Colocation).
+  - Tăng kích thước thanh sidebar lên gấp đôi (`md:w-40 lg:w-44`, ô vuông logo `w-20 h-20 md:w-28 md:h-28`, `rounded-xl`, chữ mã hãng `text-xl md:text-2xl`, nhãn tên hãng `text-xs md:text-sm w-22 md:w-36`).
+- **Khắc phục triệt để lỗi React Compiler / ESLint ([`brand-sidebar.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/_components/brand-sidebar.tsx), [`brand-card.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/brand/_components/brand-card.tsx)):**
+  - **Sửa lỗi `Cannot call impure function during render` (`Date.now()`):** Loại bỏ lời gọi `Date.now()` bất định bên trong `useMemo`; chỉ đính kèm query `?t=${new Date(updatedAt).getTime()}` khi `updatedAt` tồn tại để đảm bảo hàm render hoàn toàn thuần khiết (idempotent).
+  - **Sửa lỗi `Calling setState synchronously within an effect can trigger cascading renders`:** Loại bỏ `useEffect(() => setHasError(false), [logoPath, updatedAt])` và thay bằng việc truyền `key={`${b.logoPath ?? ''}-${b.updatedAt ?? ''}`}` vào `<BrandSquareLogo />` / `<BrandLogo />`, đồng thời chuyển việc tự động chọn hãng đầu tiên (`activeBrandId`) ở các trang cấu hình sang **Derived State** (`selectedBrandId ?? sortedBrands[0]?.id ?? null`) theo đúng Quy chuẩn 15.
+
+### Added & Enhanced (Door Studio CAD: Hiển thị đầy đủ các đường kích thước cao độ tay nắm khóa khi 2 khóa lệch nhau)
+- **Thước đo Cao độ Tay nắm Đa tầng ([`cad-dimension-overlay.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-dimension-overlay.tsx), [`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/door-cad-renderer.tsx)):**
+  - Nâng cấp bộ lọc `lockLeaves` từ `.find()` (chỉ lấy 1 cánh đầu tiên) sang `.filter()`, bao quát toàn bộ các kiểu cánh mở quay, mở lùa, xếp trượt có gắn tay nắm khóa bên hông.
+  - Gom nhóm thông minh các khóa theo cao độ (`handleHVal`) và sắp xếp từ thấp đến cao theo chuẩn bản vẽ kỹ thuật CAD:
+    - Khi các khóa có cùng cao độ: Hiển thị gọn 1 đường thước đo duy nhất.
+    - Khi các khóa lệch cao độ nhau: Tự động tách và hiển thị đầy đủ các đường thước đo song song theo từng tầng (`ox - 20`, `ox - 42`...) ở bên trái khung cửa, đồng thời tự động mở rộng `leftRulerW` để cân đối khung nhìn SVG.
+  - Highlight màu đỏ nổi bật cho con số cao độ khóa của cánh đang được chọn (`selectedCellId`) và hỗ trợ nhấp trực tiếp vào từng con số để sửa riêng cao độ khóa của cánh tương ứng.
+
+### Added & Enhanced (Hợp đồng & Thanh toán: Hỗ trợ đính kèm và xem Ảnh chứng từ / Ủy nhiệm chi khi tạo Phiếu thu tiền)
+- **Tạo Phiếu thu có đính kèm ảnh chứng từ ([`payment-transaction-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/contracts/modals/payment-transaction-modal.tsx), [`project.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/project.ts)):**
+  - Mở rộng `PaymentTransactionCreatePayload` bổ sung trường `receiptImage?: string`.
+  - Tích hợp khu vực chọn / chụp ảnh trực tiếp trong modal Tạo phiếu thu tiền, tự động tải lên MinIO qua `uploadProgressEvidence`, hiển thị ảnh xem trước và cho phép xóa/thay ảnh.
+  - Khóa an toàn nút "Lưu phiếu thu" trong khi ảnh đang tải lên để tránh gửi thiếu ảnh.
+- **Hiển thị & Phóng to Ảnh chứng từ tại Lịch sử thanh toán ([`transaction-history.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/contracts/components/transaction-history.tsx)):**
+  - Hiển thị thumbnail kèm nút "Xem ảnh chứng từ" ngay trên dòng giao dịch trong bảng Lịch sử thanh toán.
+  - Bấm vào nút mở Modal phóng to ảnh chứng từ kèm thông tin mã phiếu, số tiền và thời gian thu.
+
+### Fixed (Door Studio & Modal: Khắc phục lỗi không vuốt/kéo ngang được thanh Header Tabs trên giao diện Mobile)
+- **Mở khóa cuộn ngang thanh Navigation Tabs ([`studio-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/studio-modal.tsx), [`modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/modal/modal.tsx)):**
+  - Loại bỏ class `shrink-0` trên container chứa `NAV_TABS` và thay bằng `max-w-full min-w-0 touch-pan-x` để khung tab tự động co vừa khít vùng trống trên màn hình nhỏ và kích hoạt thanh cuộn ngang cảm ứng mượt mà.
+  - Tự động trượt mượt (`scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })`) đưa tab đang chọn vào trung tâm tầm nhìn khi người dùng chạm vào tab bị khuất ở rìa.
+  - Tách biệt xử lý `title` trong `Modal`: chỉ bọc `<Heading size="h3" className="... truncate">` khi `title` là chuỗi văn bản thuần, còn khi `title` là custom `ReactNode` thì bọc bằng `<div className="min-w-0 flex-1 pr-2">` để tránh thuộc tính `truncate` cắt cứng nội dung cuộn bên trong.
+
+### Added & Enhanced (Door Studio CAD & Config: Tái cấu trúc Cửa lùa chồng đè cánh (Sliding Sashes Overlap) chuẩn sản xuất nhôm kính)
+- **Hình học cánh lùa chồng đè thực tế ([`cad-geometry.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/cad-geometry.ts)):**
+  - Xây dựng module hình học thuần túy `computeSlidingSashes` tính toán chính xác tọa độ vị trí ($X$), chiều rộng ($W_{sash}$), hệ ray (`trackIndex`) và thứ tự xếp lớp (`zIndex`) cho từng cánh theo từng hệ cửa:
+    - **Cửa lùa 2 cánh (2 ray):** $W_{sash} = \frac{W + \Delta W}{2}$. Cánh 0 nằm ray trong ($zIndex=0$), Cánh 1 nằm ray ngoài ($zIndex=1$) đè lên Cánh 0 một khoảng $\Delta W_{overlap}$.
+    - **Cửa lùa 3 cánh (3 ray - Ảnh 1):** $W_{sash} = \frac{W + 2\Delta W}{3}$. 3 cánh bậc thang gối đầu nối tiếp nhau với bước trượt $step = W_{sash} - \Delta W$, xếp lớp $zIndex=0, 1, 2$ trên 3 ray trượt độc lập.
+    - **Cửa lùa 4 cánh (2 ray khép giữa - Ảnh 2):** $W_{sash} = \frac{W + 2\Delta W}{4}$. 2 cánh ngoài cùng nằm ray trong ($zIndex=0$), 2 cánh giữa nằm ray ngoài ($zIndex=1$) đè gối lên 2 cánh ngoài đúng $\Delta W_{overlap}$ và khép mí kín khít tại tâm $midX$.
+    - **Cửa lùa 6 cánh (3 ray khép giữa):** $W_{sash} = \frac{W + 4\Delta W}{6}$. 3 cánh bên trái và 3 cánh bên phải đối xứng trượt khép mí kín khít tại tâm $midX$.
+    - **Cấu hình tổng quát:** Tự động khống chế độ ngậm an toàn $\le 45\%$ chiều rộng cánh để tránh lỗi giao nhau phi thực tế.
+- **Duyệt cây CAD & Xếp lớp hiển thị đè gối ([`cad-tree-traverser.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/cad-tree-traverser.ts), [`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/door-cad-renderer.tsx)):**
+  - Nhận diện thông minh cụm cánh cửa lùa (`isSlidingCluster`), thay thế cơ chế chia phẳng $W/N$ cũ bằng phân bổ vị trí chồng đè thực tế `computeSlidingSashes`.
+  - Không sinh đố tĩnh thừa giữa các cánh lùa.
+  - Sắp xếp mảng `leaves` theo thứ tự `sashZIndex` tăng dần trước khi render `CadRectangularLeaf`, đảm bảo cánh ở ray ngoài hiển thị đè nổi lên cánh ở ray trong giống hệt 100% hình ảnh thực tế sản xuất nhôm kính.
+- **Giao diện Cấu hình Độ ngậm cánh lùa ([`config-sash-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/config/config-sash-tab.tsx), [`studio-types.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/studio-types.ts)):**
+  - Bổ sung thuộc tính `slidingOverlapMm?: number` trong `SashConfig` và `SceneCellNode`.
+  - Thêm ô nhập "Ngậm lùa (mm)" trong nhóm "Khe hở & ngậm cơ khí" tại Tab Cấu hình Cánh với placeholder "Tự động" (tự động lấy theo bản rộng thanh đứng cánh profile $\approx 60\text{mm}$ hoặc cho phép thợ tùy chỉnh tự do).
+
+### Added & Enhanced (Báo giá: Refactor Định giá chi tiết từng bộ cửa theo Đơn giá đ/m² linh hoạt 2 chiều)
+- **Đồng bộ giá bán 2 chiều & Khử sai số làm tròn ([`use-quotation-price-drafts.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/quotations/hooks/use-quotation-price-drafts.ts)):**
+  - Quản lý đồng bộ 2 chiều (Bidirectional sync): Gõ Đơn giá (đ/m²) tự tính Thành tiền cả bộ cửa (`round(unitPrice * areaM2)`), đồng thời gõ Thành tiền chốt giá tròn tự chia ngược ra Đơn giá (đ/m²).
+  - Tách bạch chuẩn xác cho cả 2 chế độ báo giá:
+    - Chế độ Gộp: Quản lý Đơn giá (đ/m²) trọn gói và Thành tiền tổng.
+    - Chế độ Tách riêng: Quản lý Đơn giá cửa (đ/m² thân nhôm kính) và Giá phụ kiện (đ/bộ), tự động cộng dồn Tổng thành tiền.
+  - Tích hợp tính năng Áp dụng nhanh đơn giá hàng loạt (`applyBatchUnitPrice`) và Khôi phục toàn bộ giá gợi ý (`revertAllToSuggested`).
+  - Triệt tiêu hoàn toàn sai số làm tròn (Zero Rounding Drift) khi lưu và tải lại bảng báo giá.
+- **Thanh công cụ Áp dụng nhanh & Bố cục Bảng tối ưu ([`quotation-doors-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/quotations/components/quotation-doors-table.tsx)):**
+  - Thêm thanh công cụ "⚡ Áp dụng nhanh đơn giá": Cho phép người dùng nhập 1 đơn giá đ/m² và bấm "Áp dụng tất cả" cho toàn bộ cửa dự án trong 1 click.
+  - Thêm nút tiện ích "Áp dụng cho tầng này" tại từng dòng tiêu đề tầng.
+  - Hiển thị song song Chi phí vốn (kèm `~chi phí vốn/m²` ở dòng phụ), ô nhập Đơn giá (đ/m²) có placeholder gợi ý và ô Thành tiền (đ).
+
+### Added & Enhanced (Door Studio: Nâng cấp toàn diện tính năng Đảo khung — Đảo vách / Đảo cánh)
+- **Giao diện Cấu hình Đảo khung ([`config-frame-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/config/config-frame-tab.tsx), [`studio-types.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/studio-types.ts), [`useDoorStudioState.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/hooks/useDoorStudioState.ts)):**
+  - Mở rộng kiểu dữ liệu `FrameConfig` với các trường: `reversalMode` ('none' | 'wall' | 'sash'), `reversalProfileId`, `reversalProfileCode`, `reversalOffsetMm`, đồng thời duy trì ánh xạ tương thích 2 chiều với các cờ `isReversedWall`, `isReversedSash`.
+  - Thiết kế lại giao diện chuẩn 100% theo bản thiết kế:
+    - Tiêu đề "Đảo khung — gắn thanh đảo để thay đổi hướng nẹp kính hoặc gắn cánh" kèm nút bấm "✕ Bỏ đảo khung" linh hoạt.
+    - Hai nút chọn chế độ độc lập: `↰ Đảo vách` (nền xanh navy slate `#1e3a5f` khi active) và `▊ Đảo cánh` (nền xanh ngọc emerald `#059669` khi active).
+    - Form chi tiết xuất hiện khi kích hoạt: Dropdown chọn `Profile đảo khung` (tự động lọc các profile có `barType === 'REVERSAL'` như cây C3208 hoặc phụ trợ) và trường nhập `Offset chiều dài (mm)` bù trừ lọt lòng $bW/bH$.
+  - Tự động nạp profile đảo khung mặc định của hệ nhôm vào state khi khởi tạo.
+- **Dựng hình học CAD Thanh đảo khung ([`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/door-cad-renderer.tsx), [`cad-rectangular-leaf.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-rectangular-leaf.tsx)):**
+  - Tích hợp `reversalD` (tính theo độ dày danh định `sectionHeightMm` của profile đảo khung hoặc mặc định 28mm) truyền vào CAD Engine.
+  - Khi `reversalMode === 'wall'` (Đảo vách): Tự động dựng thêm khung nhôm Thanh đảo ghép mòi 45° bo quanh 4 cạnh lọt lòng ô fix kính cố định, sau đó lòng nẹp kính và kính co lại lọt bên trong thanh đảo.
+  - Khi `reversalMode === 'sash'` (Đảo cánh): Tự động dựng khung Thanh đảo bo quanh lọt lòng ô cánh (tạo hèm đón cánh) cho cả cửa 1 cánh và cửa 2 cánh, toàn bộ khung cánh cửa, nẹp kính, tay nắm và ký hiệu mở cửa lọt bên trong thanh đảo.
+
+### Changed & Enhanced (Tiến độ sản xuất: Đồng bộ toàn diện bộ trạng thái chuẩn hóa FE & BE)
+- **Chuẩn hóa danh mục tiến độ & Loại bỏ trạng thái trung gian ([`production-labels.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/production/utils/production-labels.ts), [`cutting-plan.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/cutting-plan.ts), [`project.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/project.ts)):**
+  - Rút gọn kiểu `ProgressStepCode` và mảng `FULL_STATUS_ORDER`: loại bỏ hoàn toàn `delivering`, `delivered`, `installing`.
+  - Chuẩn hóa chuỗi tiến độ: `draft` -> `awaiting_measure` -> `surveyed` -> `producing` -> `factory_done` -> `installed` -> `accepted`.
+  - `NEXT_STEP_BY_STATUS`: `surveyed -> producing`, `producing -> factory_done`, `factory_done -> installed`.
+  - Dọn dẹp toàn bộ key rác khỏi `STEP_SECTION_CONFIG`, `PROGRESS_STEP_LABEL`, `PROGRESS_ACTION_LABEL`, `DOOR_STATUS_MAP`.
+- **Cập nhật nhanh 1 chạm & Khắc phục lùi mốc ([`daily-progress-panel.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/production/components/daily-progress-panel.tsx), [`revert-progress-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/production/modals/revert-progress-modal.tsx), [`page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/qr/[token]/page.tsx)):**
+  - Khắc phục lỗi lùi mốc từ "Đã lắp đặt": Mốc lùi liền trước mặc định là `factory_done` ("Đã sản xuất - chờ lắp đặt"), không còn thông báo chuyển về "Đang lắp đặt".
+  - Trang quét QR: `INSTALL_STEP_VALUES` chuẩn hóa còn `['factory_done', 'installed']`.
+  - Bấm nút "Cập nhật tiến độ" gọi trực tiếp mutation `advance.mutate` chuyển mốc ngay lập tức với hiệu ứng loading và toast thành công, không cần mở modal tải ảnh.
+
+### Enhanced & Optimized (Door Studio: Tối ưu hóa toàn diện logic tính toán Roan Khung & Cánh)
+- **Tách biệt tùy chọn ngữ cảnh Khung vs Cánh ([`gasket-config-section.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/config/gasket-config-section.tsx), [`studio-types.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/studio-types.ts)):**
+  - Mở rộng `GasketMeasureType` với các phương thức chuyên biệt cho Cánh: `sash_perimeter` (Theo chu vi cánh), `sash_width` (Theo chiều rộng cánh), `sash_height` (Theo chiều cao cánh).
+  - Tách dropdown thông minh: Tab Khung bao hiển thị nẹp/kính ô fix và chu vi khung; Tab Cánh hiển thị nẹp/kính cánh và chu vi/rộng/cao cánh thực tế.
+  - Thêm dòng ghi chú hướng dẫn: Cách tính Chiều rộng / Chiều cao tính 1 cạnh/ô, đặt `Số lần/ô = 2` nếu đi cả 2 cạnh.
+- **Hiển thị Bảng kết quả bóc tách BOM ([`results-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/results-tab-view.tsx)):**
+  - Cập nhật từ điển `measureMap` hiển thị nhãn tiếng Việt rõ ràng theo từng vị trí (ô fix hay cánh), giúp người dùng dễ dàng đối chiếu số liệu.
+- **Backend Tính toán Roan ([`door_calculation_service.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/services/project/door/door_calculation_service.py)):**
+  - Nhận diện `isOpenBottom`: Khi là Khung hở 3 cạnh chạm sàn, chu vi khung tự động tính $W + 2H$ (thay vì $2W + 2H$).
+  - Xử lý `sash_perimeter`: Tự động tính tổng chu vi thực tế của tất cả các cánh cửa dựa trên các thanh bao cánh `sash_bars` và hệ số nhân.
+  - Xử lý `sash_width` và `sash_height`: Tính chính xác theo kích thước cánh cửa thực tế và số lượng cánh.
+  - Tự động bổ sung ghi chú `Khung không có ô kính fix` khi khung không có kính, tránh gây hiểu lầm cho người dùng.
+
+
+### Changed & Enhanced (Báo giá: Đồng bộ giá bán bộ cửa đã gồm VAT và cập nhật bảng tính thử)
+- **Panel tính thử Báo giá ([`quotation-preview-panel.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/quotations/components/quotation-preview-panel.tsx)):**
+  - Cập nhật luồng hiển thị: "Tổng giá bán (đã gồm thuế)" -> "Giảm giá cho khách" -> "Khách phải trả", đồng thời hiển thị chi tiết "Trong đó tiền thuế VAT" và "Doanh thu thuần (chưa thuế)".
+- **Cảnh báo bán dưới giá vốn ([`use-quotation-price-drafts.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/quotations/hooks/use-quotation-price-drafts.ts), [`project-quotations-pricing.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/quotations/project-quotations-pricing.tsx)):**
+  - Truyền `vatPercent` vào hook quản lý giá sửa tay `useQuotationPriceDrafts`.
+  - Tính toán doanh thu thuần trước thuế khi kiểm tra `isBelowCostLive`, bảo đảm cảnh báo đỏ chính xác theo giá trị xưởng thực thu.
+
+### Changed (Door Studio: Chuẩn hóa đồng bộ nhãn Ngậm ngang / Ngậm dọc toàn hệ thống)
+- **Chuẩn hóa nhãn giao diện ([`config-sash-tab.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/config/config-sash-tab.tsx)):**
+  - Đồng bộ thuật ngữ từ "Ngàm ngang", "Ngàm dọc" (dấu huyền) sang **"Ngậm ngang"**, **"Ngậm dọc"** (dấu nặng), đồng nhất tuyệt đối với thanh công cụ nhanh bên Tab Vẽ cửa ([`sash-type-picker.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/sash-type-picker.tsx)).
+  - Chuẩn hóa tiêu đề phân nhóm thành **"Khe hở & ngậm cơ khí"** và phụ đề giải thích rõ ràng: **"Độ ngậm đứng (W)"** và **"Độ ngậm trên / dưới (H)"**, giúp kỹ sư và thợ nhôm kính dễ hiểu đúng bản chất cơ học khi sản xuất.
+
+
+### Changed & Fixed (Door Studio: Tự động ẩn Hở nền khi chọn Khung kín 4 cạnh)
+- **Giao diện Thông số cánh ([`sash-type-picker.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/sash-type-picker.tsx), [`toolbox-left.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/toolbox-left.tsx), [`draw-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/draw-tab-view.tsx)):**
+  - Khi cấu hình là **Khung kín (4 cạnh)** (`isOpenBottom: false`): Tự động ẩn trường nhập "Hở nền", giao diện co về lưới 2 cột cân đối (Ngậm ngang và Ngậm dọc). Nút "Mặc định" gán `hoNenMm = 0`.
+  - Khi cấu hình là **Khung hở (3 cạnh — chạm sàn)** (`isOpenBottom: true`): Hiển thị đầy đủ lưới 3 cột (Ngậm ngang, Ngậm dọc, Hở nền) với giá trị mặc định là 8 mm.
+- **Dựng hình CAD 2D & Tỷ lệ hiển thị ([`cad-rectangular-leaf.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-rectangular-leaf.tsx), [`cad-mitered-frame.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-mitered-frame.tsx), [`cad-tree-traverser.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/cad-tree-traverser.ts)):**
+  - Tách bạch logic giữa cửa thủy lực (`isHydraulic`) và loại khung: Khi người dùng chọn "Khung kín (4 cạnh)", hệ thống tôn trọng cấu hình vẽ đầy đủ thanh đáy và cánh cửa đóng kín trong khung bao, không tự động giật hở nền chân cánh.
+  - Chỉ áp dụng độ dịch chuyển hở nền `dHoNen` khi cánh cửa thuộc loại Khung hở 3 cạnh chạm sàn.
+- **Backend Tính toán Sản xuất & Kích thước Cánh ([`door_calculation_service.py`](file:///e:/hoc_ve_fullstash/xttech/xttech_v2/app/services/project/door/door_calculation_service.py)):**
+  - Đồng bộ logic tính toán chiều cao cánh sản xuất: Khi chọn khung 4 cạnh kín, công thức chiều cao cánh là `H + ngamDoc` (không trừ độ hở nền `hoNenMm`), bảo đảm số đo sản xuất cắt cánh chính xác 100%.
+
+
 ### Added & Enhanced (Hợp đồng: Đồng bộ hai chiều Tỷ lệ % và Số tiền thanh toán VNĐ)
 - **Đồng bộ hai chiều đợt thanh toán ([`milestone-editor.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/contracts/components/milestone-editor.tsx)):**
   - Mở rộng bảng đợt thanh toán hiển thị song song 2 ô Input cho Tỷ lệ (%) và Số tiền (VNĐ).

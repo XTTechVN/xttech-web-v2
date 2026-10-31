@@ -12,7 +12,7 @@ import {  PROGRESS_STEP_LABEL } from '../utils';
 import { ProductionDoorItem } from '../components/production-door-item';
 
 
-const REWORKABLE_STATUSES = ['factory_done', 'delivering', 'delivered', 'installing', 'installed'];
+const REWORKABLE_STATUSES = ['factory_done', 'installed'];
 
 interface CreateProductionOrderModalProps {
   projectId: number;

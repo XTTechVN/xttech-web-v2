@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '@/components';
 import { TableSearch } from '@/components/table';
-import { Plus, Settings2 } from 'lucide-react';
+import { Plus, Settings2, Download, Upload } from 'lucide-react';
 import type { GlassGasketCategoryFilter } from './glass-category-sidebar';
 
 interface GlassToolbarProps {
@@ -14,6 +14,9 @@ interface GlassToolbarProps {
   onAddGlass: () => void;
   onAddGasket: () => void;
   onManageCategories: () => void;
+  onExportExcelClick?: () => void;
+  onImportExcelClick?: () => void;
+  isExporting?: boolean;
 }
 
 export function GlassToolbar({
@@ -24,6 +27,9 @@ export function GlassToolbar({
   onAddGlass,
   onAddGasket,
   onManageCategories,
+  onExportExcelClick,
+  onImportExcelClick,
+  isExporting = false,
 }: GlassToolbarProps) {
   const isGasketView = selectedCategory === 'gaskets';
 
@@ -57,7 +63,30 @@ export function GlassToolbar({
         />
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        {onExportExcelClick && (
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Download size={15} />}
+            loading={isExporting}
+            onClick={onExportExcelClick}
+          >
+            Xuất Excel
+          </Button>
+        )}
+
+        {onImportExcelClick && (
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Upload size={15} />}
+            onClick={onImportExcelClick}
+          >
+            Nhập Excel
+          </Button>
+        )}
+
         {!isGasketView && (
           <Button
             variant="outline"

@@ -59,9 +59,9 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
       onClose={onClose}
       bodyClassName="p-0 overflow-hidden flex flex-col h-full"
       title={
-        <div className="flex items-center w-full min-w-0 pr-2">
+        <div className="flex items-center w-full min-w-0 pr-1">
           {/* Segmented Navigation Tabs */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/70 overflow-x-auto no-scrollbar shrink-0">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/70 overflow-x-auto no-scrollbar max-w-full min-w-0 touch-pan-x">
             {NAV_TABS.map((t) => {
               const Icon = t.icon;
               const isActive = state.activeMainTab === t.id;
@@ -69,8 +69,11 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => state.setActiveMainTab(t.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+                  onClick={(e) => {
+                    state.setActiveMainTab(t.id);
+                    e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                     isActive
                       ? 'bg-primary text-white shadow-2xs font-bold'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'

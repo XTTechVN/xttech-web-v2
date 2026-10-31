@@ -40,7 +40,7 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
     [quotation?.snapshotItems],
   );
   const isSeparated = quotation?.accessoryMode === 'separated';
-  const drafts = useQuotationPriceDrafts(items, isSeparated);
+  const drafts = useQuotationPriceDrafts(items, isSeparated, quotation?.vatPercent);
   const isLocked = quotation?.isLocked ?? false;
 
   if (api.isLoading) return <Skeleton className="h-64 w-full" />;

@@ -61,9 +61,6 @@ export type ProgressStepCode =
   | 'surveyed'
   | 'producing'
   | 'factory_done'
-  | 'delivering'
-  | 'delivered'
-  | 'installing'
   | 'installed'
   | 'accepted';
 

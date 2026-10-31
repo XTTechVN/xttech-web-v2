@@ -24,7 +24,6 @@ export const PROGRESS_STEP_ORDER: ProgressStepCode[] = [
   'surveyed',
   'producing',
   'factory_done',
-  'delivered',
   'installed',
   'accepted',
 ];
@@ -36,56 +35,37 @@ export const FULL_STATUS_ORDER: ProgressStepCode[] = [
   'surveyed',
   'producing',
   'factory_done',
-  'delivering',
-  'delivered',
-  'installing',
   'installed',
   'accepted',
 ];
 
 export const DISPLAY_STEPS_ORDER: ProgressStepCode[] = [
-  'surveyed',
   'producing',
   'factory_done',
-  'delivering',
-  'delivered',
-  'installing',
   'installed',
   'accepted',
 ];
 
 export const STEP_SECTION_CONFIG: Record<string, StepSectionConfig> = {
+  surveyed: {
+    label: 'Chờ sản xuất',
+    badgeClass: 'bg-slate-100 text-slate-700 border-slate-300',
+  },
   producing: {
     label: 'Đang sản xuất',
     badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
   },
   factory_done: {
-    label: 'Hoàn thành xưởng - Chờ vận chuyển',
+    label: 'Đã sản xuất - chờ lắp đặt',
     badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
   },
-  delivering: {
-    label: 'Đang vận chuyển đến công trình',
-    badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
-  },
-  delivered: {
-    label: 'Đã vận chuyển - Chờ lắp đặt',
-    badgeClass: 'bg-purple-50 text-purple-700 border-purple-200',
-  },
-  installing: {
-    label: 'Đang lắp đặt',
-    badgeClass: 'bg-violet-50 text-violet-700 border-violet-200',
-  },
   installed: {
-    label: 'Đã lắp đặt - Chờ nghiệm thu',
+    label: 'Đã lắp đặt',
     badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   },
   accepted: {
-    label: 'Đã nghiệm thu ',
+    label: 'Đã nghiệm thu',
     badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  },
-  surveyed: {
-    label: 'Chờ sản xuất / Đã đo',
-    badgeClass: 'bg-slate-50 text-slate-700 border-slate-200',
   },
   awaiting_measure: {
     label: 'Chờ đo thực tế',
@@ -102,11 +82,8 @@ export const PROGRESS_STEP_LABEL: Record<ProgressStepCode, string> = {
   awaiting_measure: 'Chờ đo thực tế',
   surveyed: 'Chờ sản xuất',
   producing: 'Đang sản xuất',
-  factory_done: 'Sản xuất xong',
-  delivering: 'Đang vận chuyển',
-  delivered: 'Đã giao công trình',
-  installing: 'Đang lắp đặt',
-  installed: 'Lắp đặt xong',
+  factory_done: 'Đã sản xuất - chờ lắp đặt',
+  installed: 'Đã lắp đặt',
   accepted: 'Đã nghiệm thu',
 };
 
@@ -116,9 +93,6 @@ export const PROGRESS_ACTION_LABEL: Record<ProgressStepCode, string> = {
   surveyed: 'Đã đo',
   producing: 'Bắt đầu sản xuất',
   factory_done: 'Báo sản xuất xong',
-  delivering: 'Xuất xưởng vận chuyển',
-  delivered: 'Báo đã giao',
-  installing: 'Bắt đầu lắp đặt',
   installed: 'Báo đã lắp xong',
   accepted: 'Nghiệm thu',
 };
@@ -129,9 +103,6 @@ export const PROGRESS_COLUMN_LABEL: Record<ProgressStepCode, string> = {
   surveyed: 'Đo đạc',
   producing: 'Sản xuất',
   factory_done: 'Xong xưởng',
-  delivering: 'Vận chuyển',
-  delivered: 'Giao hàng',
-  installing: 'Đang lắp',
   installed: 'Lắp đặt',
   accepted: 'Nghiệm thu',
 };
@@ -146,11 +117,14 @@ export const getStepIndex = (status: string): number =>
 // Bỏ qua mốc tùy chọn (đang vận chuyển / đang lắp đặt). 'installed' -> nghiệm thu phải lập biên bản
 // 2 bên ký (tab Nghiệm thu), 'surveyed' -> sản xuất do lệnh sản xuất tạo, nên không có mốc kế tiếp ở đây.
 const NEXT_STEP_BY_STATUS: Partial<Record<ProgressStepCode, ProgressStepCode>> = {
+  surveyed: 'producing',
   producing: 'factory_done',
-  factory_done: 'delivered',
-  delivering: 'delivered',
-  delivered: 'installed',
-  installing: 'installed',
+  factory_done: 'installed',
+};
+
+export const mapToStandardProgressStep = (status: string): ProgressStepCode => {
+  if (status === 'delivering' || status === 'delivered' || status === 'installing') return 'producing';
+  return status as ProgressStepCode;
 };
 
 export const getNextStep = (status: string): ProgressStepCode | null =>

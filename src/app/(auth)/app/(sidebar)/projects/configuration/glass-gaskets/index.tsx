@@ -10,6 +10,7 @@ import {
   setDefaultGlass,
   deleteGlassCategory,
   deleteGasket,
+  exportGlassGasketsExcel,
 } from '@/actions';
 import type { Glass, GlassCategory, Gasket } from '@/types';
 import toast from 'react-hot-toast';
@@ -26,6 +27,7 @@ import {
   GlassModal,
   GasketModal,
   GlassCategoryModal,
+  GlassGasketExcelModal,
   type GlassGasketCategoryFilter,
   type MaterialTypeFilter,
   getCategoryMaterialType,
@@ -50,6 +52,8 @@ export default function GlassGasketsPage() {
   const [isGasketModalOpen, setIsGasketModalOpen] = useState(false);
   const [selectedGasket, setSelectedGasket] = useState<Gasket | null>(null);
   const [settingDefaultGlassId, setSettingDefaultGlassId] = useState<number | null>(null);
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: catData, isLoading: isCatLoading } = useQuery({
     queryKey: ['glass-categories'],
@@ -154,6 +158,20 @@ export default function GlassGasketsPage() {
     [categoriesList, selectedCategory],
   );
 
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      await exportGlassGasketsExcel({
+        categoryId: typeof selectedCategory === 'number' ? selectedCategory : null,
+      });
+      toast.success('Đã xuất file Excel danh sách Kính & Gioăng');
+    } catch (err) {
+      showErrorToast(err, 'Lỗi khi xuất file Excel');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const isGasketView = selectedCategory === 'gaskets';
   const isLoading = isCatLoading || (isGasketView ? isGasketLoading : isGlassesLoading);
 
@@ -185,6 +203,9 @@ export default function GlassGasketsPage() {
             setIsGasketModalOpen(true);
           }}
           onManageCategories={() => setIsCategoryManagerOpen(true)}
+          onExportExcelClick={handleExportExcel}
+          onImportExcelClick={() => setIsExcelModalOpen(true)}
+          isExporting={isExporting}
         />
 
         {isLoading ? (
@@ -274,6 +295,14 @@ export default function GlassGasketsPage() {
             deleteCategoryMutate(cat.id);
           }
         }}
+      />
+
+      <GlassGasketExcelModal
+        isOpen={isExcelModalOpen}
+        onClose={() => setIsExcelModalOpen(false)}
+        categories={categoriesList}
+        existingGlasses={glassesList}
+        existingGaskets={gasketsList}
       />
     </div>
   );
