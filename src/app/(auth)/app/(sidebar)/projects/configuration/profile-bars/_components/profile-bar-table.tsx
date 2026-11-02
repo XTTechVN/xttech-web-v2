@@ -16,12 +16,20 @@ type SortOrder = 'asc' | 'desc';
 const BAR_TYPE_MAP: Record<string, string> = {
   FRAME: 'Khung bao',
   SASH: 'Cánh cửa',
-  MULLION: 'Đố chia / Đố động',
+  SCREEN_SASH: 'Cánh lưới muỗi',
+  MULLION: 'Đố cố định / Đố chia',
+  DYNAMIC_MULLION: 'Đố động',
   BEAD: 'Nẹp kính',
   TRACK: 'Ray trượt',
+  COUPLING: 'Thanh ghép khung',
+  REVERSAL: 'Thanh đảo chiều / Khuôn phụ',
+  INTERLOCK: 'Thanh móc / Hèm đối đầu',
+  SASH_JOINER: 'Thanh nối cánh',
+  LOUVER: 'Lá sách / Chớp nhôm',
+  PANO: 'Tấm pano nhôm',
   COVER: 'Ốp / Nắp đậy',
   CORNER: 'Ke góc',
-  OTHER: 'Khác',
+  OTHER: 'Phụ trợ / Khác',
 };
 
 const COLUMNS: Array<{ field: SortField; label: string; align: 'left' | 'center'; width: string }> = [
