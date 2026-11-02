@@ -2,6 +2,15 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-11-02
+### Fixed & Enhanced (Door Studio - Tab Cấu hình: Khắc phục lỗi không hiển thị danh sách Thanh Profile khi khai báo Khung bao & Cánh)
+- **Chuẩn hóa khởi tạo Hệ nhôm, Hãng nhôm & Nạp danh sách Thanh Profile ([`useDoorStudioState.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/hooks/useDoorStudioState.ts), [`info-tab-view.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/info-tab-view.tsx), [`doors/index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/doors/index.tsx)):**
+  - Suy diễn `effectiveBrandId` và `effectiveSeriesId` qua `useMemo` (tuân thủ Quy chuẩn 15 - chống Cascading Renders), đảm bảo `seriesId` luôn có giá trị hợp lệ ngay cả khi mở cửa cũ chưa gắn hệ nhôm hoặc tạo cửa mới.
+  - Tự động nạp danh sách thanh profile theo hãng nhôm / hệ nhôm đang chọn và bổ sung thông minh các nhóm thanh dùng chung cùng hãng (`FRAME`, `SASH`, `SCREEN_SASH`, `MULLION`, `DYNAMIC_MULLION`, `BEAD`, `COUPLING`, `REVERSAL`) khi hệ nhôm con chưa khai báo riêng nhóm đó.
+  - Mở khóa ô chọn **Hãng nhôm** tại tab **Thông tin chung** (`InfoTabView`) và truyền `defaultBrandId={selectedBrandId}` từ màn hình quản lý cửa vào `DoorStudioModal`.
+- **Đồng bộ từ điển hiển thị `barType` tiếng Việt ([`profile-bar-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-bar-table.tsx), [`profile-bar-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/profile-bars/_components/profile-bar-modal.tsx)):**
+  - Bổ sung đầy đủ nhãn tiếng Việt cho `SCREEN_SASH`, `DYNAMIC_MULLION`, `COUPLING`, `REVERSAL`, `INTERLOCK`, `SASH_JOINER`, `LOUVER`, `PANO` theo đúng Quy chuẩn 14.
+
 ## [Unreleased] - 2026-10-31
 ### Changed & Enhanced (Door Studio CAD: Hỗ trợ Nhấn giữ & Kéo-thả trực tiếp Icon Tay nắm / Khóa để chỉnh cao độ khóa real-time)
 - **Tích hợp Kéo-thả dọc (`ns-resize`) trực tiếp trên Tay nắm khóa ([`cad-split-resizer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-split-resizer.tsx), [`door-cad-renderer.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/door-cad-renderer.tsx), [`useDoorStudioState.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/hooks/useDoorStudioState.ts)):**

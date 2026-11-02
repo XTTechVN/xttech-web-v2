@@ -86,25 +86,7 @@ export function useDoorStudioState({
     queryFn: () => getDoorSeriesList({ limit: 9999 }),
     enabled: isOpen,
   });
-  const allAvailableSeries = seriesData?.items || [];
-  const availableSeries = useMemo(() => {
-    if (!selectedBrandId) return allAvailableSeries;
-    return allAvailableSeries.filter((s) => s.brandId === selectedBrandId);
-  }, [allAvailableSeries, selectedBrandId]);
-
-  // Fetch Profile Bars (filtered by seriesId)
-  const { data: profilesData } = useQuery({
-    queryKey: ['profile-bars', seriesId],
-    queryFn: () => getProfileBars({ seriesId: seriesId || undefined, limit: 300 }),
-    enabled: isOpen && !!seriesId,
-  });
-  const availableProfiles = useMemo(() => profilesData?.items || [], [profilesData]);
-
-  const availableBeads = useMemo(() => {
-    return availableProfiles.filter(
-      (p) => p.barType?.toUpperCase() === 'BEAD' || (p as any).category === 'bead'
-    );
-  }, [availableProfiles]);
+  const allAvailableSeries = useMemo(() => seriesData?.items || [], [seriesData]);
 
   // Fetch Brands (Chỉ lấy hãng nhôm: brandType === 'aluminum')
   const { data: brandsData } = useQuery({
@@ -116,6 +98,120 @@ export function useDoorStudioState({
     const list = (brandsData?.items || []).filter((b) => !b.brandType || b.brandType === 'aluminum');
     return [...list].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
   }, [brandsData]);
+
+  const currentSeriesObj = useMemo(
+    () => (seriesId ? allAvailableSeries.find((s) => s.id === seriesId) : undefined),
+    [allAvailableSeries, seriesId]
+  );
+
+  const effectiveBrandId = useMemo(() => {
+    return (
+      selectedBrandId ||
+      currentSeriesObj?.brandId ||
+      door?.doorSeries?.brandId ||
+      defaultBrandId ||
+      availableBrands[0]?.id ||
+      null
+    );
+  }, [selectedBrandId, currentSeriesObj, door?.doorSeries?.brandId, defaultBrandId, availableBrands]);
+
+  const availableSeries = useMemo(() => {
+    if (!effectiveBrandId) return allAvailableSeries;
+    return allAvailableSeries.filter((s) => s.brandId === effectiveBrandId);
+  }, [allAvailableSeries, effectiveBrandId]);
+
+  const effectiveSeriesId = useMemo(() => {
+    if (seriesId && (allAvailableSeries.length === 0 || allAvailableSeries.some((s) => s.id === seriesId))) {
+      return seriesId;
+    }
+    return availableSeries[0]?.id || allAvailableSeries[0]?.id || seriesId || undefined;
+  }, [seriesId, availableSeries, allAvailableSeries]);
+
+  // Fetch Profile Bars (theo hãng nhôm / hệ nhôm đang chọn để hỗ trợ cả các thanh dùng chung trong hãng)
+  const { data: profilesData } = useQuery({
+    queryKey: ['profile-bars', effectiveBrandId, effectiveSeriesId],
+    queryFn: () =>
+      getProfileBars({
+        brandId: effectiveBrandId || undefined,
+        seriesId: !effectiveBrandId ? effectiveSeriesId : undefined,
+        limit: 1000,
+      }),
+    enabled: isOpen && Boolean(effectiveBrandId || effectiveSeriesId),
+  });
+
+  const availableProfiles = useMemo(() => {
+    const allItems = profilesData?.items || [];
+    if (!effectiveSeriesId || allItems.length === 0) return allItems;
+
+    const seriesItems = allItems.filter((p) => p.seriesId === effectiveSeriesId);
+    if (seriesItems.length === 0) return allItems;
+
+    const includedIds = new Set(seriesItems.map((p) => p.id));
+    const result = [...seriesItems];
+
+    // Bổ sung các nhóm thanh dùng chung của hãng nếu hệ nhôm con chưa khai báo riêng nhóm đó
+    const requiredBarTypes = [
+      'FRAME',
+      'SASH',
+      'SCREEN_SASH',
+      'MULLION',
+      'DYNAMIC_MULLION',
+      'BEAD',
+      'COUPLING',
+      'REVERSAL',
+    ];
+    const presentBarTypes = new Set(seriesItems.map((p) => (p.barType || '').toUpperCase()));
+
+    for (const bt of requiredBarTypes) {
+      if (!presentBarTypes.has(bt)) {
+        for (const p of allItems) {
+          if ((p.barType || '').toUpperCase() === bt && !includedIds.has(p.id)) {
+            includedIds.add(p.id);
+            result.push(p);
+          }
+        }
+      }
+    }
+
+    // Đảm bảo các profileId đang được cấu hình sẵn trong cửa (nếu thuộc hệ phụ cùng hãng) luôn hiển thị trong dropdown
+    const configuredIds = [
+      frameConfig.leftEdge?.profileId,
+      frameConfig.topEdge?.profileId,
+      frameConfig.rightEdge?.profileId,
+      frameConfig.bottomEdge?.profileId,
+      frameConfig.beadProfileId,
+      frameConfig.mullionProfileId,
+      frameConfig.mullionVertProfileId,
+      frameConfig.mullionHorizProfileId,
+      frameConfig.couplingProfileId,
+      frameConfig.reversalProfileId,
+      sashConfig.leftProfileId,
+      sashConfig.topProfileId,
+      sashConfig.rightProfileId,
+      sashConfig.bottomProfileId,
+      sashConfig.beadProfileId,
+      sashConfig.mullionProfileId,
+      sashConfig.dynamicMullionProfileId,
+    ].filter((id): id is number => Boolean(id));
+
+    for (const cid of configuredIds) {
+      if (!includedIds.has(cid)) {
+        const found = allItems.find((p) => p.id === cid);
+        if (found) {
+          includedIds.add(found.id);
+          result.push(found);
+        }
+      }
+    }
+
+    return result;
+  }, [profilesData, effectiveSeriesId, frameConfig, sashConfig]);
+
+  const availableBeads = useMemo(() => {
+    return availableProfiles.filter(
+      (p) => p.barType?.toUpperCase() === 'BEAD' || (p as any).category === 'bead'
+    );
+  }, [availableProfiles]);
 
   // Fetch Accessory Combos (Đầy đủ toàn bộ combo từ CSDL)
   const { data: combosData } = useQuery({
@@ -146,7 +242,7 @@ export function useDoorStudioState({
   }, [availableGlasses]);
 
   // Lấy brandId đang active
-  const brandId = selectedBrandId;
+  const brandId = effectiveBrandId;
 
   // Fetch danh sách màu thực tế của Hãng từ Database
   const { data: brandColorsData } = useQuery({
@@ -277,10 +373,15 @@ export function useDoorStudioState({
         setSeriesId(door.doorSeriesId);
         prevSeriesIdRef.current = door.doorSeriesId;
         if (door.doorSeries?.brandId) setSelectedBrandId(door.doorSeries.brandId);
-      } else if (defaultBrandId) {
-        setSelectedBrandId(defaultBrandId);
-        setSeriesId(undefined);
-        prevSeriesIdRef.current = undefined;
+      } else {
+        const fallbackBrandId = door.doorSeries?.brandId || defaultBrandId || (availableBrands[0]?.id ?? null);
+        setSelectedBrandId(fallbackBrandId);
+        const brandSeriesList = fallbackBrandId
+          ? allAvailableSeries.filter((s) => s.brandId === fallbackBrandId)
+          : allAvailableSeries;
+        const fallbackSeriesId = brandSeriesList[0]?.id || undefined;
+        setSeriesId(fallbackSeriesId);
+        prevSeriesIdRef.current = fallbackSeriesId;
       }
       if (sc.selectedComboIds && Array.isArray(sc.selectedComboIds)) {
         setSelectedComboIds(sc.selectedComboIds);
@@ -830,7 +931,7 @@ export function useDoorStudioState({
             rootCell,
             frameConfig,
             sashConfig,
-            seriesId,
+            seriesId: effectiveSeriesId,
             selectedComboIds,
             selectedComboId: selectedComboIds[0] || null,
             selectedAccessories,
@@ -848,7 +949,7 @@ export function useDoorStudioState({
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [isOpen, w, h, frameShape, aluminumColor, rootCell, frameConfig, sashConfig, seriesId, selectedComboIds, selectedAccessories]);
+  }, [isOpen, w, h, frameShape, aluminumColor, rootCell, frameConfig, sashConfig, effectiveSeriesId, selectedComboIds, selectedAccessories]);
 
   const handleToggleCombo = (comboId: number) => {
     setSelectedComboIds((prev) =>
@@ -916,7 +1017,7 @@ export function useDoorStudioState({
         rootCell,
         frameConfig,
         sashConfig,
-        seriesId,
+        seriesId: effectiveSeriesId,
         selectedComboIds,
         selectedComboId: selectedComboIds[0] || null,
         selectedAccessories,
@@ -927,7 +1028,7 @@ export function useDoorStudioState({
           name,
           code,
           type,
-          doorSeriesId: seriesId || null,
+          doorSeriesId: effectiveSeriesId || null,
           width: w,
           height: h,
           systemConfig: sysConfig,
@@ -938,7 +1039,7 @@ export function useDoorStudioState({
           name,
           code,
           type,
-          doorSeriesId: seriesId || undefined,
+          doorSeriesId: effectiveSeriesId || undefined,
           imagePath: door?.imagePath || null,
           specification: `${w}×${h}mm`,
           systemConfig: sysConfig,
@@ -951,9 +1052,9 @@ export function useDoorStudioState({
         name,
         code,
         type,
-        doorSeriesId: seriesId || null,
+        doorSeriesId: effectiveSeriesId || null,
         imageB64,
-        specification: `${w}×${h}mm, ${frameShape}, hệ ID:${seriesId || 'default'}`,
+        specification: `${w}×${h}mm, ${frameShape}, hệ ID:${effectiveSeriesId || 'default'}`,
         systemConfig: sysConfig,
       };
 
@@ -1006,7 +1107,7 @@ export function useDoorStudioState({
     setHardwareColor,
     frameShape,
     setFrameShape,
-    seriesId,
+    seriesId: effectiveSeriesId,
     setSeriesId,
     selectedComboIds,
     selectedAccessories,
@@ -1042,7 +1143,7 @@ export function useDoorStudioState({
     availableCombos,
     availableAccessories,
     availableBrands,
-    selectedBrandId,
+    selectedBrandId: effectiveBrandId,
     setSelectedBrandId,
     availableGlasses,
     defaultGlass,

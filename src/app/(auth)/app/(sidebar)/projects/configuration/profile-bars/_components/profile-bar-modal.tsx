@@ -23,12 +23,20 @@ interface ProfileBarModalProps {
 const BAR_TYPE_OPTIONS = [
   { value: 'FRAME', label: 'Khung bao' },
   { value: 'SASH', label: 'Cánh cửa' },
-  { value: 'MULLION', label: 'Đố chia / Đố động' },
+  { value: 'SCREEN_SASH', label: 'Cánh lưới muỗi' },
+  { value: 'MULLION', label: 'Đố cố định / Đố chia' },
+  { value: 'DYNAMIC_MULLION', label: 'Đố động' },
   { value: 'BEAD', label: 'Nẹp kính' },
   { value: 'TRACK', label: 'Ray trượt' },
+  { value: 'COUPLING', label: 'Thanh ghép khung' },
+  { value: 'REVERSAL', label: 'Thanh đảo chiều / Khuôn phụ' },
+  { value: 'INTERLOCK', label: 'Thanh móc / Hèm đối đầu' },
+  { value: 'SASH_JOINER', label: 'Thanh nối cánh' },
+  { value: 'LOUVER', label: 'Lá sách / Chớp nhôm' },
+  { value: 'PANO', label: 'Tấm pano nhôm' },
   { value: 'COVER', label: 'Ốp / Nắp đậy' },
   { value: 'CORNER', label: 'Ke góc liên kết' },
-  { value: 'OTHER', label: 'Khác' },
+  { value: 'OTHER', label: 'Phụ trợ / Khác' },
 ];
 
 const DEFAULT_VALUES: ProfileBarCreate = {
