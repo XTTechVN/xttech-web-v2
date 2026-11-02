@@ -69,6 +69,7 @@ export interface TableDataProps<T> extends TableDataBaseProps<T> {
   columns: ITableColumn<T>[];
   search?: ITableSearchProps;
   filters?: ITableFilterProps[];
+  actions?: ReactNode;
 
   select?: boolean;
 
