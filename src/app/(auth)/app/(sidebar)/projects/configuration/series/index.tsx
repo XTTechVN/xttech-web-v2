@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getBrands, getDoorSeriesList, deleteDoorSeries } from '@/actions';
-import type { DoorSeries } from '@/types';
+import { getDefaultBrandId, type DoorSeries } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
@@ -42,7 +42,7 @@ export default function SeriesTab() {
   }, [brandsList]);
 
   // Tự động lấy hãng đầu tiên nếu chưa chọn (Derived State - tránh setState trong useEffect)
-  const activeBrandId = selectedBrandId ?? sortedBrands[0]?.id ?? null;
+  const activeBrandId = selectedBrandId ?? getDefaultBrandId(sortedBrands);
 
   // Mutations
   const { mutate: deleteSeriesMutate } = useMutation({

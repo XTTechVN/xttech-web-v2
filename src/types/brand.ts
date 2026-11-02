@@ -96,3 +96,14 @@ export interface BrandColorQueryParams {
   offset?: number;
   limit?: number;
 }
+
+export function isBrandFavorite(brand: Pick<Brand, 'sortOrder'>): boolean {
+  return (brand.sortOrder ?? 0) > 0;
+}
+
+export function getDefaultBrandId<T extends Pick<Brand, 'id' | 'sortOrder'>>(
+  brands: T[],
+): number | null {
+  const favoriteBrand = brands.find(isBrandFavorite);
+  return favoriteBrand?.id ?? brands[0]?.id ?? null;
+}

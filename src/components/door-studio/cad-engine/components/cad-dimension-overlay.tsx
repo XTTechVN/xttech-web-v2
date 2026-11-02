@@ -132,10 +132,38 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
           {(() => {
             const totalW = vertSlices.reduce((sum, s) => sum + s.w, 0) || w;
             const count = vertSlices.length;
+
+            // Gióng chuẩn ranh giới giữa cột idx và cột idx + 1 vào tim đố dọc hoặc mép cánh
+            const resolveVertBoundaryX = (idx: number): number => {
+              const leftSlice = vertSlices[idx];
+              const rightSlice = vertSlices[idx + 1];
+              const fallbackX = ox + Math.round((leftSlice.xEnd / totalW) * fw);
+
+              if (vertMullions.length === count - 1 && vertMullions[idx]) {
+                return Math.round(vertMullions[idx].x + vertMullions[idx].w / 2);
+              }
+
+              const leftId = leftSlice.editableCellId || leftSlice.id;
+              const rightId = rightSlice?.editableCellId || rightSlice?.id;
+              const matchedMullion = vertMullions.find(
+                (m) => m.info.childId === leftId || (rightId && m.info.nextChildId === rightId)
+              );
+              if (matchedMullion) {
+                return Math.round(matchedMullion.x + matchedMullion.w / 2);
+              }
+
+              const matchedLeaf = leaves.find((l) => l.node.id === leftId);
+              if (matchedLeaf) {
+                return Math.round(matchedLeaf.x + matchedLeaf.w);
+              }
+
+              return fallbackX;
+            };
+
             return vertSlices.map((child, idx) => {
               const isLast = idx === count - 1;
-              const leftX = idx === 0 ? ox : ox + Math.round((child.xStart / totalW) * fw);
-              const rightX = isLast ? ox + fw : ox + Math.round((child.xEnd / totalW) * fw);
+              const leftX = idx === 0 ? ox : resolveVertBoundaryX(idx - 1);
+              const rightX = isLast ? ox + fw : resolveVertBoundaryX(idx);
               const segW = rightX - leftX;
 
               // Tự động tối ưu cỡ chữ chống đè chữ khi chia nhiều ô
@@ -170,7 +198,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
                       }
                       onClick={() => {
                         if (isEditable) {
-                          onEditDimension?.('cell', child.editableCellId || child.id);
+                          onEditDimension?.('cell-w', child.editableCellId || child.id);
                         }
                       }}
                     >

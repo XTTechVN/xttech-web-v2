@@ -5,6 +5,8 @@ import type {
   GasketCreate,
   GasketUpdate,
   GasketQueryParams,
+  BulkDeleteRequest,
+  BulkDeleteResponse,
 } from '@/types';
 
 export const getGaskets = async (
@@ -64,6 +66,18 @@ export const deleteGasket = async (id: number): Promise<Gasket> => {
     return response.data;
   } catch (error) {
     console.warn('API error deleteGasket', error);
+    throw error;
+  }
+};
+
+export const bulkDeleteGaskets = async (
+  payload: BulkDeleteRequest,
+): Promise<BulkDeleteResponse> => {
+  try {
+    const response = await api.post<BulkDeleteResponse>('/api/v1/gaskets/bulk-delete', payload);
+    return response.data;
+  } catch (error) {
+    console.warn('API error bulkDeleteGaskets', error);
     throw error;
   }
 };

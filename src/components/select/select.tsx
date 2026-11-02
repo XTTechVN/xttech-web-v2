@@ -19,6 +19,7 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
   options?: SelectOption[];
   placeholder?: string;
   fullWidth?: boolean;
+  searchable?: boolean;
 }
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
@@ -30,6 +31,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       options = [],
       placeholder,
       fullWidth = false,
+      searchable,
       disabled,
       value,
       defaultValue,
@@ -70,7 +72,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       openUpward: false,
     });
 
-    const canSearch = options.length > 10;
+    const canSearch = searchable ?? options.length > 10;
 
     // Calculate fixed coordinates for Portal Dropdown
     const updatePosition = useCallback(() => {

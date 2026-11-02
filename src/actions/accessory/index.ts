@@ -13,6 +13,8 @@ import type {
   AccessoryExcelPreviewResponse,
   AccessoryBulkUpsertRequest,
   MaterialBulkUpsertResponse,
+  BulkDeleteRequest,
+  BulkDeleteResponse,
   Door,
   DoorQueryParams,
   Material,
@@ -97,6 +99,18 @@ export const deleteAccessory = async (id: number): Promise<Accessory> => {
     return response.data;
   } catch (error: unknown) {
     console.warn('API error deleteAccessory', error);
+    throw error;
+  }
+};
+
+export const bulkDeleteAccessories = async (
+  payload: BulkDeleteRequest,
+): Promise<BulkDeleteResponse> => {
+  try {
+    const response = await api.post<BulkDeleteResponse>('/api/v1/accessories/bulk-delete', payload);
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error bulkDeleteAccessories', error);
     throw error;
   }
 };

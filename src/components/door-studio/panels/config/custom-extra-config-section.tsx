@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { DoorCustomExtraItem } from '../../studio-types';
 import { ProfileBar } from '@/types';
+import { Select } from '@/components/select';
 import { Plus, X } from 'lucide-react';
 
 interface CustomExtraConfigSectionProps {
@@ -57,6 +58,15 @@ export const CustomExtraConfigSection: React.FC<CustomExtraConfigSectionProps> =
     onChangeItems(items.filter((item) => item.id !== id));
   };
 
+  const profileOptions = useMemo(
+    () =>
+      profiles.map((p) => ({
+        value: p.id,
+        label: `${p.code} · ${p.name}`,
+      })),
+    [profiles]
+  );
+
   const targetTitle = target === 'frame' ? 'Khung' : 'Cánh';
 
   return (
@@ -101,18 +111,15 @@ export const CustomExtraConfigSection: React.FC<CustomExtraConfigSectionProps> =
                 {/* 1. Profile */}
                 <div className="md:col-span-4 space-y-1">
                   <label className="text-[10px] text-slate-500 font-medium block">Profile:</label>
-                  <select
+                  <Select
+                    searchable
+                    fullWidth
+                    options={profileOptions}
                     value={row.profileId || ''}
+                    placeholder="Chọn profile thanh phụ..."
                     onChange={(e) => handleProfileSelect(row.id, Number(e.target.value))}
-                    className="w-full h-7 px-2 text-xs rounded border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-amber-500"
-                  >
-                    <option value="">Chọn profile thanh phụ...</option>
-                    {profiles.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.code} · {p.name}
-                      </option>
-                    ))}
-                  </select>
+                    className="h-7 text-xs md:text-xs py-0 pl-2 pr-7 border-slate-300 focus:border-amber-500"
+                  />
                 </div>
 
                 {/* 2. Ghi chú */}

@@ -6,10 +6,13 @@ import {
   getBrands,
   getAccessories,
   deleteAccessory,
+  bulkDeleteAccessories,
   getAccessoryCategories,
   exportAccessoriesExcel,
 } from '@/actions';
-import type { Accessory } from '@/types';
+import { ConfirmActionModal } from '@/components';
+import { useBulkDeleteSelection } from '@/hooks';
+import { getDefaultBrandId, type Accessory } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
@@ -60,7 +63,7 @@ export default function AccessoriesTab() {
   }, [brandsList]);
 
   // Tự động lấy hãng đầu tiên nếu chưa chọn (Derived State - tránh setState trong useEffect)
-  const activeBrandId = selectedBrandId ?? sortedBrands[0]?.id ?? null;
+  const activeBrandId = selectedBrandId ?? getDefaultBrandId(sortedBrands);
 
   // Queries danh sách phân loại phụ kiện
   const { data: categoriesData } = useQuery({
@@ -88,9 +91,11 @@ export default function AccessoriesTab() {
     enabled: activeBrandId !== null,
   });
 
-  const accessories = accessoriesData || [];
+  const accessories = useMemo(() => accessoriesData || [], [accessoriesData]);
 
-  // Mutations xóa phụ kiện
+  const bulkSelection = useBulkDeleteSelection(accessories);
+
+  // Mutations xóa phụ kiện đơn lẻ
   const { mutate: deleteAccessoryMutate } = useMutation({
     mutationFn: (id: number) => deleteAccessory(id),
     onSuccess: () => {
@@ -98,6 +103,17 @@ export default function AccessoriesTab() {
       toast.success('Xóa phụ kiện thành công');
     },
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa phụ kiện'),
+  });
+
+  // Mutations xóa hàng loạt phụ kiện
+  const { mutate: bulkDeleteMutate, isPending: isBulkDeleting } = useMutation({
+    mutationFn: (ids: number[]) => bulkDeleteAccessories({ ids }),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['accessories'] });
+      toast.success(`Đã xóa hàng loạt ${res.deletedCount} phụ kiện`);
+      bulkSelection.exitBulkMode();
+    },
+    onError: (err) => showErrorToast(err, 'Lỗi khi xóa hàng loạt phụ kiện'),
   });
 
   const selectedBrand = useMemo(() => {
@@ -139,16 +155,13 @@ export default function AccessoriesTab() {
 
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
-      {/* Cột lọc danh sách Hãng phụ kiện bên trái */}
       <BrandSidebar
         brands={brandsList}
         selectedBrandId={activeBrandId}
         onSelectBrand={setSelectedBrandId}
       />
 
-      {/* Khu vực nội dung danh sách Phụ kiện bên phải */}
       <div className="flex-1 flex flex-col gap-4 min-w-0 w-full p-4">
-        {/* Toolbar: Tìm kiếm, Lọc phân loại, Xuất/Nhập Excel & Thêm mới */}
         <AccessoryToolbar
           search={search}
           onSearchChange={setSearch}
@@ -160,9 +173,17 @@ export default function AccessoriesTab() {
           categoryList={categoryList}
           selectedCategoryId={selectedCategoryId}
           onCategoryChange={setSelectedCategoryId}
+          isBulkMode={bulkSelection.isBulkMode}
+          selectedCount={bulkSelection.selectedCount}
+          totalCount={bulkSelection.totalCount}
+          isAllSelected={bulkSelection.isAllSelected}
+          isBulkDeleting={isBulkDeleting}
+          onEnterBulkMode={bulkSelection.enterBulkMode}
+          onExitBulkMode={bulkSelection.exitBulkMode}
+          onToggleSelectAll={bulkSelection.toggleSelectAll}
+          onConfirmBulkDelete={() => bulkSelection.setIsConfirmOpen(true)}
         />
 
-        {/* Danh sách phụ kiện dạng bảng */}
         {isLoading ? (
           <AccessorySkeleton count={6} />
         ) : accessories.length === 0 ? (
@@ -172,11 +193,16 @@ export default function AccessoriesTab() {
             accessories={accessories}
             onEdit={handleOpenEditModal}
             onDelete={handleDeleteAccessory}
+            isBulkMode={bulkSelection.isBulkMode}
+            selectedIdSet={bulkSelection.selectedIdSet}
+            isAllSelected={bulkSelection.isAllSelected}
+            isPartiallySelected={bulkSelection.isPartiallySelected}
+            onToggleSelect={bulkSelection.toggleSelect}
+            onToggleSelectAll={bulkSelection.toggleSelectAll}
           />
         )}
       </div>
 
-      {/* Modal Thêm mới / Sửa phụ kiện */}
       <AccessoryModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -188,18 +214,33 @@ export default function AccessoriesTab() {
         defaultBrandId={activeBrandId}
       />
 
-      {/* Modal Toàn màn hình Quản lý Danh mục phụ kiện */}
       <AccessoryCategoryManagerModal
         isOpen={isCategoryManagerOpen}
         onClose={() => setIsCategoryManagerOpen(false)}
       />
 
-      {/* Modal Nhập Excel & Chỉnh sửa trực tiếp */}
       <AccessoryExcelModal
         isOpen={isExcelModalOpen}
         onClose={() => setIsExcelModalOpen(false)}
         brands={brandsList}
         categories={categoryList}
+      />
+
+      <ConfirmActionModal
+        isOpen={bulkSelection.isConfirmOpen}
+        onClose={() => bulkSelection.setIsConfirmOpen(false)}
+        onConfirm={() => bulkDeleteMutate(bulkSelection.selectedIds)}
+        title="Xác nhận xóa hàng loạt phụ kiện"
+        description={
+          <>
+            Bạn có chắc chắn muốn xóa <strong>{bulkSelection.selectedCount}</strong> phụ kiện đã chọn thuộc hãng{' '}
+            <strong>{selectedBrand?.name || ''}</strong> không?
+          </>
+        }
+        warningNote="Các phụ kiện đã chọn sẽ bị đưa vào trạng thái xóa và ẩn khỏi danh sách cấu hình."
+        confirmText={`Xóa ${bulkSelection.selectedCount} phụ kiện`}
+        variant="danger"
+        loading={isBulkDeleting}
       />
     </div>
   );

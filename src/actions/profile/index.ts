@@ -13,6 +13,8 @@ import type {
   ProfileBarExcelPreviewResponse,
   ProfileBarBulkUpsertRequest,
   MaterialBulkUpsertResponse,
+  BulkDeleteRequest,
+  BulkDeleteResponse,
 } from '@/types';
 
 // Profile Bars
@@ -73,6 +75,18 @@ export const deleteProfileBar = async (id: number): Promise<ProfileBar> => {
     return response.data;
   } catch (error) {
     console.warn('API error deleteProfileBar', error);
+    throw error;
+  }
+};
+
+export const bulkDeleteProfileBars = async (
+  payload: BulkDeleteRequest,
+): Promise<BulkDeleteResponse> => {
+  try {
+    const response = await api.post<BulkDeleteResponse>('/api/v1/profile-bars/bulk-delete', payload);
+    return response.data;
+  } catch (error) {
+    console.warn('API error bulkDeleteProfileBars', error);
     throw error;
   }
 };

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { DoorCadRenderer, ResizeSplitParams } from '../cad-engine/door-cad-renderer';
+import { getVerticalSlices, getHorizontalSlices } from '../cad-engine/cad-tree-traverser';
 import { FrameShape, SceneCellNode, FrameConfig, SashConfig, MullionInfo } from '../studio-types';
 import { ProfileBar } from '@/types/profile';
 import { Plus, Minus, Target, Check, X } from 'lucide-react';
@@ -235,7 +236,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
       initialVal = cNode?.handleHeight || (cNode ? Math.round(cNode.h / 2) : Math.round(h / 2));
       title = `Cao độ tim khóa từ đáy (mm)`;
     } else if (target === 'cell-h' && cellId) {
-      // Tìm leaf cell hoặc row cell để lấy chiều cao
+      // Tìm leaf cell hoặc row cell để lấy chiều cao thực tế trên thước
       const findCell = (node: SceneCellNode): SceneCellNode | null => {
         if (node.id === cellId) return node;
         if (node.children) {
@@ -247,10 +248,11 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
         return null;
       };
       const cNode = findCell(rootCell);
-      initialVal = cNode?.h || Math.round(h / 2);
+      const sliceH = getHorizontalSlices(rootCell).find((s) => s.id === cellId)?.h;
+      initialVal = sliceH || cNode?.h || Math.round(h / 2);
       title = `Chiều cao ô/hàng (${cellId})`;
     } else if ((target === 'cell' || target === 'cell-w') && cellId) {
-      // Tìm leaf cell để lấy chiều rộng
+      // Tìm cột/ô để lấy chiều rộng thực tế đang hiển thị trên thước
       const findCell = (node: SceneCellNode): SceneCellNode | null => {
         if (node.id === cellId) return node;
         if (node.children) {
@@ -262,7 +264,10 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
         return null;
       };
       const cNode = findCell(rootCell);
-      initialVal = cNode?.w || Math.round(w / 2);
+      const sliceW = getVerticalSlices(rootCell).find(
+        (s) => (s.editableCellId || s.id) === cellId
+      )?.w;
+      initialVal = sliceW || cNode?.w || Math.round(w / 2);
       title = `Chiều rộng cánh/ô (${cellId})`;
     }
 

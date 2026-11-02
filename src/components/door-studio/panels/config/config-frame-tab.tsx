@@ -22,6 +22,7 @@ interface ConfigFrameTabProps {
 
 export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChangeConfig, profiles, }) => {
   const frameProfiles = profiles.filter((p) => p.barType === 'FRAME');
+  const trackProfiles = profiles.filter((p) => p.barType === 'TRACK');
   const mullionProfiles = profiles.filter((p) => p.barType === 'MULLION');
   const beadProfiles = profiles.filter((p) => p.barType === 'BEAD');
   const couplingProfiles = profiles.filter((p) => p.barType === 'COUPLING');
@@ -29,12 +30,18 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
   const auxiliaryProfiles = profiles.filter(
     (p) =>
       p.barType !== 'FRAME' &&
+      p.barType !== 'TRACK' &&
       p.barType !== 'SASH' &&
       p.barType !== 'SCREEN_SASH' &&
       p.barType !== 'MULLION' &&
+      p.barType !== 'DYNAMIC_MULLION' &&
       p.barType !== 'BEAD' &&
       p.barType !== 'COUPLING' &&
-      p.barType !== 'REVERSAL'
+      p.barType !== 'REVERSAL' &&
+      p.barType !== 'INTERLOCK' &&
+      p.barType !== 'SASH_JOINER' &&
+      p.barType !== 'LOUVER' &&
+      p.barType !== 'PANO'
   );
 
   const availableReversalProfiles = reversalProfiles.length > 0 ? reversalProfiles : auxiliaryProfiles;
@@ -234,9 +241,24 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
               className="w-full h-8 px-2.5 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:border-primary text-slate-800"
             >
               <option value="">{leftEdge.profileId ? '↑ Kế thừa (Cạnh trái)' : 'Chọn profile...'}</option>
-              {frameProfiles.map((p) => (
-                <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-              ))}
+              {trackProfiles.length > 0 ? (
+                <>
+                  <optgroup label="Khung bao tiêu chuẩn (FRAME)">
+                    {frameProfiles.map((p) => (
+                      <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Ray treo / Ray trượt (TRACK)">
+                    {trackProfiles.map((p) => (
+                      <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                    ))}
+                  </optgroup>
+                </>
+              ) : (
+                frameProfiles.map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                ))
+              )}
             </select>
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] text-slate-500">Bù/trừ offset:</span>
@@ -282,13 +304,15 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
             </div>
           </div>
 
-          {/* Cạnh Dưới (Hỗ trợ Ngưỡng nhôm & Ốp chân ngưỡng) */}
+          {/* Cạnh Dưới (Hỗ trợ Ray trượt, Ngưỡng nhôm & Ốp chân ngưỡng) */}
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
             <div className="flex items-center justify-between font-semibold text-xs text-slate-800">
               <span>Cạnh dưới</span>
               <span className="text-primary font-bold text-[11px]">
                 {config.isOpenBottom
                   ? 'Bỏ qua'
+                  : bottomEdge.profileId && trackProfiles.some((p) => p.id === bottomEdge.profileId)
+                  ? 'W · 90°/90° (Ray dưới)'
                   : bottomEdge.profileId && auxiliaryProfiles.some((p) => p.id === bottomEdge.profileId)
                   ? 'W · 90°/90° (Ngưỡng)'
                   : 'W · 45°/45°'}
@@ -324,6 +348,15 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   </option>
                 ))}
               </optgroup>
+              {trackProfiles.length > 0 && (
+                <optgroup label="Ray trượt cửa lùa / xếp trượt (TRACK)">
+                  {trackProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.code} - {p.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
               {auxiliaryProfiles.length > 0 && (
                 <optgroup label="Ngưỡng sàn / Thanh phụ khác (OTHER / SILL)">
                   {auxiliaryProfiles.map((p) => (

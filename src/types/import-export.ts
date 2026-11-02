@@ -247,3 +247,15 @@ export interface AccessoryBulkUpsertItem {
 export interface AccessoryBulkUpsertRequest {
   items: AccessoryBulkUpsertItem[];
 }
+
+// 4. Bulk Delete Material Items
+export interface BulkDeleteRequest {
+  ids: number[];
+}
+
+export interface BulkDeleteResponse {
+  deletedCount: number;
+  deletedIds: number[];
+  skippedIds: number[];
+}
+

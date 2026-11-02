@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDoors, getDoorSeriesList, getBrands } from '@/actions';
-import { getDoorTypeConfig, normalizeDoorType, type Door } from '@/types';
+import { getDefaultBrandId, getDoorTypeConfig, normalizeDoorType, type Door } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 import { Search, Plus, ImageOff, LayoutGrid } from 'lucide-react';
 import { BrandSidebar } from '../../_components';
@@ -105,7 +105,7 @@ export default function DoorTemplatesTab() {
   );
 
   // Tự động chọn hãng đầu tiên (Derived State - tránh setState trong useEffect)
-  const activeBrandId = selectedBrandId ?? sortedBrands[0]?.id ?? null;
+  const activeBrandId = selectedBrandId ?? getDefaultBrandId(sortedBrands);
 
   const { data: seriesData } = useQuery({
     queryKey: ['door-series', activeBrandId],

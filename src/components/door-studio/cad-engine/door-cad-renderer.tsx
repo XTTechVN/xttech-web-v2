@@ -251,6 +251,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
       vertMullionT,
       horizMullionT,
       frameConfig,
+      sashConfig,
       slidingOverlapPx,
     }
   );
@@ -380,6 +381,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
             leftNode={leaves[0].node}
             rightNode={leaves[1]?.node}
             frameConfig={frameConfig}
+            sashConfig={sashConfig}
           />
         ) : isCurvedSingle ? (
           <CadCurvedSingleDoor
@@ -400,6 +402,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
             onSelectCell={onSelectCell}
             onEditDimension={onEditDimension}
             node={leaves[0].node}
+            sashConfig={sashConfig}
           />
         ) : (
           [...leaves]
