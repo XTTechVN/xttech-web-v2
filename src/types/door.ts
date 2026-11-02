@@ -150,6 +150,15 @@ export interface Door {
   updatedAt: string;
 }
 
+export type CalculationStepTone = 'neutral' | 'deduct' | 'add' | 'subtotal' | 'result';
+
+export interface CalculationStep {
+  label: string;
+  formula?: string | null;
+  value: string;
+  tone: CalculationStepTone;
+}
+
 export interface ProfileBarCut {
   name: string;
   side?: number | null;
@@ -165,6 +174,8 @@ export interface ProfileBarCut {
   profileCode?: string | null;
   profileName?: string | null;
   positions?: string[];
+  calcSteps?: CalculationStep[];
+  calcNote?: string | null;
 }
 
 export interface BeadCut {
@@ -178,7 +189,11 @@ export interface BeadCut {
   qty: number;
   profileId?: number | null;
   profileCode?: string | null;
+  profileName?: string | null;
+  weightPerM?: number;
   positions?: string[];
+  calcSteps?: CalculationStep[];
+  calcNote?: string | null;
 }
 
 export interface GlassCellBOM {
@@ -192,6 +207,8 @@ export interface GlassCellBOM {
   openType?: string | null;
   glassName?: string | null;
   glassPrice?: number | null;
+  calcSteps?: CalculationStep[];
+  calcNote?: string | null;
 }
 
 export interface GroupedGlassCellBOM {

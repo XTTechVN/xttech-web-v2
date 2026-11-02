@@ -7,11 +7,15 @@ import {
   getGlassCategories,
   getGaskets,
   deleteGlass,
+  bulkDeleteGlasses,
   setDefaultGlass,
   deleteGlassCategory,
   deleteGasket,
+  bulkDeleteGaskets,
   exportGlassGasketsExcel,
 } from '@/actions';
+import { ConfirmActionModal } from '@/components';
+import { useBulkDeleteSelection } from '@/hooks';
 import type { Glass, GlassCategory, Gasket } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
@@ -33,11 +37,7 @@ import {
   getCategoryMaterialType,
 } from './_components';
 
-const MATERIAL_TYPE_LABEL: Record<string, string> = {
-  glass: 'Kính',
-  panel: 'Tấm',
-  screen_mesh: 'Lưới',
-};
+const MATERIAL_TYPE_LABEL: Record<string, string> = { glass: 'Kính', panel: 'Tấm', screen_mesh: 'Lưới' };
 
 export default function GlassGasketsPage() {
   const [search, setSearch] = useState('');
@@ -59,12 +59,10 @@ export default function GlassGasketsPage() {
     queryKey: ['glass-categories'],
     queryFn: async () => (await getGlassCategories({ limit: 999 })).items,
   });
-
   const { data: glassesData, isLoading: isGlassesLoading } = useQuery({
     queryKey: ['glasses'],
     queryFn: async () => (await getGlasses({ limit: 999 })).items,
   });
-
   const { data: gasketData, isLoading: isGasketLoading } = useQuery({
     queryKey: ['gaskets'],
     queryFn: async () => (await getGaskets({ limit: 999 })).items,
@@ -81,9 +79,7 @@ export default function GlassGasketsPage() {
   }, [categoriesList]);
 
   const glassTypeCounts = useMemo(() => {
-    let glass = 0;
-    let panel = 0;
-    let screen_mesh = 0;
+    let glass = 0, panel = 0, screen_mesh = 0;
     glassesList.forEach((g) => {
       const type = categoryTypeMap.get(g.categoryId) || 'glass';
       if (type === 'panel') panel++;
@@ -153,6 +149,23 @@ export default function GlassGasketsPage() {
     return gasketsList.filter((g) => g.name.toLowerCase().includes(query) || g.code.toLowerCase().includes(query));
   }, [gasketsList, search]);
 
+  const isGasketView = selectedCategory === 'gaskets';
+  const activeItems = useMemo<Array<Glass | Gasket>>(
+    () => (isGasketView ? filteredGaskets : filteredGlasses),
+    [isGasketView, filteredGaskets, filteredGlasses],
+  );
+  const bulkSelection = useBulkDeleteSelection(activeItems);
+
+  const { mutate: bulkDeleteMutate, isPending: isBulkDeleting } = useMutation({
+    mutationFn: (ids: number[]) => (isGasketView ? bulkDeleteGaskets({ ids }) : bulkDeleteGlasses({ ids })),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: [isGasketView ? 'gaskets' : 'glasses'] });
+      toast.success(`Đã xóa hàng loạt ${res.deletedCount} ${isGasketView ? 'vật tư gioăng / keo' : 'quy cách kính / tấm'}`);
+      bulkSelection.exitBulkMode();
+    },
+    onError: (err) => showErrorToast(err, 'Lỗi khi xóa hàng loạt vật tư'),
+  });
+
   const selectedCategoryObj = useMemo(
     () => (typeof selectedCategory === 'number' ? categoriesList.find((c) => c.id === selectedCategory) : null),
     [categoriesList, selectedCategory],
@@ -161,9 +174,7 @@ export default function GlassGasketsPage() {
   const handleExportExcel = async () => {
     try {
       setIsExporting(true);
-      await exportGlassGasketsExcel({
-        categoryId: typeof selectedCategory === 'number' ? selectedCategory : null,
-      });
+      await exportGlassGasketsExcel({ categoryId: typeof selectedCategory === 'number' ? selectedCategory : null });
       toast.success('Đã xuất file Excel danh sách Kính & Gioăng');
     } catch (err) {
       showErrorToast(err, 'Lỗi khi xuất file Excel');
@@ -172,8 +183,8 @@ export default function GlassGasketsPage() {
     }
   };
 
-  const isGasketView = selectedCategory === 'gaskets';
   const isLoading = isCatLoading || (isGasketView ? isGasketLoading : isGlassesLoading);
+  const itemUnitName = isGasketView ? 'vật tư gioăng / keo' : 'quy cách kính / tấm / lưới';
 
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
@@ -194,18 +205,21 @@ export default function GlassGasketsPage() {
           onSearchChange={setSearch}
           selectedCategory={selectedCategory}
           selectedType={selectedType}
-          onAddGlass={() => {
-            setSelectedGlass(null);
-            setIsGlassModalOpen(true);
-          }}
-          onAddGasket={() => {
-            setSelectedGasket(null);
-            setIsGasketModalOpen(true);
-          }}
+          onAddGlass={() => { setSelectedGlass(null); setIsGlassModalOpen(true); }}
+          onAddGasket={() => { setSelectedGasket(null); setIsGasketModalOpen(true); }}
           onManageCategories={() => setIsCategoryManagerOpen(true)}
           onExportExcelClick={handleExportExcel}
           onImportExcelClick={() => setIsExcelModalOpen(true)}
           isExporting={isExporting}
+          isBulkMode={bulkSelection.isBulkMode}
+          selectedCount={bulkSelection.selectedCount}
+          totalCount={bulkSelection.totalCount}
+          isAllSelected={bulkSelection.isAllSelected}
+          isBulkDeleting={isBulkDeleting}
+          onEnterBulkMode={bulkSelection.enterBulkMode}
+          onExitBulkMode={bulkSelection.exitBulkMode}
+          onToggleSelectAll={bulkSelection.toggleSelectAll}
+          onConfirmBulkDelete={() => bulkSelection.setIsConfirmOpen(true)}
         />
 
         {isLoading ? (
@@ -216,15 +230,16 @@ export default function GlassGasketsPage() {
           ) : (
             <GasketTable
               gaskets={filteredGaskets}
-              onEdit={(gasket) => {
-                setSelectedGasket(gasket);
-                setIsGasketModalOpen(true);
-              }}
+              onEdit={(gasket) => { setSelectedGasket(gasket); setIsGasketModalOpen(true); }}
               onDelete={(gasket) => {
-                if (confirm(`Xác nhận xóa vật tư "${gasket.name}" (${gasket.code})?`)) {
-                  deleteGasketMutate(gasket.id);
-                }
+                if (confirm(`Xác nhận xóa vật tư "${gasket.name}" (${gasket.code})?`)) deleteGasketMutate(gasket.id);
               }}
+              isBulkMode={bulkSelection.isBulkMode}
+              selectedIdSet={bulkSelection.selectedIdSet}
+              isAllSelected={bulkSelection.isAllSelected}
+              isPartiallySelected={bulkSelection.isPartiallySelected}
+              onToggleSelect={bulkSelection.toggleSelect}
+              onToggleSelectAll={bulkSelection.toggleSelectAll}
             />
           )
         ) : filteredGlasses.length === 0 ? (
@@ -233,27 +248,25 @@ export default function GlassGasketsPage() {
           <GlassTable
             glasses={filteredGlasses}
             categories={categoriesList}
-            onEdit={(glass) => {
-              setSelectedGlass(glass);
-              setIsGlassModalOpen(true);
-            }}
+            onEdit={(glass) => { setSelectedGlass(glass); setIsGlassModalOpen(true); }}
             onDelete={(glass) => {
-              if (confirm(`Xác nhận xóa quy cách kính "${glass.name}" (${glass.code})?`)) {
-                deleteGlassMutate(glass.id);
-              }
+              if (confirm(`Xác nhận xóa quy cách kính "${glass.name}" (${glass.code})?`)) deleteGlassMutate(glass.id);
             }}
             onSetDefault={(glass) => setDefaultGlassMutate(glass.id)}
             settingDefaultId={settingDefaultGlassId}
+            isBulkMode={bulkSelection.isBulkMode}
+            selectedIdSet={bulkSelection.selectedIdSet}
+            isAllSelected={bulkSelection.isAllSelected}
+            isPartiallySelected={bulkSelection.isPartiallySelected}
+            onToggleSelect={bulkSelection.toggleSelect}
+            onToggleSelectAll={bulkSelection.toggleSelectAll}
           />
         )}
       </div>
 
       <GlassModal
         isOpen={isGlassModalOpen}
-        onClose={() => {
-          setIsGlassModalOpen(false);
-          setSelectedGlass(null);
-        }}
+        onClose={() => { setIsGlassModalOpen(false); setSelectedGlass(null); }}
         glass={selectedGlass}
         categories={categoriesList}
         defaultMaterialType={selectedType !== 'all' ? selectedType : 'glass'}
@@ -262,19 +275,13 @@ export default function GlassGasketsPage() {
 
       <GasketModal
         isOpen={isGasketModalOpen}
-        onClose={() => {
-          setIsGasketModalOpen(false);
-          setSelectedGasket(null);
-        }}
+        onClose={() => { setIsGasketModalOpen(false); setSelectedGasket(null); }}
         gasket={selectedGasket}
       />
 
       <GlassCategoryModal
         isOpen={isCategoryModalOpen}
-        onClose={() => {
-          setIsCategoryModalOpen(false);
-          setSelectedCategoryItem(null);
-        }}
+        onClose={() => { setIsCategoryModalOpen(false); setSelectedCategoryItem(null); }}
         category={selectedCategoryItem}
       />
 
@@ -282,18 +289,10 @@ export default function GlassGasketsPage() {
         isOpen={isCategoryManagerOpen}
         onClose={() => setIsCategoryManagerOpen(false)}
         categories={categoriesList}
-        onAddCategory={() => {
-          setSelectedCategoryItem(null);
-          setIsCategoryModalOpen(true);
-        }}
-        onEditCategory={(cat) => {
-          setSelectedCategoryItem(cat);
-          setIsCategoryModalOpen(true);
-        }}
+        onAddCategory={() => { setSelectedCategoryItem(null); setIsCategoryModalOpen(true); }}
+        onEditCategory={(cat) => { setSelectedCategoryItem(cat); setIsCategoryModalOpen(true); }}
         onDeleteCategory={(cat) => {
-          if (confirm(`Xác nhận xóa nhóm chủng loại "${cat.name}"?`)) {
-            deleteCategoryMutate(cat.id);
-          }
+          if (confirm(`Xác nhận xóa nhóm chủng loại "${cat.name}"?`)) deleteCategoryMutate(cat.id);
         }}
       />
 
@@ -303,6 +302,20 @@ export default function GlassGasketsPage() {
         categories={categoriesList}
         existingGlasses={glassesList}
         existingGaskets={gasketsList}
+      />
+
+      <ConfirmActionModal
+        isOpen={bulkSelection.isConfirmOpen}
+        onClose={() => bulkSelection.setIsConfirmOpen(false)}
+        onConfirm={() => bulkDeleteMutate(bulkSelection.selectedIds)}
+        title={`Xác nhận xóa hàng loạt ${itemUnitName}`}
+        description={
+          <>Bạn có chắc chắn muốn xóa <strong>{bulkSelection.selectedCount}</strong> {itemUnitName} đã chọn không?</>
+        }
+        warningNote="Các bản ghi đã chọn sẽ bị đưa vào trạng thái xóa và ẩn khỏi danh sách cấu hình."
+        confirmText={`Xóa ${bulkSelection.selectedCount} mục`}
+        variant="danger"
+        loading={isBulkDeleting}
       />
     </div>
   );

@@ -12,6 +12,12 @@ interface GlassTableProps {
   onDelete: (glass: Glass) => void;
   onSetDefault: (glass: Glass) => void;
   settingDefaultId?: number | null;
+  isBulkMode?: boolean;
+  selectedIdSet?: ReadonlySet<number>;
+  isAllSelected?: boolean;
+  isPartiallySelected?: boolean;
+  onToggleSelect?: (id: number) => void;
+  onToggleSelectAll?: () => void;
 }
 
 type SortField = 'code' | 'name' | 'thickness' | 'weight' | 'price' | 'status';
@@ -39,7 +45,20 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
   );
 }
 
-export function GlassTable({ glasses, categories, onEdit, onDelete, onSetDefault, settingDefaultId }: GlassTableProps) {
+export function GlassTable({
+  glasses,
+  categories,
+  onEdit,
+  onDelete,
+  onSetDefault,
+  settingDefaultId,
+  isBulkMode = false,
+  selectedIdSet,
+  isAllSelected = false,
+  isPartiallySelected = false,
+  onToggleSelect,
+  onToggleSelectAll,
+}: GlassTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
@@ -91,6 +110,20 @@ export function GlassTable({ glasses, categories, onEdit, onDelete, onSetDefault
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold text-slate-600 select-none">
+              {isBulkMode && (
+                <th className="py-3 px-3 w-11 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isPartiallySelected;
+                    }}
+                    onChange={() => onToggleSelectAll?.()}
+                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer accent-[#045863]"
+                    title="Chọn tất cả"
+                  />
+                </th>
+              )}
               <th onClick={() => handleSort('code')} className="py-3 px-4 w-36 cursor-pointer group/th hover:text-slate-800 transition-colors">
                 <div className="flex items-center gap-1.5">
                   <span>Mã hiệu</span>
@@ -138,9 +171,30 @@ export function GlassTable({ glasses, categories, onEdit, onDelete, onSetDefault
                 badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
               };
               const categoryName = glass.categoryId ? catMap.get(glass.categoryId)?.name : null;
+              const isSelected = Boolean(selectedIdSet?.has(glass.id));
 
               return (
-                <tr key={glass.id} className="hover:bg-slate-50/80 transition-colors group">
+                <tr
+                  key={glass.id}
+                  onClick={() => {
+                    if (isBulkMode) onToggleSelect?.(glass.id);
+                  }}
+                  className={`transition-colors group ${
+                    isBulkMode ? 'cursor-pointer' : ''
+                  } ${
+                    isSelected ? 'bg-rose-50/40 hover:bg-rose-50/60' : 'hover:bg-slate-50/80'
+                  }`}
+                >
+                  {isBulkMode && (
+                    <td className="py-3.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => onToggleSelect?.(glass.id)}
+                        className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer accent-[#045863]"
+                      />
+                    </td>
+                  )}
                   <td className="py-3.5 px-4 font-semibold text-slate-800 text-xs">{glass.code || '—'}</td>
                   <td className="py-3.5 px-4">
                     <div className="flex flex-col">
@@ -170,7 +224,7 @@ export function GlassTable({ glasses, categories, onEdit, onDelete, onSetDefault
                   <td className="py-3.5 px-4 text-right">
                     <span className="font-bold text-slate-900 text-xs">{formatCurrency(glass.unitPrice || 0)}</span>
                   </td>
-                  <td className="py-3.5 px-4 text-center">
+                  <td className="py-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center gap-2">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border whitespace-nowrap ${
@@ -200,7 +254,7 @@ export function GlassTable({ glasses, categories, onEdit, onDelete, onSetDefault
                       )}
                     </div>
                   </td>
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"

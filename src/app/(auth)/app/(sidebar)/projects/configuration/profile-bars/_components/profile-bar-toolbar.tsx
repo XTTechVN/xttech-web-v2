@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components';
-import { TableSearch } from '@/components/table';
+import { TableSearch, BulkDeleteToolbarActions } from '@/components/table';
 import { Plus, Download, Upload } from 'lucide-react';
 import type { DoorSeries } from '@/types';
 
@@ -16,6 +16,15 @@ interface ProfileBarToolbarProps {
   seriesList?: DoorSeries[];
   selectedSeriesId?: number | null;
   onSeriesChange?: (seriesId: number | null) => void;
+  isBulkMode?: boolean;
+  selectedCount?: number;
+  totalCount?: number;
+  isAllSelected?: boolean;
+  isBulkDeleting?: boolean;
+  onEnterBulkMode?: () => void;
+  onExitBulkMode?: () => void;
+  onToggleSelectAll?: () => void;
+  onConfirmBulkDelete?: () => void;
 }
 
 export function ProfileBarToolbar({
@@ -28,6 +37,15 @@ export function ProfileBarToolbar({
   seriesList = [],
   selectedSeriesId,
   onSeriesChange,
+  isBulkMode = false,
+  selectedCount = 0,
+  totalCount = 0,
+  isAllSelected = false,
+  isBulkDeleting = false,
+  onEnterBulkMode,
+  onExitBulkMode,
+  onToggleSelectAll,
+  onConfirmBulkDelete,
 }: ProfileBarToolbarProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -56,37 +74,55 @@ export function ProfileBarToolbar({
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {onExportExcelClick && (
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Download size={15} />}
-            loading={isExporting}
-            onClick={onExportExcelClick}
-          >
-            Xuất Excel
-          </Button>
+        {onEnterBulkMode && onExitBulkMode && onToggleSelectAll && onConfirmBulkDelete && (
+          <BulkDeleteToolbarActions
+            isBulkMode={isBulkMode}
+            selectedCount={selectedCount}
+            totalCount={totalCount}
+            isAllSelected={isAllSelected}
+            isDeleting={isBulkDeleting}
+            onEnterBulkMode={onEnterBulkMode}
+            onExitBulkMode={onExitBulkMode}
+            onToggleSelectAll={onToggleSelectAll}
+            onConfirmDelete={onConfirmBulkDelete}
+          />
         )}
 
-        {onImportExcelClick && (
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Upload size={15} />}
-            onClick={onImportExcelClick}
-          >
-            Nhập Excel
-          </Button>
-        )}
+        {!isBulkMode && (
+          <>
+            {onExportExcelClick && (
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<Download size={15} />}
+                loading={isExporting}
+                onClick={onExportExcelClick}
+              >
+                Xuất Excel
+              </Button>
+            )}
 
-        <Button
-          variant="primary"
-          size="sm"
-          leftIcon={<Plus size={15} />}
-          onClick={onAddClick}
-        >
-          Thêm thanh profile mới
-        </Button>
+            {onImportExcelClick && (
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<Upload size={15} />}
+                onClick={onImportExcelClick}
+              >
+                Nhập Excel
+              </Button>
+            )}
+
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Plus size={15} />}
+              onClick={onAddClick}
+            >
+              Thêm thanh profile mới
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -10,6 +10,12 @@ interface GasketTableProps {
   gaskets: Gasket[];
   onEdit: (gasket: Gasket) => void;
   onDelete: (gasket: Gasket) => void;
+  isBulkMode?: boolean;
+  selectedIdSet?: ReadonlySet<number>;
+  isAllSelected?: boolean;
+  isPartiallySelected?: boolean;
+  onToggleSelect?: (id: number) => void;
+  onToggleSelectAll?: () => void;
 }
 
 type SortField = 'code' | 'name' | 'unit' | 'price' | 'status';
@@ -30,6 +36,12 @@ export function GasketTable({
   gaskets,
   onEdit,
   onDelete,
+  isBulkMode = false,
+  selectedIdSet,
+  isAllSelected = false,
+  isPartiallySelected = false,
+  onToggleSelect,
+  onToggleSelectAll,
 }: GasketTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -75,7 +87,20 @@ export function GasketTable({
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold text-slate-600 select-none">
-              {/* Cột 1: Mã vật tư */}
+              {isBulkMode && (
+                <th className="py-3 px-3 w-11 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isPartiallySelected;
+                    }}
+                    onChange={() => onToggleSelectAll?.()}
+                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer accent-[#045863]"
+                    title="Chọn tất cả"
+                  />
+                </th>
+              )}
               <th
                 onClick={() => handleSort('code')}
                 className="py-3 px-4 w-40 cursor-pointer group/th hover:text-slate-800 transition-colors"
@@ -87,7 +112,6 @@ export function GasketTable({
                 </div>
               </th>
 
-              {/* Cột 2: Tên vật tư */}
               <th
                 onClick={() => handleSort('name')}
                 className="py-3 px-4 min-w-[240px] cursor-pointer group/th hover:text-slate-800 transition-colors"
@@ -99,7 +123,6 @@ export function GasketTable({
                 </div>
               </th>
 
-              {/* Cột 3: Đơn vị tính */}
               <th
                 onClick={() => handleSort('unit')}
                 className="py-3 px-4 text-center w-32 cursor-pointer group/th hover:text-slate-800 transition-colors"
@@ -111,7 +134,6 @@ export function GasketTable({
                 </div>
               </th>
 
-              {/* Cột 4: Đơn giá */}
               <th
                 onClick={() => handleSort('price')}
                 className="py-3 px-4 text-right w-36 cursor-pointer group/th hover:text-slate-800 transition-colors"
@@ -123,7 +145,6 @@ export function GasketTable({
                 </div>
               </th>
 
-              {/* Cột 5: Trạng thái */}
               <th
                 onClick={() => handleSort('status')}
                 className="py-3 px-4 text-center w-32 cursor-pointer group/th hover:text-slate-800 transition-colors"
@@ -135,46 +156,58 @@ export function GasketTable({
                 </div>
               </th>
 
-              {/* Cột 6: Hành động */}
               <th className="py-3 px-4 text-right w-24">Hành động</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
             {sortedList.map((gasket) => {
               const unitLabel = GASKET_UNIT_MAP[gasket.unit?.toLowerCase()] || gasket.unit || '—';
+              const isSelected = Boolean(selectedIdSet?.has(gasket.id));
 
               return (
                 <tr
                   key={gasket.id}
-                  className="hover:bg-slate-50/80 transition-colors group"
+                  onClick={() => {
+                    if (isBulkMode) onToggleSelect?.(gasket.id);
+                  }}
+                  className={`transition-colors group ${
+                    isBulkMode ? 'cursor-pointer' : ''
+                  } ${
+                    isSelected ? 'bg-rose-50/40 hover:bg-rose-50/60' : 'hover:bg-slate-50/80'
+                  }`}
                 >
-                  {/* Cột 1: Mã vật tư */}
+                  {isBulkMode && (
+                    <td className="py-3.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => onToggleSelect?.(gasket.id)}
+                        className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer accent-[#045863]"
+                      />
+                    </td>
+                  )}
                   <td className="py-3.5 px-4 font-semibold text-slate-800 text-xs">
                     <span>{gasket.code || '—'}</span>
                   </td>
 
-                  {/* Cột 2: Tên vật tư */}
                   <td className="py-3.5 px-4">
                     <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-xs">
                       {gasket.name}
                     </span>
                   </td>
 
-                  {/* Cột 3: Đơn vị tính */}
                   <td className="py-3.5 px-4 text-center">
                     <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                       {unitLabel}
                     </span>
                   </td>
 
-                  {/* Cột 4: Đơn giá */}
                   <td className="py-3.5 px-4 text-right">
                     <span className="font-bold text-slate-900 text-xs">
                       {formatCurrency(gasket.pricePerUnit || 0)}
                     </span>
                   </td>
 
-                  {/* Cột 5: Trạng thái */}
                   <td className="py-3.5 px-4 text-center">
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border whitespace-nowrap ${
@@ -187,8 +220,7 @@ export function GasketTable({
                     </span>
                   </td>
 
-                  {/* Cột 6: Thao tác */}
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"

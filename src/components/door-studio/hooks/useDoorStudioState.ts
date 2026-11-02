@@ -120,24 +120,36 @@ export function useDoorStudioState({
     return allAvailableSeries.filter((s) => s.brandId === effectiveBrandId);
   }, [allAvailableSeries, effectiveBrandId]);
 
-  const effectiveSeriesId = useMemo(() => {
+  const explicitSeriesId = useMemo(() => {
     if (seriesId && (allAvailableSeries.length === 0 || allAvailableSeries.some((s) => s.id === seriesId))) {
       return seriesId;
     }
-    return availableSeries[0]?.id || allAvailableSeries[0]?.id || seriesId || undefined;
-  }, [seriesId, availableSeries, allAvailableSeries]);
+    return undefined;
+  }, [seriesId, allAvailableSeries]);
+
+  const fallbackSeriesId = availableSeries[0]?.id || allAvailableSeries[0]?.id || seriesId || undefined;
 
   // Fetch Profile Bars (theo hãng nhôm / hệ nhôm đang chọn để hỗ trợ cả các thanh dùng chung trong hãng)
   const { data: profilesData } = useQuery({
-    queryKey: ['profile-bars', effectiveBrandId, effectiveSeriesId],
+    queryKey: ['profile-bars', effectiveBrandId, explicitSeriesId || fallbackSeriesId],
     queryFn: () =>
       getProfileBars({
         brandId: effectiveBrandId || undefined,
-        seriesId: !effectiveBrandId ? effectiveSeriesId : undefined,
+        seriesId: !effectiveBrandId ? (explicitSeriesId || fallbackSeriesId) : undefined,
         limit: 1000,
       }),
-    enabled: isOpen && Boolean(effectiveBrandId || effectiveSeriesId),
+    enabled: isOpen && Boolean(effectiveBrandId || explicitSeriesId || fallbackSeriesId),
   });
+
+  const effectiveSeriesId = useMemo(() => {
+    if (explicitSeriesId) return explicitSeriesId;
+    const leftPid = frameConfig.leftEdge?.profileId;
+    if (leftPid && profilesData?.items?.length) {
+      const matchedProf = profilesData.items.find((p) => p.id === leftPid);
+      if (matchedProf?.seriesId) return matchedProf.seriesId;
+    }
+    return fallbackSeriesId;
+  }, [explicitSeriesId, frameConfig.leftEdge?.profileId, profilesData, fallbackSeriesId]);
 
   const availableProfiles = useMemo(() => {
     const allItems = profilesData?.items || [];
@@ -149,7 +161,7 @@ export function useDoorStudioState({
     const includedIds = new Set(seriesItems.map((p) => p.id));
     const result = [...seriesItems];
 
-    // Bổ sung các nhóm thanh dùng chung của hãng nếu hệ nhôm con chưa khai báo riêng nhóm đó
+    // Bổ sung các nhóm thanh dùng chung của hãng nếu hệ nhôm con chưa khai báo riêng nhóm đó (không mượn TRACK của hệ lùa sang hệ mở quay)
     const requiredBarTypes = [
       'FRAME',
       'SASH',
@@ -173,39 +185,8 @@ export function useDoorStudioState({
       }
     }
 
-    // Đảm bảo các profileId đang được cấu hình sẵn trong cửa (nếu thuộc hệ phụ cùng hãng) luôn hiển thị trong dropdown
-    const configuredIds = [
-      frameConfig.leftEdge?.profileId,
-      frameConfig.topEdge?.profileId,
-      frameConfig.rightEdge?.profileId,
-      frameConfig.bottomEdge?.profileId,
-      frameConfig.beadProfileId,
-      frameConfig.mullionProfileId,
-      frameConfig.mullionVertProfileId,
-      frameConfig.mullionHorizProfileId,
-      frameConfig.couplingProfileId,
-      frameConfig.reversalProfileId,
-      sashConfig.leftProfileId,
-      sashConfig.topProfileId,
-      sashConfig.rightProfileId,
-      sashConfig.bottomProfileId,
-      sashConfig.beadProfileId,
-      sashConfig.mullionProfileId,
-      sashConfig.dynamicMullionProfileId,
-    ].filter((id): id is number => Boolean(id));
-
-    for (const cid of configuredIds) {
-      if (!includedIds.has(cid)) {
-        const found = allItems.find((p) => p.id === cid);
-        if (found) {
-          includedIds.add(found.id);
-          result.push(found);
-        }
-      }
-    }
-
     return result;
-  }, [profilesData, effectiveSeriesId, frameConfig, sashConfig]);
+  }, [profilesData, effectiveSeriesId]);
 
   const availableBeads = useMemo(() => {
     return availableProfiles.filter(
@@ -301,25 +282,47 @@ export function useDoorStudioState({
     // 1. Tự động gán Khung bao mặc định nếu chưa chọn hoặc profile hiện tại không thuộc hệ này
     const isFrameValid =
       frameConfig.leftEdge?.profileId &&
-      availableProfiles.some((p) => p.id === frameConfig.leftEdge?.profileId);
+      availableProfiles.some((p) => p.id === frameConfig.leftEdge?.profileId && p.barType === 'FRAME');
 
     if (!isFrameValid && defaultFrame) {
       setFrameConfig((prev) => {
         if (prev.leftEdge?.profileId === defaultFrame.id) return prev;
+        const isBotValid =
+          prev.bottomEdge?.profileId &&
+          availableProfiles.some((p) => p.id === prev.bottomEdge?.profileId);
         return {
           ...prev,
           leftEdge: { ...prev.leftEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
           topEdge: { ...prev.topEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
           rightEdge: { ...prev.rightEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
-          bottomEdge: prev.isOpenBottom
-            ? prev.bottomEdge
-            : { ...prev.bottomEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
-          beadProfileId: prev.beadProfileId || defaultBead?.id,
-          mullionProfileId: prev.mullionProfileId || defaultMullion?.id,
-          mullionVertProfileId: prev.mullionVertProfileId || prev.mullionProfileId || defaultMullion?.id,
-          mullionHorizProfileId: prev.mullionHorizProfileId || prev.mullionProfileId || defaultMullion?.id,
-          reversalProfileId: prev.reversalProfileId || defaultReversal?.id,
-          reversalProfileCode: prev.reversalProfileCode || defaultReversal?.code,
+          bottomEdge:
+            prev.isOpenBottom || isBotValid
+              ? prev.bottomEdge
+              : { ...prev.bottomEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
+          beadProfileId:
+            prev.beadProfileId && availableProfiles.some((p) => p.id === prev.beadProfileId)
+              ? prev.beadProfileId
+              : defaultBead?.id,
+          mullionProfileId:
+            prev.mullionProfileId && availableProfiles.some((p) => p.id === prev.mullionProfileId)
+              ? prev.mullionProfileId
+              : defaultMullion?.id,
+          mullionVertProfileId:
+            prev.mullionVertProfileId && availableProfiles.some((p) => p.id === prev.mullionVertProfileId)
+              ? prev.mullionVertProfileId
+              : defaultMullion?.id,
+          mullionHorizProfileId:
+            prev.mullionHorizProfileId && availableProfiles.some((p) => p.id === prev.mullionHorizProfileId)
+              ? prev.mullionHorizProfileId
+              : defaultMullion?.id,
+          reversalProfileId:
+            prev.reversalProfileId && availableProfiles.some((p) => p.id === prev.reversalProfileId)
+              ? prev.reversalProfileId
+              : defaultReversal?.id,
+          reversalProfileCode:
+            prev.reversalProfileId && availableProfiles.some((p) => p.id === prev.reversalProfileId)
+              ? prev.reversalProfileCode
+              : defaultReversal?.code,
         };
       });
     }
@@ -753,20 +756,30 @@ export function useDoorStudioState({
 
     const newChildren = parentNode.children.map((c, i) => {
       if (i === idx) {
+        const scaled = rescaleTree(
+          c,
+          isVert ? newDim / (oldDim || 1) : 1,
+          isVert ? 1 : newDim / (oldDim || 1)
+        );
         return {
-          ...c,
-          w: isVert ? newDim : c.w,
-          h: isVert ? c.h : newDim,
+          ...scaled,
+          w: isVert ? newDim : scaled.w,
+          h: isVert ? scaled.h : newDim,
           mullionProfileId: params.profileId,
           mullionCutType: params.cutType,
         };
       }
       if (i === idx + 1 && nextChild) {
         const newNextDim = Math.max(minDim, oldNextDim - delta);
+        const scaledNext = rescaleTree(
+          c,
+          isVert ? newNextDim / (oldNextDim || 1) : 1,
+          isVert ? 1 : newNextDim / (oldNextDim || 1)
+        );
         return {
-          ...c,
-          w: isVert ? newNextDim : c.w,
-          h: isVert ? c.h : newNextDim,
+          ...scaledNext,
+          w: isVert ? newNextDim : scaledNext.w,
+          h: isVert ? scaledNext.h : newNextDim,
         };
       }
       return c;

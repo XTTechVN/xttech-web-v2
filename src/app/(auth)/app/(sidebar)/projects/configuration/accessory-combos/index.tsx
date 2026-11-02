@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getAccessoryCombos, deleteAccessoryCombo, getBrands } from '@/actions';
-import type { AccessoryCombo } from '@/types';
+import { getDefaultBrandId, type AccessoryCombo } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
@@ -39,7 +39,7 @@ export default function AccessoryCombosTab() {
   );
 
   // Tự động chọn hãng đầu tiên (Derived State - tránh setState trong useEffect)
-  const activeBrandId = selectedBrandId ?? sortedBrands[0]?.id ?? null;
+  const activeBrandId = selectedBrandId ?? getDefaultBrandId(sortedBrands);
 
   // Debounce search
   const searchTimer = useRef<NodeJS.Timeout | null>(null);

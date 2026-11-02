@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components';
-import { TableSearch } from '@/components/table';
+import { TableSearch, BulkDeleteToolbarActions } from '@/components/table';
 import { Plus, Settings2, Download, Upload } from 'lucide-react';
 import type { GlassGasketCategoryFilter } from './glass-category-sidebar';
 
@@ -17,6 +17,15 @@ interface GlassToolbarProps {
   onExportExcelClick?: () => void;
   onImportExcelClick?: () => void;
   isExporting?: boolean;
+  isBulkMode?: boolean;
+  selectedCount?: number;
+  totalCount?: number;
+  isAllSelected?: boolean;
+  isBulkDeleting?: boolean;
+  onEnterBulkMode?: () => void;
+  onExitBulkMode?: () => void;
+  onToggleSelectAll?: () => void;
+  onConfirmBulkDelete?: () => void;
 }
 
 export function GlassToolbar({
@@ -30,6 +39,15 @@ export function GlassToolbar({
   onExportExcelClick,
   onImportExcelClick,
   isExporting = false,
+  isBulkMode = false,
+  selectedCount = 0,
+  totalCount = 0,
+  isAllSelected = false,
+  isBulkDeleting = false,
+  onEnterBulkMode,
+  onExitBulkMode,
+  onToggleSelectAll,
+  onConfirmBulkDelete,
 }: GlassToolbarProps) {
   const isGasketView = selectedCategory === 'gaskets';
 
@@ -64,58 +82,76 @@ export function GlassToolbar({
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {onExportExcelClick && (
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Download size={15} />}
-            loading={isExporting}
-            onClick={onExportExcelClick}
-          >
-            Xuất Excel
-          </Button>
+        {onEnterBulkMode && onExitBulkMode && onToggleSelectAll && onConfirmBulkDelete && (
+          <BulkDeleteToolbarActions
+            isBulkMode={isBulkMode}
+            selectedCount={selectedCount}
+            totalCount={totalCount}
+            isAllSelected={isAllSelected}
+            isDeleting={isBulkDeleting}
+            onEnterBulkMode={onEnterBulkMode}
+            onExitBulkMode={onExitBulkMode}
+            onToggleSelectAll={onToggleSelectAll}
+            onConfirmDelete={onConfirmBulkDelete}
+          />
         )}
 
-        {onImportExcelClick && (
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Upload size={15} />}
-            onClick={onImportExcelClick}
-          >
-            Nhập Excel
-          </Button>
-        )}
+        {!isBulkMode && (
+          <>
+            {onExportExcelClick && (
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<Download size={15} />}
+                loading={isExporting}
+                onClick={onExportExcelClick}
+              >
+                Xuất Excel
+              </Button>
+            )}
 
-        {!isGasketView && (
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Settings2 size={15} />}
-            onClick={onManageCategories}
-          >
-            Phân loại
-          </Button>
-        )}
+            {onImportExcelClick && (
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<Upload size={15} />}
+                onClick={onImportExcelClick}
+              >
+                Nhập Excel
+              </Button>
+            )}
 
-        {isGasketView ? (
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<Plus size={15} />}
-            onClick={onAddGasket}
-          >
-            Thêm gioăng ron / keo
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<Plus size={15} />}
-            onClick={onAddGlass}
-          >
-            {addLabel}
-          </Button>
+            {!isGasketView && (
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<Settings2 size={15} />}
+                onClick={onManageCategories}
+              >
+                Phân loại
+              </Button>
+            )}
+
+            {isGasketView ? (
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<Plus size={15} />}
+                onClick={onAddGasket}
+              >
+                Thêm gioăng ron / keo
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<Plus size={15} />}
+                onClick={onAddGlass}
+              >
+                {addLabel}
+              </Button>
+            )}
+          </>
         )}
       </div>
     </div>

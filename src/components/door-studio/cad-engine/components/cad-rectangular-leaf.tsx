@@ -228,20 +228,20 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
   const isSliding = node.sashType === 'sliding';
 
   // Thông số Cửa Thủy Lực & Co giãn hình học cánh (!isFixed)
+  // Lưu ý: Độ hở nền (dHoNen) đã được trừ trực tiếp tại nguồn buildCadLayout (leaf.h)
   const isHydraulic = Boolean(sashConfig?.isHydraulic || node.isHydraulic);
-  const hoNenMm = node.hoNenMm ?? sashConfig?.hoNenMm ?? 8;
   const ngamDocMm = node.ngamDocMm ?? sashConfig?.ngamDocMm ?? 5;
   const ngamNgangMm = node.ngamNgangMm ?? sashConfig?.ngamNgangMm ?? 5;
   const scale = fh / (h || 1);
 
   // Tính độ dịch chuyển hình học cho cánh chuyển động thủy lực (Ảnh 3, Ảnh 4)
-  const dHoNen = !isFixed && isHydraulic && isOpenBottom ? Math.round(hoNenMm * scale) : 0;
   const dNgamDoc = !isFixed && isHydraulic ? Math.round(ngamDocMm * scale) : 0;
   const dNgamNgang = !isFixed && isHydraulic ? Math.round(ngamNgangMm * scale) : 0;
 
-  // Tọa độ Y và chiều cao H sau khi áp dụng Hở nền và Ngậm dọc
+  // Tọa độ Y và chiều cao H sau khi áp dụng Ngậm dọc (ch đã bao gồm Hở nền từ buildCadLayout)
   const effectiveCy = cy - dNgamDoc;
-  const effectiveCh = ch - dHoNen + dNgamDoc;
+  const effectiveCh = ch + dNgamDoc;
+  const hasFloorGap = isOpenBottom && !isFixed && cy + ch < oy + fh - 1 && cy + ch + Math.round(fh * 0.65) >= oy + fh;
 
   // Cấu hình Đảo khung (Reversal - C3208)
   const reversalMode = frameConfig?.reversalMode ?? (frameConfig?.isReversedWall ? 'wall' : frameConfig?.isReversedSash ? 'sash' : 'none');
@@ -433,6 +433,20 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                   <circle cx={plateX + plateW / 2} cy={handleY + 5.5} r={1} fill="#111" />
                   <rect x={leverX} y={leverY} width={leverW} height={leverH} rx={1.2} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
                 </g>
+              )}
+
+              {/* Đường chuẩn mặt sàn nét đứt dưới đáy cánh khi có khoảng hở nền */}
+              {hasFloorGap && (
+                <line
+                  x1={cx}
+                  y1={oy + fh - 0.5}
+                  x2={cx + cw}
+                  y2={oy + fh - 0.5}
+                  stroke="#64748b"
+                  strokeWidth="0.9"
+                  strokeDasharray="3,2"
+                  pointerEvents="none"
+                />
               )}
             </g>
           );
@@ -1187,6 +1201,20 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                   stroke="#f59e0b"
                   strokeWidth="1.5"
                   strokeDasharray="5,3"
+                />
+              )}
+
+              {/* Đường chuẩn mặt sàn nét đứt dưới đáy cánh khi có khoảng hở nền */}
+              {hasFloorGap && (
+                <line
+                  x1={cx}
+                  y1={oy + fh - 0.5}
+                  x2={cx + cw}
+                  y2={oy + fh - 0.5}
+                  stroke="#64748b"
+                  strokeWidth="0.9"
+                  strokeDasharray="3,2"
+                  pointerEvents="none"
                 />
               )}
             </g>

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components';
-import { TableSearch } from '@/components/table';
+import { TableSearch, BulkDeleteToolbarActions } from '@/components/table';
 import { Plus, FolderTree, Download, Upload } from 'lucide-react';
 import type { AccessoryCategory } from '@/types';
 
@@ -17,6 +17,15 @@ interface AccessoryToolbarProps {
   categoryList?: AccessoryCategory[];
   selectedCategoryId?: number | null;
   onCategoryChange?: (categoryId: number | null) => void;
+  isBulkMode?: boolean;
+  selectedCount?: number;
+  totalCount?: number;
+  isAllSelected?: boolean;
+  isBulkDeleting?: boolean;
+  onEnterBulkMode?: () => void;
+  onExitBulkMode?: () => void;
+  onToggleSelectAll?: () => void;
+  onConfirmBulkDelete?: () => void;
 }
 
 export function AccessoryToolbar({
@@ -30,6 +39,15 @@ export function AccessoryToolbar({
   categoryList = [],
   selectedCategoryId,
   onCategoryChange,
+  isBulkMode = false,
+  selectedCount = 0,
+  totalCount = 0,
+  isAllSelected = false,
+  isBulkDeleting = false,
+  onEnterBulkMode,
+  onExitBulkMode,
+  onToggleSelectAll,
+  onConfirmBulkDelete,
 }: AccessoryToolbarProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -58,49 +76,67 @@ export function AccessoryToolbar({
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {onExportExcelClick && (
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Download size={15} />}
-            loading={isExporting}
-            onClick={onExportExcelClick}
-          >
-            Xuất Excel
-          </Button>
+        {onEnterBulkMode && onExitBulkMode && onToggleSelectAll && onConfirmBulkDelete && (
+          <BulkDeleteToolbarActions
+            isBulkMode={isBulkMode}
+            selectedCount={selectedCount}
+            totalCount={totalCount}
+            isAllSelected={isAllSelected}
+            isDeleting={isBulkDeleting}
+            onEnterBulkMode={onEnterBulkMode}
+            onExitBulkMode={onExitBulkMode}
+            onToggleSelectAll={onToggleSelectAll}
+            onConfirmDelete={onConfirmBulkDelete}
+          />
         )}
 
-        {onImportExcelClick && (
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Upload size={15} />}
-            onClick={onImportExcelClick}
-          >
-            Nhập Excel
-          </Button>
-        )}
+        {!isBulkMode && (
+          <>
+            {onExportExcelClick && (
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<Download size={15} />}
+                loading={isExporting}
+                onClick={onExportExcelClick}
+              >
+                Xuất Excel
+              </Button>
+            )}
 
-        {onManageCategoriesClick && (
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<FolderTree size={15} />}
-            onClick={onManageCategoriesClick}
-            className="font-medium text-slate-700 bg-white hover:bg-slate-50 border-slate-200"
-          >
-            Quản lý danh mục
-          </Button>
-        )}
+            {onImportExcelClick && (
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<Upload size={15} />}
+                onClick={onImportExcelClick}
+              >
+                Nhập Excel
+              </Button>
+            )}
 
-        <Button
-          variant="primary"
-          size="sm"
-          leftIcon={<Plus size={15} />}
-          onClick={onAddClick}
-        >
-          Thêm phụ kiện mới
-        </Button>
+            {onManageCategoriesClick && (
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<FolderTree size={15} />}
+                onClick={onManageCategoriesClick}
+                className="font-medium text-slate-700 bg-white hover:bg-slate-50 border-slate-200"
+              >
+                Quản lý danh mục
+              </Button>
+            )}
+
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Plus size={15} />}
+              onClick={onAddClick}
+            >
+              Thêm phụ kiện mới
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

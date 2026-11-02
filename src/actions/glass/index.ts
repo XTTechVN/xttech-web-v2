@@ -13,6 +13,8 @@ import type {
   GlassGasketExcelPreviewResponse,
   GlassGasketBulkUpsertRequest,
   MaterialBulkUpsertResponse,
+  BulkDeleteRequest,
+  BulkDeleteResponse,
 } from '@/types';
 
 // Glass Categories
@@ -125,6 +127,18 @@ export const deleteGlass = async (id: number): Promise<Glass> => {
     return response.data;
   } catch (error) {
     console.warn('API error deleteGlass', error);
+    throw error;
+  }
+};
+
+export const bulkDeleteGlasses = async (
+  payload: BulkDeleteRequest,
+): Promise<BulkDeleteResponse> => {
+  try {
+    const response = await api.post<BulkDeleteResponse>('/api/v1/glasses/bulk-delete', payload);
+    return response.data;
+  } catch (error) {
+    console.warn('API error bulkDeleteGlasses', error);
     throw error;
   }
 };

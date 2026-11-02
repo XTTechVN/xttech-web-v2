@@ -44,12 +44,20 @@ export const createDefaultRootCell = (width = 1400, height = 1600): SceneCellNod
   children: [],
 });
 
-export const rescaleTree = (node: SceneCellNode, scaleX: number, scaleY: number): SceneCellNode => ({
-  ...node,
-  w: Math.round(node.w * scaleX),
-  h: Math.round(node.h * scaleY),
-  children: node.children?.map((c) => rescaleTree(c, scaleX, scaleY)),
-});
+export const rescaleTree = (node: SceneCellNode, scaleX: number, scaleY: number): SceneCellNode => {
+  const newW = Math.round(node.w * scaleX);
+  const newH = Math.round(node.h * scaleY);
+  return {
+    ...node,
+    w: newW,
+    h: newH,
+    children: node.children?.map((c) => {
+      const childScaleX = node.splitDirection === 'horizontal' ? newW / (c.w || 1) : scaleX;
+      const childScaleY = node.splitDirection === 'vertical' ? newH / (c.h || 1) : scaleY;
+      return rescaleTree(c, childScaleX, childScaleY);
+    }),
+  };
+};
 
 export const createSplitChildren = (
   parentId: string,
@@ -310,21 +318,52 @@ export const resizeCellInParent = (
     (axis === 'h' && root.splitDirection === 'horizontal');
 
   if (childIdx >= 0 && isMatchingAxis) {
-    const siblingIdx = childIdx + 1 < root.children.length ? childIdx + 1 : childIdx - 1;
-    const oldVal = axis === 'w' ? root.children[childIdx].w : root.children[childIdx].h;
-    const sibOld = axis === 'w' ? root.children[siblingIdx].w : root.children[siblingIdx].h;
-    const maxAllowed = oldVal + (sibOld - 100);
-    const clamped = Math.max(100, Math.min(maxAllowed, newValue));
-    const delta = clamped - oldVal;
+    const minDim = 100;
+    const dims = root.children.map((c) => (axis === 'w' ? c.w : c.h));
+    const totalSum = dims.reduce((sum, d) => sum + d, 0);
+    const maxAllowed = Math.max(minDim, totalSum - (root.children.length - 1) * minDim);
+    const clamped = Math.max(minDim, Math.min(maxAllowed, newValue));
+    let remainingDelta = clamped - dims[childIdx];
+
+    const nextDims = [...dims];
+    nextDims[childIdx] = clamped;
+
+    const primarySibIdx = childIdx + 1 < root.children.length ? childIdx + 1 : childIdx - 1;
+    const siblingOrder = [
+      primarySibIdx,
+      ...root.children.map((_, i) => i).filter((i) => i !== childIdx && i !== primarySibIdx),
+    ];
+
+    for (const sIdx of siblingOrder) {
+      if (remainingDelta === 0) break;
+      const curSibVal = nextDims[sIdx];
+      const nextSibVal = Math.max(minDim, curSibVal - remainingDelta);
+      const absorbed = curSibVal - nextSibVal;
+      nextDims[sIdx] = nextSibVal;
+      remainingDelta -= absorbed;
+    }
 
     const newChildren = root.children.map((c, i) => {
-      if (i === childIdx) return { ...c, [axis]: clamped };
-      if (i === siblingIdx) {
-        return { ...c, [axis]: Math.max(100, sibOld - delta) };
-      }
-      return c;
+      const nextVal = nextDims[i];
+      const prevVal = (axis === 'w' ? c.w : c.h) || 1;
+      const scaled = rescaleTree(
+        c,
+        axis === 'w' ? nextVal / prevVal : 1,
+        axis === 'h' ? nextVal / prevVal : 1
+      );
+      return { ...scaled, [axis]: nextVal };
     });
-    return { ...root, children: newChildren };
+
+    return {
+      ...root,
+      children: newChildren,
+      sashMullions: root.sashMullions
+        ? {
+            ...root.sashMullions,
+            positions: newChildren.map((c) => (axis === 'w' ? c.w : c.h)),
+          }
+        : undefined,
+    };
   }
 
   // Không tìm thấy ở cấp này, đệ quy xuống sâu hơn

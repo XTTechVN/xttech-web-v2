@@ -8,6 +8,12 @@ interface ProfileBarTableProps {
   profileBars: ProfileBar[];
   onEdit: (bar: ProfileBar) => void;
   onDelete: (bar: ProfileBar) => void;
+  isBulkMode?: boolean;
+  selectedIdSet?: ReadonlySet<number>;
+  isAllSelected?: boolean;
+  isPartiallySelected?: boolean;
+  onToggleSelect?: (id: number) => void;
+  onToggleSelectAll?: () => void;
 }
 
 type SortField = 'code' | 'name' | 'series' | 'barType' | 'weight' | 'length' | 'status';
@@ -51,7 +57,17 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
   );
 }
 
-export function ProfileBarTable({ profileBars, onEdit, onDelete }: ProfileBarTableProps) {
+export function ProfileBarTable({
+  profileBars,
+  onEdit,
+  onDelete,
+  isBulkMode = false,
+  selectedIdSet,
+  isAllSelected = false,
+  isPartiallySelected = false,
+  onToggleSelect,
+  onToggleSelectAll,
+}: ProfileBarTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
@@ -107,6 +123,20 @@ export function ProfileBarTable({ profileBars, onEdit, onDelete }: ProfileBarTab
         <table className="w-full text-left border-collapse select-none">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              {isBulkMode && (
+                <th className="py-3 px-3 w-11 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isPartiallySelected;
+                    }}
+                    onChange={() => onToggleSelectAll?.()}
+                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer accent-[#045863]"
+                    title="Chọn tất cả"
+                  />
+                </th>
+              )}
               {COLUMNS.map((col) => (
                 <th
                   key={col.field}
@@ -126,9 +156,30 @@ export function ProfileBarTable({ profileBars, onEdit, onDelete }: ProfileBarTab
             {sortedBars.map((bar) => {
               const typeLabel = BAR_TYPE_MAP[bar.barType?.toUpperCase()] || bar.barType || '—';
               const seriesLabel = bar.doorSeries?.name || bar.doorSeries?.code || '—';
+              const isSelected = Boolean(selectedIdSet?.has(bar.id));
 
               return (
-                <tr key={bar.id} className="hover:bg-slate-50/80 transition-colors group">
+                <tr
+                  key={bar.id}
+                  onClick={() => {
+                    if (isBulkMode) onToggleSelect?.(bar.id);
+                  }}
+                  className={`transition-colors group ${
+                    isBulkMode ? 'cursor-pointer' : ''
+                  } ${
+                    isSelected ? 'bg-rose-50/40 hover:bg-rose-50/60' : 'hover:bg-slate-50/80'
+                  }`}
+                >
+                  {isBulkMode && (
+                    <td className="py-3.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => onToggleSelect?.(bar.id)}
+                        className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer accent-[#045863]"
+                      />
+                    </td>
+                  )}
                   <td className="py-3.5 px-4 font-semibold text-slate-800 text-xs">
                     <div className="flex items-center gap-2.5">
                       {bar.sectionLibrary ? (
@@ -189,7 +240,7 @@ export function ProfileBarTable({ profileBars, onEdit, onDelete }: ProfileBarTab
                     </span>
                   </td>
 
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"

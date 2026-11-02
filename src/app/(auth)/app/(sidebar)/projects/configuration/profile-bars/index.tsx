@@ -6,10 +6,13 @@ import {
   getBrands,
   getProfileBars,
   deleteProfileBar,
+  bulkDeleteProfileBars,
   getDoorSeriesList,
   exportProfileBarsExcel,
 } from '@/actions';
-import type { ProfileBar } from '@/types';
+import { ConfirmActionModal } from '@/components';
+import { useBulkDeleteSelection } from '@/hooks';
+import { getDefaultBrandId, type ProfileBar } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
@@ -46,7 +49,7 @@ export default function ProfileBarsTab() {
   }, [brandsList]);
 
   // Tự động lấy hãng đầu tiên nếu chưa chọn (Derived State - tránh setState trong useEffect)
-  const activeBrandId = selectedBrandId ?? sortedBrands[0]?.id ?? null;
+  const activeBrandId = selectedBrandId ?? getDefaultBrandId(sortedBrands);
 
   // Queries danh sách Hệ nhôm theo Hãng đang chọn
   const { data: seriesData } = useQuery({
@@ -82,9 +85,11 @@ export default function ProfileBarsTab() {
     enabled: activeBrandId !== null,
   });
 
-  const profileBars = profileBarsData || [];
+  const profileBars = useMemo(() => profileBarsData || [], [profileBarsData]);
 
-  // Mutations xóa thanh profile
+  const bulkSelection = useBulkDeleteSelection(profileBars);
+
+  // Mutations xóa thanh profile đơn lẻ
   const { mutate: deleteBarMutate } = useMutation({
     mutationFn: (id: number) => deleteProfileBar(id),
     onSuccess: () => {
@@ -94,13 +99,24 @@ export default function ProfileBarsTab() {
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa thanh profile'),
   });
 
+  // Mutations xóa hàng loạt thanh profile
+  const { mutate: bulkDeleteMutate, isPending: isBulkDeleting } = useMutation({
+    mutationFn: (ids: number[]) => bulkDeleteProfileBars({ ids }),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['profile-bars'] });
+      toast.success(`Đã xóa hàng loạt ${res.deletedCount} thanh profile nhôm`);
+      bulkSelection.exitBulkMode();
+    },
+    onError: (err) => showErrorToast(err, 'Lỗi khi xóa hàng loạt thanh profile'),
+  });
+
   const selectedBrand = useMemo(() => {
     return activeBrandId ? brandsList.find((b) => b.id === activeBrandId) : null;
   }, [brandsList, activeBrandId]);
 
   const handleSelectBrand = (brandId: number) => {
     setSelectedBrandId(brandId);
-    setSelectedSeriesId(null); // reset filter hệ nhôm khi đổi hãng
+    setSelectedSeriesId(null);
   };
 
   const handleOpenCreateModal = () => {
@@ -138,16 +154,13 @@ export default function ProfileBarsTab() {
 
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
-      {/* Cột lọc danh sách Hãng nhôm bên trái */}
       <BrandSidebar
         brands={brandsList}
         selectedBrandId={activeBrandId}
         onSelectBrand={handleSelectBrand}
       />
 
-      {/* Khu vực nội dung danh sách Thanh profile bên phải */}
       <div className="flex-1 flex flex-col gap-4 min-w-0 w-full p-4">
-        {/* Toolbar: Tìm kiếm, Lọc hệ nhôm, Xuất/Nhập Excel & Thêm mới */}
         <ProfileBarToolbar
           search={search}
           onSearchChange={setSearch}
@@ -158,9 +171,17 @@ export default function ProfileBarsTab() {
           seriesList={seriesList}
           selectedSeriesId={selectedSeriesId}
           onSeriesChange={setSelectedSeriesId}
+          isBulkMode={bulkSelection.isBulkMode}
+          selectedCount={bulkSelection.selectedCount}
+          totalCount={bulkSelection.totalCount}
+          isAllSelected={bulkSelection.isAllSelected}
+          isBulkDeleting={isBulkDeleting}
+          onEnterBulkMode={bulkSelection.enterBulkMode}
+          onExitBulkMode={bulkSelection.exitBulkMode}
+          onToggleSelectAll={bulkSelection.toggleSelectAll}
+          onConfirmBulkDelete={() => bulkSelection.setIsConfirmOpen(true)}
         />
 
-        {/* Danh sách thanh profile dạng bảng */}
         {isLoading ? (
           <ProfileBarSkeleton count={6} />
         ) : profileBars.length === 0 ? (
@@ -170,11 +191,16 @@ export default function ProfileBarsTab() {
             profileBars={profileBars}
             onEdit={handleOpenEditModal}
             onDelete={handleDeleteBar}
+            isBulkMode={bulkSelection.isBulkMode}
+            selectedIdSet={bulkSelection.selectedIdSet}
+            isAllSelected={bulkSelection.isAllSelected}
+            isPartiallySelected={bulkSelection.isPartiallySelected}
+            onToggleSelect={bulkSelection.toggleSelect}
+            onToggleSelectAll={bulkSelection.toggleSelectAll}
           />
         )}
       </div>
 
-      {/* Modal Thêm mới / Sửa thanh profile */}
       <ProfileBarModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -186,11 +212,27 @@ export default function ProfileBarsTab() {
         defaultBrandId={activeBrandId}
       />
 
-      {/* Modal Nhập Excel & Chỉnh sửa trực tiếp */}
       <ProfileBarExcelModal
         isOpen={isExcelModalOpen}
         onClose={() => setIsExcelModalOpen(false)}
         brands={brandsList}
+      />
+
+      <ConfirmActionModal
+        isOpen={bulkSelection.isConfirmOpen}
+        onClose={() => bulkSelection.setIsConfirmOpen(false)}
+        onConfirm={() => bulkDeleteMutate(bulkSelection.selectedIds)}
+        title="Xác nhận xóa hàng loạt thanh profile nhôm"
+        description={
+          <>
+            Bạn có chắc chắn muốn xóa <strong>{bulkSelection.selectedCount}</strong> thanh profile nhôm đã chọn thuộc hãng{' '}
+            <strong>{selectedBrand?.name || ''}</strong> không?
+          </>
+        }
+        warningNote="Các thanh profile đã chọn sẽ bị đưa vào trạng thái xóa và ẩn khỏi danh sách cấu hình."
+        confirmText={`Xóa ${bulkSelection.selectedCount} thanh profile`}
+        variant="danger"
+        loading={isBulkDeleting}
       />
     </div>
   );

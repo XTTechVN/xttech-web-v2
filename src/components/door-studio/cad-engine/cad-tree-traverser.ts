@@ -1,4 +1,4 @@
-import { SceneCellNode, MullionInfo, FrameConfig } from '../studio-types';
+import { SceneCellNode, MullionInfo, FrameConfig, SashConfig } from '../studio-types';
 import { FrameBox, MullionBar, LeafCell, CouplingSeamBar, VerticalSlice } from './cad-types';
 import { computeSlidingSashes } from './cad-geometry';
 
@@ -24,14 +24,34 @@ export interface CadLayoutResult {
 export const getVerticalSlices = (rootCell: SceneCellNode): VerticalSlice[] => {
   const totalW = rootCell.w || 1;
   const markers: { x: number; type: 'mullion' | 'sash' | 'sash_mullion'; nodeId?: string }[] = [];
-  const knownNodes: { id: string; xStart: number; xEnd: number; w: number }[] = [];
+  const knownNodes: {
+    id: string;
+    xStart: number;
+    xEnd: number;
+    w: number;
+    isVertSplitChild: boolean;
+    depth: number;
+  }[] = [];
 
-  const traverse = (node: SceneCellNode, xStart: number, xEnd: number) => {
+  const traverse = (
+    node: SceneCellNode,
+    xStart: number,
+    xEnd: number,
+    isVertSplitChild = false,
+    depth = 0
+  ) => {
     const span = xEnd - xStart;
     if (span <= 0) return;
 
-    // Ghi nhận phạm vi tọa độ của ô này
-    knownNodes.push({ id: node.id, xStart, xEnd, w: node.w || span });
+    // Ghi nhận phạm vi tọa độ của ô này (lưu span thực tế và cờ con trực tiếp của phép chia dọc)
+    knownNodes.push({
+      id: node.id,
+      xStart,
+      xEnd,
+      w: span,
+      isVertSplitChild,
+      depth,
+    });
 
     // 1. Phân chia đố khung theo phương dọc
     if (node.splitDirection === 'vertical' && node.children && node.children.length > 1) {
@@ -49,7 +69,7 @@ export const getVerticalSlices = (rootCell: SceneCellNode): VerticalSlice[] => {
           markers.push({ x: cur + cw, type: 'mullion', nodeId: child.id });
         }
 
-        traverse(child, cur, cur + cw);
+        traverse(child, cur, cur + cw, true, depth + 1);
         cur += cw;
       });
       return;
@@ -58,7 +78,7 @@ export const getVerticalSlices = (rootCell: SceneCellNode): VerticalSlice[] => {
     // 2. Phân chia đố khung theo phương ngang: các con chia sẻ cùng dải [xStart, xEnd]
     if (node.splitDirection === 'horizontal' && node.children && node.children.length > 1) {
       for (const child of node.children) {
-        traverse(child, xStart, xEnd);
+        traverse(child, xStart, xEnd, false, depth + 1);
       }
       return;
     }
@@ -80,7 +100,7 @@ export const getVerticalSlices = (rootCell: SceneCellNode): VerticalSlice[] => {
             markers.push({ x: cur + cw, type: 'sash_mullion', nodeId: child.id });
           }
 
-          traverse(child, cur, cur + cw);
+          traverse(child, cur, cur + cw, true, depth + 1);
           cur += cw;
         });
         return;
@@ -121,13 +141,14 @@ export const getVerticalSlices = (rootCell: SceneCellNode): VerticalSlice[] => {
 
     // 5. Nếu có con thông thường khác
     if (node.children && node.children.length > 0) {
+      const childIsVert = node.splitDirection === 'vertical';
       for (const child of node.children) {
-        traverse(child, xStart, xEnd);
+        traverse(child, xStart, xEnd, childIsVert, depth + 1);
       }
     }
   };
 
-  traverse(rootCell, 0, totalW);
+  traverse(rootCell, 0, totalW, false, 0);
 
   // Thu thập và loại bỏ các mốc trùng lặp (hoặc chênh lệch <= 3mm)
   const rawCoords = [0, totalW, ...markers.map((m) => m.x)];
@@ -157,11 +178,21 @@ export const getVerticalSlices = (rootCell: SceneCellNode): VerticalSlice[] => {
     const sEnd = cleanCoords[i + 1];
     const segW = sEnd - sStart;
 
-    // Tìm xem phân đoạn này có khớp trọn vẹn với một ô lá trong cây không
+    // Tìm ô khớp trọn vẹn với phân đoạn [sStart, sEnd]:
+    // Ưu tiên node là con trực tiếp của phép chia dọc (isVertSplitChild = true)
+    // để không chọn nhầm các hàng con chia ngang bên trong cột đó.
     const matchingNodes = knownNodes.filter(
       (n) => Math.abs(n.xStart - sStart) <= 2 && Math.abs(n.xEnd - sEnd) <= 2
     );
-    matchingNodes.sort((a, b) => a.w - b.w);
+    matchingNodes.sort((a, b) => {
+      if (a.isVertSplitChild !== b.isVertSplitChild) {
+        return a.isVertSplitChild ? -1 : 1;
+      }
+      if (a.depth !== b.depth) {
+        return a.depth - b.depth;
+      }
+      return a.w - b.w;
+    });
     const bestNode = matchingNodes[0];
 
     slices.push({
@@ -254,6 +285,7 @@ export const buildCadLayout = (
     vertMullionT?: number;
     horizMullionT?: number;
     frameConfig?: FrameConfig;
+    sashConfig?: SashConfig;
     slidingOverlapPx?: number;
   }
 ): CadLayoutResult => {
@@ -452,6 +484,20 @@ export const buildCadLayout = (
         y: innerY,
         w: innerW,
         h: Math.max(10, innerH - sillH),
+      });
+    } else if (touchesFloor && node.sashType !== 'fixed') {
+      const hoNenMm = node.hoNenMm ?? options?.sashConfig?.hoNenMm ?? 8;
+      const scaleY = fh / (rootCell.h || 1);
+      const dHoNen =
+        hoNenMm > 0
+          ? Math.min(Math.floor(innerH * 0.6), Math.round(hoNenMm * scaleY))
+          : 0;
+      leaves.push({
+        node,
+        x: innerX,
+        y: innerY,
+        w: innerW,
+        h: Math.max(10, innerH - dHoNen),
       });
     } else {
       leaves.push({ node, x: innerX, y: innerY, w: innerW, h: innerH });

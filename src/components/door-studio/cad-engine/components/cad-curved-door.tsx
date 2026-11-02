@@ -21,6 +21,7 @@ interface CadCurvedDoorBaseProps {
   onSelectCell: (cellId: string | null) => void;
   onEditDimension?: (target: 'w' | 'h' | 'cell' | 'handleHeight', cellId?: string) => void;
   frameConfig?: import('../../studio-types').FrameConfig;
+  sashConfig?: import('../../studio-types').SashConfig;
 }
 
 interface CadCurvedDoubleDoorProps extends CadCurvedDoorBaseProps {
@@ -54,16 +55,20 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   leftNode,
   rightNode,
   frameConfig,
+  sashConfig,
 }) => {
   const effectiveRightNode = rightNode || leftNode;
   const isLeftSelected = selectedCellId === leftNode.id;
   const isRightSelected = selectedCellId === effectiveRightNode.id;
   const dSash = sashD;
   const dBead = Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(dSash * 0.25));
+  const hoNenMm = leftNode.hoNenMm ?? sashConfig?.hoNenMm ?? 8;
+  const dHoNen = isOpenBottom && hoNenMm > 0 ? Math.min(Math.floor(fh * 0.5), Math.round(hoNenMm * (fh / (h || 1)))) : 0;
+  const effFh = isOpenBottom ? Math.max(20, fh - dHoNen) : fh;
 
-  const pathSashOuter = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD, isOpenBottom);
-  const pathSashInner = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD + dSash, isOpenBottom);
-  const pathBeadInner = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD + dSash + dBead, isOpenBottom);
+  const pathSashOuter = getCurvedContourPath(frameShape, ox, oy, fw, effFh, frameD, isOpenBottom);
+  const pathSashInner = getCurvedContourPath(frameShape, ox, oy, fw, effFh, frameD + dSash, isOpenBottom);
+  const pathBeadInner = getCurvedContourPath(frameShape, ox, oy, fw, effFh, frameD + dSash + dBead, isOpenBottom);
 
   if (!pathSashOuter || !pathSashInner || !pathBeadInner) return null;
 
@@ -79,7 +84,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   // Cao độ mép dưới cánh cong trên & mép nẹp kính
   const topSashInnerY = oy + frameD + dSash;
   const topBeadInnerY = oy + frameD + dSash + dBead;
-  const yInBot = isOpenBottom ? oy + fh : oy + fh - frameD;
+  const yInBot = isOpenBottom ? oy + effFh : oy + fh - frameD;
   const botSashInnerY = isOpenBottom ? yInBot : yInBot - dSash;
   const botBeadInnerY = isOpenBottom ? yInBot - dBead : yInBot - dSash - dBead;
 
@@ -339,6 +344,7 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
   selectedCellId,
   onSelectCell,
   node,
+  sashConfig,
 }) => {
   const isSelected = selectedCellId === node.id;
   const isFixed = node.sashType === 'fixed';
@@ -346,10 +352,13 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
   const dBead = isFixed
     ? Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(frameD * 0.35))
     : Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(dSash * 0.25));
+  const hoNenMm = node.hoNenMm ?? sashConfig?.hoNenMm ?? 8;
+  const dHoNen = !isFixed && isOpenBottom && hoNenMm > 0 ? Math.min(Math.floor(fh * 0.5), Math.round(hoNenMm * (fh / (h || 1)))) : 0;
+  const effFh = isOpenBottom ? Math.max(20, fh - dHoNen) : fh;
 
-  const pathSashOuter = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD, isOpenBottom);
-  const pathSashInner = dSash > 0 ? getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD + dSash, isOpenBottom) : pathSashOuter;
-  const pathBeadInner = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD + dSash + dBead, isOpenBottom);
+  const pathSashOuter = getCurvedContourPath(frameShape, ox, oy, fw, effFh, frameD, isOpenBottom);
+  const pathSashInner = dSash > 0 ? getCurvedContourPath(frameShape, ox, oy, fw, effFh, frameD + dSash, isOpenBottom) : pathSashOuter;
+  const pathBeadInner = getCurvedContourPath(frameShape, ox, oy, fw, effFh, frameD + dSash + dBead, isOpenBottom);
 
   if (!pathSashOuter || !pathSashInner || !pathBeadInner) return null;
 
