@@ -24,6 +24,7 @@ export interface ITableSearchProps {
   value?: string;
   onChange?: (value: string) => void;
   className?: string;
+  showIcon?: boolean;
 }
 
 export interface ITableFilterProps {
@@ -69,7 +70,6 @@ export interface TableDataProps<T> extends TableDataBaseProps<T> {
   columns: ITableColumn<T>[];
   search?: ITableSearchProps;
   filters?: ITableFilterProps[];
-  actions?: ReactNode;
 
   select?: boolean;
 
@@ -77,4 +77,10 @@ export interface TableDataProps<T> extends TableDataBaseProps<T> {
 
   hideRowPerPage?: boolean;
   hidePagination?: boolean;
+
+  actions?: ReactNode;
+  mobileActions?: {
+    primary?: ReactNode;
+    secondary?: ReactNode;
+  };
 }
