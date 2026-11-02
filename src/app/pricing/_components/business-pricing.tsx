@@ -112,7 +112,7 @@ const PlanButton = ({ plan }: { plan: Plan }) => {
   return (
     <button
       type="button"
-      className={`flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-bold transition-all duration-300 ${
+      className={`flex h-[44px] min-h-[44px] w-full items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-bold transition-all duration-300 ${
         styles[plan.buttonVariant]
       }`}
     >
@@ -129,7 +129,7 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
   return (
     <div
       className={`group relative flex h-full w-[280px] shrink-0 snap-center flex-col rounded-3xl border border-primary/10 bg-white p-6 text-gray-900 shadow-sm transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:border-primary hover:bg-primary hover:text-white hover:shadow-2xl hover:shadow-primary/30 sm:w-auto sm:shrink sm:snap-align-none ${
-        isPopular ? 'pt-9 lg:z-10' : ''
+        isPopular ? 'lg:z-10' : ''
       }`}
     >
       {isPopular && (
@@ -140,10 +140,10 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
         </div>
       )}
 
-      <h3 className="text-lg font-bold transition-colors duration-300 group-hover:text-white">{plan.name}</h3>
+      <h3 className="line-clamp-1 text-lg font-bold transition-colors duration-300 group-hover:text-white">{plan.name}</h3>
 
       {/* Giá với hiệu ứng hover */}
-      <div className="group/price mt-3 flex cursor-pointer flex-wrap items-baseline gap-x-1.5">
+      <div className="group/price mt-3 flex h-9 cursor-pointer items-baseline gap-x-1.5">
         <span
           className="inline-block origin-left text-3xl font-extrabold tracking-tight text-primary transition-all duration-300 ease-out group-hover:scale-105 group-hover:text-[#d6ff3d]"
         >
@@ -158,7 +158,7 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
         )}
       </div>
       <p
-        className="mb-5 mt-2 min-h-[18px] text-xs text-gray-500 transition-colors duration-300 group-hover:font-semibold group-hover:text-[#d6ff3d]"
+        className="mb-5 mt-2 flex min-h-[34px] items-center text-xs leading-snug text-gray-500 transition-colors duration-300 group-hover:font-semibold group-hover:text-[#d6ff3d]"
       >
         {view.note}
       </p>
@@ -166,7 +166,7 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
       <PlanButton plan={plan} />
 
       {/* Danh sách tính năng nổi bật */}
-      <ul className="mt-6 space-y-3.5 border-t border-primary/10 pt-5 transition-colors duration-300 group-hover:border-white/20">
+      <ul className="mt-6 flex-1 space-y-3.5 border-t border-primary/10 pt-5 transition-colors duration-300 group-hover:border-white/20">
         {plan.highlights.map((h, i) => (
           <li key={i} className="flex gap-2.5 text-sm leading-snug">
             <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-colors duration-300 group-hover:text-[#d6ff3d]" strokeWidth={3} />

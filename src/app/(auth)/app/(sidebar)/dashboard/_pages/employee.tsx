@@ -33,13 +33,13 @@ export const EmployeeDashboard = () => {
       title: 'Trạng thái ca hôm nay',
       value: isCheckedIn ? 'Đang làm việc' : 'Chưa điểm danh',
       icon: <Clock size={18} />,
-      onClick: () => router.push('/app/attendances'),
+      onClick: () => router.push('/app/attendances/payroll'),
     },
     {
       title: 'Giờ check-in',
       value: checkInText,
       icon: <CheckCircle2 size={18} />,
-      onClick: () => router.push('/app/attendances'),
+      onClick: () => router.push('/app/attendances/payroll'),
     },
     {
       title: 'Đồng nghiệp online GPS',

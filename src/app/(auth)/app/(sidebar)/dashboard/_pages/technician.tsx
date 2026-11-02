@@ -24,22 +24,20 @@ export const TechnicianDashboard = () => {
   });
 
   const isCheckedIn = Boolean(data?.myAttendance?.checkIn);
-  const checkInText = isCheckedIn
-    ? `Vào ca lúc ${data?.myAttendance?.checkIn?.slice(0, 5)}`
-    : 'Chưa vào ca';
+  const checkInText = isCheckedIn ? `Vào ca lúc ${data?.myAttendance?.checkIn?.slice(0, 5)}` : 'Chưa vào ca';
 
   const statsData = [
     {
       title: 'Trạng thái ca kỹ thuật',
       value: isCheckedIn ? 'Đang thực địa' : 'Chưa điểm danh',
       icon: <Clock size={18} />,
-      onClick: () => router.push('/app/attendances'),
+      onClick: () => router.push('/app/attendances/payroll'),
     },
     {
       title: 'Giờ check-in hôm nay',
       value: checkInText,
       icon: <CheckCircle2 size={18} />,
-      onClick: () => router.push('/app/attendances'),
+      onClick: () => router.push('/app/attendances/payroll'),
     },
     {
       title: 'Đồng nghiệp online GPS',
@@ -61,10 +59,7 @@ export const TechnicianDashboard = () => {
       <div className="flex md:hidden flex-col gap-3.5">
         <MobileHeader onRefresh={() => refetch()} isRefreshing={isRefetching} />
         <QuickAttendanceCard attendance={data?.myAttendance} />
-        <QuickActionsGrid
-          pendingLeavesCount={data?.pendingLeavesCount}
-          pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
-        />
+        <QuickActionsGrid pendingLeavesCount={data?.pendingLeavesCount} pendingAdjustmentsCount={data?.pendingAdjustmentsCount} />
         <LiveStaffWidget />
         <DepartmentRosterWidget />
         <PersonalAttendanceHistory />
@@ -74,24 +69,14 @@ export const TechnicianDashboard = () => {
       <div className="hidden md:flex flex-col gap-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {statsData.map((stat, index) => (
-            <StatCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              icon={stat.icon}
-              trend={0}
-              onClick={stat.onClick}
-            />
+            <StatCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={0} onClick={stat.onClick} />
           ))}
         </div>
 
         <div className="grid grid-cols-12 gap-4 min-w-0">
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
             <QuickAttendanceCard attendance={data?.myAttendance} />
-            <WeeklyAttendanceChart
-              data={data?.weeklyStats}
-              todayCount={data?.todayAttendancesCount}
-            />
+            <WeeklyAttendanceChart data={data?.weeklyStats} todayCount={data?.todayAttendancesCount} />
           </div>
 
           <div className="col-span-4 flex flex-col gap-4 min-w-0">

@@ -72,7 +72,7 @@ const HighlightCard = ({ plan }: { plan: Plan }) => {
   const Icon = plan.icon;
 
   return (
-    <div className="group relative flex h-full min-h-[580px] w-[285px] shrink-0 snap-center flex-col justify-between rounded-3xl border border-primary/10 bg-white p-6 pt-9 text-gray-900 shadow-sm transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:border-primary hover:bg-primary hover:text-white hover:shadow-2xl hover:shadow-primary/30 sm:h-full sm:min-h-0 sm:w-auto sm:shrink sm:snap-align-none">
+    <div className="group relative flex h-full min-h-[580px] w-[285px] shrink-0 snap-center flex-col justify-between rounded-3xl border border-primary/10 bg-white p-6 text-gray-900 shadow-sm transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:border-primary hover:bg-primary hover:text-white hover:shadow-2xl hover:shadow-primary/30 sm:h-full sm:min-h-0 sm:w-auto sm:shrink sm:snap-align-none">
       {plan.badge && (
         <span
           className="absolute -top-3.5 right-6 whitespace-nowrap rounded-full bg-primary px-3.5 py-1.5 text-xs font-extrabold text-white shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:bg-[#d6ff3d] group-hover:text-primary"

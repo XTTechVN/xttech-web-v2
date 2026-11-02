@@ -211,7 +211,7 @@ export default function DocumentPreviewModalBody({
         </div>
       </div>
 
-      <div className="flex-1 w-full h-[calc(100vh-56px)] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden relative">
+      <div className="flex-1 w-full h-[calc(100vh-56px)] flex items-center justify-center p-0 sm:p-4 md:p-6 overflow-hidden relative">
         {!downloadUrl ? (
           <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center max-w-md shadow-2xl flex flex-col items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center">

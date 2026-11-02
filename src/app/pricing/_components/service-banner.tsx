@@ -36,8 +36,8 @@ const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceB
 
           {/* Main Title */}
           <h1 className="mb-2 text-2xl font-extrabold leading-[1.15] tracking-tight text-gray-900 sm:text-4xl xl:text-5xl">
-            Bảng giá minh bạch kiểu <span className="text-primary">Google One</span> cho ngành{' '}
-            <span className="text-primary">Nhôm Kính</span>, Xây dựng & Kinh doanh
+            Bảng giá minh bạch cho ngành{' '}
+            <span className="text-primary">Nhôm , Xây dựng & Kinh doanh</span> 
           </h1>
 
           {/* 3 ngành áp dụng */}

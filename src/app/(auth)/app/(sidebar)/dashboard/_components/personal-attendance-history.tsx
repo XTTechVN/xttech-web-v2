@@ -57,17 +57,17 @@ export const PersonalAttendanceHistory: React.FC = () => {
     <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col gap-3.5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+        <Link href="/app/attendances/payroll" className="flex items-center gap-2 group cursor-pointer">
+          <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition">
             <CalendarCheck2 size={18} />
           </div>
           <div className="flex flex-col">
-            <h3 className="text-sm font-bold text-gray-900">Chấm công gần đây</h3>
+            <h3 className="text-sm font-bold text-gray-900 group-hover:text-primary transition">Chấm công gần đây</h3>
             <span className="text-[11px] text-gray-500 font-medium">
               Lịch sử vào ca / ra ca của bạn
             </span>
           </div>
-        </div>
+        </Link>
 
         <button
           type="button"
@@ -107,9 +107,10 @@ export const PersonalAttendanceHistory: React.FC = () => {
             const outTime = item.checkOut ? item.checkOut.slice(0, 5) : '--:--';
 
             return (
-              <div
+              <Link
                 key={item.id}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50/70 hover:bg-gray-100/70 border border-gray-100/80 transition"
+                href="/app/attendances/payroll"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50/70 hover:bg-gray-100/70 border border-gray-100/80 transition cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white border border-gray-200/60 shadow-2xs flex flex-col items-center justify-center shrink-0">
@@ -158,7 +159,7 @@ export const PersonalAttendanceHistory: React.FC = () => {
                     </span>
                   )}
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -166,7 +167,7 @@ export const PersonalAttendanceHistory: React.FC = () => {
 
       {/* Footer Link */}
       <Link
-        href="/app/attendances"
+        href="/app/attendances/payroll"
         className="flex items-center justify-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition py-2 bg-primary/5 hover:bg-primary/10 rounded-xl mt-0.5 active:scale-98 cursor-pointer"
       >
         <span>Xem toàn bộ lịch sử chấm công</span>
