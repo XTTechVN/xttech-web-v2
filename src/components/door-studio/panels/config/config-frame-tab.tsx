@@ -9,7 +9,7 @@ import {
   DEFAULT_SAFETY_BARS_CONFIG,
 } from '../../studio-types';
 import { ProfileBar } from '@/types';
-import { Layers, Shield, RefreshCw, Plus } from 'lucide-react';
+import { Layers, Shield, RefreshCw, Plus, CornerUpLeft, DoorClosed, X } from 'lucide-react';
 import { GasketConfigSection } from './gasket-config-section';
 import { CustomExtraConfigSection } from './custom-extra-config-section';
 
@@ -25,6 +25,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
   const mullionProfiles = profiles.filter((p) => p.barType === 'MULLION');
   const beadProfiles = profiles.filter((p) => p.barType === 'BEAD');
   const couplingProfiles = profiles.filter((p) => p.barType === 'COUPLING');
+  const reversalProfiles = profiles.filter((p) => p.barType === 'REVERSAL');
   const auxiliaryProfiles = profiles.filter(
     (p) =>
       p.barType !== 'FRAME' &&
@@ -32,8 +33,34 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
       p.barType !== 'SCREEN_SASH' &&
       p.barType !== 'MULLION' &&
       p.barType !== 'BEAD' &&
-      p.barType !== 'COUPLING'
+      p.barType !== 'COUPLING' &&
+      p.barType !== 'REVERSAL'
   );
+
+  const availableReversalProfiles = reversalProfiles.length > 0 ? reversalProfiles : auxiliaryProfiles;
+  const currentReversalMode = config.reversalMode ?? (config.isReversedWall ? 'wall' : config.isReversedSash ? 'sash' : 'none');
+
+  const handleSelectReversalMode = (mode: 'wall' | 'sash') => {
+    const nextProfId = config.reversalProfileId || availableReversalProfiles[0]?.id;
+    const nextProf = profiles.find((p) => p.id === nextProfId);
+    onChangeConfig({
+      reversalMode: mode,
+      isReversedWall: mode === 'wall',
+      isReversedSash: mode === 'sash',
+      reversalProfileId: nextProfId,
+      reversalProfileCode: nextProf?.code,
+    });
+  };
+
+  const handleClearReversal = () => {
+    onChangeConfig({
+      reversalMode: 'none',
+      isReversedWall: false,
+      isReversedSash: false,
+      reversalProfileId: undefined,
+      reversalProfileCode: undefined,
+    });
+  };
 
   const leftEdge = config?.leftEdge ?? { offsetMm: 0 };
   const topEdge = config?.topEdge ?? { offsetMm: 0 };
@@ -808,36 +835,103 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
           </div>
 
           {/* Đảo khung */}
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
-            <span className="text-xs text-slate-600 font-medium">Tùy chọn:</span>
-            <div className="flex items-center gap-2">
+          <div className="pt-3 border-t border-slate-100 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="text-xs">
+                <span className="font-semibold text-slate-800">Đảo khung</span>{' '}
+                <span className="text-slate-400 text-[11px]">— gắn thanh đảo để thay đổi hướng nẹp kính hoặc gắn cánh</span>
+              </div>
+              {currentReversalMode !== 'none' && (
+                <button
+                  type="button"
+                  onClick={handleClearReversal}
+                  className="text-[11px] font-medium text-rose-500 hover:text-rose-600 flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <X size={12} />
+                  <span>Bỏ đảo khung</span>
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => onChangeConfig({ isReversedWall: !config.isReversedWall })}
-                className={`px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors ${
-                  config.isReversedWall
-                    ? 'bg-primary/10 border-primary text-primary font-semibold'
+                onClick={() => handleSelectReversalMode('wall')}
+                className={`py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  currentReversalMode === 'wall'
+                    ? 'bg-[#1e3a5f] border-[#1e3a5f] text-white shadow-2xs'
                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                <RefreshCw size={12} className={config.isReversedWall ? 'text-primary' : 'text-slate-400'} />
+                <CornerUpLeft size={13} className={currentReversalMode === 'wall' ? 'text-white' : 'text-slate-400'} />
                 <span>Đảo vách</span>
               </button>
+
               <button
                 type="button"
-                onClick={() => onChangeConfig({ isReversedSash: !config.isReversedSash })}
-                className={`px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors ${
-                  config.isReversedSash
-                    ? 'bg-primary/10 border-primary text-primary font-semibold'
+                onClick={() => handleSelectReversalMode('sash')}
+                className={`py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  currentReversalMode === 'sash'
+                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-2xs'
                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                <Layers size={12} className={config.isReversedSash ? 'text-primary' : 'text-slate-400'} />
+                <DoorClosed size={13} className={currentReversalMode === 'sash' ? 'text-white' : 'text-slate-400'} />
                 <span>Đảo cánh</span>
               </button>
             </div>
-          </div>
-        </div>
+
+            {currentReversalMode !== 'none' && (
+              <div className="space-y-2.5 pt-1">
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-slate-700">Profile đảo khung</div>
+                  <select
+                    value={config.reversalProfileId || ''}
+                    onChange={(e) => {
+                      const pid = Number(e.target.value) || undefined;
+                      const p = profiles.find((item) => item.id === pid);
+                      onChangeConfig({
+                        reversalProfileId: pid,
+                        reversalProfileCode: p?.code,
+                      });
+                    }}
+                    className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
+                  >
+                    <option value="">
+                      {availableReversalProfiles.length > 0
+                        ? 'Chọn profile...'
+                        : '(Không có profile bar_type = REVERSAL)'}
+                    </option>
+                    {availableReversalProfiles.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.code} - {p.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="text-[11px] text-slate-400">
+                    Thanh đảo — khai bar_type = REVERSAL trong catalog/profiles
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-slate-700">
+                    Offset chiều dài (mm) — cộng thêm vào bW/bH
+                  </div>
+                  <input
+                    type="number"
+                    value={config.reversalOffsetMm ?? 0}
+                    onChange={(e) =>
+                      onChangeConfig({
+                        reversalOffsetMm: Number(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            )}
+          </div></div>
       </div>
 
       {/* CỘT RỘNG TOÀN PHẦN (12 cols): Roan gắn kính — Khung & Phụ kiện tùy biến — Khung */}

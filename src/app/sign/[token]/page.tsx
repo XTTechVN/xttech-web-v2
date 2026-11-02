@@ -2,12 +2,12 @@
 
 import React, { use, useEffect, useState } from 'react';
 import axios from 'axios';
-import { CheckCircle2, FileSignature, Loader2, ShieldAlert } from 'lucide-react';
+import { Check, CheckCircle2, FileSignature, Loader2, ShieldAlert, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getPublicSigningView, submitPublicSignature } from '@/actions';
 import { Button, Input, SignaturePad } from '@/components';
 import { BASE_MINIO_URL } from '@/config';
-import type { PublicSigningView } from '@/types';
+import type { AcceptanceItemResult, PublicSigningView } from '@/types';
 
 const formatVnd = (value?: number | null): string =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value ?? 0);
@@ -26,6 +26,11 @@ const SUBJECT_LABEL: Record<PublicSigningView['subjectType'], string> = {
   contract: 'hợp đồng',
   acceptance: 'biên bản nghiệm thu',
   quotation: 'báo giá',
+};
+
+const ITEM_RESULT_LABEL: Record<AcceptanceItemResult, string> = {
+  passed: 'Đạt',
+  failed: 'Không đạt',
 };
 
 export default function PublicSigningPage({ params }: { params: Promise<{ token: string }> }) {
@@ -133,17 +138,41 @@ export default function PublicSigningPage({ params }: { params: Promise<{ token:
             {isContract || isQuotation ? 'Hạng mục cửa' : 'Các bộ cửa nghiệm thu'} ({view.items.length})
           </h2>
           <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 text-xs">
-            {view.items.map((item, index) => (
-              <div key={`${item.code}-${index}`} className="flex items-center justify-between px-3 py-2">
-                <span className="font-semibold text-slate-800">
-                  {item.code} {item.name ? `· ${item.name}` : ''}
-                </span>
-                <span className="text-slate-500">
-                  {item.width} × {item.height} mm
-                  {item.sellingPrice != null && <b className="ml-2 text-slate-800">{formatVnd(item.sellingPrice)}</b>}
-                </span>
-              </div>
-            ))}
+            {view.items.map((item, index) => {
+              const isFailed = item.result === 'failed';
+              return (
+                <div key={`${item.code}-${index}`} className="space-y-1 px-3 py-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {item.result && (
+                        <span
+                          className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                            isFailed ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+                          }`}
+                        >
+                          {isFailed ? <X size={10} /> : <Check size={10} />}
+                          {ITEM_RESULT_LABEL[item.result]}
+                        </span>
+                      )}
+                      <span className="font-semibold text-slate-800">
+                        {item.code} {item.name ? `· ${item.name}` : ''}
+                      </span>
+                    </div>
+                    <span className="text-slate-500">
+                      {item.width} × {item.height} mm
+                      {item.sellingPrice != null && (
+                        <b className="ml-2 text-slate-800">{formatVnd(item.sellingPrice)}</b>
+                      )}
+                    </span>
+                  </div>
+                  {item.note && (
+                    <div className={`text-[11px] ${isFailed ? 'text-rose-700' : 'text-slate-500'}`}>
+                      Ghi chú: {item.note}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
@@ -153,7 +182,6 @@ export default function PublicSigningPage({ params }: { params: Promise<{ token:
           <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Ảnh nghiệm thu thực tế</h2>
           <div className="grid grid-cols-3 gap-2">
             {view.photos.map((photo) => (
-               
               <img
                 key={photo.url}
                 src={mediaUrl(photo.url)}
@@ -169,7 +197,6 @@ export default function PublicSigningPage({ params }: { params: Promise<{ token:
         <section className="grid grid-cols-2 gap-3">
           {view.signatures.map((sig) => (
             <div key={sig.id} className="rounded-lg border border-slate-200 p-2 text-center">
-              { }
               <img src={sig.signatureImage} alt={sig.signerName} className="mx-auto h-16 object-contain" />
               <div className="text-xs font-semibold text-slate-800">{sig.signerName}</div>
               <div className="text-[10px] text-slate-500">

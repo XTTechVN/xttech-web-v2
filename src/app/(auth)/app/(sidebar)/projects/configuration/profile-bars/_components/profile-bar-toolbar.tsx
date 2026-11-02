@@ -3,13 +3,16 @@
 import React from 'react';
 import { Button } from '@/components';
 import { TableSearch } from '@/components/table';
-import { Plus } from 'lucide-react';
+import { Plus, Download, Upload } from 'lucide-react';
 import type { DoorSeries } from '@/types';
 
 interface ProfileBarToolbarProps {
   search: string;
   onSearchChange: (val: string) => void;
   onAddClick: () => void;
+  onExportExcelClick?: () => void;
+  onImportExcelClick?: () => void;
+  isExporting?: boolean;
   seriesList?: DoorSeries[];
   selectedSeriesId?: number | null;
   onSeriesChange?: (seriesId: number | null) => void;
@@ -19,6 +22,9 @@ export function ProfileBarToolbar({
   search,
   onSearchChange,
   onAddClick,
+  onExportExcelClick,
+  onImportExcelClick,
+  isExporting = false,
   seriesList = [],
   selectedSeriesId,
   onSeriesChange,
@@ -49,14 +55,39 @@ export function ProfileBarToolbar({
         )}
       </div>
 
-      <Button
-        variant="primary"
-        size="sm"
-        leftIcon={<Plus size={15} />}
-        onClick={onAddClick}
-      >
-        Thêm thanh profile mới
-      </Button>
+      <div className="flex items-center gap-2 flex-wrap">
+        {onExportExcelClick && (
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Download size={15} />}
+            loading={isExporting}
+            onClick={onExportExcelClick}
+          >
+            Xuất Excel
+          </Button>
+        )}
+
+        {onImportExcelClick && (
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Upload size={15} />}
+            onClick={onImportExcelClick}
+          >
+            Nhập Excel
+          </Button>
+        )}
+
+        <Button
+          variant="primary"
+          size="sm"
+          leftIcon={<Plus size={15} />}
+          onClick={onAddClick}
+        >
+          Thêm thanh profile mới
+        </Button>
+      </div>
     </div>
   );
 }

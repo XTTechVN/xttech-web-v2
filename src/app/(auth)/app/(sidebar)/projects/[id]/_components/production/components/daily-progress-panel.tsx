@@ -14,9 +14,11 @@ import type {
 } from '@/types';
 import { ProgressUpdateModal } from '../modals/progress-update-modal';
 import { RevertProgressModal } from '../modals/revert-progress-modal';
+import { useAdvanceProgress } from '../hooks';
 import {
   DISPLAY_STEPS_ORDER,
   getNextStep,
+  mapToStandardProgressStep,
   PROGRESS_STEP_LABEL,
   STEP_SECTION_CONFIG,
 } from '../utils';
@@ -54,10 +56,15 @@ export function DailyProgressPanel({
     [matrixItemMap],
   );
 
+  const advance = useAdvanceProgress(projectId, () => {
+    setSelectedIds([]);
+  });
+
   const groupedDoors = useMemo(() => {
     const groups = new Map<string, ProjectDoorPosition[]>();
     positions.forEach((pos) => {
-      const status = getDoorStatus(pos);
+      const rawStatus = getDoorStatus(pos);
+      const status = mapToStandardProgressStep(rawStatus);
       const list = groups.get(status) ?? [];
       list.push(pos);
       groups.set(status, list);
@@ -68,14 +75,14 @@ export function DailyProgressPanel({
   const selectedStep = useMemo(() => {
     if (selectedIds.length === 0) return null;
     const firstSelected = positions.find((p) => p.id === selectedIds[0]);
-    return firstSelected ? (getDoorStatus(firstSelected) as ProgressStepCode) : null;
+    return firstSelected ? mapToStandardProgressStep(getDoorStatus(firstSelected)) : null;
   }, [selectedIds, positions, getDoorStatus]);
 
   const toggleSelect = (id: number) => {
     const clickedDoor = positions.find((p) => p.id === id);
     if (!clickedDoor) return;
 
-    const clickedStep = getDoorStatus(clickedDoor);
+    const clickedStep = mapToStandardProgressStep(getDoorStatus(clickedDoor));
 
     setSelectedIds((prev) => {
       if (prev.includes(id)) {
@@ -85,6 +92,14 @@ export function DailyProgressPanel({
         return [id];
       }
       return [...prev, id];
+    });
+  };
+
+  const handleDirectAdvance = () => {
+    if (!nextStep || selectedIds.length === 0 || advance.isPending) return;
+    advance.mutate({
+      positionIds: selectedIds,
+      targetStep: nextStep,
     });
   };
 
@@ -224,8 +239,9 @@ export function DailyProgressPanel({
             <Button
               variant="primary"
               size="sm"
-              disabled={!nextStep}
-              onClick={() => setIsUpdateModalOpen(true)}
+              disabled={!nextStep || advance.isPending}
+              loading={advance.isPending}
+              onClick={handleDirectAdvance}
               className="gap-1.5 text-xs font-semibold shadow-xs"
             >
               <CheckCircle2 size={14} />

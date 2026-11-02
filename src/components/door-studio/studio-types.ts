@@ -128,6 +128,7 @@ export interface SceneCellNode {
   hoNenMm?: number;
   ngamNgangMm?: number;
   ngamDocMm?: number;
+  slidingOverlapMm?: number;
 }
 
 
@@ -307,7 +308,10 @@ export type GasketMeasureType =
   | 'glass_height'    // Theo chiều cao kính
   | 'frame_perimeter' // Theo chu vi khung
   | 'frame_width'     // Theo chiều rộng khung
-  | 'frame_height';   // Theo chiều cao khung
+  | 'frame_height'    // Theo chiều cao khung
+  | 'sash_perimeter'  // Theo chu vi cánh
+  | 'sash_width'      // Theo chiều rộng cánh
+  | 'sash_height';    // Theo chiều cao cánh
 
 export interface DoorGasketConfigItem {
   id: string;
@@ -349,6 +353,10 @@ export interface FrameConfig {
   beadProfileId?: number;
   beadCornerJoint: BeadCornerJoint;
   couplingProfileId?: number;
+  reversalMode?: 'none' | 'wall' | 'sash';
+  reversalProfileId?: number;
+  reversalProfileCode?: string;
+  reversalOffsetMm?: number;
   isReversedWall: boolean;
   isReversedSash: boolean;
   archConfig?: ArchConfig;
@@ -386,6 +394,7 @@ export interface SashConfig {
   cornerJoint: SashCornerJoint;
   beadCornerJoint: BeadCornerJoint;
   isNhomCo: boolean;
+  slidingOverlapMm?: number;
   leftProfileId?: number;
   topProfileId?: number;
   rightProfileId?: number;
@@ -408,6 +417,8 @@ export const DEFAULT_FRAME_CONFIG: FrameConfig = {
   hasSafetyBars: false,
   safetyBarsConfig: DEFAULT_SAFETY_BARS_CONFIG,
   beadCornerJoint: '45',
+  reversalMode: 'none',
+  reversalOffsetMm: 0,
   isReversedWall: false,
   isReversedSash: false,
   archConfig: DEFAULT_ARCH_CONFIG,
@@ -428,6 +439,7 @@ export const DEFAULT_SASH_CONFIG: SashConfig = {
   cornerJoint: '45',
   beadCornerJoint: '45',
   isNhomCo: false,
+  slidingOverlapMm: undefined,
   gaskets: [],
   extras: [],
 };

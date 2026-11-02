@@ -1,20 +1,27 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getBrands, getAccessories, deleteAccessory, getAccessoryCategories } from '@/actions';
-import type { Accessory, Brand } from '@/types';
+import {
+  getBrands,
+  getAccessories,
+  deleteAccessory,
+  getAccessoryCategories,
+  exportAccessoriesExcel,
+} from '@/actions';
+import type { Accessory } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
+import { BrandSidebar } from '../../_components';
 import {
-  AccessoryBrandSidebar,
   AccessoryToolbar,
   AccessoryTable,
   AccessoryModal,
   AccessorySkeleton,
   AccessoryEmptyState,
   AccessoryCategoryManagerModal,
+  AccessoryExcelModal,
 } from './_components';
 
 export default function AccessoriesTab() {
@@ -24,8 +31,9 @@ export default function AccessoriesTab() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(null);
-
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Queries danh sách thương hiệu phụ kiện
   const { data: accessoryBrandsData, isLoading: isBrandsLoading } = useQuery({
@@ -37,7 +45,6 @@ export default function AccessoriesTab() {
         allowDeleted: false,
         brandType: 'accessory',
       });
-      // Nếu có hãng phụ kiện thì trả về, nếu không fallback lấy tất cả hãng
       if (res.items && res.items.length > 0) {
         return res.items;
       }
@@ -46,18 +53,14 @@ export default function AccessoriesTab() {
     },
   });
 
-  const brandsList = accessoryBrandsData || [];
+  const brandsList = useMemo(() => accessoryBrandsData ?? [], [accessoryBrandsData]);
 
   const sortedBrands = useMemo(() => {
     return [...brandsList].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
   }, [brandsList]);
 
-  // Luôn tự động chọn hãng đầu tiên nếu chưa chọn
-  useEffect(() => {
-    if (selectedBrandId === null && sortedBrands.length > 0) {
-      setSelectedBrandId(sortedBrands[0].id);
-    }
-  }, [sortedBrands, selectedBrandId]);
+  // Tự động lấy hãng đầu tiên nếu chưa chọn (Derived State - tránh setState trong useEffect)
+  const activeBrandId = selectedBrandId ?? sortedBrands[0]?.id ?? null;
 
   // Queries danh sách phân loại phụ kiện
   const { data: categoriesData } = useQuery({
@@ -69,11 +72,11 @@ export default function AccessoriesTab() {
 
   // Queries danh sách phụ kiện theo Hãng + Phân loại đang chọn
   const { data: accessoriesData, isLoading: isAccessoriesLoading } = useQuery({
-    queryKey: ['accessories', selectedBrandId, selectedCategoryId, search],
+    queryKey: ['accessories', activeBrandId, selectedCategoryId, search],
     queryFn: async () => {
-      if (!selectedBrandId) return [];
+      if (!activeBrandId) return [];
       const res = await getAccessories({
-        brandId: selectedBrandId,
+        brandId: activeBrandId,
         categoryId: selectedCategoryId || undefined,
         limit: 1000,
         offset: 0,
@@ -82,7 +85,7 @@ export default function AccessoriesTab() {
       });
       return res.items;
     },
-    enabled: selectedBrandId !== null,
+    enabled: activeBrandId !== null,
   });
 
   const accessories = accessoriesData || [];
@@ -98,8 +101,8 @@ export default function AccessoriesTab() {
   });
 
   const selectedBrand = useMemo(() => {
-    return selectedBrandId ? brandsList.find((b) => b.id === selectedBrandId) : null;
-  }, [brandsList, selectedBrandId]);
+    return activeBrandId ? brandsList.find((b) => b.id === activeBrandId) : null;
+  }, [brandsList, activeBrandId]);
 
   const handleOpenCreateModal = () => {
     setSelectedAccessory(null);
@@ -117,25 +120,43 @@ export default function AccessoriesTab() {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      await exportAccessoriesExcel({
+        brandId: activeBrandId,
+        categoryId: selectedCategoryId,
+      });
+      toast.success('Đã xuất file Excel danh sách phụ kiện');
+    } catch (err) {
+      showErrorToast(err, 'Lỗi khi xuất file Excel');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const isLoading = isBrandsLoading || isAccessoriesLoading;
 
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
       {/* Cột lọc danh sách Hãng phụ kiện bên trái */}
-      <AccessoryBrandSidebar
+      <BrandSidebar
         brands={brandsList}
-        selectedBrandId={selectedBrandId}
+        selectedBrandId={activeBrandId}
         onSelectBrand={setSelectedBrandId}
       />
 
       {/* Khu vực nội dung danh sách Phụ kiện bên phải */}
       <div className="flex-1 flex flex-col gap-4 min-w-0 w-full p-4">
-        {/* Toolbar: Tìm kiếm, Lọc phân loại & Thêm mới */}
+        {/* Toolbar: Tìm kiếm, Lọc phân loại, Xuất/Nhập Excel & Thêm mới */}
         <AccessoryToolbar
           search={search}
           onSearchChange={setSearch}
           onAddClick={handleOpenCreateModal}
           onManageCategoriesClick={() => setIsCategoryManagerOpen(true)}
+          onExportExcelClick={handleExportExcel}
+          onImportExcelClick={() => setIsExcelModalOpen(true)}
+          isExporting={isExporting}
           categoryList={categoryList}
           selectedCategoryId={selectedCategoryId}
           onCategoryChange={setSelectedCategoryId}
@@ -164,13 +185,21 @@ export default function AccessoriesTab() {
         }}
         accessory={selectedAccessory}
         brands={brandsList}
-        defaultBrandId={selectedBrandId}
+        defaultBrandId={activeBrandId}
       />
 
       {/* Modal Toàn màn hình Quản lý Danh mục phụ kiện */}
       <AccessoryCategoryManagerModal
         isOpen={isCategoryManagerOpen}
         onClose={() => setIsCategoryManagerOpen(false)}
+      />
+
+      {/* Modal Nhập Excel & Chỉnh sửa trực tiếp */}
+      <AccessoryExcelModal
+        isOpen={isExcelModalOpen}
+        onClose={() => setIsExcelModalOpen(false)}
+        brands={brandsList}
+        categories={categoryList}
       />
     </div>
   );

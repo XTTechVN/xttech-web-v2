@@ -110,8 +110,7 @@ export const InfoTabView: React.FC<InfoTabViewProps> = ({
                       value: String(b.id),
                       label: b.name,
                     }))}
-                    className="h-9 text-xs font-normal bg-slate-50 cursor-not-allowed text-slate-600"
-                    disabled
+                    className="h-9 text-xs font-normal"
                     fullWidth
                   />
                 </div>

@@ -118,9 +118,15 @@ const Modal: React.FC<ModalProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-100 shrink-0 bg-white rounded-t-none md:rounded-t-xl">
               {title ? (
-                <Heading size="h3" className="text-gray-900 font-semibold truncate pr-4 text-base sm:text-lg">
-                  {title}
-                </Heading>
+                typeof title === 'string' ? (
+                  <Heading size="h3" className="text-gray-900 font-semibold truncate pr-4 text-base sm:text-lg min-w-0 flex-1">
+                    {title}
+                  </Heading>
+                ) : (
+                  <div className="min-w-0 flex-1 pr-2">
+                    {title}
+                  </div>
+                )
               ) : (
                 <div />
               )}

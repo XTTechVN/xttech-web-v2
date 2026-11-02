@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { Pencil, Trash2, ExternalLink } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Trash2, ExternalLink } from 'lucide-react';
 import type { Brand } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 
@@ -25,17 +25,14 @@ function BrandLogo({
 }) {
   const [hasError, setHasError] = useState(false);
 
-  useEffect(() => {
-    setHasError(false);
-  }, [logoPath, updatedAt]);
-
   const logoUrl = useMemo(() => {
     if (!logoPath) return null;
     const base = logoPath.startsWith('http')
       ? logoPath
       : `${BASE_MINIO_URL}/${logoPath.startsWith('/') ? logoPath.slice(1) : logoPath}`;
 
-    const timestamp = updatedAt ? new Date(updatedAt).getTime() : Date.now();
+    if (!updatedAt) return base;
+    const timestamp = new Date(updatedAt).getTime();
     const separator = base.includes('?') ? '&' : '?';
     return `${base}${separator}t=${timestamp}`;
   }, [logoPath, updatedAt]);
@@ -60,7 +57,7 @@ function BrandLogo({
   );
 }
 
-export function BrandCard({ brand, onClick, onEdit, onDelete }: BrandCardProps) {
+export function BrandCard({ brand, onClick, onDelete }: BrandCardProps) {
   return (
     <div
       onClick={() => onClick?.(brand)}
@@ -70,6 +67,7 @@ export function BrandCard({ brand, onClick, onEdit, onDelete }: BrandCardProps) 
       <div>
         <div className="relative aspect-square w-full bg-slate-50/80 border border-slate-100 rounded-md flex items-center justify-center overflow-hidden mb-2">
           <BrandLogo
+            key={`${brand.logoPath ?? ''}-${brand.updatedAt ?? ''}`}
             logoPath={brand.logoPath}
             name={brand.name}
             code={brand.code}

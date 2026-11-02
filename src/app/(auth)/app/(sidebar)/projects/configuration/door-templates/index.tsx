@@ -6,7 +6,7 @@ import { getDoors, getDoorSeriesList, getBrands } from '@/actions';
 import { getDoorTypeConfig, normalizeDoorType, type Door } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 import { Search, Plus, ImageOff, LayoutGrid } from 'lucide-react';
-import { AccessoryBrandSidebar } from '../accessories/_components';
+import { BrandSidebar } from '../../_components';
 import { DoorStudioModal } from '@/components';
 import { DoorThumbnail } from './_components/door-thumbnail';
 
@@ -97,31 +97,29 @@ export default function DoorTemplatesTab() {
     queryKey: ['brands', 'aluminum'],
     queryFn: async () => (await getBrands({ limit: 9999, offset: 0, allowDeleted: false, brandType: 'aluminum' })).items || [],
   });
-  const brandsList = brandsData || [];
+  const brandsList = useMemo(() => brandsData ?? [], [brandsData]);
 
   const sortedBrands = useMemo(
     () => [...brandsList].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })),
     [brandsList],
   );
-  React.useEffect(() => {
-    if (selectedBrandId === null && sortedBrands.length > 0) {
-      setSelectedBrandId(sortedBrands[0].id);
-    }
-  }, [sortedBrands, selectedBrandId]);
+
+  // Tự động chọn hãng đầu tiên (Derived State - tránh setState trong useEffect)
+  const activeBrandId = selectedBrandId ?? sortedBrands[0]?.id ?? null;
 
   const { data: seriesData } = useQuery({
-    queryKey: ['door-series', selectedBrandId],
-    queryFn: () => getDoorSeriesList({ brandId: selectedBrandId || undefined, limit: 9999, offset: 0 }),
-    enabled: selectedBrandId !== null,
+    queryKey: ['door-series', activeBrandId],
+    queryFn: () => getDoorSeriesList({ brandId: activeBrandId || undefined, limit: 9999, offset: 0 }),
+    enabled: activeBrandId !== null,
   });
   const seriesList = seriesData?.items || [];
 
   const { data: doorsData, isLoading } = useQuery({
-    queryKey: ['door-templates', selectedBrandId],
-    queryFn: () => getDoors({ brandId: selectedBrandId || undefined, limit: 9999, offset: 0 }),
-    enabled: selectedBrandId !== null,
+    queryKey: ['door-templates', activeBrandId],
+    queryFn: () => getDoors({ brandId: activeBrandId || undefined, limit: 9999, offset: 0 }),
+    enabled: activeBrandId !== null,
   });
-  const allDoors = doorsData?.items || [];
+  const allDoors = useMemo(() => doorsData?.items ?? [], [doorsData]);
 
   const filteredDoors = useMemo(() => {
     let result = allDoors;
@@ -156,9 +154,9 @@ export default function DoorTemplatesTab() {
 
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
-      <AccessoryBrandSidebar
+      <BrandSidebar
         brands={brandsList}
-        selectedBrandId={selectedBrandId}
+        selectedBrandId={activeBrandId}
         onSelectBrand={(id) => {
           setSelectedBrandId(id);
           setSelectedSeriesId(null);
@@ -281,10 +279,10 @@ export default function DoorTemplatesTab() {
       </div>
 
       <DoorStudioModal
-        key={studioDoor ? `studio-${studioDoor.id}` : `studio-new-${selectedBrandId}`}
+        key={studioDoor ? `studio-${studioDoor.id}` : `studio-new-${activeBrandId}`}
         isOpen={isStudioOpen}
         door={studioDoor}
-        defaultBrandId={selectedBrandId}
+        defaultBrandId={activeBrandId}
         onClose={() => {
           setIsStudioOpen(false);
           setStudioDoor(null);

@@ -288,7 +288,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
             className="cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
-              onEditDimension?.('handleHeight', masterNode.id);
+              // Drag handled by CadSplitResizer
             }}
           >
             {handleType === 'crescent' ? (

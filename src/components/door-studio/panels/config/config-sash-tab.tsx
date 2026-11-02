@@ -138,11 +138,11 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
 
         {/* Khe hở & ngàm trừ cơ khí */}
         <div className="space-y-1.5">
-          <div className="font-medium text-xs text-slate-700">Khe hở & ngàm trừ cơ khí:</div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div className="font-medium text-xs text-slate-700">Khe hở & ngậm cơ khí:</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
               <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
-                <span>Ngàm ngang</span>
+                <span>Ngậm ngang</span>
                 <span className="text-slate-400">mm</span>
               </div>
               <input
@@ -151,11 +151,11 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
                 onChange={(e) => onChangeConfig({ ngamNgangMm: Number(e.target.value) })}
                 className="w-full h-7 px-2 text-xs text-center border rounded border-slate-300 focus:outline-none focus:border-primary font-medium"
               />
-              <div className="text-[10px] text-slate-400 text-center">Trừ ngàm đứng</div>
+              <div className="text-[10px] text-slate-400 text-center">Độ ngậm đứng (W)</div>
             </div>
             <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
               <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
-                <span>Ngàm dọc</span>
+                <span>Ngậm dọc</span>
                 <span className="text-slate-400">mm</span>
               </div>
               <input
@@ -164,7 +164,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
                 onChange={(e) => onChangeConfig({ ngamDocMm: Number(e.target.value) })}
                 className="w-full h-7 px-2 text-xs text-center border rounded border-slate-300 focus:outline-none focus:border-primary font-medium"
               />
-              <div className="text-[10px] text-slate-400 text-center">Trừ ngàm trên / dưới</div>
+              <div className="text-[10px] text-slate-400 text-center">Độ ngậm trên / dưới (H)</div>
             </div>
             <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
               <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
@@ -178,6 +178,20 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
                 className="w-full h-7 px-2 text-xs text-center border rounded border-slate-300 focus:outline-none focus:border-primary font-medium"
               />
               <div className="text-[10px] text-slate-400 text-center">Hs - giá trị này</div>
+            </div>
+            <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
+                <span>Ngậm lùa</span>
+                <span className="text-slate-400">mm</span>
+              </div>
+              <input
+                type="number"
+                value={config.slidingOverlapMm ?? ''}
+                placeholder="Tự động"
+                onChange={(e) => onChangeConfig({ slidingOverlapMm: e.target.value === '' ? undefined : Number(e.target.value) })}
+                className="w-full h-7 px-2 text-xs text-center border rounded border-slate-300 focus:outline-none focus:border-primary font-medium placeholder:text-slate-400 placeholder:italic"
+              />
+              <div className="text-[10px] text-slate-400 text-center">Chồng đè cánh lùa</div>
             </div>
           </div>
         </div>

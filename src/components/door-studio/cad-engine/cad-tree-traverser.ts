@@ -1,5 +1,6 @@
 import { SceneCellNode, MullionInfo, FrameConfig } from '../studio-types';
 import { FrameBox, MullionBar, LeafCell, CouplingSeamBar, VerticalSlice } from './cad-types';
+import { computeSlidingSashes } from './cad-geometry';
 
 export interface BottomSill {
   x: number;
@@ -253,6 +254,7 @@ export const buildCadLayout = (
     vertMullionT?: number;
     horizMullionT?: number;
     frameConfig?: FrameConfig;
+    slidingOverlapPx?: number;
   }
 ): CadLayoutResult => {
   const frames: FrameBox[] = [];
@@ -262,7 +264,7 @@ export const buildCadLayout = (
   const bottomSills: BottomSill[] = [];
 
   const isDoorHydraulic = Boolean(options?.isHydraulic || rootCell.isHydraulic);
-  const isOpenBottomDoor = Boolean(options?.isOpenBottom || isDoorHydraulic);
+  const isOpenBottomDoor = options?.isOpenBottom !== undefined ? Boolean(options.isOpenBottom) : Boolean(isDoorHydraulic);
 
   const traverse = (node: SceneCellNode, x: number, y: number, wBox: number, hBox: number, isFrameUnit: boolean) => {
     // 1. Frame Coupling: Mỗi nhánh con là 1 module khung độc lập ghép lại
@@ -326,6 +328,38 @@ export const buildCadLayout = (
 
     // 3. Phân chia đố T 90° hoặc cặp cánh đối xứng
     if (node.children && node.children.length > 0 && node.splitType !== 'sash_mullion') {
+      // 3.0 Cụm cánh cửa lùa (Sliding cluster) chồng đè thực tế (Overlap/Đè gối)
+      const isSlidingCluster = Boolean(
+        node.splitType === 'sash_pair' &&
+        (
+          node.sashLayout?.includes('lua') ||
+          node.sashLayout?.includes('sliding') ||
+          node.sashType?.includes('lua') ||
+          node.sashType?.includes('sliding') ||
+          node.children.some((c) =>
+            c.sashType?.includes('lua') ||
+            c.sashType === 'sliding' ||
+            Boolean(c.sashArrow?.includes('lua')) ||
+            c.sashZIndex !== undefined
+          )
+        )
+      );
+
+      if (isSlidingCluster && node.children) {
+        const count = node.children.length;
+        const activeOverlap = options?.slidingOverlapPx ?? Math.max(12, Math.round(frameD * 1.1));
+        const slidingLayout = computeSlidingSashes(innerX, innerW, count, activeOverlap, node.sashLayout);
+
+        node.children.forEach((child, idx) => {
+          const pos = slidingLayout[idx] || { x: innerX, w: innerW, trackIndex: 0, zIndex: 0 };
+          const leafChild: SceneCellNode = {
+            ...child,
+            sashZIndex: child.sashZIndex ?? pos.zIndex,
+          };
+          traverse(leafChild, pos.x, innerY, pos.w, innerH, false);
+        });
+        return;
+      }
       const isVert = node.splitDirection === 'vertical';
       const count = node.children.length;
 

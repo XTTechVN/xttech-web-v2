@@ -46,6 +46,8 @@ export interface AccessoryComboUpdate {
   code?: string;
   name?: string;
   doorTypeId?: number | null;
+  applyFor?: string | null;
+  openingType?: string | null;
   description?: string | null;
   brandId?: number | null;
   comboItems?: AccessoryComboItem[];
@@ -62,4 +64,3 @@ export interface AccessoryComboQueryParams {
   offset?: number;
   limit?: number;
 }
-

@@ -19,14 +19,11 @@ const getErrorMessage = (error: unknown): string =>
     : 'Không thể xử lý yêu cầu';
 
 const ACTION_LABEL: Partial<Record<ProgressStepCode, string>> = {
-  factory_done: 'Báo đã sản xuất xong',
-  delivering: 'Xuất xưởng - đang vận chuyển',
-  delivered: 'Báo đã giao đến công trình',
-  installing: 'Bắt đầu lắp đặt',
+  factory_done: 'Báo đã sản xuất xong - chờ lắp đặt',
   installed: 'Báo đã lắp đặt xong',
 };
 
-const INSTALL_STEP_VALUES: ProgressStepCode[] = ['factory_done', 'delivering', 'delivered', 'installing', 'installed'];
+const INSTALL_STEP_VALUES: ProgressStepCode[] = ['factory_done', 'installed'];
 
 /** Trang công khai khi quét QR dán trên bộ cửa; nhân viên đăng nhập có thể báo tiến độ ngay tại đây. */
 export default function QrPositionPage({ params }: { params: Promise<{ token: string }> }) {

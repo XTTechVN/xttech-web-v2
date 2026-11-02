@@ -12,48 +12,245 @@ interface PriceChanges {
   separatedOverrides: Record<number, { total: number; acc: number }>;
 }
 
+export const getSuggestedUnitPriceM2 = (item: QuotationDoorItemSnapshot): number => {
+  const area = item.areaM2 || 0;
+  return area > 0 ? Math.round(item.suggestedPrice / area) : item.suggestedPrice;
+};
+
+export const getSavedUnitPriceM2 = (item: QuotationDoorItemSnapshot): number => {
+  const area = item.areaM2 || 0;
+  return area > 0 ? Math.round(item.sellingPrice / area) : item.sellingPrice;
+};
+
+export const getSuggestedDoorUnitPriceM2 = (item: QuotationDoorItemSnapshot): number => {
+  const area = item.areaM2 || 0;
+  return area > 0 ? Math.round(item.doorOnlySuggestedPrice / area) : item.doorOnlySuggestedPrice;
+};
+
+export const getSavedDoorUnitPriceM2 = (item: QuotationDoorItemSnapshot): number => {
+  const area = item.areaM2 || 0;
+  return area > 0 ? Math.round(item.doorOnlySellingPrice / area) : item.doorOnlySellingPrice;
+};
+
 /**
- * Giá bán đang nhập dở (chưa lưu) trên bảng chi tiết bộ cửa.
- * Ô để trống nghĩa là quay về giá gợi ý của hệ thống.
+ * Quản lý giá bán linh hoạt 2 chiều (Đơn giá đ/m² <-> Thành tiền đ)
+ * Hỗ trợ áp dụng hàng loạt và chuẩn hóa cho cả 2 chế độ báo giá.
  */
-export function useQuotationPriceDrafts(items: QuotationDoorItemSnapshot[], isSeparated: boolean) {
-  const [priceDrafts, setPriceDrafts] = useState<DraftMap>({});
-  const [doorDrafts, setDoorDrafts] = useState<DraftMap>({});
+export function useQuotationPriceDrafts(
+  items: QuotationDoorItemSnapshot[],
+  isSeparated: boolean,
+  vatPercent: number = 10,
+) {
+  // Combined mode drafts
+  const [unitPriceM2Drafts, setUnitPriceM2Drafts] = useState<DraftMap>({});
+  const [totalDrafts, setTotalDrafts] = useState<DraftMap>({});
+
+  // Separated mode drafts
+  const [doorUnitM2Drafts, setDoorUnitM2Drafts] = useState<DraftMap>({});
+  const [doorTotalDrafts, setDoorTotalDrafts] = useState<DraftMap>({});
   const [accDrafts, setAccDrafts] = useState<DraftMap>({});
 
   const resetDrafts = () => {
-    setPriceDrafts({});
-    setDoorDrafts({});
+    setUnitPriceM2Drafts({});
+    setTotalDrafts({});
+    setDoorUnitM2Drafts({});
+    setDoorTotalDrafts({});
     setAccDrafts({});
   };
 
-  // Giá cửa / phụ kiện đang có hiệu lực: đang nhập > giá tay đã lưu > giá gợi ý
+  // --- Giá có hiệu lực (Live) ---
+
+  const getUnitPriceM2Live = (item: QuotationDoorItemSnapshot): number => {
+    const draft = unitPriceM2Drafts[item.positionId];
+    if (draft !== undefined && draft !== '') return Number(draft);
+    if (draft === '') return getSuggestedUnitPriceM2(item);
+    return item.isManuallyEdited ? getSavedUnitPriceM2(item) : getSuggestedUnitPriceM2(item);
+  };
+
+  const getDoorUnitPriceM2Live = (item: QuotationDoorItemSnapshot): number => {
+    const draft = doorUnitM2Drafts[item.positionId];
+    if (draft !== undefined && draft !== '') return Number(draft);
+    if (draft === '') return getSuggestedDoorUnitPriceM2(item);
+    return isSeparatedManual(item)
+      ? getSavedDoorUnitPriceM2(item)
+      : getSuggestedDoorUnitPriceM2(item);
+  };
+
   const getDoorLive = (item: QuotationDoorItemSnapshot): number => {
-    const draft = doorDrafts[item.positionId];
-    if (draft !== undefined) return draft === '' ? item.doorOnlySuggestedPrice : Number(draft);
+    const draft = doorTotalDrafts[item.positionId];
+    if (draft !== undefined && draft !== '') return Number(draft);
+    if (draft === '') return item.doorOnlySuggestedPrice;
     return isSeparatedManual(item) ? item.doorOnlySellingPrice : item.doorOnlySuggestedPrice;
   };
 
   const getAccessoryLive = (item: QuotationDoorItemSnapshot): number => {
     const draft = accDrafts[item.positionId];
-    if (draft !== undefined) return draft === '' ? item.accessorySuggestedPrice : Number(draft);
+    if (draft !== undefined && draft !== '') return Number(draft);
+    if (draft === '') return item.accessorySuggestedPrice;
     return isSeparatedManual(item) ? item.accessorySellingPrice : item.accessorySuggestedPrice;
   };
 
-  // Tổng giá bộ cửa đang có hiệu lực
   const getTotalLive = (item: QuotationDoorItemSnapshot): number => {
     if (isSeparated) return getDoorLive(item) + getAccessoryLive(item);
-    const draft = priceDrafts[item.positionId];
+    const draft = totalDrafts[item.positionId];
     if (draft !== undefined && draft !== '') return Number(draft);
-    return item.isManuallyEdited && draft === undefined ? item.sellingPrice : item.suggestedPrice;
+    if (draft === '') return item.suggestedPrice;
+    return item.isManuallyEdited ? item.sellingPrice : item.suggestedPrice;
   };
 
-  const isBelowCostLive = (item: QuotationDoorItemSnapshot): boolean =>
-    getTotalLive(item) < item.costPrice;
+  const isBelowCostLive = (item: QuotationDoorItemSnapshot): boolean => {
+    const totalLive = getTotalLive(item);
+    const vatFactor = 1.0 + (vatPercent || 0) / 100;
+    const netLive = vatFactor > 0 ? totalLive / vatFactor : totalLive;
+    return netLive < item.costPrice;
+  };
+
+  // --- Setters đồng bộ 2 chiều (Bidirectional) ---
+
+  const setUnitPriceM2Draft = (item: QuotationDoorItemSnapshot, digits: string) => {
+    const id = item.positionId;
+    if (digits === '') {
+      setUnitPriceM2Drafts((prev) => ({ ...prev, [id]: '' }));
+      setTotalDrafts((prev) => ({ ...prev, [id]: '' }));
+      return;
+    }
+    const unitPrice = Number(digits);
+    const total = Math.round(unitPrice * (item.areaM2 || 0));
+    setUnitPriceM2Drafts((prev) => ({ ...prev, [id]: digits }));
+    setTotalDrafts((prev) => ({ ...prev, [id]: String(total) }));
+  };
+
+  const setTotalPriceDraft = (item: QuotationDoorItemSnapshot, digits: string) => {
+    const id = item.positionId;
+    if (digits === '') {
+      setUnitPriceM2Drafts((prev) => ({ ...prev, [id]: '' }));
+      setTotalDrafts((prev) => ({ ...prev, [id]: '' }));
+      return;
+    }
+    const total = Number(digits);
+    const unitM2 = item.areaM2 > 0 ? Math.round(total / item.areaM2) : total;
+    setTotalDrafts((prev) => ({ ...prev, [id]: digits }));
+    setUnitPriceM2Drafts((prev) => ({ ...prev, [id]: String(unitM2) }));
+  };
+
+  const setDoorUnitPriceM2Draft = (item: QuotationDoorItemSnapshot, digits: string) => {
+    const id = item.positionId;
+    if (digits === '') {
+      setDoorUnitM2Drafts((prev) => ({ ...prev, [id]: '' }));
+      setDoorTotalDrafts((prev) => ({ ...prev, [id]: '' }));
+      return;
+    }
+    const unitPrice = Number(digits);
+    const total = Math.round(unitPrice * (item.areaM2 || 0));
+    setDoorUnitM2Drafts((prev) => ({ ...prev, [id]: digits }));
+    setDoorTotalDrafts((prev) => ({ ...prev, [id]: String(total) }));
+  };
+
+  const setDoorTotalPriceDraft = (item: QuotationDoorItemSnapshot, digits: string) => {
+    const id = item.positionId;
+    if (digits === '') {
+      setDoorUnitM2Drafts((prev) => ({ ...prev, [id]: '' }));
+      setDoorTotalDrafts((prev) => ({ ...prev, [id]: '' }));
+      return;
+    }
+    const total = Number(digits);
+    const unitM2 = item.areaM2 > 0 ? Math.round(total / item.areaM2) : total;
+    setDoorTotalDrafts((prev) => ({ ...prev, [id]: digits }));
+    setDoorUnitM2Drafts((prev) => ({ ...prev, [id]: String(unitM2) }));
+  };
+
+  const setAccessoryDraft = (positionId: number, digits: string) => {
+    setAccDrafts((prev) => ({ ...prev, [positionId]: digits }));
+  };
+
+  // --- Batch Actions ---
+
+  const applyBatchUnitPrice = (
+    targetItems: QuotationDoorItemSnapshot[],
+    unitPriceM2: number,
+  ) => {
+    if (unitPriceM2 <= 0) return;
+    const digits = String(unitPriceM2);
+
+    if (isSeparated) {
+      setDoorUnitM2Drafts((prev) => {
+        const next = { ...prev };
+        targetItems.forEach((item) => {
+          next[item.positionId] = digits;
+        });
+        return next;
+      });
+      setDoorTotalDrafts((prev) => {
+        const next = { ...prev };
+        targetItems.forEach((item) => {
+          next[item.positionId] = String(Math.round(unitPriceM2 * (item.areaM2 || 0)));
+        });
+        return next;
+      });
+    } else {
+      setUnitPriceM2Drafts((prev) => {
+        const next = { ...prev };
+        targetItems.forEach((item) => {
+          next[item.positionId] = digits;
+        });
+        return next;
+      });
+      setTotalDrafts((prev) => {
+        const next = { ...prev };
+        targetItems.forEach((item) => {
+          next[item.positionId] = String(Math.round(unitPriceM2 * (item.areaM2 || 0)));
+        });
+        return next;
+      });
+    }
+  };
+
+  const revertAllToSuggested = () => {
+    if (isSeparated) {
+      setDoorUnitM2Drafts((prev) => {
+        const next = { ...prev };
+        items.forEach((item) => {
+          next[item.positionId] = '';
+        });
+        return next;
+      });
+      setDoorTotalDrafts((prev) => {
+        const next = { ...prev };
+        items.forEach((item) => {
+          next[item.positionId] = '';
+        });
+        return next;
+      });
+      setAccDrafts((prev) => {
+        const next = { ...prev };
+        items.forEach((item) => {
+          next[item.positionId] = '';
+        });
+        return next;
+      });
+    } else {
+      setUnitPriceM2Drafts((prev) => {
+        const next = { ...prev };
+        items.forEach((item) => {
+          next[item.positionId] = '';
+        });
+        return next;
+      });
+      setTotalDrafts((prev) => {
+        const next = { ...prev };
+        items.forEach((item) => {
+          next[item.positionId] = '';
+        });
+        return next;
+      });
+    }
+  };
+
+  // --- Thu thập thay đổi ---
 
   const collectSeparatedChange = (item: QuotationDoorItemSnapshot, changes: PriceChanges) => {
     const id = item.positionId;
-    if (doorDrafts[id] === undefined && accDrafts[id] === undefined) return;
+    if (doorTotalDrafts[id] === undefined && accDrafts[id] === undefined) return;
     const door = getDoorLive(item);
     const acc = getAccessoryLive(item);
     const isBackToSuggested =
@@ -72,7 +269,7 @@ export function useQuotationPriceDrafts(items: QuotationDoorItemSnapshot[], isSe
 
   const collectCombinedChange = (item: QuotationDoorItemSnapshot, changes: PriceChanges) => {
     const id = item.positionId;
-    const raw = priceDrafts[id];
+    const raw = totalDrafts[id];
     if (raw === undefined) return;
     if (raw === '') {
       if (item.isManuallyEdited) changes.clearedIds.add(id);
@@ -92,14 +289,20 @@ export function useQuotationPriceDrafts(items: QuotationDoorItemSnapshot[], isSe
     );
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, isSeparated, priceDrafts, doorDrafts, accDrafts]);
+  }, [items, isSeparated, totalDrafts, doorTotalDrafts, accDrafts]);
 
   const changedCount =
     Object.keys(changes.changedPrices).length +
     Object.keys(changes.separatedOverrides).length +
     changes.clearedIds.size;
 
-  // Backend không gộp giá tay cũ nên phải gửi lại đủ cả giá cũ và mới
+  const hasAnyManual = useMemo(() => {
+    const hasSavedManual = items.some((item) =>
+      isSeparated ? isSeparatedManual(item) : item.isManuallyEdited,
+    );
+    return hasSavedManual || changedCount > 0;
+  }, [items, isSeparated, changedCount]);
+
   const buildPayload = (): ProjectQuotationUpdatePayload => {
     const manual: Record<number, number> = {};
     const manualAccessory: Record<number, number> = {};
@@ -113,29 +316,39 @@ export function useQuotationPriceDrafts(items: QuotationDoorItemSnapshot[], isSe
       } else if (isSeparated && isSeparatedManual(item)) {
         manual[id] = item.sellingPrice;
         manualAccessory[id] = item.accessorySellingPrice;
+      } else if (!isSeparated && changes.changedPrices[id] !== undefined) {
+        manual[id] = changes.changedPrices[id];
       } else if (!isSeparated && item.isManuallyEdited) {
         manual[id] = item.sellingPrice;
       }
     });
     return {
-      customSellingPrices: { ...manual, ...changes.changedPrices },
-      customAccessoryPrices: manualAccessory,
+      customSellingPrices: manual,
+      customAccessoryPrices: isSeparated ? manualAccessory : undefined,
     };
   };
 
-  const setDraft = (setter: typeof setPriceDrafts) => (positionId: number, digits: string) =>
-    setter((prev) => ({ ...prev, [positionId]: digits }));
-
   return {
-    priceDrafts,
-    doorDrafts,
+    unitPriceM2Drafts,
+    totalDrafts,
+    doorUnitM2Drafts,
+    doorTotalDrafts,
     accDrafts,
-    setPriceDraft: setDraft(setPriceDrafts),
-    setDoorDraft: setDraft(setDoorDrafts),
-    setAccessoryDraft: setDraft(setAccDrafts),
+    setUnitPriceM2Draft,
+    setTotalPriceDraft,
+    setDoorUnitPriceM2Draft,
+    setDoorTotalPriceDraft,
+    setAccessoryDraft,
+    applyBatchUnitPrice,
+    revertAllToSuggested,
     resetDrafts,
+    getUnitPriceM2Live,
+    getDoorUnitPriceM2Live,
+    getDoorLive,
+    getAccessoryLive,
     getTotalLive,
     isBelowCostLive,
+    hasAnyManual,
     changedCount,
     buildPayload,
   };

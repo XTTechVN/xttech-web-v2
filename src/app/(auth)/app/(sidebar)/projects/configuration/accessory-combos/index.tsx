@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getAccessoryCombos, deleteAccessoryCombo, getBrands } from '@/actions';
 import type { AccessoryCombo } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
-import { ComboToolbar, ComboTable, ComboModal } from './_components';
-import { AccessoryBrandSidebar } from '../accessories/_components';
+import { ComboModal } from '@/components';
+import { BrandSidebar } from '../../_components';
+import { ComboToolbar, ComboTable } from './_components';
 
 const PAGE_SIZE = 20;
 
@@ -31,18 +32,14 @@ export default function AccessoryCombosTab() {
     },
   });
 
-  const brandsList = brandsData || [];
+  const brandsList = useMemo(() => brandsData ?? [], [brandsData]);
   const sortedBrands = useMemo(
     () => [...brandsList].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })),
     [brandsList],
   );
 
-  // Tự động chọn hãng đầu tiên
-  useEffect(() => {
-    if (selectedBrandId === null && sortedBrands.length > 0) {
-      setSelectedBrandId(sortedBrands[0].id);
-    }
-  }, [sortedBrands, selectedBrandId]);
+  // Tự động chọn hãng đầu tiên (Derived State - tránh setState trong useEffect)
+  const activeBrandId = selectedBrandId ?? sortedBrands[0]?.id ?? null;
 
   // Debounce search
   const searchTimer = useRef<NodeJS.Timeout | null>(null);
@@ -61,15 +58,15 @@ export default function AccessoryCombosTab() {
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: ['accessory-combos', selectedBrandId, debouncedSearch, offset],
+    queryKey: ['accessory-combos', activeBrandId, debouncedSearch, offset],
     queryFn: () =>
       getAccessoryCombos({
-        brandId: selectedBrandId || undefined,
+        brandId: activeBrandId || undefined,
         search: debouncedSearch.trim() || undefined,
         limit: PAGE_SIZE,
         offset,
       }),
-    enabled: selectedBrandId !== null,
+    enabled: activeBrandId !== null,
   });
 
   const combos = data?.items || [];
@@ -79,6 +76,7 @@ export default function AccessoryCombosTab() {
     mutationFn: (id: number) => deleteAccessoryCombo(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
+      queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
       toast.success('Xóa gói combo thành công');
     },
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa gói combo'),
@@ -103,9 +101,9 @@ export default function AccessoryCombosTab() {
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
       {/* Sidebar lọc theo Hãng */}
-      <AccessoryBrandSidebar
+      <BrandSidebar
         brands={brandsList}
-        selectedBrandId={selectedBrandId}
+        selectedBrandId={activeBrandId}
         onSelectBrand={handleSelectBrand}
       />
 
@@ -138,9 +136,8 @@ export default function AccessoryCombosTab() {
           setSelectedCombo(null);
         }}
         combo={selectedCombo}
-        brandId={selectedBrandId}
+        brandId={activeBrandId}
       />
     </div>
   );
 }
-

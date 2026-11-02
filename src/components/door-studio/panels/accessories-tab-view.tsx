@@ -6,6 +6,7 @@ import { Search, Boxes, Package, Plus } from 'lucide-react';
 import { ComboCategoryTab, detectComboCategory, detectComboBrand } from './accessories/types';
 import { SelectedItemsPanel } from './accessories/selected-items-panel';
 import { IndividualAccessoriesView } from './accessories/individual-accessories-view';
+import { ComboModal } from './accessories/modals';
 
 interface AccessoriesTabViewProps {
   combos: AccessoryCombo[];
@@ -43,6 +44,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
   const [brandFilter, setBrandFilter] = useState<string>('all');
   const [search, setSearch] = useState<string>('');
   const [expandedComboId, setExpandedComboId] = useState<number | null>(null);
+  const [isCreateComboOpen, setIsCreateComboOpen] = useState<boolean>(false);
 
   // Group combos by category for badges
   const categoryCounts = useMemo(() => {
@@ -127,6 +129,19 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
     return 'Tìm kiếm combo...';
   }, [categoryTab]);
 
+  const defaultApplyFor = useMemo<'khung' | 'canh' | 'huong_mo' | 'khac'>(() => {
+    if (categoryTab === 'frame') return 'khung';
+    if (categoryTab === 'sash') return 'canh';
+    if (categoryTab === 'opening') return 'huong_mo';
+    return 'khung';
+  }, [categoryTab]);
+
+  const activeFilterBrandId = useMemo(() => {
+    if (brandFilter === 'all') return null;
+    const matched = brands.find((b) => b.name.toLowerCase() === brandFilter.toLowerCase());
+    return matched?.id ?? null;
+  }, [brandFilter, brands]);
+
   const isComboView = categoryTab !== 'individual';
 
   return (
@@ -186,28 +201,39 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
           </button>
         </div>
 
-        {/* Brand chips + search — only for combo views */}
+        {/* Brand chips + search + Tạo combo — only for combo views */}
         {isComboView && (
           <div className="px-4 pb-3 pt-1 border-t border-slate-100 flex flex-col gap-2">
-            {/* Search */}
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={searchPlaceholder}
-                className="w-full pl-9 pr-8 h-8.5 bg-slate-50/80 border border-slate-200/80 rounded-xl text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:bg-white transition-all shadow-2xs"
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  ✕
-                </button>
-              )}
+            {/* Search & Create Combo Action */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="w-full pl-9 pr-8 h-8.5 bg-slate-50/80 border border-slate-200/80 rounded-xl text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:bg-white transition-all shadow-2xs"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsCreateComboOpen(true)}
+                className="shrink-0 h-8.5 px-3.5 rounded-xl bg-primary text-white hover:bg-primary/90 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+              >
+                <Plus size={14} />
+                <span>Tạo combo</span>
+              </button>
             </div>
 
             {/* Brand filter pills */}
@@ -397,12 +423,20 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-2 py-10 text-slate-400">
+                <div className="flex flex-col items-center gap-2.5 py-10 text-slate-400">
                   <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
                     <Boxes size={20} className="text-slate-300" />
                   </div>
                   <p className="text-xs text-slate-500 font-medium">Không có combo phù hợp</p>
-                  <p className="text-[11px] text-slate-400">Thử bỏ bộ lọc hoặc tìm kiếm khác</p>
+                  <p className="text-[11px] text-slate-400">Thử bỏ bộ lọc hoặc tạo nhanh bộ combo mới</p>
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateComboOpen(true)}
+                    className="mt-1 px-3.5 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white border border-primary/20 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <Plus size={13} />
+                    <span>Tạo gói combo mới</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -451,6 +485,20 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
           </span>
         </div>
       </div>
+
+      {/* Modal Tạo nhanh Gói Combo Phụ kiện ngay trong Door Studio */}
+      <ComboModal
+        isOpen={isCreateComboOpen}
+        onClose={() => setIsCreateComboOpen(false)}
+        accessories={accessories}
+        brandId={activeFilterBrandId}
+        defaultApplyFor={defaultApplyFor}
+        onCreated={(newCombo) => {
+          if (newCombo?.id && !selectedComboIds.includes(newCombo.id)) {
+            onToggleCombo(newCombo.id);
+          }
+        }}
+      />
     </div>
   );
 };

@@ -35,6 +35,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   onSelectCell,
   onSelectMullion,
   onEditDimension,
+  onUpdateDimension,
   onResizeSplit,
   frameConfig,
   sashConfig,
@@ -57,21 +58,53 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   const hasVertSubDims = !hideDimensions && vertSlices.length > 1;
   const hasHorizSubDims = !hideDimensions && horizSlices.length > 1;
 
-  // Kiểm tra ô cánh có lắp khóa/tay nắm để dành khoảng lề cho thước cao độ tay nắm bên trái
-  const hasLockHandle = (node: SceneCellNode): boolean => {
-    if (!node.children || node.children.length === 0) {
-      const isSwing =
-        node.sashType === 'swing_left' ||
-        node.sashType === 'swing_right' ||
-        node.sashType === 'swing_double';
-      return (node.hasLock ?? isSwing) && node.hasLock !== false && isSwing;
+  // Đếm số mức cao độ tay nắm khóa khác nhau để dành khoảng lề trái phù hợp (1 tầng hoặc nhiều tầng khi khóa lệch nhau)
+  const collectLockHeights = (node: SceneCellNode, acc: Set<number>) => {
+    if (!node.children || node.children.length === 0 || node.splitType === 'sash_mullion') {
+      if (node.sashType === 'fixed') return;
+      const isBottomOrTop =
+        node.sashType === 'awning' ||
+        node.sashType === 'tilt' ||
+        node.sashType === 'mo-hat' ||
+        node.sashType === 'mo-lat' ||
+        node.sashType === 'tilt_down';
+      if (isBottomOrTop) return;
+
+      const defaultHasHandle = [
+        'swing_left',
+        'swing_right',
+        'swing_double',
+        'tilt_turn',
+        'le-trai-mo-ra',
+        'le-trai-mo-vao',
+        'le-phai-mo-ra',
+        'le-phai-mo-vao',
+        'gap-xep-le-trai',
+        'gap-xep-le-phai',
+        'lua-trai',
+        'lua-phai',
+        'canh-truot',
+        'sliding',
+      ].includes(node.sashType || '');
+
+      if ((node.hasLock ?? defaultHasHandle) && node.hasLock !== false) {
+        const isHyd = Boolean(sashConfig?.isHydraulic || node.isHydraulic);
+        const hVal = node.handleHeight || (isHyd ? 1050 : Math.round(node.h / 2));
+        acc.add(hVal);
+      }
+      return;
     }
-    return node.children.some(hasLockHandle);
+    node.children.forEach((c) => collectLockHeights(c, acc));
   };
-  const hasLockRuler = !hideDimensions && hasLockHandle(rootCell);
+
+  const lockHeightsSet = new Set<number>();
+  if (!hideDimensions) {
+    collectLockHeights(rootCell, lockHeightsSet);
+  }
+  const lockLevelsCount = lockHeightsSet.size;
 
   // Kích thước lề dành cho thước đo 2 bên và trên dưới
-  const leftRulerW = hasLockRuler ? 38 : 0;
+  const leftRulerW = lockLevelsCount > 1 ? 56 : lockLevelsCount === 1 ? 38 : 0;
   const rightRulerW = hasHorizSubDims ? 55 : 36;
   const bottomRulerH = hasVertSubDims ? 55 : 36;
   const topRulerH = 12;
@@ -90,7 +123,6 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
 
   const totalContentH = topRulerH + fh + bottomRulerH;
   const oy = hideDimensions ? Math.round((vbH - fh) / 2) : Math.round((vbH - totalContentH) / 2) + topRulerH;
-  const baseDim = Math.min(fw, fh);
 
   // 1. Khung bao (FRAME): Ưu tiên lấy theo sectionHeightMm của profile được chọn, fallback về mặc định chuẩn mm
   const selectedFrameProfile = availableProfiles?.find(
@@ -138,6 +170,17 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
       : defaultBeadMm;
   const beadW = Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(beadMm * scale));
 
+  // 5. Thanh đảo khung (REVERSAL - C3208): Lấy theo profile đảo khung hoặc mặc định 28mm
+  const selectedReversalProfile = availableProfiles?.find(
+    (p) => p.id === frameConfig?.reversalProfileId
+  );
+  const defaultReversalMm = 28;
+  const reversalMm =
+    selectedReversalProfile?.sectionHeightMm && selectedReversalProfile.sectionHeightMm > 0
+      ? selectedReversalProfile.sectionHeightMm
+      : defaultReversalMm;
+  const reversalD = Math.max(3, Math.round(reversalMm * scale));
+
   const sashJoint: SashCornerJoint = sashConfig?.cornerJoint ?? '45';
 
   // 4. Đố tĩnh (MULLION): Lấy theo profile đố hoặc mm mặc định (Hỗ trợ Dọc / Ngang riêng)
@@ -173,6 +216,13 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
 
   const isOpenBottom = frameConfig?.isOpenBottom ?? false;
 
+  // 6. Độ ngậm cánh lùa (SLIDING OVERLAP): Lấy cấu hình mm hoặc bản rộng profile cánh
+  const slidingOverlapMm =
+    sashConfig?.slidingOverlapMm && sashConfig.slidingOverlapMm > 0
+      ? sashConfig.slidingOverlapMm
+      : sashMm;
+  const slidingOverlapPx = Math.max(10, Math.round(slidingOverlapMm * scale));
+
   // Tính toán hình dạng khung vòm/bo góc (nếu có)
   const curvedPaths = getCurvedFramePaths(
     frameShape,
@@ -201,6 +251,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
       vertMullionT,
       horizMullionT,
       frameConfig,
+      slidingOverlapPx,
     }
   );
 
@@ -351,7 +402,9 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
             node={leaves[0].node}
           />
         ) : (
-          leaves.map((leaf) => (
+          [...leaves]
+            .sort((a, b) => (a.node.sashZIndex ?? 0) - (b.node.sashZIndex ?? 0))
+            .map((leaf) => (
             <CadRectangularLeaf
               key={leaf.node.id}
               leaf={leaf}
@@ -362,6 +415,8 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
               beadW={beadW}
               mullionT={mullionT}
               frameD={frameD}
+              reversalD={reversalD}
+              frameConfig={frameConfig}
               h={h}
               oy={oy}
               fh={fh}
@@ -376,15 +431,23 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
           ))
         )}
 
-        {/* 3. Split Resizer Layer: Đố T (cả đố khung & đố cánh) và Vách ghép Tách khung (Nằm trên cùng để nhận chuột 100%) */}
+        {/* 3. Split Resizer Layer: Đố T, Vách ghép Tách khung và Tay nắm khóa (Nằm trên cùng để nhận chuột 100%) */}
         <CadSplitResizer
           mullions={allMullions}
           couplingSeams={couplingSeams}
+          leaves={leaves}
           scale={scale}
+          h={h}
+          oy={oy}
+          fh={fh}
+          sashD={sashD}
+          sashConfig={sashConfig}
           selectedMullionId={selectedMullionId}
           aluminumColor={aluminumColor}
+          onSelectCell={onSelectCell}
           onSelectMullion={onSelectMullion}
           onResizeSplit={onResizeSplit}
+          onUpdateDimension={onUpdateDimension}
         />
       </g>
 
@@ -415,6 +478,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
           leaves={leaves}
           mullions={allMullions}
           sashConfig={sashConfig}
+          selectedCellId={selectedCellId}
           onEditDimension={onEditDimension}
         />
       )}

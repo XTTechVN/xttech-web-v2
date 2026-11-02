@@ -1,4 +1,5 @@
 import api from '@/utils/api';
+import { downloadOrShareBlob, getFilenameFromContentDisposition } from '@/utils';
 import type { BaseResponseWithPagination } from '@/components';
 import type {
   ProfileBar,
@@ -9,6 +10,9 @@ import type {
   ProfileSectionCreate,
   ProfileSectionUpdate,
   ProfileSectionQueryParams,
+  ProfileBarExcelPreviewResponse,
+  ProfileBarBulkUpsertRequest,
+  MaterialBulkUpsertResponse,
 } from '@/types';
 
 // Profile Bars
@@ -69,6 +73,58 @@ export const deleteProfileBar = async (id: number): Promise<ProfileBar> => {
     return response.data;
   } catch (error) {
     console.warn('API error deleteProfileBar', error);
+    throw error;
+  }
+};
+
+// Profile Bars Excel Export / Preview / Bulk Upsert
+export const exportProfileBarsExcel = async (params?: {
+  brandId?: number | null;
+  seriesId?: number | null;
+  templateOnly?: boolean;
+}): Promise<void> => {
+  try {
+    const query: Record<string, unknown> = {};
+    if (params?.brandId) query.brand_id = params.brandId;
+    if (params?.seriesId) query.series_id = params.seriesId;
+    if (params?.templateOnly) query.template_only = true;
+
+    const response = await api.get('/api/v1/profile-bars/excel/export', {
+      params: query,
+      responseType: 'blob',
+    });
+    const disposition = response.headers['content-disposition'];
+    const fallback = params?.templateOnly ? 'mau_nhap_thanh_profile.xlsx' : 'danh_sach_thanh_profile.xlsx';
+    const fileName = getFilenameFromContentDisposition(disposition, fallback);
+    await downloadOrShareBlob(response.data, fileName);
+  } catch (error) {
+    console.warn('API error exportProfileBarsExcel', error);
+    throw error;
+  }
+};
+
+export const previewProfileBarsExcel = async (file: File): Promise<ProfileBarExcelPreviewResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/api/v1/profile-bars/excel/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  } catch (error) {
+    console.warn('API error previewProfileBarsExcel', error);
+    throw error;
+  }
+};
+
+export const bulkUpsertProfileBars = async (
+  payload: ProfileBarBulkUpsertRequest,
+): Promise<MaterialBulkUpsertResponse> => {
+  try {
+    const response = await api.post('/api/v1/profile-bars/excel/bulk-upsert', payload);
+    return response.data;
+  } catch (error) {
+    console.warn('API error bulkUpsertProfileBars', error);
     throw error;
   }
 };

@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getBrands, getDoorSeriesList, deleteDoorSeries } from '@/actions';
 import type { DoorSeries } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
+import { BrandSidebar } from '../../_components';
 import {
-  SeriesBrandSidebar,
   SeriesToolbar,
   SeriesTable,
   SeriesModal,
@@ -34,19 +34,15 @@ export default function SeriesTab() {
     queryFn: async () => (await getDoorSeriesList({ offset: 0, limit: 9999 })).items,
   });
 
-  const brandsList = brandsData || [];
-  const seriesList = seriesData || [];
+  const brandsList = useMemo(() => brandsData ?? [], [brandsData]);
+  const seriesList = useMemo(() => seriesData ?? [], [seriesData]);
 
   const sortedBrands = useMemo(() => {
     return [...brandsList].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
   }, [brandsList]);
 
-  // Luôn tự động chọn hãng đầu tiên nếu chưa chọn hoặc danh sách thay đổi
-  useEffect(() => {
-    if (selectedBrandId === null && sortedBrands.length > 0) {
-      setSelectedBrandId(sortedBrands[0].id);
-    }
-  }, [sortedBrands, selectedBrandId]);
+  // Tự động lấy hãng đầu tiên nếu chưa chọn (Derived State - tránh setState trong useEffect)
+  const activeBrandId = selectedBrandId ?? sortedBrands[0]?.id ?? null;
 
   // Mutations
   const { mutate: deleteSeriesMutate } = useMutation({
@@ -62,7 +58,7 @@ export default function SeriesTab() {
   const filteredSeries = useMemo(() => {
     return seriesList
       .filter((s) => {
-        const matchBrand = selectedBrandId === null || s.brandId === selectedBrandId;
+        const matchBrand = activeBrandId === null || s.brandId === activeBrandId;
         if (!matchBrand) return false;
 
         if (!search.trim()) return true;
@@ -74,11 +70,11 @@ export default function SeriesTab() {
         );
       })
       .sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
-  }, [seriesList, selectedBrandId, search]);
+  }, [seriesList, activeBrandId, search]);
 
   const selectedBrand = useMemo(() => {
-    return selectedBrandId ? brandsList.find((b) => b.id === selectedBrandId) : null;
-  }, [brandsList, selectedBrandId]);
+    return activeBrandId ? brandsList.find((b) => b.id === activeBrandId) : null;
+  }, [brandsList, activeBrandId]);
 
   const handleOpenCreateModal = () => {
     setSelectedSeries(null);
@@ -101,9 +97,9 @@ export default function SeriesTab() {
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
       {/* Cột lọc danh sách Hãng nhôm bên trái */}
-      <SeriesBrandSidebar
+      <BrandSidebar
         brands={brandsList}
-        selectedBrandId={selectedBrandId}
+        selectedBrandId={activeBrandId}
         onSelectBrand={setSelectedBrandId}
       />
 
@@ -139,7 +135,7 @@ export default function SeriesTab() {
         }}
         series={selectedSeries}
         brands={brandsList}
-        defaultBrandId={selectedBrandId}
+        defaultBrandId={activeBrandId}
       />
     </div>
   );

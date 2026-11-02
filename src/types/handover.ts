@@ -36,6 +36,8 @@ export interface SigningRequestResult {
   emailSent: boolean;
 }
 
+export type AcceptanceItemResult = 'passed' | 'failed';
+
 export interface PublicSigningView {
   subjectType: 'contract' | 'acceptance' | 'quotation';
   /** Trạng thái chứng từ hoặc link: signed | revoked | expired | draft | sent | awaiting_customer... */
@@ -57,6 +59,9 @@ export interface PublicSigningView {
     areaM2?: number;
     /** Chỉ có ở báo giá */
     sellingPrice?: number;
+    /** Chỉ có ở nghiệm thu */
+    result?: AcceptanceItemResult;
+    note?: string | null;
   }[];
   photos: EvidenceMediaItem[];
   signatures: ESignature[];
@@ -72,6 +77,20 @@ export interface PublicSignPayload {
 // ---------- Nghiệm thu ----------
 export type AcceptanceStatus = 'awaiting_customer' | 'signed' | 'cancelled';
 
+export interface AcceptanceItemInput {
+  positionId: number;
+  result: AcceptanceItemResult;
+  note?: string;
+}
+
+export interface AcceptanceItem {
+  positionId: number;
+  positionCode: string;
+  doorName: string;
+  result: AcceptanceItemResult;
+  note?: string | null;
+}
+
 export interface ProjectAcceptance {
   id: number;
   projectId: number;
@@ -79,6 +98,7 @@ export interface ProjectAcceptance {
   status: AcceptanceStatus;
   positionIds: number[];
   positionCodes: string[];
+  items?: AcceptanceItem[];
   photos: EvidenceMediaItem[];
   note?: string | null;
   signatures: ESignature[];
@@ -88,7 +108,8 @@ export interface ProjectAcceptance {
 }
 
 export interface AcceptanceCreatePayload {
-  positionIds: number[];
+  positionIds?: number[];
+  items?: AcceptanceItemInput[];
   photos: EvidenceMediaItem[];
   note?: string;
   companySignature: SignatureInput;

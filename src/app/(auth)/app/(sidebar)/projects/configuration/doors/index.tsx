@@ -143,6 +143,7 @@ const Page = () => {
         key={studioDoor ? `studio-${studioDoor.id}` : 'studio-new'}
         isOpen={isStudioOpen}
         door={studioDoor}
+        defaultBrandId={selectedBrandId}
         onClose={() => {
           setIsStudioOpen(false);
           setStudioDoor(null);

@@ -17,7 +17,12 @@ interface CanvasCadViewProps {
   onSelectCell: (cellId: string | null) => void;
   onSelectMullion?: (mullion: MullionInfo) => void;
   selectedMullionId?: string | null;
-  onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', value: number, cellId?: string) => void;
+  onUpdateDimension: (
+    target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight',
+    value: number,
+    cellId?: string,
+    isFinal?: boolean
+  ) => void;
   onResizeSplit?: (params: ResizeSplitParams) => void;
   frameConfig?: FrameConfig;
   sashConfig?: SashConfig;
@@ -267,7 +272,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
 
   const handleConfirmEdit = () => {
     if (editTarget && inputVal > 0) {
-      onUpdateDimension(editTarget.type, inputVal, editTarget.cellId);
+      onUpdateDimension(editTarget.type, inputVal, editTarget.cellId, true);
       setEditTarget(null);
     }
   };
@@ -402,6 +407,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
                 onSelectMullion={onSelectMullion}
                 selectedMullionId={selectedMullionId}
                 onEditDimension={handleOpenEdit}
+                onUpdateDimension={onUpdateDimension}
                 onResizeSplit={onResizeSplit}
                 frameConfig={frameConfig}
                 sashConfig={sashConfig}
@@ -418,7 +424,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
           <span className="text-slate-400">Hướng dẫn:</span>
           <span>Click ô = chọn</span>
           <span className="text-slate-300">·</span>
-          <span>Kéo nền ngoài = di chuyển</span>
+          <span>Giữ & kéo khóa/đố = chỉnh vị trí</span>
           <span className="text-slate-300">·</span>
           <span>Cuộn chuột = thu phóng</span>
           <span className="text-slate-300">·</span>

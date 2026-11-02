@@ -1,4 +1,5 @@
 import api from '@/utils/api';
+import { downloadOrShareBlob, getFilenameFromContentDisposition } from '@/utils';
 import type { BaseResponseWithPagination } from '@/components';
 import type {
   Accessory,
@@ -9,6 +10,9 @@ import type {
   AccessoryUnassignDoors,
   AccessoryUnassignMaterials,
   AccessoryUpdate,
+  AccessoryExcelPreviewResponse,
+  AccessoryBulkUpsertRequest,
+  MaterialBulkUpsertResponse,
   Door,
   DoorQueryParams,
   Material,
@@ -93,6 +97,58 @@ export const deleteAccessory = async (id: number): Promise<Accessory> => {
     return response.data;
   } catch (error: unknown) {
     console.warn('API error deleteAccessory', error);
+    throw error;
+  }
+};
+
+// Accessories Excel Export / Preview / Bulk Upsert
+export const exportAccessoriesExcel = async (params?: {
+  brandId?: number | null;
+  categoryId?: number | null;
+  templateOnly?: boolean;
+}): Promise<void> => {
+  try {
+    const query: Record<string, unknown> = {};
+    if (params?.brandId) query.brand_id = params.brandId;
+    if (params?.categoryId) query.category_id = params.categoryId;
+    if (params?.templateOnly) query.template_only = true;
+
+    const response = await api.get('/api/v1/accessories/excel/export', {
+      params: query,
+      responseType: 'blob',
+    });
+    const disposition = response.headers['content-disposition'];
+    const fallback = params?.templateOnly ? 'mau_nhap_phu_kien.xlsx' : 'danh_sach_phu_kien.xlsx';
+    const fileName = getFilenameFromContentDisposition(disposition, fallback);
+    await downloadOrShareBlob(response.data, fileName);
+  } catch (error: unknown) {
+    console.warn('API error exportAccessoriesExcel', error);
+    throw error;
+  }
+};
+
+export const previewAccessoriesExcel = async (file: File): Promise<AccessoryExcelPreviewResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/api/v1/accessories/excel/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error previewAccessoriesExcel', error);
+    throw error;
+  }
+};
+
+export const bulkUpsertAccessories = async (
+  payload: AccessoryBulkUpsertRequest,
+): Promise<MaterialBulkUpsertResponse> => {
+  try {
+    const response = await api.post('/api/v1/accessories/excel/bulk-upsert', payload);
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error bulkUpsertAccessories', error);
     throw error;
   }
 };

@@ -17,9 +17,6 @@ const INITIAL_STEP_COUNTS: Record<ProgressStepCode, number> = {
   surveyed: 0,
   producing: 0,
   factory_done: 0,
-  delivering: 0,
-  delivered: 0,
-  installing: 0,
   installed: 0,
   accepted: 0,
 };
@@ -55,19 +52,19 @@ export function useOverviewSummary(projectId: number) {
     enabled: !!projectId,
   });
 
-  const quotations = quotationsData?.items ?? [];
-  const contracts = contractsData?.items ?? [];
-  const activities = activitiesData?.items ?? [];
+  const quotations = useMemo(() => quotationsData?.items ?? [], [quotationsData]);
 
-  const activeQuotation = useMemo(
-    () => quotations.find((q) => q.isSelected) ?? quotations[0] ?? null,
-    [quotations],
-  );
+  const activeQuotation = useMemo(() => {
+    const list = quotationsData?.items ?? [];
+    return list.find((q) => q.isSelected) ?? list[0] ?? null;
+  }, [quotationsData]);
 
-  const activeContracts = useMemo(
-    () => contracts.filter((c) => c.status !== 'cancelled'),
-    [contracts],
-  );
+  const activeContracts = useMemo(() => {
+    const list = contractsData?.items ?? [];
+    return list.filter((c) => c.status !== 'cancelled');
+  }, [contractsData]);
+
+  const activities = useMemo(() => activitiesData?.items ?? [], [activitiesData]);
 
   const stepCounts = useMemo(() => {
     const counts: Record<ProgressStepCode, number> = { ...INITIAL_STEP_COUNTS };
