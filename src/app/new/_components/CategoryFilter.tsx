@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Button } from '@/components/button';
 
 export interface CategoryItem {
   id: string;
@@ -25,18 +26,19 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
         {categories.map((cat) => {
           const isActive = activeCategoryId === cat.id;
           return (
-            <button
+            <Button
               key={cat.id}
-              type="button"
+              variant={isActive ? 'primary' : 'ghost'}
+              size="sm"
               onClick={() => onSelectCategory(cat.id)}
-              className={`text-xs sm:text-[13px] font-medium px-4 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
+              className={`rounded-full px-4 h-8 text-xs sm:text-[13px] font-medium transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer ${
                 isActive
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-transparent'
+                  ? 'shadow-xs font-semibold hover:shadow-md'
+                  : 'text-slate-600 hover:text-primary hover:bg-slate-100/90'
               }`}
             >
               {cat.name}
-            </button>
+            </Button>
           );
         })}
       </div>

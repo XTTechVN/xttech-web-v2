@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Button } from '@/components/button';
 import { ArticleCard } from './ArticleCard';
 import { ArticleItem } from './HeroArticle';
 
@@ -27,13 +28,14 @@ export const ArticleGrid: React.FC<ArticleGridProps> = ({
       {/* Button Xem thêm bài viết */}
       {hasMore && (
         <div className="mt-10 mb-6">
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onLoadMore}
-            className="px-6 py-2.5 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-98"
+            className="px-6 h-9 rounded-full border-slate-300 bg-white hover:bg-slate-50 text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:shadow-xs transition-all active:scale-95 cursor-pointer"
           >
             Xem thêm bài viết
-          </button>
+          </Button>
         </div>
       )}
     </section>
