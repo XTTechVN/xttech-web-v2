@@ -7,20 +7,12 @@ import { UploadVersionModal } from './upload-version-modal';
 import { FileText } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import {
-  getFileUrl,
-  isApproverEligible,
-  getApproverRoleBadge,
-  DOC_QUERY_KEYS,
-  invalidateDocumentQueries,
-  getDocumentPermissions,
+  getFileUrl, isApproverEligible, getApproverRoleBadge,
+  DOC_QUERY_KEYS, invalidateDocumentQueries, getDocumentPermissions,
 } from '@/utils';
 import {
-  reviewDocument,
-  submitDocument,
-  publishDocument,
-  updateDocument,
-  getDocumentById,
-  markDocumentAsRead,
+  reviewDocument, submitDocument, publishDocument,
+  updateDocument, getDocumentById, markDocumentAsRead,
 } from '@/actions/document';
 import { getEmployees } from '@/actions/employee';
 import { getDepartments } from '@/actions/department';
@@ -48,14 +40,7 @@ interface DocumentDetailModalProps {
 }
 
 export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
-  isOpen,
-  onClose,
-  document: doc,
-  onSuccess,
-  onEdit,
-  onDelete,
-  onShare,
-  onPreview,
+  isOpen, onClose, document: doc, onSuccess, onEdit, onDelete, onShare, onPreview,
 }) => {
   const queryClient = useQueryClient();
   const [reviewLoading, setReviewLoading] = useState(false);
@@ -70,10 +55,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const { hasRole, isAdmin, isHR, isSuper, isManager } = usePermission();
 
   const canManageDoc =
-    isAdmin ||
-    isHR ||
-    isSuper ||
-    isManager ||
+    isAdmin || isHR || isSuper || isManager ||
     hasRole(['admin', 'hr', 'super', 'supper', 'super_admin', 'supper_admin']);
 
   const markedDocIdRef = useRef<number | null>(null);
@@ -197,10 +179,15 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
     }
   };
 
+  const resolvePublishShareScope = () => {
+    const raw = targetDoc.shareScope;
+    return raw === 'department' || raw === 'user' || raw === 'all' ? raw : 'all';
+  };
+
   const handlePublish = async () => {
     try {
       setPublishLoading(true);
-      await publishDocument(doc.id);
+      await publishDocument(doc.id, { shareScope: resolvePublishShareScope() });
       toast.success('Đã ban hành văn bản chính thức!');
       invalidateDocumentQueries(queryClient);
       onSuccess?.();
@@ -208,6 +195,25 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
     } catch (error: any) {
       toast.error(error?.message || 'Không thể ban hành tài liệu');
     } finally {
+      setPublishLoading(false);
+    }
+  };
+
+  const handleApproveAndPublish = async () => {
+    try {
+      setReviewLoading(true);
+      setPublishLoading(true);
+      await reviewDocument(doc.id, { action: 'approved', approvalStatus: 'approved' });
+      await publishDocument(doc.id, { shareScope: resolvePublishShareScope() });
+      toast.success('Đã phê duyệt và ban hành văn bản chính thức!');
+      invalidateDocumentQueries(queryClient);
+      onSuccess?.();
+      onClose();
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Không thể duyệt và ban hành văn bản';
+      toast.error(msg);
+    } finally {
+      setReviewLoading(false);
       setPublishLoading(false);
     }
   };
@@ -230,18 +236,12 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         }
         footer={
           <DocumentDetailFooter
-            isDraftOrRejected={isDraftOrRejected}
-            isCreator={isCreator}
-            canManageDoc={canManageDoc}
-            canEditDoc={canEditDoc}
-            approvalStatus={approvalStatus}
-            isAssignedApprover={isAssignedApprover}
-            isApproved={isApproved}
-            isPublished={targetDoc.status === 'published'}
-            isActionBusy={isActionBusy}
-            submitLoading={submitLoading}
-            reviewLoading={reviewLoading}
-            publishLoading={publishLoading}
+            isDraftOrRejected={isDraftOrRejected} isCreator={isCreator}
+            canManageDoc={canManageDoc} canEditDoc={canEditDoc}
+            approvalStatus={approvalStatus} isAssignedApprover={isAssignedApprover}
+            isApproved={isApproved} isPublished={targetDoc.status === 'published'}
+            isActionBusy={isActionBusy} submitLoading={submitLoading}
+            reviewLoading={reviewLoading} publishLoading={publishLoading}
             downloadUrl={downloadUrl}
             onOpenSubmitModal={() => {
               setSelectedApproverId(currentApproverId ? String(currentApproverId) : '');
@@ -250,6 +250,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             }}
             onOpenRejectModal={() => setIsRejectModalOpen(true)}
             onApprove={() => handleReview('approved')}
+            onApproveAndPublish={handleApproveAndPublish}
             onPublish={handlePublish}
             onOpenUploadVersion={() => setIsUploadVersionOpen(true)}
             onEdit={onEdit ? () => onEdit(targetDoc) : undefined}
@@ -258,52 +259,31 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         }
       >
         <DocumentDetailBody
-          doc={doc}
-          targetDoc={targetDoc}
-          canManageDoc={canManageDoc}
-          approvalStatus={approvalStatus}
-          approverDisplayName={approverDisplayName}
-          resolvedDepartments={resolvedDepartments}
-          resolvedUsers={resolvedUsers}
-          onPreview={onPreview}
-          onShare={onShare}
-          onEdit={onEdit}
-          onDelete={onDelete}
+          doc={doc} targetDoc={targetDoc} canManageDoc={canManageDoc}
+          approvalStatus={approvalStatus} approverDisplayName={approverDisplayName}
+          resolvedDepartments={resolvedDepartments} resolvedUsers={resolvedUsers}
+          onPreview={onPreview} onShare={onShare} onEdit={onEdit} onDelete={onDelete}
         />
       </Modal>
 
       <RejectDocumentModal
-        isOpen={isRejectModalOpen}
-        onClose={() => setIsRejectModalOpen(false)}
-        documentTitle={targetDoc.title}
-        onConfirm={(reason) => handleReview('rejected', reason)}
+        isOpen={isRejectModalOpen} onClose={() => setIsRejectModalOpen(false)}
+        documentTitle={targetDoc.title} onConfirm={(reason) => handleReview('rejected', reason)}
         loading={reviewLoading}
       />
 
       <UploadVersionModal
-        isOpen={isUploadVersionOpen}
-        onClose={() => setIsUploadVersionOpen(false)}
+        isOpen={isUploadVersionOpen} onClose={() => setIsUploadVersionOpen(false)}
         document={targetDoc}
-        onSuccess={() => {
-          invalidateDocumentQueries(queryClient);
-          onSuccess?.();
-        }}
+        onSuccess={() => { invalidateDocumentQueries(queryClient); onSuccess?.(); }}
       />
 
       <SubmitApprovalModal
-        isOpen={isSubmitModalOpen}
-        loading={submitLoading}
-        selectedApproverId={selectedApproverId}
-        submitError={submitError}
+        isOpen={isSubmitModalOpen} loading={submitLoading}
+        selectedApproverId={selectedApproverId} submitError={submitError}
         approverSelectOptions={approverSelectOptions}
-        onApproverChange={(id) => {
-          setSelectedApproverId(id);
-          if (submitError) setSubmitError(null);
-        }}
-        onClose={() => {
-          setIsSubmitModalOpen(false);
-          setSubmitError(null);
-        }}
+        onApproverChange={(id) => { setSelectedApproverId(id); if (submitError) setSubmitError(null); }}
+        onClose={() => { setIsSubmitModalOpen(false); setSubmitError(null); }}
         onConfirm={handleConfirmSubmitForApproval}
       />
     </>

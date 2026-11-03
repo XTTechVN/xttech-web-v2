@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Download, Edit3,Check, Megaphone, Send, UploadCloud, X } from 'lucide-react';
+import { Check, Megaphone, Send, UploadCloud, X, Zap } from 'lucide-react';
 import { Button, Modal, Select, Tooltip } from '@/components';
 import type { DocumentItem } from '@/types';
 
@@ -113,30 +113,17 @@ export const DocumentDetailFooter: React.FC<{
   onOpenSubmitModal: () => void;
   onOpenRejectModal: () => void;
   onApprove: () => void;
+  onApproveAndPublish?: () => void;
   onPublish: () => void;
   onOpenUploadVersion: () => void;
   onEdit?: () => void;
   onClose: () => void;
 }> = ({
-  isDraftOrRejected,
-  isCreator,
-  canManageDoc,
-  canEditDoc = false,
-  approvalStatus,
-  isAssignedApprover,
-  isApproved,
-  isPublished,
-  isActionBusy,
-  submitLoading,
-  reviewLoading,
-  publishLoading,
-  onOpenSubmitModal,
-  onOpenRejectModal,
-  onApprove,
-  onPublish,
-  onOpenUploadVersion,
-  onEdit,
-  onClose,
+  isDraftOrRejected, isCreator, canManageDoc, approvalStatus,
+  isAssignedApprover, isApproved, isPublished, isActionBusy,
+  submitLoading, reviewLoading, publishLoading,
+  onOpenSubmitModal, onOpenRejectModal, onApprove, onApproveAndPublish,
+  onPublish, onOpenUploadVersion, onClose,
 }) => {
   const canUploadVersion = isCreator || canManageDoc;
   const canSubmit = isDraftOrRejected && (isCreator || canManageDoc);
@@ -145,13 +132,10 @@ export const DocumentDetailFooter: React.FC<{
 
   return (
     <div className="flex items-center justify-end gap-2 w-full">
-      {/* 1. Trình duyệt tài liệu */}
       {canSubmit && (
         <Tooltip content="Trình duyệt tài liệu" position="top">
           <button
-            type="button"
-            onClick={onOpenSubmitModal}
-            disabled={isActionBusy || submitLoading}
+            type="button" onClick={onOpenSubmitModal} disabled={isActionBusy || submitLoading}
             title="Trình duyệt tài liệu"
             className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg bg-primary hover:bg-primary/90 active:scale-95 text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-medium text-xs shrink-0"
           >
@@ -161,15 +145,11 @@ export const DocumentDetailFooter: React.FC<{
         </Tooltip>
       )}
 
-      {/* 2. Chờ duyệt: Từ chối & Duyệt đề xuất */}
       {isPending && (
         <>
           <Tooltip content="Từ chối đề xuất" position="top">
             <button
-              type="button"
-              onClick={onOpenRejectModal}
-              disabled={isActionBusy}
-              title="Từ chối"
+              type="button" onClick={onOpenRejectModal} disabled={isActionBusy} title="Từ chối"
               className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg bg-[#ff245a] hover:bg-[#e61a4d] active:scale-95 text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-semibold text-xs shrink-0"
             >
               <X size={16} className="shrink-0" />
@@ -179,27 +159,33 @@ export const DocumentDetailFooter: React.FC<{
 
           <Tooltip content="Duyệt đề xuất" position="top">
             <button
-              type="button"
-              onClick={onApprove}
-              disabled={isActionBusy || reviewLoading}
-              title="Duyệt đề xuất"
+              type="button" onClick={onApprove} disabled={isActionBusy || reviewLoading} title="Duyệt đề xuất"
               className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-semibold text-xs shrink-0"
             >
               <Check size={16} className="shrink-0" />
               <span className="hidden sm:inline">Duyệt đề xuất</span>
             </button>
           </Tooltip>
+
+          {canManageDoc && onApproveAndPublish && (
+            <Tooltip content="Phê duyệt và ban hành ngay toàn công ty" position="top">
+              <button
+                type="button" onClick={onApproveAndPublish}
+                disabled={isActionBusy || reviewLoading || publishLoading} title="Duyệt & Ban hành ngay"
+                className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg bg-primary hover:bg-primary/90 active:scale-95 text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-semibold text-xs shrink-0"
+              >
+                <Zap size={15} className="shrink-0" />
+                <span className="hidden sm:inline">Duyệt & Ban hành ngay</span>
+              </button>
+            </Tooltip>
+          )}
         </>
       )}
 
-      {/* 3. Ban hành văn bản */}
       {canPublishDoc && (
         <Tooltip content="Ban hành văn bản" position="top">
           <button
-            type="button"
-            onClick={onPublish}
-            disabled={isActionBusy || publishLoading}
-            title="Ban hành văn bản"
+            type="button" onClick={onPublish} disabled={isActionBusy || publishLoading} title="Ban hành văn bản"
             className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg border border-teal-300 bg-teal-50/70 hover:bg-teal-100 text-teal-800 flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50 font-semibold text-xs shrink-0"
           >
             <Megaphone size={16} className="shrink-0 text-teal-600" />
@@ -208,14 +194,10 @@ export const DocumentDetailFooter: React.FC<{
         </Tooltip>
       )}
 
-      {/* 4. Tải phiên bản mới */}
       {canUploadVersion && (
         <Tooltip content="Tải phiên bản mới" position="top">
           <button
-            type="button"
-            onClick={onOpenUploadVersion}
-            disabled={isActionBusy}
-            title="Tải phiên bản mới"
+            type="button" onClick={onOpenUploadVersion} disabled={isActionBusy} title="Tải phiên bản mới"
             className="w-10 h-10 sm:w-auto sm:h-9 sm:px-3.5 rounded-xl sm:rounded-lg border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 hover:text-slate-900 flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer disabled:opacity-50 font-medium text-xs shrink-0"
           >
             <UploadCloud size={16} className="shrink-0" />
@@ -224,14 +206,7 @@ export const DocumentDetailFooter: React.FC<{
         </Tooltip>
       )}
 
-      {/* 5. Nút Đóng trên desktop */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onClose}
-        disabled={isActionBusy}
-        className="hidden sm:inline-flex text-xs h-9 px-3 shrink-0"
-      >
+      <Button variant="ghost" size="sm" onClick={onClose} disabled={isActionBusy} className="hidden sm:inline-flex text-xs h-9 px-3 shrink-0">
         Đóng
       </Button>
     </div>

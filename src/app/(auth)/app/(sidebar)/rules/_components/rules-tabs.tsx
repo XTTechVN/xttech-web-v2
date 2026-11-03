@@ -37,7 +37,7 @@ export const RulesTabs: React.FC<RulesTabsProps> = ({
     },
     {
       value: 'drafts',
-      label: 'Soạn thảo',
+      label: canManage ? 'Soạn thảo' : 'Dự thảo của tôi',
       icon: <FilePen size={15} />,
       count: summary?.draftCount ?? 0,
       badgeClass: 'bg-slate-200 text-slate-700',
@@ -51,9 +51,9 @@ export const RulesTabs: React.FC<RulesTabsProps> = ({
     },
   ];
 
-  // Chỉ hr/admin/super mới thấy tab "Soạn thảo" và "Chờ tôi xử lý"
+  // Mọi nhân sự đều thấy "Cơ chế hiện hành" và "Soạn thảo / Dự thảo của tôi"; chỉ hr/admin/super thấy "Chờ tôi xử lý"
   const visibleTabs = tabs.filter((tab) => {
-    if (tab.value === 'current') return true;
+    if (tab.value === 'current' || tab.value === 'drafts') return true;
     if (!canManage) return false;
     if (tab.value === 'to_process') return tab.count > 0 || activeTab === 'to_process';
     return true;

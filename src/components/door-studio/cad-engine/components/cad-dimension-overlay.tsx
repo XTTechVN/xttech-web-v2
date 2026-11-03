@@ -48,8 +48,11 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
   const hasVertSubDims = vertSlices.length > 1;
   const hasHorizSubDims = horizSlices.length > 1;
 
-  const dimSubBotY = oy + fh + 20;
-  const dimBotY = oy + fh + (hasVertSubDims ? 44 : 26);
+  const maxLeafBottomY = leaves.reduce((maxY, l) => Math.max(maxY, l.y + l.h), oy + fh);
+  const botRefY = Math.max(oy + fh, maxLeafBottomY);
+
+  const dimSubBotY = botRefY + 20;
+  const dimBotY = botRefY + (hasVertSubDims ? 44 : 26);
   const dimSubRightX = ox + fw + 20;
   const dimRightX = ox + fw + (hasHorizSubDims ? 44 : 26);
 

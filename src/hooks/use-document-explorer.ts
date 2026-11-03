@@ -10,7 +10,7 @@ import { useDocumentBulkUpload } from './use-document-bulk-upload';
 import { useDocumentExplorerActions } from './use-document-explorer-actions';
 import { useAuthStore } from '@/stores';
 import { getDocumentCategoryTree, getDocuments, getInboxDocuments } from '@/actions/document';
-import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP } from '@/types';
+import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, PERSONAL_DOC_TYPES } from '@/types';
 import {
   DOC_QUERY_KEYS,
   collectCategoryIds,
@@ -32,8 +32,11 @@ export const DOCUMENT_ITEM_TYPE_OPTIONS = [
 ];
 
 const DOCUMENT_TYPE_OPTIONS = [
-  { value: '', label: 'Tất cả loại văn bản' },
-  ...Object.entries(DOCUMENT_TYPE_MAP).map(([key, item]) => ({ value: key, label: item.label })),
+  { value: '', label: 'Tất cả phân loại' },
+  ...PERSONAL_DOC_TYPES.map((key) => ({
+    value: key,
+    label: DOCUMENT_TYPE_MAP[key]?.label || key,
+  })),
 ];
 
 const STATUS_OPTIONS = [

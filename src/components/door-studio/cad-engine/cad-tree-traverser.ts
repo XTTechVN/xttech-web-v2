@@ -484,23 +484,65 @@ export const buildCadLayout = (
         y: innerY,
         w: innerW,
         h: Math.max(10, innerH - sillH),
+        rawX: innerX,
+        rawY: innerY,
+        rawW: innerW,
+        rawH: innerH,
+        touchesFloor,
       });
-    } else if (touchesFloor && node.sashType !== 'fixed') {
+    } else if (node.sashType !== 'fixed') {
+      const isLeafHydraulic = Boolean(isDoorHydraulic || node.isHydraulic);
       const hoNenMm = node.hoNenMm ?? options?.sashConfig?.hoNenMm ?? 8;
+      const ngamNgangMm = node.ngamNgangMm ?? options?.sashConfig?.ngamNgangMm ?? 5;
+      const ngamDocMm = node.ngamDocMm ?? options?.sashConfig?.ngamDocMm ?? 5;
+      const scaleX = fw / (rootCell.w || 1);
       const scaleY = fh / (rootCell.h || 1);
-      const dHoNen =
-        hoNenMm > 0
-          ? Math.min(Math.floor(innerH * 0.6), Math.round(hoNenMm * scaleY))
+
+      const maxHoNenPx = Math.floor(innerH * 0.6);
+      const dHoNen = touchesFloor
+        ? Math.max(-maxHoNenPx, Math.min(maxHoNenPx, Math.round(hoNenMm * scaleY)))
+        : 0;
+
+      const dNgamNgang =
+        isLeafHydraulic || ngamNgangMm < 0
+          ? Math.max(-Math.floor(innerW * 0.35), Math.min(frameD - 2, Math.round(ngamNgangMm * scaleX)))
           : 0;
+      const dNgamDoc =
+        isLeafHydraulic || ngamDocMm < 0
+          ? Math.max(-Math.floor(innerH * 0.35), Math.min(frameD - 2, Math.round(ngamDocMm * scaleY)))
+          : 0;
+
+      const leafX = innerX - dNgamNgang;
+      const leafW = Math.max(10, innerW + 2 * dNgamNgang);
+      const leafY = innerY - dNgamDoc;
+      const vertNgamDelta = touchesFloor ? dNgamDoc : 2 * dNgamDoc;
+      const leafH = Math.max(10, innerH - dHoNen + vertNgamDelta);
+
+      leaves.push({
+        node,
+        x: leafX,
+        y: leafY,
+        w: leafW,
+        h: leafH,
+        rawX: innerX,
+        rawY: innerY,
+        rawW: innerW,
+        rawH: innerH,
+        touchesFloor,
+      });
+    } else {
       leaves.push({
         node,
         x: innerX,
         y: innerY,
         w: innerW,
-        h: Math.max(10, innerH - dHoNen),
+        h: innerH,
+        rawX: innerX,
+        rawY: innerY,
+        rawW: innerW,
+        rawH: innerH,
+        touchesFloor,
       });
-    } else {
-      leaves.push({ node, x: innerX, y: innerY, w: innerW, h: innerH });
     }
   };
 

@@ -102,15 +102,18 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
   const vertSafetyProfile = profiles.find((p) => p.id === safetyBarsConfig.mullionVertProfileId);
   const horizSafetyProfile = profiles.find((p) => p.id === safetyBarsConfig.mullionHorizProfileId);
 
-  // Handle Master Left Edge input -> auto apply to other edges if empty
+  // Handle Master Left Edge input -> auto apply to other edges if empty or matching previous leftEdge
   const handleLeftProfileChange = (profileId: number) => {
     const selected = profiles.find((p) => p.id === profileId);
     const code = selected?.code;
+    const prevLeftId = leftEdge.profileId;
+    const shouldSyncEdge = (edgeId?: number) => !edgeId || edgeId === prevLeftId;
+
     onChangeConfig({
       leftEdge: { ...leftEdge, profileId, profileCode: code },
-      topEdge: topEdge.profileId ? topEdge : { ...topEdge, profileId, profileCode: code },
-      rightEdge: rightEdge.profileId ? rightEdge : { ...rightEdge, profileId, profileCode: code },
-      bottomEdge: bottomEdge.profileId ? bottomEdge : { ...bottomEdge, profileId, profileCode: code },
+      topEdge: shouldSyncEdge(topEdge.profileId) ? { ...topEdge, profileId, profileCode: code } : topEdge,
+      rightEdge: shouldSyncEdge(rightEdge.profileId) ? { ...rightEdge, profileId, profileCode: code } : rightEdge,
+      bottomEdge: shouldSyncEdge(bottomEdge.profileId) ? { ...bottomEdge, profileId, profileCode: code } : bottomEdge,
     });
   };
 
