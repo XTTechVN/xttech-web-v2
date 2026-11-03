@@ -1,0 +1,14 @@
+// GET : /home
+
+{
+  "data": {
+    "hero": { "...Article": "bài nổi bật chính" },
+    "featured": [ "...3 bài nổi bật phụ" ],
+    "latest": [ "...10 bài mới nhất" ],
+    "trending": [ "...5 bài đọc nhiều" ],
+    "breaking": [ "...tin nóng" ],
+    "sections": [
+      { "category": { "name": "Công nghệ", "slug": "cong-nghe" }, "articles": [ "...4 bài" ] }
+    ]
+  }
+}
