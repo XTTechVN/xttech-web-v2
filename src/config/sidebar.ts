@@ -80,6 +80,7 @@ export const acceptedSections = [
   'rules',
   'trash',
   'inbox',
+  'news',
 ];
 
 
@@ -306,7 +307,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
       },
     ],
   },
-  // 4. Tiện ích & Hệ thống
+  // 4. Cơ chế và tài liệu
   {
     title: 'Cơ chế và tài liệu',
     items: [
@@ -345,7 +346,20 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
       },
     ],
   },
-  // 5. Hệ thống
+   // 5. Quản lý tin tức
+  {
+    title: 'Quản lý tin tức',
+    items: [
+      {
+        id: 'news',
+        label: 'Quản lý tin tức',
+        icon: React.createElement(Folder, { size: 18 }),
+        href: '/app/news',
+        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+      },
+    ],
+  },
+  // 6. Hệ thống
   {
     title: 'Hệ thống',
     items: [

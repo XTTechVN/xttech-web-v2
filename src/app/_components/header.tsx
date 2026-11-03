@@ -13,6 +13,7 @@ import useAuthStore from '@/stores/useAuthStore';
 const NAV_LINKS = [
   { href: '/#about', label: 'Về chúng tôi', key: 'about' },
   { href: '/pricing', label: 'Giá', key: 'pricing' },
+  { href: '/new', label: 'Tin tức', key: 'news' },
   { href: '/#contact', label: 'Liên hệ', key: 'contact' },
 ];
 
@@ -62,6 +63,8 @@ export const Header = () => {
 
   const activeKey = pathname?.startsWith('/pricing')
     ? 'pricing'
+    : pathname?.startsWith('/new')
+    ? 'news'
     : pathname === '/'
     ? currentHash === '#contact'
       ? 'contact'
@@ -72,7 +75,7 @@ export const Header = () => {
     e: React.MouseEvent<HTMLAnchorElement>,
     link: (typeof NAV_LINKS)[number],
   ) => {
-    if (link.key === 'pricing') {
+    if (link.key === 'pricing' || link.key === 'news') {
       return;
     }
 
