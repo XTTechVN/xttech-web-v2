@@ -88,7 +88,8 @@ export function RulesPageContent() {
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white">
       <RulesHeader
         search={filters.search}
-        canCreate={isManager}
+        canCreate={Boolean(user?.id)}
+        isManager={isManager}
         viewMode={filters.viewMode}
         showViewSwitcher={filters.tab === 'current'}
         onSearchChange={filters.setSearch}
@@ -164,6 +165,14 @@ export function RulesPageContent() {
           onDelete: setDeleteDoc,
           onReplace: handleReplace,
           onApprove: (doc, note) => actions.reviewMutation.mutate({ id: doc.id, isApproved: true, note }),
+          onApproveAndPublish: async (doc, note) => {
+            try {
+              await actions.reviewMutation.mutateAsync({ id: doc.id, isApproved: true, note });
+              setPublishDoc({ ...doc, status: 'approved', approvalStatus: 'approved' });
+            } catch {
+              // Error handled by reviewMutation.onError
+            }
+          },
           onReject: (doc, note) => {
             if (note) {
               actions.reviewMutation.mutate({ id: doc.id, isApproved: false, note });

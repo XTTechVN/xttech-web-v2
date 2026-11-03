@@ -222,26 +222,22 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
   onSelectCell,
   onEditDimension,
 }) => {
-  const { node, x: cx, y: cy, w: cw, h: ch } = leaf;
+  const { node, x: cx, y: cy, w: cw, h: ch, rawX = cx, rawY = cy, rawW = cw, rawH = ch, touchesFloor = false } = leaf;
   const isFixed = node.sashType === 'fixed';
   const isDouble = node.sashType === 'swing_double';
   const isSliding = node.sashType === 'sliding';
 
   // Thông số Cửa Thủy Lực & Co giãn hình học cánh (!isFixed)
-  // Lưu ý: Độ hở nền (dHoNen) đã được trừ trực tiếp tại nguồn buildCadLayout (leaf.h)
+  // Lưu ý: Toàn bộ độ lệch Hở nền (dHoNen), Ngậm ngang (dNgamNgang), Ngậm dọc (dNgamDoc)
+  // (cả âm lẫn dương) đã được tính tập trung tại nguồn buildCadLayout (leaf.x, leaf.y, leaf.w, leaf.h)
   const isHydraulic = Boolean(sashConfig?.isHydraulic || node.isHydraulic);
-  const ngamDocMm = node.ngamDocMm ?? sashConfig?.ngamDocMm ?? 5;
-  const ngamNgangMm = node.ngamNgangMm ?? sashConfig?.ngamNgangMm ?? 5;
   const scale = fh / (h || 1);
 
-  // Tính độ dịch chuyển hình học cho cánh chuyển động thủy lực (Ảnh 3, Ảnh 4)
-  const dNgamDoc = !isFixed && isHydraulic ? Math.round(ngamDocMm * scale) : 0;
-  const dNgamNgang = !isFixed && isHydraulic ? Math.round(ngamNgangMm * scale) : 0;
-
-  // Tọa độ Y và chiều cao H sau khi áp dụng Ngậm dọc (ch đã bao gồm Hở nền từ buildCadLayout)
-  const effectiveCy = cy - dNgamDoc;
-  const effectiveCh = ch + dNgamDoc;
-  const hasFloorGap = isOpenBottom && !isFixed && cy + ch < oy + fh - 1 && cy + ch + Math.round(fh * 0.65) >= oy + fh;
+  const effectiveCy = cy;
+  const effectiveCh = ch;
+  const isTouchingFloor = touchesFloor || (isOpenBottom && Math.abs((rawY + rawH) - (oy + fh)) < 2);
+  const hasFloorGap = isTouchingFloor && !isFixed && Math.abs((cy + ch) - (oy + fh)) >= 1;
+  const isFloorOverhang = hasFloorGap && cy + ch > oy + fh;
 
   // Cấu hình Đảo khung (Reversal - C3208)
   const reversalMode = frameConfig?.reversalMode ?? (frameConfig?.isReversedWall ? 'wall' : frameConfig?.isReversedSash ? 'sash' : 'none');
@@ -272,12 +268,12 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
             CAD_CONFIG.MULLION.ASTRAGAL_MIN_PX,
             Math.min(CAD_CONFIG.MULLION.ASTRAGAL_MAX_PX, Math.round(mullionT * CAD_CONFIG.MULLION.ASTRAGAL_RATIO))
           );
-          const totalW = doubleBoxW + 2 * dNgamNgang;
+          const totalW = doubleBoxW;
           const s1W = Math.floor((totalW - astW) / 2);
           const s2W = totalW - astW - s1W;
           const dSash1 = getAdaptiveSashD(s1W, doubleBoxH, sashD);
           const dSash2 = getAdaptiveSashD(s2W, doubleBoxH, sashD);
-          const s1X = doubleBoxX - dNgamNgang;
+          const s1X = doubleBoxX;
           const s2X = s1X + s1W + astW;
           const pane1W = Math.max(4, s1W - 2 * dSash1);
           const pane2W = Math.max(4, s2W - 2 * dSash2);
@@ -435,16 +431,16 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                 </g>
               )}
 
-              {/* Đường chuẩn mặt sàn nét đứt dưới đáy cánh khi có khoảng hở nền */}
+              {/* Đường chuẩn mặt sàn nét đứt khi có khoảng hở nền dương hoặc âm nền */}
               {hasFloorGap && (
                 <line
-                  x1={cx}
+                  x1={rawX}
                   y1={oy + fh - 0.5}
-                  x2={cx + cw}
+                  x2={rawX + rawW}
                   y2={oy + fh - 0.5}
-                  stroke="#64748b"
-                  strokeWidth="0.9"
-                  strokeDasharray="3,2"
+                  stroke={isFloorOverhang ? '#334155' : '#64748b'}
+                  strokeWidth={isFloorOverhang ? '1.1' : '0.9'}
+                  strokeDasharray={isFloorOverhang ? '4,2' : '3,2'}
                   pointerEvents="none"
                 />
               )}
@@ -1204,16 +1200,16 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                 />
               )}
 
-              {/* Đường chuẩn mặt sàn nét đứt dưới đáy cánh khi có khoảng hở nền */}
+              {/* Đường chuẩn mặt sàn nét đứt khi có khoảng hở nền dương hoặc âm nền */}
               {hasFloorGap && (
                 <line
-                  x1={cx}
+                  x1={rawX}
                   y1={oy + fh - 0.5}
-                  x2={cx + cw}
+                  x2={rawX + rawW}
                   y2={oy + fh - 0.5}
-                  stroke="#64748b"
-                  strokeWidth="0.9"
-                  strokeDasharray="3,2"
+                  stroke={isFloorOverhang ? '#334155' : '#64748b'}
+                  strokeWidth={isFloorOverhang ? '1.1' : '0.9'}
+                  strokeDasharray={isFloorOverhang ? '4,2' : '3,2'}
                   pointerEvents="none"
                 />
               )}

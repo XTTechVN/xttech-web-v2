@@ -103,6 +103,17 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   }
   const lockLevelsCount = lockHeightsSet.size;
 
+  const isOpenBottom = frameConfig?.isOpenBottom ?? false;
+  const collectMinHoNen = (node: SceneCellNode): number => {
+    if (!node.children || node.children.length === 0 || node.splitType === 'sash_mullion') {
+      if (node.sashType === 'fixed') return 0;
+      return node.hoNenMm ?? sashConfig?.hoNenMm ?? 8;
+    }
+    return Math.min(0, ...node.children.map(collectMinHoNen));
+  };
+  const minHoNenMm = isOpenBottom ? Math.min(0, collectMinHoNen(rootCell)) : 0;
+  const bottomOverhangMm = minHoNenMm < 0 ? Math.min(Math.round(h * 0.5), Math.abs(minHoNenMm)) : 0;
+
   // Kích thước lề dành cho thước đo 2 bên và trên dưới
   const leftRulerW = lockLevelsCount > 1 ? 56 : lockLevelsCount === 1 ? 38 : 0;
   const rightRulerW = hasHorizSubDims ? 55 : 36;
@@ -112,17 +123,20 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   // Vùng vẽ tối đa dành cho khung cửa (chừa lề đối xứng và cân đối cho các tầng thước đo)
   const availW = hideDimensions ? vbW - 16 : vbW - (leftRulerW + rightRulerW + 28);
   const availH = hideDimensions ? vbH - 16 : vbH - (topRulerH + bottomRulerH + 20);
-  const scale = Math.min(availW / w, availH / h);
+  const scale = Math.min(availW / w, availH / (h + bottomOverhangMm));
 
   const fw = Math.round(w * scale);
   const fh = Math.round(h * scale);
+  const bottomOverhangPx = Math.round(bottomOverhangMm * scale);
 
   // Căn giữa cửa cân đối hoàn hảo trong viewBox theo kích thước bao của cửa và các thước
   const totalContentW = leftRulerW + fw + rightRulerW;
   const ox = hideDimensions ? Math.round((vbW - fw) / 2) : Math.round((vbW - totalContentW) / 2) + leftRulerW;
 
-  const totalContentH = topRulerH + fh + bottomRulerH;
-  const oy = hideDimensions ? Math.round((vbH - fh) / 2) : Math.round((vbH - totalContentH) / 2) + topRulerH;
+  const totalContentH = topRulerH + fh + bottomOverhangPx + bottomRulerH;
+  const oy = hideDimensions
+    ? Math.round((vbH - (fh + bottomOverhangPx)) / 2)
+    : Math.round((vbH - totalContentH) / 2) + topRulerH;
 
   // 1. Khung bao (FRAME): Ưu tiên lấy theo sectionHeightMm của profile được chọn, fallback về mặc định chuẩn mm
   const selectedFrameProfile = availableProfiles?.find(
@@ -213,8 +227,6 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   const vertMullionT = Math.max(CAD_CONFIG.MULLION.MIN_RENDER_PX, Math.round(vertMullionMm * scale));
   const horizMullionT = Math.max(CAD_CONFIG.MULLION.MIN_RENDER_PX, Math.round(horizMullionMm * scale));
   const mullionT = Math.max(vertMullionT, horizMullionT);
-
-  const isOpenBottom = frameConfig?.isOpenBottom ?? false;
 
   // 6. Độ ngậm cánh lùa (SLIDING OVERLAP): Lấy cấu hình mm hoặc bản rộng profile cánh
   const slidingOverlapMm =

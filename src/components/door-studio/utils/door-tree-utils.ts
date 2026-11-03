@@ -45,17 +45,73 @@ export const createDefaultRootCell = (width = 1400, height = 1600): SceneCellNod
 });
 
 export const rescaleTree = (node: SceneCellNode, scaleX: number, scaleY: number): SceneCellNode => {
-  const newW = Math.round(node.w * scaleX);
-  const newH = Math.round(node.h * scaleY);
+  const newW = Math.max(1, Math.round(node.w * scaleX));
+  const newH = Math.max(1, Math.round(node.h * scaleY));
+
+  let nextChildren: SceneCellNode[] | undefined;
+  if (node.children && node.children.length > 0) {
+    const count = node.children.length;
+    const isVert = node.splitDirection === 'vertical';
+    const isHoriz = node.splitDirection === 'horizontal';
+
+    if (isVert || isHoriz) {
+      const targetSpan = isVert ? newW : newH;
+      const totalWeight = node.children.reduce((sum, c) => sum + ((isVert ? c.w : c.h) || 1), 0);
+      let accumulated = 0;
+
+      nextChildren = node.children.map((c, idx) => {
+        const isLast = idx === count - 1;
+        const weight = (isVert ? c.w : c.h) || 1;
+        const ratio = totalWeight > 0 ? weight / totalWeight : 1 / count;
+        const childSpan = isLast
+          ? Math.max(1, targetSpan - accumulated)
+          : Math.max(1, Math.round(targetSpan * ratio));
+        accumulated += childSpan;
+
+        const targetChildW = isVert ? childSpan : newW;
+        const targetChildH = isVert ? newH : childSpan;
+        const childScaleX = targetChildW / (c.w || 1);
+        const childScaleY = targetChildH / (c.h || 1);
+        const scaledChild = rescaleTree(c, childScaleX, childScaleY);
+        return {
+          ...scaledChild,
+          w: targetChildW,
+          h: targetChildH,
+        };
+      });
+    } else {
+      nextChildren = node.children.map((c) => rescaleTree(c, scaleX, scaleY));
+    }
+  }
+
+  let nextSashMullions = node.sashMullions;
+  if (node.sashMullions?.positions && node.sashMullions.positions.length > 0) {
+    const isSmVert = node.sashMullions.direction === 'vertical';
+    const smTargetSpan = isSmVert ? newW : newH;
+    const smCount = node.sashMullions.positions.length;
+    const smTotal = node.sashMullions.positions.reduce((s, p) => s + (p || 1), 0);
+    let smAcc = 0;
+    const scaledPositions = node.sashMullions.positions.map((p, idx) => {
+      const isLast = idx === smCount - 1;
+      const ratio = smTotal > 0 ? (p || 1) / smTotal : 1 / smCount;
+      const val = isLast
+        ? Math.max(1, smTargetSpan - smAcc)
+        : Math.max(1, Math.round(smTargetSpan * ratio));
+      smAcc += val;
+      return val;
+    });
+    nextSashMullions = {
+      ...node.sashMullions,
+      positions: scaledPositions,
+    };
+  }
+
   return {
     ...node,
     w: newW,
     h: newH,
-    children: node.children?.map((c) => {
-      const childScaleX = node.splitDirection === 'horizontal' ? newW / (c.w || 1) : scaleX;
-      const childScaleY = node.splitDirection === 'vertical' ? newH / (c.h || 1) : scaleY;
-      return rescaleTree(c, childScaleX, childScaleY);
-    }),
+    children: nextChildren,
+    sashMullions: nextSashMullions,
   };
 };
 
@@ -320,10 +376,12 @@ export const resizeCellInParent = (
   if (childIdx >= 0 && isMatchingAxis) {
     const minDim = 100;
     const dims = root.children.map((c) => (axis === 'w' ? c.w : c.h));
-    const totalSum = dims.reduce((sum, d) => sum + d, 0);
+    const currentSum = dims.reduce((sum, d) => sum + d, 0);
+    const parentSpan = axis === 'w' ? root.w : root.h;
+    const totalSum = parentSpan > 0 ? parentSpan : currentSum;
     const maxAllowed = Math.max(minDim, totalSum - (root.children.length - 1) * minDim);
     const clamped = Math.max(minDim, Math.min(maxAllowed, newValue));
-    let remainingDelta = clamped - dims[childIdx];
+    let remainingDelta = (clamped - dims[childIdx]) + (currentSum - totalSum);
 
     const nextDims = [...dims];
     nextDims[childIdx] = clamped;

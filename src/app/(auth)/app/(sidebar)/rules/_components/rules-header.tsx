@@ -9,6 +9,7 @@ import type { RulesViewMode } from '@/types';
 interface RulesHeaderProps {
   search: string;
   canCreate?: boolean;
+  isManager?: boolean;
   viewMode: RulesViewMode;
   showViewSwitcher?: boolean;
   onSearchChange: (value: string) => void;
@@ -18,7 +19,8 @@ interface RulesHeaderProps {
 
 export const RulesHeader: React.FC<RulesHeaderProps> = ({
   search,
-  canCreate = false,
+  canCreate = true,
+  isManager = false,
   viewMode,
   showViewSwitcher = true,
   onSearchChange,
@@ -95,7 +97,7 @@ export const RulesHeader: React.FC<RulesHeaderProps> = ({
           onClick={onCreate}
           className="h-8.5 sm:h-9 px-2 sm:px-3 text-xs shrink-0 shadow-2xs whitespace-nowrap"
         >
-          <span className="hidden xs:inline">Soạn cơ chế</span>
+          <span className="hidden xs:inline">{isManager ? 'Soạn văn bản / Cơ chế' : 'Soạn dự thảo / Đề xuất'}</span>
           <span className="xs:hidden">Soạn</span>
         </Button>
       )}

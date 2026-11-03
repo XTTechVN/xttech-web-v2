@@ -63,7 +63,10 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   const dSash = sashD;
   const dBead = Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(dSash * 0.25));
   const hoNenMm = leftNode.hoNenMm ?? sashConfig?.hoNenMm ?? 8;
-  const dHoNen = isOpenBottom && hoNenMm > 0 ? Math.min(Math.floor(fh * 0.5), Math.round(hoNenMm * (fh / (h || 1)))) : 0;
+  const maxHoNenPx = Math.floor(fh * 0.5);
+  const dHoNen = isOpenBottom
+    ? Math.max(-maxHoNenPx, Math.min(maxHoNenPx, Math.round(hoNenMm * (fh / (h || 1)))))
+    : 0;
   const effFh = isOpenBottom ? Math.max(20, fh - dHoNen) : fh;
 
   const pathSashOuter = getCurvedContourPath(frameShape, ox, oy, fw, effFh, frameD, isOpenBottom);
@@ -353,7 +356,11 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
     ? Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(frameD * 0.35))
     : Math.max(CAD_CONFIG.BEAD.MIN_RENDER_PX, Math.round(dSash * 0.25));
   const hoNenMm = node.hoNenMm ?? sashConfig?.hoNenMm ?? 8;
-  const dHoNen = !isFixed && isOpenBottom && hoNenMm > 0 ? Math.min(Math.floor(fh * 0.5), Math.round(hoNenMm * (fh / (h || 1)))) : 0;
+  const maxHoNenPx = Math.floor(fh * 0.5);
+  const dHoNen =
+    !isFixed && isOpenBottom
+      ? Math.max(-maxHoNenPx, Math.min(maxHoNenPx, Math.round(hoNenMm * (fh / (h || 1)))))
+      : 0;
   const effFh = isOpenBottom ? Math.max(20, fh - dHoNen) : fh;
 
   const pathSashOuter = getCurvedContourPath(frameShape, ox, oy, fw, effFh, frameD, isOpenBottom);

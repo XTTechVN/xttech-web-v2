@@ -1,6 +1,7 @@
 import React from 'react';
+import Link from 'next/link';
 import { Button, TableSearch, Select } from '@/components';
-import { FolderPlus, FileUp, FolderUp, LayoutGrid, List, RotateCcw } from 'lucide-react';
+import { FolderPlus, FileUp, FolderUp, LayoutGrid, List, RotateCcw, FileSpreadsheet } from 'lucide-react';
 import type { DocumentItemTypeFilter } from '@/hooks/use-document-explorer';
 
 interface DocumentsToolbarProps {
@@ -32,6 +33,12 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
   itemTypeFilter = 'all',
   onItemTypeFilterChange,
   itemTypeOptions = [],
+  documentType = '',
+  onDocumentTypeChange,
+  documentTypeOptions = [],
+  status = '',
+  onStatusChange,
+  statusOptions = [],
   hasActiveFilters,
   onResetFilters,
   viewMode,
@@ -91,14 +98,23 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
               >
                 <span className="truncate">Tải tệp lên</span>
               </Button>
+
+              <Link
+                href="/app/rules"
+                className="hidden md:inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-primary/25 bg-primary/5 text-primary hover:bg-primary/10 text-xs font-semibold transition-colors shrink-0"
+                title="Chuyển sang phân hệ Soạn thảo & Ban hành Văn bản Doanh nghiệp"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
+                <span>Soạn văn bản A4</span>
+              </Link>
             </div>
           )}
         </div>
 
-        {/* Nhóm bên phải: Bộ lọc loại mục và Chế độ xem Lưới/Danh sách ở cuối cùng */}
-        <div className="flex items-center gap-2 w-full xl:w-auto min-w-0 justify-between xl:justify-end">
-          <div className="flex-1 xl:w-44 lg:w-48 xl:flex-none min-w-0 flex items-center gap-1.5">
-            <div className="w-full min-w-0">
+        {/* Nhóm bên phải: Bộ lọc loại mục, Phân loại, Trạng thái và Chế độ xem Lưới/Danh sách */}
+        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto min-w-0 justify-between xl:justify-end">
+          <div className="flex-1 xl:flex-none min-w-0 flex flex-wrap items-center gap-1.5">
+            <div className="w-36 sm:w-40 min-w-0">
               <Select
                 value={itemTypeFilter}
                 onChange={(e) => onItemTypeFilterChange?.(e.target.value as DocumentItemTypeFilter)}
@@ -107,6 +123,30 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
                 className="h-9 text-xs w-full"
               />
             </div>
+
+            {documentTypeOptions.length > 0 && onDocumentTypeChange && (
+              <div className="w-36 sm:w-40 min-w-0">
+                <Select
+                  value={documentType}
+                  onChange={(e) => onDocumentTypeChange(e.target.value)}
+                  options={documentTypeOptions}
+                  placeholder="Tất cả phân loại"
+                  className="h-9 text-xs w-full"
+                />
+              </div>
+            )}
+
+            {statusOptions.length > 0 && onStatusChange && (
+              <div className="w-36 sm:w-40 min-w-0 hidden sm:block">
+                <Select
+                  value={status}
+                  onChange={(e) => onStatusChange(e.target.value)}
+                  options={statusOptions}
+                  placeholder="Tất cả trạng thái"
+                  className="h-9 text-xs w-full"
+                />
+              </div>
+            )}
 
             {hasActiveFilters && (
               <Button

@@ -15,7 +15,7 @@ import {
 } from '../_utils/rules-constants';
 
 const toTab = (value?: string, canManage = false): RulesTab => {
-  if (!canManage) return 'current';
+  if (!canManage) return value === 'drafts' ? 'drafts' : 'current';
   return RULES_TAB_VALUES.includes(value as RulesTab) ? (value as RulesTab) : 'current';
 };
 

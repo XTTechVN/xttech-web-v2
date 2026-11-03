@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Clock, Eye, FilePen, Megaphone, RefreshCw, ShieldCheck, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
+import { Clock, Eye, FilePen, Megaphone, RefreshCw, ShieldCheck, ThumbsDown, ThumbsUp, Trash2, Zap } from 'lucide-react';
 import { Modal, Button } from '@/components';
+import { InlineDocumentPreview } from '@/components/documents/inline-document-preview';
+import { DocumentWorkflowStepper } from '@/components/documents/workflow-stepper';
 import { getDocumentById } from '@/actions/document';
 import type { DocumentItem } from '@/types';
 import { SHARE_SCOPE_MAP } from '@/types';
@@ -19,6 +21,7 @@ export interface RuleDetailHandlers {
   onDelete: (doc: DocumentItem) => void;
   onReplace?: (doc: DocumentItem) => void;
   onApprove: (doc: DocumentItem, note?: string) => void;
+  onApproveAndPublish?: (doc: DocumentItem, note?: string) => void;
   onReject: (doc: DocumentItem, note?: string) => void;
   onPublish: (doc: DocumentItem) => void;
   onAcknowledge: (doc: DocumentItem) => void;
@@ -68,8 +71,18 @@ export const RuleDetailModal: React.FC<RuleDetailModalProps> = ({
   const version = doc.currentVersion;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg" className="m-2 max-w-3xl w-full" title="Chi tiết cơ chế">
-      <div className="flex flex-col gap-5 text-xs max-h-[70vh] overflow-y-auto pr-1">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" className="m-2 max-w-6xl w-full" title="Chi tiết & Thẩm định Văn bản">
+      <div className="flex flex-col gap-4 text-xs max-h-[75vh] overflow-y-auto pr-1">
+        <DocumentWorkflowStepper status={doc.status} approvalStatus={doc.approvalStatus} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* Cột Trái (7/12): Khung xem trực tiếp nội dung văn bản A4 / PDF / Word */}
+          <div className="lg:col-span-7 w-full">
+            <InlineDocumentPreview document={doc} onOpenFullscreen={() => handlers.onPreview(doc)} />
+          </div>
+
+          {/* Cột Phải (5/12): Thông tin định danh, Phê duyệt & Lịch sử */}
+          <div className="lg:col-span-5 flex flex-col gap-4">
         <header className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-[11px] text-slate-400">{doc.code}</span>
@@ -194,8 +207,21 @@ export const RuleDetailModal: React.FC<RuleDetailModalProps> = ({
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
                 onClick={() => handlers.onApprove(doc, approvalNote.trim() || undefined)}
               >
-                Đồng ý phê duyệt
+                Đồng ý duyệt
               </Button>
+              {handlers.onApproveAndPublish && (
+                <Button
+                  id="rule-review-approve-publish-btn"
+                  size="sm"
+                  leftIcon={<Zap size={14} />}
+                  loading={isBusy}
+                  disabled={isBusy}
+                  className="bg-primary hover:bg-primary/90 text-white"
+                  onClick={() => handlers.onApproveAndPublish!(doc, approvalNote.trim() || undefined)}
+                >
+                  Duyệt &amp; Ban hành ngay
+                </Button>
+              )}
             </div>
           </section>
         )}
@@ -204,16 +230,15 @@ export const RuleDetailModal: React.FC<RuleDetailModalProps> = ({
           <h3 className="text-xs font-bold text-slate-700 mb-3">Lịch sử xử lý</h3>
           <RuleApprovalTimeline documentId={doc.id} isEnabled={isOpen} />
         </section>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 w-full mt-4 pt-3 border-t border-slate-100">
         {actions.canDelete && (
           <Button
-            variant="ghost"
-            size="sm"
-            leftIcon={<Trash2 size={14} className="text-rose-600" />}
-            disabled={isBusy}
-            className="w-full sm:w-auto text-rose-600 hover:bg-rose-50 hover:text-rose-700 justify-center"
+            variant="ghost" size="sm" leftIcon={<Trash2 size={14} className="text-rose-600" />}
+            disabled={isBusy} className="w-full sm:w-auto text-rose-600 hover:bg-rose-50 hover:text-rose-700 justify-center"
             onClick={() => handlers.onDelete(doc)}
           >
             Xóa văn bản
@@ -221,37 +246,24 @@ export const RuleDetailModal: React.FC<RuleDetailModalProps> = ({
         )}
         {actions.canEdit && (
           <Button
-            id="rule-action-edit"
-            variant="outline"
-            size="sm"
-            leftIcon={<FilePen size={14} />}
-            disabled={isBusy}
-            className="w-full sm:w-auto justify-center"
-            onClick={() => handlers.onEdit(doc)}
+            id="rule-action-edit" variant="outline" size="sm" leftIcon={<FilePen size={14} />}
+            disabled={isBusy} className="w-full sm:w-auto justify-center" onClick={() => handlers.onEdit(doc)}
           >
             Sửa &amp; gửi duyệt
           </Button>
         )}
         {actions.canPublish && (
           <Button
-            id="rule-action-publish"
-            size="sm"
-            leftIcon={<Megaphone size={14} />}
-            disabled={isBusy}
-            className="w-full sm:w-auto justify-center"
-            onClick={() => handlers.onPublish(doc)}
+            id="rule-action-publish" size="sm" leftIcon={<Megaphone size={14} />}
+            disabled={isBusy} className="w-full sm:w-auto justify-center" onClick={() => handlers.onPublish(doc)}
           >
             Ban hành
           </Button>
         )}
         {actions.canReplace && handlers.onReplace && (
           <Button
-            id="rule-action-replace"
-            variant="outline"
-            size="sm"
-            leftIcon={<RefreshCw size={14} className="text-amber-600" />}
-            disabled={isBusy}
-            className="w-full sm:w-auto justify-center text-amber-700 border-amber-300 hover:bg-amber-50"
+            id="rule-action-replace" variant="outline" size="sm" leftIcon={<RefreshCw size={14} className="text-amber-600" />}
+            disabled={isBusy} className="w-full sm:w-auto justify-center text-amber-700 border-amber-300 hover:bg-amber-50"
             onClick={() => handlers.onReplace!(doc)}
           >
             Soạn cơ chế thay thế
@@ -259,24 +271,16 @@ export const RuleDetailModal: React.FC<RuleDetailModalProps> = ({
         )}
         {actions.canAcknowledge && (
           <Button
-            id="rule-action-acknowledge"
-            size="sm"
-            leftIcon={<ShieldCheck size={14} />}
-            loading={isBusy}
-            disabled={isBusy}
-            className="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white"
+            id="rule-action-acknowledge" size="sm" leftIcon={<ShieldCheck size={14} />}
+            loading={isBusy} disabled={isBusy} className="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white"
             onClick={() => handlers.onAcknowledge(doc)}
           >
             Đã đọc và hiểu
           </Button>
         )}
         <Button
-          id="rule-action-preview"
-          variant="outline"
-          size="sm"
-          leftIcon={<Eye size={14} />}
-          className="w-full sm:w-auto justify-center"
-          onClick={() => handlers.onPreview(doc)}
+          id="rule-action-preview" variant="outline" size="sm" leftIcon={<Eye size={14} />}
+          className="w-full sm:w-auto justify-center" onClick={() => handlers.onPreview(doc)}
         >
           Xem văn bản
         </Button>

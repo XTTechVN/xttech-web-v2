@@ -43,6 +43,11 @@ export interface LeafCell {
   y: number;
   w: number;
   h: number;
+  rawX?: number;
+  rawY?: number;
+  rawW?: number;
+  rawH?: number;
+  touchesFloor?: boolean;
 }
 
 export interface MullionBar {

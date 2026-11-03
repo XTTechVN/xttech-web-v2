@@ -2,8 +2,10 @@
 
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { createDocument, createDocumentVersion, submitDocument, updateDocument } from '@/actions/document';
+import { createDocument, createDocumentVersion, publishDocument, submitDocument, updateDocument } from '@/actions/document';
 import type { DocumentItem } from '@/types';
+
+export type RuleSaveActionMode = 'draft' | 'submit' | 'publish_now';
 
 export interface RuleFormValues {
   title: string;
@@ -22,7 +24,7 @@ interface SaveRuleInput {
   values: RuleFormValues;
   file: File | null;
   existingDoc: DocumentItem | null;
-  isSubmitting: boolean; // true: lưu rồi gửi duyệt ngay
+  actionMode: RuleSaveActionMode;
 }
 
 const toDocumentPayload = (values: RuleFormValues) => {
@@ -65,18 +67,31 @@ const updateDraft = async (doc: DocumentItem, values: RuleFormValues, file: File
   return updated;
 };
 
-// Lưu bản nháp (tạo mới / cập nhật) và tuỳ chọn gửi duyệt ngay sau khi lưu
+// Lưu bản nháp, trình duyệt, hoặc duyệt & ban hành ngay (dành cho cấp quản lý)
 export function useRuleSave(onSaved: () => void) {
   return useMutation({
-    mutationFn: async ({ values, file, existingDoc, isSubmitting }: SaveRuleInput) => {
+    mutationFn: async ({ values, file, existingDoc, actionMode }: SaveRuleInput) => {
       const savedDoc = existingDoc ? await updateDraft(existingDoc, values, file) : await createDraft(values, file as File);
-      if (!isSubmitting) return { isSubmitted: false };
-
-      await submitDocument(savedDoc.id, { approverId: values.approverId as string });
-      return { isSubmitted: true };
+      if (actionMode === 'submit') {
+        await submitDocument(savedDoc.id, { approverId: values.approverId as string });
+      } else if (actionMode === 'publish_now') {
+        await publishDocument(savedDoc.id, {
+          shareScope: values.shareScope,
+          supersedesId: values.supersedesId ?? undefined,
+          recipientDepartmentIds: values.shareScope === 'department' ? values.recipientDepartmentIds?.map(Number) : undefined,
+          recipientUserIds: values.shareScope === 'user' ? values.recipientUserIds?.map(String) : undefined,
+        });
+      }
+      return { actionMode };
     },
-    onSuccess: ({ isSubmitted }) => {
-      toast.success(isSubmitted ? 'Đã lưu và gửi văn bản đi phê duyệt' : 'Đã lưu bản nháp');
+    onSuccess: ({ actionMode }) => {
+      const msg =
+        actionMode === 'publish_now'
+          ? 'Đã duyệt và ban hành văn bản chính thức!'
+          : actionMode === 'submit'
+            ? 'Đã lưu và gửi văn bản đi phê duyệt'
+            : 'Đã lưu bản nháp';
+      toast.success(msg);
       onSaved();
     },
     onError: (error: Error) => {
