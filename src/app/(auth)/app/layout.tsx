@@ -4,9 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores';
 import { getUser } from '@/actions/user';
-import queryClient from '@/utils/query';
 import { SidebarProvider, PageTransitionProvider } from '@/contexts';
-import { QueryClientProvider } from '@tanstack/react-query';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -30,7 +28,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           try {
             const latestUser = await getUser(currentUserId);
             if (latestUser) {
-              useAuthStore.getState().updateUser(latestUser as any);
+              useAuthStore.getState().updateUser({
+                email: latestUser.email,
+                username: latestUser.username,
+                fullName: latestUser.fullName,
+                phoneNumber: latestUser.phoneNumber,
+                avatar: latestUser.avatar ?? undefined,
+                gender: latestUser.gender,
+                birthday: latestUser.birthday,
+                address: latestUser.address ?? undefined,
+                joinedAt: latestUser.joinedAt ?? undefined,
+                identifyCode: latestUser.identifyCode ?? undefined,
+                attendancePolicy: latestUser.attendancePolicy,
+                roles: latestUser.roles,
+              });
             }
           } catch {
             // Không chặn giao diện nếu mạng yếu
@@ -53,14 +64,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
-      <QueryClientProvider client={queryClient}>
-        <SidebarProvider>
-          <PageTransitionProvider>
-            <div>{children}</div>
-          </PageTransitionProvider>
-        </SidebarProvider>
-      </QueryClientProvider>
-    </>
+    <SidebarProvider>
+      <PageTransitionProvider>
+        <div>{children}</div>
+      </PageTransitionProvider>
+    </SidebarProvider>
   );
 }
