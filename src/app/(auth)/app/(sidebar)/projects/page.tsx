@@ -3,20 +3,35 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { FolderOpen, CheckCircle2, Clock, Users } from 'lucide-react';
+import { FolderOpen, CheckCircle2, Clock, Users, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { StatsCard } from '@/components';
-import { getCustomers, getProjectStats, deleteProject } from '@/actions';
+import { getCustomers, getGlobalWarrantyQueue, getProjectStats, deleteProject } from '@/actions';
 import { usePermission } from '@/hooks';
 import type { Project } from '@/types';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
-import { Table, ProjectFormModal, ProjectDeleteModal } from './_components';
+import {
+  Table,
+  ProjectFormModal,
+  ProjectDeleteModal,
+  WarrantyQueueSection,
+} from './_components';
 
 const Page = () => {
   const router = useRouter();
   const { user, isSaleOnly } = usePermission();
   const scopedUserId = isSaleOnly && user?.id ? user.id : undefined;
+  const [activeView, setActiveView] = useState<'projects' | 'warranty'>('projects');
+
+  // Lấy thống kê badge yêu cầu bảo hành / sửa chữa đang mở
+  const { data: warrantyBadgeData } = useQuery({
+    queryKey: ['global_warranty_badge'],
+    queryFn: () => getGlobalWarrantyQueue({ openOnly: true, limit: 1 }),
+    staleTime: 30_000,
+  });
+  const newClaimCount = warrantyBadgeData?.stats.newClaims ?? 0;
+  const openWarrantyCount = warrantyBadgeData?.stats.totalOpen ?? 0;
 
   // Lấy tổng số khách hàng nhẹ (limit = 1 chỉ đọc meta.total)
   const { data: customerMeta } = useQuery({
@@ -28,7 +43,7 @@ const Page = () => {
     staleTime: 60_000,
   });
 
-  // Lấy thống kê dự án nhẹ từ endpoint агреgate /projects/stats
+  // Lấy thống kê dự án nhẹ từ endpoint aggregate /projects/stats
   const { data: projectsStatsData } = useQuery({
     queryKey: ['projects', 'stats-summary', scopedUserId],
     queryFn: () => getProjectStats({ userId: scopedUserId }),
@@ -112,25 +127,71 @@ const Page = () => {
 
   return (
     <div className="p-4 flex flex-col gap-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {projectStats.map((stat) => (
-          <StatsCard
-            key={stat.title}
-            title={stat.title}
-            value={stat.value}
-            icon={stat.icon}
-            trend={stat.trend}
-            trendDirection={stat.trendDirection}
-          />
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1">
+          <button
+            type="button"
+            onClick={() => setActiveView('projects')}
+            className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
+              activeView === 'projects'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <FolderOpen size={15} className="text-[#045863]" />
+            <span>Danh sách dự án</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('warranty')}
+            className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
+              activeView === 'warranty'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Wrench size={15} className="text-[#045863]" />
+            <span>Bảo hành & Sửa chữa</span>
+            {(newClaimCount > 0 || openWarrantyCount > 0) && (
+              <span
+                className={`rounded-full px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums ${
+                  newClaimCount > 0
+                    ? 'bg-red-500 text-white'
+                    : 'bg-[#045863]/10 text-[#045863]'
+                }`}
+              >
+                {newClaimCount > 0 ? `${newClaimCount} mới` : openWarrantyCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
-      <Table
-        onViewClick={handleViewProject}
-        onEditClick={handleOpenEditModal}
-        onDeleteClick={handleOpenDeleteModal}
-        onAddClick={handleOpenCreateModal}
-      />
+      {activeView === 'warranty' ? (
+        <WarrantyQueueSection />
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {projectStats.map((stat) => (
+              <StatsCard
+                key={stat.title}
+                title={stat.title}
+                value={stat.value}
+                icon={stat.icon}
+                trend={stat.trend}
+                trendDirection={stat.trendDirection}
+              />
+            ))}
+          </div>
+
+          <Table
+            onViewClick={handleViewProject}
+            onEditClick={handleOpenEditModal}
+            onDeleteClick={handleOpenDeleteModal}
+            onAddClick={handleOpenCreateModal}
+          />
+        </>
+      )}
 
       <ProjectFormModal
         isOpen={isFormOpen}

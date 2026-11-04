@@ -5,13 +5,13 @@ import { Glass, ProfileBar } from '@/types';
 import {
   SceneCellNode,
   PaneType,
-  BeadType,
   BeadJointType,
   FrameShape,
   FrameConfig,
   ArchConfig,
 } from '../studio-types';
-import { ShieldCheck, Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, Square, DoorClosed } from 'lucide-react';
+import { computeArchMetrics } from '../cad-engine/cad-geometry';
+import { Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, Square, DoorClosed } from 'lucide-react';
 
 interface CellInspectorProps {
   selectedCell: SceneCellNode | null;
@@ -27,6 +27,7 @@ interface CellInspectorProps {
   frameShape?: FrameShape;
   frameConfig?: FrameConfig;
   doorW?: number;
+  doorH?: number;
   onChangeFrameConfig?: (updates: Partial<FrameConfig>) => void;
 }
 
@@ -38,6 +39,14 @@ const GLASS_OPTIONS = [
   'Kính cường lực 10mm',
   'Kính cường lực 12mm',
   'Kính hộp cách âm 5-9-5mm',
+];
+
+const LEGGED_ARCH_SHAPES: FrameShape[] = [
+  'arch_semicircle',
+  'arch_semicircle_open',
+  'arch_segment_leg',
+  'arch_segment_leg_open',
+  'arch_pointed_leg',
 ];
 
 export const CellInspector: React.FC<CellInspectorProps> = ({
@@ -54,6 +63,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   frameShape,
   frameConfig,
   doorW,
+  doorH,
   onChangeFrameConfig,
 }) => {
   const [localW, setLocalW] = React.useState<number>(selectedCell?.w ?? 0);
@@ -79,7 +89,6 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   };
 
   // Ưu tiên dùng data từ DB, fallback về hardcode khi chưa fetch xong
-  // Dùng object {key, label} để key luôn unique (id từ DB, index khi fallback)
   const glassOptions =
     availableGlasses && availableGlasses.length > 0
       ? availableGlasses.map((g) => ({ key: String(g.id), label: g.name }))
@@ -87,7 +96,11 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   const isArchShape = Boolean(
     frameShape &&
     frameShape !== 'rect' &&
-    (frameShape.startsWith('arch_') || frameShape.startsWith('round_') || frameShape === 'circle' || frameShape === 'ellipse' || frameShape === 'quad_circle')
+    (frameShape.startsWith('arch_') ||
+      frameShape.startsWith('round_') ||
+      frameShape === 'circle' ||
+      frameShape === 'ellipse' ||
+      frameShape === 'quad_circle')
   );
 
   const renderArchConfigCard = () => {
@@ -95,10 +108,31 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
     const archCfg: ArchConfig = frameConfig.archConfig || {
       radiusMm: undefined,
       isCutAtApex: false,
-      bendingClampingMm: 400,
+      legJoinMode: 'continuous',
+      bendingClampingMm: 250,
     };
-    const defaultR = Math.round((doorW || 1600) / 2);
+
+    const metrics = computeArchMetrics(
+      frameShape || 'rect',
+      doorW || 1300,
+      doorH || 1600,
+      0,
+      { ...archCfg, radiusMm: undefined }
+    );
+    const defaultR = Math.round(metrics.autoRadiusMm);
     const currentR = archCfg.radiusMm ?? defaultR;
+    const hasArchLegs = Boolean(frameShape && LEGGED_ARCH_SHAPES.includes(frameShape));
+    const isPointedArch = frameShape === 'arch_pointed' || frameShape === 'arch_pointed_leg';
+    const isSegmentArch =
+      frameShape === 'arch_segment' ||
+      frameShape === 'arch_segment_leg' ||
+      frameShape === 'arch_segment_leg_open';
+
+    const radiusHintText = isPointedArch
+      ? 'Tự động tính theo cung nhọn 2 tâm'
+      : isSegmentArch
+        ? 'Tự động tính theo dây cung'
+        : 'Tự động tính theo W / 2';
 
     const handleUpdateArch = (updates: Partial<ArchConfig>) => {
       onChangeFrameConfig({
@@ -127,17 +161,18 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
               className="w-24 h-7 px-2 text-right font-mono font-bold text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-slate-800"
             />
           </div>
-          <div className="text-[10px] text-slate-400 text-right">Tự động tính theo W / 2</div>
+          <div className="text-[10px] text-slate-400 text-right">{radiusHintText}</div>
         </div>
 
-        <div className="border-t border-slate-100 pt-2 space-y-1">
+        <div className="border-t border-slate-100 pt-2 space-y-2.5">
           {/* 2. Cắt vòm tại đỉnh */}
           <label className="flex items-start gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
-              checked={archCfg.isCutAtApex ?? false}
+              checked={Boolean(archCfg.isCutAtApex || isPointedArch)}
+              disabled={isPointedArch}
               onChange={(e) => handleUpdateArch({ isCutAtApex: e.target.checked })}
-              className="mt-0.5 w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+              className="mt-0.5 w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer disabled:opacity-60"
             />
             <div>
               <div className="text-xs font-semibold text-slate-800">Cắt vòm tại đỉnh</div>
@@ -146,16 +181,41 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
               </div>
             </div>
           </label>
+
+          {/* 3. Phương án uốn chân vòm (A: Tách rời chân thẳng | B: Uốn liền chân) */}
+          {hasArchLegs && (
+            <div className="space-y-1 pt-1">
+              <label className="text-[11px] font-semibold text-slate-700 block">
+                Phương án gia công chân vòm
+              </label>
+              <select
+                value={archCfg.legJoinMode ?? 'continuous'}
+                onChange={(e) =>
+                  handleUpdateArch({
+                    legJoinMode: e.target.value as 'continuous' | 'separate',
+                  })
+                }
+                className="w-full h-7.5 px-2 text-[11px] font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
+              >
+                <option value="continuous">Phương án B: Uốn liền chân (Mặc định)</option>
+                <option value="separate">Phương án A: Tách rời chân thẳng</option>
+              </select>
+            </div>
+          )}
         </div>
 
-        {/* 3. Kẹp phôi */}
+        {/* 4. Kẹp đầu (mm) */}
         <div className="border-t border-slate-100 pt-2 space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-semibold text-slate-700">Kẹp phôi (mm)</label>
+            <label className="text-[11px] font-semibold text-slate-700">Kẹp đầu (mm)</label>
             <input
               type="number"
-              value={archCfg.bendingClampingMm ?? 400}
-              onChange={(e) => handleUpdateArch({ bendingClampingMm: Number(e.target.value) || 0 })}
+              value={archCfg.bendingClampingMm ?? 250}
+              onChange={(e) =>
+                handleUpdateArch({
+                  bendingClampingMm: Math.max(0, Number(e.target.value) || 0),
+                })
+              }
               className="w-24 h-7 px-2 text-right font-mono font-bold text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-slate-800"
             />
           </div>
@@ -261,19 +321,56 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
           <span>Kiểu mở riêng ô này</span>
         </div>
         <select
-          value={selectedCell.sashType || 'fixed'}
+          value={(() => {
+            const raw = String(selectedCell.sashType || 'fixed').trim();
+            if (
+              raw === 'fixed' ||
+              raw === 'swing_left' ||
+              raw === 'swing_right' ||
+              raw === 'awning' ||
+              raw === 'tilt' ||
+              raw === 'tilt_turn' ||
+              raw === 'sliding'
+            ) {
+              return raw;
+            }
+            if (raw.includes('mo-hat') && (raw.includes('le-trai') || raw.includes('le-phai'))) {
+              return 'tilt_turn';
+            }
+            if (raw === 'mo-hat') return 'awning';
+            if (raw === 'mo-lat') return 'tilt';
+            if (raw.startsWith('le-trai') || raw === 'gap-xep-trai') return 'swing_left';
+            if (raw.startsWith('le-phai') || raw === 'gap-xep-phai') return 'swing_right';
+            if (
+              raw.includes('lua') ||
+              raw === '2-chieu' ||
+              raw === '1-chieu' ||
+              raw.includes('sliding')
+            ) {
+              return 'sliding';
+            }
+            return 'fixed';
+          })()}
           onChange={(e) => {
-            const newSashType = e.target.value as any;
-            const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down', 'sliding'].includes(newSashType);
-            const updates: Record<string, unknown> = { sashType: newSashType };
+            const newSashType = e.target.value as SceneCellNode['sashType'];
+            const sashHasHandle = [
+              'swing_left',
+              'swing_right',
+              'tilt_turn',
+              'awning',
+              'tilt',
+              'tilt_down',
+              'sliding',
+            ].includes(newSashType || '');
+            const updates: Partial<SceneCellNode> = { sashType: newSashType };
             if (sashHasHandle) {
               updates.hasLock = true;
               updates.handleHeight = Math.round(selectedCell.h / 2);
               updates.handleType = selectedCell.handleType ?? 'lever';
-            } else if (!sashHasHandle) {
+            } else {
               updates.hasLock = false;
             }
-            onUpdateCell(updates as any);
+            onUpdateCell(updates);
           }}
           className="w-full h-8 px-2.5 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 font-medium"
         >
@@ -291,7 +388,8 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
       {selectedCell.sashType && selectedCell.sashType !== 'fixed' && (
         <div className="space-y-2 p-2.5 rounded-xl bg-orange-50/70 border border-orange-200/80">
           {(() => {
-            const isLockActive = selectedCell.hasLock ?? ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down'].includes(selectedCell.sashType || '');
+            const isLockActive =
+              selectedCell.hasLock ?? Boolean(selectedCell.sashType && selectedCell.sashType !== 'fixed');
             return (
               <>
                 <div className="flex items-center justify-between">
@@ -311,47 +409,51 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 </div>
 
                 {isLockActive && (
-            <div className="space-y-2 pt-1">
-              <div>
-                <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
-                  <span>Cao độ tim khóa:</span>
-                  <span className="font-mono font-bold text-orange-700">
-                    {selectedCell.handleHeight ?? Math.round(selectedCell.h / 2)} mm
-                  </span>
-                </div>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={selectedCell.handleHeight ?? Math.round(selectedCell.h / 2)}
-                    onChange={(e) => onUpdateCell({ handleHeight: Number(e.target.value) })}
-                    className="w-full h-8 px-2.5 pr-8 font-mono font-bold text-xs bg-white rounded-lg border border-orange-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-slate-900"
-                  />
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-gray-400">
-                    mm
-                  </span>
-                </div>
-              </div>
+                  <div className="space-y-2 pt-1">
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
+                        <span>Cao độ tim khóa:</span>
+                        <span className="font-mono font-bold text-orange-700">
+                          {selectedCell.handleHeight ?? Math.round(selectedCell.h / 2)} mm
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={selectedCell.handleHeight ?? Math.round(selectedCell.h / 2)}
+                          onChange={(e) => onUpdateCell({ handleHeight: Number(e.target.value) })}
+                          className="w-full h-8 px-2.5 pr-8 font-mono font-bold text-xs bg-white rounded-lg border border-orange-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-slate-900"
+                        />
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-gray-400">
+                          mm
+                        </span>
+                      </div>
+                    </div>
 
-              <div>
-                <label className="text-[11px] text-gray-600 font-medium block mb-1">Kiểu tay nắm</label>
-                <select
-                  value={selectedCell.handleType || 'lever'}
-                  onChange={(e) => onUpdateCell({ handleType: e.target.value as any })}
-                  className="w-full h-8 px-2 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-orange-500 font-medium text-slate-800"
-                >
-                  <option value="lever">Tay nắm gạt cửa đi (Lever handle)</option>
-                  <option value="multipoint">Tay gạt đa điểm (Cửa sổ)</option>
-                  <option value="pull">Tay nắm kéo chữ D</option>
-                  <option value="crescent">Khóa bán nguyệt</option>
-                </select>
-              </div>
-            </div>
-          )}
-        </>
-      );
-    })()}
-  </div>
-)}
+                    <div>
+                      <label className="text-[11px] text-gray-600 font-medium block mb-1">
+                        Kiểu tay nắm
+                      </label>
+                      <select
+                        value={selectedCell.handleType || 'lever'}
+                        onChange={(e) =>
+                          onUpdateCell({ handleType: e.target.value as SceneCellNode['handleType'] })
+                        }
+                        className="w-full h-8 px-2 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-orange-500 font-medium text-slate-800"
+                      >
+                        <option value="lever">Tay nắm gạt cửa đi (Lever handle)</option>
+                        <option value="multipoint">Tay gạt đa điểm (Cửa sổ)</option>
+                        <option value="pull">Tay nắm kéo chữ D</option>
+                        <option value="crescent">Khóa bán nguyệt</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      )}
 
       {/* 4. Loại vật liệu tấm (Pane Type) */}
       <div className="space-y-2">
@@ -390,7 +492,9 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
           </div>
 
           <div>
-            <label className="text-[11px] text-slate-600 font-medium block mb-1">Loại kính cho ô này:</label>
+            <label className="text-[11px] text-slate-600 font-medium block mb-1">
+              Loại kính cho ô này:
+            </label>
             <select
               value={selectedCell.glassName || ''}
               onChange={(e) => onUpdateCell({ glassName: e.target.value || undefined })}
@@ -422,7 +526,9 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
               min={1}
               max={10}
               value={selectedCell.glassSplitCount || 1}
-              onChange={(e) => onUpdateCell({ glassSplitCount: Math.max(1, Number(e.target.value)) })}
+              onChange={(e) =>
+                onUpdateCell({ glassSplitCount: Math.max(1, Number(e.target.value)) })
+              }
               className="w-full h-8 px-2.5 font-mono font-bold text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 text-slate-800"
               placeholder="1"
             />
@@ -549,7 +655,9 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                   type="button"
                   onClick={() => onUpdateCell({ beadJoint: joint.id as BeadJointType })}
                   className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
-                    isSelected ? 'bg-primary text-white shadow-2xs' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                    isSelected
+                      ? 'bg-primary text-white shadow-2xs'
+                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                   }`}
                 >
                   {joint.label}
@@ -639,4 +747,3 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
     </div>
   );
 };
-

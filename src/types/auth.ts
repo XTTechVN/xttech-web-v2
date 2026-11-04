@@ -50,3 +50,9 @@ export interface SignInResponse {
   refreshToken: string;
   user: AuthUser;
 }
+
+// Kiểu dữ liệu trả về khi làm mới phiên đăng nhập
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken?: string;
+}

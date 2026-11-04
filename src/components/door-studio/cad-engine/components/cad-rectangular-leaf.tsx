@@ -943,13 +943,13 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                             width={4}
                             height={28}
                             rx={1}
-                            fill="#18181b"
+                            fill={hardwareColor}
                             stroke="#000"
                             strokeWidth="0.5"
                           />
                           <path
                             d={`M ${sashBoxX + sashBoxW - dSash / 2 - 2} ${handleY - 11} C ${sashBoxX + sashBoxW - dSash / 2 - 11} ${handleY - 11}, ${sashBoxX + sashBoxW - dSash / 2 - 11} ${handleY + 11}, ${sashBoxX + sashBoxW - dSash / 2 - 2} ${handleY + 11} L ${sashBoxX + sashBoxW - dSash / 2 - 2} ${handleY + 8} C ${sashBoxX + sashBoxW - dSash / 2 - 8} ${handleY + 8}, ${sashBoxX + sashBoxW - dSash / 2 - 8} ${handleY - 8}, ${sashBoxX + sashBoxW - dSash / 2 - 2} ${handleY - 8} Z`}
-                            fill="#18181b"
+                            fill={hardwareColor}
                             stroke="#000"
                             strokeWidth="0.5"
                           />
@@ -968,20 +968,20 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                             width={4}
                             height={28}
                             rx={1}
-                            fill="#18181b"
+                            fill={hardwareColor}
                             stroke="#000"
                             strokeWidth="0.5"
                           />
                           <path
                             d={`M ${sashBoxX + dSash / 2 + 2} ${handleY - 11} C ${sashBoxX + dSash / 2 + 11} ${handleY - 11}, ${sashBoxX + dSash / 2 + 11} ${handleY + 11}, ${sashBoxX + dSash / 2 + 2} ${handleY + 11} L ${sashBoxX + dSash / 2 + 2} ${handleY + 8} C ${sashBoxX + dSash / 2 + 8} ${handleY + 8}, ${sashBoxX + dSash / 2 + 8} ${handleY - 8}, ${sashBoxX + dSash / 2 + 2} ${handleY - 8} Z`}
-                            fill="#18181b"
+                            fill={hardwareColor}
                             stroke="#000"
                             strokeWidth="0.5"
                           />
                         </g>
                       )
                     ) : (
-                      // Khóa sập âm dài màu đen (như 2 cánh ngoài cùng trong Ảnh 2)
+                      // Khóa sập âm dài theo màu phụ kiện (như 2 cánh ngoài cùng trong Ảnh 2)
                       <g
                         className="cursor-pointer"
                         onClick={(e) => {
@@ -999,7 +999,7 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
                                 width={3.6}
                                 height={30}
                                 rx={1}
-                                fill="#18181b"
+                                fill={hardwareColor}
                                 stroke="#000"
                                 strokeWidth="0.5"
                               />

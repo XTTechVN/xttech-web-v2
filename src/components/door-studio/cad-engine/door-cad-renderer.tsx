@@ -1,10 +1,15 @@
 'use client';
 
 import React from 'react';
-import { SashCornerJoint, SceneCellNode } from '../studio-types';
+import { ArchConfig, SashCornerJoint, SceneCellNode } from '../studio-types';
 import { CAD_CONFIG } from './cad-config';
 import { DoorCadRendererProps } from './cad-types';
-import { getCurvedFramePaths } from './cad-geometry';
+import {
+  computeArchMetrics,
+  getArchYAtX,
+  getCurvedFramePaths,
+  isArchOpenBottomShape,
+} from './cad-geometry';
 import { buildCadLayout, getVerticalSlices, getHorizontalSlices, collectSashMullions } from './cad-tree-traverser';
 import { CadMiteredFrame } from './components/cad-mitered-frame';
 import { CadCurvedDoubleDoor, CadCurvedSingleDoor } from './components/cad-curved-door';
@@ -16,6 +21,9 @@ export { CAD_CONFIG };
 export * from './cad-types';
 export * from './cad-geometry';
 export * from './cad-tree-traverser';
+
+const LEFT_SWING_SASH_TYPES = ['swing_left', 'le-trai-mo-ra', 'le-trai-mo-vao'];
+const RIGHT_SWING_SASH_TYPES = ['swing_right', 'le-phai-mo-ra', 'le-phai-mo-vao'];
 
 /**
  * Component chính DoorCadRenderer:
@@ -103,7 +111,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   }
   const lockLevelsCount = lockHeightsSet.size;
 
-  const isOpenBottom = frameConfig?.isOpenBottom ?? false;
+  const isOpenBottom = Boolean((frameConfig?.isOpenBottom ?? false) || isArchOpenBottomShape(frameShape));
   const collectMinHoNen = (node: SceneCellNode): number => {
     if (!node.children || node.children.length === 0 || node.splitType === 'sash_mullion') {
       if (node.sashType === 'fixed') return 0;
@@ -146,10 +154,11 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
       p.id === frameConfig?.rightEdge?.profileId ||
       p.id === frameConfig?.bottomEdge?.profileId
   );
-  const frameMm =
+  const rawFrameMm =
     selectedFrameProfile?.sectionHeightMm && selectedFrameProfile.sectionHeightMm > 0
       ? selectedFrameProfile.sectionHeightMm
       : CAD_CONFIG.FRAME.DEFAULT_MM;
+  const frameMm = frameShape !== 'rect' ? Math.min(rawFrameMm, 56) : rawFrameMm;
   const frameD = Math.max(CAD_CONFIG.FRAME.MIN_RENDER_PX, Math.round(frameMm * scale));
 
   // 2. Khung cánh (SASH): Ưu tiên lấy theo sectionHeightMm của profile cánh được chọn
@@ -167,10 +176,11 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     : isDoorUnit
       ? CAD_CONFIG.SASH.DOOR_DEFAULT_MM
       : CAD_CONFIG.SASH.WINDOW_DEFAULT_MM;
-  const sashMm =
+  const rawSashMm =
     selectedSashProfile?.sectionHeightMm && selectedSashProfile.sectionHeightMm > 0
       ? selectedSashProfile.sectionHeightMm
       : defaultSashMm;
+  const sashMm = frameShape !== 'rect' ? Math.min(rawSashMm, 68) : rawSashMm;
   const sashD = Math.max(CAD_CONFIG.SASH.MIN_RENDER_PX, Math.round(sashMm * scale));
 
   // 3. Nẹp kính (BEAD): Lấy theo profile nẹp hoặc mm mặc định
@@ -235,6 +245,16 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
       : sashMm;
   const slidingOverlapPx = Math.max(10, Math.round(slidingOverlapMm * scale));
 
+  // Quy đổi thông số vòm sang hệ tọa độ pixel của SVG
+  const scaledArchConfig: ArchConfig | undefined = frameConfig?.archConfig
+    ? {
+        ...frameConfig.archConfig,
+        radiusMm: frameConfig.archConfig.radiusMm
+          ? frameConfig.archConfig.radiusMm * scale
+          : undefined,
+      }
+    : undefined;
+
   // Tính toán hình dạng khung vòm/bo góc (nếu có)
   const curvedPaths = getCurvedFramePaths(
     frameShape,
@@ -243,7 +263,8 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     fw,
     fh,
     frameD,
-    isOpenBottom
+    isOpenBottom,
+    scaledArchConfig
   );
   const clipId = `door-inner-clip-${id || 'root'}`;
 
@@ -278,8 +299,8 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     (
       (leaves.length === 1 && leaves[0].node.sashType === 'swing_double') ||
       (leaves.length === 2 &&
-        leaves[0].node.sashType === 'swing_left' &&
-        leaves[1].node.sashType === 'swing_right')
+        LEFT_SWING_SASH_TYPES.includes(leaves[0].node.sashType || '') &&
+        RIGHT_SWING_SASH_TYPES.includes(leaves[1].node.sashType || ''))
     )
   );
 
@@ -289,6 +310,30 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     leaves.length === 1 &&
     leaves[0].node.sashType !== 'swing_double'
   );
+
+  // Các đường chia khung bao vòm (Cắt vòm tại đỉnh & Tách rời chân thẳng)
+  const archMetrics = curvedPaths ? computeArchMetrics(frameShape, fw, fh, 0, scaledArchConfig) : null;
+  const xMidFrame = Math.round(ox + fw / 2);
+  const showApexCutLine = Boolean(
+    curvedPaths &&
+    (frameConfig?.archConfig?.isCutAtApex ||
+      frameShape === 'arch_pointed' ||
+      frameShape === 'arch_pointed_leg')
+  );
+  const yApexOuter = showApexCutLine
+    ? getArchYAtX(frameShape, ox, oy, fw, fh, 0, xMidFrame, scaledArchConfig)
+    : oy;
+  const yApexInner = showApexCutLine
+    ? getArchYAtX(frameShape, ox, oy, fw, fh, frameD, xMidFrame, scaledArchConfig)
+    : oy + frameD;
+
+  const showSeparateLegSeams = Boolean(
+    curvedPaths &&
+    frameConfig?.archConfig?.legJoinMode === 'separate' &&
+    archMetrics &&
+    archMetrics.legH > 4
+  );
+  const ySpringLine = archMetrics ? Math.round(oy + fh - archMetrics.legH) : oy + fh;
 
   return (
     <svg
@@ -335,6 +380,31 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
             stroke="#27272a"
             strokeWidth="0.8"
           />
+          {/* Đường cắt chia đôi đỉnh khung bao vòm khi tích "Cắt vòm tại đỉnh" hoặc Vòm nhọn 2 cung */}
+          {showApexCutLine && (
+            <line
+              x1={xMidFrame}
+              y1={yApexOuter}
+              x2={xMidFrame}
+              y2={yApexInner}
+              stroke="#18181b"
+              strokeWidth="0.95"
+            />
+          )}
+          {/* Đường ghép nối chân thẳng khi chọn Phương án A (Tách rời chân thẳng) */}
+          {showSeparateLegSeams && (
+            <g stroke="#18181b" strokeWidth="0.85">
+              <line x1={ox} y1={ySpringLine} x2={ox + frameD} y2={ySpringLine} />
+              <line x1={ox + fw - frameD} y1={ySpringLine} x2={ox + fw} y2={ySpringLine} />
+            </g>
+          )}
+          {/* Đường cắt mòi 45° tại 2 góc đáy của khung bao vòm (khi không hở chân) */}
+          {!isOpenBottom && (
+            <g stroke="#18181b" strokeWidth="0.75">
+              <line x1={ox} y1={oy + fh} x2={ox + frameD} y2={oy + fh - frameD} />
+              <line x1={ox + fw} y1={oy + fh} x2={ox + fw - frameD} y2={oy + fh - frameD} />
+            </g>
+          )}
         </g>
       ) : (
         <>
@@ -394,6 +464,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
             rightNode={leaves[1]?.node}
             frameConfig={frameConfig}
             sashConfig={sashConfig}
+            scaledArchConfig={scaledArchConfig}
           />
         ) : isCurvedSingle ? (
           <CadCurvedSingleDoor
@@ -414,7 +485,9 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
             onSelectCell={onSelectCell}
             onEditDimension={onEditDimension}
             node={leaves[0].node}
+            frameConfig={frameConfig}
             sashConfig={sashConfig}
+            scaledArchConfig={scaledArchConfig}
           />
         ) : (
           [...leaves]

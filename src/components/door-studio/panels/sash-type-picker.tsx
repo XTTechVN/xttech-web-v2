@@ -315,6 +315,40 @@ function renderSquareVisualCard(layout: SashLayoutConfig): React.ReactNode {
   );
 }
 
+function mapConfigFamilyToTab(family?: string): SashFamily {
+  switch (family) {
+    case 'Cửa đi mở quay':
+      return 'cua-di';
+    case 'Cửa sổ lùa':
+      return 'cua-so-lua';
+    case 'Cửa đi lùa':
+    case 'Cửa trượt lùa':
+      return 'cua-di-lua';
+    case 'Cửa xếp trượt':
+      return 'gap-xep';
+    case 'Cửa sổ mở quay/Hất':
+    default:
+      return 'cua-so';
+  }
+}
+
+function mapTabToConfigFamily(tab: SashFamily): string {
+  switch (tab) {
+    case 'cua-di':
+      return 'Cửa đi mở quay';
+    case 'cua-so-lua':
+      return 'Cửa sổ lùa';
+    case 'cua-di-lua':
+    case 'truot-quay':
+      return 'Cửa đi lùa';
+    case 'gap-xep':
+      return 'Cửa xếp trượt';
+    case 'cua-so':
+    default:
+      return 'Cửa sổ mở quay/Hất';
+  }
+}
+
 export const SashTypePicker: React.FC<SashTypePickerProps> = ({
   currentSashType,
   selectedCellId,
@@ -326,8 +360,19 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
   onSplitSashMullion,
 }) => {
   const [splitCount, setSplitCount] = useState<number>(2);
-  const [activeFamily, setActiveFamily] = useState<SashFamily>('cua-so');
+  const [activeFamily, setActiveFamily] = useState<SashFamily>(() =>
+    mapConfigFamilyToTab(sashConfig?.family)
+  );
   const [isSplitCollapsed, setIsSplitCollapsed] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (!sashConfig?.family) return;
+    const targetTab = mapConfigFamilyToTab(sashConfig.family);
+    setActiveFamily((prev) => {
+      if (prev === 'truot-quay' && targetTab === 'cua-di-lua') return prev;
+      return targetTab;
+    });
+  }, [sashConfig?.family]);
 
   // Tham chiếu và trạng thái cuộn ngang cho dải tab phân loại
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -397,6 +442,10 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
   const handleTabClick = (tabId: SashFamily, e: React.MouseEvent<HTMLButtonElement>) => {
     if (hasDragged.current) return;
     setActiveFamily(tabId);
+    const nextConfigFamily = mapTabToConfigFamily(tabId);
+    if (sashConfig?.family !== nextConfigFamily) {
+      onChangeSashConfig?.({ family: nextConfigFamily });
+    }
     e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     setTimeout(updateScrollLimits, 250);
   };

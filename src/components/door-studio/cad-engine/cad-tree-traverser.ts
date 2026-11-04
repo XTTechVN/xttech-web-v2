@@ -352,10 +352,16 @@ export const buildCadLayout = (
 
     if (isFrameUnit) {
       frames.push({ id: node.id, x, y, w: wBox, h: hBox });
+      const isBot90 = options?.frameConfig?.cornerJoint === '45_top_90_bot';
+      const botFrameD = isOpenBottomDoor
+        ? 0
+        : isBot90
+        ? Math.max(6, Math.round(frameD * 0.65))
+        : frameD;
       innerX = x + frameD;
       innerY = y + frameD;
       innerW = Math.max(10, wBox - 2 * frameD);
-      innerH = Math.max(10, hBox - frameD - (isOpenBottomDoor ? 0 : frameD));
+      innerH = Math.max(10, hBox - frameD - botFrameD);
     }
 
     // 3. Phân chia đố T 90° hoặc cặp cánh đối xứng

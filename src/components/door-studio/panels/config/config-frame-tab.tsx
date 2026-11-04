@@ -102,6 +102,69 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
   const vertSafetyProfile = profiles.find((p) => p.id === safetyBarsConfig.mullionVertProfileId);
   const horizSafetyProfile = profiles.find((p) => p.id === safetyBarsConfig.mullionHorizProfileId);
 
+  const selectedLeftFrame = profiles.find((p) => p.id === leftEdge.profileId);
+  const selectedTopFrame = profiles.find((p) => p.id === (topEdge.profileId || leftEdge.profileId));
+  const selectedRightFrame = profiles.find((p) => p.id === (rightEdge.profileId || leftEdge.profileId));
+  const selectedBottomFrame = profiles.find((p) => p.id === (bottomEdge.profileId || leftEdge.profileId));
+  const selectedSharedMullion = profiles.find((p) => p.id === config.mullionProfileId);
+
+  const getEdgeJointDeduct = (prof?: ProfileBar) => {
+    if (!prof) return 0;
+    const dm = Number(prof.deductMullionMm || 0);
+    if (dm > 0) return dm;
+    const sh = Number(prof.sectionHeightMm || 0);
+    return sh > 0 ? sh : 0;
+  };
+  const dLeftJoint = getEdgeJointDeduct(selectedLeftFrame);
+  const dRightJoint = getEdgeJointDeduct(selectedRightFrame);
+  const dTopJoint = getEdgeJointDeduct(selectedTopFrame);
+  const dBotJoint = config.isOpenBottom ? 0 : getEdgeJointDeduct(selectedBottomFrame);
+
+  const horizDeductTotal = Number((dLeftJoint + dRightJoint).toFixed(1));
+  const vertDeductTotal = Number((dTopJoint + dBotJoint).toFixed(1));
+  const horizDeductFormula = horizDeductTotal > 0 ? `W-${horizDeductTotal}` : '(W-2·Df)';
+  const vertDeductFormula = vertDeductTotal > 0 ? `H-${vertDeductTotal}` : '(H-2·Df)';
+
+  const renderProfileSpecBadges = (prof?: ProfileBar) => {
+    if (!prof) return null;
+    const hasSpecs =
+      Boolean(prof.sectionHeightMm) ||
+      Boolean(prof.deductSashMm) ||
+      Boolean(prof.deductMullionMm) ||
+      Boolean(prof.deductBeadMm) ||
+      Boolean(prof.deductGlassMm);
+    if (!hasSpecs) return null;
+    return (
+      <div className="flex flex-wrap gap-1 pt-0.5 text-[10px] font-mono text-slate-600">
+        {Boolean(prof.sectionHeightMm) && (
+          <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded">
+            Bản: <b className="text-primary">{prof.sectionHeightMm}</b>mm
+          </span>
+        )}
+        {Boolean(prof.deductSashMm) && (
+          <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded">
+            Trừ cánh: <b>{prof.deductSashMm}</b>mm
+          </span>
+        )}
+        {Boolean(prof.deductMullionMm) && (
+          <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded">
+            Trừ đố: <b>{prof.deductMullionMm}</b>mm
+          </span>
+        )}
+        {Boolean(prof.deductBeadMm) && (
+          <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded">
+            Trừ nẹp: <b>{prof.deductBeadMm}</b>mm
+          </span>
+        )}
+        {Boolean(prof.deductGlassMm) && (
+          <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded">
+            Trừ kính: <b>{prof.deductGlassMm}</b>mm
+          </span>
+        )}
+      </div>
+    );
+  };
+
   // Handle Master Left Edge input -> auto apply to other edges if empty or matching previous leftEdge
   const handleLeftProfileChange = (profileId: number) => {
     const selected = profiles.find((p) => p.id === profileId);
@@ -188,10 +251,52 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
 
         {/* Công thức cắt theo góc ghép */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2.5 bg-white rounded-md border border-slate-200 text-xs">
-          <div className="text-slate-600">Trái: <span className="font-bold text-primary">H · {config.cornerJoint === '45' ? '45°/45°' : '90°/90°'}</span></div>
-          <div className="text-slate-600">Trên: <span className="font-bold text-primary">W · {config.cornerJoint === '45' ? '45°/45°' : '90°/90°'}</span></div>
-          <div className="text-slate-600">Phải: <span className="font-bold text-primary">H · {config.cornerJoint === '45' ? '45°/45°' : '90°/90°'}</span></div>
-          <div className="text-slate-600">Dưới: <span className="font-bold text-primary">{config.isOpenBottom ? 'Khung hở' : `W · ${config.cornerJoint === '45' ? '45°/45°' : '90°/90°'}`}</span></div>
+          <div className="text-slate-600">
+            Trái:{' '}
+            <span className="font-bold text-primary">
+              {config.cornerJoint === '45'
+                ? 'H · 45°/45°'
+                : config.cornerJoint === '45_top_90_bot'
+                ? 'H · 45°/90°'
+                : config.cornerJoint === '90_horiz'
+                ? `${vertDeductFormula} · 90°/90°`
+                : 'H · 90°/90°'}
+            </span>
+          </div>
+          <div className="text-slate-600">
+            Trên:{' '}
+            <span className="font-bold text-primary">
+              {config.cornerJoint === '45' || config.cornerJoint === '45_top_90_bot'
+                ? 'W · 45°/45°'
+                : config.cornerJoint === '90_vert'
+                ? `${horizDeductFormula} · 90°/90°`
+                : 'W · 90°/90°'}
+            </span>
+          </div>
+          <div className="text-slate-600">
+            Phải:{' '}
+            <span className="font-bold text-primary">
+              {config.cornerJoint === '45'
+                ? 'H · 45°/45°'
+                : config.cornerJoint === '45_top_90_bot'
+                ? 'H · 45°/90°'
+                : config.cornerJoint === '90_horiz'
+                ? `${vertDeductFormula} · 90°/90°`
+                : 'H · 90°/90°'}
+            </span>
+          </div>
+          <div className="text-slate-600">
+            Dưới:{' '}
+            <span className="font-bold text-primary">
+              {config.isOpenBottom
+                ? 'Khung hở'
+                : config.cornerJoint === '45'
+                ? 'W · 45°/45°'
+                : config.cornerJoint === '45_top_90_bot' || config.cornerJoint === '90_vert'
+                ? `${horizDeductFormula} · 90°/90°`
+                : 'W · 90°/90°'}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -206,7 +311,15 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
             <div className="flex items-center justify-between font-semibold text-xs text-slate-800">
               <span>Cạnh trái (Gốc)</span>
-              <span className="text-primary font-bold text-[11px]">H · 45°/45°</span>
+              <span className="text-primary font-bold text-[11px]">
+                {config.cornerJoint === '45'
+                  ? 'H · 45°/45°'
+                  : config.cornerJoint === '45_top_90_bot'
+                  ? 'H · 45°/90°'
+                  : config.cornerJoint === '90_horiz'
+                  ? `${vertDeductFormula} · 90°/90°`
+                  : 'H · 90°/90°'}
+              </span>
             </div>
             <select
               value={leftEdge.profileId || ''}
@@ -218,6 +331,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                 <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
               ))}
             </select>
+            {renderProfileSpecBadges(selectedLeftFrame)}
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] text-slate-500">Bù/trừ offset:</span>
               <div className="flex items-center gap-1">
@@ -236,7 +350,13 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
             <div className="flex items-center justify-between font-semibold text-xs text-slate-800">
               <span>Cạnh trên</span>
-              <span className="text-primary font-bold text-[11px]">W · 45°/45°</span>
+              <span className="text-primary font-bold text-[11px]">
+                {config.cornerJoint === '45' || config.cornerJoint === '45_top_90_bot'
+                  ? 'W · 45°/45°'
+                  : config.cornerJoint === '90_vert'
+                  ? `${horizDeductFormula} · 90°/90°`
+                  : 'W · 90°/90°'}
+              </span>
             </div>
             <select
               value={topEdge.profileId || ''}
@@ -281,7 +401,15 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
             <div className="flex items-center justify-between font-semibold text-xs text-slate-800">
               <span>Cạnh phải</span>
-              <span className="text-primary font-bold text-[11px]">H · 45°/45°</span>
+              <span className="text-primary font-bold text-[11px]">
+                {config.cornerJoint === '45'
+                  ? 'H · 45°/45°'
+                  : config.cornerJoint === '45_top_90_bot'
+                  ? 'H · 45°/90°'
+                  : config.cornerJoint === '90_horiz'
+                  ? `${vertDeductFormula} · 90°/90°`
+                  : 'H · 90°/90°'}
+              </span>
             </div>
             <select
               value={rightEdge.profileId || ''}
@@ -314,6 +442,8 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
               <span className="text-primary font-bold text-[11px]">
                 {config.isOpenBottom
                   ? 'Bỏ qua'
+                  : config.cornerJoint === '45_top_90_bot' || config.cornerJoint === '90_vert'
+                  ? `${horizDeductFormula} · 90°/90°`
                   : bottomEdge.profileId && trackProfiles.some((p) => p.id === bottomEdge.profileId)
                   ? 'W · 90°/90° (Ray dưới)'
                   : bottomEdge.profileId && auxiliaryProfiles.some((p) => p.id === bottomEdge.profileId)
@@ -370,6 +500,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                 </optgroup>
               )}
             </select>
+            {!config.isOpenBottom && renderProfileSpecBadges(selectedBottomFrame)}
 
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-gray-500">Bù/trừ offset:</span>
@@ -457,9 +588,9 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   const basePid = config.mullionProfileId || mullionProfiles[0]?.id;
                   onChangeConfig({
                     mullionMode: mode,
-                    mullionProfileId: basePid,
-                    mullionVertProfileId: config.mullionVertProfileId || basePid,
-                    mullionHorizProfileId: config.mullionHorizProfileId || basePid,
+                    mullionProfileId: mode === 'none' ? undefined : basePid,
+                    mullionVertProfileId: mode === 'none' ? undefined : (config.mullionVertProfileId || basePid),
+                    mullionHorizProfileId: mode === 'none' ? undefined : (config.mullionHorizProfileId || basePid),
                   });
                 }}
                 className={`p-2 rounded-lg border text-xs font-medium text-center transition-all cursor-pointer ${
@@ -504,6 +635,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   </option>
                 ))}
               </select>
+              {renderProfileSpecBadges(selectedSharedMullion)}
             </div>
           )}
 

@@ -99,15 +99,17 @@ export const CadMiteredFrame: React.FC<CadMiteredFrameProps> = ({
     );
   }
 
-  // 4. Trường hợp 4 cạnh kín: 45° Trên, 90° Dưới
+  // 4. Trường hợp 4 cạnh kín: 45° Trên - 90° Dưới (Dọc phủ ở dưới: 2 thanh đứng chạy suốt xuống đáy, thanh ngang đáy lọt lòng)
   if (cornerJoint === '45_top_90_bot') {
+    const botW = Math.max(0, fwBox - 2 * frameD);
+    const botFrameD = Math.max(6, Math.round(frameD * 0.65));
     return (
       <g fill={aluminumColor} stroke="#27272a" strokeWidth="0.8" strokeLinejoin="miter">
         <polygon points={`${fx},${fy} ${fx + fwBox},${fy} ${fx + fwBox - frameD},${fy + frameD} ${fx + frameD},${fy + frameD}`} />
-        <rect x={fx} y={fy + fhBox - frameD} width={fwBox} height={frameD} />
-        <polygon points={`${fx},${fy} ${fx + frameD},${fy + frameD} ${fx + frameD},${fy + fhBox - frameD} ${fx},${fy + fhBox - frameD}`} />
+        <rect x={fx + frameD} y={fy + fhBox - botFrameD} width={botW} height={botFrameD} />
+        <polygon points={`${fx},${fy} ${fx + frameD},${fy + frameD} ${fx + frameD},${fy + fhBox} ${fx},${fy + fhBox}`} />
         <polygon
-          points={`${fx + fwBox},${fy} ${fx + fwBox - frameD},${fy + frameD} ${fx + fwBox - frameD},${fy + fhBox - frameD} ${fx + fwBox},${fy + fhBox - frameD}`}
+          points={`${fx + fwBox},${fy} ${fx + fwBox - frameD},${fy + frameD} ${fx + fwBox - frameD},${fy + fhBox} ${fx + fwBox},${fy + fhBox}`}
         />
       </g>
     );

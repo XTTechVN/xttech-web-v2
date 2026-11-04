@@ -4,13 +4,515 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Door, DoorCreate, DoorUpdate, DoorCalculateResponse, SelectedAccessoryItem } from '@/types';
 import { calculateDoor, createDoor, updateDoor, getDoorSeriesList, getProfileBars, getAccessoryCombos, getAccessories, getGlasses, getBrandColors, getBrands, } from '@/actions';
-import { FrameShape, SashOpenType, SceneCellNode, StudioMainTab, FrameConfig, SashConfig, DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG, MullionInfo, MullionCutType, ColorSwatch, ALUMINUM_PALETTE, GlassGrilleConfig, } from '../studio-types';
+import { FrameShape, SashOpenType, SceneCellNode, StudioMainTab, FrameConfig, SashConfig, FrameCornerJoint, SashCornerJoint, BeadCornerJoint, SlidingSashRole, SashOffsetScope, SashOffsetValues, SashVariantProfiles, DoorCustomExtraItem, DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG, MullionInfo, MullionCutType, ColorSwatch, ALUMINUM_PALETTE, GlassGrilleConfig, } from '../studio-types';
 import { ResizeSplitParams } from '../cad-engine/door-cad-renderer';
 import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, } from '../utils/door-tree-utils';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
 import { showErrorToast } from '@/utils';
+
+function pickNumber(sources: Array<Record<string, unknown> | undefined>, keys: string[], fallback: number): number {
+  for (const src of sources) {
+    if (!src) continue;
+    for (const key of keys) {
+      const val = src[key];
+      if (val !== undefined && val !== null && val !== '') {
+        const num = Number(val);
+        if (!Number.isNaN(num)) return num;
+      }
+    }
+  }
+  return fallback;
+}
+
+function pickString(sources: Array<Record<string, unknown> | undefined>, keys: string[], fallback: string): string {
+  for (const src of sources) {
+    if (!src) continue;
+    for (const key of keys) {
+      const val = src[key];
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        return String(val).trim();
+      }
+    }
+  }
+  return fallback;
+}
+
+function pickBool(sources: Array<Record<string, unknown> | undefined>, keys: string[], fallback: boolean): boolean {
+  for (const src of sources) {
+    if (!src) continue;
+    for (const key of keys) {
+      const val = src[key];
+      if (val !== undefined && val !== null) {
+        return Boolean(val);
+      }
+    }
+  }
+  return fallback;
+}
+
+function parseProfileId(val: unknown): number | undefined {
+  if (val === undefined || val !== null && val === '') return undefined;
+  if (val === null) return undefined;
+  const s = String(val).trim();
+  if (!s) return undefined;
+  const head = s.split('_')[0];
+  const n = Number(head);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+function normalizeCornerJoint(val: unknown, fallback: string): string {
+  const s = String(val || '').trim().toLowerCase();
+  if (!s) return fallback;
+  if (
+    s === '45' ||
+    s === '90_horiz' ||
+    s === '90_vert' ||
+    s === '45_top_90_bot' ||
+    s === '63' ||
+    s === 'd_left' ||
+    s === 'd_right'
+  ) {
+    return s;
+  }
+  if (s === 'd-trai' || s.includes('d_left') || s.includes('d-trai')) return 'd_left';
+  if (s === 'd-phai' || s.includes('d_right') || s.includes('d-phai')) return 'd_right';
+  if (s.includes('45') && s.includes('90')) return '45_top_90_bot';
+  if (s.includes('63')) return '63';
+  if (s.includes('90')) {
+    if (s.includes('ngang') || s.includes('horiz')) return '90_horiz';
+    return '90_vert';
+  }
+  if (s.includes('45')) return '45';
+  return fallback;
+}
+
+function normalizeSashFamily(rawFamily: unknown, doorType?: string | null): string {
+  const f = String(rawFamily || '').trim();
+  if (
+    f === 'Cửa sổ mở quay/Hất' ||
+    f === 'Cửa đi mở quay' ||
+    f === 'Cửa đi lùa' ||
+    f === 'Cửa sổ lùa' ||
+    f === 'Cửa xếp trượt'
+  ) {
+    return f;
+  }
+  const fl = f.toLowerCase();
+  const dt = (doorType || '').toLowerCase();
+  if (fl === 'cua-di-lua') return 'Cửa đi lùa';
+  if (fl === 'cua-so-lua') return 'Cửa sổ lùa';
+  if (fl === 'cửa trượt lùa') {
+    return dt === 'cs' || dt.includes('so') ? 'Cửa sổ lùa' : 'Cửa đi lùa';
+  }
+  if (fl.includes('xếp trượt') || fl.includes('xep truot') || fl.includes('gap-xep') || dt.includes('folding')) {
+    return 'Cửa xếp trượt';
+  }
+  if (fl.includes('lùa') || fl.includes('trượt') || fl.includes('lua') || dt.includes('sliding') || dt === 'cl') {
+    if (fl.includes('sổ') || fl.includes('so') || dt === 'cs' || dt.includes('so')) {
+      return 'Cửa sổ lùa';
+    }
+    return 'Cửa đi lùa';
+  }
+  if (fl.includes('cửa đi') || fl.includes('cua di') || fl === 'cua-di' || dt === 'cd' || dt === 'casement_door') {
+    return 'Cửa đi mở quay';
+  }
+  return 'Cửa sổ mở quay/Hất';
+}
+
+function inferSashFamilyFromSashType(
+  sashType: string,
+  currentFamily: string,
+  doorType: string
+): string | null {
+  const st = (sashType || '').trim().toLowerCase();
+  if (!st || st === 'fixed') return null;
+
+  if (st.startsWith('di-lua-') || st.startsWith('cua-di-truot-quay-')) {
+    return 'Cửa đi lùa';
+  }
+  if (st.startsWith('so-lua-')) {
+    return 'Cửa sổ lùa';
+  }
+  if (st.startsWith('cua-gap-xep-')) {
+    return 'Cửa xếp trượt';
+  }
+  if (st.startsWith('cua-di-')) {
+    return 'Cửa đi mở quay';
+  }
+  if (st.startsWith('so-')) {
+    return 'Cửa sổ mở quay/Hất';
+  }
+
+  // Các mã kiểu mở đơn lẻ (từ CellInspector hoặc node lá)
+  if (
+    st === 'awning' ||
+    st === 'tilt' ||
+    st === 'tilt_turn' ||
+    st === 'tilt_down' ||
+    st === 'mo-hat' ||
+    st === 'mo-lat' ||
+    st.includes('mo-hat')
+  ) {
+    return 'Cửa sổ mở quay/Hất';
+  }
+
+  if (
+    st === 'sliding' ||
+    st === 'lua-trai' ||
+    st === 'lua-phai' ||
+    st === '2-chieu' ||
+    st === '1-chieu'
+  ) {
+    if (currentFamily === 'Cửa đi lùa' || currentFamily === 'Cửa sổ lùa') {
+      return currentFamily;
+    }
+    const dt = (doorType || '').toLowerCase();
+    if (dt === 'cs' || dt.includes('window') || currentFamily === 'Cửa sổ mở quay/Hất') {
+      return 'Cửa sổ lùa';
+    }
+    return 'Cửa đi lùa';
+  }
+
+  if (
+    st === 'swing_left' ||
+    st === 'swing_right' ||
+    st === 'swing_double' ||
+    st.startsWith('le-trai') ||
+    st.startsWith('le-phai')
+  ) {
+    if (currentFamily === 'Cửa đi mở quay' || currentFamily === 'Cửa sổ mở quay/Hất') {
+      return currentFamily;
+    }
+    const dt = (doorType || '').toLowerCase();
+    if (
+      dt === 'cd' ||
+      dt.includes('door') ||
+      currentFamily === 'Cửa đi lùa' ||
+      currentFamily === 'Cửa xếp trượt'
+    ) {
+      return 'Cửa đi mở quay';
+    }
+    return 'Cửa sổ mở quay/Hất';
+  }
+
+  return null;
+}
+
+function mapRawExtraItem(raw: unknown, idx: number, target: 'frame' | 'sash'): DoorCustomExtraItem {
+  const r = (raw || {}) as Record<string, unknown>;
+  const rawPid = pickString([r], ['profileId', 'profile'], '');
+  return {
+    id: pickString([r], ['id'], `extra_${target}_${idx}`),
+    profileId: parseProfileId(rawPid),
+    profileCode: r.profileCode ? String(r.profileCode) : undefined,
+    profileName: r.profileName ? String(r.profileName) : undefined,
+    note: pickString([r], ['note'], ''),
+    formulaLen: pickString([r], ['formulaLen', 'formula_len'], target === 'frame' ? 'W' : 'Ws'),
+    angle1: pickNumber([r], ['angle1'], 90),
+    angle2: pickNumber([r], ['angle2'], 90),
+    qty: Math.max(1, pickNumber([r], ['qty'], 1)),
+    fixedQty: pickBool([r], ['fixedQty', 'fixed_qty'], target === 'frame'),
+    target,
+  };
+}
+
+function normalizeExtrasList(
+  explicitExtras: unknown,
+  legacyExtras: unknown,
+  target: 'frame' | 'sash'
+): DoorCustomExtraItem[] {
+  if (Array.isArray(explicitExtras) && explicitExtras.length > 0) {
+    return explicitExtras.map((item, idx) => mapRawExtraItem(item, idx, target));
+  }
+  if (Array.isArray(legacyExtras) && legacyExtras.length > 0) {
+    return legacyExtras
+      .filter((item) => {
+        const r = (item || {}) as Record<string, unknown>;
+        return (r.target || 'frame') === target;
+      })
+      .map((item, idx) => mapRawExtraItem(item, idx, target));
+  }
+  return [];
+}
+
+function parseVariantEntry(raw: unknown, fallbackLeft?: number): SashVariantProfiles {
+  if (typeof raw === 'number' || typeof raw === 'string') {
+    const pid = parseProfileId(raw) ?? fallbackLeft;
+    return {
+      leftProfileId: pid,
+      topProfileId: undefined,
+      rightProfileId: undefined,
+      bottomProfileId: undefined,
+    };
+  }
+  if (raw && typeof raw === 'object') {
+    const d = raw as Record<string, unknown>;
+    const leftId = parseProfileId(pickString([d], ['leftProfileId', '1', 'left'], '')) ?? fallbackLeft;
+    const topId = parseProfileId(pickString([d], ['topProfileId', '2', 'top'], ''));
+    const rightId = parseProfileId(pickString([d], ['rightProfileId', '3', 'right'], ''));
+    const bottomId = parseProfileId(pickString([d], ['bottomProfileId', '4', 'bot', 'bottom'], ''));
+    return {
+      leftProfileId: leftId,
+      topProfileId: topId && topId !== leftId ? topId : undefined,
+      rightProfileId: rightId && rightId !== leftId ? rightId : undefined,
+      bottomProfileId: bottomId && bottomId !== (topId || leftId) ? bottomId : undefined,
+    };
+  }
+  return { leftProfileId: fallbackLeft };
+}
+
+function normalizeInitialFrameConfig(sc: Record<string, unknown>): FrameConfig {
+  const rawFc = (sc.frameConfig || {}) as Record<string, unknown>;
+  const rawLegacyFrame = (sc.frame || {}) as Record<string, unknown>;
+  const rawLegacyMullion = (sc.mullion || {}) as Record<string, unknown>;
+  const leftEdgeSrc = (rawFc.leftEdge || {}) as Record<string, unknown>;
+  const topEdgeSrc = (rawFc.topEdge || {}) as Record<string, unknown>;
+  const rightEdgeSrc = (rawFc.rightEdge || {}) as Record<string, unknown>;
+  const bottomEdgeSrc = (rawFc.bottomEdge || {}) as Record<string, unknown>;
+  const archSrc = (rawFc.archConfig || {}) as Record<string, unknown>;
+
+  const cornerJoint = normalizeCornerJoint(
+    pickString([rawFc, rawLegacyFrame], ['cornerJoint', 'joint'], ''),
+    DEFAULT_FRAME_CONFIG.cornerJoint
+  ) as FrameCornerJoint;
+
+  const beadCornerJoint = normalizeCornerJoint(
+    pickString([rawFc, rawLegacyFrame, sc], ['beadCornerJoint', 'beadJoint', 'bead_joint'], ''),
+    DEFAULT_FRAME_CONFIG.beadCornerJoint
+  ) as BeadCornerJoint;
+
+  const leftPid = parseProfileId(leftEdgeSrc.profileId) ?? parseProfileId(rawLegacyFrame.left);
+  const topPid = parseProfileId(topEdgeSrc.profileId) ?? parseProfileId(rawLegacyFrame.top) ?? leftPid;
+  const rightPid = parseProfileId(rightEdgeSrc.profileId) ?? parseProfileId(rawLegacyFrame.right) ?? leftPid;
+  const bottomPid =
+    parseProfileId(bottomEdgeSrc.profileId) ??
+    parseProfileId(rawLegacyFrame.bot ?? rawLegacyFrame.bottom) ??
+    leftPid;
+
+  const rawMullionMode = pickString([rawFc, rawLegacyMullion, rawLegacyFrame], ['mullionMode', 'type', 'mullion_mode'], '');
+  const mullionMode =
+    rawMullionMode === 'none' || rawMullionMode === 'single' || rawMullionMode === 'separate'
+      ? rawMullionMode
+      : DEFAULT_FRAME_CONFIG.mullionMode;
+
+  const mullionPid =
+    mullionMode === 'none'
+      ? undefined
+      : parseProfileId(rawFc.mullionProfileId ?? rawLegacyMullion.profile ?? rawLegacyFrame.mullion);
+
+  const beadPid = parseProfileId(rawFc.beadProfileId ?? rawLegacyFrame.bead ?? sc.bead);
+
+  return {
+    ...DEFAULT_FRAME_CONFIG,
+    ...(rawFc as Partial<FrameConfig>),
+    cornerJoint,
+    beadCornerJoint,
+    mullionMode,
+    mullionProfileId: mullionPid,
+    beadProfileId: beadPid,
+    leftEdge: {
+      ...DEFAULT_FRAME_CONFIG.leftEdge,
+      ...(leftEdgeSrc as Partial<FrameConfig['leftEdge']>),
+      profileId: leftPid,
+      offsetMm: pickNumber([leftEdgeSrc, rawLegacyFrame], ['offsetMm', 'offset_left'], 0),
+    },
+    topEdge: {
+      ...DEFAULT_FRAME_CONFIG.topEdge,
+      ...(topEdgeSrc as Partial<FrameConfig['topEdge']>),
+      profileId: topPid,
+      offsetMm: pickNumber([topEdgeSrc, rawLegacyFrame], ['offsetMm', 'offset_top'], 0),
+    },
+    rightEdge: {
+      ...DEFAULT_FRAME_CONFIG.rightEdge,
+      ...(rightEdgeSrc as Partial<FrameConfig['rightEdge']>),
+      profileId: rightPid,
+      offsetMm: pickNumber([rightEdgeSrc, rawLegacyFrame], ['offsetMm', 'offset_right'], 0),
+    },
+    bottomEdge: {
+      ...DEFAULT_FRAME_CONFIG.bottomEdge,
+      ...(bottomEdgeSrc as Partial<FrameConfig['bottomEdge']>),
+      profileId: bottomPid,
+      offsetMm: pickNumber([bottomEdgeSrc, rawLegacyFrame], ['offsetMm', 'offset_bot', 'offset_bottom'], 0),
+    },
+    archConfig: {
+      ...(DEFAULT_FRAME_CONFIG.archConfig || { isCutAtApex: false, bendingClampingMm: 250 }),
+      ...(archSrc as Partial<NonNullable<FrameConfig['archConfig']>>),
+    },
+    extras: normalizeExtrasList(rawFc.extras, sc.extras ?? sc.customAccessories, 'frame'),
+  };
+}
+
+function normalizeInitialSashConfig(sc: Record<string, unknown>, doorType?: string | null): SashConfig {
+  const rawSc = (sc.sashConfig || {}) as Record<string, unknown>;
+  const rawLegacySash = (sc.sash || {}) as Record<string, unknown>;
+  const rawOffset = (rawSc.offsetMm || {}) as Record<string, unknown>;
+
+  const family = normalizeSashFamily(pickString([rawSc, rawLegacySash], ['family'], ''), doorType);
+  const ngamNgangMm = pickNumber(
+    [rawSc, rawLegacySash],
+    ['ngamNgangMm', 'doNgamNgang', 'do_ngam_ngang'],
+    DEFAULT_SASH_CONFIG.ngamNgangMm
+  );
+  const ngamDocMm = pickNumber(
+    [rawSc, rawLegacySash],
+    ['ngamDocMm', 'doNgamDoc', 'do_ngam_doc'],
+    DEFAULT_SASH_CONFIG.ngamDocMm
+  );
+  const truDoDongMm = pickNumber(
+    [rawSc, rawLegacySash],
+    ['truDoDongMm', 'opDodong', 'op_dodong', 'deductOpNoi', 'deduct_op_noi'],
+    DEFAULT_SASH_CONFIG.truDoDongMm
+  );
+  const hoNenMm = pickNumber(
+    [rawSc, rawLegacySash],
+    ['hoNenMm', 'hoCanh', 'ho_canh'],
+    DEFAULT_SASH_CONFIG.hoNenMm
+  );
+
+  const rawJointsMap = (rawLegacySash.joints || {}) as Record<string, unknown>;
+  const rawSlidingJoints = (rawSc.slidingJoints || {}) as Record<string, unknown>;
+
+  const cornerJoint = normalizeCornerJoint(
+    pickString([rawSc, rawLegacySash, rawJointsMap], ['cornerJoint', 'joint', 'lua-trai'], ''),
+    DEFAULT_SASH_CONFIG.cornerJoint
+  ) as SashCornerJoint;
+
+  const slidingJoints = {
+    leftSliding: normalizeCornerJoint(
+      pickString([rawSlidingJoints, rawJointsMap], ['leftSliding', 'lua-trai'], cornerJoint),
+      cornerJoint
+    ) as SashCornerJoint,
+    rightSliding: normalizeCornerJoint(
+      pickString([rawSlidingJoints, rawJointsMap], ['rightSliding', 'lua-phai'], cornerJoint),
+      cornerJoint
+    ) as SashCornerJoint,
+    centerSliding: normalizeCornerJoint(
+      pickString([rawSlidingJoints, rawJointsMap], ['centerSliding', '2-chieu'], cornerJoint),
+      cornerJoint
+    ) as SashCornerJoint,
+  };
+
+  const beadCornerJoint = normalizeCornerJoint(
+    pickString([rawSc, rawLegacySash, sc], ['beadCornerJoint', 'beadJoint', 'bead_joint'], ''),
+    DEFAULT_SASH_CONFIG.beadCornerJoint
+  ) as BeadCornerJoint;
+
+  const baseOffset: SashOffsetValues = {
+    left: pickNumber([rawOffset, rawLegacySash], ['left', 'offset_left'], 0),
+    top: pickNumber([rawOffset, rawLegacySash], ['top', 'offset_top'], 0),
+    right: pickNumber([rawOffset, rawLegacySash], ['right', 'offset_right'], 0),
+    bottom: pickNumber([rawOffset, rawLegacySash], ['bottom', 'offset_bot', 'offset_bottom'], 0),
+  };
+
+  const rawOffsetApply = pickString([rawSc, rawLegacySash], ['offsetApplyTo', 'offset_apply_to'], 'all');
+  const offsetApplyTo: SashOffsetScope =
+    rawOffsetApply === 'left_sliding' || rawOffsetApply === 'right_sliding' || rawOffsetApply === 'center_sliding'
+      ? rawOffsetApply
+      : 'all';
+
+  const rawSlidingOffsets = (rawSc.slidingOffsets || {}) as Record<string, Record<string, unknown>>;
+  const zeroOffset: SashOffsetValues = { left: 0, top: 0, right: 0, bottom: 0 };
+  const slidingOffsets: Partial<Record<SashOffsetScope, SashOffsetValues>> = {
+    all: rawSlidingOffsets.all
+      ? {
+          left: pickNumber([rawSlidingOffsets.all], ['left'], 0),
+          top: pickNumber([rawSlidingOffsets.all], ['top'], 0),
+          right: pickNumber([rawSlidingOffsets.all], ['right'], 0),
+          bottom: pickNumber([rawSlidingOffsets.all], ['bottom'], 0),
+        }
+      : offsetApplyTo === 'all'
+      ? baseOffset
+      : zeroOffset,
+    left_sliding: rawSlidingOffsets.left_sliding
+      ? {
+          left: pickNumber([rawSlidingOffsets.left_sliding], ['left'], 0),
+          top: pickNumber([rawSlidingOffsets.left_sliding], ['top'], 0),
+          right: pickNumber([rawSlidingOffsets.left_sliding], ['right'], 0),
+          bottom: pickNumber([rawSlidingOffsets.left_sliding], ['bottom'], 0),
+        }
+      : offsetApplyTo === 'left_sliding'
+      ? baseOffset
+      : zeroOffset,
+    right_sliding: rawSlidingOffsets.right_sliding
+      ? {
+          left: pickNumber([rawSlidingOffsets.right_sliding], ['left'], 0),
+          top: pickNumber([rawSlidingOffsets.right_sliding], ['top'], 0),
+          right: pickNumber([rawSlidingOffsets.right_sliding], ['right'], 0),
+          bottom: pickNumber([rawSlidingOffsets.right_sliding], ['bottom'], 0),
+        }
+      : offsetApplyTo === 'right_sliding'
+      ? baseOffset
+      : zeroOffset,
+    center_sliding: rawSlidingOffsets.center_sliding
+      ? {
+          left: pickNumber([rawSlidingOffsets.center_sliding], ['left'], 0),
+          top: pickNumber([rawSlidingOffsets.center_sliding], ['top'], 0),
+          right: pickNumber([rawSlidingOffsets.center_sliding], ['right'], 0),
+          bottom: pickNumber([rawSlidingOffsets.center_sliding], ['bottom'], 0),
+        }
+      : offsetApplyTo === 'center_sliding'
+      ? baseOffset
+      : zeroOffset,
+  };
+
+  const rawLegacyProfile = (rawLegacySash.profile || {}) as Record<string, unknown>;
+  const rawLegacyVariants = (rawLegacyProfile.variants || {}) as Record<string, unknown>;
+  const rawSlidingVariants = (rawSc.slidingVariants || {}) as Record<string, unknown>;
+  const fallbackLeftPid = parseProfileId(rawSc.leftProfileId);
+
+  const leftVariant = parseVariantEntry(
+    rawSlidingVariants.left_sliding ?? rawLegacyVariants['lua-trai'],
+    fallbackLeftPid
+  );
+  const rightVariant = parseVariantEntry(
+    rawSlidingVariants.right_sliding ?? rawLegacyVariants['lua-phai'],
+    leftVariant.leftProfileId ?? fallbackLeftPid
+  );
+  const centerVariant = parseVariantEntry(
+    rawSlidingVariants.center_sliding ?? rawLegacyVariants['2-chieu'],
+    leftVariant.leftProfileId ?? fallbackLeftPid
+  );
+
+  const opNoiProfileId = parseProfileId(pickString([rawSc, rawLegacySash], ['opNoiProfileId', 'op_noi'], ''));
+  const interlockProfileId = parseProfileId(pickString([rawSc, rawLegacySash], ['interlockProfileId', 'interlock'], ''));
+  const beadProfileId = parseProfileId(pickString([rawSc, rawLegacySash], ['beadProfileId', 'bead'], ''));
+
+  const effectiveLeftPid = fallbackLeftPid ?? leftVariant.leftProfileId;
+  const effectiveTopPid = parseProfileId(rawSc.topProfileId) ?? leftVariant.topProfileId ?? effectiveLeftPid;
+  const effectiveRightPid = parseProfileId(rawSc.rightProfileId) ?? leftVariant.rightProfileId ?? effectiveLeftPid;
+  const effectiveBottomPid = parseProfileId(rawSc.bottomProfileId) ?? leftVariant.bottomProfileId ?? effectiveTopPid ?? effectiveLeftPid;
+
+  return {
+    ...DEFAULT_SASH_CONFIG,
+    ...(rawSc as Partial<SashConfig>),
+    family,
+    ngamNgangMm,
+    ngamDocMm,
+    truDoDongMm,
+    hoNenMm,
+    cornerJoint,
+    slidingJoints,
+    beadCornerJoint,
+    offsetApplyTo,
+    offsetMm: slidingOffsets[offsetApplyTo] || baseOffset,
+    slidingOffsets,
+    leftProfileId: effectiveLeftPid,
+    topProfileId: effectiveTopPid,
+    rightProfileId: effectiveRightPid,
+    bottomProfileId: effectiveBottomPid,
+    slidingVariants: {
+      left_sliding: leftVariant,
+      right_sliding: rightVariant,
+      center_sliding: centerVariant,
+    },
+    beadProfileId,
+    opNoiProfileId,
+    interlockProfileId,
+    extras: normalizeExtrasList(rawSc.extras, sc.extras ?? sc.customAccessories, 'sash'),
+  };
+}
 
 interface UseDoorStudioStateProps {
   isOpen: boolean;
@@ -59,8 +561,16 @@ export function useDoorStudioState({
   const [selectedAccessories, setSelectedAccessories] = useState<SelectedAccessoryItem[]>([]);
 
   // Flexible Configurations (Frame & Sash)
-  const [frameConfig, setFrameConfig] = useState<FrameConfig>(DEFAULT_FRAME_CONFIG);
-  const [sashConfig, setSashConfig] = useState<SashConfig>(DEFAULT_SASH_CONFIG);
+  const [frameConfig, setFrameConfig] = useState<FrameConfig>(() =>
+    door
+      ? normalizeInitialFrameConfig((door.systemConfig || {}) as Record<string, unknown>)
+      : DEFAULT_FRAME_CONFIG
+  );
+  const [sashConfig, setSashConfig] = useState<SashConfig>(() =>
+    door
+      ? normalizeInitialSashConfig((door.systemConfig || {}) as Record<string, unknown>, door.type)
+      : { ...DEFAULT_SASH_CONFIG, family: 'Cửa đi mở quay' }
+  );
 
   // Drawing View State
   const [activeLeftTab, setActiveLeftTab] = useState<'frame' | 'sash'>('sash');
@@ -168,6 +678,8 @@ export function useDoorStudioState({
       'SCREEN_SASH',
       'MULLION',
       'DYNAMIC_MULLION',
+      'INTERLOCK',
+      'SASH_JOINER',
       'BEAD',
       'COUPLING',
       'REVERSAL',
@@ -182,6 +694,17 @@ export function useDoorStudioState({
             result.push(p);
           }
         }
+      }
+    }
+
+    // Luôn bổ sung các thanh phụ trợ / dùng chung của hãng (OTHER, INTERLOCK, SASH_JOINER, COUPLING, REVERSAL)
+    // để hệ con (như RT134) luôn truy cập được ốp móc, ốp nối, ray inox, thanh bắt đa điểm dùng chung của hãng (như R-SP134-*, VI-001)
+    const sharedAuxiliaryTypes = new Set(['OTHER', 'INTERLOCK', 'SASH_JOINER', 'COUPLING', 'REVERSAL']);
+    for (const p of allItems) {
+      const bt = (p.barType || '').toUpperCase();
+      if (sharedAuxiliaryTypes.has(bt) && !includedIds.has(p.id)) {
+        includedIds.add(p.id);
+        result.push(p);
       }
     }
 
@@ -271,12 +794,28 @@ export function useDoorStudioState({
   useEffect(() => {
     if (!availableProfiles || availableProfiles.length === 0) return;
 
-    const defaultFrame = availableProfiles.find((p) => p.barType === 'FRAME');
+    const isDedicatedBottomFrame = (p: { barType?: string; name?: string }) => {
+      const bt = (p.barType || '').toUpperCase();
+      if (bt !== 'FRAME' && bt !== 'TRACK') return false;
+      const n = (p.name || '').toLowerCase();
+      return n.includes('khung dưới') || n.includes('ngang dưới') || n.includes('ray dưới');
+    };
+
+    const defaultFrame =
+      availableProfiles.find((p) => p.barType === 'FRAME' && !isDedicatedBottomFrame(p)) ||
+      availableProfiles.find((p) => p.barType === 'FRAME');
+    const dedicatedBottomFrame = availableProfiles.find(
+      (p) =>
+        isDedicatedBottomFrame(p) &&
+        (!defaultFrame?.seriesId || p.seriesId === defaultFrame.seriesId)
+    );
+    const defaultBottomFrame = dedicatedBottomFrame || defaultFrame;
     const defaultSash = availableProfiles.find(
       (p) => p.barType === 'SASH' || p.barType === 'SCREEN_SASH'
     );
     const defaultBead = availableProfiles.find((p) => p.barType === 'BEAD');
     const defaultMullion = availableProfiles.find((p) => p.barType === 'MULLION');
+    const defaultDynamicMullion = availableProfiles.find((p) => p.barType === 'DYNAMIC_MULLION');
     const defaultReversal = availableProfiles.find((p) => p.barType === 'REVERSAL');
 
     // 1. Tự động gán Khung bao mặc định nếu chưa chọn hoặc profile hiện tại không thuộc hệ này
@@ -290,15 +829,20 @@ export function useDoorStudioState({
         const isBotValid =
           prev.bottomEdge?.profileId &&
           availableProfiles.some((p) => p.id === prev.bottomEdge?.profileId);
+        const botProf = defaultBottomFrame || defaultFrame;
         return {
           ...prev,
+          cornerJoint:
+            dedicatedBottomFrame && prev.cornerJoint === '45'
+              ? '45_top_90_bot'
+              : prev.cornerJoint,
           leftEdge: { ...prev.leftEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
           topEdge: { ...prev.topEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
           rightEdge: { ...prev.rightEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
           bottomEdge:
-            prev.isOpenBottom || isBotValid
+            prev.isOpenBottom || (isBotValid && prev.bottomEdge?.profileId !== prev.leftEdge?.profileId)
               ? prev.bottomEdge
-              : { ...prev.bottomEdge, profileId: defaultFrame.id, profileCode: defaultFrame.code },
+              : { ...prev.bottomEdge, profileId: botProf.id, profileCode: botProf.code },
           beadProfileId:
             prev.beadProfileId && availableProfiles.some((p) => p.id === prev.beadProfileId)
               ? prev.beadProfileId
@@ -306,14 +850,20 @@ export function useDoorStudioState({
           mullionProfileId:
             prev.mullionProfileId && availableProfiles.some((p) => p.id === prev.mullionProfileId)
               ? prev.mullionProfileId
+              : prev.mullionMode === 'none'
+              ? undefined
               : defaultMullion?.id,
           mullionVertProfileId:
             prev.mullionVertProfileId && availableProfiles.some((p) => p.id === prev.mullionVertProfileId)
               ? prev.mullionVertProfileId
+              : prev.mullionMode === 'none'
+              ? undefined
               : defaultMullion?.id,
           mullionHorizProfileId:
             prev.mullionHorizProfileId && availableProfiles.some((p) => p.id === prev.mullionHorizProfileId)
               ? prev.mullionHorizProfileId
+              : prev.mullionMode === 'none'
+              ? undefined
               : defaultMullion?.id,
           reversalProfileId:
             prev.reversalProfileId && availableProfiles.some((p) => p.id === prev.reversalProfileId)
@@ -325,28 +875,160 @@ export function useDoorStudioState({
               : defaultReversal?.code,
         };
       });
+    } else if (
+      isFrameValid &&
+      defaultFrame &&
+      dedicatedBottomFrame &&
+      !frameConfig.isOpenBottom &&
+      frameConfig.leftEdge?.profileId === defaultFrame.id &&
+      frameConfig.bottomEdge?.profileId === defaultFrame.id &&
+      (frameConfig.cornerJoint === '45_top_90_bot' || sashConfig.family.includes('lùa'))
+    ) {
+      setFrameConfig((prev) => ({
+        ...prev,
+        cornerJoint: prev.cornerJoint === '45' ? '45_top_90_bot' : prev.cornerJoint,
+        bottomEdge: {
+          ...prev.bottomEdge,
+          profileId: dedicatedBottomFrame.id,
+          profileCode: dedicatedBottomFrame.code,
+        },
+      }));
     }
 
-    // 2. Tự động gán Cánh cửa mặc định nếu chưa chọn hoặc profile hiện tại không thuộc hệ này
-    const isSashValid =
-      sashConfig.leftProfileId &&
-      availableProfiles.some((p) => p.id === sashConfig.leftProfileId);
+    // 2. Tự động gán Cánh cửa mặc định nếu chưa chọn hoặc profile hiện tại không thuộc nhóm SASH của hệ này
+    const defaultInterlock = availableProfiles.find(
+      (p) =>
+        p.barType === 'INTERLOCK' ||
+        p.name.toLowerCase().includes('móc') ||
+        p.name.toLowerCase().includes('interlock')
+    );
+    const defaultOpNoi = availableProfiles.find(
+      (p) =>
+        p.barType === 'SASH_JOINER' ||
+        p.name.toLowerCase().includes('ốp nối') ||
+        p.barType === 'DYNAMIC_MULLION'
+    );
 
-    if (!isSashValid && defaultSash) {
+    if (defaultSash) {
       setSashConfig((prev) => {
-        if (prev.leftProfileId === defaultSash.id) return prev;
+        const isSashIdValid = (pid?: number) =>
+          Boolean(
+            pid &&
+              availableProfiles.some(
+                (p) => p.id === pid && (p.barType === 'SASH' || p.barType === 'SCREEN_SASH')
+              )
+          );
+        const isAnyIdValid = (pid?: number) =>
+          Boolean(pid && availableProfiles.some((p) => p.id === pid));
+
+        const wasSashAlreadyValid = isSashIdValid(prev.leftProfileId);
+        const nextLeftId = wasSashAlreadyValid ? prev.leftProfileId : defaultSash.id;
+        const nextTopId = isSashIdValid(prev.topProfileId) ? prev.topProfileId : nextLeftId;
+        const nextRightId = isSashIdValid(prev.rightProfileId) ? prev.rightProfileId : nextLeftId;
+        const nextBottomId = isSashIdValid(prev.bottomProfileId) ? prev.bottomProfileId : nextTopId;
+
+        const sanitizeVariant = (v?: SashVariantProfiles): SashVariantProfiles => {
+          const vLeft = isSashIdValid(v?.leftProfileId) ? v?.leftProfileId : nextLeftId;
+          const vTop =
+            isSashIdValid(v?.topProfileId) && v?.topProfileId !== vLeft
+              ? v?.topProfileId
+              : undefined;
+          const vRight =
+            isSashIdValid(v?.rightProfileId) && v?.rightProfileId !== vLeft
+              ? v?.rightProfileId
+              : undefined;
+          const vBot =
+            isSashIdValid(v?.bottomProfileId) && v?.bottomProfileId !== (vTop || vLeft)
+              ? v?.bottomProfileId
+              : undefined;
+          return {
+            leftProfileId: vLeft,
+            topProfileId: vTop,
+            rightProfileId: vRight,
+            bottomProfileId: vBot,
+          };
+        };
+
+        const nextLeftVar = sanitizeVariant(prev.slidingVariants?.left_sliding);
+        const nextRightVar = sanitizeVariant(prev.slidingVariants?.right_sliding);
+        const nextCenterVar = sanitizeVariant(prev.slidingVariants?.center_sliding);
+
+        // Đố cánh (mullionProfileId): tôn trọng tuyệt đối lựa chọn "Không có" (undefined) của người dùng;
+        // chỉ giữ lại nếu đang có ID hợp lệ trong hệ nhôm hiện tại.
+        const nextMullionId = isAnyIdValid(prev.mullionProfileId)
+          ? prev.mullionProfileId
+          : undefined;
+
+        // Các profile phụ khác: chỉ tự động điền mặc định khi khởi tạo mới / đổi hệ nhôm (!wasSashAlreadyValid);
+        // nếu cửa đã thuộc hệ nhôm này thì giữ nguyên lựa chọn của người dùng (kể cả khi người dùng chọn bỏ trống).
+        const resolveOptionalProfile = (currentId?: number, fallbackId?: number) => {
+          if (isAnyIdValid(currentId)) return currentId;
+          if (wasSashAlreadyValid) return undefined;
+          return fallbackId;
+        };
+
+        const nextBeadId = resolveOptionalProfile(prev.beadProfileId, defaultBead?.id);
+        const nextDynMullionId = resolveOptionalProfile(
+          prev.dynamicMullionProfileId,
+          defaultDynamicMullion?.id
+        );
+        const nextInterlockId = resolveOptionalProfile(
+          prev.interlockProfileId,
+          defaultInterlock?.id
+        );
+        const nextOpNoiId = resolveOptionalProfile(prev.opNoiProfileId, defaultOpNoi?.id);
+
+        const isSameVariant = (a?: SashVariantProfiles, b?: SashVariantProfiles) =>
+          a?.leftProfileId === b?.leftProfileId &&
+          a?.topProfileId === b?.topProfileId &&
+          a?.rightProfileId === b?.rightProfileId &&
+          a?.bottomProfileId === b?.bottomProfileId;
+
+        if (
+          prev.leftProfileId === nextLeftId &&
+          prev.topProfileId === nextTopId &&
+          prev.rightProfileId === nextRightId &&
+          prev.bottomProfileId === nextBottomId &&
+          prev.beadProfileId === nextBeadId &&
+          prev.mullionProfileId === nextMullionId &&
+          prev.dynamicMullionProfileId === nextDynMullionId &&
+          prev.interlockProfileId === nextInterlockId &&
+          prev.opNoiProfileId === nextOpNoiId &&
+          isSameVariant(prev.slidingVariants?.left_sliding, nextLeftVar) &&
+          isSameVariant(prev.slidingVariants?.right_sliding, nextRightVar) &&
+          isSameVariant(prev.slidingVariants?.center_sliding, nextCenterVar)
+        ) {
+          return prev;
+        }
+
         return {
           ...prev,
-          leftProfileId: defaultSash.id,
-          topProfileId: defaultSash.id,
-          rightProfileId: defaultSash.id,
-          bottomProfileId: defaultSash.id,
-          beadProfileId: prev.beadProfileId || defaultBead?.id,
-          mullionProfileId: prev.mullionProfileId || defaultMullion?.id,
+          leftProfileId: nextLeftId,
+          topProfileId: nextTopId,
+          rightProfileId: nextRightId,
+          bottomProfileId: nextBottomId,
+          beadProfileId: nextBeadId,
+          mullionProfileId: nextMullionId,
+          dynamicMullionProfileId: nextDynMullionId,
+          interlockProfileId: nextInterlockId,
+          opNoiProfileId: nextOpNoiId,
+          slidingVariants: {
+            left_sliding: nextLeftVar,
+            right_sliding: nextRightVar,
+            center_sliding: nextCenterVar,
+          },
         };
       });
     }
-  }, [availableProfiles, frameConfig.leftEdge?.profileId, sashConfig.leftProfileId]);
+  }, [
+    availableProfiles,
+    frameConfig.leftEdge?.profileId,
+    frameConfig.bottomEdge?.profileId,
+    frameConfig.cornerJoint,
+    frameConfig.isOpenBottom,
+    sashConfig.leftProfileId,
+    sashConfig.family,
+  ]);
 
 
   // Khởi tạo hoặc nạp lại state khi sửa cửa cũ, HOẶC reset toàn bộ khi thêm cửa mới
@@ -405,33 +1087,8 @@ export function useDoorStudioState({
       } else {
         setSelectedAccessories([]);
       }
-      if (sc.frameConfig) {
-        setFrameConfig({
-          ...DEFAULT_FRAME_CONFIG,
-          ...sc.frameConfig,
-          leftEdge: { ...DEFAULT_FRAME_CONFIG.leftEdge, ...(sc.frameConfig.leftEdge || {}) },
-          topEdge: { ...DEFAULT_FRAME_CONFIG.topEdge, ...(sc.frameConfig.topEdge || {}) },
-          rightEdge: { ...DEFAULT_FRAME_CONFIG.rightEdge, ...(sc.frameConfig.rightEdge || {}) },
-          bottomEdge: { ...DEFAULT_FRAME_CONFIG.bottomEdge, ...(sc.frameConfig.bottomEdge || {}) },
-          archConfig: {
-            ...(DEFAULT_FRAME_CONFIG.archConfig || { isCutAtApex: false, bendingClampingMm: 400 }),
-            ...(sc.frameConfig.archConfig || {}),
-          },
-        });
-      }
-      const defaultFamily = door?.type === 'cd' ? 'Cửa đi mở quay' : 'Cửa sổ mở quay/Hất';
-      if (sc.sashConfig) {
-        setSashConfig({
-          ...DEFAULT_SASH_CONFIG,
-          family: sc.sashConfig.family || defaultFamily,
-          ...sc.sashConfig,
-        });
-      } else {
-        setSashConfig({
-          ...DEFAULT_SASH_CONFIG,
-          family: defaultFamily,
-        });
-      }
+      setFrameConfig(normalizeInitialFrameConfig(sc));
+      setSashConfig(normalizeInitialSashConfig(sc, door?.type));
       if (sc.rootCell) {
         setRootCell(sc.rootCell);
         setHistory([sc.rootCell]);
@@ -466,7 +1123,7 @@ export function useDoorStudioState({
       setSelectedComboIds([]);
       setSelectedAccessories([]);
       setFrameConfig(DEFAULT_FRAME_CONFIG);
-      setSashConfig(DEFAULT_SASH_CONFIG);
+      setSashConfig({ ...DEFAULT_SASH_CONFIG, family: 'Cửa đi mở quay' });
       setCurrentSashType('fixed');
       setRootCell(initialRoot);
       setHistory([initialRoot]);
@@ -677,6 +1334,10 @@ export function useDoorStudioState({
 
   const handleSelectSashType = (sashType: SashOpenType) => {
     setCurrentSashType(sashType);
+    const inferredFamily = inferSashFamilyFromSashType(sashType, sashConfig.family, type);
+    if (inferredFamily && inferredFamily !== sashConfig.family) {
+      setSashConfig((prev) => ({ ...prev, family: inferredFamily }));
+    }
     const targetId = selectedCellId || (rootCell.children?.[0]?.id || rootCell.id);
     const { updatedRoot, nextSelectedId } = applySashTypeToCluster(rootCell, targetId, sashType);
     pushState(updatedRoot);
@@ -718,6 +1379,10 @@ export function useDoorStudioState({
     if (!selectedCellId) return;
     if (updates.sashType) {
       setCurrentSashType(updates.sashType);
+      const inferredFamily = inferSashFamilyFromSashType(updates.sashType, sashConfig.family, type);
+      if (inferredFamily && inferredFamily !== sashConfig.family) {
+        setSashConfig((prev) => ({ ...prev, family: inferredFamily }));
+      }
       const { updatedRoot, nextSelectedId } = applySashTypeToCluster(rootCell, selectedCellId, updates.sashType);
       pushState(updatedRoot);
       if (nextSelectedId) {
