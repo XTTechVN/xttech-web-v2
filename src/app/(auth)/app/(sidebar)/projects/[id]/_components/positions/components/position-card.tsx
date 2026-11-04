@@ -5,7 +5,7 @@ import { Copy, Edit, ImageOff, QrCode, Ruler, Trash2 } from 'lucide-react';
 import { Badge } from '@/components';
 import { DOOR_STATUS_MAP } from '@/config';
 import type { ProjectDoorPosition } from '@/types';
-import { DoorThumbnail } from '../../../../configuration/door-templates/_components/door-thumbnail';
+import { DoorThumbnail } from '@/components';
 
 interface PositionCardProps {
   position: ProjectDoorPosition;

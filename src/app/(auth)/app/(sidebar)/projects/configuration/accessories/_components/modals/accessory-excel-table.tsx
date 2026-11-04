@@ -16,10 +16,12 @@ const UNIT_OPTIONS = [
   { value: 'pair', label: 'Đôi / Cặp (pair)' },
   { value: 'roll', label: 'Cuộn (roll)' },
   { value: 'box', label: 'Hộp (box)' },
+  { value: 'bag', label: 'Túi (bag)' },
   { value: 'meter', label: 'Mét (meter)' },
 ];
 
 const COLOR_OPTIONS = [
+  { value: '', label: '-- Để trống --' },
   { value: 'black', label: 'Đen (black)' },
   { value: 'white', label: 'Trắng (white)' },
   { value: 'silver', label: 'Bạc / Inox (silver)' },
@@ -46,7 +48,7 @@ export function AccessoryExcelTable({
 }: AccessoryExcelTableProps) {
   return (
     <div className="overflow-x-auto flex-1">
-      <table className="w-full text-xs border-collapse min-w-[1220px]">
+      <table className="w-full text-xs border-collapse min-w-305">
         <thead className="bg-slate-100 text-slate-700 uppercase font-bold sticky top-0 z-10 border-b border-slate-200">
           <tr>
             <th className="p-2.5 text-center w-12">#</th>
@@ -58,8 +60,7 @@ export function AccessoryExcelTable({
             <th className="p-2.5 text-left w-32">Đơn vị (*)</th>
             <th className="p-2.5 text-left w-32">Màu sắc</th>
             <th className="p-2.5 text-left w-44">Quy cách</th>
-            <th className="p-2.5 text-right w-32">Giá bán (đ) (*)</th>
-            <th className="p-2.5 text-right w-32">Giá vốn (đ)</th>
+            <th className="p-2.5 text-right w-36">Giá nhập (đ) (*)</th>
             <th className="p-2.5 text-center w-12">Xóa</th>
           </tr>
         </thead>
@@ -165,7 +166,7 @@ export function AccessoryExcelTable({
                 </td>
                 <td className="p-1.5">
                   <select
-                    value={row.data.color}
+                    value={row.data.color || ''}
                     onChange={(e) => onUpdateCell(row.rowIndex, { color: e.target.value })}
                     className="w-full h-8 px-2 border border-slate-200 rounded bg-white text-xs"
                   >
@@ -189,27 +190,17 @@ export function AccessoryExcelTable({
                 <td className="p-1.5">
                   <input
                     type="number"
-                    value={row.data.unitPrice}
-                    onChange={(e) =>
-                      onUpdateCell(row.rowIndex, { unitPrice: Number(e.target.value) })
-                    }
-                    className="w-full h-8 px-2 border border-slate-200 rounded bg-white text-xs text-right"
-                  />
-                  {isUpd && row.oldData && row.oldData.unitPrice !== row.data.unitPrice && (
-                    <div className="text-[10px] text-amber-600 text-right mt-0.5">
-                      Cũ: {row.oldData.unitPrice.toLocaleString('vi-VN')}
-                    </div>
-                  )}
-                </td>
-                <td className="p-1.5">
-                  <input
-                    type="number"
                     value={row.data.costPrice}
                     onChange={(e) =>
                       onUpdateCell(row.rowIndex, { costPrice: Number(e.target.value) })
                     }
                     className="w-full h-8 px-2 border border-slate-200 rounded bg-white text-xs text-right"
                   />
+                  {isUpd && row.oldData && row.oldData.costPrice !== row.data.costPrice && (
+                    <div className="text-[10px] text-amber-600 text-right mt-0.5">
+                      Cũ: {row.oldData.costPrice.toLocaleString('vi-VN')}
+                    </div>
+                  )}
                 </td>
                 <td className="p-1.5 text-center">
                   <button

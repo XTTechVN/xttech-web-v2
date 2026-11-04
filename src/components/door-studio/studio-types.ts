@@ -433,12 +433,31 @@ export const DEFAULT_ARCH_CONFIG: ArchConfig = {
   legJoinMode: 'continuous',
 };
 
+export type DoorSystemFamily =
+  | 'Cửa đi mở quay'
+  | 'Cửa sổ mở quay/Hất'
+  | 'Cửa đi lùa'
+  | 'Cửa sổ lùa'
+  | 'Cửa xếp trượt'
+  | 'Cửa trượt quay'
+  | (string & {});
+
+export const DOOR_SYSTEM_FAMILIES: DoorSystemFamily[] = [
+  'Cửa đi lùa',
+  'Cửa sổ lùa',
+  'Cửa đi mở quay',
+  'Cửa sổ mở quay/Hất',
+  'Cửa xếp trượt',
+  'Cửa trượt quay',
+];
+
 export interface SashConfig {
   hasScreenSash: boolean;
-  family: string;
+  family: DoorSystemFamily;
   sashStyle: 'standard' | 'slim';
   isHydraulic?: boolean;
   hoNenMm: number;
+  hoLeMm?: number;
   ngamNgangMm: number;
   ngamDocMm: number;
   truDoDongMm: number;
@@ -450,16 +469,27 @@ export interface SashConfig {
   beadCornerJoint: BeadCornerJoint;
   isNhomCo: boolean;
   slidingOverlapMm?: number;
+  profileId?: number;
   leftProfileId?: number;
   topProfileId?: number;
   rightProfileId?: number;
   bottomProfileId?: number;
+  bottomRailProfileId?: number;
+  edges?: {
+    bottom?: {
+      profileId?: number;
+      enabled?: boolean;
+    };
+    [key: string]: unknown;
+  };
   slidingVariants?: Partial<Record<SlidingSashRole, SashVariantProfiles>>;
   mullionProfileId?: number;
   beadProfileId?: number;
   dynamicMullionProfileId?: number;
   opNoiProfileId?: number;
   interlockProfileId?: number;
+  rawDodong?: string;
+  rawVariants?: Record<string, unknown>;
   gaskets?: DoorGasketConfigItem[];
   extras?: DoorCustomExtraItem[];
 }

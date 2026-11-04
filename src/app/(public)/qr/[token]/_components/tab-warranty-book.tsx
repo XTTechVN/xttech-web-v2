@@ -63,39 +63,67 @@ export function TabWarrantyBook({
   const activeVisits = summary.visits.filter((v) => v.status !== 'cancelled');
 
   return (
-    <div className="space-y-4">
-      <section className="grid grid-cols-3 divide-x divide-slate-100 rounded-2xl border border-slate-200 bg-white py-3 text-center">
-        <div>
-          <div className="text-[10px] uppercase text-slate-400">Tổng đợt BH</div>
-          <div className="mt-0.5 font-mono text-base font-bold tabular-nums text-slate-900">
-            {summary.totalVisits}
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
+      {/* CỘT TRÁI (4/12 trên Máy tính): Thống kê tổng quan & nút tạo yêu cầu */}
+      <div className="lg:col-span-4 lg:sticky lg:top-20 space-y-3.5">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
+          <div className="grid grid-cols-3 divide-x divide-slate-100 text-center">
+            <div>
+              <div className="text-[10px] uppercase text-slate-400">Tổng đợt BH</div>
+              <div className="mt-0.5 font-mono text-base font-bold tabular-nums text-slate-900">
+                {summary.totalVisits}
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-400">Hoàn thành</div>
+              <div className="mt-0.5 font-mono text-base font-bold tabular-nums text-emerald-600">
+                {summary.doneVisits}
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-400">Đang xử lý</div>
+              <div className="mt-0.5 font-mono text-base font-bold tabular-nums text-amber-600">
+                {summary.upcomingVisits + summary.overdueVisits}
+              </div>
+            </div>
           </div>
-        </div>
-        <div>
-          <div className="text-[10px] uppercase text-slate-400">Hoàn thành</div>
-          <div className="mt-0.5 font-mono text-base font-bold tabular-nums text-emerald-600">
-            {summary.doneVisits}
-          </div>
-        </div>
-        <div>
-          <div className="text-[10px] uppercase text-slate-400">Đang xử lý</div>
-          <div className="mt-0.5 font-mono text-base font-bold tabular-nums text-amber-600">
-            {summary.upcomingVisits + summary.overdueVisits}
-          </div>
-        </div>
-      </section>
 
-      <div className="space-y-3">
+          <Button
+            size="sm"
+            fullWidth
+            leftIcon={<Wrench size={14} />}
+            onClick={onRequestNewClaim}
+            className="hidden lg:inline-flex min-h-[42px]"
+          >
+            Tạo yêu cầu bảo hành / sửa chữa
+          </Button>
+        </section>
+      </div>
+
+      {/* CỘT PHẢI (8/12 trên Máy tính): Danh sách phiếu bảo hành & sửa chữa */}
+      <div className="lg:col-span-8 space-y-3">
         {activeVisits.map((visit) => {
           const statusBadge = WARRANTY_VISIT_STATUS_MAP[visit.status];
           const isOpen = visit.status === 'scheduled' || visit.status === 'in_progress';
           const stepIndex =
             visit.status === 'done' ? 3 : visit.status === 'in_progress' ? 2 : 1;
+          const hasPhase1 =
+            visit.issueTags.length > 0 ||
+            Boolean(visit.issueDescription) ||
+            visit.customerPhotos.length > 0;
+          const hasPhase2 = Boolean(
+            visit.diagnosisNote ||
+              visit.damagedParts.length > 0 ||
+              visit.repairActions ||
+              visit.replacedParts.length > 0 ||
+              visit.resultNote ||
+              visit.photos.length > 0,
+          );
 
           return (
             <article
               key={visit.id}
-              className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 text-xs"
+              className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 lg:p-5 text-xs"
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
@@ -157,69 +185,75 @@ export function TabWarrantyBook({
                 </div>
               )}
 
-              {(visit.issueTags.length > 0 ||
-                visit.issueDescription ||
-                visit.customerPhotos.length > 0) && (
-                <div className="space-y-1.5 border-t border-slate-100 pt-2.5">
-                  <div className="text-[11px] font-bold text-slate-700">
-                    Thông tin khách hàng báo:
-                  </div>
-                  {visit.issueTags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {visit.issueTags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800"
-                        >
-                          {WARRANTY_ISSUE_TAG_MAP[tag] || tag}
-                        </span>
-                      ))}
+              {(hasPhase1 || hasPhase2) && (
+                <div
+                  className={
+                    hasPhase1 && hasPhase2
+                      ? 'grid grid-cols-1 md:grid-cols-2 gap-3 border-t border-slate-100 pt-2.5'
+                      : 'space-y-2.5 border-t border-slate-100 pt-2.5'
+                  }
+                >
+                  {hasPhase1 && (
+                    <div className="space-y-1.5 rounded-xl bg-slate-50/80 p-3 border border-slate-100">
+                      <div className="text-[11px] font-bold text-slate-700">
+                        Thông tin khách hàng báo:
+                      </div>
+                      {visit.issueTags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {visit.issueTags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800"
+                            >
+                              {WARRANTY_ISSUE_TAG_MAP[tag] || tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {visit.issueDescription && (
+                        <p className="text-slate-600">{visit.issueDescription}</p>
+                      )}
+                      <QrMediaStrip
+                        items={visit.customerPhotos}
+                        onPlayVideo={setPreviewVideoUrl}
+                      />
                     </div>
                   )}
-                  {visit.issueDescription && (
-                    <p className="text-slate-600">{visit.issueDescription}</p>
-                  )}
-                  <QrMediaStrip items={visit.customerPhotos} onPlayVideo={setPreviewVideoUrl} />
-                </div>
-              )}
 
-              {(visit.diagnosisNote ||
-                visit.damagedParts.length > 0 ||
-                visit.repairActions ||
-                visit.replacedParts.length > 0 ||
-                visit.resultNote ||
-                visit.photos.length > 0) && (
-                <div className="space-y-1.5 border-t border-slate-100 pt-2.5">
-                  <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                    <CheckCircle2 size={13} />
-                    <span>Biên bản kiểm tra & xử lý của Kỹ thuật viên:</span>
-                  </div>
-                  {visit.diagnosisNote && (
-                    <p className="text-slate-700">
-                      <b>Chẩn đoán:</b> {visit.diagnosisNote}
-                    </p>
+                  {hasPhase2 && (
+                    <div className="space-y-1.5 rounded-xl bg-emerald-50/40 p-3 border border-emerald-100">
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                        <CheckCircle2 size={13} />
+                        <span>Biên bản kiểm tra & xử lý của Kỹ thuật viên:</span>
+                      </div>
+                      {visit.diagnosisNote && (
+                        <p className="text-slate-700">
+                          <b>Chẩn đoán:</b> {visit.diagnosisNote}
+                        </p>
+                      )}
+                      {visit.damagedParts.length > 0 && (
+                        <p className="text-slate-700">
+                          <b>Bộ phận hỏng:</b> {visit.damagedParts.join(', ')}
+                        </p>
+                      )}
+                      {visit.repairActions && (
+                        <p className="text-slate-700">
+                          <b>Xử lý:</b> {visit.repairActions}
+                        </p>
+                      )}
+                      {visit.replacedParts.length > 0 && (
+                        <p className="text-slate-700">
+                          <b>Thay thế:</b> {visit.replacedParts.join(', ')}
+                        </p>
+                      )}
+                      {visit.resultNote && (
+                        <p className="text-emerald-700">
+                          <b>Kết quả nghiệm thu:</b> {visit.resultNote}
+                        </p>
+                      )}
+                      <QrMediaStrip items={visit.photos} onPlayVideo={setPreviewVideoUrl} />
+                    </div>
                   )}
-                  {visit.damagedParts.length > 0 && (
-                    <p className="text-slate-700">
-                      <b>Bộ phận hỏng:</b> {visit.damagedParts.join(', ')}
-                    </p>
-                  )}
-                  {visit.repairActions && (
-                    <p className="text-slate-700">
-                      <b>Xử lý:</b> {visit.repairActions}
-                    </p>
-                  )}
-                  {visit.replacedParts.length > 0 && (
-                    <p className="text-slate-700">
-                      <b>Thay thế:</b> {visit.replacedParts.join(', ')}
-                    </p>
-                  )}
-                  {visit.resultNote && (
-                    <p className="text-emerald-700">
-                      <b>Kết quả nghiệm thu:</b> {visit.resultNote}
-                    </p>
-                  )}
-                  <QrMediaStrip items={visit.photos} onPlayVideo={setPreviewVideoUrl} />
                 </div>
               )}
 

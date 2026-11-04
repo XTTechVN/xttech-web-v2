@@ -7,8 +7,7 @@ import { getDefaultBrandId, getDoorTypeConfig, normalizeDoorType, type Door } fr
 import { BASE_MINIO_URL } from '@/config';
 import { Search, Plus, ImageOff, LayoutGrid } from 'lucide-react';
 import { BrandSidebar } from '../../_components';
-import { DoorStudioModal } from '@/components';
-import { DoorThumbnail } from './_components/door-thumbnail';
+import { DoorStudioModal, DoorThumbnail } from '@/components';
 
 const DOOR_TYPES: Array<{ value: string | null; label: string }> = [
   { value: null, label: 'Tất cả' },

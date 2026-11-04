@@ -4,7 +4,7 @@ import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Button, Input } from '@/components';
 import type { Door, ProjectFloor } from '@/types';
-import { DoorThumbnail } from '../../../../configuration/door-templates/_components/door-thumbnail';
+import { DoorThumbnail } from '@/components';
 
 export const normalizeBulkBaseCode = (raw: string): string => {
   const trimmed = raw.trim();

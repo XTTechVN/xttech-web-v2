@@ -19,6 +19,7 @@ import type {
   QrProjectDoorItem,
   WarrantyIssueTag,
 } from '@/types';
+import { QrDoorVisual } from './qr-door-visual';
 import { getErrorMessage } from './qr-helpers';
 import { QrMediaUploader } from './qr-media-uploader';
 
@@ -108,186 +109,230 @@ export function TabClaimRequest({
   };
 
   const selectedDoorItems = doors.filter((d) => effectiveDoorIds.includes(d.id));
+  const displayDoors =
+    selectedDoorItems.length > 0
+      ? selectedDoorItems
+      : [
+          {
+            id: view.positionId,
+            code: view.code,
+            name: view.name,
+            doorName: view.doorName,
+            floorName: view.floorName,
+            width: view.width,
+            height: view.height,
+            designImage: view.designImage,
+            systemConfig: view.systemConfig,
+          },
+        ];
 
   return (
-    <div className="space-y-4">
-      <div
-        className={`flex items-start gap-2.5 rounded-2xl border p-3.5 text-xs ${
-          isExpired
-            ? 'border-amber-200 bg-amber-50 text-amber-900'
-            : 'border-emerald-200 bg-emerald-50 text-emerald-900'
-        }`}
-      >
-        {isExpired ? (
-          <ShieldAlert size={18} className="mt-0.5 shrink-0 text-amber-600" />
-        ) : (
-          <ShieldCheck size={18} className="mt-0.5 shrink-0 text-emerald-600" />
-        )}
-        <div className="space-y-0.5">
-          <div className="font-bold">
-            {isExpired
-              ? 'Yêu cầu Sửa chữa & Bảo trì Dịch vụ (Ngoài hạn bảo hành)'
-              : 'Yêu cầu Bảo hành Chính hãng (Trong thời hạn bảo hành)'}
-          </div>
-          <p className="text-[11px] opacity-90">
-            {isExpired
-              ? 'Kỹ thuật viên sẽ đến kiểm tra thực tế và báo giá chi tiết vật tư / nhân công (nếu có) trước khi tiến hành sửa chữa.'
-              : 'Kỹ thuật viên sẽ đến kiểm tra thực tế và cập nhật biên bản xử lý vào Sổ bảo hành điện tử của công trình.'}
-          </p>
-        </div>
-      </div>
-
-      <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              1. Bộ cửa cần kiểm tra ({effectiveDoorIds.length} cửa)
-            </h3>
-            <p className="text-[11px] text-slate-500">
-              Mặc định chọn bộ cửa vừa quét, có thể chọn thêm các cửa khác.
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
+      {/* CỘT TRÁI (5/12 trên Máy tính): Chính sách bảo hành + Danh sách bộ cửa cần kiểm tra */}
+      <div className="lg:col-span-5 lg:sticky lg:top-20 space-y-4">
+        <div
+          className={`flex items-start gap-2.5 rounded-2xl border p-3.5 lg:p-4 text-xs ${
+            isExpired
+              ? 'border-amber-200 bg-amber-50 text-amber-900'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+          }`}
+        >
+          {isExpired ? (
+            <ShieldAlert size={18} className="mt-0.5 shrink-0 text-amber-600" />
+          ) : (
+            <ShieldCheck size={18} className="mt-0.5 shrink-0 text-emerald-600" />
+          )}
+          <div className="space-y-0.5">
+            <div className="font-bold">
+              {isExpired
+                ? 'Yêu cầu Sửa chữa & Bảo trì Dịch vụ (Ngoài hạn bảo hành)'
+                : 'Yêu cầu Bảo hành Chính hãng (Trong thời hạn bảo hành)'}
+            </div>
+            <p className="text-[11px] opacity-90">
+              {isExpired
+                ? 'Kỹ thuật viên sẽ đến kiểm tra thực tế và báo giá chi tiết vật tư / nhân công (nếu có) trước khi tiến hành sửa chữa.'
+                : 'Kỹ thuật viên sẽ đến kiểm tra thực tế và cập nhật biên bản xử lý vào Sổ bảo hành điện tử của công trình.'}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowDoorPicker((prev) => !prev)}
-            className="inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-xl bg-slate-100 px-3 text-xs font-semibold text-[#045863]"
-          >
-            <span>{showDoorPicker ? 'Thu gọn' : 'Chọn thêm cửa'}</span>
-            {showDoorPicker ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          {(selectedDoorItems.length > 0
-            ? selectedDoorItems
-            : [{ id: view.positionId, code: view.code, name: view.name, doorName: view.doorName }]
-          ).map((door) => (
-            <span
-              key={door.id}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#045863]/10 px-2.5 py-1 text-xs font-semibold text-[#045863]"
+        <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 lg:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                1. Bộ cửa cần kiểm tra ({effectiveDoorIds.length} cửa)
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                Mặc định chọn bộ cửa vừa quét, có thể chọn thêm các cửa khác.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowDoorPicker((prev) => !prev)}
+              className="inline-flex min-h-[44px] lg:min-h-[38px] shrink-0 items-center gap-1 rounded-xl bg-slate-100 px-3 text-xs font-semibold text-[#045863] cursor-pointer"
             >
-              <span className="font-mono">{door.code}</span>
-              <span className="text-[11px] font-normal text-slate-600">
-                · {door.name || door.doorName}
-              </span>
-            </span>
-          ))}
-        </div>
-
-        {showDoorPicker && (
-          <div className="max-h-60 divide-y divide-slate-100 overflow-y-auto rounded-xl bg-slate-50 p-2 text-xs">
-            {isLoadingDoors ? (
-              <div className="py-4 text-center text-slate-400">Đang tải danh sách cửa...</div>
-            ) : (
-              doors.map((door) => {
-                const checked = effectiveDoorIds.includes(door.id);
-                return (
-                  <button
-                    key={door.id}
-                    type="button"
-                    onClick={() => toggleDoorId(door.id)}
-                    className="flex min-h-[44px] w-full items-center justify-between px-2.5 py-2 text-left"
-                  >
-                    <div>
-                      <span className="font-mono font-bold text-slate-900">{door.code}</span>
-                      <span className="ml-1.5 text-slate-600">{door.name || door.doorName}</span>
-                      {door.floorName && (
-                        <span className="ml-1.5 text-[11px] text-slate-400">({door.floorName})</span>
-                      )}
-                    </div>
-                    <CheckCircle2
-                      size={18}
-                      className={checked ? 'text-[#045863]' : 'text-slate-300'}
-                    />
-                  </button>
-                );
-              })
-            )}
+              <span>{showDoorPicker ? 'Thu gọn' : 'Chọn thêm cửa'}</span>
+              {showDoorPicker ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
           </div>
-        )}
-      </section>
 
-      <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-          2. Hiện tượng & Mô tả tình trạng
-        </h3>
-        <div className="grid grid-cols-2 gap-2">
-          {WARRANTY_ISSUE_TAG_OPTIONS.map((opt) => {
-            const active = issueTags.includes(opt.value);
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => toggleTag(opt.value)}
-                className={`flex min-h-[44px] items-center justify-center rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                  active
-                    ? 'border-[#045863] bg-[#045863] text-white'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
-                }`}
+          <div className="space-y-2">
+            {displayDoors.map((door) => (
+              <div
+                key={door.id}
+                className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50/70 p-2 text-xs"
               >
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
+                <QrDoorVisual
+                  code={door.code}
+                  doorName={door.doorName}
+                  name={door.name}
+                  width={door.width}
+                  height={door.height}
+                  designImage={door.designImage}
+                  systemConfig={door.systemConfig}
+                  variant="mini"
+                  className="w-12 h-14 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="rounded bg-[#045863]/10 px-2 py-0.5 font-mono text-[11px] font-bold text-[#045863]">
+                      {door.code}
+                    </span>
+                    {door.floorName && (
+                      <span className="text-[11px] text-slate-500">{door.floorName}</span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 truncate font-semibold text-slate-800">
+                    {door.name || door.doorName}
+                  </p>
+                  <p className="font-mono text-[11px] tabular-nums text-slate-500">
+                    {door.width} × {door.height} mm
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
 
-        <Textarea
-          label="Mô tả chi tiết cho kỹ thuật viên *"
-          placeholder="Ví dụ: Cửa ban công tầng 2 bị xệ nhẹ, đóng khóa hơi nặng tay khi trời mưa..."
-          value={issueDescription}
-          onChange={(e) => setIssueDescription(e.target.value)}
-          rows={3}
-          fullWidth
-        />
+          {showDoorPicker && (
+            <div className="max-h-60 divide-y divide-slate-100 overflow-y-auto rounded-xl bg-slate-50 p-2 text-xs">
+              {isLoadingDoors ? (
+                <div className="py-4 text-center text-slate-400">Đang tải danh sách cửa...</div>
+              ) : (
+                doors.map((door) => {
+                  const checked = effectiveDoorIds.includes(door.id);
+                  return (
+                    <button
+                      key={door.id}
+                      type="button"
+                      onClick={() => toggleDoorId(door.id)}
+                      className="flex min-h-[44px] w-full items-center justify-between px-2.5 py-2 text-left cursor-pointer"
+                    >
+                      <div>
+                        <span className="font-mono font-bold text-slate-900">{door.code}</span>
+                        <span className="ml-1.5 text-slate-600">{door.name || door.doorName}</span>
+                        {door.floorName && (
+                          <span className="ml-1.5 text-[11px] text-slate-400">
+                            ({door.floorName})
+                          </span>
+                        )}
+                      </div>
+                      <CheckCircle2
+                        size={18}
+                        className={checked ? 'text-[#045863]' : 'text-slate-300'}
+                      />
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </section>
+      </div>
 
-        <QrMediaUploader
-          token={token}
-          value={customerPhotos}
-          onChange={setCustomerPhotos}
-          onUploadingChange={setIsUploadingMedia}
-        />
-      </section>
+      {/* CỘT PHẢI (7/12 trên Máy tính): Hiện tượng, mô tả, ảnh/video & thông tin liên hệ */}
+      <div className="lg:col-span-7 space-y-4">
+        <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 lg:p-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            2. Hiện tượng & Mô tả tình trạng
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {WARRANTY_ISSUE_TAG_OPTIONS.map((opt) => {
+              const active = issueTags.includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggleTag(opt.value)}
+                  className={`flex min-h-[44px] items-center justify-center rounded-xl border px-3 py-2 text-xs font-semibold transition cursor-pointer ${
+                    active
+                      ? 'border-[#045863] bg-[#045863] text-white'
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
 
-      <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-          3. Thông tin liên hệ & Lịch hẹn kiểm tra
-        </h3>
-        <Input
-          label="Họ và tên người liên hệ *"
-          placeholder="Nhập tên của bạn..."
-          value={requesterName}
-          onChange={(e) => setRequesterName(e.target.value)}
-          fullWidth
-        />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Input
-            label="Số điện thoại liên hệ *"
-            type="tel"
-            placeholder="09xx xxx xxx"
-            value={requesterPhone}
-            onChange={(e) => setRequesterPhone(e.target.value)}
+          <Textarea
+            label="Mô tả chi tiết cho kỹ thuật viên *"
+            placeholder="Ví dụ: Cửa ban công tầng 2 bị xệ nhẹ, đóng khóa hơi nặng tay khi trời mưa..."
+            value={issueDescription}
+            onChange={(e) => setIssueDescription(e.target.value)}
+            rows={3}
             fullWidth
           />
+
+          <QrMediaUploader
+            token={token}
+            value={customerPhotos}
+            onChange={setCustomerPhotos}
+            onUploadingChange={setIsUploadingMedia}
+          />
+        </section>
+
+        <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 lg:p-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            3. Thông tin liên hệ & Lịch hẹn kiểm tra
+          </h3>
           <Input
-            label="Ngày mong muốn kỹ thuật đến"
-            type="date"
-            value={scheduledDate}
-            onChange={(e) => setScheduledDate(e.target.value)}
+            label="Họ và tên người liên hệ *"
+            placeholder="Nhập tên của bạn..."
+            value={requesterName}
+            onChange={(e) => setRequesterName(e.target.value)}
             fullWidth
           />
-        </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Input
+              label="Số điện thoại liên hệ *"
+              type="tel"
+              placeholder="09xx xxx xxx"
+              value={requesterPhone}
+              onChange={(e) => setRequesterPhone(e.target.value)}
+              fullWidth
+            />
+            <Input
+              label="Ngày mong muốn kỹ thuật đến"
+              type="date"
+              value={scheduledDate}
+              onChange={(e) => setScheduledDate(e.target.value)}
+              fullWidth
+            />
+          </div>
 
-        <Button
-          fullWidth
-          loading={isSubmitting}
-          disabled={isUploadingMedia}
-          leftIcon={<Send size={16} />}
-          onClick={() => void handleSubmit()}
-          className="min-h-[48px]"
-        >
-          Gửi yêu cầu cho Kỹ thuật viên
-        </Button>
-      </section>
+          <Button
+            fullWidth
+            loading={isSubmitting}
+            disabled={isUploadingMedia}
+            leftIcon={<Send size={16} />}
+            onClick={() => void handleSubmit()}
+            className="min-h-[48px]"
+          >
+            Gửi yêu cầu cho Kỹ thuật viên
+          </Button>
+        </section>
+      </div>
     </div>
   );
 }

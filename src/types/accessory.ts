@@ -31,6 +31,10 @@ export const ACCESSORY_UNIT_CONFIG: Record<string, AccessoryUnitConfig> = {
     label: 'Hộp',
     className: 'bg-sky-50 text-sky-700 border-sky-200/70',
   },
+  bag: {
+    label: 'Túi',
+    className: 'bg-cyan-50 text-cyan-700 border-cyan-200/70',
+  },
   meter: {
     label: 'Mét',
     className: 'bg-rose-50 text-rose-700 border-rose-200/70',
@@ -48,6 +52,7 @@ export const ACCESSORY_UNIT_MAP: Record<string, string> = {
   pair: 'Đôi / Cặp',
   roll: 'Cuộn',
   box: 'Hộp',
+  bag: 'Túi',
   meter: 'Mét',
   sheet: 'Tấm',
 };
@@ -93,11 +98,8 @@ export interface Accessory {
   name: string;
   specification: string | null;
   unit: string | null;
-  unitPrice?: number;
   color?: string | null;
   costPrice: number;
-  retailPrice: number;
-  salePrice: number;
   imagePath: string | null;
   isActive?: boolean;
   createdAt: string;
@@ -111,11 +113,8 @@ export interface AccessoryCreate {
   brandId?: number | null;
   specification?: string;
   unit?: string;
-  unitPrice?: number;
   color?: string;
   costPrice?: number;
-  retailPrice?: number;
-  salePrice?: number;
   imagePath?: string;
   isActive?: boolean;
 }
@@ -127,11 +126,8 @@ export interface AccessoryUpdate {
   brandId?: number | null;
   specification?: string;
   unit?: string;
-  unitPrice?: number;
   color?: string;
   costPrice?: number;
-  retailPrice?: number;
-  salePrice?: number;
   imagePath?: string;
   isActive?: boolean;
 }

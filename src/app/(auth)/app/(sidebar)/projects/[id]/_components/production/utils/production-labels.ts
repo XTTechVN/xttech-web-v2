@@ -40,6 +40,7 @@ export const FULL_STATUS_ORDER: ProgressStepCode[] = [
 ];
 
 export const DISPLAY_STEPS_ORDER: ProgressStepCode[] = [
+  'surveyed',
   'producing',
   'factory_done',
   'installed',
@@ -117,7 +118,6 @@ export const getStepIndex = (status: string): number =>
 // Bỏ qua mốc tùy chọn (đang vận chuyển / đang lắp đặt). 'installed' -> nghiệm thu phải lập biên bản
 // 2 bên ký (tab Nghiệm thu), 'surveyed' -> sản xuất do lệnh sản xuất tạo, nên không có mốc kế tiếp ở đây.
 const NEXT_STEP_BY_STATUS: Partial<Record<ProgressStepCode, ProgressStepCode>> = {
-  surveyed: 'producing',
   producing: 'factory_done',
   factory_done: 'installed',
 };

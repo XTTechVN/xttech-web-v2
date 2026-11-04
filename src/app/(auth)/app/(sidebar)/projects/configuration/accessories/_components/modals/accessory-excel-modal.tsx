@@ -57,7 +57,7 @@ function validateAccessoryRow(
 
   const brand = brands.find((b) => b.id === Number(data.brandId));
   if (!brand) errors.push('Chưa chọn hãng phụ kiện');
-  if (Number(data.unitPrice) < 0) errors.push('Đơn giá không hợp lệ');
+  if (Number(data.costPrice ?? 0) < 0) errors.push('Giá nhập không được âm');
 
   const cat = categories.find((c) => c.id === Number(data.categoryId));
   const matched = code
@@ -83,9 +83,8 @@ function validateAccessoryRow(
           brandId: matched.brandId ?? null,
           categoryId: matched.categoryId ?? null,
           unit: matched.unit || 'pcs',
-          color: matched.color || 'black',
+          color: matched.color || '',
           specification: matched.specification ?? null,
-          unitPrice: matched.unitPrice ?? matched.salePrice ?? 0,
           costPrice: matched.costPrice ?? 0,
           isActive: matched.isActive !== false,
         }
@@ -194,9 +193,8 @@ export function AccessoryExcelModal({
       brandId: brands[0]?.id ?? null,
       categoryId: categories[0]?.id ?? null,
       unit: 'pcs',
-      color: 'black',
+      color: '',
       specification: null,
-      unitPrice: 150000,
       costPrice: 120000,
       isActive: true,
     };
@@ -220,9 +218,8 @@ export function AccessoryExcelModal({
         brandId: r.data.brandId ? Number(r.data.brandId) : null,
         categoryId: r.data.categoryId ? Number(r.data.categoryId) : null,
         unit: r.data.unit,
-        color: r.data.color,
+        color: r.data.color || '',
         specification: r.data.specification,
-        unitPrice: Number(r.data.unitPrice) || 0,
         costPrice: Number(r.data.costPrice) || 0,
         isActive: r.data.isActive,
       })),

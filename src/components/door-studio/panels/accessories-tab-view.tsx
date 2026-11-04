@@ -113,7 +113,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
   const totalIndividualPrice = useMemo(() =>
     selectedAccessories.reduce((sum, item) => {
       const acc = accessories.find((a) => a.id === item.accessoryId);
-      const price = acc?.salePrice || acc?.retailPrice || acc?.costPrice || 0;
+      const price = acc?.costPrice || 0;
       return sum + price * item.quantity;
     }, 0),
     [selectedAccessories, accessories]

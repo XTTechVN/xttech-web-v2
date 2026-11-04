@@ -9,3 +9,4 @@ export * from './panels/cell-inspector';
 export * from './panels/accessories/modals';
 export * from './bom-sidebar';
 export * from './studio-modal';
+export * from './door-thumbnail';

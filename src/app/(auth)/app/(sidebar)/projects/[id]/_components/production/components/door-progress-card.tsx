@@ -4,7 +4,7 @@ import React from 'react';
 import { Check, ImageOff } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import type { ProgressMatrixItem, ProjectDoorPosition } from '@/types';
-import { DoorThumbnail } from '../../../../configuration/door-templates/_components/door-thumbnail';
+import { DoorThumbnail } from '@/components';
 
 interface DoorProgressCardProps {
   position: ProjectDoorPosition;

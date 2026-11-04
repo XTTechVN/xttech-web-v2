@@ -36,7 +36,7 @@ const COLUMNS: Array<{ field: SortField; label: string; align: 'left' | 'center'
   { field: 'specification', label: 'Quy cách', align: 'center', width: 'w-32' },
   { field: 'unit', label: 'ĐVT', align: 'center', width: 'w-24' },
   { field: 'color', label: 'Màu sắc', align: 'center', width: 'w-28' },
-  { field: 'price', label: 'Đơn giá', align: 'right', width: 'w-32' },
+  { field: 'price', label: 'Giá nhập', align: 'right', width: 'w-32' },
   { field: 'status', label: 'Trạng thái', align: 'center', width: 'w-28' },
 ];
 
@@ -91,7 +91,7 @@ export function AccessoryTable({
           break;
         }
         case 'price':
-          comparison = (a.unitPrice || a.salePrice || 0) - (b.unitPrice || b.salePrice || 0);
+          comparison = (a.costPrice || 0) - (b.costPrice || 0);
           break;
         case 'status':
           comparison = (a.isActive !== false ? 1 : 0) - (b.isActive !== false ? 1 : 0);
@@ -100,7 +100,7 @@ export function AccessoryTable({
       return sortOrder === 'asc' ? comparison : -comparison;
     });
   }, [accessories, sortField, sortOrder]);
-
+  
   return (
     <div className="w-full bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xs">
       <div className="overflow-x-auto">
@@ -146,7 +146,7 @@ export function AccessoryTable({
               const categoryLabel = acc.category?.name || '—';
               const unitLabel = formatAccessoryUnit(acc.unit) || '—';
               const colorLabel = acc.color ? ACCESSORY_COLOR_MAP[acc.color.toLowerCase()] || acc.color : '—';
-              const price = acc.unitPrice || acc.salePrice || 0;
+              const price = acc.costPrice || 0;
               const isSelected = Boolean(selectedIdSet?.has(acc.id));
               const imgSrc = acc.imagePath
                 ? acc.imagePath.startsWith('http')
@@ -274,7 +274,7 @@ export function AccessoryTable({
 
       {lightboxUrl && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-9999 flex items-center justify-center bg-black/70 backdrop-blur-sm"
           onClick={() => setLightboxUrl(null)}
         >
           <button
