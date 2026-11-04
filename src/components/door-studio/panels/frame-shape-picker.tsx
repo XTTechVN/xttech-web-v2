@@ -54,6 +54,7 @@ export const FrameShapePicker: React.FC<FrameShapePickerProps> = ({
       <div className="grid grid-cols-3 gap-2 max-h-[320px] overflow-y-auto pr-1">
         {filteredItems.map((item) => {
           const isSelected = currentShape === item.id;
+          const isOpenBottomItem = item.id.endsWith('_open');
           return (
             <button
               key={item.id}
@@ -70,11 +71,23 @@ export const FrameShapePicker: React.FC<FrameShapePickerProps> = ({
                 <svg viewBox="0 0 40 40" className="w-8 h-8">
                   <path
                     d={item.svgPath}
-                    fill="#e0f2fe"
-                    stroke="#475569"
-                    strokeWidth="2"
+                    fill="#99f6e4"
+                    fillOpacity="0.55"
+                    stroke="#334155"
+                    strokeWidth="2.2"
                     strokeLinejoin="round"
                   />
+                  {isOpenBottomItem && (
+                    <line
+                      x1="6"
+                      y1="34"
+                      x2="34"
+                      y2="34"
+                      stroke="#64748b"
+                      strokeWidth="1.2"
+                      strokeDasharray="2.5,2"
+                    />
+                  )}
                 </svg>
               </div>
               <span className="text-[10.5px] font-medium text-gray-700 text-center leading-tight line-clamp-2">

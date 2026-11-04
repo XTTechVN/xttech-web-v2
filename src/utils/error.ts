@@ -56,6 +56,9 @@ export function getErrorMessage(err: unknown, fallback = 'Đã có lỗi xảy r
   }
 
   if (errorObj.message && typeof errorObj.message === 'string') {
+    if (errorObj.message === 'Network Error') {
+      return 'Không thể kết nối đến máy chủ hoặc phản hồi bị gián đoạn. Vui lòng kiểm tra kết nối mạng và thử lại.';
+    }
     return errorObj.message;
   }
 
@@ -71,4 +74,3 @@ export function showErrorToast(err: unknown, fallback?: string): string {
   toast.error(message);
   return message;
 }
-

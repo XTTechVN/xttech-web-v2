@@ -118,14 +118,37 @@ export interface AcceptanceCreatePayload {
   recipientEmail?: string;
 }
 
-// ---------- Bảo hành ----------
+// ---------- Bảo hành & Sửa chữa 2 Giai đoạn ----------
 export type WarrantyState = 'not_started' | 'active' | 'expired';
 export type WarrantyVisitStatus = 'scheduled' | 'in_progress' | 'done' | 'cancelled';
 export type WarrantyVisitKind = 'periodic' | 'claim';
+export type WarrantyIssueTag =
+  | 'lock_jam'
+  | 'sash_sag'
+  | 'water_leak'
+  | 'glass_crack'
+  | 'seal_peel'
+  | 'other';
+
+export interface WarrantyVisitPositionItem {
+  id: number;
+  code: string;
+  name?: string | null;
+  doorName: string;
+  floorId: number;
+  floorName?: string | null;
+  width: number;
+  height: number;
+  areaM2: number;
+  designImage?: string | null;
+}
 
 export interface WarrantyVisit {
   id: number;
   projectId: number;
+  projectCode?: string | null;
+  projectName?: string | null;
+  projectAddress?: string | null;
   code: string;
   kind: WarrantyVisitKind;
   title: string;
@@ -136,9 +159,21 @@ export interface WarrantyVisit {
   assigneeId?: string | null;
   assigneeName?: string | null;
   positionIds: number[];
+  positions: WarrantyVisitPositionItem[];
+  // Giai đoạn 1: Khách hàng báo
+  requesterName?: string | null;
+  requesterPhone?: string | null;
+  issueTags: WarrantyIssueTag[];
   issueDescription?: string | null;
+  customerPhotos: EvidenceMediaItem[];
+  // Giai đoạn 2: Kỹ thuật viên kiểm tra & xử lý
+  diagnosisNote?: string | null;
+  damagedParts: string[];
+  repairActions?: string | null;
+  replacedParts: string[];
   resultNote?: string | null;
   photos: EvidenceMediaItem[];
+  // Phạm vi & phí
   isInScope: boolean;
   isChargeable: boolean;
   feeAmount: number;
@@ -165,12 +200,56 @@ export interface WarrantySummary {
   visits: WarrantyVisit[];
 }
 
+export interface WarrantyQueueStats {
+  totalOpen: number;
+  newClaims: number;
+  inProgressCount: number;
+  overdueCount: number;
+  doneCount: number;
+}
+
+export interface WarrantyQueueQueryParams {
+  search?: string;
+  status?: WarrantyVisitStatus;
+  kind?: WarrantyVisitKind;
+  isChargeable?: boolean;
+  overdueOnly?: boolean;
+  openOnly?: boolean;
+  assigneeId?: string;
+  projectId?: number;
+  offset?: number;
+  limit?: number;
+}
+
+export interface WarrantyQueueResponse {
+  stats: WarrantyQueueStats;
+  items: WarrantyVisit[];
+  total: number;
+}
+
+export interface PublicWarrantyClaimCreatePayload {
+  positionIds: number[];
+  requesterName: string;
+  requesterPhone: string;
+  scheduledDate?: string | null;
+  issueTags: WarrantyIssueTag[];
+  issueDescription: string;
+  customerPhotos: EvidenceMediaItem[];
+}
+
 export interface WarrantyVisitCreatePayload {
   kind?: WarrantyVisitKind;
   title: string;
   scheduledDate: string;
+  monthMark?: number;
   assigneeId?: string;
+  positionIds?: number[];
+  requesterName?: string;
+  requesterPhone?: string;
+  issueTags?: WarrantyIssueTag[];
   issueDescription?: string;
+  customerPhotos?: EvidenceMediaItem[];
+  isInScope?: boolean;
   isChargeable?: boolean;
   feeAmount?: number;
   scopeNote?: string;
@@ -179,19 +258,35 @@ export interface WarrantyVisitCreatePayload {
 export interface WarrantyVisitUpdatePayload {
   title?: string;
   scheduledDate?: string;
-  assigneeId?: string;
-  issueDescription?: string;
+  assigneeId?: string | null;
+  positionIds?: number[];
+  requesterName?: string | null;
+  requesterPhone?: string | null;
+  issueTags?: WarrantyIssueTag[];
+  issueDescription?: string | null;
+  customerPhotos?: EvidenceMediaItem[];
+  diagnosisNote?: string | null;
+  damagedParts?: string[];
+  repairActions?: string | null;
+  replacedParts?: string[];
   isInScope?: boolean;
   isChargeable?: boolean;
   feeAmount?: number;
-  scopeNote?: string;
+  scopeNote?: string | null;
 }
 
 export interface WarrantyVisitCompletePayload {
   resultNote: string;
   photos: EvidenceMediaItem[];
   actualDate?: string;
+  diagnosisNote?: string | null;
+  damagedParts?: string[];
+  repairActions?: string | null;
+  replacedParts?: string[];
+  isInScope?: boolean;
+  isChargeable?: boolean;
   feeAmount?: number;
+  scopeNote?: string | null;
 }
 
 // ---------- Tổng quan dự án & báo cáo ----------
@@ -252,8 +347,42 @@ export interface ReportOverview {
   warranty: { activeProjects: number; upcomingVisits7d: number; overdueVisits: number };
 }
 
-// ---------- Trang QR công khai ----------
+// ---------- Trang QR công khai Đa Tab ----------
+export interface QrWarrantyHeader {
+  state: WarrantyState;
+  warrantyMonths: number;
+  startDate?: string | null;
+  endDate?: string | null;
+  daysRemaining?: number | null;
+  elapsedPercent: number;
+  totalVisits: number;
+  openClaimsCount: number;
+}
+
+export interface QrProjectDoorItem {
+  id: number;
+  code: string;
+  name?: string | null;
+  doorName: string;
+  doorType?: string | null;
+  floorId: number;
+  floorName?: string | null;
+  width: number;
+  height: number;
+  areaM2: number;
+  isMeasured: boolean;
+  status: ProgressStepCode;
+  statusLabel: string;
+  brandName?: string | null;
+  seriesName?: string | null;
+  colorName?: string | null;
+  glassName?: string | null;
+  designImage?: string | null;
+  qrToken: string;
+}
+
 export interface PositionQrView {
+  positionId: number;
   projectId: number;
   code: string;
   name?: string | null;
@@ -261,6 +390,7 @@ export interface PositionQrView {
   doorType?: string | null;
   projectName: string;
   projectAddress?: string | null;
+  floorId?: number | null;
   floorName?: string | null;
   width: number;
   height: number;
@@ -296,4 +426,6 @@ export interface PositionQrView {
   }[];
   allowedNextSteps: ProgressStepCode[];
   qrUrl: string;
+  totalProjectDoors: number;
+  warrantyHeader: QrWarrantyHeader;
 }

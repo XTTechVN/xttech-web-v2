@@ -382,7 +382,7 @@ export const SASH_LAYOUT_CATALOG: Record<string, SashLayoutConfig> = {
       },
       { huongMo: '2-chieu', hasHandle: false, zIndex: 1 },
       {
-        huongMo: 'lua-phai',
+        huongMo: 'lua-trai',
         hasHandle: true,
         handleType: 'khoa-sap',
         handleSide: 'phai',
@@ -591,7 +591,7 @@ export const SASH_LAYOUT_CATALOG: Record<string, SashLayoutConfig> = {
       },
       { huongMo: '2-chieu', hasHandle: false, zIndex: 1 },
       {
-        huongMo: 'lua-phai',
+        huongMo: 'lua-trai',
         hasHandle: true,
         handleType: 'd-trai',
         handleSide: 'phai',

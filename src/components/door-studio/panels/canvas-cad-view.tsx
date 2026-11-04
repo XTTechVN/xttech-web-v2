@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { DoorCadRenderer, ResizeSplitParams } from '../cad-engine/door-cad-renderer';
 import { getVerticalSlices, getHorizontalSlices } from '../cad-engine/cad-tree-traverser';
 import { FrameShape, SceneCellNode, FrameConfig, SashConfig, MullionInfo } from '../studio-types';
 import { ProfileBar } from '@/types/profile';
-import { Plus, Minus, Target, Check, X } from 'lucide-react';
+import { Plus, Minus, Target, Check, X, Box } from 'lucide-react';
+
+const Door3DViewer = dynamic(() => import('../canvas-3d/door-3d-viewer'), { ssr: false });
 
 interface CanvasCadViewProps {
   w: number;
@@ -47,6 +50,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
   sashConfig,
   availableProfiles,
 }) => {
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [zoom, setZoom] = useState<number>(1);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -287,34 +291,68 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
       ref={containerRef}
       className="relative flex-1 flex flex-col h-full bg-slate-50 overflow-hidden border-x border-gray-200 select-none"
     >
-      {/* Top Floating Zoom Controls */}
-      <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/95 backdrop-blur p-1 rounded-lg shadow-2xs border border-slate-200 z-10">
+      {/* Top Floating Zoom & 2D/3D Toggle Controls */}
+      <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/95 backdrop-blur p-1 rounded-lg shadow-2xs border border-slate-200 z-20">
         <button
           type="button"
-          title="Phóng to"
-          onClick={handleZoomIn}
-          className="w-7 h-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
+          title={viewMode === '2d' ? 'Chuyển sang xem 3D trực tiếp' : 'Quay lại bản vẽ 2D CAD'}
+          onClick={() => setViewMode((m) => (m === '2d' ? '3d' : '2d'))}
+          className={`h-7 px-2 rounded flex items-center gap-1 text-xs font-bold transition-colors cursor-pointer ${
+            viewMode === '3d'
+              ? 'bg-primary text-white shadow-2xs'
+              : 'hover:bg-slate-100 text-slate-700'
+          }`}
         >
-          <Plus size={15} />
+          <Box size={14} />
+          <span>{viewMode === '3d' ? '2D CAD' : '3D'}</span>
         </button>
-        <button
-          type="button"
-          title="Thu nhỏ"
-          onClick={handleZoomOut}
-          className="w-7 h-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
-        >
-          <Minus size={15} />
-        </button>
-        <div className="w-px h-3.5 bg-slate-200 mx-0.5" />
-        <button
-          type="button"
-          title="Đặt lại góc nhìn"
-          onClick={handleResetZoom}
-          className="w-7 h-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
-        >
-          <Target size={14} />
-        </button>
+        {viewMode === '2d' && (
+          <>
+            <div className="w-px h-3.5 bg-slate-200 mx-0.5" />
+            <button
+              type="button"
+              title="Phóng to"
+              onClick={handleZoomIn}
+              className="w-7 h-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
+            >
+              <Plus size={15} />
+            </button>
+            <button
+              type="button"
+              title="Thu nhỏ"
+              onClick={handleZoomOut}
+              className="w-7 h-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
+            >
+              <Minus size={15} />
+            </button>
+            <div className="w-px h-3.5 bg-slate-200 mx-0.5" />
+            <button
+              type="button"
+              title="Đặt lại góc nhìn"
+              onClick={handleResetZoom}
+              className="w-7 h-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
+            >
+              <Target size={14} />
+            </button>
+          </>
+        )}
       </div>
+
+      {viewMode === '3d' ? (
+        <Door3DViewer
+          w={w}
+          h={h}
+          aluminumColor={aluminumColor}
+          hardwareColor={hardwareColor}
+          frameShape={frameShape}
+          rootCell={rootCell}
+          frameConfig={frameConfig}
+          sashConfig={sashConfig}
+          availableProfiles={availableProfiles}
+          compactMode={true}
+        />
+      ) : (
+        <>
 
       {/* Inline Quick Dimension Edit Popover */}
       {editTarget && (
@@ -444,6 +482,8 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
           {Math.round(zoom * 100)}%
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

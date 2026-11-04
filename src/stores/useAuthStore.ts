@@ -4,8 +4,8 @@ import { create } from 'zustand';
 // Middleware lưu trữ trạng thái của Zustand vào LocalStorage
 import { persist } from 'zustand/middleware';
 
-// Hàm xử lý đăng nhập
-import { signIn } from '@/actions';
+// Hàm xử lý đăng nhập và đăng xuất
+import { signIn, signOut } from '@/actions';
 
 // Kiểu dữ liệu dùng chung cho thông tin tài khoản và kết quả đăng nhập
 import { AuthUser } from '@/types';
@@ -18,14 +18,16 @@ interface AuthState {
   user: AuthUser | null;
   isLoading: boolean;
   signin: (username: string, password: string) => Promise<boolean>;
+  signout: () => Promise<void>;
   setAccessToken: (accessToken: string) => void;
+  setTokens: (accessToken: string, refreshToken?: string) => void;
   setUser: (user: AuthUser | null) => void;
   updateUser: (userData: Partial<AuthUser>) => void;
 }
 
 const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       isAuthenticated: false,
       accessToken: '',
       refreshToken: '',
@@ -51,7 +53,33 @@ const useAuthStore = create<AuthState>()(
         }
       },
 
+      signout: async () => {
+        const currentRefreshToken = get().refreshToken;
+        if (currentRefreshToken) {
+          await signOut(currentRefreshToken);
+        }
+        set({
+          isAuthenticated: false,
+          accessToken: '',
+          refreshToken: '',
+          user: null,
+        });
+        if (typeof document !== 'undefined') {
+          document.cookie = 'xt-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
+        }
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('xt-auth');
+          window.location.replace('/signin');
+        }
+      },
+
       setAccessToken: (accessToken: string) => set({ accessToken }),
+
+      setTokens: (accessToken: string, refreshToken?: string) =>
+        set((state) => ({
+          accessToken,
+          refreshToken: refreshToken || state.refreshToken,
+        })),
 
       setUser: (user: AuthUser | null) => {
         if (user && user.roles && typeof document !== 'undefined') {

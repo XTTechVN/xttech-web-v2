@@ -14,6 +14,17 @@ export const signIn = async ({ username, password }: SignInCredentials) => {
   }
 };
 
+export const signOut = async (refreshToken?: string) => {
+  try {
+    const res = await api.post(`/api/v1/auth/logout`, {
+      refreshToken: refreshToken || null,
+    });
+    return res.data;
+  } catch {
+    return { message: 'Đã đăng xuất khỏi phiên làm việc' };
+  }
+};
+
 export const forgetPassword = async (email: string) => {
   try {
     const res = await api.post(`/api/v1/auth/forget`, { email });

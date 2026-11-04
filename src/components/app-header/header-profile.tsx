@@ -3,8 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { Bell, User, Lock, LogOut, Download } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { Avatar, Dropdown } from '@/components';
 import { useAuthStore } from '@/stores';
+import { NativeTracking } from '@/hooks';
 import { UserRole } from '@/config';
 import { getFileUrl } from '@/utils';
 import { ProfileModal } from './profile-modal';
@@ -39,10 +41,11 @@ export function HeaderProfile({ userRole }: HeaderProfileProps) {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    document.cookie = 'xt-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
-    window.location.replace('/signin');
+  const handleLogout = async () => {
+    if (Capacitor.isNativePlatform()) {
+      await NativeTracking.stopTracking().catch(() => undefined);
+    }
+    await useAuthStore.getState().signout();
   };
 
   const roleName =

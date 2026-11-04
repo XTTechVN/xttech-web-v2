@@ -6,7 +6,10 @@ export type FrameShape =
   | 'arch_segment'
   | 'arch_semicircle'
   | 'arch_semicircle_open'
+  | 'arch_segment_leg'
+  | 'arch_segment_leg_open'
   | 'arch_pointed'
+  | 'arch_pointed_leg'
   | 'round_top_2'
   | 'round_top_2_open'
   | 'round_top_right'
@@ -159,6 +162,7 @@ export const HARDWARE_PALETTE: ColorSwatch[] = [
 export interface FrameShapeItem {
   id: FrameShape;
   name: string;
+  label?: string;
   category: FrameShapeCategory;
   svgPath: string;
   viewBox?: string;
@@ -169,39 +173,66 @@ export const FRAME_SHAPE_ITEMS: FrameShapeItem[] = [
   {
     id: 'rect',
     name: 'Chữ nhật',
+    label: 'Chữ nhật',
     category: 'basic',
     svgPath: 'M 4 4 H 36 V 36 H 4 Z',
   },
-  // Vòm
+  // Vòm (Đủ 8 mẫu chuẩn)
   {
     id: 'arch_half',
     name: 'Nửa tròn',
+    label: 'Nửa tròn',
     category: 'arch',
-    svgPath: 'M 4 36 A 16 16 0 0 1 36 36 Z',
+    svgPath: 'M 4 34 A 16 16 0 0 1 36 34 Z',
   },
   {
     id: 'arch_segment',
     name: 'Cung tròn',
+    label: 'Cung tròn',
     category: 'arch',
-    svgPath: 'M 4 36 Q 20 18 36 36 Z',
+    svgPath: 'M 4 32 A 22 22 0 0 1 36 32 Z',
   },
   {
     id: 'arch_semicircle',
     name: 'Vòm bán nguyệt',
+    label: 'Vòm bán nguyệt',
     category: 'arch',
-    svgPath: 'M 4 36 V 18 A 16 16 0 0 1 36 18 V 36 Z',
+    svgPath: 'M 4 36 V 20 A 16 16 0 0 1 36 20 V 36 Z',
   },
   {
     id: 'arch_semicircle_open',
-    name: 'Vòm hở chân',
+    name: 'Vòm bán nguyệt - hở chân',
+    label: 'Vòm bán nguyệt - hở chân',
     category: 'arch',
-    svgPath: 'M 4 36 V 18 A 16 16 0 0 1 36 18 V 36',
+    svgPath: 'M 4 36 V 20 A 16 16 0 0 1 36 20 V 36',
+  },
+  {
+    id: 'arch_segment_leg',
+    name: 'Vòm cung',
+    label: 'Vòm cung',
+    category: 'arch',
+    svgPath: 'M 4 36 V 16 A 22 22 0 0 1 36 16 V 36 Z',
+  },
+  {
+    id: 'arch_segment_leg_open',
+    name: 'Vòm cung - hở chân',
+    label: 'Vòm cung - hở chân',
+    category: 'arch',
+    svgPath: 'M 4 36 V 16 A 22 22 0 0 1 36 16 V 36',
   },
   {
     id: 'arch_pointed',
-    name: 'Vòm nhọn (Gothic)',
+    name: 'Vòm nhọn 2 cung',
+    label: 'Vòm nhọn 2 cung',
     category: 'arch',
-    svgPath: 'M 4 36 V 20 Q 8 6 20 2 Q 32 6 36 20 V 36 Z',
+    svgPath: 'M 4 36 A 28 28 0 0 1 20 6 A 28 28 0 0 1 36 36 Z',
+  },
+  {
+    id: 'arch_pointed_leg',
+    name: 'Vòm nhọn 2 cung có chân',
+    label: 'Vòm nhọn 2 cung có chân',
+    category: 'arch',
+    svgPath: 'M 4 36 V 22 A 24 24 0 0 1 20 4 A 24 24 0 0 1 36 22 V 36 Z',
   },
   // Bo góc
   {
@@ -267,11 +298,34 @@ export const SASH_TYPE_ITEMS: SashTypeItem[] = [
   { id: 'sliding', name: 'Trượt lùa', description: 'Cánh trượt ngang tiết kiệm diện tích' },
 ];
 
-export type StudioMainTab = 'info' | 'draw' | 'config' | 'bom' | 'accessories';
+export type StudioMainTab = 'info' | 'draw' | 'config' | 'bom' | 'accessories' | 'view3d';
 
 export type FrameCornerJoint = '45' | '90_horiz' | '90_vert' | '45_top_90_bot' | '63';
-export type SashCornerJoint = '45' | '90_vert' | '45_top_90_bot' | '90_horiz';
+export type SashCornerJoint = '45' | '90_vert' | '45_top_90_bot' | '90_horiz' | 'd_left' | 'd_right';
 export type BeadCornerJoint = '45' | '90_horiz' | '90_vert';
+
+export type SlidingSashRole = 'left_sliding' | 'right_sliding' | 'center_sliding';
+export type SashOffsetScope = 'all' | SlidingSashRole;
+
+export interface SashOffsetValues {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+export interface SashVariantProfiles {
+  leftProfileId?: number;
+  topProfileId?: number;
+  rightProfileId?: number;
+  bottomProfileId?: number;
+}
+
+export interface SlidingSashJoints {
+  leftSliding: SashCornerJoint;
+  rightSliding: SashCornerJoint;
+  centerSliding: SashCornerJoint;
+}
 
 export interface FrameEdgeProfile {
   profileId?: number;
@@ -334,6 +388,7 @@ export interface DoorCustomExtraItem {
   angle1: number;     // Góc trái, mặc định 90
   angle2: number;     // Góc phải, mặc định 90
   qty: number;        // Số lượng thanh, mặc định 1
+  fixedQty?: boolean; // Cố định/bộ (true) hoặc nhân theo số cánh/ô (false)
   target: 'frame' | 'sash';
 }
 
@@ -365,15 +420,17 @@ export interface FrameConfig {
 }
 
 export interface ArchConfig {
-  radiusMm?: number;        // Bán kính R (mm), mặc định W / 2
-  isCutAtApex: boolean;      // Cắt vòm tại đỉnh: chia thanh vòm và nẹp vòm thành hai phần trái, phải
-  bendingClampingMm: number; // Kẹp phôi (mm), mặc định 400
+  radiusMm?: number;                        // Bán kính R (mm), mặc định tự động theo công thức
+  isCutAtApex?: boolean;                    // Cắt vòm tại đỉnh: chia thanh vòm và nẹp vòm thành hai phần trái, phải
+  bendingClampingMm?: number;               // Kẹp đầu uốn vòm (mm), mặc định 250
+  legJoinMode?: 'continuous' | 'separate';  // 'continuous' (Phương án B - Mặc định) | 'separate' (Phương án A)
 }
 
 export const DEFAULT_ARCH_CONFIG: ArchConfig = {
   radiusMm: undefined,
   isCutAtApex: false,
-  bendingClampingMm: 400,
+  bendingClampingMm: 250,
+  legJoinMode: 'continuous',
 };
 
 export interface SashConfig {
@@ -385,13 +442,11 @@ export interface SashConfig {
   ngamNgangMm: number;
   ngamDocMm: number;
   truDoDongMm: number;
-  offsetMm: {
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-  };
+  offsetMm: SashOffsetValues;
+  offsetApplyTo?: SashOffsetScope;
+  slidingOffsets?: Partial<Record<SashOffsetScope, SashOffsetValues>>;
   cornerJoint: SashCornerJoint;
+  slidingJoints?: SlidingSashJoints;
   beadCornerJoint: BeadCornerJoint;
   isNhomCo: boolean;
   slidingOverlapMm?: number;
@@ -399,9 +454,12 @@ export interface SashConfig {
   topProfileId?: number;
   rightProfileId?: number;
   bottomProfileId?: number;
+  slidingVariants?: Partial<Record<SlidingSashRole, SashVariantProfiles>>;
   mullionProfileId?: number;
   beadProfileId?: number;
   dynamicMullionProfileId?: number;
+  opNoiProfileId?: number;
+  interlockProfileId?: number;
   gaskets?: DoorGasketConfigItem[];
   extras?: DoorCustomExtraItem[];
 }

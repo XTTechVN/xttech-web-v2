@@ -298,6 +298,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
               frameShape={frameShape}
               frameConfig={frameConfig}
               doorW={w}
+              doorH={h}
               onChangeFrameConfig={onChangeFrameConfig}
             />
           ) : (
@@ -417,6 +418,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   frameShape={frameShape}
                   frameConfig={frameConfig}
                   doorW={w}
+                  doorH={h}
                   onChangeFrameConfig={onChangeFrameConfig}
                 />
               )}
