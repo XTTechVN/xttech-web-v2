@@ -378,6 +378,7 @@ export interface QrProjectDoorItem {
   colorName?: string | null;
   glassName?: string | null;
   designImage?: string | null;
+  systemConfig?: Record<string, unknown> | null;
   qrToken: string;
 }
 
@@ -404,6 +405,7 @@ export interface PositionQrView {
   colorName?: string | null;
   glassName?: string | null;
   designImage?: string | null;
+  systemConfig?: Record<string, unknown> | null;
   bars: {
     name: string;
     length: number;

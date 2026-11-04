@@ -27,11 +27,13 @@ const UNIT_OPTIONS = [
   { value: 'pair', label: 'Đôi / Cặp (Pair)' },
   { value: 'roll', label: 'Cuộn (Roll)' },
   { value: 'box', label: 'Hộp (Box)' },
+  { value: 'bag', label: 'Túi (Bag)' },
   { value: 'meter', label: 'Mét (Meter)' },
   { value: 'sheet', label: 'Tấm (Sheet)' },
 ];
 
 const COLOR_OPTIONS = [
+  { value: '', label: '-- Để trống --' },
   { value: 'silver', label: 'Bạc ánh kim / Silver' },
   { value: 'black', label: 'Đen tuyền / Black' },
   { value: 'white', label: 'Trắng sứ / White' },
@@ -48,11 +50,8 @@ const DEFAULT_VALUES: AccessoryCreate = {
   name: '',
   specification: '',
   unit: 'pcs',
-  color: 'silver',
-  unitPrice: 0,
+  color: '',
   costPrice: 0,
-  retailPrice: 0,
-  salePrice: 0,
   isActive: true,
 };
 
@@ -92,11 +91,8 @@ export function AccessoryModal({ isOpen, onClose, accessory, brands, defaultBran
         name: accessory.name || '',
         specification: accessory.specification || '',
         unit: accessory.unit || 'pcs',
-        color: accessory.color || 'silver',
-        unitPrice: accessory.unitPrice ?? accessory.salePrice ?? 0,
+        color: accessory.color || '',
         costPrice: accessory.costPrice ?? 0,
-        retailPrice: accessory.retailPrice ?? 0,
-        salePrice: accessory.salePrice ?? accessory.unitPrice ?? 0,
         isActive: accessory.isActive,
       });
     } else {
@@ -150,14 +146,10 @@ export function AccessoryModal({ isOpen, onClose, accessory, brands, defaultBran
   });
 
   const onSubmit = (data: AccessoryCreate) => {
-    const price = Number(data.unitPrice) || 0;
     const payload = {
       ...data,
       brandId: Number(data.brandId),
       categoryId: data.categoryId ? Number(data.categoryId) : undefined,
-      unitPrice: price,
-      salePrice: price,
-      retailPrice: price,
       costPrice: Number(data.costPrice) || 0,
     };
     if (isEdit) updateMutate(payload);
@@ -269,17 +261,14 @@ export function AccessoryModal({ isOpen, onClose, accessory, brands, defaultBran
               ))}
             </select>
           </div>
-          <Input type="number" label="Đơn giá (VNĐ)" placeholder="VD: 85000" {...register('unitPrice')} />
+          <Input type="number" label="Giá nhập (VNĐ)" placeholder="VD: 65000" {...register('costPrice')} />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <Input type="number" label="Giá vốn / nhập (VNĐ)" placeholder="VD: 65000" {...register('costPrice')} />
-          <div className="flex items-center pt-5">
-            <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700">
-              <input type="checkbox" {...register('isActive')} className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary accent-primary" />
-              <span className="font-semibold">Kích hoạt hoạt động phụ kiện này</span>
-            </label>
-          </div>
+        <div className="flex items-center pt-1">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700">
+            <input type="checkbox" {...register('isActive')} className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary accent-primary" />
+            <span className="font-semibold">Kích hoạt hoạt động phụ kiện này</span>
+          </label>
         </div>
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100 mt-2">

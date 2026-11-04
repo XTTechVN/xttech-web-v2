@@ -5,14 +5,14 @@ import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { Modal } from '@/components/modal';
 import { Input } from '@/components/input';
 import { Button } from '@/components/button';
-import { Plus, Trash2, Layers, Calculator } from 'lucide-react';
+import { Plus, Trash2, Layers, Calculator, Check } from 'lucide-react';
 import { SearchableSelect } from './searchable-select';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
 import { showErrorToast, formatCurrency } from '@/utils';
 import { createAccessoryCombo, updateAccessoryCombo, getAccessories, getBrands } from '@/actions';
-import type { Accessory, AccessoryCombo, AccessoryComboCreate } from '@/types';
+import { normalizeDoorType, type Accessory, type AccessoryCombo, type AccessoryComboCreate } from '@/types';
 
 export interface ComboModalProps {
   isOpen: boolean;
@@ -28,14 +28,28 @@ const DEFAULT_VALUES: AccessoryComboCreate = {
   code: '',
   name: '',
   doorTypeId: null,
+  doorTypes: [],
   applyFor: 'khung',
   openingType: null,
+  description: '',
   brandId: null,
   comboItems: [],
   totalComboPrice: 0,
   isDefault: false,
   isActive: true,
 };
+
+const DOOR_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'casement_door', label: 'Cửa đi mở quay' },
+  { value: 'sliding_door', label: 'Cửa đi lùa' },
+  { value: 'casement_window', label: 'Cửa sổ mở quay' },
+  { value: 'sliding_window', label: 'Cửa sổ lùa' },
+  { value: 'folding_door', label: 'Cửa gấp xếp' },
+  { value: 'sliding_casement_door', label: 'Cửa trượt quay' },
+  { value: 'glass_wall', label: 'Vách kính' },
+  { value: 'curtain_wall', label: 'Mặt dựng' },
+  { value: 'composite', label: 'Tổng hợp' },
+];
 
 const OPENING_TYPE_OPTIONS = [
   { value: '', label: '-- Chọn kiểu mở --' },
@@ -68,7 +82,15 @@ export function ComboModal({
 
   const applyFor = watch('applyFor');
   const formBrandId = watch('brandId');
+  const selectedDoorTypes = watch('doorTypes') || [];
   const effectiveBrandId = formBrandId ? Number(formBrandId) : brandId || null;
+
+  const handleToggleDoorType = (doorTypeVal: string) => {
+    const current = Array.isArray(selectedDoorTypes) ? selectedDoorTypes : [];
+    const exists = current.includes(doorTypeVal);
+    const next = exists ? current.filter((item) => item !== doorTypeVal) : [...current, doorTypeVal];
+    setValue('doorTypes', next, { shouldDirty: true });
+  };
 
   // Query danh sách hãng phụ kiện để cho phép chọn hãng ngay trong modal
   const { data: accessoryBrandsData } = useQuery({
@@ -109,7 +131,7 @@ export function ComboModal({
 
   const accessoryPriceMap = useMemo(() => {
     const map = new Map<number, number>();
-    for (const acc of accessories) map.set(acc.id, acc.retailPrice || acc.salePrice || 0);
+    for (const acc of accessories) map.set(acc.id, acc.costPrice || 0);
     return map;
   }, [accessories]);
 
@@ -117,7 +139,7 @@ export function ComboModal({
     () =>
       accessories.map((a) => ({
         value: a.id,
-        label: `${a.name} (${a.code || 'N/A'}) - ${formatCurrency(a.retailPrice || a.salePrice || 0)}`,
+        label: `${a.name} (${a.code || 'N/A'}) - ${formatCurrency(a.costPrice || 0)}`,
       })),
     [accessories],
   );
@@ -135,24 +157,28 @@ export function ComboModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    const defaultAccId = accessories[0]?.id || 1;
     if (combo) {
       const items = combo.comboItems || [];
+      const normalizedTypes = Array.from(
+        new Set((combo.doorTypes || []).map((t) => normalizeDoorType(t)).filter(Boolean)),
+      );
       reset({
         code: combo.code,
         name: combo.name,
         doorTypeId: combo.doorTypeId ?? null,
+        doorTypes: normalizedTypes,
         applyFor: combo.applyFor ?? 'khung',
         openingType: combo.openingType ?? null,
+        description: combo.description ?? '',
         brandId: combo.brandId ?? brandId ?? null,
         comboItems:
           items.length > 0
             ? items.map((item) => ({
-                accessoryId: item.accessoryId ?? defaultAccId,
+                accessoryId: Number(item.accessoryId) || 0,
                 quantity: item.quantity || 1,
                 note: item.note || '',
               }))
-            : [{ accessoryId: defaultAccId, quantity: 1, note: '' }],
+            : [{ accessoryId: 0, quantity: 1, note: '' }],
         totalComboPrice: Number(combo.totalComboPrice) || 0,
         isDefault: combo.isDefault ?? false,
         isActive: combo.isActive ?? true,
@@ -162,7 +188,7 @@ export function ComboModal({
         ...DEFAULT_VALUES,
         applyFor: defaultApplyFor,
         brandId: brandId ?? brandOptions[0]?.id ?? null,
-        comboItems: [{ accessoryId: defaultAccId, quantity: 1, note: '' }],
+        comboItems: [{ accessoryId: 0, quantity: 1, note: '' }],
       });
     }
     // Chỉ khởi tạo lại form khi mở modal hoặc chuyển đổi đối tượng combo đang sửa
@@ -174,18 +200,30 @@ export function ComboModal({
       let finalPrice = Number(data.totalComboPrice);
       if ((!finalPrice || finalPrice <= 0) && suggestedTotal > 0) finalPrice = suggestedTotal;
       data.totalComboPrice = finalPrice;
-      data.comboItems = (data.comboItems || []).map((item) => ({
-        accessoryId: Number(item.accessoryId),
-        quantity: Number(item.quantity || 1),
-        note: item.note || '',
-      }));
+      data.comboItems = (data.comboItems || [])
+        .filter((item) => Number(item.accessoryId) > 0)
+        .map((item) => ({
+          accessoryId: Number(item.accessoryId),
+          quantity: Number(item.quantity || 1),
+          note: item.note || '',
+        }));
       const doorTypeId = data.doorTypeId ? Number(data.doorTypeId) : null;
       const resolvedBrandId = data.brandId ? Number(data.brandId) : brandId || combo?.brandId || null;
+      const cleanedDoorTypes = Array.isArray(data.doorTypes) ? data.doorTypes.filter(Boolean) : [];
+      const cleanedDescription = data.description?.trim() ? data.description.trim() : null;
+
+      const payload = {
+        ...data,
+        doorTypeId,
+        doorTypes: cleanedDoorTypes,
+        description: cleanedDescription,
+        brandId: resolvedBrandId,
+      };
 
       if (isEdit && combo) {
-        return updateAccessoryCombo(combo.id, { ...data, doorTypeId, brandId: resolvedBrandId });
+        return updateAccessoryCombo(combo.id, payload);
       }
-      return createAccessoryCombo({ ...data, doorTypeId, brandId: resolvedBrandId });
+      return createAccessoryCombo(payload);
     },
     onSuccess: (savedCombo) => {
       queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
@@ -251,6 +289,55 @@ export function ComboModal({
           )}
         </div>
 
+        {/* Loại cửa áp dụng */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700">
+              Loại cửa áp dụng <span className="font-normal text-slate-400">(có thể chọn nhiều loại cửa)</span>
+            </label>
+            {selectedDoorTypes.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setValue('doorTypes', [], { shouldDirty: true })}
+                className="text-[11px] text-rose-500 hover:underline cursor-pointer"
+              >
+                Bỏ chọn tất cả ({selectedDoorTypes.length})
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {DOOR_TYPE_OPTIONS.map((opt) => {
+              const isSelected = selectedDoorTypes.includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleToggleDoorType(opt.value)}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-primary/10 text-primary border-primary font-semibold shadow-2xs'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800'
+                  }`}
+                >
+                  {isSelected && <Check size={12} className="shrink-0" />}
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Mô tả combo phụ kiện */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả gói combo</label>
+          <textarea
+            rows={2}
+            placeholder="VD: Dùng cho cửa đi 1 cánh hoặc 2 cánh hệ 55, đồng bộ bản lề 4D + khóa đa điểm..."
+            {...register('description')}
+            className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:bg-white transition resize-none"
+          />
+        </div>
+
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
@@ -261,7 +348,7 @@ export function ComboModal({
               variant="outline"
               size="xs"
               leftIcon={<Plus size={13} />}
-              onClick={() => append({ accessoryId: accessories[0]?.id || 1, quantity: 1, note: '' })}
+              onClick={() => append({ accessoryId: 0, quantity: 1, note: '' })}
               type="button"
             >
               Thêm món
@@ -273,8 +360,8 @@ export function ComboModal({
               <div key={field.id} className="flex items-center gap-2 border border-slate-200 rounded-lg p-2 bg-slate-50/50">
                 <SearchableSelect
                   options={accessoryOptions}
-                  value={Number(comboItems?.[idx]?.accessoryId) || accessories[0]?.id || 0}
-                  onChange={(val) => setValue(`comboItems.${idx}.accessoryId`, Number(val))}
+                  value={Number(comboItems?.[idx]?.accessoryId) || 0}
+                  onChange={(val) => setValue(`comboItems.${idx}.accessoryId`, Number(val), { shouldDirty: true })}
                   placeholder="Chọn phụ kiện..."
                   className="min-w-0 flex-1"
                 />
@@ -334,4 +421,3 @@ export function ComboModal({
     </Modal>
   );
 }
-

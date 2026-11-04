@@ -5,7 +5,7 @@ import { CheckSquare, Eye, Layers, Search, Square, Wrench } from 'lucide-react';
 import { Badge, Button, Input, Modal, Skeleton } from '@/components';
 import { DOOR_STATUS_MAP } from '@/config';
 import type { QrProjectDoorItem } from '@/types';
-import { mediaUrl } from './qr-helpers';
+import { QrDoorVisual } from './qr-door-visual';
 
 interface TabProjectDoorsProps {
   doors: QrProjectDoorItem[];
@@ -71,49 +71,52 @@ export function TabProjectDoors({
   const selectedSet = new Set(selectedDoorIds);
 
   return (
-    <div className="space-y-3.5">
-      <div className="space-y-2.5 rounded-2xl border border-slate-200 bg-white p-3.5">
-        <div className="relative">
-          <Input
-            placeholder="Tìm theo mã cửa (D1, W1) hoặc tên vị trí..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            fullWidth
-          />
-          <Search
-            size={15}
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-        </div>
-        {floorNames.length > 1 && (
-          <div className="flex gap-1.5 overflow-x-auto pb-1">
-            <button
-              type="button"
-              onClick={() => setSelectedFloor('ALL')}
-              className={`min-h-[44px] shrink-0 rounded-full px-3.5 text-xs font-semibold transition ${
-                selectedFloor === 'ALL'
-                  ? 'bg-[#045863] text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Tất cả ({doors.length})
-            </button>
-            {floorNames.map((floor) => (
+    <div className="space-y-3.5 lg:space-y-5">
+      <div className="space-y-2.5 rounded-2xl border border-slate-200 bg-white p-3.5 lg:p-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 lg:gap-4">
+          <div className="relative lg:w-96 shrink-0">
+            <Input
+              placeholder="Tìm theo mã cửa (D1, W1) hoặc tên vị trí..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              fullWidth
+            />
+            <Search
+              size={15}
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+          </div>
+
+          {floorNames.length > 1 && (
+            <div className="flex gap-1.5 overflow-x-auto pb-1 lg:pb-0">
               <button
-                key={floor}
                 type="button"
-                onClick={() => setSelectedFloor(floor)}
-                className={`min-h-[44px] shrink-0 rounded-full px-3.5 text-xs font-semibold transition ${
-                  selectedFloor === floor
+                onClick={() => setSelectedFloor('ALL')}
+                className={`min-h-[44px] lg:min-h-[38px] shrink-0 rounded-full px-3.5 text-xs font-semibold transition cursor-pointer ${
+                  selectedFloor === 'ALL'
                     ? 'bg-[#045863] text-white'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                {floor}
+                Tất cả ({doors.length})
               </button>
-            ))}
-          </div>
-        )}
+              {floorNames.map((floor) => (
+                <button
+                  key={floor}
+                  type="button"
+                  onClick={() => setSelectedFloor(floor)}
+                  className={`min-h-[44px] lg:min-h-[38px] shrink-0 rounded-full px-3.5 text-xs font-semibold transition cursor-pointer ${
+                    selectedFloor === floor
+                      ? 'bg-[#045863] text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {floor}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <p className="text-[11px] text-slate-500">
           Chạm vào từng bộ cửa để chọn nhiều cửa cần bảo hành / sửa chữa cùng lúc.
         </p>
@@ -138,13 +141,13 @@ export function TabProjectDoors({
               <button
                 type="button"
                 onClick={() => onSelectAllFloor(floorIds)}
-                className="min-h-[44px] px-2.5 text-xs font-semibold text-[#045863] active:opacity-75"
+                className="min-h-[44px] lg:min-h-[36px] px-2.5 text-xs font-semibold text-[#045863] active:opacity-75 cursor-pointer"
               >
                 {isAllSelected ? 'Bỏ chọn tầng' : 'Chọn cả tầng'}
               </button>
             </div>
 
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 md:divide-y-0 md:grid md:grid-cols-2 xl:grid-cols-3 md:gap-3.5 md:p-3.5">
               {floorDoors.map((door) => {
                 const isSelected = selectedSet.has(door.id);
                 const isScanned = door.id === scannedPositionId;
@@ -152,14 +155,16 @@ export function TabProjectDoors({
                 return (
                   <div
                     key={door.id}
-                    className={`flex min-h-[68px] items-center justify-between gap-2.5 px-3.5 py-2.5 transition ${
-                      isSelected ? 'bg-[#045863]/5' : 'bg-white'
+                    className={`flex min-h-[68px] items-center justify-between gap-2.5 px-3.5 py-2.5 transition md:rounded-xl md:border ${
+                      isSelected
+                        ? 'bg-[#045863]/5 md:border-[#045863]/40'
+                        : 'bg-white md:border-slate-200/80 md:hover:border-slate-300'
                     }`}
                   >
                     <button
                       type="button"
                       onClick={() => onToggleDoor(door.id)}
-                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left cursor-pointer"
                     >
                       <span className="shrink-0 text-[#045863]">
                         {isSelected ? (
@@ -168,6 +173,19 @@ export function TabProjectDoors({
                           <Square size={20} className="text-slate-300" />
                         )}
                       </span>
+
+                      <QrDoorVisual
+                        code={door.code}
+                        doorName={door.doorName}
+                        name={door.name}
+                        width={door.width}
+                        height={door.height}
+                        designImage={door.designImage}
+                        systemConfig={door.systemConfig}
+                        variant="mini"
+                        className="w-14 h-16 shrink-0"
+                      />
+
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span className="font-mono text-xs font-bold text-slate-900">
@@ -197,8 +215,8 @@ export function TabProjectDoors({
                     <button
                       type="button"
                       onClick={() => setPreviewDoor(door)}
-                      className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:border-[#045863] hover:text-[#045863]"
-                      title="Xem chi tiết bộ cửa"
+                      className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:border-[#045863] hover:text-[#045863] cursor-pointer"
+                      title="Xem chi tiết & bản vẽ bộ cửa"
                     >
                       <Eye size={16} />
                     </button>
@@ -217,7 +235,7 @@ export function TabProjectDoors({
       )}
 
       {selectedDoorIds.length > 0 && (
-        <div className="sticky bottom-20 z-30 flex items-center justify-between gap-3 rounded-2xl bg-slate-900 p-3.5 text-white shadow-lg">
+        <div className="sticky bottom-20 lg:bottom-6 z-30 flex items-center justify-between gap-3 rounded-2xl bg-slate-900 p-3.5 lg:px-5 text-white shadow-lg">
           <div className="text-xs">
             Đã chọn{' '}
             <b className="font-mono text-sm tabular-nums text-teal-300">
@@ -235,10 +253,21 @@ export function TabProjectDoors({
         isOpen={Boolean(previewDoor)}
         onClose={() => setPreviewDoor(null)}
         title={previewDoor ? `Chi tiết cửa ${previewDoor.code}` : ''}
-        className="max-w-md w-full"
+        className="max-w-lg w-full"
       >
         {previewDoor && (
           <div className="space-y-3 text-xs">
+            <QrDoorVisual
+              code={previewDoor.code}
+              doorName={previewDoor.doorName}
+              name={previewDoor.name}
+              width={previewDoor.width}
+              height={previewDoor.height}
+              areaM2={previewDoor.areaM2}
+              designImage={previewDoor.designImage}
+              systemConfig={previewDoor.systemConfig}
+              variant="card"
+            />
             <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 px-3 py-1">
               {[
                 ['Tên vị trí', previewDoor.name || previewDoor.doorName],
@@ -260,13 +289,6 @@ export function TabProjectDoors({
                 ) : null,
               )}
             </div>
-            {previewDoor.designImage && (
-              <img
-                src={mediaUrl(previewDoor.designImage)}
-                alt={previewDoor.code}
-                className="max-h-64 w-full rounded-xl border border-slate-200 bg-slate-50 object-contain"
-              />
-            )}
           </div>
         )}
       </Modal>

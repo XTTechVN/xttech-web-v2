@@ -108,7 +108,7 @@ export const IndividualAccessoriesView: React.FC<IndividualAccessoriesViewProps>
                 <th className="py-2.5 px-3.5">Mã & Tên phụ kiện</th>
                 <th className="py-2.5 px-3">Phân loại</th>
                 <th className="py-2.5 px-2.5 text-center">ĐVT</th>
-                <th className="py-2.5 px-3 text-right">Đơn giá</th>
+                <th className="py-2.5 px-3 text-right">Giá nhập</th>
                 <th className="py-2.5 px-3 text-center w-28">Thao tác</th>
               </tr>
             </thead>
@@ -116,7 +116,7 @@ export const IndividualAccessoriesView: React.FC<IndividualAccessoriesViewProps>
               {filtered.map((acc) => {
                 const qty = selectedMap.get(acc.id) || 0;
                 const isSelected = qty > 0;
-                const price = acc.salePrice || acc.retailPrice || acc.costPrice || 0;
+                const price = acc.costPrice || 0;
                 const unitCfg = acc.unit ? ACCESSORY_UNIT_CONFIG[acc.unit] : null;
 
                 return (

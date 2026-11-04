@@ -207,7 +207,6 @@ export interface AccessoryExcelItemData {
   unit: string;
   color: string;
   specification: string | null;
-  unitPrice: number;
   costPrice: number;
   isActive: boolean;
 }
@@ -239,7 +238,6 @@ export interface AccessoryBulkUpsertItem {
   unit: string;
   color: string;
   specification: string | null;
-  unitPrice: number;
   costPrice: number;
   isActive: boolean;
 }

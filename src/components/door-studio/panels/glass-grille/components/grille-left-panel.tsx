@@ -352,7 +352,7 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
               <option value="">-- Chọn phụ kiện trong kho --</option>
               {accessories.map((acc) => (
                 <option key={acc.id} value={acc.id}>
-                  {acc.code ? `[${acc.code}] ` : ''}{acc.name} ({((acc.unitPrice || acc.salePrice || 0)).toLocaleString('vi-VN')} đ)
+                  {acc.code ? `[${acc.code}] ` : ''}{acc.name} ({(acc.costPrice || 0).toLocaleString('vi-VN')} đ)
                 </option>
               ))}
             </select>

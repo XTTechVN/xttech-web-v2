@@ -93,7 +93,7 @@ export const ItemLibrarySelector: React.FC<ItemLibrarySelectorProps> = ({
             onChange={(e) => onSelectAccessoryId(Number(e.target.value))}
             options={accessories.map((a) => ({
               value: a.id,
-              label: `[${a.code || 'ACC'}] ${a.name} (${(a.costPrice || a.unitPrice || 0).toLocaleString('vi-VN')}đ)`,
+              label: `[${a.code || 'ACC'}] ${a.name} (${(a.costPrice || 0).toLocaleString('vi-VN')}đ)`,
             }))}
           />
         </div>

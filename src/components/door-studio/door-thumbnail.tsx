@@ -1,21 +1,32 @@
 'use client';
 
 import React, { useId } from 'react';
+import { DoorCadRenderer } from './cad-engine/door-cad-renderer';
 import {
-  DoorCadRenderer,
   DEFAULT_FRAME_CONFIG,
   DEFAULT_SASH_CONFIG,
   type SceneCellNode,
   type FrameShape,
   type FrameConfig,
   type SashConfig,
-} from '@/components';
+} from './studio-types';
 
-interface DoorThumbnailProps {
+export interface DoorThumbnailProps {
   door?: { systemConfig?: Record<string, unknown> | null } | null;
   systemConfig?: Record<string, unknown> | null;
   hideDimensions?: boolean;
   className?: string;
+}
+
+interface RawDoorSystemConfig {
+  w?: number;
+  h?: number;
+  aluminumColor?: string;
+  hardwareColor?: string;
+  frameShape?: FrameShape;
+  frameConfig?: Partial<FrameConfig>;
+  sashConfig?: Partial<SashConfig>;
+  rootCell?: SceneCellNode | null;
 }
 
 /**
@@ -28,13 +39,13 @@ export function DoorThumbnail({
   className = '',
 }: DoorThumbnailProps) {
   const svgId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
-  const sc = (directConfig || door?.systemConfig || {}) as Record<string, any>;
+  const sc = (directConfig || door?.systemConfig || {}) as RawDoorSystemConfig;
 
-  const w: number = sc.w || 800;
-  const h: number = sc.h || 1200;
+  const w: number = Number(sc.w) || 800;
+  const h: number = Number(sc.h) || 1200;
   const aluminumColor: string = sc.aluminumColor || '#C6A869';
   const hardwareColor: string = sc.hardwareColor || '#1E293B';
-  const frameShape: FrameShape = (sc.frameShape as FrameShape) || 'rect';
+  const frameShape: FrameShape = sc.frameShape || 'rect';
 
   const frameConfig: FrameConfig = sc.frameConfig
     ? {
@@ -80,3 +91,4 @@ export function DoorThumbnail({
     </div>
   );
 }
+

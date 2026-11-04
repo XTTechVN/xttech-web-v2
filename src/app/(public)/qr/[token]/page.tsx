@@ -139,22 +139,67 @@ export default function QrPositionPage({ params }: { params: Promise<{ token: st
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 px-4 py-2.5 backdrop-blur-md">
-        <div className="mx-auto flex max-w-lg items-center justify-between">
-          <div className="flex items-center gap-2 text-[#045863]">
-            <QrCode size={18} />
-            <span className="text-xs font-bold uppercase tracking-wider">
+    <div className="min-h-screen bg-slate-50 pb-24 lg:pb-12">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 px-4 lg:px-8 py-2.5 lg:py-3 backdrop-blur-md">
+        <div className="mx-auto flex max-w-lg lg:max-w-7xl items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5 text-[#045863]">
+            <QrCode size={18} className="shrink-0" />
+            <span className="text-xs lg:text-sm font-bold uppercase tracking-wider">
               XT-Tech · Cổng QR Công Trình
             </span>
           </div>
-          <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-bold text-slate-700">
-            {view.code}
-          </span>
+
+          {/* Thanh điều hướng ngang trên Máy tính (Desktop >= 1024px) */}
+          <nav
+            aria-label="Điều hướng cổng QR trên máy tính"
+            className="hidden lg:flex items-center gap-1.5 rounded-xl bg-slate-100/90 p-1 border border-slate-200/70"
+          >
+            {navItems.map((item) => {
+              const ActiveIcon = item.Icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveTab(item.id)}
+                  className={`relative inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-bold transition cursor-pointer ${
+                    isActive
+                      ? 'bg-[#045863] text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-white/70 hover:text-slate-900'
+                  }`}
+                >
+                  <ActiveIcon size={15} />
+                  <span>{item.label}</span>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span
+                      className={`inline-flex h-4 min-w-[18px] items-center justify-center rounded-full px-1.5 font-mono text-[10px] font-bold tabular-nums ${
+                        isActive
+                          ? 'bg-white text-[#045863]'
+                          : 'bg-[#045863]/15 text-[#045863]'
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            {view.floorName && (
+              <span className="hidden sm:inline-block rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                {view.floorName}
+              </span>
+            )}
+            <span className="rounded-md bg-[#045863]/10 border border-[#045863]/20 px-2.5 py-1 font-mono text-xs font-bold text-[#045863]">
+              {view.code}
+            </span>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-lg space-y-4 px-3.5 pt-3.5">
+      <main className="mx-auto max-w-lg lg:max-w-7xl space-y-4 lg:space-y-6 px-3.5 lg:px-8 pt-3.5 lg:pt-6">
         <QrProjectHeader
           view={view}
           onOpenWarrantyBook={() => setActiveTab('warranty_book')}
@@ -213,9 +258,10 @@ export default function QrPositionPage({ params }: { params: Promise<{ token: st
         )}
       </main>
 
+      {/* Thanh điều hướng đáy cố định cho Mobile (< 1024px) */}
       <nav
         aria-label="Điều hướng cổng QR"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-md"
+        className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-md"
       >
         <div className="mx-auto grid max-w-lg grid-cols-4">
           {navItems.map((item) => {

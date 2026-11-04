@@ -1,6 +1,6 @@
 import type { QuotationSheet, QuotationSheetRow } from '@/types';
 import { getFileUrl } from '@/utils';
-import { DoorThumbnail } from '../../../../configuration/door-templates/_components/door-thumbnail';
+import { DoorThumbnail } from '@/components';
 import {
   SHEET_UNIT_LABELS,
   floorLetter,
