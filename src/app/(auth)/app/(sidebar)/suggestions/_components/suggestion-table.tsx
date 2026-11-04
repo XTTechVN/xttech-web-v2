@@ -3,13 +3,13 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { RotateCw, Plus, Download, Eye, Pencil, Trash2 } from 'lucide-react';
+import { RotateCw, Plus, Eye, Pencil, Trash2 } from 'lucide-react';
 import { useSuggestionStore } from '@/stores/useSuggestionStore';
 import toast from 'react-hot-toast';
 import { showErrorToast } from '@/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks';
-import { TableData, TableAction, Button, Heading } from '@/components';
+import { TableData, TableAction, Button } from '@/components';
 import { getSuggestions } from '@/actions/suggestion';
 import { Suggestion } from '@/types';
 
@@ -47,8 +47,6 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
     setDetailModalOpen,
     resetFilters,
     setCreateModalOpen,
-    isExporting,
-    setExporting,
     isRefreshing,
     setRefreshing,
     typeFilterVal,
@@ -100,14 +98,6 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
     },
     [debouncedTab, isManager, currentUserId, debouncedSearch, debouncedType],
   );
-
-  const handleExportExcel = () => {
-    setExporting(true);
-    setTimeout(() => {
-      setExporting(false);
-      toast.success('Xuất file Excel thành công!');
-    }, 1200);
-  };
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -379,29 +369,7 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
 
   return (
     <div className="flex flex-col gap-4">
-      {/* 1. Header Panel */}
-      <div className="flex md:flex-row justify-end items-start md:items-center w-full gap-4">
-        {/* Right Header (Add, Export & Refresh) */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setCreateModalOpen(true)}
-            leftIcon={<Plus className="w-4 h-4" />}
-            className="px-2.5 lg:px-3 gap-0 lg:gap-2"
-          >
-            <span className="hidden lg:inline">Tạo đề xuất</span>
-          </Button>
-
-
-
-          <Button variant="outline" size="sm" onClick={handleRefresh} className="p-2 h-9 w-9 shrink-0 flex items-center justify-center rounded-lg hover:bg-[#ececf27d]">
-            <RotateCw className={`w-4 h-4 text-slate-500 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
-      </div>
-
-      {/* 2. Responsive TableData */}
+      {/* Responsive TableData */}
       <TableData<Suggestion>
         queryKey={queryKey}
         fetcher={fetcher}
@@ -409,10 +377,10 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
         renderCard={renderCard}
         select={false}
         search={{
-          placeholder: 'Tìm kiếm theo tên nhân viên hoặc phòng ban...',
+          placeholder: 'Tìm nhân viên hoặc phòng ban',
           value: search || '',
           onChange: setSearch,
-          className: 'min-w-[350px]',
+          className: 'min-w-[320px]',
         }}
         filters={[
           {
@@ -449,6 +417,50 @@ export default function SuggestionTable({ isManager, currentUserId }: Suggestion
             className: 'w-44',
           },
         ]}
+        actions={
+          <div className="flex items-center gap-3">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setCreateModalOpen(true)}
+              leftIcon={<Plus className="w-4 h-4" />}
+              className="px-2.5 lg:px-3 gap-0 lg:gap-2 rounded-xl"
+            >
+              <span className="hidden lg:inline">Tạo đề xuất</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              className="p-2 h-9 w-9 shrink-0 flex items-center justify-center rounded-xl hover:bg-[#ececf27d]"
+            >
+              <RotateCw className={`w-4 h-4 text-[#045863] ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+        }
+        mobileActions={{
+          primary: (
+            <button
+              type="button"
+              onClick={() => setCreateModalOpen(true)}
+              className="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors shadow-xs active:scale-95 cursor-pointer"
+              title="Tạo đề xuất"
+            >
+              <Plus className="w-4 h-4 text-white" />
+            </button>
+          ),
+          secondary: (
+            <button
+              type="button"
+              onClick={handleRefresh}
+              className="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl bg-white border border-gray-200 hover:bg-slate-50 transition-colors shadow-xs active:scale-95 cursor-pointer"
+              title="Làm mới"
+            >
+              <RotateCw className={`w-4 h-4 text-[#045863] ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+          ),
+        }}
       />
     </div>
   );

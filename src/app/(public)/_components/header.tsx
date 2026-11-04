@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 // Thành phần dùng chung cho components
 import { Button, Heading, Avatar, XTLogo } from '@/components';
@@ -10,19 +11,83 @@ import { getFileUrl } from '@/utils';
 import useAuthStore from '@/stores/useAuthStore';
 
 const NAV_LINKS = [
-  { href: '/#about', label: 'Về chúng tôi' },
-  { href: '/pricing', label: 'Giá' },
-  { href: '/#contact', label: 'Liên hệ' },
+  { href: '/#about', label: 'Về chúng tôi', key: 'about' },
+  { href: '/pricing', label: 'Giá', key: 'pricing' },
+  { href: '/#contact', label: 'Liên hệ', key: 'contact' },
 ];
 
 export const Header = () => {
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentHash, setCurrentHash] = useState('');
   const { isAuthenticated, user } = useAuthStore();
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined') {
+      setCurrentHash(window.location.hash);
+    }
   }, []);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentHash(window.location.hash);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Theo dõi vị trí cuộn trên trang chủ '/' để tự động cập nhật active giữa 'about' và 'contact'
+  useEffect(() => {
+    if (pathname !== '/') return;
+
+    const handleScroll = () => {
+      const contactEl = document.getElementById('contact');
+      if (contactEl) {
+        const rect = contactEl.getBoundingClientRect();
+        if (rect.top <= window.innerHeight * 0.7) {
+          setCurrentHash('#contact');
+          return;
+        }
+      }
+      if (window.scrollY < 400 || !window.location.hash || window.location.hash === '#about') {
+        setCurrentHash('#about');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [pathname]);
+
+  const activeKey = pathname?.startsWith('/pricing')
+    ? 'pricing'
+    : pathname === '/'
+    ? currentHash === '#contact'
+      ? 'contact'
+      : 'about'
+    : '';
+
+  const handleLinkClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    link: (typeof NAV_LINKS)[number],
+  ) => {
+    if (link.key === 'pricing') {
+      return;
+    }
+
+    if (pathname === '/') {
+      const targetEl = document.getElementById(link.key);
+      if (targetEl) {
+        e.preventDefault();
+        targetEl.scrollIntoView({ behavior: 'smooth' });
+        window.history.pushState(null, '', `#${link.key}`);
+        setCurrentHash(`#${link.key}`);
+      }
+    } else {
+      setCurrentHash(`#${link.key}`);
+    }
+  };
 
   // Đóng menu khi resize lên desktop
   useEffect(() => {
@@ -37,20 +102,41 @@ export const Header = () => {
     <header className="w-full border-b border-gray-200 bg-white backdrop-blur-md sticky top-0 z-50 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center gap-2.5">
+        <Link
+          href="/"
+          onClick={(e) => {
+            if (pathname === '/') {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              window.history.pushState(null, '', '/');
+              setCurrentHash('#about');
+            }
+          }}
+          className="flex items-center gap-2.5 hover:opacity-90 transition-opacity"
+        >
           <XTLogo className="w-8 h-8 drop-shadow-[0_2px_5px_rgba(4,88,99,0.35)]" />
           <Heading size="h1" className="text-primary tracking-tight">
             XTTECH
           </Heading>
-        </div>
+        </Link>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const isActive = activeKey === link.key;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={(e) => handleLinkClick(e, link)}
+                className={`text-sm font-semibold transition-colors ${
+                  isActive ? 'text-primary' : 'text-gray-600 hover:text-primary'
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Right side: Auth + Hamburger */}
@@ -109,16 +195,26 @@ export const Header = () => {
         }`}
       >
         <nav className="flex flex-col px-4 py-3 bg-white/95 backdrop-blur-md gap-1">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-sm font-semibold text-gray-600 hover:text-primary hover:bg-primary/5 px-3 py-2.5 rounded-lg transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const isActive = activeKey === link.key;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={(e) => {
+                  setMobileMenuOpen(false);
+                  handleLinkClick(e, link);
+                }}
+                className={`text-sm font-semibold px-3 py-2.5 rounded-lg transition-colors ${
+                  isActive
+                    ? 'text-primary bg-primary/10'
+                    : 'text-gray-600 hover:text-primary hover:bg-primary/5'
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </header>

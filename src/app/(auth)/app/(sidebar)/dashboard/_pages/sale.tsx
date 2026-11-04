@@ -38,13 +38,13 @@ export const SaleDashboard = () => {
       title: 'Trạng thái điểm danh',
       value: isCheckedIn ? 'Đang làm việc' : 'Chưa vào ca',
       icon: <Clock size={18} />,
-      onClick: () => router.push('/app/attendances'),
+      onClick: () => router.push('/app/attendances/payroll'),
     },
     {
       title: 'Giờ check-in',
       value: checkInText,
       icon: <CheckCircle2 size={18} />,
-      onClick: () => router.push('/app/attendances'),
+      onClick: () => router.push('/app/attendances/payroll'),
     },
     {
       title: 'Tổng nhân sự công ty',
