@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { Toaster } from 'react-hot-toast';
 import { AppUpdateModal } from '@/components';
+import { QueryProvider } from '@/contexts';
 
 import './globals.css';
 
@@ -60,9 +61,11 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased scroll-smooth`} suppressHydrationWarning>
       <body className="bg-white antialiased min-h-screen" suppressHydrationWarning>
-        {children}
-        <Toaster position="top-center" />
-        <AppUpdateModal />
+        <QueryProvider>
+          {children}
+          <Toaster position="top-center" />
+          <AppUpdateModal />
+        </QueryProvider>
       </body>
     </html>
   );

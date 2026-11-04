@@ -3,6 +3,10 @@
 All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-11-04
+### Fixed (Cổng QR Công trình `/qr/[token]` — Bọc `QueryProvider` Toàn cục tại `RootLayout`)
+- **Khắc phục lỗi thiếu `QueryClientProvider` trên nhánh trang công khai `(public)` ([`QueryProvider.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/contexts/QueryProvider.tsx), [`contexts/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/contexts/index.ts), [`app/layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/layout.tsx), [`app/(auth)/app/layout.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/layout.tsx)):**
+  - Tạo mới Client Provider [`QueryProvider`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/contexts/QueryProvider.tsx) bọc `QueryClientProvider` (sử dụng singleton [`queryClient`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/utils/query.ts)) ngay tại [`RootLayout` (`src/app/layout.tsx`)](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/layout.tsx#L63-L69) và gỡ bỏ `QueryClientProvider` trùng lặp trong [`AppLayout` (`src/app/(auth)/app/layout.tsx`)](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/layout.tsx#L53-L57), giúp các trang công khai sử dụng React Query (`useQuery`, `useMutation`, `useQueryClient`) như `/qr/[token]` hoạt động ổn định.
+
 ### Added & Enhanced (Cổng QR Công Trình Đa Tab Mobile-First `/qr/[token]` Chuẩn `ui-ux-pro-max` & Luồng Bảo Hành / Sửa Chữa 2 Giai Đoạn)
 - **Thiết kế Cổng QR Công Trình 4 Tab Mobile-First ([`src/app/(public)/qr/[token]/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(public)/qr/[token]/page.tsx) & `_components/`):**
   - Áp dụng chuẩn thiết kế `ui-ux-pro-max` cho trải nghiệm quét QR trên điện thoại: Bảng màu Deep Teal `#045863`, font số kỹ thuật `Geist Mono` `tabular-nums`, kích thước điểm chạm cảm ứng tối thiểu `min-h-[44px]`, không lồng Card-in-Card và thanh điều hướng 4 Tab cố định dưới đáy màn hình (`Thumb-Zone Bottom Navigation Bar`) kèm cơ chế **Lazy-Loading theo Tab** bằng React Query (`enabled` theo `activeTab`).
