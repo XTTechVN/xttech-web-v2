@@ -1,3 +1,5 @@
+import { ArchConfig, FrameShape } from '@/components/door-studio/studio-types';
+
 export type SupplierType = 'aluminum' | 'accessory' | 'glass' | 'consumable';
 
 export type WarehouseItemType = 'profile' | 'accessory' | 'consumable';
@@ -265,6 +267,8 @@ export interface GlassOrderItem {
   isRevisionStale: boolean;
   positionCode?: string | null;
   doorName?: string | null;
+  frameShape?: FrameShape | null;
+  archConfig?: ArchConfig | null;
 }
 
 export interface GlassOrder {
@@ -309,6 +313,8 @@ export interface GlassPanePreviewItem {
   isMeasured?: boolean;
   paneSource?: GlassPaneSource;
   manualReason?: ManualReason | null;
+  frameShape?: FrameShape | null;
+  archConfig?: ArchConfig | null;
 }
 
 export interface GlassOrderItemCreatePayload {

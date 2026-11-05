@@ -104,8 +104,9 @@ export function mat4LookAt(eye: Vec3, center: Vec3, up: Vec3): Mat4 {
  * 2 = Matte Rubber / Gasket / Floor Grid
  * 3 = Architectural Wall / Floor
  * 4 = Hardware (Handle / Hinge chrome / bronze)
+ * 5 = Procedural Studio Floor (Tile 60x60 / 80x80 / 60x120 / Wood Planks)
  */
-export type MaterialId = 0 | 1 | 2 | 3 | 4;
+export type MaterialId = 0 | 1 | 2 | 3 | 4 | 5;
 
 export class Door3DMeshCollector {
   // Opaque triangles: 10 floats per vertex (x, y, z, nx, ny, nz, r, g, b, matId)

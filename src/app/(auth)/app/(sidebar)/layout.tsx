@@ -130,7 +130,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* 3. Vùng nội dung chính */}
-      <div className="flex-1 h-full bg-slate-50 flex flex-col min-w-0">
+      <div className="flex-1 h-full bg-[#a6c1b733] flex flex-col min-w-0">
         <AppHeader setActive={setActiveMenu} onMenuClick={() => setIsMobileOpen(true)} userRole={userRole} />
         <div className="flex-1 overflow-y-auto">{children}</div>
       </div>

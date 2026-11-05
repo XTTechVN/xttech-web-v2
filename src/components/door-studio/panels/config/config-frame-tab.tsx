@@ -9,6 +9,7 @@ import {
   DEFAULT_SAFETY_BARS_CONFIG,
 } from '../../studio-types';
 import { ProfileBar } from '@/types';
+import { Select } from '@/components/select';
 import { Layers, Shield, RefreshCw, Plus, CornerUpLeft, DoorClosed, X } from 'lucide-react';
 import { GasketConfigSection } from './gasket-config-section';
 import { CustomExtraConfigSection } from './custom-extra-config-section';
@@ -321,16 +322,17 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   : 'H · 90°/90°'}
               </span>
             </div>
-            <select
+            <Select
+              fullWidth
               value={leftEdge.profileId || ''}
               onChange={(e) => handleLeftProfileChange(Number(e.target.value))}
-              className="w-full h-8 px-2.5 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:border-primary text-slate-800"
-            >
-              <option value="">Chọn profile...</option>
-              {frameProfiles.map((p) => (
-                <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'Chọn profile...' },
+                ...frameProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+              ]}
+              placeholder="Chọn profile..."
+              className="h-8 text-xs md:text-xs py-0 pl-2.5 pr-8 border-slate-200"
+            />
             {renderProfileSpecBadges(selectedLeftFrame)}
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] text-slate-500">Bù/trừ offset:</span>
@@ -358,31 +360,24 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   : 'W · 90°/90°'}
               </span>
             </div>
-            <select
+            <Select
+              fullWidth
               value={topEdge.profileId || ''}
-              onChange={(e) => onChangeConfig({ topEdge: { ...topEdge, profileId: Number(e.target.value) } })}
-              className="w-full h-8 px-2.5 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:border-primary text-slate-800"
-            >
-              <option value="">{leftEdge.profileId ? '↑ Kế thừa (Cạnh trái)' : 'Chọn profile...'}</option>
-              {trackProfiles.length > 0 ? (
-                <>
-                  <optgroup label="Khung bao tiêu chuẩn (FRAME)">
-                    {frameProfiles.map((p) => (
-                      <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Ray treo / Ray trượt (TRACK)">
-                    {trackProfiles.map((p) => (
-                      <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                    ))}
-                  </optgroup>
-                </>
-              ) : (
-                frameProfiles.map((p) => (
-                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                ))
-              )}
-            </select>
+              onChange={(e) => {
+                const pId = e.target.value ? Number(e.target.value) : leftEdge.profileId;
+                const selected = profiles.find((p) => p.id === pId);
+                onChangeConfig({
+                  topEdge: { ...topEdge, profileId: pId, profileCode: selected?.code },
+                });
+              }}
+              options={[
+                { value: '', label: leftEdge.profileId ? '↑ Kế thừa (Cạnh trái)' : 'Chọn profile...' },
+                ...frameProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                ...trackProfiles.map((p) => ({ value: p.id, label: `[Ray] ${p.code} · ${p.name}` })),
+              ]}
+              placeholder={leftEdge.profileId ? '↑ Kế thừa (Cạnh trái)' : 'Chọn profile...'}
+              className="h-8 text-xs md:text-xs py-0 pl-2.5 pr-8 border-slate-200"
+            />
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] text-slate-500">Bù/trừ offset:</span>
               <div className="flex items-center gap-1">
@@ -411,16 +406,23 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   : 'H · 90°/90°'}
               </span>
             </div>
-            <select
+            <Select
+              fullWidth
               value={rightEdge.profileId || ''}
-              onChange={(e) => onChangeConfig({ rightEdge: { ...rightEdge, profileId: Number(e.target.value) } })}
-              className="w-full h-8 px-2.5 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:border-primary text-slate-800"
-            >
-              <option value="">{leftEdge.profileId ? '↑ Kế thừa (Cạnh trái)' : 'Chọn profile...'}</option>
-              {frameProfiles.map((p) => (
-                <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-              ))}
-            </select>
+              onChange={(e) => {
+                const pId = e.target.value ? Number(e.target.value) : leftEdge.profileId;
+                const selected = profiles.find((p) => p.id === pId);
+                onChangeConfig({
+                  rightEdge: { ...rightEdge, profileId: pId, profileCode: selected?.code },
+                });
+              }}
+              options={[
+                { value: '', label: leftEdge.profileId ? '↑ Kế thừa (Cạnh trái)' : 'Chọn profile...' },
+                ...frameProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+              ]}
+              placeholder={leftEdge.profileId ? '↑ Kế thừa (Cạnh trái)' : 'Chọn profile...'}
+              className="h-8 text-xs md:text-xs py-0 pl-2.5 pr-8 border-slate-200"
+            />
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] text-slate-500">Bù/trừ offset:</span>
               <div className="flex items-center gap-1">
@@ -451,11 +453,12 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   : 'W · 45°/45°'}
               </span>
             </div>
-            <select
+            <Select
+              fullWidth
               disabled={config.isOpenBottom}
               value={bottomEdge.profileId || ''}
               onChange={(e) => {
-                const pId = Number(e.target.value) || undefined;
+                const pId = e.target.value ? Number(e.target.value) : leftEdge.profileId;
                 const selected = profiles.find((p) => p.id === pId);
                 onChangeConfig({
                   bottomEdge: {
@@ -465,41 +468,28 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   },
                 });
               }}
-              className="w-full h-8 px-2.5 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:border-primary text-slate-800 disabled:bg-slate-100"
-            >
-              <option value="">
-                {config.isOpenBottom
+              options={[
+                {
+                  value: '',
+                  label: config.isOpenBottom
+                    ? '(Khung hở - không có cạnh dưới)'
+                    : leftEdge.profileId
+                    ? '↑ Kế thừa (Cạnh trái)'
+                    : 'Chọn profile...',
+                },
+                ...frameProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                ...trackProfiles.map((p) => ({ value: p.id, label: `[Ray] ${p.code} · ${p.name}` })),
+                ...auxiliaryProfiles.map((p) => ({ value: p.id, label: `[Ngưỡng] ${p.code} · ${p.name}` })),
+              ]}
+              placeholder={
+                config.isOpenBottom
                   ? '(Khung hở - không có cạnh dưới)'
                   : leftEdge.profileId
                   ? '↑ Kế thừa (Cạnh trái)'
-                  : 'Chọn profile...'}
-              </option>
-              <optgroup label="Khung bao tiêu chuẩn (FRAME)">
-                {frameProfiles.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.code} - {p.name}
-                  </option>
-                ))}
-              </optgroup>
-              {trackProfiles.length > 0 && (
-                <optgroup label="Ray trượt cửa lùa / xếp trượt (TRACK)">
-                  {trackProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.code} - {p.name}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              {auxiliaryProfiles.length > 0 && (
-                <optgroup label="Ngưỡng sàn / Thanh phụ khác (OTHER / SILL)">
-                  {auxiliaryProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.code} - {p.name}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-            </select>
+                  : 'Chọn profile...'
+              }
+              className="h-8 text-xs md:text-xs py-0 pl-2.5 pr-8 border-slate-200"
+            />
             {!config.isOpenBottom && renderProfileSpecBadges(selectedBottomFrame)}
 
             <div className="flex items-center gap-2">
@@ -537,7 +527,8 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                     </button>
                   )}
                 </div>
-                <select
+                <Select
+                  fullWidth
                   value={bottomEdge.coverProfileId || ''}
                   onChange={(e) => {
                     const cId = Number(e.target.value) || undefined;
@@ -550,15 +541,13 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                       },
                     });
                   }}
-                  className="w-full h-7 px-1.5 text-[11px] rounded-lg border border-gray-300 bg-white"
-                >
-                  <option value="">-- Không dùng thanh ốp chân --</option>
-                  {auxiliaryProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.code} - {p.name}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: '-- Không dùng thanh ốp chân --' },
+                    ...auxiliaryProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                  ]}
+                  placeholder="-- Không dùng thanh ốp chân --"
+                  className="h-7 text-[11px] md:text-[11px] py-0 pl-2 pr-7 border-gray-300"
+                />
               </div>
             )}
           </div>
@@ -616,7 +605,8 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   </span>
                 )}
               </div>
-              <select
+              <Select
+                fullWidth
                 value={config.mullionProfileId || ''}
                 onChange={(e) => {
                   const pid = Number(e.target.value) || undefined;
@@ -626,15 +616,13 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                     mullionHorizProfileId: pid,
                   });
                 }}
-                className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-              >
-                <option value="">Chọn profile đố...</option>
-                {mullionProfiles.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.code} - {p.name}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: 'Chọn profile đố...' },
+                  ...mullionProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                ]}
+                placeholder="Chọn profile đố..."
+                className="h-8 text-xs md:text-xs py-0 pl-2 pr-8 border-slate-200"
+              />
               {renderProfileSpecBadges(selectedSharedMullion)}
             </div>
           )}
@@ -653,20 +641,19 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                     </span>
                   )}
                 </div>
-                <select
+                <Select
+                  fullWidth
                   value={config.mullionVertProfileId || config.mullionProfileId || ''}
                   onChange={(e) =>
                     onChangeConfig({ mullionVertProfileId: Number(e.target.value) || undefined })
                   }
-                  className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                >
-                  <option value="">Chọn profile đố dọc...</option>
-                  {mullionProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.code} - {p.name}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: 'Chọn profile đố dọc...' },
+                    ...mullionProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                  ]}
+                  placeholder="Chọn profile đố dọc..."
+                  className="h-8 text-xs md:text-xs py-0 pl-2 pr-8 border-slate-200"
+                />
               </div>
 
               {/* Đố Ngang */}
@@ -681,20 +668,19 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                     </span>
                   )}
                 </div>
-                <select
+                <Select
+                  fullWidth
                   value={config.mullionHorizProfileId || config.mullionProfileId || ''}
                   onChange={(e) =>
                     onChangeConfig({ mullionHorizProfileId: Number(e.target.value) || undefined })
                   }
-                  className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                >
-                  <option value="">Chọn profile đố ngang...</option>
-                  {mullionProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.code} - {p.name}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: 'Chọn profile đố ngang...' },
+                    ...mullionProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                  ]}
+                  placeholder="Chọn profile đố ngang..."
+                  className="h-8 text-xs md:text-xs py-0 pl-2 pr-8 border-slate-200"
+                />
               </div>
             </div>
           )}
@@ -747,18 +733,17 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                     {/* Profile khung bảo vệ */}
                     <div className="space-y-1">
                       <label className="font-semibold text-xs text-slate-700">Profile khung bảo vệ</label>
-                      <select
+                      <Select
+                        fullWidth
                         value={safetyBarsConfig.profileId || ''}
                         onChange={(e) => updateSafetyBars({ profileId: Number(e.target.value) || undefined })}
-                        className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                      >
-                        <option value="">Chọn profile khung...</option>
-                        {profiles.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.code} · {p.name}
-                          </option>
-                        ))}
-                      </select>
+                        options={[
+                          { value: '', label: 'Chọn profile khung...' },
+                          ...profiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                        ]}
+                        placeholder="Chọn profile khung..."
+                        className="h-8 text-xs md:text-xs py-0 pl-2 pr-8 border-slate-200"
+                      />
                       {selectedSafetyProfile && (
                         <div className="flex items-center gap-1 text-[11px] text-slate-500">
                           <span>{selectedSafetyProfile.code} — {selectedSafetyProfile.name}</span>
@@ -831,18 +816,17 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                       {/* Cây dọc */}
                       <div className="space-y-1">
                         <label className="font-medium text-[11px] text-slate-700">Cây dọc</label>
-                        <select
+                        <Select
+                          fullWidth
                           value={safetyBarsConfig.mullionVertProfileId || ''}
                           onChange={(e) => updateSafetyBars({ mullionVertProfileId: Number(e.target.value) || undefined })}
-                          className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                        >
-                          <option value="">Chọn profile cây dọc...</option>
-                          {profiles.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.code} · {p.name}
-                            </option>
-                          ))}
-                        </select>
+                          options={[
+                            { value: '', label: 'Chọn profile cây dọc...' },
+                            ...profiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                          ]}
+                          placeholder="Chọn profile cây dọc..."
+                          className="h-8 text-xs md:text-xs py-0 pl-2 pr-8 border-slate-200"
+                        />
                         {vertSafetyProfile && (
                           <div className="flex items-center gap-1 text-[10px] text-slate-500">
                             <span>{vertSafetyProfile.code} — {vertSafetyProfile.name}</span>
@@ -856,18 +840,17 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                       {/* Cây ngang */}
                       <div className="space-y-1">
                         <label className="font-medium text-[11px] text-slate-700">Cây ngang</label>
-                        <select
+                        <Select
+                          fullWidth
                           value={safetyBarsConfig.mullionHorizProfileId || ''}
                           onChange={(e) => updateSafetyBars({ mullionHorizProfileId: Number(e.target.value) || undefined })}
-                          className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                        >
-                          <option value="">Chọn profile cây ngang...</option>
-                          {profiles.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.code} · {p.name}
-                            </option>
-                          ))}
-                        </select>
+                          options={[
+                            { value: '', label: 'Chọn profile cây ngang...' },
+                            ...profiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                          ]}
+                          placeholder="Chọn profile cây ngang..."
+                          className="h-8 text-xs md:text-xs py-0 pl-2 pr-8 border-slate-200"
+                        />
                         {horizSafetyProfile && (
                           <div className="flex items-center gap-1 text-[10px] text-slate-500">
                             <span>{horizSafetyProfile.code} — {horizSafetyProfile.name}</span>
@@ -890,18 +873,17 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                     {/* Cây dọc */}
                     <div className="space-y-1">
                       <label className="font-medium text-[11px] text-slate-700">Cây dọc</label>
-                      <select
+                      <Select
+                        fullWidth
                         value={safetyBarsConfig.mullionVertProfileId || ''}
                         onChange={(e) => updateSafetyBars({ mullionVertProfileId: Number(e.target.value) || undefined })}
-                        className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                      >
-                        <option value="">Chọn profile cây dọc...</option>
-                        {profiles.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.code} · {p.name}
-                          </option>
-                        ))}
-                      </select>
+                        options={[
+                          { value: '', label: 'Chọn profile cây dọc...' },
+                          ...profiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                        ]}
+                        placeholder="Chọn profile cây dọc..."
+                        className="h-8 text-xs md:text-xs py-0 pl-2 pr-8 border-slate-200"
+                      />
                       {vertSafetyProfile && (
                         <div className="flex items-center gap-1 text-[10px] text-slate-500">
                           <span>{vertSafetyProfile.code} — {vertSafetyProfile.name}</span>
@@ -915,18 +897,17 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                     {/* Cây ngang */}
                     <div className="space-y-1">
                       <label className="font-medium text-[11px] text-slate-700">Cây ngang</label>
-                      <select
+                      <Select
+                        fullWidth
                         value={safetyBarsConfig.mullionHorizProfileId || ''}
                         onChange={(e) => updateSafetyBars({ mullionHorizProfileId: Number(e.target.value) || undefined })}
-                        className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                      >
-                        <option value="">Chọn profile cây ngang...</option>
-                        {profiles.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.code} · {p.name}
-                          </option>
-                        ))}
-                      </select>
+                        options={[
+                          { value: '', label: 'Chọn profile cây ngang...' },
+                          ...profiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                        ]}
+                        placeholder="Chọn profile cây ngang..."
+                        className="h-8 text-xs md:text-xs py-0 pl-2 pr-8 border-slate-200"
+                      />
                       {horizSafetyProfile && (
                         <div className="flex items-center gap-1 text-[10px] text-slate-500">
                           <span>{horizSafetyProfile.code} — {horizSafetyProfile.name}</span>
@@ -952,16 +933,17 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
           <div className="space-y-3">
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
               <div className="font-semibold text-xs text-slate-800">Nẹp kính (Bead)</div>
-              <select
+              <Select
+                fullWidth
                 value={config.beadProfileId || ''}
-                onChange={(e) => onChangeConfig({ beadProfileId: Number(e.target.value) })}
-                className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-              >
-                <option value="">Chọn profile nẹp...</option>
-                {beadProfiles.map((p) => (
-                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                ))}
-              </select>
+                onChange={(e) => onChangeConfig({ beadProfileId: Number(e.target.value) || undefined })}
+                options={[
+                  { value: '', label: 'Chọn profile nẹp...' },
+                  ...beadProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                ]}
+                placeholder="Chọn profile nẹp..."
+                className="h-8 text-xs md:text-xs py-0 pl-2 pr-8 border-slate-200"
+              />
               <div className="flex items-center gap-1.5 pt-1 flex-wrap">
                 {([
                   { id: '45', label: 'Ghép 45°' },
@@ -986,18 +968,20 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
 
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
               <div className="font-semibold text-xs text-slate-800">Nối khung (Coupling)</div>
-              <select
+              <Select
+                fullWidth
                 value={config.couplingProfileId || ''}
-                onChange={(e) => onChangeConfig({ couplingProfileId: Number(e.target.value) })}
-                className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-              >
-                <option value="">
-                  {couplingProfiles.length > 0 ? 'Chọn profile nối khung...' : '(Hệ này không có nối khung)'}
-                </option>
-                {couplingProfiles.map((p) => (
-                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                ))}
-              </select>
+                onChange={(e) => onChangeConfig({ couplingProfileId: Number(e.target.value) || undefined })}
+                options={[
+                  {
+                    value: '',
+                    label: couplingProfiles.length > 0 ? 'Chọn profile nối khung...' : '(Hệ này không có nối khung)',
+                  },
+                  ...couplingProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                ]}
+                placeholder={couplingProfiles.length > 0 ? 'Chọn profile nối khung...' : '(Hệ này không có nối khung)'}
+                className="h-8 text-xs md:text-xs py-0 pl-2 pr-8 border-slate-200"
+              />
               <div className="text-[11px] text-slate-400">Thanh nối ghép góc 90°, 135° giữa các bộ khung</div>
             </div>
           </div>
@@ -1053,7 +1037,8 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
               <div className="space-y-2.5 pt-1">
                 <div className="space-y-1">
                   <div className="text-xs font-medium text-slate-700">Profile đảo khung</div>
-                  <select
+                  <Select
+                    fullWidth
                     value={config.reversalProfileId || ''}
                     onChange={(e) => {
                       const pid = Number(e.target.value) || undefined;
@@ -1063,19 +1048,23 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                         reversalProfileCode: p?.code,
                       });
                     }}
-                    className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                  >
-                    <option value="">
-                      {availableReversalProfiles.length > 0
+                    options={[
+                      {
+                        value: '',
+                        label:
+                          availableReversalProfiles.length > 0
+                            ? 'Chọn profile...'
+                            : '(Không có profile bar_type = REVERSAL)',
+                      },
+                      ...availableReversalProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
+                    ]}
+                    placeholder={
+                      availableReversalProfiles.length > 0
                         ? 'Chọn profile...'
-                        : '(Không có profile bar_type = REVERSAL)'}
-                    </option>
-                    {availableReversalProfiles.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.code} - {p.name}
-                      </option>
-                    ))}
-                  </select>
+                        : '(Không có profile bar_type = REVERSAL)'
+                    }
+                    className="h-8 text-xs md:text-xs py-0 pl-2 pr-8 border-slate-200"
+                  />
                   <div className="text-[11px] text-slate-400">
                     Thanh đảo — khai bar_type = REVERSAL trong catalog/profiles
                   </div>

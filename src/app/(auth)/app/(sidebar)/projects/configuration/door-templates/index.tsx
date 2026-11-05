@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getDoors, getDoorSeriesList, getBrands } from '@/actions';
-import { getDefaultBrandId, getDoorTypeConfig, normalizeDoorType, type Door } from '@/types';
-import { BASE_MINIO_URL } from '@/config';
-import { Search, Plus, ImageOff, LayoutGrid } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { getDoors, getDoorSeriesList, getBrands, deleteDoor } from '@/actions';
+import { getDefaultBrandId, normalizeDoorType, type Door } from '@/types';
+import { Search, Plus, LayoutGrid } from 'lucide-react';
+import toast from 'react-hot-toast';
+import queryClient from '@/utils/query';
+import { showErrorToast } from '@/utils';
 import { BrandSidebar } from '../../_components';
-import { DoorStudioModal, DoorThumbnail } from '@/components';
+import { ConfirmActionModal, DoorStudioModal, Select } from '@/components';
+import { DoorCard } from './_components/door-card';
 
 const DOOR_TYPES: Array<{ value: string | null; label: string }> = [
   { value: null, label: 'Tất cả' },
@@ -28,62 +31,6 @@ function matchDoorType(doorType: string | null | undefined, filterType: string |
   return normalizeDoorType(doorType) === normalizeDoorType(filterType);
 }
 
-function DoorCard({ door, onClick }: { door: Door; onClick: () => void }) {
-  const [imgError, setImgError] = useState(false);
-  const hasSvg = Boolean((door.systemConfig as Record<string, unknown> | undefined)?.rootCell);
-
-  const imgUrl = (() => {
-    const primary = door.images?.find((i) => i.isPrimary);
-    const path = primary?.imagePath ?? door.imagePath;
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${BASE_MINIO_URL}/${path.replace(/^\//, '')}`;
-  })();
-
-  const typeConfig = getDoorTypeConfig(door.type);
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-primary hover:shadow-md transition-all text-left cursor-pointer"
-    >
-      <div className="aspect-[4/3] w-full bg-slate-50 flex items-center justify-center overflow-hidden relative">
-        {hasSvg ? (
-          <div className="w-full h-full p-1.5 group-hover:scale-105 transition-transform duration-300">
-            <DoorThumbnail door={door} />
-          </div>
-        ) : imgUrl && !imgError ? (
-          <img
-            src={imgUrl}
-            alt={door.name}
-            className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div className="flex flex-col items-center gap-1.5 text-slate-300">
-            <ImageOff size={28} />
-            <span className="text-[11px] font-medium">Chưa có bản vẽ</span>
-          </div>
-        )}
-      </div>
-
-      <div className="p-3 border-t border-slate-100 flex flex-col gap-1.5">
-        {door.type && (
-          <div>
-            <span className={`inline-flex text-[10px] font-semibold px-2 py-0.5 rounded border ${typeConfig.className}`}>
-              {typeConfig.label}
-            </span>
-          </div>
-        )}
-        <p className="text-xs font-semibold text-slate-800 group-hover:text-primary transition-colors leading-snug line-clamp-2">
-          {door.name}
-        </p>
-      </div>
-    </button>
-  );
-}
-
 export default function DoorTemplatesTab() {
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
   const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
@@ -91,6 +38,7 @@ export default function DoorTemplatesTab() {
   const [search, setSearch] = useState('');
   const [studioDoor, setStudioDoor] = useState<Door | null>(null);
   const [isStudioOpen, setIsStudioOpen] = useState(false);
+  const [doorToDelete, setDoorToDelete] = useState<Door | null>(null);
 
   const { data: brandsData } = useQuery({
     queryKey: ['brands', 'aluminum'],
@@ -119,6 +67,46 @@ export default function DoorTemplatesTab() {
     enabled: activeBrandId !== null,
   });
   const allDoors = useMemo(() => doorsData?.items ?? [], [doorsData]);
+
+  const { mutate: deleteDoorMutation, isPending: isDeleting } = useMutation({
+    mutationFn: (id: number) => deleteDoor(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['door-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['doors'] });
+      queryClient.invalidateQueries({ queryKey: ['doors-stats'] });
+      toast.success('Xóa mẫu cửa thành công');
+      setDoorToDelete(null);
+    },
+    onError: (error) => {
+      showErrorToast(error, 'Xóa mẫu cửa thất bại');
+    },
+  });
+
+  const handleEditDoor = (door: Door) => {
+    setStudioDoor(door);
+    setIsStudioOpen(true);
+  };
+
+  const handleCopyDoor = (door: Door) => {
+    const clonedConfig = door.systemConfig
+      ? (structuredClone(door.systemConfig) as Record<string, unknown>)
+      : undefined;
+
+    const copiedDoor: Door = {
+      ...door,
+      id: 0,
+      name: `${door.name}_COPY`,
+      code: `${door.code || door.name}_COPY`,
+      systemConfig: clonedConfig,
+    };
+
+    setStudioDoor(copiedDoor);
+    setIsStudioOpen(true);
+  };
+
+  const handleDeleteDoor = (door: Door) => {
+    setDoorToDelete(door);
+  };
 
   const filteredDoors = useMemo(() => {
     let result = allDoors;
@@ -166,16 +154,19 @@ export default function DoorTemplatesTab() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2 flex-wrap">
             {seriesList.length > 0 && (
-              <select
+              <Select
                 value={selectedSeriesId ?? ''}
                 onChange={(e) => setSelectedSeriesId(e.target.value ? Number(e.target.value) : null)}
-                className="h-9 px-2.5 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-none focus:border-primary transition cursor-pointer"
-              >
-                <option value="">Tất cả series</option>
-                {seriesList.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: 'Tất cả series' },
+                  ...seriesList.map((s) => ({
+                    value: s.id,
+                    label: s.name,
+                  })),
+                ]}
+                placeholder="Tất cả series"
+                className="h-9 py-0 min-w-[180px] text-sm md:text-sm rounded-lg border-slate-200 bg-white text-slate-700"
+              />
             )}
 
             <div className="relative">
@@ -264,10 +255,9 @@ export default function DoorTemplatesTab() {
                     <DoorCard
                       key={door.id}
                       door={door}
-                      onClick={() => {
-                        setStudioDoor(door);
-                        setIsStudioOpen(true);
-                      }}
+                      onEdit={handleEditDoor}
+                      onCopy={handleCopyDoor}
+                      onDelete={handleDeleteDoor}
                     />
                   ))}
                 </div>
@@ -278,7 +268,7 @@ export default function DoorTemplatesTab() {
       </div>
 
       <DoorStudioModal
-        key={studioDoor ? `studio-${studioDoor.id}` : `studio-new-${activeBrandId}`}
+        key={studioDoor ? `studio-${studioDoor.id}-${studioDoor.code}` : `studio-new-${activeBrandId}`}
         isOpen={isStudioOpen}
         door={studioDoor}
         defaultBrandId={activeBrandId}
@@ -286,6 +276,28 @@ export default function DoorTemplatesTab() {
           setIsStudioOpen(false);
           setStudioDoor(null);
         }}
+      />
+
+      <ConfirmActionModal
+        isOpen={Boolean(doorToDelete)}
+        onClose={() => setDoorToDelete(null)}
+        title="Xác nhận xóa mẫu cửa"
+        description={
+          <>
+            Bạn có chắc chắn muốn xóa mẫu cửa{' '}
+            <strong className="text-slate-900 font-semibold">{doorToDelete?.name}</strong>
+            {doorToDelete?.code ? ` (${doorToDelete.code})` : ''}?
+          </>
+        }
+        onConfirm={() => {
+          if (doorToDelete) {
+            deleteDoorMutation(doorToDelete.id);
+          }
+        }}
+        loading={isDeleting}
+        confirmText="Xác nhận xóa"
+        cancelText="Hủy"
+        variant="danger"
       />
     </div>
   );

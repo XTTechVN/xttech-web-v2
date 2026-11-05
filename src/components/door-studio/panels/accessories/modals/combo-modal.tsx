@@ -5,6 +5,7 @@ import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { Modal } from '@/components/modal';
 import { Input } from '@/components/input';
 import { Button } from '@/components/button';
+import { Select } from '@/components/select';
 import { Plus, Trash2, Layers, Calculator, Check } from 'lucide-react';
 import { SearchableSelect } from './searchable-select';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -81,6 +82,7 @@ export function ComboModal({
   });
 
   const applyFor = watch('applyFor');
+  const openingType = watch('openingType');
   const formBrandId = watch('brandId');
   const selectedDoorTypes = watch('doorTypes') || [];
   const effectiveBrandId = formBrandId ? Number(formBrandId) : brandId || null;
@@ -248,43 +250,61 @@ export function ComboModal({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Hãng phụ kiện</label>
-            <select
-              {...register('brandId')}
-              className="w-full h-9 px-2.5 border border-slate-200 rounded-md text-xs bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition cursor-pointer"
-            >
-              <option value="">-- Tất cả / Chưa chọn hãng --</option>
-              {brandOptions.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name} ({b.code})
-                </option>
-              ))}
-            </select>
+            <Select
+              fullWidth
+              value={formBrandId != null ? String(formBrandId) : ''}
+              onChange={(e) =>
+                setValue('brandId', e.target.value ? Number(e.target.value) : null, {
+                  shouldDirty: true,
+                })
+              }
+              options={[
+                { value: '', label: '-- Tất cả / Chưa chọn hãng --' },
+                ...brandOptions.map((b) => ({
+                  value: String(b.id),
+                  label: `${b.name} (${b.code})`,
+                })),
+              ]}
+              placeholder="-- Tất cả / Chưa chọn hãng --"
+              className="h-9 text-xs md:text-xs bg-slate-50 border-slate-200"
+            />
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Dành cho</label>
-            <select
-              {...register('applyFor')}
-              className="w-full h-9 px-2.5 border border-slate-200 rounded-md text-xs bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition cursor-pointer"
-            >
-              <option value="khung">Khung cửa</option>
-              <option value="canh">Cánh cửa</option>
-              <option value="huong_mo">Hướng mở</option>
-              <option value="khac">Khác</option>
-            </select>
+            <Select
+              fullWidth
+              value={applyFor || 'khung'}
+              onChange={(e) =>
+                setValue(
+                  'applyFor',
+                  e.target.value as 'khung' | 'canh' | 'huong_mo' | 'khac',
+                  { shouldDirty: true }
+                )
+              }
+              options={[
+                { value: 'khung', label: 'Khung cửa' },
+                { value: 'canh', label: 'Cánh cửa' },
+                { value: 'huong_mo', label: 'Hướng mở' },
+                { value: 'khac', label: 'Khác' },
+              ]}
+              className="h-9 text-xs md:text-xs bg-slate-50 border-slate-200"
+            />
           </div>
 
           {applyFor === 'huong_mo' && (
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Kiểu mở cánh</label>
-              <select
-                {...register('openingType')}
-                className="w-full h-9 px-2.5 border border-slate-200 rounded-md text-xs bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition cursor-pointer"
-              >
-                {OPENING_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+              <Select
+                fullWidth
+                value={openingType || ''}
+                onChange={(e) =>
+                  setValue('openingType', e.target.value || null, { shouldDirty: true })
+                }
+                options={OPENING_TYPE_OPTIONS}
+                placeholder="-- Chọn kiểu mở --"
+                className="h-9 text-xs md:text-xs bg-slate-50 border-slate-200"
+              />
             </div>
           )}
         </div>

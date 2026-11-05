@@ -8,6 +8,7 @@ import { DesignOptionsBar } from './components/design-options-bar';
 import { QuotationApprovalBar } from './components/quotation-approval-bar';
 import { QuotationConfigForm } from './components/quotation-config-form';
 import { QuotationDoorsTable } from './components/quotation-doors-table';
+import { QuotationMaterialAnalysisSection } from './components/quotation-material-analysis-section';
 import { QuotationPreviewPanel } from './components/quotation-preview-panel';
 import { QuotationPreviewTab } from './components/quotation-preview-tab';
 import { QuotationStatusBanner } from './components/quotation-status-banner';
@@ -96,16 +97,22 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
 
       {activeTab === 'analysis' &&
         (quotation ? (
-          <QuotationDoorsTable
-            items={items}
-            isSeparated={isSeparated}
-            isLocked={!isEditable}
-            isSaving={api.isSavingPrices}
-            drafts={drafts}
-            onSave={() =>
-              api.savePrices(drafts.buildPayload(), { onSuccess: drafts.resetDrafts })
-            }
-          />
+          <div className="space-y-4">
+            <QuotationDoorsTable
+              items={items}
+              isSeparated={isSeparated}
+              isLocked={!isEditable}
+              isSaving={api.isSavingPrices}
+              drafts={drafts}
+              onSave={() =>
+                api.savePrices(drafts.buildPayload(), { onSuccess: drafts.resetDrafts })
+              }
+            />
+            <QuotationMaterialAnalysisSection
+              projectId={projectId}
+              quotationId={quotation.id}
+            />
+          </div>
         ) : (
           <div className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-xs text-center text-xs text-slate-400">
             Dự án chưa có báo giá. Hãy lập báo giá ở tab &quot;Cấu thành giá&quot;.

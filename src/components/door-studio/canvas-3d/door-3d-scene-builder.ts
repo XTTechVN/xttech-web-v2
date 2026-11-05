@@ -16,6 +16,7 @@ import {
 } from '../cad-engine/cad-geometry';
 import { buildCadLayout, collectSashMullions } from '../cad-engine/cad-tree-traverser';
 import { Door3DMeshCollector, hexToRgb01, MaterialId, Vec3 } from './door-3d-math';
+import { DEFAULT_DOOR_3D_SETTINGS, Door3DCustomSettings } from './door-3d-types';
 
 export type SlidingCycleDirection = 'right_to_left' | 'left_to_right';
 
@@ -33,6 +34,7 @@ export interface BuildDoor3DParams {
   slidingDirection?: SlidingCycleDirection;
   showWall: boolean;
   showOpeningRays: boolean;
+  customSettings?: Door3DCustomSettings;
 }
 
 function ensureCCW(pts: [number, number][]): [number, number][] {
@@ -378,31 +380,41 @@ function addHandle3D(
   isLeftSideOfSash: boolean,
   isSliding: boolean,
   to3D: (xMm: number, yMm: number) => [number, number],
-  hwColor: Vec3
+  hwColor: Vec3,
+  handleOpts?: {
+    depthMm?: number;
+    offsetXMm?: number;
+    offsetYMm?: number;
+    bothSides?: boolean;
+  }
 ) {
-  const [hx, hy] = to3D(handleXMm, handleYMm);
+  const offX = handleOpts?.offsetXMm ?? 0;
+  const offY = handleOpts?.offsetYMm ?? 0;
+  const [hx, hy] = to3D(handleXMm + offX, handleYMm - offY);
   const edgeCol = darkenColor(hwColor, 0.55);
   const dir = isLeftSideOfSash ? 1 : -1;
+  const depthScale = Math.max(0.35, (handleOpts?.depthMm ?? 47) / 47);
+  const sides = handleOpts?.bothSides === false ? [1] : [1, -1];
 
   if (isSliding) {
-    for (const signZ of [1, -1]) {
+    for (const signZ of sides) {
       const zBase = signZ > 0 ? zSurfaceFront : zSurfaceBack;
-      collector.addBox(hx, hy, zBase + signZ * 0.003, 0.024, 0.18, 0.006, hwColor, 4, edgeCol);
-      collector.addBox(hx, hy + 0.065, zBase + signZ * 0.016, 0.016, 0.016, 0.024, hwColor, 4, edgeCol);
-      collector.addBox(hx, hy - 0.065, zBase + signZ * 0.016, 0.016, 0.016, 0.024, hwColor, 4, edgeCol);
-      collector.addBox(hx, hy, zBase + signZ * 0.03, 0.018, 0.15, 0.012, hwColor, 4, edgeCol);
+      collector.addBox(hx, hy, zBase + signZ * 0.003 * depthScale, 0.024, 0.18, 0.006, hwColor, 4, edgeCol);
+      collector.addBox(hx, hy + 0.065, zBase + signZ * 0.016 * depthScale, 0.016, 0.016, 0.024 * depthScale, hwColor, 4, edgeCol);
+      collector.addBox(hx, hy - 0.065, zBase + signZ * 0.016 * depthScale, 0.016, 0.016, 0.024 * depthScale, hwColor, 4, edgeCol);
+      collector.addBox(hx, hy, zBase + signZ * 0.03 * depthScale, 0.018, 0.15, 0.012, hwColor, 4, edgeCol);
     }
     return;
   }
 
-  for (const signZ of [1, -1]) {
+  for (const signZ of sides) {
     const zBase = signZ > 0 ? zSurfaceFront : zSurfaceBack;
-    collector.addBox(hx, hy, zBase + signZ * 0.004, 0.028, 0.165, 0.008, hwColor, 4, edgeCol);
-    collector.addBox(hx, hy + 0.015, zBase + signZ * 0.02, 0.018, 0.02, 0.028, hwColor, 4, edgeCol);
+    collector.addBox(hx, hy, zBase + signZ * 0.004 * depthScale, 0.028, 0.165, 0.008, hwColor, 4, edgeCol);
+    collector.addBox(hx, hy + 0.015, zBase + signZ * 0.02 * depthScale, 0.018, 0.02, 0.028 * depthScale, hwColor, 4, edgeCol);
     collector.addBox(
       hx + dir * 0.052,
       hy + 0.015,
-      zBase + signZ * 0.036,
+      zBase + signZ * 0.036 * depthScale,
       0.125,
       0.018,
       0.012,
@@ -413,7 +425,7 @@ function addHandle3D(
     collector.addBox(
       hx,
       hy - 0.038,
-      zBase + signZ * 0.009,
+      zBase + signZ * 0.009 * depthScale,
       0.012,
       0.024,
       0.004,
@@ -424,14 +436,15 @@ function addHandle3D(
 }
 
 /**
- * Dựng Bản lề cối 3D trên cạnh bản lề của cánh mở quay
+ * Dựng Bản lề cối 3D trên cạnh bản lề của cánh mở quay (tự động đặt theo mặt mở ra hoặc mở vào)
  */
 function addHinges3D(
   collector: Door3DMeshCollector,
   hingeXMm: number,
   sashYMm: number,
   sashHMm: number,
-  zFront: number,
+  zHingeFace: number,
+  dirZ: number,
   to3D: (xMm: number, yMm: number) => [number, number],
   hwColor: Vec3
 ) {
@@ -439,7 +452,7 @@ function addHinges3D(
   const offsets = sashHMm >= 1600 ? [0.14, 0.5, 0.86] : [0.2, 0.8];
   for (const ratio of offsets) {
     const [bx, by] = to3D(hingeXMm, sashYMm + sashHMm * ratio);
-    collector.addBox(bx, by, zFront + 0.008, 0.016, 0.095, 0.016, hwColor, 4, edgeCol);
+    collector.addBox(bx, by, zHingeFace + dirZ * 0.006, 0.015, 0.092, 0.015, hwColor, 4, edgeCol);
   }
 }
 
@@ -454,7 +467,12 @@ function addInfillPane3D(
   paneType: PaneType,
   aluColor: Vec3,
   matId: MaterialId,
-  cellNode: SceneCellNode
+  cellNode: SceneCellNode,
+  glassOpts?: {
+    thicknessMm?: number;
+    colorHex?: string;
+    transparency?: number;
+  }
 ) {
   const [x1, yTop] = to3D(paneBox.x, paneBox.y);
   const [x2, yBot] = to3D(paneBox.x + paneBox.w, paneBox.y + paneBox.h);
@@ -462,22 +480,23 @@ function addInfillPane3D(
   const cy = (yTop + yBot) / 2;
   const pw = Math.max(0.01, Math.abs(x2 - x1));
   const ph = Math.max(0.01, Math.abs(yTop - yBot));
+  const glassThickM = Math.max(0.004, (glassOpts?.thicknessMm ?? 8) * 0.001);
 
   const gasketCol: Vec3 = [0.12, 0.14, 0.16];
   const gT = 0.0035;
-  collector.addBox(cx, yTop - gT / 2, zCenter, pw, gT, 0.014, gasketCol, 2);
-  collector.addBox(cx, yBot + gT / 2, zCenter, pw, gT, 0.014, gasketCol, 2);
-  collector.addBox(x1 + gT / 2, cy, zCenter, gT, ph, 0.014, gasketCol, 2);
-  collector.addBox(x2 - gT / 2, cy, zCenter, gT, ph, 0.014, gasketCol, 2);
+  collector.addBox(cx, yTop - gT / 2, zCenter, pw, gT, glassThickM + 0.006, gasketCol, 2);
+  collector.addBox(cx, yBot + gT / 2, zCenter, pw, gT, glassThickM + 0.006, gasketCol, 2);
+  collector.addBox(x1 + gT / 2, cy, zCenter, gT, ph, glassThickM + 0.006, gasketCol, 2);
+  collector.addBox(x2 - gT / 2, cy, zCenter, gT, ph, glassThickM + 0.006, gasketCol, 2);
 
   if (paneType === 'panel') {
     const edgeCol = darkenColor(aluColor, 0.65);
-    collector.addBox(cx, cy, zCenter, pw - gT * 2, ph - gT * 2, 0.012, aluColor, matId, edgeCol);
+    collector.addBox(cx, cy, zCenter, pw - gT * 2, ph - gT * 2, 0.014, aluColor, matId, edgeCol);
     const slats = Math.max(2, Math.min(18, Math.floor(paneBox.h / 110)));
     for (let i = 1; i < slats; i++) {
       const sy = yBot + (ph * i) / slats;
-      collector.addLine([x1 + gT, sy, zCenter + 0.0065], [x2 - gT, sy, zCenter + 0.0065], edgeCol, 0.75);
-      collector.addLine([x1 + gT, sy, zCenter - 0.0065], [x2 - gT, sy, zCenter - 0.0065], edgeCol, 0.75);
+      collector.addLine([x1 + gT, sy, zCenter + 0.0075], [x2 - gT, sy, zCenter + 0.0075], edgeCol, 0.75);
+      collector.addLine([x1 + gT, sy, zCenter - 0.0075], [x2 - gT, sy, zCenter - 0.0075], edgeCol, 0.75);
     }
     return;
   }
@@ -509,12 +528,14 @@ function addInfillPane3D(
     return;
   }
 
-  const glassColor: Vec3 = [0.68, 0.89, 0.94];
-  const zF = zCenter + 0.005;
-  const zB = zCenter - 0.005;
+  const glassColor: Vec3 = hexToRgb01(glassOpts?.colorHex || '#88ccff', [0.53, 0.8, 1.0]);
+  const baseAlpha = Math.max(0.08, Math.min(0.85, 0.55 - (glassOpts?.transparency ?? 0.34) * 0.55));
+  const halfGlass = glassThickM / 2;
+  const zF = zCenter + halfGlass;
+  const zB = zCenter - halfGlass;
 
-  collector.addTransQuad([x1, yBot, zF], [x2, yBot, zF], [x2, yTop, zF], [x1, yTop, zF], glassColor, 0.28);
-  collector.addTransQuad([x2, yBot, zB], [x1, yBot, zB], [x1, yTop, zB], [x2, yTop, zB], glassColor, 0.28);
+  collector.addTransQuad([x1, yBot, zF], [x2, yBot, zF], [x2, yTop, zF], [x1, yTop, zF], glassColor, baseAlpha);
+  collector.addTransQuad([x2, yBot, zB], [x1, yBot, zB], [x1, yTop, zB], [x2, yTop, zB], glassColor, baseAlpha);
 
   const diagLen = Math.min(pw, ph) * 0.28;
   collector.addLine(
@@ -634,6 +655,7 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     slidingDirection = 'right_to_left',
     showWall,
     showOpeningRays,
+    customSettings,
   } = params;
 
   const collector = new Door3DMeshCollector();
@@ -745,6 +767,12 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     slidingOverlapPx: slidingOverlapMm,
   });
 
+  const cfg: Door3DCustomSettings = customSettings ?? DEFAULT_DOOR_3D_SETTINGS;
+  const effectiveHwRgb =
+    cfg.handleColorMode && cfg.handleColorMode !== 'design'
+      ? hexToRgb01(cfg.handleColorMode, hwRgb)
+      : hwRgb;
+
   const slidingLeavesList = layout.leaves.filter((l) => isLeafSliding(l.node));
   const totalSlidingLeaves = slidingLeavesList.length;
   const hasSlidingLeaves =
@@ -766,31 +794,48 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     1
   );
   const numTracks = hasSlidingLeaves ? Math.max(2, maxZIdx + 1) : 1;
-  const trackSpacingM = 0.036; // Khoảng cách tâm giữa 2 ray = 36mm
+  const userSashDepthM = Math.max(0.024, (cfg.sashDepthMm || 49) * 0.001);
+  const sashDepthM = hasSlidingLeaves ? Math.min(userSashDepthM, 0.042) : userSashDepthM;
+  const trackSpacingM = Math.max(0.038, sashDepthM + 0.01);
   const getTrackZ = (trackIdx: number): number => {
     const clampedIdx = Math.max(0, Math.min(numTracks - 1, trackIdx));
     return (clampedIdx - (numTracks - 1) / 2) * trackSpacingM;
   };
 
-  // Chiều sâu khung bao (Z) tự động mở rộng theo số lượng ray (2 ray = 110mm, 3 ray = 146mm...)
-  const frameDepthM = hasSlidingLeaves
-    ? Math.max(0.11, numTracks * trackSpacingM + 0.038)
-    : 0.068;
+  const baseFrameDepthM = Math.max(0.04, (cfg.frameDepthMm || 105) * 0.001);
+  const frameDepthM =
+    cfg.multiplyByZLayers && numTracks > 1
+      ? Math.max(baseFrameDepthM, numTracks * trackSpacingM + 0.036)
+      : Math.max(baseFrameDepthM, sashDepthM + 0.012);
   const frameZBack = -frameDepthM / 2;
   const frameZFront = frameDepthM / 2;
 
-  // 3. Vẽ Sàn lưới chuẩn kỹ thuật (Floor Grid) & Khung tường giả lập
+  // 3. Vẽ Mặt sàn Studio (Gỗ / Gạch 60x60 - 80x80 - 60x120) hoặc Lưới Kỹ thuật CAD
   const floorY = -(safeH / 2) * 0.001 - 0.004;
-  const gridHalfExtent = Math.max(1.8, Math.max(safeW, safeH) * 0.001 * 0.95);
-  const gridStep = 0.25;
-  const gridCount = Math.round(gridHalfExtent / gridStep);
-  for (let i = -gridCount; i <= gridCount; i++) {
-    const pos = i * gridStep;
-    const isAxis = i === 0;
-    const col: Vec3 = isAxis ? [0.45, 0.55, 0.65] : [0.76, 0.8, 0.85];
-    const alpha = isAxis ? 0.55 : 0.32;
-    collector.addLine([-gridHalfExtent, floorY, pos], [gridHalfExtent, floorY, pos], col, alpha);
-    collector.addLine([pos, floorY, -gridHalfExtent], [pos, floorY, gridHalfExtent], col, alpha);
+  const gridHalfExtent = Math.max(2.6, Math.max(safeW, safeH) * 0.001 * 1.45);
+
+  if (cfg.displayMode === 'studio') {
+    const fExt = 5.4;
+    collector.addQuad(
+      [-fExt, floorY, fExt],
+      [fExt, floorY, fExt],
+      [fExt, floorY, -fExt],
+      [-fExt, floorY, -fExt],
+      [0.85, 0.75, 0.62],
+      5,
+      [0, 1, 0]
+    );
+  } else {
+    const gridStep = 0.25;
+    const gridCount = Math.round(gridHalfExtent / gridStep);
+    for (let i = -gridCount; i <= gridCount; i++) {
+      const pos = i * gridStep;
+      const isAxis = i === 0;
+      const col: Vec3 = isAxis ? [0.45, 0.55, 0.65] : [0.76, 0.8, 0.85];
+      const alpha = isAxis ? 0.55 : 0.32;
+      collector.addLine([-gridHalfExtent, floorY, pos], [gridHalfExtent, floorY, pos], col, alpha);
+      collector.addLine([pos, floorY, -gridHalfExtent], [pos, floorY, gridHalfExtent], col, alpha);
+    }
   }
 
   const doorHalfWM = (safeW / 2) * 0.001;
@@ -799,8 +844,8 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     [doorHalfWM + 0.08, floorY + 0.001, frameZFront + 0.09],
     [doorHalfWM + 0.08, floorY + 0.001, frameZBack - 0.09],
     [-doorHalfWM - 0.08, floorY + 0.001, frameZBack - 0.09],
-    [0.08, 0.12, 0.18],
-    0.18
+    [0.08, 0.1, 0.14],
+    0.16
   );
 
   if (showWall && frameShape === 'rect') {
@@ -903,8 +948,9 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
   }
 
   // 5. Dựng các thanh Đố chia khung (Static Mullions)
+  const rawMullionDepthM = Math.max(0.04, (cfg.mullionDepthMm || 105) * 0.001);
+  const mDepth = Math.min(frameDepthM, rawMullionDepthM);
   for (const mBar of layout.mullions) {
-    const mDepth = frameDepthM - 0.004;
     const poly = ensureCCW([
       to3D(mBar.x, mBar.y),
       to3D(mBar.x + mBar.w, mBar.y),
@@ -924,7 +970,6 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
   // 6. Thu thập trước Đố chia cánh (Sash Mullions)
   const sashMullionsAll = collectSashMullions(layout.leaves, sashMm);
 
-  // Tọa độ biên trái (xMin) và biên phải (xMax) của cụm cánh lùa để tính chu trình trượt 2 chiều chính xác
   const slidingXMin =
     slidingLeavesList.length > 0
       ? Math.min(...slidingLeavesList.map((l) => l.x))
@@ -934,14 +979,35 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
       ? Math.max(...slidingLeavesList.map((l) => l.x))
       : safeW - frameMm;
 
-  // Kiểm tra có phải cửa lùa chia đôi đối xứng tại tâm (4 cánh 2 ray hoặc 6 cánh 3 ray) không
   const isCenterMeetingSliding =
-    (totalSlidingLeaves === 4 || totalSlidingLeaves === 6) &&
-    slidingLeavesList.some((l) => Boolean(l.node.sashJoiner || l.node.sashJoinerPair)) ||
+    ((totalSlidingLeaves === 4 || totalSlidingLeaves === 6) &&
+      slidingLeavesList.some((l) => Boolean(l.node.sashJoiner || l.node.sashJoinerPair))) ||
     (totalSlidingLeaves === 4 && numTracks === 2);
+
+  // Gom nhóm các cánh mở quay/xếp trượt cùng chiều trên cùng 1 hàng ngang (không có đố tĩnh ngăn cách) để gập nối tiếp chữ V (Accordion) không xuyên qua nhau
+  const hasVertMullionBetween = (xA: number, xB: number, yMid: number): boolean => {
+    const minX = Math.min(xA, xB) + 4;
+    const maxX = Math.max(xA, xB) - 4;
+    return layout.mullions.some(
+      (m) => m.h > m.w && m.x + m.w / 2 >= minX && m.x + m.w / 2 <= maxX && yMid >= m.y && yMid <= m.y + m.h
+    );
+  };
 
   // 7. Dựng từng Ô cửa (Vách kính cố định hoặc Cánh đóng/mở động học)
   let slidingLeafCounter = 0;
+
+  interface FlattenedSashItem {
+    node: SceneCellNode;
+    box: { x: number; y: number; w: number; h: number };
+    sashType: string;
+    hasDynamicMullion?: boolean;
+    slidingIndex?: number;
+    foldChainIndex?: number;
+    foldChainAnchorXMm?: number;
+    foldChainPrevWidthsMm?: number[];
+  }
+
+  const allSashes: FlattenedSashItem[] = [];
 
   for (const leaf of layout.leaves) {
     const { node, x: lx, y: ly, w: lw, h: lh } = leaf;
@@ -949,7 +1015,7 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
 
     if (st === 'fixed') {
       const bW = Math.min(beadMm, Math.floor(Math.min(lw, lh) * 0.15));
-      const beadDepth = 0.018;
+      const beadDepth = Math.max(0.018, (cfg.glassThicknessMm || 8) * 0.001 + 0.01);
       addFourPerimeterBars3D(
         collector,
         to3D,
@@ -971,28 +1037,28 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
         node.paneType || 'glass',
         aluRgb,
         aluMatId,
-        node
+        node,
+        {
+          thicknessMm: cfg.glassThicknessMm,
+          colorHex: cfg.glassColorHex,
+          transparency: cfg.glassTransparency,
+        }
       );
       continue;
     }
 
-    const subSashes: {
-      box: { x: number; y: number; w: number; h: number };
-      sashType: string;
-      hasDynamicMullion?: boolean;
-      slidingIndex?: number;
-    }[] = [];
-
     if (st === 'swing_double') {
-      const gapMid = 2;
+      const gapMid = 3;
       const halfW = (lw - gapMid) / 2;
-      subSashes.push(
+      allSashes.push(
         {
+          node,
           box: { x: lx, y: ly, w: halfW, h: lh },
           sashType: 'swing_left',
           hasDynamicMullion: true,
         },
         {
+          node,
           box: { x: lx + halfW + gapMid, y: ly, w: halfW, h: lh },
           sashType: 'swing_right',
           hasDynamicMullion: false,
@@ -1000,52 +1066,181 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
       );
     } else {
       const isSlidingSash = isLeafSliding(node);
-      subSashes.push({
+      allSashes.push({
+        node,
         box: { x: lx, y: ly, w: lw, h: lh },
         sashType: st,
         slidingIndex: isSlidingSash ? slidingLeafCounter++ : undefined,
       });
     }
+  }
 
-    for (const sub of subSashes) {
-      const sBox = sub.box;
-      const subSt = sub.sashType;
-      const isSliding = sub.slidingIndex !== undefined;
+  // Phát hiện chuỗi cánh xếp trượt / mở nối tiếp cùng phía để tính động học gập đôi (Bi-Fold Accordion)
+  const leftSwingCandidates = allSashes
+    .filter(
+      (s) =>
+        s.sashType === 'gap-xep-le-trai' ||
+        s.sashType === 'swing_left' ||
+        s.sashType === 'le-trai-mo-ra' ||
+        s.sashType === 'le-trai-mo-vao'
+    )
+    .sort((a, b) => a.box.x - b.box.x);
 
-      // Xác định ray Z cho cánh lùa
-      let trackIdx = 0;
-      if (isSliding) {
-        trackIdx =
-          node.sashZIndex !== undefined
-            ? node.sashZIndex
-            : totalSlidingLeaves === 4
-              ? sub.slidingIndex === 1 || sub.slidingIndex === 2
-                ? 1
-                : 0
-              : (sub.slidingIndex ?? 0) % numTracks;
+  for (let i = 0; i < leftSwingCandidates.length; i++) {
+    const cur = leftSwingCandidates[i];
+    if (i === 0) {
+      cur.foldChainIndex = 0;
+      cur.foldChainAnchorXMm = cur.box.x;
+      cur.foldChainPrevWidthsMm = [];
+      continue;
+    }
+    const prev = leftSwingCandidates[i - 1];
+    const sameRow = Math.abs(cur.box.y - prev.box.y) < 15 && Math.abs(cur.box.h - prev.box.h) < 15;
+    const isAdjacent = Math.abs(cur.box.x - (prev.box.x + prev.box.w)) < 25;
+    const noMullion = !hasVertMullionBetween(prev.box.x + prev.box.w / 2, cur.box.x + cur.box.w / 2, cur.box.y + cur.box.h / 2);
+    if (sameRow && (cur.sashType.includes('gap-xep') || (isAdjacent && noMullion))) {
+      cur.foldChainIndex = (prev.foldChainIndex ?? 0) + 1;
+      cur.foldChainAnchorXMm = prev.foldChainAnchorXMm ?? prev.box.x;
+      cur.foldChainPrevWidthsMm = [...(prev.foldChainPrevWidthsMm || []), prev.box.w];
+    } else {
+      cur.foldChainIndex = 0;
+      cur.foldChainAnchorXMm = cur.box.x;
+      cur.foldChainPrevWidthsMm = [];
+    }
+  }
+
+  const rightSwingCandidates = allSashes
+    .filter(
+      (s) =>
+        s.sashType === 'gap-xep-le-phai' ||
+        s.sashType === 'swing_right' ||
+        s.sashType === 'le-phai-mo-ra' ||
+        s.sashType === 'le-phai-mo-vao'
+    )
+    .sort((a, b) => b.box.x - a.box.x);
+
+  for (let i = 0; i < rightSwingCandidates.length; i++) {
+    const cur = rightSwingCandidates[i];
+    if (i === 0) {
+      cur.foldChainIndex = 0;
+      cur.foldChainAnchorXMm = cur.box.x + cur.box.w;
+      cur.foldChainPrevWidthsMm = [];
+      continue;
+    }
+    const prev = rightSwingCandidates[i - 1];
+    const sameRow = Math.abs(cur.box.y - prev.box.y) < 15 && Math.abs(cur.box.h - prev.box.h) < 15;
+    const isAdjacent = Math.abs(prev.box.x - (cur.box.x + cur.box.w)) < 25;
+    const noMullion = !hasVertMullionBetween(cur.box.x + cur.box.w / 2, prev.box.x + prev.box.w / 2, cur.box.y + cur.box.h / 2);
+    if (sameRow && (cur.sashType.includes('gap-xep') || (isAdjacent && noMullion))) {
+      cur.foldChainIndex = (prev.foldChainIndex ?? 0) + 1;
+      cur.foldChainAnchorXMm = prev.foldChainAnchorXMm ?? prev.box.x + prev.box.w;
+      cur.foldChainPrevWidthsMm = [...(prev.foldChainPrevWidthsMm || []), prev.box.w];
+    } else {
+      cur.foldChainIndex = 0;
+      cur.foldChainAnchorXMm = cur.box.x + cur.box.w;
+      cur.foldChainPrevWidthsMm = [];
+    }
+  }
+
+  for (const sub of allSashes) {
+    const { node } = sub;
+    const subSt = sub.sashType;
+    const isSliding = sub.slidingIndex !== undefined;
+
+    // Khe hở kỹ thuật thực tế (Rebate clearance 2mm) để cánh không cọ/xuyên vào khung bao
+    const clearanceMm = isSliding ? 0 : 2;
+    const sBox = {
+      x: sub.box.x + clearanceMm,
+      y: sub.box.y + clearanceMm,
+      w: Math.max(40, sub.box.w - clearanceMm * 2),
+      h: Math.max(40, sub.box.h - clearanceMm * 2),
+    };
+
+    const isLeftHinge =
+      subSt === 'swing_left' ||
+      subSt === 'le-trai-mo-ra' ||
+      subSt === 'le-trai-mo-vao' ||
+      subSt === 'gap-xep-le-trai';
+    const isRightHinge =
+      subSt === 'swing_right' ||
+      subSt === 'le-phai-mo-ra' ||
+      subSt === 'le-phai-mo-vao' ||
+      subSt === 'gap-xep-le-phai';
+    const isAwning = subSt === 'awning' || subSt === 'mo-hat';
+    const isTilt = subSt === 'tilt' || subSt === 'mo-lat' || subSt === 'tilt_turn' || subSt === 'tilt_down';
+
+    const isInward = subSt.includes('mo-vao') || isTilt;
+    const dirZ = isInward ? -1 : 1;
+
+    // Xác định mặt phẳng Z của cánh:
+    // - Cánh mở ra ngoài (mo-ra, awning): mặt ngoài của cánh phẳng (flush) với mặt ngoài khung bao (frameZFront)
+    // - Cánh mở vào trong (mo-vao, tilt): mặt trong của cánh phẳng (flush) với mặt trong khung bao (frameZBack)
+    // -> Nhờ vậy khi xoay quanh tâm bản lề ngoài/trong, thân cánh thoát hoàn toàn ra khỏi khung, không bao giờ cắt xuyên qua khung!
+    let trackIdx = 0;
+    if (isSliding) {
+      trackIdx =
+        node.sashZIndex !== undefined
+          ? node.sashZIndex
+          : totalSlidingLeaves === 4
+            ? sub.slidingIndex === 1 || sub.slidingIndex === 2
+              ? 1
+              : 0
+            : (sub.slidingIndex ?? 0) % numTracks;
+    }
+
+    let sZBack: number;
+    let sZFront: number;
+    if (isSliding) {
+      const trackZCenter = getTrackZ(trackIdx);
+      sZBack = trackZCenter - sashDepthM / 2;
+      sZFront = trackZCenter + sashDepthM / 2;
+    } else if (isInward) {
+      sZBack = frameZBack;
+      sZFront = Math.min(frameZFront, frameZBack + sashDepthM);
+    } else {
+      sZFront = frameZFront;
+      sZBack = Math.max(frameZBack, frameZFront - sashDepthM);
+    }
+    const sashZCenter = (sZBack + sZFront) / 2;
+
+    let activeSashJoint: SashCornerJoint = sashConfig?.cornerJoint ?? '45';
+    if (isSliding && sashConfig?.slidingJoints) {
+      const sIdx = sub.slidingIndex ?? 0;
+      const isFirst = sIdx === 0;
+      const isLast = sIdx === totalSlidingLeaves - 1 && totalSlidingLeaves > 1;
+      if (isFirst) {
+        activeSashJoint = sashConfig.slidingJoints.leftSliding || activeSashJoint;
+      } else if (isLast) {
+        activeSashJoint = sashConfig.slidingJoints.rightSliding || activeSashJoint;
+      } else {
+        activeSashJoint = sashConfig.slidingJoints.centerSliding || activeSashJoint;
       }
-      const trackZCenter = isSliding ? getTrackZ(trackIdx) : 0;
+    }
 
-      const sashDepthM = isSliding ? 0.032 : 0.056;
-      const sZBack = trackZCenter - sashDepthM / 2;
-      const sZFront = trackZCenter + sashDepthM / 2;
+    const sashSnap = collector.getSnapshotIndices();
+    const isVoCuc3D = isSlim && !isSliding && !subSt.includes('gap-xep');
+    const hingeZFace = dirZ > 0 ? sZFront : sZBack;
 
-      let activeSashJoint: SashCornerJoint = sashConfig?.cornerJoint ?? '45';
-      if (isSliding && sashConfig?.slidingJoints) {
-        const sIdx = sub.slidingIndex ?? 0;
-        const isFirst = sIdx === 0;
-        const isLast = sIdx === totalSlidingLeaves - 1 && totalSlidingLeaves > 1;
-        if (isFirst) {
-          activeSashJoint = sashConfig.slidingJoints.leftSliding || activeSashJoint;
-        } else if (isLast) {
-          activeSashJoint = sashConfig.slidingJoints.rightSliding || activeSashJoint;
-        } else {
-          activeSashJoint = sashConfig.slidingJoints.centerSliding || activeSashJoint;
-        }
+    if (isVoCuc3D) {
+      const voCucPoly = ensureCCW([
+        to3D(sBox.x, sBox.y),
+        to3D(sBox.x + sBox.w, sBox.y),
+        to3D(sBox.x + sBox.w, sBox.y + sBox.h),
+        to3D(sBox.x, sBox.y + sBox.h),
+      ]);
+      collector.addExtrudedConvexPolygon(
+        voCucPoly,
+        sZBack,
+        sZFront,
+        aluRgb,
+        aluMatId,
+        aluEdgeRgb
+      );
+      if (isLeftHinge || isRightHinge) {
+        const hingeX = isLeftHinge ? sBox.x + 3 : sBox.x + sBox.w - 3;
+        addHinges3D(collector, hingeX, sBox.y, sBox.h, hingeZFace, dirZ, to3D, effectiveHwRgb);
       }
-
-      const sashSnap = collector.getSnapshotIndices();
-
+    } else {
       const dSash = Math.min(sashMm, Math.floor(Math.min(sBox.w, sBox.h) * 0.22));
       addFourPerimeterBars3D(
         collector,
@@ -1064,150 +1259,143 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
         }
       );
 
-      // Cây Ốp móc (Interlock) cho cánh lùa ở cạnh giao nhau giữa các cánh
-      if (isSliding && totalSlidingLeaves >= 2) {
-        const sIdx = sub.slidingIndex ?? 0;
-        const hasRightInterlock = isCenterMeetingSliding
-          ? sIdx !== totalSlidingLeaves / 2 - 1 && sIdx < totalSlidingLeaves - 1
-          : sIdx < totalSlidingLeaves - 1;
-        const hasLeftInterlock = isCenterMeetingSliding
-          ? sIdx !== totalSlidingLeaves / 2 && sIdx > 0
-          : sIdx > 0;
+    // Cây Ốp móc (Interlock) cho cánh lùa
+    if (isSliding && totalSlidingLeaves >= 2) {
+      const sIdx = sub.slidingIndex ?? 0;
+      const hasRightInterlock = isCenterMeetingSliding
+        ? sIdx !== totalSlidingLeaves / 2 - 1 && sIdx < totalSlidingLeaves - 1
+        : sIdx < totalSlidingLeaves - 1;
+      const hasLeftInterlock = isCenterMeetingSliding
+        ? sIdx !== totalSlidingLeaves / 2 && sIdx > 0
+        : sIdx > 0;
 
-        const interlockFinDepth = 0.018;
-        if (hasRightInterlock) {
-          const [ix] = to3D(sBox.x + sBox.w - 8, sBox.y);
-          const [, iyT] = to3D(sBox.x, sBox.y + dSash);
-          const [, iyB] = to3D(sBox.x, sBox.y + sBox.h - dSash);
-          const zFin = sZFront + interlockFinDepth / 2;
-          collector.addBox(
-            ix,
-            (iyT + iyB) / 2,
-            zFin,
-            0.012,
-            Math.max(0.05, Math.abs(iyT - iyB)),
-            interlockFinDepth,
-            aluRgb,
-            aluMatId,
-            aluEdgeRgb
-          );
-        }
-        if (hasLeftInterlock) {
-          const [ix] = to3D(sBox.x + 8, sBox.y);
-          const [, iyT] = to3D(sBox.x, sBox.y + dSash);
-          const [, iyB] = to3D(sBox.x, sBox.y + sBox.h - dSash);
-          const zFin = sZBack - interlockFinDepth / 2;
-          collector.addBox(
-            ix,
-            (iyT + iyB) / 2,
-            zFin,
-            0.012,
-            Math.max(0.05, Math.abs(iyT - iyB)),
-            interlockFinDepth,
-            aluRgb,
-            aluMatId,
-            aluEdgeRgb
-          );
-        }
-      }
-
-      // Đố động / Ốp nối cánh giữa
-      if (sub.hasDynamicMullion || node.sashJoiner) {
-        const [dmX] = to3D(sBox.x + sBox.w + 1, sBox.y);
-        const [, dmYT] = to3D(sBox.x, sBox.y);
-        const [, dmYB] = to3D(sBox.x, sBox.y + sBox.h);
+      const interlockFinDepth = 0.014;
+      if (hasRightInterlock) {
+        const [ix] = to3D(sBox.x + sBox.w - 8, sBox.y);
+        const [, iyT] = to3D(sBox.x, sBox.y + dSash);
+        const [, iyB] = to3D(sBox.x, sBox.y + sBox.h - dSash);
+        const zFin = sZFront + interlockFinDepth / 2;
         collector.addBox(
-          dmX,
-          (dmYT + dmYB) / 2,
-          trackZCenter,
-          0.024,
-          Math.max(0.05, Math.abs(dmYT - dmYB)),
-          sashDepthM + 0.006,
+          ix,
+          (iyT + iyB) / 2,
+          zFin,
+          0.012,
+          Math.max(0.05, Math.abs(iyT - iyB)),
+          interlockFinDepth,
           aluRgb,
           aluMatId,
           aluEdgeRgb
         );
       }
-
-      // Đố chia trong lòng cánh (Sash Mullions)
-      const smBarsInSash = sashMullionsAll.filter(
-        (sm) =>
-          sm.x >= sBox.x - 2 &&
-          sm.x + sm.w <= sBox.x + sBox.w + 2 &&
-          sm.y >= sBox.y - 2 &&
-          sm.y + sm.h <= sBox.y + sBox.h + 2
-      );
-      for (const sm of smBarsInSash) {
-        const smPoly = ensureCCW([
-          to3D(sm.x, sm.y),
-          to3D(sm.x + sm.w, sm.y),
-          to3D(sm.x + sm.w, sm.y + sm.h),
-          to3D(sm.x, sm.y + sm.h),
-        ]);
-        collector.addExtrudedConvexPolygon(
-          smPoly,
-          sZBack + 0.003,
-          sZFront - 0.003,
+      if (hasLeftInterlock) {
+        const [ix] = to3D(sBox.x + 8, sBox.y);
+        const [, iyT] = to3D(sBox.x, sBox.y + dSash);
+        const [, iyB] = to3D(sBox.x, sBox.y + sBox.h - dSash);
+        const zFin = sZBack - interlockFinDepth / 2;
+        collector.addBox(
+          ix,
+          (iyT + iyB) / 2,
+          zFin,
+          0.012,
+          Math.max(0.05, Math.abs(iyT - iyB)),
+          interlockFinDepth,
           aluRgb,
           aluMatId,
           aluEdgeRgb
         );
       }
+    }
 
-      // 4 Thanh Nẹp kính cánh + Tấm kính trong lòng cánh
-      const sbW = Math.min(beadMm, Math.floor(dSash * 0.42));
-      const innerBox = {
-        x: sBox.x + dSash,
-        y: sBox.y + dSash,
-        w: Math.max(20, sBox.w - 2 * dSash),
-        h: Math.max(20, sBox.h - 2 * dSash),
-      };
-      addFourPerimeterBars3D(
-        collector,
-        to3D,
-        innerBox,
-        { left: sbW, top: sbW, right: sbW, bottom: sbW },
-        trackZCenter - 0.009,
-        trackZCenter + 0.009,
-        sashConfig?.beadCornerJoint ?? '45',
-        beadRgb,
-        aluMatId,
-        aluEdgeRgb,
-        { gapMm: 0.4 }
-      );
-
-      addInfillPane3D(
-        collector,
-        to3D,
-        {
-          x: innerBox.x + sbW,
-          y: innerBox.y + sbW,
-          w: Math.max(16, innerBox.w - 2 * sbW),
-          h: Math.max(16, innerBox.h - 2 * sbW),
-        },
-        trackZCenter,
-        node.paneType || 'glass',
+    // Đố động / Ốp nối cánh giữa
+    if (sub.hasDynamicMullion || node.sashJoiner) {
+      const [dmX] = to3D(sBox.x + sBox.w + 1, sBox.y);
+      const [, dmYT] = to3D(sBox.x, sBox.y);
+      const [, dmYB] = to3D(sBox.x, sBox.y + sBox.h);
+      collector.addBox(
+        dmX,
+        (dmYT + dmYB) / 2,
+        sashZCenter,
+        0.02,
+        Math.max(0.05, Math.abs(dmYT - dmYB)),
+        sZFront - sZBack,
         aluRgb,
         aluMatId,
-        node
+        aluEdgeRgb
       );
+    }
 
-      const isLeftHinge =
-        subSt === 'swing_left' ||
-        subSt === 'le-trai-mo-ra' ||
-        subSt === 'le-trai-mo-vao' ||
-        subSt === 'gap-xep-le-trai';
-      const isRightHinge =
-        subSt === 'swing_right' ||
-        subSt === 'le-phai-mo-ra' ||
-        subSt === 'le-phai-mo-vao' ||
-        subSt === 'gap-xep-le-phai';
-      const isAwning = subSt === 'awning' || subSt === 'mo-hat';
-      const isTilt = subSt === 'tilt' || subSt === 'mo-lat' || subSt === 'tilt_turn' || subSt === 'tilt_down';
+    // Đố chia trong lòng cánh (Sash Mullions)
+    const smBarsInSash = sashMullionsAll.filter(
+      (sm) =>
+        sm.x >= sub.box.x - 2 &&
+        sm.x + sm.w <= sub.box.x + sub.box.w + 2 &&
+        sm.y >= sub.box.y - 2 &&
+        sm.y + sm.h <= sub.box.y + sub.box.h + 2
+    );
+    for (const sm of smBarsInSash) {
+      const smPoly = ensureCCW([
+        to3D(sm.x, sm.y),
+        to3D(sm.x + sm.w, sm.y),
+        to3D(sm.x + sm.w, sm.y + sm.h),
+        to3D(sm.x, sm.y + sm.h),
+      ]);
+      collector.addExtrudedConvexPolygon(
+        smPoly,
+        sZBack + 0.002,
+        sZFront - 0.002,
+        aluRgb,
+        aluMatId,
+        aluEdgeRgb
+      );
+    }
+
+    // 4 Thanh Nẹp kính cánh + Tấm kính trong lòng cánh
+    const sbW = Math.min(beadMm, Math.floor(dSash * 0.42));
+    const innerBox = {
+      x: sBox.x + dSash,
+      y: sBox.y + dSash,
+      w: Math.max(20, sBox.w - 2 * dSash),
+      h: Math.max(20, sBox.h - 2 * dSash),
+    };
+    const halfBeadZ = Math.min((sZFront - sZBack) * 0.42, Math.max(0.009, (cfg.glassThicknessMm || 8) * 0.0005 + 0.005));
+    addFourPerimeterBars3D(
+      collector,
+      to3D,
+      innerBox,
+      { left: sbW, top: sbW, right: sbW, bottom: sbW },
+      sashZCenter - halfBeadZ,
+      sashZCenter + halfBeadZ,
+      sashConfig?.beadCornerJoint ?? '45',
+      beadRgb,
+      aluMatId,
+      aluEdgeRgb,
+      { gapMm: 0.4 }
+    );
+
+    addInfillPane3D(
+      collector,
+      to3D,
+      {
+        x: innerBox.x + sbW,
+        y: innerBox.y + sbW,
+        w: Math.max(16, innerBox.w - 2 * sbW),
+        h: Math.max(16, innerBox.h - 2 * sbW),
+      },
+      sashZCenter,
+      node.paneType || 'glass',
+      aluRgb,
+      aluMatId,
+      node,
+      {
+        thicknessMm: cfg.glassThicknessMm,
+        colorHex: cfg.glassColorHex,
+        transparency: cfg.glassTransparency,
+      }
+    );
 
       if (isLeftHinge || isRightHinge) {
-        const hingeX = isLeftHinge ? sBox.x + 4 : sBox.x + sBox.w - 4;
-        addHinges3D(collector, hingeX, sBox.y, sBox.h, sZFront, to3D, hwRgb);
+        const hingeX = isLeftHinge ? sBox.x + 3 : sBox.x + sBox.w - 3;
+        addHinges3D(collector, hingeX, sBox.y, sBox.h, hingeZFace, dirZ, to3D, effectiveHwRgb);
 
         if (node.hasLock !== false) {
           const handleHFromBot = node.handleHeight || Math.round(sBox.h * 0.5);
@@ -1223,7 +1411,13 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
             !isLeftHinge,
             false,
             to3D,
-            hwRgb
+            effectiveHwRgb,
+            {
+              depthMm: cfg.handleDepthMm,
+              offsetXMm: cfg.handleOffsetXMm,
+              offsetYMm: cfg.handleOffsetYMm,
+              bothSides: cfg.bothSidesHandle,
+            }
           );
         }
       } else if (isSliding && node.hasLock !== false) {
@@ -1247,113 +1441,166 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
           isHandleOnLeft,
           true,
           to3D,
-          hwRgb
+          effectiveHwRgb,
+          {
+            depthMm: cfg.handleDepthMm,
+            offsetXMm: cfg.handleOffsetXMm,
+            offsetYMm: cfg.handleOffsetYMm,
+            bothSides: cfg.bothSidesHandle,
+          }
         );
       } else if ((isAwning || isTilt) && node.hasLock !== false) {
-        const [hx, hy] = to3D(sBox.x + sBox.w / 2, sBox.y + sBox.h - dSash * 0.5);
-        collector.addBox(hx, hy, sZFront + 0.012, 0.095, 0.02, 0.022, hwRgb, 4, darkenColor(hwRgb, 0.5));
+        const [hx, hy] = to3D(
+          sBox.x + sBox.w / 2 + (cfg.handleOffsetXMm || 0),
+          sBox.y + sBox.h - dSash * 0.5 - (cfg.handleOffsetYMm || 0)
+        );
+        collector.addBox(hx, hy, sZFront + 0.012, 0.095, 0.02, 0.022, effectiveHwRgb, 4, darkenColor(effectiveHwRgb, 0.5));
       }
+    }
 
-      // Vẽ tia chỉ hướng mở 3D trên mặt kính
-      if (showOpeningRays) {
-        if (isLeftHinge) {
-          addOpeningRays3D(collector, to3D, sBox, sZFront, 'swing_left');
-        } else if (isRightHinge) {
-          addOpeningRays3D(collector, to3D, sBox, sZFront, 'swing_right');
-        } else if (isAwning) {
-          addOpeningRays3D(collector, to3D, sBox, sZFront, 'awning');
-        } else if (isTilt) {
-          addOpeningRays3D(collector, to3D, sBox, sZFront, 'tilt');
-        } else if (isSliding) {
-          const sIdx = sub.slidingIndex ?? 0;
-          const isMiddleTwoWay =
-            subSt === '2-chieu' ||
-            (!isCenterMeetingSliding && totalSlidingLeaves >= 3 && sIdx > 0 && sIdx < totalSlidingLeaves - 1);
+    // Vẽ tia chỉ hướng mở 3D trên mặt kính
+    if (showOpeningRays) {
+      if (isLeftHinge) {
+        addOpeningRays3D(collector, to3D, sBox, sZFront, 'swing_left');
+      } else if (isRightHinge) {
+        addOpeningRays3D(collector, to3D, sBox, sZFront, 'swing_right');
+      } else if (isAwning) {
+        addOpeningRays3D(collector, to3D, sBox, sZFront, 'awning');
+      } else if (isTilt) {
+        addOpeningRays3D(collector, to3D, sBox, sZFront, 'tilt');
+      } else if (isSliding) {
+        const sIdx = sub.slidingIndex ?? 0;
+        const isMiddleTwoWay =
+          subSt === '2-chieu' ||
+          (!isCenterMeetingSliding && totalSlidingLeaves >= 3 && sIdx > 0 && sIdx < totalSlidingLeaves - 1);
 
-          if (isMiddleTwoWay) {
-            addOpeningRays3D(collector, to3D, sBox, sZFront, 'sliding_both');
-          } else if (isCenterMeetingSliding) {
-            const halfCount = totalSlidingLeaves / 2;
-            const isInnerMeetingSash = sIdx === halfCount - 1 || sIdx === halfCount;
-            const pointsLeft = isInnerMeetingSash ? sIdx < halfCount : sIdx >= halfCount;
-            addOpeningRays3D(collector, to3D, sBox, sZFront, pointsLeft ? 'sliding_left' : 'sliding_right');
-          } else {
-            // Cánh đầu (bìa trái) trượt sang phải (->), cánh cuối (bìa phải) trượt sang trái (<-)
-            const pointsRight = sIdx === 0;
-            addOpeningRays3D(collector, to3D, sBox, sZFront, pointsRight ? 'sliding_right' : 'sliding_left');
-          }
+        if (isMiddleTwoWay) {
+          addOpeningRays3D(collector, to3D, sBox, sZFront, 'sliding_both');
+        } else if (isCenterMeetingSliding) {
+          const halfCount = totalSlidingLeaves / 2;
+          const isInnerMeetingSash = sIdx === halfCount - 1 || sIdx === halfCount;
+          const pointsLeft = isInnerMeetingSash ? sIdx < halfCount : sIdx >= halfCount;
+          addOpeningRays3D(collector, to3D, sBox, sZFront, pointsLeft ? 'sliding_left' : 'sliding_right');
+        } else {
+          const pointsRight = sIdx === 0;
+          addOpeningRays3D(collector, to3D, sBox, sZFront, pointsRight ? 'sliding_right' : 'sliding_left');
         }
       }
+    }
 
-      // 8. Áp dụng phép biến đổi Động học 2 chiều (Bidirectional Kinematic Transform) khi openRatio > 0
-      if (openRatio > 0.001) {
-        const clampedOpen = Math.max(0, Math.min(1, openRatio));
-        const isInward = subSt.includes('mo-vao');
-        const dirZ = isInward ? -1 : 1;
+    // 8. Áp dụng phép biến đổi Động học Chuẩn Kiến trúc (Không cắt xuyên khung / Không xuyên cánh)
+    if (openRatio > 0.001) {
+      const clampedOpen = Math.max(0, Math.min(1, openRatio));
+      const pivotZPin = hingeZFace + dirZ * 0.003;
 
-        if (isLeftHinge) {
-          const [pivX, pivY] = to3D(sBox.x, sBox.y + sBox.h / 2);
-          const maxAngle = subSt.includes('gap-xep') ? (78 * Math.PI) / 180 : (68 * Math.PI) / 180;
+      if (isLeftHinge) {
+        const chainIdx = sub.foldChainIndex ?? 0;
+        const maxAngle = (chainIdx > 0 || subSt.includes('gap-xep')) ? (74 * Math.PI) / 180 : (68 * Math.PI) / 180;
+        const theta = clampedOpen * maxAngle;
+        const [pivX, pivY] = to3D(sBox.x, sBox.y + sBox.h / 2);
+
+        if (chainIdx === 0) {
           collector.transformSince(sashSnap, {
             pivotX: pivX,
             pivotY: pivY,
-            pivotZ: dirZ * (sashDepthM / 2),
-            rotY: -dirZ * clampedOpen * maxAngle,
+            pivotZ: pivotZPin,
+            rotY: -dirZ * theta,
           });
-        } else if (isRightHinge) {
-          const [pivX, pivY] = to3D(sBox.x + sBox.w, sBox.y + sBox.h / 2);
-          const maxAngle = subSt.includes('gap-xep') ? (78 * Math.PI) / 180 : (68 * Math.PI) / 180;
-          collector.transformSince(sashSnap, {
-            pivotX: pivX,
-            pivotY: pivY,
-            pivotZ: dirZ * (sashDepthM / 2),
-            rotY: dirZ * clampedOpen * maxAngle,
-          });
-        } else if (isAwning) {
-          const [pivX, pivY] = to3D(sBox.x + sBox.w / 2, sBox.y);
-          const maxAngle = (36 * Math.PI) / 180;
-          collector.transformSince(sashSnap, {
-            pivotX: pivX,
-            pivotY: pivY,
-            pivotZ: sZFront,
-            rotX: -clampedOpen * maxAngle,
-          });
-        } else if (isTilt) {
-          const [pivX, pivY] = to3D(sBox.x + sBox.w / 2, sBox.y + sBox.h);
-          const maxAngle = (26 * Math.PI) / 180;
-          collector.transformSince(sashSnap, {
-            pivotX: pivX,
-            pivotY: pivY,
-            pivotZ: sZBack,
-            rotX: -clampedOpen * maxAngle,
-          });
-        } else if (isSliding) {
-          const sIdx = sub.slidingIndex ?? 0;
-          let targetXMm = sBox.x;
+        } else {
+          // Cánh xếp nối tiếp (Accordion Bi-fold): Cánh chẵn/lẻ gập ngược chiều nhau và tịnh tiến theo mép cánh trước
+          const anchorX = to3D(sub.foldChainAnchorXMm ?? sBox.x, sBox.y)[0];
+          const prevWidthsM = (sub.foldChainPrevWidthsMm || []).map((wm) => wm * 0.001);
+          const foldedSpanM = prevWidthsM.reduce((sum, wM) => sum + wM * Math.cos(theta), 0);
+          const targetHingeX = anchorX + foldedSpanM;
+          const isOdd = chainIdx % 2 === 1;
+          const prevW = prevWidthsM[prevWidthsM.length - 1] || sBox.w * 0.001;
+          const dzHinge = isOdd ? dirZ * prevW * Math.sin(theta) : 0;
 
-          if (isCenterMeetingSliding) {
-            const half = totalSlidingLeaves / 2;
-            const leftCenterX = slidingLeavesList[half - 1]?.x ?? sBox.x;
-            const rightCenterX = slidingLeavesList[half]?.x ?? sBox.x;
+          collector.transformSince(sashSnap, {
+            pivotX: pivX,
+            pivotY: pivY,
+            pivotZ: pivotZPin,
+            rotY: isOdd ? dirZ * theta : -dirZ * theta,
+            dx: targetHingeX - pivX,
+            dz: dzHinge,
+          });
+        }
+      } else if (isRightHinge) {
+        const chainIdx = sub.foldChainIndex ?? 0;
+        const maxAngle = (chainIdx > 0 || subSt.includes('gap-xep')) ? (74 * Math.PI) / 180 : (68 * Math.PI) / 180;
+        const theta = clampedOpen * maxAngle;
+        const [pivX, pivY] = to3D(sBox.x + sBox.w, sBox.y + sBox.h / 2);
 
-            if (slidingDirection === 'right_to_left') {
-              // Pha 1: Mở từ Giữa dồn ra 2 Biên ngoài (Mở thông lối đi chính giữa)
-              targetXMm = sIdx < half ? slidingXMin : slidingXMax;
-            } else {
-              // Pha 2: Mở từ 2 Biên ngoài lùa dồn vào Giữa (Mở thông 2 lối đi 2 bên)
-              targetXMm = sIdx < half ? leftCenterX : rightCenterX;
-            }
+        if (chainIdx === 0) {
+          collector.transformSince(sashSnap, {
+            pivotX: pivX,
+            pivotY: pivY,
+            pivotZ: pivotZPin,
+            rotY: dirZ * theta,
+          });
+        } else {
+          const anchorX = to3D(sub.foldChainAnchorXMm ?? sBox.x + sBox.w, sBox.y)[0];
+          const prevWidthsM = (sub.foldChainPrevWidthsMm || []).map((wm) => wm * 0.001);
+          const foldedSpanM = prevWidthsM.reduce((sum, wM) => sum + wM * Math.cos(theta), 0);
+          const targetHingeX = anchorX - foldedSpanM;
+          const isOdd = chainIdx % 2 === 1;
+          const prevW = prevWidthsM[prevWidthsM.length - 1] || sBox.w * 0.001;
+          const dzHinge = isOdd ? dirZ * prevW * Math.sin(theta) : 0;
+
+          collector.transformSince(sashSnap, {
+            pivotX: pivX,
+            pivotY: pivY,
+            pivotZ: pivotZPin,
+            rotY: isOdd ? -dirZ * theta : dirZ * theta,
+            dx: targetHingeX - pivX,
+            dz: dzHinge,
+          });
+        }
+      } else if (isAwning) {
+        // Mở hất ra ngoài (+Z): Bản lề ở mép trên mặt ngoài (sZFront + 0.003), đẩy đáy cánh ra phía trước
+        const [pivX, pivY] = to3D(sBox.x + sBox.w / 2, sBox.y);
+        const maxAngle = (34 * Math.PI) / 180;
+        collector.transformSince(sashSnap, {
+          pivotX: pivX,
+          pivotY: pivY,
+          pivotZ: sZFront + 0.003,
+          rotX: -clampedOpen * maxAngle,
+        });
+      } else if (isTilt) {
+        // Mở lật vào trong (-Z): Bản lề ở mép dưới mặt trong (sZBack - 0.003), ngả đỉnh cánh vào trong phòng
+        const [pivX, pivY] = to3D(sBox.x + sBox.w / 2, sBox.y + sBox.h);
+        const maxAngle = (22 * Math.PI) / 180;
+        collector.transformSince(sashSnap, {
+          pivotX: pivX,
+          pivotY: pivY,
+          pivotZ: sZBack - 0.003,
+          rotX: -clampedOpen * maxAngle,
+        });
+      } else if (isSliding) {
+        const sIdx = sub.slidingIndex ?? 0;
+        let targetXMm = sub.box.x;
+
+        if (isCenterMeetingSliding) {
+          const half = totalSlidingLeaves / 2;
+          const leftCenterX = slidingLeavesList[half - 1]?.x ?? sub.box.x;
+          const rightCenterX = slidingLeavesList[half]?.x ?? sub.box.x;
+
+          if (slidingDirection === 'right_to_left') {
+            // Pha 1: Mở 2 cánh giữa trượt dồn ra 2 cánh biên ngoài (trên 2 ray khác nhau, không chạm nhau)
+            if (sIdx === half - 1) targetXMm = slidingXMin;
+            else if (sIdx === half) targetXMm = slidingXMax;
           } else {
-            // Hệ cửa lùa 2 cánh, 3 cánh, 4 cánh 4 ray, 5 cánh...:
-            // - Khi slidingDirection === 'right_to_left': Toàn bộ các cánh trượt từ Phải qua Trái dồn về biên trái (slidingXMin)
-            // - Khi slidingDirection === 'left_to_right': Toàn bộ các cánh trượt từ Trái qua Phải dồn về biên phải (slidingXMax)
-            targetXMm = slidingDirection === 'right_to_left' ? slidingXMin : slidingXMax;
+            // Pha 2: Mở 2 cánh biên ngoài trượt dồn vào 2 cánh giữa
+            if (sIdx === 0) targetXMm = leftCenterX;
+            else if (sIdx === totalSlidingLeaves - 1) targetXMm = rightCenterX;
           }
+        } else {
+          targetXMm = slidingDirection === 'right_to_left' ? slidingXMin : slidingXMax;
+        }
 
-          const slideDxMeters = ((targetXMm - sBox.x) * 0.001) * clampedOpen * 0.92;
-          if (Math.abs(slideDxMeters) > 0.0001) {
-            collector.transformSince(sashSnap, { dx: slideDxMeters });
-          }
+        const slideDxMeters = (targetXMm - sub.box.x) * 0.001 * clampedOpen * 0.92;
+        if (Math.abs(slideDxMeters) > 0.0001) {
+          collector.transformSince(sashSnap, { dx: slideDxMeters });
         }
       }
     }

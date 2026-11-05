@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ArchConfig, SashCornerJoint, SceneCellNode } from '../studio-types';
+import { ensureRootCellDimensions } from '../utils/door-tree-utils';
 import { CAD_CONFIG } from './cad-config';
 import { DoorCadRendererProps } from './cad-types';
 import {
@@ -37,7 +38,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   aluminumColor,
   hardwareColor,
   frameShape,
-  rootCell,
+  rootCell: rawRootCell,
   selectedCellId,
   selectedMullionId,
   onSelectCell,
@@ -49,6 +50,10 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   sashConfig,
   availableProfiles,
 }) => {
+  const rootCell = React.useMemo(
+    () => ensureRootCellDimensions(rawRootCell, w, h),
+    [rawRootCell, w, h]
+  );
   // Aspect ratio của bộ cửa thực tế
   const aspect = w / (h || 1);
 
@@ -166,6 +171,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   const isDoorUnit = h >= 1800;
   const selectedSashProfile = availableProfiles?.find(
     (p) =>
+      (isSlim && p.id === sashConfig?.voCucProfileId) ||
       p.id === sashConfig?.leftProfileId ||
       p.id === sashConfig?.topProfileId ||
       p.id === sashConfig?.rightProfileId ||

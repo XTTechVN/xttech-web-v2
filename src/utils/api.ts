@@ -17,6 +17,15 @@ api.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
+    // Nếu body là FormData, xóa Content-Type mặc định ('application/json')
+    // để trình duyệt tự động gắn 'multipart/form-data; boundary=...' chuẩn xác
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      if (typeof config.headers.delete === 'function') {
+        config.headers.delete('Content-Type');
+      } else {
+        delete config.headers['Content-Type'];
+      }
+    }
     return config;
   },
   (error) => {

@@ -2,6 +2,7 @@
 
 import React, { useId } from 'react';
 import { DoorCadRenderer } from './cad-engine/door-cad-renderer';
+import { ensureRootCellDimensions } from './utils/door-tree-utils';
 import {
   DEFAULT_FRAME_CONFIG,
   DEFAULT_SASH_CONFIG,
@@ -29,20 +30,25 @@ interface RawDoorSystemConfig {
   rootCell?: SceneCellNode | null;
 }
 
-/**
- * Đọc systemConfig của door hoặc config truyền trực tiếp và render SVG thumbnail bằng DoorCadRenderer.
- */
-export function DoorThumbnail({
-  door,
-  systemConfig: directConfig,
-  hideDimensions = true,
-  className = '',
-}: DoorThumbnailProps) {
-  const svgId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
-  const sc = (directConfig || door?.systemConfig || {}) as RawDoorSystemConfig;
+export interface ParsedDoorSystemConfig {
+  w: number;
+  h: number;
+  aluminumColor: string;
+  hardwareColor: string;
+  frameShape: FrameShape;
+  frameConfig: FrameConfig;
+  sashConfig: SashConfig;
+  rootCell: SceneCellNode | null;
+}
 
-  const w: number = Number(sc.w) || 800;
-  const h: number = Number(sc.h) || 1200;
+export function parseDoorSystemConfig(
+  rawConfig?: Record<string, unknown> | null,
+  fallbackW = 800,
+  fallbackH = 1200,
+): ParsedDoorSystemConfig {
+  const sc = (rawConfig || {}) as RawDoorSystemConfig;
+  const w: number = Number(sc.w) || fallbackW;
+  const h: number = Number(sc.h) || fallbackH;
   const aluminumColor: string = sc.aluminumColor || '#C6A869';
   const hardwareColor: string = sc.hardwareColor || '#1E293B';
   const frameShape: FrameShape = sc.frameShape || 'rect';
@@ -62,7 +68,34 @@ export function DoorThumbnail({
     ? { ...DEFAULT_SASH_CONFIG, ...sc.sashConfig }
     : DEFAULT_SASH_CONFIG;
 
-  const rootCell: SceneCellNode | null = sc.rootCell ?? null;
+  const rootCell: SceneCellNode | null = sc.rootCell
+    ? ensureRootCellDimensions(sc.rootCell, w, h)
+    : null;
+
+  return {
+    w,
+    h,
+    aluminumColor,
+    hardwareColor,
+    frameShape,
+    frameConfig,
+    sashConfig,
+    rootCell,
+  };
+}
+
+/**
+ * Đọc systemConfig của door hoặc config truyền trực tiếp và render SVG thumbnail bằng DoorCadRenderer.
+ */
+export function DoorThumbnail({
+  door,
+  systemConfig: directConfig,
+  hideDimensions = true,
+  className = '',
+}: DoorThumbnailProps) {
+  const svgId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  const { w, h, aluminumColor, hardwareColor, frameShape, frameConfig, sashConfig, rootCell } =
+    parseDoorSystemConfig(directConfig || door?.systemConfig);
 
   if (!rootCell) {
     return (
@@ -91,4 +124,3 @@ export function DoorThumbnail({
     </div>
   );
 }
-

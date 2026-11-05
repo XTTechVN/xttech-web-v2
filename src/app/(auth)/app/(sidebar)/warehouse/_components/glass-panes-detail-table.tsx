@@ -4,7 +4,7 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { GlassOrderItem } from '@/types';
 
-import { MANUAL_REASON_MAP, GRIND_LABEL_MAP } from '../_utils/glass-mapping';
+import { MANUAL_REASON_MAP, GRIND_LABEL_MAP, formatPaneShapeSummary } from '../_utils/glass-mapping';
 
 interface GlassPanesDetailTableProps {
   items: GlassOrderItem[];
@@ -48,7 +48,16 @@ export function GlassPanesDetailTable({ items }: GlassPanesDetailTableProps) {
                   <td className="p-2.5 font-mono text-slate-700">
                     {item.paneLabel || '-'}
                   </td>
-                  <td className="p-2.5 text-slate-700">{item.glassType}</td>
+                  <td className="p-2.5 text-slate-700">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span>{item.glassType}</span>
+                      {item.frameShape && item.frameShape !== 'rect' && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                          {formatPaneShapeSummary(item.frameShape, item.archConfig)}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="p-2.5 text-right font-mono font-semibold text-slate-800">
                     {item.widthMm} × {item.heightMm} mm
                   </td>

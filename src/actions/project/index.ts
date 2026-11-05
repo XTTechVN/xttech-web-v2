@@ -648,6 +648,21 @@ export const exportProjectQuotationExcel = async (
   }
 };
 
+export const getProjectQuotationMaterialAnalysis = async (
+  projectId: number,
+  quotationId: number,
+): Promise<import('@/types').QuotationMaterialAnalysisResponse> => {
+  try {
+    const response = await api.get(
+      `/api/v1/projects/${projectId}/quotations/${quotationId}/material-analysis`,
+    );
+    return response.data;
+  } catch (error) {
+    console.warn('API error getProjectQuotationMaterialAnalysis', error);
+    throw error;
+  }
+};
+
 export * from './manufacture';
 
 export * from './handover';

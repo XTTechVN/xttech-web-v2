@@ -176,17 +176,16 @@ export const GasketConfigSection: React.FC<GasketConfigSectionProps> = ({
                 {/* 3. Cách tính */}
                 <div className="md:col-span-3 space-y-1">
                   <label className="text-[10px] text-slate-500 font-medium block">Cách tính:</label>
-                  <select
+                  <Select
+                    fullWidth
                     value={row.measure}
                     onChange={(e) => handleUpdateItem(row.id, { measure: e.target.value as GasketMeasureType })}
-                    className="w-full h-7 px-2 text-xs rounded border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-pink-500"
-                  >
-                    {(target === 'frame' ? FRAME_MEASURE_OPTIONS : SASH_MEASURE_OPTIONS).map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={(target === 'frame' ? FRAME_MEASURE_OPTIONS : SASH_MEASURE_OPTIONS).map((opt) => ({
+                      value: opt.id,
+                      label: opt.label,
+                    }))}
+                    className="h-7 text-xs md:text-xs py-0 pl-2 pr-7 border-slate-300 focus:border-pink-500"
+                  />
                 </div>
 
                 {/* 4. Số lần / ô */}

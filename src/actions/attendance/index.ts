@@ -1,13 +1,12 @@
 import api from "@/utils/api";
-import { useAuthStore } from "@/stores";
-import { BASE_API_URL } from "@/config";
 import {
     Attendance,
     AttendanceCreate,
     DataListResponse,
     AttendanceQueryParams,
     AttendanceAdjustmentRequest,
-    AutoTimekeepingData,AttendanceAdjustmentRequestCreate,
+    AutoTimekeepingData,
+    AttendanceAdjustmentRequestCreate,
     AdjustmentRequestQueryParams,
     AttendanceAdjustmentRequestUpdate,
     LocationPingPayload,
@@ -49,29 +48,17 @@ export const deleteAttendance = async (id: number) => {
     return api.delete<Attendance>(`${baseVersion1}/attendances/${id}`);
 }
 
-export const autoTimekeeping = async (data: AutoTimekeepingData, image: File) => {
+export const autoTimekeeping = async (data: AutoTimekeepingData, image: File): Promise<Attendance> => {
     const formData = new FormData();
     formData.append('data', JSON.stringify(data));
     formData.append('image', image);
 
-    // Dùng native fetch thay axios để tránh vấn đề Content-Type của axios instance
-    // fetch + FormData tự động set đúng multipart/form-data; boundary=...
-    const accessToken = useAuthStore.getState().accessToken;
-    const response = await fetch(`${BASE_API_URL}${baseVersion1}/users/attendance`, {
-        method: 'POST',
-        headers: {
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        credentials: 'include',
-        body: formData,
-    });
+    const response = await api.post<Attendance>(
+        `${baseVersion1}/users/attendance`,
+        formData
+    );
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw { response: { data: errorData, status: response.status } };
-    }
-
-    return response.json() as Promise<Attendance>;
+    return response.data;
 };
 
 export const getAdjustmentRequests = async (
@@ -120,7 +107,7 @@ export const getLiveLocations = async (): Promise<StaffLiveLocation[]> => {
 };
 
 export const getStaffRoute = async (userId: string, date?: string, attendanceId?: number): Promise<StaffRouteResponse> => {
-  const params: Record<string, any> = {};
+  const params: Record<string, string | number> = {};
   if (date) params.date = date;
   if (attendanceId) params.attendanceId = attendanceId;
 
@@ -149,4 +136,3 @@ export const getMonthRoster = async (
   );
   return response.data;
 };
-

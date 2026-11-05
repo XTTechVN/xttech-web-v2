@@ -308,3 +308,124 @@ export interface DesignOptionCreatePayload {
   /** Nhân bản toàn bộ cửa của phương án khác */
   copyFromOptionId?: number;
 }
+
+
+// ---------- Phân tích cấu thành giá sản xuất & Thống kê vật tư (BOM) ----------
+export type QuotationBomUnit =
+  | 'meter'
+  | 'pcs'
+  | 'unit'
+  | 'pair'
+  | 'set'
+  | 'roll'
+  | 'box'
+  | 'bag'
+  | 'tube'
+  | 'sheet'
+  | 'sqm'
+  | 'kg'
+  | 'bar';
+
+export type QuotationAuxiliaryItemType = 'gasket' | 'accessory' | 'auxiliary';
+export type QuotationLaborRowCode = 'production' | 'install' | 'clean';
+export type QuotationMaterialRowCode = 'profile' | 'glass' | 'gasket' | 'accessory';
+
+export interface QuotationMaterialCostRow {
+  code: QuotationMaterialRowCode;
+  amount: number;
+  ratioPercent: number;
+  unitCostPerM2: number;
+}
+
+export interface QuotationLaborCostRow {
+  code: QuotationLaborRowCode;
+  quantity: number;
+  unit: 'kg' | 'sqm';
+  unitPrice: number;
+  amount: number;
+}
+
+export interface QuotationProductionCostBreakdown {
+  totalAreaM2: number;
+  totalAluminumKg: number;
+  materialRows: QuotationMaterialCostRow[];
+  totalMaterialCost: number;
+  materialRatioPercent: number;
+  materialCostPerM2: number;
+  laborRows: QuotationLaborCostRow[];
+  totalLaborCost: number;
+  laborRatioPercent: number;
+  laborCostPerM2: number;
+  totalBaseCost: number;
+  totalBaseCostPerM2: number;
+}
+
+export interface QuotationProfileStatItem {
+  profileCode: string;
+  colorId: number | null;
+  colorName: string;
+  colorHex: string;
+  profileName: string;
+  barType: string;
+  lengthM: number;
+  weightPerM: number;
+  quantity: number;
+  weightKg: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface QuotationGlassStatItem {
+  glassName: string;
+  widthMm: number;
+  heightMm: number;
+  quantity: number;
+  areaM2: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface QuotationAuxiliaryStatItem {
+  itemType: QuotationAuxiliaryItemType;
+  code: string;
+  name: string;
+  unit: QuotationBomUnit;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface QuotationMaterialBreakdown {
+  costBreakdown: QuotationProductionCostBreakdown;
+  profiles: QuotationProfileStatItem[];
+  totalProfileWeightKg: number;
+  totalProfileCost: number;
+  glasses: QuotationGlassStatItem[];
+  totalGlassQuantity: number;
+  totalGlassAreaM2: number;
+  totalGlassCost: number;
+  auxiliaries: QuotationAuxiliaryStatItem[];
+  totalAuxiliaryCost: number;
+}
+
+export interface QuotationPositionMaterialAnalysis {
+  positionId: number;
+  positionCode: string;
+  positionName: string | null;
+  doorName: string;
+  floorId: number;
+  floorName: string;
+  width: number;
+  height: number;
+  breakdown: QuotationMaterialBreakdown;
+}
+
+export interface QuotationMaterialAnalysisResponse {
+  quotationId: number;
+  quotationCode: string;
+  accessoryMode: 'combined' | 'separated';
+  laborCalcUnit: 'vnd_per_m2' | 'vnd_per_kg';
+  totalPositions: number;
+  overall: QuotationMaterialBreakdown;
+  byPositions: QuotationPositionMaterialAnalysis[];
+}

@@ -106,7 +106,7 @@ export const PROGRESS_COLUMN_LABEL: Record<ProgressStepCode, string> = {
   factory_done: 'Xong xưởng',
   installed: 'Lắp đặt',
   accepted: 'Nghiệm thu',
-};
+};  
 
 const isProgressStep = (status: string): status is ProgressStepCode =>
   PROGRESS_STEP_ORDER.includes(status as ProgressStepCode);

@@ -7,6 +7,7 @@ import {
   SashVariantProfiles,
 } from '../../studio-types';
 import { ProfileBar } from '@/types';
+import { Select } from '@/components/select';
 
 interface SlidingSashVariantsSectionProps {
   config: SashConfig;
@@ -185,22 +186,24 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
                 <div className="text-[11px] font-medium text-slate-700">
                   1 · Đứng trái <span className="text-red-500">*</span>
                 </div>
-                <select
+                <Select
+                  fullWidth
                   value={v.leftProfileId || ''}
                   onChange={(e) =>
                     handleVariantChange(role, {
                       leftProfileId: e.target.value ? Number(e.target.value) : undefined,
                     })
                   }
-                  className="w-full h-8 px-2 text-xs rounded-md border border-primary/50 bg-white text-slate-800 font-medium focus:outline-none focus:border-primary"
-                >
-                  <option value="">Chọn profile...</option>
-                  {sashProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.code} · {p.name}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: 'Chọn profile...' },
+                    ...sashProfiles.map((p) => ({
+                      value: p.id,
+                      label: `${p.code} · ${p.name}`,
+                    })),
+                  ]}
+                  placeholder="Chọn profile..."
+                  className="h-8 py-0 text-xs md:text-xs rounded-md border-primary/50 bg-white text-slate-800 font-medium"
+                />
                 {leftProf && (
                   <div className="flex flex-wrap gap-1 pt-0.5 text-[10px] font-mono text-slate-600">
                     {Boolean(leftProf.sectionHeightMm) && (
@@ -222,22 +225,24 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
                 <div className="text-[11px] font-medium text-slate-700">
                   2 · Trên <span className="text-[10px] text-slate-400 font-normal">← từ [1]</span>
                 </div>
-                <select
+                <Select
+                  fullWidth
                   value={v.topProfileId || ''}
                   onChange={(e) =>
                     handleVariantChange(role, {
                       topProfileId: e.target.value ? Number(e.target.value) : undefined,
                     })
                   }
-                  className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-primary"
-                >
-                  <option value="">{inheritFrom1Label}</option>
-                  {sashProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.code} · {p.name}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: inheritFrom1Label },
+                    ...sashProfiles.map((p) => ({
+                      value: p.id,
+                      label: `${p.code} · ${p.name}`,
+                    })),
+                  ]}
+                  placeholder={inheritFrom1Label}
+                  className="h-8 py-0 text-xs md:text-xs rounded-md border-slate-200 bg-white text-slate-700"
+                />
               </div>
 
               {/* 3 · Đứng phải <- từ [1] */}
@@ -245,22 +250,24 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
                 <div className="text-[11px] font-medium text-slate-700">
                   3 · Đứng phải <span className="text-[10px] text-slate-400 font-normal">← từ [1]</span>
                 </div>
-                <select
+                <Select
+                  fullWidth
                   value={v.rightProfileId || ''}
                   onChange={(e) =>
                     handleVariantChange(role, {
                       rightProfileId: e.target.value ? Number(e.target.value) : undefined,
                     })
                   }
-                  className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-primary"
-                >
-                  <option value="">{inheritFrom1Label}</option>
-                  {sashProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.code} · {p.name}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: inheritFrom1Label },
+                    ...sashProfiles.map((p) => ({
+                      value: p.id,
+                      label: `${p.code} · ${p.name}`,
+                    })),
+                  ]}
+                  placeholder={inheritFrom1Label}
+                  className="h-8 py-0 text-xs md:text-xs rounded-md border-slate-200 bg-white text-slate-700"
+                />
               </div>
 
               {/* 4 · Dưới <- từ [2] */}
@@ -268,22 +275,24 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
                 <div className="text-[11px] font-medium text-slate-700">
                   4 · Dưới <span className="text-[10px] text-slate-400 font-normal">← từ [2]</span>
                 </div>
-                <select
+                <Select
+                  fullWidth
                   value={v.bottomProfileId || ''}
                   onChange={(e) =>
                     handleVariantChange(role, {
                       bottomProfileId: e.target.value ? Number(e.target.value) : undefined,
                     })
                   }
-                  className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-primary"
-                >
-                  <option value="">{inheritFrom2Label}</option>
-                  {sashProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.code} · {p.name}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: inheritFrom2Label },
+                    ...sashProfiles.map((p) => ({
+                      value: p.id,
+                      label: `${p.code} · ${p.name}`,
+                    })),
+                  ]}
+                  placeholder={inheritFrom2Label}
+                  className="h-8 py-0 text-xs md:text-xs rounded-md border-slate-200 bg-white text-slate-700"
+                />
               </div>
             </div>
           </div>
@@ -294,56 +303,62 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
         <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
           <span className="font-semibold text-xs text-slate-800">Đố cánh (Mullion)</span>
-          <select
+          <Select
+            fullWidth
             value={config.mullionProfileId || ''}
             onChange={(e) =>
               onChangeConfig({ mullionProfileId: e.target.value ? Number(e.target.value) : undefined })
             }
-            className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-          >
-            <option value="">Chọn profile...</option>
-            {mullionProfiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.code} · {p.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Chọn profile...' },
+              ...mullionProfiles.map((p) => ({
+                value: p.id,
+                label: `${p.code} · ${p.name}`,
+              })),
+            ]}
+            placeholder="Chọn profile..."
+            className="h-8 py-0 text-xs md:text-xs rounded-md border-slate-200 bg-white text-slate-800"
+          />
         </div>
 
         <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
           <span className="font-semibold text-xs text-slate-800">Nẹp cánh (Bead)</span>
-          <select
+          <Select
+            fullWidth
             value={config.beadProfileId || ''}
             onChange={(e) =>
               onChangeConfig({ beadProfileId: e.target.value ? Number(e.target.value) : undefined })
             }
-            className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-          >
-            <option value="">Chọn profile...</option>
-            {beadProfiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.code} · {p.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Chọn profile...' },
+              ...beadProfiles.map((p) => ({
+                value: p.id,
+                label: `${p.code} · ${p.name}`,
+              })),
+            ]}
+            placeholder="Chọn profile..."
+            className="h-8 py-0 text-xs md:text-xs rounded-md border-slate-200 bg-white text-slate-800"
+          />
         </div>
 
         <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
           <span className="font-semibold text-xs text-slate-800">Ốp móc / Interlock</span>
-          <select
+          <Select
+            fullWidth
             value={config.interlockProfileId || ''}
             onChange={(e) =>
               onChangeConfig({ interlockProfileId: e.target.value ? Number(e.target.value) : undefined })
             }
-            className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-          >
-            <option value="">Chọn profile ốp móc...</option>
-            {interlockOptions.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.code} · {p.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Chọn profile ốp móc...' },
+              ...interlockOptions.map((p) => ({
+                value: p.id,
+                label: `${p.code} · ${p.name}`,
+              })),
+            ]}
+            placeholder="Chọn profile ốp móc..."
+            className="h-8 py-0 text-xs md:text-xs rounded-md border-slate-200 bg-white text-slate-800"
+          />
         </div>
 
         <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
@@ -351,20 +366,22 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
             <span className="font-semibold text-xs text-slate-800">Ốp nối cánh</span>
             <span className="text-[10px] text-slate-400">(nối 2 cánh lùa)</span>
           </div>
-          <select
+          <Select
+            fullWidth
             value={config.opNoiProfileId || ''}
             onChange={(e) =>
               onChangeConfig({ opNoiProfileId: e.target.value ? Number(e.target.value) : undefined })
             }
-            className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-          >
-            <option value="">Chọn profile ốp nối...</option>
-            {opNoiOptions.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.code} · {p.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Chọn profile ốp nối...' },
+              ...opNoiOptions.map((p) => ({
+                value: p.id,
+                label: `${p.code} · ${p.name}`,
+              })),
+            ]}
+            placeholder="Chọn profile ốp nối..."
+            className="h-8 py-0 text-xs md:text-xs rounded-md border-slate-200 bg-white text-slate-800"
+          />
         </div>
       </div>
     </div>

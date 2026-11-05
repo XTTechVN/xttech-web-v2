@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { MullionInfo, MullionCutType } from '../studio-types';
 import { ProfileBar } from '@/types';
+import { Select } from '@/components/select';
 import { Ruler, Trash2, Check, X } from 'lucide-react';
 
 interface MullionInspectorModalProps {
@@ -159,20 +160,22 @@ export const MullionInspectorModal: React.FC<MullionInspectorModalProps> = ({
               <label className="text-xs font-semibold text-slate-600">
                 Override cây đố khung:
               </label>
-              <select
+              <Select
+                fullWidth
                 value={selectedProfileId ?? ''}
                 onChange={(e) =>
                   setSelectedProfileId(e.target.value ? Number(e.target.value) : undefined)
                 }
-                className="w-full h-10 px-3 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 bg-white focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/15 cursor-pointer truncate"
-              >
-                <option value="">(Mặc định theo hệ nhôm)</option>
-                {availableProfiles.map((bar) => (
-                  <option key={bar.id} value={bar.id}>
-                    {bar.code} – {bar.name}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: '(Mặc định theo hệ nhôm)' },
+                  ...availableProfiles.map((bar) => ({
+                    value: bar.id,
+                    label: `${bar.code} – ${bar.name}`,
+                  })),
+                ]}
+                placeholder="(Mặc định theo hệ nhôm)"
+                className="h-10 py-0 rounded-xl border-slate-300 text-xs md:text-xs font-medium text-slate-800 bg-white"
+              />
               {selectedProfileId && (
                 <button
                   type="button"

@@ -115,6 +115,33 @@ export const rescaleTree = (node: SceneCellNode, scaleX: number, scaleY: number)
   };
 };
 
+export const ensureRootCellDimensions = (
+  node: SceneCellNode,
+  targetW: number,
+  targetH: number
+): SceneCellNode => {
+  const safeW = Math.max(1, Math.round(targetW || node.w || 1400));
+  const safeH = Math.max(1, Math.round(targetH || node.h || 1600));
+  const curW = node.w || safeW;
+  const curH = node.h || safeH;
+
+  const isVert = node.splitDirection === 'vertical';
+  const isHoriz = node.splitDirection === 'horizontal';
+  const childrenSpanMismatch =
+    node.children && node.children.length > 0 && (isVert || isHoriz)
+      ? Math.abs(
+          node.children.reduce((sum, c) => sum + ((isVert ? c.w : c.h) || 0), 0) -
+            (isVert ? safeW : safeH)
+        ) >= 1
+      : false;
+
+  if (curW === safeW && curH === safeH && !childrenSpanMismatch) {
+    return node;
+  }
+
+  return rescaleTree({ ...node, w: curW, h: curH }, safeW / curW, safeH / curH);
+};
+
 export const createSplitChildren = (
   parentId: string,
   totalW: number,

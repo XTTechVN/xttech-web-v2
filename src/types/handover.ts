@@ -152,7 +152,6 @@ export interface WarrantyVisit {
   code: string;
   kind: WarrantyVisitKind;
   title: string;
-  monthMark?: number | null;
   status: WarrantyVisitStatus;
   scheduledDate: string;
   actualDate?: string | null;
@@ -195,7 +194,6 @@ export interface WarrantySummary {
   doneVisits: number;
   upcomingVisits: number;
   overdueVisits: number;
-  progressPercent: number;
   nextVisit?: WarrantyVisit | null;
   visits: WarrantyVisit[];
 }
@@ -241,7 +239,6 @@ export interface WarrantyVisitCreatePayload {
   kind?: WarrantyVisitKind;
   title: string;
   scheduledDate: string;
-  monthMark?: number;
   assigneeId?: string;
   positionIds?: number[];
   requesterName?: string;

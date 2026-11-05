@@ -130,10 +130,8 @@ export function TabWarrantyBook({
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="font-mono font-bold text-[#045863]">{visit.code}</span>
                     <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
-                    {visit.kind === 'claim' ? (
-                      <Badge variant="primary">Yêu cầu khách hàng</Badge>
-                    ) : (
-                      <Badge variant="default">Định kỳ</Badge>
+                    {visit.kind === 'claim' && (
+                      <Badge variant="primary">Yêu cầu bảo hành</Badge>
                     )}
                     {visit.isChargeable && (
                       <Badge variant="warning">Phí: {formatVnd(visit.feeAmount)}</Badge>
@@ -288,7 +286,7 @@ export function TabWarrantyBook({
         {activeVisits.length === 0 && (
           <div className="space-y-3 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
             <p className="text-xs text-slate-500">
-              Công trình chưa có phiếu yêu cầu bảo hành hoặc lịch bảo hành định kỳ nào.
+              Công trình chưa có phiếu yêu cầu bảo hành / sửa chữa nào.
             </p>
             <Button
               size="sm"
