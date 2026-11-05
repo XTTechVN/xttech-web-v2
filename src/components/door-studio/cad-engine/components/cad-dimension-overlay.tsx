@@ -83,8 +83,15 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
     'sliding',
   ];
 
-  const lockLeaves = leaves.filter((l) => {
-    if (l.node.sashType === 'fixed') return false;
+  const isVoCucMode =
+    sashConfig?.sashStyle === 'slim' &&
+    sashConfig?.family !== 'Cửa đi lùa' &&
+    sashConfig?.family !== 'Cửa sổ lùa';
+
+  const lockLeaves = isVoCucMode
+    ? []
+    : leaves.filter((l) => {
+        if (l.node.sashType === 'fixed') return false;
     const isBottomOrTop =
       l.node.sashType === 'awning' ||
       l.node.sashType === 'tilt' ||

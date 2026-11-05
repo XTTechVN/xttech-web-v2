@@ -117,30 +117,16 @@ export function TabWarranty({ projectId }: TabWarrantyProps) {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div>
-                <div className="mb-0.5 flex justify-between text-[11px] text-slate-500">
-                  <span>Thời gian bảo hành đã trôi qua</span>
-                  <span className="font-mono tabular-nums">{summary.elapsedPercent}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-slate-100">
-                  <div
-                    className="h-2 rounded-full bg-slate-400"
-                    style={{ width: `${summary.elapsedPercent}%` }}
-                  />
-                </div>
+            <div>
+              <div className="mb-0.5 flex justify-between text-[11px] text-slate-500">
+                <span>Thời gian bảo hành đã trôi qua</span>
+                <span className="font-mono tabular-nums">{summary.elapsedPercent}%</span>
               </div>
-              <div>
-                <div className="mb-0.5 flex justify-between text-[11px] text-slate-500">
-                  <span>Tiến độ các đợt bảo hành</span>
-                  <span className="font-mono tabular-nums">{summary.progressPercent}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-slate-100">
-                  <div
-                    className="h-2 rounded-full bg-emerald-500"
-                    style={{ width: `${summary.progressPercent}%` }}
-                  />
-                </div>
+              <div className="h-2 rounded-full bg-slate-100">
+                <div
+                  className="h-2 rounded-full bg-slate-400"
+                  style={{ width: `${summary.elapsedPercent}%` }}
+                />
               </div>
             </div>
 
@@ -171,7 +157,7 @@ export function TabWarranty({ projectId }: TabWarrantyProps) {
         ))}
         {summary.visits.length === 0 && (
           <div className="rounded-xl border border-dashed border-slate-300 py-10 text-center text-xs text-slate-400">
-            Chưa có phiếu yêu cầu bảo hành hoặc lịch bảo hành định kỳ nào.
+            Chưa có phiếu yêu cầu bảo hành / sửa chữa nào.
           </div>
         )}
       </div>

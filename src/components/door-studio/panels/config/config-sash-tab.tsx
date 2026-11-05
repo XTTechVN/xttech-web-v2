@@ -1,20 +1,14 @@
 'use client';
 
 import React from 'react';
-import {
-  SashConfig,
-  SashCornerJoint,
-  BeadCornerJoint,
-  SashOffsetScope,
-  SashOffsetValues,
-  DOOR_SYSTEM_FAMILIES,
-} from '../../studio-types';
+import { SashConfig, SashCornerJoint, BeadCornerJoint, SashOffsetScope, SashOffsetValues, DOOR_SYSTEM_FAMILIES } from '../../studio-types';
 import { ProfileBar } from '@/types';
 import { Shield } from 'lucide-react';
 import { GasketConfigSection } from './gasket-config-section';
 import { CustomExtraConfigSection } from './custom-extra-config-section';
 import { SlidingSashVariantsSection } from './sliding-sash-variants-section';
 import { CasementSashProfilesSection } from './casement-sash-profiles-section';
+import { Select } from '@/components/select';
 
 interface ConfigSashTabProps {
   config: SashConfig;
@@ -28,14 +22,8 @@ const BASE_SASH_JOINTS: { id: SashCornerJoint; label: string }[] = [
   { id: '45_top_90_bot', label: '45° trên - 90° dưới' },
   { id: '90_horiz', label: '90° Ngang phủ' },
 ];
-const LEFT_SLIDING_JOINTS: { id: SashCornerJoint; label: string }[] = [
-  ...BASE_SASH_JOINTS,
-  { id: 'd_left', label: 'Cánh lùa Trái (D)' },
-];
-const RIGHT_SLIDING_JOINTS: { id: SashCornerJoint; label: string }[] = [
-  ...BASE_SASH_JOINTS,
-  { id: 'd_right', label: 'Cánh lùa Phải (D)' },
-];
+const LEFT_SLIDING_JOINTS: { id: SashCornerJoint; label: string }[] = [...BASE_SASH_JOINTS, { id: 'd_left', label: 'Cánh lùa Trái (D)' }];
+const RIGHT_SLIDING_JOINTS: { id: SashCornerJoint; label: string }[] = [...BASE_SASH_JOINTS, { id: 'd_right', label: 'Cánh lùa Phải (D)' }];
 const BEAD_CORNER_JOINTS: { id: BeadCornerJoint; label: string }[] = [
   { id: '45', label: 'Ghép 45°' },
   { id: '90_horiz', label: '90° Ngang phủ' },
@@ -55,15 +43,14 @@ const OFFSET_EDGE_FIELDS: { key: keyof SashOffsetValues; label: string }[] = [
 ];
 
 export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({ config, onChangeConfig, profiles }) => {
-  const isSlidingFamily =
-    config.family === 'Cửa đi lùa' || config.family === 'Cửa sổ lùa' || config.family === 'Cửa trượt lùa';
+  const isSlidingFamily = config.family === 'Cửa đi lùa' || config.family === 'Cửa sổ lùa' || config.family === 'Cửa trượt lùa';
   const isSlidingOrSwingSlide = isSlidingFamily || config.family === 'Cửa trượt quay';
   const isFoldingFamily = config.family === 'Cửa xếp trượt';
+  const isSlimCasement = config.sashStyle === 'slim' && !isSlidingOrSwingSlide && !isFoldingFamily;
   const normalizedFamilyValue = config.family === 'Cửa trượt lùa' ? 'Cửa đi lùa' : config.family;
+  const sashProfiles = profiles.filter((p) => p.barType === 'SASH' || p.barType === 'SCREEN_SASH');
 
-  const selectedLeftSash =
-    profiles.find((p) => p.id === config.leftProfileId && (p.barType === 'SASH' || p.barType === 'SCREEN_SASH')) ||
-    profiles.find((p) => p.barType === 'SASH' || p.barType === 'SCREEN_SASH');
+  const selectedLeftSash = sashProfiles.find((p) => p.id === (config.voCucProfileId ?? config.leftProfileId)) || sashProfiles[0];
   const currentScope: SashOffsetScope = isSlidingOrSwingSlide ? (config.offsetApplyTo || 'all') : 'all';
   const currentScopeLabel = OFFSET_SCOPES.find((s) => s.id === currentScope)?.label || 'Tất cả cánh';
 
@@ -91,10 +78,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({ config, onChangeCo
     centerSliding: config.cornerJoint || '45',
   };
 
-  const handleSlidingJointChange = (
-    key: 'leftSliding' | 'rightSliding' | 'centerSliding',
-    joint: SashCornerJoint
-  ) => {
+  const handleSlidingJointChange = (key: 'leftSliding' | 'rightSliding' | 'centerSliding', joint: SashCornerJoint) => {
     onChangeConfig({
       slidingJoints: { ...slidingJoints, [key]: joint },
       ...(key === 'leftSliding' ? { cornerJoint: joint } : {}),
@@ -104,12 +88,14 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({ config, onChangeCo
   const clearanceFields = [
     { label: 'Ngậm ngang', sub: 'Ngậm khung đứng', val: config.ngamNgangMm, onChange: (v: number) => onChangeConfig({ ngamNgangMm: v }) },
     { label: 'Ngậm dọc', sub: 'Ngậm trên/dưới', val: config.ngamDocMm, onChange: (v: number) => onChangeConfig({ ngamDocMm: v }) },
-    {
-      label: isSlidingOrSwingSlide ? 'Trừ ốp nối cánh' : 'Trừ đố động',
-      sub: isSlidingOrSwingSlide ? 'Ốp nối = Hs - giá trị này' : 'Hs - giá trị này',
-      val: config.truDoDongMm,
-      onChange: (v: number) => onChangeConfig({ truDoDongMm: v }),
-    },
+    ...(!isSlimCasement
+      ? [{
+          label: isSlidingOrSwingSlide ? 'Trừ ốp nối cánh' : 'Trừ đố động',
+          sub: isSlidingOrSwingSlide ? 'Ốp nối = Hs - giá trị này' : 'Hs - giá trị này',
+          val: config.truDoDongMm,
+          onChange: (v: number) => onChangeConfig({ truDoDongMm: v }),
+        }]
+      : []),
   ];
 
   const slidingJointRows = [
@@ -146,9 +132,13 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({ config, onChangeCo
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200">
               <label className="font-medium text-xs text-slate-700">Nhóm kiểu mở (Family):</label>
-              <select value={normalizedFamilyValue} onChange={(e) => onChangeConfig({ family: e.target.value })} className="w-full h-8 px-2 text-xs rounded-lg border border-slate-300 bg-white text-slate-800 font-medium focus:outline-none focus:border-primary">
-                {DOOR_SYSTEM_FAMILIES.map((fam) => <option key={fam} value={fam}>{fam}</option>)}
-              </select>
+              <Select
+                fullWidth
+                value={normalizedFamilyValue}
+                onChange={(e) => onChangeConfig({ family: e.target.value })}
+                options={DOOR_SYSTEM_FAMILIES.map((fam) => ({ value: fam, label: fam }))}
+                className="h-8 py-0 text-xs md:text-xs rounded-md border-slate-300 bg-white text-slate-800 font-medium"
+              />
             </div>
 
             <div className="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200">
@@ -160,12 +150,17 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({ config, onChangeCo
                   </button>
                 ))}
               </div>
+              {isSlimCasement && (
+                <div className="text-[10px] text-slate-500 pt-0.5 leading-snug">
+                  1 cánh · 1 profile duy nhất · cắt 90°/90° · không tay nắm · không kính · không đố động. Hướng mở chọn tại Bản vẽ.
+                </div>
+              )}
             </div>
           </div>
 
           <div className="space-y-1.5">
             <div className="font-medium text-xs text-slate-700">Khe hở & ngậm cơ khí:</div>
-            <div className={`grid grid-cols-2 ${isFoldingFamily ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-2.5`}>
+            <div className={`grid grid-cols-2 ${isSlimCasement ? 'sm:grid-cols-2' : isFoldingFamily ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-2.5`}>
               {clearanceFields.map((item) => (
                 <div key={item.label} className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
                   <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium"><span>{item.label}</span><span className="text-slate-400">mm</span></div>
@@ -180,13 +175,15 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({ config, onChangeCo
                   <div className="text-[10px] text-slate-400 text-center">Khe hở bản lề xếp trượt</div>
                 </div>
               )}
-              <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
-                <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
-                  <span>{config.family === 'Cửa trượt quay' ? 'Hở cánh / Ngậm lùa' : 'Ngậm lùa'}</span><span className="text-slate-400">mm</span>
+              {!isSlimCasement && (
+                <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
+                    <span>{config.family === 'Cửa trượt quay' ? 'Hở cánh / Ngậm lùa' : 'Ngậm lùa'}</span><span className="text-slate-400">mm</span>
+                  </div>
+                  <input type="number" value={config.slidingOverlapMm ?? ''} placeholder={selectedLeftSash?.sectionHeightMm ? `Tự động (${selectedLeftSash.sectionHeightMm} mm)` : 'Tự động'} onChange={(e) => onChangeConfig({ slidingOverlapMm: e.target.value === '' ? undefined : Number(e.target.value) })} className="w-full h-7 px-2 text-xs text-center border rounded border-slate-300 focus:outline-none focus:border-primary font-medium placeholder:text-slate-400 placeholder:italic tabular-nums" />
+                  <div className="text-[10px] text-slate-400 text-center">Chồng đè cánh lùa</div>
                 </div>
-                <input type="number" value={config.slidingOverlapMm ?? ''} placeholder={selectedLeftSash?.sectionHeightMm ? `Tự động (${selectedLeftSash.sectionHeightMm} mm)` : 'Tự động'} onChange={(e) => onChangeConfig({ slidingOverlapMm: e.target.value === '' ? undefined : Number(e.target.value) })} className="w-full h-7 px-2 text-xs text-center border rounded border-slate-300 focus:outline-none focus:border-primary font-medium placeholder:text-slate-400 placeholder:italic tabular-nums" />
-                <div className="text-[10px] text-slate-400 text-center">Chồng đè cánh lùa</div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -240,7 +237,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({ config, onChangeCo
                 </div>
               </div>
             </div>
-          ) : (
+          ) : !isSlimCasement ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-2">
                 <div className="font-semibold text-xs text-slate-800">Góc ghép cánh:</div>
@@ -263,7 +260,7 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({ config, onChangeCo
                 </div>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -272,9 +269,9 @@ export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({ config, onChangeCo
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2 font-semibold text-xs text-slate-900">
               <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-bold">2</span>
-              <span>{isSlidingOrSwingSlide ? 'Cấu hình thanh / profile cánh lùa' : 'Profile chi tiết cánh cửa'}</span>
+              <span>{isSlidingOrSwingSlide ? 'Cấu hình thanh / profile cánh lùa' : isSlimCasement ? 'Profile cánh vô cực' : 'Profile chi tiết cánh cửa'}</span>
             </div>
-            <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded">Tự đồng bộ</span>
+            <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded">{isSlimCasement ? '1 thanh duy nhất' : 'Tự đồng bộ'}</span>
           </div>
           {isSlidingOrSwingSlide ? (
             <SlidingSashVariantsSection config={config} onChangeConfig={onChangeConfig} profiles={profiles} />

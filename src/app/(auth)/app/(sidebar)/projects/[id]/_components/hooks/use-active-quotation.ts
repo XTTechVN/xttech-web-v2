@@ -9,10 +9,14 @@ export const activeQuotationKey = (projectId: number) => ['project_quotation_act
 
 export const quotationSheetKey = (projectId: number) => ['project_quotation_sheet', projectId];
 
+export const quotationMaterialAnalysisKey = (projectId: number) =>
+  ['project_quotation_material_analysis', projectId] as const;
+
 // Làm mới mọi dữ liệu phụ thuộc báo giá hiện hành (báo giá, bảng báo giá, dự án)
 export const invalidateQuotationQueries = (projectId: number) => {
   queryClient.invalidateQueries({ queryKey: activeQuotationKey(projectId) });
   queryClient.invalidateQueries({ queryKey: quotationSheetKey(projectId) });
+  queryClient.invalidateQueries({ queryKey: quotationMaterialAnalysisKey(projectId) });
   queryClient.invalidateQueries({ queryKey: ['project', projectId] });
   queryClient.invalidateQueries({ queryKey: ['project_overview', projectId] });
   queryClient.invalidateQueries({ queryKey: ['design_options', projectId] });

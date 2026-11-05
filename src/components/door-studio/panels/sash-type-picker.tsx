@@ -495,6 +495,10 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
           <div className="p-2.5 pt-0 border-t border-slate-100 space-y-2">
             {!hasSelectedCell ? (
               <div className="text-[11px] text-slate-400 italic">Nhấp chọn cánh cửa trên bản vẽ để chia đố.</div>
+            ) : sashConfig?.sashStyle === 'slim' ? (
+              <div className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded">
+                Cánh vô cực (1 thanh duy nhất) không chia đố trong cánh.
+              </div>
             ) : isFixed && !isInsideSash ? (
               <div className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded">
                 Ô fix dùng <strong>Chia đố khung</strong> ở tab Kiểu khung.
@@ -634,14 +638,16 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
           <div className="grid grid-cols-3 gap-2">
             {currentFamilyLayouts.map((layout) => {
               const isSelected = currentSashType === layout.id;
+              const isSlimDisabled = sashConfig?.sashStyle === 'slim' && layout.sashes.length > 1;
 
               return (
                 <button
                   key={layout.id}
                   type="button"
-                  onClick={() => onSelectSashType(layout.id as SashOpenType)}
+                  disabled={isSlimDisabled}
+                  onClick={() => !isSlimDisabled && onSelectSashType(layout.id as SashOpenType)}
                   title={`${layout.label} (${layout.sashes.length} cánh)`}
-                  className={`aspect-square rounded-lg p-0.5 transition-all cursor-pointer flex items-center justify-center bg-white ${
+                  className={`aspect-square rounded-lg p-0.5 transition-all flex items-center justify-center bg-white ${isSlimDisabled ? 'opacity-35 cursor-not-allowed' : 'cursor-pointer'} ${
                     isSelected
                       ? 'ring-2 ring-blue-500 border-2 border-blue-500 shadow-sm'
                       : 'border border-slate-200 hover:border-slate-300'

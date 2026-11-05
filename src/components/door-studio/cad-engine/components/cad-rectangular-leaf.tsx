@@ -809,6 +809,67 @@ export const CadRectangularLeaf: React.FC<CadRectangularLeafProps> = ({
           const leverW = 14;
           const leverH = 3.5;
 
+          const isVoCucLeaf = !isFixed && sashConfig?.sashStyle === 'slim' && !isSlidingDoorSash;
+          if (isVoCucLeaf) {
+            return (
+              <g>
+                {hasReversalSash && (
+                  <CadSashBox
+                    sx={cx}
+                    sy={effectiveCy}
+                    sw={cw}
+                    sh={effectiveCh}
+                    aluminumColor={aluminumColor}
+                    joint="45"
+                    effectiveSashD={revD}
+                  />
+                )}
+                <g
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectCell(node.id);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <rect
+                    x={sashBoxX}
+                    y={sashBoxY}
+                    width={sashBoxW}
+                    height={sashBoxH}
+                    fill={aluminumColor}
+                    stroke="#27272a"
+                    strokeWidth="0.9"
+                  />
+                  <line
+                    x1={sashBoxX + sashBoxW * 0.25}
+                    y1={sashBoxY}
+                    x2={sashBoxX + sashBoxW * 0.25}
+                    y2={sashBoxY + sashBoxH}
+                    stroke="#18181b"
+                    strokeOpacity={0.35}
+                    strokeWidth="0.5"
+                  />
+                  <line
+                    x1={sashBoxX + sashBoxW * 0.75}
+                    y1={sashBoxY}
+                    x2={sashBoxX + sashBoxW * 0.75}
+                    y2={sashBoxY + sashBoxH}
+                    stroke="#18181b"
+                    strokeOpacity={0.35}
+                    strokeWidth="0.5"
+                  />
+                  <CadOpeningSymbol
+                    cx={sashBoxX + 2}
+                    cy={sashBoxY + 2}
+                    cw={Math.max(4, sashBoxW - 4)}
+                    ch={Math.max(4, sashBoxH - 4)}
+                    type={node.sashType}
+                  />
+                </g>
+              </g>
+            );
+          }
+
           return (
             <g>
               {/* Khung thanh đảo cho ô Fix (Đảo vách) */}

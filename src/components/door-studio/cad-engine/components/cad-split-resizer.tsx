@@ -98,6 +98,11 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
 
   // Tính toán danh sách vùng kéo-thả cho tất cả các Tay nắm khóa trên cửa
   const handleZones: HandleDragZone[] = React.useMemo(() => {
+    const isVoCucMode =
+      sashConfig?.sashStyle === 'slim' &&
+      sashConfig?.family !== 'Cửa đi lùa' &&
+      sashConfig?.family !== 'Cửa sổ lùa';
+    if (isVoCucMode) return [];
     const zones: HandleDragZone[] = [];
     for (const leaf of leaves) {
       const { node, x: cx, y: cy, w: cw, h: ch } = leaf;

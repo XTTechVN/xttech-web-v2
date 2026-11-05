@@ -7,6 +7,7 @@ import { buildDoor3DGeometry, SlidingCycleDirection } from './door-3d-scene-buil
 import { Door3DWebGLEngine } from './door-3d-webgl-engine';
 import { Door3DHud } from './door-3d-hud';
 import { Vec3 } from './door-3d-math';
+import { DEFAULT_DOOR_3D_SETTINGS, Door3DCustomSettings } from './door-3d-types';
 
 export interface Door3DViewerProps {
   w: number;
@@ -66,6 +67,11 @@ export const Door3DViewer: React.FC<Door3DViewerProps> = ({
   const [showEdges, setShowEdges] = useState<boolean>(true);
   const [showOpeningRays, setShowOpeningRays] = useState<boolean>(true);
   const [activePreset, setActivePreset] = useState<string>('iso_left');
+  const [settings, setSettings] = useState<Door3DCustomSettings>(DEFAULT_DOOR_3D_SETTINGS);
+
+  const handleUpdateSettings = useCallback((patch: Partial<Door3DCustomSettings>) => {
+    setSettings((prev) => ({ ...prev, ...patch }));
+  }, []);
 
   const hasSlidingSash = useMemo(
     () =>
@@ -97,8 +103,72 @@ export const Door3DViewer: React.FC<Door3DViewerProps> = ({
     ];
     const target: Vec3 = [targetX, targetY, 0];
 
-    engine.render({ width: cw, height: ch, eye, target, showEdges });
-  }, [showEdges]);
+    engine.render({
+      width: cw,
+      height: ch,
+      eye,
+      target,
+      showEdges,
+      roughness: settings.roughness,
+      metalness: settings.metalness,
+      isAnodize: settings.surfaceType === 'anodize',
+      isStudio: settings.displayMode === 'studio',
+      floorType: settings.floorType,
+      glassRoughness: settings.glassRoughness,
+      glassFrost: settings.glassFrost,
+    });
+  }, [
+    showEdges,
+    settings.roughness,
+    settings.metalness,
+    settings.surfaceType,
+    settings.displayMode,
+    settings.floorType,
+    settings.glassRoughness,
+    settings.glassFrost,
+  ]);
+
+  // Chỉ tính toán lại hình học 3D khi các thông số hình học / kết cấu thay đổi
+  const geometrySettings = useMemo(
+    () => ({
+      frameDepthMm: settings.frameDepthMm,
+      sashDepthMm: settings.sashDepthMm,
+      glassThicknessMm: settings.glassThicknessMm,
+      mullionDepthMm: settings.mullionDepthMm,
+      handleDepthMm: settings.handleDepthMm,
+      multiplyByZLayers: settings.multiplyByZLayers,
+      handleOffsetXMm: settings.handleOffsetXMm,
+      handleOffsetYMm: settings.handleOffsetYMm,
+      bothSidesHandle: settings.bothSidesHandle,
+      handleColorMode: settings.handleColorMode,
+      glassColorHex: settings.glassColorHex,
+      glassTransparency: settings.glassTransparency,
+      displayMode: settings.displayMode,
+      surfaceType: settings.surfaceType,
+      finishPreset: settings.finishPreset,
+      roughness: settings.roughness,
+      metalness: settings.metalness,
+      glassRoughness: settings.glassRoughness,
+      glassFrost: settings.glassFrost,
+      floorType: settings.floorType,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      settings.frameDepthMm,
+      settings.sashDepthMm,
+      settings.glassThicknessMm,
+      settings.mullionDepthMm,
+      settings.handleDepthMm,
+      settings.multiplyByZLayers,
+      settings.handleOffsetXMm,
+      settings.handleOffsetYMm,
+      settings.bothSidesHandle,
+      settings.handleColorMode,
+      settings.glassColorHex,
+      settings.glassTransparency,
+      settings.displayMode,
+    ]
+  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -115,23 +185,53 @@ export const Door3DViewer: React.FC<Door3DViewerProps> = ({
       engineRef.current?.dispose();
       engineRef.current = null;
     };
-  }, [renderFrame]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
     const collector = buildDoor3DGeometry({
-      w, h, aluminumColor, hardwareColor, frameShape, rootCell, frameConfig, sashConfig,
-      availableProfiles, openRatio, slidingDirection, showWall, showOpeningRays,
+      w,
+      h,
+      aluminumColor,
+      hardwareColor,
+      frameShape,
+      rootCell,
+      frameConfig,
+      sashConfig,
+      availableProfiles,
+      openRatio,
+      slidingDirection,
+      showWall,
+      showOpeningRays,
+      customSettings: geometrySettings,
     });
     engine.uploadGeometry(collector);
     renderFrame();
   }, [
-    w, h, aluminumColor, hardwareColor, frameShape, rootCell, frameConfig, sashConfig,
-    availableProfiles, openRatio, slidingDirection, showWall, showOpeningRays, renderFrame,
+    w,
+    h,
+    aluminumColor,
+    hardwareColor,
+    frameShape,
+    rootCell,
+    frameConfig,
+    sashConfig,
+    availableProfiles,
+    openRatio,
+    slidingDirection,
+    showWall,
+    showOpeningRays,
+    geometrySettings,
+    renderFrame,
   ]);
 
-  // Diễn hoạt tự động: với hệ cửa lùa sẽ tự động chạy đủ 2 chu trình (Phải -> Trái rồi Trái -> Phải)
+  // Khi chỉ đổi thông số Shader (Độ nhám, Độ kim loại, Anode, Loại sàn, Độ mờ kính) -> Render tức thì không dựng lại Mesh
+  useEffect(() => {
+    renderFrame();
+  }, [renderFrame]);
+
   useEffect(() => {
     if (!isAutoPlaying) return;
     let rafId = 0;
@@ -191,7 +291,7 @@ export const Door3DViewer: React.FC<Door3DViewerProps> = ({
   };
 
   return (
-    <div className="relative flex-1 w-full h-full min-h-[420px] bg-slate-100 select-none overflow-hidden flex flex-col">
+    <div className="relative flex-1 w-full h-full min-h-[300px] sm:min-h-[420px] bg-slate-100 select-none overflow-hidden flex flex-col">
       <Door3DHud
         w={w}
         h={h}
@@ -201,6 +301,8 @@ export const Door3DViewer: React.FC<Door3DViewerProps> = ({
         onSelectAluminumColor={onSelectAluminumColor}
         onSelectHardwareColor={onSelectHardwareColor}
         compactMode={compactMode}
+        settings={settings}
+        onChangeSettings={handleUpdateSettings}
         activePreset={activePreset}
         onSelectPreset={applyCameraPreset}
         openRatio={openRatio}
@@ -282,7 +384,7 @@ export const Door3DViewer: React.FC<Door3DViewerProps> = ({
           }
         }}
         onTouchEnd={() => { dragRef.current.isDown = false; }}
-        className="w-full h-full flex-1 cursor-grab active:cursor-grabbing"
+        className="w-full h-full flex-1 touch-none cursor-grab active:cursor-grabbing"
       />
     </div>
   );

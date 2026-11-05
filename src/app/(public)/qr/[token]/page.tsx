@@ -140,11 +140,11 @@ export default function QrPositionPage({ params }: { params: Promise<{ token: st
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 lg:pb-12">
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 px-4 lg:px-8 py-2.5 lg:py-3 backdrop-blur-md">
-        <div className="mx-auto flex max-w-lg lg:max-w-7xl items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5 text-[#045863]">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 px-3.5 sm:px-4 lg:px-8 py-2.5 lg:py-3 backdrop-blur-md">
+        <div className="mx-auto flex max-w-lg lg:max-w-7xl items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 text-[#045863] min-w-0">
             <QrCode size={18} className="shrink-0" />
-            <span className="text-xs lg:text-sm font-bold uppercase tracking-wider">
+            <span className="text-xs lg:text-sm font-bold uppercase tracking-wider truncate">
               XT-Tech · Cổng QR Công Trình
             </span>
           </div>
@@ -186,20 +186,20 @@ export default function QrPositionPage({ params }: { params: Promise<{ token: st
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {view.floorName && (
               <span className="hidden sm:inline-block rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
                 {view.floorName}
               </span>
             )}
-            <span className="rounded-md bg-[#045863]/10 border border-[#045863]/20 px-2.5 py-1 font-mono text-xs font-bold text-[#045863]">
+            <span className="rounded-md bg-[#045863]/10 border border-[#045863]/20 px-2 sm:px-2.5 py-1 font-mono text-[11px] sm:text-xs font-bold text-[#045863]">
               {view.code}
             </span>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-lg lg:max-w-7xl space-y-4 lg:space-y-6 px-3.5 lg:px-8 pt-3.5 lg:pt-6">
+      <main className="mx-auto max-w-lg lg:max-w-7xl space-y-3.5 sm:space-y-4 lg:space-y-6 px-3 sm:px-4 lg:px-8 pt-3 sm:pt-4 lg:pt-6">
         <QrProjectHeader
           view={view}
           onOpenWarrantyBook={() => setActiveTab('warranty_book')}
@@ -261,7 +261,7 @@ export default function QrPositionPage({ params }: { params: Promise<{ token: st
       {/* Thanh điều hướng đáy cố định cho Mobile (< 1024px) */}
       <nav
         aria-label="Điều hướng cổng QR"
-        className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-md"
+        className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
       >
         <div className="mx-auto grid max-w-lg grid-cols-4">
           {navItems.map((item) => {
@@ -272,7 +272,7 @@ export default function QrPositionPage({ params }: { params: Promise<{ token: st
                 key={item.id}
                 type="button"
                 onClick={() => setActiveTab(item.id)}
-                className={`relative flex min-h-[60px] flex-col items-center justify-center gap-1 px-1 py-1.5 text-[11px] font-semibold transition ${
+                className={`relative flex min-h-[60px] flex-col items-center justify-center gap-1 px-1 py-1.5 text-[11px] font-semibold transition cursor-pointer ${
                   isActive ? 'text-[#045863]' : 'text-slate-500 hover:text-slate-800'
                 }`}
               >

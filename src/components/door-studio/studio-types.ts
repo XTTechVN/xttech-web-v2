@@ -455,6 +455,7 @@ export interface SashConfig {
   hasScreenSash: boolean;
   family: DoorSystemFamily;
   sashStyle: 'standard' | 'slim';
+  voCucProfileId?: number;
   isHydraulic?: boolean;
   hoNenMm: number;
   hoLeMm?: number;
