@@ -338,6 +338,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
         profileBars={state.availableProfiles}
         onSave={state.handleSaveMullion}
         onDeleteMullion={state.handleDeleteMullion}
+        onLocalTranspose={state.handleLocalTransposeMullion}
       />
 
       <GlassGrilleModal

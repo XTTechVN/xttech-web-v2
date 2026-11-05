@@ -73,12 +73,26 @@ function addFourPerimeterBars3D(
     isOpenBottom?: boolean;
     hasInnerRebate?: boolean;
     gapMm?: number;
+    mullions?: Array<{
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+      direction?: 'vertical' | 'horizontal';
+      cutStart?: boolean;
+      cutEnd?: boolean;
+      isSashMullion?: boolean;
+      isCoupling?: boolean;
+    }>;
   }
 ) {
   const { x, y, w, h } = box;
   const { left: dL, top: dT, right: dR, bottom: dB } = barW;
   const gap = options?.gapMm ?? 0.6;
   const isOpenBot = Boolean(options?.isOpenBottom);
+  const frameMullions = (options?.mullions || []).filter(
+    (m) => !m.isSashMullion && !m.isCoupling
+  );
 
   let tlMiter = true;
   let trMiter = true;
@@ -141,13 +155,62 @@ function addFourPerimeterBars3D(
         ? y + h
         : y + h - dB - gap;
 
-  const leftPts2d = ensureCCW([
-    to3D(x, lTopOuterY),
-    to3D(x + dL, lTopInnerY),
-    to3D(x + dL, lBotInnerY),
-    to3D(x, lBotOuterY),
-  ]);
-  collector.addExtrudedConvexPolygon(leftPts2d, zBack, zFront, color, matId, edgeColor);
+  const leftCuts = frameMullions
+    .filter(
+      (m) =>
+        (m.direction === 'horizontal' || m.w > m.h) &&
+        Boolean(m.cutStart) &&
+        Math.abs(m.x - x) < 2
+    )
+    .sort((a, b) => a.y - b.y);
+
+  if (leftCuts.length === 0) {
+    const leftPts2d = ensureCCW([
+      to3D(x, lTopOuterY),
+      to3D(x + dL, lTopInnerY),
+      to3D(x + dL, lBotInnerY),
+      to3D(x, lBotOuterY),
+    ]);
+    collector.addExtrudedConvexPolygon(leftPts2d, zBack, zFront, color, matId, edgeColor);
+  } else {
+    let curOuterTop = lTopOuterY;
+    let curInnerTop = lTopInnerY;
+    leftCuts.forEach((mc) => {
+      const segBotY = mc.y - gap;
+      if (segBotY > Math.max(curOuterTop, curInnerTop) + 2) {
+        collector.addExtrudedConvexPolygon(
+          ensureCCW([
+            to3D(x, curOuterTop),
+            to3D(x + dL, curInnerTop),
+            to3D(x + dL, segBotY),
+            to3D(x, segBotY),
+          ]),
+          zBack,
+          zFront,
+          color,
+          matId,
+          edgeColor
+        );
+      }
+      curOuterTop = mc.y + mc.h + gap;
+      curInnerTop = mc.y + mc.h + gap;
+    });
+    if (Math.min(lBotOuterY, lBotInnerY) > curOuterTop + 2) {
+      collector.addExtrudedConvexPolygon(
+        ensureCCW([
+          to3D(x, curOuterTop),
+          to3D(x + dL, curInnerTop),
+          to3D(x + dL, lBotInnerY),
+          to3D(x, lBotOuterY),
+        ]),
+        zBack,
+        zFront,
+        color,
+        matId,
+        edgeColor
+      );
+    }
+  }
 
   // 2. Thanh Đứng Phải (Right Bar)
   const rTopOuterY = trMiter ? y + gap : vertCoversTop ? y : y + dT + gap;
@@ -167,13 +230,62 @@ function addFourPerimeterBars3D(
         ? y + h
         : y + h - dB - gap;
 
-  const rightPts2d = ensureCCW([
-    to3D(x + w - dR, rTopInnerY),
-    to3D(x + w, rTopOuterY),
-    to3D(x + w, rBotOuterY),
-    to3D(x + w - dR, rBotInnerY),
-  ]);
-  collector.addExtrudedConvexPolygon(rightPts2d, zBack, zFront, color, matId, edgeColor);
+  const rightCuts = frameMullions
+    .filter(
+      (m) =>
+        (m.direction === 'horizontal' || m.w > m.h) &&
+        Boolean(m.cutEnd) &&
+        Math.abs(m.x + m.w - (x + w)) < 2
+    )
+    .sort((a, b) => a.y - b.y);
+
+  if (rightCuts.length === 0) {
+    const rightPts2d = ensureCCW([
+      to3D(x + w - dR, rTopInnerY),
+      to3D(x + w, rTopOuterY),
+      to3D(x + w, rBotOuterY),
+      to3D(x + w - dR, rBotInnerY),
+    ]);
+    collector.addExtrudedConvexPolygon(rightPts2d, zBack, zFront, color, matId, edgeColor);
+  } else {
+    let curOuterTop = rTopOuterY;
+    let curInnerTop = rTopInnerY;
+    rightCuts.forEach((mc) => {
+      const segBotY = mc.y - gap;
+      if (segBotY > Math.max(curOuterTop, curInnerTop) + 2) {
+        collector.addExtrudedConvexPolygon(
+          ensureCCW([
+            to3D(x + w - dR, curInnerTop),
+            to3D(x + w, curOuterTop),
+            to3D(x + w, segBotY),
+            to3D(x + w - dR, segBotY),
+          ]),
+          zBack,
+          zFront,
+          color,
+          matId,
+          edgeColor
+        );
+      }
+      curOuterTop = mc.y + mc.h + gap;
+      curInnerTop = mc.y + mc.h + gap;
+    });
+    if (Math.min(rBotOuterY, rBotInnerY) > curOuterTop + 2) {
+      collector.addExtrudedConvexPolygon(
+        ensureCCW([
+          to3D(x + w - dR, curInnerTop),
+          to3D(x + w, curOuterTop),
+          to3D(x + w, rBotOuterY),
+          to3D(x + w - dR, rBotInnerY),
+        ]),
+        zBack,
+        zFront,
+        color,
+        matId,
+        edgeColor
+      );
+    }
+  }
 
   // 3. Thanh Ngang Trên (Top Bar)
   const tLeftOuterX = tlMiter ? x + gap : vertCoversTop ? x + dL + gap : x;
@@ -181,13 +293,62 @@ function addFourPerimeterBars3D(
   const tRightOuterX = trMiter ? x + w - gap : vertCoversTop ? x + w - dR - gap : x + w;
   const tRightInnerX = trMiter ? x + w - dR - gap : vertCoversTop ? x + w - dR - gap : x + w;
 
-  const topPts2d = ensureCCW([
-    to3D(tLeftOuterX, y),
-    to3D(tRightOuterX, y),
-    to3D(tRightInnerX, y + dT),
-    to3D(tLeftInnerX, y + dT),
-  ]);
-  collector.addExtrudedConvexPolygon(topPts2d, zBack, zFront, color, matId, edgeColor);
+  const topCuts = frameMullions
+    .filter(
+      (m) =>
+        (m.direction === 'vertical' || m.h > m.w) &&
+        Boolean(m.cutStart) &&
+        Math.abs(m.y - y) < 2
+    )
+    .sort((a, b) => a.x - b.x);
+
+  if (topCuts.length === 0) {
+    const topPts2d = ensureCCW([
+      to3D(tLeftOuterX, y),
+      to3D(tRightOuterX, y),
+      to3D(tRightInnerX, y + dT),
+      to3D(tLeftInnerX, y + dT),
+    ]);
+    collector.addExtrudedConvexPolygon(topPts2d, zBack, zFront, color, matId, edgeColor);
+  } else {
+    let curOuterLeft = tLeftOuterX;
+    let curInnerLeft = tLeftInnerX;
+    topCuts.forEach((mc) => {
+      const segRightX = mc.x - gap;
+      if (segRightX > Math.max(curOuterLeft, curInnerLeft) + 2) {
+        collector.addExtrudedConvexPolygon(
+          ensureCCW([
+            to3D(curOuterLeft, y),
+            to3D(segRightX, y),
+            to3D(segRightX, y + dT),
+            to3D(curInnerLeft, y + dT),
+          ]),
+          zBack,
+          zFront,
+          color,
+          matId,
+          edgeColor
+        );
+      }
+      curOuterLeft = mc.x + mc.w + gap;
+      curInnerLeft = mc.x + mc.w + gap;
+    });
+    if (Math.min(tRightOuterX, tRightInnerX) > curOuterLeft + 2) {
+      collector.addExtrudedConvexPolygon(
+        ensureCCW([
+          to3D(curOuterLeft, y),
+          to3D(tRightOuterX, y),
+          to3D(tRightInnerX, y + dT),
+          to3D(curInnerLeft, y + dT),
+        ]),
+        zBack,
+        zFront,
+        color,
+        matId,
+        edgeColor
+      );
+    }
+  }
 
   // 4. Thanh Ngang Dưới (Bottom Bar)
   if (!isOpenBot && dB > 0) {
@@ -196,13 +357,62 @@ function addFourPerimeterBars3D(
     const bRightOuterX = brMiter ? x + w - gap : vertCoversBot ? x + w - dR - gap : x + w;
     const bRightInnerX = brMiter ? x + w - dR - gap : vertCoversBot ? x + w - dR - gap : x + w;
 
-    const botPts2d = ensureCCW([
-      to3D(bLeftInnerX, y + h - dB),
-      to3D(bRightInnerX, y + h - dB),
-      to3D(bRightOuterX, y + h),
-      to3D(bLeftOuterX, y + h),
-    ]);
-    collector.addExtrudedConvexPolygon(botPts2d, zBack, zFront, color, matId, edgeColor);
+    const botCuts = frameMullions
+      .filter(
+        (m) =>
+          (m.direction === 'vertical' || m.h > m.w) &&
+          Boolean(m.cutEnd) &&
+          Math.abs(m.y + m.h - (y + h)) < 2
+      )
+      .sort((a, b) => a.x - b.x);
+
+    if (botCuts.length === 0) {
+      const botPts2d = ensureCCW([
+        to3D(bLeftInnerX, y + h - dB),
+        to3D(bRightInnerX, y + h - dB),
+        to3D(bRightOuterX, y + h),
+        to3D(bLeftOuterX, y + h),
+      ]);
+      collector.addExtrudedConvexPolygon(botPts2d, zBack, zFront, color, matId, edgeColor);
+    } else {
+      let curOuterLeft = bLeftOuterX;
+      let curInnerLeft = bLeftInnerX;
+      botCuts.forEach((mc) => {
+        const segRightX = mc.x - gap;
+        if (segRightX > Math.max(curOuterLeft, curInnerLeft) + 2) {
+          collector.addExtrudedConvexPolygon(
+            ensureCCW([
+              to3D(curInnerLeft, y + h - dB),
+              to3D(segRightX, y + h - dB),
+              to3D(segRightX, y + h),
+              to3D(curOuterLeft, y + h),
+            ]),
+            zBack,
+            zFront,
+            color,
+            matId,
+            edgeColor
+          );
+        }
+        curOuterLeft = mc.x + mc.w + gap;
+        curInnerLeft = mc.x + mc.w + gap;
+      });
+      if (Math.min(bRightOuterX, bRightInnerX) > curOuterLeft + 2) {
+        collector.addExtrudedConvexPolygon(
+          ensureCCW([
+            to3D(curInnerLeft, y + h - dB),
+            to3D(bRightInnerX, y + h - dB),
+            to3D(bRightOuterX, y + h),
+            to3D(curOuterLeft, y + h),
+          ]),
+          zBack,
+          zFront,
+          color,
+          matId,
+          edgeColor
+        );
+      }
+    }
   }
 
   // Gờ hèm bậc trong (Rebate step) tạo chiều sâu cơ khí như thanh nhôm thật
@@ -930,6 +1140,7 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
           isOpenBottom,
           hasInnerRebate: !hasSlidingLeaves,
           gapMm: 0.7,
+          mullions: layout.mullions,
         }
       );
 

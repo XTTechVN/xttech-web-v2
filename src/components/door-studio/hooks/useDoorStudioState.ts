@@ -695,6 +695,63 @@ function normalizeInitialSashConfig(sc: Record<string, unknown>, doorType?: stri
   };
 }
 
+function syncLegacyDrawingMullionMeta(
+  cell: SceneCellNode,
+  drNode?: Record<string, unknown>
+): SceneCellNode {
+  if (!drNode || !Array.isArray(cell.children) || cell.children.length === 0) return cell;
+  const isHoriz = cell.splitDirection === 'horizontal';
+  const rawCuts = isHoriz
+    ? Array.isArray(drNode.mullH_cut)
+      ? drNode.mullH_cut
+      : []
+    : Array.isArray(drNode.mullV_cut)
+      ? drNode.mullV_cut
+      : [];
+  const rawProfiles = isHoriz
+    ? Array.isArray(drNode.mullH_profiles)
+      ? drNode.mullH_profiles
+      : []
+    : Array.isArray(drNode.mullV_profiles)
+      ? drNode.mullV_profiles
+      : [];
+  const drChildren = Array.isArray(drNode.children) ? drNode.children : [];
+
+  const nextChildren = cell.children.map((ch, idx) => {
+    let nextCh = ch;
+    if (idx < (cell.children?.length || 0) - 1) {
+      const cutObj = rawCuts[idx] as Record<string, unknown> | undefined;
+      let inferredCut: MullionCutType | undefined;
+      if (cutObj && typeof cutObj === 'object') {
+        const s = isHoriz ? cutObj.left : cutObj.top;
+        const e = isHoriz ? cutObj.right : cutObj.bot;
+        if (s === 'cat' && e === 'cat') inferredCut = 'cut_both';
+        else if (s === 'cat') inferredCut = 'cut_left';
+        else if (e === 'cat') inferredCut = 'cut_right';
+        else if (s === 'lot' && e === 'lot') inferredCut = 'inside_frame';
+      }
+      const rawProf = rawProfiles[idx] as Record<string, unknown> | string | number | undefined;
+      const profId = parseProfileId(
+        typeof rawProf === 'object' && rawProf !== null
+          ? rawProf.id ?? rawProf.profileId
+          : rawProf
+      );
+      if ((!nextCh.mullionCutType && inferredCut) || (!nextCh.mullionProfileId && profId)) {
+        nextCh = {
+          ...nextCh,
+          mullionCutType: nextCh.mullionCutType ?? inferredCut,
+          mullionProfileId: nextCh.mullionProfileId ?? profId,
+        };
+      }
+    }
+    if (drChildren[idx] && typeof drChildren[idx] === 'object') {
+      nextCh = syncLegacyDrawingMullionMeta(nextCh, drChildren[idx] as Record<string, unknown>);
+    }
+    return nextCh;
+  });
+  return { ...cell, children: nextChildren };
+}
+
 interface UseDoorStudioStateProps {
   isOpen: boolean;
   onClose: () => void;
@@ -1301,8 +1358,11 @@ export function useDoorStudioState({
       if (sc.rootCell) {
         const targetW = Number(sc.w) || 1400;
         const targetH = Number(sc.h) || 1600;
-        const syncedRoot = ensureRootCellDimensions(sc.rootCell, targetW, targetH);
         const drRoot = sc.drawing?.root as Record<string, unknown> | undefined;
+        const syncedRoot = syncLegacyDrawingMullionMeta(
+          ensureRootCellDimensions(sc.rootCell, targetW, targetH),
+          drRoot
+        );
         const mullHList = Array.isArray(drRoot?.mullH) ? drRoot?.mullH : undefined;
         const mullHDims = Array.isArray(drRoot?.mullH_dim_mm) ? drRoot?.mullH_dim_mm : undefined;
         if (
@@ -1900,6 +1960,95 @@ export function useDoorStudioState({
     toast.success('Đã xóa thanh đố thành công');
   };
 
+  const handleLocalTransposeMullion = (parentId: string, mullionIndex: number) => {
+    const targetParent = findNode(rootCell, parentId);
+    if (!targetParent || !targetParent.children || targetParent.children.length < 2) {
+      toast.error('Không tìm thấy giao điểm đố vuông góc để đảo chiều');
+      return;
+    }
+
+    const transposeTwoLevelSplit = (outerNode: SceneCellNode): SceneCellNode | null => {
+      if (!outerNode.children || outerNode.children.length !== 2 || !outerNode.splitDirection) {
+        return null;
+      }
+      const isOuterVert = outerNode.splitDirection === 'vertical';
+      const innerDir: 'vertical' | 'horizontal' = isOuterVert ? 'horizontal' : 'vertical';
+      const [c0, c1] = outerNode.children;
+      const c0HasInner = c0.children?.length === 2 && c0.splitDirection === innerDir;
+      const c1HasInner = c1.children?.length === 2 && c1.splitDirection === innerDir;
+      if (!c0HasInner && !c1HasInner) return null;
+
+      const refInner = c0HasInner ? c0 : c1;
+      const innerDim0 = isOuterVert ? refInner.children![0].h : refInner.children![0].w;
+      const innerDim1 = isOuterVert ? refInner.children![1].h : refInner.children![1].w;
+
+      const c0A: SceneCellNode = c0HasInner
+        ? c0.children![0]
+        : { ...c0, id: `${c0.id}-a`, w: isOuterVert ? c0.w : innerDim0, h: isOuterVert ? innerDim0 : c0.h };
+      const c0B: SceneCellNode = c0HasInner
+        ? c0.children![1]
+        : { ...c0, id: `${c0.id}-b`, w: isOuterVert ? c0.w : innerDim1, h: isOuterVert ? innerDim1 : c0.h };
+      const c1A: SceneCellNode = c1HasInner
+        ? c1.children![0]
+        : { ...c1, id: `${c1.id}-a`, w: isOuterVert ? c1.w : innerDim0, h: isOuterVert ? innerDim0 : c1.h };
+      const c1B: SceneCellNode = c1HasInner
+        ? c1.children![1]
+        : { ...c1, id: `${c1.id}-b`, w: isOuterVert ? c1.w : innerDim1, h: isOuterVert ? innerDim1 : c1.h };
+
+      const newBranch0: SceneCellNode = {
+        id: `${outerNode.id}-tr-0`,
+        w: isOuterVert ? outerNode.w : innerDim0,
+        h: isOuterVert ? innerDim0 : outerNode.h,
+        splitDirection: outerNode.splitDirection,
+        splitType: outerNode.splitType || 'mullion',
+        sashType: 'fixed',
+        paneType: 'glass',
+        children: [
+          { ...c0A, w: c0.w, h: isOuterVert ? innerDim0 : c0A.h },
+          { ...c1A, w: c1.w, h: isOuterVert ? innerDim0 : c1A.h },
+        ],
+      };
+      const newBranch1: SceneCellNode = {
+        id: `${outerNode.id}-tr-1`,
+        w: isOuterVert ? outerNode.w : innerDim1,
+        h: isOuterVert ? innerDim1 : outerNode.h,
+        splitDirection: outerNode.splitDirection,
+        splitType: outerNode.splitType || 'mullion',
+        sashType: 'fixed',
+        paneType: 'glass',
+        children: [
+          { ...c0B, w: c0.w, h: isOuterVert ? innerDim1 : c0B.h },
+          { ...c1B, w: c1.w, h: isOuterVert ? innerDim1 : c1B.h },
+        ],
+      };
+
+      return {
+        ...outerNode,
+        splitDirection: innerDir,
+        children: [newBranch0, newBranch1],
+      };
+    };
+
+    const directTransposed = transposeTwoLevelSplit(targetParent);
+    if (directTransposed) {
+      pushState(updateNode(rootCell, targetParent.id, directTransposed));
+      toast.success('Đã đảo chiều ưu tiên giao điểm đố (Local transpose)');
+      return;
+    }
+
+    const grandParent = findParentNode(rootCell, targetParent.id);
+    if (grandParent) {
+      const parentTransposed = transposeTwoLevelSplit(grandParent);
+      if (parentTransposed) {
+        pushState(updateNode(rootCell, grandParent.id, parentTransposed));
+        toast.success('Đã đảo chiều ưu tiên giao điểm đố (Local transpose)');
+        return;
+      }
+    }
+
+    toast.error('Cần có giao điểm đố ngang - dọc (T hoặc +) để đảo chiều ưu tiên');
+  };
+
   const handleSaveGrille = (config: GlassGrilleConfig, applyToAllSashes: boolean) => {
     if (!grilleEditingCell) return;
     if (applyToAllSashes) {
@@ -2282,6 +2431,7 @@ export function useDoorStudioState({
     handleSaveMullion,
     handleResizeSplit,
     handleDeleteMullion,
+    handleLocalTransposeMullion,
     handleSaveGrille,
     handleToggleCombo,
     handleUpdateAccessoryQty,
