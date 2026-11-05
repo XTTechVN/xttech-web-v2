@@ -70,13 +70,15 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
   const dynamicBrandFilters = useMemo(() => {
     const set = new Set<string>();
     for (const c of combos) {
-      const b = detectComboBrand(c, brands);
+      const b = detectComboBrand(c, brands).trim();
       if (b && b !== 'Khác') set.add(b);
     }
     for (const b of brands) {
-      if (b.brandType === 'accessory' || b.brandType === 'both') set.add(b.name);
+      if ((b.brandType === 'accessory' || b.brandType === 'both') && b.name?.trim()) {
+        set.add(b.name.trim());
+      }
     }
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'vi', { sensitivity: 'base' }));
   }, [combos, brands]);
 
   // Filter combos based on active category, brand, search
@@ -88,7 +90,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
       }
       if (brandFilter !== 'all') {
         const b = detectComboBrand(c, brands);
-        if (b.toLowerCase() !== brandFilter.toLowerCase()) return false;
+        if (b.trim().toLowerCase() !== brandFilter.trim().toLowerCase()) return false;
       }
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -138,7 +140,9 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
 
   const activeFilterBrandId = useMemo(() => {
     if (brandFilter === 'all') return null;
-    const matched = brands.find((b) => b.name.toLowerCase() === brandFilter.toLowerCase());
+    const matched = brands.find(
+      (b) => b.name.trim().toLowerCase() === brandFilter.trim().toLowerCase()
+    );
     return matched?.id ?? null;
   }, [brandFilter, brands]);
 

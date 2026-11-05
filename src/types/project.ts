@@ -4,6 +4,7 @@ import type { Customer } from './customer';
 import type { User } from './user';
 import type { Brand, BrandColor } from './brand';
 import type { DoorSeries } from './door-series';
+import type { Door } from './door';
 
 export type ProjectStatus =
   | 'draft'
@@ -216,6 +217,7 @@ export interface ProjectDoorPosition {
   createdAt: string;
   updatedAt: string;
   floor?: Pick<ProjectFloor, 'id' | 'name'> | null;
+  templateDoor?: Pick<Door, 'id' | 'code' | 'name'> | null;
   brand?: Pick<Brand, 'id' | 'name'> | null;
   doorSeries?: Pick<DoorSeries, 'id' | 'name'> | null;
   color?: Pick<BrandColor, 'id' | 'name' | 'colorHex'> | null;

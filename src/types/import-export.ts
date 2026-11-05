@@ -208,6 +208,7 @@ export interface AccessoryExcelItemData {
   color: string;
   specification: string | null;
   costPrice: number;
+  imagePath?: string | null;
   isActive: boolean;
 }
 
@@ -239,11 +240,16 @@ export interface AccessoryBulkUpsertItem {
   color: string;
   specification: string | null;
   costPrice: number;
+  imagePath?: string | null;
   isActive: boolean;
 }
 
 export interface AccessoryBulkUpsertRequest {
   items: AccessoryBulkUpsertItem[];
+}
+
+export interface AccessoryImageUploadResponse {
+  imagePath: string;
 }
 
 // 4. Bulk Delete Material Items

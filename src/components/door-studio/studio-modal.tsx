@@ -15,7 +15,7 @@ import { GlassGrilleModal } from './panels/glass-grille-modal';
 import { DoorCadRenderer } from './cad-engine/door-cad-renderer';
 import { updateNode } from './utils/door-tree-utils';
 import { useDoorStudioState } from './hooks/useDoorStudioState';
-import { Save, Loader2, FileText, PenTool, Sliders, BarChart3, Wrench, Box } from 'lucide-react';
+import { Save, Loader2, FileText, PenTool, Sliders, BarChart3, Wrench, Box, LayoutGrid, ChevronDown } from 'lucide-react';
 
 const Door3DViewer = dynamic(() => import('./canvas-3d/door-3d-viewer'), { ssr: false });
 
@@ -35,6 +35,8 @@ export interface DoorStudioModalProps {
   onClose: () => void;
   door?: Door | null;
   defaultBrandId?: number | null;
+  templateDoorName?: string | null;
+  onOpenTemplatePicker?: () => void;
   onSaveSuccess?: (savedDoor: Door) => void;
   onCustomSave?: (data: DoorStudioModalSaveData) => Promise<void>;
 }
@@ -72,6 +74,8 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
   onClose,
   door,
   defaultBrandId,
+  templateDoorName,
+  onOpenTemplatePicker,
   onSaveSuccess,
   onCustomSave,
 }) => {
@@ -93,7 +97,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
       onClose={onClose}
       bodyClassName="p-0 overflow-hidden flex flex-col h-full"
       title={
-        <div className="flex items-center w-full min-w-0 pr-1">
+        <div className="flex items-center justify-between gap-2 w-full min-w-0 pr-1">
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/70 overflow-x-auto no-scrollbar max-w-full min-w-0 touch-pan-x">
             {NAV_TABS.map((t) => {
               const Icon = t.icon;
@@ -118,6 +122,21 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
               );
             })}
           </div>
+
+          {onOpenTemplatePicker && (
+            <button
+              type="button"
+              onClick={onOpenTemplatePicker}
+              title="Nhấn để chọn đổi sang mẫu cửa khác"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-primary/40 bg-slate-50/80 hover:bg-primary/5 text-slate-700 hover:text-primary transition-all cursor-pointer max-w-[180px] sm:max-w-[260px] md:max-w-[340px] shrink-0 shadow-2xs"
+            >
+              <LayoutGrid size={14} className="text-primary shrink-0" />
+              <span className="text-xs font-semibold truncate">
+                {templateDoorName || state.name || 'Chọn mẫu cửa'}
+              </span>
+              <ChevronDown size={14} className="text-slate-400 shrink-0" />
+            </button>
+          )}
         </div>
       }
       size="full"
@@ -279,7 +298,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
             selectedComboIds={state.selectedComboIds}
             onToggleCombo={state.handleToggleCombo}
             accessories={state.availableAccessories}
-            brands={state.availableBrands}
+            brands={state.availableAccessoryBrands}
             selectedAccessories={state.selectedAccessories}
             onUpdateAccessoryQty={state.handleUpdateAccessoryQty}
             onSetAccessoryQty={state.handleSetAccessoryQty}

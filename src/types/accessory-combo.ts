@@ -1,3 +1,5 @@
+import type { Brand } from './brand';
+
 export interface AccessoryComboItem {
   accessoryId: number;
   quantity: number;
@@ -21,6 +23,7 @@ export interface AccessoryCombo {
   openingType?: string | null;
   description?: string | null;
   brandId?: number | null;
+  brand?: Brand | null;
   comboItems: AccessoryComboItem[];
   totalComboPrice: number;
   isDefault: boolean;

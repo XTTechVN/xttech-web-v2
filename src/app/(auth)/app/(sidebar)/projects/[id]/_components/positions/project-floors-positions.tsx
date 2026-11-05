@@ -51,9 +51,14 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
   const [isStudioOpen, setIsStudioOpen] = useState(false);
   const [studioDoor, setStudioDoor] = useState<Door | null>(null);
   const [editingStudioPosition, setEditingStudioPosition] = useState<ProjectDoorPosition | null>(null);
+  const [studioTemplateDoorId, setStudioTemplateDoorId] = useState<number | null>(null);
+  const [studioTemplateDoorName, setStudioTemplateDoorName] = useState<string | null>(null);
+  const [isReplaceTemplatePickerOpen, setIsReplaceTemplatePickerOpen] = useState(false);
 
   const handleOpenStudioForPosition = (pos: ProjectDoorPosition) => {
     setEditingStudioPosition(pos);
+    setStudioTemplateDoorId(pos.templateDoorId ?? pos.templateDoor?.id ?? null);
+    setStudioTemplateDoorName(pos.templateDoor?.name || pos.description || pos.code);
     const sc = (pos.systemConfig || {}) as Record<string, unknown>;
     const pseudoDoor: Door = {
       id: pos.id,
@@ -75,6 +80,40 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
     setIsStudioOpen(true);
   };
 
+  const handleSwitchStudioTemplateDoor = (pickedDoor: Door, defaultW?: number, defaultH?: number) => {
+    if (!editingStudioPosition) return;
+    const rawSc = (pickedDoor.systemConfig || {}) as Record<string, unknown>;
+    const nextW = editingStudioPosition.isMeasured
+      ? editingStudioPosition.width
+      : defaultW || Number(rawSc.w) || Number(rawSc.width) || editingStudioPosition.width || 1200;
+    const nextH = editingStudioPosition.isMeasured
+      ? editingStudioPosition.height
+      : defaultH || Number(rawSc.h) || Number(rawSc.height) || editingStudioPosition.height || 2200;
+
+    setStudioTemplateDoorId(pickedDoor.id);
+    setStudioTemplateDoorName(pickedDoor.name);
+    setStudioDoor({
+      id: editingStudioPosition.id,
+      name: pickedDoor.name || editingStudioPosition.description || editingStudioPosition.code,
+      code: editingStudioPosition.code,
+      type: pickedDoor.type || editingStudioPosition.doorType || 'door',
+      doorSeriesId: pickedDoor.doorSeriesId || editingStudioPosition.doorSeriesId || undefined,
+      doorSeries: pickedDoor.doorSeries,
+      imagePath: pickedDoor.imagePath || null,
+      specification: `${nextW}×${nextH}mm`,
+      systemConfig: {
+        ...structuredClone(rawSc),
+        w: nextW,
+        h: nextH,
+        width: nextW,
+        height: nextH,
+      },
+      createdAt: '',
+      updatedAt: '',
+    });
+    toast.success(`Đã áp dụng mẫu cửa: ${pickedDoor.name}`);
+  };
+
   const handleStudioCustomSave = async (saveData: {
     name: string;
     code: string;
@@ -91,6 +130,7 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
       height: saveData.height,
       doorType: saveData.type,
       description: saveData.name,
+      templateDoorId: studioTemplateDoorId ?? editingStudioPosition.templateDoorId ?? undefined,
       doorSeriesId: saveData.doorSeriesId || undefined,
       systemConfig: saveData.systemConfig,
     });
@@ -256,9 +296,22 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
           setIsStudioOpen(false);
           setStudioDoor(null);
           setEditingStudioPosition(null);
+          setStudioTemplateDoorId(null);
+          setStudioTemplateDoorName(null);
         }}
         door={studioDoor}
+        templateDoorName={studioTemplateDoorName}
+        onOpenTemplatePicker={() => setIsReplaceTemplatePickerOpen(true)}
         onCustomSave={handleStudioCustomSave}
+      />
+
+      <TemplateDoorPickerModal
+        isOpen={isReplaceTemplatePickerOpen}
+        onClose={() => setIsReplaceTemplatePickerOpen(false)}
+        projectId={projectId}
+        defaultBrandId={editingStudioPosition?.brandId ?? studioDoor?.doorSeries?.brandId ?? null}
+        defaultSeriesId={studioDoor?.doorSeriesId ?? editingStudioPosition?.doorSeriesId ?? null}
+        onSelectDoor={handleSwitchStudioTemplateDoor}
       />
     </div>
   );

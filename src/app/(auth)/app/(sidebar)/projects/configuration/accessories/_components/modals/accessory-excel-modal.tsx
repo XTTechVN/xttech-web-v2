@@ -12,6 +12,7 @@ import {
   Download,
   Plus,
   Trash2,
+  ImagePlus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
@@ -20,6 +21,7 @@ import {
   exportAccessoriesExcel,
   previewAccessoriesExcel,
   bulkUpsertAccessories,
+  uploadAccessoryExcelImage,
   getAccessories,
 } from '@/actions';
 import type {
@@ -64,6 +66,8 @@ function validateAccessoryRow(
     ? existingAccessories.find((a) => (a.code || '').trim().toUpperCase() === code.toUpperCase())
     : null;
   const action: ExcelRowAction = errors.length > 0 ? 'ERROR' : matched ? 'UPDATE' : 'CREATE';
+  const resolvedImagePath =
+    data.imagePath === undefined ? (matched?.imagePath ?? null) : data.imagePath;
 
   return {
     rowIndex,
@@ -71,6 +75,7 @@ function validateAccessoryRow(
     existingId: matched ? matched.id : null,
     data: {
       ...data,
+      imagePath: resolvedImagePath,
       brandCode: brand?.code ?? data.brandCode,
       brandName: brand?.name ?? data.brandName,
       categoryCode: cat?.code ?? data.categoryCode,
@@ -86,6 +91,7 @@ function validateAccessoryRow(
           color: matched.color || '',
           specification: matched.specification ?? null,
           costPrice: matched.costPrice ?? 0,
+          imagePath: matched.imagePath ?? null,
           isActive: matched.isActive !== false,
         }
       : (fallbackOld ?? null),
@@ -101,9 +107,11 @@ export function AccessoryExcelModal({
   categories,
 }: AccessoryExcelModalProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const batchImageInputRef = useRef<HTMLInputElement | null>(null);
   const [rows, setRows] = useState<AccessoryExcelPreviewRow[]>([]);
   const [filterTab, setFilterTab] = useState<FilterTab>('ALL');
   const [fileName, setFileName] = useState<string>('');
+  const [uploadingRows, setUploadingRows] = useState<Set<number>>(new Set());
 
   const { data: existingAccessories = [] } = useQuery({
     queryKey: ['accessories', 'all-for-excel'],
@@ -126,9 +134,7 @@ export function AccessoryExcelModal({
     mutationFn: bulkUpsertAccessories,
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['accessories'] });
-      toast.success(
-        `Hoàn tất: Thêm mới ${res.createdCount}, Cập nhật ${res.updatedCount} phụ kiện!`,
-      );
+      toast.success(`Hoàn tất: Thêm mới ${res.createdCount}, Cập nhật ${res.updatedCount} phụ kiện!`);
       setRows([]);
       setFileName('');
       onClose();
@@ -137,9 +143,7 @@ export function AccessoryExcelModal({
   });
 
   const counts = useMemo(() => {
-    let create = 0;
-    let update = 0;
-    let error = 0;
+    let create = 0, update = 0, error = 0;
     rows.forEach((r) => {
       if (r.action === 'CREATE') create++;
       else if (r.action === 'UPDATE') update++;
@@ -161,112 +165,114 @@ export function AccessoryExcelModal({
     e.target.value = '';
   };
 
-  const handleClearAll = () => {
-    setRows([]);
-    setFileName('');
-    setFilterTab('ALL');
-    toast.success('Đã xóa toàn bộ dữ liệu đang nhập');
-  };
-
   const handleUpdateCell = (rowIndex: number, patch: Partial<AccessoryExcelItemData>) => {
     setRows((prev) =>
       prev.map((r) =>
         r.rowIndex === rowIndex
-          ? validateAccessoryRow(
-              { ...r.data, ...patch },
-              r.rowIndex,
-              brands,
-              categories,
-              existingAccessories,
-              r.oldData,
-            )
+          ? validateAccessoryRow({ ...r.data, ...patch }, r.rowIndex, brands, categories, existingAccessories, r.oldData)
           : r,
       ),
     );
   };
 
+  const handleUploadRowImage = async (rowIndex: number, file: File) => {
+    setUploadingRows((prev) => new Set(prev).add(rowIndex));
+    try {
+      const res = await uploadAccessoryExcelImage(file);
+      handleUpdateCell(rowIndex, { imagePath: res.imagePath });
+      toast.success('Đã tải ảnh phụ kiện lên');
+    } catch (err: unknown) {
+      showErrorToast(err, 'Lỗi tải ảnh phụ kiện');
+    } finally {
+      setUploadingRows((prev) => {
+        const next = new Set(prev);
+        next.delete(rowIndex);
+        return next;
+      });
+    }
+  };
+
+  const handleBatchImageMatch = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (files.length === 0) return;
+
+    const tasks: Array<{ rowIndex: number; file: File }> = [];
+    files.forEach((file) => {
+      const baseName = file.name.replace(/\.[^/.]+$/, '').trim().toUpperCase();
+      if (!baseName) return;
+      rows.forEach((r) => {
+        const codeUpper = (r.data.code || '').trim().toUpperCase();
+        if (codeUpper && (baseName === codeUpper || baseName.startsWith(codeUpper))) {
+          tasks.push({ rowIndex: r.rowIndex, file });
+        }
+      });
+    });
+    if (tasks.length === 0) {
+      toast.error('Không tìm thấy dòng nào có Mã phụ kiện khớp với tên file ảnh đã chọn');
+      return;
+    }
+
+    setUploadingRows((prev) => new Set([...prev, ...tasks.map((t) => t.rowIndex)]));
+    const results = await Promise.allSettled(
+      tasks.map(async (t) => ({ rowIndex: t.rowIndex, res: await uploadAccessoryExcelImage(t.file) })),
+    );
+    let successCount = 0;
+    results.forEach((item) => {
+      if (item.status === 'fulfilled') {
+        successCount++;
+        handleUpdateCell(item.value.rowIndex, { imagePath: item.value.res.imagePath });
+      }
+    });
+    setUploadingRows((prev) => {
+      const next = new Set(prev);
+      tasks.forEach((t) => next.delete(t.rowIndex));
+      return next;
+    });
+    if (successCount > 0) toast.success(`Đã ghép thành công ${successCount} ảnh theo Mã phụ kiện!`);
+    else toast.error('Tải ảnh hàng loạt thất bại');
+  };
+
   const handleAddBlankRow = () => {
     const nextIdx = rows.length > 0 ? Math.max(...rows.map((r) => r.rowIndex)) + 1 : 2;
     const blank: AccessoryExcelItemData = {
-      code: '',
-      name: '',
-      brandId: brands[0]?.id ?? null,
-      categoryId: categories[0]?.id ?? null,
-      unit: 'pcs',
-      color: '',
-      specification: null,
-      costPrice: 120000,
-      isActive: true,
+      code: '', name: '', brandId: brands[0]?.id ?? null, categoryId: categories[0]?.id ?? null,
+      unit: 'pcs', color: '', specification: null, costPrice: 120000, imagePath: null, isActive: true,
     };
-    setRows((prev) => [
-      ...prev,
-      validateAccessoryRow(blank, nextIdx, brands, categories, existingAccessories),
-    ]);
+    setRows((prev) => [...prev, validateAccessoryRow(blank, nextIdx, brands, categories, existingAccessories)]);
   };
 
   const handleConfirmSave = () => {
     const validRows = rows.filter((r) => r.action === 'CREATE' || r.action === 'UPDATE');
-    if (validRows.length === 0) {
-      toast.error('Không có dòng phụ kiện hợp lệ nào để lưu');
-      return;
-    }
+    if (validRows.length === 0) return toast.error('Không có dòng phụ kiện hợp lệ nào để lưu');
     upsertMutate({
       items: validRows.map((r) => ({
-        existingId: r.existingId,
-        code: r.data.code.trim(),
-        name: r.data.name.trim(),
+        existingId: r.existingId, code: r.data.code.trim(), name: r.data.name.trim(),
         brandId: r.data.brandId ? Number(r.data.brandId) : null,
         categoryId: r.data.categoryId ? Number(r.data.categoryId) : null,
-        unit: r.data.unit,
-        color: r.data.color || '',
-        specification: r.data.specification,
-        costPrice: Number(r.data.costPrice) || 0,
-        isActive: r.data.isActive,
+        unit: r.data.unit, color: r.data.color || '', specification: r.data.specification,
+        costPrice: Number(r.data.costPrice) || 0, imagePath: r.data.imagePath ?? null, isActive: r.data.isActive,
       })),
     });
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      size="full"
-      title={
-        <div className="flex items-center gap-2.5">
-          <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
-          <span className="font-bold text-slate-900">
-            Nhập Excel & Kiểm tra dữ liệu Phụ Kiện Kim Khí
-          </span>
-        </div>
-      }
-      bodyClassName="p-4 sm:p-6 bg-slate-50/60 min-h-[calc(100vh-65px)] flex flex-col gap-4"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} size="full" title={<div className="flex items-center gap-2.5"><FileSpreadsheet className="w-5 h-5 text-emerald-600" /><span className="font-bold text-slate-900">Nhập Excel & Kiểm tra dữ liệu Phụ Kiện Kim Khí</span></div>} bodyClassName="p-4 sm:p-6 bg-slate-50/60 min-h-[calc(100vh-65px)] flex flex-col gap-4">
       <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs">
         <div className="flex items-center gap-2.5 flex-wrap">
           <input ref={fileInputRef} type="file" accept=".xlsx" onChange={handleFileChange} className="hidden" />
-          <Button variant="primary" size="sm" leftIcon={<Upload size={15} />} loading={isPreviewing} onClick={() => fileInputRef.current?.click()}>
-            {fileName ? 'Chọn file Excel khác' : 'Tải file Excel (.xlsx) lên'}
-          </Button>
-          <Button variant="outline" size="sm" leftIcon={<Download size={15} />} onClick={() => exportAccessoriesExcel({ templateOnly: true }).catch((err) => showErrorToast(err, 'Lỗi tải file mẫu'))}>
-            Tải file mẫu (có sẵn Select Hãng & Danh mục)
-          </Button>
-          <Button variant="outline" size="sm" leftIcon={<Plus size={15} />} onClick={handleAddBlankRow}>
-            Thêm dòng trực tiếp
-          </Button>
+          <input ref={batchImageInputRef} type="file" accept="image/*" multiple onChange={handleBatchImageMatch} className="hidden" />
+          <Button variant="primary" size="sm" leftIcon={<Upload size={15} />} loading={isPreviewing} onClick={() => fileInputRef.current?.click()}>{fileName ? 'Chọn file Excel khác' : 'Tải file Excel (.xlsx) lên'}</Button>
+          <Button variant="outline" size="sm" leftIcon={<Download size={15} />} onClick={() => exportAccessoriesExcel({ templateOnly: true }).catch((err) => showErrorToast(err, 'Lỗi tải file mẫu'))}>Tải file mẫu (có sẵn Select Hãng & Danh mục)</Button>
+          <Button variant="outline" size="sm" leftIcon={<Plus size={15} />} onClick={handleAddBlankRow}>Thêm dòng trực tiếp</Button>
           {rows.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<Trash2 size={15} />}
-              onClick={handleClearAll}
-              className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300"
-            >
-              Xóa toàn bộ ({counts.total})
-            </Button>
+            <>
+              <Button variant="outline" size="sm" leftIcon={<ImagePlus size={15} />} onClick={() => batchImageInputRef.current?.click()}>Ghép ảnh theo Mã</Button>
+              <Button variant="outline" size="sm" leftIcon={<Trash2 size={15} />} onClick={() => { setRows([]); setFileName(''); setFilterTab('ALL'); toast.success('Đã xóa toàn bộ dữ liệu đang nhập'); }} className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300">Xóa toàn bộ ({counts.total})</Button>
+            </>
           )}
           {fileName && <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">File: <strong>{fileName}</strong></span>}
         </div>
-
         {rows.length > 0 && (
           <div className="flex items-center gap-1.5 flex-wrap">
             <button type="button" onClick={() => setFilterTab('ALL')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${filterTab === 'ALL' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700'}`}>Tất cả ({counts.total})</button>
@@ -276,16 +282,15 @@ export function AccessoryExcelModal({
           </div>
         )}
       </div>
-
       {rows.length === 0 ? (
         <div onClick={() => fileInputRef.current?.click()} className="flex-1 bg-white border-2 border-dashed border-slate-300 hover:border-primary rounded-2xl flex flex-col items-center justify-center p-10 cursor-pointer transition">
           <Upload className="w-12 h-12 text-slate-400 mb-3 stroke-1" />
           <p className="text-sm font-semibold text-slate-700">Bấm để chọn file Excel (.xlsx) danh sách Phụ kiện</p>
-          <p className="text-xs text-slate-500 mt-1 text-center max-w-lg">Tự động phân loại Thêm mới, Cập nhật hoặc Báo lỗi và hỗ trợ chỉnh sửa trực tiếp ngay trong bảng.</p>
+          <p className="text-xs text-slate-500 mt-1 text-center max-w-lg">Tự động phân loại Thêm mới, Cập nhật hoặc Báo lỗi, trích xuất ảnh từ Excel và hỗ trợ chỉnh sửa/ghép ảnh trực tiếp ngay trong bảng.</p>
         </div>
       ) : (
         <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col shadow-2xs">
-          <AccessoryExcelTable rows={filteredRows} brands={brands} categories={categories} onUpdateCell={handleUpdateCell} onRemoveRow={(idx) => setRows((prev) => prev.filter((r) => r.rowIndex !== idx))} />
+          <AccessoryExcelTable rows={filteredRows} brands={brands} categories={categories} uploadingRowIndices={uploadingRows} onUpdateCell={handleUpdateCell} onUploadRowImage={handleUploadRowImage} onRemoveRow={(idx) => setRows((prev) => prev.filter((r) => r.rowIndex !== idx))} />
           <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="text-xs text-slate-600">
               Sẵn sàng lưu <strong className="text-emerald-600">{counts.create} phụ kiện mới</strong> và <strong className="text-blue-600">{counts.update} phụ kiện cập nhật</strong>.

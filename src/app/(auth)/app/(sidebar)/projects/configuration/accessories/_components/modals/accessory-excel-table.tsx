@@ -1,7 +1,16 @@
 'use client';
 
 import React from 'react';
-import { AlertTriangle, CheckCircle2, RefreshCw, Trash2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ImagePlus,
+  Loader2,
+  RefreshCw,
+  Trash2,
+  X,
+} from 'lucide-react';
+import { BASE_MINIO_URL } from '@/config';
 import type {
   Brand,
   AccessoryCategory,
@@ -35,7 +44,9 @@ interface AccessoryExcelTableProps {
   rows: AccessoryExcelPreviewRow[];
   brands: Brand[];
   categories: AccessoryCategory[];
+  uploadingRowIndices?: ReadonlySet<number>;
   onUpdateCell: (rowIndex: number, patch: Partial<AccessoryExcelItemData>) => void;
+  onUploadRowImage: (rowIndex: number, file: File) => void;
   onRemoveRow: (rowIndex: number) => void;
 }
 
@@ -43,7 +54,9 @@ export function AccessoryExcelTable({
   rows,
   brands,
   categories,
+  uploadingRowIndices,
   onUpdateCell,
+  onUploadRowImage,
   onRemoveRow,
 }: AccessoryExcelTableProps) {
   return (
@@ -53,6 +66,7 @@ export function AccessoryExcelTable({
           <tr>
             <th className="p-2.5 text-center w-12">#</th>
             <th className="p-2.5 text-left w-36">Trạng thái</th>
+            <th className="p-2.5 text-center w-20">Hình ảnh</th>
             <th className="p-2.5 text-left w-36">Mã phụ kiện (*)</th>
             <th className="p-2.5 text-left w-56">Tên phụ kiện (*)</th>
             <th className="p-2.5 text-left w-40">Hãng phụ kiện (*)</th>
@@ -68,6 +82,13 @@ export function AccessoryExcelTable({
           {rows.map((row) => {
             const isErr = row.action === 'ERROR';
             const isUpd = row.action === 'UPDATE';
+            const isRowUploading = uploadingRowIndices?.has(row.rowIndex) ?? false;
+            const imgSrc = row.data.imagePath
+              ? row.data.imagePath.startsWith('http')
+                ? row.data.imagePath
+                : `${BASE_MINIO_URL}/${row.data.imagePath.replace(/^\//, '')}`
+              : null;
+
             return (
               <tr
                 key={row.rowIndex}
@@ -94,6 +115,58 @@ export function AccessoryExcelTable({
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">
                       <CheckCircle2 size={11} /> Thêm mới
                     </span>
+                  )}
+                </td>
+                <td className="p-1.5 text-center">
+                  {isRowUploading ? (
+                    <div className="w-10 h-10 mx-auto rounded border border-slate-200 bg-slate-50 flex items-center justify-center">
+                      <Loader2 size={16} className="animate-spin text-primary" />
+                    </div>
+                  ) : imgSrc ? (
+                    <div className="relative w-10 h-10 mx-auto">
+                      <label className="block w-10 h-10 cursor-pointer" title="Bấm để đổi ảnh">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = '';
+                            if (file) onUploadRowImage(row.rowIndex, file);
+                          }}
+                        />
+                        <img
+                          src={imgSrc}
+                          alt={row.data.name || row.data.code}
+                          className="w-10 h-10 object-contain rounded border border-slate-200 bg-white hover:border-primary transition"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        title="Xóa ảnh"
+                        onClick={() => onUpdateCell(row.rowIndex, { imagePath: null })}
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-xs hover:bg-rose-600 cursor-pointer"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label
+                      className="w-10 h-10 mx-auto rounded border border-dashed border-slate-300 hover:border-primary hover:bg-primary/5 text-slate-400 hover:text-primary flex items-center justify-center cursor-pointer transition"
+                      title="Chọn ảnh phụ kiện từ máy tính"
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = '';
+                          if (file) onUploadRowImage(row.rowIndex, file);
+                        }}
+                      />
+                      <ImagePlus size={15} />
+                    </label>
                   )}
                 </td>
                 <td className="p-1.5">

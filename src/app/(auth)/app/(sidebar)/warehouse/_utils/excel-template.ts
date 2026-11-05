@@ -1,24 +1,50 @@
-import { WarehouseItem, WarehouseReceiptItemCreatePayload } from '@/types';
+import * as XLSX from 'xlsx';
+import { ReceiptType, WarehouseItem, WarehouseReceiptItemCreatePayload } from '@/types';
+import { buildReceiptTemplateXlsxBuffer } from './receipt-excel-builder';
+import { toDisplayUnit } from './unit-mapping';
+
+export interface ParsedReceiptImportResult {
+  items: WarehouseReceiptItemCreatePayload[];
+  unmatchedCodes: string[];
+  overStockItems: Array<{
+    itemCode: string;
+    requested: number;
+    available: number;
+    unit: string;
+  }>;
+}
+
+interface ColumnMap {
+  codeIdx: number;
+  nameIdx: number;
+  colorIdx: number;
+  unitIdx: number;
+  qtyIdx: number;
+  priceIdx: number;
+  noteIdx: number;
+}
 
 /**
- * Xuất file CSV mẫu nhập kho chuẩn UTF-8 (có BOM chống lỗi font tiếng Việt trên Excel)
+ * Tải xuống biểu mẫu Excel (.xlsx) 2 Sheet chuẩn XTTECH ERP cho Phiếu Nhập / Xuất Kho
  */
-export function downloadReceiptTemplateCsv() {
-  const headers = ['Mã vật tư', 'Tên vật tư', 'Đơn vị tính', 'Số lượng', 'Đơn giá', 'Ghi chú'];
-  const sampleRows = [
-    ['XF55-01', 'Khung bao cửa đi 55 Xingfa', 'cây', '20', '380000', 'Nhôm dày 2.0mm'],
-    ['BL-3D-KL', 'Bản lề 3D Kinlong cửa đi', 'bộ', '60', '85000', 'Màu đen'],
-    ['KEO-APOLLO-A500', 'Keo Silicone Apollo A500', 'chai', '100', '52000', 'Trắng trong'],
-  ];
+export function downloadReceiptTemplateExcel(
+  receiptType: ReceiptType = 'import',
+  existingItems: WarehouseItem[] = []
+): void {
+  const bytes = buildReceiptTemplateXlsxBuffer(receiptType, existingItems);
+  const blobBuffer = new Uint8Array(bytes).buffer;
+  const blob = new Blob([blobBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  const fileName =
+    receiptType === 'export'
+      ? 'Mau_Phieu_Xuat_Kho_XTTech.xlsx'
+      : 'Mau_Phieu_Nhap_Kho_XTTech.xlsx';
 
-  const csvRows = [headers.join(','), ...sampleRows.map((r) => r.map((c) => `"${c}"`).join(','))];
-  const csvContent = '\uFEFF' + csvRows.join('\r\n');
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', 'mau_nhap_kho_vat_tu_xttech.csv');
+  link.setAttribute('download', fileName);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -26,55 +52,188 @@ export function downloadReceiptTemplateCsv() {
 }
 
 /**
- * Phân tích nội dung file CSV/Text thành danh sách dòng nhập kho
+ * Xuất biểu mẫu Excel (.xlsx) 2 Sheet (giữ tên export để tương thích import hiện có)
  */
-export function parseReceiptCsv(
-  csvText: string,
+export function downloadReceiptTemplateCsv(
+  receiptType: ReceiptType = 'import',
   existingItems: WarehouseItem[] = []
-): WarehouseReceiptItemCreatePayload[] {
-  const lines = csvText.split(/\r?\n/).filter((l) => l.trim().length > 0);
-  if (lines.length <= 1) return [];
+): void {
+  downloadReceiptTemplateExcel(receiptType, existingItems);
+}
+
+function parseNumericCell(raw: string | number | undefined, fallback: number): number {
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : fallback;
+  const text = String(raw ?? '').trim();
+  if (!text) return fallback;
+  const normalized = text
+    .replace(/\s+/g, '')
+    .replace(/,(?=\d{3}(\D|$))/g, '')
+    .replace(/\.(?=\d{3}(\D|$))/g, '')
+    .replace(',', '.');
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function detectHeaderAndColumnMap(rows: Array<Array<string | number>>): {
+  startRowIdx: number;
+  colMap: ColumnMap;
+} {
+  const maxScan = Math.min(rows.length, 15);
+  for (let r = 0; r < maxScan; r++) {
+    const row = rows[r].map((c) => String(c ?? '').trim().toLowerCase());
+    const codeIdx = row.findIndex(
+      (c) => c.includes('mã vật tư') || c.includes('mã vt') || c.includes('mã hàng')
+    );
+    const nameIdx = row.findIndex(
+      (c) => c.includes('tên vật tư') || c.includes('tên mặt hàng')
+    );
+    if (codeIdx !== -1 && nameIdx !== -1 && codeIdx !== nameIdx) {
+      const colorIdx = row.findIndex((c) => c.includes('màu sắc') || c.includes('màu'));
+      const unitIdx = row.findIndex((c) => c.includes('đơn vị') || c.includes('đvt'));
+      const qtyIdx = row.findIndex((c) => c.includes('số lượng') || c === 'sl');
+      const priceIdx = row.findIndex((c) => c.includes('đơn giá') || c.includes('giá'));
+      const noteIdx = row.findIndex((c) => c.includes('ghi chú'));
+      return {
+        startRowIdx: r + 1,
+        colMap: {
+          codeIdx,
+          nameIdx,
+          colorIdx,
+          unitIdx: unitIdx !== -1 ? unitIdx : codeIdx + 2,
+          qtyIdx: qtyIdx !== -1 ? qtyIdx : codeIdx + 3,
+          priceIdx: priceIdx !== -1 ? priceIdx : codeIdx + 4,
+          noteIdx: noteIdx !== -1 ? noteIdx : codeIdx + 5,
+        },
+      };
+    }
+  }
+
+  if ((rows[0]?.length ?? 0) >= 8) {
+    return {
+      startRowIdx: 1,
+      colMap: { codeIdx: 1, nameIdx: 2, colorIdx: 3, unitIdx: 4, qtyIdx: 5, priceIdx: 6, noteIdx: 8 },
+    };
+  }
+  return {
+    startRowIdx: 1,
+    colMap: { codeIdx: 0, nameIdx: 1, colorIdx: -1, unitIdx: 2, qtyIdx: 3, priceIdx: 4, noteIdx: 5 },
+  };
+}
+
+function isIgnoredTemplateRow(rawCode: string, rawName: string, rowTextJoined: string): boolean {
+  const joinedLower = rowTextJoined.toLowerCase();
+  if (
+    joinedLower.includes('tổng cộng tiền hàng') ||
+    joinedLower.startsWith('tổng cộng') ||
+    joinedLower.includes('biểu mẫu nhập liệu') ||
+    joinedLower.startsWith('hướng dẫn:')
+  ) {
+    return true;
+  }
+  if (rawCode.toLowerCase().includes('tổng cộng') || rawName.toLowerCase().includes('tổng cộng')) {
+    return true;
+  }
+  return !rawCode && !rawName;
+}
+
+function parseRowsMatrix(
+  rows: Array<Array<string | number>>,
+  existingItems: WarehouseItem[]
+): ParsedReceiptImportResult {
+  const items: WarehouseReceiptItemCreatePayload[] = [];
+  const unmatchedSet = new Set<string>();
+  const overStockItems: ParsedReceiptImportResult['overStockItems'] = [];
+  if (rows.length === 0) return { items, unmatchedCodes: [], overStockItems };
 
   const itemsMapByCode = new Map<string, WarehouseItem>();
   existingItems.forEach((it) => itemsMapByCode.set(it.itemCode.trim().toUpperCase(), it));
+  const { startRowIdx, colMap } = detectHeaderAndColumnMap(rows);
 
-  const result: WarehouseReceiptItemCreatePayload[] = [];
+  for (let i = startRowIdx; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
 
-  // Bỏ qua dòng tiêu đề (index 0)
-  for (let i = 1; i < lines.length; i++) {
-    const rawLine = lines[i].trim();
-    if (!rawLine) continue;
+    const rawCode = String(row[colMap.codeIdx] ?? '').trim();
+    const rawName = String(row[colMap.nameIdx] ?? '').trim();
+    const rowJoined = row.map((c) => String(c ?? '').trim()).join(' ');
+    if (isIgnoredTemplateRow(rawCode, rawName, rowJoined)) continue;
 
-    const parts = splitCsvLine(rawLine);
-    if (parts.length < 2) continue;
+    const matched = rawCode ? itemsMapByCode.get(rawCode.toUpperCase()) : undefined;
+    if (rawCode && !matched) unmatchedSet.add(rawCode);
 
-    const rawCode = (parts[0] || '').trim();
-    const rawName = (parts[1] || '').trim();
-    if (!rawCode && !rawName) continue;
+    const rawColor = colMap.colorIdx >= 0 ? String(row[colMap.colorIdx] ?? '').trim() : '';
+    const rawUnit = String(row[colMap.unitIdx] ?? '').trim();
+    const parsedQty = parseNumericCell(row[colMap.qtyIdx], 1);
+    const quantity = Math.max(parsedQty > 0 ? parsedQty : 1, 0.001);
+    const filePrice = parseNumericCell(row[colMap.priceIdx], 0);
+    const rawNote = colMap.noteIdx >= 0 ? String(row[colMap.noteIdx] ?? '').trim() : '';
 
-    const matched = itemsMapByCode.get(rawCode.toUpperCase());
-    const unit = (parts[2] || matched?.unit || 'cây').trim();
-    const quantity = Math.max(parseFloat(parts[3]) || 1, 0.001);
-    const unitPrice = parseFloat(parts[4]) || (matched?.costPrice ?? 0);
-    const note = (parts[5] || '').trim();
+    if (matched && quantity > matched.availableStock) {
+      overStockItems.push({
+        itemCode: matched.itemCode,
+        requested: quantity,
+        available: matched.availableStock,
+        unit: toDisplayUnit(matched.unit),
+      });
+    }
 
-    result.push({
+    items.push({
       itemId: matched?.id,
       itemCode: rawCode || matched?.itemCode || 'VT-MOI',
       itemName: rawName || matched?.itemName || 'Vật tư mới',
-      unit,
+      itemType: matched?.itemType,
+      profileBarId: matched?.profileBarId ?? undefined,
+      colorId: matched?.colorId ?? undefined,
+      colorName: rawColor || matched?.colorName || undefined,
+      unit: toDisplayUnit(rawUnit || matched?.unit || 'bar'),
       quantity,
-      unitPrice,
-      note: note || undefined,
+      unitPrice: filePrice > 0 ? filePrice : (matched?.costPrice ?? 0),
+      note: rawNote || undefined,
     });
   }
 
-  return result;
+  return { items, unmatchedCodes: Array.from(unmatchedSet), overStockItems };
 }
 
 /**
- * Tách một dòng CSV an toàn có xử lý dấu ngoặc kép và dấu phẩy/chấm phẩy
+ * Đọc file Excel (.xlsx, .xls) hoặc CSV (.csv, .txt) hoặc chuỗi CSV thành danh sách vật tư phiếu kho
  */
+export async function parseReceiptExcelFile(
+  fileOrText: File | string,
+  existingItems: WarehouseItem[] = []
+): Promise<ParsedReceiptImportResult> {
+  if (typeof fileOrText === 'string') {
+    const matrix = fileOrText
+      .split(/\r?\n/)
+      .filter((l) => l.trim().length > 0)
+      .map(splitCsvLine);
+    return parseRowsMatrix(matrix, existingItems);
+  }
+
+  const lowerName = fileOrText.name.toLowerCase();
+  if (lowerName.endsWith('.csv') || lowerName.endsWith('.txt')) {
+    const csvText = await fileOrText.text();
+    return parseReceiptExcelFile(csvText, existingItems);
+  }
+
+  const buffer = await fileOrText.arrayBuffer();
+  const wb = XLSX.read(buffer, { type: 'array' });
+  const firstSheetName = wb.SheetNames[0];
+  if (!firstSheetName) return { items: [], unmatchedCodes: [], overStockItems: [] };
+  const matrix = XLSX.utils.sheet_to_json<Array<string | number>>(wb.Sheets[firstSheetName], {
+    header: 1,
+    defval: '',
+  });
+  return parseRowsMatrix(matrix, existingItems);
+}
+
+export async function parseReceiptCsv(
+  fileOrText: File | string,
+  existingItems: WarehouseItem[] = []
+): Promise<ParsedReceiptImportResult> {
+  return parseReceiptExcelFile(fileOrText, existingItems);
+}
+
 function splitCsvLine(line: string): string[] {
   const delimiter = line.includes(';') && !line.includes(',') ? ';' : ',';
   const result: string[] = [];

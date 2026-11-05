@@ -738,6 +738,7 @@ export function useDoorStudioState({
   const [frameShape, setFrameShape] = useState<FrameShape>('rect');
   const [seriesId, setSeriesId] = useState<number | undefined>(() => door?.doorSeriesId || (door?.systemConfig as any)?.seriesId || undefined);
   const prevSeriesIdRef = useRef<number | undefined>(undefined);
+  const wasOpenRef = useRef<boolean>(false);
   const [selectedComboIds, setSelectedComboIds] = useState<number[]>([]);
   const [selectedAccessories, setSelectedAccessories] = useState<SelectedAccessoryItem[]>([]);
 
@@ -779,14 +780,22 @@ export function useDoorStudioState({
   });
   const allAvailableSeries = useMemo(() => seriesData?.items || [], [seriesData]);
 
-  // Fetch Brands (Chỉ lấy hãng nhôm: brandType === 'aluminum')
+  // Fetch Brands (Lấy toàn bộ hãng đang hoạt động để tách hãng nhôm & hãng phụ kiện)
   const { data: brandsData } = useQuery({
-    queryKey: ['brands-list', 'aluminum'],
-    queryFn: () => getBrands({ limit: 9999, isActive: true, brandType: 'aluminum' }),
+    queryKey: ['brands-list', 'all'],
+    queryFn: () => getBrands({ limit: 9999, isActive: true }),
     enabled: isOpen,
   });
   const availableBrands = useMemo(() => {
-    const list = (brandsData?.items || []).filter((b) => !b.brandType || b.brandType === 'aluminum');
+    const list = (brandsData?.items || []).filter(
+      (b) => !b.brandType || b.brandType === 'aluminum' || b.brandType === 'both'
+    );
+    return [...list].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
+  }, [brandsData]);
+  const availableAccessoryBrands = useMemo(() => {
+    const list = (brandsData?.items || []).filter(
+      (b) => b.brandType === 'accessory' || b.brandType === 'both'
+    );
     return [...list].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
   }, [brandsData]);
 
@@ -1228,7 +1237,12 @@ export function useDoorStudioState({
 
   // Khởi tạo hoặc nạp lại state khi sửa cửa cũ, HOẶC reset toàn bộ khi thêm cửa mới
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      wasOpenRef.current = false;
+      return;
+    }
+    const isFirstOpen = !wasOpenRef.current;
+    wasOpenRef.current = true;
 
     if (door) {
       if (door.name) setName(door.name);
@@ -1320,12 +1334,21 @@ export function useDoorStudioState({
         setRootCell(syncedRoot);
         setHistory([syncedRoot]);
         setHistoryIdx(0);
+      } else {
+        const fallbackW = Number(sc.w) || 1400;
+        const fallbackH = Number(sc.h) || 1600;
+        const fallbackRoot = createDefaultRootCell(fallbackW, fallbackH);
+        setRootCell(fallbackRoot);
+        setHistory([fallbackRoot]);
+        setHistoryIdx(0);
       }
       setSelectedCellId(null);
       setSelectedMullion(null);
       setIsMullionModalOpen(false);
       setCalcData(null);
-      setActiveMainTab('info');
+      if (isFirstOpen) {
+        setActiveMainTab('info');
+      }
     } else {
       const defaultW = 1400;
       const defaultH = 1600;
@@ -2238,6 +2261,7 @@ export function useDoorStudioState({
     availableCombos,
     availableAccessories,
     availableBrands,
+    availableAccessoryBrands,
     selectedBrandId: effectiveBrandId,
     setSelectedBrandId,
     availableGlasses,

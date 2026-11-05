@@ -137,7 +137,10 @@ export function TemplateDoorPickerModal({
     const sc = (door.systemConfig || {}) as Record<string, unknown>;
     const defaultW = Number(sc.w) || Number(sc.width) || 1200;
     const defaultH = Number(sc.h) || Number(sc.height) || 2200;
-    if (projectId) {
+    if (onSelectDoor) {
+      onSelectDoor(door, defaultW, defaultH);
+      handleClose();
+    } else if (projectId) {
       setSelectedDoor(door);
       setNewCode('');
       setDescription(door.name || '');
@@ -146,9 +149,6 @@ export function TemplateDoorPickerModal({
       setQuantity(1);
       setTargetFloorId(typeof selectedFloorId === 'number' ? selectedFloorId : floors?.[0]?.id || 0);
       setStep('info');
-    } else if (onSelectDoor) {
-      onSelectDoor(door, defaultW, defaultH);
-      handleClose();
     }
   };
 
@@ -156,6 +156,7 @@ export function TemplateDoorPickerModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
+      containerClassName="z-[60]"
       title={step === 'select' ? 'Chọn mẫu cửa' : 'Thông tin cửa mới'}
       size={step === 'select' ? 'xl' : 'md'}
       className={
