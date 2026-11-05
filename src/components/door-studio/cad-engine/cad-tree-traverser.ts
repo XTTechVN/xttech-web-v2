@@ -1,4 +1,11 @@
-import { SceneCellNode, MullionInfo, FrameConfig, SashConfig } from '../studio-types';
+import {
+  SceneCellNode,
+  MullionInfo,
+  FrameConfig,
+  SashConfig,
+  normalizeMullionCutType,
+  resolveMullionCutEnds,
+} from '../studio-types';
 import { FrameBox, MullionBar, LeafCell, CouplingSeamBar, VerticalSlice } from './cad-types';
 import { computeSlidingSashes } from './cad-geometry';
 
@@ -298,7 +305,26 @@ export const buildCadLayout = (
   const isDoorHydraulic = Boolean(options?.isHydraulic || rootCell.isHydraulic);
   const isOpenBottomDoor = options?.isOpenBottom !== undefined ? Boolean(options.isOpenBottom) : Boolean(isDoorHydraulic);
 
-  const traverse = (node: SceneCellNode, x: number, y: number, wBox: number, hBox: number, isFrameUnit: boolean) => {
+  interface FrameUnitBounds {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    fLeft: number;
+    fRight: number;
+    fTop: number;
+    fBot: number;
+  }
+
+  const traverse = (
+    node: SceneCellNode,
+    x: number,
+    y: number,
+    wBox: number,
+    hBox: number,
+    isFrameUnit: boolean,
+    frameBounds?: FrameUnitBounds
+  ) => {
     // 1. Frame Coupling: Mỗi nhánh con là 1 module khung độc lập ghép lại
     if (node.splitType === 'coupling' && node.children && node.children.length > 0) {
       const isVert = node.splitDirection === 'vertical';
@@ -316,7 +342,7 @@ export const buildCadLayout = (
         const cx = isVert ? x + cur : x;
         const cy = isVert ? y : y + cur;
 
-        traverse(child, cx, cy, cw, ch, true);
+        traverse(child, cx, cy, cw, ch, true, undefined);
         cur += isVert ? cw : ch;
 
         // Bổ sung vách giáp ranh tách khung (coupling seam) để hỗ trợ kéo thả điều chỉnh
@@ -349,6 +375,16 @@ export const buildCadLayout = (
     let innerY = y;
     let innerW = wBox;
     let innerH = hBox;
+    let activeFrameBounds: FrameUnitBounds = frameBounds || {
+      x,
+      y,
+      w: wBox,
+      h: hBox,
+      fLeft: frameD,
+      fRight: frameD,
+      fTop: frameD,
+      fBot: isOpenBottomDoor ? 0 : frameD,
+    };
 
     if (isFrameUnit) {
       frames.push({ id: node.id, x, y, w: wBox, h: hBox });
@@ -362,6 +398,16 @@ export const buildCadLayout = (
       innerY = y + frameD;
       innerW = Math.max(10, wBox - 2 * frameD);
       innerH = Math.max(10, hBox - frameD - botFrameD);
+      activeFrameBounds = {
+        x,
+        y,
+        w: wBox,
+        h: hBox,
+        fLeft: frameD,
+        fRight: frameD,
+        fTop: frameD,
+        fBot: botFrameD,
+      };
     }
 
     // 3. Phân chia đố T 90° hoặc cặp cánh đối xứng
@@ -394,7 +440,7 @@ export const buildCadLayout = (
             ...child,
             sashZIndex: child.sashZIndex ?? pos.zIndex,
           };
-          traverse(leafChild, pos.x, innerY, pos.w, innerH, false);
+          traverse(leafChild, pos.x, innerY, pos.w, innerH, false, activeFrameBounds);
         });
         return;
       }
@@ -432,7 +478,7 @@ export const buildCadLayout = (
         const cx = isVert ? innerX + cur : innerX;
         const cy = isVert ? innerY : innerY + cur;
 
-        traverse(child, cx, cy, cw, ch, false);
+        traverse(child, cx, cy, cw, ch, false, activeFrameBounds);
         cur += isVert ? cw : ch;
         spanCur += isVert ? cw : ch;
 
@@ -448,6 +494,24 @@ export const buildCadLayout = (
                   : (options?.frameConfig?.mullionHorizProfileId || options?.frameConfig?.mullionProfileId))
               : options?.frameConfig?.mullionProfileId;
 
+            const rawCutType = child.mullionCutType;
+            const normCutType = normalizeMullionCutType(rawCutType);
+            const touchesStartFrame = isVert
+              ? Math.abs(innerY - (activeFrameBounds.y + activeFrameBounds.fTop)) < 1.5
+              : Math.abs(innerX - (activeFrameBounds.x + activeFrameBounds.fLeft)) < 1.5;
+            const touchesEndFrame = isVert
+              ? Math.abs(
+                  innerY + innerH - (activeFrameBounds.y + activeFrameBounds.h - activeFrameBounds.fBot)
+                ) < 1.5
+              : Math.abs(
+                  innerX + innerW - (activeFrameBounds.x + activeFrameBounds.w - activeFrameBounds.fRight)
+                ) < 1.5;
+            const { cutStart, cutEnd } = resolveMullionCutEnds(
+              normCutType,
+              touchesStartFrame,
+              touchesEndFrame
+            );
+
             const mullionInfo: MullionInfo = {
               id: `${node.id}-mullion-${idx}`,
               parentNodeId: node.id,
@@ -458,13 +522,45 @@ export const buildCadLayout = (
               dimension: isVert ? child.w : child.h,
               totalDimension: totalWeight,
               profileId: child.mullionProfileId ?? (node as SceneCellNode).mullionProfileId ?? defaultPid,
-              cutType: child.mullionCutType ?? 'inside_frame',
+              cutType: normCutType,
+              cutStart,
+              cutEnd,
             };
 
             if (isVert) {
-              mullions.push({ x: innerX + cur, y: innerY, w: activeMullionT, h: innerH, info: mullionInfo });
+              const mY = cutStart ? activeFrameBounds.y : innerY;
+              const mH =
+                innerH +
+                (cutStart ? activeFrameBounds.fTop : 0) +
+                (cutEnd ? activeFrameBounds.fBot : 0);
+              mullions.push({
+                x: innerX + cur,
+                y: mY,
+                w: activeMullionT,
+                h: mH,
+                direction: 'vertical',
+                cutType: normCutType,
+                cutStart,
+                cutEnd,
+                info: mullionInfo,
+              });
             } else {
-              mullions.push({ x: innerX, y: innerY + cur, w: innerW, h: activeMullionT, info: mullionInfo });
+              const mX = cutStart ? activeFrameBounds.x : innerX;
+              const mW =
+                innerW +
+                (cutStart ? activeFrameBounds.fLeft : 0) +
+                (cutEnd ? activeFrameBounds.fRight : 0);
+              mullions.push({
+                x: mX,
+                y: innerY + cur,
+                w: mW,
+                h: activeMullionT,
+                direction: 'horizontal',
+                cutType: normCutType,
+                cutStart,
+                cutEnd,
+                info: mullionInfo,
+              });
             }
             cur += activeMullionT;
           }

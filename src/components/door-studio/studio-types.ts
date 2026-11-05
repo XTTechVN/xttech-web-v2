@@ -554,7 +554,41 @@ export interface DoorStudioState {
   zoomLevel: number;
 }
 
-export type MullionCutType = 'inside_frame' | 'overlap' | 'miter' | 'square';
+/** Kiểu cắt đố khung chuẩn Windova: lọt khung, cắt cả 2 đầu khung, cắt đầu trái/trên, cắt đầu phải/dưới */
+export type MullionCutType = 'inside_frame' | 'cut_both' | 'cut_left' | 'cut_right';
+
+export const MULLION_CUT_ORDER: readonly MullionCutType[] = [
+  'inside_frame',
+  'cut_both',
+  'cut_left',
+  'cut_right',
+] as const;
+
+export const MULLION_CUT_LABELS: Record<MullionCutType, string> = {
+  inside_frame: 'Lọt khung →',
+  cut_both: 'Cắt cả 2 →',
+  cut_left: 'Cắt trái →',
+  cut_right: 'Cắt phải →',
+};
+
+export function normalizeMullionCutType(raw?: string | null): MullionCutType {
+  if (raw === 'cut_both' || raw === 'cut_left' || raw === 'cut_right') {
+    return raw;
+  }
+  return 'inside_frame';
+}
+
+export function resolveMullionCutEnds(
+  cutType?: string | null,
+  touchesStartFrame = true,
+  touchesEndFrame = true
+): { cutStart: boolean; cutEnd: boolean } {
+  const norm = normalizeMullionCutType(cutType);
+  return {
+    cutStart: (norm === 'cut_left' || norm === 'cut_both') && touchesStartFrame,
+    cutEnd: (norm === 'cut_right' || norm === 'cut_both') && touchesEndFrame,
+  };
+}
 
 export interface MullionInfo {
   id: string;
@@ -565,6 +599,8 @@ export interface MullionInfo {
   totalDimension: number;
   profileId?: number;
   cutType?: MullionCutType;
+  cutStart?: boolean;
+  cutEnd?: boolean;
   childId: string;
   nextChildId?: string;
 }

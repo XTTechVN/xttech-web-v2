@@ -1,4 +1,4 @@
-import { SceneCellNode, FrameShape, FrameConfig, SashConfig, MullionInfo } from '../studio-types';
+import { SceneCellNode, FrameShape, FrameConfig, SashConfig, MullionInfo, MullionCutType } from '../studio-types';
 import { ProfileBar } from '@/types/profile';
 
 export interface ResizeSplitParams {
@@ -55,6 +55,12 @@ export interface MullionBar {
   y: number;
   w: number;
   h: number;
+  direction?: 'vertical' | 'horizontal';
+  cutType?: MullionCutType;
+  cutStart?: boolean;
+  cutEnd?: boolean;
+  isSashMullion?: boolean;
+  isCoupling?: boolean;
   info: MullionInfo;
 }
 

@@ -12,6 +12,7 @@ import type {
   AccessoryUpdate,
   AccessoryExcelPreviewResponse,
   AccessoryBulkUpsertRequest,
+  AccessoryImageUploadResponse,
   MaterialBulkUpsertResponse,
   BulkDeleteRequest,
   BulkDeleteResponse,
@@ -163,6 +164,24 @@ export const bulkUpsertAccessories = async (
     return response.data;
   } catch (error: unknown) {
     console.warn('API error bulkUpsertAccessories', error);
+    throw error;
+  }
+};
+
+export const uploadAccessoryExcelImage = async (
+  file: File,
+): Promise<AccessoryImageUploadResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post<AccessoryImageUploadResponse>(
+      '/api/v1/accessories/excel/upload-image',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error uploadAccessoryExcelImage', error);
     throw error;
   }
 };
