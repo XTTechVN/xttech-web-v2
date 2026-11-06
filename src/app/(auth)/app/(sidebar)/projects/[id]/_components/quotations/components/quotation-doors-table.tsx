@@ -148,9 +148,7 @@ export function QuotationDoorsTable({
                     <tr className="bg-slate-50/90 border-y border-slate-200/60">
                       <td colSpan={columnCount} className="py-2 px-3">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-slate-700">
-                            {floorName} ({floorItems.length} bộ)
-                          </span>
+                          <span className="font-bold text-slate-700">{floorName} ({floorItems.length} bộ)</span>
                           {batchUnitPrice && Number(batchUnitPrice) > 0 && !isLocked && (
                             <button
                               type="button"
@@ -164,13 +162,7 @@ export function QuotationDoorsTable({
                       </td>
                     </tr>
                     {floorItems.map((item) => (
-                      <DoorRow
-                        key={item.positionId}
-                        item={item}
-                        isSeparated={isSeparated}
-                        isLocked={isLocked}
-                        drafts={drafts}
-                      />
+                      <DoorRow key={item.positionId} item={item} isSeparated={isSeparated} isLocked={isLocked} drafts={drafts} />
                     ))}
                   </React.Fragment>
                 ))}
@@ -183,12 +175,7 @@ export function QuotationDoorsTable({
   );
 }
 
-function DoorRow({
-  item,
-  isSeparated,
-  isLocked,
-  drafts,
-}: {
+function DoorRow({ item, isSeparated, isLocked, drafts }: {
   item: QuotationDoorItemSnapshot;
   isSeparated: boolean;
   isLocked: boolean;
@@ -197,27 +184,20 @@ function DoorRow({
   const isBelowCost = drafts.isBelowCostLive(item);
   const id = item.positionId;
   const isManual = isSeparatedManual(item);
+  const isLiveManual = drafts.isManualLive(item);
   const costPerM2 = item.areaM2 > 0 ? Math.round(item.costPrice / item.areaM2) : item.costPrice;
 
   return (
-    <tr
-      className={`border-b border-slate-100 ${isBelowCost ? 'bg-red-50/60' : 'hover:bg-slate-50/60'}`}
-    >
+    <tr className={`border-b border-slate-100 ${isBelowCost ? 'bg-red-50/60' : 'hover:bg-slate-50/60'}`}>
       <td className="py-2 px-2 whitespace-nowrap">
         <span className="font-bold text-slate-800">{item.positionCode}</span>
         <span className="text-slate-500"> · {item.doorName}</span>
       </td>
-      <td className="py-2 px-2 whitespace-nowrap text-slate-600">
-        {item.width} x {item.height}
-      </td>
-      <td className="py-2 px-2 whitespace-nowrap text-right text-slate-600">
-        {item.areaM2.toLocaleString('vi-VN')}
-      </td>
+      <td className="py-2 px-2 whitespace-nowrap text-slate-600">{item.width} x {item.height}</td>
+      <td className="py-2 px-2 whitespace-nowrap text-right text-slate-600">{item.areaM2.toLocaleString('vi-VN')}</td>
       <td className="py-2 px-2 whitespace-nowrap text-right text-slate-700">
         <span className="font-semibold">{formatCurrency(item.costPrice)}</span>
-        <span className="block text-[10px] text-slate-400 font-normal">
-          ~{formatCurrency(costPerM2)}/m²
-        </span>
+        <span className="block text-[10px] text-slate-400 font-normal">~{formatCurrency(costPerM2)}/m²</span>
       </td>
 
       {isSeparated ? (
@@ -246,6 +226,7 @@ function DoorRow({
             <span className={`font-bold ${isBelowCost ? 'text-red-600' : 'text-slate-800'}`}>
               {formatCurrency(drafts.getTotalLive(item))}
             </span>
+            {isLiveManual && <span className="block text-[10px] text-amber-600">Đã sửa giá tay</span>}
             {isBelowCost && <span className="block text-[10px] text-red-600">Thấp hơn chi phí</span>}
           </td>
         </>
@@ -271,9 +252,7 @@ function DoorRow({
               widthClass="w-32"
               isDanger={isBelowCost}
             />
-            {item.isManuallyEdited && (
-              <span className="block text-[10px] text-amber-600">Đã sửa giá tay</span>
-            )}
+            {isLiveManual && <span className="block text-[10px] text-amber-600">Đã sửa giá tay</span>}
             {isBelowCost && <span className="block text-[10px] text-red-600">Thấp hơn chi phí</span>}
           </td>
         </>

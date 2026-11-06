@@ -4,7 +4,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { Modal } from '@/components';
 import { Door } from '@/types';
-import { SashConfig } from './studio-types';
+import { SashConfig, StudioMainTab } from './studio-types';
 import { DrawTabView } from './panels/draw-tab-view';
 import { InfoTabView } from './panels/info-tab-view';
 import { ConfigTabView } from './panels/config/config-tab-view';
@@ -35,6 +35,7 @@ export interface DoorStudioModalProps {
   onClose: () => void;
   door?: Door | null;
   defaultBrandId?: number | null;
+  initialTab?: StudioMainTab;
   templateDoorName?: string | null;
   onOpenTemplatePicker?: () => void;
   onSaveSuccess?: (savedDoor: Door) => void;
@@ -74,12 +75,13 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
   onClose,
   door,
   defaultBrandId,
+  initialTab,
   templateDoorName,
   onOpenTemplatePicker,
   onSaveSuccess,
   onCustomSave,
 }) => {
-  const state = useDoorStudioState({ isOpen, onClose, door, defaultBrandId, onSaveSuccess, onCustomSave });
+  const state = useDoorStudioState({ isOpen, onClose, door, defaultBrandId, initialTab, onSaveSuccess, onCustomSave });
 
   const handleSashConfigChange = (updates: Partial<SashConfig>) => {
     state.setSashConfig((prev) => ({ ...prev, ...updates }));

@@ -8,21 +8,36 @@ import {
   createProjectFloor,
   deleteProjectFloor,
   getProjectPositions,
+  createProjectPosition,
   updateProjectPosition,
   deleteProjectPosition,
   duplicateProjectPosition,
   measureProjectPosition,
 } from '@/actions';
 import type {
+  Door,
   ProjectDoorPosition,
   MeasurePositionResponse,
   ProjectDoorPositionUpdate,
 } from '@/types';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
+import {
+  generateNextPositionCode,
+  type PositionDrawInitPayload,
+} from '../modals/position-draw-init-modal';
 
 export function useProjectPositions(projectId: number) {
   const [selectedFloorId, setSelectedFloorId] = useState<number | 'all'>('all');
+  const [isDrawInitOpen, setIsDrawInitOpen] = useState(false);
+  const [pendingDrawInit, setPendingDrawInit] = useState<PositionDrawInitPayload | null>(null);
+  const [isStudioOpen, setIsStudioOpen] = useState(false);
+  const [studioInitialTab, setStudioInitialTab] = useState<'info' | 'draw'>('info');
+  const [studioDoor, setStudioDoor] = useState<Door | null>(null);
+  const [editingStudioPosition, setEditingStudioPosition] = useState<ProjectDoorPosition | null>(null);
+  const [studioTemplateDoorId, setStudioTemplateDoorId] = useState<number | null>(null);
+  const [studioTemplateDoorName, setStudioTemplateDoorName] = useState<string | null>(null);
+  const [isReplaceTemplatePickerOpen, setIsReplaceTemplatePickerOpen] = useState(false);
 
   const { data: floors = [], isLoading: isLoadingFloors } = useQuery({
     queryKey: ['project_floors', projectId],
@@ -147,6 +162,148 @@ export function useProjectPositions(projectId: number) {
     onError: (err) => showErrorToast(err, 'Lỗi lưu kích thước đo đạc'),
   });
 
+  const handleConfirmDrawInit = (payload: PositionDrawInitPayload) => {
+    setIsDrawInitOpen(false);
+    setEditingStudioPosition(null);
+    setPendingDrawInit(payload);
+    setStudioTemplateDoorId(null);
+    setStudioTemplateDoorName(null);
+    setStudioInitialTab('draw');
+    setStudioDoor({
+      id: 0,
+      name: payload.description || payload.code,
+      code: payload.code,
+      type: payload.doorType || 'casement_door',
+      doorSeriesId: payload.doorSeriesId,
+      doorSeries: payload.doorSeries,
+      imagePath: null,
+      specification: `${payload.width}×${payload.height}mm`,
+      systemConfig: {
+        w: payload.width,
+        h: payload.height,
+        width: payload.width,
+        height: payload.height,
+        brandId: payload.brandId,
+        seriesId: payload.doorSeriesId,
+        ...(payload.aluminumColor ? { aluminumColor: payload.aluminumColor } : {}),
+      },
+      createdAt: '',
+      updatedAt: '',
+    });
+    setIsStudioOpen(true);
+  };
+
+  const handleOpenStudioForPosition = (pos: ProjectDoorPosition) => {
+    setPendingDrawInit(null);
+    setEditingStudioPosition(pos);
+    setStudioInitialTab('info');
+    setStudioTemplateDoorId(pos.templateDoorId ?? pos.templateDoor?.id ?? null);
+    setStudioTemplateDoorName(pos.templateDoor?.name || pos.description || pos.code);
+    const sc = (pos.systemConfig || {}) as Record<string, unknown>;
+    setStudioDoor({
+      id: pos.id,
+      name: pos.description || pos.code,
+      code: pos.code,
+      type: pos.doorType || 'door',
+      doorSeriesId: pos.doorSeriesId || undefined,
+      imagePath: null,
+      specification: `${pos.width}×${pos.height}mm`,
+      systemConfig: { ...sc, w: pos.width, h: pos.height },
+      createdAt: '',
+      updatedAt: '',
+    });
+    setIsStudioOpen(true);
+  };
+
+  const handleCloseStudio = () => {
+    setIsStudioOpen(false);
+    setStudioDoor(null);
+    setEditingStudioPosition(null);
+    setPendingDrawInit(null);
+    setStudioTemplateDoorId(null);
+    setStudioTemplateDoorName(null);
+  };
+
+  const handleSwitchStudioTemplateDoor = (pickedDoor: Door, defaultW?: number, defaultH?: number) => {
+    if (!editingStudioPosition && !pendingDrawInit) return;
+    const rawSc = (pickedDoor.systemConfig || {}) as Record<string, unknown>;
+    const fallbackW = editingStudioPosition?.width || pendingDrawInit?.width || 1200;
+    const fallbackH = editingStudioPosition?.height || pendingDrawInit?.height || 2200;
+    const nextW = editingStudioPosition?.isMeasured
+      ? editingStudioPosition.width
+      : defaultW || Number(rawSc.w) || Number(rawSc.width) || fallbackW;
+    const nextH = editingStudioPosition?.isMeasured
+      ? editingStudioPosition.height
+      : defaultH || Number(rawSc.h) || Number(rawSc.height) || fallbackH;
+    const currentCode =
+      editingStudioPosition?.code ||
+      studioDoor?.code ||
+      pendingDrawInit?.code ||
+      generateNextPositionCode(allPositions);
+
+    setStudioTemplateDoorId(pickedDoor.id);
+    setStudioTemplateDoorName(pickedDoor.name);
+    setStudioDoor({
+      id: editingStudioPosition?.id || 0,
+      name: pickedDoor.name || editingStudioPosition?.description || pendingDrawInit?.description || currentCode,
+      code: currentCode,
+      type: pickedDoor.type || editingStudioPosition?.doorType || pendingDrawInit?.doorType || 'door',
+      doorSeriesId: pickedDoor.doorSeriesId || editingStudioPosition?.doorSeriesId || pendingDrawInit?.doorSeriesId || undefined,
+      doorSeries: pickedDoor.doorSeries || pendingDrawInit?.doorSeries,
+      imagePath: pickedDoor.imagePath || null,
+      specification: `${nextW}×${nextH}mm`,
+      systemConfig: { ...structuredClone(rawSc), w: nextW, h: nextH, width: nextW, height: nextH },
+      createdAt: '',
+      updatedAt: '',
+    });
+    toast.success(`Đã áp dụng mẫu cửa: ${pickedDoor.name}`);
+  };
+
+  const handleStudioCustomSave = async (saveData: {
+    name: string;
+    code: string;
+    type: string;
+    doorSeriesId?: number | null;
+    width: number;
+    height: number;
+    systemConfig: Record<string, unknown>;
+  }) => {
+    if (editingStudioPosition) {
+      await updateProjectPosition(projectId, editingStudioPosition.id, {
+        code: saveData.code.trim() || editingStudioPosition.code,
+        width: saveData.width,
+        height: saveData.height,
+        doorType: saveData.type,
+        description: saveData.name,
+        templateDoorId: studioTemplateDoorId ?? editingStudioPosition.templateDoorId ?? undefined,
+        doorSeriesId: saveData.doorSeriesId || undefined,
+        systemConfig: saveData.systemConfig,
+      });
+      invalidatePositionsAndProject();
+      toast.success('Đã cập nhật bản vẽ vị trí cửa dự án');
+      return;
+    }
+
+    const finalCode = saveData.code.trim() || pendingDrawInit?.code || generateNextPositionCode(allPositions);
+    const targetFloorId =
+      pendingDrawInit?.floorId ?? (typeof selectedFloorId === 'number' ? selectedFloorId : floors[0]?.id);
+    const created = await createProjectPosition(projectId, {
+      projectId,
+      code: finalCode,
+      floorId: targetFloorId ? Number(targetFloorId) : undefined,
+      templateDoorId: studioTemplateDoorId ?? undefined,
+      description: saveData.name.trim() || pendingDrawInit?.description || finalCode,
+      doorType: saveData.type || pendingDrawInit?.doorType || 'casement_door',
+      width: saveData.width,
+      height: saveData.height,
+      brandId: pendingDrawInit?.brandId ?? studioDoor?.doorSeries?.brandId ?? undefined,
+      doorSeriesId: saveData.doorSeriesId || pendingDrawInit?.doorSeriesId || undefined,
+      systemConfig: saveData.systemConfig,
+    });
+    invalidatePositionsAndProject();
+    toast.success(`Đã thêm cửa ${created.code} vào dự án`);
+  };
+
   return {
     floors,
     allPositions,
@@ -164,6 +321,21 @@ export function useProjectPositions(projectId: number) {
     updatePositionMutation,
     measurePositionMutation,
     invalidatePositionsAndProject,
+    isDrawInitOpen,
+    setIsDrawInitOpen,
+    pendingDrawInit,
+    isStudioOpen,
+    studioInitialTab,
+    studioDoor,
+    editingStudioPosition,
+    studioTemplateDoorName,
+    isReplaceTemplatePickerOpen,
+    setIsReplaceTemplatePickerOpen,
+    handleConfirmDrawInit,
+    handleOpenStudioForPosition,
+    handleCloseStudio,
+    handleSwitchStudioTemplateDoor,
+    handleStudioCustomSave,
   };
 }
 

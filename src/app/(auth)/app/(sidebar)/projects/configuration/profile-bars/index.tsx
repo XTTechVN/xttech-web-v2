@@ -33,6 +33,7 @@ export default function ProfileBarsTab() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBar, setSelectedBar] = useState<ProfileBar | null>(null);
+  const [isCopyMode, setIsCopyMode] = useState(false);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -121,11 +122,19 @@ export default function ProfileBarsTab() {
 
   const handleOpenCreateModal = () => {
     setSelectedBar(null);
+    setIsCopyMode(false);
     setIsModalOpen(true);
   };
 
   const handleOpenEditModal = (bar: ProfileBar) => {
     setSelectedBar(bar);
+    setIsCopyMode(false);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenCopyModal = (bar: ProfileBar) => {
+    setSelectedBar(bar);
+    setIsCopyMode(true);
     setIsModalOpen(true);
   };
 
@@ -190,6 +199,7 @@ export default function ProfileBarsTab() {
           <ProfileBarTable
             profileBars={profileBars}
             onEdit={handleOpenEditModal}
+            onCopy={handleOpenCopyModal}
             onDelete={handleDeleteBar}
             isBulkMode={bulkSelection.isBulkMode}
             selectedIdSet={bulkSelection.selectedIdSet}
@@ -208,6 +218,7 @@ export default function ProfileBarsTab() {
           setSelectedBar(null);
         }}
         profileBar={selectedBar}
+        isCopy={isCopyMode}
         brands={brandsList}
         defaultBrandId={activeBrandId}
       />

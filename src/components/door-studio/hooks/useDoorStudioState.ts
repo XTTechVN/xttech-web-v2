@@ -757,6 +757,7 @@ interface UseDoorStudioStateProps {
   onClose: () => void;
   door?: Door | null;
   defaultBrandId?: number | null;
+  initialTab?: StudioMainTab;
   onSaveSuccess?: (savedDoor: Door) => void;
   onCustomSave?: (data: {
     name: string;
@@ -775,11 +776,12 @@ export function useDoorStudioState({
   onClose,
   door,
   defaultBrandId,
+  initialTab = 'info',
   onSaveSuccess,
   onCustomSave,
 }: UseDoorStudioStateProps) {
   // Navigation Tabs
-  const [activeMainTab, setActiveMainTab] = useState<StudioMainTab>('info');
+  const [activeMainTab, setActiveMainTab] = useState<StudioMainTab>(initialTab);
 
   // Selected Brand State
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
@@ -1407,7 +1409,7 @@ export function useDoorStudioState({
       setIsMullionModalOpen(false);
       setCalcData(null);
       if (isFirstOpen) {
-        setActiveMainTab('info');
+        setActiveMainTab(initialTab || 'info');
       }
     } else {
       const defaultW = 1400;
@@ -1443,9 +1445,9 @@ export function useDoorStudioState({
       setIsMullionModalOpen(false);
       setCalcData(null);
       setIsCalculating(false);
-      setActiveMainTab('info');
+      setActiveMainTab(initialTab || 'info');
     }
-  }, [door, isOpen, defaultBrandId, allAvailableSeries.length]);
+  }, [door, isOpen, defaultBrandId, initialTab, allAvailableSeries.length]);
 
   const pushState = (newRoot: SceneCellNode) => {
     const nextHist = [...history.slice(0, historyIdx + 1), newRoot];
@@ -2335,7 +2337,9 @@ export function useDoorStudioState({
       queryClient.invalidateQueries({ queryKey: ['door-templates'] });
       queryClient.invalidateQueries({ queryKey: ['doors-stats'] });
       queryClient.invalidateQueries({ queryKey: ['project_positions'] });
-      toast.success(door?.id ? 'Cập nhật thiết kế thành công' : 'Lưu thiết kế thành công');
+      if (!onCustomSave) {
+        toast.success(door?.id ? 'Cập nhật thiết kế thành công' : 'Lưu thiết kế thành công');
+      }
       onSaveSuccess?.(savedDoor);
       onClose();
     },
