@@ -105,6 +105,23 @@ export function useQuotationPriceDrafts(
     return netLive < item.costPrice;
   };
 
+  const isManualLive = (item: QuotationDoorItemSnapshot): boolean => {
+    const id = item.positionId;
+    if (isSeparated) {
+      if (doorTotalDrafts[id] === undefined && accDrafts[id] === undefined) {
+        return isSeparatedManual(item);
+      }
+      return !(
+        getDoorLive(item) === item.doorOnlySuggestedPrice &&
+        getAccessoryLive(item) === item.accessorySuggestedPrice
+      );
+    }
+    const draft = totalDrafts[id];
+    if (draft === '') return false;
+    if (draft !== undefined) return true;
+    return item.isManuallyEdited;
+  };
+
   // --- Setters đồng bộ 2 chiều (Bidirectional) ---
 
   const setUnitPriceM2Draft = (item: QuotationDoorItemSnapshot, digits: string) => {
@@ -348,6 +365,7 @@ export function useQuotationPriceDrafts(
     getAccessoryLive,
     getTotalLive,
     isBelowCostLive,
+    isManualLive,
     hasAnyManual,
     changedCount,
     buildPayload,

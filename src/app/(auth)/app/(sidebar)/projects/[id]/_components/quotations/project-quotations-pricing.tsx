@@ -34,7 +34,6 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
   const [optionId, setOptionId] = useState<number | null>(null);
   const api = useProjectQuotation(projectId, optionId);
   const { quotation, isEditable } = api;
-  const form = useQuotationForm(projectId, quotation, optionId);
 
   const items = useMemo(
     () => (Array.isArray(quotation?.snapshotItems) ? quotation.snapshotItems : EMPTY_ITEMS),
@@ -42,7 +41,25 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
   );
   const isSeparated = quotation?.accessoryMode === 'separated';
   const drafts = useQuotationPriceDrafts(items, isSeparated, quotation?.vatPercent);
+  const manualPricePayload = useMemo(
+    () => (quotation ? drafts.buildPayload() : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [quotation, items, isSeparated, drafts.changedCount, drafts.totalDrafts, drafts.doorTotalDrafts, drafts.accDrafts],
+  );
+  const form = useQuotationForm(projectId, quotation, optionId, manualPricePayload);
   const isLocked = quotation?.isLocked ?? false;
+
+  const onSaveConfig = () => {
+    const manualPrices = quotation ? drafts.buildPayload() : {};
+    api.saveQuotation(
+      {
+        config: { ...form.config, ...manualPrices },
+        name: form.name.trim(),
+        note: form.note.trim(),
+      },
+      { onSuccess: drafts.resetDrafts },
+    );
+  };
 
   if (api.isLoading) return <Skeleton className="h-64 w-full" />;
 
@@ -84,13 +101,7 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
             saveLabel={!quotation ? 'Lập báo giá' : isEditable ? 'Cập nhật báo giá' : 'Lập phiên bản mới'}
             isSaving={api.isSaving}
             isSaveDisabled={isLocked || !form.name.trim() || form.isMissingFloors}
-            onSave={() =>
-              api.saveQuotation({
-                config: form.config,
-                name: form.name.trim(),
-                note: form.note.trim(),
-              })
-            }
+            onSave={onSaveConfig}
           />
         </div>
       )}

@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Pencil, Trash2, Copy, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import type { ProfileBar } from '@/types';
+import { BAR_TYPE_MAP } from './profile-bar-config';
 
 interface ProfileBarTableProps {
   profileBars: ProfileBar[];
   onEdit: (bar: ProfileBar) => void;
+  onCopy: (bar: ProfileBar) => void;
   onDelete: (bar: ProfileBar) => void;
   isBulkMode?: boolean;
   selectedIdSet?: ReadonlySet<number>;
@@ -18,25 +20,6 @@ interface ProfileBarTableProps {
 
 type SortField = 'code' | 'name' | 'series' | 'barType' | 'weight' | 'length' | 'status';
 type SortOrder = 'asc' | 'desc';
-
-const BAR_TYPE_MAP: Record<string, string> = {
-  FRAME: 'Khung bao',
-  SASH: 'Cánh cửa',
-  SCREEN_SASH: 'Cánh lưới muỗi',
-  MULLION: 'Đố cố định / Đố chia',
-  DYNAMIC_MULLION: 'Đố động',
-  BEAD: 'Nẹp kính',
-  TRACK: 'Ray trượt',
-  COUPLING: 'Thanh ghép khung',
-  REVERSAL: 'Thanh đảo chiều / Khuôn phụ',
-  INTERLOCK: 'Thanh móc / Hèm đối đầu',
-  SASH_JOINER: 'Thanh nối cánh',
-  LOUVER: 'Lá sách / Chớp nhôm',
-  PANO: 'Tấm pano nhôm',
-  COVER: 'Ốp / Nắp đậy',
-  CORNER: 'Ke góc',
-  OTHER: 'Phụ trợ / Khác',
-};
 
 const COLUMNS: Array<{ field: SortField; label: string; align: 'left' | 'center'; width: string }> = [
   { field: 'code', label: 'Mã thanh', align: 'left', width: 'w-36' },
@@ -57,9 +40,31 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
   );
 }
 
+function ProfileBarBadges({ bar }: { bar: ProfileBar }) {
+  const companionCount = bar.companions?.length ?? 0;
+  const variantCount = bar.variants?.length ?? 0;
+  const badges: string[] = [];
+  if (bar.isVirtual) badges.push('Ảo');
+  if (bar.isFullCompanion && companionCount > 0) badges.push(`Combine toàn phần (${companionCount})`);
+  else if (companionCount > 0) badges.push(`+${companionCount} thanh kèm`);
+  if (variantCount > 0) badges.push(`${variantCount} biến thể`);
+  if (badges.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {badges.map((label) => (
+        <span key={label} className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-teal-50 text-teal-800 border border-teal-100">
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function ProfileBarTable({
   profileBars,
   onEdit,
+  onCopy,
   onDelete,
   isBulkMode = false,
   selectedIdSet,
@@ -207,6 +212,7 @@ export function ProfileBarTable({
                     <div className="flex flex-col">
                       <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-sm">{bar.name}</span>
                       {bar.doorSeries?.name && <span className="text-xs text-slate-400 mt-0.5">Hệ: {bar.doorSeries.name}</span>}
+                      <ProfileBarBadges bar={bar} />
                     </div>
                   </td>
 
@@ -242,6 +248,14 @@ export function ProfileBarTable({
 
                   <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => onCopy(bar)}
+                        className="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-teal-50 rounded-md transition-colors cursor-pointer"
+                        title="Sao chép profile nhôm"
+                      >
+                        <Copy size={15} />
+                      </button>
                       <button
                         type="button"
                         onClick={() => onEdit(bar)}
