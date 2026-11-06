@@ -1,16 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FolderOpen, Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { updateProjectPosition } from '@/actions';
+import { FolderOpen, PenTool, Plus } from 'lucide-react';
 import { Button, DoorStudioModal } from '@/components';
-import type { Door, ProjectDoorPosition, ProjectFloor } from '@/types';
+import type { ProjectDoorPosition, ProjectFloor } from '@/types';
 import { FloorSidebar } from './components/floor-sidebar';
 import { PositionCard } from './components/position-card';
 import { useProjectPositions } from './hooks/use-project-positions';
 import { ConfirmDeleteModal } from './modals/confirm-delete-modal';
 import { FloorCreateModal } from './modals/floor-create-modal';
+import { PositionDrawInitModal } from './modals/position-draw-init-modal';
 import { PositionEditModal } from './modals/position-edit-modal';
 import { PositionMeasureModal } from './modals/position-measure-modal';
 import { PositionQrModal } from './modals/position-qr-modal';
@@ -37,7 +36,21 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
     deletePositionMutation,
     updatePositionMutation,
     measurePositionMutation,
-    invalidatePositionsAndProject,
+    isDrawInitOpen,
+    setIsDrawInitOpen,
+    pendingDrawInit,
+    isStudioOpen,
+    studioInitialTab,
+    studioDoor,
+    editingStudioPosition,
+    studioTemplateDoorName,
+    isReplaceTemplatePickerOpen,
+    setIsReplaceTemplatePickerOpen,
+    handleConfirmDrawInit,
+    handleOpenStudioForPosition,
+    handleCloseStudio,
+    handleSwitchStudioTemplateDoor,
+    handleStudioCustomSave,
   } = useProjectPositions(projectId);
 
   const [isFloorModalOpen, setIsFloorModalOpen] = useState(false);
@@ -48,95 +61,17 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
   const [floorToDelete, setFloorToDelete] = useState<ProjectFloor | null>(null);
   const [positionToDelete, setPositionToDelete] = useState<ProjectDoorPosition | null>(null);
 
-  const [isStudioOpen, setIsStudioOpen] = useState(false);
-  const [studioDoor, setStudioDoor] = useState<Door | null>(null);
-  const [editingStudioPosition, setEditingStudioPosition] = useState<ProjectDoorPosition | null>(null);
-  const [studioTemplateDoorId, setStudioTemplateDoorId] = useState<number | null>(null);
-  const [studioTemplateDoorName, setStudioTemplateDoorName] = useState<string | null>(null);
-  const [isReplaceTemplatePickerOpen, setIsReplaceTemplatePickerOpen] = useState(false);
+  const studioBrandId =
+    editingStudioPosition?.brandId ??
+    pendingDrawInit?.brandId ??
+    studioDoor?.doorSeries?.brandId ??
+    null;
 
-  const handleOpenStudioForPosition = (pos: ProjectDoorPosition) => {
-    setEditingStudioPosition(pos);
-    setStudioTemplateDoorId(pos.templateDoorId ?? pos.templateDoor?.id ?? null);
-    setStudioTemplateDoorName(pos.templateDoor?.name || pos.description || pos.code);
-    const sc = (pos.systemConfig || {}) as Record<string, unknown>;
-    const pseudoDoor: Door = {
-      id: pos.id,
-      name: pos.description || pos.code,
-      code: pos.code,
-      type: pos.doorType || 'door',
-      doorSeriesId: pos.doorSeriesId || undefined,
-      imagePath: null,
-      specification: `${pos.width}×${pos.height}mm`,
-      systemConfig: {
-        ...sc,
-        w: pos.width,
-        h: pos.height,
-      },
-      createdAt: '',
-      updatedAt: '',
-    };
-    setStudioDoor(pseudoDoor);
-    setIsStudioOpen(true);
-  };
-
-  const handleSwitchStudioTemplateDoor = (pickedDoor: Door, defaultW?: number, defaultH?: number) => {
-    if (!editingStudioPosition) return;
-    const rawSc = (pickedDoor.systemConfig || {}) as Record<string, unknown>;
-    const nextW = editingStudioPosition.isMeasured
-      ? editingStudioPosition.width
-      : defaultW || Number(rawSc.w) || Number(rawSc.width) || editingStudioPosition.width || 1200;
-    const nextH = editingStudioPosition.isMeasured
-      ? editingStudioPosition.height
-      : defaultH || Number(rawSc.h) || Number(rawSc.height) || editingStudioPosition.height || 2200;
-
-    setStudioTemplateDoorId(pickedDoor.id);
-    setStudioTemplateDoorName(pickedDoor.name);
-    setStudioDoor({
-      id: editingStudioPosition.id,
-      name: pickedDoor.name || editingStudioPosition.description || editingStudioPosition.code,
-      code: editingStudioPosition.code,
-      type: pickedDoor.type || editingStudioPosition.doorType || 'door',
-      doorSeriesId: pickedDoor.doorSeriesId || editingStudioPosition.doorSeriesId || undefined,
-      doorSeries: pickedDoor.doorSeries,
-      imagePath: pickedDoor.imagePath || null,
-      specification: `${nextW}×${nextH}mm`,
-      systemConfig: {
-        ...structuredClone(rawSc),
-        w: nextW,
-        h: nextH,
-        width: nextW,
-        height: nextH,
-      },
-      createdAt: '',
-      updatedAt: '',
-    });
-    toast.success(`Đã áp dụng mẫu cửa: ${pickedDoor.name}`);
-  };
-
-  const handleStudioCustomSave = async (saveData: {
-    name: string;
-    code: string;
-    type: string;
-    doorSeriesId?: number | null;
-    width: number;
-    height: number;
-    systemConfig: Record<string, unknown>;
-    imageB64?: string;
-  }) => {
-    if (!editingStudioPosition) return;
-    await updateProjectPosition(projectId, editingStudioPosition.id, {
-      width: saveData.width,
-      height: saveData.height,
-      doorType: saveData.type,
-      description: saveData.name,
-      templateDoorId: studioTemplateDoorId ?? editingStudioPosition.templateDoorId ?? undefined,
-      doorSeriesId: saveData.doorSeriesId || undefined,
-      systemConfig: saveData.systemConfig,
-    });
-    invalidatePositionsAndProject();
-    toast.success('Đã cập nhật bản vẽ vị trí cửa dự án');
-  };
+  const studioSeriesId =
+    studioDoor?.doorSeriesId ??
+    editingStudioPosition?.doorSeriesId ??
+    pendingDrawInit?.doorSeriesId ??
+    null;
 
   return (
     <div className="flex flex-col md:flex-row items-start gap-4">
@@ -162,6 +97,15 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
 
           <div className="flex items-center gap-2">
             <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<PenTool size={14} />}
+              onClick={() => setIsDrawInitOpen(true)}
+              className="h-8 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5"
+            >
+              Vẽ cửa
+            </Button>
+            <Button
               variant="primary"
               size="sm"
               leftIcon={<Plus size={14} />}
@@ -183,15 +127,26 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
             <p className="text-xs text-slate-500 font-medium">
               Chưa có vị trí cửa nào trong {currentFloorName.toLowerCase()}.
             </p>
-            <Button
-              variant="primary"
-              size="sm"
-              leftIcon={<Plus size={14} />}
-              onClick={() => setIsPickerOpen(true)}
-              className="text-xs"
-            >
-              Chọn mẫu cửa ngay
-            </Button>
+            <div className="flex items-center gap-2 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<PenTool size={14} />}
+                onClick={() => setIsDrawInitOpen(true)}
+                className="text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5"
+              >
+                Vẽ cửa mới
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<Plus size={14} />}
+                onClick={() => setIsPickerOpen(true)}
+                className="text-xs"
+              >
+                Chọn mẫu cửa ngay
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -211,6 +166,16 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
           </div>
         )}
       </div>
+
+      <PositionDrawInitModal
+        isOpen={isDrawInitOpen}
+        onClose={() => setIsDrawInitOpen(false)}
+        projectId={projectId}
+        floors={floors}
+        selectedFloorId={selectedFloorId}
+        existingPositions={allPositions}
+        onConfirm={handleConfirmDrawInit}
+      />
 
       <TemplateDoorPickerModal
         isOpen={isPickerOpen}
@@ -292,14 +257,10 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
 
       <DoorStudioModal
         isOpen={isStudioOpen}
-        onClose={() => {
-          setIsStudioOpen(false);
-          setStudioDoor(null);
-          setEditingStudioPosition(null);
-          setStudioTemplateDoorId(null);
-          setStudioTemplateDoorName(null);
-        }}
+        onClose={handleCloseStudio}
         door={studioDoor}
+        defaultBrandId={studioBrandId}
+        initialTab={studioInitialTab}
         templateDoorName={studioTemplateDoorName}
         onOpenTemplatePicker={() => setIsReplaceTemplatePickerOpen(true)}
         onCustomSave={handleStudioCustomSave}
@@ -309,8 +270,8 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
         isOpen={isReplaceTemplatePickerOpen}
         onClose={() => setIsReplaceTemplatePickerOpen(false)}
         projectId={projectId}
-        defaultBrandId={editingStudioPosition?.brandId ?? studioDoor?.doorSeries?.brandId ?? null}
-        defaultSeriesId={studioDoor?.doorSeriesId ?? editingStudioPosition?.doorSeriesId ?? null}
+        defaultBrandId={studioBrandId}
+        defaultSeriesId={studioSeriesId}
         onSelectDoor={handleSwitchStudioTemplateDoor}
       />
     </div>

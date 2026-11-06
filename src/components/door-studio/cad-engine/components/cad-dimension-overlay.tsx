@@ -1,6 +1,7 @@
 import React from 'react';
 import { SceneCellNode, SashConfig } from '../../studio-types';
-import { LeafCell, MullionBar, VerticalSlice } from '../cad-types';
+import { CadMetrics, LeafCell, MullionBar, VerticalSlice } from '../cad-types';
+import { hasDefaultLeafHandle, resolveHandleHeightMm, resolveHandleY, resolveLeafGeometry } from '../cad-leaf-geometry';
 
 interface CadDimensionOverlayProps {
   w: number;
@@ -9,9 +10,7 @@ interface CadDimensionOverlayProps {
   oy: number;
   fw: number;
   fh: number;
-  frameD: number;
-  sashD: number;
-  isOpenBottom: boolean;
+  metrics: CadMetrics;
   vertSlices: VerticalSlice[];
   horizSlices: SceneCellNode[];
   leaves: LeafCell[];
@@ -34,9 +33,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
   oy,
   fw,
   fh,
-  frameD,
-  sashD,
-  isOpenBottom,
+  metrics,
   vertSlices,
   horizSlices,
   leaves,
@@ -66,22 +63,6 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
     .sort((a, b) => a.x - b.x);
 
   // Tìm tất cả các ô cánh có lắp khóa bên hông để vẽ đường gióng cao độ tay nắm (hỗ trợ nhiều khóa lệch nhau)
-  const SIDE_HANDLE_SASH_TYPES = [
-    'swing_left',
-    'swing_right',
-    'swing_double',
-    'tilt_turn',
-    'le-trai-mo-ra',
-    'le-trai-mo-vao',
-    'le-phai-mo-ra',
-    'le-phai-mo-vao',
-    'gap-xep-le-trai',
-    'gap-xep-le-phai',
-    'lua-trai',
-    'lua-phai',
-    'canh-truot',
-    'sliding',
-  ];
 
   const isVoCucMode =
     sashConfig?.sashStyle === 'slim' &&
@@ -111,7 +92,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
       );
     if (isSecondaryOfPair) return false;
 
-    const defaultHasHandle = SIDE_HANDLE_SASH_TYPES.includes(l.node.sashType || '');
+    const defaultHasHandle = hasDefaultLeafHandle(l.node.sashType);
     return (l.node.hasLock ?? defaultHasHandle) && l.node.hasLock !== false;
   });
 
@@ -119,12 +100,9 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
   const lockRulerItems = (() => {
     const map = new Map<number, { handleHVal: number; lockY: number; leaf: LeafCell }>();
     for (const l of lockLeaves) {
-      const isHyd = Boolean(isGlobalHydraulic || l.node.isHydraulic);
-      const handleHVal = l.node.handleHeight || (isHyd ? 1050 : Math.round(l.node.h / 2));
-      const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
-      const bottomBound = l.y + l.h - sashD - 10;
-      const topBound = l.y + sashD + 20;
-      const lockY = Math.max(topBound, Math.min(bottomBound, lockYCalc));
+      const handleHVal = resolveHandleHeightMm(l.node, isGlobalHydraulic);
+      const geometry = resolveLeafGeometry(l, leaves, metrics, sashConfig);
+      const lockY = resolveHandleY(geometry, handleHVal, { doorHeightMm: h, originY: oy, frameHeightPx: fh });
 
       const existing = map.get(handleHVal);
       if (!existing || l.node.id === selectedCellId) {

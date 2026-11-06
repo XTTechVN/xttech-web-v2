@@ -1,4 +1,4 @@
-import { SceneCellNode, FrameShape, FrameConfig, SashConfig, MullionInfo, MullionCutType } from '../studio-types';
+import { SceneCellNode, FrameShape, FrameConfig, SashConfig, MullionInfo, MullionCutType, SlidingSashRole } from '../studio-types';
 import { ProfileBar } from '@/types/profile';
 
 export interface ResizeSplitParams {
@@ -100,4 +100,36 @@ export interface VerticalSlice {
   xEnd: number;
   isHybrid?: boolean;
   editableCellId?: string;
+}
+
+/** Äá»™ dÃ y tá»«ng cáº¡nh (px, sá»‘ thá»±c) cá»§a khung bao / khung cÃ¡nh */
+export interface EdgeThickness {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+export type CadReversalMode = 'none' | 'wall' | 'sash';
+
+/**
+ * Sá»‘ Ä‘o thá»±c cá»§a báº£n váº½ (px, sá»‘ thá»±c, = mm Ã— scale): Ä‘á»™ dÃ y tá»«ng cáº¡nh khung bao / khung cÃ¡nh,
+ * náº¹p, Ä‘á»‘, Ä‘áº£o khung, Ä‘á»™ ngáº­m cÃ¡nh lÃ¹a. Nguá»“n duy nháº¥t cho má»i sub-renderer.
+ */
+export interface CadMetrics {
+  scale: number;
+  frame: EdgeThickness;
+  sash: EdgeThickness;
+  /** Äá»™ dÃ y cÃ¡nh lÃ¹a theo vai trÃ² (khi cáº¥u hÃ¬nh biáº¿n thá»ƒ profile riÃªng cho cÃ¡nh lÃ¹a) */
+  slidingSash: Partial<Record<SlidingSashRole, EdgeThickness>>;
+  bead: number;
+  reversal: number;
+  reversalMode: CadReversalMode;
+  vertMullion: number;
+  horizMullion: number;
+  /** Äá»‘ cÃ¡nh (chia Ã´ bÃªn trong 1 cÃ¡nh) */
+  sashMullion: number;
+  /** Äá»‘ Ä‘á»™ng (astragal) giá»¯a 2 cÃ¡nh má»Ÿ quay */
+  astragal: number;
+  slidingOverlap: number;
 }
