@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components';
-import { TableSearch, BulkDeleteToolbarActions } from '@/components/table';
+import { TableSearch, TableFilters, BulkDeleteToolbarActions } from '@/components/table';
 import { Plus, Download, Upload } from 'lucide-react';
 import type { DoorSeries } from '@/types';
 
@@ -58,18 +58,19 @@ export function ProfileBarToolbar({
         />
 
         {seriesList.length > 0 && (
-          <select
-            value={selectedSeriesId ?? ''}
-            onChange={(e) => onSeriesChange?.(e.target.value ? Number(e.target.value) : null)}
-            className="h-9 px-3 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-none focus:border-primary transition min-w-[180px]"
-          >
-            <option value="">Tất cả hệ nhôm</option>
-            {seriesList.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} ({s.code})
-              </option>
-            ))}
-          </select>
+          <TableFilters
+            filters={[
+              {
+                label: 'Hệ nhôm',
+                value: selectedSeriesId ? String(selectedSeriesId) : undefined,
+                options: seriesList.map((s) => ({
+                  value: String(s.id),
+                  label: `${s.name} (${s.code})`,
+                })),
+                onChange: (val) => onSeriesChange?.(val ? Number(val) : null),
+              },
+            ]}
+          />
         )}
       </div>
 

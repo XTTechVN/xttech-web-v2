@@ -34,6 +34,7 @@ export interface ComboModalProps {
   isOpen: boolean;
   onClose: () => void;
   combo?: AccessoryCombo | null;
+  isCopy?: boolean;
   accessories?: Accessory[];
   brandId?: number | null;
   defaultApplyFor?: 'khung' | 'canh' | 'huong_mo' | 'khac';
@@ -44,12 +45,13 @@ export function ComboModal({
   isOpen,
   onClose,
   combo,
+  isCopy = false,
   accessories: initialAccessories,
   brandId,
   defaultApplyFor = 'khung',
   onCreated,
 }: ComboModalProps) {
-  const isEdit = Boolean(combo);
+  const isEdit = Boolean(combo && !isCopy);
   const { register, control, handleSubmit, reset, setValue, watch } = useForm<AccessoryComboCreate>({
     defaultValues: DEFAULT_VALUES,
   });
@@ -123,8 +125,8 @@ export function ComboModal({
         new Set((combo.doorTypes || []).map((t) => normalizeDoorType(t)).filter(Boolean)),
       );
       reset({
-        code: combo.code,
-        name: combo.name,
+        code: isCopy ? `${combo.code}_COPY` : combo.code,
+        name: isCopy ? `${combo.name} (Bản sao)` : combo.name,
         doorTypeId: combo.doorTypeId ?? null,
         doorTypes: normalizedTypes,
         applyFor: combo.applyFor ?? 'khung',
@@ -133,7 +135,7 @@ export function ComboModal({
         brandId: combo.brandId ?? brandId ?? null,
         comboItems: resolveComboItemsForForm(combo.comboItems, accessories),
         totalComboPrice: Number(combo.totalComboPrice) || 0,
-        isDefault: combo.isDefault ?? false,
+        isDefault: isCopy ? false : (combo.isDefault ?? false),
         isActive: combo.isActive ?? true,
       });
     } else {
@@ -145,7 +147,7 @@ export function ComboModal({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [combo, isOpen, reset, defaultApplyFor, brandId, accessories.length]);
+  }, [combo, isCopy, isOpen, reset, defaultApplyFor, brandId, accessories.length]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: AccessoryComboCreate) => {
@@ -155,15 +157,17 @@ export function ComboModal({
     onSuccess: (savedCombo) => {
       queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
       queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
-      toast.success(isEdit ? 'Cập nhật gói combo thành công' : 'Thêm gói combo thành công');
+      toast.success(isEdit ? 'Cập nhật gói combo thành công' : isCopy ? 'Sao chép gói combo thành công' : 'Thêm gói combo thành công');
       if (!isEdit && savedCombo) onCreated?.(savedCombo);
       onClose();
     },
     onError: (err) => showErrorToast(err, isEdit ? 'Lỗi khi cập nhật' : 'Lỗi khi tạo mới'),
   });
 
+  const modalTitle = isEdit ? 'Sửa gói combo phụ kiện' : isCopy ? 'Sao chép gói combo phụ kiện' : 'Tạo gói combo phụ kiện mới';
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isEdit ? 'Sửa gói combo phụ kiện' : 'Tạo gói combo phụ kiện mới'} size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} size="lg">
       <form onSubmit={handleSubmit((d) => mutate(d))} className="flex flex-col gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input label="Mã gói combo *" placeholder="VD: COMBO_CD_1C_KL" {...register('code', { required: true })} />
@@ -218,11 +222,7 @@ export function ComboModal({
               Loại cửa áp dụng <span className="font-normal text-slate-400">(có thể chọn nhiều loại cửa)</span>
             </label>
             {selectedDoorTypes.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setValue('doorTypes', [], { shouldDirty: true })}
-                className="text-[11px] text-rose-500 hover:underline cursor-pointer"
-              >
+              <button type="button" onClick={() => setValue('doorTypes', [], { shouldDirty: true })} className="text-[11px] text-rose-500 hover:underline cursor-pointer">
                 Bỏ chọn tất cả ({selectedDoorTypes.length})
               </button>
             )}
@@ -236,9 +236,7 @@ export function ComboModal({
                   type="button"
                   onClick={() => handleToggleDoorType(opt.value)}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-primary/10 text-primary border-primary font-semibold shadow-2xs'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800'
+                    isSelected ? 'bg-primary/10 text-primary border-primary font-semibold shadow-2xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800'
                   }`}
                 >
                   {isSelected && <Check size={12} className="shrink-0" />}

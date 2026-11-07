@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { Button, Input, Modal, Select } from '@/components';
-import { WarehouseSupplier, ProjectFloor } from '@/types';
-import { previewProjectGlassPanes, createProjectGlassOrder } from '@/actions';
+import { WarehouseSupplier, ProjectFloor, Glass } from '@/types';
+import { previewProjectGlassPanes, createProjectGlassOrder, getGlasses } from '@/actions';
 import { getProjectFloors } from '@/actions/project';
 import {
   GlassOrderPanesEditor,
@@ -26,29 +26,37 @@ export function GlassOrderGenerateModal({
   onClose,
   projectId,
   productionOrderId,
-  glassSuppliers,
   onSuccess,
 }: GlassOrderGenerateModalProps) {
-  const [selectedSupplierId, setSelectedSupplierId] = useState<number | undefined>(undefined);
+  const [selectedSupplierId] = useState<number | undefined>(undefined);
   const [expectedDate, setExpectedDate] = useState('');
   const [orderNote, setOrderNote] = useState('');
   const [panes, setPanes] = useState<EditablePaneItem[]>([]);
   const [knownDoors, setKnownDoors] = useState<DoorOption[]>([]);
+  const [allProjectGlassTypes, setAllProjectGlassTypes] = useState<string[]>([]);
+  const [catalogGlasses, setCatalogGlasses] = useState<Glass[]>([]);
   const [isLoadingPanes, setIsLoadingPanes] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Filters
   const [floors, setFloors] = useState<ProjectFloor[]>([]);
   const [selectedFloorId, setSelectedFloorId] = useState<number | undefined>(undefined);
   const [filterGlassType, setFilterGlassType] = useState<string>('');
 
-  // Load project floors
   useEffect(() => {
-    if (isOpen && projectId) {
+    if (!isOpen) return;
+    if (projectId) {
       getProjectFloors(projectId)
         .then((data) => setFloors(data || []))
         .catch(() => setFloors([]));
     }
+    getGlasses({ limit: 999, isActive: true })
+      .then((res) => {
+        const items = (res?.items || []).filter(
+          (g) => !g.category?.materialType || g.category.materialType === 'glass',
+        );
+        setCatalogGlasses(items);
+      })
+      .catch(() => setCatalogGlasses([]));
   }, [isOpen, projectId]);
 
   const fetchPreviewPanes = useCallback(async () => {
@@ -61,7 +69,11 @@ export function GlassOrderGenerateModal({
         floorId: selectedFloorId,
       });
 
-      // Filter by glass type if selected
+      const extractedTypes = Array.from(
+        new Set(data.map((item) => item.glassType).filter(Boolean)),
+      );
+      setAllProjectGlassTypes(extractedTypes);
+
       const filteredData = filterGlassType
         ? data.filter((item) => item.glassType === filterGlassType)
         : data;
@@ -110,6 +122,7 @@ export function GlassOrderGenerateModal({
       fetchPreviewPanes();
     } else if (!isOpen) {
       setPanes([]);
+      setAllProjectGlassTypes([]);
       setOrderNote('');
       setExpectedDate('');
       setSelectedFloorId(undefined);
@@ -117,14 +130,29 @@ export function GlassOrderGenerateModal({
     }
   }, [isOpen, projectId, productionOrderId, fetchPreviewPanes]);
 
-  // Unique glass types extracted from all available panes or known doors for filter dropdown
   const availableGlassTypes = useMemo(() => {
-    const set = new Set<string>();
+    const set = new Set<string>(allProjectGlassTypes);
     for (const p of panes) {
       if (p.glassType) set.add(p.glassType);
     }
     return Array.from(set);
-  }, [panes]);
+  }, [allProjectGlassTypes, panes]);
+
+  const glassCatalogNames = useMemo(() => {
+    const set = new Set<string>();
+    for (const g of catalogGlasses) {
+      if (g.name) set.add(g.name);
+    }
+    for (const gt of availableGlassTypes) {
+      if (gt) set.add(gt);
+    }
+    return Array.from(set);
+  }, [catalogGlasses, availableGlassTypes]);
+
+  const defaultGlassType = useMemo(() => {
+    const defaultItem = catalogGlasses.find((g) => g.isDefault);
+    return defaultItem?.name || catalogGlasses[0]?.name || availableGlassTypes[0];
+  }, [catalogGlasses, availableGlassTypes]);
 
   const summary = useMemo(() => {
     let manualCount = 0;
@@ -132,8 +160,7 @@ export function GlassOrderGenerateModal({
     let totalArea = 0;
 
     for (const p of panes) {
-      const area = (p.widthMm * p.heightMm) / 1_000_000.0;
-      totalArea += area;
+      totalArea += (p.widthMm * p.heightMm) / 1_000_000.0;
       if (p.paneSource === 'manual' || !p.positionId) manualCount++;
       else if (p.isMeasured === false) unmeasuredCount++;
     }
@@ -223,9 +250,7 @@ export function GlassOrderGenerateModal({
           )}
         </span>
         {summary.unmeasuredCount > 0 && (
-          <span className="text-red-600 font-semibold">
-            ⚠️ {summary.unmeasuredCount} tấm chưa đo ô chờ
-          </span>
+          <span className="text-red-600 font-semibold">⚠️ {summary.unmeasuredCount} tấm chưa đo ô chờ</span>
         )}
         <span>
           Tổng diện tích: <b className="text-emerald-700">{summary.totalArea} m²</b>
@@ -249,18 +274,8 @@ export function GlassOrderGenerateModal({
   );
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Lập Đơn Đặt Kính Tôi Nhà Máy"
-      size="xl"
-      footer={footerNode}
-    >
-      <form
-        id="glass-order-form"
-        onSubmit={handleSubmit}
-        className="flex flex-col h-full md:h-[84vh] space-y-4"
-      >
+    <Modal isOpen={isOpen} onClose={onClose} title="Lập Đơn Đặt Kính Tôi Nhà Máy" size="xl" footer={footerNode}>
+      <form id="glass-order-form" onSubmit={handleSubmit} className="flex flex-col h-full md:h-[84vh] space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg items-end">
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
@@ -271,10 +286,7 @@ export function GlassOrderGenerateModal({
               onChange={(e) => setSelectedFloorId(e.target.value ? Number(e.target.value) : undefined)}
               options={[
                 { value: '', label: '— Tất cả các tầng —' },
-                ...floors.map((f) => ({
-                  value: String(f.id),
-                  label: f.name,
-                })),
+                ...floors.map((f) => ({ value: String(f.id), label: f.name })),
               ]}
               className="text-xs h-8"
             />
@@ -289,10 +301,7 @@ export function GlassOrderGenerateModal({
               onChange={(e) => setFilterGlassType(e.target.value)}
               options={[
                 { value: '', label: '— Tất cả loại kính —' },
-                ...availableGlassTypes.map((gt) => ({
-                  value: gt,
-                  label: gt,
-                })),
+                ...availableGlassTypes.map((gt) => ({ value: gt, label: gt })),
               ]}
               className="text-xs h-8"
             />
@@ -329,6 +338,8 @@ export function GlassOrderGenerateModal({
             panes={panes}
             onChange={setPanes}
             doorOptions={knownDoors}
+            glassOptions={glassCatalogNames}
+            defaultGlassType={defaultGlassType}
             isLoading={isLoadingPanes}
           />
         </div>

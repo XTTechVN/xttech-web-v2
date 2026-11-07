@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getAccessoryCombos, deleteAccessoryCombo, getBrands } from '@/actions';
 import { getDefaultBrandId, type AccessoryCombo } from '@/types';
@@ -16,10 +16,12 @@ const PAGE_SIZE = 20;
 export default function AccessoryCombosTab() {
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedApplyFor, setSelectedApplyFor] = useState('');
+  const [selectedDoorType, setSelectedDoorType] = useState('');
   const [offset, setOffset] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCombo, setSelectedCombo] = useState<AccessoryCombo | null>(null);
+  const [isCopyMode, setIsCopyMode] = useState(false);
 
   // Query danh sách hãng phụ kiện
   const { data: brandsData } = useQuery({
@@ -41,15 +43,9 @@ export default function AccessoryCombosTab() {
   // Tự động chọn hãng đầu tiên (Derived State - tránh setState trong useEffect)
   const activeBrandId = selectedBrandId ?? getDefaultBrandId(sortedBrands);
 
-  // Debounce search
-  const searchTimer = useRef<NodeJS.Timeout | null>(null);
   const handleSearchChange = (val: string) => {
     setSearch(val);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      setDebouncedSearch(val);
-      setOffset(0);
-    }, 350);
+    setOffset(0);
   };
 
   const handleSelectBrand = (brandId: number) => {
@@ -57,12 +53,24 @@ export default function AccessoryCombosTab() {
     setOffset(0);
   };
 
+  const handleApplyForChange = (val: string) => {
+    setSelectedApplyFor(val);
+    setOffset(0);
+  };
+
+  const handleDoorTypeChange = (val: string) => {
+    setSelectedDoorType(val);
+    setOffset(0);
+  };
+
   const { data, isLoading } = useQuery({
-    queryKey: ['accessory-combos', activeBrandId, debouncedSearch, offset],
+    queryKey: ['accessory-combos', activeBrandId, search, selectedApplyFor, selectedDoorType, offset],
     queryFn: () =>
       getAccessoryCombos({
         brandId: activeBrandId || undefined,
-        search: debouncedSearch.trim() || undefined,
+        search: search.trim() || undefined,
+        applyFor: selectedApplyFor || undefined,
+        doorType: selectedDoorType || undefined,
         limit: PAGE_SIZE,
         offset,
       }),
@@ -84,11 +92,19 @@ export default function AccessoryCombosTab() {
 
   const handleOpenCreate = () => {
     setSelectedCombo(null);
+    setIsCopyMode(false);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenCopy = (combo: AccessoryCombo) => {
+    setSelectedCombo(combo);
+    setIsCopyMode(true);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (combo: AccessoryCombo) => {
     setSelectedCombo(combo);
+    setIsCopyMode(false);
     setIsModalOpen(true);
   };
 
@@ -112,6 +128,10 @@ export default function AccessoryCombosTab() {
         <ComboToolbar
           search={search}
           onSearchChange={handleSearchChange}
+          selectedApplyFor={selectedApplyFor}
+          onApplyForChange={handleApplyForChange}
+          selectedDoorType={selectedDoorType}
+          onDoorTypeChange={handleDoorTypeChange}
           onAddClick={handleOpenCreate}
           total={total}
         />
@@ -119,10 +139,12 @@ export default function AccessoryCombosTab() {
         <ComboTable
           combos={combos}
           isLoading={isLoading}
-          search={debouncedSearch}
+          search={search}
+          hasActiveFilter={Boolean(selectedApplyFor || selectedDoorType)}
           total={total}
           offset={offset}
           pageSize={PAGE_SIZE}
+          onCopy={handleOpenCopy}
           onEdit={handleOpenEdit}
           onDelete={handleDelete}
           onPageChange={setOffset}
@@ -134,9 +156,12 @@ export default function AccessoryCombosTab() {
         onClose={() => {
           setIsModalOpen(false);
           setSelectedCombo(null);
+          setIsCopyMode(false);
         }}
         combo={selectedCombo}
+        isCopy={isCopyMode}
         brandId={activeBrandId}
+        defaultApplyFor={(selectedApplyFor as 'khung' | 'canh' | 'huong_mo' | 'khac') || 'khung'}
       />
     </div>
   );
