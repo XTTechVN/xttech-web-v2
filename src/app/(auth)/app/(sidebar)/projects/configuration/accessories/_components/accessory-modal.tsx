@@ -28,7 +28,8 @@ const UNIT_OPTIONS = [
   { value: 'roll', label: 'Cuộn (Roll)' },
   { value: 'box', label: 'Hộp (Box)' },
   { value: 'bag', label: 'Túi (Bag)' },
-  { value: 'meter', label: 'Mét (Meter)' },
+  { value: 'meter', label: 'Mét - Roan / Gioang (Meter)' },
+  { value: 'bottle', label: 'Chai / Tuýp - Keo (Bottle)' },
   { value: 'sheet', label: 'Tấm (Sheet)' },
 ];
 
@@ -125,10 +126,18 @@ export function AccessoryModal({ isOpen, onClose, accessory, brands, defaultBran
 
   const displayImage = previewUrl || existingImageUrl;
 
+  const invalidateAccessoryAndComboQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['accessories'] });
+    queryClient.invalidateQueries({ queryKey: ['accessories-list'] });
+    queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
+    queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
+    queryClient.invalidateQueries({ queryKey: ['all-accessories-dropdown'] });
+  };
+
   const { mutate: createMutate, isPending: isCreating } = useMutation({
     mutationFn: (data: AccessoryCreate) => createAccessory({ data, file: selectedFile || undefined }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accessories'] });
+      invalidateAccessoryAndComboQueries();
       toast.success('Thêm phụ kiện thành công');
       onClose();
     },
@@ -138,7 +147,7 @@ export function AccessoryModal({ isOpen, onClose, accessory, brands, defaultBran
   const { mutate: updateMutate, isPending: isUpdating } = useMutation({
     mutationFn: (data: AccessoryUpdate) => updateAccessory(accessory!.id, { data, file: selectedFile || undefined }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accessories'] });
+      invalidateAccessoryAndComboQueries();
       toast.success('Cập nhật phụ kiện thành công');
       onClose();
     },

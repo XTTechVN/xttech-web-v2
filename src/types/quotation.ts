@@ -320,6 +320,7 @@ export type QuotationBomUnit =
   | 'roll'
   | 'box'
   | 'bag'
+  | 'bottle'
   | 'tube'
   | 'sheet'
   | 'sqm'

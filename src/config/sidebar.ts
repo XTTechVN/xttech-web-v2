@@ -250,7 +250,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
           },
           {
             id: 'glass-gaskets',
-            label: 'Kính & Gioăng keo',
+            label: 'Kính, Panel & Lưới muỗi',
             href: '/app/projects/configuration?tab=glass-gaskets',
             roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
           },

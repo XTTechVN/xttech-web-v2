@@ -39,8 +39,8 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
       containerClassName={containerClassName}
     >
       <div className="flex flex-col gap-2 py-2">
-        <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
-        {warningNote && <p className="text-xs text-rose-500 font-medium">{warningNote}</p>}
+        <div className="text-gray-600 text-sm leading-relaxed">{description}</div>
+        {warningNote && <div className="text-xs text-rose-500 font-medium">{warningNote}</div>}
       </div>
       <div className="flex gap-3 justify-end w-full mt-6">
         <Button variant="outline" size="sm" onClick={onClose} disabled={loading}>

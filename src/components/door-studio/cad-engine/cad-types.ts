@@ -48,6 +48,20 @@ export interface LeafCell {
   rawW?: number;
   rawH?: number;
   touchesFloor?: boolean;
+  /** Chế độ đảo riêng của ô (chỉ có khi ô ghi đè reversalOverride; không có = theo metrics.reversalMode) */
+  effectiveReversalMode?: 'none' | 'wall' | 'sash';
+  /** Bề rộng thanh đảo riêng của ô (px, chỉ có khi ô ghi đè đảo) */
+  reversalD?: number;
+}
+
+/** Đoạn thanh khung đáy còn lại khi cửa Hở đáy từng phần (cùng hệ tọa độ với layout) */
+export interface BottomBarSegment {
+  x0: number;
+  x1: number;
+  /** Đầu trái chạm khung đứng trái (ghép góc theo cấu hình khung) - ngược lại đâm 90° vào đố đứng */
+  isFrameStart: boolean;
+  /** Đầu phải chạm khung đứng phải */
+  isFrameEnd: boolean;
 }
 
 export interface MullionBar {

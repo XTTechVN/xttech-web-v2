@@ -55,6 +55,8 @@ export default function BrandTab() {
     mutationFn: (id: number) => deleteBrand(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
+      queryClient.invalidateQueries({ queryKey: ['brands-picker'] });
+      queryClient.invalidateQueries({ queryKey: ['brands-list'] });
       toast.success('Xóa thương hiệu thành công');
     },
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa thương hiệu'),
@@ -85,6 +87,7 @@ export default function BrandTab() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
       queryClient.invalidateQueries({ queryKey: ['brands-picker'] });
+      queryClient.invalidateQueries({ queryKey: ['brands-list'] });
       if (variables.nextFavorite) {
         toast.success(`Đã đặt "${variables.brand.name}" làm hãng mặc định khi vào trang`);
       } else {
@@ -93,6 +96,11 @@ export default function BrandTab() {
     },
     onError: (err) => showErrorToast(err, 'Không thể cập nhật trạng thái yêu thích'),
   });
+
+  const activeDetailBrand = useMemo(
+    () => (detailBrand ? allBrands.find((b) => b.id === detailBrand.id) ?? detailBrand : null),
+    [allBrands, detailBrand],
+  );
 
   const handleToggleFavorite = (brand: Brand, groupBrands: Brand[]) => {
     if (isTogglingFavorite) return;
@@ -231,7 +239,7 @@ export default function BrandTab() {
           setSelectedBrand(null);
           setDetailBrand(null);
         }}
-        brand={detailBrand}
+        brand={activeDetailBrand}
         brands={allBrands}
         onSelectBrand={setDetailBrand}
       />

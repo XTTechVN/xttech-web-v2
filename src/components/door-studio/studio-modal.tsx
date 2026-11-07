@@ -245,6 +245,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           onUpdateDimension={state.handleUpdateDimension}
           onResizeSplit={state.handleResizeSplit}
           onUpdateSelectedCell={state.handleUpdateSelectedCell}
+          onApplyGlassVisualToAll={state.handleApplyGlassVisualToAll}
           onSplitSelectedCell={(dir) => state.handleSplitMullion(2, dir)}
           onMergeSelectedCell={() => {
             if (!state.selectedCellId) return;

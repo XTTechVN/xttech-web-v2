@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArchConfig, FrameConfig, FrameShape, SashConfig, SceneCellNode } from '../../studio-types';
+import { CadGlassEffectOverlay } from './cad-glass-effect-overlay';
 import {
   getArchCenterlinePath,
   getArchXAtY,
@@ -281,6 +282,22 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
             onSelectCell(rightNode ? rightNode.id : leftNode.id);
           }}
         />
+        {paneType === 'glass' && (
+          <CadGlassEffectOverlay
+            cellId={id || 'curved'}
+            pathD={beadInnerPath}
+            bbox={{
+              x: ox + dFrame + dSash + dBead,
+              y: oy + dFrame + dSash + dBead,
+              width: Math.max(10, fw - (dFrame + dSash + dBead) * 2),
+              height: Math.max(10, effFh - (dFrame + dSash + dBead) * 2),
+            }}
+            clipId={glassClipId}
+            effect={leftNode?.glassVisualEffect}
+            color={leftNode?.glassVisualColor}
+            splitCount={leftNode?.glassSplitCount}
+          />
+        )}
       </g>
 
       {/* 2. Vành Khung Cánh uốn vòm bao quanh (Sash Arch Ring) */}
@@ -726,6 +743,17 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
             onSelectCell(node.id);
           }}
         />
+        {paneType === 'glass' && (
+          <CadGlassEffectOverlay
+            cellId={id || 'curved-single'}
+            pathD={beadInnerPath}
+            bbox={{ x: gx, y: gy, width: gw, height: gh }}
+            clipId={glassClipId}
+            effect={node.glassVisualEffect}
+            color={node.glassVisualColor}
+            splitCount={node.glassSplitCount}
+          />
+        )}
       </g>
 
       {/* 2. Vành Cánh uốn vòm (nếu không phải ô Fix) */}

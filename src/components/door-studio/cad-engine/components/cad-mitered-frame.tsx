@@ -1,6 +1,7 @@
 import React from 'react';
 import { FrameConfig, FrameShape } from '../../studio-types';
-import { EdgeThickness } from '../cad-types';
+import { EdgeThickness, BottomBarSegment } from '../cad-types';
+import { CadPartialBottomFrame } from './cad-partial-bottom-frame';
 
 interface CadMiteredFrameProps {
   fx: number;
@@ -14,6 +15,14 @@ interface CadMiteredFrameProps {
   framesCount: number;
   frameConfig?: FrameConfig;
   isHydraulic?: boolean;
+  /** Hở đáy hiệu lực khi các ô ghi đè đồng loạt Hở/Kín (không truyền = theo frameConfig như cũ) */
+  isOpenBottomOverride?: boolean;
+  /** Hở đáy từng phần (ghi đè theo ô): dựng khung theo các đoạn thanh đáy còn lại */
+  partialBottom?: {
+    isLeftBottomOpen: boolean;
+    isRightBottomOpen: boolean;
+    bottomBarSegments: BottomBarSegment[];
+  };
 }
 
 const FRAME_STROKE = '#27272a';
@@ -36,6 +45,8 @@ export const CadMiteredFrame: React.FC<CadMiteredFrameProps> = ({
   framesCount,
   frameConfig,
   isHydraulic = false,
+  partialBottom,
+  isOpenBottomOverride,
 }) => {
   if (frameShape === 'round_top_2' && framesCount === 1) {
     const cr = Math.min(40, Math.round(fwBox * 0.2));
@@ -48,8 +59,25 @@ export const CadMiteredFrame: React.FC<CadMiteredFrameProps> = ({
     );
   }
 
-  const isOpenBottom = frameConfig?.isOpenBottom !== undefined ? frameConfig.isOpenBottom : isHydraulic;
+  const isOpenBottom =
+    isOpenBottomOverride ?? (frameConfig?.isOpenBottom !== undefined ? frameConfig.isOpenBottom : isHydraulic);
   const cornerJoint = frameConfig?.cornerJoint ?? '45';
+  if (partialBottom) {
+    return (
+      <CadPartialBottomFrame
+        fx={fx}
+        fy={fy}
+        fwBox={fwBox}
+        fhBox={fhBox}
+        aluminumColor={aluminumColor}
+        frameEdges={frameEdges}
+        cornerJoint={cornerJoint}
+        isLeftBottomOpen={partialBottom.isLeftBottomOpen}
+        isRightBottomOpen={partialBottom.isRightBottomOpen}
+        bottomBarSegments={partialBottom.bottomBarSegments}
+      />
+    );
+  }
   const { top, left, right, bottom } = frameEdges;
   const x2 = fx + fwBox;
   const y2 = fy + fhBox;

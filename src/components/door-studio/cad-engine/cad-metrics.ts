@@ -94,6 +94,24 @@ const resolveSlidingSashMetrics = (
 };
 
 /**
+ * Bản rộng thanh REVERSAL (mm) cho ô ghi đè đảo: mã thanh riêng của ô -> mã cấu hình chung ->
+ * thanh REVERSAL mặc định của hệ nhôm -> mặc định cấu hình.
+ */
+export const resolveReversalMm = (
+  availableProfiles: ProfileBar[] | undefined,
+  frameConfig: FrameConfig | undefined,
+  overrideProfileId?: number | null
+): number => {
+  const defaultReversalId = availableProfiles?.find((profile) => profile.barType === 'REVERSAL')?.id;
+  return (
+    getProfileMm(availableProfiles, overrideProfileId ?? undefined) ??
+    getProfileMm(availableProfiles, frameConfig?.reversalProfileId) ??
+    getProfileMm(availableProfiles, defaultReversalId) ??
+    CAD_CONFIG.REVERSAL.DEFAULT_MM
+  );
+};
+
+/**
  * Tính toàn bộ số đo thực của bản vẽ (px = mm × scale, số thực, KHÔNG kẹp tối thiểu / KHÔNG làm tròn).
  * Mỗi cạnh khung bao / khung cánh lấy độ dày từ đúng profile của cạnh đó.
  */

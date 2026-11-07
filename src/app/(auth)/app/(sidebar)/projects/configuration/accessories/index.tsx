@@ -10,7 +10,6 @@ import {
   getAccessoryCategories,
   exportAccessoriesExcel,
 } from '@/actions';
-import { ConfirmActionModal } from '@/components';
 import { useBulkDeleteSelection } from '@/hooks';
 import { getDefaultBrandId, type Accessory } from '@/types';
 import toast from 'react-hot-toast';
@@ -25,6 +24,7 @@ import {
   AccessoryEmptyState,
   AccessoryCategoryManagerModal,
   AccessoryExcelModal,
+  AccessoryDeleteConfirmModal,
 } from './_components';
 
 export default function AccessoriesTab() {
@@ -34,6 +34,7 @@ export default function AccessoriesTab() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(null);
+  const [deletingAccessory, setDeletingAccessory] = useState<Accessory | null>(null);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -95,12 +96,21 @@ export default function AccessoriesTab() {
 
   const bulkSelection = useBulkDeleteSelection(accessories);
 
+  const invalidateAccessoryAndComboQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['accessories'] });
+    queryClient.invalidateQueries({ queryKey: ['accessories-list'] });
+    queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
+    queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
+    queryClient.invalidateQueries({ queryKey: ['all-accessories-dropdown'] });
+  };
+
   // Mutations xóa phụ kiện đơn lẻ
-  const { mutate: deleteAccessoryMutate } = useMutation({
+  const { mutate: deleteAccessoryMutate, isPending: isDeletingSingle } = useMutation({
     mutationFn: (id: number) => deleteAccessory(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accessories'] });
-      toast.success('Xóa phụ kiện thành công');
+      invalidateAccessoryAndComboQueries();
+      setDeletingAccessory(null);
+      toast.success('Đã xóa phụ kiện và các gói combo liên quan');
     },
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa phụ kiện'),
   });
@@ -109,8 +119,8 @@ export default function AccessoriesTab() {
   const { mutate: bulkDeleteMutate, isPending: isBulkDeleting } = useMutation({
     mutationFn: (ids: number[]) => bulkDeleteAccessories({ ids }),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ['accessories'] });
-      toast.success(`Đã xóa hàng loạt ${res.deletedCount} phụ kiện`);
+      invalidateAccessoryAndComboQueries();
+      toast.success(`Đã xóa hàng loạt ${res.deletedCount} phụ kiện và các gói combo liên quan`);
       bulkSelection.exitBulkMode();
     },
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa hàng loạt phụ kiện'),
@@ -131,9 +141,7 @@ export default function AccessoriesTab() {
   };
 
   const handleDeleteAccessory = (acc: Accessory) => {
-    if (confirm(`Xác nhận xóa phụ kiện "${acc.name}" (${acc.code || ''})?`)) {
-      deleteAccessoryMutate(acc.id);
-    }
+    setDeletingAccessory(acc);
   };
 
   const handleExportExcel = async () => {
@@ -224,22 +232,27 @@ export default function AccessoriesTab() {
         onClose={() => setIsExcelModalOpen(false)}
         brands={brandsList}
         categories={categoryList}
+        defaultBrandId={activeBrandId}
       />
 
-      <ConfirmActionModal
+      <AccessoryDeleteConfirmModal
+        isOpen={Boolean(deletingAccessory)}
+        onClose={() => setDeletingAccessory(null)}
+        onConfirm={() => {
+          if (deletingAccessory) deleteAccessoryMutate(deletingAccessory.id);
+        }}
+        mode="single"
+        accessory={deletingAccessory}
+        loading={isDeletingSingle}
+      />
+
+      <AccessoryDeleteConfirmModal
         isOpen={bulkSelection.isConfirmOpen}
         onClose={() => bulkSelection.setIsConfirmOpen(false)}
         onConfirm={() => bulkDeleteMutate(bulkSelection.selectedIds)}
-        title="Xác nhận xóa hàng loạt phụ kiện"
-        description={
-          <>
-            Bạn có chắc chắn muốn xóa <strong>{bulkSelection.selectedCount}</strong> phụ kiện đã chọn thuộc hãng{' '}
-            <strong>{selectedBrand?.name || ''}</strong> không?
-          </>
-        }
-        warningNote="Các phụ kiện đã chọn sẽ bị đưa vào trạng thái xóa và ẩn khỏi danh sách cấu hình."
-        confirmText={`Xóa ${bulkSelection.selectedCount} phụ kiện`}
-        variant="danger"
+        mode="bulk"
+        bulkIds={bulkSelection.selectedIds}
+        selectedBrandName={selectedBrand?.name}
         loading={isBulkDeleting}
       />
     </div>

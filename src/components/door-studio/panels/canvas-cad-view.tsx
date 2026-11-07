@@ -73,6 +73,16 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
     title: string;
   } | null>(null);
   const [inputVal, setInputVal] = useState<number>(0);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (!editTarget) return;
+    const rafId = window.requestAnimationFrame(() => {
+      editInputRef.current?.focus();
+      editInputRef.current?.select();
+    });
+    return () => window.cancelAnimationFrame(rafId);
+  }, [editTarget]);
 
   const handleZoomIn = () => setZoom((prev) => Math.min(3.5, Number((prev + 0.15).toFixed(2))));
   const handleZoomOut = () => setZoom((prev) => Math.max(0.3, Number((prev - 0.15).toFixed(2))));
@@ -254,7 +264,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
       const cNode = findCell(rootCell);
       const sliceH = getHorizontalSlices(rootCell).find((s) => s.id === cellId)?.h;
       initialVal = sliceH || cNode?.h || Math.round(h / 2);
-      title = `Chiều cao ô/hàng (${cellId})`;
+      title = 'Chiều cao ô / hàng';
     } else if ((target === 'cell' || target === 'cell-w') && cellId) {
       // Tìm cột/ô để lấy chiều rộng thực tế đang hiển thị trên thước
       const findCell = (node: SceneCellNode): SceneCellNode | null => {
@@ -272,7 +282,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
         (s) => (s.editableCellId || s.id) === cellId
       )?.w;
       initialVal = sliceW || cNode?.w || Math.round(w / 2);
-      title = `Chiều rộng cánh/ô (${cellId})`;
+      title = 'Chiều rộng cánh / ô';
     }
 
     setInputVal(initialVal);
@@ -354,53 +364,75 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
       ) : (
         <>
 
-      {/* Inline Quick Dimension Edit Popover */}
+      {/* Centered Quick Dimension Edit Modal */}
       {editTarget && (
-        <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-2 rounded-xl shadow-lg border border-blue-200 z-20 flex flex-col gap-1.5 w-52 max-w-[calc(100%-24px)] animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center justify-between gap-1.5 text-[11px] font-bold text-gray-800">
-            <span className="truncate" title={editTarget.title}>{editTarget.title}</span>
-            <button
-              type="button"
-              onClick={() => setEditTarget(null)}
-              className="p-0.5 text-gray-400 hover:text-gray-700 shrink-0 cursor-pointer"
-            >
-              <X size={13} />
-            </button>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="relative flex-1">
-              <input
-                type="number"
-                autoFocus
-                value={inputVal}
-                onChange={(e) => setInputVal(Number(e.target.value))}
-                onKeyDown={(e) => e.key === 'Enter' && handleConfirmEdit()}
-                className="w-full h-7 pl-2 pr-6 font-mono font-bold text-xs rounded-md border border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 font-medium select-none pointer-events-none">
-                mm
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-[1px] animate-in fade-in duration-150"
+          onMouseDown={() => setEditTarget(null)}
+        >
+          <div
+            className="bg-white px-4 py-3.5 rounded-2xl shadow-2xl border border-blue-200 flex flex-col gap-2.5 w-64 max-w-[calc(100vw-32px)] animate-in zoom-in-95 duration-150"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-800">
+              <span className="truncate" title={editTarget.title}>
+                {editTarget.title}
               </span>
-            </div>
-            <button
-              type="button"
-              onClick={handleConfirmEdit}
-              className="h-7 w-7 rounded-md bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shrink-0 cursor-pointer shadow-xs"
-              title="Xác nhận"
-            >
-              <Check size={13} />
-            </button>
-          </div>
-          <div className="flex items-center justify-between gap-1 text-[9.5px] text-gray-500 pt-0.5 border-t border-gray-100">
-            {[-50, -10, 10, 50].map((delta) => (
               <button
-                key={delta}
                 type="button"
-                onClick={() => setInputVal((prev) => Math.max(100, prev + delta))}
-                className="flex-1 py-0.5 rounded bg-gray-50 hover:bg-gray-200/80 font-mono text-gray-600 border border-gray-100 text-center cursor-pointer transition-colors"
+                onClick={() => setEditTarget(null)}
+                className="p-0.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 shrink-0 cursor-pointer transition-colors"
+                title="Đóng (Esc)"
               >
-                {delta > 0 ? `+${delta}` : delta}
+                <X size={14} />
               </button>
-            ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  ref={editInputRef}
+                  key={`${editTarget.type}-${editTarget.cellId ?? 'root'}`}
+                  type="number"
+                  autoFocus
+                  value={inputVal}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onChange={(e) => setInputVal(Number(e.target.value))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleConfirmEdit();
+                    if (e.key === 'Escape') setEditTarget(null);
+                  }}
+                  className="w-full h-9 pl-3 pr-8 font-mono font-bold text-sm text-slate-900 rounded-lg border border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600"
+                />
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-semibold select-none pointer-events-none">
+                  mm
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleConfirmEdit}
+                className="h-9 w-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shrink-0 cursor-pointer shadow-xs transition-colors"
+                title="Xác nhận (Enter)"
+              >
+                <Check size={15} />
+              </button>
+            </div>
+            <div className="flex items-center justify-between gap-1.5 text-[11px] text-slate-600 pt-1 border-t border-slate-100">
+              {[-50, -10, 10, 50].map((delta) => (
+                <button
+                  key={delta}
+                  type="button"
+                  onClick={() => {
+                    setInputVal((prev) => Math.max(100, prev + delta));
+                    editInputRef.current?.focus();
+                    editInputRef.current?.select();
+                  }}
+                  className="flex-1 py-1 rounded-md bg-slate-50 hover:bg-slate-200/70 font-mono font-semibold text-slate-700 border border-slate-200/80 text-center cursor-pointer transition-colors"
+                >
+                  {delta > 0 ? `+${delta}` : delta}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

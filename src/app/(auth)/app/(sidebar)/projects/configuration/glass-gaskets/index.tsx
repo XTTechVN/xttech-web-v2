@@ -5,18 +5,15 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   getGlasses,
   getGlassCategories,
-  getGaskets,
   deleteGlass,
   bulkDeleteGlasses,
   setDefaultGlass,
   deleteGlassCategory,
-  deleteGasket,
-  bulkDeleteGaskets,
   exportGlassGasketsExcel,
 } from '@/actions';
 import { ConfirmActionModal } from '@/components';
 import { useBulkDeleteSelection } from '@/hooks';
-import type { Glass, GlassCategory, Gasket } from '@/types';
+import type { Glass, GlassCategory } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
@@ -24,12 +21,10 @@ import {
   GlassCategorySidebar,
   GlassToolbar,
   GlassTable,
-  GasketTable,
   GlassCategoryManagerModal,
   GlassSkeleton,
   GlassEmptyState,
   GlassModal,
-  GasketModal,
   GlassCategoryModal,
   GlassGasketExcelModal,
   type GlassGasketCategoryFilter,
@@ -49,8 +44,6 @@ export default function GlassGasketsPage() {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [selectedCategoryItem, setSelectedCategoryItem] = useState<GlassCategory | null>(null);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
-  const [isGasketModalOpen, setIsGasketModalOpen] = useState(false);
-  const [selectedGasket, setSelectedGasket] = useState<Gasket | null>(null);
   const [settingDefaultGlassId, setSettingDefaultGlassId] = useState<number | null>(null);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -63,14 +56,9 @@ export default function GlassGasketsPage() {
     queryKey: ['glasses'],
     queryFn: async () => (await getGlasses({ limit: 999 })).items,
   });
-  const { data: gasketData, isLoading: isGasketLoading } = useQuery({
-    queryKey: ['gaskets'],
-    queryFn: async () => (await getGaskets({ limit: 999 })).items,
-  });
 
   const categoriesList = useMemo(() => catData || [], [catData]);
   const glassesList = useMemo(() => glassesData || [], [glassesData]);
-  const gasketsList = useMemo(() => gasketData || [], [gasketData]);
 
   const categoryTypeMap = useMemo(() => {
     const map = new Map<number, 'glass' | 'panel' | 'screen_mesh'>();
@@ -111,15 +99,6 @@ export default function GlassGasketsPage() {
     onSettled: () => setSettingDefaultGlassId(null),
   });
 
-  const { mutate: deleteGasketMutate } = useMutation({
-    mutationFn: (id: number) => deleteGasket(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gaskets'] });
-      toast.success('Xóa gioăng ron / keo thành công');
-    },
-    onError: (err) => showErrorToast(err, 'Lỗi khi xóa gioăng ron'),
-  });
-
   const { mutate: deleteCategoryMutate } = useMutation({
     mutationFn: (id: number) => deleteGlassCategory(id),
     onSuccess: () => {
@@ -133,7 +112,7 @@ export default function GlassGasketsPage() {
     const query = search.trim().toLowerCase();
     return glassesList.filter((g) => {
       if (selectedType !== 'all' && (categoryTypeMap.get(g.categoryId) || 'glass') !== selectedType) return false;
-      if (selectedCategory !== 'all' && selectedCategory !== 'gaskets' && g.categoryId !== selectedCategory) return false;
+      if (selectedCategory !== 'all' && g.categoryId !== selectedCategory) return false;
       if (!query) return true;
       return (
         g.name.toLowerCase().includes(query) ||
@@ -143,24 +122,13 @@ export default function GlassGasketsPage() {
     });
   }, [glassesList, selectedType, selectedCategory, search, categoryTypeMap]);
 
-  const filteredGaskets = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return gasketsList;
-    return gasketsList.filter((g) => g.name.toLowerCase().includes(query) || g.code.toLowerCase().includes(query));
-  }, [gasketsList, search]);
-
-  const isGasketView = selectedCategory === 'gaskets';
-  const activeItems = useMemo<Array<Glass | Gasket>>(
-    () => (isGasketView ? filteredGaskets : filteredGlasses),
-    [isGasketView, filteredGaskets, filteredGlasses],
-  );
-  const bulkSelection = useBulkDeleteSelection(activeItems);
+  const bulkSelection = useBulkDeleteSelection(filteredGlasses);
 
   const { mutate: bulkDeleteMutate, isPending: isBulkDeleting } = useMutation({
-    mutationFn: (ids: number[]) => (isGasketView ? bulkDeleteGaskets({ ids }) : bulkDeleteGlasses({ ids })),
+    mutationFn: (ids: number[]) => bulkDeleteGlasses({ ids }),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: [isGasketView ? 'gaskets' : 'glasses'] });
-      toast.success(`Đã xóa hàng loạt ${res.deletedCount} ${isGasketView ? 'vật tư gioăng / keo' : 'quy cách kính / tấm'}`);
+      queryClient.invalidateQueries({ queryKey: ['glasses'] });
+      toast.success(`Đã xóa hàng loạt ${res.deletedCount} quy cách kính / tấm`);
       bulkSelection.exitBulkMode();
     },
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa hàng loạt vật tư'),
@@ -175,7 +143,7 @@ export default function GlassGasketsPage() {
     try {
       setIsExporting(true);
       await exportGlassGasketsExcel({ categoryId: typeof selectedCategory === 'number' ? selectedCategory : null });
-      toast.success('Đã xuất file Excel danh sách Kính & Gioăng');
+      toast.success('Đã xuất file Excel danh sách Kính, Tấm & Lưới');
     } catch (err) {
       showErrorToast(err, 'Lỗi khi xuất file Excel');
     } finally {
@@ -183,8 +151,8 @@ export default function GlassGasketsPage() {
     }
   };
 
-  const isLoading = isCatLoading || (isGasketView ? isGasketLoading : isGlassesLoading);
-  const itemUnitName = isGasketView ? 'vật tư gioăng / keo' : 'quy cách kính / tấm / lưới';
+  const isLoading = isCatLoading || isGlassesLoading;
+  const itemUnitName = 'quy cách kính / tấm / lưới';
 
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
@@ -195,7 +163,6 @@ export default function GlassGasketsPage() {
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
         glassCount={glassesList.length}
-        gasketCount={gasketsList.length}
         glassTypeCounts={glassTypeCounts}
       />
 
@@ -206,7 +173,6 @@ export default function GlassGasketsPage() {
           selectedCategory={selectedCategory}
           selectedType={selectedType}
           onAddGlass={() => { setSelectedGlass(null); setIsGlassModalOpen(true); }}
-          onAddGasket={() => { setSelectedGasket(null); setIsGasketModalOpen(true); }}
           onManageCategories={() => setIsCategoryManagerOpen(true)}
           onExportExcelClick={handleExportExcel}
           onImportExcelClick={() => setIsExcelModalOpen(true)}
@@ -224,24 +190,6 @@ export default function GlassGasketsPage() {
 
         {isLoading ? (
           <GlassSkeleton count={6} />
-        ) : isGasketView ? (
-          filteredGaskets.length === 0 ? (
-            <GlassEmptyState isGasket />
-          ) : (
-            <GasketTable
-              gaskets={filteredGaskets}
-              onEdit={(gasket) => { setSelectedGasket(gasket); setIsGasketModalOpen(true); }}
-              onDelete={(gasket) => {
-                if (confirm(`Xác nhận xóa vật tư "${gasket.name}" (${gasket.code})?`)) deleteGasketMutate(gasket.id);
-              }}
-              isBulkMode={bulkSelection.isBulkMode}
-              selectedIdSet={bulkSelection.selectedIdSet}
-              isAllSelected={bulkSelection.isAllSelected}
-              isPartiallySelected={bulkSelection.isPartiallySelected}
-              onToggleSelect={bulkSelection.toggleSelect}
-              onToggleSelectAll={bulkSelection.toggleSelectAll}
-            />
-          )
         ) : filteredGlasses.length === 0 ? (
           <GlassEmptyState categoryName={selectedCategoryObj?.name || MATERIAL_TYPE_LABEL[selectedType] || null} />
         ) : (
@@ -273,12 +221,6 @@ export default function GlassGasketsPage() {
         defaultCategoryId={typeof selectedCategory === 'number' ? selectedCategory : undefined}
       />
 
-      <GasketModal
-        isOpen={isGasketModalOpen}
-        onClose={() => { setIsGasketModalOpen(false); setSelectedGasket(null); }}
-        gasket={selectedGasket}
-      />
-
       <GlassCategoryModal
         isOpen={isCategoryModalOpen}
         onClose={() => { setIsCategoryModalOpen(false); setSelectedCategoryItem(null); }}
@@ -301,7 +243,6 @@ export default function GlassGasketsPage() {
         onClose={() => setIsExcelModalOpen(false)}
         categories={categoriesList}
         existingGlasses={glassesList}
-        existingGaskets={gasketsList}
       />
 
       <ConfirmActionModal

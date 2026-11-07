@@ -12,6 +12,7 @@ import { renderCadGrille } from './cad-grille';
 import { CadLeafHardware, resolveLeafHandleFlags } from './cad-leaf-hardware';
 import { CadOpeningSymbol } from './cad-opening-symbol';
 import { CadSashBox } from './cad-sash-box';
+import { CadGlassEffectOverlay } from './cad-glass-effect-overlay';
 
 interface CadSingleLeafProps {
   node: SceneCellNode;
@@ -193,6 +194,18 @@ export const CadSingleLeaf: React.FC<CadSingleLeafProps> = ({
             }}
             className="cursor-pointer"
           />
+          {sub.node.paneType === 'glass' && (
+            <CadGlassEffectOverlay
+              cellId={sub.id}
+              x={sub.gx}
+              y={sub.gy}
+              width={sub.gw}
+              height={sub.gh}
+              effect={sub.node.glassVisualEffect}
+              color={sub.node.glassVisualColor}
+              splitCount={sub.node.glassSplitCount ?? node.glassSplitCount}
+            />
+          )}
           {sub.node.paneType === 'glass' &&
             renderCadGrille(sub.gx, sub.gy, sub.gw, sub.gh, sub.node.grilleConfig || node.grilleConfig)}
           {selectedCellId === sub.id && (

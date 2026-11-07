@@ -101,6 +101,7 @@ export const QUOTATION_BOM_UNIT_MAP: Record<QuotationBomUnit, string> = {
   roll: 'CUỘN',
   box: 'HỘP',
   bag: 'TÚI',
+  bottle: 'CHAI',
   tube: 'CHAI',
   sheet: 'TẤM',
   sqm: 'M²',

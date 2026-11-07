@@ -5,6 +5,7 @@ import {
   FrameShape,
   SashOpenType,
   SashConfig,
+  SceneCellNode,
   ColorSwatch,
   ALUMINUM_PALETTE,
   HARDWARE_PALETTE,
@@ -54,6 +55,8 @@ interface ToolboxLeftProps {
   isInsideSash?: boolean;
   sashConfig?: SashConfig;
   isOpenBottom?: boolean;
+  selectedCell?: SceneCellNode | null;
+  onUpdateCell?: (updates: Partial<SceneCellNode>) => void;
   onChangeSashConfig?: (updates: Partial<SashConfig>) => void;
 }
 
@@ -85,6 +88,8 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
   isInsideSash,
   sashConfig,
   isOpenBottom,
+  selectedCell,
+  onUpdateCell,
   onChangeSashConfig,
 }) => {
   const [frameSplitCount, setFrameSplitCount] = useState<number>(2);
@@ -357,6 +362,8 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
           isInsideSash={isInsideSash}
           sashConfig={sashConfig}
           isOpenBottom={isOpenBottom}
+          selectedCell={selectedCell}
+          onUpdateCell={onUpdateCell}
           onChangeSashConfig={onChangeSashConfig}
           onSelectSashType={onSelectSashType}
           onSplitSashMullion={onSplitSashMullion}

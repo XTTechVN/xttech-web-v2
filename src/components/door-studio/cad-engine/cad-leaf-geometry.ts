@@ -117,11 +117,12 @@ const resolveDoubleGeometry = (
   leaf: LeafCell,
   metrics: CadMetrics,
   hasReversalSash: boolean,
-  sashJoint: SashCornerJoint
+  sashJoint: SashCornerJoint,
+  reversalWidth: number
 ): LeafGeometry => {
   const { x: cx, y: cy, w: cw, h: ch } = leaf;
   const reversalD = hasReversalSash
-    ? Math.max(0, Math.min(metrics.reversal, (Math.min(cw, ch) - 20) / 2))
+    ? Math.max(0, Math.min(reversalWidth, (Math.min(cw, ch) - 20) / 2))
     : 0;
   const sashBox: CadRect = {
     x: cx + reversalD,
@@ -164,13 +165,16 @@ export const resolveLeafGeometry = (
   const isDouble = node.sashType === 'swing_double';
   const role = resolveSlidingRole(leaf, allLeaves);
   const sashJoint = resolveSashJoint(role, sashConfig);
-  const hasReversalWall = isFixed && metrics.reversalMode === 'wall';
-  const hasReversalSash = !isFixed && metrics.reversalMode === 'sash';
+  // Ô có ghi đè đảo riêng dùng chế độ/bề rộng của ô; ngược lại theo cấu hình chung
+  const reversalMode = leaf.effectiveReversalMode ?? metrics.reversalMode;
+  const reversalWidth = leaf.reversalD ?? metrics.reversal;
+  const hasReversalWall = isFixed && reversalMode === 'wall';
+  const hasReversalSash = !isFixed && reversalMode === 'sash';
 
-  if (isDouble) return resolveDoubleGeometry(leaf, metrics, hasReversalSash, sashJoint);
+  if (isDouble) return resolveDoubleGeometry(leaf, metrics, hasReversalSash, sashJoint, reversalWidth);
 
   const hasReversal = hasReversalWall || hasReversalSash;
-  const reversalD = hasReversal ? Math.max(0, Math.min(metrics.reversal, (Math.min(cw, ch) - 10) / 2)) : 0;
+  const reversalD = hasReversal ? Math.max(0, Math.min(reversalWidth, (Math.min(cw, ch) - 10) / 2)) : 0;
 
   if (isFixed) {
     return {

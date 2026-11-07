@@ -3,14 +3,14 @@ import type { Brand } from './brand';
 export interface AccessoryComboItem {
   accessoryId: number;
   quantity: number;
-  note?: string;
-  accessoryName?: string;
-  accessoryCode?: string;
-  unit?: string;
-  unitPrice?: number;
-  brandId?: number;
-  brandName?: string;
-  category?: string;
+  note?: string | null;
+  accessoryName?: string | null;
+  accessoryCode?: string | null;
+  unit?: string | null;
+  unitPrice?: number | null;
+  brandId?: number | null;
+  brandName?: string | null;
+  category?: string | null;
 }
 
 export interface AccessoryCombo {
@@ -66,6 +66,7 @@ export interface AccessoryComboQueryParams {
   search?: string;
   doorTypeId?: number;
   brandId?: number;
+  applyFor?: string;
   isActive?: boolean;
   offset?: number;
   limit?: number;

@@ -132,6 +132,35 @@ export interface SceneCellNode {
   ngamNgangMm?: number;
   ngamDocMm?: number;
   slidingOverlapMm?: number;
+  /** Ghi đè Đảo vách / Đảo cánh riêng cho ô (mặc định 'inherit' = theo FrameConfig toàn cục) */
+  reversalOverride?: CellReversalOverride;
+  /** Ghi đè mã thanh REVERSAL riêng cho ô */
+  reversalProfileIdOverride?: number | null;
+  /** Ghi đè khoảng hở/ngậm đảo riêng cho ô (mm) */
+  reversalOffsetMmOverride?: number | null;
+  /** Ghi đè Hở/Kín cạnh đáy riêng cho ô chạm sàn (mặc định 'inherit') */
+  openBottomOverride?: CellOpenBottomOverride;
+  /** Mã kính đã chọn cho ô (null/undefined = dùng kính mặc định) */
+  glassId?: number | null;
+  /** Hiệu ứng thị giác của kính (chỉ để hiển thị 2D/3D) */
+  glassVisualEffect?: GlassVisualEffect;
+  /** true: người dùng tự chọn hiệu ứng, không theo vật liệu kính */
+  glassVisualEffectOverride?: boolean;
+  /** Màu kính (hex) cho hiệu ứng 'tinted' */
+  glassVisualColor?: string;
+}
+
+export type GlassVisualEffect = 'clear' | 'tinted' | 'frosted' | 'striped' | 'rain' | 'pattern';
+
+export type CellReversalOverride = 'inherit' | 'none' | 'wall' | 'sash';
+export type CellOpenBottomOverride = 'inherit' | 'open' | 'closed';
+
+/** Khoảng ngang (px/mm theo hệ tọa độ layout) của ô chạm sàn đang Hở cạnh đáy */
+export interface BottomOpenRange {
+  x0: number;
+  x1: number;
+  floorGapMm: number;
+  cellId: string;
 }
 
 

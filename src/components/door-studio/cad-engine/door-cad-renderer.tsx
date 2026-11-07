@@ -4,7 +4,8 @@ import React from 'react';
 import { ArchConfig, SceneCellNode } from '../studio-types';
 import { ensureRootCellDimensions } from '../utils/door-tree-utils';
 import { CAD_CONFIG } from './cad-config';
-import { computeCadMetrics } from './cad-metrics';
+import { computeCadMetrics, resolveReversalMm } from './cad-metrics';
+import { resolveBottomOpenPlan } from './cad-cell-config-resolver';
 import { hasDefaultLeafHandle, resolveHandleHeightMm } from './cad-leaf-geometry';
 import { DoorCadRendererProps } from './cad-types';
 import {
@@ -99,7 +100,11 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   }
   const lockLevelsCount = lockHeightsSet.size;
 
-  const isOpenBottom = Boolean((frameConfig?.isOpenBottom ?? false) || isArchOpenBottomShape(frameShape));
+  // Ghi đè Hở/Kín đáy theo từng ô: không có ghi đè => plan.mode 'global' và isOpenBottom giữ nguyên như cũ
+  const isGlobalOpenBottom = Boolean((frameConfig?.isOpenBottom ?? false) || isArchOpenBottomShape(frameShape));
+  const bottomOpenPlan = resolveBottomOpenPlan(rootCell, isGlobalOpenBottom);
+  const isOpenBottom = bottomOpenPlan.isOpenBottom;
+  const isPartialBottomOpen = bottomOpenPlan.mode === 'partial';
   const collectMinHoNen = (node: SceneCellNode): number => {
     if (!node.children || node.children.length === 0 || node.splitType === 'sash_mullion') {
       if (node.sashType === 'fixed') return 0;
@@ -107,7 +112,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     }
     return Math.min(0, ...node.children.map(collectMinHoNen));
   };
-  const minHoNenMm = isOpenBottom ? Math.min(0, collectMinHoNen(rootCell)) : 0;
+  const minHoNenMm = isOpenBottom || isPartialBottomOpen ? Math.min(0, collectMinHoNen(rootCell)) : 0;
   const bottomOverhangMm = minHoNenMm < 0 ? Math.min(Math.round(h * 0.5), Math.abs(minHoNenMm)) : 0;
 
   // Kích thước lề dành cho thước đo 2 bên và trên dưới
@@ -173,7 +178,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
 
   // Xây dựng sơ đồ khung, đố và ô lá từ cây scene
   const isHydraulic = Boolean(sashConfig?.isHydraulic);
-  const { frames, mullions, couplingSeams, leaves, bottomSills } = buildCadLayout(
+  const { frames, mullions, couplingSeams, leaves, bottomSills, isLeftBottomOpen, isRightBottomOpen, bottomBarSegments } = buildCadLayout(
     rootCell,
     ox,
     oy,
@@ -183,13 +188,14 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     mullionT,
     {
       frameEdges: metrics.frame,
-      isOpenBottom,
+      isOpenBottom: isGlobalOpenBottom,
       isHydraulic,
       vertMullionT: metrics.vertMullion,
       horizMullionT: metrics.horizMullion,
       frameConfig,
       sashConfig,
       slidingOverlapPx: metrics.slidingOverlap,
+      resolveReversalPx: (profileId) => resolveReversalMm(availableProfiles, frameConfig, profileId) * scale,
     }
   );
 
@@ -325,6 +331,16 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
               framesCount={frames.length}
               frameConfig={frameConfig}
               isHydraulic={isHydraulic}
+              isOpenBottomOverride={bottomOpenPlan.mode === 'global' ? undefined : isOpenBottom}
+              partialBottom={
+                isPartialBottomOpen && bottomBarSegments
+                  ? {
+                      isLeftBottomOpen: Boolean(isLeftBottomOpen),
+                      isRightBottomOpen: Boolean(isRightBottomOpen),
+                      bottomBarSegments,
+                    }
+                  : undefined
+              }
             />
           ))}
           {/* Thanh đáy ô fix chạm sàn cho cửa thủy lực */}

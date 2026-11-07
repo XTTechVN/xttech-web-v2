@@ -13,6 +13,7 @@ import {
 import { ToolboxLeft } from './toolbox-left';
 import { CanvasCadView } from './canvas-cad-view';
 import { CellInspector } from './cell-inspector';
+import { isNodeTouchingBottom } from '../cad-engine/cad-cell-config-resolver';
 import { BomSidebar } from '../bom-sidebar';
 import { DoorCalculateResponse, Glass, ProfileBar } from '@/types';
 import { Undo2, Redo2, PenTool, Sliders, BarChart3, X } from 'lucide-react';
@@ -55,6 +56,7 @@ interface DrawTabViewProps {
   onUpdateSelectedCell: (updates: Partial<SceneCellNode>) => void;
   onSplitSelectedCell: (direction: 'vertical' | 'horizontal') => void;
   onMergeSelectedCell: () => void;
+  onApplyGlassVisualToAll?: (patch: Partial<SceneCellNode>) => void;
   onOpenGrilleModal?: (cell: SceneCellNode) => void;
   availableGlasses?: Glass[];
   availableBeads?: ProfileBar[];
@@ -104,6 +106,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
   onUpdateSelectedCell,
   onSplitSelectedCell,
   onMergeSelectedCell,
+  onApplyGlassVisualToAll,
   onOpenGrilleModal,
   availableGlasses,
   availableBeads,
@@ -149,6 +152,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
           onSelectFrameShape={onSelectFrameShape}
           selectedCellId={selectedCellId}
           onSelectSashType={onSelectSashType}
+          selectedCell={selectedCellNode}
+          onUpdateCell={onUpdateSelectedCell}
           onSplitMullion={onSplitMullion}
           onCoupleFrame={onCoupleFrame}
           onSplitSashMullion={onSplitSashMullion}
@@ -289,6 +294,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
               onUpdateCell={onUpdateSelectedCell}
               onSplitCell={onSplitSelectedCell}
               onMergeCell={onMergeSelectedCell}
+              onApplyGlassVisualToAll={onApplyGlassVisualToAll}
               onOpenGrilleModal={onOpenGrilleModal}
               onDeselect={() => onSelectCell(null)}
               availableGlasses={availableGlasses}
@@ -299,6 +305,9 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
               frameConfig={frameConfig}
               doorW={w}
               doorH={h}
+              isTouchingBottom={selectedCellNode ? isNodeTouchingBottom(rootCell, selectedCellNode.id) : false}
+              availableProfiles={availableProfiles}
+              sashConfig={sashConfig}
               onChangeFrameConfig={onChangeFrameConfig}
             />
           ) : (
@@ -391,6 +400,9 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   onSelectFrameShape={onSelectFrameShape}
                   selectedCellId={selectedCellId}
                   onSelectSashType={onSelectSashType}
+                  isOpenBottom={frameConfig?.isOpenBottom}
+                  selectedCell={selectedCellNode}
+                  onUpdateCell={onUpdateSelectedCell}
                   onSplitMullion={onSplitMullion}
                   onCoupleFrame={onCoupleFrame}
                   onSplitSashMullion={onSplitSashMullion}
@@ -409,6 +421,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   onUpdateCell={onUpdateSelectedCell}
                   onSplitCell={onSplitSelectedCell}
                   onMergeCell={onMergeSelectedCell}
+                  onApplyGlassVisualToAll={onApplyGlassVisualToAll}
                   onOpenGrilleModal={onOpenGrilleModal}
                   onDeselect={() => onSelectCell(null)}
                   availableGlasses={availableGlasses}
@@ -419,6 +432,9 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   frameConfig={frameConfig}
                   doorW={w}
                   doorH={h}
+                  isTouchingBottom={selectedCellNode ? isNodeTouchingBottom(rootCell, selectedCellNode.id) : false}
+                  availableProfiles={availableProfiles}
+                  sashConfig={sashConfig}
                   onChangeFrameConfig={onChangeFrameConfig}
                 />
               )}
