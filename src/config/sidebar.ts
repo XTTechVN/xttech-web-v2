@@ -13,6 +13,7 @@ import {
   ClockAlert,
   Folder,
   Warehouse,
+  Newspaper,
 } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
@@ -79,6 +80,7 @@ export const acceptedSections = [
   'rules',
   'trash',
   'inbox',
+  'news',
 ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
@@ -340,6 +342,13 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
   {
     title: 'Hệ thống',
     items: [
+      {
+        id: 'news',
+        label: 'Quản trị tin tức',
+        icon: React.createElement(Newspaper, { size: 18 }),
+        href: '/app/news',
+        roles: ['super', 'admin', 'hr'],
+      },
       {
         id: 'app-versions',
         label: 'Quản trị hệ thống',

@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Mail, Phone, MapPin, ArrowUpRight, ShieldCheck, FileText, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, ArrowUpRight, ShieldCheck, FileText, CheckCircle2 } from 'lucide-react';
 import { XTLogo } from '@/components';
 
 export const Footer = () => {
@@ -35,6 +35,9 @@ export const Footer = () => {
               </li>
               <li>
                 <Link href="/pricing" className="text-gray-600 hover:text-primary transition-colors">Bảng giá dịch vụ</Link>
+              </li>
+              <li>
+                <Link href="/news" className="text-gray-600 hover:text-primary transition-colors">Tin tức & Sự kiện</Link>
               </li>
               <li>
                 <Link href="/signin" className="text-gray-600 hover:text-primary transition-colors">Đăng nhập</Link>
@@ -106,6 +109,8 @@ export const Footer = () => {
             <Link href="/#about" className="hover:text-primary transition-colors">Về chúng tôi</Link>
             <span className="h-3 w-[1px] bg-gray-300" />
             <Link href="/pricing" className="hover:text-primary transition-colors">Bảng giá</Link>
+            <span className="h-3 w-[1px] bg-gray-300" />
+            <Link href="/news" className="hover:text-primary transition-colors">Tin tức</Link>
             <span className="h-3 w-[1px] bg-gray-300" />
             <a href="https://facebook.com" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">Facebook</a>
           </div>

@@ -54,10 +54,8 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       setMounted(true);
     }, []);
 
-    // Sync ref
     React.useImperativeHandle(ref, () => hiddenSelectRef.current!);
 
-    // Handle internal selected value state to sync with custom UI
     const [selectedValue, setSelectedValue] = useState<string | number>(() => {
       const val = value !== undefined ? value : defaultValue;
       if (Array.isArray(val)) return val[0] || '';
@@ -74,7 +72,6 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
     const canSearch = searchable ?? options.length > 10;
 
-    // Calculate fixed coordinates for Portal Dropdown
     const updatePosition = useCallback(() => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
@@ -91,25 +88,22 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     }, []);
 
     useEffect(() => {
-      if (isOpen) {
-        updatePosition();
-        window.addEventListener('resize', updatePosition);
-        window.addEventListener('scroll', updatePosition, true);
-        return () => {
-          window.removeEventListener('resize', updatePosition);
-          window.removeEventListener('scroll', updatePosition, true);
-        };
-      }
+      if (!isOpen) return;
+      updatePosition();
+      window.addEventListener('resize', updatePosition);
+      window.addEventListener('scroll', updatePosition, true);
+      return () => {
+        window.removeEventListener('resize', updatePosition);
+        window.removeEventListener('scroll', updatePosition, true);
+      };
     }, [isOpen, updatePosition]);
 
-    // Update internal state when controlled value changes
     useEffect(() => {
       if (value !== undefined) {
         setSelectedValue(Array.isArray(value) ? value[0] || '' : (value as string | number));
       }
     }, [value]);
 
-    // Close on click outside (check both container and portal dropdown)
     useEffect(() => {
       if (!isOpen) return;
       const handleClickOutside = (event: MouseEvent) => {
@@ -127,7 +121,6 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isOpen]);
 
-    // Auto-focus and select visible input when open
     useEffect(() => {
       if (isOpen) {
         if (canSearch) {
@@ -144,7 +137,6 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
     const selectedOption = options.find((opt) => String(opt.value) === String(selectedValue));
 
-    // Filter options based on search query
     const filteredOptions = useMemo(() => {
       if (!canSearch || !searchQuery.trim()) return options;
       return options.filter((opt) => includesSearchText(opt.label, searchQuery));
@@ -155,36 +147,22 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       setSelectedValue(optValue);
       setIsOpen(false);
 
-      // Sync value to hidden select
       if (hiddenSelectRef.current) {
         hiddenSelectRef.current.value = String(optValue);
-        // Create and dispatch a fake synthetic change event
-        const event = new Event('change', { bubbles: true });
-        hiddenSelectRef.current.dispatchEvent(event);
+        hiddenSelectRef.current.dispatchEvent(new Event('change', { bubbles: true }));
       }
 
-      // Call onChange callback directly with a synthetic-like event
       if (onChange) {
         const synthEvent = {
-          target: {
-            name,
-            value: optValue,
-          },
-          currentTarget: {
-            name,
-            value: optValue,
-          },
+          target: { name, value: optValue },
+          currentTarget: { name, value: optValue },
         } as unknown as React.ChangeEvent<HTMLSelectElement>;
         onChange(synthEvent);
       }
     };
 
     return (
-      <div
-        ref={containerRef}
-        className={cn('flex flex-col gap-1.5 relative', fullWidth && 'w-full')}
-      >
-        {/* Hidden native select for form submission / ref binding */}
+      <div ref={containerRef} className={cn('flex flex-col gap-1.5 relative', fullWidth && 'w-full')}>
         <select
           ref={hiddenSelectRef}
           id={selectId}
@@ -210,36 +188,31 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           ))}
         </select>
 
-        {/* Label */}
         {label && (
-          <label
-            htmlFor={selectId}
-            className="text-xs font-semibold text-gray-700 select-none"
-          >
+          <label htmlFor={selectId} className="text-xs font-semibold text-gray-700 select-none">
             {label}
           </label>
         )}
 
-        {/* Custom Dropdown Trigger / Search Input */}
         <div className="relative w-full">
           <input
             ref={visibleInputRef}
             type="text"
             disabled={disabled}
             readOnly={!isOpen || !canSearch}
+            title={!isOpen && selectedOption ? selectedOption.label : undefined}
             value={isOpen && canSearch ? searchQuery : (selectedOption ? selectedOption.label : '')}
-            placeholder={isOpen && canSearch && selectedOption ? selectedOption.label : (placeholder || 'Chọn...')}
+            placeholder={
+              isOpen && canSearch && selectedOption ? selectedOption.label : (placeholder || 'Chọn...')
+            }
             onClick={() => {
-              if (disabled) return;
-              if (!isOpen) {
+              if (!disabled && !isOpen) {
                 setIsOpen(true);
                 if (canSearch) setSearchQuery('');
               }
             }}
             onChange={(e) => {
-              if (isOpen && canSearch) {
-                setSearchQuery(e.target.value);
-              }
+              if (isOpen && canSearch) setSearchQuery(e.target.value);
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && isOpen && filteredOptions.length > 0) {
@@ -250,12 +223,15 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
               }
             }}
             className={cn(
-              'w-full h-10 pl-3 pr-10 text-left text-base md:text-sm bg-white border rounded-md outline-none transition-all duration-200 text-gray-900 disabled:cursor-not-allowed',
-              isOpen && canSearch ? 'cursor-text border-primary ring-2 ring-primary/20 bg-white' : 'cursor-pointer border-gray-200',
+              'w-full h-10 pl-3 pr-9 text-left text-base md:text-sm bg-white border rounded-md outline-none transition-all duration-200 text-gray-900 truncate disabled:cursor-not-allowed',
+              isOpen && canSearch
+                ? 'cursor-text border-primary ring-2 ring-primary/20 bg-white'
+                : 'cursor-pointer border-gray-200',
               'hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20',
               'disabled:bg-gray-50 disabled:text-gray-400 disabled:pointer-events-none',
               error && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
-              className
+              className,
+              'pr-8',
             )}
           />
 
@@ -269,70 +245,69 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                 if (!isOpen && canSearch) setSearchQuery('');
               }
             }}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 cursor-pointer disabled:pointer-events-none disabled:opacity-40"
+            className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 cursor-pointer disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronDown
-              size={16}
+              size={15}
               className={cn('transition-transform duration-200 shrink-0', isOpen && 'transform rotate-180')}
             />
           </button>
         </div>
 
-        {/* Error message */}
         {error && <span className="text-xs text-red-500">{error}</span>}
 
-        {/* Portal Dropdown Menu Options list */}
-        {mounted && isOpen && dropdownPos.width > 0 && createPortal(
-          <div
-            ref={dropdownRef}
-            style={{
-              position: 'fixed',
-              left: `${dropdownPos.left}px`,
-              minWidth: `${dropdownPos.width}px`,
-              width: 'max-content',
-              maxWidth: 'min(420px, calc(100vw - 32px))',
-              ...(dropdownPos.openUpward
-                ? { bottom: `${window.innerHeight - dropdownPos.top}px` }
-                : { top: `${dropdownPos.top}px` }),
-              zIndex: 99999,
-            }}
-            className={cn(
-              "bg-white border border-gray-200 rounded-lg shadow-2xl p-1 max-h-56 overflow-y-auto select-none animate-in fade-in duration-150 flex flex-col gap-0.5 pr-0.5",
-              dropdownPos.openUpward ? "slide-in-from-bottom-1" : "slide-in-from-top-1"
-            )}
-          >
-            {filteredOptions.length === 0 ? (
-              <div className="px-3 py-4 text-xs text-gray-400 text-center">
-                Không tìm thấy kết quả
-              </div>
-            ) : (
-              filteredOptions.map((opt, idx) => {
-                const isSelected = String(opt.value) === String(selectedValue);
-                return (
-                  <button
-                    key={`${opt.value}-${idx}`}
-                    type="button"
-                    disabled={opt.disabled}
-                    onClick={() => handleSelectOption(opt.value)}
-                    className={cn(
-                      'px-3 py-2 text-left text-sm flex items-center justify-between transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer rounded-md shrink-0 gap-2',
-                      isSelected
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    )}
-                  >
-                    <span className="whitespace-normal leading-snug">{opt.label}</span>
-                    {isSelected && <Check size={14} className="text-primary shrink-0 ml-1" />}
-                  </button>
-                );
-              })
-            )}
-          </div>,
-          document.body
-        )}
+        {mounted &&
+          isOpen &&
+          dropdownPos.width > 0 &&
+          createPortal(
+            <div
+              ref={dropdownRef}
+              style={{
+                position: 'fixed',
+                left: `${dropdownPos.left}px`,
+                minWidth: `${dropdownPos.width}px`,
+                width: 'max-content',
+                maxWidth: 'min(420px, calc(100vw - 32px))',
+                ...(dropdownPos.openUpward
+                  ? { bottom: `${window.innerHeight - dropdownPos.top}px` }
+                  : { top: `${dropdownPos.top}px` }),
+                zIndex: 99999,
+              }}
+              className={cn(
+                'bg-white border border-gray-200 rounded-lg shadow-2xl p-1 max-h-56 overflow-y-auto select-none animate-in fade-in duration-150 flex flex-col gap-0.5 pr-0.5',
+                dropdownPos.openUpward ? 'slide-in-from-bottom-1' : 'slide-in-from-top-1',
+              )}
+            >
+              {filteredOptions.length === 0 ? (
+                <div className="px-3 py-4 text-xs text-gray-400 text-center">Không tìm thấy kết quả</div>
+              ) : (
+                filteredOptions.map((opt, idx) => {
+                  const isSelected = String(opt.value) === String(selectedValue);
+                  return (
+                    <button
+                      key={`${opt.value}-${idx}`}
+                      type="button"
+                      disabled={opt.disabled}
+                      onClick={() => handleSelectOption(opt.value)}
+                      className={cn(
+                        'px-3 py-2 text-left text-sm flex items-center justify-between transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer rounded-md shrink-0 gap-2',
+                        isSelected
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'text-gray-700 hover:bg-gray-50',
+                      )}
+                    >
+                      <span className="whitespace-normal leading-snug">{opt.label}</span>
+                      {isSelected && <Check size={14} className="text-primary shrink-0 ml-1" />}
+                    </button>
+                  );
+                })
+              )}
+            </div>,
+            document.body,
+          )}
       </div>
     );
-  }
+  },
 );
 
 Select.displayName = 'Select';

@@ -1,6 +1,7 @@
 import { formatCurrency } from '@/utils';
 import {
   ACCESSORY_UNIT_MAP,
+  COMBO_DOOR_TYPE_OPTIONS,
   type Accessory,
   type AccessoryCombo,
   type AccessoryComboCreate,
@@ -29,17 +30,7 @@ export const APPLY_FOR_OPTIONS = [
   { value: 'khac', label: 'Khác' },
 ];
 
-export const DOOR_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'casement_door', label: 'Cửa đi mở quay' },
-  { value: 'sliding_door', label: 'Cửa đi lùa' },
-  { value: 'casement_window', label: 'Cửa sổ mở quay' },
-  { value: 'sliding_window', label: 'Cửa sổ lùa' },
-  { value: 'folding_door', label: 'Cửa gấp xếp' },
-  { value: 'sliding_casement_door', label: 'Cửa trượt quay' },
-  { value: 'glass_wall', label: 'Vách kính' },
-  { value: 'curtain_wall', label: 'Mặt dựng' },
-  { value: 'composite', label: 'Tổng hợp' },
-];
+export const DOOR_TYPE_OPTIONS = COMBO_DOOR_TYPE_OPTIONS;
 
 export const OPENING_TYPE_OPTIONS = [
   { value: '', label: '-- Chọn kiểu mở --' },

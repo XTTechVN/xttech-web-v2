@@ -9,4 +9,6 @@ export * from './contract-default-terms';
 export * from './quotation-template';
 export * from './customer';
 export * from './work-shift';
+export * from './news';
+
 

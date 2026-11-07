@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components';
-import { TableSearch, BulkDeleteToolbarActions } from '@/components/table';
+import { TableSearch, TableFilters, BulkDeleteToolbarActions } from '@/components/table';
 import { Plus, FolderTree, Download, Upload } from 'lucide-react';
 import type { AccessoryCategory } from '@/types';
 
@@ -60,18 +60,16 @@ export function AccessoryToolbar({
         />
 
         {categoryList.length > 0 && (
-          <select
-            value={selectedCategoryId ?? ''}
-            onChange={(e) => onCategoryChange?.(e.target.value ? Number(e.target.value) : null)}
-            className="h-9 px-3 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-none focus:border-primary transition min-w-[180px]"
-          >
-            <option value="">Tất cả phân loại</option>
-            {categoryList.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <TableFilters
+            filters={[
+              {
+                label: 'Phân loại',
+                value: selectedCategoryId ? String(selectedCategoryId) : undefined,
+                options: categoryList.map((c) => ({ value: String(c.id), label: c.name })),
+                onChange: (val) => onCategoryChange?.(val ? Number(val) : null),
+              },
+            ]}
+          />
         )}
       </div>
 
