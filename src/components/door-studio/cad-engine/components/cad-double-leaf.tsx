@@ -6,6 +6,7 @@ import { renderCadBead } from './cad-bead';
 import { renderCadGrille } from './cad-grille';
 import { CadOpeningSymbol } from './cad-opening-symbol';
 import { CadSashBox } from './cad-sash-box';
+import { CadGlassEffectOverlay } from './cad-glass-effect-overlay';
 import { CadDoubleDoorHardware } from './cad-leaf-hardware';
 
 const GLASS_FILL = '#b2f5ea';
@@ -61,6 +62,18 @@ export const CadDoubleLeaf: React.FC<CadDoubleLeafProps> = ({
     <>
       {bead.el}
       <rect x={bead.gx2} y={bead.gy2} width={bead.gw2} height={bead.gh2} fill={GLASS_FILL} fillOpacity={0.85} stroke="none" />
+      {(node.paneType ?? 'glass') === 'glass' && (
+        <CadGlassEffectOverlay
+          cellId={`${node.id}-${symbol}`}
+          x={bead.gx2}
+          y={bead.gy2}
+          width={bead.gw2}
+          height={bead.gh2}
+          effect={node.glassVisualEffect}
+          color={node.glassVisualColor}
+          splitCount={node.glassSplitCount}
+        />
+      )}
       {renderCadGrille(bead.gx2, bead.gy2, bead.gw2, bead.gh2, node.grilleConfig)}
       <CadOpeningSymbol cx={bead.gx2} cy={bead.gy2} cw={bead.gw2} ch={bead.gh2} type={symbol} />
     </>

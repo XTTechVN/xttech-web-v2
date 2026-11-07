@@ -18,6 +18,7 @@ import { buildCadLayout, collectSashMullions } from '../cad-engine/cad-tree-trav
 import { resolveBottomOpenPlan } from '../cad-engine/cad-cell-config-resolver';
 import { resolveReversalMm } from '../cad-engine/cad-metrics';
 import { BottomBarSegment } from '../cad-engine/cad-types';
+import { addGlassEffectDetails3D, resolveGlassEffectAppearance } from './door-3d-glass-effects';
 import { Door3DMeshCollector, hexToRgb01, MaterialId, Vec3 } from './door-3d-math';
 import { DEFAULT_DOOR_3D_SETTINGS, Door3DCustomSettings } from './door-3d-types';
 
@@ -775,14 +776,24 @@ function addInfillPane3D(
     return;
   }
 
-  const glassColor: Vec3 = hexToRgb01(glassOpts?.colorHex || '#88ccff', [0.53, 0.8, 1.0]);
-  const baseAlpha = Math.max(0.08, Math.min(0.85, 0.55 - (glassOpts?.transparency ?? 0.34) * 0.55));
+  // Hiệu ứng kính riêng của ô (clear = giữ nguyên màu/độ trong theo cài đặt chung)
+  const effectAppearance = resolveGlassEffectAppearance(cellNode.glassVisualEffect, cellNode.glassVisualColor);
+  const glassColor: Vec3 = effectAppearance?.color ?? hexToRgb01(glassOpts?.colorHex || '#88ccff', [0.53, 0.8, 1.0]);
+  const baseAlpha =
+    effectAppearance?.alpha ?? Math.max(0.08, Math.min(0.85, 0.55 - (glassOpts?.transparency ?? 0.34) * 0.55));
   const halfGlass = glassThickM / 2;
   const zF = zCenter + halfGlass;
   const zB = zCenter - halfGlass;
 
   collector.addTransQuad([x1, yBot, zF], [x2, yBot, zF], [x2, yTop, zF], [x1, yTop, zF], glassColor, baseAlpha);
   collector.addTransQuad([x2, yBot, zB], [x1, yBot, zB], [x1, yTop, zB], [x2, yTop, zB], glassColor, baseAlpha);
+  addGlassEffectDetails3D(
+    collector,
+    { x1, x2, yTop, yBot, zF, zB },
+    cellNode.glassVisualEffect,
+    cellNode.glassSplitCount,
+    cellNode.id
+  );
 
   const diagLen = Math.min(pw, ph) * 0.28;
   collector.addLine(

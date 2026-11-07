@@ -28,7 +28,8 @@ const UNIT_OPTIONS = [
   { value: 'roll', label: 'Cuộn (Roll)' },
   { value: 'box', label: 'Hộp (Box)' },
   { value: 'bag', label: 'Túi (Bag)' },
-  { value: 'meter', label: 'Mét (Meter)' },
+  { value: 'meter', label: 'Mét - Roan / Gioang (Meter)' },
+  { value: 'bottle', label: 'Chai / Tuýp - Keo (Bottle)' },
   { value: 'sheet', label: 'Tấm (Sheet)' },
 ];
 

@@ -12,9 +12,10 @@ import {
   SashConfig,
 } from '../studio-types';
 import { CellFrameOverrideSection } from './cell-frame-override-section';
+import { CellGlassConfigSection } from './cell-glass-config-section';
 import { computeArchMetrics } from '../cad-engine/cad-geometry';
 import { Select } from '@/components/select';
-import { Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, Square, DoorClosed } from 'lucide-react';
+import { Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, DoorClosed } from 'lucide-react';
 
 interface CellInspectorProps {
   selectedCell: SceneCellNode | null;
@@ -36,17 +37,9 @@ interface CellInspectorProps {
   isTouchingBottom?: boolean;
   availableProfiles?: ProfileBar[];
   sashConfig?: SashConfig;
+  /** Áp patch hiệu ứng kính cho mọi ô kính trong cửa */
+  onApplyGlassVisualToAll?: (patch: Partial<SceneCellNode>) => void;
 }
-
-const GLASS_OPTIONS = [
-  'Kính dán an toàn 6.38mm',
-  'Kính dán an toàn 8.38mm',
-  'Kính dán an toàn 10.38mm',
-  'Kính cường lực 8mm',
-  'Kính cường lực 10mm',
-  'Kính cường lực 12mm',
-  'Kính hộp cách âm 5-9-5mm',
-];
 
 const LEGGED_ARCH_SHAPES: FrameShape[] = [
   'arch_semicircle',
@@ -75,6 +68,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   isTouchingBottom = false,
   availableProfiles,
   sashConfig,
+  onApplyGlassVisualToAll,
 }) => {
   const [localW, setLocalW] = React.useState<number>(selectedCell?.w ?? 0);
   const [localH, setLocalH] = React.useState<number>(selectedCell?.h ?? 0);
@@ -98,11 +92,6 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
     }
   };
 
-  // Ưu tiên dùng data từ DB, fallback về hardcode khi chưa fetch xong
-  const glassOptions =
-    availableGlasses && availableGlasses.length > 0
-      ? availableGlasses.map((g) => ({ key: String(g.id), label: g.name }))
-      : GLASS_OPTIONS.map((name, idx) => ({ key: `fallback-${idx}`, label: name }));
   const isArchShape = Boolean(
     frameShape &&
     frameShape !== 'rect' &&
@@ -510,58 +499,13 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
 
       {/* 4. Kính (khi chọn Pane = Glass) */}
       {selectedCell.paneType === 'glass' && (
-        <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
-          <div className="flex items-center gap-1.5 text-slate-800 font-semibold text-xs">
-            <Square size={13} className="text-primary" />
-            <span>Kính ô cửa</span>
-          </div>
-
-          <div>
-            <label className="text-[11px] text-slate-600 font-medium block mb-1">
-              Loại kính cho ô này:
-            </label>
-            <Select
-              fullWidth
-              value={selectedCell.glassName || ''}
-              onChange={(e) => onUpdateCell({ glassName: e.target.value || undefined })}
-              options={[
-                {
-                  value: '',
-                  label: defaultGlass?.name ? `${defaultGlass.name} (Mặc định)` : 'Dùng kính mặc định',
-                },
-                ...glassOptions.map(({ label }) => ({
-                  value: label,
-                  label,
-                })),
-              ]}
-              placeholder={defaultGlass?.name ? `${defaultGlass.name} (Mặc định)` : 'Dùng kính mặc định'}
-              className="h-8 py-0 text-xs md:text-xs bg-white rounded-md border-slate-200 text-slate-800"
-            />
-            {defaultGlass?.name && (
-              <p className="text-[11px] text-gray-500 italic mt-1.5">
-                Mặc định: {defaultGlass.name}
-              </p>
-            )}
-          </div>
-
-          <div className="pt-1.5 border-t border-slate-200/60">
-            <div className="text-[11px] text-gray-700 font-semibold mb-0.5">Chia kính</div>
-            <div className="flex items-center justify-between text-[11px] text-gray-500 mb-1">
-              <span>Số tấm chia đều:</span>
-            </div>
-            <input
-              type="number"
-              min={1}
-              max={10}
-              value={selectedCell.glassSplitCount || 1}
-              onChange={(e) =>
-                onUpdateCell({ glassSplitCount: Math.max(1, Number(e.target.value)) })
-              }
-              className="w-full h-8 px-2.5 font-mono font-bold text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 text-slate-800"
-              placeholder="1"
-            />
-          </div>
-        </div>
+        <CellGlassConfigSection
+          selectedCell={selectedCell}
+          availableGlasses={availableGlasses}
+          defaultGlass={defaultGlass}
+          onUpdateCell={onUpdateCell}
+          onApplyGlassVisualToAll={onApplyGlassVisualToAll}
+        />
       )}
 
       {/* 5. Tùy chỉnh nẹp (Custom Edge Beads) */}

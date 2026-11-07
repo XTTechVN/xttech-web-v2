@@ -110,7 +110,7 @@ export interface ProfileBarBulkUpsertRequest {
   items: ProfileBarBulkUpsertItem[];
 }
 
-// 2. Glass & Gaskets Excel
+// 2. Glass Excel
 export interface GlassExcelItemData {
   code: string;
   name: string;
@@ -138,31 +138,12 @@ export interface GlassExcelPreviewRow {
   warnings: string[];
 }
 
-export interface GasketExcelItemData {
-  code: string;
-  name: string;
-  unit: string;
-  pricePerUnit: number;
-  isActive: boolean;
-}
-
-export interface GasketExcelPreviewRow {
-  rowIndex: number;
-  action: ExcelRowAction;
-  existingId: number | null;
-  data: GasketExcelItemData;
-  oldData?: GasketExcelItemData | null;
-  errors: string[];
-  warnings: string[];
-}
-
 export interface GlassGasketExcelPreviewResponse {
   totalRows: number;
   createCount: number;
   updateCount: number;
   errorCount: number;
   glasses: GlassExcelPreviewRow[];
-  gaskets: GasketExcelPreviewRow[];
 }
 
 export interface GlassBulkUpsertItem {
@@ -180,18 +161,8 @@ export interface GlassBulkUpsertItem {
   isActive: boolean;
 }
 
-export interface GasketBulkUpsertItem {
-  existingId?: number | null;
-  code: string;
-  name: string;
-  unit: string;
-  pricePerUnit: number;
-  isActive: boolean;
-}
-
 export interface GlassGasketBulkUpsertRequest {
   glasses: GlassBulkUpsertItem[];
-  gaskets: GasketBulkUpsertItem[];
 }
 
 // 3. Accessories Excel

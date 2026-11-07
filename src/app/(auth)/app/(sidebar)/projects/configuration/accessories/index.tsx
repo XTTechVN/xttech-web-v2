@@ -232,6 +232,7 @@ export default function AccessoriesTab() {
         onClose={() => setIsExcelModalOpen(false)}
         brands={brandsList}
         categories={categoryList}
+        defaultBrandId={activeBrandId}
       />
 
       <AccessoryDeleteConfirmModal

@@ -19,14 +19,16 @@ import type {
 } from '@/types';
 
 const UNIT_OPTIONS = [
-  { value: 'set', label: 'Bộ (set)' },
-  { value: 'pcs', label: 'Cái (pcs)' },
-  { value: 'unit', label: 'Chiếc (unit)' },
-  { value: 'pair', label: 'Đôi / Cặp (pair)' },
-  { value: 'roll', label: 'Cuộn (roll)' },
-  { value: 'box', label: 'Hộp (box)' },
-  { value: 'bag', label: 'Túi (bag)' },
-  { value: 'meter', label: 'Mét (meter)' },
+  { value: 'set', label: 'Bộ (Set)' },
+  { value: 'pcs', label: 'Cái (Pcs)' },
+  { value: 'unit', label: 'Chiếc (Unit)' },
+  { value: 'pair', label: 'Đôi / Cặp (Pair)' },
+  { value: 'roll', label: 'Cuộn (Roll)' },
+  { value: 'box', label: 'Hộp (Box)' },
+  { value: 'bag', label: 'Túi (Bag)' },
+  { value: 'meter', label: 'Mét - Roan / Gioang (Meter)' },
+  { value: 'bottle', label: 'Chai / Tuýp - Keo (Bottle)' },
+  { value: 'sheet', label: 'Tấm (Sheet)' },
 ];
 
 const COLOR_OPTIONS = [

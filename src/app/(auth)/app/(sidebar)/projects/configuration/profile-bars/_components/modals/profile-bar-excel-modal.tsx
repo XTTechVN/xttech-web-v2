@@ -38,6 +38,7 @@ interface ProfileBarExcelModalProps {
   isOpen: boolean;
   onClose: () => void;
   brands: Brand[];
+  defaultBrandId?: number | null;
 }
 
 type FilterTab = 'ALL' | 'CREATE' | 'UPDATE' | 'ERROR';
@@ -110,7 +111,12 @@ function validateAndClassifyBarRow(
   };
 }
 
-export function ProfileBarExcelModal({ isOpen, onClose, brands }: ProfileBarExcelModalProps) {
+export function ProfileBarExcelModal({
+  isOpen,
+  onClose,
+  brands,
+  defaultBrandId,
+}: ProfileBarExcelModalProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [rows, setRows] = useState<ProfileBarExcelPreviewRow[]>([]);
   const [filterTab, setFilterTab] = useState<FilterTab>('ALL');
@@ -136,7 +142,7 @@ export function ProfileBarExcelModal({ isOpen, onClose, brands }: ProfileBarExce
   });
 
   const { mutate: previewMutate, isPending: isPreviewing } = useMutation({
-    mutationFn: (file: File) => previewProfileBarsExcel(file),
+    mutationFn: (file: File) => previewProfileBarsExcel(file, defaultBrandId),
     onSuccess: (res) => {
       setRows(res.rows || []);
       setFilterTab('ALL');
@@ -213,7 +219,8 @@ export function ProfileBarExcelModal({ isOpen, onClose, brands }: ProfileBarExce
   };
 
   const handleAddBlankRow = () => {
-    const defaultBrand = brands[0] || null;
+    const defaultBrand =
+      (defaultBrandId ? brands.find((b) => b.id === defaultBrandId) : null) || brands[0] || null;
     const defaultSeries = defaultBrand
       ? seriesList.find((s) => s.brandId === defaultBrand.id) || null
       : null;
@@ -288,7 +295,7 @@ export function ProfileBarExcelModal({ isOpen, onClose, brands }: ProfileBarExce
           <Button variant="primary" size="sm" leftIcon={<Upload size={15} />} loading={isPreviewing} onClick={() => fileInputRef.current?.click()}>
             {fileName ? 'Chọn file Excel khác' : 'Tải file Excel (.xlsx) lên'}
           </Button>
-          <Button variant="outline" size="sm" leftIcon={<Download size={15} />} onClick={() => exportProfileBarsExcel({ templateOnly: true }).catch((err) => showErrorToast(err, 'Lỗi tải file mẫu'))}>
+          <Button variant="outline" size="sm" leftIcon={<Download size={15} />} onClick={() => exportProfileBarsExcel({ templateOnly: true, brandId: defaultBrandId }).catch((err) => showErrorToast(err, 'Lỗi tải file mẫu'))}>
             Tải file mẫu (có sẵn Select Hãng → Hệ nhôm)
           </Button>
           <Button variant="outline" size="sm" leftIcon={<Plus size={15} />} onClick={handleAddBlankRow}>

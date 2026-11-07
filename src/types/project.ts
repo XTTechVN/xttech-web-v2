@@ -201,7 +201,7 @@ export interface ProjectDoorPosition {
   doorSeriesId?: number | null;
   colorId?: number | null;
   glassId?: number | null;
-  gasketId?: number | null;
+
   status: DoorPositionStatus;
   qrCodeToken: string;
   qrUrl?: string | null;
@@ -237,7 +237,7 @@ export interface ProjectDoorPositionCreate {
   doorSeriesId?: number;
   colorId?: number;
   glassId?: number;
-  gasketId?: number;
+
   status?: DoorPositionStatus;
   systemConfig?: Record<string, any>;
 }
@@ -257,7 +257,7 @@ export interface ProjectDoorPositionBulkCreate {
   doorSeriesId?: number;
   colorId?: number;
   glassId?: number;
-  gasketId?: number;
+
   systemConfig?: Record<string, any>;
 }
 
@@ -274,7 +274,7 @@ export interface ProjectDoorPositionUpdate {
   doorSeriesId?: number;
   colorId?: number;
   glassId?: number;
-  gasketId?: number;
+
   status?: DoorPositionStatus;
   systemConfig?: Record<string, any>;
   revision?: number;

@@ -7,6 +7,7 @@ import { calculateDoor, createDoor, updateDoor, getDoorSeriesList, getProfileBar
 import { FrameShape, SashOpenType, SceneCellNode, StudioMainTab, FrameConfig, SashConfig, FrameCornerJoint, SashCornerJoint, BeadCornerJoint, SlidingSashRole, SashOffsetScope, SashOffsetValues, SashVariantProfiles, DoorCustomExtraItem, DoorSystemFamily, DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG, MullionInfo, MullionCutType, ColorSwatch, ALUMINUM_PALETTE, GlassGrilleConfig, } from '../studio-types';
 import { ResizeSplitParams } from '../cad-engine/door-cad-renderer';
 import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, ensureRootCellDimensions, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, } from '../utils/door-tree-utils';
+import { applyGlassVisualToTree } from '../utils/glass-visual-utils';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
@@ -1787,6 +1788,11 @@ export function useDoorStudioState({
     pushState(updateNode(rootCell, selectedCellId, updates));
   };
 
+  // Áp hiệu ứng kính cho mọi ô kính trong cửa (1 bước lịch sử)
+  const handleApplyGlassVisualToAll = (patch: Partial<SceneCellNode>) => {
+    pushState(applyGlassVisualToTree(rootCell, patch));
+  };
+
   const handleSelectMullion = (mullion: MullionInfo) => {
     setSelectedMullion(mullion);
     setIsMullionModalOpen(true);
@@ -2431,6 +2437,7 @@ export function useDoorStudioState({
     handleSelectSashType,
     handleUpdateDimension,
     handleUpdateSelectedCell,
+    handleApplyGlassVisualToAll,
     handleSelectMullion,
     handleSaveMullion,
     handleResizeSplit,

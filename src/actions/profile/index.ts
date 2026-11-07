@@ -117,11 +117,15 @@ export const exportProfileBarsExcel = async (params?: {
   }
 };
 
-export const previewProfileBarsExcel = async (file: File): Promise<ProfileBarExcelPreviewResponse> => {
+export const previewProfileBarsExcel = async (
+  file: File,
+  brandId?: number | null,
+): Promise<ProfileBarExcelPreviewResponse> => {
   try {
     const formData = new FormData();
     formData.append('file', file);
     const response = await api.post('/api/v1/profile-bars/excel/preview', formData, {
+      params: brandId ? { brandId } : undefined,
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;

@@ -12,7 +12,6 @@ interface GlassToolbarProps {
   selectedCategory: GlassGasketCategoryFilter;
   selectedType?: 'all' | 'glass' | 'panel' | 'screen_mesh';
   onAddGlass: () => void;
-  onAddGasket: () => void;
   onManageCategories: () => void;
   onExportExcelClick?: () => void;
   onImportExcelClick?: () => void;
@@ -31,10 +30,8 @@ interface GlassToolbarProps {
 export function GlassToolbar({
   search,
   onSearchChange,
-  selectedCategory,
   selectedType = 'all',
   onAddGlass,
-  onAddGasket,
   onManageCategories,
   onExportExcelClick,
   onImportExcelClick,
@@ -49,8 +46,6 @@ export function GlassToolbar({
   onToggleSelectAll,
   onConfirmBulkDelete,
 }: GlassToolbarProps) {
-  const isGasketView = selectedCategory === 'gaskets';
-
   const addLabel =
     selectedType === 'glass'
       ? 'Thêm kính'
@@ -65,9 +60,7 @@ export function GlassToolbar({
       <div>
         <TableSearch
           placeholder={
-            isGasketView
-              ? 'Tìm kiếm mã hoặc tên gioăng ron / keo...'
-              : selectedType === 'glass'
+            selectedType === 'glass'
               ? 'Tìm kiếm mã, tên quy cách kính...'
               : selectedType === 'panel'
               ? 'Tìm kiếm mã, tên quy cách tấm panel...'
@@ -121,36 +114,23 @@ export function GlassToolbar({
               </Button>
             )}
 
-            {!isGasketView && (
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<Settings2 size={15} />}
-                onClick={onManageCategories}
-              >
-                Phân loại
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Settings2 size={15} />}
+              onClick={onManageCategories}
+            >
+              Phân loại
+            </Button>
 
-            {isGasketView ? (
-              <Button
-                variant="primary"
-                size="sm"
-                leftIcon={<Plus size={15} />}
-                onClick={onAddGasket}
-              >
-                Thêm gioăng ron / keo
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                leftIcon={<Plus size={15} />}
-                onClick={onAddGlass}
-              >
-                {addLabel}
-              </Button>
-            )}
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Plus size={15} />}
+              onClick={onAddGlass}
+            >
+              {addLabel}
+            </Button>
           </>
         )}
       </div>

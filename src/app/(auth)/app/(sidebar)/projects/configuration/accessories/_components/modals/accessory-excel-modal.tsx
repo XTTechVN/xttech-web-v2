@@ -39,9 +39,28 @@ interface AccessoryExcelModalProps {
   onClose: () => void;
   brands: Brand[];
   categories: AccessoryCategory[];
+  defaultBrandId?: number | null;
 }
 
 type FilterTab = 'ALL' | 'CREATE' | 'UPDATE' | 'ERROR';
+
+const UNIT_ALIAS_MAP: Record<string, string> = {
+  set: 'set', bộ: 'set', bo: 'set',
+  pcs: 'pcs', cái: 'pcs', cai: 'pcs', con: 'pcs',
+  unit: 'unit', chiếc: 'unit', chiec: 'unit',
+  pair: 'pair', đôi: 'pair', doi: 'pair', cặp: 'pair', cap: 'pair',
+  roll: 'roll', cuộn: 'roll', cuon: 'roll',
+  box: 'box', hộp: 'box', hop: 'box',
+  bag: 'bag', túi: 'bag', tui: 'bag',
+  meter: 'meter', m: 'meter', mét: 'meter', met: 'meter', roan: 'meter', gioang: 'meter', gioăng: 'meter', ron: 'meter',
+  bottle: 'bottle', chai: 'bottle', tuýp: 'bottle', tuyp: 'bottle', tube: 'bottle', keo: 'bottle',
+  sheet: 'sheet', tấm: 'sheet', tam: 'sheet',
+};
+
+function normalizeUnitCode(raw?: string | null): string {
+  const clean = (raw || '').trim().toLowerCase();
+  return clean ? (UNIT_ALIAS_MAP[clean] || clean) : 'pcs';
+}
 
 function validateAccessoryRow(
   data: AccessoryExcelItemData,
@@ -75,6 +94,7 @@ function validateAccessoryRow(
     existingId: matched ? matched.id : null,
     data: {
       ...data,
+      unit: normalizeUnitCode(data.unit),
       imagePath: resolvedImagePath,
       brandCode: brand?.code ?? data.brandCode,
       brandName: brand?.name ?? data.brandName,
@@ -105,6 +125,7 @@ export function AccessoryExcelModal({
   onClose,
   brands,
   categories,
+  defaultBrandId,
 }: AccessoryExcelModalProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const batchImageInputRef = useRef<HTMLInputElement | null>(null);
@@ -121,7 +142,7 @@ export function AccessoryExcelModal({
   });
 
   const { mutate: previewMutate, isPending: isPreviewing } = useMutation({
-    mutationFn: (file: File) => previewAccessoriesExcel(file),
+    mutationFn: (file: File) => previewAccessoriesExcel(file, defaultBrandId),
     onSuccess: (res) => {
       setRows(res.rows || []);
       setFilterTab('ALL');
@@ -239,8 +260,12 @@ export function AccessoryExcelModal({
 
   const handleAddBlankRow = () => {
     const nextIdx = rows.length > 0 ? Math.max(...rows.map((r) => r.rowIndex)) + 1 : 2;
+    const resolvedBrandId =
+      (defaultBrandId && brands.some((b) => b.id === defaultBrandId)
+        ? defaultBrandId
+        : brands[0]?.id) ?? null;
     const blank: AccessoryExcelItemData = {
-      code: '', name: '', brandId: brands[0]?.id ?? null, categoryId: categories[0]?.id ?? null,
+      code: '', name: '', brandId: resolvedBrandId, categoryId: categories[0]?.id ?? null,
       unit: 'pcs', color: '', specification: null, costPrice: 120000, imagePath: null, isActive: true,
     };
     setRows((prev) => [...prev, validateAccessoryRow(blank, nextIdx, brands, categories, existingAccessories)]);
@@ -261,13 +286,13 @@ export function AccessoryExcelModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="full" title={<div className="flex items-center gap-2.5"><FileSpreadsheet className="w-5 h-5 text-emerald-600" /><span className="font-bold text-slate-900">Nhập Excel & Kiểm tra dữ liệu Phụ Kiện Kim Khí</span></div>} bodyClassName="p-4 sm:p-6 bg-slate-50/60 min-h-[calc(100vh-65px)] flex flex-col gap-4">
+    <Modal isOpen={isOpen} onClose={onClose} size="full" title={<div className="flex items-center gap-2.5"><FileSpreadsheet className="w-5 h-5 text-emerald-600" /><span className="font-bold text-slate-900">Nhập Excel & Kiểm tra dữ liệu Phụ Kiện, Roan & Keo</span></div>} bodyClassName="p-4 sm:p-6 bg-slate-50/60 min-h-[calc(100vh-65px)] flex flex-col gap-4">
       <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs">
         <div className="flex items-center gap-2.5 flex-wrap">
           <input ref={fileInputRef} type="file" accept=".xlsx" onChange={handleFileChange} className="hidden" />
           <input ref={batchImageInputRef} type="file" accept="image/*" multiple onChange={handleBatchImageMatch} className="hidden" />
           <Button variant="primary" size="sm" leftIcon={<Upload size={15} />} loading={isPreviewing} onClick={() => fileInputRef.current?.click()}>{fileName ? 'Chọn file Excel khác' : 'Tải file Excel (.xlsx) lên'}</Button>
-          <Button variant="outline" size="sm" leftIcon={<Download size={15} />} onClick={() => exportAccessoriesExcel({ templateOnly: true }).catch((err) => showErrorToast(err, 'Lỗi tải file mẫu'))}>Tải file mẫu (có sẵn Select Hãng & Danh mục)</Button>
+          <Button variant="outline" size="sm" leftIcon={<Download size={15} />} onClick={() => exportAccessoriesExcel({ templateOnly: true, brandId: defaultBrandId }).catch((err) => showErrorToast(err, 'Lỗi tải file mẫu'))}>Tải file mẫu (có sẵn Select Hãng & Danh mục)</Button>
           <Button variant="outline" size="sm" leftIcon={<Plus size={15} />} onClick={handleAddBlankRow}>Thêm dòng trực tiếp</Button>
           {rows.length > 0 && (
             <>

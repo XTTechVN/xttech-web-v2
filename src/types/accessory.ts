@@ -1,6 +1,18 @@
 import type { AccessoryCategory } from './accessory-category';
 import type { Brand } from './brand';
 
+export type AccessoryUnit =
+  | 'set'
+  | 'pcs'
+  | 'pair'
+  | 'unit'
+  | 'roll'
+  | 'box'
+  | 'bag'
+  | 'meter'
+  | 'bottle'
+  | 'sheet';
+
 export interface AccessoryUnitConfig {
   label: string;
   className: string;
@@ -39,6 +51,10 @@ export const ACCESSORY_UNIT_CONFIG: Record<string, AccessoryUnitConfig> = {
     label: 'Mét',
     className: 'bg-rose-50 text-rose-700 border-rose-200/70',
   },
+  bottle: {
+    label: 'Chai / Tuýp',
+    className: 'bg-pink-50 text-pink-700 border-pink-200/70',
+  },
   sheet: {
     label: 'Tấm',
     className: 'bg-orange-50 text-orange-700 border-orange-200/70',
@@ -54,6 +70,7 @@ export const ACCESSORY_UNIT_MAP: Record<string, string> = {
   box: 'Hộp',
   bag: 'Túi',
   meter: 'Mét',
+  bottle: 'Chai / Tuýp',
   sheet: 'Tấm',
 };
 
@@ -98,12 +115,21 @@ export interface Accessory {
   name: string;
   specification: string | null;
   unit: string | null;
+  unitLabel?: string | null;
   color?: string | null;
   costPrice: number;
   imagePath: string | null;
   isActive?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AccessoryDropdownItem {
+  id: number;
+  name: string;
+  code?: string | null;
+  unit?: string | null;
+  unitLabel?: string | null;
 }
 
 export interface AccessoryCreate {
@@ -135,12 +161,14 @@ export interface AccessoryUpdate {
 export interface AccessoryQueryParams {
   search?: string;
   code?: string;
-  unit?: string;
+  unit?: AccessoryUnit | string;
   categoryId?: number;
   brandId?: number;
   isActive?: boolean;
   offset?: number;
   limit?: number;
+  orderBy?: string;
+  sortBy?: 'asc' | 'desc';
   allowDeleted?: boolean;
   materialId?: number;
   doorId?: number;

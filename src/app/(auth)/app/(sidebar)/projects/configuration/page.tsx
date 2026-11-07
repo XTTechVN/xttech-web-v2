@@ -87,7 +87,7 @@ const TABS: ConfigTab[] = [
   },
   {
     id: 'accessories',
-    label: 'Phụ kiện',
+    label: 'Phụ kiện, Roan & Keo',
     component: AccessoriesTab,
     icon: <ListChecks size={16} />,
     roles: ALL_ROLES,

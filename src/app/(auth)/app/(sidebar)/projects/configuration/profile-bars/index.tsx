@@ -227,6 +227,7 @@ export default function ProfileBarsTab() {
         isOpen={isExcelModalOpen}
         onClose={() => setIsExcelModalOpen(false)}
         brands={brandsList}
+        defaultBrandId={activeBrandId}
       />
 
       <ConfirmActionModal
