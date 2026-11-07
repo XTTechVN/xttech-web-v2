@@ -6,7 +6,9 @@ import {
   normalizeMullionCutType,
   resolveMullionCutEnds,
 } from '../studio-types';
-import { FrameBox, MullionBar, LeafCell, CouplingSeamBar, VerticalSlice, EdgeThickness, CadMetrics } from './cad-types';
+import { FrameBox, MullionBar, LeafCell, CouplingSeamBar, VerticalSlice, EdgeThickness, CadMetrics, BottomBarSegment } from './cad-types';
+import { BottomOpenRange } from '../studio-types';
+import { resolveBottomOpenPlan, resolveCellReversal, findEdgeBottomLeafId } from './cad-cell-config-resolver';
 import { computeSlidingSashes } from './cad-geometry';
 import { resolveLeafGeometry } from './cad-leaf-geometry';
 import { buildSashSubPanes } from './cad-leaf-subpanes';
@@ -24,6 +26,14 @@ export interface CadLayoutResult {
   couplingSeams: CouplingSeamBar[];
   leaves: LeafCell[];
   bottomSills?: BottomSill[];
+  /** Hở đáy hiệu lực ở cấp khung bao (đã tính ghi đè từng ô) */
+  isOpenBottom?: boolean;
+  /** Cửa Hở đáy từng phần: chỉ dựng các đoạn thanh khung đáy trong `bottomBarSegments` */
+  isPartialBottomOpen?: boolean;
+  isLeftBottomOpen?: boolean;
+  isRightBottomOpen?: boolean;
+  bottomOpenRanges?: BottomOpenRange[];
+  bottomBarSegments?: BottomBarSegment[];
 }
 
 /**
@@ -298,6 +308,8 @@ export const buildCadLayout = (
     frameConfig?: FrameConfig;
     sashConfig?: SashConfig;
     slidingOverlapPx?: number;
+    /** Quy đổi mã thanh REVERSAL của ô (ghi đè) sang bề rộng px; không truyền = ô không có reversalD riêng */
+    resolveReversalPx?: (profileId?: number | null) => number;
   }
 ): CadLayoutResult => {
   const frames: FrameBox[] = [];
@@ -307,7 +319,12 @@ export const buildCadLayout = (
   const bottomSills: BottomSill[] = [];
 
   const isDoorHydraulic = Boolean(options?.isHydraulic || rootCell.isHydraulic);
-  const isOpenBottomDoor = options?.isOpenBottom !== undefined ? Boolean(options.isOpenBottom) : Boolean(isDoorHydraulic);
+  const isGlobalOpenBottom = options?.isOpenBottom !== undefined ? Boolean(options.isOpenBottom) : Boolean(isDoorHydraulic);
+  // Ghi đè Hở/Kín đáy theo từng ô (không có ghi đè => mode 'global', giữ nguyên hành vi cũ)
+  const bottomPlan = resolveBottomOpenPlan(rootCell, isGlobalOpenBottom);
+  const isOpenBottomDoor = bottomPlan.isOpenBottom;
+  const isPartialBottomOpen = bottomPlan.mode === 'partial';
+  const isOpenLeafNode = (nodeId: string): boolean => isPartialBottomOpen && bottomPlan.openLeafIds.has(nodeId);
 
   // Tỉ lệ thực (2D): độ dày từng cạnh khung + số thực. Không truyền frameEdges: giữ hành vi cũ (đồng nhất, làm tròn) cho 3D.
   const isRealProportion = options?.frameEdges !== undefined;
@@ -504,6 +521,11 @@ export const buildCadLayout = (
                   : (options?.frameConfig?.mullionHorizProfileId || options?.frameConfig?.mullionProfileId))
               : options?.frameConfig?.mullionProfileId;
 
+            const isFloorMullion =
+              isPartialBottomOpen &&
+              isVert &&
+              Math.abs(innerY + innerH - (activeFrameBounds.y + activeFrameBounds.h - activeFrameBounds.fBot)) < 1.5 &&
+              (isOpenLeafNode(findEdgeBottomLeafId(child, 'last')) || isOpenLeafNode(findEdgeBottomLeafId(nextChild, 'first')));
             const rawCutType = child.mullionCutType;
             const normCutType = normalizeMullionCutType(rawCutType);
             const touchesStartFrame = isVert
@@ -542,7 +564,7 @@ export const buildCadLayout = (
               const mH =
                 innerH +
                 (cutStart ? activeFrameBounds.fTop : 0) +
-                (cutEnd ? activeFrameBounds.fBot : 0);
+                (cutEnd || isFloorMullion ? activeFrameBounds.fBot : 0);
               mullions.push({
                 x: innerX + cur,
                 y: mY,
@@ -572,6 +594,8 @@ export const buildCadLayout = (
                 info: mullionInfo,
               });
             }
+            // Đố đứng ranh giới Hở/Kín chạy xuống sàn: chân cắt 90°, đồng thời cắt thanh khung đáy
+            if (isFloorMullion) mullions[mullions.length - 1].cutEnd = true;
             cur += activeMullionT;
           }
         }
@@ -580,7 +604,21 @@ export const buildCadLayout = (
     }
 
     // 4. Ô lá cuối cùng (Leaf Cell)
-    const touchesFloor = isOpenBottomDoor && Math.abs((innerY + innerH) - (oy + fh)) < 2;
+    // Ô Hở đáy trong cửa Hở đáy từng phần: cộng bù chiều dày khung đáy để ô kéo xuống sàn
+    const isOpenLeaf = isOpenLeafNode(node.id);
+    if (isOpenLeaf) innerH += activeFrameBounds.fBot;
+    const touchesFloor = (isOpenBottomDoor || isOpenLeaf) && Math.abs((innerY + innerH) - (oy + fh)) < 2;
+    const cellReversalMode = resolveCellReversal(node);
+    const leafReversalFields: Pick<LeafCell, 'effectiveReversalMode' | 'reversalD'> =
+      cellReversalMode === undefined
+        ? {}
+        : {
+            effectiveReversalMode: cellReversalMode,
+            reversalD:
+              cellReversalMode !== 'none' && options?.resolveReversalPx
+                ? options.resolveReversalPx(node.reversalProfileIdOverride)
+                : undefined,
+          };
 
     if (touchesFloor && isDoorHydraulic && node.sashType === 'fixed') {
       const sillH = frameEdges.bottom;
@@ -601,6 +639,7 @@ export const buildCadLayout = (
         rawW: innerW,
         rawH: innerH,
         touchesFloor,
+        ...leafReversalFields,
       });
     } else if (node.sashType !== 'fixed') {
       const isLeafHydraulic = Boolean(isDoorHydraulic || node.isHydraulic);
@@ -642,6 +681,7 @@ export const buildCadLayout = (
         rawW: innerW,
         rawH: innerH,
         touchesFloor,
+        ...leafReversalFields,
       });
     } else {
       leaves.push({
@@ -655,13 +695,70 @@ export const buildCadLayout = (
         rawW: innerW,
         rawH: innerH,
         touchesFloor,
+        ...leafReversalFields,
       });
     }
   };
 
   traverse(rootCell, ox, oy, fw, fh, true);
 
-  return { frames, mullions, couplingSeams, leaves, bottomSills };
+  if (!isPartialBottomOpen) {
+    return { frames, mullions, couplingSeams, leaves, bottomSills, isOpenBottom: isOpenBottomDoor };
+  }
+
+  // Hở đáy từng phần: chia thanh khung đáy thành các đoạn nằm dưới ô Kín (đoạn dưới ô Hở bị bỏ)
+  const frameBox = frames[0];
+  const bottomLeaves = leaves
+    .filter((leaf) => bottomPlan.bottomLeafIds.has(leaf.node.id))
+    .sort((a, b) => (a.rawX ?? a.x) - (b.rawX ?? b.x));
+  const bottomOpenRanges: BottomOpenRange[] = [];
+  const bottomBarSegments: BottomBarSegment[] = [];
+  const edgeTolerance = 1.5;
+  const closedRun = { x0: 0, x1: 0, isActive: false };
+  const flushSegment = (): void => {
+    if (!closedRun.isActive) return;
+    bottomBarSegments.push({
+      x0: closedRun.x0,
+      x1: closedRun.x1,
+      isFrameStart: Math.abs(closedRun.x0 - (frameBox.x + frameEdges.left)) < edgeTolerance,
+      isFrameEnd: Math.abs(closedRun.x1 - (frameBox.x + frameBox.w - frameEdges.right)) < edgeTolerance,
+    });
+    closedRun.isActive = false;
+  };
+  bottomLeaves.forEach((leaf) => {
+    const leafX0 = leaf.rawX ?? leaf.x;
+    const leafX1 = leafX0 + (leaf.rawW ?? leaf.w);
+    if (bottomPlan.openLeafIds.has(leaf.node.id)) {
+      flushSegment();
+      bottomOpenRanges.push({
+        x0: leafX0,
+        x1: leafX1,
+        floorGapMm: leaf.node.hoNenMm ?? options?.sashConfig?.hoNenMm ?? 8,
+        cellId: leaf.node.id,
+      });
+      return;
+    }
+    closedRun.x0 = closedRun.isActive ? closedRun.x0 : leafX0;
+    closedRun.x1 = leafX1;
+    closedRun.isActive = true;
+  });
+  flushSegment();
+
+  const firstLeafId = bottomLeaves[0]?.node.id;
+  const lastLeafId = bottomLeaves[bottomLeaves.length - 1]?.node.id;
+  return {
+    frames,
+    mullions,
+    couplingSeams,
+    leaves,
+    bottomSills,
+    isOpenBottom: false,
+    isPartialBottomOpen: true,
+    isLeftBottomOpen: firstLeafId !== undefined && bottomPlan.openLeafIds.has(firstLeafId),
+    isRightBottomOpen: lastLeafId !== undefined && bottomPlan.openLeafIds.has(lastLeafId),
+    bottomOpenRanges,
+    bottomBarSegments,
+  };
 };
 
 /**

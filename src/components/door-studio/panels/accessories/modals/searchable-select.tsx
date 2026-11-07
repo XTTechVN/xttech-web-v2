@@ -4,13 +4,16 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
 
-interface Option {
+export interface SearchableSelectOption {
   value: number | string;
   label: string;
+  name?: string;
+  code?: string;
+  subLabel?: string;
 }
 
 interface SearchableSelectProps {
-  options: Option[];
+  options: SearchableSelectOption[];
   value: number | string;
   onChange: (value: number | string) => void;
   placeholder?: string;
@@ -25,8 +28,10 @@ export function SearchableSelect({
   className = '',
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [query, setQuery] = useState('');
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -46,8 +51,20 @@ export function SearchableSelect({
       position: 'fixed',
       top: rect.bottom + 4,
       left: rect.left,
-      width: Math.max(rect.width, 260),
+      width: Math.max(rect.width, 360),
       zIndex: 9999,
+    });
+  };
+
+  const updateTooltipPosition = () => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setTooltipStyle({
+      position: 'fixed',
+      bottom: window.innerHeight - rect.top + 6,
+      left: rect.left,
+      maxWidth: Math.max(rect.width, 380),
+      zIndex: 10000,
     });
   };
 
@@ -83,8 +100,19 @@ export function SearchableSelect({
   }, [isOpen]);
 
   const handleOpen = () => {
+    setIsHovered(false);
     updatePosition();
     setIsOpen((prev) => !prev);
+  };
+
+  const handleMouseEnter = () => {
+    if (!selected || isOpen) return;
+    updateTooltipPosition();
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
   };
 
   return (
@@ -93,6 +121,9 @@ export function SearchableSelect({
         ref={triggerRef}
         type="button"
         onClick={handleOpen}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        title={selected ? selected.label : undefined}
         className="w-full h-9 px-2.5 border border-gray-200 rounded-md text-xs bg-white focus:outline-none focus:border-primary text-gray-800 flex items-center justify-between gap-1 hover:border-primary/50 transition cursor-pointer"
       >
         <span className="truncate text-left flex-1">
@@ -103,6 +134,38 @@ export function SearchableSelect({
           className={`shrink-0 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
+
+      {isHovered &&
+        !isOpen &&
+        selected &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            style={tooltipStyle}
+            className="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg shadow-xl pointer-events-none border border-slate-700 leading-relaxed"
+          >
+            {selected.name ? (
+              <div className="flex flex-col gap-1">
+                <div className="font-semibold text-white break-words">{selected.name}</div>
+                <div className="flex items-center flex-wrap gap-2 text-[11px] text-slate-300">
+                  {selected.code && (
+                    <span>
+                      Mã: <strong className="font-mono text-amber-300">{selected.code}</strong>
+                    </span>
+                  )}
+                  {selected.subLabel && (
+                    <span>
+                      Đơn giá: <strong className="text-emerald-300">{selected.subLabel}</strong>
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="font-medium break-words">{selected.label}</div>
+            )}
+          </div>,
+          document.body,
+        )}
 
       {isOpen &&
         typeof document !== 'undefined' &&
@@ -119,7 +182,7 @@ export function SearchableSelect({
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Tìm phụ kiện..."
+                placeholder="Tìm phụ kiện theo tên hoặc mã..."
                 className="flex-1 text-xs outline-none placeholder:text-slate-400 text-slate-800 bg-transparent"
               />
               {query && (
@@ -129,7 +192,7 @@ export function SearchableSelect({
               )}
             </div>
 
-            <div className="max-h-48 overflow-y-auto">
+            <div className="max-h-56 overflow-y-auto divide-y divide-slate-50">
               {filtered.length === 0 ? (
                 <p className="text-xs text-slate-400 italic text-center py-3">Không tìm thấy</p>
               ) : (
@@ -137,12 +200,13 @@ export function SearchableSelect({
                   <button
                     key={opt.value}
                     type="button"
+                    title={opt.label}
                     onClick={() => {
                       onChange(opt.value);
                       setIsOpen(false);
                       setQuery('');
                     }}
-                    className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition-colors cursor-pointer ${
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition-colors cursor-pointer leading-snug break-words ${
                       opt.value === value ? 'bg-primary/5 text-primary font-semibold' : 'text-slate-800'
                     }`}
                   >
@@ -157,4 +221,3 @@ export function SearchableSelect({
     </div>
   );
 }
-

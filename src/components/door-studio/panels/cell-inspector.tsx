@@ -9,7 +9,9 @@ import {
   FrameShape,
   FrameConfig,
   ArchConfig,
+  SashConfig,
 } from '../studio-types';
+import { CellFrameOverrideSection } from './cell-frame-override-section';
 import { computeArchMetrics } from '../cad-engine/cad-geometry';
 import { Select } from '@/components/select';
 import { Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, Square, DoorClosed } from 'lucide-react';
@@ -30,6 +32,10 @@ interface CellInspectorProps {
   doorW?: number;
   doorH?: number;
   onChangeFrameConfig?: (updates: Partial<FrameConfig>) => void;
+  /** Ô có chạm đáy cửa không (cho phép chọn Hở/Kín cạnh đáy riêng) */
+  isTouchingBottom?: boolean;
+  availableProfiles?: ProfileBar[];
+  sashConfig?: SashConfig;
 }
 
 const GLASS_OPTIONS = [
@@ -66,6 +72,9 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   doorW,
   doorH,
   onChangeFrameConfig,
+  isTouchingBottom = false,
+  availableProfiles,
+  sashConfig,
 }) => {
   const [localW, setLocalW] = React.useState<number>(selectedCell?.w ?? 0);
   const [localH, setLocalH] = React.useState<number>(selectedCell?.h ?? 0);
@@ -388,6 +397,15 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
           className="h-8 py-0 text-xs md:text-xs bg-white rounded-lg border-gray-300 font-medium"
         />
       </div>
+
+      <CellFrameOverrideSection
+        selectedCell={selectedCell}
+        onUpdateCell={onUpdateCell}
+        isTouchingBottom={isTouchingBottom}
+        availableProfiles={availableProfiles}
+        frameConfig={frameConfig}
+        sashConfig={sashConfig}
+      />
 
       {/* 3.1. Cấu hình Khóa & Cao độ tay nắm */}
       {selectedCell.sashType && selectedCell.sashType !== 'fixed' && (

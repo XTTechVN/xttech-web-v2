@@ -2,6 +2,26 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-11-07
+### Fixed & Changed (Cấu Hình Gói Combo Phụ Kiện & Phụ Kiện Kim Khí — Sửa Lỗi Hiển Thị Tên Phụ Kiện Ở Ô Vị Trí Lắp, Bổ Sung Options Cho `ComboModal` & Đồng Bộ Invalidate React Query Khi Xóa Phụ Kiện)
+- **Tái cấu trúc & chuẩn hóa `ComboModal` (`< 300` dòng) ([`combo-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/accessories/modals/combo-modal.tsx), [`combo-modal.constants.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/accessories/modals/combo-modal.constants.ts), [`combo-items-editor.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/accessories/modals/combo-items-editor.tsx), [`accessory-combo.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/accessory-combo.ts)):**
+  - Tách constants/helpers (`combo-modal.constants.ts`) và sub-component danh sách món phụ kiện (`combo-items-editor.tsx`).
+  - Bổ sung `cleanComboNote` tự động lọc bỏ chuỗi ghi chú trùng với `accessoryName` hoặc `"Món combo"` khi mở form và khi lưu.
+  - Bổ sung các món hợp lệ từ `combo.comboItems` vào `accessoryOptions` và `accessoryPriceMap` để `SearchableSelect` luôn hiển thị đúng phụ kiện đã chọn.
+- **Đồng bộ Invalidate 5 React Query Keys & Cảnh báo Cascade Xóa ([`accessories/index.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/index.tsx), [`accessory-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/_components/accessory-modal.tsx), [`accessory-excel-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/configuration/accessories/_components/modals/accessory-excel-modal.tsx)):**
+  - Làm mới đồng bộ `['accessories']`, `['accessories-list']`, `['accessory-combos']`, `['accessory-combos-list']`, `['all-accessories-dropdown']` sau khi thêm/sửa/xóa/nhập Excel phụ kiện và cập nhật thông báo xác nhận xóa.
+
+### Added (Door Studio — Override Cấu hình Theo Từng Ô: Đảo vách/Đảo cánh & Hở cạnh đáy từng phần)
+- **Types:** `CellReversalOverride`, `CellOpenBottomOverride`, `BottomOpenRange` và các trường override trên `SceneCellNode`; `effectiveReversalMode`, `reversalD` trên `LeafCell`.
+- **Resolver dùng chung [`cad-cell-config-resolver.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/cad-cell-config-resolver.ts)** cho 2D CAD và 3D; khung đáy một phần [`cad-partial-bottom-frame.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/cad-engine/components/cad-partial-bottom-frame.tsx).
+- **UI:** [`cell-frame-override-section.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/cell-frame-override-section.tsx) trong Thuộc tính ô: Đảo vách/Đảo cánh (Mặc định chung | Không đảo | Đảo), mã thanh `REVERSAL`, Cạnh đáy (Mặc định chung | Hở | Kín), Khe hở nền.
+- **UI:** Ô nhập **Hở nền (mm)** ở khối *Thông số cánh* ([`sash-type-picker.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/sash-type-picker.tsx)) hiện cả khi ô chọn ghi đè `open` (cấu hình chung kín) và ghi `hoNenMm` vào chính ô đó; dùng chung `resolveIsCellOpenBottom`.
+
+### Changed
+- 2D CAD / 3D: hở đáy theo từng ô (đố đứng ranh giới chạy xuống sàn, đoạn đáy đâm đố cắt 90°), đảo vách theo ô; cửa không có override đi đúng nhánh cũ.
+- **UX Modal sửa nhanh kích thước trên bản vẽ CAD ([canvas-cad-view.tsx](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/canvas-cad-view.tsx#L367-L433)):** Hiển thị chính giữa màn hình kèm lớp nền mờ, tự động đóng khi bấm ra ngoài hoặc nhấn Esc, và tự động bôi đen (select()) toàn bộ số hiện tại ngay khi mở để nhập đè trực tiếp.
+- Giới hạn: ô `coupling` bỏ qua override đáy; hèm 3D của thanh đứng vẫn theo cờ hở đáy toàn cục.
+
 ## [Unreleased] - 2026-11-06
 ### Fixed (Báo Giá Dự Án — Đồng Bộ Single Source of Truth Giữa Tab Cấu Thành Giá & Chi Tiết Từng Bộ Cửa Khi Khôi Phục Giá Gợi Ý)
 - **Đồng nhất trạng thái giá sửa tay giữa 2 Tab & hiển thị live badge `"Đã sửa giá tay"` ([`use-quotation-price-drafts.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/quotations/hooks/use-quotation-price-drafts.ts), [`quotation-doors-table.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/quotations/components/quotation-doors-table.tsx), [`use-quotation-form.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/quotations/hooks/use-quotation-form.ts), [`project-quotations-pricing.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(auth)/app/(sidebar)/projects/[id]/_components/quotations/project-quotations-pricing.tsx)):**

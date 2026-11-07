@@ -134,6 +134,10 @@ export function AccessoryExcelModal({
     mutationFn: bulkUpsertAccessories,
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['accessories'] });
+      queryClient.invalidateQueries({ queryKey: ['accessories-list'] });
+      queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
+      queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
+      queryClient.invalidateQueries({ queryKey: ['all-accessories-dropdown'] });
       toast.success(`Hoàn tất: Thêm mới ${res.createdCount}, Cập nhật ${res.updatedCount} phụ kiện!`);
       setRows([]);
       setFileName('');

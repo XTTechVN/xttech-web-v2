@@ -15,6 +15,9 @@ import {
   isArchOpenBottomShape,
 } from '../cad-engine/cad-geometry';
 import { buildCadLayout, collectSashMullions } from '../cad-engine/cad-tree-traverser';
+import { resolveBottomOpenPlan } from '../cad-engine/cad-cell-config-resolver';
+import { resolveReversalMm } from '../cad-engine/cad-metrics';
+import { BottomBarSegment } from '../cad-engine/cad-types';
 import { Door3DMeshCollector, hexToRgb01, MaterialId, Vec3 } from './door-3d-math';
 import { DEFAULT_DOOR_3D_SETTINGS, Door3DCustomSettings } from './door-3d-types';
 
@@ -71,6 +74,11 @@ function addFourPerimeterBars3D(
   edgeColor: Vec3,
   options?: {
     isOpenBottom?: boolean;
+    /** Hở đáy từng phần: chân thanh đứng trái/phải chạy xuống sàn cắt 90° khi bên đó Hở */
+    isOpenBotLeft?: boolean;
+    isOpenBotRight?: boolean;
+    /** Hở đáy từng phần: các đoạn thanh khung đáy còn lại (dưới ô Kín) */
+    bottomBarSegments?: BottomBarSegment[];
     hasInnerRebate?: boolean;
     gapMm?: number;
     mullions?: Array<{
@@ -90,6 +98,8 @@ function addFourPerimeterBars3D(
   const { left: dL, top: dT, right: dR, bottom: dB } = barW;
   const gap = options?.gapMm ?? 0.6;
   const isOpenBot = Boolean(options?.isOpenBottom);
+  const isOpenBotLeft = options?.isOpenBotLeft ?? isOpenBot;
+  const isOpenBotRight = options?.isOpenBotRight ?? isOpenBot;
   const frameMullions = (options?.mullions || []).filter(
     (m) => !m.isSashMullion && !m.isCoupling
   );
@@ -140,14 +150,14 @@ function addFourPerimeterBars3D(
   // 1. Thanh Đứng Trái (Left Bar)
   const lTopOuterY = tlMiter ? y + gap : vertCoversTop ? y : y + dT + gap;
   const lTopInnerY = tlMiter ? y + dT + gap : vertCoversTop ? y : y + dT + gap;
-  const lBotOuterY = isOpenBot
+  const lBotOuterY = isOpenBotLeft
     ? y + h
     : blMiter
       ? y + h - gap
       : vertCoversBot
         ? y + h
         : y + h - dB - gap;
-  const lBotInnerY = isOpenBot
+  const lBotInnerY = isOpenBotLeft
     ? y + h
     : blMiter
       ? y + h - dB - gap
@@ -215,14 +225,14 @@ function addFourPerimeterBars3D(
   // 2. Thanh Đứng Phải (Right Bar)
   const rTopOuterY = trMiter ? y + gap : vertCoversTop ? y : y + dT + gap;
   const rTopInnerY = trMiter ? y + dT + gap : vertCoversTop ? y : y + dT + gap;
-  const rBotOuterY = isOpenBot
+  const rBotOuterY = isOpenBotRight
     ? y + h
     : brMiter
       ? y + h - gap
       : vertCoversBot
         ? y + h
         : y + h - dB - gap;
-  const rBotInnerY = isOpenBot
+  const rBotInnerY = isOpenBotRight
     ? y + h
     : brMiter
       ? y + h - dB - gap
@@ -351,7 +361,7 @@ function addFourPerimeterBars3D(
   }
 
   // 4. Thanh Ngang Dưới (Bottom Bar)
-  if (!isOpenBot && dB > 0) {
+  if (!isOpenBot && dB > 0 && !options?.bottomBarSegments) {
     const bLeftOuterX = blMiter ? x + gap : vertCoversBot ? x + dL + gap : x;
     const bLeftInnerX = blMiter ? x + dL + gap : vertCoversBot ? x + dL + gap : x;
     const bRightOuterX = brMiter ? x + w - gap : vertCoversBot ? x + w - dR - gap : x + w;
@@ -415,6 +425,33 @@ function addFourPerimeterBars3D(
     }
   }
 
+  // 4b. Hở đáy từng phần: chỉ dựng các đoạn thanh đáy dưới ô Kín; đầu đâm vào đố đứng cắt 90°, đầu chạm khung đứng theo góc ghép
+  if (options?.bottomBarSegments && dB > 0) {
+    const frameStartOuterX = blMiter ? x + gap : vertCoversBot ? x + dL + gap : x;
+    const frameStartInnerX = blMiter ? x + dL + gap : vertCoversBot ? x + dL + gap : x;
+    const frameEndOuterX = brMiter ? x + w - gap : vertCoversBot ? x + w - dR - gap : x + w;
+    const frameEndInnerX = brMiter ? x + w - dR - gap : vertCoversBot ? x + w - dR - gap : x + w;
+    options.bottomBarSegments.forEach((segment) => {
+      const startOuterX = segment.isFrameStart ? frameStartOuterX : segment.x0 + gap;
+      const startInnerX = segment.isFrameStart ? frameStartInnerX : segment.x0 + gap;
+      const endOuterX = segment.isFrameEnd ? frameEndOuterX : segment.x1 - gap;
+      const endInnerX = segment.isFrameEnd ? frameEndInnerX : segment.x1 - gap;
+      if (Math.min(endOuterX, endInnerX) <= Math.max(startOuterX, startInnerX) + 2) return;
+      collector.addExtrudedConvexPolygon(
+        ensureCCW([
+          to3D(startInnerX, y + h - dB),
+          to3D(endInnerX, y + h - dB),
+          to3D(endOuterX, y + h),
+          to3D(startOuterX, y + h),
+        ]),
+        zBack,
+        zFront,
+        color,
+        matId,
+        edgeColor
+      );
+    });
+  }
   // Gờ hèm bậc trong (Rebate step) tạo chiều sâu cơ khí như thanh nhôm thật
   if (options?.hasInnerRebate) {
     const rebateW = Math.max(8, Math.round(Math.min(dL, dT) * 0.28));
@@ -426,8 +463,8 @@ function addFourPerimeterBars3D(
       ensureCCW([
         to3D(x + dL, y + dT),
         to3D(x + dL + rebateW, y + dT + rebateW),
-        to3D(x + dL + rebateW, y + h - (isOpenBot ? 0 : dB + rebateW)),
-        to3D(x + dL, y + h - (isOpenBot ? 0 : dB)),
+        to3D(x + dL + rebateW, y + h - (isOpenBotLeft ? 0 : dB + rebateW)),
+        to3D(x + dL, y + h - (isOpenBotLeft ? 0 : dB)),
       ]),
       zMid1,
       zMid2,
@@ -440,8 +477,8 @@ function addFourPerimeterBars3D(
       ensureCCW([
         to3D(x + w - dR - rebateW, y + dT + rebateW),
         to3D(x + w - dR, y + dT),
-        to3D(x + w - dR, y + h - (isOpenBot ? 0 : dB)),
-        to3D(x + w - dR - rebateW, y + h - (isOpenBot ? 0 : dB + rebateW)),
+        to3D(x + w - dR, y + h - (isOpenBotRight ? 0 : dB)),
+        to3D(x + w - dR - rebateW, y + h - (isOpenBotRight ? 0 : dB + rebateW)),
       ]),
       zMid1,
       zMid2,
@@ -954,12 +991,15 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
       ? horizMullionProfile.sectionHeightMm
       : mullionMm;
 
-  const isOpenBottom = Boolean(
+  const isGlobalOpenBottom = Boolean(
     (frameConfig?.isOpenBottom ?? false) ||
       sashConfig?.isHydraulic ||
       rootCell.isHydraulic ||
       isArchOpenBottomShape(frameShape)
   );
+  // Ghi đè Hở/Kín đáy theo từng ô (không có ghi đè => giữ nguyên giá trị toàn cục)
+  const bottomOpenPlan = resolveBottomOpenPlan(rootCell, isGlobalOpenBottom);
+  const isOpenBottom = bottomOpenPlan.isOpenBottom;
 
   const slidingOverlapMm =
     sashConfig?.slidingOverlapMm && sashConfig.slidingOverlapMm > 0
@@ -968,7 +1008,7 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
 
   // 2. Chạy thuật toán giải tích bố cục CAD 2D ngay trên miền đơn vị thực (mm)
   const layout = buildCadLayout(rootCell, 0, 0, safeW, safeH, frameMm, mullionMm, {
-    isOpenBottom,
+    isOpenBottom: isGlobalOpenBottom,
     isHydraulic: Boolean(sashConfig?.isHydraulic || rootCell.isHydraulic),
     vertMullionT: mullionMm,
     horizMullionT: horizMullionMm,
@@ -1138,6 +1178,9 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
         aluEdgeRgb,
         {
           isOpenBottom,
+          isOpenBotLeft: layout.isPartialBottomOpen ? layout.isLeftBottomOpen : undefined,
+          isOpenBotRight: layout.isPartialBottomOpen ? layout.isRightBottomOpen : undefined,
+          bottomBarSegments: layout.isPartialBottomOpen ? layout.bottomBarSegments : undefined,
           hasInnerRebate: !hasSlidingLeaves,
           gapMm: 0.7,
           mullions: layout.mullions,
@@ -1221,7 +1264,34 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
   const allSashes: FlattenedSashItem[] = [];
 
   for (const leaf of layout.leaves) {
-    const { node, x: lx, y: ly, w: lw, h: lh } = leaf;
+    const { node, x: leafX, y: leafY, w: leafW, h: leafH } = leaf;
+    // Ô ghi đè Đảo vách/Đảo cánh riêng: dựng 4 thanh REVERSAL quanh ô rồi thu nhỏ hộp ô vào trong
+    const hasCellReversal = leaf.effectiveReversalMode === 'wall' || leaf.effectiveReversalMode === 'sash';
+    const cellReversalMm = hasCellReversal
+      ? Math.min(
+          resolveReversalMm(availableProfiles, frameConfig, node.reversalProfileIdOverride),
+          Math.floor(Math.min(leafW, leafH) * 0.2)
+        )
+      : 0;
+    if (cellReversalMm > 0) {
+      addFourPerimeterBars3D(
+        collector,
+        to3D,
+        { x: leafX, y: leafY, w: leafW, h: leafH },
+        { left: cellReversalMm, top: cellReversalMm, right: cellReversalMm, bottom: cellReversalMm },
+        -sashDepthM / 2,
+        sashDepthM / 2,
+        '45',
+        aluRgb,
+        aluMatId,
+        aluEdgeRgb,
+        { gapMm: 0.4 }
+      );
+    }
+    const lx = leafX + cellReversalMm;
+    const ly = leafY + cellReversalMm;
+    const lw = leafW - 2 * cellReversalMm;
+    const lh = leafH - 2 * cellReversalMm;
     const st = String(node.sashType || 'fixed');
 
     if (st === 'fixed') {
