@@ -14,8 +14,6 @@ import {
   Workflow,
   Award,
   PhoneCall,
-  ZoomIn,
-  ZoomOut,
   Camera,
   Share2,
   Palette,
@@ -146,9 +144,17 @@ const MISSION_VISION = [
   },
 ];
 
+const ALUMINUM_COLORS = [
+  { id: 'wood' as const, title: 'Nhôm vân gỗ cao cấp', bgClass: 'bg-[#966b43]', frameFill: '#9a6a43', sashFill: '#aa7a4f' },
+  { id: 'grey' as const, title: 'Nhôm xám ghi Xingfa', bgClass: 'bg-[#4b5563]', frameFill: '#4b5563', sashFill: '#64748b' },
+  { id: 'white' as const, title: 'Nhôm trắng sứ tĩnh điện', bgClass: 'bg-[#e2e8f0]', frameFill: '#e2e8f0', sashFill: '#f1f5f9' },
+  { id: 'champagne' as const, title: 'Nhôm vàng sâm panh', bgClass: 'bg-[#c8b282]', frameFill: '#c8b282', sashFill: '#d9c59a' },
+  { id: 'coffee' as const, title: 'Nhôm nâu cà phê', bgClass: 'bg-[#4a3525]', frameFill: '#4a3525', sashFill: '#5c4330' },
+];
+
 export const Hero = () => {
-  const [viewMode, setViewMode] = useState<'2D' | '3D'>('2D');
-  const [activeTab, setActiveTab] = useState<'wood' | 'grey' | 'white'>('wood');
+  const [activeTab, setActiveTab] = useState<(typeof ALUMINUM_COLORS)[number]['id']>('wood');
+  const currentAluminumColor = ALUMINUM_COLORS.find((c) => c.id === activeTab) ?? ALUMINUM_COLORS[0];
   // State quản lý việc ẩn / hiện thanh dock các nút liên hệ
   const [dockOpen, setDockOpen] = useState<boolean>(true);
 
@@ -313,7 +319,7 @@ export const Hero = () => {
           </div>
 
           {/* Stats Bar */}
-          <div className="mt-12 grid grid-cols-2 gap-4 rounded-3xl border border-primary/10 bg-white/80 p-6 shadow-xl shadow-primary/5 backdrop-blur-sm sm:p-8 lg:grid-cols-4 lg:gap-8">
+          <div className="mt-12 grid grid-cols-2 gap-4 rounded-xl border border-primary/10 bg-white/80 p-6 shadow-xl shadow-primary/5 backdrop-blur-sm sm:p-8 lg:grid-cols-4 lg:gap-8">
             {STATS.map((stat) => (
               <div key={stat.label} className="flex flex-col items-center text-center">
                 <span className="text-3xl font-black tracking-tight text-primary sm:text-4xl lg:text-5xl">{stat.value}</span>
@@ -364,69 +370,26 @@ export const Hero = () => {
 
             {/* Cột phải: Card preview Cửa 2D/3D kỹ thuật cao */}
             <div className="lg:col-span-6">
-              <div className="relative rounded-3xl border border-gray-200 bg-white p-5 shadow-2xl shadow-gray-200/50 sm:p-7">
+              <div className="relative rounded-xl border border-gray-200 bg-white p-5 shadow-2xl shadow-gray-200/50 sm:p-7">
                 {/* Thanh điều khiển trên Card */}
                 <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">
-                  <div className="inline-flex rounded-full bg-gray-100 p-1">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('2D')}
-                      className={`rounded-full px-4 py-1 text-xs font-bold transition-all ${
-                        viewMode === '2D' ? 'bg-[#1e293b] text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      2D Kỹ Thuật
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('3D')}
-                      className={`rounded-full px-4 py-1 text-xs font-bold transition-all ${
-                        viewMode === '3D' ? 'bg-[#1e293b] text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      3D Sống Động
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('wood')}
-                      title="Nhôm vân gỗ cao cấp"
-                      className={`h-5 w-5 rounded-full border-2 transition-all ${
-                        activeTab === 'wood' ? 'border-primary ring-2 ring-primary/30 scale-110' : 'border-gray-300'
-                      } bg-[#966b43]`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('grey')}
-                      title="Nhôm xám ghi Xingfa"
-                      className={`h-5 w-5 rounded-full border-2 transition-all ${
-                        activeTab === 'grey' ? 'border-primary ring-2 ring-primary/30 scale-110' : 'border-gray-300'
-                      } bg-[#4b5563]`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('white')}
-                      title="Nhôm trắng sứ tĩnh điện"
-                      className={`h-5 w-5 rounded-full border-2 transition-all ${
-                        activeTab === 'white' ? 'border-primary ring-2 ring-primary/30 scale-110' : 'border-gray-300'
-                      } bg-[#e2e8f0]`}
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer">
-                      <ZoomIn className="h-3.5 w-3.5" />
-                    </span>
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer">
-                      <ZoomOut className="h-3.5 w-3.5" />
-                    </span>
+                  <div className="flex items-center gap-2">
+                    {ALUMINUM_COLORS.map((color) => (
+                      <button
+                        key={color.id}
+                        type="button"
+                        onClick={() => setActiveTab(color.id)}
+                        title={color.title}
+                        className={`h-5 w-5 rounded-full border-2 transition-all cursor-pointer ${
+                          activeTab === color.id ? 'border-primary ring-2 ring-primary/30 scale-110' : 'border-gray-300'
+                        } ${color.bgClass}`}
+                      />
+                    ))}
                   </div>
                 </div>
 
                 {/* Khung vẽ Bản vẽ Cửa CAD chuẩn tỷ lệ */}
-                <div className="relative flex items-center justify-center rounded-2xl bg-white p-4 sm:p-6 min-h-[380px]">
+                <div className="relative flex items-center justify-center rounded-lg bg-white p-4 sm:p-6 min-h-[380px]">
                   <svg
                     viewBox="0 0 540 620"
                     className="w-full max-w-[420px] drop-shadow-md select-none"
@@ -445,7 +408,7 @@ export const Hero = () => {
                       width="340"
                       height="480"
                       rx="4"
-                      fill={activeTab === 'wood' ? '#9a6a43' : activeTab === 'grey' ? '#4b5563' : '#e2e8f0'}
+                      fill={currentAluminumColor.frameFill}
                       stroke="#2d3748"
                       strokeWidth="2.5"
                     />
@@ -459,7 +422,7 @@ export const Hero = () => {
                       y="64"
                       width="144"
                       height="432"
-                      fill={activeTab === 'wood' ? '#aa7a4f' : activeTab === 'grey' ? '#64748b' : '#f1f5f9'}
+                      fill={currentAluminumColor.sashFill}
                       stroke="#334155"
                       strokeWidth="1.5"
                     />
@@ -476,7 +439,7 @@ export const Hero = () => {
                       y="64"
                       width="144"
                       height="432"
-                      fill={activeTab === 'wood' ? '#aa7a4f' : activeTab === 'grey' ? '#64748b' : '#f1f5f9'}
+                      fill={currentAluminumColor.sashFill}
                       stroke="#334155"
                       strokeWidth="1.5"
                     />
@@ -552,7 +515,7 @@ export const Hero = () => {
       {/* ===================== KHỐI BANNER TỐI ĐỈNH CAO: SẴN SÀNG THAY ĐỔI CÁCH THIẾT KẾ VÀ TƯ VẤN ===================== */}
       <section className="py-16 lg:py-24 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-[#03363D] px-6 py-12 text-white shadow-2xl sm:px-10 lg:px-14 lg:py-16">
+          <div className="relative overflow-hidden rounded-xl bg-[#03363D] px-6 py-12 text-white shadow-2xl sm:px-10 lg:px-14 lg:py-16">
             <div
               className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-25 blur-3xl"
               style={{ background: `radial-gradient(circle, ${ACCENT} 0%, transparent 70%)` }}
@@ -562,7 +525,7 @@ export const Hero = () => {
             <div className="relative z-10 grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
               {/* Mockup Dashboard CAD */}
               <div className="w-full lg:col-span-6">
-                <div className="relative mx-auto w-full max-w-xl rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-b from-gray-900/95 via-gray-900 to-gray-950 p-3 sm:p-5 shadow-2xl backdrop-blur-md">
+                <div className="relative mx-auto w-full max-w-xl rounded-xl border border-white/20 bg-gradient-to-b from-gray-900/95 via-gray-900 to-gray-950 p-3 sm:p-5 shadow-2xl backdrop-blur-md">
                   {/* Window Bar */}
                   <div className="mb-3 sm:mb-4 flex items-center justify-between border-b border-white/10 pb-2.5 sm:pb-3">
                     <div className="flex items-center gap-1.5 sm:gap-2">
@@ -621,7 +584,7 @@ export const Hero = () => {
                   </div>
 
                   {/* Floating Badge Mobile App - Responsive */}
-                  <div className="mt-3 sm:mt-0 sm:absolute sm:-bottom-5 sm:-right-5 rounded-2xl border border-white/30 bg-[#045863]/95 p-3.5 shadow-2xl backdrop-blur-md text-white sm:max-w-[220px]">
+                  <div className="mt-3 sm:mt-0 sm:absolute sm:-bottom-5 sm:-right-5 rounded-xl border border-white/30 bg-[#045863]/95 p-3.5 shadow-2xl backdrop-blur-md text-white sm:max-w-[220px]">
                     <div className="flex items-center gap-1.5 font-bold text-[#d6ff3d] text-xs sm:text-sm">
                       <Sparkles className="h-4 w-4 shrink-0 text-[#d6ff3d]" />
                       <span>Đồng bộ Mobile App</span>
@@ -688,17 +651,29 @@ export const Hero = () => {
                 <Target className="h-3.5 w-3.5" />
                 <span>Câu chuyện của XTTech</span>
               </div>
-              <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              <h2 className="text-3xl font-extrabold tracking-tight text-primary sm:text-4xl">
                 Sinh ra từ chính trăn trở <br className="hidden sm:inline" />
                 của người làm xưởng thực tế
               </h2>
               <p className="text-base leading-relaxed text-gray-600">
-                Thấu hiểu những nỗi đau lớn nhất của ngành nhôm kính: tính toán barem thủ công dễ sai lệch, phụ thuộc thợ kỹ thuật cắt nhôm thừa
-                thiếu, báo giá chậm làm tuột mất khách hàng và quản lý sổ sách nợ nần rời rạc.
+                Xuất phát điểm từ những ngày trực tiếp lăn lộn tại phân xưởng và công trường, chúng tôi thấu hiểu sâu sắc từng &ldquo;nỗi đau&rdquo;
+                thầm lặng của người làm nghề nhôm kính: những đêm thức trắng bóc tách bản vẽ và tính barem thủ công nhưng vẫn sai lệch kích thước, sự
+                phụ thuộc nặng nề vào thợ cả khiến tiến độ đình trệ, từng đố nhôm cắt nhầm biến thành phế liệu ăn mòn lợi nhuận, hay những lần gửi báo
+                giá chậm trễ làm vụt mất hợp đồng tâm huyết.
               </p>
               <p className="text-base leading-relaxed text-gray-600">
-                XTTech ra đời với mục tiêu trở thành **hệ điều hành phân xưởng thông minh**, chuẩn hóa toàn bộ tri thức kỹ thuật thành công nghệ tự
-                động hóa, giúp chủ doanh nghiệp dễ dàng mở rộng quy mô mà vẫn kiểm soát tối đa từng đồng chi phí.
+                Khi quy mô xưởng lớn dần, bài toán quản lý lại càng chồng chất — từ tồn kho thanh nhôm, vật tư phụ kiện thất thoát không rõ nguyên
+                nhân, tiến độ lắp đặt tại công trình thiếu đồng bộ với xưởng sản xuất, cho đến sổ sách công nợ rời rạc khiến dòng tiền bị đọng mà chủ
+                xưởng không nắm được lãi lỗ thực sự của từng công trình.
+              </p>
+              <p className="text-base leading-relaxed text-gray-600">
+                Chính từ những trăn trở thực chiến đó, <strong className="font-semibold text-primary">XTTech</strong> ra đời với khát vọng trở thành{' '}
+                <strong className="font-semibold text-primary">hệ điều hành phân xưởng thông minh</strong> — số hóa và chuẩn hóa toàn bộ tri thức kỹ
+                thuật ngành cửa thành quy trình tự động khép kín. Không chỉ giải quyết bài toán kỹ thuật và sản xuất, hệ thống còn hỗ trợ toàn diện công
+                tác <strong className="font-semibold text-primary">quản trị hành chính – nhân sự</strong>: từ chấm công GPS minh bạch tại xưởng lẫn chân
+                công trình, phân ca làm việc, xét duyệt đơn từ nghỉ phép, tự động tính lương cho đến lưu trữ công văn và quy chế nội bộ. Chúng tôi giúp
+                chủ doanh nghiệp giải phóng khỏi sự vụ hàng ngày, tự tin nhân rộng quy mô mà vẫn kiểm soát chặt chẽ đến từng milimet nhôm, từng ngày
+                công nhân sự và từng đồng chi phí.
               </p>
             </div>
 
@@ -707,7 +682,7 @@ export const Hero = () => {
               {MISSION_VISION.map((box, idx) => (
                 <div
                   key={box.title}
-                  className={`relative overflow-hidden rounded-3xl p-6 sm:p-8 transition-all duration-300 ${
+                  className={`relative overflow-hidden rounded-xl p-6 sm:p-8 transition-all duration-300 ${
                     idx === 0
                       ? 'border border-primary/20 bg-primary text-white shadow-xl hover:shadow-2xl'
                       : 'border border-gray-200 bg-white text-gray-900 shadow-sm hover:border-primary/30 hover:shadow-lg'
@@ -759,10 +734,10 @@ export const Hero = () => {
               return (
                 <div
                   key={pillar.title}
-                  className="group relative flex flex-col justify-between rounded-3xl border border-gray-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-xl"
+                  className="group relative flex flex-col justify-between rounded-xl border border-gray-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-xl"
                 >
                   <div className="space-y-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                       <Icon className="h-6 w-6" />
                     </div>
                     <span className="inline-block rounded-full bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-primary">{pillar.tag}</span>
@@ -779,7 +754,7 @@ export const Hero = () => {
       {/* ===================== BANNER LIÊN HỆ ĐỒNG HÀNH ===================== */}
       <section className="pb-16 lg:pb-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-primary px-6 py-12 text-white shadow-2xl sm:px-12 lg:px-16 lg:py-16">
+          <div className="relative overflow-hidden rounded-xl bg-primary px-6 py-12 text-white shadow-2xl sm:px-12 lg:px-16 lg:py-16">
             <div
               className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full opacity-25 blur-3xl"
               style={{ background: `radial-gradient(circle, ${ACCENT} 0%, transparent 70%)` }}
