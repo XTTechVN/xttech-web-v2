@@ -417,3 +417,4 @@ export const IMPLEMENTATION_PRICING_PLANS: ImplementationPlan[] = [
     note: 'Chỉ 5 suất / tháng • Đã bao gồm G4 1TB + 1 tháng G2',
   },
 ];
+

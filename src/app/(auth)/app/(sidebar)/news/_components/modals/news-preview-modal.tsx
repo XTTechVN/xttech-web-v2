@@ -189,7 +189,7 @@ export function NewsPreviewModal({ isOpen, onClose, article }: NewsPreviewModalP
           )}
 
           <div
-            className="text-sm sm:text-base text-slate-800 leading-relaxed space-y-3 [&_figure]:my-4 [&_figcaption]:text-xs [&_figcaption]:text-slate-500 [&_figcaption]:italic [&_figcaption]:text-center [&_img]:max-w-full [&_img]:rounded-lg [&_img]:mx-auto [&_video]:max-w-full [&_video]:rounded-lg [&_video]:mx-auto [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg [&_iframe]:mx-auto [&_iframe]:border-0 [&_iframe]:shadow-sm [&_h2]:text-lg [&_h2]:font-bold [&_h3]:text-base [&_h3]:font-bold"
+            className="text-sm sm:text-base text-slate-800 leading-relaxed space-y-3 [&_figure]:my-4 [&_figcaption]:text-xs [&_figcaption]:text-slate-500 [&_figcaption]:italic [&_figcaption]:text-center [&_img]:max-w-full [&_img]:rounded-lg [&_img]:mx-auto [&_video]:max-w-full [&_video]:rounded-lg [&_video]:mx-auto [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg [&_iframe]:mx-auto [&_iframe]:border-0 [&_iframe]:shadow-sm [&_h2]:text-lg [&_h2]:font-bold [&_h3]:text-base [&_h3]:font-bold [&_h4]:text-sm [&_h4]:font-bold [&_ul]:my-3 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:my-3 [&_ol]:pl-5 [&_ol]:list-decimal [&_blockquote]:my-3 [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:bg-primary/5 [&_blockquote]:px-3.5 [&_blockquote]:py-2 [&_blockquote]:rounded-r-lg [&_blockquote]:italic [&_hr]:my-4 [&_hr]:border-slate-200 [&_a]:text-primary [&_a]:font-medium [&_a]:underline [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:rounded-xs [&_s]:line-through [&_del]:line-through"
             dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
           />
 

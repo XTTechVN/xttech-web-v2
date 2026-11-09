@@ -1,20 +1,19 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { escapeHtml, normalizePastedHtml, sanitizeNewsHtml } from '@/utils/html';
+import { ColorPickerPopover } from './color-picker-popover';
+import { EditorToolbar } from './editor-toolbar';
+import { LinkInsertPopover } from './link-insert-popover';
+import { CONTENT_CLASS, PAPER_CONTENT_CLASS } from './rich-text-editor.constants';
 import {
-  AlignCenter,
-  AlignJustify,
-  AlignLeft,
-  AlignRight,
-  Bold,
-  ImagePlus,
-  Italic,
-  List,
-  ListOrdered,
-  Underline,
-  Video,
-} from 'lucide-react';
-import { escapeHtml } from '@/utils/html';
+  applyEditorHighlightColor,
+  applyEditorTextColor,
+  buildMediaHtmlChunks,
+  buildYoutubeEmbedHtml,
+  clearEditorSelectionFormatting,
+  countEditorWordsAndChars,
+} from './rich-text-editor.utils';
 import { YoutubeEmbedPopover } from './youtube-embed-popover';
 
 export interface InsertedMediaItem {
@@ -30,6 +29,8 @@ export interface RichTextEditorProps {
   placeholder?: string;
   isReadOnly?: boolean;
   minHeightClass?: string;
+  fullHeight?: boolean;
+  showStatusBar?: boolean;
   paperMode?: boolean;
   headerSlot?: React.ReactNode;
   footerSlot?: React.ReactNode;
@@ -37,49 +38,14 @@ export interface RichTextEditorProps {
   enableYoutubeEmbed?: boolean;
 }
 
-interface ToolbarAction {
-  command: string;
-  title: string;
-  icon: React.ReactNode;
-}
-
-const TOOLBAR_ACTIONS: ToolbarAction[] = [
-  { command: 'bold', title: 'In đậm (Ctrl+B)', icon: <Bold size={14} /> },
-  { command: 'italic', title: 'In nghiêng (Ctrl+I)', icon: <Italic size={14} /> },
-  { command: 'underline', title: 'Gạch chân (Ctrl+U)', icon: <Underline size={14} /> },
-  { command: 'justifyLeft', title: 'Căn trái', icon: <AlignLeft size={14} /> },
-  { command: 'justifyCenter', title: 'Căn giữa tiêu đề / chương mục', icon: <AlignCenter size={14} /> },
-  { command: 'justifyRight', title: 'Căn phải', icon: <AlignRight size={14} /> },
-  { command: 'justifyFull', title: 'Căn đều hai bên', icon: <AlignJustify size={14} /> },
-  { command: 'insertUnorderedList', title: 'Danh sách gạch đầu dòng', icon: <List size={14} /> },
-  { command: 'insertOrderedList', title: 'Danh sách đánh số', icon: <ListOrdered size={14} /> },
-];
-
-const MEDIA_CONTENT_STYLES = `
-  [&_figure]:my-4 [&_figure]:mx-auto [&_figcaption]:text-xs [&_figcaption]:text-slate-500
-  [&_figcaption]:italic [&_figcaption]:text-center [&_figcaption]:mt-1.5
-  [&_img]:max-w-full [&_img]:rounded-lg [&_img]:mx-auto
-  [&_video]:max-w-full [&_video]:rounded-lg [&_video]:mx-auto
-  [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg [&_iframe]:mx-auto [&_iframe]:border-0 [&_iframe]:shadow-sm
-  [&_h2]:text-base [&_h2]:font-bold [&_h2]:my-2.5`;
-
-const CONTENT_CLASS = `p-3.5 text-xs leading-[1.6] text-slate-800 focus:outline-hidden overflow-y-auto no-scrollbar
-  [&_p]:my-1.5 [&_ul]:my-1.5 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:my-1.5 [&_ol]:pl-5 [&_ol]:list-decimal
-  [&_li]:my-0.5 [&_strong]:font-bold [&_u]:underline [&_em]:italic
-  [&_h3]:text-sm [&_h3]:font-bold [&_h3]:my-2 [&_h4]:text-xs [&_h4]:font-bold [&_h4]:my-1.5 ${MEDIA_CONTENT_STYLES}`;
-
-const PAPER_CONTENT_CLASS = `min-h-[260px] text-[13.5px] leading-[1.7] text-slate-900 focus:outline-hidden font-sans
-  [&_p]:my-2 [&_ul]:my-2 [&_ul]:pl-6 [&_ul]:list-disc [&_ol]:my-2 [&_ol]:pl-6 [&_ol]:list-decimal
-  [&_li]:my-1 [&_strong]:font-bold [&_u]:underline [&_em]:italic
-  [&_h3]:text-[15px] [&_h3]:font-bold [&_h3]:my-2.5 [&_h4]:text-[14px] [&_h4]:font-bold [&_h4]:my-2 ${MEDIA_CONTENT_STYLES}`;
-
-// Trình soạn thảo văn bản có định dạng (HTML) dùng chung, điều khiển qua value/onChange
 export function RichTextEditor({
   value,
   onChange,
   placeholder,
   isReadOnly = false,
   minHeightClass = 'min-h-48 max-h-96',
+  fullHeight = false,
+  showStatusBar = true,
   paperMode = false,
   headerSlot,
   footerSlot,
@@ -89,10 +55,11 @@ export function RichTextEditor({
   const editorRef = useRef<HTMLDivElement>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
-  const [isYoutubePopoverOpen, setIsYoutubePopoverOpen] = useState(false);
-  const canEmbedYoutube = Boolean(onInsertMediaFiles || enableYoutubeEmbed);
+  const [activePopover, setActivePopover] = useState<'color' | 'link' | 'youtube' | null>(null);
 
-  // Đồng bộ nội dung từ ngoài vào vùng soạn thảo (không ghi đè khi chính người dùng đang gõ)
+  const canEmbedYoutube = Boolean(onInsertMediaFiles || enableYoutubeEmbed);
+  const stats = useMemo(() => countEditorWordsAndChars(value), [value]);
+
   useEffect(() => {
     const editor = editorRef.current;
     if (editor && editor.innerHTML !== value) editor.innerHTML = value;
@@ -103,7 +70,7 @@ export function RichTextEditor({
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
     const range = selection.getRangeAt(0);
-    if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
+    if (editorRef.current?.contains(range.commonAncestorContainer)) {
       savedRangeRef.current = range.cloneRange();
     }
   };
@@ -136,120 +103,133 @@ export function RichTextEditor({
 
   const executeCommand = (command: string, commandValue?: string) => {
     editorRef.current?.focus();
+    restoreSelectionRange();
     document.execCommand(command, false, commandValue);
     saveSelectionRange();
     emitChange();
   };
 
+  const runEditorDomUpdate = (fn: (el: HTMLElement) => void) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    restoreSelectionRange();
+    fn(editorRef.current);
+    saveSelectionRange();
+    emitChange();
+  };
+
+  const handleConfirmLink = (url: string, label?: string) => {
+    const safeUrl = escapeHtml(url);
+    if (label) {
+      insertHtmlAtCursor(
+        `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`,
+      );
+      return;
+    }
+    editorRef.current?.focus();
+    if (restoreSelectionRange()) {
+      document.execCommand('createLink', false, url);
+      saveSelectionRange();
+      emitChange();
+    } else {
+      insertHtmlAtCursor(
+        `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a>`,
+      );
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    if (isReadOnly) return;
+    const htmlData = e.clipboardData?.getData('text/html') || '';
+    const textData = e.clipboardData?.getData('text/plain') || '';
+
+    if (htmlData.trim()) {
+      e.preventDefault();
+      saveSelectionRange();
+      insertHtmlAtCursor(sanitizeNewsHtml(normalizePastedHtml(htmlData)));
+    } else if (textData.trim()) {
+      e.preventDefault();
+      saveSelectionRange();
+      insertHtmlAtCursor(escapeHtml(textData).replace(/\r?\n/g, '<br/>'));
+    }
+  };
+
   const handleMediaInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0 || !onInsertMediaFiles) return;
-
-    const files = Array.from(fileList);
-    const items = onInsertMediaFiles(files);
+    const items = onInsertMediaFiles(Array.from(fileList));
     e.target.value = '';
-    if (!items || items.length === 0) return;
-
-    const htmlChunks = items
-      .map((item) => {
-        const caption = escapeHtml(item.defaultCaption || 'Nhập chú thích...');
-        const safeTempId = escapeHtml(item.tempId);
-        const safeSrc = escapeHtml(item.previewUrl);
-        if (item.mediaType === 'video') {
-          return `<figure><video data-temp-id="${safeTempId}" src="${safeSrc}" controls playsinline preload="metadata"></video><figcaption>${caption}</figcaption></figure><p><br/></p>`;
-        }
-        return `<figure><img data-temp-id="${safeTempId}" src="${safeSrc}" alt="${caption}" /><figcaption>${caption}</figcaption></figure><p><br/></p>`;
-      })
-      .join('');
-
-    insertHtmlAtCursor(htmlChunks);
+    if (items?.length) insertHtmlAtCursor(buildMediaHtmlChunks(items));
   };
 
-  const handleInsertYoutube = (embedUrl: string, caption: string) => {
-    const safeCaption = escapeHtml(caption || 'Nhập chú thích video...');
-    const htmlChunk = `<figure><iframe src="${embedUrl}" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="true" loading="lazy" class="w-full aspect-video rounded-lg border-0"></iframe><figcaption>${safeCaption}</figcaption></figure><p><br/></p>`;
-    insertHtmlAtCursor(htmlChunk);
-  };
+  const wrapperLayoutClass =
+    fullHeight && !paperMode ? 'flex flex-col flex-1 min-h-0 h-full' : 'flex flex-col';
+  const editableHeightClass =
+    fullHeight && !paperMode ? 'flex-1 min-h-[320px] lg:min-h-0' : minHeightClass;
 
   return (
-    <div className="border border-slate-200 rounded-lg bg-white overflow-hidden shadow-xs">
+    <div
+      className={`border border-slate-200 rounded-xl bg-white overflow-hidden shadow-xs ${wrapperLayoutClass}`}
+    >
       {!isReadOnly && (
         <>
-          <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-50 border-b border-slate-200">
-            {TOOLBAR_ACTIONS.map((action) => (
-              <button
-                key={action.command}
-                type="button"
-                title={action.title}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => executeCommand(action.command)}
-                className="p-1.5 rounded hover:bg-white hover:shadow-xs text-gray-700 hover:text-primary transition-colors cursor-pointer bg-transparent border-0"
-              >
-                {action.icon}
-              </button>
-            ))}
-            <div className="h-4 w-px bg-slate-300 mx-1" />
-            <select
-              onChange={(e) => executeCommand('formatBlock', e.target.value)}
-              defaultValue="p"
-              className="text-xs h-7 px-2 bg-white border border-slate-200 rounded text-gray-700 focus:outline-hidden focus:border-primary cursor-pointer"
-            >
-              <option value="p">Văn bản thường</option>
-              <option value="h2">Tiêu đề chương (H2)</option>
-              <option value="h3">Tiêu đề lớn (H3)</option>
-              <option value="h4">Tiêu đề vừa (H4)</option>
-            </select>
+          <EditorToolbar
+            onCommand={executeCommand}
+            onClearFormatting={() => runEditorDomUpdate(clearEditorSelectionFormatting)}
+            onSaveSelection={saveSelectionRange}
+            isColorPopoverOpen={activePopover === 'color'}
+            onToggleColorPopover={() =>
+              setActivePopover((prev) => (prev === 'color' ? null : 'color'))
+            }
+            isLinkPopoverOpen={activePopover === 'link'}
+            onToggleLinkPopover={() =>
+              setActivePopover((prev) => (prev === 'link' ? null : 'link'))
+            }
+            isYoutubePopoverOpen={activePopover === 'youtube'}
+            onToggleYoutubePopover={() =>
+              setActivePopover((prev) => (prev === 'youtube' ? null : 'youtube'))
+            }
+            canInsertMedia={Boolean(onInsertMediaFiles)}
+            onClickInsertMedia={() => mediaInputRef.current?.click()}
+            canEmbedYoutube={canEmbedYoutube}
+          />
 
-            {(onInsertMediaFiles || canEmbedYoutube) && <div className="h-4 w-px bg-slate-300 mx-1" />}
+          {onInsertMediaFiles && (
+            <input
+              ref={mediaInputRef}
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              onChange={handleMediaInputChange}
+              className="hidden"
+            />
+          )}
 
-            {onInsertMediaFiles && (
-              <>
-                <button
-                  type="button"
-                  title="Chèn Ảnh hoặc Video vào vị trí con trỏ"
-                  onMouseDown={() => saveSelectionRange()}
-                  onClick={() => mediaInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 px-2.5 h-7 rounded text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/15 border border-primary/20 transition-colors cursor-pointer"
-                >
-                  <ImagePlus size={14} />
-                  <span>Chèn Ảnh / Video</span>
-                </button>
-                <input
-                  ref={mediaInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  multiple
-                  onChange={handleMediaInputChange}
-                  className="hidden"
-                />
-              </>
-            )}
+          <ColorPickerPopover
+            isOpen={activePopover === 'color'}
+            onClose={() => setActivePopover(null)}
+            onSelectTextColor={(color) => runEditorDomUpdate((el) => applyEditorTextColor(el, color))}
+            onSelectHighlightColor={(color) =>
+              runEditorDomUpdate((el) => applyEditorHighlightColor(el, color))
+            }
+            onClearAllFormatting={() => runEditorDomUpdate(clearEditorSelectionFormatting)}
+          />
 
-            {canEmbedYoutube && (
-              <button
-                type="button"
-                title="Nhúng video YouTube kèm chú thích vào vị trí con trỏ"
-                onMouseDown={() => saveSelectionRange()}
-                onClick={() => setIsYoutubePopoverOpen((prev) => !prev)}
-                className={`inline-flex items-center gap-1.5 px-2.5 h-7 rounded text-xs font-semibold transition-colors cursor-pointer border ${
-                  isYoutubePopoverOpen
-                    ? 'bg-primary text-white border-primary'
-                    : 'text-primary bg-primary/10 hover:bg-primary/15 border-primary/20'
-                }`}
-              >
-                <Video size={14} />
-                <span>Nhúng YouTube</span>
-              </button>
-            )}
-          </div>
+          <LinkInsertPopover
+            isOpen={activePopover === 'link'}
+            onClose={() => setActivePopover(null)}
+            onConfirmLink={handleConfirmLink}
+            onRemoveLink={() => executeCommand('unlink')}
+          />
 
           <YoutubeEmbedPopover
-            isOpen={isYoutubePopoverOpen}
-            onClose={() => setIsYoutubePopoverOpen(false)}
-            onConfirm={handleInsertYoutube}
+            isOpen={activePopover === 'youtube'}
+            onClose={() => setActivePopover(null)}
+            onConfirm={(url, cap) => insertHtmlAtCursor(buildYoutubeEmbedHtml(url, cap))}
           />
         </>
       )}
+
       {paperMode ? (
         <div className="bg-slate-200/75 p-3 sm:p-6 max-h-[480px] overflow-y-auto">
           <div className="w-full max-w-[720px] h-fit min-h-[520px] mx-auto bg-white shadow-md border border-slate-300/80 rounded-sm px-6 sm:px-12 py-6 sm:py-8">
@@ -260,6 +240,7 @@ export function RichTextEditor({
               suppressContentEditableWarning
               data-placeholder={placeholder}
               onInput={emitChange}
+              onPaste={handlePaste}
               onKeyUp={saveSelectionRange}
               onMouseUp={saveSelectionRange}
               onBlur={() => {
@@ -279,15 +260,28 @@ export function RichTextEditor({
           suppressContentEditableWarning
           data-placeholder={placeholder}
           onInput={emitChange}
+          onPaste={handlePaste}
           onKeyUp={saveSelectionRange}
           onMouseUp={saveSelectionRange}
           onBlur={() => {
             saveSelectionRange();
             emitChange();
           }}
-          className={`${minHeightClass} ${CONTENT_CLASS} ${isReadOnly ? 'bg-slate-50/60' : ''}`}
+          className={`${editableHeightClass} ${CONTENT_CLASS} ${isReadOnly ? 'bg-slate-50/60' : ''}`}
           style={{ wordBreak: 'break-word' }}
         />
+      )}
+
+      {showStatusBar && !isReadOnly && (
+        <div className="px-3 py-1.5 bg-slate-50/90 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 shrink-0">
+          <span>
+            Tự động lọc sạch nền đen khi dán (Ctrl+V) • Nhấn{' '}
+            <strong className="text-slate-700">Xóa nền / Format</strong> để làm sạch đoạn văn cũ
+          </span>
+          <span className="font-mono tabular-nums font-medium text-slate-600">
+            {stats.words} từ • {stats.chars} ký tự
+          </span>
+        </div>
       )}
     </div>
   );

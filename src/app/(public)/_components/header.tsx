@@ -1,21 +1,17 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-// Thành phần dùng chung cho components
+import { ChevronDown } from 'lucide-react';
 import { Button, Heading, Avatar, XTLogo } from '@/components';
 import { getFileUrl } from '@/utils';
 import useAuthStore from '@/stores/useAuthStore';
+import { FOOTER_LEGAL_LINKS, NAV_LINKS, type PublicNavLink } from '../_constants/public-layout.constants';
 
-const NAV_LINKS = [
-  { href: '/#about', label: 'Về chúng tôi', key: 'about' },
-  { href: '/pricing', label: 'Giá', key: 'pricing' },
-  { href: '/news', label: 'Tin tức', key: 'news' },
-  { href: '/#contact', label: 'Liên hệ', key: 'contact' },
-];
+interface PillMetrics { left: number; width: number }
+let cachedActiveMetrics: PillMetrics | null = null;
 
 export const Header = () => {
   const pathname = usePathname();
@@ -24,61 +20,88 @@ export const Header = () => {
   const [currentHash, setCurrentHash] = useState('');
   const { isAuthenticated, user } = useAuthStore();
 
-  useEffect(() => {
-    setMounted(true);
-    if (typeof window !== 'undefined') {
-      setCurrentHash(window.location.hash);
-    }
-  }, []);
+  const itemRefs = useRef<Record<string, HTMLElement | null>>({});
+  const [activeMetrics, setActiveMetrics] = useState<PillMetrics | null>(() => cachedActiveMetrics);
+  const [hoverMetrics, setHoverMetrics] = useState<PillMetrics | null>(null);
+  const [hoveredKey, setHoveredKey] = useState<PublicNavLink['key'] | null>(null);
 
   useEffect(() => {
-    const handleHashChange = () => {
-      setCurrentHash(window.location.hash);
-    };
+    setMounted(true);
+    if (typeof window !== 'undefined') setCurrentHash(window.location.hash);
+    const handleHashChange = () => setCurrentHash(window.location.hash);
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Theo dõi vị trí cuộn trên trang chủ '/' để tự động cập nhật active giữa 'about' và 'contact'
   useEffect(() => {
     if (pathname !== '/') return;
-
     const handleScroll = () => {
       const contactEl = document.getElementById('contact');
-      if (contactEl) {
-        const rect = contactEl.getBoundingClientRect();
-        if (rect.top <= window.innerHeight * 0.7) {
-          setCurrentHash('#contact');
-          return;
-        }
+      if (contactEl && contactEl.getBoundingClientRect().top <= window.innerHeight * 0.7) {
+        setCurrentHash('#contact');
+        return;
       }
       if (window.scrollY < 400 || !window.location.hash || window.location.hash === '#about') {
         setCurrentHash('#about');
       }
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [pathname]);
 
-  const activeKey = pathname?.startsWith('/pricing')
+  const isLegalRoute =
+    pathname?.startsWith('/privacy-policy') ||
+    pathname?.startsWith('/terms-of-service') ||
+    pathname?.startsWith('/refund-policy');
+
+  const activeKey: PublicNavLink['key'] | '' = pathname?.startsWith('/pricing')
     ? 'pricing'
     : pathname?.startsWith('/news')
-    ? 'news'
-    : pathname === '/'
-    ? currentHash === '#contact'
-      ? 'contact'
-      : 'about'
-    : '';
+      ? 'news'
+      : isLegalRoute
+        ? 'legal'
+        : pathname === '/'
+          ? currentHash === '#contact' ? 'contact' : 'about'
+          : '';
 
-  const handleLinkClick = (
-    e: React.MouseEvent<HTMLAnchorElement>,
-    link: (typeof NAV_LINKS)[number],
-  ) => {
-    if (link.key === 'pricing' || link.key === 'news') {
+  const updateActivePillPosition = useCallback(() => {
+    const targetEl = activeKey ? itemRefs.current[activeKey] : null;
+    if (!targetEl) {
+      setActiveMetrics(null);
       return;
     }
+    const next: PillMetrics = { left: targetEl.offsetLeft, width: targetEl.offsetWidth };
+    cachedActiveMetrics = next;
+    setActiveMetrics(next);
+  }, [activeKey]);
 
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(updateActivePillPosition);
+    const handleResize = () => {
+      if (window.innerWidth >= 768) setMobileMenuOpen(false);
+      updateActivePillPosition();
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [updateActivePillPosition]);
+
+  const handleMouseEnterItem = (key: PublicNavLink['key']) => {
+    setHoveredKey(key);
+    const el = itemRefs.current[key];
+    if (el) setHoverMetrics({ left: el.offsetLeft, width: el.offsetWidth });
+  };
+
+  const cacheCurrentActivePosition = () => {
+    const el = activeKey ? itemRefs.current[activeKey] : null;
+    if (el) cachedActiveMetrics = { left: el.offsetLeft, width: el.offsetWidth };
+  };
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, link: PublicNavLink) => {
+    cacheCurrentActivePosition();
+    if (link.key === 'pricing' || link.key === 'news' || link.key === 'legal') return;
     if (pathname === '/') {
       const targetEl = document.getElementById(link.key);
       if (targetEl) {
@@ -92,22 +115,13 @@ export const Header = () => {
     }
   };
 
-  // Đóng menu khi resize lên desktop
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) setMobileMenuOpen(false);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   return (
-    <header className="w-full border-b border-gray-200 bg-white backdrop-blur-md sticky top-0 z-50 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo */}
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200/80 bg-white/90 backdrop-blur-md transition-all">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
           onClick={(e) => {
+            cacheCurrentActivePosition();
             if (pathname === '/') {
               e.preventDefault();
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -115,26 +129,87 @@ export const Header = () => {
               setCurrentHash('#about');
             }
           }}
-          className="flex items-center gap-2.5 hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
         >
-          <XTLogo className="w-8 h-8 drop-shadow-[0_2px_5px_rgba(4,88,99,0.35)]" />
-          <Heading size="h1" className="text-primary tracking-tight">
-            XTTECH
-          </Heading>
+          <XTLogo className="h-8 w-8 drop-shadow-[0_2px_5px_rgba(4,88,99,0.35)]" />
+          <Heading size="h1" className="tracking-tight text-primary">XTTECH</Heading>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8">
+        {/* Desktop Nav với hiệu ứng Liquid Glass */}
+        <nav
+          onMouseLeave={() => setHoveredKey(null)}
+          className="relative hidden items-center gap-2 py-1 md:flex"
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              left: hoverMetrics ? `${hoverMetrics.left}px` : '0px',
+              width: hoverMetrics ? `${hoverMetrics.width}px` : '0px',
+              opacity: hoveredKey && hoveredKey !== activeKey ? 1 : 0,
+            }}
+            className="pointer-events-none absolute top-1 bottom-1 z-0 rounded-full bg-slate-100/80 backdrop-blur-xs transition-all duration-300 ease-out"
+          />
+          <span
+            aria-hidden="true"
+            style={{
+              left: activeMetrics ? `${activeMetrics.left}px` : '0px',
+              width: activeMetrics ? `${activeMetrics.width}px` : '0px',
+              opacity: activeMetrics && activeKey ? 1 : 0,
+            }}
+            className="pointer-events-none absolute top-1 bottom-1 z-0 rounded-full border border-[#045863]/20 bg-gradient-to-b from-white/95 via-[#E6F2F4]/90 to-[#045863]/15 shadow-[0_2px_10px_-1px_rgba(4,88,99,0.16),inset_0_1px_1px_rgba(255,255,255,0.95),inset_0_-1px_2px_rgba(4,88,99,0.08)] backdrop-blur-md transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          >
+            <span className="absolute inset-x-3 top-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-95" />
+          </span>
+
           {NAV_LINKS.map((link) => {
             const isActive = activeKey === link.key;
+            const itemClass = `relative z-10 inline-flex items-center gap-1 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors duration-200 ${
+              isActive ? 'text-[#045863]' : 'text-gray-600 hover:text-[#045863]'
+            }`;
+            if (link.key === 'legal') {
+              return (
+                <div
+                  key={link.href}
+                  ref={(el) => { itemRefs.current[link.key] = el; }}
+                  onMouseEnter={() => handleMouseEnterItem(link.key)}
+                  className="group relative z-10"
+                >
+                  <Link href={link.href} onClick={(e) => handleLinkClick(e, link)} className={itemClass}>
+                    <span>{link.label}</span>
+                    <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-hover:rotate-180" />
+                  </Link>
+                  <div className="invisible absolute top-full left-1/2 z-50 w-52 -translate-x-1/2 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
+                    <div className="rounded-xl border border-gray-200/90 bg-white/95 p-1.5 shadow-lg backdrop-blur-md">
+                      {FOOTER_LEGAL_LINKS.map((item) => {
+                        const ItemIcon = item.icon;
+                        const isSub = pathname === item.href;
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={cacheCurrentActivePosition}
+                            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                              isSub ? 'bg-primary/10 font-semibold text-primary' : 'text-gray-700 hover:bg-gray-50 hover:text-primary'
+                            }`}
+                          >
+                            <ItemIcon className="h-4 w-4 shrink-0 text-primary" />
+                            <span>{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
             return (
               <Link
                 key={link.href}
+                ref={(el) => { itemRefs.current[link.key] = el; }}
                 href={link.href}
+                onMouseEnter={() => handleMouseEnterItem(link.key)}
                 onClick={(e) => handleLinkClick(e, link)}
-                className={`text-sm font-semibold transition-colors ${
-                  isActive ? 'text-primary' : 'text-gray-600 hover:text-primary'
-                }`}
+                className={itemClass}
               >
                 {link.label}
               </Link>
@@ -142,78 +217,58 @@ export const Header = () => {
           })}
         </nav>
 
-        {/* Right side: Auth + Hamburger */}
         <div className="flex items-center gap-3">
           {mounted ? (
             isAuthenticated && user ? (
-              <Link href="/app/dashboard" className="flex items-center gap-2 hover:bg-gray-100 p-1.5 rounded-full pr-4 transition-colors">
-                <Avatar
-                  src={getFileUrl(user.avatar) || undefined}
-                  name={user.fullName || user.username}
-                  size="sm"
-                />
-                <span className="text-sm font-semibold text-gray-700 hidden sm:inline">{user.fullName || user.username}</span>
+              <Link href="/app/dashboard" className="flex items-center gap-2 rounded-full p-1.5 pr-4 transition-colors hover:bg-gray-100">
+                <Avatar src={getFileUrl(user.avatar) || undefined} name={user.fullName || user.username} size="sm" />
+                <span className="hidden text-sm font-semibold text-gray-700 sm:inline">{user.fullName || user.username}</span>
               </Link>
             ) : (
               <Link href="/signin">
-                <Button size="sm" className="rounded-full px-5 bg-primary hover:bg-primary/90 shadow-sm text-white">
-                  Đăng Nhập
-                </Button>
+                <Button size="sm" className="rounded-full bg-primary px-5 text-white shadow-sm hover:bg-primary/90">Đăng Nhập</Button>
               </Link>
             )
           ) : (
-            <div className="w-[105px] h-8 bg-gray-200 animate-pulse rounded-full"></div>
+            <div className="h-8 w-[105px] animate-pulse rounded-full bg-gray-200" />
           )}
 
-          {/* Hamburger Button - mobile only */}
           <button
-            className="md:hidden flex flex-col items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 transition-colors gap-[5px] p-1.5"
+            className="flex h-9 w-9 flex-col items-center justify-center gap-[5px] rounded-lg p-1.5 transition-colors hover:bg-gray-100 md:hidden"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle menu"
             aria-expanded={mobileMenuOpen}
           >
-            <span
-              className={`block w-5 h-[2px] bg-gray-700 rounded-full transition-all duration-300 ${
-                mobileMenuOpen ? 'rotate-45 translate-y-[7px]' : ''
-              }`}
-            />
-            <span
-              className={`block w-5 h-[2px] bg-gray-700 rounded-full transition-all duration-300 ${
-                mobileMenuOpen ? 'opacity-0 scale-x-0' : ''
-              }`}
-            />
-            <span
-              className={`block w-5 h-[2px] bg-gray-700 rounded-full transition-all duration-300 ${
-                mobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''
-              }`}
-            />
+            <span className={`block h-[2px] w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? 'translate-y-[7px] rotate-45' : ''}`} />
+            <span className={`block h-[2px] w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? 'scale-x-0 opacity-0' : ''}`} />
+            <span className={`block h-[2px] w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? '-translate-y-[7px] -rotate-45' : ''}`} />
           </button>
         </div>
       </div>
 
-      {/* Mobile Nav Dropdown */}
-      <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          mobileMenuOpen ? 'max-h-60 border-t border-gray-200' : 'max-h-0'
-        }`}
-      >
-        <nav className="flex flex-col px-4 py-3 bg-white/95 backdrop-blur-md gap-1">
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out md:hidden ${mobileMenuOpen ? 'max-h-96 border-t border-gray-200' : 'max-h-0'}`}>
+        <nav className="flex flex-col gap-1 bg-white/95 px-4 py-3 backdrop-blur-md">
           {NAV_LINKS.map((link) => {
             const isActive = activeKey === link.key;
+            if (link.key === 'legal') {
+              return (
+                <div key={link.href} className="space-y-1 py-1">
+                  <div className="px-3 py-1 text-xs font-bold tracking-wider text-slate-400 uppercase">Pháp lý &amp; Chính sách</div>
+                  {FOOTER_LEGAL_LINKS.map((subItem) => {
+                    const SubIcon = subItem.icon;
+                    const isSub = pathname === subItem.href;
+                    return (
+                      <Link key={subItem.href} href={subItem.href} onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${isSub ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-primary/5 hover:text-primary'}`}>
+                        <SubIcon className="h-4 w-4 shrink-0 text-primary" />
+                        <span>{subItem.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              );
+            }
             return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={(e) => {
-                  setMobileMenuOpen(false);
-                  handleLinkClick(e, link);
-                }}
-                className={`text-sm font-semibold px-3 py-2.5 rounded-lg transition-colors ${
-                  isActive
-                    ? 'text-primary bg-primary/10'
-                    : 'text-gray-600 hover:text-primary hover:bg-primary/5'
-                }`}
-              >
+              <Link key={link.href} href={link.href} onClick={(e) => { setMobileMenuOpen(false); handleLinkClick(e, link); }} className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-primary/5 hover:text-primary'}`}>
                 {link.label}
               </Link>
             );

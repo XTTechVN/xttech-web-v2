@@ -13,7 +13,7 @@ import {
   savePercent,
   type ButtonVariant,
   type PricingPlan as Plan,
-} from './mock-data';
+} from '../_constants/pricing.constants';
 
 const PRICING_DATA = BUILDER_PRICING_DATA;
 
