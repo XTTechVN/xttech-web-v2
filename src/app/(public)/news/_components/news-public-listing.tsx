@@ -15,6 +15,7 @@ import {
   NEWS_CATEGORY_BADGE_MAP,
   NEWS_CATEGORY_MAP,
   NEWS_CATEGORY_OPTIONS,
+  PUBLIC_NEWS_QUERY_KEYS,
 } from '@/config';
 import { getPublicNewsList } from '@/actions';
 import { useDebounce } from '@/hooks';
@@ -46,27 +47,41 @@ export function NewsPublicListing() {
   // Hiển thị bố cục tạp chí tự động chia khu vực khi ở trang 1 và không lọc riêng 1 chuyên mục hay tìm kiếm
   const isEditorialView = !hasActiveFilter && page === 1;
 
-  // Call 1 API chính duy nhất lấy limit = 999, toàn bộ các khu vực (Mới nhất, Nổi bật, Chuyên mục, Xem nhiều, Tin Hot) tự động lọc/sắp xếp trên FE
+  // Call 1 API chính duy nhất lấy limit = 999 với queryKey thống nhất PUBLIC_NEWS_QUERY_KEYS.list
+  // Toàn bộ các khu vực (Mới nhất, Nổi bật, Chuyên mục, Xem nhiều, Tin Hot, Tìm kiếm) tự động lọc/sắp xếp trên FE
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['public-news-list', 'main', debouncedSearch, selectedCategory, FETCH_ALL_LIMIT],
+    queryKey: PUBLIC_NEWS_QUERY_KEYS.list,
     queryFn: () =>
       getPublicNewsList({
-        search: debouncedSearch || undefined,
-        category: selectedCategory,
         offset: 0,
         limit: FETCH_ALL_LIMIT,
       }),
   });
 
   const allArticles = useMemo(() => data?.items || [], [data?.items]);
-  const total = allArticles.length;
+
+  // Lọc theo chuyên mục & từ khóa tìm kiếm ngay trên FE từ allArticles (không cần gọi lại API)
+  const filteredArticles = useMemo(() => {
+    const keyword = debouncedSearch.trim().toLowerCase();
+    return allArticles.filter((item) => {
+      if (selectedCategory && item.category !== selectedCategory) return false;
+      if (keyword) {
+        const matchTitle = item.title?.toLowerCase().includes(keyword);
+        const matchSummary = item.summary?.toLowerCase().includes(keyword);
+        return Boolean(matchTitle || matchSummary);
+      }
+      return true;
+    });
+  }, [allArticles, selectedCategory, debouncedSearch]);
+
+  const total = filteredArticles.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_LIMIT));
 
-  // Phân trang ngay trên FE từ danh sách allArticles
+  // Phân trang ngay trên FE từ danh sách filteredArticles
   const paginatedArticles = useMemo(() => {
     const start = (page - 1) * PAGE_LIMIT;
-    return allArticles.slice(start, start + PAGE_LIMIT);
-  }, [allArticles, page]);
+    return filteredArticles.slice(start, start + PAGE_LIMIT);
+  }, [filteredArticles, page]);
 
   // 1. Tự động lọc bài viết Nổi bật (isFeatured = true, tối đa 5 bài cho Slide cột phải) trên FE
   const featuredSlideArticles = useMemo(
@@ -352,13 +367,7 @@ export function NewsPublicListing() {
                       )}
                     </div>
 
-                    {isLoading ? (
-                      <div className="space-y-3">
-                        <Skeleton className="w-full aspect-16/10 rounded-md" />
-                        <Skeleton className="h-5 w-full rounded" />
-                        <Skeleton className="h-4 w-4/5 rounded" />
-                      </div>
-                    ) : featuredSlideArticles.length > 0 ? (
+                    {featuredSlideArticles.length > 0 ? (
                       <div className="space-y-4">
                         {/* Khung trượt Slide ngang mượt mà (cubic-bezier + hiệu ứng scale & mờ dần) */}
                         <div className="overflow-hidden rounded-md">
@@ -419,7 +428,7 @@ export function NewsPublicListing() {
 
           {/* SECTION 2: DẢI 4 CỘT CHUYÊN MỤC TRÊN NỀN XÁM NHẠT */}
           <section className="w-full px-4 sm:px-8 lg:px-32">
-            <div className="bg-slate-100/85 border-b-[3px] border-primary px-5 py-8 sm:px-8 rounded-t-lg">
+            <div className="bg-slate-100/85 border-b-4 border-primary px-5 py-8 sm:px-8 rounded-t-lg">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {topFourCategories.map((cat) => {
                   const catArticles = categoryArticlesMap[cat.value] || [];

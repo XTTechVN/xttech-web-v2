@@ -118,10 +118,10 @@ export function NewsRelatedArticles({
               </h2>
             </div>
             <Link
-              href="/news?popular=true"
+              href="/news"
               className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-primary hover:underline"
             >
-              <span>Xem bảng xếp hạng</span>
+              <span>Tất cả tin tức</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

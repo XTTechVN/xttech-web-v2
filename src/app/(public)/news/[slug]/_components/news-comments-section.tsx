@@ -1,47 +1,40 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { MessageSquare, Send, Trash2, User } from 'lucide-react';
-import { Button, Input, Textarea, Skeleton } from '@/components';
+import { Button, Input, Skeleton, Textarea } from '@/components';
 import { ConfirmActionModal } from '@/components/documents';
 import { createPublicNewsComment, deleteNewsComment, getPublicNewsComments } from '@/actions';
+import { PUBLIC_NEWS_QUERY_KEYS } from '@/config';
 import { usePermission } from '@/hooks';
 import queryClient from '@/utils/query';
 import { showErrorToast, showSuccessToast } from '@/utils';
-import type { NewsComment } from '@/types';
+import type { NewsArticle, NewsComment, NewsCommentCreate } from '@/types';
 
 export interface NewsCommentsSectionProps {
   slug: string;
   articleId: number;
   commentCount: number;
-  onCommentCountDelta?: (delta: number) => void;
 }
 
 const COMMENTS_LIMIT = 10;
 
-export function NewsCommentsSection({
-  slug,
-  articleId,
-  commentCount,
-  onCommentCountDelta,
-}: NewsCommentsSectionProps) {
+export function NewsCommentsSection({ slug, articleId, commentCount }: NewsCommentsSectionProps) {
   const { user, isManager } = usePermission();
   const [authorName, setAuthorName] = useState(() => user?.fullName || user?.username || '');
   const [content, setContent] = useState('');
   const [nameError, setNameError] = useState('');
   const [contentError, setContentError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [page, setPage] = useState(1);
   const [commentToDelete, setCommentToDelete] = useState<NewsComment | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const offset = (page - 1) * COMMENTS_LIMIT;
 
   const { data, isLoading } = useQuery({
-    queryKey: ['public-news-comments', slug, offset, COMMENTS_LIMIT],
+    queryKey: [...PUBLIC_NEWS_QUERY_KEYS.comments(slug), offset, COMMENTS_LIMIT],
     queryFn: () => getPublicNewsComments(slug, { offset, limit: COMMENTS_LIMIT }),
     enabled: Boolean(slug),
   });
@@ -50,21 +43,77 @@ export function NewsCommentsSection({
   const total = data?.meta?.total ?? commentCount;
   const totalPages = Math.max(1, Math.ceil(total / COMMENTS_LIMIT));
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const syncCommentCountCache = (delta: number) => {
+    queryClient.setQueryData<NewsArticle>(PUBLIC_NEWS_QUERY_KEYS.detail(slug), (old) =>
+      old ? { ...old, commentCount: Math.max(0, (old.commentCount || 0) + delta) } : old,
+    );
+    queryClient.setQueriesData<{ items?: NewsArticle[]; meta?: unknown }>(
+      { queryKey: PUBLIC_NEWS_QUERY_KEYS.list },
+      (old) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((item) =>
+            item.id === articleId
+              ? { ...item, commentCount: Math.max(0, (item.commentCount || 0) + delta) }
+              : item,
+          ),
+        };
+      },
+    );
+    queryClient.invalidateQueries({ queryKey: PUBLIC_NEWS_QUERY_KEYS.comments(slug) });
+    queryClient.invalidateQueries({ queryKey: PUBLIC_NEWS_QUERY_KEYS.list });
+    queryClient.invalidateQueries({ queryKey: ['admin-news-comments', articleId] });
+    queryClient.invalidateQueries({ queryKey: ['admin-news-detail', articleId] });
+    queryClient.invalidateQueries({ queryKey: ['admin-news'] });
+  };
+
+  const createCommentMutation = useMutation({
+    mutationFn: (payload: NewsCommentCreate) => createPublicNewsComment(slug, payload),
+    onSuccess: () => {
+      setContent('');
+      setPage(1);
+      syncCommentCountCache(1);
+      showSuccessToast('Đã gửi bình luận thành công!');
+    },
+    onError: (err) => {
+      showErrorToast(err, 'Không thể gửi bình luận. Vui lòng thử lại.');
+    },
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: number) => deleteNewsComment(commentId),
+    onSuccess: () => {
+      setCommentToDelete(null);
+      syncCommentCountCache(-1);
+      showSuccessToast('Đã xóa bình luận vi phạm.');
+    },
+    onError: (err) => {
+      showErrorToast(err, 'Không thể xóa bình luận.');
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanName = authorName.trim();
     const cleanContent = content.trim();
 
     let hasErr = false;
-    if (cleanName.length < 2) {
-      setNameError('Vui lòng nhập họ tên hoặc biệt danh (tối thiểu 2 ký tự)');
+    if (cleanName.length < 1) {
+      setNameError('Vui lòng nhập họ tên hoặc biệt danh');
+      hasErr = true;
+    } else if (cleanName.length > 100) {
+      setNameError('Họ tên không được vượt quá 100 ký tự');
       hasErr = true;
     } else {
       setNameError('');
     }
 
-    if (cleanContent.length < 2) {
-      setContentError('Vui lòng nhập nội dung bình luận (tối thiểu 2 ký tự)');
+    if (cleanContent.length < 1) {
+      setContentError('Vui lòng nhập nội dung bình luận');
+      hasErr = true;
+    } else if (cleanContent.length > 2000) {
+      setContentError('Nội dung bình luận không được vượt quá 2000 ký tự');
       hasErr = true;
     } else {
       setContentError('');
@@ -72,52 +121,15 @@ export function NewsCommentsSection({
 
     if (hasErr) return;
 
-    setIsSubmitting(true);
-    try {
-      await createPublicNewsComment(slug, {
-        authorName: cleanName,
-        content: cleanContent,
-      });
-      setContent('');
-      setPage(1);
-      onCommentCountDelta?.(1);
-      showSuccessToast('Đã gửi bình luận thành công!');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['public-news-comments', slug] }),
-        queryClient.invalidateQueries({ queryKey: ['public-news-detail', slug] }),
-        queryClient.invalidateQueries({ queryKey: ['public-news-list'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-news-comments', articleId] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-news-detail', articleId] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-news'] }),
-      ]);
-    } catch (err) {
-      showErrorToast(err, 'Không thể gửi bình luận. Vui lòng thử lại.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    createCommentMutation.mutate({
+      authorName: cleanName,
+      content: cleanContent,
+    });
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (!commentToDelete) return;
-    setIsDeleting(true);
-    try {
-      await deleteNewsComment(commentToDelete.id);
-      setCommentToDelete(null);
-      onCommentCountDelta?.(-1);
-      showSuccessToast('Đã xóa bình luận vi phạm.');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['public-news-comments', slug] }),
-        queryClient.invalidateQueries({ queryKey: ['public-news-detail', slug] }),
-        queryClient.invalidateQueries({ queryKey: ['public-news-list'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-news-comments', articleId] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-news-detail', articleId] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-news'] }),
-      ]);
-    } catch (err) {
-      showErrorToast(err, 'Không thể xóa bình luận.');
-    } finally {
-      setIsDeleting(false);
-    }
+    deleteCommentMutation.mutate(commentToDelete.id);
   };
 
   return (
@@ -159,7 +171,7 @@ export function NewsCommentsSection({
               if (nameError) setNameError('');
             }}
             error={nameError}
-            maxLength={120}
+            maxLength={100}
             fullWidth
           />
         </div>
@@ -186,7 +198,7 @@ export function NewsCommentsSection({
             type="submit"
             variant="primary"
             size="sm"
-            loading={isSubmitting}
+            loading={createCommentMutation.isPending}
             leftIcon={<Send className="w-3.5 h-3.5" />}
           >
             Gửi bình luận
@@ -232,7 +244,7 @@ export function NewsCommentsSection({
                       • {item.createdAt ? dayjs(item.createdAt).format('DD/MM/YYYY HH:mm') : '--'}
                     </span>
                   </div>
-                  <p className="mt-1.5 text-sm text-slate-700 whitespace-pre-line leading-relaxed break-words">
+                  <p className="mt-1.5 text-sm text-slate-700 whitespace-pre-line leading-relaxed wrap-break-word">
                     {item.content}
                   </p>
                 </div>
@@ -292,7 +304,7 @@ export function NewsCommentsSection({
         warningNote="Hành động này sẽ xóa cứng bình luận khỏi cơ sở dữ liệu và giảm tổng số bình luận của bài viết."
         confirmText="Xóa vĩnh viễn"
         variant="danger"
-        loading={isDeleting}
+        loading={deleteCommentMutation.isPending}
         onConfirm={handleConfirmDelete}
       />
     </section>

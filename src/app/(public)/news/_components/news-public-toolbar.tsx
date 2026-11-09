@@ -20,9 +20,9 @@ export function NewsPublicToolbar({
   onSelectCategory,
 }: NewsPublicToolbarProps) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-primary/4 to-white border-b border-slate-200/80 pt-10 sm:pt-14">
+    <section className="relative overflow-hidden bg-linear-to-b from-primary/10 via-primary/4 to-white border-b border-slate-200/80 pt-10 sm:pt-14">
       {/* Hiệu ứng nền trang trí đồng bộ hệ sinh thái XTTech */}
-      <div className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-72 w-[520px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-72 w-full max-w-lg -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
       <div className="w-full px-4 sm:px-8 lg:px-32">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
@@ -69,7 +69,7 @@ export function NewsPublicToolbar({
           <button
             type="button"
             onClick={() => onSelectCategory(undefined)}
-            className={`relative pb-3.5 pt-2 text-sm transition-colors cursor-pointer shrink-0 border-b-2 -mb-[1px] ${
+            className={`relative pb-3.5 pt-2 text-sm transition-colors cursor-pointer shrink-0 border-b-2 -mb-px ${
               !selectedCategory
                 ? 'border-primary text-slate-900 font-semibold'
                 : 'border-transparent text-slate-600 hover:text-slate-900 font-medium'
@@ -84,7 +84,7 @@ export function NewsPublicToolbar({
                 key={cat.value}
                 type="button"
                 onClick={() => onSelectCategory(cat.value)}
-                className={`relative pb-3.5 pt-2 text-sm transition-colors cursor-pointer shrink-0 border-b-2 -mb-[1px] ${
+                className={`relative pb-3.5 pt-2 text-sm transition-colors cursor-pointer shrink-0 border-b-2 -mb-px ${
                   isActive
                     ? 'border-primary text-slate-900 font-semibold'
                     : 'border-transparent text-slate-600 hover:text-slate-900 font-medium'
