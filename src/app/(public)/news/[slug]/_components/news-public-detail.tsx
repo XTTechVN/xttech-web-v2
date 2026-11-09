@@ -323,7 +323,7 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
 
           {thumbnailSrc && (
             <div className="mt-6 rounded-xl overflow-hidden bg-slate-50">
-              <img src={thumbnailSrc} alt={article.title} className="w-full max-h-[480px] object-cover mx-auto" />
+              <img src={thumbnailSrc} alt={article.title} className="w-full h-auto object-contain mx-auto" />
             </div>
           )}
 

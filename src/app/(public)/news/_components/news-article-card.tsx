@@ -34,6 +34,7 @@ export interface NewsArticleCardProps {
   variant?: NewsCardVariant;
   rank?: number;
   showDateOnBullet?: boolean;
+  hideDescription?: boolean;
 }
 
 export function NewsArticleCard({
@@ -43,6 +44,7 @@ export function NewsArticleCard({
   variant,
   rank,
   showDateOnBullet = false,
+  hideDescription = false,
 }: NewsArticleCardProps) {
   const [optimisticLike, setOptimisticLike] = useState<{
     articleId: number;
@@ -226,7 +228,7 @@ export function NewsArticleCard({
             {article.viewCount}
           </span>
         </div>
-        {article.summary && (
+        {!hideDescription && article.summary && (
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-2">
             {article.summary}
           </p>
