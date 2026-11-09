@@ -58,10 +58,23 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
     enabled: Boolean(article?.category),
   });
 
+  const { data: popularData } = useQuery({
+    queryKey: ['public-news-popular-sidebar'],
+    queryFn: () => getPublicNewsList({ popular: true, limit: 5 }),
+  });
+
   const relatedArticles = useMemo(() => {
     if (!relatedData?.items || !article) return [];
     return relatedData.items.filter((item) => item.id !== article.id).slice(0, 3);
   }, [relatedData, article]);
+
+  const popularArticles = useMemo(() => {
+    if (!popularData?.items || !article) return [];
+    const relatedIds = new Set(relatedArticles.map((r) => r.id));
+    return popularData.items
+      .filter((item) => item.id !== article.id && !relatedIds.has(item.id))
+      .slice(0, 3);
+  }, [popularData, article, relatedArticles]);
 
   const sanitizedContent = useMemo(
     () => sanitizeNewsHtml(article?.content || ''),
@@ -96,6 +109,9 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
       const res = await togglePublicNewsLike(article.slug, { action: nextLiked ? 'like' : 'unlike' });
       setOptimisticLike({ articleId: article.id, liked: nextLiked, likeCount: res.likeCount });
       queryClient.invalidateQueries({ queryKey: ['public-news-list'] });
+      queryClient.invalidateQueries({ queryKey: ['public-news-featured-spotlight'] });
+      queryClient.invalidateQueries({ queryKey: ['public-news-popular-sidebar'] });
+      queryClient.invalidateQueries({ queryKey: ['public-news-hot-sidebar'] });
     } catch (err) {
       setOptimisticLike({ articleId: article.id, liked: !nextLiked, likeCount: currentLikeCount });
       setNewsArticleLiked(article.id, !nextLiked);
@@ -156,11 +172,18 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
           </Link>
           <div className="flex items-center gap-2">
             {article.isFeatured && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary text-white">
+              <Link
+                href="/news?isFeatured=true"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+              >
                 <Sparkles className="w-3 h-3" /> Tiêu điểm
-              </span>
+              </Link>
             )}
-            <Badge variant={categoryBadge.variant} size="md" pill>{categoryBadge.label}</Badge>
+            <Link href={`/news?category=${encodeURIComponent(article.category)}`}>
+              <Badge variant={categoryBadge.variant} size="md" pill>
+                {categoryBadge.label}
+              </Badge>
+            </Link>
           </div>
         </div>
 
@@ -235,7 +258,11 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
           />
         </div>
 
-        <NewsRelatedArticles articles={relatedArticles} />
+        <NewsRelatedArticles
+          articles={relatedArticles}
+          popularArticles={popularArticles}
+          category={article.category}
+        />
       </article>
     </div>
   );
