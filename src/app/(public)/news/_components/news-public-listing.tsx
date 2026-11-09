@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
@@ -28,31 +28,27 @@ const PAGE_LIMIT = 8;
 const VALID_CATEGORIES = new Set<string>(NEWS_CATEGORY_OPTIONS.map((item) => item.value));
 
 export function NewsPublicListing() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [searchInput, setSearchInput] = useState(() => searchParams.get('search') || '');
+  const [selectedCategory, setSelectedCategory] = useState<NewsCategory | undefined>(() => {
+    const raw = searchParams.get('category') || '';
+    return VALID_CATEGORIES.has(raw) ? (raw as NewsCategory) : undefined;
+  });
+  const [sortMode, setSortMode] = useState<PublicNewsSortMode>(() => {
+    if (searchParams.get('isFeatured') === 'true') return 'featured';
+    if (searchParams.get('popular') === 'true') return 'popular';
+    if (searchParams.get('hot') === 'true') return 'hot';
+    return 'latest';
+  });
   const [page, setPage] = useState(1);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [sidebarTab, setSidebarTab] = useState<'popular' | 'hot'>('popular');
 
-  const rawCategory = searchParams.get('category') || '';
-  const selectedCategory: NewsCategory | undefined = VALID_CATEGORIES.has(rawCategory)
-    ? (rawCategory as NewsCategory)
-    : undefined;
-
-  const isFeaturedFilter = searchParams.get('isFeatured') === 'true';
-  const isPopular = !isFeaturedFilter && searchParams.get('popular') === 'true';
-  const isHot = !isFeaturedFilter && !isPopular && searchParams.get('hot') === 'true';
-
-  const sortMode: PublicNewsSortMode = isFeaturedFilter
-    ? 'featured'
-    : isPopular
-      ? 'popular'
-      : isHot
-        ? 'hot'
-        : 'latest';
+  const isFeaturedFilter = sortMode === 'featured';
+  const isPopular = sortMode === 'popular';
+  const isHot = sortMode === 'hot';
 
   const debouncedSearch = useDebounce(searchInput.trim(), 350);
   const offset = (page - 1) * PAGE_LIMIT;
@@ -61,6 +57,7 @@ export function NewsPublicListing() {
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
       'public-news-list',
+      'main',
       debouncedSearch,
       selectedCategory,
       isFeaturedFilter,
@@ -84,24 +81,27 @@ export function NewsPublicListing() {
       }),
   });
 
-  // 2. Call API riêng cho khu vực Tiêu điểm nổi bật (isFeatured = true)
+  // 2. Call API riêng cho khu vực Tiêu điểm nổi bật (isFeatured = true) - cùng root key 'public-news-list'
   const showSpotlightSection =
-    page === 1 && !debouncedSearch && sortMode === 'latest' && sortOrder === 'desc';
+    page === 1 &&
+    !debouncedSearch &&
+    !selectedCategory &&
+    sortMode === 'latest' &&
+    sortOrder === 'desc';
 
   const { data: featuredData, isLoading: isLoadingFeatured } = useQuery({
-    queryKey: ['public-news-featured-spotlight', selectedCategory],
+    queryKey: ['public-news-list', 'featured-spotlight'],
     queryFn: () =>
       getPublicNewsList({
         isFeatured: true,
-        category: selectedCategory,
         limit: 4,
       }),
     enabled: showSpotlightSection,
   });
 
-  // 3. Call API riêng cho Bảng xếp hạng Bài viết nhiều người xem (popular = true)
+  // 3. Call API riêng cho Bảng xếp hạng Bài viết nhiều người xem (popular = true) - cùng root key 'public-news-list'
   const { data: popularData, isLoading: isLoadingPopular } = useQuery({
-    queryKey: ['public-news-popular-sidebar'],
+    queryKey: ['public-news-list', 'popular-sidebar'],
     queryFn: () =>
       getPublicNewsList({
         popular: true,
@@ -109,9 +109,9 @@ export function NewsPublicListing() {
       }),
   });
 
-  // 4. Call API riêng cho Bảng xếp hạng Tin Hot / Yêu thích (hot = true)
+  // 4. Call API riêng cho Bảng xếp hạng Tin Hot / Yêu thích (hot = true) - cùng root key 'public-news-list'
   const { data: hotData, isLoading: isLoadingHot } = useQuery({
-    queryKey: ['public-news-hot-sidebar'],
+    queryKey: ['public-news-list', 'hot-sidebar'],
     queryFn: () =>
       getPublicNewsList({
         hot: true,
@@ -140,37 +140,38 @@ export function NewsPublicListing() {
   const sidebarArticles = sidebarTab === 'popular' ? popularArticles : hotArticles;
   const isSidebarLoading = sidebarTab === 'popular' ? isLoadingPopular : isLoadingHot;
 
-  const updateUrlParams = (updater: (params: URLSearchParams) => void) => {
-    const params = new URLSearchParams(searchParams.toString());
-    updater(params);
-    const queryString = params.toString();
-    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
-    setPage(1);
+  const syncUrlParams = (nextCategory?: NewsCategory, nextMode?: PublicNewsSortMode) => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (nextCategory) {
+      params.set('category', nextCategory);
+    } else {
+      params.delete('category');
+    }
+    params.delete('isFeatured');
+    params.delete('popular');
+    params.delete('hot');
+    if (nextMode === 'featured') {
+      params.set('isFeatured', 'true');
+    } else if (nextMode === 'popular') {
+      params.set('popular', 'true');
+    } else if (nextMode === 'hot') {
+      params.set('hot', 'true');
+    }
+    const qs = params.toString();
+    window.history.replaceState(null, '', qs ? `${pathname}?${qs}` : pathname);
   };
 
   const handleSelectCategory = (category?: NewsCategory) => {
-    updateUrlParams((params) => {
-      if (category) {
-        params.set('category', category);
-      } else {
-        params.delete('category');
-      }
-    });
+    setSelectedCategory(category);
+    setPage(1);
+    syncUrlParams(category, sortMode);
   };
 
   const handleSelectSortMode = (mode: PublicNewsSortMode) => {
-    updateUrlParams((params) => {
-      params.delete('isFeatured');
-      params.delete('popular');
-      params.delete('hot');
-      if (mode === 'featured') {
-        params.set('isFeatured', 'true');
-      } else if (mode === 'popular') {
-        params.set('popular', 'true');
-      } else if (mode === 'hot') {
-        params.set('hot', 'true');
-      }
-    });
+    setSortMode(mode);
+    setPage(1);
+    syncUrlParams(selectedCategory, mode);
   };
 
   const handleToggleSortOrder = () => {
@@ -185,9 +186,13 @@ export function NewsPublicListing() {
 
   const handleClearAllFilters = () => {
     setSearchInput('');
+    setSelectedCategory(undefined);
+    setSortMode('latest');
     setSortOrder('desc');
     setPage(1);
-    router.replace(pathname, { scroll: false });
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', pathname);
+    }
   };
 
   const hasActiveFilter = Boolean(

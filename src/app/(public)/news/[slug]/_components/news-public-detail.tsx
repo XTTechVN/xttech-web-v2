@@ -53,13 +53,13 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
   });
 
   const { data: relatedData } = useQuery({
-    queryKey: ['public-news-related', article?.category],
+    queryKey: ['public-news-list', 'related', article?.category],
     queryFn: () => getPublicNewsList({ category: article?.category, limit: 4 }),
     enabled: Boolean(article?.category),
   });
 
   const { data: popularData } = useQuery({
-    queryKey: ['public-news-popular-sidebar'],
+    queryKey: ['public-news-list', 'popular-sidebar'],
     queryFn: () => getPublicNewsList({ popular: true, limit: 5 }),
   });
 
@@ -108,10 +108,12 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
     try {
       const res = await togglePublicNewsLike(article.slug, { action: nextLiked ? 'like' : 'unlike' });
       setOptimisticLike({ articleId: article.id, liked: nextLiked, likeCount: res.likeCount });
-      queryClient.invalidateQueries({ queryKey: ['public-news-list'] });
-      queryClient.invalidateQueries({ queryKey: ['public-news-featured-spotlight'] });
-      queryClient.invalidateQueries({ queryKey: ['public-news-popular-sidebar'] });
-      queryClient.invalidateQueries({ queryKey: ['public-news-hot-sidebar'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['public-news-list'] }),
+        queryClient.invalidateQueries({ queryKey: ['public-news-detail', article.slug] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-news'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-news-detail', article.id] }),
+      ]);
     } catch (err) {
       setOptimisticLike({ articleId: article.id, liked: !nextLiked, likeCount: currentLikeCount });
       setNewsArticleLiked(article.id, !nextLiked);

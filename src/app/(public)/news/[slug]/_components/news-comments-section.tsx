@@ -85,7 +85,10 @@ export function NewsCommentsSection({
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['public-news-comments', slug] }),
         queryClient.invalidateQueries({ queryKey: ['public-news-detail', slug] }),
+        queryClient.invalidateQueries({ queryKey: ['public-news-list'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-news-comments', articleId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-news-detail', articleId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-news'] }),
       ]);
     } catch (err) {
       showErrorToast(err, 'Không thể gửi bình luận. Vui lòng thử lại.');
@@ -105,7 +108,9 @@ export function NewsCommentsSection({
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['public-news-comments', slug] }),
         queryClient.invalidateQueries({ queryKey: ['public-news-detail', slug] }),
+        queryClient.invalidateQueries({ queryKey: ['public-news-list'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-news-comments', articleId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-news-detail', articleId] }),
         queryClient.invalidateQueries({ queryKey: ['admin-news'] }),
       ]);
     } catch (err) {

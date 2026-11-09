@@ -68,7 +68,12 @@ export function NewsArticleCard({
         action: nextLiked ? 'like' : 'unlike',
       });
       setOptimisticLike({ articleId: article.id, liked: nextLiked, likeCount: res.likeCount });
-      queryClient.invalidateQueries({ queryKey: ['public-news-detail', article.slug] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['public-news-list'] }),
+        queryClient.invalidateQueries({ queryKey: ['public-news-detail', article.slug] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-news'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-news-detail', article.id] }),
+      ]);
     } catch (err) {
       setOptimisticLike({ articleId: article.id, liked: !nextLiked, likeCount: currentLikeCount });
       setNewsArticleLiked(article.id, !nextLiked);
