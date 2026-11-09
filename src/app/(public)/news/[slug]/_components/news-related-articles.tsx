@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import Link from 'next/link';
 import dayjs from 'dayjs';
 import { ArrowRight, Eye, Heart, Newspaper, Sparkles, TrendingUp } from 'lucide-react';
@@ -19,6 +19,18 @@ export function NewsRelatedArticles({
   popularArticles = [],
   category,
 }: NewsRelatedArticlesProps) {
+  const lastClickTimeRef = useRef<number>(0);
+
+  const handleArticleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const now = Date.now();
+    if (e.detail > 1 || now - lastClickTimeRef.current < 1000) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    lastClickTimeRef.current = now;
+  };
+
   const hasRelated = articles && articles.length > 0;
   const hasPopular = popularArticles && popularArticles.length > 0;
 
@@ -49,6 +61,7 @@ export function NewsRelatedArticles({
                 <Link
                   key={rel.id}
                   href={`/news/${encodeURIComponent(rel.slug)}`}
+                  onClick={handleArticleLinkClick}
                   className="group p-3.5 rounded-xl bg-white border border-slate-200/80 hover:border-primary/40 shadow-2xs transition-all flex flex-col justify-between gap-3"
                 >
                   <div className="space-y-2.5">
@@ -119,6 +132,7 @@ export function NewsRelatedArticles({
                 <Link
                   key={pop.id}
                   href={`/news/${encodeURIComponent(pop.slug)}`}
+                  onClick={handleArticleLinkClick}
                   className="group p-3.5 rounded-xl bg-white border border-slate-200/80 hover:border-primary/40 shadow-2xs transition-all flex flex-col justify-between gap-3"
                 >
                   <div className="space-y-2.5">

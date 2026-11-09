@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Link from 'next/link';
 import dayjs from 'dayjs';
 import {
@@ -43,6 +43,18 @@ export function NewsArticleCard({
     likeCount: number;
   } | null>(null);
   const [isLiking, setIsLiking] = useState(false);
+  const lastClickTimeRef = useRef<number>(0);
+
+  // Chặn double-click hoặc click liên tiếp vào bài viết để chống spam view
+  const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const now = Date.now();
+    if (e.detail > 1 || now - lastClickTimeRef.current < 1000) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    lastClickTimeRef.current = now;
+  };
 
   const isLiked =
     optimisticLike?.articleId === article.id
@@ -99,6 +111,7 @@ export function NewsArticleCard({
     return (
       <Link
         href={`/news/${encodeURIComponent(article.slug)}`}
+        onClick={handleCardClick}
         className="group flex items-start gap-3.5 p-3 rounded-xl bg-white border border-slate-200/80 hover:border-primary/35 hover:shadow-xs transition-all duration-200"
       >
         {typeof rank === 'number' && (
@@ -166,6 +179,7 @@ export function NewsArticleCard({
     return (
       <Link
         href={`/news/${encodeURIComponent(article.slug)}`}
+        onClick={handleCardClick}
         className="group relative grid grid-cols-1 lg:grid-cols-12 rounded-2xl overflow-hidden bg-white border border-primary/20 shadow-xs hover:shadow-lg hover:border-primary/40 transition-all duration-300"
       >
         <div className="relative lg:col-span-7 aspect-16/10 lg:aspect-auto lg:min-h-[360px] bg-primary/5 overflow-hidden">
@@ -276,6 +290,7 @@ export function NewsArticleCard({
   return (
     <Link
       href={`/news/${encodeURIComponent(article.slug)}`}
+      onClick={handleCardClick}
       className="group flex flex-col rounded-xl overflow-hidden bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-primary/30 transition-all duration-300 h-full"
     >
       <div className="relative aspect-16/10 bg-primary/5 overflow-hidden shrink-0">
