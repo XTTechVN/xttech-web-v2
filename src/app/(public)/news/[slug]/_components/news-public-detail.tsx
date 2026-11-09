@@ -355,12 +355,22 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
               <span className="inline-flex items-center gap-1" title="Lượt xem">
                 <Eye className="w-3.5 h-3.5 text-slate-400" /> {article.viewCount}
               </span>
-              <span className="inline-flex items-center gap-1" title="Lượt yêu thích">
+              <button
+                type="button"
+                onClick={handleToggleLike}
+                disabled={likeMutation.isPending}
+                title={isLiked ? 'Bỏ thả tim' : 'Thả tim bài viết'}
+                className={`inline-flex items-center gap-1 cursor-pointer transition-colors ${
+                  isLiked ? 'text-rose-600 font-bold' : 'hover:text-rose-600'
+                }`}
+              >
                 <Heart
-                  className={`w-3.5 h-3.5 ${isLiked ? 'text-rose-500 fill-rose-500' : 'text-rose-500'}`}
+                  className={`w-3.5 h-3.5 transition-transform ${
+                    isLiked ? 'text-rose-500 fill-rose-500 scale-110' : 'text-rose-500'
+                  }`}
                 />{' '}
                 {currentLikeCount}
-              </span>
+              </button>
               <a
                 href="#comments"
                 className="inline-flex items-center gap-1 hover:text-primary"

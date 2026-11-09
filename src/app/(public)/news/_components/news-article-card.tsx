@@ -319,12 +319,20 @@ export function NewsArticleCard({
               <Eye className="w-3 h-3" />
               {article.viewCount}
             </span>
-            <span className="inline-flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleQuickLike}
+              disabled={likeMutation.isPending}
+              title={isLiked ? 'Bỏ thả tim' : 'Thả tim bài viết'}
+              className={`inline-flex items-center gap-1 cursor-pointer transition-colors ${
+                isLiked ? 'text-rose-600 font-bold' : 'hover:text-rose-600'
+              }`}
+            >
               <Heart
                 className={`w-3 h-3 ${isLiked ? 'text-rose-500 fill-rose-500' : 'text-rose-500'}`}
               />
               {currentLikeCount}
-            </span>
+            </button>
           </div>
         </div>
       </Link>
