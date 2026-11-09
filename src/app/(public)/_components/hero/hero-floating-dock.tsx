@@ -36,10 +36,10 @@ export const HeroFloatingDock = () => {
 
         {/* 2. Nút Facebook */}
         <a
-          href="https://www.facebook.com/vu.quyen.547476?locale=vi_VN"
+          href="https://www.facebook.com/xttech.vn"
           target="_blank"
           rel="noopener noreferrer"
-          title="Facebook cá nhân"
+          title="Fanpage"
           className="group relative flex h-11 w-11 items-center justify-center rounded-full bg-[#1877F2] text-white shadow-lg shadow-blue-600/30 transition-transform duration-300 hover:scale-110"
         >
           <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">

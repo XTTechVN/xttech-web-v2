@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Header, Footer, LegalPageView } from '../_components';
+import { LegalPageView } from '../_components';
 
 export const metadata: Metadata = {
   title: 'Chính Sách Bảo Mật Dữ Liệu | XTTECH ERP',
@@ -8,13 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPolicyPage() {
-  return (
-    <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-primary/15 selection:text-primary">
-      <Header />
-      <main>
-        <LegalPageView policyKey="privacy" />
-      </main>
-      <Footer />
-    </div>
-  );
+  return <LegalPageView policyKey="privacy" />;
 }

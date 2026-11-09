@@ -2,12 +2,34 @@
 import { getFileUrl } from './string';
 
 const ALLOWED_TAGS = new Set([
-  'P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'H3', 'H4', 'BLOCKQUOTE', 'DIV', 'SPAN',
+  'P',
+  'BR',
+  'STRONG',
+  'B',
+  'EM',
+  'I',
+  'U',
+  'S',
+  'STRIKE',
+  'DEL',
+  'MARK',
+  'UL',
+  'OL',
+  'LI',
+  'H2',
+  'H3',
+  'H4',
+  'BLOCKQUOTE',
+  'HR',
+  'SUB',
+  'SUP',
+  'DIV',
+  'SPAN',
+  'FONT',
 ]);
 
 const NEWS_ALLOWED_TAGS = new Set([
   ...ALLOWED_TAGS,
-  'H2',
   'FIGURE',
   'FIGCAPTION',
   'IMG',
@@ -26,6 +48,7 @@ const MEDIA_ALLOWED_ATTRS = new Set([
   'poster',
   'type',
   'class',
+  'data-temp-id',
 ]);
 
 const IFRAME_ALLOWED_ATTRS = new Set([
@@ -38,9 +61,41 @@ const IFRAME_ALLOWED_ATTRS = new Set([
   'frameborder',
 ]);
 
+const STYLE_ALLOWED_TAGS = new Set([
+  'P',
+  'SPAN',
+  'DIV',
+  'H2',
+  'H3',
+  'H4',
+  'LI',
+  'UL',
+  'OL',
+  'BLOCKQUOTE',
+  'STRONG',
+  'B',
+  'EM',
+  'I',
+  'U',
+  'S',
+  'STRIKE',
+  'DEL',
+  'MARK',
+  'SUB',
+  'SUP',
+  'FONT',
+  'FIGCAPTION',
+]);
+
 const YOUTUBE_VIDEO_ID_REGEX = /^[a-zA-Z0-9_-]{11}$/;
 const SAFE_YOUTUBE_EMBED_REGEX =
   /^https:\/\/(www\.)?(youtube\.com|youtube-nocookie\.com)\/embed\/[a-zA-Z0-9_-]{11}(\?[a-zA-Z0-9_=&-]+)?$/;
+
+const SAFE_CSS_COLOR_REGEX =
+  /^(#[0-9a-fA-F]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\)|hsla?\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\))$/i;
+
+const SAFE_TEXT_ALIGN_REGEX = /^(left|center|right|justify)$/i;
+const DANGEROUS_CSS_TOKEN_REGEX = /(url\s*\(|expression\s*\(|javascript:|vbscript:|@import|\\)/i;
 
 export const isSafeYoutubeEmbedUrl = (url: string): boolean => {
   return SAFE_YOUTUBE_EMBED_REGEX.test(url.trim());
@@ -122,6 +177,60 @@ export const escapeHtml = (raw: string): string =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+const sanitizeElementStyle = (element: Element, stripColors = false): string => {
+  const rawStyle = element.getAttribute('style') || '';
+  const alignAttr = element.getAttribute('align')?.trim() || '';
+  const fontColorAttr = element.tagName === 'FONT' ? element.getAttribute('color')?.trim() || '' : '';
+
+  const safeDeclarations: Record<string, string> = {};
+
+  if (!stripColors && fontColorAttr && SAFE_CSS_COLOR_REGEX.test(fontColorAttr)) {
+    safeDeclarations['color'] = fontColorAttr;
+  }
+
+  if (alignAttr && SAFE_TEXT_ALIGN_REGEX.test(alignAttr)) {
+    safeDeclarations['text-align'] = alignAttr.toLowerCase();
+  }
+
+  if (rawStyle && !DANGEROUS_CSS_TOKEN_REGEX.test(rawStyle)) {
+    rawStyle.split(';').forEach((part) => {
+      const colonIdx = part.indexOf(':');
+      if (colonIdx === -1) return;
+      const prop = part.slice(0, colonIdx).trim().toLowerCase();
+      const val = part.slice(colonIdx + 1).trim();
+      if (!prop || !val || DANGEROUS_CSS_TOKEN_REGEX.test(val)) return;
+
+      if (prop === 'color' && !stripColors && SAFE_CSS_COLOR_REGEX.test(val)) {
+        safeDeclarations['color'] = val;
+      } else if (
+        prop === 'background-color' &&
+        !stripColors &&
+        (val.toLowerCase() === 'transparent' || SAFE_CSS_COLOR_REGEX.test(val))
+      ) {
+        if (val.toLowerCase() !== 'transparent') {
+          safeDeclarations['background-color'] = val;
+        }
+      } else if (prop === 'text-align' && SAFE_TEXT_ALIGN_REGEX.test(val)) {
+        safeDeclarations['text-align'] = val.toLowerCase();
+      }
+    });
+  }
+
+  return Object.entries(safeDeclarations)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join('; ');
+};
+
+const resolveNormalizedTag = (rawTag: string, mapHeadings = false): string => {
+  if (rawTag === 'FONT') return 'span';
+  if (rawTag === 'STRIKE') return 's';
+  if (mapHeadings) {
+    if (rawTag === 'H1') return 'h2';
+    if (rawTag === 'H5' || rawTag === 'H6') return 'h4';
+  }
+  return rawTag.toLowerCase();
+};
+
 const sanitizeNode = (node: Node, output: Node, document: Document): void => {
   node.childNodes.forEach((child) => {
     if (child.nodeType === Node.TEXT_NODE) {
@@ -131,18 +240,31 @@ const sanitizeNode = (node: Node, output: Node, document: Document): void => {
     if (child.nodeType !== Node.ELEMENT_NODE) return;
 
     const element = child as Element;
-    if (!ALLOWED_TAGS.has(element.tagName)) {
-      // Thẻ không cho phép: bỏ thẻ nhưng giữ nội dung chữ bên trong (trừ script/style)
-      if (!['SCRIPT', 'STYLE'].includes(element.tagName)) sanitizeNode(element, output, document);
+    const tag = element.tagName;
+    if (!ALLOWED_TAGS.has(tag)) {
+      if (!['SCRIPT', 'STYLE'].includes(tag)) sanitizeNode(element, output, document);
       return;
     }
-    const clean = document.createElement(element.tagName.toLowerCase());
+
+    const clean = document.createElement(resolveNormalizedTag(tag));
+    if (STYLE_ALLOWED_TAGS.has(tag)) {
+      const safeStyle = sanitizeElementStyle(element, false);
+      if (safeStyle) clean.setAttribute('style', safeStyle);
+    }
     sanitizeNode(element, clean, document);
     output.appendChild(clean);
   });
 };
 
-const sanitizeNewsNode = (node: Node, output: Node, document: Document): void => {
+const sanitizeNewsNode = (
+  node: Node,
+  output: Node,
+  document: Document,
+  options?: { stripColors?: boolean; mapHeadings?: boolean },
+): void => {
+  const stripColors = Boolean(options?.stripColors);
+  const mapHeadings = Boolean(options?.mapHeadings);
+
   node.childNodes.forEach((child) => {
     if (child.nodeType === Node.TEXT_NODE) {
       output.appendChild(document.createTextNode(child.textContent ?? ''));
@@ -152,12 +274,14 @@ const sanitizeNewsNode = (node: Node, output: Node, document: Document): void =>
 
     const element = child as Element;
     const tag = element.tagName;
-    if (!NEWS_ALLOWED_TAGS.has(tag)) {
-      if (!['SCRIPT', 'STYLE'].includes(tag)) sanitizeNewsNode(element, output, document);
+    const isMappedHeading = mapHeadings && (tag === 'H1' || tag === 'H5' || tag === 'H6');
+
+    if (!NEWS_ALLOWED_TAGS.has(tag) && !isMappedHeading) {
+      if (!['SCRIPT', 'STYLE'].includes(tag)) sanitizeNewsNode(element, output, document, options);
       return;
     }
 
-    const clean = document.createElement(tag.toLowerCase());
+    const clean = document.createElement(resolveNormalizedTag(tag, mapHeadings));
 
     if (tag === 'IFRAME') {
       const src = element.getAttribute('src')?.trim() || '';
@@ -166,11 +290,7 @@ const sanitizeNewsNode = (node: Node, output: Node, document: Document): void =>
       Array.from(element.attributes).forEach((attr) => {
         const attrName = attr.name.toLowerCase();
         if (!IFRAME_ALLOWED_ATTRS.has(attrName)) return;
-        if (attrName === 'src') {
-          clean.setAttribute('src', src);
-          return;
-        }
-        clean.setAttribute(attrName, attr.value);
+        clean.setAttribute(attrName, attrName === 'src' ? src : attr.value);
       });
       output.appendChild(clean);
       return;
@@ -203,19 +323,25 @@ const sanitizeNewsNode = (node: Node, output: Node, document: Document): void =>
         }
       }
       const cls = element.getAttribute('class');
-      if (cls) clean.setAttribute('class', cls);
-    } else if (tag === 'FIGURE' || tag === 'FIGCAPTION') {
+      if (cls && !stripColors) clean.setAttribute('class', cls);
+    } else if ((tag === 'FIGURE' || tag === 'FIGCAPTION') && !stripColors) {
       const cls = element.getAttribute('class');
       if (cls) clean.setAttribute('class', cls);
     }
 
-    sanitizeNewsNode(element, clean, document);
+    if (STYLE_ALLOWED_TAGS.has(tag) || isMappedHeading) {
+      const safeStyle = sanitizeElementStyle(element, stripColors);
+      if (safeStyle) clean.setAttribute('style', safeStyle);
+    }
+
+    sanitizeNewsNode(element, clean, document, options);
     output.appendChild(clean);
   });
 };
 
-// Chỉ giữ các thẻ định dạng văn bản cơ bản, loại bỏ mọi thuộc tính (onclick, style, href...)
+// Làm sạch HTML cơ bản cho văn bản/hợp đồng (hỗ trợ căn lề, màu chữ, màu nền an toàn)
 export function sanitizeRichHtml(html: string): string {
+  if (!html) return '';
   if (typeof DOMParser === 'undefined') return escapeHtml(html);
 
   const parsed = new DOMParser().parseFromString(html, 'text/html');
@@ -224,13 +350,24 @@ export function sanitizeRichHtml(html: string): string {
   return container.innerHTML;
 }
 
-// Làm sạch HTML bài viết tin tức (hỗ trợ ảnh, video, chú thích figure/figcaption và chuyển đường dẫn MinIO tương đối)
+// Làm sạch HTML bài viết tin tức (hỗ trợ ảnh, video, chú thích figure/figcaption, màu chữ/nền an toàn)
 export function sanitizeNewsHtml(html: string): string {
   if (!html) return '';
   if (typeof DOMParser === 'undefined') return escapeHtml(html);
 
   const parsed = new DOMParser().parseFromString(html, 'text/html');
   const container = parsed.createElement('div');
-  sanitizeNewsNode(parsed.body, container, parsed);
+  sanitizeNewsNode(parsed.body, container, parsed, { stripColors: false, mapHeadings: false });
+  return container.innerHTML;
+}
+
+// Chuẩn hóa HTML khi người dùng Paste từ trang web khác (gỡ sạch nền đen/màu chữ ngoại lai nhưng giữ cấu trúc)
+export function normalizePastedHtml(rawHtml: string): string {
+  if (!rawHtml) return '';
+  if (typeof DOMParser === 'undefined') return escapeHtml(rawHtml);
+
+  const parsed = new DOMParser().parseFromString(rawHtml, 'text/html');
+  const container = parsed.createElement('div');
+  sanitizeNewsNode(parsed.body, container, parsed, { stripColors: true, mapHeadings: true });
   return container.innerHTML;
 }

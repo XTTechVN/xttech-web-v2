@@ -11,7 +11,6 @@ export const NAV_LINKS: PublicNavLink[] = [
   { href: '/pricing', label: 'Giá', key: 'pricing' },
   { href: '/news', label: 'Tin tức', key: 'news' },
   { href: '/privacy-policy', label: 'Chính sách', key: 'legal' },
-  { href: '/#contact', label: 'Liên hệ', key: 'contact' },
 ];
 
 export interface FooterSolutionLink {
