@@ -6,8 +6,8 @@ import dayjs from 'dayjs';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
-  Calendar,
   Check,
+  ChevronRight,
   Copy,
   Eye,
   Heart,
@@ -18,10 +18,9 @@ import {
   Share2,
   Sparkles,
 } from 'lucide-react';
-import { Avatar, Badge, Button, Skeleton } from '@/components';
+import { Button, Skeleton } from '@/components';
 import {
   isNewsArticleLiked,
-  NEWS_CATEGORY_BADGE_MAP,
   NEWS_CATEGORY_MAP,
   PUBLIC_NEWS_QUERY_KEYS,
   setNewsArticleLiked,
@@ -37,18 +36,36 @@ export interface NewsPublicDetailProps {
   slug: string;
 }
 
-const ARTICLE_HTML_CLASS = `text-slate-800 text-base leading-[1.85] space-y-4
-  [&_p]:my-3.5 [&_h2]:text-xl [&_h2]:sm:text-2xl [&_h2]:font-bold [&_h2]:text-slate-900 [&_h2]:mt-8 [&_h2]:mb-3
+const VIETNAMESE_WEEKDAYS = [
+  'Chủ nhật',
+  'Thứ hai',
+  'Thứ ba',
+  'Thứ tư',
+  'Thứ năm',
+  'Thứ sáu',
+  'Thứ bảy',
+];
+
+function formatVietnameseArticleDate(dateStr?: string | null): string {
+  if (!dateStr) return '--';
+  const d = dayjs(dateStr);
+  if (!d.isValid()) return '--';
+  const weekday = VIETNAMESE_WEEKDAYS[d.day()];
+  return `${weekday}, ${d.format('D/M/YYYY HH:mm')} (GMT+7)`;
+}
+
+const ARTICLE_HTML_CLASS = `text-slate-800 text-base sm:text-[17px] leading-[1.8] space-y-4
+  [&_p]:my-4 [&_h2]:text-xl [&_h2]:sm:text-2xl [&_h2]:font-bold [&_h2]:text-slate-900 [&_h2]:mt-8 [&_h2]:mb-3
   [&_h3]:text-lg [&_h3]:sm:text-xl [&_h3]:font-bold [&_h3]:text-slate-900 [&_h3]:mt-6 [&_h3]:mb-2.5
   [&_h4]:text-base [&_h4]:font-bold [&_h4]:text-slate-900 [&_h4]:mt-5 [&_h4]:mb-2
   [&_ul]:my-4 [&_ul]:pl-6 [&_ul]:list-disc [&_ol]:my-4 [&_ol]:pl-6 [&_ol]:list-decimal
   [&_li]:my-1.5 [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:bg-primary/5
   [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:rounded-r-lg [&_blockquote]:italic [&_blockquote]:text-slate-700
-  [&_figure]:my-6 [&_figure]:mx-auto [&_figcaption]:text-xs [&_figcaption]:sm:text-sm [&_figcaption]:text-slate-500
-  [&_figcaption]:italic [&_figcaption]:text-center [&_figcaption]:mt-2
-  [&_img]:max-w-full [&_img]:rounded-xl [&_img]:mx-auto [&_img]:shadow-xs
-  [&_video]:max-w-full [&_video]:rounded-xl [&_video]:mx-auto [&_video]:shadow-xs
-  [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg [&_iframe]:mx-auto [&_iframe]:border-0 [&_iframe]:shadow-sm
+  [&_figure]:my-6 [&_figure]:mx-auto [&_figcaption]:text-xs [&_figcaption]:text-slate-500
+  [&_figcaption]:mt-2
+  [&_img]:w-full [&_img]:max-h-105 [&_img]:object-contain [&_img]:bg-slate-50 [&_img]:mx-auto
+  [&_video]:w-full [&_video]:max-h-105 [&_video]:rounded-lg [&_video]:mx-auto
+  [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg [&_iframe]:mx-auto [&_iframe]:border-0
   [&_a]:text-primary [&_a]:font-medium [&_a]:underline hover:[&_a]:text-primary/80
   [&_hr]:my-6 [&_hr]:border-slate-200 [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:rounded-xs
   [&_s]:line-through [&_del]:line-through`;
@@ -261,10 +278,12 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
 
   if (isLoading) {
     return (
-      <div className="w-full px-4 sm:px-8 lg:px-32 py-10 space-y-5">
-        <Skeleton className="h-5 w-40 rounded" />
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-5">
+        <Skeleton className="h-4 w-44 rounded" />
         <Skeleton className="h-10 w-full rounded-lg" />
-        <Skeleton className="h-80 w-full rounded-2xl" />
+        <Skeleton className="h-4 w-64 rounded" />
+        <Skeleton className="h-16 w-full rounded" />
+        <Skeleton className="h-80 w-full rounded-lg" />
       </div>
     );
   }
@@ -288,97 +307,95 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
     );
   }
 
-  const categoryBadge = NEWS_CATEGORY_BADGE_MAP[article.category] || {
-    label: NEWS_CATEGORY_MAP[article.category] || article.category,
-    variant: 'primary' as const,
-  };
+  const categoryLabel = NEWS_CATEGORY_MAP[article.category] || article.category;
   const authorDisplayName =
     article.author?.fullName || article.author?.username || 'Ban biên tập XTTECH';
-  const authorAvatarSrc = getFileUrl(article.author?.avatar) || undefined;
   const thumbnailSrc = getFileUrl(article.thumbnailUrl);
 
   return (
     <div className="bg-white min-h-screen pb-16">
-      <article className="w-full px-4 sm:px-8 lg:px-32 pt-8 sm:pt-10">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <Link
-            href="/news"
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-primary transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Tất cả tin tức</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            {article.isFeatured && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
-                <Sparkles className="w-3 h-3" /> Tiêu điểm
-              </span>
-            )}
-            <Link href={`/news?category=${encodeURIComponent(article.category)}`}>
-              <Badge variant={categoryBadge.variant} size="md" pill>
-                {categoryBadge.label}
-              </Badge>
+      <article className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10">
+        {/* Dòng điều hướng Chuyên mục kiểu báo chí (giống mẫu Ảnh 2: TIN TỨC > CHUYÊN MỤC) */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <nav className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm font-medium uppercase tracking-wide text-slate-400">
+            <Link href="/news" className="hover:text-primary transition-colors">
+              Tin tức
             </Link>
-          </div>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+            <Link
+              href={`/news?category=${encodeURIComponent(article.category)}`}
+              className="text-slate-500 hover:text-primary transition-colors"
+            >
+              {categoryLabel}
+            </Link>
+          </nav>
+
+          {article.isFeatured && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
+              <Sparkles className="w-3 h-3" /> Tiêu điểm
+            </span>
+          )}
         </div>
 
-        <div className="bg-white">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-snug">
+        <div className="mt-3">
+          {/* Tiêu đề lớn */}
+          <h1 className="text-2xl sm:text-3xl lg:text-[36px] font-bold text-slate-900 tracking-tight leading-[1.25]">
             {article.title}
           </h1>
 
-          <div className="mt-5 pb-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Avatar src={authorAvatarSrc} name={authorDisplayName} size="md" />
-              <div>
-                <p className="text-sm font-bold text-slate-900">{authorDisplayName}</p>
-                <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                  <Calendar className="w-3.5 h-3.5 text-primary" />
-                  <span className="font-mono tabular-nums">
-                    {article.createdAt ? dayjs(article.createdAt).format('DD/MM/YYYY HH:mm') : '--'}
-                  </span>
-                </div>
-              </div>
+          {/* Dòng Tác giả • Thứ, ngày giờ (GMT+7) & thông số tương tác */}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-[13px] text-slate-500">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="font-bold text-slate-900">{authorDisplayName}</span>
+              <span className="text-slate-300">•</span>
+              <span>{formatVietnameseArticleDate(article.createdAt)}</span>
             </div>
 
-            <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-600 font-mono tabular-nums">
-              <span className="inline-flex items-center gap-1.5" title="Lượt xem">
-                <Eye className="w-4 h-4 text-slate-400" /> {article.viewCount}
+            <div className="flex items-center gap-3.5 text-xs text-slate-500 font-mono tabular-nums">
+              <span className="inline-flex items-center gap-1" title="Lượt xem">
+                <Eye className="w-3.5 h-3.5 text-slate-400" /> {article.viewCount}
               </span>
-              <span className="inline-flex items-center gap-1.5" title="Lượt yêu thích">
+              <span className="inline-flex items-center gap-1" title="Lượt yêu thích">
                 <Heart
-                  className={`w-4 h-4 ${isLiked ? 'text-rose-500 fill-rose-500' : 'text-rose-500'}`}
+                  className={`w-3.5 h-3.5 ${isLiked ? 'text-rose-500 fill-rose-500' : 'text-rose-500'}`}
                 />{' '}
                 {currentLikeCount}
               </span>
               <a
                 href="#comments"
-                className="inline-flex items-center gap-1.5 hover:text-primary"
+                className="inline-flex items-center gap-1 hover:text-primary"
                 title="Bình luận"
               >
-                <MessageSquare className="w-4 h-4 text-primary" /> {article.commentCount}
+                <MessageSquare className="w-3.5 h-3.5 text-primary" /> {article.commentCount}
               </a>
             </div>
           </div>
 
+          {/* Sapo / Tóm tắt in đậm (chuẩn phong cách báo chí ở Ảnh 2) */}
           {article.summary && (
-            <div className="mt-6 p-4 sm:p-5 rounded-xl bg-primary/5 border-l-4 border-primary text-sm sm:text-base font-medium text-slate-700 leading-relaxed">
+            <p className="mt-5 text-base sm:text-[17px] font-bold text-slate-800 leading-relaxed">
               {article.summary}
-            </div>
+            </p>
           )}
 
+          {/* Ảnh đại diện vừa vặn trong khung đọc + chú thích ảnh bên dưới (giống Ảnh 2) */}
           {thumbnailSrc && (
-            <div className="mt-6 rounded-xl overflow-hidden bg-slate-50">
-              <img
-                src={thumbnailSrc}
-                alt={article.title}
-                className="w-full h-auto object-contain mx-auto"
-              />
-            </div>
+            <figure className="mt-6 space-y-2">
+              <div className="overflow-hidden bg-slate-50">
+                <img
+                  src={thumbnailSrc}
+                  alt={article.title}
+                  className="w-full max-h-105 object-contain mx-auto"
+                />
+              </div>
+              <figcaption className="text-xs text-slate-500 leading-relaxed">
+                {article.title}. Ảnh: <em className="italic">XTTECH</em>.
+              </figcaption>
+            </figure>
           )}
 
           <div
-            className={`mt-7 ${ARTICLE_HTML_CLASS}`}
+            className={`mt-6 ${ARTICLE_HTML_CLASS}`}
             dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
 
@@ -411,17 +428,7 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
                 <span>Chia sẻ:</span>
               </span>
 
-              <button
-                type="button"
-                onClick={() => handleShareChannel('zalo')}
-                title="Chia sẻ qua Zalo"
-                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-[#0068FF] text-white text-xs font-bold shadow-2xs hover:opacity-90 hover:scale-105 transition-all cursor-pointer"
-              >
-                <span className="font-extrabold tracking-tight text-[11px] bg-white text-[#0068FF] px-1.5 py-0.2 rounded-full leading-tight">
-                  Zalo
-                </span>
-                <span className="hidden md:inline">Zalo</span>
-              </button>
+              
 
               <button
                 type="button"
@@ -445,38 +452,6 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
                   <path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.19 5.44 3.14 7.17.16.13.26.35.27.57l.05 1.78c.02.63.67 1.04 1.24.76l1.98-.87c.17-.08.36-.1.55-.05.88.24 1.81.36 2.77.36 5.64 0 10-4.13 10-9.7C22 6.13 17.64 2 12 2zm6 7.46-2.93 4.67c-.47.73-1.47.92-2.17.4l-2.34-1.75a.6.6 0 0 0-.72 0l-3.16 2.4c-.42.32-.97-.18-.69-.63l2.93-4.67c.47-.73 1.47-.92 2.17-.4l2.34 1.75a.6.6 0 0 0 .72 0l3.16-2.4c.42-.32.97.18.69.63z" />
                 </svg>
                 <span className="hidden md:inline">Messenger</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleShareChannel('instagram')}
-                title="Chia sẻ qua Instagram"
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-full bg-linear-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] text-white text-xs font-bold shadow-2xs hover:opacity-90 hover:scale-105 transition-all cursor-pointer"
-              >
-                <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                </svg>
-                <span className="hidden md:inline">Instagram</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleShareChannel('gmail')}
-                title="Chia sẻ qua Gmail"
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-full bg-[#EA4335] text-white text-xs font-bold shadow-2xs hover:opacity-90 hover:scale-105 transition-all cursor-pointer"
-              >
-                <Mail className="w-4 h-4 shrink-0" />
-                <span className="hidden md:inline">Gmail</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleShareChannel('telegram')}
-                title="Chia sẻ qua Telegram"
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-full bg-[#26A5E4] text-white text-xs font-bold shadow-2xs hover:opacity-90 hover:scale-105 transition-all cursor-pointer"
-              >
-                <Send className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden md:inline">Telegram</span>
               </button>
 
               <button
