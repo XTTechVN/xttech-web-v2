@@ -5,7 +5,6 @@ import { ZoomIn, ZoomOut } from 'lucide-react';
 import { ADVISE_ADVANTAGES } from './hero.constants';
 
 export const HeroAdviseCadSection = () => {
-  const [viewMode, setViewMode] = useState<'2D' | '3D'>('2D');
   const [activeTab, setActiveTab] = useState<'wood' | 'grey' | 'white'>('wood');
 
   return (
@@ -46,31 +45,14 @@ export const HeroAdviseCadSection = () => {
             </div>
           </div>
 
-          {/* Cột phải: Card preview Cửa 2D/3D kỹ thuật cao */}
+          {/* Cột phải: Card preview Cửa 2D kỹ thuật cao */}
           <div className="lg:col-span-6">
             <div className="relative rounded-3xl border border-gray-200 bg-white p-5 shadow-2xl shadow-gray-200/50 sm:p-7">
               {/* Thanh điều khiển trên Card */}
               <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">
-                <div className="inline-flex rounded-full bg-gray-100 p-1">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('2D')}
-                    className={`rounded-full px-4 py-1 text-xs font-bold transition-all ${
-                      viewMode === '2D' ? 'bg-[#1e293b] text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    2D Kỹ Thuật
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('3D')}
-                    className={`rounded-full px-4 py-1 text-xs font-bold transition-all ${
-                      viewMode === '3D' ? 'bg-[#1e293b] text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    3D Sống Động
-                  </button>
-                </div>
+                <span className="inline-flex items-center rounded-full bg-[#1e293b] px-4 py-1.5 text-xs font-bold text-white shadow-sm">
+                  2D Kỹ Thuật
+                </span>
 
                 <div className="flex items-center gap-1.5">
                   <button

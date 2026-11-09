@@ -17,7 +17,7 @@ export const HeroFloatingDock = () => {
       {/* Nhóm các nút liên kết mạng xã hội (có thể thu gọn/ẩn đi hoặc mở ra) */}
       <div
         className={`flex flex-col items-center gap-2.5 transition-all duration-300 ease-in-out ${
-          dockOpen ? 'pointer-events-auto max-h-[420px] scale-100 opacity-100' : 'pointer-events-none max-h-0 scale-75 overflow-hidden opacity-0'
+          dockOpen ? 'pointer-events-auto max-h-105 scale-100 opacity-100' : 'pointer-events-none max-h-0 scale-75 overflow-hidden opacity-0'
         }`}
       >
         {/* 1. Nút Zalo: 0776710766 */}

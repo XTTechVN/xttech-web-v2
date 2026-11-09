@@ -14,6 +14,7 @@ import {
   Folder,
   Warehouse,
   Newspaper,
+  ClipboardCheck,
 } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
@@ -81,6 +82,7 @@ export const acceptedSections = [
   'trash',
   'inbox',
   'news',
+  'tasks',
 ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
@@ -117,6 +119,24 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
   {
     title: 'Nhân sự & Chấm công',
     items: [
+      {
+        id: 'tasks',
+        label: 'Công việc & Giao việc',
+        icon: React.createElement(ClipboardCheck, { size: 18 }),
+        href: '/app/tasks',
+        roles: [
+          'super',
+          'admin',
+          'hr',
+          'sale',
+          'technician',
+          'accountant',
+          'employee',
+          'workshop',
+          'installer',
+          'warranty',
+        ],
+      },
       {
         id: 'employees-root',
         label: 'Nhân sự',
