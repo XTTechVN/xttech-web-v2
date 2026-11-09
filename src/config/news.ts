@@ -96,6 +96,12 @@ export function slugifyVietnamese(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+export const PUBLIC_NEWS_QUERY_KEYS = {
+  list: ['public-news-list'] as const,
+  detail: (slug: string) => ['public-news-detail', slug] as const,
+  comments: (slug: string) => ['public-news-comments', slug] as const,
+};
+
 const LIKED_NEWS_STORAGE_KEY = 'xttech_liked_news_ids';
 
 function readLikedNewsIds(): number[] {
