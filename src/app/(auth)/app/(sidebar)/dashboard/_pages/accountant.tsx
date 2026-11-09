@@ -13,6 +13,7 @@ import LiveStaffWidget from '../_components/live-staff-widget';
 import ProjectReportCard from '../_components/project-report-card';
 import { Users, CheckCircle2, FolderGit2, ClockAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { MyTasksReminderWidget } from '../_components/my-tasks-reminder-widget';
 
 export const AccountantDashboard = () => {
   const router = useRouter();
@@ -65,6 +66,7 @@ export const AccountantDashboard = () => {
           pendingLeavesCount={data?.pendingLeavesCount}
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
         />
+        <MyTasksReminderWidget />
         <PersonalAttendanceHistory />
       </div>
 
@@ -85,6 +87,7 @@ export const AccountantDashboard = () => {
 
         <div className="grid grid-cols-12 gap-4 min-w-0">
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
+            <MyTasksReminderWidget />
             <ProjectReportCard />
             <QuickAttendanceCard attendance={data?.myAttendance} />
             <WeeklyAttendanceChart

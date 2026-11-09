@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { MapPin, CalendarOff, ClockAlert, CalendarCheck, CalendarDays, Building2, Users, Lightbulb, BarChart3, } from 'lucide-react';
+import { MapPin, CalendarOff, ClockAlert, CalendarCheck, CalendarDays, Building2, Users, Lightbulb, BarChart3, ClipboardCheck } from 'lucide-react';
 import { useAuthStore } from '@/stores';
 import { UserRole, isRouteAllowedForRole } from '@/config';
 
@@ -39,6 +39,14 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
 
   const allActions: QuickActionItem[] = useMemo(
     () => [
+      {
+        id: 'tasks',
+        title: 'Công việc',
+        href: '/app/tasks',
+        icon: <ClipboardCheck size={22} />,
+        bgColor: 'bg-teal-50 hover:bg-teal-100/80',
+        textColor: 'text-primary',
+      },
       {
         id: 'live-map',
         title: 'Bản đồ Live',

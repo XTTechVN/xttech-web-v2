@@ -67,8 +67,9 @@ export function WarrantyQueueSection() {
   });
 
   const refresh = () => {
-    void queryClient.invalidateQueries({ queryKey: ['global_warranty_queue'] });
-    void queryClient.invalidateQueries({ queryKey: ['global_warranty_badge'] });
+    ['global_warranty_queue', 'global_warranty_badge', 'staff-tasks', 'staff-tasks-summary'].forEach(
+      (key) => void queryClient.invalidateQueries({ queryKey: [key] }),
+    );
   };
 
   const start = useMutation({
@@ -197,18 +198,15 @@ export function WarrantyQueueSection() {
             );
           })}
         </div>
-        <div className="relative w-full sm:w-72">
-          <Search
-            size={14}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <Input
-            placeholder="Tìm mã phiếu, tên khách, SĐT, công trình..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            fullWidth
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative w-full sm:w-64">
+            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input placeholder="Tìm mã phiếu, tên khách, SĐT, công trình..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" fullWidth />
+          </div>
+          <Link href="/app/tasks?sourceType=warranty" className="inline-flex items-center gap-1 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 shrink-0">
+            <span>Danh sách giao việc</span>
+            <ExternalLink size={12} />
+          </Link>
         </div>
       </div>
 
