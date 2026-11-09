@@ -249,8 +249,8 @@ export function NewsArticleCard({
   // 3. Kiểu Ngang nhỏ (3 bài bên phải của mục "Tin mới")
   if (variant === 'horizontal-sm') {
     return (
-      <Link href={href} onClick={handleCardClick} className="group flex items-start gap-3.5">
-        <div className="relative w-32 sm:w-36 aspect-16/10 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+      <Link href={href} onClick={handleCardClick} className="group grid grid-cols-12 gap-3.5 items-start">
+        <div className="col-span-5 relative w-full aspect-16/10 rounded-lg overflow-hidden bg-slate-100">
           {thumbnailSrc ? (
             <img
               src={thumbnailSrc}
@@ -263,7 +263,7 @@ export function NewsArticleCard({
             </div>
           )}
         </div>
-        <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="col-span-7 min-w-0 space-y-1.5">
           <h4 className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors leading-snug line-clamp-2">
             {article.title}
           </h4>
@@ -319,12 +319,20 @@ export function NewsArticleCard({
               <Eye className="w-3 h-3" />
               {article.viewCount}
             </span>
-            <span className="inline-flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleQuickLike}
+              disabled={likeMutation.isPending}
+              title={isLiked ? 'Bỏ thả tim' : 'Thả tim bài viết'}
+              className={`inline-flex items-center gap-1 cursor-pointer transition-colors ${
+                isLiked ? 'text-rose-600 font-bold' : 'hover:text-rose-600'
+              }`}
+            >
               <Heart
                 className={`w-3 h-3 ${isLiked ? 'text-rose-500 fill-rose-500' : 'text-rose-500'}`}
               />
               {currentLikeCount}
-            </span>
+            </button>
           </div>
         </div>
       </Link>
@@ -338,7 +346,7 @@ export function NewsArticleCard({
       onClick={handleCardClick}
       className="group grid grid-cols-1 sm:grid-cols-12 gap-4 items-start"
     >
-      <div className="sm:col-span-5 relative aspect-16/10 rounded-lg overflow-hidden bg-slate-100">
+      <div className="sm:col-span-5 min-w-0 relative w-full aspect-16/10 rounded-lg overflow-hidden bg-slate-100">
         {thumbnailSrc ? (
           <img
             src={thumbnailSrc}
@@ -351,7 +359,7 @@ export function NewsArticleCard({
           </div>
         )}
       </div>
-      <div className="sm:col-span-7 space-y-1.5">
+      <div className="sm:col-span-7 min-w-0 space-y-1.5">
         <h3 className="text-base font-bold text-slate-900 group-hover:text-primary transition-colors leading-snug line-clamp-2">
           {article.title}
         </h3>

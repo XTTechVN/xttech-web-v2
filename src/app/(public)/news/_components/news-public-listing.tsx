@@ -7,12 +7,11 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleArrowRight,
+  Flame,
   Newspaper,
-  RotateCcw,
 } from 'lucide-react';
-import { Badge, Button, Skeleton } from '@/components';
+import { Button, Skeleton } from '@/components';
 import {
-  NEWS_CATEGORY_BADGE_MAP,
   NEWS_CATEGORY_MAP,
   NEWS_CATEGORY_OPTIONS,
   PUBLIC_NEWS_QUERY_KEYS,
@@ -203,58 +202,21 @@ export function NewsPublicListing() {
         onSelectCategory={handleSelectCategory}
       />
 
-      {/* Thanh trạng thái khi đang lọc chuyên mục hoặc tìm kiếm */}
-      {hasActiveFilter && (
-        <div className="w-full px-4 sm:px-8 lg:px-32 pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 px-4 rounded-xl bg-slate-50 border border-slate-200/80">
-            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-              <span className="font-semibold text-slate-600">Đang hiển thị:</span>
-              {selectedCategory && (
-                <Badge
-                  variant={NEWS_CATEGORY_BADGE_MAP[selectedCategory]?.variant || 'primary'}
-                  size="sm"
-                  pill
-                >
-                  Chuyên mục: {NEWS_CATEGORY_MAP[selectedCategory]}
-                </Badge>
-              )}
-              {debouncedSearch && (
-                <Badge variant="default" size="sm" pill>
-                  Từ khóa: &ldquo;{debouncedSearch}&rdquo;
-                </Badge>
-              )}
-              <span className="text-xs text-slate-400 font-mono tabular-nums ml-1">
-                ({total} bài viết)
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleClearAllFilters}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Quay lại tất cả tin tức</span>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* =====================================================================
           GIAO DIỆN TRANG TIN TỨC BÁO CHÍ / TẠP CHÍ
          ===================================================================== */}
       {isEditorialView && (
         <div className="space-y-12 pt-8">
           {/* SECTION 1: TOP HERO + TIN MỚI (Cột trái 8 cols) & TIÊU ĐIỂM NỔI BẬT (Cột phải 4 cols) */}
-          <section className="w-full px-4 sm:px-8 lg:px-32">
+          <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
             {isLoading ? (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-8 space-y-6">
+                <div className="lg:col-span-8 min-w-0 space-y-6">
                   <Skeleton className="w-full aspect-16/9 rounded-lg" />
                   <Skeleton className="h-8 w-4/5 rounded" />
                   <Skeleton className="h-16 w-full rounded" />
                 </div>
-                <div className="lg:col-span-4 space-y-6">
+                <div className="lg:col-span-4 min-w-0 space-y-6">
                   <Skeleton className="w-full h-80 rounded-lg" />
                 </div>
               </div>
@@ -274,7 +236,7 @@ export function NewsPublicListing() {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 {/* CỘT TRÁI (8 cols): BÀI Đinh (Lead Hero) + Khối "Tin mới" */}
-                <div className="lg:col-span-8 space-y-10">
+                <div className="lg:col-span-8 min-w-0 space-y-10">
                   {leadHeroArticle && (
                     <NewsArticleCard article={leadHeroArticle} variant="lead-hero" />
                   )}
@@ -301,13 +263,13 @@ export function NewsPublicListing() {
 
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                         {/* Cột trái trong khối Tin mới: 1 bài sub-lead */}
-                        <div className="md:col-span-6">
+                        <div className="md:col-span-6 min-w-0">
                           <NewsArticleCard article={latestLeadArticle} variant="sub-lead" />
                         </div>
 
                         {/* Cột phải trong khối Tin mới: tối đa 3 bài ngang nhỏ */}
                         {latestSideArticles.length > 0 && (
-                          <div className="md:col-span-6 space-y-4">
+                          <div className="md:col-span-6 min-w-0 space-y-4">
                             {latestSideArticles.map((item) => (
                               <NewsArticleCard
                                 key={item.id}
@@ -323,9 +285,9 @@ export function NewsPublicListing() {
                 </div>
 
                 {/* CỘT PHẢI (4 cols): Khối "Tiêu điểm nổi bật" thiết kế dạng Slide (tối đa 5 bài isFeatured = true + chấm tròn chuyển slide) */}
-                <aside className="lg:col-span-4 space-y-6">
+                <aside className="lg:col-span-4 min-w-0 w-full space-y-6">
                   <div
-                    className="group/slide rounded-lg bg-white border border-slate-200/90 shadow-sm p-5 space-y-4"
+                    className="group/slide rounded-lg bg-white border border-slate-200/90 shadow-sm p-5 space-y-4 overflow-hidden"
                     onMouseEnter={() => setIsHoveringSlide(true)}
                     onMouseLeave={() => setIsHoveringSlide(false)}
                   >
@@ -427,7 +389,7 @@ export function NewsPublicListing() {
           </section>
 
           {/* SECTION 2: DẢI 4 CỘT CHUYÊN MỤC TRÊN NỀN XÁM NHẠT */}
-          <section className="w-full px-4 sm:px-8 lg:px-32">
+          <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
             <div className="bg-slate-100/85 border-b-4 border-primary px-5 py-8 sm:px-8 rounded-t-lg">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {topFourCategories.map((cat) => {
@@ -436,7 +398,7 @@ export function NewsPublicListing() {
                   const bulletCatArticles = catArticles.slice(1, 4);
 
                   return (
-                    <div key={cat.value} className="flex flex-col space-y-4">
+                    <div key={cat.value} className="flex flex-col min-w-0 space-y-4">
                       <button
                         type="button"
                         onClick={() => handleSelectCategory(cat.value)}
@@ -486,7 +448,7 @@ export function NewsPublicListing() {
 
           {/* SECTION 3: 2 CỘT CHUYÊN MỤC LỚN Side-by-Side */}
           {bottomTwoCategories.length > 0 && (
-            <section className="w-full px-4 sm:px-8 lg:px-32">
+            <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 {bottomTwoCategories.map((cat) => {
                   const catArticles = categoryArticlesMap[cat.value] || [];
@@ -494,7 +456,7 @@ export function NewsPublicListing() {
                   const subCatArticles = catArticles.slice(1, 3);
 
                   return (
-                    <div key={cat.value} className="space-y-5">
+                    <div key={cat.value} className="min-w-0 space-y-5">
                       <div className="flex items-center justify-between">
                         <button
                           type="button"
@@ -563,11 +525,11 @@ export function NewsPublicListing() {
          ===================================================================== */}
       <section
         id="all-news-archive"
-        className="w-full px-4 sm:px-8 lg:px-32 pt-12 space-y-8"
+        className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-12 space-y-8"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start border-t border-slate-200 pt-10">
           {/* Cột trái (8 cols): Danh sách tất cả bài viết có phân trang */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 min-w-0 space-y-6">
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2.5">
                 <span className="w-1 h-5 bg-primary rounded-xs shrink-0" />
@@ -696,7 +658,7 @@ export function NewsPublicListing() {
           </div>
 
           {/* Cột phải (4 cols): Khối Xem nhiều nhất (1..5) & Tin Hot cố định (Không dùng tab bấm chuyển đổi) */}
-          <aside className="lg:col-span-4 space-y-8 lg:sticky lg:top-20">
+          <aside className="lg:col-span-4 min-w-0 w-full space-y-8 lg:sticky lg:top-20">
             {/* Khối 1: Đọc nhiều nhất (đánh số 1, 2, 3, 4, 5 cố định như mẫu Ảnh 3) */}
             <div className="space-y-4">
               <div className="flex items-center gap-2.5 border-b border-slate-200 pb-3">
@@ -729,9 +691,9 @@ export function NewsPublicListing() {
             {/* Khối 2: Tin Hot / Được quan tâm (cố định) */}
             {hotArticles.length > 0 && (
               <div className="rounded-lg bg-slate-50/90 border border-slate-200/80 p-5 space-y-4">
-                <div className="flex items-center gap-2.5 border-b border-slate-200/80 pb-2.5">
-                  <span className="w-1 h-5 bg-primary rounded-xs shrink-0" />
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                <div className="flex items-center gap-2 border-b border-slate-200/80 pb-2.5">
+                  <Flame className="w-5 h-5 text-red-600 fill-red-500 shrink-0" />
+                  <h3 className="text-base sm:text-lg font-bold text-red-600">
                     Tin Hot & Được yêu thích
                   </h3>
                 </div>
