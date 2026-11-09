@@ -9,11 +9,9 @@ import {
   CircleArrowRight,
   Flame,
   Newspaper,
-  RotateCcw,
 } from 'lucide-react';
-import { Badge, Button, Skeleton } from '@/components';
+import { Button, Skeleton } from '@/components';
 import {
-  NEWS_CATEGORY_BADGE_MAP,
   NEWS_CATEGORY_MAP,
   NEWS_CATEGORY_OPTIONS,
   PUBLIC_NEWS_QUERY_KEYS,
@@ -203,43 +201,6 @@ export function NewsPublicListing() {
         selectedCategory={selectedCategory}
         onSelectCategory={handleSelectCategory}
       />
-
-      {/* Thanh trạng thái khi đang lọc chuyên mục hoặc tìm kiếm */}
-      {hasActiveFilter && (
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 px-4 rounded-xl bg-slate-50 border border-slate-200/80">
-            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-              <span className="font-semibold text-slate-600">Đang hiển thị:</span>
-              {selectedCategory && (
-                <Badge
-                  variant={NEWS_CATEGORY_BADGE_MAP[selectedCategory]?.variant || 'primary'}
-                  size="sm"
-                  pill
-                >
-                  Chuyên mục: {NEWS_CATEGORY_MAP[selectedCategory]}
-                </Badge>
-              )}
-              {debouncedSearch && (
-                <Badge variant="default" size="sm" pill>
-                  Từ khóa: &ldquo;{debouncedSearch}&rdquo;
-                </Badge>
-              )}
-              <span className="text-xs text-slate-400 font-mono tabular-nums ml-1">
-                ({total} bài viết)
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleClearAllFilters}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Quay lại tất cả tin tức</span>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* =====================================================================
           GIAO DIỆN TRANG TIN TỨC BÁO CHÍ / TẠP CHÍ
