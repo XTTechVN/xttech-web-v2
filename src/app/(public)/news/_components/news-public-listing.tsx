@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Eye,
   Flame,
-  FolderOpen,
   Newspaper,
   RotateCcw,
   Sparkles,
@@ -43,8 +42,7 @@ export function NewsPublicListing() {
     return 'latest';
   });
   const [page, setPage] = useState(1);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [sidebarTab, setSidebarTab] = useState<'popular' | 'hot'>('popular');
+  const [sidebarTab, setSidebarTab] = useState<'featured' | 'popular' | 'hot'>('popular');
 
   const isFeaturedFilter = sortMode === 'featured';
   const isPopular = sortMode === 'popular';
@@ -53,7 +51,7 @@ export function NewsPublicListing() {
   const debouncedSearch = useDebounce(searchInput.trim(), 350);
   const offset = (page - 1) * PAGE_LIMIT;
 
-  // 1. Call API lấy danh sách bài viết chính theo đầy đủ các cờ (category, isFeatured, popular, hot, search, sortOrder)
+  // 1. Call API lấy danh sách bài viết chính theo đúng cờ đang chọn (isFeatured, popular, hot, category, search)
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
       'public-news-list',
@@ -63,7 +61,6 @@ export function NewsPublicListing() {
       isFeaturedFilter,
       isPopular,
       isHot,
-      sortOrder,
       offset,
       PAGE_LIMIT,
     ],
@@ -71,11 +68,9 @@ export function NewsPublicListing() {
       getPublicNewsList({
         search: debouncedSearch || undefined,
         category: selectedCategory,
-        isFeatured: isFeaturedFilter || undefined,
-        popular: isPopular || undefined,
-        hot: isHot || undefined,
-        sortBy: 'createdAt',
-        sortOrder,
+        isFeatured: isFeaturedFilter ? true : undefined,
+        popular: isPopular ? true : undefined,
+        hot: isHot ? true : undefined,
         offset,
         limit: PAGE_LIMIT,
       }),
@@ -83,11 +78,7 @@ export function NewsPublicListing() {
 
   // 2. Call API riêng cho khu vực Tiêu điểm nổi bật (isFeatured = true) - cùng root key 'public-news-list'
   const showSpotlightSection =
-    page === 1 &&
-    !debouncedSearch &&
-    !selectedCategory &&
-    sortMode === 'latest' &&
-    sortOrder === 'desc';
+    page === 1 && !debouncedSearch && !selectedCategory && sortMode === 'latest';
 
   const { data: featuredData, isLoading: isLoadingFeatured } = useQuery({
     queryKey: ['public-news-list', 'featured-spotlight'],
@@ -99,22 +90,14 @@ export function NewsPublicListing() {
     enabled: showSpotlightSection,
   });
 
-  // 3. Call API riêng cho Bảng xếp hạng Bài viết nhiều người xem (popular = true) - cùng root key 'public-news-list'
-  const { data: popularData, isLoading: isLoadingPopular } = useQuery({
-    queryKey: ['public-news-list', 'popular-sidebar'],
+  // 3. Call API cho Bảng tin Xu hướng (Sidebar) theo đúng 1 trong 3 cờ: isFeatured=true | popular=true | hot=true
+  const { data: sidebarData, isLoading: isSidebarLoading } = useQuery({
+    queryKey: ['public-news-list', 'sidebar-flag', sidebarTab],
     queryFn: () =>
       getPublicNewsList({
-        popular: true,
-        limit: 5,
-      }),
-  });
-
-  // 4. Call API riêng cho Bảng xếp hạng Tin Hot / Yêu thích (hot = true) - cùng root key 'public-news-list'
-  const { data: hotData, isLoading: isLoadingHot } = useQuery({
-    queryKey: ['public-news-list', 'hot-sidebar'],
-    queryFn: () =>
-      getPublicNewsList({
-        hot: true,
+        isFeatured: sidebarTab === 'featured' ? true : undefined,
+        popular: sidebarTab === 'popular' ? true : undefined,
+        hot: sidebarTab === 'hot' ? true : undefined,
         limit: 5,
       }),
   });
@@ -135,10 +118,7 @@ export function NewsPublicListing() {
     ? articles.filter((item) => item.id !== primaryFeatured.id)
     : articles;
 
-  const popularArticles = popularData?.items || [];
-  const hotArticles = hotData?.items || [];
-  const sidebarArticles = sidebarTab === 'popular' ? popularArticles : hotArticles;
-  const isSidebarLoading = sidebarTab === 'popular' ? isLoadingPopular : isLoadingHot;
+  const sidebarArticles = sidebarData?.items || [];
 
   const syncUrlParams = (nextCategory?: NewsCategory, nextMode?: PublicNewsSortMode) => {
     if (typeof window === 'undefined') return;
@@ -174,11 +154,6 @@ export function NewsPublicListing() {
     syncUrlParams(selectedCategory, mode);
   };
 
-  const handleToggleSortOrder = () => {
-    setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'));
-    setPage(1);
-  };
-
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
     setPage(1);
@@ -188,7 +163,6 @@ export function NewsPublicListing() {
     setSearchInput('');
     setSelectedCategory(undefined);
     setSortMode('latest');
-    setSortOrder('desc');
     setPage(1);
     if (typeof window !== 'undefined') {
       window.history.replaceState(null, '', pathname);
@@ -208,9 +182,6 @@ export function NewsPublicListing() {
         onSelectCategory={handleSelectCategory}
         sortMode={sortMode}
         onSelectSortMode={handleSelectSortMode}
-        sortOrder={sortOrder}
-        onToggleSortOrder={handleToggleSortOrder}
-        totalCount={total}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 space-y-10">
@@ -472,9 +443,8 @@ export function NewsPublicListing() {
             )}
           </div>
 
-          {/* Cột phải (Sticky Sidebar): Top Xem nhiều (popular=true), Tin Hot (hot=true) & Chuyên mục */}
+          {/* Cột phải (Sticky Sidebar): 3 cờ riêng biệt (popular=true | hot=true | isFeatured=true) */}
           <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-22">
-            {/* Widget 1: Bảng xếp hạng Xem nhiều / Tin Hot */}
             <div className="rounded-2xl bg-white border border-slate-200/80 shadow-xs p-5 space-y-4">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -485,31 +455,43 @@ export function NewsPublicListing() {
                 </div>
               </div>
 
-              {/* Chuyển đổi giữa cờ popular=true và hot=true */}
-              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100">
+              {/* Chuyển đổi giữa đủ 3 cờ: popular=true | hot=true | isFeatured=true */}
+              <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-100">
                 <button
                   type="button"
                   onClick={() => setSidebarTab('popular')}
-                  className={`inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     sidebarTab === 'popular'
-                      ? 'bg-white text-primary shadow-2xs'
+                      ? 'bg-white text-sky-600 shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>Xem nhiều nhất</span>
+                  <Eye className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Xem nhiều</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSidebarTab('hot')}
-                  className={`inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     sidebarTab === 'hot'
                       ? 'bg-white text-rose-600 shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Flame className="w-3.5 h-3.5" />
-                  <span>Tin Hot / Yêu thích</span>
+                  <Flame className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Tin Hot</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSidebarTab('featured')}
+                  className={`inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    sidebarTab === 'featured'
+                      ? 'bg-white text-amber-600 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Star className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Nổi bật</span>
                 </button>
               </div>
 
@@ -539,69 +521,12 @@ export function NewsPublicListing() {
                 <span>
                   {sidebarTab === 'popular'
                     ? 'Lọc tất cả bài nhiều người xem'
-                    : 'Lọc tất cả bài viết Hot'}
+                    : sidebarTab === 'hot'
+                      ? 'Lọc tất cả bài viết Hot'
+                      : 'Lọc tất cả bài viết nổi bật'}
                 </span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
-            </div>
-
-            {/* Widget 2: Khám phá theo Chuyên mục (Giữ đầy đủ chuyên mục) */}
-            <div className="rounded-2xl bg-white border border-slate-200/80 shadow-xs p-5 space-y-3.5">
-              <div className="flex items-center gap-2">
-                <FolderOpen className="w-4 h-4 text-primary" />
-                <h3 className="text-sm sm:text-base font-extrabold text-slate-900">
-                  Chuyên mục bài viết
-                </h3>
-              </div>
-
-              <div className="space-y-1.5">
-                <button
-                  type="button"
-                  onClick={() => handleSelectCategory(undefined)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                    !selectedCategory
-                      ? 'bg-primary text-white shadow-2xs'
-                      : 'text-slate-700 hover:bg-slate-50 hover:text-primary'
-                  }`}
-                >
-                  <span>Tất cả chuyên mục</span>
-                  <ArrowRight className="w-3.5 h-3.5 opacity-75" />
-                </button>
-
-                {NEWS_CATEGORY_OPTIONS.map((cat) => {
-                  const isActive = selectedCategory === cat.value;
-                  const badgeInfo = NEWS_CATEGORY_BADGE_MAP[cat.value];
-                  return (
-                    <button
-                      key={cat.value}
-                      type="button"
-                      onClick={() => handleSelectCategory(cat.value)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-primary text-white shadow-2xs'
-                          : 'text-slate-700 hover:bg-slate-50 hover:text-primary'
-                      }`}
-                    >
-                      <span>{cat.label}</span>
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          isActive
-                            ? 'bg-white'
-                            : badgeInfo?.variant === 'success'
-                              ? 'bg-emerald-500'
-                              : badgeInfo?.variant === 'info'
-                                ? 'bg-sky-500'
-                                : badgeInfo?.variant === 'warning'
-                                  ? 'bg-amber-500'
-                                  : badgeInfo?.variant === 'danger'
-                                    ? 'bg-rose-500'
-                                    : 'bg-primary'
-                        }`}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
             </div>
           </aside>
         </div>
