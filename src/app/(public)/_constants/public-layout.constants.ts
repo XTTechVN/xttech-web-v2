@@ -1,15 +1,16 @@
-import { Mail, Phone, ShieldCheck, FileText, type LucideIcon } from 'lucide-react';
+import { Mail, Phone, RotateCcw, ShieldCheck, FileText, type LucideIcon } from 'lucide-react';
 
 export interface PublicNavLink {
   href: string;
   label: string;
-  key: 'about' | 'pricing' | 'news' | 'contact';
+  key: 'about' | 'pricing' | 'news' | 'legal' | 'contact';
 }
 
 export const NAV_LINKS: PublicNavLink[] = [
   { href: '/#about', label: 'Về chúng tôi', key: 'about' },
   { href: '/pricing', label: 'Giá', key: 'pricing' },
   { href: '/news', label: 'Tin tức', key: 'news' },
+  { href: '/privacy-policy', label: 'Chính sách', key: 'legal' },
   { href: '/#contact', label: 'Liên hệ', key: 'contact' },
 ];
 
@@ -30,13 +31,13 @@ export const FOOTER_SOLUTION_LINKS: FooterSolutionLink[] = [
 export interface FooterLegalLink {
   href: string;
   label: string;
-  icon?: LucideIcon;
+  icon: LucideIcon;
 }
 
 export const FOOTER_LEGAL_LINKS: FooterLegalLink[] = [
-  { href: '#', label: 'Chính sách bảo mật', icon: ShieldCheck },
-  { href: '#', label: 'Điều khoản dịch vụ', icon: FileText },
-  { href: '#', label: 'Chính sách hoàn tiền' },
+  { href: '/privacy-policy', label: 'Chính sách bảo mật', icon: ShieldCheck },
+  { href: '/terms-of-service', label: 'Điều khoản dịch vụ', icon: FileText },
+  { href: '/refund-policy', label: 'Chính sách hoàn tiền', icon: RotateCcw },
 ];
 
 export interface FooterContactItem {
