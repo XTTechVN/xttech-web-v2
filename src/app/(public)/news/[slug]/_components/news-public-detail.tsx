@@ -29,7 +29,9 @@ const ARTICLE_HTML_CLASS = `text-slate-800 text-base leading-[1.85] space-y-4
   [&_img]:max-w-full [&_img]:rounded-xl [&_img]:mx-auto [&_img]:shadow-xs
   [&_video]:max-w-full [&_video]:rounded-xl [&_video]:mx-auto [&_video]:shadow-xs
   [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg [&_iframe]:mx-auto [&_iframe]:border-0 [&_iframe]:shadow-sm
-  [&_a]:text-primary [&_a]:font-medium [&_a]:underline hover:[&_a]:text-primary/80`;
+  [&_a]:text-primary [&_a]:font-medium [&_a]:underline hover:[&_a]:text-primary/80
+  [&_hr]:my-6 [&_hr]:border-slate-200 [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:rounded-xs
+  [&_s]:line-through [&_del]:line-through`;
 
 export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
   const [optimisticLike, setOptimisticLike] = useState<{

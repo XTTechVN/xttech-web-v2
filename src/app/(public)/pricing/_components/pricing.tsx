@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowUpRight, Check } from 'lucide-react';
-import { IMPLEMENTATION_PRICING_PLANS as plans, type ImplementationPlan as Plan } from './mock-data';
+import { IMPLEMENTATION_PRICING_PLANS as plans, type ImplementationPlan as Plan } from '../_constants/pricing.constants';
 
 /*
   Màu dùng trong file:

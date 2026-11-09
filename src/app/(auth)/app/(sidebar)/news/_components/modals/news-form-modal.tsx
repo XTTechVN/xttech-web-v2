@@ -1,14 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Button,
-  Input,
-  Modal,
-  RichTextEditor,
-  Textarea,
-  type InsertedMediaItem,
-} from '@/components';
+import { FileCode2 } from 'lucide-react';
+import { Button, Modal, RichTextEditor, type InsertedMediaItem } from '@/components';
 import { slugifyVietnamese } from '@/config';
 import { createNewsArticle, updateNewsArticle } from '@/actions';
 import { getFileUrl, sanitizeNewsHtml, showErrorToast, showSuccessToast } from '@/utils';
@@ -34,7 +28,9 @@ export function NewsFormModal({ isOpen, onClose, initialData, onSuccess }: NewsF
   const [title, setTitle] = useState(() => initialData?.title || '');
   const [slug, setSlug] = useState(() => initialData?.slug || '');
   const [isCustomSlug, setIsCustomSlug] = useState(() => Boolean(initialData?.slug));
-  const [category, setCategory] = useState<NewsCategory>(() => initialData?.category || 'company_news');
+  const [category, setCategory] = useState<NewsCategory>(
+    () => initialData?.category || 'company_news',
+  );
   const [status, setStatus] = useState<NewsStatus>(() => initialData?.status || 'published');
   const [isFeatured, setIsFeatured] = useState(() => Boolean(initialData?.isFeatured));
   const [summary, setSummary] = useState(() => initialData?.summary || '');
@@ -53,6 +49,16 @@ export function NewsFormModal({ isOpen, onClose, initialData, onSuccess }: NewsF
     setTitle(nextTitle);
     if (!isCustomSlug) setSlug(slugifyVietnamese(nextTitle));
     if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
+  };
+
+  const handleCustomSlugChange = (rawSlug: string) => {
+    setIsCustomSlug(true);
+    setSlug(slugifyVietnamese(rawSlug));
+  };
+
+  const handleResetSlug = () => {
+    setIsCustomSlug(false);
+    setSlug(slugifyVietnamese(title));
   };
 
   const handleSelectCoverFile = (file: File) => {
@@ -87,22 +93,26 @@ export function NewsFormModal({ isOpen, onClose, initialData, onSuccess }: NewsF
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanTitle = title.trim();
-    const cleanContent = content.trim();
+    const sanitizedContent = sanitizeNewsHtml(content.trim());
 
     const nextErrors: { title?: string; content?: string } = {};
     if (cleanTitle.length < 3) nextErrors.title = 'Tiêu đề bài viết phải có ít nhất 3 ký tự';
 
-    const textOnly = cleanContent.replace(/<[^>]*>/g, '').trim();
-    const hasMediaTag = /<(img|video|iframe)\b/i.test(cleanContent);
+    const textOnly = sanitizedContent.replace(/<[^>]*>/g, '').trim();
+    const hasMediaTag = /<(img|video|iframe)\b/i.test(sanitizedContent);
     if (!textOnly && !hasMediaTag) nextErrors.content = 'Vui lòng nhập nội dung bài viết';
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
+      if (nextErrors.title) {
+        showErrorToast(null, 'Vui lòng nhập Tiêu đề bài viết ở cột Thông tin chung bên phải.');
+      }
       return;
     }
 
     const activeMedia = pendingMediaList.filter(
-      (entry) => cleanContent.includes(entry.tempId) || cleanContent.includes(entry.previewUrl),
+      (entry) =>
+        sanitizedContent.includes(entry.tempId) || sanitizedContent.includes(entry.previewUrl),
     );
     const mediaTempIds = activeMedia.map((entry) => entry.tempId);
     const mediaFiles = activeMedia.map((entry) => entry.file);
@@ -119,7 +129,7 @@ export function NewsFormModal({ isOpen, onClose, initialData, onSuccess }: NewsF
             title: cleanTitle,
             slug: cleanSlug || null,
             summary: cleanSummary,
-            content: cleanContent,
+            content: sanitizedContent,
             category,
             status,
             isFeatured,
@@ -136,7 +146,7 @@ export function NewsFormModal({ isOpen, onClose, initialData, onSuccess }: NewsF
             title: cleanTitle,
             slug: cleanSlug || null,
             summary: cleanSummary,
-            content: cleanContent,
+            content: sanitizedContent,
             category,
             status,
             isFeatured,
@@ -162,6 +172,8 @@ export function NewsFormModal({ isOpen, onClose, initialData, onSuccess }: NewsF
       onClose={onClose}
       disabled={isSubmitting}
       size="xl"
+      className="md:max-w-7xl md:w-[95vw] lg:h-[calc(100vh-3.5rem)]"
+      bodyClassName="p-4 sm:p-5 overflow-y-auto lg:overflow-hidden flex flex-col"
       title={isEditMode ? 'Chỉnh sửa bài viết tin tức' : 'Đăng bài viết tin tức mới'}
       footer={
         <div className="flex items-center justify-end gap-2.5 w-full">
@@ -174,61 +186,54 @@ export function NewsFormModal({ isOpen, onClose, initialData, onSuccess }: NewsF
         </div>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-8 space-y-4">
-            <Input
-              label="Tiêu đề bài viết *"
-              placeholder="Nhập tiêu đề bài viết tin tức, sự kiện hoặc công trình..."
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              error={errors.title}
-              fullWidth
-            />
-            <Input
-              label="Đường dẫn tĩnh (Slug SEO)"
-              placeholder="tu-dong-sinh-tu-tieu-de"
-              value={slug}
-              onChange={(e) => {
-                setIsCustomSlug(true);
-                setSlug(slugifyVietnamese(e.target.value));
-              }}
-              fullWidth
-            />
-            <Textarea
-              label="Tóm tắt ngắn (Sapo hiển thị ở danh sách)"
-              placeholder="Nhập đoạn tóm tắt ngắn gọn 2-3 câu thu hút người đọc..."
-              rows={2}
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              fullWidth
-            />
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-gray-700">
-                  Nội dung chi tiết bài viết (Hỗ trợ chèn nhiều Ảnh / Video kèm chú thích) *
-                </label>
+      <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-0">
+          {/* Cột bên trái: Chỉ dành riêng cho Trình biên soạn nội dung */}
+          <div className="lg:col-span-8 flex flex-col min-h-0 h-full space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 shrink-0">
+              <label className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide">
+                <FileCode2 className="w-4 h-4 text-primary shrink-0" />
+                <span>
+                  Trình biên soạn nội dung bài viết (Hỗ trợ đổi màu chữ, màu nền, chèn Ảnh / Video /
+                  YouTube) *
+                </span>
+              </label>
+
+              <div className="flex items-center gap-3">
                 {pendingMediaList.length > 0 && (
-                  <span className="text-[11px] font-mono tabular-nums text-primary font-semibold">
+                  <span className="text-[11px] font-mono tabular-nums text-primary font-semibold bg-primary/10 px-2 py-0.5 rounded-full">
                     Đã đính kèm {pendingMediaList.length} media mới
                   </span>
                 )}
+                {errors.content && (
+                  <span className="text-xs font-semibold text-rose-600">{errors.content}</span>
+                )}
               </div>
-              <RichTextEditor
-                value={content}
-                onChange={(html) => {
-                  setContent(html);
-                  if (errors.content) setErrors((prev) => ({ ...prev, content: undefined }));
-                }}
-                placeholder="Soạn thảo nội dung bài viết... Nhấn nút 'Chèn Ảnh / Video' trên thanh công cụ để chèn hình ảnh/video trực tiếp vào vị trí con trỏ."
-                minHeightClass="min-h-72 max-h-[460px]"
-                onInsertMediaFiles={handleInsertMediaFiles}
-              />
-              {errors.content && <p className="text-xs text-red-500">{errors.content}</p>}
             </div>
+
+            <RichTextEditor
+              value={content}
+              onChange={(html) => {
+                setContent(html);
+                if (errors.content) setErrors((prev) => ({ ...prev, content: undefined }));
+              }}
+              placeholder="Soạn thảo nội dung bài viết tại đây... Khi copy-paste từ trang web khác có nền đen, hệ thống sẽ tự động làm sạch nền đen giúp bạn."
+              fullHeight
+              onInsertMediaFiles={handleInsertMediaFiles}
+            />
           </div>
 
+          {/* Cột bên phải: Thông tin chung, SEO, Phân loại & Ảnh bìa */}
           <NewsFormSidebar
+            title={title}
+            onTitleChange={handleTitleChange}
+            titleError={errors.title}
+            slug={slug}
+            isCustomSlug={isCustomSlug}
+            onCustomSlugChange={handleCustomSlugChange}
+            onResetSlug={handleResetSlug}
+            summary={summary}
+            onSummaryChange={setSummary}
             category={category}
             onCategoryChange={setCategory}
             status={status}

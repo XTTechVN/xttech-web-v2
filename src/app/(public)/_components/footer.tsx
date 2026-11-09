@@ -1,7 +1,13 @@
 import React from 'react';
 import Link from 'next/link';
-import { Mail, Phone, ArrowUpRight, ShieldCheck, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2 } from 'lucide-react';
 import { XTLogo } from '@/components';
+import {
+  FOOTER_BOTTOM_LINKS,
+  FOOTER_CONTACT_ITEMS,
+  FOOTER_LEGAL_LINKS,
+  FOOTER_SOLUTION_LINKS,
+} from '../_constants/public-layout.constants';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -20,7 +26,7 @@ export const Footer = () => {
             <p className="text-sm leading-relaxed text-gray-600 sm:max-w-sm">
               Nền tảng tiên phong số hóa ngành nhôm kính & xây dựng — Giải pháp quản trị khép kín từ khảo sát, thiết kế 3D, bóc tách kỹ thuật đến quản lý thi công công trình.
             </p>
-            <div className="inline-flex items-center gap-2 rounded-lg border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary w-fit">
+            <div className="inline-flex w-fit items-center gap-2 rounded-lg border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary">
               <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
               <span>Tiên phong công nghệ số hóa 4.0</span>
             </div>
@@ -30,23 +36,24 @@ export const Footer = () => {
           <div className="flex flex-col gap-3 lg:col-span-2 lg:pl-4">
             <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Giải pháp</h3>
             <ul className="flex flex-col space-y-2 text-sm">
-              <li>
-                <Link href="/#about" className="text-gray-600 hover:text-primary transition-colors">Về chúng tôi</Link>
-              </li>
-              <li>
-                <Link href="/pricing" className="text-gray-600 hover:text-primary transition-colors">Bảng giá dịch vụ</Link>
-              </li>
-              <li>
-                <Link href="/news" className="text-gray-600 hover:text-primary transition-colors">Tin tức & Sự kiện</Link>
-              </li>
-              <li>
-                <Link href="/signin" className="text-gray-600 hover:text-primary transition-colors">Đăng nhập</Link>
-              </li>
-              <li>
-                <a href="https://zalo.me/0865853327" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-gray-600 hover:text-primary transition-colors">
-                  Tư vấn Zalo <ArrowUpRight className="h-3.5 w-3.5 opacity-70" />
-                </a>
-              </li>
+              {FOOTER_SOLUTION_LINKS.map((item) => (
+                <li key={item.label}>
+                  {item.external ? (
+                    <a
+                      href={item.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-gray-600 transition-colors hover:text-primary"
+                    >
+                      {item.label} <ArrowUpRight className="h-3.5 w-3.5 opacity-70" />
+                    </a>
+                  ) : (
+                    <Link href={item.href} className="text-gray-600 transition-colors hover:text-primary">
+                      {item.label}
+                    </Link>
+                  )}
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -54,21 +61,20 @@ export const Footer = () => {
           <div className="flex flex-col gap-3 lg:col-span-3">
             <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Pháp lý & Chính sách</h3>
             <ul className="flex flex-col space-y-2 text-sm">
-              <li>
-                <Link href="#" className="inline-flex items-center gap-1.5 text-gray-600 hover:text-primary transition-colors">
-                  <ShieldCheck className="h-4 w-4 shrink-0 text-gray-400" />
-                  <span>Chính sách bảo mật</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="inline-flex items-center gap-1.5 text-gray-600 hover:text-primary transition-colors">
-                  <FileText className="h-4 w-4 shrink-0 text-gray-400" />
-                  <span>Điều khoản dịch vụ</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-gray-600 hover:text-primary transition-colors">Chính sách hoàn tiền</Link>
-              </li>
+              {FOOTER_LEGAL_LINKS.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.label}>
+                    <Link
+                      href={item.href}
+                      className="inline-flex items-center gap-1.5 text-gray-600 transition-colors hover:text-primary"
+                    >
+                      {Icon && <Icon className="h-4 w-4 shrink-0 text-gray-400" />}
+                      <span>{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -76,24 +82,23 @@ export const Footer = () => {
           <div className="flex flex-col gap-3 lg:col-span-3">
             <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Liên hệ</h3>
             <ul className="flex flex-col space-y-2.5 text-sm">
-              <li>
-                <a href="tel:0865853327" className="group flex items-start gap-2 text-gray-600 hover:text-primary transition-colors">
-                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <div>
-                    <span className="block font-medium text-gray-900">Hotline tư vấn</span>
-                    <span>0865 853 327</span>
-                  </div>
-                </a>
-              </li>
-              <li>
-                <a href="mailto:contact@xttech.vn" className="group flex items-start gap-2 text-gray-600 hover:text-primary transition-colors">
-                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <div>
-                    <span className="block font-medium text-gray-900">Email hỗ trợ</span>
-                    <span>xttechvn@gmail.com</span>
-                  </div>
-                </a>
-              </li>
+              {FOOTER_CONTACT_ITEMS.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.title}>
+                    <a
+                      href={item.href}
+                      className="group flex items-start gap-2 text-gray-600 transition-colors hover:text-primary"
+                    >
+                      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      <div>
+                        <span className="block font-medium text-gray-900">{item.title}</span>
+                        <span>{item.value}</span>
+                      </div>
+                    </a>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>
@@ -106,13 +111,25 @@ export const Footer = () => {
             © {currentYear} <span className="font-semibold text-gray-700">XTTECH</span>. Tất cả các quyền được bảo lưu.
           </p>
           <div className="flex items-center gap-5 text-xs text-gray-500">
-            <Link href="/#about" className="hover:text-primary transition-colors">Về chúng tôi</Link>
-            <span className="h-3 w-[1px] bg-gray-300" />
-            <Link href="/pricing" className="hover:text-primary transition-colors">Bảng giá</Link>
-            <span className="h-3 w-[1px] bg-gray-300" />
-            <Link href="/news" className="hover:text-primary transition-colors">Tin tức</Link>
-            <span className="h-3 w-[1px] bg-gray-300" />
-            <a href="https://facebook.com" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">Facebook</a>
+            {FOOTER_BOTTOM_LINKS.map((item, idx) => (
+              <React.Fragment key={item.label}>
+                {idx > 0 && <span className="h-3 w-[1px] bg-gray-300" />}
+                {item.external ? (
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="transition-colors hover:text-primary"
+                  >
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link href={item.href} className="transition-colors hover:text-primary">
+                    {item.label}
+                  </Link>
+                )}
+              </React.Fragment>
+            ))}
           </div>
         </div>
       </div>
