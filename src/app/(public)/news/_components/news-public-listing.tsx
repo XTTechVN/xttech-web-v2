@@ -184,7 +184,7 @@ export function NewsPublicListing() {
         onSelectSortMode={handleSelectSortMode}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 space-y-10">
+      <div className="w-full px-4 sm:px-8 lg:px-32 pt-8 sm:pt-10 space-y-10">
         {/* Thanh trạng thái bộ lọc đang kích hoạt */}
         {hasActiveFilter && (
           <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 px-4 rounded-xl bg-white border border-slate-200/80 shadow-2xs">

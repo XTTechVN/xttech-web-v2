@@ -66,7 +66,7 @@ export function NewsPublicToolbar({
       {/* Hiệu ứng nền trang trí đồng bộ hệ sinh thái XTTech */}
       <div className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-72 w-[520px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-8 lg:px-32">
         <div className="max-w-3xl space-y-3.5">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5 shrink-0" />
@@ -129,7 +129,7 @@ export function NewsPublicToolbar({
         </div>
 
         {/* Bộ lọc Chuyên mục (Giữ nguyên toàn bộ chuyên mục cấu hình sẵn) */}
-        <div className="mt-4 pt-4 border-t border-slate-200/60 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+        <div className="mt-4 pt-4 border-t border-slate-200/60 flex flex-wrap items-center gap-2">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0 hidden sm:inline">
             Chuyên mục:
           </span>
