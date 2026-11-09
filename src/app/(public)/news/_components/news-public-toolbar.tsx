@@ -41,9 +41,9 @@ export function NewsPublicToolbar({
           </p>
         </div>
 
-        {/* Thanh ngang đồng bộ: Trái là Tab Chuyên mục gạch chân | Phải là Ô tìm kiếm */}
+        {/* Thanh ngang đồng bộ: Trái là Tab Chuyên mục gạch chân (1 dòng cuộn ngang trên mobile) | Phải là Ô tìm kiếm */}
         <div className="mt-7 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-5 sm:gap-7">
+          <div className="flex items-center gap-5 sm:gap-7 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               type="button"
               onClick={() => onSelectCategory(undefined)}
