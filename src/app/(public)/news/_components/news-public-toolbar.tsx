@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Clock, Eye, Flame, Search, Sparkles, Star, X } from 'lucide-react';
+import { Input } from '@/components';
 import { NEWS_CATEGORY_OPTIONS } from '@/config';
 import type { NewsCategory } from '@/types';
 
@@ -62,7 +63,7 @@ export function NewsPublicToolbar({
   onSelectSortMode,
 }: NewsPublicToolbarProps) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-primary/4 to-white border-b border-slate-200/80 pt-10 pb-8 sm:pt-14 sm:pb-10">
+    <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-primary/4 to-white border-b border-slate-200/80 pt-10 sm:pt-14">
       {/* Hiệu ứng nền trang trí đồng bộ hệ sinh thái XTTech */}
       <div className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-72 w-[520px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
@@ -106,21 +107,22 @@ export function NewsPublicToolbar({
             })}
           </div>
 
-          <div className="relative w-full lg:w-88 shrink-0">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
+          <div className="relative w-full lg:w-96 shrink-0">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
+            <Input
               type="text"
               value={searchInput}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Tìm kiếm bài viết, kỹ thuật nhôm kính, dự án..."
-              className="w-full h-10.5 pl-10 pr-9 text-sm bg-white border border-slate-200/90 rounded-full shadow-2xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-slate-900 transition-all"
+              fullWidth
+              className="pl-9 pr-9"
             />
             {searchInput && (
               <button
                 type="button"
                 onClick={() => onSearchChange('')}
                 aria-label="Xóa tìm kiếm"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer z-10"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -128,21 +130,18 @@ export function NewsPublicToolbar({
           </div>
         </div>
 
-        {/* Bộ lọc Chuyên mục (Giữ nguyên toàn bộ chuyên mục cấu hình sẵn) */}
-        <div className="mt-4 pt-4 border-t border-slate-200/60 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0 hidden sm:inline">
-            Chuyên mục:
-          </span>
+        {/* Bộ lọc Chuyên mục thiết kế dạng Tab gạch chân tối giản */}
+        <div className="mt-6 flex flex-wrap items-center gap-6 sm:gap-8">
           <button
             type="button"
             onClick={() => onSelectCategory(undefined)}
-            className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
+            className={`relative pb-3.5 pt-2 text-sm transition-colors cursor-pointer shrink-0 border-b-2 -mb-[1px] ${
               !selectedCategory
-                ? 'bg-primary text-white shadow-xs'
-                : 'bg-white text-slate-600 border border-slate-200 hover:border-primary/40 hover:text-primary'
+                ? 'border-primary text-slate-900 font-semibold'
+                : 'border-transparent text-slate-600 hover:text-slate-900 font-medium'
             }`}
           >
-            Tất cả chuyên mục
+            Tất cả
           </button>
           {NEWS_CATEGORY_OPTIONS.map((cat) => {
             const isActive = selectedCategory === cat.value;
@@ -151,10 +150,10 @@ export function NewsPublicToolbar({
                 key={cat.value}
                 type="button"
                 onClick={() => onSelectCategory(cat.value)}
-                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
+                className={`relative pb-3.5 pt-2 text-sm transition-colors cursor-pointer shrink-0 border-b-2 -mb-[1px] ${
                   isActive
-                    ? 'bg-primary text-white shadow-xs'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-primary/40 hover:text-primary'
+                    ? 'border-primary text-slate-900 font-semibold'
+                    : 'border-transparent text-slate-600 hover:text-slate-900 font-medium'
                 }`}
               >
                 {cat.label}
