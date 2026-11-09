@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
   ChevronLeft,
@@ -26,6 +26,7 @@ import type { NewsArticle, NewsCategory } from '@/types';
 import { NewsArticleCard } from './news-article-card';
 import { NewsPublicToolbar, type PublicNewsSortMode } from './news-public-toolbar';
 
+const FETCH_ALL_LIMIT = 999;
 const PAGE_LIMIT = 12;
 const VALID_CATEGORIES = new Set<string>(NEWS_CATEGORY_OPTIONS.map((item) => item.value));
 
@@ -52,7 +53,6 @@ export function NewsPublicListing() {
   const isHot = sortMode === 'hot';
 
   const debouncedSearch = useDebounce(searchInput.trim(), 350);
-  const offset = (page - 1) * PAGE_LIMIT;
 
   const hasActiveFilter = Boolean(
     debouncedSearch || selectedCategory || isFeaturedFilter || isPopular || isHot,
@@ -60,7 +60,7 @@ export function NewsPublicListing() {
   // Hiển thị bố cục tạp chí khi ở trang 1 và không lọc riêng 1 chuyên mục hay từ khóa tìm kiếm
   const isEditorialView = !debouncedSearch && !selectedCategory && page === 1;
 
-  // 1. Call API lấy danh sách bài viết chính theo đúng cờ đang chọn (isFeatured, popular, hot, category, search)
+  // 1. Call API chính 1 lần duy nhất với limit = 999 theo đúng cờ đang chọn, sau đó lọc các chuyên mục ở FE
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
       'public-news-list',
@@ -70,8 +70,7 @@ export function NewsPublicListing() {
       isFeaturedFilter,
       isPopular,
       isHot,
-      offset,
-      PAGE_LIMIT,
+      FETCH_ALL_LIMIT,
     ],
     queryFn: () =>
       getPublicNewsList({
@@ -80,46 +79,12 @@ export function NewsPublicListing() {
         isFeatured: isFeaturedFilter ? true : undefined,
         popular: isPopular ? true : undefined,
         hot: isHot ? true : undefined,
-        offset,
-        limit: PAGE_LIMIT,
+        offset: 0,
+        limit: FETCH_ALL_LIMIT,
       }),
   });
 
-  // 2. Call API riêng cho khu vực Sự kiện / Tiêu điểm nổi bật (cờ isFeatured = true)
-  const { data: featuredData, isLoading: isLoadingFeatured } = useQuery({
-    queryKey: ['public-news-list', 'featured-spotlight'],
-    queryFn: () =>
-      getPublicNewsList({
-        isFeatured: true,
-        limit: 6,
-      }),
-    enabled: isEditorialView,
-  });
-
-  // 3. Call API riêng cho từng chuyên mục (6 chuyên mục ở Ảnh 3 & Ảnh 4) kèm theo đúng cờ đang chọn
-  const categoryQueries = useQueries({
-    queries: NEWS_CATEGORY_OPTIONS.map((cat) => ({
-      queryKey: [
-        'public-news-list',
-        'category-section',
-        cat.value,
-        isFeaturedFilter,
-        isPopular,
-        isHot,
-      ],
-      queryFn: () =>
-        getPublicNewsList({
-          category: cat.value,
-          isFeatured: isFeaturedFilter ? true : undefined,
-          popular: isPopular ? true : undefined,
-          hot: isHot ? true : undefined,
-          limit: 4,
-        }),
-      enabled: isEditorialView,
-    })),
-  });
-
-  // 4. Call API cho Bảng xếp hạng (1, 2, 3, 4, 5) theo đúng 1 trong 3 cờ: isFeatured=true | popular=true | hot=true
+  // 2. Call API cho Bảng xếp hạng (1, 2, 3, 4, 5) theo đúng 1 trong 3 cờ: isFeatured=true | popular=true | hot=true
   const { data: sidebarData, isLoading: isSidebarLoading } = useQuery({
     queryKey: ['public-news-list', 'sidebar-flag', sidebarTab],
     queryFn: () =>
@@ -131,60 +96,67 @@ export function NewsPublicListing() {
       }),
   });
 
-  const articles = data?.items || [];
-  const total = data?.meta?.total ?? 0;
+  const allArticles = useMemo(() => data?.items || [], [data?.items]);
+  const total = allArticles.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_LIMIT));
 
-  const featuredArticles = featuredData?.items || [];
+  // Phân trang ngay trên FE từ danh sách allArticles
+  const paginatedArticles = useMemo(() => {
+    const start = (page - 1) * PAGE_LIMIT;
+    return allArticles.slice(start, start + PAGE_LIMIT);
+  }, [allArticles, page]);
+
+  // Lọc các bài viết có cờ isFeatured = true ngay trên FE
+  const featuredArticles = useMemo(
+    () => allArticles.filter((item) => item.isFeatured),
+    [allArticles],
+  );
+
   const sidebarArticles = sidebarData?.items || [];
 
-  // Map kết quả từng chuyên mục theo đúng cờ category (không fallback sang chuyên mục khác)
+  // Lọc bài viết cho từng chuyên mục (6 chuyên mục ở Ảnh 3 & Ảnh 4) trực tiếp trên FE từ allArticles
   const categoryArticlesMap = useMemo(() => {
-    const map: Record<NewsCategory, { items: NewsArticle[]; isLoading: boolean }> = {
-      company_news: { items: [], isLoading: false },
-      industry_knowledge: { items: [], isLoading: false },
-      project_showcase: { items: [], isLoading: false },
-      technology_solution: { items: [], isLoading: false },
-      recruitment_culture: { items: [], isLoading: false },
-      promotion_event: { items: [], isLoading: false },
+    const map: Record<NewsCategory, NewsArticle[]> = {
+      company_news: [],
+      industry_knowledge: [],
+      project_showcase: [],
+      technology_solution: [],
+      recruitment_culture: [],
+      promotion_event: [],
     };
 
-    NEWS_CATEGORY_OPTIONS.forEach((cat, idx) => {
-      const q = categoryQueries[idx];
-      const rawItems = q?.data?.items || [];
-      map[cat.value] = {
-        items: rawItems.filter((item) => item.category === cat.value),
-        isLoading: Boolean(q?.isLoading),
-      };
-    });
+    for (const item of allArticles) {
+      if (map[item.category] && map[item.category].length < 4) {
+        map[item.category].push(item);
+      }
+    }
 
     return map;
-  }, [categoryQueries]);
+  }, [allArticles]);
 
   // Bài đinh đầu trang (Lead Hero): lấy bài đầu tiên theo đúng cờ đang chọn (hoặc bài nổi bật khi ở tab Mới nhất)
   const leadHeroArticle: NewsArticle | null = useMemo(() => {
     if (!isEditorialView) return null;
     if (sortMode === 'latest') {
-      return featuredArticles[0] || articles[0] || null;
+      return featuredArticles[0] || allArticles[0] || null;
     }
-    return articles[0] || null;
-  }, [isEditorialView, sortMode, featuredArticles, articles]);
+    return allArticles[0] || null;
+  }, [isEditorialView, sortMode, featuredArticles, allArticles]);
 
   // Khối "Tin mới" bên dưới bài Lead Hero (1 bài sub-lead bên trái + 3 bài horizontal-sm bên phải)
   const latestBlockArticles = useMemo(() => {
     if (!isEditorialView) return [];
-    return articles.filter((item) => item.id !== leadHeroArticle?.id).slice(0, 4);
-  }, [isEditorialView, articles, leadHeroArticle]);
+    return allArticles.filter((item) => item.id !== leadHeroArticle?.id).slice(0, 4);
+  }, [isEditorialView, allArticles, leadHeroArticle]);
 
   const latestLeadArticle = latestBlockArticles[0] || null;
   const latestSideArticles = latestBlockArticles.slice(1, 4);
 
-  // Khối "Tiêu điểm nổi bật" cột phải: chỉ lấy đúng các bài có cờ isFeatured = true
+  // Khối "Tiêu điểm nổi bật" cột phải: lọc đúng các bài có cờ isFeatured = true trên FE
   const eventBoxArticles = useMemo(() => {
     if (!isEditorialView) return [];
-    const strictFeatured = featuredArticles.filter((item) => item.isFeatured);
-    const filtered = strictFeatured.filter((item) => item.id !== leadHeroArticle?.id);
-    return (filtered.length > 0 ? filtered : strictFeatured).slice(0, 4);
+    const filtered = featuredArticles.filter((item) => item.id !== leadHeroArticle?.id);
+    return (filtered.length > 0 ? filtered : featuredArticles).slice(0, 4);
   }, [isEditorialView, featuredArticles, leadHeroArticle]);
 
   const eventBoxLead = eventBoxArticles[0] || null;
@@ -313,7 +285,7 @@ export function NewsPublicListing() {
         <div className="space-y-12 pt-8">
           {/* SECTION 1: TOP HERO + TIN MỚI (Cột trái 8 cols) & TIÊU ĐIỂM NỔI BẬT (Cột phải 4 cols) */}
           <section className="w-full px-4 sm:px-8 lg:px-32">
-            {isLoading && isLoadingFeatured ? (
+            {isLoading ? (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-8 space-y-6">
                   <Skeleton className="w-full aspect-16/9 rounded-lg" />
@@ -324,7 +296,7 @@ export function NewsPublicListing() {
                   <Skeleton className="w-full h-80 rounded-lg" />
                 </div>
               </div>
-            ) : articles.length === 0 ? (
+            ) : allArticles.length === 0 ? (
               <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-12 text-center my-2">
                 <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
                   <Newspaper className="w-7 h-7" />
@@ -393,7 +365,7 @@ export function NewsPublicListing() {
                   )}
                 </div>
 
-                {/* CỘT PHẢI (4 cols): Khối "Tiêu điểm nổi bật" lọc đúng theo cờ isFeatured = true */}
+                {/* CỘT PHẢI (4 cols): Khối "Tiêu điểm nổi bật" lọc đúng theo cờ isFeatured = true trên FE */}
                 <aside className="lg:col-span-4 space-y-6">
                   <div className="rounded-lg bg-white border border-slate-200/90 shadow-sm p-5 space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
@@ -407,7 +379,7 @@ export function NewsPublicListing() {
                       </button>
                     </div>
 
-                    {isLoadingFeatured ? (
+                    {isLoading ? (
                       <div className="space-y-3">
                         <Skeleton className="w-full aspect-16/10 rounded-md" />
                         <Skeleton className="h-5 w-full rounded" />
@@ -442,13 +414,12 @@ export function NewsPublicListing() {
             )}
           </section>
 
-          {/* SECTION 2: DẢI 4 CỘT CHUYÊN MỤC TRÊN NỀN XÁM NHẠT (Lọc đúng theo từng chuyên mục & cờ đang chọn) */}
+          {/* SECTION 2: DẢI 4 CỘT CHUYÊN MỤC TRÊN NỀN XÁM NHẠT (Lọc trên FE từ kết quả API chính limit=999) */}
           <section className="w-full px-4 sm:px-8 lg:px-32">
             <div className="bg-slate-100/85 border-b-[3px] border-primary px-5 py-8 sm:px-8 rounded-t-lg">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {topFourCategories.map((cat) => {
-                  const catState = categoryArticlesMap[cat.value];
-                  const catArticles = catState?.items || [];
+                  const catArticles = categoryArticlesMap[cat.value] || [];
                   const topCatArticle = catArticles[0];
                   const bulletCatArticles = catArticles.slice(1, 4);
 
@@ -466,7 +437,7 @@ export function NewsPublicListing() {
                         </h3>
                       </button>
 
-                      {catState?.isLoading ? (
+                      {isLoading ? (
                         <div className="space-y-3">
                           <Skeleton className="w-full aspect-16/10 rounded-md" />
                           <Skeleton className="h-5 w-full rounded" />
@@ -502,13 +473,12 @@ export function NewsPublicListing() {
             </div>
           </section>
 
-          {/* SECTION 3: 2 CỘT CHUYÊN MỤC LỚN Side-by-Side (Lọc đúng theo chuyên mục Tuyển dụng & Văn hóa / Khuyến mãi & Sự kiện) */}
+          {/* SECTION 3: 2 CỘT CHUYÊN MỤC LỚN Side-by-Side (Lọc trên FE từ kết quả API chính limit=999) */}
           {bottomTwoCategories.length > 0 && (
             <section className="w-full px-4 sm:px-8 lg:px-32">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 {bottomTwoCategories.map((cat) => {
-                  const catState = categoryArticlesMap[cat.value];
-                  const catArticles = catState?.items || [];
+                  const catArticles = categoryArticlesMap[cat.value] || [];
                   const mainCatArticle = catArticles[0];
                   const subCatArticles = catArticles.slice(1, 3);
 
@@ -535,7 +505,7 @@ export function NewsPublicListing() {
                         </button>
                       </div>
 
-                      {catState?.isLoading ? (
+                      {isLoading ? (
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                           <Skeleton className="sm:col-span-6 aspect-16/10 rounded-md" />
                           <div className="sm:col-span-6 space-y-2">
@@ -623,7 +593,7 @@ export function NewsPublicListing() {
                   </div>
                 ))}
               </div>
-            ) : articles.length === 0 ? (
+            ) : paginatedArticles.length === 0 ? (
               <div className="bg-slate-50 rounded-xl border border-slate-200/80 p-10 text-center">
                 <p className="text-sm font-semibold text-slate-700">
                   Không tìm thấy bài viết nào phù hợp với bộ lọc hiện tại.
@@ -642,7 +612,7 @@ export function NewsPublicListing() {
             ) : (
               <div className="space-y-6">
                 <div className="divide-y divide-slate-200/80">
-                  {articles.map((article) => (
+                  {paginatedArticles.map((article) => (
                     <div key={article.id} className="py-5 first:pt-0 last:pb-0">
                       <NewsArticleCard article={article} variant="horizontal-md" />
                     </div>
