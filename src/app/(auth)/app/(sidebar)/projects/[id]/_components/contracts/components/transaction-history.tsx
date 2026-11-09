@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
-import { DollarSign, Receipt, RotateCcw } from 'lucide-react';
-import { Button } from '@/components';
+import React, { useState } from 'react';
+import { DollarSign, Image as ImageIcon, Receipt, RotateCcw } from 'lucide-react';
+import { Button, Modal } from '@/components';
 import { PAYMENT_METHOD_MAP } from '@/config';
 import type { PaymentTransactionItem, ProjectLedgerSummary } from '@/types';
-import { formatCurrency } from '@/utils';
+import { formatCurrency, getFileUrl } from '@/utils';
 
 interface TransactionHistoryProps {
   transactions: PaymentTransactionItem[];
@@ -52,9 +52,11 @@ function CollectionProgress({ ledger }: { ledger?: ProjectLedgerSummary }) {
 function TransactionRow({
   transaction,
   onReverse,
+  onPreviewImage,
 }: {
   transaction: PaymentTransactionItem;
   onReverse: (transaction: PaymentTransactionItem) => void;
+  onPreviewImage: (transaction: PaymentTransactionItem) => void;
 }) {
   const isNegative = transaction.amount < 0;
   const canReverse = transaction.amount > 0 && !transaction.reversalOfId;
@@ -65,7 +67,7 @@ function TransactionRow({
         isNegative ? 'bg-red-50/40 text-red-700' : 'hover:bg-slate-50/60'
       }`}
     >
-      <div className="space-y-0.5 min-w-0">
+      <div className="space-y-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="font-bold text-slate-800">{transaction.transactionCode}</span>
           <span className="text-[11px] text-slate-400">
@@ -80,6 +82,22 @@ function TransactionRow({
           <span className="text-[10px] text-slate-400 block">
             Mã GD ngân hàng: {transaction.bankReference}
           </span>
+        )}
+        {transaction.receiptImage && (
+          <button
+            type="button"
+            onClick={() => onPreviewImage(transaction)}
+            className="mt-1 inline-flex cursor-pointer items-center gap-1.5 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/5"
+            title="Nhấn để phóng to ảnh chứng từ"
+          >
+            <img
+              src={getFileUrl(transaction.receiptImage)}
+              alt="Chứng từ"
+              className="h-5 w-5 rounded-xs object-cover"
+            />
+            <ImageIcon size={11} />
+            <span>Xem ảnh chứng từ</span>
+          </button>
         )}
       </div>
       <div className="text-right shrink-0 space-y-1">
@@ -109,6 +127,8 @@ export function TransactionHistory({
   onCollect,
   onReverse,
 }: TransactionHistoryProps) {
+  const [previewTx, setPreviewTx] = useState<PaymentTransactionItem | null>(null);
+
   return (
     <div className="bg-white rounded-lg border border-slate-200/70 p-4 shadow-2xs space-y-3.5">
       <div className="flex items-center justify-between gap-3">
@@ -148,10 +168,43 @@ export function TransactionHistory({
       {!isLoading && transactions.length > 0 && (
         <div className="divide-y divide-slate-100 border border-slate-100 rounded-lg overflow-hidden max-h-[460px] overflow-y-auto">
           {transactions.map((tx) => (
-            <TransactionRow key={tx.id} transaction={tx} onReverse={onReverse} />
+            <TransactionRow
+              key={tx.id}
+              transaction={tx}
+              onReverse={onReverse}
+              onPreviewImage={setPreviewTx}
+            />
           ))}
         </div>
       )}
+
+      <Modal
+        isOpen={Boolean(previewTx?.receiptImage)}
+        onClose={() => setPreviewTx(null)}
+        title={`Ảnh chứng từ — ${previewTx?.transactionCode ?? ''}`}
+        className="max-w-lg w-full"
+      >
+        {previewTx?.receiptImage && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-md border border-slate-100">
+              <span>
+                Số tiền:{' '}
+                <strong className="text-emerald-600">{formatCurrency(previewTx.amount)}</strong>
+              </span>
+              <span>
+                Thời gian: <strong>{formatDateTime(previewTx.transactionDate || previewTx.createdAt)}</strong>
+              </span>
+            </div>
+            <div className="flex justify-center rounded-lg border border-slate-200 bg-slate-900/5 p-2">
+              <img
+                src={getFileUrl(previewTx.receiptImage)}
+                alt={`Chứng từ ${previewTx.transactionCode}`}
+                className="max-h-[65vh] w-auto max-w-full rounded object-contain"
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

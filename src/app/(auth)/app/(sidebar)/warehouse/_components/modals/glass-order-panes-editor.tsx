@@ -34,6 +34,8 @@ interface GlassOrderPanesEditorProps {
   panes: EditablePaneItem[];
   onChange: (panes: EditablePaneItem[]) => void;
   doorOptions?: DoorOption[];
+  glassOptions?: string[];
+  defaultGlassType?: string;
   isLoading?: boolean;
 }
 
@@ -41,6 +43,8 @@ export function GlassOrderPanesEditor({
   panes,
   onChange,
   doorOptions = [],
+  glassOptions = [],
+  defaultGlassType,
   isLoading,
 }: GlassOrderPanesEditorProps) {
   const handleUpdateField = <K extends keyof EditablePaneItem>(
@@ -88,6 +92,11 @@ export function GlassOrderPanesEditor({
   };
 
   const handleAddPane = () => {
+    const fallbackGlass =
+      panes[panes.length - 1]?.glassType ||
+      defaultGlassType ||
+      glassOptions[0] ||
+      'Kính dán an toàn 8.38mm trắng trong';
     const newPane: EditablePaneItem = {
       tempId: `pane_${Date.now()}_${Math.random()}`,
       paneSource: 'manual',
@@ -99,7 +108,7 @@ export function GlassOrderPanesEditor({
       paneLabel: `Kính lẻ ${panes.length + 1}`,
       widthMm: 1000,
       heightMm: 1000,
-      glassType: 'Kính dán an toàn 8.38mm trắng trong',
+      glassType: fallbackGlass,
       grindType: 'grind_edge',
       unitPrice: 0,
       isMeasured: true,
@@ -124,6 +133,11 @@ export function GlassOrderPanesEditor({
     })),
   ];
 
+  const mergedGlassNames = Array.from(
+    new Set([...glassOptions, ...panes.map((p) => p.glassType).filter(Boolean)])
+  );
+  const glassSelectOptions = mergedGlassNames.map((name) => ({ value: name, label: name }));
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -146,13 +160,13 @@ export function GlassOrderPanesEditor({
           <thead className="bg-slate-50 sticky top-0 z-10">
             <tr>
               <th className="px-2 py-2 text-center font-medium text-slate-600 w-8">STT</th>
-              <th className="px-2 py-2 text-left font-medium text-slate-600 min-w-[150px]">Thuộc Cửa</th>
-              <th className="px-2 py-2 text-left font-medium text-slate-600 min-w-[160px]">Ký hiệu / Lý do</th>
-              <th className="px-2 py-2 text-left font-medium text-slate-600 min-w-[170px]">Chủng loại kính</th>
+              <th className="px-2 py-2 text-left font-medium text-slate-600 min-w-[165px]">Thuộc Cửa</th>
+              <th className="px-2 py-2 text-left font-medium text-slate-600 min-w-[155px]">Ký hiệu / Lý do</th>
+              <th className="px-2 py-2 text-left font-medium text-slate-600 min-w-[210px]">Chủng loại kính</th>
               <th className="px-2 py-2 text-center font-medium text-slate-600 w-20">Rộng (mm)</th>
               <th className="px-2 py-2 text-center font-medium text-slate-600 w-20">Cao (mm)</th>
               <th className="px-2 py-2 text-right font-medium text-slate-600 w-16">S (m²)</th>
-              <th className="px-2 py-2 text-left font-medium text-slate-600 w-32">Mài cạnh</th>
+              <th className="px-2 py-2 text-left font-medium text-slate-600 w-36">Mài cạnh</th>
               <th className="px-1 py-2 text-center font-medium text-slate-600 w-8">Xóa</th>
             </tr>
           </thead>
@@ -177,12 +191,12 @@ export function GlassOrderPanesEditor({
                     }`}
                   >
                     <td className="px-2 py-1.5 text-center text-slate-500">{idx + 1}</td>
-                    <td className="px-2 py-1">
+                    <td className="px-2 py-1.5">
                       <Select
                         value={isManual ? 'manual' : String(pane.positionId)}
                         onChange={(e) => handleDoorChange(idx, e.target.value)}
                         options={doorSelectOptions}
-                        className={`text-xs h-7 py-0 px-2 ${
+                        className={`text-xs h-8 pl-2.5 ${
                           isUnmeasured ? 'border-red-400 text-red-600 font-medium' : ''
                         }`}
                       />
@@ -192,13 +206,13 @@ export function GlassOrderPanesEditor({
                         </span>
                       )}
                     </td>
-                    <td className="px-2 py-1">
+                    <td className="px-2 py-1.5">
                       <div className="space-y-1">
                         <Input
                           type="text"
                           value={pane.paneLabel}
                           onChange={(e) => handleUpdateField(idx, 'paneLabel', e.target.value)}
-                          className="text-xs h-7 px-2"
+                          className="text-xs h-8 px-2.5"
                           placeholder={isManual ? 'Nhãn kính lẻ (bắt buộc)' : 'Ký hiệu ô kính'}
                         />
                         {isManual && (
@@ -208,47 +222,48 @@ export function GlassOrderPanesEditor({
                               handleUpdateField(idx, 'manualReason', e.target.value as ManualReason)
                             }
                             options={MANUAL_REASON_OPTIONS}
-                            className="text-[11px] h-6 py-0 px-1.5 bg-amber-50 border-amber-300 text-amber-800"
+                            className="text-[11px] h-7 pl-2 bg-amber-50 border-amber-300 text-amber-800"
                           />
                         )}
                       </div>
                     </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="text"
+                    <td className="px-2 py-1.5">
+                      <Select
                         value={pane.glassType}
                         onChange={(e) => handleUpdateField(idx, 'glassType', e.target.value)}
-                        className="text-xs h-7 px-2"
-                        placeholder="Quy cách kính..."
+                        options={glassSelectOptions}
+                        searchable
+                        placeholder="Chọn loại kính..."
+                        className="text-xs h-8 pl-2.5"
                       />
                     </td>
-                    <td className="px-2 py-1">
+                    <td className="px-2 py-1.5">
                       <Input
                         type="number"
                         value={pane.widthMm || ''}
                         onChange={(e) => handleUpdateField(idx, 'widthMm', Number(e.target.value))}
-                        className="text-xs h-7 px-1 text-center"
+                        className="text-xs h-8 px-1.5 text-center"
                         min={1}
                       />
                     </td>
-                    <td className="px-2 py-1">
+                    <td className="px-2 py-1.5">
                       <Input
                         type="number"
                         value={pane.heightMm || ''}
                         onChange={(e) => handleUpdateField(idx, 'heightMm', Number(e.target.value))}
-                        className="text-xs h-7 px-1 text-center"
+                        className="text-xs h-8 px-1.5 text-center"
                         min={1}
                       />
                     </td>
                     <td className="px-2 py-1.5 text-right font-medium text-slate-700">
                       {area.toFixed(3)}
                     </td>
-                    <td className="px-2 py-1">
+                    <td className="px-2 py-1.5">
                       <Select
                         value={pane.grindType}
                         onChange={(e) => handleUpdateField(idx, 'grindType', e.target.value)}
                         options={GRIND_OPTIONS}
-                        className="text-xs h-7 py-0 px-2"
+                        className="text-xs h-8 pl-2.5"
                       />
                     </td>
                     <td className="px-1 py-1 text-center">

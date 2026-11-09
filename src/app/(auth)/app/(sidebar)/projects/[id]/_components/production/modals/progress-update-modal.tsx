@@ -127,7 +127,7 @@ export function ProgressUpdateModal({
         <div>
           <div className="mb-1.5 flex items-center justify-between">
             <label className="text-xs font-semibold text-slate-700">
-              Ảnh / Video nghiệm thu ({evidenceMedia.length}):
+              Ảnh / Video nghiệm thu ({evidenceMedia.length}) <span className="font-normal text-slate-400">(tùy chọn)</span>:
             </label>
             <button
               type="button"

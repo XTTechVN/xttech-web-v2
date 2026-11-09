@@ -84,3 +84,48 @@ export const PAYMENT_MILESTONE_STATUS_MAP: Record<string, { label: string; varia
 // Nội dung soạn thảo của hợp đồng (Cơ chế, Điều khoản, Chính sách gộp chung) lưu ở khóa này trong contractTerms
 export const CONTRACT_TERMS_PLACEHOLDER =
   'Cơ chế thực hiện, điều khoản giao hàng - nghiệm thu - bảo hành, chính sách hỗ trợ sau bán hàng...';
+
+
+import type {
+  QuotationBomUnit,
+  QuotationLaborRowCode,
+  QuotationMaterialRowCode,
+} from '@/types';
+
+export const QUOTATION_BOM_UNIT_MAP: Record<QuotationBomUnit, string> = {
+  meter: 'M',
+  pcs: 'CÁI',
+  unit: 'CHIẾC',
+  pair: 'CẶP',
+  set: 'BỘ',
+  roll: 'CUỘN',
+  box: 'HỘP',
+  bag: 'TÚI',
+  bottle: 'CHAI',
+  tube: 'CHAI',
+  sheet: 'TẤM',
+  sqm: 'M²',
+  kg: 'KG',
+  bar: 'CÂY',
+};
+
+export const QUOTATION_MATERIAL_ROW_LABEL_MAP: Record<QuotationMaterialRowCode, string> = {
+  profile: 'Profile',
+  glass: 'Kính',
+  gasket: 'Roan / Gioăng',
+  accessory: 'Phụ kiện',
+};
+
+export const QUOTATION_LABOR_ROW_LABEL_MAP: Record<QuotationLaborRowCode, string> = {
+  production: 'Nhân công sản xuất',
+  install: 'Lắp đặt',
+  clean: 'Vệ sinh',
+};
+
+export const QUOTATION_LABOR_UNIT_LABEL_MAP: Record<
+  'kg' | 'sqm',
+  { unitLabel: string; rateSuffix: string }
+> = {
+  kg: { unitLabel: 'kg', rateSuffix: 'đ/kg' },
+  sqm: { unitLabel: 'm²', rateSuffix: 'đ/m²' },
+};

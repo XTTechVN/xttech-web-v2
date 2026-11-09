@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { Modal, Button, Input, Select } from '@/components';
-import { Edit3 } from 'lucide-react';
+import { Edit3, ArrowUpRight } from 'lucide-react';
 import type { DocumentCategory, DocumentItem } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -11,7 +12,7 @@ import { useForm } from 'react-hook-form';
 import { invalidateDocumentQueries, showErrorToast } from '@/utils';
 import {
   flattenCategoriesForSelect,
-  DOC_TYPE_SELECT_OPTIONS,
+  getPersonalDocTypeOptions,
   saveDocumentPersonalInfo,
 } from './edit-document-helpers';
 
@@ -114,16 +115,29 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Select
-            label="Phân loại văn bản *"
-            fullWidth
-            value={watch('documentType')}
-            onChange={(e) => setValue('documentType', e.target.value, { shouldValidate: true })}
-            options={DOC_TYPE_SELECT_OPTIONS}
-            error={errors.documentType?.message}
-          />
+          <div className="space-y-1">
+            <Select
+              label="Phân loại tài liệu *"
+              fullWidth
+              value={watch('documentType')}
+              onChange={(e) => setValue('documentType', e.target.value, { shouldValidate: true })}
+              options={getPersonalDocTypeOptions(doc?.documentType)}
+              error={errors.documentType?.message}
+            />
+            <p className="text-[11px] text-slate-500 leading-snug">
+              Văn bản định chế (Quyết định, Quy chế...) soạn tại{' '}
+              <Link
+                href="/app/rules"
+                onClick={onClose}
+                className="inline-flex items-center gap-0.5 font-semibold text-primary hover:underline"
+              >
+                Văn bản & Quy định
+                <ArrowUpRight className="w-3 h-3" />
+              </Link>
+            </p>
+          </div>
           <Input
-            label="Mã văn bản (Tùy chọn)"
+            label="Mã tài liệu (Tùy chọn)"
             fullWidth
             placeholder="Mã tài liệu..."
             value={watch('code')}

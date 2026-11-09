@@ -106,11 +106,11 @@ function PreviewResult({
       <div>
         <span className="text-[11px] font-bold text-slate-500 block mb-1">Từ giá bán đến số tiền khách trả</span>
         <div className="divide-y divide-slate-100">
-          <ResultRow label="Giá bán khi chưa giảm" value={formatCurrency(result.subtotalSellingPrice)} />
+          <ResultRow label="Tổng giá bán (đã gồm thuế)" value={formatCurrency(result.subtotalSellingPrice)} />
           <ResultRow label="Giảm giá cho khách" value={`-${formatCurrency(result.discountAmount)}`} tone="red" />
-          <ResultRow label="Khách trả (chưa thuế)" value={formatCurrency(result.totalAmountBeforeVat)} strong />
-          <ResultRow label="Thuế VAT" value={formatCurrency(result.vatAmount)} />
-          <ResultRow label="Khách phải trả (đã gồm thuế)" value={formatCurrency(result.totalAmount)} strong tone="primary" />
+          <ResultRow label="Khách phải trả" value={formatCurrency(result.totalAmount)} strong tone="primary" />
+          <ResultRow label="Trong đó tiền thuế VAT" value={formatCurrency(result.vatAmount)} />
+          <ResultRow label="Doanh thu thuần (chưa thuế)" value={formatCurrency(result.totalAmountBeforeVat)} />
           <ResultRow
             label="Tiền lãi thực tế"
             value={`${formatCurrency(result.totalProfit)} (${result.effectiveMarginPercent.toFixed(1)}%)`}

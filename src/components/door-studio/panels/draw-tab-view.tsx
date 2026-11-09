@@ -13,6 +13,7 @@ import {
 import { ToolboxLeft } from './toolbox-left';
 import { CanvasCadView } from './canvas-cad-view';
 import { CellInspector } from './cell-inspector';
+import { isNodeTouchingBottom } from '../cad-engine/cad-cell-config-resolver';
 import { BomSidebar } from '../bom-sidebar';
 import { DoorCalculateResponse, Glass, ProfileBar } from '@/types';
 import { Undo2, Redo2, PenTool, Sliders, BarChart3, X } from 'lucide-react';
@@ -50,17 +51,20 @@ interface DrawTabViewProps {
   onDeleteSelected?: () => void;
   onChangeTab: (tab: 'frame' | 'sash') => void;
   onSelectCell: (id: string | null) => void;
-  onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', value: number, cellId?: string) => void;
+  onUpdateDimension: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', value: number, cellId?: string, isFinal?: boolean) => void;
   onResizeSplit?: (params: import('../cad-engine/door-cad-renderer').ResizeSplitParams) => void;
   onUpdateSelectedCell: (updates: Partial<SceneCellNode>) => void;
   onSplitSelectedCell: (direction: 'vertical' | 'horizontal') => void;
   onMergeSelectedCell: () => void;
+  onApplyGlassVisualToAll?: (patch: Partial<SceneCellNode>) => void;
   onOpenGrilleModal?: (cell: SceneCellNode) => void;
   availableGlasses?: Glass[];
   availableBeads?: ProfileBar[];
+  availableProfiles?: ProfileBar[];
   defaultGlass?: Glass | null;
   aluminumColors?: ColorSwatch[];
   onChangeFrameConfig?: (updates: Partial<FrameConfig>) => void;
+  onChangeSashConfig?: (updates: Partial<SashConfig>) => void;
   isInsideSash?: boolean;
 }
 
@@ -102,12 +106,15 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
   onUpdateSelectedCell,
   onSplitSelectedCell,
   onMergeSelectedCell,
+  onApplyGlassVisualToAll,
   onOpenGrilleModal,
   availableGlasses,
   availableBeads,
+  availableProfiles,
   defaultGlass,
   aluminumColors,
   onChangeFrameConfig,
+  onChangeSashConfig,
   isInsideSash,
 }) => {
   const [rightTab, setRightTab] = useState<'inspector' | 'bom'>('inspector');
@@ -145,6 +152,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
           onSelectFrameShape={onSelectFrameShape}
           selectedCellId={selectedCellId}
           onSelectSashType={onSelectSashType}
+          selectedCell={selectedCellNode}
+          onUpdateCell={onUpdateSelectedCell}
           onSplitMullion={onSplitMullion}
           onCoupleFrame={onCoupleFrame}
           onSplitSashMullion={onSplitSashMullion}
@@ -152,6 +161,9 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
           onChangeTab={onChangeTab}
           aluminumColors={aluminumColors}
           isInsideSash={isInsideSash}
+          sashConfig={sashConfig}
+          isOpenBottom={frameConfig?.isOpenBottom}
+          onChangeSashConfig={onChangeSashConfig}
         />
       </div>
 
@@ -172,6 +184,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
           onSelectCell={handleCanvasSelectCell}
           onUpdateDimension={onUpdateDimension}
           onResizeSplit={onResizeSplit}
+          availableProfiles={availableProfiles}
         />
 
         {/* Floating Action Pill Bar trên Mobile & Tablet (< lg) */}
@@ -281,6 +294,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
               onUpdateCell={onUpdateSelectedCell}
               onSplitCell={onSplitSelectedCell}
               onMergeCell={onMergeSelectedCell}
+              onApplyGlassVisualToAll={onApplyGlassVisualToAll}
               onOpenGrilleModal={onOpenGrilleModal}
               onDeselect={() => onSelectCell(null)}
               availableGlasses={availableGlasses}
@@ -290,6 +304,10 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
               frameShape={frameShape}
               frameConfig={frameConfig}
               doorW={w}
+              doorH={h}
+              isTouchingBottom={selectedCellNode ? isNodeTouchingBottom(rootCell, selectedCellNode.id) : false}
+              availableProfiles={availableProfiles}
+              sashConfig={sashConfig}
               onChangeFrameConfig={onChangeFrameConfig}
             />
           ) : (
@@ -382,6 +400,9 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   onSelectFrameShape={onSelectFrameShape}
                   selectedCellId={selectedCellId}
                   onSelectSashType={onSelectSashType}
+                  isOpenBottom={frameConfig?.isOpenBottom}
+                  selectedCell={selectedCellNode}
+                  onUpdateCell={onUpdateSelectedCell}
                   onSplitMullion={onSplitMullion}
                   onCoupleFrame={onCoupleFrame}
                   onSplitSashMullion={onSplitSashMullion}
@@ -389,6 +410,8 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   onChangeTab={onChangeTab}
                   aluminumColors={aluminumColors}
                   isInsideSash={isInsideSash}
+                  sashConfig={sashConfig}
+                  onChangeSashConfig={onChangeSashConfig}
                 />
               )}
 
@@ -398,6 +421,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   onUpdateCell={onUpdateSelectedCell}
                   onSplitCell={onSplitSelectedCell}
                   onMergeCell={onMergeSelectedCell}
+                  onApplyGlassVisualToAll={onApplyGlassVisualToAll}
                   onOpenGrilleModal={onOpenGrilleModal}
                   onDeselect={() => onSelectCell(null)}
                   availableGlasses={availableGlasses}
@@ -407,6 +431,10 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   frameShape={frameShape}
                   frameConfig={frameConfig}
                   doorW={w}
+                  doorH={h}
+                  isTouchingBottom={selectedCellNode ? isNodeTouchingBottom(rootCell, selectedCellNode.id) : false}
+                  availableProfiles={availableProfiles}
+                  sashConfig={sashConfig}
                   onChangeFrameConfig={onChangeFrameConfig}
                 />
               )}

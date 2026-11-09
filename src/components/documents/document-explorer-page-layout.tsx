@@ -24,12 +24,6 @@ export const DocumentExplorerPageLayout: React.FC<DocumentExplorerPageLayoutProp
         itemTypeFilter={explorer.itemTypeFilter}
         onItemTypeFilterChange={explorer.setItemTypeFilter}
         itemTypeOptions={explorer.itemTypeOptions}
-        documentType={explorer.documentType}
-        onDocumentTypeChange={explorer.setDocumentType}
-        documentTypeOptions={explorer.documentTypeOptions}
-        status={explorer.status}
-        onStatusChange={explorer.setStatus}
-        statusOptions={explorer.statusOptions}
         hasActiveFilters={explorer.hasActiveFilters}
         onResetFilters={explorer.handleResetFilters}
         viewMode={explorer.viewMode}

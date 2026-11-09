@@ -71,6 +71,11 @@ export const ROUTE_METADATA_MAP: Record<string, RouteMeta> = {
     subtitle: 'Đóng góp ý kiến cải tiến hệ thống',
     iconName: 'MessageSquarePlus',
   },
+  '/app/news': {
+    title: 'Quản trị tin tức',
+    subtitle: 'Bài viết, sự kiện & bình luận công khai',
+    iconName: 'Newspaper',
+  },
   '/app/app-versions': {
     title: 'Cập nhật ứng dụng',
     subtitle: 'Thông tin phiên bản & Phát hành',

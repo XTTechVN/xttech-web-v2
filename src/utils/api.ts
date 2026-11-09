@@ -17,6 +17,15 @@ api.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
+    // Nếu body là FormData, xóa Content-Type mặc định ('application/json')
+    // để trình duyệt tự động gắn 'multipart/form-data; boundary=...' chuẩn xác
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      if (typeof config.headers.delete === 'function') {
+        config.headers.delete('Content-Type');
+      } else {
+        delete config.headers['Content-Type'];
+      }
+    }
     return config;
   },
   (error) => {
@@ -70,7 +79,8 @@ api.interceptors.response.use(
     if (
       requestUrl.includes('/auth/signin') ||
       requestUrl.includes('/auth/signup') ||
-      requestUrl.includes('/auth/refresh')
+      requestUrl.includes('/auth/refresh') ||
+      requestUrl.includes('/auth/logout')
     ) {
       return Promise.reject(error);
     }
@@ -110,11 +120,12 @@ api.interceptors.response.use(
 
       // Backend trả về camelCase chuẩn theo quy chuẩn dự án (Rule 13)
       const newAccessToken: string | undefined = response.data?.accessToken;
+      const newRefreshToken: string | undefined = response.data?.refreshToken;
       if (!newAccessToken) {
         throw new Error('API refresh không trả về access token mới');
       }
 
-      useAuthStore.getState().setAccessToken(newAccessToken);
+      useAuthStore.getState().setTokens(newAccessToken, newRefreshToken);
 
       // Giải phóng hàng đợi cho tất cả các request đang chờ
       processQueue(null, newAccessToken);

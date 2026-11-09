@@ -1,5 +1,4 @@
 import React from 'react';
-import { CAD_CONFIG } from '../cad-config';
 
 export interface CadBeadResult {
   el: React.ReactNode;
@@ -10,7 +9,7 @@ export interface CadBeadResult {
 }
 
 /**
- * Render Nẹp kính (Glazing Bead): Dải nhôm 4 thanh ghép mòi 45° kẹp giữa khung cánh/khung bao và mặt kính.
+ * Render Nẹp kính (Glazing Bead): Dải nhôm 4 thanh ghép mòi 45° hoặc 90° kẹp giữa khung cánh/khung bao và mặt kính.
  * Trả về element SVG kèm tọa độ lòng kính (gx2, gy2, gw2, gh2).
  */
 export const renderCadBead = (
@@ -23,12 +22,9 @@ export const renderCadBead = (
   effectiveBeadW: number,
   jointType: '90' | '45' = '90'
 ): CadBeadResult => {
-  const maxAllowed = Math.max(2, Math.floor((Math.min(gw, gh) - 4) / 2));
-  const targetBw = Math.min(
-    effectiveBeadW,
-    Math.max(CAD_CONFIG.BEAD.MIN_W, Math.floor(Math.min(gw, gh) * CAD_CONFIG.BEAD.MAX_PANE_PERCENT))
-  );
-  const bw = Math.max(2, Math.min(targetBw, maxAllowed));
+  // Nẹp theo bản rộng profile thật; chỉ chặn khi ô kính quá nhỏ để không âm diện tích lòng kính
+  const maxAllowed = Math.max(0.5, (Math.min(gw, gh) - 4) / 2);
+  const bw = Math.min(effectiveBeadW, maxAllowed);
   const gx2 = gx + bw;
   const gy2 = gy + bw;
   const gw2 = Math.max(2, gw - 2 * bw);

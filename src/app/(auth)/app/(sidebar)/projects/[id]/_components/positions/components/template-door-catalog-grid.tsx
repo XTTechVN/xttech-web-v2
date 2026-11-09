@@ -4,7 +4,7 @@ import React from 'react';
 import { ImageOff, Layers, Star, Tag } from 'lucide-react';
 import { BASE_MINIO_URL } from '@/config';
 import { getDoorTypeConfig, type Door } from '@/types';
-import { DoorThumbnail } from '../../../../configuration/door-templates/_components/door-thumbnail';
+import { DoorThumbnail } from '@/components';
 import type { DoorSeriesGroup } from '../hooks/use-template-door-picker';
 
 interface TemplateDoorCardProps {

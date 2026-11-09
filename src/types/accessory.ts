@@ -1,6 +1,18 @@
 import type { AccessoryCategory } from './accessory-category';
 import type { Brand } from './brand';
 
+export type AccessoryUnit =
+  | 'set'
+  | 'pcs'
+  | 'pair'
+  | 'unit'
+  | 'roll'
+  | 'box'
+  | 'bag'
+  | 'meter'
+  | 'bottle'
+  | 'sheet';
+
 export interface AccessoryUnitConfig {
   label: string;
   className: string;
@@ -31,9 +43,17 @@ export const ACCESSORY_UNIT_CONFIG: Record<string, AccessoryUnitConfig> = {
     label: 'Hộp',
     className: 'bg-sky-50 text-sky-700 border-sky-200/70',
   },
+  bag: {
+    label: 'Túi',
+    className: 'bg-cyan-50 text-cyan-700 border-cyan-200/70',
+  },
   meter: {
     label: 'Mét',
     className: 'bg-rose-50 text-rose-700 border-rose-200/70',
+  },
+  bottle: {
+    label: 'Chai / Tuýp',
+    className: 'bg-pink-50 text-pink-700 border-pink-200/70',
   },
   sheet: {
     label: 'Tấm',
@@ -48,7 +68,9 @@ export const ACCESSORY_UNIT_MAP: Record<string, string> = {
   pair: 'Đôi / Cặp',
   roll: 'Cuộn',
   box: 'Hộp',
+  bag: 'Túi',
   meter: 'Mét',
+  bottle: 'Chai / Tuýp',
   sheet: 'Tấm',
 };
 
@@ -93,15 +115,21 @@ export interface Accessory {
   name: string;
   specification: string | null;
   unit: string | null;
-  unitPrice?: number;
+  unitLabel?: string | null;
   color?: string | null;
   costPrice: number;
-  retailPrice: number;
-  salePrice: number;
   imagePath: string | null;
   isActive?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AccessoryDropdownItem {
+  id: number;
+  name: string;
+  code?: string | null;
+  unit?: string | null;
+  unitLabel?: string | null;
 }
 
 export interface AccessoryCreate {
@@ -111,11 +139,8 @@ export interface AccessoryCreate {
   brandId?: number | null;
   specification?: string;
   unit?: string;
-  unitPrice?: number;
   color?: string;
   costPrice?: number;
-  retailPrice?: number;
-  salePrice?: number;
   imagePath?: string;
   isActive?: boolean;
 }
@@ -127,11 +152,8 @@ export interface AccessoryUpdate {
   brandId?: number | null;
   specification?: string;
   unit?: string;
-  unitPrice?: number;
   color?: string;
   costPrice?: number;
-  retailPrice?: number;
-  salePrice?: number;
   imagePath?: string;
   isActive?: boolean;
 }
@@ -139,12 +161,14 @@ export interface AccessoryUpdate {
 export interface AccessoryQueryParams {
   search?: string;
   code?: string;
-  unit?: string;
+  unit?: AccessoryUnit | string;
   categoryId?: number;
   brandId?: number;
   isActive?: boolean;
   offset?: number;
   limit?: number;
+  orderBy?: string;
+  sortBy?: 'asc' | 'desc';
   allowDeleted?: boolean;
   materialId?: number;
   doorId?: number;

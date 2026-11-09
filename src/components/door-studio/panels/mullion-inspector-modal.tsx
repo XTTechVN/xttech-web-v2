@@ -2,9 +2,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MullionInfo, MullionCutType } from '../studio-types';
+import {
+  MullionInfo,
+  MullionCutType,
+  MULLION_CUT_LABELS,
+  MULLION_CUT_ORDER,
+  normalizeMullionCutType,
+} from '../studio-types';
 import { ProfileBar } from '@/types';
-import { Ruler, Trash2, Check, X } from 'lucide-react';
+import { Select } from '@/components/select';
+import { Ruler, Trash2, Check, X, ArrowLeftRight } from 'lucide-react';
 
 interface MullionInspectorModalProps {
   isOpen: boolean;
@@ -17,14 +24,8 @@ interface MullionInspectorModalProps {
     cutType?: MullionCutType;
   }) => void;
   onDeleteMullion: () => void;
+  onLocalTranspose?: (parentId: string, mullionIndex: number) => void;
 }
-
-const CUT_TYPE_LABELS: Record<MullionCutType, string> = {
-  inside_frame: 'Lọt khung →',
-  overlap: 'Phủ khung →',
-  miter: 'Cắt mòi 45° →',
-  square: 'Vuông 90° →',
-};
 
 export const MullionInspectorModal: React.FC<MullionInspectorModalProps> = ({
   isOpen,
@@ -33,6 +34,7 @@ export const MullionInspectorModal: React.FC<MullionInspectorModalProps> = ({
   profileBars,
   onSave,
   onDeleteMullion,
+  onLocalTranspose,
 }) => {
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic');
   const [dimension, setDimension] = useState<number>(0);
@@ -46,7 +48,7 @@ export const MullionInspectorModal: React.FC<MullionInspectorModalProps> = ({
     if (mullion) {
       setDimension(mullion.dimension);
       setSelectedProfileId(mullion.profileId);
-      setCutType(mullion.cutType || 'inside_frame');
+      setCutType(normalizeMullionCutType(mullion.cutType));
       setActiveTab('basic');
     }
   }, [mullion]);
@@ -75,9 +77,9 @@ export const MullionInspectorModal: React.FC<MullionInspectorModalProps> = ({
   };
 
   const handleCycleCutType = () => {
-    const types: MullionCutType[] = ['inside_frame', 'overlap', 'square', 'miter'];
-    const nextIdx = (types.indexOf(cutType) + 1) % types.length;
-    setCutType(types[nextIdx]);
+    const currentIdx = MULLION_CUT_ORDER.indexOf(normalizeMullionCutType(cutType));
+    const nextIdx = (currentIdx + 1) % MULLION_CUT_ORDER.length;
+    setCutType(MULLION_CUT_ORDER[nextIdx]);
   };
 
   return (
@@ -159,20 +161,22 @@ export const MullionInspectorModal: React.FC<MullionInspectorModalProps> = ({
               <label className="text-xs font-semibold text-slate-600">
                 Override cây đố khung:
               </label>
-              <select
+              <Select
+                fullWidth
                 value={selectedProfileId ?? ''}
                 onChange={(e) =>
                   setSelectedProfileId(e.target.value ? Number(e.target.value) : undefined)
                 }
-                className="w-full h-10 px-3 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 bg-white focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/15 cursor-pointer truncate"
-              >
-                <option value="">(Mặc định theo hệ nhôm)</option>
-                {availableProfiles.map((bar) => (
-                  <option key={bar.id} value={bar.id}>
-                    {bar.code} – {bar.name}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: '(Mặc định theo hệ nhôm)' },
+                  ...availableProfiles.map((bar) => ({
+                    value: bar.id,
+                    label: `${bar.code} – ${bar.name}`,
+                  })),
+                ]}
+                placeholder="(Mặc định theo hệ nhôm)"
+                className="h-10 py-0 rounded-xl border-slate-300 text-xs md:text-xs font-medium text-slate-800 bg-white"
+              />
               {selectedProfileId && (
                 <button
                   type="button"
@@ -192,7 +196,7 @@ export const MullionInspectorModal: React.FC<MullionInspectorModalProps> = ({
                 onClick={handleCycleCutType}
                 className="px-3.5 py-1.5 rounded-full border border-orange-400 text-orange-600 font-semibold text-xs hover:bg-orange-50 transition-colors cursor-pointer"
               >
-                {CUT_TYPE_LABELS[cutType]}
+                {MULLION_CUT_LABELS[normalizeMullionCutType(cutType)]}
               </button>
             </div>
 
@@ -271,19 +275,48 @@ export const MullionInspectorModal: React.FC<MullionInspectorModalProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  className="py-2 rounded-xl text-xs font-medium border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"
-                  disabled
+                  onClick={() => {
+                    onLocalTranspose?.(mullion.parentNodeId, mullion.mullionIndex);
+                    onClose();
+                  }}
+                  disabled={!onLocalTranspose}
+                  className={`py-2 rounded-xl text-xs font-medium border transition-colors ${
+                    onLocalTranspose
+                      ? 'border-teal-500 bg-teal-50/70 text-teal-800 hover:bg-teal-100/80 cursor-pointer font-semibold'
+                      : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
+                  }`}
                 >
                   {isHoriz ? '← Qua trái' : '↑ Lên trên'}
                 </button>
                 <button
                   type="button"
-                  className="py-2 rounded-xl text-xs font-medium border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"
-                  disabled
+                  onClick={() => {
+                    onLocalTranspose?.(mullion.parentNodeId, mullion.mullionIndex);
+                    onClose();
+                  }}
+                  disabled={!onLocalTranspose}
+                  className={`py-2 rounded-xl text-xs font-medium border transition-colors ${
+                    onLocalTranspose
+                      ? 'border-teal-500 bg-teal-50/70 text-teal-800 hover:bg-teal-100/80 cursor-pointer font-semibold'
+                      : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
+                  }`}
                 >
                   {isHoriz ? 'Qua phải →' : 'Xuống dưới ↓'}
                 </button>
               </div>
+              {onLocalTranspose && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onLocalTranspose(mullion.parentNodeId, mullion.mullionIndex);
+                    onClose();
+                  }}
+                  className="mt-1 w-full py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                >
+                  <ArrowLeftRight size={14} />
+                  <span>Đảo chiều ưu tiên đố (Local transpose)</span>
+                </button>
+              )}
             </div>
 
             {/* Chú giải mốc */}

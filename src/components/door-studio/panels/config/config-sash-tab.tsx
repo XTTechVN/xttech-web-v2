@@ -1,15 +1,14 @@
 'use client';
 
 import React from 'react';
-import {
-  SashConfig,
-  SashCornerJoint,
-  BeadCornerJoint,
-} from '../../studio-types';
+import { SashConfig, SashCornerJoint, BeadCornerJoint, SashOffsetScope, SashOffsetValues, DOOR_SYSTEM_FAMILIES } from '../../studio-types';
 import { ProfileBar } from '@/types';
-import { DoorClosed, Shield, SlidersHorizontal, Layers, Check } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { GasketConfigSection } from './gasket-config-section';
 import { CustomExtraConfigSection } from './custom-extra-config-section';
+import { SlidingSashVariantsSection } from './sliding-sash-variants-section';
+import { CasementSashProfilesSection } from './casement-sash-profiles-section';
+import { Select } from '@/components/select';
 
 interface ConfigSashTabProps {
   config: SashConfig;
@@ -17,380 +16,274 @@ interface ConfigSashTabProps {
   profiles: ProfileBar[];
 }
 
-export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({
-  config,
-  onChangeConfig,
-  profiles,
-}) => {
-  const sashProfiles = profiles.filter((p) => p.barType === 'SASH');
-  const mullionProfiles = profiles.filter((p) => p.barType === 'MULLION');
-  const beadProfiles = profiles.filter((p) => p.barType === 'BEAD');
+const BASE_SASH_JOINTS: { id: SashCornerJoint; label: string }[] = [
+  { id: '45', label: 'Ghép 45°' },
+  { id: '90_vert', label: '90° Dọc phủ' },
+  { id: '45_top_90_bot', label: '45° trên - 90° dưới' },
+  { id: '90_horiz', label: '90° Ngang phủ' },
+];
+const LEFT_SLIDING_JOINTS: { id: SashCornerJoint; label: string }[] = [...BASE_SASH_JOINTS, { id: 'd_left', label: 'Cánh lùa Trái (D)' }];
+const RIGHT_SLIDING_JOINTS: { id: SashCornerJoint; label: string }[] = [...BASE_SASH_JOINTS, { id: 'd_right', label: 'Cánh lùa Phải (D)' }];
+const BEAD_CORNER_JOINTS: { id: BeadCornerJoint; label: string }[] = [
+  { id: '45', label: 'Ghép 45°' },
+  { id: '90_horiz', label: '90° Ngang phủ' },
+  { id: '90_vert', label: '90° Dọc phủ' },
+];
+const OFFSET_SCOPES: { id: SashOffsetScope; label: string }[] = [
+  { id: 'all', label: 'Tất cả cánh' },
+  { id: 'left_sliding', label: 'Cánh lùa trái' },
+  { id: 'right_sliding', label: 'Cánh lùa phải' },
+  { id: 'center_sliding', label: 'Cánh lùa giữa (2 chiều)' },
+];
+const OFFSET_EDGE_FIELDS: { key: keyof SashOffsetValues; label: string }[] = [
+  { key: 'left', label: 'Cạnh Trái' },
+  { key: 'top', label: 'Cạnh Trên' },
+  { key: 'right', label: 'Cạnh Phải' },
+  { key: 'bottom', label: 'Cạnh Dưới' },
+];
 
-  const offsetMm = config?.offsetMm ?? { left: 0, top: 0, right: 0, bottom: 0 };
+export const ConfigSashTab: React.FC<ConfigSashTabProps> = ({ config, onChangeConfig, profiles }) => {
+  const isSlidingFamily = config.family === 'Cửa đi lùa' || config.family === 'Cửa sổ lùa' || config.family === 'Cửa trượt lùa';
+  const isSlidingOrSwingSlide = isSlidingFamily || config.family === 'Cửa trượt quay';
+  const isFoldingFamily = config.family === 'Cửa xếp trượt';
+  const isSlimCasement = config.sashStyle === 'slim' && !isSlidingOrSwingSlide && !isFoldingFamily;
+  const normalizedFamilyValue = config.family === 'Cửa trượt lùa' ? 'Cửa đi lùa' : config.family;
+  const sashProfiles = profiles.filter((p) => p.barType === 'SASH' || p.barType === 'SCREEN_SASH');
 
-  // Master left sash profile change -> apply to others if not set
-  const handleLeftProfileChange = (profileId: number) => {
+  const selectedLeftSash = sashProfiles.find((p) => p.id === (config.voCucProfileId ?? config.leftProfileId)) || sashProfiles[0];
+  const currentScope: SashOffsetScope = isSlidingOrSwingSlide ? (config.offsetApplyTo || 'all') : 'all';
+  const currentScopeLabel = OFFSET_SCOPES.find((s) => s.id === currentScope)?.label || 'Tất cả cánh';
+
+  const activeOffset: SashOffsetValues =
+    (isSlidingOrSwingSlide ? config.slidingOffsets?.[currentScope] : undefined) ??
+    config?.offsetMm ?? { left: 0, top: 0, right: 0, bottom: 0 };
+
+  const handleOffsetFieldChange = (edge: keyof SashOffsetValues, val: number) => {
+    const nextOffset: SashOffsetValues = { ...activeOffset, [edge]: val };
     onChangeConfig({
-      leftProfileId: profileId,
-      topProfileId: config.topProfileId || profileId,
-      rightProfileId: config.rightProfileId || profileId,
-      bottomProfileId: config.bottomProfileId || profileId,
+      offsetMm: nextOffset,
+      offsetApplyTo: currentScope,
+      slidingOffsets: { ...(config.slidingOffsets || {}), [currentScope]: nextOffset },
     });
   };
 
-  const SASH_CORNER_JOINTS: { id: SashCornerJoint; label: string }[] = [
-    { id: '45', label: 'Ghép 45°' },
-    { id: '90_vert', label: '90° Dọc phủ' },
-    { id: '45_top_90_bot', label: '45° trên - 90° dưới' },
-    { id: '90_horiz', label: '90° Ngang phủ' },
+  const handleScopeChange = (nextScope: SashOffsetScope) => {
+    const scopeOffset = config.slidingOffsets?.[nextScope] ?? { left: 0, top: 0, right: 0, bottom: 0 };
+    onChangeConfig({ offsetApplyTo: nextScope, offsetMm: scopeOffset });
+  };
+
+  const slidingJoints = config.slidingJoints ?? {
+    leftSliding: config.cornerJoint || '45',
+    rightSliding: config.cornerJoint || '45',
+    centerSliding: config.cornerJoint || '45',
+  };
+
+  const handleSlidingJointChange = (key: 'leftSliding' | 'rightSliding' | 'centerSliding', joint: SashCornerJoint) => {
+    onChangeConfig({
+      slidingJoints: { ...slidingJoints, [key]: joint },
+      ...(key === 'leftSliding' ? { cornerJoint: joint } : {}),
+    });
+  };
+
+  const clearanceFields = [
+    { label: 'Ngậm ngang', sub: 'Ngậm khung đứng', val: config.ngamNgangMm, onChange: (v: number) => onChangeConfig({ ngamNgangMm: v }) },
+    { label: 'Ngậm dọc', sub: 'Ngậm trên/dưới', val: config.ngamDocMm, onChange: (v: number) => onChangeConfig({ ngamDocMm: v }) },
+    ...(!isSlimCasement
+      ? [{
+          label: isSlidingOrSwingSlide ? 'Trừ ốp nối cánh' : 'Trừ đố động',
+          sub: isSlidingOrSwingSlide ? 'Ốp nối = Hs - giá trị này' : 'Hs - giá trị này',
+          val: config.truDoDongMm,
+          onChange: (v: number) => onChangeConfig({ truDoDongMm: v }),
+        }]
+      : []),
   ];
 
-  const BEAD_CORNER_JOINTS: { id: BeadCornerJoint; label: string }[] = [
-    { id: '45', label: 'Ghép 45°' },
-    { id: '90_horiz', label: '90° Ngang phủ' },
-    { id: '90_vert', label: '90° Dọc phủ' },
+  const slidingJointRows = [
+    { key: 'leftSliding' as const, label: 'Cánh lùa trái:', options: LEFT_SLIDING_JOINTS },
+    { key: 'rightSliding' as const, label: 'Cánh lùa phải:', options: RIGHT_SLIDING_JOINTS },
+    { key: 'centerSliding' as const, label: 'Cánh lùa giữa (2 chiều):', options: BASE_SASH_JOINTS },
   ];
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 text-xs text-slate-800">
-      {/* CỘT TRÁI (7 cols): Cấu hình lưới muỗi & Thông số quy cách cánh */}
       <div className="xl:col-span-7 space-y-4">
-        {/* Cấu hình lưới muỗi */}
         <div className="flex items-center justify-between p-3.5 bg-white rounded-lg border border-slate-200 shadow-2xs">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-              <Shield size={16} />
-            </div>
+            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><Shield size={16} /></div>
             <div>
               <div className="font-semibold text-xs text-slate-900">Cánh lưới chống muỗi (Screen Sash)</div>
               <div className="text-[11px] text-slate-500 hidden sm:block">Kích hoạt để cấu hình và tính toán hệ lưới muỗi độc lập</div>
             </div>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={config.hasScreenSash}
-              onChange={(e) => onChangeConfig({ hasScreenSash: e.target.checked })}
-              className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
-            />
+            <input type="checkbox" checked={config.hasScreenSash} onChange={(e) => onChangeConfig({ hasScreenSash: e.target.checked })} className="w-4 h-4 rounded text-primary accent-primary cursor-pointer" />
           </label>
         </div>
 
-        {/* Cánh cửa (Sash) */}
         <div className="space-y-4 p-4 rounded-lg bg-white border border-slate-200 shadow-2xs">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-          <div className="flex items-center gap-2 font-semibold text-xs text-slate-900">
-            <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-bold">1</span>
-            <span>Thông số quy cách cánh</span>
-          </div>
-          <span className="text-[11px] text-slate-400 font-normal hidden sm:inline">Cấu hình áp dụng mặc định cho các cánh</span>
-        </div>
-
-        {/* Nhóm kiểu mở & Loại cánh */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200">
-            <label className="font-medium text-xs text-slate-700">Nhóm kiểu mở (Family):</label>
-            <select
-              value={config.family}
-              onChange={(e) => onChangeConfig({ family: e.target.value })}
-              className="w-full h-8 px-2 text-xs rounded-lg border border-slate-300 bg-white text-slate-800 font-medium focus:outline-none focus:border-primary"
-            >
-              <option value="Cửa sổ mở quay/Hất">Cửa sổ mở quay/Hất</option>
-              <option value="Cửa đi mở quay">Cửa đi mở quay</option>
-              <option value="Cửa trượt lùa">Cửa trượt lùa</option>
-              <option value="Cửa xếp trượt">Cửa xếp trượt</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200">
-            <label className="font-medium text-xs text-slate-700">Loại bản cánh:</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => onChangeConfig({ sashStyle: 'standard' })}
-                className={`py-1.5 px-2 rounded-lg border text-xs font-medium text-center cursor-pointer transition-all ${
-                  config.sashStyle === 'standard'
-                    ? 'border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary/30'
-                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                Cánh tiêu chuẩn
-              </button>
-              <button
-                type="button"
-                onClick={() => onChangeConfig({ sashStyle: 'slim' })}
-                className={`py-1.5 px-2 rounded-lg border text-xs font-medium text-center cursor-pointer transition-all ${
-                  config.sashStyle === 'slim'
-                    ? 'border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary/30'
-                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                Cánh vô cực (Slim)
-              </button>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+            <div className="flex items-center gap-2 font-semibold text-xs text-slate-900">
+              <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-bold">1</span>
+              <span>Thông số quy cách cánh</span>
             </div>
+            <span className="text-[11px] text-slate-400 font-normal hidden sm:inline">Cấu hình áp dụng mặc định cho các cánh</span>
           </div>
-        </div>
 
-        {/* Khe hở & ngàm trừ cơ khí */}
-        <div className="space-y-1.5">
-          <div className="font-medium text-xs text-slate-700">Khe hở & ngàm trừ cơ khí:</div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
-              <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
-                <span>Ngàm ngang</span>
-                <span className="text-slate-400">mm</span>
-              </div>
-              <input
-                type="number"
-                value={config.ngamNgangMm}
-                onChange={(e) => onChangeConfig({ ngamNgangMm: Number(e.target.value) })}
-                className="w-full h-7 px-2 text-xs text-center border rounded border-slate-300 focus:outline-none focus:border-primary font-medium"
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200">
+              <label className="font-medium text-xs text-slate-700">Nhóm kiểu mở (Family):</label>
+              <Select
+                fullWidth
+                value={normalizedFamilyValue}
+                onChange={(e) => onChangeConfig({ family: e.target.value })}
+                options={DOOR_SYSTEM_FAMILIES.map((fam) => ({ value: fam, label: fam }))}
+                className="h-8 py-0 text-xs md:text-xs rounded-md border-slate-300 bg-white text-slate-800 font-medium"
               />
-              <div className="text-[10px] text-slate-400 text-center">Trừ ngàm đứng</div>
             </div>
-            <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
-              <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
-                <span>Ngàm dọc</span>
-                <span className="text-slate-400">mm</span>
+
+            <div className="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200">
+              <label className="font-medium text-xs text-slate-700">Loại bản cánh:</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['standard', 'slim'] as const).map((style) => (
+                  <button key={style} type="button" onClick={() => onChangeConfig({ sashStyle: style })} className={`py-1.5 px-2 rounded-lg border text-xs font-medium text-center cursor-pointer transition-all ${config.sashStyle === style ? 'border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary/30' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                    {style === 'standard' ? 'Cánh tiêu chuẩn' : 'Cánh vô cực (Slim)'}
+                  </button>
+                ))}
               </div>
-              <input
-                type="number"
-                value={config.ngamDocMm}
-                onChange={(e) => onChangeConfig({ ngamDocMm: Number(e.target.value) })}
-                className="w-full h-7 px-2 text-xs text-center border rounded border-slate-300 focus:outline-none focus:border-primary font-medium"
-              />
-              <div className="text-[10px] text-slate-400 text-center">Trừ ngàm trên / dưới</div>
-            </div>
-            <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
-              <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
-                <span>Trừ đố động</span>
-                <span className="text-slate-400">mm</span>
-              </div>
-              <input
-                type="number"
-                value={config.truDoDongMm}
-                onChange={(e) => onChangeConfig({ truDoDongMm: Number(e.target.value) })}
-                className="w-full h-7 px-2 text-xs text-center border rounded border-slate-300 focus:outline-none focus:border-primary font-medium"
-              />
-              <div className="text-[10px] text-slate-400 text-center">Hs - giá trị này</div>
+              {isSlimCasement && (
+                <div className="text-[10px] text-slate-500 pt-0.5 leading-snug">
+                  1 cánh · 1 profile duy nhất · cắt 90°/90° · không tay nắm · không kính · không đố động. Hướng mở chọn tại Bản vẽ.
+                </div>
+              )}
             </div>
           </div>
-        </div>
 
-        {/* Bù trừ offset cánh */}
-        <div className="space-y-1.5">
-          <div className="font-medium text-xs text-slate-700">Bù / trừ offset cánh (mm):</div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {[
-              { key: 'left', label: 'Cạnh Trái' },
-              { key: 'top', label: 'Cạnh Trên' },
-              { key: 'right', label: 'Cạnh Phải' },
-              { key: 'bottom', label: 'Cạnh Dưới' },
-            ].map(({ key, label }) => (
-              <div key={key} className="p-2.5 bg-white rounded-lg border border-slate-200 text-center space-y-1">
-                <div className="text-[11px] font-medium text-slate-600">{label}</div>
-                <input
-                  type="number"
-                  value={offsetMm[key as keyof typeof offsetMm]}
-                  onChange={(e) =>
-                    onChangeConfig({
-                      offsetMm: {
-                        ...offsetMm,
-                        [key]: Number(e.target.value),
-                      },
-                    })
-                  }
-                  className="w-full h-7 text-center text-xs border rounded border-slate-300 focus:outline-none focus:border-primary font-medium"
-                />
-              </div>
-            ))}
+          <div className="space-y-1.5">
+            <div className="font-medium text-xs text-slate-700">Khe hở & ngậm cơ khí:</div>
+            <div className={`grid grid-cols-2 ${isSlimCasement ? 'sm:grid-cols-2' : isFoldingFamily ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-2.5`}>
+              {clearanceFields.map((item) => (
+                <div key={item.label} className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium"><span>{item.label}</span><span className="text-slate-400">mm</span></div>
+                  <input type="number" value={item.val} onChange={(e) => item.onChange(Number(e.target.value))} className="w-full h-7 px-2 text-xs text-center border rounded border-slate-300 focus:outline-none focus:border-primary font-medium tabular-nums" />
+                  <div className="text-[10px] text-slate-400 text-center">{item.sub}</div>
+                </div>
+              ))}
+              {isFoldingFamily && (
+                <div className="p-3 bg-white rounded-lg border border-primary/30 space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-primary font-semibold"><span>Độ hở bản lề</span><span className="text-slate-400">mm</span></div>
+                  <input type="number" value={config.hoLeMm ?? 13} onChange={(e) => onChangeConfig({ hoLeMm: Number(e.target.value) })} className="w-full h-7 px-2 text-xs text-center border rounded border-primary/40 focus:outline-none focus:border-primary font-semibold tabular-nums" />
+                  <div className="text-[10px] text-slate-400 text-center">Khe hở bản lề xếp trượt</div>
+                </div>
+              )}
+              {!isSlimCasement && (
+                <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
+                    <span>{config.family === 'Cửa trượt quay' ? 'Hở cánh / Ngậm lùa' : 'Ngậm lùa'}</span><span className="text-slate-400">mm</span>
+                  </div>
+                  <input type="number" value={config.slidingOverlapMm ?? ''} placeholder={selectedLeftSash?.sectionHeightMm ? `Tự động (${selectedLeftSash.sectionHeightMm} mm)` : 'Tự động'} onChange={(e) => onChangeConfig({ slidingOverlapMm: e.target.value === '' ? undefined : Number(e.target.value) })} className="w-full h-7 px-2 text-xs text-center border rounded border-slate-300 focus:outline-none focus:border-primary font-medium placeholder:text-slate-400 placeholder:italic tabular-nums" />
+                  <div className="text-[10px] text-slate-400 text-center">Chồng đè cánh lùa</div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Góc ghép cánh & Góc ghép nẹp cánh */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-2">
-            <div className="font-semibold text-xs text-slate-800">Góc ghép cánh:</div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {SASH_CORNER_JOINTS.map((joint) => (
-                <button
-                  key={joint.id}
-                  type="button"
-                  onClick={() => onChangeConfig({ cornerJoint: joint.id })}
-                  className={`px-2.5 py-1 rounded text-[11px] font-medium border cursor-pointer transition-colors ${
-                    config.cornerJoint === joint.id
-                      ? 'bg-primary text-white border-primary shadow-xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {joint.label}
-                </button>
+          <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <div className="font-medium text-xs text-slate-800">Bù / trừ offset cánh (mm):</div>
+                {isSlidingOrSwingSlide && <div className="text-[11px] text-primary font-medium">Đang chỉnh bộ offset: <b>{currentScopeLabel}</b></div>}
+              </div>
+              {isSlidingOrSwingSlide && (
+                <select value={currentScope} onChange={(e) => handleScopeChange(e.target.value as SashOffsetScope)} className="h-7 px-2 text-xs rounded border border-primary/40 bg-white text-slate-800 font-medium focus:outline-none focus:border-primary">
+                  {OFFSET_SCOPES.map((sc) => <option key={sc.id} value={sc.id}>{sc.label}</option>)}
+                </select>
+              )}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {OFFSET_EDGE_FIELDS.map(({ key, label }) => (
+                <div key={key} className="p-2 bg-white rounded-lg border border-slate-200 text-center space-y-1">
+                  <div className="text-[11px] font-medium text-slate-600">{label}</div>
+                  <input type="number" value={activeOffset[key]} onChange={(e) => handleOffsetFieldChange(key, Number(e.target.value))} className="w-full h-7 text-center text-xs border rounded border-slate-300 focus:outline-none focus:border-primary font-medium tabular-nums" />
+                </div>
               ))}
             </div>
           </div>
 
-          <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-2">
-            <div className="font-semibold text-xs text-slate-800">Góc ghép nẹp cho cánh:</div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {BEAD_CORNER_JOINTS.map((joint) => (
-                <button
-                  key={joint.id}
-                  type="button"
-                  onClick={() => onChangeConfig({ beadCornerJoint: joint.id })}
-                  className={`px-2.5 py-1 rounded text-[11px] font-medium border cursor-pointer transition-colors ${
-                    config.beadCornerJoint === joint.id
-                      ? 'bg-primary text-white border-primary shadow-xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {joint.label}
-                </button>
-              ))}
+          {isSlidingOrSwingSlide ? (
+            <div className="space-y-3 pt-1">
+              <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-2.5">
+                <div className="font-semibold text-xs text-slate-800">Góc ghép cánh (theo loại cánh):</div>
+                {slidingJointRows.map((row) => (
+                  <div key={row.key} className="space-y-1">
+                    <div className="text-[11px] font-medium text-slate-600">{row.label}</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                      {row.options.map((joint) => (
+                        <button key={joint.id} type="button" onClick={() => handleSlidingJointChange(row.key, joint.id)} className={`px-2 py-1.5 rounded text-[11px] font-medium border cursor-pointer transition-colors ${slidingJoints[row.key] === joint.id ? 'bg-primary text-white border-primary shadow-xs font-semibold' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}>
+                          {joint.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-2">
+                <div className="font-semibold text-xs text-slate-800">Góc ghép nẹp cho cánh:</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {BEAD_CORNER_JOINTS.map((joint) => (
+                    <button key={joint.id} type="button" onClick={() => onChangeConfig({ beadCornerJoint: joint.id })} className={`px-2.5 py-1.5 rounded text-[11px] font-medium border cursor-pointer transition-colors ${config.beadCornerJoint === joint.id ? 'bg-amber-600 text-white border-amber-600 shadow-xs font-semibold' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}>
+                      {joint.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          ) : !isSlimCasement ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-2">
+                <div className="font-semibold text-xs text-slate-800">Góc ghép cánh:</div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {BASE_SASH_JOINTS.map((joint) => (
+                    <button key={joint.id} type="button" onClick={() => onChangeConfig({ cornerJoint: joint.id })} className={`px-2.5 py-1 rounded text-[11px] font-medium border cursor-pointer transition-colors ${config.cornerJoint === joint.id ? 'bg-primary text-white border-primary shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}>
+                      {joint.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-2">
+                <div className="font-semibold text-xs text-slate-800">Góc ghép nẹp cho cánh:</div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {BEAD_CORNER_JOINTS.map((joint) => (
+                    <button key={joint.id} type="button" onClick={() => onChangeConfig({ beadCornerJoint: joint.id })} className={`px-2.5 py-1 rounded text-[11px] font-medium border cursor-pointer transition-colors ${config.beadCornerJoint === joint.id ? 'bg-primary text-white border-primary shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}>
+                      {joint.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
-      {/* CỘT PHẢI (5 cols): Profile chi tiết cánh cửa */}
       <div className="xl:col-span-5 space-y-4">
         <div className="space-y-3 p-4 rounded-lg bg-white border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2 font-semibold text-xs text-slate-900">
               <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-bold">2</span>
-              <span>Profile chi tiết cánh cửa</span>
+              <span>{isSlidingOrSwingSlide ? 'Cấu hình thanh / profile cánh lùa' : isSlimCasement ? 'Profile cánh vô cực' : 'Profile chi tiết cánh cửa'}</span>
             </div>
-            <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded">Tự đồng bộ</span>
+            <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded">{isSlimCasement ? '1 thanh duy nhất' : 'Tự đồng bộ'}</span>
           </div>
-
-          <div className="space-y-3">
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-xs text-slate-800">Cạnh đứng trái (Gốc)</span>
-                <span className="text-[10px] text-primary font-medium">Đồng bộ sang cạnh khác</span>
-              </div>
-              <select
-                value={config.leftProfileId || ''}
-                onChange={(e) => handleLeftProfileChange(Number(e.target.value))}
-                className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-              >
-                <option value="">Chọn profile...</option>
-                {sashProfiles.map((p) => (
-                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
-                <span className="font-semibold text-xs text-slate-800">Cạnh trên</span>
-                <select
-                  value={config.topProfileId || ''}
-                  onChange={(e) => onChangeConfig({ topProfileId: Number(e.target.value) })}
-                  className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                >
-                  <option value="">{config.leftProfileId ? '↑ Kế thừa (Cạnh trái)' : 'Chọn profile...'}</option>
-                  {sashProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
-                <span className="font-semibold text-xs text-slate-800">Cạnh đứng phải</span>
-                <select
-                  value={config.rightProfileId || ''}
-                  onChange={(e) => onChangeConfig({ rightProfileId: Number(e.target.value) })}
-                  className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                >
-                  <option value="">{config.leftProfileId ? '↑ Kế thừa (Cạnh trái)' : 'Chọn profile...'}</option>
-                  {sashProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
-              <span className="font-semibold text-xs text-slate-800">Cạnh dưới</span>
-              <select
-                value={config.bottomProfileId || ''}
-                onChange={(e) => onChangeConfig({ bottomProfileId: Number(e.target.value) })}
-                className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-              >
-                <option value="">{config.leftProfileId ? '↑ Kế thừa (Cạnh trái)' : 'Chọn profile...'}</option>
-                {sashProfiles.map((p) => (
-                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
-                <span className="font-semibold text-xs text-slate-800">Đố chia cánh</span>
-                <select
-                  value={config.mullionProfileId || ''}
-                  onChange={(e) => onChangeConfig({ mullionProfileId: Number(e.target.value) })}
-                  className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                >
-                  <option value="">Chọn profile...</option>
-                  {mullionProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
-                <span className="font-semibold text-xs text-slate-800">Nẹp kính cánh</span>
-                <select
-                  value={config.beadProfileId || ''}
-                  onChange={(e) => onChangeConfig({ beadProfileId: Number(e.target.value) })}
-                  className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-                >
-                  <option value="">Chọn profile...</option>
-                  {beadProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-xs text-slate-800">Đố động (Astragal)</span>
-                <span className="text-[11px] text-slate-400">Dành cho 2 cánh</span>
-              </div>
-              <select
-                value={config.dynamicMullionProfileId || ''}
-                onChange={(e) => onChangeConfig({ dynamicMullionProfileId: Number(e.target.value) })}
-                className="w-full h-8 px-2 text-xs rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-primary"
-              >
-                <option value="">Chọn profile đố động...</option>
-                {mullionProfiles.map((p) => (
-                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+          {isSlidingOrSwingSlide ? (
+            <SlidingSashVariantsSection config={config} onChangeConfig={onChangeConfig} profiles={profiles} />
+          ) : (
+            <CasementSashProfilesSection config={config} onChangeConfig={onChangeConfig} profiles={profiles} />
+          )}
         </div>
       </div>
 
-      {/* CỘT RỘNG TOÀN PHẦN (12 cols): Roan gắn kính — Cánh & Phụ kiện tùy biến — Cánh */}
       <div className="xl:col-span-12 space-y-4 pt-1">
-        {/* 2. Roan gắn kính — Cánh */}
-        <GasketConfigSection
-          items={config.gaskets}
-          onChangeItems={(gaskets) => onChangeConfig({ gaskets })}
-          target="sash"
-        />
-
-        {/* 3. Phụ kiện tùy biến — Cánh */}
-        <CustomExtraConfigSection
-          items={config.extras}
-          onChangeItems={(extras) => onChangeConfig({ extras })}
-          profiles={profiles}
-          target="sash"
-        />
+        <GasketConfigSection items={config.gaskets} onChangeItems={(gaskets) => onChangeConfig({ gaskets })} target="sash" />
+        <CustomExtraConfigSection items={config.extras} onChangeItems={(extras) => onChangeConfig({ extras })} profiles={profiles} target="sash" />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button, Input, Modal } from '@/components';
 import type { MeasurePositionResponse, ProjectDoorPosition } from '@/types';
@@ -21,18 +21,19 @@ export function PositionMeasureModal({
   onClose,
   onMeasure,
 }: PositionMeasureModalProps) {
-  const [actualWidth, setActualWidth] = useState(0);
-  const [actualHeight, setActualHeight] = useState(0);
-  const [measureNote, setMeasureNote] = useState('');
+  const [prevPosId, setPrevPosId] = useState<number | null>(position?.id ?? null);
+  const [actualWidth, setActualWidth] = useState(position?.width ?? 0);
+  const [actualHeight, setActualHeight] = useState(position?.height ?? 0);
+  const [measureNote, setMeasureNote] = useState(position?.measureNote || '');
   const [measureWarning, setMeasureWarning] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!position) return;
+  if (position && position.id !== prevPosId) {
+    setPrevPosId(position.id);
     setActualWidth(position.width);
     setActualHeight(position.height);
-    setMeasureNote('');
+    setMeasureNote(position.measureNote || '');
     setMeasureWarning(null);
-  }, [position]);
+  }
 
   const handleConfirm = () => {
     if (!position) return;

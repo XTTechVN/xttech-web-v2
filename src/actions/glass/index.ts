@@ -1,4 +1,5 @@
 import api from '@/utils/api';
+import { downloadOrShareBlob, getFilenameFromContentDisposition } from '@/utils';
 import type { BaseResponseWithPagination } from '@/components';
 import type {
   Glass,
@@ -9,6 +10,11 @@ import type {
   GlassCategoryCreate,
   GlassCategoryUpdate,
   GlassCategoryQueryParams,
+  GlassGasketExcelPreviewResponse,
+  GlassGasketBulkUpsertRequest,
+  MaterialBulkUpsertResponse,
+  BulkDeleteRequest,
+  BulkDeleteResponse,
 } from '@/types';
 
 // Glass Categories
@@ -125,6 +131,18 @@ export const deleteGlass = async (id: number): Promise<Glass> => {
   }
 };
 
+export const bulkDeleteGlasses = async (
+  payload: BulkDeleteRequest,
+): Promise<BulkDeleteResponse> => {
+  try {
+    const response = await api.post<BulkDeleteResponse>('/api/v1/glasses/bulk-delete', payload);
+    return response.data;
+  } catch (error) {
+    console.warn('API error bulkDeleteGlasses', error);
+    throw error;
+  }
+};
+
 export const setDefaultGlass = async (id: number): Promise<Glass> => {
   try {
     const response = await api.patch(`/api/v1/glasses/${id}/default`);
@@ -135,3 +153,52 @@ export const setDefaultGlass = async (id: number): Promise<Glass> => {
   }
 };
 
+// Glass & Gaskets Excel Export / Preview / Bulk Upsert
+export const exportGlassGasketsExcel = async (params?: {
+  categoryId?: number | null;
+  templateOnly?: boolean;
+}): Promise<void> => {
+  try {
+    const query: Record<string, unknown> = {};
+    if (params?.categoryId) query.category_id = params.categoryId;
+    if (params?.templateOnly) query.template_only = true;
+
+    const response = await api.get('/api/v1/glasses/excel/export', {
+      params: query,
+      responseType: 'blob',
+    });
+    const disposition = response.headers['content-disposition'];
+    const fallback = params?.templateOnly ? 'mau_nhap_kinh_gioang.xlsx' : 'danh_sach_kinh_gioang.xlsx';
+    const fileName = getFilenameFromContentDisposition(disposition, fallback);
+    await downloadOrShareBlob(response.data, fileName);
+  } catch (error) {
+    console.warn('API error exportGlassGasketsExcel', error);
+    throw error;
+  }
+};
+
+export const previewGlassGasketsExcel = async (file: File): Promise<GlassGasketExcelPreviewResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/api/v1/glasses/excel/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  } catch (error) {
+    console.warn('API error previewGlassGasketsExcel', error);
+    throw error;
+  }
+};
+
+export const bulkUpsertGlassGaskets = async (
+  payload: GlassGasketBulkUpsertRequest,
+): Promise<MaterialBulkUpsertResponse> => {
+  try {
+    const response = await api.post('/api/v1/glasses/excel/bulk-upsert', payload);
+    return response.data;
+  } catch (error) {
+    console.warn('API error bulkUpsertGlassGaskets', error);
+    throw error;
+  }
+};

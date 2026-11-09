@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { X, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
-import { Button, Modal } from '@/components';
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { Button, Modal, SupplierFormModal } from '@/components';
 import { showErrorToast } from '@/utils';
 import {
   ReceiptType,
@@ -15,7 +15,7 @@ import {
 import { createWarehouseReceipt } from '@/actions';
 import { ReceiptItemsTable, FormRowItem } from './receipt-items-table';
 import { ReceiptFormHeader } from './receipt-form-header';
-import { toDisplayUnit, toBackendUnit } from '../../_utils/unit-mapping';
+import { toDisplayUnit, toBackendUnit } from '../../_utils';
 
 interface ReceiptFormModalProps {
   isOpen: boolean;
@@ -27,6 +27,7 @@ interface ReceiptFormModalProps {
   initialType?: ReceiptType;
   initialReason?: ReceiptReason;
   initialSupplierId?: number;
+  onSupplierCreated?: (newSupplier: WarehouseSupplier) => void;
 }
 
 export function ReceiptFormModal({
@@ -39,91 +40,80 @@ export function ReceiptFormModal({
   initialType = 'import',
   initialReason = 'purchase',
   initialSupplierId,
+  onSupplierCreated,
 }: ReceiptFormModalProps) {
   const [receiptType, setReceiptType] = useState<ReceiptType>(initialType);
   const [receiptReason, setReceiptReason] = useState<ReceiptReason>(initialReason);
   const [supplierId, setSupplierId] = useState<number | undefined>(initialSupplierId);
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const [addedSuppliers, setAddedSuppliers] = useState<WarehouseSupplier[]>([]);
+
+  const combinedSuppliers = useMemo(() => {
+    if (addedSuppliers.length === 0) return suppliersList;
+    const existingIds = new Set(suppliersList.map((s) => s.id));
+    return [...addedSuppliers.filter((s) => !existingIds.has(s.id)), ...suppliersList];
+  }, [suppliersList, addedSuppliers]);
 
   const handleReceiptTypeChange = (newType: ReceiptType) => {
     setReceiptType(newType);
-    if (newType === 'import') {
-      const validImportReasons: ReceiptReason[] = ['purchase', 'offcut_return', 'adjustment'];
-      if (!validImportReasons.includes(receiptReason)) {
-        setReceiptReason('purchase');
-      }
-    } else {
-      const validExportReasons: ReceiptReason[] = ['production_issue', 'rework_issue', 'adjustment', 'scrap'];
-      if (!validExportReasons.includes(receiptReason)) {
-        setReceiptReason('production_issue');
-      }
+    const validReasons: ReceiptReason[] =
+      newType === 'import'
+        ? ['purchase', 'offcut_return', 'adjustment']
+        : ['production_issue', 'rework_issue', 'adjustment', 'scrap'];
+    if (!validReasons.includes(receiptReason)) {
+      setReceiptReason(newType === 'import' ? 'purchase' : 'production_issue');
     }
   };
 
   const [rows, setRows] = useState<FormRowItem[]>([
-    {
-      id: 'row-1',
-      itemCode: '',
-      itemName: '',
-      unit: 'Cây',
-      colorName: '',
-      quantity: 1,
-      unitPrice: 0,
-    },
+    { id: 'row-1', itemCode: '', itemName: '', unit: 'Cây', colorName: '', quantity: 1, unitPrice: 0 },
   ]);
 
-  // Đồng bộ vật tư khi mở modal hoặc nhận danh sách từ JIT check
   useEffect(() => {
-    if (!isOpen) return;
-    if (initialItems && initialItems.length > 0) {
-      setRows(
-        initialItems.map((item, idx) => {
-          const matched = itemsList.find((i) => i.itemCode === item.itemCode);
-          return {
-            id: `row-jit-${idx}`,
-            itemId: item.itemId || matched?.id,
-            itemCode: item.itemCode,
-            itemName: item.itemName,
-            itemType: item.itemType || matched?.itemType || 'profile',
-            profileBarId: item.profileBarId || matched?.profileBarId || undefined,
-            unit: toDisplayUnit(item.unit || matched?.unit || 'bar'),
-            colorId: item.colorId || matched?.colorId,
-            colorName: item.colorName || '',
-            quantity: item.quantity,
-            unitPrice: item.unitPrice || matched?.costPrice || 0,
-            note: item.note,
-          };
-        })
-      );
-      setReceiptType('import');
-      setReceiptReason('purchase');
+    if (!isOpen || !initialItems || initialItems.length === 0) return;
+    setRows(
+      initialItems.map((item, idx) => {
+        const matched = itemsList.find((i) => i.itemCode === item.itemCode);
+        return {
+          id: `row-jit-${idx}`,
+          itemId: item.itemId || matched?.id,
+          itemCode: item.itemCode,
+          itemName: item.itemName,
+          itemType: item.itemType || matched?.itemType || 'profile',
+          profileBarId: item.profileBarId || matched?.profileBarId || undefined,
+          unit: toDisplayUnit(item.unit || matched?.unit || 'bar'),
+          colorId: item.colorId || matched?.colorId,
+          colorName: item.colorName || '',
+          quantity: item.quantity,
+          unitPrice: item.unitPrice || matched?.costPrice || 0,
+          note: item.note,
+        };
+      })
+    );
+    setReceiptType('import');
+    setReceiptReason('purchase');
 
-      // Tự động gợi ý nhà cung cấp tương ứng
-      const hasAlu = initialItems.some(
-        (i) => i.itemCode.startsWith('XF') || i.itemCode.startsWith('ALU')
-      );
-      if (hasAlu) {
-        const aluSupplier = suppliersList.find((s) => s.supplierType === 'aluminum');
-        if (aluSupplier) setSupplierId(aluSupplier.id);
-      }
+    if (initialItems.some((i) => i.itemCode.startsWith('XF') || i.itemCode.startsWith('ALU'))) {
+      const aluSupplier = suppliersList.find((s) => s.supplierType === 'aluminum');
+      if (aluSupplier) setSupplierId(aluSupplier.id);
     }
   }, [isOpen, initialItems, itemsList, suppliersList]);
 
   if (!isOpen) return null;
 
+  const handleSupplierCreated = (newSupplier?: WarehouseSupplier) => {
+    if (!newSupplier) return;
+    setAddedSuppliers((prev) => [newSupplier, ...prev]);
+    setSupplierId(newSupplier.id);
+    onSupplierCreated?.(newSupplier);
+  };
+
   const handleAddRow = () => {
     setRows((prev) => [
       ...prev,
-      {
-        id: `row-${Date.now()}`,
-        itemCode: '',
-        itemName: '',
-        unit: 'Cây',
-        colorName: '',
-        quantity: 1,
-        unitPrice: 0,
-      },
+      { id: `row-${Date.now()}`, itemCode: '', itemName: '', unit: 'Cây', colorName: '', quantity: 1, unitPrice: 0 },
     ]);
   };
 
@@ -144,9 +134,11 @@ export function ReceiptFormModal({
               itemId: selected.id,
               itemCode: selected.itemCode,
               itemName: selected.itemName,
+              itemType: selected.itemType,
+              profileBarId: selected.profileBarId || undefined,
               unit: toDisplayUnit(selected.unit),
               colorId: selected.colorId || undefined,
-              colorName: r.colorName || '',
+              colorName: selected.colorName || r.colorName || '',
               unitPrice: selected.costPrice > 0 ? selected.costPrice : r.unitPrice,
             }
           : r
@@ -154,10 +146,8 @@ export function ReceiptFormModal({
     );
   };
 
-  const handleRowChange = (id: string, field: keyof FormRowItem, value: any) => {
-    setRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
-    );
+  const handleRowChange = (id: string, field: keyof FormRowItem, value: string | number) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
   };
 
   const totalAmount = rows.reduce(
@@ -171,7 +161,6 @@ export function ReceiptFormModal({
       toast.error('Vui lòng nhập đầy đủ mã và tên vật tư ít nhất 1 dòng');
       return;
     }
-
     if (receiptType === 'import' && !supplierId) {
       toast.error('Vui lòng chọn nhà cung cấp cho phiếu nhập kho!');
       return;
@@ -200,14 +189,15 @@ export function ReceiptFormModal({
         })),
       });
 
+      const actionLabel = receiptType === 'import' ? 'nhập' : 'xuất';
       toast.success(
         approveImmediately
-          ? `Lập & Duyệt phiếu ${receiptType === 'import' ? 'nhập' : 'xuất'} kho thành công! Tồn kho đã cập nhật.`
-          : `Lập phiếu ${receiptType === 'import' ? 'nhập' : 'xuất'} kho (Chưa duyệt) thành công!`
+          ? `Lập & Duyệt phiếu ${actionLabel} kho thành công! Tồn kho đã cập nhật.`
+          : `Lập phiếu ${actionLabel} kho (Chưa duyệt) thành công!`
       );
       onSuccess();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       showErrorToast(err, 'Lỗi lập phiếu kho');
     } finally {
       setIsSubmitting(false);
@@ -253,47 +243,57 @@ export function ReceiptFormModal({
   );
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={titleNode}
-      size="xl"
-      className="md:h-[88vh] md:max-h-[88vh]"
-      bodyClassName="flex flex-col p-4 overflow-hidden"
-      footer={footerNode}
-    >
-      <form
-        id="receipt-form"
-        onSubmit={(e) => { e.preventDefault(); handleSaveReceipt(false); }}
-        noValidate
-        className="flex flex-col h-full min-h-0 space-y-4"
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={titleNode}
+        size="xl"
+        className="md:h-[88vh] md:max-h-[88vh]"
+        bodyClassName="flex flex-col p-4 overflow-hidden"
+        footer={footerNode}
       >
-        <ReceiptFormHeader
-          receiptType={receiptType}
-          setReceiptType={handleReceiptTypeChange}
-          receiptReason={receiptReason}
-          setReceiptReason={setReceiptReason}
-          supplierId={supplierId}
-          setSupplierId={setSupplierId}
-          suppliersList={suppliersList}
-          note={note}
-          setNote={setNote}
-        />
-
-        {/* Dynamic Table */}
-        <div className="flex-1 min-h-0 flex flex-col">
-          <ReceiptItemsTable
-            rows={rows}
-            itemsList={itemsList}
-            onAddRow={handleAddRow}
-            onRemoveRow={handleRemoveRow}
-            onSelectPredefinedItem={handleSelectPredefinedItem}
-            onRowChange={handleRowChange}
-            onImportRows={setRows}
-            totalAmount={totalAmount}
+        <form
+          id="receipt-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSaveReceipt(false);
+          }}
+          noValidate
+          className="flex flex-col h-full min-h-0 space-y-4"
+        >
+          <ReceiptFormHeader
+            receiptType={receiptType}
+            setReceiptType={handleReceiptTypeChange}
+            receiptReason={receiptReason}
+            setReceiptReason={setReceiptReason}
+            supplierId={supplierId}
+            setSupplierId={setSupplierId}
+            suppliersList={combinedSuppliers}
+            note={note}
+            setNote={setNote}
+            onOpenCreateSupplier={() => setShowSupplierModal(true)}
           />
-        </div>
-      </form>
-    </Modal>
+          <div className="flex-1 min-h-0 flex flex-col">
+            <ReceiptItemsTable
+              rows={rows}
+              itemsList={itemsList}
+              receiptType={receiptType}
+              onAddRow={handleAddRow}
+              onRemoveRow={handleRemoveRow}
+              onSelectPredefinedItem={handleSelectPredefinedItem}
+              onRowChange={handleRowChange}
+              onImportRows={setRows}
+              totalAmount={totalAmount}
+            />
+          </div>
+        </form>
+      </Modal>
+      <SupplierFormModal
+        isOpen={showSupplierModal}
+        onClose={() => setShowSupplierModal(false)}
+        onSuccess={handleSupplierCreated}
+      />
+    </>
   );
 }

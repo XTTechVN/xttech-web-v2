@@ -8,6 +8,7 @@ import type { DocumentItem } from '@/types';
 import { DOCUMENT_TYPE_MAP, DOCUMENT_STATUS_MAP, APPROVAL_STATUS_MAP, SHARE_SCOPE_MAP } from '@/types';
 import { formatBytes } from '@/utils';
 import dayjs from 'dayjs';
+import { DocumentWorkflowStepper } from '../workflow-stepper';
 
 interface DocumentDetailBodyProps {
   doc: DocumentItem;
@@ -47,6 +48,7 @@ export const DocumentDetailBody: React.FC<DocumentDetailBodyProps> = ({
 
   return (
     <div className="space-y-3.5 text-xs">
+      <DocumentWorkflowStepper status={targetDoc.status || doc.status} approvalStatus={approvalStatus} />
       {/* Khối 1: Thông tin tiêu đề và badges */}
       <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-50 border border-slate-200 shadow-2xs space-y-2.5">
         {/* Hàng 1: Danh sách nhãn trạng thái */}

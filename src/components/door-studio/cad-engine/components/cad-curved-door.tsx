@@ -1,9 +1,15 @@
 import React from 'react';
-import { FrameShape, SceneCellNode } from '../../studio-types';
-import { CAD_CONFIG } from '../cad-config';
-import { getCurvedContourPath } from '../cad-geometry';
+import { ArchConfig, FrameConfig, FrameShape, SashConfig, SceneCellNode } from '../../studio-types';
+import { CadGlassEffectOverlay } from './cad-glass-effect-overlay';
+import {
+  getArchCenterlinePath,
+  getArchXAtY,
+  getArchYAtX,
+  getCurvedContourPath,
+  isArchOpenBottomShape,
+} from '../cad-geometry';
 
-interface CadCurvedDoorBaseProps {
+interface CadCurvedDoubleDoorProps {
   id?: string;
   frameShape: FrameShape;
   ox: number;
@@ -13,27 +19,25 @@ interface CadCurvedDoorBaseProps {
   h: number;
   frameD: number;
   sashD: number;
+  beadW: number;
   mullionT: number;
   aluminumColor: string;
   hardwareColor: string;
   isOpenBottom: boolean;
   selectedCellId: string | null;
-  onSelectCell: (cellId: string | null) => void;
-  onEditDimension?: (target: 'w' | 'h' | 'cell' | 'handleHeight', cellId?: string) => void;
-  frameConfig?: import('../../studio-types').FrameConfig;
-}
-
-interface CadCurvedDoubleDoorProps extends CadCurvedDoorBaseProps {
+  onSelectCell: (id: string | null) => void;
+  onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
   leftNode: SceneCellNode;
   rightNode?: SceneCellNode;
-}
-
-interface CadCurvedSingleDoorProps extends CadCurvedDoorBaseProps {
-  node: SceneCellNode;
+  sashConfig?: SashConfig;
+  scaledArchConfig?: ArchConfig;
 }
 
 /**
- * Render Cánh cong đặc biệt cho cửa 2 cánh mở quay đối xứng (swing_double hoặc cặp swing_left + swing_right) trong khung vòm / tròn
+ * Render Cửa Vòm Mở Quay 2 Cánh đối xứng (Curved Double Swing Door):
+ * - Cánh uốn cong theo viền trong khung vòm
+ * - Nẹp kính uốn cong và đố đứng 2 cánh gặp nhau tại trục giữa (kèm đường cắt mòi chuẩn trên đỉnh và góc đáy)
+ * - Đường tâm uốn màu cam đứt nét cho Vòm nhọn 2 cung (arch_pointed / arch_pointed_leg)
  */
 export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   id,
@@ -45,6 +49,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   h,
   frameD,
   sashD,
+  beadW,
   aluminumColor,
   hardwareColor,
   isOpenBottom,
@@ -53,282 +58,483 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   onEditDimension,
   leftNode,
   rightNode,
-  frameConfig,
+  sashConfig,
+  scaledArchConfig,
 }) => {
-  const effectiveRightNode = rightNode || leftNode;
-  const isLeftSelected = selectedCellId === leftNode.id;
-  const isRightSelected = selectedCellId === effectiveRightNode.id;
+  const dFrame = frameD;
   const dSash = sashD;
-  const dBead = Math.max(
-    CAD_CONFIG.BEAD.MIN_W,
-    Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash * CAD_CONFIG.BEAD.NORMAL_RATIO))
+  const dBead = beadW;
+
+  const effectiveOpenBottom = Boolean(isOpenBottom || isArchOpenBottomShape(frameShape));
+  const dBot = effectiveOpenBottom ? 0 : dFrame;
+  const hoNenVal = leftNode?.hoNenMm ?? rightNode?.hoNenMm ?? sashConfig?.hoNenMm ?? 8;
+  const hoNenPx = effectiveOpenBottom ? Math.round((hoNenVal / (h || 1)) * fh) : 0;
+  const effFh = Math.max(40, fh - hoNenPx);
+
+  const xMid = Math.round(ox + fw / 2);
+
+  // 1. Đường viền ngoài của cánh = viền trong của khung bao (offset = dFrame)
+  const sashOuterPath = getCurvedContourPath(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame,
+    false,
+    scaledArchConfig,
+    dBot
   );
 
-  const pathSashOuter = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD, isOpenBottom);
-  const pathSashInner = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD + dSash, isOpenBottom);
-  const pathBeadInner = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD + dSash + dBead, isOpenBottom);
+  // 2. Đường viền trong của cánh = viền ngoài của nẹp (offset = dFrame + dSash)
+  const sashInnerPath = getCurvedContourPath(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash,
+    false,
+    scaledArchConfig,
+    dBot + dSash
+  );
 
-  if (!pathSashOuter || !pathSashInner || !pathBeadInner) return null;
+  // 3. Đường viền trong của nẹp = vùng kính thông thủy (offset = dFrame + dSash + dBead)
+  const beadInnerPath = getCurvedContourPath(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash + dBead,
+    false,
+    scaledArchConfig,
+    dBot + dSash + dBead
+  );
 
-  const isCutAtApex = frameConfig?.archConfig?.isCutAtApex ?? false;
+  if (!sashOuterPath || !sashInnerPath || !beadInnerPath) return null;
 
-  const xMid = ox + fw / 2;
-  // Hai cánh khép sát tim cửa tại xMid (không bị chèn hộp đố động thô kệch)
-  const leftStileX = xMid - dSash;
-  const rightStileX = xMid;
-  const leftBeadX = xMid - dSash - dBead;
-  const rightBeadX = xMid + dSash;
+  const sashClipId = `curved-sash-inner-${id || 'root'}`;
+  const glassClipId = `curved-glass-inner-${id || 'root'}`;
 
-  // Cao độ mép dưới cánh cong trên & mép nẹp kính
-  const topSashInnerY = oy + frameD + dSash;
-  const topBeadInnerY = oy + frameD + dSash + dBead;
-  const yInBot = isOpenBottom ? oy + fh : oy + fh - frameD;
-  const botSashInnerY = isOpenBottom ? yInBot : yInBot - dSash;
-  const botBeadInnerY = isOpenBottom ? yInBot - dBead : yInBot - dSash - dBead;
+  const paneType = leftNode?.paneType ?? 'glass';
+  const fillVal =
+    paneType === 'panel'
+      ? aluminumColor
+      : paneType === 'screen'
+        ? 'url(#screen-mesh)'
+        : paneType === 'louver'
+          ? 'url(#louver-pattern)'
+          : '#a5f3fc';
 
-  const stileY = topSashInnerY;
-  const stileH = Math.max(10, yInBot - stileY);
-  const beadY = topSashInnerY;
-  const beadH = Math.max(10, botSashInnerY - beadY);
+  const isLeftSelected = selectedCellId === leftNode.id;
+  const isRightSelected = rightNode ? selectedCellId === rightNode.id : isLeftSelected;
 
-  // Cao độ tay nắm & Master node (ưu tiên cánh được chọn hoặc cánh phải)
-  const masterNode = isLeftSelected ? leftNode : effectiveRightNode;
-  const handleHVal = masterNode.handleHeight || Math.round((masterNode.h || h) / 2);
-  const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
-  const handleY = Math.max(stileY + 20, Math.min(botSashInnerY - 20, lockYCalc));
-  const isLockActive = masterNode.hasLock ?? (masterNode.sashType !== 'fixed');
-  const handleType = masterNode.handleType || 'lever';
+  const yBotOuter = oy + effFh - dBot;
+  const yBotSashInner = yBotOuter - dSash;
+  const yBotBeadInner = yBotSashInner - dBead;
 
-  // Clip paths cho kính cánh trái và cánh phải
-  const leftGlassClipId = `curved-glass-l-${id || 'root'}`;
-  const rightGlassClipId = `curved-glass-r-${id || 'root'}`;
+  // Tọa độ X của đố cánh trung tâm và nẹp trung tâm
+  const xLeftStileInner = xMid - dSash;
+  const xRightStileInner = xMid + dSash;
+  const xLeftBeadInner = xLeftStileInner - dBead;
+  const xRightBeadInner = xRightStileInner + dBead;
 
-  // Tọa độ nét mở cánh (Hình thoi cân đối 100% như Windova Hình 2)
-  const isCircleOrEllipse = frameShape === 'circle' || frameShape === 'ellipse';
-  const isLeftFixed = leftNode.sashType === 'fixed';
-  const isRightFixed = effectiveRightNode.sashType === 'fixed';
+  // Tọa độ Y chính xác tại nơi đố cánh trung tâm và nẹp trung tâm giao với đường cong vòm
+  const yApexFrameInner = getArchYAtX(frameShape, ox, oy, fw, effFh, dFrame, xMid, scaledArchConfig);
+  const yLeftStileTop = getArchYAtX(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash,
+    xLeftStileInner,
+    scaledArchConfig
+  );
+  const yRightStileTop = getArchYAtX(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash,
+    xRightStileInner,
+    scaledArchConfig
+  );
+  const yLeftBeadTop = getArchYAtX(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash + dBead,
+    xLeftBeadInner,
+    scaledArchConfig
+  );
+  const yRightBeadTop = getArchYAtX(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash + dBead,
+    xRightBeadInner,
+    scaledArchConfig
+  );
 
-  const yOpeningTop = topBeadInnerY + 8;
-  const yOpeningBot = botBeadInnerY - 8;
-  // Đỉnh nhọn 2 bên nằm chính xác tại TRUNG ĐIỂM CHIỀU CAO LÒNG CÁNH để nét đỏ luôn cân đối 100%
-  const yHingeMid = (yOpeningTop + yOpeningBot) / 2;
+  // Ký hiệu chiều mở (Red Opening Triangle): bám chính xác theo viền kính cong
+  const isLeftInward = leftNode?.sashType === 'le-trai-mo-vao';
+  const isRightInward = rightNode?.sashType === 'le-phai-mo-vao';
+  const leftStrokeDash = isLeftInward ? '6,4' : undefined;
+  const rightStrokeDash = isRightInward ? '6,4' : undefined;
 
-  let leftOuterX = ox + frameD + dSash + dBead + 4;
-  let rightOuterX = ox + fw - (frameD + dSash + dBead + 4);
+  const yOpenTopLeft = Math.max(oy + dFrame + dSash + dBead + 2, yLeftBeadTop);
+  const yOpenTopRight = Math.max(oy + dFrame + dSash + dBead + 2, yRightBeadTop);
+  const yOpenBot = yBotBeadInner;
+  const yOpenMidLeft = (yOpenTopLeft + yOpenBot) / 2;
+  const yOpenMidRight = (yOpenTopRight + yOpenBot) / 2;
 
-  if (isCircleOrEllipse) {
-    const rxIn = Math.max(2, fw / 2 - (frameD + dSash + dBead));
-    const cxMid = ox + fw / 2;
-    leftOuterX = cxMid - rxIn + 4;
-    rightOuterX = cxMid + rxIn - 4;
-  }
+  const xHingeLeft = getArchXAtY(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash + dBead,
+    yOpenMidLeft,
+    'left',
+    scaledArchConfig
+  );
+  const xHingeRight = getArchXAtY(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash + dBead,
+    yOpenMidRight,
+    'right',
+    scaledArchConfig
+  );
 
-  const leftInnerX = leftBeadX;
-  const rightInnerX = rightBeadX + dBead;
+  // Đường tâm uốn màu cam nét đứt cho Vòm nhọn 2 cung (arch_pointed / arch_pointed_leg)
+  const centerlinePath =
+    frameShape === 'arch_pointed' || frameShape === 'arch_pointed_leg'
+      ? getArchCenterlinePath(
+          frameShape,
+          ox,
+          oy,
+          fw,
+          effFh,
+          dFrame + dSash * 0.45,
+          scaledArchConfig
+        )
+      : null;
+
+  // Tay nắm khóa trên cánh phải (hoặc cánh chính)
+  const isHyd = Boolean(sashConfig?.isHydraulic || leftNode?.isHydraulic || rightNode?.isHydraulic);
+  const handleHVal =
+    rightNode?.handleHeight || leftNode?.handleHeight || (isHyd ? 1050 : Math.round(h / 2));
+  const lockY = Math.max(
+    oy + dFrame + dSash + 30,
+    Math.min(yBotSashInner - 20, oy + effFh - Math.round((handleHVal / (h || 1)) * fh))
+  );
+  const hx = xMid + Math.round(dSash * 0.45);
+  const showHandle = (rightNode?.hasLock ?? leftNode?.hasLock ?? true) !== false;
 
   return (
-    <g key={`${leftNode.id}-curved-double`}>
+    <g>
       <defs>
-        <clipPath id={leftGlassClipId}>
-          <rect x={ox - 40} y={oy - 40} width={Math.max(0, leftBeadX - (ox - 40))} height={fh + 80} />
+        <clipPath id={sashClipId}>
+          <path d={sashInnerPath} />
         </clipPath>
-        <clipPath id={rightGlassClipId}>
-          <rect x={rightBeadX + dBead} y={oy - 40} width={Math.max(0, ox + fw + 40 - (rightBeadX + dBead))} height={fh + 80} />
+        <clipPath id={glassClipId}>
+          <path d={beadInnerPath} />
         </clipPath>
       </defs>
 
-      {/* 1. Kính cánh trái */}
-      <path
-        d={pathBeadInner}
-        clipPath={`url(#${leftGlassClipId})`}
-        fill="#b2f5ea"
-        fillOpacity={0.85}
-        stroke="none"
-        className="cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectCell(leftNode.id);
-        }}
-      />
-
-      {/* Kính cánh phải */}
-      <path
-        d={pathBeadInner}
-        clipPath={`url(#${rightGlassClipId})`}
-        fill="#b2f5ea"
-        fillOpacity={0.85}
-        stroke="none"
-        className="cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectCell(effectiveRightNode.id);
-        }}
-      />
-
-      {/* Viền chọn cánh trái khi đang active */}
-      {isLeftSelected && (
-        <path
-          d={pathBeadInner}
-          clipPath={`url(#${leftGlassClipId})`}
-          fill="none"
-          stroke="#f59e0b"
-          strokeWidth="1.5"
-          strokeDasharray="5,3"
+      {/* 1. Vùng Kính 2 bên trái/phải */}
+      <g clipPath={`url(#${glassClipId})`}>
+        <rect
+          x={ox}
+          y={oy}
+          width={Math.max(0, xLeftBeadInner - ox)}
+          height={effFh}
+          fill={fillVal}
+          fillOpacity={paneType === 'glass' ? 0.72 : 0.9}
+          className="cursor-pointer transition-opacity hover:opacity-85"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectCell(leftNode.id);
+          }}
         />
-      )}
-
-      {/* Viền chọn cánh phải khi đang active */}
-      {isRightSelected && (
-        <path
-          d={pathBeadInner}
-          clipPath={`url(#${rightGlassClipId})`}
-          fill="none"
-          stroke="#f59e0b"
-          strokeWidth="1.5"
-          strokeDasharray="5,3"
+        <rect
+          x={xRightBeadInner}
+          y={oy}
+          width={Math.max(0, ox + fw - xRightBeadInner)}
+          height={effFh}
+          fill={fillVal}
+          fillOpacity={paneType === 'glass' ? 0.72 : 0.9}
+          className="cursor-pointer transition-opacity hover:opacity-85"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectCell(rightNode ? rightNode.id : leftNode.id);
+          }}
         />
-      )}
-
-      {/* 2. Đường nét mở cánh (Hình thoi mở quay đối xứng như Hình 1) */}
-      {!isLeftFixed && (
-        <polyline
-          points={`${leftInnerX},${yOpeningTop} ${leftOuterX},${yHingeMid} ${leftInnerX},${yOpeningBot}`}
-          fill="none"
-          stroke="#dc2626"
-          strokeWidth="1"
-        />
-      )}
-      {!isRightFixed && (
-        <polyline
-          points={`${rightInnerX},${yOpeningTop} ${rightOuterX},${yHingeMid} ${rightInnerX},${yOpeningBot}`}
-          fill="none"
-          stroke="#dc2626"
-          strokeWidth="1"
-        />
-      )}
-
-      {/* 3. Nẹp kính cong bao quanh chu vi */}
-      <path
-        d={`${pathSashInner} ${pathBeadInner}`}
-        fill={aluminumColor}
-        fillRule="evenodd"
-        stroke="#27272a"
-        strokeWidth="0.5"
-      />
-
-      {/* 4. Bản cánh cong bao quanh chu vi */}
-      <path
-        d={`${pathSashOuter} ${pathSashInner}`}
-        fill={aluminumColor}
-        fillRule="evenodd"
-        stroke="#27272a"
-        strokeWidth="0.7"
-      />
-
-      {/* 5. Cụm đố đứng & nẹp đứng ở giữa (Góc vát mòi 45° lên đỉnh tim vòm như Hình 2) */}
-      {/* Nẹp đứng trái & phải */}
-      <rect x={leftBeadX} y={beadY} width={dBead} height={beadH} fill={aluminumColor} stroke="#27272a" strokeWidth="0.5" />
-      <rect x={rightBeadX} y={beadY} width={dBead} height={beadH} fill={aluminumColor} stroke="#27272a" strokeWidth="0.5" />
-
-      {/* Đố đứng cánh trái với góc vát mòi 45° lên đỉnh tim vòm (xMid, oy + frameD) */}
-      <polygon
-        points={`${leftStileX},${yInBot} ${leftStileX},${topSashInnerY} ${xMid},${oy + frameD} ${xMid},${yInBot}`}
-        fill={aluminumColor}
-        stroke="#27272a"
-        strokeWidth="0.7"
-      />
-      {/* Đố đứng cánh phải với góc vát mòi 45° lên đỉnh tim vòm (xMid, oy + frameD) */}
-      <polygon
-        points={`${xMid},${yInBot} ${xMid},${oy + frameD} ${rightStileX + dSash},${topSashInnerY} ${rightStileX + dSash},${yInBot}`}
-        fill={aluminumColor}
-        stroke="#27272a"
-        strokeWidth="0.7"
-      />
-
-      {/* 6. Đường tiếp giáp kỹ thuật ở tim & góc mòi chân cửa */}
-      {/* Vết cắt đỉnh khung bao (nếu bật tùy chọn Cắt vòm tại đỉnh) */}
-      {isCutAtApex && (
-        <line x1={xMid} y1={oy} x2={xMid} y2={oy + frameD} stroke="#27272a" strokeWidth="0.8" />
-      )}
-
-      {/* Khe tiếp giáp đứng giữa 2 cánh chạy thẳng tắp từ đỉnh cánh xuống đáy cánh */}
-      <line x1={xMid} y1={oy + frameD} x2={xMid} y2={yInBot} stroke="#27272a" strokeWidth="0.8" />
-
-      {/* Thanh cánh ngang đáy & đường mòi chân cửa */}
-      {!isOpenBottom && (
-        <>
-          {/* Mối ghép chân khung bao 90° (thanh đứng chạy suốt chạm sàn, thanh đáy lọt lòng - chuẩn Hình 2) */}
-          <line x1={ox + frameD} y1={yInBot} x2={ox + frameD} y2={oy + fh} stroke="#27272a" strokeWidth="0.8" />
-          <line x1={ox + fw - frameD} y1={yInBot} x2={ox + fw - frameD} y2={oy + fh} stroke="#27272a" strokeWidth="0.8" />
-
-          {/* Mòi 2 góc ngoài đáy cánh (45 độ) */}
-          <line x1={ox + frameD} y1={yInBot} x2={ox + frameD + dSash} y2={botSashInnerY} stroke="#27272a" strokeWidth="0.7" />
-          <line x1={ox + fw - frameD} y1={yInBot} x2={ox + fw - frameD - dSash} y2={botSashInnerY} stroke="#27272a" strokeWidth="0.7" />
-
-          {/* Mòi 2 góc ngoài đáy nẹp kính (45 độ - đồng quy liền mạch với góc cánh) */}
-          <line x1={ox + frameD + dSash} y1={botSashInnerY} x2={ox + frameD + dSash + dBead} y2={botBeadInnerY} stroke="#27272a" strokeWidth="0.5" />
-          <line x1={ox + fw - frameD - dSash} y1={botSashInnerY} x2={ox + fw - frameD - dSash - dBead} y2={botBeadInnerY} stroke="#27272a" strokeWidth="0.5" />
-        </>
-      )}
-
-      {/* 7. Tay nắm khóa mở quay (Render đúng 1 khóa trên cánh chính, hỗ trợ đủ các loại tay nắm theo sidebar phải) */}
-      {isLockActive && (() => {
-        const isRightMaster = !isLeftSelected;
-        const plateW = handleType === 'multipoint' ? 3.8 : 4.5;
-        const plateH = handleType === 'multipoint' ? 16 : handleType === 'pull' ? 46 : 22;
-        const leverW = handleType === 'multipoint' ? 12 : 14;
-        const leverH = handleType === 'multipoint' ? 3 : 3.5;
-
-        // Vị trí trục đố chính
-        const stileX = isRightMaster ? rightStileX : leftStileX;
-        const plateX = stileX + dSash / 2 - plateW / 2;
-        const plateY = handleY - plateH / 2;
-        // Tay gạt hướng vào lòng ô kính của cánh đó
-        const leverX = isRightMaster ? plateX + plateW / 2 : plateX + plateW / 2 - leverW;
-
-        return (
-          <g
-            className="cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEditDimension?.('handleHeight', masterNode.id);
+        {paneType === 'glass' && (
+          <CadGlassEffectOverlay
+            cellId={id || 'curved'}
+            pathD={beadInnerPath}
+            bbox={{
+              x: ox + dFrame + dSash + dBead,
+              y: oy + dFrame + dSash + dBead,
+              width: Math.max(10, fw - (dFrame + dSash + dBead) * 2),
+              height: Math.max(10, effFh - (dFrame + dSash + dBead) * 2),
             }}
-          >
-            {handleType === 'crescent' ? (
-              // Khóa bán nguyệt
-              <g>
-                <circle cx={plateX + plateW / 2} cy={handleY} r={6} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
-                <path
-                  d={`M ${plateX + plateW / 2} ${handleY - 5} A 5 5 0 0 ${isRightMaster ? 1 : 0} ${plateX + plateW / 2} ${handleY + 5} Z`}
-                  fill="#111"
-                />
-              </g>
-            ) : handleType === 'pull' ? (
-              // Tay nắm kéo chữ D
-              <g>
-                <rect x={plateX} y={plateY} width={plateW} height={plateH} rx={2.2} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
-                <circle cx={plateX + plateW / 2} cy={plateY + 5} r={1.2} fill="#111" />
-                <circle cx={plateX + plateW / 2} cy={plateY + plateH - 5} r={1.2} fill="#111" />
-              </g>
-            ) : (
-              // Tay gạt cửa đi (lever) hoặc tay gạt cửa sổ (multipoint)
-              <g>
-                <rect x={plateX} y={plateY} width={plateW} height={plateH} rx={1.5} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
-                <circle cx={plateX + plateW / 2} cy={handleY + (handleType === 'multipoint' ? 3.5 : 5.5)} r={1} fill="#111" />
-                <rect x={leverX} y={handleY - leverH / 2} width={leverW} height={leverH} rx={1.2} fill={hardwareColor} stroke="#000" strokeWidth="0.5" />
-              </g>
-            )}
-          </g>
-        );
-      })()}
+            clipId={glassClipId}
+            effect={leftNode?.glassVisualEffect}
+            color={leftNode?.glassVisualColor}
+            splitCount={leftNode?.glassSplitCount}
+          />
+        )}
+      </g>
+
+      {/* 2. Vành Khung Cánh uốn vòm bao quanh (Sash Arch Ring) */}
+      <path
+        d={`${sashOuterPath} ${sashInnerPath}`}
+        fill={aluminumColor}
+        fillRule="evenodd"
+      />
+      <path d={sashOuterPath} fill="none" stroke="#18181b" strokeWidth="0.9" />
+      <path d={sashInnerPath} fill="none" stroke="#18181b" strokeWidth="0.8" />
+
+      {/* 3. Vành Nẹp Kính uốn vòm bao quanh (Bead Arch Ring) */}
+      <path
+        d={`${sashInnerPath} ${beadInnerPath}`}
+        fill={aluminumColor}
+        fillRule="evenodd"
+      />
+      <path d={beadInnerPath} fill="none" stroke="#27272a" strokeWidth="0.65" />
+
+      {/* 4. Hai thanh đố đứng cánh trung tâm & 2 thanh nẹp đứng trung tâm */}
+      <g clipPath={`url(#${sashClipId})`}>
+        {/* Đố đứng cánh trái + phải */}
+        <rect
+          x={xLeftStileInner}
+          y={oy}
+          width={dSash * 2}
+          height={effFh}
+          fill={aluminumColor}
+        />
+        {/* Nẹp đứng trung tâm cánh trái */}
+        <rect
+          x={xLeftBeadInner}
+          y={oy}
+          width={dBead}
+          height={yBotSashInner - oy}
+          fill={aluminumColor}
+          stroke="#27272a"
+          strokeWidth="0.6"
+        />
+        {/* Nẹp đứng trung tâm cánh phải */}
+        <rect
+          x={xRightStileInner}
+          y={oy}
+          width={dBead}
+          height={yBotSashInner - oy}
+          fill={aluminumColor}
+          stroke="#27272a"
+          strokeWidth="0.6"
+        />
+        {/* Viền ngoài 2 đố đứng cánh trung tâm */}
+        <line
+          x1={xLeftStileInner}
+          y1={oy}
+          x2={xLeftStileInner}
+          y2={yBotSashInner}
+          stroke="#18181b"
+          strokeWidth="0.8"
+        />
+        <line
+          x1={xRightStileInner}
+          y1={oy}
+          x2={xRightStileInner}
+          y2={yBotSashInner}
+          stroke="#18181b"
+          strokeWidth="0.8"
+        />
+      </g>
+
+      {/* 5. Đường cắt mòi (Miter Lines) của Cánh, Nẹp và Khe giữ 2 cánh */}
+      <g stroke="#18181b" strokeWidth="0.75">
+        {/* Khe đứng chính giữa 2 cánh từ đỉnh trong khung bao xuống đáy cánh */}
+        <line x1={xMid} y1={yApexFrameInner} x2={xMid} y2={yBotOuter} strokeWidth="0.95" />
+
+        {/* Đường cắt mòi đỉnh 2 cánh tại trung tâm vòm */}
+        <line x1={xMid} y1={yApexFrameInner} x2={xLeftStileInner} y2={yLeftStileTop} />
+        <line x1={xMid} y1={yApexFrameInner} x2={xRightStileInner} y2={yRightStileTop} />
+
+        {/* Đường cắt mòi đỉnh 2 thanh nẹp đứng trung tâm */}
+        <line x1={xLeftStileInner} y1={yLeftStileTop} x2={xLeftBeadInner} y2={yLeftBeadTop} strokeWidth="0.6" />
+        <line x1={xRightStileInner} y1={yRightStileTop} x2={xRightBeadInner} y2={yRightBeadTop} strokeWidth="0.6" />
+
+        {/* Đường cắt mòi 45° tại 4 góc đáy của 2 cánh (xuyên qua cả cánh và nẹp) */}
+        <line
+          x1={ox + dFrame}
+          y1={yBotOuter}
+          x2={ox + dFrame + dSash + dBead}
+          y2={yBotBeadInner}
+        />
+        <line
+          x1={xMid}
+          y1={yBotOuter}
+          x2={xLeftBeadInner}
+          y2={yBotBeadInner}
+        />
+        <line
+          x1={xMid}
+          y1={yBotOuter}
+          x2={xRightBeadInner}
+          y2={yBotBeadInner}
+        />
+        <line
+          x1={ox + fw - dFrame}
+          y1={yBotOuter}
+          x2={ox + fw - dFrame - dSash - dBead}
+          y2={yBotBeadInner}
+        />
+      </g>
+
+      {/* 6. Đường tâm uốn cam nét đứt cho Vòm nhọn 2 cung */}
+      {centerlinePath && (
+        <path
+          d={centerlinePath}
+          fill="none"
+          stroke="#f59e0b"
+          strokeWidth="1.15"
+          strokeDasharray="5,4"
+          className="pointer-events-none"
+        />
+      )}
+
+      {/* 7. Ký hiệu chiều mở quay 2 cánh (Tam giác đỏ) */}
+      <g
+        fill="none"
+        stroke="#dc2626"
+        strokeWidth="1"
+        strokeLinejoin="round"
+        className="pointer-events-none"
+      >
+        <polyline
+          points={`${xLeftBeadInner},${yOpenTopLeft} ${xHingeLeft + 1},${yOpenMidLeft} ${xLeftBeadInner},${yOpenBot}`}
+          strokeDasharray={leftStrokeDash}
+        />
+        <polyline
+          points={`${xRightBeadInner},${yOpenTopRight} ${xHingeRight - 1},${yOpenMidRight} ${xRightBeadInner},${yOpenBot}`}
+          strokeDasharray={rightStrokeDash}
+        />
+      </g>
+
+      {/* 8. Viền sáng xanh khi người dùng click chọn ô cánh */}
+      {isLeftSelected && (
+        <rect
+          x={ox + dFrame + 2}
+          y={oy + dFrame + 2}
+          width={Math.max(0, xMid - (ox + dFrame) - 4)}
+          height={Math.max(0, effFh - dFrame - dBot - 4)}
+          fill="none"
+          stroke="#2563eb"
+          strokeWidth="1.6"
+          strokeDasharray="4,2"
+          className="pointer-events-none"
+        />
+      )}
+      {isRightSelected && rightNode && (
+        <rect
+          x={xMid + 2}
+          y={oy + dFrame + 2}
+          width={Math.max(0, ox + fw - dFrame - xMid - 4)}
+          height={Math.max(0, effFh - dFrame - dBot - 4)}
+          fill="none"
+          stroke="#2563eb"
+          strokeWidth="1.6"
+          strokeDasharray="4,2"
+          className="pointer-events-none"
+        />
+      )}
+
+      {/* 9. Tay nắm khóa gạt (Lever Handle) trên cánh phải */}
+      {showHandle && (
+        <g
+          className="cursor-pointer hover:opacity-85"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditDimension?.('handleHeight', rightNode ? rightNode.id : leftNode.id);
+          }}
+        >
+          <title>{`Tay nắm khóa (Cao độ: ${handleHVal}mm - Nhấp để sửa)`}</title>
+          {/* Đế khóa (Escutcheon) */}
+          <rect
+            x={hx - 2.5}
+            y={lockY - 12}
+            width={5}
+            height={24}
+            rx={1.8}
+            fill={hardwareColor}
+            stroke="#0f172a"
+            strokeWidth="0.7"
+          />
+          {/* Tay gạt ngang (Lever) hướng sang phải */}
+          <rect
+            x={hx - 1}
+            y={lockY - 3.5}
+            width={17}
+            height={4}
+            rx={1.8}
+            fill={hardwareColor}
+            stroke="#0f172a"
+            strokeWidth="0.75"
+          />
+          {/* Lỗ ruột khóa */}
+          <circle cx={hx} cy={lockY + 6.5} r={1} fill="#94a3b8" />
+        </g>
+      )}
     </g>
   );
 };
 
+interface CadCurvedSingleDoorProps {
+  id?: string;
+  frameShape: FrameShape;
+  ox: number;
+  oy: number;
+  fw: number;
+  fh: number;
+  h: number;
+  frameD: number;
+  sashD: number;
+  beadW: number;
+  mullionT: number;
+  aluminumColor: string;
+  hardwareColor: string;
+  isOpenBottom: boolean;
+  selectedCellId: string | null;
+  onSelectCell: (id: string | null) => void;
+  onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
+  node: SceneCellNode;
+  frameConfig?: FrameConfig;
+  sashConfig?: SashConfig;
+  scaledArchConfig?: ArchConfig;
+}
+
 /**
- * Render Cánh đơn hoặc Vách chết cong uốn theo khung vòm/tròn
+ * Render Cửa Vòm 1 Cánh hoặc Vách Kính Cố Định Vòm (Curved Single Door / Fixed Arch):
+ * - Nếu Fixed: Chỉ hiển thị vành nẹp kính uốn cong + mặt kính
+ * - Nếu có Cánh (Mở quay trái/phải, Mở hất, Mở lật): Hiển thị vành cánh uốn cong + nẹp kính + ký hiệu mở + tay nắm
  */
 export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
+  id,
   frameShape,
   ox,
   oy,
@@ -337,136 +543,368 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
   h,
   frameD,
   sashD,
+  beadW,
   aluminumColor,
+  hardwareColor,
   isOpenBottom,
   selectedCellId,
   onSelectCell,
+  onEditDimension,
   node,
+  frameConfig,
+  sashConfig,
+  scaledArchConfig,
 }) => {
+  const sashType = node?.sashType ?? 'fixed';
+  const hasSash = sashType !== 'fixed';
+
+  const dFrame = frameD;
+  const dSash = hasSash ? sashD : 0;
+  const dBead = beadW;
+
+  const effectiveOpenBottom = Boolean(isOpenBottom || isArchOpenBottomShape(frameShape));
+  const dBot = effectiveOpenBottom && hasSash ? 0 : dFrame;
+  const hoNenVal = node?.hoNenMm ?? sashConfig?.hoNenMm ?? 8;
+  const hoNenPx = effectiveOpenBottom && hasSash ? Math.round((hoNenVal / (h || 1)) * fh) : 0;
+  const effFh = Math.max(40, fh - hoNenPx);
+
+  const sashOuterPath = getCurvedContourPath(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame,
+    false,
+    scaledArchConfig,
+    dBot
+  );
+
+  const sashInnerPath = hasSash
+    ? getCurvedContourPath(
+        frameShape,
+        ox,
+        oy,
+        fw,
+        effFh,
+        dFrame + dSash,
+        false,
+        scaledArchConfig,
+        dBot + dSash
+      )
+    : sashOuterPath;
+
+  const beadInnerPath = getCurvedContourPath(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash + dBead,
+    false,
+    scaledArchConfig,
+    dBot + dSash + dBead
+  );
+
+  if (!sashOuterPath || !sashInnerPath || !beadInnerPath) return null;
+
+  const glassClipId = `curved-single-glass-${id || 'root'}`;
+  const paneType = node?.paneType ?? 'glass';
+  const fillVal =
+    paneType === 'panel'
+      ? aluminumColor
+      : paneType === 'screen'
+        ? 'url(#screen-mesh)'
+        : paneType === 'louver'
+          ? 'url(#louver-pattern)'
+          : '#a5f3fc';
+
   const isSelected = selectedCellId === node.id;
-  const isFixed = node.sashType === 'fixed';
-  const dSash = isFixed ? 0 : sashD;
-  const dBead = isFixed
-    ? Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(frameD * CAD_CONFIG.BEAD.FIXED_RATIO)))
-    : Math.max(CAD_CONFIG.BEAD.MIN_W, Math.min(CAD_CONFIG.BEAD.MAX_W, Math.round(dSash * CAD_CONFIG.BEAD.NORMAL_RATIO)));
 
-  const pathSashOuter = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD, isOpenBottom);
-  const pathSashInner = dSash > 0 ? getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD + dSash, isOpenBottom) : pathSashOuter;
-  const pathBeadInner = getCurvedContourPath(frameShape, ox, oy, fw, fh, frameD + dSash + dBead, isOpenBottom);
+  const gx = ox + dFrame + dSash + dBead;
+  const gy = oy + dFrame + dSash + dBead;
+  const gw = Math.max(10, fw - 2 * (dFrame + dSash + dBead));
+  const gh = Math.max(10, effFh - dFrame - dBot - 2 * (dSash + dBead));
+  const yBotOuter = oy + effFh - dBot;
+  const yBotBeadInner = gy + gh;
 
-  if (!pathSashOuter || !pathSashInner || !pathBeadInner) return null;
+  const isLeftSwing = ['swing_left', 'le-trai-mo-ra', 'le-trai-mo-vao', 'gap-xep-le-trai'].includes(sashType);
+  const isRightSwing = ['swing_right', 'le-phai-mo-ra', 'le-phai-mo-vao', 'gap-xep-le-phai'].includes(sashType);
+  const isAwning = ['awning', 'mo-hat'].includes(sashType);
+  const isTilt = ['tilt', 'mo-lat', 'mo-lat-trong', 'tilt_down'].includes(sashType);
+  const isTiltTurn = sashType === 'tilt_turn';
+  const isInward = ['le-trai-mo-vao', 'le-phai-mo-vao', 'mo-lat', 'mo-lat-trong'].includes(sashType);
+  const openDash = isInward ? '6,4' : undefined;
 
-  const xMid = ox + fw / 2;
-  const handleHVal = node.handleHeight || Math.round(node.h / 2);
-  const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
-  const handleY = Math.max(oy + frameD + dSash + 30, Math.min(oy + fh - frameD - dSash - 30, lockYCalc));
+  const yMidGlass = gy + gh * 0.55;
+  const xLeftEdgeMid = getArchXAtY(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash + dBead,
+    yMidGlass,
+    'left',
+    scaledArchConfig
+  );
+  const xRightEdgeMid = getArchXAtY(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash + dBead,
+    yMidGlass,
+    'right',
+    scaledArchConfig
+  );
+  const yApexSashOuter = getArchYAtX(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame,
+    ox + fw / 2,
+    scaledArchConfig
+  );
+  const yApexGlass = getArchYAtX(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash + dBead,
+    ox + fw / 2,
+    scaledArchConfig
+  );
+  const showSingleApexCut = Boolean(
+    frameConfig?.archConfig?.isCutAtApex ||
+      frameShape === 'arch_pointed' ||
+      frameShape === 'arch_pointed_leg'
+  );
+
+  // Đường tâm uốn màu cam nét đứt cho Vòm nhọn 2 cung
+  const centerlinePath =
+    frameShape === 'arch_pointed' || frameShape === 'arch_pointed_leg'
+      ? getArchCenterlinePath(
+          frameShape,
+          ox,
+          oy,
+          fw,
+          effFh,
+          dFrame + (hasSash ? dSash * 0.45 : dBead * 0.5),
+          scaledArchConfig
+        )
+      : null;
+
+  // Tay nắm khóa cho cửa 1 cánh mở quay
+  const showSideHandle = hasSash && (isLeftSwing || isRightSwing || isTiltTurn) && node?.hasLock !== false;
+  const isHyd = Boolean(sashConfig?.isHydraulic || node?.isHydraulic);
+  const handleHVal = node?.handleHeight || (isHyd ? 1050 : Math.round(h / 2));
+  const lockY = Math.max(
+    oy + dFrame + dSash + 30,
+    Math.min(yBotOuter - dSash - 20, oy + effFh - Math.round((handleHVal / (h || 1)) * fh))
+  );
+  const handleSide = isLeftSwing ? 'right' : 'left';
+  const xLockOuter = getArchXAtY(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    effFh,
+    dFrame + dSash * 0.5,
+    lockY,
+    handleSide,
+    scaledArchConfig
+  );
 
   return (
-    <g
-      key={`${node.id}-curved-single`}
-      className="cursor-pointer"
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelectCell(node.id);
-      }}
-    >
-      {/* Kính */}
-      <path d={pathBeadInner} fill="#b2f5ea" fillOpacity={0.85} stroke="none" />
+    <g>
+      <defs>
+        <clipPath id={glassClipId}>
+          <path d={beadInnerPath} />
+        </clipPath>
+      </defs>
 
-      {/* Viền chọn ô kính khi đang active */}
-      {isSelected && (
+      {/* 1. Mặt Kính */}
+      <g clipPath={`url(#${glassClipId})`}>
+        <rect
+          x={ox}
+          y={oy}
+          width={fw}
+          height={effFh}
+          fill={fillVal}
+          fillOpacity={paneType === 'glass' ? 0.72 : 0.9}
+          className="cursor-pointer transition-opacity hover:opacity-85"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectCell(node.id);
+          }}
+        />
+        {paneType === 'glass' && (
+          <CadGlassEffectOverlay
+            cellId={id || 'curved-single'}
+            pathD={beadInnerPath}
+            bbox={{ x: gx, y: gy, width: gw, height: gh }}
+            clipId={glassClipId}
+            effect={node.glassVisualEffect}
+            color={node.glassVisualColor}
+            splitCount={node.glassSplitCount}
+          />
+        )}
+      </g>
+
+      {/* 2. Vành Cánh uốn vòm (nếu không phải ô Fix) */}
+      {hasSash && (
+        <>
+          <path
+            d={`${sashOuterPath} ${sashInnerPath}`}
+            fill={aluminumColor}
+            fillRule="evenodd"
+          />
+          <path d={sashOuterPath} fill="none" stroke="#18181b" strokeWidth="0.9" />
+          <path d={sashInnerPath} fill="none" stroke="#18181b" strokeWidth="0.8" />
+        </>
+      )}
+
+      {/* 3. Vành Nẹp kính uốn vòm */}
+      <path
+        d={`${sashInnerPath} ${beadInnerPath}`}
+        fill={aluminumColor}
+        fillRule="evenodd"
+      />
+      <path d={beadInnerPath} fill="none" stroke="#27272a" strokeWidth="0.65" />
+
+      {/* 4. Đường cắt mòi 45° tại 2 góc đáy và nét cắt đỉnh (khi chia đôi tại đỉnh) */}
+      <g stroke="#18181b" strokeWidth="0.75">
+        {showSingleApexCut && (
+          <line
+            x1={Math.round(ox + fw / 2)}
+            y1={yApexSashOuter}
+            x2={Math.round(ox + fw / 2)}
+            y2={yApexGlass}
+            strokeWidth="0.85"
+          />
+        )}
+        <line
+          x1={ox + dFrame}
+          y1={yBotOuter}
+          x2={gx}
+          y2={yBotBeadInner}
+        />
+        <line
+          x1={ox + fw - dFrame}
+          y1={yBotOuter}
+          x2={gx + gw}
+          y2={yBotBeadInner}
+        />
+      </g>
+
+      {/* 5. Đường tâm uốn cam nét đứt cho Vòm nhọn 2 cung */}
+      {centerlinePath && (
         <path
-          d={pathBeadInner}
+          d={centerlinePath}
           fill="none"
           stroke="#f59e0b"
-          strokeWidth="1.5"
-          strokeDasharray="5,3"
+          strokeWidth="1.15"
+          strokeDasharray="5,4"
+          className="pointer-events-none"
         />
       )}
 
-      {/* Ký hiệu mở nếu có */}
-      {!isFixed && (
-        <g>
-          {node.sashType === 'swing_left' && (
+      {/* 6. Ký hiệu chiều mở */}
+      {hasSash && (
+        <g
+          fill="none"
+          stroke="#dc2626"
+          strokeWidth="1"
+          strokeLinejoin="round"
+          className="pointer-events-none"
+        >
+          {isLeftSwing && (
             <polyline
-              points={`${ox + frameD + dSash + dBead + 5},${handleY - fh * 0.3} ${ox + fw - frameD - dSash - dBead - 5},${handleY} ${ox + frameD + dSash + dBead + 5},${handleY + fh * 0.3}`}
-              fill="none"
-              stroke="#dc2626"
-              strokeWidth="1"
+              points={`${gx + gw - 4},${yMidGlass - gh * 0.25} ${xLeftEdgeMid + 1},${yMidGlass} ${gx + gw},${yBotBeadInner}`}
+              strokeDasharray={openDash}
             />
           )}
-          {node.sashType === 'swing_right' && (
+          {isRightSwing && (
             <polyline
-              points={`${ox + fw - frameD - dSash - dBead - 5},${handleY - fh * 0.3} ${ox + frameD + dSash + dBead + 5},${handleY} ${ox + fw - frameD - dSash - dBead - 5},${handleY + fh * 0.3}`}
-              fill="none"
-              stroke="#dc2626"
-              strokeWidth="1"
+              points={`${gx + 4},${yMidGlass - gh * 0.25} ${xRightEdgeMid - 1},${yMidGlass} ${gx},${yBotBeadInner}`}
+              strokeDasharray={openDash}
             />
           )}
-          {node.sashType === 'awning' && (
+          {isAwning && (
             <polyline
-              points={`${ox + frameD + dSash + dBead + 10},${oy + fh - frameD - dSash - dBead - 10} ${xMid},${oy + frameD + dSash + dBead + 5} ${ox + fw - frameD - dSash - dBead - 10},${oy + fh - frameD - dSash - dBead - 10}`}
-              fill="none"
-              stroke="#dc2626"
-              strokeWidth="1"
+              points={`${gx},${yBotBeadInner} ${ox + fw / 2},${yApexGlass + 2} ${gx + gw},${yBotBeadInner}`}
+              strokeDasharray={openDash}
             />
+          )}
+          {isTilt && (
+            <polyline
+              points={`${xLeftEdgeMid + 2},${yMidGlass} ${ox + fw / 2},${yBotBeadInner} ${xRightEdgeMid - 2},${yMidGlass}`}
+              strokeDasharray={openDash}
+            />
+          )}
+          {isTiltTurn && (
+            <>
+              <polyline
+                points={`${gx + gw - 4},${yMidGlass - gh * 0.25} ${xLeftEdgeMid + 1},${yMidGlass} ${gx + gw},${yBotBeadInner}`}
+              />
+              <polyline
+                points={`${xLeftEdgeMid + 2},${yMidGlass} ${ox + fw / 2},${yBotBeadInner} ${xRightEdgeMid - 2},${yMidGlass}`}
+                strokeDasharray="5,3"
+              />
+            </>
           )}
         </g>
       )}
 
-      {/* Nẹp kính cong */}
-      <path
-        d={`${pathSashInner} ${pathBeadInner}`}
-        fill={aluminumColor}
-        fillRule="evenodd"
-        stroke="#27272a"
-        strokeWidth="0.5"
-      />
-
-      {/* Bản cánh cong (nếu không phải vách cố định) */}
-      {!isFixed && (
-        <path
-          d={`${pathSashOuter} ${pathSashInner}`}
-          fill={aluminumColor}
-          fillRule="evenodd"
-          stroke="#27272a"
-          strokeWidth="0.7"
-        />
+      {/* 7. Tay nắm khóa gạt (cho cửa 1 cánh mở quay) */}
+      {showSideHandle && (
+        <g
+          className="cursor-pointer hover:opacity-85"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditDimension?.('handleHeight', node.id);
+          }}
+        >
+          <title>{`Tay nắm khóa (Cao độ: ${handleHVal}mm - Nhấp để sửa)`}</title>
+          <rect
+            x={xLockOuter - 2.5}
+            y={lockY - 12}
+            width={5}
+            height={24}
+            rx={1.8}
+            fill={hardwareColor}
+            stroke="#0f172a"
+            strokeWidth="0.7"
+          />
+          <rect
+            x={handleSide === 'right' ? xLockOuter - 15 : xLockOuter - 1}
+            y={lockY - 3.5}
+            width={16}
+            height={4}
+            rx={1.8}
+            fill={hardwareColor}
+            stroke="#0f172a"
+            strokeWidth="0.75"
+          />
+          <circle cx={xLockOuter} cy={lockY + 6.5} r={1} fill="#94a3b8" />
+        </g>
       )}
 
-      {/* Đường ghép mòi 45 độ góc đáy ngoài cùng khi có đáy */}
-      {!isOpenBottom && (
-        <>
-          {/* Mối ghép chân khung bao 90° (thanh đứng chạy suốt chạm sàn, thanh đáy lọt lòng - chuẩn Hình 2) */}
-          <line x1={ox + frameD} y1={oy + fh - frameD} x2={ox + frameD} y2={oy + fh} stroke="#27272a" strokeWidth="0.8" />
-          <line x1={ox + fw - frameD} y1={oy + fh - frameD} x2={ox + fw - frameD} y2={oy + fh} stroke="#27272a" strokeWidth="0.8" />
-
-          {/* Mòi 2 góc ngoài đáy cánh (45 độ nếu có cánh) */}
-          {!isFixed && (
-            <>
-              <line x1={ox + frameD} y1={oy + fh - frameD} x2={ox + frameD + dSash} y2={oy + fh - frameD - dSash} stroke="#27272a" strokeWidth="0.7" />
-              <line x1={ox + fw - frameD} y1={oy + fh - frameD} x2={ox + fw - frameD - dSash} y2={oy + fh - frameD - dSash} stroke="#27272a" strokeWidth="0.7" />
-            </>
-          )}
-
-          {/* Mòi 2 góc ngoài đáy nẹp kính (45 độ) */}
-          <line
-            x1={ox + frameD + dSash}
-            y1={oy + fh - frameD - dSash}
-            x2={ox + frameD + dSash + dBead}
-            y2={oy + fh - frameD - dSash - dBead}
-            stroke="#27272a"
-            strokeWidth="0.5"
-          />
-          <line
-            x1={ox + fw - frameD - dSash}
-            y1={oy + fh - frameD - dSash}
-            x2={ox + fw - frameD - dSash - dBead}
-            y2={oy + fh - frameD - dSash - dBead}
-            stroke="#27272a"
-            strokeWidth="0.5"
-          />
-        </>
+      {/* 8. Viền sáng xanh khi chọn ô */}
+      {isSelected && (
+        <path
+          d={beadInnerPath}
+          fill="none"
+          stroke="#2563eb"
+          strokeWidth="1.8"
+          strokeDasharray="4,2"
+          className="pointer-events-none"
+        />
       )}
     </g>
   );

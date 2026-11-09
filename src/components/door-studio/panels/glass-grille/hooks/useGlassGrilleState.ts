@@ -645,7 +645,7 @@ export function useGlassGrilleState({
         accessoryId: acc.id,
         accessoryCode: acc.code || undefined,
         name: acc.name,
-        price: acc.unitPrice || acc.salePrice || motifUnitPrice,
+        price: acc.costPrice || motifUnitPrice,
       });
       toast.success(`Đã liên kết: ${acc.name}`);
     }

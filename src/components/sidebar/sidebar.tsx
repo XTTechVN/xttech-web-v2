@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/utils';
-import { ChevronDown, ChevronRight, Plus, Headphones, ExternalLink, MessageCircle, Pin, PinOff } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Headphones, ExternalLink, Pin, PinOff } from 'lucide-react';
 import { Avatar } from '@/components';
 import { HEADER_HEIGHT } from '@/config';
 
@@ -81,7 +81,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
 
     const toggleSubMenu = (itemId: string) => {
       setOpenSubMenus((prev) => ({
-        ...prev,
+        // ...prev,
         [itemId]: !prev[itemId],
       }));
     };
@@ -105,7 +105,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
           'h-200 flex flex-col transition-[width,box-shadow] duration-300 ease-in-out border rounded-2xl relative select-none overflow-x-hidden',
           isLight ? 'bg-white text-slate-700 border-slate-200 shadow-lg' : 'bg-slate-900 text-slate-300 border-slate-800 shadow-2xl',
           effectivelyCollapsed ? 'w-0 md:w-20 border-r-0 md:border-r opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto' : 'w-72',
-          isCollapsed && isHovered && '!shadow-2xl z-30',
+          isCollapsed && isHovered && 'shadow-2xl! z-30',
           className,
         )}
         {...props}
@@ -255,7 +255,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                   )}
                 >
                   {effectivelyCollapsed ? (
-                    <span className={cn('w-4 h-[1px] block', isLight ? 'bg-slate-200' : 'bg-slate-800')} />
+                    <span className={cn('w-4 h-px block', isLight ? 'bg-slate-200' : 'bg-slate-800')} />
                   ) : (
                     <>
                       <span className="truncate whitespace-nowrap">{section.title}</span>
@@ -352,7 +352,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                                 {/* Dấu chấm nhánh nối */}
                                 <span
                                   className={cn(
-                                    'absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full border',
+                                    'absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full border',
                                     isLight ? 'border-white' : 'border-slate-900',
                                     isSubActive ? 'bg-primary' : isLight ? 'bg-slate-200' : 'bg-slate-800',
                                   )}

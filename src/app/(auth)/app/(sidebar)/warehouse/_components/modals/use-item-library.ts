@@ -121,7 +121,7 @@ export function useItemLibrary({
       setItemCode(acc.code || `ACC-${acc.id}`);
       setItemName(acc.name);
       setUnit(toDisplayUnit(acc.unit || 'pcs'));
-      setCostPrice(String(acc.costPrice || acc.unitPrice || 0));
+      setCostPrice(String(acc.costPrice || 0));
     }
   }, [selectedAccessoryId, accessories, inputMode, itemType, isEditMode]);
 

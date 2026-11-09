@@ -13,6 +13,7 @@ import {
   ClockAlert,
   Folder,
   Warehouse,
+  Newspaper,
 } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
@@ -64,7 +65,6 @@ export const acceptedSections = [
   'quotations',
   'extra-options',
   'formulas',
-  'shifts',
   'attendances-reports',
   'live-map',
   'app-versions',
@@ -80,8 +80,8 @@ export const acceptedSections = [
   'rules',
   'trash',
   'inbox',
+  'news',
 ];
-
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
   roles?: UserRole[];
@@ -175,12 +175,6 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
             href: '/app/attendances/reports',
             roles: ['super', 'admin', 'hr'],
           },
-          {
-            id: 'shifts',
-            label: 'Ca làm việc',
-            href: '/app/shifts',
-            roles: ['super', 'admin', 'hr'],
-          },
         ],
       },
       {
@@ -233,7 +227,6 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
       },
       {
         id: 'configurations-root',
-
         label: 'Cấu hình dự án',
         icon: React.createElement(SlidersHorizontal, { size: 18 }),
         href: '/app/projects/configuration',
@@ -259,7 +252,7 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
           },
           {
             id: 'glass-gaskets',
-            label: 'Kính & Gioăng keo',
+            label: 'Kính, Panel & Lưới muỗi',
             href: '/app/projects/configuration?tab=glass-gaskets',
             roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
           },
@@ -349,6 +342,13 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
   {
     title: 'Hệ thống',
     items: [
+      {
+        id: 'news',
+        label: 'Quản trị tin tức',
+        icon: React.createElement(Newspaper, { size: 18 }),
+        href: '/app/news',
+        roles: ['super', 'admin', 'hr'],
+      },
       {
         id: 'app-versions',
         label: 'Quản trị hệ thống',

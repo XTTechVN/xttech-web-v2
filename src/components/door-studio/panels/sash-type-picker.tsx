@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { SashOpenType } from '../studio-types';
-import { Columns, Rows, Grid, ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { SashOpenType, SashConfig, SceneCellNode } from '../studio-types';
+import { resolveIsCellOpenBottom } from '../cad-engine/cad-cell-config-resolver';
+import { Columns, Rows, Grid, ChevronDown, ChevronRight, ChevronLeft, Settings2 } from 'lucide-react';
 import {
   SASH_LAYOUT_CATALOG,
   SashLayoutConfig,
@@ -13,6 +14,12 @@ interface SashTypePickerProps {
   currentSashType: SashOpenType;
   selectedCellId: string | null;
   isInsideSash?: boolean;
+  sashConfig?: SashConfig;
+  isOpenBottom?: boolean;
+  /** Ô đang chọn: cho phép nhập Hở nền riêng khi ô ghi đè Hở cạnh đáy */
+  selectedCell?: SceneCellNode | null;
+  onUpdateCell?: (updates: Partial<SceneCellNode>) => void;
+  onChangeSashConfig?: (updates: Partial<SashConfig>) => void;
   onSelectSashType: (sashType: SashOpenType) => void;
   onSplitSashMullion?: (count: number, direction: 'vertical' | 'horizontal') => void;
 }
@@ -312,16 +319,155 @@ function renderSquareVisualCard(layout: SashLayoutConfig): React.ReactNode {
   );
 }
 
+function mapConfigFamilyToTab(family?: string): SashFamily {
+  switch (family) {
+    case 'Cửa đi mở quay':
+      return 'cua-di';
+    case 'Cửa sổ lùa':
+      return 'cua-so-lua';
+    case 'Cửa đi lùa':
+    case 'Cửa trượt lùa':
+      return 'cua-di-lua';
+    case 'Cửa xếp trượt':
+      return 'gap-xep';
+    case 'Cửa sổ mở quay/Hất':
+    default:
+      return 'cua-so';
+  }
+}
+
+function mapTabToConfigFamily(tab: SashFamily): string {
+  switch (tab) {
+    case 'cua-di':
+      return 'Cửa đi mở quay';
+    case 'cua-so-lua':
+      return 'Cửa sổ lùa';
+    case 'cua-di-lua':
+    case 'truot-quay':
+      return 'Cửa đi lùa';
+    case 'gap-xep':
+      return 'Cửa xếp trượt';
+    case 'cua-so':
+    default:
+      return 'Cửa sổ mở quay/Hất';
+  }
+}
+
 export const SashTypePicker: React.FC<SashTypePickerProps> = ({
   currentSashType,
   selectedCellId,
   isInsideSash = false,
+  sashConfig,
+  isOpenBottom = false,
+  selectedCell,
+  onUpdateCell,
+  onChangeSashConfig,
   onSelectSashType,
   onSplitSashMullion,
 }) => {
+  // Hở nền: ô ghi đè 'open' ghi vào chính ô; còn lại giữ hành vi cũ (ghi cấu hình chung)
+  const isCellOverrideOpen = selectedCell?.openBottomOverride === 'open';
+  const isCellOpenBottom = selectedCell ? resolveIsCellOpenBottom(selectedCell, isOpenBottom) : false;
+  const shouldShowHoNen = isOpenBottom || isCellOpenBottom;
+  const globalHoNenMm = sashConfig?.hoNenMm ?? 8;
+  const hoNenValue = isCellOverrideOpen ? (selectedCell?.hoNenMm ?? globalHoNenMm) : globalHoNenMm;
+  const handleChangeHoNen = (value: number): void => {
+    if (isCellOverrideOpen && onUpdateCell) {
+      onUpdateCell({ hoNenMm: value });
+      return;
+    }
+    onChangeSashConfig?.({ hoNenMm: value });
+  };
   const [splitCount, setSplitCount] = useState<number>(2);
-  const [activeFamily, setActiveFamily] = useState<SashFamily>('cua-so');
+  const [activeFamily, setActiveFamily] = useState<SashFamily>(() =>
+    mapConfigFamilyToTab(sashConfig?.family)
+  );
   const [isSplitCollapsed, setIsSplitCollapsed] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (!sashConfig?.family) return;
+    const targetTab = mapConfigFamilyToTab(sashConfig.family);
+    setActiveFamily((prev) => {
+      if (prev === 'truot-quay' && targetTab === 'cua-di-lua') return prev;
+      return targetTab;
+    });
+  }, [sashConfig?.family]);
+
+  // Tham chiếu và trạng thái cuộn ngang cho dải tab phân loại
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef<boolean>(false);
+  const hasDragged = useRef<boolean>(false);
+  const startX = useRef<number>(0);
+  const scrollLeftPos = useRef<number>(0);
+  const [canScrollLeft, setCanScrollLeft] = useState<boolean>(false);
+  const [canScrollRight, setCanScrollRight] = useState<boolean>(true);
+
+  const updateScrollLimits = useCallback(() => {
+    const el = tabsRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 2);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 2);
+  }, []);
+
+  useEffect(() => {
+    updateScrollLimits();
+    window.addEventListener('resize', updateScrollLimits);
+    return () => window.removeEventListener('resize', updateScrollLimits);
+  }, [updateScrollLimits]);
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const el = tabsRef.current;
+    if (!el) return;
+    if (Math.abs(e.deltaY) > 0) {
+      el.scrollLeft += e.deltaY;
+      updateScrollLimits();
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = tabsRef.current;
+    if (!el) return;
+    isDragging.current = true;
+    hasDragged.current = false;
+    startX.current = e.pageX - el.offsetLeft;
+    scrollLeftPos.current = el.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    const el = tabsRef.current;
+    if (!el) return;
+    const x = e.pageX - el.offsetLeft;
+    if (Math.abs(x - startX.current) > 4) {
+      hasDragged.current = true;
+    }
+    const walk = (x - startX.current) * 1.5;
+    el.scrollLeft = scrollLeftPos.current - walk;
+    updateScrollLimits();
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDragging.current = false;
+  };
+
+  const scrollByStep = (direction: 'left' | 'right') => {
+    const el = tabsRef.current;
+    if (!el) return;
+    const offset = direction === 'left' ? -90 : 90;
+    el.scrollBy({ left: offset, behavior: 'smooth' });
+    setTimeout(updateScrollLimits, 250);
+  };
+
+  const handleTabClick = (tabId: SashFamily, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (hasDragged.current) return;
+    setActiveFamily(tabId);
+    const nextConfigFamily = mapTabToConfigFamily(tabId);
+    if (sashConfig?.family !== nextConfigFamily) {
+      onChangeSashConfig?.({ family: nextConfigFamily });
+    }
+    e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    setTimeout(updateScrollLimits, 250);
+  };
 
   // Phân loại nhóm hiển thị
   const familyTabs: { id: SashFamily; label: string }[] = [
@@ -368,6 +514,10 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
           <div className="p-2.5 pt-0 border-t border-slate-100 space-y-2">
             {!hasSelectedCell ? (
               <div className="text-[11px] text-slate-400 italic">Nhấp chọn cánh cửa trên bản vẽ để chia đố.</div>
+            ) : sashConfig?.sashStyle === 'slim' ? (
+              <div className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded">
+                Cánh vô cực (1 thanh duy nhất) không chia đố trong cánh.
+              </div>
             ) : isFixed && !isInsideSash ? (
               <div className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded">
                 Ô fix dùng <strong>Chia đố khung</strong> ở tab Kiểu khung.
@@ -378,10 +528,10 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
                   <input
                     type="number"
                     min={2}
-                    max={6}
+                    max={20}
                     value={splitCount}
-                    onChange={(e) => setSplitCount(Math.max(2, Math.min(6, Number(e.target.value))))}
-                    className="w-9 h-7 text-center text-xs font-bold rounded border border-slate-200 bg-white focus:outline-none focus:border-primary"
+                    onChange={(e) => setSplitCount(Math.max(2, Math.min(20, Number(e.target.value))))}
+                    className="w-11 h-7 text-center text-xs font-bold rounded border border-slate-200 bg-white focus:outline-none focus:border-primary"
                   />
                   <span className="text-slate-500 font-medium text-[11px]">ô</span>
                 </div>
@@ -448,40 +598,75 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
           </button>
         </div>
 
-        {/* Thanh chọn Phân Loại (Family Tabs) */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar text-[11px] border-b border-slate-100">
-          {familyTabs.map((tab) => {
-            const isTabActive = activeFamily === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveFamily(tab.id)}
-                className={`px-2 py-1 rounded-md whitespace-nowrap font-medium transition-all cursor-pointer ${
-                  isTabActive
-                    ? 'bg-slate-800 text-white font-bold shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+        {/* Thanh chọn Phân Loại (Family Tabs) với cuộn ngang, nút mũi tên & kéo rê chuột */}
+        <div className="relative flex items-center border-b border-slate-100 group/tabbar">
+          {canScrollLeft && (
+            <button
+              type="button"
+              onClick={() => scrollByStep('left')}
+              aria-label="Cuộn sang trái"
+              className="absolute left-0 z-10 w-5 h-6 bg-gradient-to-r from-white via-white/95 to-transparent flex items-center justify-start text-slate-500 hover:text-slate-900 transition-opacity cursor-pointer"
+            >
+              <ChevronLeft size={13} className="stroke-[2.5]" />
+            </button>
+          )}
+
+          <div
+            ref={tabsRef}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUpOrLeave}
+            onMouseLeave={handleMouseUpOrLeave}
+            onScroll={updateScrollLimits}
+            className="flex items-center gap-1 overflow-x-auto py-1 scroll-smooth cursor-grab active:cursor-grabbing select-none text-[11px] no-scrollbar px-1"
+          >
+            {familyTabs.map((tab) => {
+              const isTabActive = activeFamily === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={(e) => handleTabClick(tab.id, e)}
+                  className={`px-2 py-1 rounded-md whitespace-nowrap font-medium transition-all cursor-pointer shrink-0 ${
+                    isTabActive
+                      ? 'bg-slate-800 text-white font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {canScrollRight && (
+            <button
+              type="button"
+              onClick={() => scrollByStep('right')}
+              aria-label="Cuộn sang phải"
+              className="absolute right-0 z-10 w-5 h-6 bg-gradient-to-l from-white via-white/95 to-transparent flex items-center justify-end text-slate-500 hover:text-slate-900 transition-opacity cursor-pointer"
+            >
+              <ChevronRight size={13} className="stroke-[2.5]" />
+            </button>
+          )}
         </div>
 
         {/* LƯỚI 3 CỘT CÁC Ô BIỂU TƯỢNG HÌNH VUÔNG (3-Column Grid) - Giống 100% Ảnh 1 & Ảnh 3 */}
-        <div className="max-h-[380px] overflow-y-auto pr-0.5 custom-scrollbar">
+        <div className="max-h-[340px] overflow-y-auto pr-0.5 custom-scrollbar">
           <div className="grid grid-cols-3 gap-2">
             {currentFamilyLayouts.map((layout) => {
               const isSelected = currentSashType === layout.id;
+              const isSlimDisabled = sashConfig?.sashStyle === 'slim' && layout.sashes.length > 1;
 
               return (
                 <button
                   key={layout.id}
                   type="button"
-                  onClick={() => onSelectSashType(layout.id as SashOpenType)}
+                  disabled={isSlimDisabled}
+                  onClick={() => !isSlimDisabled && onSelectSashType(layout.id as SashOpenType)}
                   title={`${layout.label} (${layout.sashes.length} cánh)`}
-                  className={`aspect-square rounded-lg p-0.5 transition-all cursor-pointer flex items-center justify-center bg-white ${
+                  className={`aspect-square rounded-lg p-0.5 transition-all flex items-center justify-center bg-white ${isSlimDisabled ? 'opacity-35 cursor-not-allowed' : 'cursor-pointer'} ${
                     isSelected
                       ? 'ring-2 ring-blue-500 border-2 border-blue-500 shadow-sm'
                       : 'border border-slate-200 hover:border-slate-300'
@@ -491,6 +676,108 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* 3. Ô FIX / Ô PHỤ CỬA ĐI (Ảnh 1) */}
+        <div className="pt-2 border-t border-slate-100 space-y-1.5">
+          <div className="font-bold text-[#b45309] text-[11px]">Ô fix / ô phụ cửa đi</div>
+          <button
+            type="button"
+            onClick={() => onSelectSashType('fixed')}
+            title="Ô fix / ô phụ cửa đi"
+            className={`w-16 h-16 rounded-lg p-1 transition-all cursor-pointer flex items-center justify-center bg-white ${
+              isFixed
+                ? 'ring-2 ring-amber-500 border-2 border-amber-500 shadow-xs'
+                : 'border border-amber-300/80 hover:border-amber-400 bg-amber-50/10'
+            }`}
+          >
+            <svg viewBox="0 0 72 72" className="w-full h-full p-0.5">
+              <rect x="6" y="6" width="60" height="60" fill="#fcfbfa" stroke="#c5a059" strokeWidth="2.2" rx="2" />
+              <rect x="12" y="12" width="48" height="48" fill="#c8f5f0" stroke="#0284c7" strokeWidth="1.2" />
+              <polygon points="12 60 36 12 60 60" fill="none" stroke="#0284c7" strokeWidth="1.2" />
+            </svg>
+          </button>
+        </div>
+
+        {/* 4. NÚT XÁC NHẬN CỬA THỦY LỰC (Ảnh 1) */}
+        <div className="p-2.5 rounded-xl border-2 border-cyan-400 bg-white shadow-2xs flex items-center justify-between">
+          <span className="font-bold text-cyan-800 text-xs">Cửa thủy lực</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={Boolean(sashConfig?.isHydraulic)}
+            onClick={() =>
+              onChangeSashConfig?.({
+                isHydraulic: !sashConfig?.isHydraulic,
+                hoNenMm: sashConfig?.hoNenMm ?? 8,
+                ngamNgangMm: sashConfig?.ngamNgangMm ?? 5,
+                ngamDocMm: sashConfig?.ngamDocMm ?? 5,
+              })
+            }
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+              sashConfig?.isHydraulic ? 'bg-cyan-500' : 'bg-slate-200'
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                sashConfig?.isHydraulic ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* 5. KHỐI THÔNG SỐ CÁNH (Ảnh 1, Ảnh 3, Ảnh 4) */}
+        <div className="p-2.5 rounded-xl border border-emerald-300 bg-emerald-50/40 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold text-emerald-800">
+            <div className="flex items-center gap-1.5">
+              <Settings2 size={13} className="text-emerald-600" />
+              <span>Thông số cánh</span>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                onChangeSashConfig?.({
+                  ngamNgangMm: 5,
+                  ngamDocMm: 5,
+                  ...(isOpenBottom ? { hoNenMm: 8 } : { hoNenMm: 0 }),
+                })
+              }
+              className="text-[11px] text-emerald-600 hover:text-emerald-800 hover:underline font-semibold cursor-pointer"
+            >
+              Mặc định
+            </button>
+          </div>
+          <div className={`grid ${shouldShowHoNen ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
+            <div className="space-y-1 text-center">
+              <div className="text-[10.5px] text-emerald-700 font-medium">Ngậm ngang</div>
+              <input
+                type="number"
+                value={sashConfig?.ngamNgangMm ?? 5}
+                onChange={(e) => onChangeSashConfig?.({ ngamNgangMm: Number(e.target.value) })}
+                className="w-full h-7 px-1 text-center text-xs font-bold rounded-lg border border-emerald-300 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-800 shadow-2xs"
+              />
+            </div>
+            <div className="space-y-1 text-center">
+              <div className="text-[10.5px] text-emerald-700 font-medium">Ngậm dọc</div>
+              <input
+                type="number"
+                value={sashConfig?.ngamDocMm ?? 5}
+                onChange={(e) => onChangeSashConfig?.({ ngamDocMm: Number(e.target.value) })}
+                className="w-full h-7 px-1 text-center text-xs font-bold rounded-lg border border-emerald-300 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-800 shadow-2xs"
+              />
+            </div>
+            {shouldShowHoNen && (
+              <div className="space-y-1 text-center">
+                <div className="text-[10.5px] text-emerald-700 font-medium">Hở nền</div>
+                <input
+                  type="number"
+                  value={hoNenValue}
+                  onChange={(e) => handleChangeHoNen(Number(e.target.value))}
+                  className="w-full h-7 px-1 text-center text-xs font-bold rounded-lg border border-emerald-300 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-800 shadow-2xs"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

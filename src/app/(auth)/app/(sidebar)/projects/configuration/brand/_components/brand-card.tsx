@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { Pencil, Trash2, ExternalLink } from 'lucide-react';
-import type { Brand } from '@/types';
+import React, { useState, useMemo } from 'react';
+import { Trash2, ExternalLink, Star } from 'lucide-react';
+import { isBrandFavorite, type Brand } from '@/types';
 import { BASE_MINIO_URL } from '@/config';
 
 interface BrandCardProps {
@@ -10,6 +10,7 @@ interface BrandCardProps {
   onClick?: (brand: Brand) => void;
   onEdit: (brand: Brand) => void;
   onDelete: (brand: Brand) => void;
+  onToggleFavorite?: (brand: Brand) => void;
 }
 
 function BrandLogo({
@@ -25,17 +26,14 @@ function BrandLogo({
 }) {
   const [hasError, setHasError] = useState(false);
 
-  useEffect(() => {
-    setHasError(false);
-  }, [logoPath, updatedAt]);
-
   const logoUrl = useMemo(() => {
     if (!logoPath) return null;
     const base = logoPath.startsWith('http')
       ? logoPath
       : `${BASE_MINIO_URL}/${logoPath.startsWith('/') ? logoPath.slice(1) : logoPath}`;
 
-    const timestamp = updatedAt ? new Date(updatedAt).getTime() : Date.now();
+    if (!updatedAt) return base;
+    const timestamp = new Date(updatedAt).getTime();
     const separator = base.includes('?') ? '&' : '?';
     return `${base}${separator}t=${timestamp}`;
   }, [logoPath, updatedAt]);
@@ -60,7 +58,9 @@ function BrandLogo({
   );
 }
 
-export function BrandCard({ brand, onClick, onEdit, onDelete }: BrandCardProps) {
+export function BrandCard({ brand, onClick, onDelete, onToggleFavorite }: BrandCardProps) {
+  const isFavorite = isBrandFavorite(brand);
+
   return (
     <div
       onClick={() => onClick?.(brand)}
@@ -69,7 +69,30 @@ export function BrandCard({ brand, onClick, onEdit, onDelete }: BrandCardProps) 
       {/* Card Header: Brand Logo & Status indicator */}
       <div>
         <div className="relative aspect-square w-full bg-slate-50/80 border border-slate-100 rounded-md flex items-center justify-center overflow-hidden mb-2">
+          {/* Nút ngôi sao Yêu thích góc trên bên trái */}
+          {onToggleFavorite && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(brand);
+              }}
+              title={isFavorite ? 'Bỏ đánh dấu hãng yêu thích' : 'Đặt làm hãng yêu thích (chọn đầu tiên)'}
+              className="absolute top-1.5 left-1.5 z-10 p-0.5 rounded-full transition-transform hover:scale-110 cursor-pointer"
+            >
+              <Star
+                size={14}
+                className={
+                  isFavorite
+                    ? 'fill-amber-400 text-amber-400 drop-shadow-2xs'
+                    : 'text-slate-300 hover:text-amber-400 transition-colors'
+                }
+              />
+            </button>
+          )}
+
           <BrandLogo
+            key={`${brand.logoPath ?? ''}-${brand.updatedAt ?? ''}`}
             logoPath={brand.logoPath}
             name={brand.name}
             code={brand.code}

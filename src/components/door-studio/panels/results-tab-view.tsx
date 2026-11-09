@@ -1,12 +1,142 @@
 'use client';
 
 import React, { useState } from 'react';
-import { DoorCalculateResponse } from '@/types';
+import { CalculationStep, DoorCalculateResponse } from '@/types';
 import { FrameConfig, SashConfig, SceneCellNode } from '../studio-types';
 import { detectProfileIssues } from '../utils/detect-profile-issues';
-import { Calculator, Info } from 'lucide-react';
+import { Calculator, Info, MapPin } from 'lucide-react';
 
 export { detectProfileIssues };
+
+const CORNER_JOINT_LABEL_MAP: Record<string, string> = {
+  '45': 'Ghép 45°',
+  '90_horiz': '90° Ngang phủ',
+  '90_vert': '90° Dọc phủ',
+  '45_top_90_bot': '45° trên - 90° dưới',
+  '63': 'Góc 63° (gấp xếp)',
+};
+
+interface CalculationStepsBreakdownProps {
+  steps?: CalculationStep[];
+  note?: string | null;
+  positions?: string[];
+  fallbackFormula?: string | null;
+  fallbackResultLabel: string;
+  fallbackResultValue: string;
+  fallbackNote: string;
+}
+
+const CalculationStepsBreakdown: React.FC<CalculationStepsBreakdownProps> = ({
+  steps,
+  note,
+  positions,
+  fallbackFormula,
+  fallbackResultLabel,
+  fallbackResultValue,
+  fallbackNote,
+}) => {
+  const hasSteps = Boolean(steps && steps.length > 0);
+  const regularSteps = hasSteps ? steps!.filter((s) => s.tone !== 'result') : [];
+  const resultSteps = hasSteps ? steps!.filter((s) => s.tone === 'result') : [];
+
+  return (
+    <div className="space-y-2 text-xs">
+      {positions && positions.length > 0 && (
+        <div className="flex items-start gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200/80 text-[11px] text-slate-600">
+          <MapPin size={12} className="text-primary shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold text-slate-700">Vị trí lắp đặt: </span>
+            <span>{positions.join(', ')}</span>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80 space-y-2">
+        {hasSteps ? (
+          <>
+            <div className="space-y-1.5 text-slate-700">
+              {regularSteps.map((step, idx) => {
+                if (step.tone === 'subtotal') {
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-2 text-slate-700 bg-white px-2 py-1 rounded border border-slate-100"
+                    >
+                      <span className="flex items-center flex-wrap gap-1">
+                        <span>{step.label}</span>
+                        {step.formula && (
+                          <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px] font-medium">
+                            {step.formula}
+                          </span>
+                        )}
+                      </span>
+                      <span className="font-bold text-slate-800 font-mono shrink-0">{step.value}</span>
+                    </div>
+                  );
+                }
+
+                const valueToneClass =
+                  step.tone === 'deduct'
+                    ? 'text-rose-600 font-semibold'
+                    : step.tone === 'add'
+                      ? 'text-emerald-600 font-semibold'
+                      : 'text-slate-800 font-bold';
+
+                return (
+                  <div key={idx} className="flex items-center justify-between gap-2">
+                    <span className="text-slate-600 flex items-center flex-wrap gap-1">
+                      <span>{step.label}</span>
+                      {step.formula && (
+                        <span className="px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-600 font-mono text-[10px] font-medium">
+                          {step.formula}
+                        </span>
+                      )}
+                    </span>
+                    <span className={`${valueToneClass} font-mono shrink-0`}>{step.value}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {resultSteps.map((resStep, rIdx) => (
+              <div
+                key={rIdx}
+                className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between gap-2 bg-primary/5 p-2 rounded border border-primary/20"
+              >
+                <span className="font-bold text-slate-800 flex items-center flex-wrap gap-1">
+                  <span>{resStep.label}</span>
+                  {resStep.formula && (
+                    <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono text-[10px] font-semibold">
+                      {resStep.formula}
+                    </span>
+                  )}
+                </span>
+                <span className="font-bold text-primary text-sm font-mono shrink-0">{resStep.value}</span>
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            {fallbackFormula && (
+              <div className="flex items-center justify-between text-slate-700">
+                <span>Công thức áp dụng:</span>
+                <span className="font-bold text-primary font-mono">{fallbackFormula}</span>
+              </div>
+            )}
+            <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between bg-primary/5 p-2 rounded border border-primary/20">
+              <span className="font-bold text-slate-800">{fallbackResultLabel}</span>
+              <span className="font-bold text-primary text-sm font-mono">{fallbackResultValue}</span>
+            </div>
+          </>
+        )}
+
+        <div className="text-[11px] text-slate-500 leading-relaxed pt-0.5">
+          * {note || fallbackNote}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface ResultsTabViewProps {
   calcData: DoorCalculateResponse | null;
@@ -290,21 +420,47 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                       </span>
                     </div>
 
-                    {/* Khối tham số đầu vào */}
+                    {/* Khối tham số đầu vào & Cấu hình cơ khí đang áp dụng */}
                     <div className="bg-white rounded-lg border border-slate-200/80 p-2.5 space-y-2 text-xs">
                       <div className="font-semibold text-slate-700 flex items-center gap-1.5">
                         <Info size={13} className="text-blue-500" />
-                        <span>Thông số cơ sở hình học:</span>
+                        <span>Thông số cơ sở hình học & cấu hình:</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-slate-600">
                         <div className="bg-slate-50 p-1.5 rounded border border-slate-100">
                           <span className="text-slate-400 block text-[11px]">Rộng phủ bì (W):</span>
-                          <span className="font-bold text-slate-800">{w} mm</span>
+                          <span className="font-bold text-slate-800 font-mono">{w} mm</span>
                         </div>
                         <div className="bg-slate-50 p-1.5 rounded border border-slate-100">
                           <span className="text-slate-400 block text-[11px]">Cao phủ bì (H):</span>
-                          <span className="font-bold text-slate-800">{h} mm</span>
+                          <span className="font-bold text-slate-800 font-mono">{h} mm</span>
                         </div>
+                        {sashConfig && (
+                          <>
+                            <div className="bg-slate-50 p-1.5 rounded border border-slate-100">
+                              <span className="text-slate-400 block text-[11px]">Ngậm ngang / Ngậm dọc:</span>
+                              <span className="font-semibold text-slate-800 font-mono">
+                                {sashConfig.ngamNgangMm} / {sashConfig.ngamDocMm} mm
+                              </span>
+                            </div>
+                            <div className="bg-slate-50 p-1.5 rounded border border-slate-100">
+                              <span className="text-slate-400 block text-[11px]">Trừ đố động / Hở nền:</span>
+                              <span className="font-semibold text-slate-800 font-mono">
+                                {sashConfig.truDoDongMm} / {sashConfig.hoNenMm} mm
+                              </span>
+                            </div>
+                          </>
+                        )}
+                        {(frameConfig || sashConfig) && (
+                          <div className="col-span-2 bg-slate-50 p-1.5 rounded border border-slate-100 flex items-center justify-between">
+                            <span className="text-slate-400 text-[11px]">Góc ghép Khung / Cánh:</span>
+                            <span className="font-semibold text-slate-700 text-[11px]">
+                              {CORNER_JOINT_LABEL_MAP[frameConfig?.cornerJoint || '45'] || frameConfig?.cornerJoint || 'Ghép 45°'}
+                              {' / '}
+                              {CORNER_JOINT_LABEL_MAP[sashConfig?.cornerJoint || '45'] || sashConfig?.cornerJoint || 'Ghép 45°'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -316,136 +472,36 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <div>
                               <span className="font-bold text-slate-800 text-xs block">{selectedBar.name}</span>
-                              <span className="text-[11px] text-slate-400">Mã Profile: {selectedBar.profileCode || 'Chưa gắn mã'}</span>
+                              <span className="text-[11px] text-slate-400">
+                                Mã Profile: {selectedBar.profileCode || 'Chưa gắn mã'}
+                                {selectedBar.profileName ? ` (${selectedBar.profileName})` : ''}
+                              </span>
                             </div>
                             <div className="text-right">
                               <span className="px-2 py-0.5 rounded text-[11px] bg-primary/10 text-primary font-bold">
                                 SL: {selectedBar.qty} cây
                               </span>
-                              <span className="block text-[11px] text-slate-500 mt-0.5">Góc cắt: {selectedBar.goc1}° / {selectedBar.goc2}°</span>
+                              <span className="block text-[11px] text-slate-500 mt-0.5">
+                                Góc cắt: {selectedBar.goc1}° / {selectedBar.goc2}°
+                              </span>
                             </div>
                           </div>
 
-                          {/* Diễn giải phép tính từng bước trực quan */}
+                          {/* Diễn giải phép tính từng bước trực quan (100% động từ Backend) */}
                           <div className="space-y-2 text-xs">
                             <span className="font-bold text-slate-700 flex items-center gap-1">
                               <span>Các bước tính ra kích thước cắt ({selectedBar.length} mm):</span>
                             </span>
 
-                            {/* Trường hợp 1: Khung bao phủ bì */}
-                            {(selectedBar.name.toLowerCase().includes('khung') && (selectedBar.formula === 'H' || selectedBar.formula === 'W')) && (
-                              <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80 space-y-1.5">
-                                <div className="flex items-center justify-between text-slate-700">
-                                  <span>1. Kích thước phủ bì mép tường:</span>
-                                  <span className="font-bold">{selectedBar.formula === 'H' ? `${h} mm (Chiều cao H)` : `${w} mm (Chiều rộng W)`}</span>
-                                </div>
-                                <div className="text-[11px] text-slate-500 leading-relaxed pt-1 border-t border-slate-200/60">
-                                  Thanh khung bao áp sát trực tiếp vào mép tường hoàn thiện nên chiều dài cắt giữ nguyên bằng kích thước phủ bì ô chờ, cắt vát 45° ở hai đầu để đấu góc.
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Trường hợp 2: Thanh cánh đứng (2168.3 mm) */}
-                            {(selectedBar.name.toLowerCase().includes('cánh') && selectedBar.category === 'sash_h') && (
-                              <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80 space-y-2">
-                                <div className="space-y-1 text-slate-700">
-                                  <div className="flex items-center justify-between">
-                                    <span>• Bước 1: Chiều cao phủ bì (H):</span>
-                                    <span className="font-bold">{h} mm</span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-slate-600">
-                                    <span>• Bước 2: Trừ bản khung bao trên & dưới (2 x 43.9):</span>
-                                    <span className="font-semibold text-rose-600">- 87.8 mm</span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-slate-600 bg-white px-2 py-1 rounded border border-slate-100">
-                                    <span>→ Chiều cao lọt lòng trong khung:</span>
-                                    <span className="font-bold text-slate-800">2212.2 mm</span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-slate-600">
-                                    <span>• Bước 3: Trừ khe hở & hèm đón cánh (Trừ cánh):</span>
-                                    <span className="font-semibold text-rose-600">- 43.9 mm</span>
-                                  </div>
-                                </div>
-                                <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between bg-primary/5 p-2 rounded border border-primary/20">
-                                  <span className="font-bold text-slate-800">→ Chiều dài cắt thực tế:</span>
-                                  <span className="font-bold text-primary text-sm">{selectedBar.length} mm</span>
-                                </div>
-                                <div className="text-[11px] text-slate-500 leading-relaxed pt-0.5">
-                                  * Cánh cửa nằm lọt bên trong khung bao. Phép tính tự động lấy chiều cao lọt lòng trừ đi phần khe hở kỹ thuật để cánh đóng mở êm ái mà không bị cạ chạm vào khung.
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Trường hợp 3: Thanh cánh ngang (826.6 mm) */}
-                            {(selectedBar.name.toLowerCase().includes('cánh') && selectedBar.category === 'sash_w') && (
-                              <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80 space-y-2">
-                                <div className="space-y-1 text-slate-700">
-                                  <div className="flex items-center justify-between">
-                                    <span>• Bước 1: Chiều rộng phủ bì (W):</span>
-                                    <span className="font-bold">{w} mm</span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-slate-600">
-                                    <span>• Bước 2: Trừ khung bao 2 bên & bản đố chia giữa:</span>
-                                    <span className="font-semibold text-rose-600">- Khung & đố</span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-slate-600 bg-white px-2 py-1 rounded border border-slate-100">
-                                    <span>→ Lọt lòng chia đều cho 2 cánh:</span>
-                                    <span className="font-bold text-slate-800">Mỗi cánh ~870.5 mm</span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-slate-600">
-                                    <span>• Bước 3: Trừ khe hở đón cánh (Trừ cánh):</span>
-                                    <span className="font-semibold text-rose-600">- 43.9 mm</span>
-                                  </div>
-                                </div>
-                                <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between bg-primary/5 p-2 rounded border border-primary/20">
-                                  <span className="font-bold text-slate-800">→ Chiều dài cắt thực tế:</span>
-                                  <span className="font-bold text-primary text-sm">{selectedBar.length} mm</span>
-                                </div>
-                                <div className="text-[11px] text-slate-500 leading-relaxed pt-0.5">
-                                  * Chiều ngang cửa được chia đôi cho 2 cánh, sau đó trừ đi khe hở kỹ thuật để 2 cánh khép kín vào đố giữa mà không bị kích nhôm.
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Trường hợp 4: Thanh đố chia ô (2196.2 mm) */}
-                            {selectedBar.name.toLowerCase().includes('đố') && (
-                              <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80 space-y-2">
-                                <div className="space-y-1 text-slate-700">
-                                  <div className="flex items-center justify-between">
-                                    <span>• Bước 1: Chiều cao lọt lòng khung (Lm):</span>
-                                    <span className="font-bold">2212.2 mm</span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-slate-600">
-                                    <span>• Bước 2: Trừ ngàm phay ăn khớp 2 đầu:</span>
-                                    <span className="font-semibold text-rose-600">- 16.0 mm (mỗi đầu 8 mm)</span>
-                                  </div>
-                                </div>
-                                <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between bg-primary/5 p-2 rounded border border-primary/20">
-                                  <span className="font-bold text-slate-800">→ Chiều dài cắt thực tế (Lm - 16):</span>
-                                  <span className="font-bold text-primary text-sm">{selectedBar.length} mm</span>
-                                </div>
-                                <div className="text-[11px] text-slate-500 leading-relaxed pt-0.5">
-                                  * Thanh đố đứng ngăn giữa 2 cánh cửa. Hai đầu cây đố được phay ngàm để ngậm khít vào lòng khung bao trên và dưới.
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Các thanh còn lại fallback */}
-                            {!selectedBar.name.toLowerCase().includes('khung') && !selectedBar.name.toLowerCase().includes('cánh') && !selectedBar.name.toLowerCase().includes('đố') && (
-                              <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80 space-y-1.5">
-                                <div className="flex items-center justify-between text-slate-700">
-                                  <span>Công thức tính:</span>
-                                  <span className="font-bold text-primary">{selectedBar.formula || '-'}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-slate-700 bg-white px-2 py-1 rounded border border-slate-100">
-                                  <span>Chiều dài cắt:</span>
-                                  <span className="font-bold text-slate-900">{selectedBar.length} mm</span>
-                                </div>
-                                <div className="text-[11px] text-slate-500 leading-relaxed pt-1">
-                                  Chiều dài được tính toán tự động dựa theo vị trí lắp đặt và các thông số trừ khấu hao cơ khí trong hệ nhôm.
-                                </div>
-                              </div>
-                            )}
+                            <CalculationStepsBreakdown
+                              steps={selectedBar.calcSteps}
+                              note={selectedBar.calcNote}
+                              positions={selectedBar.positions}
+                              fallbackFormula={selectedBar.formula}
+                              fallbackResultLabel="→ Chiều dài cắt thực tế:"
+                              fallbackResultValue={`${selectedBar.length} mm`}
+                              fallbackNote="Chiều dài được tính toán tự động dựa theo vị trí lắp đặt và các thông số trừ khấu hao cơ khí trong hệ nhôm."
+                            />
                           </div>
                         </div>
                       ) : (
@@ -550,7 +606,10 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <div>
                               <span className="font-bold text-slate-800 text-xs block">{selectedBead.name}</span>
-                              <span className="text-[11px] text-slate-400">Profile: {selectedBead.profileCode || 'Chưa gắn mã'}</span>
+                              <span className="text-[11px] text-slate-400">
+                                Profile: {selectedBead.profileCode || 'Chưa gắn mã'}
+                                {selectedBead.profileName ? ` (${selectedBead.profileName})` : ''}
+                              </span>
                             </div>
                             <div className="text-right">
                               <span className="px-2 py-0.5 rounded text-[11px] bg-primary/10 text-primary font-bold">
@@ -565,29 +624,15 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                               <span>Các bước tính chiều dài nẹp ({selectedBead.length} mm):</span>
                             </span>
 
-                            <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80 space-y-2 text-xs">
-                              <div className="space-y-1 text-slate-700">
-                                <div className="flex items-center justify-between">
-                                  <span>• Bước 1: Kích thước lọt lòng ô kính:</span>
-                                  <span className="font-bold">
-                                    {selectedBead.name.toLowerCase().includes('đứng') ? 'Chiều cao ô kính' : 'Chiều rộng ô kính'}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between text-slate-600">
-                                  <span>• Bước 2: Khấu trừ góc ghép nẹp (ghép 90° hoặc vát 45°):</span>
-                                  <span className="font-semibold text-rose-600">Theo cấu hình nẹp</span>
-                                </div>
-                              </div>
-
-                              <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between bg-primary/5 p-2 rounded border border-primary/20">
-                                <span className="font-bold text-slate-800">→ Chiều dài cắt nẹp thực tế:</span>
-                                <span className="font-bold text-primary text-sm">{selectedBead.length} mm</span>
-                              </div>
-
-                              <div className="text-[11px] text-slate-500 leading-relaxed pt-0.5">
-                                * Thanh nẹp kính dùng để gài giữ mép kính chặt vào khung bao hoặc cánh. Khi ghép góc 90° phẳng, hai cây nẹp đứng sẽ phủ kín chiều cao, còn hai cây nẹp ngang được cắt hụt đúng bằng độ dày của hai bản nẹp đứng để lọt khít vào giữa.
-                              </div>
-                            </div>
+                            <CalculationStepsBreakdown
+                              steps={selectedBead.calcSteps}
+                              note={selectedBead.calcNote}
+                              positions={selectedBead.positions}
+                              fallbackFormula={selectedBead.formula}
+                              fallbackResultLabel="→ Chiều dài cắt nẹp thực tế:"
+                              fallbackResultValue={`${selectedBead.length} mm`}
+                              fallbackNote="Thanh nẹp kính dùng để gài giữ mép kính chặt vào khung bao hoặc cánh theo cấu hình góc ghép nẹp đã chọn."
+                            />
                           </div>
                         </div>
                       ) : (
@@ -704,31 +749,13 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                               <span>Các bước tính kích thước cắt kính ({selectedCell.glassW} × {selectedCell.glassH} mm):</span>
                             </span>
 
-                            <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80 space-y-2 text-xs">
-                              <div className="space-y-1 text-slate-700">
-                                <div className="flex items-center justify-between">
-                                  <span>• Kích thước cánh phủ ngoài:</span>
-                                  <span className="font-bold">{selectedCell.w} × {selectedCell.h} mm</span>
-                                </div>
-                                <div className="flex items-center justify-between text-slate-600">
-                                  <span>• Trừ độ ngậm nhôm của bản cánh (2 bên):</span>
-                                  <span className="font-semibold text-rose-600">Độ sâu khe đón kính</span>
-                                </div>
-                                <div className="flex items-center justify-between text-slate-600">
-                                  <span>• Trừ khe co giãn nhiệt & gioăng cao su:</span>
-                                  <span className="font-semibold text-rose-600">- 2 đến 3 mm</span>
-                                </div>
-                              </div>
-
-                              <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between bg-primary/5 p-2 rounded border border-primary/20">
-                                <span className="font-bold text-slate-800">→ Kích thước đặt xưởng kính:</span>
-                                <span className="font-bold text-primary text-sm">{selectedCell.glassW} × {selectedCell.glassH} mm</span>
-                              </div>
-
-                              <div className="text-[11px] text-slate-500 leading-relaxed pt-0.5">
-                                * Tấm kính phải nhỏ hơn kích thước phủ bì cánh để lọt sâu vào rãnh ngậm kính của thanh nhôm cánh, đồng thời chừa khe hở cho lớp đệm chèn gioăng chống va đập vỡ kính.
-                              </div>
-                            </div>
+                            <CalculationStepsBreakdown
+                              steps={selectedCell.calcSteps}
+                              note={selectedCell.calcNote}
+                              fallbackResultLabel="→ Kích thước đặt xưởng kính:"
+                              fallbackResultValue={`${selectedCell.glassW} × ${selectedCell.glassH} mm`}
+                              fallbackNote="Tấm kính được tính toán từ kích thước lọt lòng cộng độ ngậm kính mỗi cạnh và trừ khe hở chèn gioăng."
+                            />
                           </div>
                         </div>
                       ) : (
@@ -820,13 +847,16 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                     <tbody className="divide-y divide-gray-100 text-xs">
                       {calcData.gaskets?.map((g, idx) => {
                         const measureMap: Record<string, string> = {
-                          bead: 'Theo nẹp kính',
-                          glass_perimeter: 'Theo chu vi kính',
-                          glass_width: 'Theo chiều rộng kính',
-                          glass_height: 'Theo chiều cao kính',
-                          frame_perimeter: 'Theo chu vi khung',
-                          frame_width: 'Theo chiều rộng khung',
-                          frame_height: 'Theo chiều cao khung',
+                          bead: g.target === 'frame' ? 'Theo nẹp kính ô fix' : 'Theo nẹp kính cánh',
+                          glass_perimeter: g.target === 'frame' ? 'Theo chu vi kính ô fix' : 'Theo chu vi kính cánh',
+                          glass_width: g.target === 'frame' ? 'Theo chiều rộng kính ô fix' : 'Theo chiều rộng kính cánh',
+                          glass_height: g.target === 'frame' ? 'Theo chiều cao kính ô fix' : 'Theo chiều cao kính cánh',
+                          frame_perimeter: 'Theo chu vi khung bao',
+                          frame_width: 'Theo chiều rộng khung bao',
+                          frame_height: 'Theo chiều cao khung bao',
+                          sash_perimeter: 'Theo chu vi cánh',
+                          sash_width: 'Theo chiều rộng cánh',
+                          sash_height: 'Theo chiều cao cánh',
                         };
                         return (
                           <tr key={idx} className="hover:bg-pink-50/20 transition-colors">

@@ -166,7 +166,7 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
               <div className="divide-y divide-gray-100">
                 {selectedAccessories.map((item, idx) => {
                   const acc = accessories.find((a) => a.id === item.accessoryId);
-                  const price = acc?.salePrice || acc?.retailPrice || acc?.costPrice || 0;
+                  const price = acc?.costPrice || 0;
                   return (
                     <div
                       key={`sel-acc-${item.accessoryId}-${idx}`}

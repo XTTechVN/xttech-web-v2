@@ -8,6 +8,7 @@ import { DesignOptionsBar } from './components/design-options-bar';
 import { QuotationApprovalBar } from './components/quotation-approval-bar';
 import { QuotationConfigForm } from './components/quotation-config-form';
 import { QuotationDoorsTable } from './components/quotation-doors-table';
+import { QuotationMaterialAnalysisSection } from './components/quotation-material-analysis-section';
 import { QuotationPreviewPanel } from './components/quotation-preview-panel';
 import { QuotationPreviewTab } from './components/quotation-preview-tab';
 import { QuotationStatusBanner } from './components/quotation-status-banner';
@@ -33,15 +34,32 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
   const [optionId, setOptionId] = useState<number | null>(null);
   const api = useProjectQuotation(projectId, optionId);
   const { quotation, isEditable } = api;
-  const form = useQuotationForm(projectId, quotation, optionId);
 
   const items = useMemo(
     () => (Array.isArray(quotation?.snapshotItems) ? quotation.snapshotItems : EMPTY_ITEMS),
     [quotation?.snapshotItems],
   );
   const isSeparated = quotation?.accessoryMode === 'separated';
-  const drafts = useQuotationPriceDrafts(items, isSeparated);
+  const drafts = useQuotationPriceDrafts(items, isSeparated, quotation?.vatPercent);
+  const manualPricePayload = useMemo(
+    () => (quotation ? drafts.buildPayload() : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [quotation, items, isSeparated, drafts.changedCount, drafts.totalDrafts, drafts.doorTotalDrafts, drafts.accDrafts],
+  );
+  const form = useQuotationForm(projectId, quotation, optionId, manualPricePayload);
   const isLocked = quotation?.isLocked ?? false;
+
+  const onSaveConfig = () => {
+    const manualPrices = quotation ? drafts.buildPayload() : {};
+    api.saveQuotation(
+      {
+        config: { ...form.config, ...manualPrices },
+        name: form.name.trim(),
+        note: form.note.trim(),
+      },
+      { onSuccess: drafts.resetDrafts },
+    );
+  };
 
   if (api.isLoading) return <Skeleton className="h-64 w-full" />;
 
@@ -83,29 +101,29 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
             saveLabel={!quotation ? 'Lập báo giá' : isEditable ? 'Cập nhật báo giá' : 'Lập phiên bản mới'}
             isSaving={api.isSaving}
             isSaveDisabled={isLocked || !form.name.trim() || form.isMissingFloors}
-            onSave={() =>
-              api.saveQuotation({
-                config: form.config,
-                name: form.name.trim(),
-                note: form.note.trim(),
-              })
-            }
+            onSave={onSaveConfig}
           />
         </div>
       )}
 
       {activeTab === 'analysis' &&
         (quotation ? (
-          <QuotationDoorsTable
-            items={items}
-            isSeparated={isSeparated}
-            isLocked={!isEditable}
-            isSaving={api.isSavingPrices}
-            drafts={drafts}
-            onSave={() =>
-              api.savePrices(drafts.buildPayload(), { onSuccess: drafts.resetDrafts })
-            }
-          />
+          <div className="space-y-4">
+            <QuotationDoorsTable
+              items={items}
+              isSeparated={isSeparated}
+              isLocked={!isEditable}
+              isSaving={api.isSavingPrices}
+              drafts={drafts}
+              onSave={() =>
+                api.savePrices(drafts.buildPayload(), { onSuccess: drafts.resetDrafts })
+              }
+            />
+            <QuotationMaterialAnalysisSection
+              projectId={projectId}
+              quotationId={quotation.id}
+            />
+          </div>
         ) : (
           <div className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-xs text-center text-xs text-slate-400">
             Dự án chưa có báo giá. Hãy lập báo giá ở tab &quot;Cấu thành giá&quot;.

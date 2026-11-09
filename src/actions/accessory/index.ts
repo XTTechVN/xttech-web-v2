@@ -1,7 +1,9 @@
 import api from '@/utils/api';
+import { downloadOrShareBlob, getFilenameFromContentDisposition } from '@/utils';
 import type { BaseResponseWithPagination } from '@/components';
 import type {
   Accessory,
+  AccessoryDropdownItem,
   AccessoryAssignDoors,
   AccessoryAssignMaterials,
   AccessoryCreate,
@@ -9,11 +11,32 @@ import type {
   AccessoryUnassignDoors,
   AccessoryUnassignMaterials,
   AccessoryUpdate,
+  AccessoryExcelPreviewResponse,
+  AccessoryBulkUpsertRequest,
+  AccessoryImageUploadResponse,
+  MaterialBulkUpsertResponse,
+  BulkDeleteRequest,
+  BulkDeleteResponse,
   Door,
   DoorQueryParams,
   Material,
   MaterialQueryParams,
 } from '@/types';
+
+export const getAccessoriesDropdown = async (params?: {
+  brandId?: number;
+  unit?: string;
+}): Promise<AccessoryDropdownItem[]> => {
+  try {
+    const response = await api.get<AccessoryDropdownItem[]>('/api/v1/accessories/dropdown', {
+      params,
+    });
+    return response.data || [];
+  } catch (error: unknown) {
+    console.warn('API error getAccessoriesDropdown', error);
+    throw error;
+  }
+};
 
 export const getAccessories = async (
   params?: AccessoryQueryParams,
@@ -93,6 +116,92 @@ export const deleteAccessory = async (id: number): Promise<Accessory> => {
     return response.data;
   } catch (error: unknown) {
     console.warn('API error deleteAccessory', error);
+    throw error;
+  }
+};
+
+export const bulkDeleteAccessories = async (
+  payload: BulkDeleteRequest,
+): Promise<BulkDeleteResponse> => {
+  try {
+    const response = await api.post<BulkDeleteResponse>('/api/v1/accessories/bulk-delete', payload);
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error bulkDeleteAccessories', error);
+    throw error;
+  }
+};
+
+// Accessories Excel Export / Preview / Bulk Upsert
+export const exportAccessoriesExcel = async (params?: {
+  brandId?: number | null;
+  categoryId?: number | null;
+  templateOnly?: boolean;
+}): Promise<void> => {
+  try {
+    const query: Record<string, unknown> = {};
+    if (params?.brandId) query.brand_id = params.brandId;
+    if (params?.categoryId) query.category_id = params.categoryId;
+    if (params?.templateOnly) query.template_only = true;
+
+    const response = await api.get('/api/v1/accessories/excel/export', {
+      params: query,
+      responseType: 'blob',
+    });
+    const disposition = response.headers['content-disposition'];
+    const fallback = params?.templateOnly ? 'mau_nhap_phu_kien.xlsx' : 'danh_sach_phu_kien.xlsx';
+    const fileName = getFilenameFromContentDisposition(disposition, fallback);
+    await downloadOrShareBlob(response.data, fileName);
+  } catch (error: unknown) {
+    console.warn('API error exportAccessoriesExcel', error);
+    throw error;
+  }
+};
+
+export const previewAccessoriesExcel = async (
+  file: File,
+  brandId?: number | null,
+): Promise<AccessoryExcelPreviewResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/api/v1/accessories/excel/preview', formData, {
+      params: brandId ? { brandId } : undefined,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error previewAccessoriesExcel', error);
+    throw error;
+  }
+};
+
+export const bulkUpsertAccessories = async (
+  payload: AccessoryBulkUpsertRequest,
+): Promise<MaterialBulkUpsertResponse> => {
+  try {
+    const response = await api.post('/api/v1/accessories/excel/bulk-upsert', payload);
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error bulkUpsertAccessories', error);
+    throw error;
+  }
+};
+
+export const uploadAccessoryExcelImage = async (
+  file: File,
+): Promise<AccessoryImageUploadResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post<AccessoryImageUploadResponse>(
+      '/api/v1/accessories/excel/upload-image',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error uploadAccessoryExcelImage', error);
     throw error;
   }
 };

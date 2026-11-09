@@ -32,11 +32,11 @@ export const getRuleActions = (doc: DocumentItem, ctx: RuleActionContext): RuleA
   const isUnapproved = isDraft || isPending;
 
   return {
-    canEdit: isDraft && ctx.isManager && (isCreator || ctx.isManager),
-    canDelete: ctx.isManager && (isUnapproved || ctx.isManager),
-    canSubmit: isDraft && ctx.isManager && isCreator,
+    canEdit: isDraft && (isCreator || ctx.isManager),
+    canDelete: (isDraft && isCreator) || (ctx.isManager && (isUnapproved || ctx.isManager)),
+    canSubmit: isDraft && (isCreator || ctx.isManager),
     canReview: isPending && ctx.isManager && !isCreator && isApprover,
-    canPublish: isApproved && ctx.isManager,
+    canPublish: (isApproved || isDraft || isPending) && ctx.isManager,
     canReplace: isPublished && ctx.isManager,
     canAcknowledge:
       doc.canAcknowledge !== undefined

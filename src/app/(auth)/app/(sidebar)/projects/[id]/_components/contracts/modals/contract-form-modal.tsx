@@ -17,7 +17,7 @@ import { formatCurrency } from '@/utils';
 import { ContractPartyAForm } from '../components/contract-party-a-form';
 import { ContractPreview } from '../components/contract-preview';
 import { ContractTermsEditor } from '../components/contract-terms-editor';
-import { DEFAULT_MILESTONES, MilestoneEditor, sumPercentage } from '../components/milestone-editor';
+import { DEFAULT_MILESTONES, MilestoneEditor, sumAmount, sumPercentage } from '../components/milestone-editor';
 import { toPartyAOverride } from '../utils/contract-party';
 import { hasTermsContent, readTermsContent } from '../utils/contract-terms';
 import { buildDefaultPartyAFromProject, buildSourceFromDraft } from '../utils/contract-source';
@@ -45,13 +45,24 @@ interface ContractFormModalProps {
   onSubmit: (payload: ContractCreatePayload) => void;
 }
 
-const toPayloadMilestones = (milestones: ContractMilestoneInput[]): ContractMilestoneInput[] =>
-  milestones.map((m, index) => ({
-    ...m,
-    milestoneOrder: index + 1,
-    installmentName: m.installmentName.trim(),
-    dueDate: m.dueDate || undefined,
-  }));
+const toPayloadMilestones = (
+  milestones: ContractMilestoneInput[],
+  totalAmount: number,
+): ContractMilestoneInput[] =>
+  milestones.map((m, index) => {
+    const calculatedAmount =
+      m.expectedAmount !== undefined
+        ? m.expectedAmount
+        : Math.round((totalAmount * (Number(m.percentage) || 0)) / 100);
+    return {
+      ...m,
+      milestoneOrder: index + 1,
+      installmentName: m.installmentName.trim(),
+      percentage: Number(m.percentage) || 0,
+      expectedAmount: calculatedAmount > 0 ? calculatedAmount : undefined,
+      dueDate: m.dueDate || undefined,
+    };
+  });
 
 export function ContractFormModal({ isOpen, ...formProps }: ContractFormModalProps) {
   return (
@@ -89,7 +100,13 @@ function ContractForm({
 
   const isOutdated = !!quotation?.isOutdated;
   const hasEmptyName = milestones.some((m) => !m.installmentName.trim());
-  const canSubmit = !!quotation && !isOutdated && !!contractName.trim() && sumPercentage(milestones) === 100 && !hasEmptyName;
+  const totalPercentage = sumPercentage(milestones);
+  const totalExpectedAmount = sumAmount(milestones, quotation?.totalAmount ?? 0);
+  const isPercentageValid = Math.abs(totalPercentage - 100) <= 0.05;
+  const isAmountValid = !!quotation && Math.abs(totalExpectedAmount - quotation.totalAmount) <= 1000;
+  const isValidTotal = isPercentageValid || isAmountValid;
+
+  const canSubmit = !!quotation && !isOutdated && !!contractName.trim() && isValidTotal && !hasEmptyName;
 
   const partyAOverride = toPartyAOverride(partyA, defaultPartyA);
   const draftSource = buildSourceFromDraft({
@@ -103,7 +120,7 @@ function ContractForm({
   const handleSubmit = () =>
     onSubmit({
       contractName: contractName.trim(),
-      milestones: toPayloadMilestones(milestones),
+      milestones: toPayloadMilestones(milestones, quotation?.totalAmount ?? 0),
       contractTerms: hasTermsContent(terms) ? terms : undefined,
       partyAOverride: Object.keys(partyAOverride).length > 0 ? partyAOverride : undefined,
     });

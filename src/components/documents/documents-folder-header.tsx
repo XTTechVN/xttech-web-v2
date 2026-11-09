@@ -46,7 +46,7 @@ export const DocumentsFolderHeader: React.FC<DocumentsFolderHeaderProps> = ({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-              <h2 className="text-sm sm:text-base font-bold text-slate-800 truncate leading-tight max-w-[180px] xs:max-w-xs sm:max-w-md md:max-w-xl">
+              <h2 className="text-sm sm:text-base font-bold text-slate-800 truncate leading-tight max-w-45 xs:max-w-xs sm:max-w-md md:max-w-xl">
                 {currentFolder
                   ? currentFolder.name
                   : tab === 'shared'

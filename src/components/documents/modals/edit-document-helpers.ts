@@ -1,7 +1,7 @@
 import toast from 'react-hot-toast';
 import { updateDocument } from '@/actions/document';
 import type { DocumentCategory, DocumentItem } from '@/types';
-import { DOCUMENT_TYPE_MAP } from '@/types';
+import { DOCUMENT_TYPE_MAP, PERSONAL_DOC_TYPES } from '@/types';
 
 export function flattenCategoriesForSelect(
   cats: DocumentCategory[],
@@ -22,10 +22,24 @@ export function flattenCategoriesForSelect(
   return result;
 }
 
-export const DOC_TYPE_SELECT_OPTIONS = Object.entries(DOCUMENT_TYPE_MAP).map(([key, item]) => ({
+export const DOC_TYPE_SELECT_OPTIONS = PERSONAL_DOC_TYPES.map((key) => ({
   value: key,
-  label: item.label,
+  label: DOCUMENT_TYPE_MAP[key]?.label || key,
 }));
+
+export function getPersonalDocTypeOptions(currentType?: string): { value: string; label: string }[] {
+  const baseOptions = PERSONAL_DOC_TYPES.map((key) => ({
+    value: key,
+    label: DOCUMENT_TYPE_MAP[key]?.label || key,
+  }));
+  if (currentType && !PERSONAL_DOC_TYPES.includes(currentType)) {
+    return [
+      { value: currentType, label: DOCUMENT_TYPE_MAP[currentType]?.label || currentType },
+      ...baseOptions,
+    ];
+  }
+  return baseOptions;
+}
 
 export interface SaveDocumentPersonalData {
   title: string;

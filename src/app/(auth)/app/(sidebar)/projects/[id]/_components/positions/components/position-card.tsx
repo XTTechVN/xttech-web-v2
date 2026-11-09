@@ -5,7 +5,7 @@ import { Copy, Edit, ImageOff, QrCode, Ruler, Trash2 } from 'lucide-react';
 import { Badge } from '@/components';
 import { DOOR_STATUS_MAP } from '@/config';
 import type { ProjectDoorPosition } from '@/types';
-import { DoorThumbnail } from '../../../../configuration/door-templates/_components/door-thumbnail';
+import { DoorThumbnail } from '@/components';
 
 interface PositionCardProps {
   position: ProjectDoorPosition;
@@ -94,6 +94,12 @@ export function PositionCard({
         <div className="text-[11px] text-slate-400">
           <span className="truncate block">{pos.floor?.name || 'Tầng 1'}</span>
         </div>
+
+        {pos.measureNote && (
+          <p className="text-[11px] text-slate-500 break-words leading-tight">
+            <span className="font-medium text-slate-600">Ghi chú:</span> {pos.measureNote}
+          </p>
+        )}
 
         <div className="pt-2.5 border-t border-slate-100 grid grid-cols-5 gap-1.5">
           <button

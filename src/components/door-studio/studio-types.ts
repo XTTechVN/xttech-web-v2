@@ -6,7 +6,10 @@ export type FrameShape =
   | 'arch_segment'
   | 'arch_semicircle'
   | 'arch_semicircle_open'
+  | 'arch_segment_leg'
+  | 'arch_segment_leg_open'
   | 'arch_pointed'
+  | 'arch_pointed_leg'
   | 'round_top_2'
   | 'round_top_2_open'
   | 'round_top_right'
@@ -124,6 +127,40 @@ export interface SceneCellNode {
   sashJoiner?: boolean;
   sashJoinerPair?: boolean;
   sashHingeSymbol?: string;
+  isHydraulic?: boolean;
+  hoNenMm?: number;
+  ngamNgangMm?: number;
+  ngamDocMm?: number;
+  slidingOverlapMm?: number;
+  /** Ghi đè Đảo vách / Đảo cánh riêng cho ô (mặc định 'inherit' = theo FrameConfig toàn cục) */
+  reversalOverride?: CellReversalOverride;
+  /** Ghi đè mã thanh REVERSAL riêng cho ô */
+  reversalProfileIdOverride?: number | null;
+  /** Ghi đè khoảng hở/ngậm đảo riêng cho ô (mm) */
+  reversalOffsetMmOverride?: number | null;
+  /** Ghi đè Hở/Kín cạnh đáy riêng cho ô chạm sàn (mặc định 'inherit') */
+  openBottomOverride?: CellOpenBottomOverride;
+  /** Mã kính đã chọn cho ô (null/undefined = dùng kính mặc định) */
+  glassId?: number | null;
+  /** Hiệu ứng thị giác của kính (chỉ để hiển thị 2D/3D) */
+  glassVisualEffect?: GlassVisualEffect;
+  /** true: người dùng tự chọn hiệu ứng, không theo vật liệu kính */
+  glassVisualEffectOverride?: boolean;
+  /** Màu kính (hex) cho hiệu ứng 'tinted' */
+  glassVisualColor?: string;
+}
+
+export type GlassVisualEffect = 'clear' | 'tinted' | 'frosted' | 'striped' | 'rain' | 'pattern';
+
+export type CellReversalOverride = 'inherit' | 'none' | 'wall' | 'sash';
+export type CellOpenBottomOverride = 'inherit' | 'open' | 'closed';
+
+/** Khoảng ngang (px/mm theo hệ tọa độ layout) của ô chạm sàn đang Hở cạnh đáy */
+export interface BottomOpenRange {
+  x0: number;
+  x1: number;
+  floorGapMm: number;
+  cellId: string;
 }
 
 
@@ -154,6 +191,7 @@ export const HARDWARE_PALETTE: ColorSwatch[] = [
 export interface FrameShapeItem {
   id: FrameShape;
   name: string;
+  label?: string;
   category: FrameShapeCategory;
   svgPath: string;
   viewBox?: string;
@@ -164,39 +202,66 @@ export const FRAME_SHAPE_ITEMS: FrameShapeItem[] = [
   {
     id: 'rect',
     name: 'Chữ nhật',
+    label: 'Chữ nhật',
     category: 'basic',
     svgPath: 'M 4 4 H 36 V 36 H 4 Z',
   },
-  // Vòm
+  // Vòm (Đủ 8 mẫu chuẩn)
   {
     id: 'arch_half',
     name: 'Nửa tròn',
+    label: 'Nửa tròn',
     category: 'arch',
-    svgPath: 'M 4 36 A 16 16 0 0 1 36 36 Z',
+    svgPath: 'M 4 34 A 16 16 0 0 1 36 34 Z',
   },
   {
     id: 'arch_segment',
     name: 'Cung tròn',
+    label: 'Cung tròn',
     category: 'arch',
-    svgPath: 'M 4 36 Q 20 18 36 36 Z',
+    svgPath: 'M 4 32 A 22 22 0 0 1 36 32 Z',
   },
   {
     id: 'arch_semicircle',
     name: 'Vòm bán nguyệt',
+    label: 'Vòm bán nguyệt',
     category: 'arch',
-    svgPath: 'M 4 36 V 18 A 16 16 0 0 1 36 18 V 36 Z',
+    svgPath: 'M 4 36 V 20 A 16 16 0 0 1 36 20 V 36 Z',
   },
   {
     id: 'arch_semicircle_open',
-    name: 'Vòm hở chân',
+    name: 'Vòm bán nguyệt - hở chân',
+    label: 'Vòm bán nguyệt - hở chân',
     category: 'arch',
-    svgPath: 'M 4 36 V 18 A 16 16 0 0 1 36 18 V 36',
+    svgPath: 'M 4 36 V 20 A 16 16 0 0 1 36 20 V 36',
+  },
+  {
+    id: 'arch_segment_leg',
+    name: 'Vòm cung',
+    label: 'Vòm cung',
+    category: 'arch',
+    svgPath: 'M 4 36 V 16 A 22 22 0 0 1 36 16 V 36 Z',
+  },
+  {
+    id: 'arch_segment_leg_open',
+    name: 'Vòm cung - hở chân',
+    label: 'Vòm cung - hở chân',
+    category: 'arch',
+    svgPath: 'M 4 36 V 16 A 22 22 0 0 1 36 16 V 36',
   },
   {
     id: 'arch_pointed',
-    name: 'Vòm nhọn (Gothic)',
+    name: 'Vòm nhọn 2 cung',
+    label: 'Vòm nhọn 2 cung',
     category: 'arch',
-    svgPath: 'M 4 36 V 20 Q 8 6 20 2 Q 32 6 36 20 V 36 Z',
+    svgPath: 'M 4 36 A 28 28 0 0 1 20 6 A 28 28 0 0 1 36 36 Z',
+  },
+  {
+    id: 'arch_pointed_leg',
+    name: 'Vòm nhọn 2 cung có chân',
+    label: 'Vòm nhọn 2 cung có chân',
+    category: 'arch',
+    svgPath: 'M 4 36 V 22 A 24 24 0 0 1 20 4 A 24 24 0 0 1 36 22 V 36 Z',
   },
   // Bo góc
   {
@@ -262,11 +327,34 @@ export const SASH_TYPE_ITEMS: SashTypeItem[] = [
   { id: 'sliding', name: 'Trượt lùa', description: 'Cánh trượt ngang tiết kiệm diện tích' },
 ];
 
-export type StudioMainTab = 'info' | 'draw' | 'config' | 'bom' | 'accessories';
+export type StudioMainTab = 'info' | 'draw' | 'config' | 'bom' | 'accessories' | 'view3d';
 
 export type FrameCornerJoint = '45' | '90_horiz' | '90_vert' | '45_top_90_bot' | '63';
-export type SashCornerJoint = '45' | '90_vert' | '45_top_90_bot' | '90_horiz';
+export type SashCornerJoint = '45' | '90_vert' | '45_top_90_bot' | '90_horiz' | 'd_left' | 'd_right';
 export type BeadCornerJoint = '45' | '90_horiz' | '90_vert';
+
+export type SlidingSashRole = 'left_sliding' | 'right_sliding' | 'center_sliding';
+export type SashOffsetScope = 'all' | SlidingSashRole;
+
+export interface SashOffsetValues {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+export interface SashVariantProfiles {
+  leftProfileId?: number;
+  topProfileId?: number;
+  rightProfileId?: number;
+  bottomProfileId?: number;
+}
+
+export interface SlidingSashJoints {
+  leftSliding: SashCornerJoint;
+  rightSliding: SashCornerJoint;
+  centerSliding: SashCornerJoint;
+}
 
 export interface FrameEdgeProfile {
   profileId?: number;
@@ -303,7 +391,10 @@ export type GasketMeasureType =
   | 'glass_height'    // Theo chiều cao kính
   | 'frame_perimeter' // Theo chu vi khung
   | 'frame_width'     // Theo chiều rộng khung
-  | 'frame_height';   // Theo chiều cao khung
+  | 'frame_height'    // Theo chiều cao khung
+  | 'sash_perimeter'  // Theo chu vi cánh
+  | 'sash_width'      // Theo chiều rộng cánh
+  | 'sash_height';    // Theo chiều cao cánh
 
 export interface DoorGasketConfigItem {
   id: string;
@@ -326,6 +417,7 @@ export interface DoorCustomExtraItem {
   angle1: number;     // Góc trái, mặc định 90
   angle2: number;     // Góc phải, mặc định 90
   qty: number;        // Số lượng thanh, mặc định 1
+  fixedQty?: boolean; // Cố định/bộ (true) hoặc nhân theo số cánh/ô (false)
   target: 'frame' | 'sash';
 }
 
@@ -345,6 +437,10 @@ export interface FrameConfig {
   beadProfileId?: number;
   beadCornerJoint: BeadCornerJoint;
   couplingProfileId?: number;
+  reversalMode?: 'none' | 'wall' | 'sash';
+  reversalProfileId?: number;
+  reversalProfileCode?: string;
+  reversalOffsetMm?: number;
   isReversedWall: boolean;
   isReversedSash: boolean;
   archConfig?: ArchConfig;
@@ -353,40 +449,77 @@ export interface FrameConfig {
 }
 
 export interface ArchConfig {
-  radiusMm?: number;        // Bán kính R (mm), mặc định W / 2
-  isCutAtApex: boolean;      // Cắt vòm tại đỉnh: chia thanh vòm và nẹp vòm thành hai phần trái, phải
-  bendingClampingMm: number; // Kẹp phôi (mm), mặc định 400
+  radiusMm?: number;                        // Bán kính R (mm), mặc định tự động theo công thức
+  isCutAtApex?: boolean;                    // Cắt vòm tại đỉnh: chia thanh vòm và nẹp vòm thành hai phần trái, phải
+  bendingClampingMm?: number;               // Kẹp đầu uốn vòm (mm), mặc định 250
+  legJoinMode?: 'continuous' | 'separate';  // 'continuous' (Phương án B - Mặc định) | 'separate' (Phương án A)
 }
 
 export const DEFAULT_ARCH_CONFIG: ArchConfig = {
   radiusMm: undefined,
   isCutAtApex: false,
-  bendingClampingMm: 400,
+  bendingClampingMm: 250,
+  legJoinMode: 'continuous',
 };
+
+export type DoorSystemFamily =
+  | 'Cửa đi mở quay'
+  | 'Cửa sổ mở quay/Hất'
+  | 'Cửa đi lùa'
+  | 'Cửa sổ lùa'
+  | 'Cửa xếp trượt'
+  | 'Cửa trượt quay'
+  | (string & {});
+
+export const DOOR_SYSTEM_FAMILIES: DoorSystemFamily[] = [
+  'Cửa đi lùa',
+  'Cửa sổ lùa',
+  'Cửa đi mở quay',
+  'Cửa sổ mở quay/Hất',
+  'Cửa xếp trượt',
+  'Cửa trượt quay',
+];
 
 export interface SashConfig {
   hasScreenSash: boolean;
-  family: string;
+  family: DoorSystemFamily;
   sashStyle: 'standard' | 'slim';
+  voCucProfileId?: number;
+  isHydraulic?: boolean;
+  hoNenMm: number;
+  hoLeMm?: number;
   ngamNgangMm: number;
   ngamDocMm: number;
   truDoDongMm: number;
-  offsetMm: {
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-  };
+  offsetMm: SashOffsetValues;
+  offsetApplyTo?: SashOffsetScope;
+  slidingOffsets?: Partial<Record<SashOffsetScope, SashOffsetValues>>;
   cornerJoint: SashCornerJoint;
+  slidingJoints?: SlidingSashJoints;
   beadCornerJoint: BeadCornerJoint;
   isNhomCo: boolean;
+  slidingOverlapMm?: number;
+  profileId?: number;
   leftProfileId?: number;
   topProfileId?: number;
   rightProfileId?: number;
   bottomProfileId?: number;
+  bottomRailProfileId?: number;
+  edges?: {
+    bottom?: {
+      profileId?: number;
+      enabled?: boolean;
+    };
+    [key: string]: unknown;
+  };
+  slidingVariants?: Partial<Record<SlidingSashRole, SashVariantProfiles>>;
   mullionProfileId?: number;
   beadProfileId?: number;
   dynamicMullionProfileId?: number;
+  opNoiProfileId?: number;
+  interlockProfileId?: number;
+  rawDodong?: string;
+  rawVariants?: Record<string, unknown>;
   gaskets?: DoorGasketConfigItem[];
   extras?: DoorCustomExtraItem[];
 }
@@ -402,6 +535,8 @@ export const DEFAULT_FRAME_CONFIG: FrameConfig = {
   hasSafetyBars: false,
   safetyBarsConfig: DEFAULT_SAFETY_BARS_CONFIG,
   beadCornerJoint: '45',
+  reversalMode: 'none',
+  reversalOffsetMm: 0,
   isReversedWall: false,
   isReversedSash: false,
   archConfig: DEFAULT_ARCH_CONFIG,
@@ -413,13 +548,16 @@ export const DEFAULT_SASH_CONFIG: SashConfig = {
   hasScreenSash: false,
   family: 'Cửa sổ mở quay/Hất',
   sashStyle: 'standard',
-  ngamNgangMm: 0,
-  ngamDocMm: 0,
+  isHydraulic: false,
+  hoNenMm: 8,
+  ngamNgangMm: 5,
+  ngamDocMm: 5,
   truDoDongMm: 0,
   offsetMm: { left: 0, top: 0, right: 0, bottom: 0 },
   cornerJoint: '45',
   beadCornerJoint: '45',
   isNhomCo: false,
+  slidingOverlapMm: undefined,
   gaskets: [],
   extras: [],
 };
@@ -445,7 +583,41 @@ export interface DoorStudioState {
   zoomLevel: number;
 }
 
-export type MullionCutType = 'inside_frame' | 'overlap' | 'miter' | 'square';
+/** Kiểu cắt đố khung chuẩn Windova: lọt khung, cắt cả 2 đầu khung, cắt đầu trái/trên, cắt đầu phải/dưới */
+export type MullionCutType = 'inside_frame' | 'cut_both' | 'cut_left' | 'cut_right';
+
+export const MULLION_CUT_ORDER: readonly MullionCutType[] = [
+  'inside_frame',
+  'cut_both',
+  'cut_left',
+  'cut_right',
+] as const;
+
+export const MULLION_CUT_LABELS: Record<MullionCutType, string> = {
+  inside_frame: 'Lọt khung →',
+  cut_both: 'Cắt cả 2 →',
+  cut_left: 'Cắt trái →',
+  cut_right: 'Cắt phải →',
+};
+
+export function normalizeMullionCutType(raw?: string | null): MullionCutType {
+  if (raw === 'cut_both' || raw === 'cut_left' || raw === 'cut_right') {
+    return raw;
+  }
+  return 'inside_frame';
+}
+
+export function resolveMullionCutEnds(
+  cutType?: string | null,
+  touchesStartFrame = true,
+  touchesEndFrame = true
+): { cutStart: boolean; cutEnd: boolean } {
+  const norm = normalizeMullionCutType(cutType);
+  return {
+    cutStart: (norm === 'cut_left' || norm === 'cut_both') && touchesStartFrame,
+    cutEnd: (norm === 'cut_right' || norm === 'cut_both') && touchesEndFrame,
+  };
+}
 
 export interface MullionInfo {
   id: string;
@@ -456,6 +628,8 @@ export interface MullionInfo {
   totalDimension: number;
   profileId?: number;
   cutType?: MullionCutType;
+  cutStart?: boolean;
+  cutEnd?: boolean;
   childId: string;
   nextChildId?: string;
 }

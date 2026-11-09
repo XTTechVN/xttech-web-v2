@@ -8,11 +8,15 @@ import type {
   ProjectOverview,
   PublicSignPayload,
   PublicSigningView,
+  PublicWarrantyClaimCreatePayload,
+  QrProjectDoorItem,
   ReportOverview,
   RevertProgressPayload,
   SignatureInput,
   SigningRequestPayload,
   SigningRequestResult,
+  WarrantyQueueQueryParams,
+  WarrantyQueueResponse,
   WarrantySummary,
   WarrantyVisit,
   WarrantyVisitCompletePayload,
@@ -101,6 +105,15 @@ export const cancelProjectAcceptance = async (
 };
 
 // --- Bảo hành ---
+export const getGlobalWarrantyQueue = async (
+  params?: WarrantyQueueQueryParams,
+): Promise<WarrantyQueueResponse> => {
+  const response = await api.get<WarrantyQueueResponse>('/api/v1/projects/warranty/visits', {
+    params,
+  });
+  return response.data;
+};
+
 export const getProjectWarranty = async (projectId: number): Promise<WarrantySummary> => {
   const response = await api.get(`${projectUrl(projectId)}/warranty`);
   return response.data;
@@ -162,7 +175,7 @@ export const cancelWarrantyVisit = async (
   return response.data;
 };
 
-// --- Trang công khai (không cần đăng nhập): ký online & quét QR ---
+// --- Trang công khai (không cần đăng nhập): ký online & quét QR Đa Tab ---
 export const getPublicSigningView = async (token: string): Promise<PublicSigningView> => {
   const response = await api.get(`/api/v1/public/signing/${token}`);
   return response.data;
@@ -178,6 +191,55 @@ export const submitPublicSignature = async (
 
 export const getPositionQrView = async (token: string): Promise<PositionQrView> => {
   const response = await api.get(`/api/v1/projects/positions/by-qr/${token}`);
+  return response.data;
+};
+
+export const getQrProjectDoors = async (token: string): Promise<QrProjectDoorItem[]> => {
+  const response = await api.get<{ items: QrProjectDoorItem[] }>(
+    `/api/v1/projects/positions/by-qr/${token}/project-doors`,
+  );
+  return response.data.items;
+};
+
+export const getQrProjectWarranty = async (token: string): Promise<WarrantySummary> => {
+  const response = await api.get<WarrantySummary>(
+    `/api/v1/projects/positions/by-qr/${token}/warranty`,
+  );
+  return response.data;
+};
+
+export const uploadQrClaimMedia = async (
+  token: string,
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<EvidenceMediaItem> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post<EvidenceMediaItem>(
+    `/api/v1/projects/positions/by-qr/${token}/upload-media`,
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 0,
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(Math.min(percent, 100));
+        }
+      },
+    },
+  );
+  return response.data;
+};
+
+export const createPublicWarrantyClaim = async (
+  token: string,
+  data: PublicWarrantyClaimCreatePayload,
+): Promise<WarrantyVisit> => {
+  const response = await api.post<WarrantyVisit>(
+    `/api/v1/projects/positions/by-qr/${token}/warranty-claims`,
+    data,
+  );
   return response.data;
 };
 

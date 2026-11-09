@@ -1,4 +1,8 @@
 import { ManualReason, GlassOrderStatus } from '@/types/warehouse';
+export {
+  FRAME_SHAPE_LABEL_MAP,
+  formatPaneShapeSummary,
+} from '@/utils/glass-order-dxf-export';
 
 export const MANUAL_REASON_MAP: Record<ManualReason, string> = {
   spare: 'Kính dự phòng',

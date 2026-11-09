@@ -2,10 +2,10 @@
 
 import React, { useMemo } from 'react';
 import type { GlassCategory } from '@/types';
-import { ShieldCheck, Wrench, Layers } from 'lucide-react';
+import { ShieldCheck, Layers } from 'lucide-react';
 
 export type MaterialTypeFilter = 'all' | 'glass' | 'panel' | 'screen_mesh';
-export type GlassGasketCategoryFilter = 'all' | 'gaskets' | number;
+export type GlassGasketCategoryFilter = 'all' | number;
 
 interface GlassCategorySidebarProps {
   categories: GlassCategory[];
@@ -13,7 +13,6 @@ interface GlassCategorySidebarProps {
   onSelectType: (type: MaterialTypeFilter) => void;
   selectedCategory: GlassGasketCategoryFilter;
   onSelectCategory: (cat: GlassGasketCategoryFilter) => void;
-  gasketCount?: number;
   glassCount?: number;
   glassTypeCounts?: {
     glass: number;
@@ -66,7 +65,6 @@ export function GlassCategorySidebar({
   onSelectType,
   selectedCategory,
   onSelectCategory,
-  gasketCount = 0,
   glassCount = 0,
   glassTypeCounts,
 }: GlassCategorySidebarProps) {
@@ -101,8 +99,6 @@ export function GlassCategorySidebar({
     { id: 'screen_mesh', label: 'Lưới', count: glassTypeCounts?.screen_mesh },
   ];
 
-  const isGasketActive = selectedCategory === 'gaskets';
-
   return (
     <div className="w-full md:w-60 lg:w-64 shrink-0 bg-white border-b md:border-b-0 md:border-r border-slate-200 rounded-none p-3 flex flex-row md:flex-col gap-2 shadow-none sticky top-0 z-10 md:h-[calc(100vh-105px)] overflow-x-auto md:overflow-x-hidden md:overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* 1. Tiêu đề & Bộ lọc 3 loại chính */}
@@ -112,7 +108,7 @@ export function GlassCategorySidebar({
         </div>
         <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100/90 rounded-lg">
           {TYPE_TABS.map((tab) => {
-            const isActive = !isGasketActive && selectedType === tab.id;
+            const isActive = selectedType === tab.id;
             return (
               <button
                 key={tab.id}
@@ -145,7 +141,7 @@ export function GlassCategorySidebar({
         type="button"
         onClick={() => onSelectCategory('all')}
         className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 md:w-full text-left ${
-          !isGasketActive && selectedCategory === 'all'
+          selectedCategory === 'all'
             ? 'bg-primary text-white shadow-xs'
             : 'text-slate-600 hover:bg-slate-100'
         }`}
@@ -167,7 +163,7 @@ export function GlassCategorySidebar({
       {/* 3. Danh sách các Category thuộc loại chính */}
       <div className="flex flex-row md:flex-col gap-1 min-w-0">
         {filteredCategories.map((cat) => {
-          const isSelected = !isGasketActive && selectedCategory === cat.id;
+          const isSelected = selectedCategory === cat.id;
 
           return (
             <button
@@ -195,38 +191,6 @@ export function GlassCategorySidebar({
           </div>
         )}
       </div>
-
-      <div className="hidden md:block my-1 border-t border-slate-100" />
-      <div className="hidden md:block px-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-        Vật tư chèn & ron
-      </div>
-
-      {/* 4. Mục: Gioăng ron & Keo phụ trợ */}
-      <button
-        type="button"
-        onClick={() => onSelectCategory('gaskets')}
-        className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 md:w-full text-left ${
-          isGasketActive
-            ? 'bg-primary text-white shadow-xs'
-            : 'text-slate-600 hover:bg-slate-100'
-        }`}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <Wrench size={15} className="shrink-0" />
-          <span className="truncate">Gioăng ron & Keo</span>
-        </div>
-        {gasketCount > 0 && (
-          <span
-            className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold shrink-0 ml-1.5 ${
-              isGasketActive
-                ? 'bg-white/20 text-white'
-                : 'bg-slate-100 text-slate-500'
-            }`}
-          >
-            {gasketCount}
-          </span>
-        )}
-      </button>
     </div>
   );
 }

@@ -80,7 +80,6 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
                 <span className="truncate sm:hidden">Tải thư mục</span>
                 <span className="hidden sm:inline">Tải thư mục lên</span>
               </Button>
-
               <Button
                 variant="primary"
                 size="sm"
@@ -91,14 +90,15 @@ export const DocumentsToolbar: React.FC<DocumentsToolbarProps> = ({
               >
                 <span className="truncate">Tải tệp lên</span>
               </Button>
+
             </div>
           )}
         </div>
 
-        {/* Nhóm bên phải: Bộ lọc loại mục và Chế độ xem Lưới/Danh sách ở cuối cùng */}
-        <div className="flex items-center gap-2 w-full xl:w-auto min-w-0 justify-between xl:justify-end">
-          <div className="flex-1 xl:w-44 lg:w-48 xl:flex-none min-w-0 flex items-center gap-1.5">
-            <div className="w-full min-w-0">
+        {/* Nhóm bên phải: Bộ lọc loại mục, Phân loại, Trạng thái và Chế độ xem Lưới/Danh sách */}
+        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto min-w-0 justify-between xl:justify-end">
+          <div className="flex-1 xl:flex-none min-w-0 flex flex-wrap items-center gap-1.5">
+            <div className="w-36 sm:w-40 min-w-0">
               <Select
                 value={itemTypeFilter}
                 onChange={(e) => onItemTypeFilterChange?.(e.target.value as DocumentItemTypeFilter)}

@@ -4,6 +4,7 @@ import React from 'react';
 import { Lock, Unlock, Tag, Database, Trash2 } from 'lucide-react';
 import { GlassGrilleMotif, GRILLE_COLORS, ColorSwatch } from '../../../studio-types';
 import { Accessory } from '@/types';
+import { Select } from '@/components/select';
 
 interface GrilleLeftPanelProps {
   glassW: number;
@@ -344,18 +345,20 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
                 </span>
               )}
             </label>
-            <select
+            <Select
+              fullWidth
               value={activeMotif.accessoryId || ''}
               onChange={(e) => onAssignAccessoryToMotif(e.target.value)}
-              className="w-full h-7 px-1.5 text-[11px] bg-white rounded-lg border border-amber-300 focus:outline-none focus:border-amber-500 font-medium text-gray-800"
-            >
-              <option value="">-- Chọn phụ kiện trong kho --</option>
-              {accessories.map((acc) => (
-                <option key={acc.id} value={acc.id}>
-                  {acc.code ? `[${acc.code}] ` : ''}{acc.name} ({((acc.unitPrice || acc.salePrice || 0)).toLocaleString('vi-VN')} đ)
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: '-- Chọn phụ kiện trong kho --' },
+                ...accessories.map((acc) => ({
+                  value: acc.id,
+                  label: `${acc.code ? `[${acc.code}] ` : ''}${acc.name} (${(acc.costPrice || 0).toLocaleString('vi-VN')} đ)`,
+                })),
+              ]}
+              placeholder="-- Chọn phụ kiện trong kho --"
+              className="h-7 py-0 pl-1.5 pr-6 text-[11px] md:text-[11px] bg-white rounded-lg border-amber-300 font-medium text-gray-800"
+            />
           </div>
 
           <div>

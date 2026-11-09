@@ -1,1 +1,10 @@
-export * from './rich-text-editor';
+export { RichTextEditor } from './rich-text-editor';
+export type { InsertedMediaItem, RichTextEditorProps } from './rich-text-editor';
+export { YoutubeEmbedPopover } from './youtube-embed-popover';
+export type { YoutubeEmbedPopoverProps } from './youtube-embed-popover';
+export { ColorPickerPopover } from './color-picker-popover';
+export type { ColorPickerPopoverProps } from './color-picker-popover';
+export { LinkInsertPopover } from './link-insert-popover';
+export type { LinkInsertPopoverProps } from './link-insert-popover';
+export { EditorToolbar } from './editor-toolbar';
+export type { EditorToolbarProps } from './editor-toolbar';

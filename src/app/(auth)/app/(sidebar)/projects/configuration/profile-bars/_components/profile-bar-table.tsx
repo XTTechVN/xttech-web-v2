@@ -1,28 +1,25 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Pencil, Trash2, Copy, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import type { ProfileBar } from '@/types';
+import { BAR_TYPE_MAP } from './profile-bar-config';
 
 interface ProfileBarTableProps {
   profileBars: ProfileBar[];
   onEdit: (bar: ProfileBar) => void;
+  onCopy: (bar: ProfileBar) => void;
   onDelete: (bar: ProfileBar) => void;
+  isBulkMode?: boolean;
+  selectedIdSet?: ReadonlySet<number>;
+  isAllSelected?: boolean;
+  isPartiallySelected?: boolean;
+  onToggleSelect?: (id: number) => void;
+  onToggleSelectAll?: () => void;
 }
 
 type SortField = 'code' | 'name' | 'series' | 'barType' | 'weight' | 'length' | 'status';
 type SortOrder = 'asc' | 'desc';
-
-const BAR_TYPE_MAP: Record<string, string> = {
-  FRAME: 'Khung bao',
-  SASH: 'Cánh cửa',
-  MULLION: 'Đố chia / Đố động',
-  BEAD: 'Nẹp kính',
-  TRACK: 'Ray trượt',
-  COVER: 'Ốp / Nắp đậy',
-  CORNER: 'Ke góc',
-  OTHER: 'Khác',
-};
 
 const COLUMNS: Array<{ field: SortField; label: string; align: 'left' | 'center'; width: string }> = [
   { field: 'code', label: 'Mã thanh', align: 'left', width: 'w-36' },
@@ -43,7 +40,39 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
   );
 }
 
-export function ProfileBarTable({ profileBars, onEdit, onDelete }: ProfileBarTableProps) {
+function ProfileBarBadges({ bar }: { bar: ProfileBar }) {
+  const companionCount = bar.companions?.length ?? 0;
+  const variantCount = bar.variants?.length ?? 0;
+  const badges: string[] = [];
+  if (bar.isVirtual) badges.push('Ảo');
+  if (bar.isFullCompanion && companionCount > 0) badges.push(`Combine toàn phần (${companionCount})`);
+  else if (companionCount > 0) badges.push(`+${companionCount} thanh kèm`);
+  if (variantCount > 0) badges.push(`${variantCount} biến thể`);
+  if (badges.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {badges.map((label) => (
+        <span key={label} className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-teal-50 text-teal-800 border border-teal-100">
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function ProfileBarTable({
+  profileBars,
+  onEdit,
+  onCopy,
+  onDelete,
+  isBulkMode = false,
+  selectedIdSet,
+  isAllSelected = false,
+  isPartiallySelected = false,
+  onToggleSelect,
+  onToggleSelectAll,
+}: ProfileBarTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
@@ -99,6 +128,20 @@ export function ProfileBarTable({ profileBars, onEdit, onDelete }: ProfileBarTab
         <table className="w-full text-left border-collapse select-none">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              {isBulkMode && (
+                <th className="py-3 px-3 w-11 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isPartiallySelected;
+                    }}
+                    onChange={() => onToggleSelectAll?.()}
+                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer accent-[#045863]"
+                    title="Chọn tất cả"
+                  />
+                </th>
+              )}
               {COLUMNS.map((col) => (
                 <th
                   key={col.field}
@@ -118,9 +161,30 @@ export function ProfileBarTable({ profileBars, onEdit, onDelete }: ProfileBarTab
             {sortedBars.map((bar) => {
               const typeLabel = BAR_TYPE_MAP[bar.barType?.toUpperCase()] || bar.barType || '—';
               const seriesLabel = bar.doorSeries?.name || bar.doorSeries?.code || '—';
+              const isSelected = Boolean(selectedIdSet?.has(bar.id));
 
               return (
-                <tr key={bar.id} className="hover:bg-slate-50/80 transition-colors group">
+                <tr
+                  key={bar.id}
+                  onClick={() => {
+                    if (isBulkMode) onToggleSelect?.(bar.id);
+                  }}
+                  className={`transition-colors group ${
+                    isBulkMode ? 'cursor-pointer' : ''
+                  } ${
+                    isSelected ? 'bg-rose-50/40 hover:bg-rose-50/60' : 'hover:bg-slate-50/80'
+                  }`}
+                >
+                  {isBulkMode && (
+                    <td className="py-3.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => onToggleSelect?.(bar.id)}
+                        className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer accent-[#045863]"
+                      />
+                    </td>
+                  )}
                   <td className="py-3.5 px-4 font-semibold text-slate-800 text-xs">
                     <div className="flex items-center gap-2.5">
                       {bar.sectionLibrary ? (
@@ -148,6 +212,7 @@ export function ProfileBarTable({ profileBars, onEdit, onDelete }: ProfileBarTab
                     <div className="flex flex-col">
                       <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-sm">{bar.name}</span>
                       {bar.doorSeries?.name && <span className="text-xs text-slate-400 mt-0.5">Hệ: {bar.doorSeries.name}</span>}
+                      <ProfileBarBadges bar={bar} />
                     </div>
                   </td>
 
@@ -181,8 +246,16 @@ export function ProfileBarTable({ profileBars, onEdit, onDelete }: ProfileBarTab
                     </span>
                   </td>
 
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => onCopy(bar)}
+                        className="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-teal-50 rounded-md transition-colors cursor-pointer"
+                        title="Sao chép profile nhôm"
+                      >
+                        <Copy size={15} />
+                      </button>
                       <button
                         type="button"
                         onClick={() => onEdit(bar)}

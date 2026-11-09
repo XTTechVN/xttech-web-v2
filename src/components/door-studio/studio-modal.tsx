@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { Modal } from '@/components';
 import { Door } from '@/types';
+import { SashConfig, StudioMainTab } from './studio-types';
 import { DrawTabView } from './panels/draw-tab-view';
 import { InfoTabView } from './panels/info-tab-view';
 import { ConfigTabView } from './panels/config/config-tab-view';
@@ -13,7 +15,9 @@ import { GlassGrilleModal } from './panels/glass-grille-modal';
 import { DoorCadRenderer } from './cad-engine/door-cad-renderer';
 import { updateNode } from './utils/door-tree-utils';
 import { useDoorStudioState } from './hooks/useDoorStudioState';
-import { Save, Loader2, FileText, PenTool, Sliders, BarChart3, Wrench } from 'lucide-react';
+import { Save, Loader2, FileText, PenTool, Sliders, BarChart3, Wrench, Box, LayoutGrid, ChevronDown } from 'lucide-react';
+
+const Door3DViewer = dynamic(() => import('./canvas-3d/door-3d-viewer'), { ssr: false });
 
 export interface DoorStudioModalSaveData {
   name: string;
@@ -31,6 +35,9 @@ export interface DoorStudioModalProps {
   onClose: () => void;
   door?: Door | null;
   defaultBrandId?: number | null;
+  initialTab?: StudioMainTab;
+  templateDoorName?: string | null;
+  onOpenTemplatePicker?: () => void;
   onSaveSuccess?: (savedDoor: Door) => void;
   onCustomSave?: (data: DoorStudioModalSaveData) => Promise<void>;
 }
@@ -41,17 +48,50 @@ const NAV_TABS = [
   { id: 'config' as const, label: 'Cấu hình', icon: Sliders },
   { id: 'bom' as const, label: 'Kết quả', icon: BarChart3 },
   { id: 'accessories' as const, label: 'Phụ kiện', icon: Wrench },
+  { id: 'view3d' as const, label: '3D', icon: Box },
 ];
+
+const TYPE_TO_FAMILY_MAP: Record<string, string> = {
+  casement_door: 'Cửa đi mở quay',
+  cd: 'Cửa đi mở quay',
+  sliding_door: 'Cửa đi lùa',
+  sliding_casement_door: 'Cửa đi lùa',
+  casement_window: 'Cửa sổ mở quay/Hất',
+  cs: 'Cửa sổ mở quay/Hất',
+  sliding_window: 'Cửa sổ lùa',
+  folding_door: 'Cửa xếp trượt',
+};
+
+const FAMILY_TO_TYPE_MAP: Record<string, string> = {
+  'Cửa đi mở quay': 'casement_door',
+  'Cửa đi lùa': 'sliding_door',
+  'Cửa sổ mở quay/Hất': 'casement_window',
+  'Cửa sổ lùa': 'sliding_window',
+  'Cửa xếp trượt': 'folding_door',
+};
 
 export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
   isOpen,
   onClose,
   door,
   defaultBrandId,
+  initialTab,
+  templateDoorName,
+  onOpenTemplatePicker,
   onSaveSuccess,
   onCustomSave,
 }) => {
-  const state = useDoorStudioState({ isOpen, onClose, door, defaultBrandId, onSaveSuccess, onCustomSave });
+  const state = useDoorStudioState({ isOpen, onClose, door, defaultBrandId, initialTab, onSaveSuccess, onCustomSave });
+
+  const handleSashConfigChange = (updates: Partial<SashConfig>) => {
+    state.setSashConfig((prev) => ({ ...prev, ...updates }));
+    if (updates.family) {
+      const nextType = FAMILY_TO_TYPE_MAP[updates.family];
+      if (nextType && nextType !== state.type) {
+        state.setType(nextType);
+      }
+    }
+  };
 
   return (
     <Modal
@@ -59,9 +99,8 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
       onClose={onClose}
       bodyClassName="p-0 overflow-hidden flex flex-col h-full"
       title={
-        <div className="flex items-center w-full min-w-0 pr-2">
-          {/* Segmented Navigation Tabs */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/70 overflow-x-auto no-scrollbar shrink-0">
+        <div className="flex items-center justify-between gap-2 w-full min-w-0 pr-1">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/70 overflow-x-auto no-scrollbar max-w-full min-w-0 touch-pan-x">
             {NAV_TABS.map((t) => {
               const Icon = t.icon;
               const isActive = state.activeMainTab === t.id;
@@ -69,8 +108,11 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => state.setActiveMainTab(t.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+                  onClick={(e) => {
+                    state.setActiveMainTab(t.id);
+                    e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                     isActive
                       ? 'bg-primary text-white shadow-2xs font-bold'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -82,6 +124,21 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
               );
             })}
           </div>
+
+          {onOpenTemplatePicker && (
+            <button
+              type="button"
+              onClick={onOpenTemplatePicker}
+              title="Nhấn để chọn đổi sang mẫu cửa khác"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-primary/40 bg-slate-50/80 hover:bg-primary/5 text-slate-700 hover:text-primary transition-all cursor-pointer max-w-[180px] sm:max-w-[260px] md:max-w-[340px] shrink-0 shadow-2xs"
+            >
+              <LayoutGrid size={14} className="text-primary shrink-0" />
+              <span className="text-xs font-semibold truncate">
+                {templateDoorName || state.name || 'Chọn mẫu cửa'}
+              </span>
+              <ChevronDown size={14} className="text-slate-400 shrink-0" />
+            </button>
+          )}
         </div>
       }
       size="full"
@@ -135,21 +192,15 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
               else if (field === 'code') state.setCode(val);
               else if (field === 'type') {
                 state.setType(val);
-                const isDoor = val === 'casement_door' || val === 'sliding_door' || val === 'folding_door' || val === 'sliding_casement_door' || val === 'cd';
-                const isWindow = val === 'casement_window' || val === 'sliding_window' || val === 'cs';
-                if (isDoor && state.sashConfig.family === 'Cửa sổ mở quay/Hất') {
-                  state.setSashConfig((prev) => ({ ...prev, family: 'Cửa đi mở quay' }));
-                } else if (isWindow && state.sashConfig.family === 'Cửa đi mở quay') {
-                  state.setSashConfig((prev) => ({ ...prev, family: 'Cửa sổ mở quay/Hất' }));
+                const mappedFamily = TYPE_TO_FAMILY_MAP[String(val || '')];
+                if (mappedFamily && mappedFamily !== state.sashConfig.family) {
+                  state.setSashConfig((prev) => ({ ...prev, family: mappedFamily }));
                 }
-              }
-              else if (field === 'brandId') {
+              } else if (field === 'brandId') {
                 state.setSelectedBrandId(val ?? null);
-                // Tìm series thuộc brand mới và gán mặc định
                 const nextSeries = state.allAvailableSeries.filter((s) => !val || s.brandId === val);
                 state.setSeriesId(nextSeries[0]?.id || undefined);
-              }
-              else if (field === 'aluminumColor') state.setAluminumColor(val);
+              } else if (field === 'aluminumColor') state.setAluminumColor(val);
               else if (field === 'hardwareColor') state.setHardwareColor(val);
               else if (field === 'seriesId') state.setSeriesId(val);
             }}
@@ -194,6 +245,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           onUpdateDimension={state.handleUpdateDimension}
           onResizeSplit={state.handleResizeSplit}
           onUpdateSelectedCell={state.handleUpdateSelectedCell}
+          onApplyGlassVisualToAll={state.handleApplyGlassVisualToAll}
           onSplitSelectedCell={(dir) => state.handleSplitMullion(2, dir)}
           onMergeSelectedCell={() => {
             if (!state.selectedCellId) return;
@@ -208,7 +260,9 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           defaultGlass={state.defaultGlass}
           aluminumColors={state.dynamicAluminumColors}
           onChangeFrameConfig={(updates) => state.setFrameConfig((prev) => ({ ...prev, ...updates }))}
+          onChangeSashConfig={handleSashConfigChange}
           isInsideSash={state.isSelectedInsideSash}
+          availableProfiles={state.availableProfiles}
         />
       )}
 
@@ -218,7 +272,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
             frameConfig={state.frameConfig}
             sashConfig={state.sashConfig}
             onChangeFrameConfig={(updates) => state.setFrameConfig((prev) => ({ ...prev, ...updates }))}
-            onChangeSashConfig={(updates) => state.setSashConfig((prev) => ({ ...prev, ...updates }))}
+            onChangeSashConfig={handleSashConfigChange}
             profiles={state.availableProfiles}
           />
         </div>
@@ -247,13 +301,32 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
             selectedComboIds={state.selectedComboIds}
             onToggleCombo={state.handleToggleCombo}
             accessories={state.availableAccessories}
-            brands={state.availableBrands}
+            brands={state.availableAccessoryBrands}
             selectedAccessories={state.selectedAccessories}
             onUpdateAccessoryQty={state.handleUpdateAccessoryQty}
             onSetAccessoryQty={state.handleSetAccessoryQty}
             onClearAll={state.handleClearAllAccessories}
             hardwareColor={state.hardwareColor}
             onChangeHardwareColor={state.setHardwareColor}
+          />
+        </div>
+      )}
+
+      {state.activeMainTab === 'view3d' && (
+        <div className="flex-1 h-full overflow-hidden flex flex-col">
+          <Door3DViewer
+            w={state.w}
+            h={state.h}
+            aluminumColor={state.aluminumColor}
+            hardwareColor={state.hardwareColor}
+            frameShape={state.frameShape}
+            rootCell={state.rootCell}
+            frameConfig={state.frameConfig}
+            sashConfig={state.sashConfig}
+            availableProfiles={state.availableProfiles}
+            aluminumColors={state.dynamicAluminumColors}
+            onSelectAluminumColor={state.setAluminumColor}
+            onSelectHardwareColor={state.setHardwareColor}
           />
         </div>
       )}
@@ -268,6 +341,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
         profileBars={state.availableProfiles}
         onSave={state.handleSaveMullion}
         onDeleteMullion={state.handleDeleteMullion}
+        onLocalTranspose={state.handleLocalTransposeMullion}
       />
 
       <GlassGrilleModal
@@ -280,7 +354,6 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
         onApply={state.handleSaveGrille}
       />
 
-      {/* Hidden CAD Renderer for clean SVG Thumbnail Export */}
       <div className="sr-only pointer-events-none absolute -top-[9999px] -left-[9999px] w-[400px] h-[400px] opacity-0" aria-hidden="true">
         <DoorCadRenderer
           id="studio-export-cad-svg"
@@ -293,6 +366,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           rootCell={state.rootCell}
           frameConfig={state.frameConfig}
           sashConfig={state.sashConfig}
+          availableProfiles={state.availableProfiles}
           selectedCellId={null}
           onSelectCell={() => {}}
         />

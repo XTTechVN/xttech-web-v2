@@ -1,43 +1,51 @@
-// ============================================================================
-// BẢNG THÔNG SỐ TỶ LỆ HÌNH HỌC CAD (DỄ DÀNG CHỈNH SỬA TẠI ĐÂY)
-// ============================================================================
+/**
+ * Cấu hình Hằng số Bản vẽ Kỹ thuật CAD 2D (DoorCadRenderer)
+ * Toàn bộ kích thước khai báo bằng mm; bản vẽ quy đổi px = mm × scale (tỉ lệ thực tuyệt đối).
+ */
 export const CAD_CONFIG = {
-  // 1. KHUNG BAO NGOÀI (FRAME)
   FRAME: {
-    SCALE_RATIO: 0.026, // Tỷ lệ độ dày khung bao theo kích thước tổng thể
-    MIN_D: 7,           // Độ dày tối thiểu (px)
-    MAX_D: 10,          // Độ dày tối đa (px)
+    /** Bản rộng mặt cắt khung bao mặc định (mm) khi chưa gán profile cụ thể */
+    DEFAULT_MM: 50,
   },
-
-  // 2. KHUNG CÁNH (SASH)
   SASH: {
-    DOOR_RATIO: 1.4,    // Cánh cửa đi so với khung bao (85-90mm vs 55-66mm)
-    WINDOW_RATIO: 1.15, // Cánh cửa sổ so với khung bao
-    SLIM_RATIO: 0.75,   // Hệ cánh Slim thanh mảnh
-    DOOR_MIN_D: 14,     // Độ dày tối thiểu cánh cửa đi (px)
-    DOOR_MAX_D: 18,     // Độ dày tối đa cánh cửa đi (px)
-    WINDOW_MIN_D: 11,   // Độ dày tối thiểu cánh cửa sổ (px)
-    WINDOW_MAX_D: 14,   // Độ dày tối đa cánh cửa sổ (px)
-    SLIM_MIN_D: 7,      // Độ dày tối thiểu cánh slim (px)
+    /** Bản rộng cánh cửa đi mặc định (mm) - H >= 1800mm */
+    DOOR_DEFAULT_MM: 85,
+    /** Bản rộng cánh cửa sổ mặc định (mm) - H < 1800mm */
+    WINDOW_DEFAULT_MM: 76,
+    /** Bản rộng cánh hệ Slim mặc định (mm) */
+    SLIM_DEFAULT_MM: 28,
   },
-
-  // 3. NẸP KÍNH (GLAZING BEAD) - ĐÃ TĂNG ĐỘ DÀY ĐẸP MẮT
   BEAD: {
-    NORMAL_RATIO: 0.28,     // Tỷ lệ nẹp so với bản cánh (cũ: 0.20 -> mới: 0.28)
-    SLIM_RATIO: 0.22,       // Tỷ lệ nẹp hệ Slim (cũ: 0.18 -> mới: 0.22)
-    FIXED_RATIO: 0.35,      // Tỷ lệ nẹp vách kính cố định so với khung bao (cũ: 0.25 -> mới: 0.35)
-    MIN_W: 4,               // Độ dày nẹp tối thiểu (px) (cũ: 2px -> mới: 4px)
-    MAX_W: 6.5,             // Độ dày nẹp tối đa (px) (cũ: 2.8-5px -> mới: 6.5px)
-    MAX_PANE_PERCENT: 0.10, // Giới hạn diện tích nẹp chiếm tối đa 10% lòng cánh
+    /** Bản rộng nẹp kính tiêu chuẩn mặc định (mm) */
+    DEFAULT_MM: 18,
+    /** Bản rộng nẹp kính hệ Slim mặc định (mm) */
+    SLIM_DEFAULT_MM: 10,
   },
-
-  // 4. ĐỐ TĨNH (MULLION) & ĐỐ ĐỘNG (ASTRAGAL)
   MULLION: {
-    SCALE_RATIO: 1.0,       // Độ dày đố tĩnh T so với khung bao
-    MIN_T: 7,
-    MAX_T: 10,
-    ASTRAGAL_RATIO: 0.5,    // Đố động giữa 2 cánh so với đố tĩnh
-    ASTRAGAL_MIN: 4,
-    ASTRAGAL_MAX: 7,
+    /** Bản rộng đố tĩnh (Đố T) mặc định (mm) */
+    DEFAULT_MM: 50,
+    /** Bản rộng đố động (astragal) mặc định giữa 2 cánh mở quay (mm) khi chưa gán profile */
+    ASTRAGAL_DEFAULT_MM: 22,
   },
-};
+  REVERSAL: {
+    /** Bản rộng thanh đảo khung mặc định (mm) khi chưa gán profile */
+    DEFAULT_MM: 28,
+  },
+  /** Ngưỡng độ dày tối thiểu (px) — CHỈ áp dụng cho thumbnail (hideDimensions) để nét không biến mất */
+  THUMBNAIL_MIN_PX: 1.5,
+  /** Kích thước phụ kiện thực (mm) — nhân scale khi vẽ, có ngưỡng nhìn thấy tối thiểu */
+  HARDWARE: {
+    /** Ngưỡng nhìn thấy tối thiểu (px) để phụ kiện không biến mất ở cửa rất lớn */
+    MIN_VISIBLE_PX: 1.2,
+    /** Tay nắm chữ D (cửa lùa) */
+    D_HANDLE: { LENGTH_MM: 140, PLATE_WIDTH_MM: 24, REACH_MM: 60 },
+    /** Khóa sập âm dài (cửa lùa) */
+    SLIDING_LOCK: { LENGTH_MM: 150, WIDTH_MM: 22, CYLINDER_LENGTH_MM: 50, KEY_LENGTH_MM: 25 },
+    /** Tay gạt (cửa mở quay / hất / lật) */
+    LEVER: { PLATE_LENGTH_MM: 130, PLATE_WIDTH_MM: 26, LEVER_LENGTH_MM: 120, LEVER_THICKNESS_MM: 22 },
+    /** Thanh tay nắm ống dài (cửa thủy lực) */
+    PULL_BAR: { LENGTH_MM: 750, WIDTH_MM: 32, CAP_LENGTH_MM: 18 },
+    /** Tay gạt cánh hất / lật (thanh ngang nhỏ) */
+    AWNING_BAR: { LENGTH_MM: 90, THICKNESS_MM: 20 },
+  },
+} as const;

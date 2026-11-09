@@ -1,6 +1,67 @@
 'use client';
 
 import React from 'react';
+import { HelpCircle } from 'lucide-react';
+import { Tooltip } from '@/components';
+
+// Nút dấu ? giải thích 2 cách tính giá bán cho người không chuyên môn
+export function PricingModeHelpTooltip() {
+  return (
+    <Tooltip
+      position="top"
+      className="w-80 sm:w-96 whitespace-normal text-left p-3.5 leading-relaxed right-0 left-auto translate-x-0 font-normal shadow-xl border border-slate-700"
+      content={
+        <div className="space-y-2.5 text-[11px] text-slate-100">
+          <div className="font-bold text-xs text-white border-b border-slate-700 pb-1.5">
+            Phân biệt 2 cách tính giá bán (chưa gồm thuế VAT)
+          </div>
+
+          <div className="space-y-1">
+            <div className="font-semibold text-emerald-300">
+              1. Cộng thêm % lãi vào chi phí (Tính xuôi từ vốn)
+            </div>
+            <p className="text-slate-300">
+              Lấy tổng chi phí làm cửa làm gốc, rồi cộng thêm % tiền lãi bạn muốn.
+            </p>
+            <div className="bg-slate-800/90 rounded px-2 py-1 text-slate-200">
+              <span className="font-semibold text-amber-300">Ví dụ:</span> Làm bộ cửa hết{' '}
+              <b>10 triệu</b> tiền vốn, cộng thêm <b>30% lãi</b> (3 triệu) → Giá bán ={' '}
+              <b>13 triệu</b>.
+            </div>
+          </div>
+
+          <div className="space-y-1 pt-1 border-t border-slate-800">
+            <div className="font-semibold text-sky-300">
+              2. Đặt % lãi mong muốn trên giá bán (Tính trên số tiền thu về)
+            </div>
+            <p className="text-slate-300">
+              Trong tổng số tiền khách trả, bạn muốn tiền lãi chiếm đúng bao nhiêu % (phần còn lại là
+              chi phí).
+            </p>
+            <div className="bg-slate-800/90 rounded px-2 py-1 text-slate-200">
+              <span className="font-semibold text-amber-300">Ví dụ:</span> Làm bộ cửa hết{' '}
+              <b>7 triệu</b> tiền vốn, muốn lãi chiếm <b>30% giá bán</b> (vốn chiếm 70%) → Giá bán ={' '}
+              <b>7 ÷ 0,7 = 10 triệu</b> (lãi đúng 3 triệu = 30% của 10 triệu).
+            </div>
+          </div>
+
+          <div className="text-[10px] text-slate-300 bg-primary/30 border border-primary/40 rounded px-2 py-1">
+            💡 <b>Lưu ý:</b> Cùng nhập một con số % (ví dụ 30%), <b>Cách 2</b> sẽ cho ra giá bán và
+            tiền lãi cao hơn <b>Cách 1</b>.
+          </div>
+        </div>
+      }
+    >
+      <button
+        type="button"
+        aria-label="Giải thích cách tính giá bán"
+        className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors cursor-help"
+      >
+        <HelpCircle className="w-3.5 h-3.5" />
+      </button>
+    </Tooltip>
+  );
+}
 
 // Khối nhập liệu: tiêu đề + mô tả dễ hiểu
 export function PriceBlock({

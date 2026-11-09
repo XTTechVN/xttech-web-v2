@@ -25,6 +25,8 @@ export function TableData<T>({
 
   hideRowPerPage = false,
   hidePagination = false,
+  actions,
+  mobileActions,
 }: TableDataProps<T>) {
   const isMobile = useIsMobile();
 
@@ -65,11 +67,32 @@ export function TableData<T>({
   return (
     <div className="w-full">
       {/* Mobile Viewport: Chỉ mount khi đã xác định chắc chắn là thiết bị di động */}
-      <div className="block md:hidden space-y-4">
-        <div className="flex flex-wrap items-center gap-3">
-          {search.placeholder && <TableSearch {...search} />}
-          {filters && filters.length > 0 && <TableFilters filters={filters} />}
-        </div>
+      <div className="block md:hidden space-y-3">
+        {mobileActions ? (
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center gap-2.5 w-full">
+              <div className="flex-1 min-w-0">
+                {search.placeholder && <TableSearch {...search} className="w-full" />}
+              </div>
+              {mobileActions.primary && (
+                <div className="shrink-0">{mobileActions.primary}</div>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-2 w-full">
+              <div className="flex flex-wrap items-center gap-2">
+                {filters && filters.length > 0 && <TableFilters filters={filters} />}
+              </div>
+              {mobileActions.secondary && (
+                <div className="shrink-0 ml-auto">{mobileActions.secondary}</div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3">
+            {search.placeholder && <TableSearch {...search} />}
+            {filters && filters.length > 0 && <TableFilters filters={filters} />}
+          </div>
+        )}
 
         {isMobile === true && (
           <TableDataMobile
@@ -89,9 +112,12 @@ export function TableData<T>({
             {search.placeholder && <TableSearch {...search} />}
             {filters && filters.length > 0 && <TableFilters filters={filters} />}
           </div>
-          {togglableColumns.length > 0 && (
-            <TableView views={togglableColumns} visibleKeys={visibleKeys} onToggle={handleToggleColumn} />
-          )}
+          <div className="flex items-center gap-3 shrink-0">
+            {actions}
+            {togglableColumns.length > 0 && (
+              <TableView views={togglableColumns} visibleKeys={visibleKeys} onToggle={handleToggleColumn} />
+            )}
+          </div>
         </div>
 
         {(isMobile === false || isMobile === undefined) && (

@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import {
   FrameShape,
   SashOpenType,
+  SashConfig,
+  SceneCellNode,
   ColorSwatch,
   ALUMINUM_PALETTE,
   HARDWARE_PALETTE,
@@ -51,6 +53,11 @@ interface ToolboxLeftProps {
   onChangeTab: (tab: 'frame' | 'sash') => void;
   aluminumColors?: ColorSwatch[];
   isInsideSash?: boolean;
+  sashConfig?: SashConfig;
+  isOpenBottom?: boolean;
+  selectedCell?: SceneCellNode | null;
+  onUpdateCell?: (updates: Partial<SceneCellNode>) => void;
+  onChangeSashConfig?: (updates: Partial<SashConfig>) => void;
 }
 
 export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
@@ -79,6 +86,11 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
   onChangeTab,
   aluminumColors,
   isInsideSash,
+  sashConfig,
+  isOpenBottom,
+  selectedCell,
+  onUpdateCell,
+  onChangeSashConfig,
 }) => {
   const [frameSplitCount, setFrameSplitCount] = useState<number>(2);
 
@@ -285,10 +297,10 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
                 <input
                   type="number"
                   min={1}
-                  max={6}
+                  max={20}
                   value={frameSplitCount}
-                  onChange={(e) => setFrameSplitCount(Math.max(1, Math.min(6, Number(e.target.value))))}
-                  className="w-10 h-7 text-center text-xs font-bold rounded border border-slate-200 bg-white focus:outline-none focus:border-primary"
+                  onChange={(e) => setFrameSplitCount(Math.max(1, Math.min(20, Number(e.target.value))))}
+                  className="w-11 h-7 text-center text-xs font-bold rounded border border-slate-200 bg-white focus:outline-none focus:border-primary"
                 />
                 <span className="text-slate-500 font-medium">ô</span>
               </div>
@@ -348,6 +360,11 @@ export const ToolboxLeft: React.FC<ToolboxLeftProps> = ({
           currentSashType={currentSashType}
           selectedCellId={selectedCellId}
           isInsideSash={isInsideSash}
+          sashConfig={sashConfig}
+          isOpenBottom={isOpenBottom}
+          selectedCell={selectedCell}
+          onUpdateCell={onUpdateCell}
+          onChangeSashConfig={onChangeSashConfig}
           onSelectSashType={onSelectSashType}
           onSplitSashMullion={onSplitSashMullion}
         />

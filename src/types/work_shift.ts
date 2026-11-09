@@ -1,16 +1,20 @@
-export interface WorkShiftException {
-  id?: number;
-  workShiftId?: number;
+export type ShiftType = 'morning' | 'afternoon' | 'full_day' | 'night';
+export type WorkShiftStatus = 'active' | 'inactive';
+
+export interface WorkShiftExceptionInput {
   userId: string;
+  workShiftId?: number | null;
   checkIn: string; // "HH:MM:SS" or "HH:MM"
   checkOut: string;
   startDate: string; // "YYYY-MM-DD"
   endDate: string;
+}
+
+export interface WorkShiftException extends WorkShiftExceptionInput {
+  id?: number;
   createdAt?: string;
   updatedAt?: string;
 }
-
-export type ShiftType = 'morning' | 'afternoon' | 'full_day' | 'night';
 
 export interface WorkShift {
   id: number;
@@ -18,24 +22,23 @@ export interface WorkShift {
   startTime: string; // "HH:MM:SS" or "HH:MM"
   endTime: string;
   departmentId?: number | null;
-  shiftType?: ShiftType | string;
-  workDays?: string; // e.g. "2,3,4,5,6,7"
-  optionalWorkDays?: string; // e.g. "8"
-  status: 'active' | 'inactive' | string;
+  shiftType?: ShiftType | string | null;
+  workDays?: string | null; // e.g. "2,3,4,5,6"
+  optionalWorkDays?: string | null; // e.g. "7,8"
+  status: WorkShiftStatus | string;
   workLatitude?: number | null;
   workLongitude?: number | null;
-  allowedDistance?: number;
+  allowedDistance?: number | null;
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string | null;
-  workShiftException?: WorkShiftException[];
-  workShiftExceptions?: WorkShiftException[];
   exceptions?: WorkShiftException[];
+  workShiftExceptions?: WorkShiftException[];
   department?: {
     id: number;
     name: string;
     code?: string;
-  };
+  } | null;
 }
 
 export interface WorkShiftCreate {
@@ -43,30 +46,17 @@ export interface WorkShiftCreate {
   startTime?: string;
   endTime?: string;
   departmentId?: number | null;
-  shiftType?: string;
-  workDays?: string;
-  optionalWorkDays?: string;
-  status?: string;
+  shiftType?: ShiftType | string | null;
+  workDays?: string | null;
+  optionalWorkDays?: string | null;
+  status?: WorkShiftStatus | string;
   workLatitude?: number | null;
   workLongitude?: number | null;
   allowedDistance?: number;
-  workShiftExceptions?: WorkShiftException[];
+  workShiftExceptions?: WorkShiftExceptionInput[];
 }
 
-export interface WorkShiftUpdate {
-  name?: string;
-  startTime?: string;
-  endTime?: string;
-  departmentId?: number | null;
-  shiftType?: string;
-  workDays?: string;
-  optionalWorkDays?: string;
-  status?: string;
-  workLatitude?: number | null;
-  workLongitude?: number | null;
-  allowedDistance?: number;
-  workShiftExceptions?: WorkShiftException[];
-}
+export type WorkShiftUpdate = Partial<WorkShiftCreate>;
 
 export interface WorkShiftQueryParams {
   offset?: number;

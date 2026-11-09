@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { DoorCustomExtraItem } from '../../studio-types';
 import { ProfileBar } from '@/types';
+import { Select } from '@/components/select';
 import { Plus, X } from 'lucide-react';
 
 interface CustomExtraConfigSectionProps {
@@ -26,10 +27,11 @@ export const CustomExtraConfigSection: React.FC<CustomExtraConfigSectionProps> =
       profileCode: defaultProfile?.code,
       profileName: defaultProfile?.name || '',
       note: '',
-      formulaLen: 'W',
+      formulaLen: target === 'frame' ? 'W' : 'Hs',
       angle1: 90,
       angle2: 90,
       qty: 1,
+      fixedQty: target === 'frame',
       target,
     };
     onChangeItems([...items, newItem]);
@@ -57,6 +59,15 @@ export const CustomExtraConfigSection: React.FC<CustomExtraConfigSectionProps> =
     onChangeItems(items.filter((item) => item.id !== id));
   };
 
+  const profileOptions = useMemo(
+    () =>
+      profiles.map((p) => ({
+        value: p.id,
+        label: `${p.code} · ${p.name}`,
+      })),
+    [profiles]
+  );
+
   const targetTitle = target === 'frame' ? 'Khung' : 'Cánh';
 
   return (
@@ -71,7 +82,9 @@ export const CustomExtraConfigSection: React.FC<CustomExtraConfigSectionProps> =
             Phụ kiện tùy biến — {targetTitle}
           </span>
           <span className="text-[11px] text-slate-400 font-normal">
-            W, H = kích thước ô hiện tại; W0, H0 = kích thước tổng bộ cửa
+            {target === 'sash'
+              ? 'Ws, Hs = kích thước cánh; W0, H0 = kích thước tổng bộ cửa'
+              : 'W, H = kích thước ô hiện tại; W0, H0 = kích thước tổng bộ cửa'}
           </span>
         </div>
 
@@ -99,28 +112,25 @@ export const CustomExtraConfigSection: React.FC<CustomExtraConfigSectionProps> =
             >
               <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center text-xs">
                 {/* 1. Profile */}
-                <div className="md:col-span-4 space-y-1">
+                <div className="md:col-span-3 space-y-1">
                   <label className="text-[10px] text-slate-500 font-medium block">Profile:</label>
-                  <select
+                  <Select
+                    searchable
+                    fullWidth
+                    options={profileOptions}
                     value={row.profileId || ''}
+                    placeholder="Chọn profile thanh phụ..."
                     onChange={(e) => handleProfileSelect(row.id, Number(e.target.value))}
-                    className="w-full h-7 px-2 text-xs rounded border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-amber-500"
-                  >
-                    <option value="">Chọn profile thanh phụ...</option>
-                    {profiles.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.code} · {p.name}
-                      </option>
-                    ))}
-                  </select>
+                    className="h-7 text-xs md:text-xs py-0 pl-2 pr-7 border-slate-300 focus:border-amber-500"
+                  />
                 </div>
 
                 {/* 2. Ghi chú */}
-                <div className="md:col-span-3 space-y-1">
+                <div className="md:col-span-2 space-y-1">
                   <label className="text-[10px] text-slate-500 font-medium block">Ghi chú:</label>
                   <input
                     type="text"
-                    placeholder="Ghi chú..."
+                    placeholder="Hs-40..."
                     value={row.note || ''}
                     onChange={(e) => handleUpdateItem(row.id, { note: e.target.value })}
                     className="w-full h-7 px-2 text-xs rounded border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-amber-500"
@@ -132,14 +142,40 @@ export const CustomExtraConfigSection: React.FC<CustomExtraConfigSectionProps> =
                   <label className="text-[10px] text-slate-500 font-medium block">Công thức dài:</label>
                   <input
                     type="text"
-                    placeholder="vd: W-47.6"
+                    placeholder="vd: W-47.6, Hs"
                     value={row.formulaLen}
                     onChange={(e) => handleUpdateItem(row.id, { formulaLen: e.target.value })}
                     className="w-full h-7 px-2 text-xs font-mono font-bold rounded border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
-                {/* 4. Góc T/P */}
+                {/* 4. Số lượng (SL) */}
+                <div className="md:col-span-1 space-y-1">
+                  <label className="text-[10px] text-slate-500 font-medium block text-center">SL:</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={row.qty ?? 1}
+                    onChange={(e) => handleUpdateItem(row.id, { qty: Math.max(1, Number(e.target.value) || 1) })}
+                    className="w-full h-7 px-1 text-center text-xs font-semibold rounded border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                {/* 5. Cách tính (Cố định/bộ) */}
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-[10px] text-slate-500 font-medium block text-center">Cách tính:</label>
+                  <label className="h-7 flex items-center justify-center gap-1.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={row.fixedQty ?? (target === 'frame')}
+                      onChange={(e) => handleUpdateItem(row.id, { fixedQty: e.target.checked })}
+                      className="w-3.5 h-3.5 rounded text-primary accent-primary cursor-pointer"
+                    />
+                    <span className="text-[11px] text-slate-600">Cố định/bộ</span>
+                  </label>
+                </div>
+
+                {/* 6. Góc T/P & Nút xóa */}
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-[10px] text-slate-500 font-medium block text-center">Góc T/P:</label>
                   <div className="flex items-center gap-1 justify-center">
@@ -147,28 +183,24 @@ export const CustomExtraConfigSection: React.FC<CustomExtraConfigSectionProps> =
                       type="number"
                       value={row.angle1}
                       onChange={(e) => handleUpdateItem(row.id, { angle1: Number(e.target.value) || 90 })}
-                      className="w-12 h-7 px-1 text-center text-xs font-semibold rounded border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-amber-500"
+                      className="w-11 h-7 px-1 text-center text-xs font-semibold rounded border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-amber-500"
                     />
                     <span className="text-slate-400">/</span>
                     <input
                       type="number"
                       value={row.angle2}
                       onChange={(e) => handleUpdateItem(row.id, { angle2: Number(e.target.value) || 90 })}
-                      className="w-12 h-7 px-1 text-center text-xs font-semibold rounded border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-amber-500"
+                      className="w-11 h-7 px-1 text-center text-xs font-semibold rounded border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-amber-500"
                     />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(row.id)}
+                      title="Xóa phụ kiện tùy biến này"
+                      className="w-6 h-7 rounded flex items-center justify-center text-red-500 hover:text-white hover:bg-red-500 transition-colors cursor-pointer shrink-0"
+                    >
+                      <X size={13} />
+                    </button>
                   </div>
-                </div>
-
-                {/* 5. Nút xóa */}
-                <div className="md:col-span-1 flex justify-end items-end pt-4">
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveItem(row.id)}
-                    title="Xóa phụ kiện tùy biến này"
-                    className="w-7 h-7 rounded flex items-center justify-center text-red-500 hover:text-white hover:bg-red-500 transition-colors cursor-pointer"
-                  >
-                    <X size={14} />
-                  </button>
                 </div>
               </div>
             </div>

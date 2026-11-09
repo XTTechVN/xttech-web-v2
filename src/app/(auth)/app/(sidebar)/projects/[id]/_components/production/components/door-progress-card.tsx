@@ -4,7 +4,7 @@ import React from 'react';
 import { Check, ImageOff } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import type { ProgressMatrixItem, ProjectDoorPosition } from '@/types';
-import { DoorThumbnail } from '../../../../configuration/door-templates/_components/door-thumbnail';
+import { DoorThumbnail } from '@/components';
 
 interface DoorProgressCardProps {
   position: ProjectDoorPosition;
@@ -86,6 +86,12 @@ export function DoorProgressCard({
             </span>
           )}
         </div>
+
+        {position.measureNote && (
+          <p className="mt-1 text-[10px] text-slate-500 break-words leading-tight">
+            <span className="font-medium text-slate-600">Ghi chú:</span> {position.measureNote}
+          </p>
+        )}
       </div>
     </div>
   );

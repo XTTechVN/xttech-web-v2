@@ -10,6 +10,7 @@ import { markDocumentAsRead } from '@/actions/document';
 import { WordViewer } from './preview-viewers/word-viewer';
 import { ExcelViewer } from './preview-viewers/excel-viewer';
 import { PdfViewer } from './preview-viewers/pdf-viewer';
+import { HtmlViewer } from './preview-viewers/html-viewer';
 import { FallbackViewer } from './preview-viewers/fallback-viewer';
 
 export interface DocumentPreviewModalProps {
@@ -56,6 +57,7 @@ export default function DocumentPreviewModalBody({
   const mime = (currentVersion?.mimeType || '').toLowerCase();
 
   const isImage = Boolean(mime.startsWith('image/') || IMAGE_EXTS.includes(ext));
+  const isHtml = Boolean(mime.includes('html') || ext === 'html' || ext === 'htm');
   const isPdf = Boolean(mime.includes('pdf') || ext === 'pdf');
   const isWord = Boolean(mime.includes('word') || ext === 'docx' || ext === 'doc');
   const isExcel = Boolean(
@@ -211,7 +213,7 @@ export default function DocumentPreviewModalBody({
         </div>
       </div>
 
-      <div className="flex-1 w-full h-[calc(100vh-56px)] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden relative">
+      <div className="flex-1 w-full h-[calc(100vh-56px)] flex items-center justify-center p-0 sm:p-4 md:p-6 overflow-hidden relative">
         {!downloadUrl ? (
           <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center max-w-md shadow-2xl flex flex-col items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center">
@@ -222,6 +224,14 @@ export default function DocumentPreviewModalBody({
               <p className="text-xs text-slate-400 mt-1">Tài liệu này chưa được đính kèm tệp tin.</p>
             </div>
           </div>
+        ) : isHtml ? (
+          <HtmlViewer
+            key={downloadUrl}
+            buffer={fileBuffer}
+            isLoading={isBufferLoading}
+            error={bufferError}
+            onDownload={handleDownload}
+          />
         ) : isWord ? (
           <WordViewer
             key={downloadUrl}

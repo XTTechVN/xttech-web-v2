@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getBrands, deleteBrand } from '@/actions';
-import type { Brand } from '@/types';
+import { getBrands, deleteBrand, updateBrand } from '@/actions';
+import { isBrandFavorite, type Brand } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
@@ -55,10 +55,61 @@ export default function BrandTab() {
     mutationFn: (id: number) => deleteBrand(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
+      queryClient.invalidateQueries({ queryKey: ['brands-picker'] });
+      queryClient.invalidateQueries({ queryKey: ['brands-list'] });
       toast.success('Xóa thương hiệu thành công');
     },
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa thương hiệu'),
   });
+
+  const { mutate: toggleFavoriteMutate, isPending: isTogglingFavorite } = useMutation({
+    mutationFn: async ({
+      brand,
+      nextFavorite,
+      groupBrands,
+    }: {
+      brand: Brand;
+      nextFavorite: boolean;
+      groupBrands: Brand[];
+    }) => {
+      if (nextFavorite) {
+        const previousFavorites = groupBrands.filter(
+          (item) => item.id !== brand.id && isBrandFavorite(item),
+        );
+        await Promise.all([
+          ...previousFavorites.map((item) => updateBrand(item.id, { sortOrder: 0 })),
+          updateBrand(brand.id, { sortOrder: 1 }),
+        ]);
+        return;
+      }
+      await updateBrand(brand.id, { sortOrder: 0 });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['brands'] });
+      queryClient.invalidateQueries({ queryKey: ['brands-picker'] });
+      queryClient.invalidateQueries({ queryKey: ['brands-list'] });
+      if (variables.nextFavorite) {
+        toast.success(`Đã đặt "${variables.brand.name}" làm hãng mặc định khi vào trang`);
+      } else {
+        toast.success(`Đã bỏ đánh dấu yêu thích hãng "${variables.brand.name}"`);
+      }
+    },
+    onError: (err) => showErrorToast(err, 'Không thể cập nhật trạng thái yêu thích'),
+  });
+
+  const activeDetailBrand = useMemo(
+    () => (detailBrand ? allBrands.find((b) => b.id === detailBrand.id) ?? detailBrand : null),
+    [allBrands, detailBrand],
+  );
+
+  const handleToggleFavorite = (brand: Brand, groupBrands: Brand[]) => {
+    if (isTogglingFavorite) return;
+    toggleFavoriteMutate({
+      brand,
+      nextFavorite: !isBrandFavorite(brand),
+      groupBrands,
+    });
+  };
 
   const handleOpenCreateModal = () => {
     setSelectedBrand(null);
@@ -125,6 +176,7 @@ export default function BrandTab() {
                     onClick={handleOpenDetailModal}
                     onEdit={handleOpenEditModal}
                     onDelete={handleDeleteBrand}
+                    onToggleFavorite={(b) => handleToggleFavorite(b, aluminumBrands)}
                   />
                 ))}
               </div>
@@ -160,6 +212,7 @@ export default function BrandTab() {
                     onClick={handleOpenDetailModal}
                     onEdit={handleOpenEditModal}
                     onDelete={handleDeleteBrand}
+                    onToggleFavorite={(b) => handleToggleFavorite(b, accessoryBrands)}
                   />
                 ))}
               </div>
@@ -186,11 +239,10 @@ export default function BrandTab() {
           setSelectedBrand(null);
           setDetailBrand(null);
         }}
-        brand={detailBrand}
+        brand={activeDetailBrand}
         brands={allBrands}
         onSelectBrand={setDetailBrand}
       />
     </div>
   );
 }
-

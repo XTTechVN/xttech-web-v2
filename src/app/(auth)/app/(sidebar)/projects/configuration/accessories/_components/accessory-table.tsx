@@ -11,6 +11,12 @@ interface AccessoryTableProps {
   accessories: Accessory[];
   onEdit: (accessory: Accessory) => void;
   onDelete: (accessory: Accessory) => void;
+  isBulkMode?: boolean;
+  selectedIdSet?: ReadonlySet<number>;
+  isAllSelected?: boolean;
+  isPartiallySelected?: boolean;
+  onToggleSelect?: (id: number) => void;
+  onToggleSelectAll?: () => void;
 }
 
 type SortField = 'code' | 'name' | 'category' | 'specification' | 'unit' | 'color' | 'price' | 'status';
@@ -30,11 +36,21 @@ const COLUMNS: Array<{ field: SortField; label: string; align: 'left' | 'center'
   { field: 'specification', label: 'Quy cách', align: 'center', width: 'w-32' },
   { field: 'unit', label: 'ĐVT', align: 'center', width: 'w-24' },
   { field: 'color', label: 'Màu sắc', align: 'center', width: 'w-28' },
-  { field: 'price', label: 'Đơn giá', align: 'right', width: 'w-32' },
+  { field: 'price', label: 'Giá nhập', align: 'right', width: 'w-32' },
   { field: 'status', label: 'Trạng thái', align: 'center', width: 'w-28' },
 ];
 
-export function AccessoryTable({ accessories, onEdit, onDelete }: AccessoryTableProps) {
+export function AccessoryTable({
+  accessories,
+  onEdit,
+  onDelete,
+  isBulkMode = false,
+  selectedIdSet,
+  isAllSelected = false,
+  isPartiallySelected = false,
+  onToggleSelect,
+  onToggleSelectAll,
+}: AccessoryTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
@@ -75,7 +91,7 @@ export function AccessoryTable({ accessories, onEdit, onDelete }: AccessoryTable
           break;
         }
         case 'price':
-          comparison = (a.unitPrice || a.salePrice || 0) - (b.unitPrice || b.salePrice || 0);
+          comparison = (a.costPrice || 0) - (b.costPrice || 0);
           break;
         case 'status':
           comparison = (a.isActive !== false ? 1 : 0) - (b.isActive !== false ? 1 : 0);
@@ -84,13 +100,27 @@ export function AccessoryTable({ accessories, onEdit, onDelete }: AccessoryTable
       return sortOrder === 'asc' ? comparison : -comparison;
     });
   }, [accessories, sortField, sortOrder]);
-
+  
   return (
     <div className="w-full bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xs">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse select-none">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              {isBulkMode && (
+                <th className="py-3 px-3 w-11 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isPartiallySelected;
+                    }}
+                    onChange={() => onToggleSelectAll?.()}
+                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer accent-[#045863]"
+                    title="Chọn tất cả"
+                  />
+                </th>
+              )}
               <th className="py-3 px-3 w-14" />
               {COLUMNS.map((col) => (
                 <th
@@ -116,7 +146,8 @@ export function AccessoryTable({ accessories, onEdit, onDelete }: AccessoryTable
               const categoryLabel = acc.category?.name || '—';
               const unitLabel = formatAccessoryUnit(acc.unit) || '—';
               const colorLabel = acc.color ? ACCESSORY_COLOR_MAP[acc.color.toLowerCase()] || acc.color : '—';
-              const price = acc.unitPrice || acc.salePrice || 0;
+              const price = acc.costPrice || 0;
+              const isSelected = Boolean(selectedIdSet?.has(acc.id));
               const imgSrc = acc.imagePath
                 ? acc.imagePath.startsWith('http')
                   ? acc.imagePath
@@ -124,12 +155,35 @@ export function AccessoryTable({ accessories, onEdit, onDelete }: AccessoryTable
                 : null;
 
               return (
-                <tr key={acc.id} className="hover:bg-slate-50/80 transition-colors group">
+                <tr
+                  key={acc.id}
+                  onClick={() => {
+                    if (isBulkMode) onToggleSelect?.(acc.id);
+                  }}
+                  className={`transition-colors group ${
+                    isBulkMode ? 'cursor-pointer' : ''
+                  } ${
+                    isSelected ? 'bg-rose-50/40 hover:bg-rose-50/60' : 'hover:bg-slate-50/80'
+                  }`}
+                >
+                  {isBulkMode && (
+                    <td className="py-2.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => onToggleSelect?.(acc.id)}
+                        className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer accent-[#045863]"
+                      />
+                    </td>
+                  )}
                   <td className="py-2.5 px-3">
                     {imgSrc ? (
                       <button
                         type="button"
-                        onClick={() => setLightboxUrl(imgSrc)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxUrl(imgSrc);
+                        }}
                         className="relative group/img block w-9 h-9 cursor-zoom-in"
                       >
                         <img
@@ -191,7 +245,7 @@ export function AccessoryTable({ accessories, onEdit, onDelete }: AccessoryTable
                     </span>
                   </td>
 
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"
@@ -220,7 +274,7 @@ export function AccessoryTable({ accessories, onEdit, onDelete }: AccessoryTable
 
       {lightboxUrl && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-9999 flex items-center justify-center bg-black/70 backdrop-blur-sm"
           onClick={() => setLightboxUrl(null)}
         >
           <button

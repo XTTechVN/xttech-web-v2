@@ -89,13 +89,25 @@ export const DOOR_TYPE_CONFIG: Record<string, DoorTypeConfig> = {
   },
 };
 
+export const LEGACY_DOOR_TYPE_MAP: Record<string, DoorType> = {
+  cd: 'casement_door',
+  cs: 'casement_window',
+  ck: 'glass_wall',
+  di_mo: 'casement_door',
+  di_lua: 'sliding_door',
+  so_mo: 'casement_window',
+  so_lua: 'sliding_window',
+  gap_xep: 'folding_door',
+  truot_quay: 'sliding_casement_door',
+  vach: 'glass_wall',
+  mat_dung: 'curtain_wall',
+  tong_hop: 'composite',
+};
+
 export const normalizeDoorType = (type: string | null | undefined): string => {
   if (!type) return '';
   const key = type.toLowerCase().trim();
-  if (key === 'cd') return 'casement_door';
-  if (key === 'cs') return 'casement_window';
-  if (key === 'ck') return 'glass_wall';
-  return key;
+  return LEGACY_DOOR_TYPE_MAP[key] || key;
 };
 
 export const getDoorTypeConfig = (type: string | null | undefined): DoorTypeConfig => {
@@ -150,6 +162,15 @@ export interface Door {
   updatedAt: string;
 }
 
+export type CalculationStepTone = 'neutral' | 'deduct' | 'add' | 'subtotal' | 'result';
+
+export interface CalculationStep {
+  label: string;
+  formula?: string | null;
+  value: string;
+  tone: CalculationStepTone;
+}
+
 export interface ProfileBarCut {
   name: string;
   side?: number | null;
@@ -165,6 +186,8 @@ export interface ProfileBarCut {
   profileCode?: string | null;
   profileName?: string | null;
   positions?: string[];
+  calcSteps?: CalculationStep[];
+  calcNote?: string | null;
 }
 
 export interface BeadCut {
@@ -178,7 +201,11 @@ export interface BeadCut {
   qty: number;
   profileId?: number | null;
   profileCode?: string | null;
+  profileName?: string | null;
+  weightPerM?: number;
   positions?: string[];
+  calcSteps?: CalculationStep[];
+  calcNote?: string | null;
 }
 
 export interface GlassCellBOM {
@@ -192,6 +219,8 @@ export interface GlassCellBOM {
   openType?: string | null;
   glassName?: string | null;
   glassPrice?: number | null;
+  calcSteps?: CalculationStep[];
+  calcNote?: string | null;
 }
 
 export interface GroupedGlassCellBOM {

@@ -4,6 +4,7 @@ import type { Customer } from './customer';
 import type { User } from './user';
 import type { Brand, BrandColor } from './brand';
 import type { DoorSeries } from './door-series';
+import type { Door } from './door';
 
 export type ProjectStatus =
   | 'draft'
@@ -200,7 +201,7 @@ export interface ProjectDoorPosition {
   doorSeriesId?: number | null;
   colorId?: number | null;
   glassId?: number | null;
-  gasketId?: number | null;
+
   status: DoorPositionStatus;
   qrCodeToken: string;
   qrUrl?: string | null;
@@ -216,6 +217,7 @@ export interface ProjectDoorPosition {
   createdAt: string;
   updatedAt: string;
   floor?: Pick<ProjectFloor, 'id' | 'name'> | null;
+  templateDoor?: Pick<Door, 'id' | 'code' | 'name'> | null;
   brand?: Pick<Brand, 'id' | 'name'> | null;
   doorSeries?: Pick<DoorSeries, 'id' | 'name'> | null;
   color?: Pick<BrandColor, 'id' | 'name' | 'colorHex'> | null;
@@ -235,7 +237,7 @@ export interface ProjectDoorPositionCreate {
   doorSeriesId?: number;
   colorId?: number;
   glassId?: number;
-  gasketId?: number;
+
   status?: DoorPositionStatus;
   systemConfig?: Record<string, any>;
 }
@@ -255,7 +257,7 @@ export interface ProjectDoorPositionBulkCreate {
   doorSeriesId?: number;
   colorId?: number;
   glassId?: number;
-  gasketId?: number;
+
   systemConfig?: Record<string, any>;
 }
 
@@ -272,7 +274,7 @@ export interface ProjectDoorPositionUpdate {
   doorSeriesId?: number;
   colorId?: number;
   glassId?: number;
-  gasketId?: number;
+
   status?: DoorPositionStatus;
   systemConfig?: Record<string, any>;
   revision?: number;
@@ -308,6 +310,7 @@ export interface ContractMilestoneInput {
   milestoneOrder: number;
   installmentName: string;
   percentage: number;
+  expectedAmount?: number;
   dueDate?: string;
   note?: string;
 }
@@ -435,6 +438,7 @@ export interface PaymentTransactionCreatePayload {
   transactionType?: 'collection' | 'refund';
   paymentMethod?: string;
   bankReference?: string;
+  receiptImage?: string;
   note?: string;
 }
 
@@ -509,7 +513,7 @@ export interface ProgressMatrixItem {
   surveyed: ProgressStepStatus;
   producing: ProgressStepStatus;
   factoryDone: ProgressStepStatus;
-  delivered: ProgressStepStatus;
+  delivered?: ProgressStepStatus;
   installed: ProgressStepStatus;
   accepted: ProgressStepStatus;
 }

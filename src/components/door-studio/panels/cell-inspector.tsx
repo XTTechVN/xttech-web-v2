@@ -5,13 +5,17 @@ import { Glass, ProfileBar } from '@/types';
 import {
   SceneCellNode,
   PaneType,
-  BeadType,
   BeadJointType,
   FrameShape,
   FrameConfig,
   ArchConfig,
+  SashConfig,
 } from '../studio-types';
-import { ShieldCheck, Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, Square, DoorClosed } from 'lucide-react';
+import { CellFrameOverrideSection } from './cell-frame-override-section';
+import { CellGlassConfigSection } from './cell-glass-config-section';
+import { computeArchMetrics } from '../cad-engine/cad-geometry';
+import { Select } from '@/components/select';
+import { Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, DoorClosed } from 'lucide-react';
 
 interface CellInspectorProps {
   selectedCell: SceneCellNode | null;
@@ -27,17 +31,22 @@ interface CellInspectorProps {
   frameShape?: FrameShape;
   frameConfig?: FrameConfig;
   doorW?: number;
+  doorH?: number;
   onChangeFrameConfig?: (updates: Partial<FrameConfig>) => void;
+  /** Ô có chạm đáy cửa không (cho phép chọn Hở/Kín cạnh đáy riêng) */
+  isTouchingBottom?: boolean;
+  availableProfiles?: ProfileBar[];
+  sashConfig?: SashConfig;
+  /** Áp patch hiệu ứng kính cho mọi ô kính trong cửa */
+  onApplyGlassVisualToAll?: (patch: Partial<SceneCellNode>) => void;
 }
 
-const GLASS_OPTIONS = [
-  'Kính dán an toàn 6.38mm',
-  'Kính dán an toàn 8.38mm',
-  'Kính dán an toàn 10.38mm',
-  'Kính cường lực 8mm',
-  'Kính cường lực 10mm',
-  'Kính cường lực 12mm',
-  'Kính hộp cách âm 5-9-5mm',
+const LEGGED_ARCH_SHAPES: FrameShape[] = [
+  'arch_semicircle',
+  'arch_semicircle_open',
+  'arch_segment_leg',
+  'arch_segment_leg_open',
+  'arch_pointed_leg',
 ];
 
 export const CellInspector: React.FC<CellInspectorProps> = ({
@@ -54,7 +63,12 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   frameShape,
   frameConfig,
   doorW,
+  doorH,
   onChangeFrameConfig,
+  isTouchingBottom = false,
+  availableProfiles,
+  sashConfig,
+  onApplyGlassVisualToAll,
 }) => {
   const [localW, setLocalW] = React.useState<number>(selectedCell?.w ?? 0);
   const [localH, setLocalH] = React.useState<number>(selectedCell?.h ?? 0);
@@ -78,16 +92,14 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
     }
   };
 
-  // Ưu tiên dùng data từ DB, fallback về hardcode khi chưa fetch xong
-  // Dùng object {key, label} để key luôn unique (id từ DB, index khi fallback)
-  const glassOptions =
-    availableGlasses && availableGlasses.length > 0
-      ? availableGlasses.map((g) => ({ key: String(g.id), label: g.name }))
-      : GLASS_OPTIONS.map((name, idx) => ({ key: `fallback-${idx}`, label: name }));
   const isArchShape = Boolean(
     frameShape &&
     frameShape !== 'rect' &&
-    (frameShape.startsWith('arch_') || frameShape.startsWith('round_') || frameShape === 'circle' || frameShape === 'ellipse' || frameShape === 'quad_circle')
+    (frameShape.startsWith('arch_') ||
+      frameShape.startsWith('round_') ||
+      frameShape === 'circle' ||
+      frameShape === 'ellipse' ||
+      frameShape === 'quad_circle')
   );
 
   const renderArchConfigCard = () => {
@@ -95,10 +107,31 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
     const archCfg: ArchConfig = frameConfig.archConfig || {
       radiusMm: undefined,
       isCutAtApex: false,
-      bendingClampingMm: 400,
+      legJoinMode: 'continuous',
+      bendingClampingMm: 250,
     };
-    const defaultR = Math.round((doorW || 1600) / 2);
+
+    const metrics = computeArchMetrics(
+      frameShape || 'rect',
+      doorW || 1300,
+      doorH || 1600,
+      0,
+      { ...archCfg, radiusMm: undefined }
+    );
+    const defaultR = Math.round(metrics.autoRadiusMm);
     const currentR = archCfg.radiusMm ?? defaultR;
+    const hasArchLegs = Boolean(frameShape && LEGGED_ARCH_SHAPES.includes(frameShape));
+    const isPointedArch = frameShape === 'arch_pointed' || frameShape === 'arch_pointed_leg';
+    const isSegmentArch =
+      frameShape === 'arch_segment' ||
+      frameShape === 'arch_segment_leg' ||
+      frameShape === 'arch_segment_leg_open';
+
+    const radiusHintText = isPointedArch
+      ? 'Tự động tính theo cung nhọn 2 tâm'
+      : isSegmentArch
+        ? 'Tự động tính theo dây cung'
+        : 'Tự động tính theo W / 2';
 
     const handleUpdateArch = (updates: Partial<ArchConfig>) => {
       onChangeFrameConfig({
@@ -127,17 +160,18 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
               className="w-24 h-7 px-2 text-right font-mono font-bold text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-slate-800"
             />
           </div>
-          <div className="text-[10px] text-slate-400 text-right">Tự động tính theo W / 2</div>
+          <div className="text-[10px] text-slate-400 text-right">{radiusHintText}</div>
         </div>
 
-        <div className="border-t border-slate-100 pt-2 space-y-1">
+        <div className="border-t border-slate-100 pt-2 space-y-2.5">
           {/* 2. Cắt vòm tại đỉnh */}
           <label className="flex items-start gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
-              checked={archCfg.isCutAtApex ?? false}
+              checked={Boolean(archCfg.isCutAtApex || isPointedArch)}
+              disabled={isPointedArch}
               onChange={(e) => handleUpdateArch({ isCutAtApex: e.target.checked })}
-              className="mt-0.5 w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+              className="mt-0.5 w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer disabled:opacity-60"
             />
             <div>
               <div className="text-xs font-semibold text-slate-800">Cắt vòm tại đỉnh</div>
@@ -146,16 +180,43 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
               </div>
             </div>
           </label>
+
+          {/* 3. Phương án uốn chân vòm (A: Tách rời chân thẳng | B: Uốn liền chân) */}
+          {hasArchLegs && (
+            <div className="space-y-1 pt-1">
+              <label className="text-[11px] font-semibold text-slate-700 block">
+                Phương án gia công chân vòm
+              </label>
+              <Select
+                fullWidth
+                value={archCfg.legJoinMode ?? 'continuous'}
+                onChange={(e) =>
+                  handleUpdateArch({
+                    legJoinMode: e.target.value as 'continuous' | 'separate',
+                  })
+                }
+                options={[
+                  { value: 'continuous', label: 'Phương án B: Uốn liền chân (Mặc định)' },
+                  { value: 'separate', label: 'Phương án A: Tách rời chân thẳng' },
+                ]}
+                className="h-7.5 py-0 text-[11px] md:text-[11px] font-semibold bg-slate-50 border-slate-200 rounded-lg text-slate-800"
+              />
+            </div>
+          )}
         </div>
 
-        {/* 3. Kẹp phôi */}
+        {/* 4. Kẹp đầu (mm) */}
         <div className="border-t border-slate-100 pt-2 space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-semibold text-slate-700">Kẹp phôi (mm)</label>
+            <label className="text-[11px] font-semibold text-slate-700">Kẹp đầu (mm)</label>
             <input
               type="number"
-              value={archCfg.bendingClampingMm ?? 400}
-              onChange={(e) => handleUpdateArch({ bendingClampingMm: Number(e.target.value) || 0 })}
+              value={archCfg.bendingClampingMm ?? 250}
+              onChange={(e) =>
+                handleUpdateArch({
+                  bendingClampingMm: Math.max(0, Number(e.target.value) || 0),
+                })
+              }
               className="w-24 h-7 px-2 text-right font-mono font-bold text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-slate-800"
             />
           </div>
@@ -260,38 +321,87 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
           <DoorClosed size={13} className="text-primary" />
           <span>Kiểu mở riêng ô này</span>
         </div>
-        <select
-          value={selectedCell.sashType || 'fixed'}
+        <Select
+          fullWidth
+          value={(() => {
+            const raw = String(selectedCell.sashType || 'fixed').trim();
+            if (
+              raw === 'fixed' ||
+              raw === 'swing_left' ||
+              raw === 'swing_right' ||
+              raw === 'awning' ||
+              raw === 'tilt' ||
+              raw === 'tilt_turn' ||
+              raw === 'sliding'
+            ) {
+              return raw;
+            }
+            if (raw.includes('mo-hat') && (raw.includes('le-trai') || raw.includes('le-phai'))) {
+              return 'tilt_turn';
+            }
+            if (raw === 'mo-hat') return 'awning';
+            if (raw === 'mo-lat') return 'tilt';
+            if (raw.startsWith('le-trai') || raw === 'gap-xep-trai') return 'swing_left';
+            if (raw.startsWith('le-phai') || raw === 'gap-xep-phai') return 'swing_right';
+            if (
+              raw.includes('lua') ||
+              raw === '2-chieu' ||
+              raw === '1-chieu' ||
+              raw.includes('sliding')
+            ) {
+              return 'sliding';
+            }
+            return 'fixed';
+          })()}
           onChange={(e) => {
-            const newSashType = e.target.value as any;
-            const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down', 'sliding'].includes(newSashType);
-            const updates: Record<string, unknown> = { sashType: newSashType };
+            const newSashType = e.target.value as SceneCellNode['sashType'];
+            const sashHasHandle = [
+              'swing_left',
+              'swing_right',
+              'tilt_turn',
+              'awning',
+              'tilt',
+              'tilt_down',
+              'sliding',
+            ].includes(newSashType || '');
+            const updates: Partial<SceneCellNode> = { sashType: newSashType };
             if (sashHasHandle) {
               updates.hasLock = true;
               updates.handleHeight = Math.round(selectedCell.h / 2);
               updates.handleType = selectedCell.handleType ?? 'lever';
-            } else if (!sashHasHandle) {
+            } else {
               updates.hasLock = false;
             }
-            onUpdateCell(updates as any);
+            onUpdateCell(updates);
           }}
-          className="w-full h-8 px-2.5 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 font-medium"
-        >
-          <option value="fixed">Vách kính cố định (Fix)</option>
-          <option value="swing_left">Cánh mở quay trái</option>
-          <option value="swing_right">Cánh mở quay phải</option>
-          <option value="awning">Cánh mở hất</option>
-          <option value="tilt">Cánh mở lật</option>
-          <option value="tilt_turn">Cánh mở quay & lật</option>
-          <option value="sliding">Cánh trượt lùa</option>
-        </select>
+          options={[
+            { value: 'fixed', label: 'Vách kính cố định (Fix)' },
+            { value: 'swing_left', label: 'Cánh mở quay trái' },
+            { value: 'swing_right', label: 'Cánh mở quay phải' },
+            { value: 'awning', label: 'Cánh mở hất' },
+            { value: 'tilt', label: 'Cánh mở lật' },
+            { value: 'tilt_turn', label: 'Cánh mở quay & lật' },
+            { value: 'sliding', label: 'Cánh trượt lùa' },
+          ]}
+          className="h-8 py-0 text-xs md:text-xs bg-white rounded-lg border-gray-300 font-medium"
+        />
       </div>
+
+      <CellFrameOverrideSection
+        selectedCell={selectedCell}
+        onUpdateCell={onUpdateCell}
+        isTouchingBottom={isTouchingBottom}
+        availableProfiles={availableProfiles}
+        frameConfig={frameConfig}
+        sashConfig={sashConfig}
+      />
 
       {/* 3.1. Cấu hình Khóa & Cao độ tay nắm */}
       {selectedCell.sashType && selectedCell.sashType !== 'fixed' && (
         <div className="space-y-2 p-2.5 rounded-xl bg-orange-50/70 border border-orange-200/80">
           {(() => {
-            const isLockActive = selectedCell.hasLock ?? ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down'].includes(selectedCell.sashType || '');
+            const isLockActive =
+              selectedCell.hasLock ?? Boolean(selectedCell.sashType && selectedCell.sashType !== 'fixed');
             return (
               <>
                 <div className="flex items-center justify-between">
@@ -311,47 +421,53 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 </div>
 
                 {isLockActive && (
-            <div className="space-y-2 pt-1">
-              <div>
-                <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
-                  <span>Cao độ tim khóa:</span>
-                  <span className="font-mono font-bold text-orange-700">
-                    {selectedCell.handleHeight ?? Math.round(selectedCell.h / 2)} mm
-                  </span>
-                </div>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={selectedCell.handleHeight ?? Math.round(selectedCell.h / 2)}
-                    onChange={(e) => onUpdateCell({ handleHeight: Number(e.target.value) })}
-                    className="w-full h-8 px-2.5 pr-8 font-mono font-bold text-xs bg-white rounded-lg border border-orange-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-slate-900"
-                  />
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-gray-400">
-                    mm
-                  </span>
-                </div>
-              </div>
+                  <div className="space-y-2 pt-1">
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
+                        <span>Cao độ tim khóa:</span>
+                        <span className="font-mono font-bold text-orange-700">
+                          {selectedCell.handleHeight ?? Math.round(selectedCell.h / 2)} mm
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={selectedCell.handleHeight ?? Math.round(selectedCell.h / 2)}
+                          onChange={(e) => onUpdateCell({ handleHeight: Number(e.target.value) })}
+                          className="w-full h-8 px-2.5 pr-8 font-mono font-bold text-xs bg-white rounded-lg border border-orange-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-slate-900"
+                        />
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-gray-400">
+                          mm
+                        </span>
+                      </div>
+                    </div>
 
-              <div>
-                <label className="text-[11px] text-gray-600 font-medium block mb-1">Kiểu tay nắm</label>
-                <select
-                  value={selectedCell.handleType || 'lever'}
-                  onChange={(e) => onUpdateCell({ handleType: e.target.value as any })}
-                  className="w-full h-8 px-2 text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-orange-500 font-medium text-slate-800"
-                >
-                  <option value="lever">Tay nắm gạt cửa đi (Lever handle)</option>
-                  <option value="multipoint">Tay gạt đa điểm (Cửa sổ)</option>
-                  <option value="pull">Tay nắm kéo chữ D</option>
-                  <option value="crescent">Khóa bán nguyệt</option>
-                </select>
-              </div>
-            </div>
-          )}
-        </>
-      );
-    })()}
-  </div>
-)}
+                    <div>
+                      <label className="text-[11px] text-gray-600 font-medium block mb-1">
+                        Kiểu tay nắm
+                      </label>
+                      <Select
+                        fullWidth
+                        value={selectedCell.handleType || 'lever'}
+                        onChange={(e) =>
+                          onUpdateCell({ handleType: e.target.value as SceneCellNode['handleType'] })
+                        }
+                        options={[
+                          { value: 'lever', label: 'Tay nắm gạt cửa đi (Lever handle)' },
+                          { value: 'multipoint', label: 'Tay gạt đa điểm (Cửa sổ)' },
+                          { value: 'pull', label: 'Tay nắm kéo chữ D' },
+                          { value: 'crescent', label: 'Khóa bán nguyệt' },
+                        ]}
+                        className="h-8 py-0 text-xs md:text-xs bg-white rounded-lg border-gray-300 font-medium text-slate-800"
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      )}
 
       {/* 4. Loại vật liệu tấm (Pane Type) */}
       <div className="space-y-2">
@@ -383,51 +499,13 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
 
       {/* 4. Kính (khi chọn Pane = Glass) */}
       {selectedCell.paneType === 'glass' && (
-        <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
-          <div className="flex items-center gap-1.5 text-slate-800 font-semibold text-xs">
-            <Square size={13} className="text-primary" />
-            <span>Kính ô cửa</span>
-          </div>
-
-          <div>
-            <label className="text-[11px] text-slate-600 font-medium block mb-1">Loại kính cho ô này:</label>
-            <select
-              value={selectedCell.glassName || ''}
-              onChange={(e) => onUpdateCell({ glassName: e.target.value || undefined })}
-              className="w-full h-8 px-2.5 text-xs bg-white rounded-md border border-slate-200 focus:outline-none focus:border-primary text-slate-800"
-            >
-              <option value="">
-                {defaultGlass?.name ? `${defaultGlass.name} (Mặc định)` : 'Dùng kính mặc định'}
-              </option>
-              {glassOptions.map(({ key, label }) => (
-                <option key={key} value={label}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            {defaultGlass?.name && (
-              <p className="text-[11px] text-gray-500 italic mt-1.5">
-                Mặc định: {defaultGlass.name}
-              </p>
-            )}
-          </div>
-
-          <div className="pt-1.5 border-t border-slate-200/60">
-            <div className="text-[11px] text-gray-700 font-semibold mb-0.5">Chia kính</div>
-            <div className="flex items-center justify-between text-[11px] text-gray-500 mb-1">
-              <span>Số tấm chia đều:</span>
-            </div>
-            <input
-              type="number"
-              min={1}
-              max={10}
-              value={selectedCell.glassSplitCount || 1}
-              onChange={(e) => onUpdateCell({ glassSplitCount: Math.max(1, Number(e.target.value)) })}
-              className="w-full h-8 px-2.5 font-mono font-bold text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 text-slate-800"
-              placeholder="1"
-            />
-          </div>
-        </div>
+        <CellGlassConfigSection
+          selectedCell={selectedCell}
+          availableGlasses={availableGlasses}
+          defaultGlass={defaultGlass}
+          onUpdateCell={onUpdateCell}
+          onApplyGlassVisualToAll={onApplyGlassVisualToAll}
+        />
       )}
 
       {/* 5. Tùy chỉnh nẹp (Custom Edge Beads) */}
@@ -446,7 +524,8 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <span className="text-[10px] text-slate-500 font-medium block mb-0.5">Dưới</span>
-              <select
+              <Select
+                fullWidth
                 value={selectedCell.customBeads?.bottom || ''}
                 onChange={(e) => {
                   const val = e.target.value ? Number(e.target.value) : null;
@@ -454,19 +533,21 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                     customBeads: { ...selectedCell.customBeads, bottom: val },
                   });
                 }}
-                className="w-full h-7 px-1.5 text-[11px] bg-white rounded border border-slate-200 focus:outline-none focus:border-primary text-slate-800"
-              >
-                <option value="">— Mặc định —</option>
-                {availableBeads?.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.code} - {b.name}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: '— Mặc định —' },
+                  ...(availableBeads?.map((b) => ({
+                    value: b.id,
+                    label: `${b.code} - ${b.name}`,
+                  })) || []),
+                ]}
+                placeholder="— Mặc định —"
+                className="h-7 py-0 pl-1.5 pr-6 text-[11px] md:text-[11px] bg-white rounded border-slate-200 text-slate-800"
+              />
             </div>
             <div>
               <span className="text-[10px] text-slate-500 font-medium block mb-0.5">Trên</span>
-              <select
+              <Select
+                fullWidth
                 value={selectedCell.customBeads?.top || ''}
                 onChange={(e) => {
                   const val = e.target.value ? Number(e.target.value) : null;
@@ -474,15 +555,16 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                     customBeads: { ...selectedCell.customBeads, top: val },
                   });
                 }}
-                className="w-full h-7 px-1.5 text-[11px] bg-white rounded border border-slate-200 focus:outline-none focus:border-primary text-slate-800"
-              >
-                <option value="">— Mặc định —</option>
-                {availableBeads?.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.code} - {b.name}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: '— Mặc định —' },
+                  ...(availableBeads?.map((b) => ({
+                    value: b.id,
+                    label: `${b.code} - ${b.name}`,
+                  })) || []),
+                ]}
+                placeholder="— Mặc định —"
+                className="h-7 py-0 pl-1.5 pr-6 text-[11px] md:text-[11px] bg-white rounded border-slate-200 text-slate-800"
+              />
             </div>
           </div>
         </div>
@@ -493,7 +575,8 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <span className="text-[10px] text-slate-500 font-medium block mb-0.5">Trái</span>
-              <select
+              <Select
+                fullWidth
                 value={selectedCell.customBeads?.left || ''}
                 onChange={(e) => {
                   const val = e.target.value ? Number(e.target.value) : null;
@@ -501,19 +584,21 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                     customBeads: { ...selectedCell.customBeads, left: val },
                   });
                 }}
-                className="w-full h-7 px-1.5 text-[11px] bg-white rounded border border-slate-200 focus:outline-none focus:border-primary text-slate-800"
-              >
-                <option value="">— Mặc định —</option>
-                {availableBeads?.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.code} - {b.name}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: '— Mặc định —' },
+                  ...(availableBeads?.map((b) => ({
+                    value: b.id,
+                    label: `${b.code} - ${b.name}`,
+                  })) || []),
+                ]}
+                placeholder="— Mặc định —"
+                className="h-7 py-0 pl-1.5 pr-6 text-[11px] md:text-[11px] bg-white rounded border-slate-200 text-slate-800"
+              />
             </div>
             <div>
               <span className="text-[10px] text-slate-500 font-medium block mb-0.5">Phải</span>
-              <select
+              <Select
+                fullWidth
                 value={selectedCell.customBeads?.right || ''}
                 onChange={(e) => {
                   const val = e.target.value ? Number(e.target.value) : null;
@@ -521,15 +606,16 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                     customBeads: { ...selectedCell.customBeads, right: val },
                   });
                 }}
-                className="w-full h-7 px-1.5 text-[11px] bg-white rounded border border-slate-200 focus:outline-none focus:border-primary text-slate-800"
-              >
-                <option value="">— Mặc định —</option>
-                {availableBeads?.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.code} - {b.name}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: '— Mặc định —' },
+                  ...(availableBeads?.map((b) => ({
+                    value: b.id,
+                    label: `${b.code} - ${b.name}`,
+                  })) || []),
+                ]}
+                placeholder="— Mặc định —"
+                className="h-7 py-0 pl-1.5 pr-6 text-[11px] md:text-[11px] bg-white rounded border-slate-200 text-slate-800"
+              />
             </div>
           </div>
         </div>
@@ -549,7 +635,9 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                   type="button"
                   onClick={() => onUpdateCell({ beadJoint: joint.id as BeadJointType })}
                   className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
-                    isSelected ? 'bg-primary text-white shadow-2xs' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                    isSelected
+                      ? 'bg-primary text-white shadow-2xs'
+                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                   }`}
                 >
                   {joint.label}
@@ -639,4 +727,3 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
     </div>
   );
 };
-

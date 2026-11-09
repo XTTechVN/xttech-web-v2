@@ -1,24 +1,27 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getAccessoryCombos, deleteAccessoryCombo, getBrands } from '@/actions';
-import type { AccessoryCombo } from '@/types';
+import { getDefaultBrandId, type AccessoryCombo } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
-import { ComboToolbar, ComboTable, ComboModal } from './_components';
-import { AccessoryBrandSidebar } from '../accessories/_components';
+import { ComboModal } from '@/components';
+import { BrandSidebar } from '../../_components';
+import { ComboToolbar, ComboTable } from './_components';
 
 const PAGE_SIZE = 20;
 
 export default function AccessoryCombosTab() {
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedApplyFor, setSelectedApplyFor] = useState('');
+  const [selectedDoorType, setSelectedDoorType] = useState('');
   const [offset, setOffset] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCombo, setSelectedCombo] = useState<AccessoryCombo | null>(null);
+  const [isCopyMode, setIsCopyMode] = useState(false);
 
   // Query danh sách hãng phụ kiện
   const { data: brandsData } = useQuery({
@@ -31,28 +34,18 @@ export default function AccessoryCombosTab() {
     },
   });
 
-  const brandsList = brandsData || [];
+  const brandsList = useMemo(() => brandsData ?? [], [brandsData]);
   const sortedBrands = useMemo(
     () => [...brandsList].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })),
     [brandsList],
   );
 
-  // Tự động chọn hãng đầu tiên
-  useEffect(() => {
-    if (selectedBrandId === null && sortedBrands.length > 0) {
-      setSelectedBrandId(sortedBrands[0].id);
-    }
-  }, [sortedBrands, selectedBrandId]);
+  // Tự động chọn hãng đầu tiên (Derived State - tránh setState trong useEffect)
+  const activeBrandId = selectedBrandId ?? getDefaultBrandId(sortedBrands);
 
-  // Debounce search
-  const searchTimer = useRef<NodeJS.Timeout | null>(null);
   const handleSearchChange = (val: string) => {
     setSearch(val);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      setDebouncedSearch(val);
-      setOffset(0);
-    }, 350);
+    setOffset(0);
   };
 
   const handleSelectBrand = (brandId: number) => {
@@ -60,16 +53,28 @@ export default function AccessoryCombosTab() {
     setOffset(0);
   };
 
+  const handleApplyForChange = (val: string) => {
+    setSelectedApplyFor(val);
+    setOffset(0);
+  };
+
+  const handleDoorTypeChange = (val: string) => {
+    setSelectedDoorType(val);
+    setOffset(0);
+  };
+
   const { data, isLoading } = useQuery({
-    queryKey: ['accessory-combos', selectedBrandId, debouncedSearch, offset],
+    queryKey: ['accessory-combos', activeBrandId, search, selectedApplyFor, selectedDoorType, offset],
     queryFn: () =>
       getAccessoryCombos({
-        brandId: selectedBrandId || undefined,
-        search: debouncedSearch.trim() || undefined,
+        brandId: activeBrandId || undefined,
+        search: search.trim() || undefined,
+        applyFor: selectedApplyFor || undefined,
+        doorType: selectedDoorType || undefined,
         limit: PAGE_SIZE,
         offset,
       }),
-    enabled: selectedBrandId !== null,
+    enabled: activeBrandId !== null,
   });
 
   const combos = data?.items || [];
@@ -79,6 +84,7 @@ export default function AccessoryCombosTab() {
     mutationFn: (id: number) => deleteAccessoryCombo(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
+      queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
       toast.success('Xóa gói combo thành công');
     },
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa gói combo'),
@@ -86,11 +92,19 @@ export default function AccessoryCombosTab() {
 
   const handleOpenCreate = () => {
     setSelectedCombo(null);
+    setIsCopyMode(false);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenCopy = (combo: AccessoryCombo) => {
+    setSelectedCombo(combo);
+    setIsCopyMode(true);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (combo: AccessoryCombo) => {
     setSelectedCombo(combo);
+    setIsCopyMode(false);
     setIsModalOpen(true);
   };
 
@@ -103,9 +117,9 @@ export default function AccessoryCombosTab() {
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
       {/* Sidebar lọc theo Hãng */}
-      <AccessoryBrandSidebar
+      <BrandSidebar
         brands={brandsList}
-        selectedBrandId={selectedBrandId}
+        selectedBrandId={activeBrandId}
         onSelectBrand={handleSelectBrand}
       />
 
@@ -114,6 +128,10 @@ export default function AccessoryCombosTab() {
         <ComboToolbar
           search={search}
           onSearchChange={handleSearchChange}
+          selectedApplyFor={selectedApplyFor}
+          onApplyForChange={handleApplyForChange}
+          selectedDoorType={selectedDoorType}
+          onDoorTypeChange={handleDoorTypeChange}
           onAddClick={handleOpenCreate}
           total={total}
         />
@@ -121,10 +139,12 @@ export default function AccessoryCombosTab() {
         <ComboTable
           combos={combos}
           isLoading={isLoading}
-          search={debouncedSearch}
+          search={search}
+          hasActiveFilter={Boolean(selectedApplyFor || selectedDoorType)}
           total={total}
           offset={offset}
           pageSize={PAGE_SIZE}
+          onCopy={handleOpenCopy}
           onEdit={handleOpenEdit}
           onDelete={handleDelete}
           onPageChange={setOffset}
@@ -136,11 +156,13 @@ export default function AccessoryCombosTab() {
         onClose={() => {
           setIsModalOpen(false);
           setSelectedCombo(null);
+          setIsCopyMode(false);
         }}
         combo={selectedCombo}
-        brandId={selectedBrandId}
+        isCopy={isCopyMode}
+        brandId={activeBrandId}
+        defaultApplyFor={(selectedApplyFor as 'khung' | 'canh' | 'huong_mo' | 'khac') || 'khung'}
       />
     </div>
   );
 }
-

@@ -1,20 +1,30 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getBrands, getAccessories, deleteAccessory, getAccessoryCategories } from '@/actions';
-import type { Accessory, Brand } from '@/types';
+import {
+  getBrands,
+  getAccessories,
+  deleteAccessory,
+  bulkDeleteAccessories,
+  getAccessoryCategories,
+  exportAccessoriesExcel,
+} from '@/actions';
+import { useBulkDeleteSelection } from '@/hooks';
+import { getDefaultBrandId, type Accessory } from '@/types';
 import toast from 'react-hot-toast';
 import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
+import { BrandSidebar } from '../../_components';
 import {
-  AccessoryBrandSidebar,
   AccessoryToolbar,
   AccessoryTable,
   AccessoryModal,
   AccessorySkeleton,
   AccessoryEmptyState,
   AccessoryCategoryManagerModal,
+  AccessoryExcelModal,
+  AccessoryDeleteConfirmModal,
 } from './_components';
 
 export default function AccessoriesTab() {
@@ -24,8 +34,10 @@ export default function AccessoriesTab() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(null);
-
+  const [deletingAccessory, setDeletingAccessory] = useState<Accessory | null>(null);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Queries danh sách thương hiệu phụ kiện
   const { data: accessoryBrandsData, isLoading: isBrandsLoading } = useQuery({
@@ -37,7 +49,6 @@ export default function AccessoriesTab() {
         allowDeleted: false,
         brandType: 'accessory',
       });
-      // Nếu có hãng phụ kiện thì trả về, nếu không fallback lấy tất cả hãng
       if (res.items && res.items.length > 0) {
         return res.items;
       }
@@ -46,18 +57,14 @@ export default function AccessoriesTab() {
     },
   });
 
-  const brandsList = accessoryBrandsData || [];
+  const brandsList = useMemo(() => accessoryBrandsData ?? [], [accessoryBrandsData]);
 
   const sortedBrands = useMemo(() => {
     return [...brandsList].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
   }, [brandsList]);
 
-  // Luôn tự động chọn hãng đầu tiên nếu chưa chọn
-  useEffect(() => {
-    if (selectedBrandId === null && sortedBrands.length > 0) {
-      setSelectedBrandId(sortedBrands[0].id);
-    }
-  }, [sortedBrands, selectedBrandId]);
+  // Tự động lấy hãng đầu tiên nếu chưa chọn (Derived State - tránh setState trong useEffect)
+  const activeBrandId = selectedBrandId ?? getDefaultBrandId(sortedBrands);
 
   // Queries danh sách phân loại phụ kiện
   const { data: categoriesData } = useQuery({
@@ -69,11 +76,11 @@ export default function AccessoriesTab() {
 
   // Queries danh sách phụ kiện theo Hãng + Phân loại đang chọn
   const { data: accessoriesData, isLoading: isAccessoriesLoading } = useQuery({
-    queryKey: ['accessories', selectedBrandId, selectedCategoryId, search],
+    queryKey: ['accessories', activeBrandId, selectedCategoryId, search],
     queryFn: async () => {
-      if (!selectedBrandId) return [];
+      if (!activeBrandId) return [];
       const res = await getAccessories({
-        brandId: selectedBrandId,
+        brandId: activeBrandId,
         categoryId: selectedCategoryId || undefined,
         limit: 1000,
         offset: 0,
@@ -82,24 +89,46 @@ export default function AccessoriesTab() {
       });
       return res.items;
     },
-    enabled: selectedBrandId !== null,
+    enabled: activeBrandId !== null,
   });
 
-  const accessories = accessoriesData || [];
+  const accessories = useMemo(() => accessoriesData || [], [accessoriesData]);
 
-  // Mutations xóa phụ kiện
-  const { mutate: deleteAccessoryMutate } = useMutation({
+  const bulkSelection = useBulkDeleteSelection(accessories);
+
+  const invalidateAccessoryAndComboQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['accessories'] });
+    queryClient.invalidateQueries({ queryKey: ['accessories-list'] });
+    queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
+    queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
+    queryClient.invalidateQueries({ queryKey: ['all-accessories-dropdown'] });
+  };
+
+  // Mutations xóa phụ kiện đơn lẻ
+  const { mutate: deleteAccessoryMutate, isPending: isDeletingSingle } = useMutation({
     mutationFn: (id: number) => deleteAccessory(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accessories'] });
-      toast.success('Xóa phụ kiện thành công');
+      invalidateAccessoryAndComboQueries();
+      setDeletingAccessory(null);
+      toast.success('Đã xóa phụ kiện và các gói combo liên quan');
     },
     onError: (err) => showErrorToast(err, 'Lỗi khi xóa phụ kiện'),
   });
 
+  // Mutations xóa hàng loạt phụ kiện
+  const { mutate: bulkDeleteMutate, isPending: isBulkDeleting } = useMutation({
+    mutationFn: (ids: number[]) => bulkDeleteAccessories({ ids }),
+    onSuccess: (res) => {
+      invalidateAccessoryAndComboQueries();
+      toast.success(`Đã xóa hàng loạt ${res.deletedCount} phụ kiện và các gói combo liên quan`);
+      bulkSelection.exitBulkMode();
+    },
+    onError: (err) => showErrorToast(err, 'Lỗi khi xóa hàng loạt phụ kiện'),
+  });
+
   const selectedBrand = useMemo(() => {
-    return selectedBrandId ? brandsList.find((b) => b.id === selectedBrandId) : null;
-  }, [brandsList, selectedBrandId]);
+    return activeBrandId ? brandsList.find((b) => b.id === activeBrandId) : null;
+  }, [brandsList, activeBrandId]);
 
   const handleOpenCreateModal = () => {
     setSelectedAccessory(null);
@@ -112,8 +141,21 @@ export default function AccessoriesTab() {
   };
 
   const handleDeleteAccessory = (acc: Accessory) => {
-    if (confirm(`Xác nhận xóa phụ kiện "${acc.name}" (${acc.code || ''})?`)) {
-      deleteAccessoryMutate(acc.id);
+    setDeletingAccessory(acc);
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      await exportAccessoriesExcel({
+        brandId: activeBrandId,
+        categoryId: selectedCategoryId,
+      });
+      toast.success('Đã xuất file Excel danh sách phụ kiện');
+    } catch (err) {
+      showErrorToast(err, 'Lỗi khi xuất file Excel');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -121,27 +163,35 @@ export default function AccessoriesTab() {
 
   return (
     <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
-      {/* Cột lọc danh sách Hãng phụ kiện bên trái */}
-      <AccessoryBrandSidebar
+      <BrandSidebar
         brands={brandsList}
-        selectedBrandId={selectedBrandId}
+        selectedBrandId={activeBrandId}
         onSelectBrand={setSelectedBrandId}
       />
 
-      {/* Khu vực nội dung danh sách Phụ kiện bên phải */}
       <div className="flex-1 flex flex-col gap-4 min-w-0 w-full p-4">
-        {/* Toolbar: Tìm kiếm, Lọc phân loại & Thêm mới */}
         <AccessoryToolbar
           search={search}
           onSearchChange={setSearch}
           onAddClick={handleOpenCreateModal}
           onManageCategoriesClick={() => setIsCategoryManagerOpen(true)}
+          onExportExcelClick={handleExportExcel}
+          onImportExcelClick={() => setIsExcelModalOpen(true)}
+          isExporting={isExporting}
           categoryList={categoryList}
           selectedCategoryId={selectedCategoryId}
           onCategoryChange={setSelectedCategoryId}
+          isBulkMode={bulkSelection.isBulkMode}
+          selectedCount={bulkSelection.selectedCount}
+          totalCount={bulkSelection.totalCount}
+          isAllSelected={bulkSelection.isAllSelected}
+          isBulkDeleting={isBulkDeleting}
+          onEnterBulkMode={bulkSelection.enterBulkMode}
+          onExitBulkMode={bulkSelection.exitBulkMode}
+          onToggleSelectAll={bulkSelection.toggleSelectAll}
+          onConfirmBulkDelete={() => bulkSelection.setIsConfirmOpen(true)}
         />
 
-        {/* Danh sách phụ kiện dạng bảng */}
         {isLoading ? (
           <AccessorySkeleton count={6} />
         ) : accessories.length === 0 ? (
@@ -151,11 +201,16 @@ export default function AccessoriesTab() {
             accessories={accessories}
             onEdit={handleOpenEditModal}
             onDelete={handleDeleteAccessory}
+            isBulkMode={bulkSelection.isBulkMode}
+            selectedIdSet={bulkSelection.selectedIdSet}
+            isAllSelected={bulkSelection.isAllSelected}
+            isPartiallySelected={bulkSelection.isPartiallySelected}
+            onToggleSelect={bulkSelection.toggleSelect}
+            onToggleSelectAll={bulkSelection.toggleSelectAll}
           />
         )}
       </div>
 
-      {/* Modal Thêm mới / Sửa phụ kiện */}
       <AccessoryModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -164,13 +219,41 @@ export default function AccessoriesTab() {
         }}
         accessory={selectedAccessory}
         brands={brandsList}
-        defaultBrandId={selectedBrandId}
+        defaultBrandId={activeBrandId}
       />
 
-      {/* Modal Toàn màn hình Quản lý Danh mục phụ kiện */}
       <AccessoryCategoryManagerModal
         isOpen={isCategoryManagerOpen}
         onClose={() => setIsCategoryManagerOpen(false)}
+      />
+
+      <AccessoryExcelModal
+        isOpen={isExcelModalOpen}
+        onClose={() => setIsExcelModalOpen(false)}
+        brands={brandsList}
+        categories={categoryList}
+        defaultBrandId={activeBrandId}
+      />
+
+      <AccessoryDeleteConfirmModal
+        isOpen={Boolean(deletingAccessory)}
+        onClose={() => setDeletingAccessory(null)}
+        onConfirm={() => {
+          if (deletingAccessory) deleteAccessoryMutate(deletingAccessory.id);
+        }}
+        mode="single"
+        accessory={deletingAccessory}
+        loading={isDeletingSingle}
+      />
+
+      <AccessoryDeleteConfirmModal
+        isOpen={bulkSelection.isConfirmOpen}
+        onClose={() => bulkSelection.setIsConfirmOpen(false)}
+        onConfirm={() => bulkDeleteMutate(bulkSelection.selectedIds)}
+        mode="bulk"
+        bulkIds={bulkSelection.selectedIds}
+        selectedBrandName={selectedBrand?.name}
+        loading={isBulkDeleting}
       />
     </div>
   );

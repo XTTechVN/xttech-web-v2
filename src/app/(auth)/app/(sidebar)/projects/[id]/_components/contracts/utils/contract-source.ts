@@ -47,7 +47,7 @@ export const buildSourceFromDraft = ({
   installments: milestones.map((milestone) => ({
     name: milestone.installmentName,
     percentage: milestone.percentage,
-    amount: Math.round((totalAmount * milestone.percentage) / 100),
+    amount: milestone.expectedAmount ?? Math.round((totalAmount * milestone.percentage) / 100),
     dueDate: milestone.dueDate,
   })),
   partyA,
