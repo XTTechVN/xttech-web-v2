@@ -63,8 +63,8 @@ const ARTICLE_HTML_CLASS = `text-slate-800 text-base sm:text-[17px] leading-[1.8
   [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:rounded-r-lg [&_blockquote]:italic [&_blockquote]:text-slate-700
   [&_figure]:my-6 [&_figure]:mx-auto [&_figcaption]:text-xs [&_figcaption]:text-slate-500
   [&_figcaption]:mt-2
-  [&_img]:w-full [&_img]:max-h-105 [&_img]:object-contain [&_img]:bg-slate-50 [&_img]:mx-auto
-  [&_video]:w-full [&_video]:max-h-105 [&_video]:rounded-lg [&_video]:mx-auto
+  [&_img]:w-full [&_img]:h-auto [&_img]:object-contain [&_img]:bg-slate-50 [&_img]:mx-auto
+  [&_video]:w-full [&_video]:h-auto [&_video]:rounded-lg [&_video]:mx-auto
   [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg [&_iframe]:mx-auto [&_iframe]:border-0
   [&_a]:text-primary [&_a]:font-medium [&_a]:underline hover:[&_a]:text-primary/80
   [&_hr]:my-6 [&_hr]:border-slate-200 [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:rounded-xs
@@ -388,14 +388,14 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
             </p>
           )}
 
-          {/* Ảnh đại diện vừa vặn trong khung đọc + chú thích ảnh bên dưới (giống Ảnh 2) */}
+          {/* Ảnh đại diện tự co giãn đúng tỉ lệ theo trang + chú thích ảnh bên dưới */}
           {thumbnailSrc && (
             <figure className="mt-6 space-y-2">
-              <div className="overflow-hidden bg-slate-50">
+              <div className="w-full overflow-hidden bg-slate-50">
                 <img
                   src={thumbnailSrc}
                   alt={article.title}
-                  className="w-full max-h-105 object-contain mx-auto"
+                  className="w-full h-auto block object-contain mx-auto"
                 />
               </div>
               <figcaption className="text-xs text-slate-500 leading-relaxed">
