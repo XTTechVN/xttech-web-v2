@@ -9,13 +9,7 @@ import { usePathname } from 'next/navigation';
 import { Button, Heading, Avatar, XTLogo } from '@/components';
 import { getFileUrl } from '@/utils';
 import useAuthStore from '@/stores/useAuthStore';
-
-const NAV_LINKS = [
-  { href: '/#about', label: 'Về chúng tôi', key: 'about' },
-  { href: '/pricing', label: 'Giá', key: 'pricing' },
-  { href: '/news', label: 'Tin tức', key: 'news' },
-  { href: '/#contact', label: 'Liên hệ', key: 'contact' },
-];
+import { NAV_LINKS, type PublicNavLink } from '../_constants/public-layout.constants';
 
 export const Header = () => {
   const pathname = usePathname();

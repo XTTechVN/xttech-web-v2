@@ -24,6 +24,27 @@ Tài liệu này tự động áp dụng khi làm việc trong thư mục `xttec
 - **Tái sử dụng Modal Xác nhận:** Mọi hành động xác nhận (Xóa mềm, Xóa vĩnh viễn, Khôi phục, Duyệt...) phải tái sử dụng `ConfirmActionModal` chung, không tạo nhiều file modal xác nhận trùng lặp.
 - **Lazy Load Modal Nặng:** Các modal lớn (như `DocumentPreviewModal`, `RichTextEditor`, CAD/3D Viewer) nên dùng `next/dynamic` (`ssr: false`) để tối ưu tốc độ tải trang.
 
+### 1.3. Quy tắc Tách Biệt Dữ liệu Tĩnh / Mockup Data & Đóng Gói Theo Quy Mô (`Adaptive Colocation`)
+- 🛑 **NGHIÊM CẤM:**
+  1. Cấm nhồi các mảng/object dữ liệu tĩnh hoặc mockup data (`NAV_LINKS`, `STATS`, `CORE_PILLARS`, `PRICING_PLANS`...) trực tiếp vào bên trong file giao diện `.tsx`.
+  2. Cấm vứt các file `*.constants.ts` nằm phẳng lộn xộn trực tiếp ngay dưới `_components/`.
+  3. Cấm nhét thẻ `<svg>` / JSX thô vào trong file dữ liệu (`.constants.tsx`) — file dữ liệu phải là **`.constants.ts` thuần TypeScript** (chỉ lưu dữ liệu và tham chiếu Component Icon như `icon: Mail` từ `lucide-react` hoặc custom icon component).
+- **2 Cấp độ Tổ chức Chuẩn (Adaptive Colocation):**
+  - **Cấp độ 1 — Component Đơn Gọn Nhẹ (`< 250` dòng, không có sub-component, vd: `header.tsx`, `footer.tsx`):**
+    - Giữ component `.tsx` gọn nhẹ chỉ chứa UI & logic hiển thị.
+    - Tách toàn bộ dữ liệu tĩnh/mockup vào thư mục **`_constants/<domain>.constants.ts`** của route (hoặc đưa lên **`src/config/<domain>.ts`** nếu dữ liệu đó được dùng từ 2 route trở lên).
+  - **Cấp độ 2 — Component Phức hợp / Đa Section (`> 250` dòng hoặc có $\ge 2$ sub-components, vd: `hero`, `pricing`):**
+    - **Bắt buộc đóng gói thành 1 Folder riêng (`_components/<feature-name>/`)** để gom cả sub-components lẫn file hằng số:
+      ```text
+      _components/
+        └── hero/                         # Folder riêng cho khối phức hợp
+            ├── hero.tsx                  # File khung ghép các section (< 150 dòng)
+            ├── hero-cad-preview.tsx      # Sub-component (< 250 dòng)
+            ├── hero-floating-dock.tsx    # Sub-component (< 150 dòng)
+            ├── hero.constants.ts         # Thuần .ts: Lưu STATS, ADVISE_ADVANTAGES, CORE_PILLARS...
+            └── index.ts                  # Barrel export: export * from './hero'
+      ```
+
 ---
 
 ## 2. Quy chuẩn React Hooks & Chống Cascading Renders
