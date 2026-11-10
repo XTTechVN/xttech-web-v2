@@ -1,3 +1,5 @@
+export type ProfileIdRef = number | string;
+
 export type FrameShapeCategory = 'all' | 'basic' | 'arch' | 'corner' | 'special_arch';
 
 export type FrameShape =
@@ -37,10 +39,10 @@ export type BeadType = 'square' | 'bevel' | 'round';
 export type BeadJointType = '90' | '45';
 
 export interface CustomEdgeBeads {
-  bottom?: number | null;
-  top?: number | null;
-  left?: number | null;
-  right?: number | null;
+  bottom?: ProfileIdRef | null;
+  top?: ProfileIdRef | null;
+  left?: ProfileIdRef | null;
+  right?: ProfileIdRef | null;
 }
 
 export interface GlassGrilleMotif {
@@ -117,7 +119,7 @@ export interface SceneCellNode {
   hasLock?: boolean;
   handleHeight?: number;
   handleType?: 'lever' | 'pull' | 'crescent' | 'multipoint' | 'khoa-sap' | 'd-trai' | 'd-phai' | (string & {});
-  mullionProfileId?: number;
+  mullionProfileId?: ProfileIdRef;
   mullionCutType?: MullionCutType;
   grilleConfig?: GlassGrilleConfig;
   sashMullions?: SashMullionConfig;
@@ -135,7 +137,7 @@ export interface SceneCellNode {
   /** Ghi đè Đảo vách / Đảo cánh riêng cho ô (mặc định 'inherit' = theo FrameConfig toàn cục) */
   reversalOverride?: CellReversalOverride;
   /** Ghi đè mã thanh REVERSAL riêng cho ô */
-  reversalProfileIdOverride?: number | null;
+  reversalProfileIdOverride?: ProfileIdRef | null;
   /** Ghi đè khoảng hở/ngậm đảo riêng cho ô (mm) */
   reversalOffsetMmOverride?: number | null;
   /** Ghi đè Hở/Kín cạnh đáy riêng cho ô chạm sàn (mặc định 'inherit') */
@@ -344,10 +346,10 @@ export interface SashOffsetValues {
 }
 
 export interface SashVariantProfiles {
-  leftProfileId?: number;
-  topProfileId?: number;
-  rightProfileId?: number;
-  bottomProfileId?: number;
+  leftProfileId?: ProfileIdRef;
+  topProfileId?: ProfileIdRef;
+  rightProfileId?: ProfileIdRef;
+  bottomProfileId?: ProfileIdRef;
 }
 
 export interface SlidingSashJoints {
@@ -357,9 +359,9 @@ export interface SlidingSashJoints {
 }
 
 export interface FrameEdgeProfile {
-  profileId?: number;
+  profileId?: ProfileIdRef;
   profileCode?: string;
-  coverProfileId?: number;
+  coverProfileId?: ProfileIdRef;
   coverProfileCode?: string;
   offsetMm: number;
 }
@@ -370,11 +372,11 @@ export type SafetyBarsCornerJoint = '45' | '90_vert';
 export interface SafetyBarsConfig {
   isEnabled: boolean;
   preset: SafetyBarsPreset;
-  profileId?: number;
+  profileId?: ProfileIdRef;
   cornerJoint: SafetyBarsCornerJoint;
   insetGapMm: number;
-  mullionVertProfileId?: number;
-  mullionHorizProfileId?: number;
+  mullionVertProfileId?: ProfileIdRef;
+  mullionHorizProfileId?: ProfileIdRef;
 }
 
 export const DEFAULT_SAFETY_BARS_CONFIG: SafetyBarsConfig = {
@@ -409,7 +411,7 @@ export interface DoorGasketConfigItem {
 
 export interface DoorCustomExtraItem {
   id: string;
-  profileId?: number;
+  profileId?: ProfileIdRef;
   profileCode?: string;
   profileName?: string;
   note?: string;
@@ -429,16 +431,16 @@ export interface FrameConfig {
   rightEdge: FrameEdgeProfile;
   bottomEdge: FrameEdgeProfile;
   mullionMode: 'none' | 'single' | 'separate';
-  mullionProfileId?: number;
-  mullionVertProfileId?: number;
-  mullionHorizProfileId?: number;
+  mullionProfileId?: ProfileIdRef;
+  mullionVertProfileId?: ProfileIdRef;
+  mullionHorizProfileId?: ProfileIdRef;
   hasSafetyBars: boolean;
   safetyBarsConfig?: SafetyBarsConfig;
-  beadProfileId?: number;
+  beadProfileId?: ProfileIdRef;
   beadCornerJoint: BeadCornerJoint;
-  couplingProfileId?: number;
+  couplingProfileId?: ProfileIdRef;
   reversalMode?: 'none' | 'wall' | 'sash';
-  reversalProfileId?: number;
+  reversalProfileId?: ProfileIdRef;
   reversalProfileCode?: string;
   reversalOffsetMm?: number;
   isReversedWall: boolean;
@@ -484,7 +486,7 @@ export interface SashConfig {
   hasScreenSash: boolean;
   family: DoorSystemFamily;
   sashStyle: 'standard' | 'slim';
-  voCucProfileId?: number;
+  voCucProfileId?: ProfileIdRef;
   isHydraulic?: boolean;
   hoNenMm: number;
   hoLeMm?: number;
@@ -499,25 +501,25 @@ export interface SashConfig {
   beadCornerJoint: BeadCornerJoint;
   isNhomCo: boolean;
   slidingOverlapMm?: number;
-  profileId?: number;
-  leftProfileId?: number;
-  topProfileId?: number;
-  rightProfileId?: number;
-  bottomProfileId?: number;
-  bottomRailProfileId?: number;
+  profileId?: ProfileIdRef;
+  leftProfileId?: ProfileIdRef;
+  topProfileId?: ProfileIdRef;
+  rightProfileId?: ProfileIdRef;
+  bottomProfileId?: ProfileIdRef;
+  bottomRailProfileId?: ProfileIdRef;
   edges?: {
     bottom?: {
-      profileId?: number;
+      profileId?: ProfileIdRef;
       enabled?: boolean;
     };
     [key: string]: unknown;
   };
   slidingVariants?: Partial<Record<SlidingSashRole, SashVariantProfiles>>;
-  mullionProfileId?: number;
-  beadProfileId?: number;
-  dynamicMullionProfileId?: number;
-  opNoiProfileId?: number;
-  interlockProfileId?: number;
+  mullionProfileId?: ProfileIdRef;
+  beadProfileId?: ProfileIdRef;
+  dynamicMullionProfileId?: ProfileIdRef;
+  opNoiProfileId?: ProfileIdRef;
+  interlockProfileId?: ProfileIdRef;
   rawDodong?: string;
   rawVariants?: Record<string, unknown>;
   gaskets?: DoorGasketConfigItem[];
@@ -626,7 +628,7 @@ export interface MullionInfo {
   direction: 'vertical' | 'horizontal';
   dimension: number;
   totalDimension: number;
-  profileId?: number;
+  profileId?: ProfileIdRef;
   cutType?: MullionCutType;
   cutStart?: boolean;
   cutEnd?: boolean;

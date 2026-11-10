@@ -271,8 +271,8 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
 
     // TH 2: Render từ trang danh sách khiếu nại (Quên chấm công)
     if (!data && form.requestType === 'forgot_attendance') {
-      if (!form.requestedCheckIn && !form.requestedCheckOut) {
-        toast.error('Vui lòng nhập Check In hoặc Check Out yêu cầu');
+      if (!form.requestedCheckIn || !form.requestedCheckOut) {
+        toast.error('Đơn quên chấm công bắt buộc phải nhập đầy đủ cả giờ Check In và giờ Check Out yêu cầu');
         return;
       }
 
@@ -471,7 +471,7 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
         {/* REQUESTED CHECK IN */}
         {showRequestedCheckIn && (
           <Input
-            label={data ? 'Check In yêu cầu *' : 'Check In yêu cầu'}
+            label="Check In yêu cầu *"
             type="time"
             value={form.requestedCheckIn}
             onChange={(e) => updateField('requestedCheckIn', e.target.value)}
@@ -482,7 +482,7 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
         {/* REQUESTED CHECK OUT */}
         {showRequestedCheckOut && (
           <Input
-            label={data ? 'Check Out yêu cầu *' : 'Check Out yêu cầu'}
+            label="Check Out yêu cầu *"
             type="time"
             value={form.requestedCheckOut}
             onChange={(e) => updateField('requestedCheckOut', e.target.value)}
@@ -503,7 +503,7 @@ export default function AddAdjustmentModal({ open, onClose, onSuccess, data }: P
         {/* MISSING ATTENDANCE INFO BOX */}
         {isMissingAttendance && (
           <div className="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700">
-            Tạo yêu cầu cho ngày quên chấm công. Vui lòng nhập thời gian Check In và/hoặc Check Out yêu cầu.
+            Tạo yêu cầu cho ngày quên chấm công. Vui lòng nhập đầy đủ cả thời gian Check In và Check Out của ca làm việc.
           </div>
         )}
       </div>

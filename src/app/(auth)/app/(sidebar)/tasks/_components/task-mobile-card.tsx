@@ -75,7 +75,7 @@ export function TaskMobileCard({
         'rounded-xl border bg-white px-3 py-2.5 transition',
         canSelect && 'cursor-pointer',
         isChecked
-          ? 'border-primary bg-primary/[0.03] ring-1 ring-primary'
+          ? 'border-primary bg-primary/3 ring-1 ring-primary'
           : 'border-slate-200',
       )}
     >

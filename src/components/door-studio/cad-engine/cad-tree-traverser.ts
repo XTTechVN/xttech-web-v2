@@ -3,6 +3,7 @@ import {
   MullionInfo,
   FrameConfig,
   SashConfig,
+  ProfileIdRef,
   normalizeMullionCutType,
   resolveMullionCutEnds,
 } from '../studio-types';
@@ -309,7 +310,7 @@ export const buildCadLayout = (
     sashConfig?: SashConfig;
     slidingOverlapPx?: number;
     /** Quy đổi mã thanh REVERSAL của ô (ghi đè) sang bề rộng px; không truyền = ô không có reversalD riêng */
-    resolveReversalPx?: (profileId?: number | null) => number;
+    resolveReversalPx?: (profileId?: ProfileIdRef | null) => number;
   }
 ): CadLayoutResult => {
   const frames: FrameBox[] = [];

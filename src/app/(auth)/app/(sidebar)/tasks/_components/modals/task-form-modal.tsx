@@ -223,7 +223,7 @@ function TaskFormBody({ task, employees, departments, projects, onClose, onSucce
             />
           </div>
 
-          <div className="max-h-56 min-h-50 flex-1 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 bg-white md:max-h-[340px]">
+          <div className="max-h-56 min-h-50 flex-1 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 bg-white md:max-h-85">
             {filteredEmployees.map((emp) => {
               const checked = assigneeIds.includes(emp.id);
               const firstDeptId = emp.positions?.[0]?.departmentId;
@@ -233,7 +233,7 @@ function TaskFormBody({ task, employees, departments, projects, onClose, onSucce
                   key={emp.id}
                   type="button"
                   onClick={() => toggleAssignee(emp.id)}
-                  className={cn('flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer', checked ? 'bg-primary/[0.06]' : 'hover:bg-slate-50')}
+                  className={cn('flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer', checked ? 'bg-primary/6' : 'hover:bg-slate-50')}
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
                     <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold', checked ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600')}>

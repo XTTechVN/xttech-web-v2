@@ -1,4 +1,4 @@
-import { ReceiptType } from '@/types';
+import { ManualReason, ReceiptType } from '@/types';
 
 export const SUPPLIER_TYPE_MAP: Record<string, string> = {
   aluminum: 'Nhà cung cấp nhôm thanh',
@@ -45,9 +45,94 @@ export const RECEIPT_STATUS_MAP: Record<string, { label: string; bg: string; tex
   cancelled: { label: 'Đã hủy', bg: 'bg-slate-100', text: 'text-slate-600' },
 };
 
-export const GLASS_ORDER_STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = {
-  draft: { label: 'Chờ duyệt', bg: 'bg-slate-100', text: 'text-slate-700' },
-  ordered: { label: 'Đã gửi nhà máy tôi', bg: 'bg-blue-50', text: 'text-blue-700' },
-  delivered: { label: 'Đã nhận về xưởng', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  assembled: { label: 'Đã vào khung hoàn thiện', bg: 'bg-indigo-50', text: 'text-indigo-700' },
+export const GLASS_ORDER_STATUS_MAP: Record<
+  string,
+  { label: string; badgeClass: string; bg: string; text: string }
+> = {
+  draft: {
+    label: 'Chờ duyệt',
+    badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+    bg: 'bg-slate-100',
+    text: 'text-slate-700',
+  },
+  ordered: {
+    label: 'Đã gửi nhà máy',
+    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+  },
+  delivered: {
+    label: 'Đã nhận về xưởng',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-700',
+  },
+  assembled: {
+    label: 'Đã vào khung',
+    badgeClass: 'bg-primary/10 text-primary border-primary/20',
+    bg: 'bg-primary/10',
+    text: 'text-primary',
+  },
+  cancelled: {
+    label: 'Đã hủy',
+    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+    bg: 'bg-rose-50',
+    text: 'text-rose-700',
+  },
+  scrapped: {
+    label: 'Hủy / Bể vỡ',
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+  },
+};
+
+export const GLASS_GRIND_LABEL_MAP: Record<string, string> = {
+  grind_edge: 'Mài xiết cạnh',
+  grind_flat: 'Mài bóng phẳng',
+  grind_bevel: 'Mài vát cạnh',
+  no_grind: 'Không mài',
+};
+
+export const GLASS_GRIND_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'grind_edge', label: 'Mài xiết cạnh' },
+  { value: 'grind_flat', label: 'Mài bóng phẳng' },
+  { value: 'grind_bevel', label: 'Mài vát cạnh' },
+  { value: 'no_grind', label: 'Không mài' },
+];
+
+export const GLASS_MANUAL_REASON_MAP: Record<ManualReason, string> = {
+  spare: 'Kính dự phòng',
+  replacement: 'Kính thay thế (vỡ/lỗi)',
+  extra: 'Phát sinh ngoài thiết kế',
+  other: 'Khác',
+};
+
+export const GLASS_MANUAL_REASON_OPTIONS: Array<{ value: ManualReason; label: string }> = [
+  { value: 'spare', label: 'Kính dự phòng' },
+  { value: 'replacement', label: 'Kính thay thế (vỡ/lỗi)' },
+  { value: 'extra', label: 'Phát sinh ngoài thiết kế' },
+  { value: 'other', label: 'Khác' },
+];
+
+export const FRAME_SHAPE_LABEL_MAP: Record<string, string> = {
+  rect: 'Chữ nhật',
+  arch_half: 'Vòm bán nguyệt',
+  arch_segment: 'Vòm cung tròn',
+  arch_semicircle: 'Vòm bán nguyệt có chân',
+  arch_semicircle_open: 'Vòm bán nguyệt mở đáy',
+  arch_segment_leg: 'Vòm cung có chân',
+  arch_segment_leg_open: 'Vòm cung mở đáy',
+  arch_pointed: 'Vòm nhọn Gothic',
+  arch_pointed_leg: 'Vòm nhọn có chân',
+  round_top: 'Tròn đầu',
+  round_top_open: 'Tròn đầu mở đáy',
+  round_top_2: 'Bo 2 góc trên',
+  round_top_2_open: 'Bo 2 góc trên mở đáy',
+  round_top_right: 'Bo 1 góc trên',
+  round_top_rw: 'Bo góc lệch',
+  round_4_corner: 'Bo 4 góc',
+  quad_circle: 'Vòm 1/4',
+  circle: 'Hình tròn',
+  ellipse: 'Hình elip',
 };

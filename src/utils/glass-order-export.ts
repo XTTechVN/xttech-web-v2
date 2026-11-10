@@ -1,80 +1,49 @@
 import toast from 'react-hot-toast';
+import { GLASS_GRIND_LABEL_MAP } from '@/config/warehouse';
 import { GlassOrder } from '@/types';
+import { downloadOrShareBlob } from './file';
 import {
-  GLASS_GRIND_LABEL_MAP,
-  formatPaneShapeSummary,
   exportGlassOrderToDxf,
+  formatPaneShapeSummary,
 } from './glass-order-dxf-export';
+import { captureAllDoorSectionAssets } from './glass-excel/door-cad-snapshot';
+import { groupGlassOrderForExcel } from './glass-excel/glass-order-grouping';
+import { buildGlassOrderWorksheets } from './glass-excel/glass-order-sheets-builder';
+import { renderAllPaneAssets } from './glass-excel/glass-pane-canvas';
+import { packWorksheetsToXlsx } from './glass-excel/xlsx-openxml-packager';
 
 export { exportGlassOrderToDxf, formatPaneShapeSummary };
 
 export async function exportGlassOrderToExcel(fullOrder: GlassOrder): Promise<void> {
-  const items = fullOrder.items || [];
-  if (items.length === 0) {
-    toast.error('Đơn hàng không có ô kính nào để xuất!');
+  const grouped = groupGlassOrderForExcel(fullOrder);
+  if (grouped.activeItems.length === 0) {
+    toast.error('Đơn hàng không có ô kính hợp lệ nào để xuất!');
     return;
   }
 
-  const XLSX = await import('xlsx');
-  const rows = [
-    ['ĐƠN ĐẶT KÍNH TÔI GIA CÔNG NHÀ MÁY'],
-    [`Mã đơn: ${fullOrder.code}`, `Dự án: ${fullOrder.projectName || ''}`],
-    [
-      `Ngày lập: ${new Date(fullOrder.createdAt).toLocaleDateString('vi-VN')}`,
-      `Số lượng tấm: ${fullOrder.totalPanes}`,
-      `Tổng diện tích: ${fullOrder.totalAreaM2} m²`,
-    ],
-    [],
-    [
-      'STT',
-      'Vị trí cửa',
-      'Ký hiệu ô kính',
-      'Chủng loại kính',
-      'Hình dạng',
-      'Rộng (mm)',
-      'Cao (mm)',
-      'Diện tích (m²)',
-      'Mài cạnh',
-      'Ghi chú',
-    ],
-    ...items.map((it, idx) => [
-      idx + 1,
-      it.doorName ||
-        it.positionCode ||
-        (it.paneSource === 'manual' ? 'Kính lẻ' : `Vị trí #${it.positionId}`),
-      it.paneLabel || '-',
-      it.glassType,
-      formatPaneShapeSummary(it.frameShape, it.archConfig),
-      it.widthMm,
-      it.heightMm,
-      Number(it.areaM2.toFixed(3)),
-      GLASS_GRIND_LABEL_MAP[it.grindType || ''] || it.grindType || 'Mài xiết cạnh',
-      it.manualReason || '',
-    ]),
-  ];
+  const paneAssets = renderAllPaneAssets(grouped.specGroups);
+  const doorAssets = await captureAllDoorSectionAssets(
+    grouped.doorSections,
+    paneAssets.size + 1,
+  );
+  const sheets = buildGlassOrderWorksheets(fullOrder, grouped, paneAssets, doorAssets);
+  const allAssets = [...Array.from(paneAssets.values()), ...Array.from(doorAssets.values())];
+  const xlsxBytes = packWorksheetsToXlsx(sheets, allAssets);
+  const blobBuffer = xlsxBytes.buffer.slice(
+    xlsxBytes.byteOffset,
+    xlsxBytes.byteOffset + xlsxBytes.byteLength,
+  ) as ArrayBuffer;
+  const blob = new Blob([blobBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
 
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [
-    { wch: 6 },
-    { wch: 20 },
-    { wch: 18 },
-    { wch: 30 },
-    { wch: 22 },
-    { wch: 12 },
-    { wch: 12 },
-    { wch: 14 },
-    { wch: 16 },
-    { wch: 20 },
-  ];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'DonDatKinh');
-  XLSX.writeFile(wb, `Don_Dat_Kinh_${fullOrder.code}.xlsx`);
-  toast.success('Đã xuất file Excel đơn kính thành công!');
+  await downloadOrShareBlob(blob, `Don_Dat_Kinh_${fullOrder.code}.xlsx`);
+  toast.success('Đã xuất file Excel đơn kính 2 Sheet kèm hình vẽ thành công!');
 }
 
 export function printGlassOrderHtml(fullOrder: GlassOrder): void {
-  const items = fullOrder.items || [];
+  const grouped = groupGlassOrderForExcel(fullOrder);
+  const items = grouped.activeItems;
   if (items.length === 0) {
     toast.error('Đơn hàng không có ô kính nào để in!');
     return;
@@ -114,10 +83,10 @@ export function printGlassOrderHtml(fullOrder: GlassOrder): void {
       <title>Đơn Đặt Kính - ${fullOrder.code}</title>
       <style>
         body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
-        h2 { text-transform: uppercase; margin-bottom: 4px; font-size: 18px; }
+        h2 { text-transform: uppercase; margin-bottom: 4px; font-size: 18px; color: #045863; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 16px; font-size: 13px; line-height: 1.6; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-        th { background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 6px; text-align: left; }
+        th { background-color: #e6f2f3; color: #045863; border: 1px solid #cbd5e1; padding: 8px 6px; text-align: left; }
         @media print {
           @page { size: A4 landscape; margin: 12mm; }
           body { margin: 0; }
@@ -133,8 +102,8 @@ export function printGlassOrderHtml(fullOrder: GlassOrder): void {
           <p><b>Ngày lập:</b> ${new Date(fullOrder.createdAt).toLocaleDateString('vi-VN')}</p>
         </div>
         <div>
-          <p><b>Tổng số tấm:</b> ${fullOrder.totalPanes} tấm</p>
-          <p><b>Tổng diện tích:</b> ${fullOrder.totalAreaM2.toFixed(3)} m²</p>
+          <p><b>Tổng số tấm:</b> ${grouped.totalPanes} tấm</p>
+          <p><b>Tổng diện tích:</b> ${grouped.totalAreaM2.toFixed(3)} m²</p>
           <p><b>Ghi chú:</b> ${fullOrder.note || 'Không có'}</p>
         </div>
       </div>
@@ -175,4 +144,3 @@ export function printGlassOrderHtml(fullOrder: GlassOrder): void {
   `);
   printWindow.document.close();
 }
-

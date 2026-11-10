@@ -9,6 +9,7 @@ import {
   SashConfig,
   SceneCellNode,
 } from '../studio-types';
+import { parseStudioProfileId } from '../utils/profile-combine-utils';
 
 interface CellFrameOverrideSectionProps {
   selectedCell: SceneCellNode;
@@ -96,7 +97,7 @@ export const CellFrameOverrideSection: React.FC<CellFrameOverrideSectionProps> =
             value={selectedCell.reversalProfileIdOverride ?? ''}
             onChange={(event) =>
               onUpdateCell({
-                reversalProfileIdOverride: event.target.value ? Number(event.target.value) : null,
+                reversalProfileIdOverride: parseStudioProfileId(event.target.value) ?? null,
               })
             }
             className={SELECT_CLASS}

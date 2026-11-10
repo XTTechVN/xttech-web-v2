@@ -81,7 +81,7 @@ export function TaskStatsCards({
             className={cn(
               'rounded-xl border px-3.5 py-3 text-left transition cursor-pointer',
               isActive
-                ? 'border-primary bg-primary/[0.03] ring-1 ring-primary'
+                ? 'border-primary bg-primary/3 ring-1 ring-primary'
                 : 'border-slate-200 bg-white hover:border-slate-300',
             )}
           >

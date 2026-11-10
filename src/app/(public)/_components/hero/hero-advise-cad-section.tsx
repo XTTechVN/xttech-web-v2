@@ -92,10 +92,10 @@ export const HeroAdviseCadSection = () => {
               </div>
 
               {/* Khung vẽ Bản vẽ Cửa CAD chuẩn tỷ lệ */}
-              <div className="relative flex min-h-[380px] items-center justify-center rounded-2xl bg-white p-4 sm:p-6">
+              <div className="relative flex min-h-95 items-center justify-center rounded-2xl bg-white p-4 sm:p-6">
                 <svg
                   viewBox="0 0 540 620"
-                  className="w-full max-w-[420px] drop-shadow-md select-none"
+                  className="w-full max-w-105 drop-shadow-md select-none"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >

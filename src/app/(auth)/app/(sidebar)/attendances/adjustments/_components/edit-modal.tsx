@@ -61,6 +61,18 @@ export default function EditAdjustmentModal({ open, data, onClose, onSuccess }: 
       toast.error('Vui lòng nhập lý do khiếu nại');
       return;
     }
+    if (form.requestType === 'forgot_attendance' && (!form.requestedCheckIn || !form.requestedCheckOut)) {
+      toast.error('Đơn quên chấm công bắt buộc phải nhập đầy đủ cả giờ Check In và giờ Check Out yêu cầu');
+      return;
+    }
+    if (form.requestType === 'check_in' && !form.requestedCheckIn) {
+      toast.error('Vui lòng nhập giờ Check In yêu cầu');
+      return;
+    }
+    if (form.requestType === 'check_out' && !form.requestedCheckOut) {
+      toast.error('Vui lòng nhập giờ Check Out yêu cầu');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const payload: AttendanceAdjustmentRequestUpdate = {
