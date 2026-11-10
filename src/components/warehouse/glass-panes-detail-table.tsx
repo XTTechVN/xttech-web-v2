@@ -2,11 +2,11 @@
 
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { GLASS_GRIND_LABEL_MAP, GLASS_MANUAL_REASON_MAP } from '@/config/warehouse';
 import { GlassOrderItem } from '@/types';
+import { formatPaneShapeSummary } from '@/utils/glass-order-dxf-export';
 
-import { MANUAL_REASON_MAP, GRIND_LABEL_MAP, formatPaneShapeSummary } from '../_utils/glass-mapping';
-
-interface GlassPanesDetailTableProps {
+export interface GlassPanesDetailTableProps {
   items: GlassOrderItem[];
 }
 
@@ -23,7 +23,7 @@ export function GlassPanesDetailTable({ items }: GlassPanesDetailTableProps) {
               <th className="p-2.5">Vị Trí Cửa</th>
               <th className="p-2.5">Ký Hiệu Ô Kính</th>
               <th className="p-2.5">Quy Cách Kính</th>
-              <th className="p-2.5 text-right">Rộng x Cao (mm)</th>
+              <th className="p-2.5 text-right">Rộng × Cao (mm)</th>
               <th className="p-2.5 text-right">Diện Tích (m²)</th>
               <th className="p-2.5">Mài Cạnh</th>
               <th className="p-2.5 text-center">Trạng Thái Bản Vẽ</th>
@@ -32,10 +32,15 @@ export function GlassPanesDetailTable({ items }: GlassPanesDetailTableProps) {
           <tbody className="divide-y divide-slate-100">
             {items.map((item) => {
               const isManual = item.paneSource === 'manual' || !item.positionId;
-              const reasonLabel = item.manualReason ? MANUAL_REASON_MAP[item.manualReason] : 'Kính lẻ';
+              const reasonLabel = item.manualReason
+                ? GLASS_MANUAL_REASON_MAP[item.manualReason]
+                : 'Kính lẻ';
 
               return (
-                <tr key={item.id} className={`hover:bg-slate-50/50 ${isManual ? 'bg-amber-50/30' : ''}`}>
+                <tr
+                  key={item.id}
+                  className={`hover:bg-slate-50/50 ${isManual ? 'bg-amber-50/30' : ''}`}
+                >
                   <td className="p-2.5 font-medium text-slate-800">
                     {isManual ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
@@ -45,9 +50,7 @@ export function GlassPanesDetailTable({ items }: GlassPanesDetailTableProps) {
                       item.doorName || item.positionCode || `Vị trí #${item.positionId}`
                     )}
                   </td>
-                  <td className="p-2.5 font-mono text-slate-700">
-                    {item.paneLabel || '-'}
-                  </td>
+                  <td className="p-2.5 font-mono text-slate-700">{item.paneLabel || '-'}</td>
                   <td className="p-2.5 text-slate-700">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span>{item.glassType}</span>
@@ -58,29 +61,25 @@ export function GlassPanesDetailTable({ items }: GlassPanesDetailTableProps) {
                       )}
                     </div>
                   </td>
-                  <td className="p-2.5 text-right font-mono font-semibold text-slate-800">
+                  <td className="p-2.5 text-right font-mono tabular-nums font-semibold text-slate-800">
                     {item.widthMm} × {item.heightMm} mm
                   </td>
-                  <td className="p-2.5 text-right font-medium text-indigo-700">
+                  <td className="p-2.5 text-right font-mono tabular-nums font-semibold text-primary">
                     {item.areaM2.toFixed(3)} m²
                   </td>
                   <td className="p-2.5 text-slate-600">
-                    {GRIND_LABEL_MAP[item.grindType || ''] || item.grindType || 'Mài xiết cạnh'}
+                    {GLASS_GRIND_LABEL_MAP[item.grindType || ''] || item.grindType || 'Mài xiết cạnh'}
                   </td>
                   <td className="p-2.5 text-center">
                     {isManual ? (
-                      <span className="text-amber-700 font-medium text-[11px]">
-                        Kính lẻ phát sinh
-                      </span>
+                      <span className="text-amber-700 font-medium text-[11px]">Kính lẻ phát sinh</span>
                     ) : item.isRevisionStale ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
                         <AlertTriangle size={10} />
                         Đã sửa thiết kế sau bóc tách
                       </span>
                     ) : (
-                      <span className="text-emerald-700 font-medium text-[11px]">
-                        Đồng bộ chuẩn
-                      </span>
+                      <span className="text-emerald-700 font-medium text-[11px]">Đồng bộ chuẩn</span>
                     )}
                   </td>
                 </tr>

@@ -1,5 +1,6 @@
 import { FrameConfig, FrameShape, SashConfig, SashVariantProfiles, SlidingSashRole } from '../studio-types';
 import { ProfileBar } from '@/types/profile';
+import { findStudioProfile, type StudioProfileId } from '../utils/profile-combine-utils';
 import { CAD_CONFIG } from './cad-config';
 import { CadMetrics, CadReversalMode, EdgeThickness } from './cad-types';
 
@@ -20,9 +21,8 @@ const MAX_CURVED_FRAME_MM = 56;
 const MAX_CURVED_SASH_MM = 68;
 const SLIDING_ROLES: SlidingSashRole[] = ['left_sliding', 'right_sliding', 'center_sliding'];
 
-const getProfileMm = (profiles: ProfileBar[] | undefined, profileId: number | undefined): number | undefined => {
-  if (profileId === undefined || !profiles) return undefined;
-  const profile = profiles.find((item) => item.id === profileId);
+const getProfileMm = (profiles: ProfileBar[] | undefined, profileId: StudioProfileId | undefined): number | undefined => {
+  const profile = findStudioProfile(profiles, profileId);
   return profile && profile.sectionHeightMm > 0 ? profile.sectionHeightMm : undefined;
 };
 
@@ -100,7 +100,7 @@ const resolveSlidingSashMetrics = (
 export const resolveReversalMm = (
   availableProfiles: ProfileBar[] | undefined,
   frameConfig: FrameConfig | undefined,
-  overrideProfileId?: number | null
+  overrideProfileId?: StudioProfileId | null
 ): number => {
   const defaultReversalId = availableProfiles?.find((profile) => profile.barType === 'REVERSAL')?.id;
   return (

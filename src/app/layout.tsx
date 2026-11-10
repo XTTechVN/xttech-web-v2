@@ -39,6 +39,9 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'XTTech - Quản lý doanh nghiệp',
   description: 'XTTech - Quản lý doanh nghiệp',
+  other: {
+    'facebook-domain-verification': 'bdvtycdcy863x260asdrime4wdi3n0',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

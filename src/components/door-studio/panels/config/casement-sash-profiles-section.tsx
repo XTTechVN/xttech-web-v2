@@ -4,6 +4,11 @@ import React from 'react';
 import { SashConfig } from '../../studio-types';
 import { ProfileBar } from '@/types';
 import { Select } from '@/components/select';
+import {
+  findStudioProfile,
+  parseStudioProfileId,
+  type StudioProfileId,
+} from '../../utils/profile-combine-utils';
 
 interface CasementSashProfilesSectionProps {
   config: SashConfig;
@@ -21,11 +26,11 @@ export const CasementSashProfilesSection: React.FC<CasementSashProfilesSectionPr
   const beadProfiles = profiles.filter((p) => p.barType === 'BEAD');
   const dynamicMullionProfiles = profiles.filter((p) => p.barType === 'DYNAMIC_MULLION');
 
-  const selectedLeftSash = profiles.find((p) => p.id === config.leftProfileId);
-  const selectedVoCucSash = profiles.find((p) => p.id === (config.voCucProfileId ?? config.leftProfileId));
-  const selectedSashMullion = profiles.find((p) => p.id === config.mullionProfileId);
-  const selectedSashBead = profiles.find((p) => p.id === config.beadProfileId);
-  const selectedDynamicMullion = profiles.find((p) => p.id === config.dynamicMullionProfileId);
+  const selectedLeftSash = findStudioProfile(profiles, config.leftProfileId);
+  const selectedVoCucSash = findStudioProfile(profiles, config.voCucProfileId ?? config.leftProfileId);
+  const selectedSashMullion = findStudioProfile(profiles, config.mullionProfileId);
+  const selectedSashBead = findStudioProfile(profiles, config.beadProfileId);
+  const selectedDynamicMullion = findStudioProfile(profiles, config.dynamicMullionProfileId);
   const sashOptions = sashProfiles.map((p) => ({ value: p.id, label: `${p.code} - ${p.name}` }));
 
   if (config.sashStyle === 'slim') {
@@ -42,7 +47,7 @@ export const CasementSashProfilesSection: React.FC<CasementSashProfilesSectionPr
           fullWidth
           value={voCucId}
           onChange={(e) => {
-            const nextId = e.target.value ? Number(e.target.value) : undefined;
+            const nextId = parseStudioProfileId(e.target.value);
             onChangeConfig({
               voCucProfileId: nextId,
               ...(config.leftProfileId ? {} : { profileId: nextId, leftProfileId: nextId }),
@@ -69,10 +74,10 @@ export const CasementSashProfilesSection: React.FC<CasementSashProfilesSectionPr
   }
 
   const buildSyncedRawVariants = (
-    leftId?: number,
-    topId?: number,
-    rightId?: number,
-    bottomId?: number
+    leftId?: StudioProfileId,
+    topId?: StudioProfileId,
+    rightId?: StudioProfileId,
+    bottomId?: StudioProfileId
   ): Record<string, unknown> | undefined => {
     if (!config.rawVariants) return undefined;
     const nextRawVariants: Record<string, unknown> = { ...config.rawVariants };
@@ -97,7 +102,7 @@ export const CasementSashProfilesSection: React.FC<CasementSashProfilesSectionPr
   };
 
   const handleLeftProfileChange = (rawValue: string) => {
-    const profileId = rawValue ? Number(rawValue) : undefined;
+    const profileId = parseStudioProfileId(rawValue);
     onChangeConfig({
       profileId,
       leftProfileId: profileId,
@@ -114,7 +119,7 @@ export const CasementSashProfilesSection: React.FC<CasementSashProfilesSectionPr
     edgeKey: 'topProfileId' | 'rightProfileId' | 'bottomProfileId',
     rawValue: string
   ) => {
-    const resolvedId = rawValue ? Number(rawValue) : config.leftProfileId;
+    const resolvedId = parseStudioProfileId(rawValue) ?? config.leftProfileId;
     const nextTopId = edgeKey === 'topProfileId' ? resolvedId : config.topProfileId;
     const nextRightId = edgeKey === 'rightProfileId' ? resolvedId : config.rightProfileId;
     const nextBottomId = edgeKey === 'bottomProfileId' ? resolvedId : config.bottomProfileId;
@@ -182,7 +187,7 @@ export const CasementSashProfilesSection: React.FC<CasementSashProfilesSectionPr
           <Select
             fullWidth
             value={config.mullionProfileId || ''}
-            onChange={(e) => onChangeConfig({ mullionProfileId: e.target.value ? Number(e.target.value) : undefined })}
+            onChange={(e) => onChangeConfig({ mullionProfileId: parseStudioProfileId(e.target.value) })}
             options={[{ value: '', label: 'Chọn profile...' }, ...mullionProfiles.map((p) => ({ value: p.id, label: `${p.code} - ${p.name}` }))]}
             placeholder="Chọn profile..."
             className="h-8 py-0 text-xs md:text-xs rounded-md border-slate-200 bg-white text-slate-800"
@@ -201,7 +206,7 @@ export const CasementSashProfilesSection: React.FC<CasementSashProfilesSectionPr
           <Select
             fullWidth
             value={config.beadProfileId || ''}
-            onChange={(e) => onChangeConfig({ beadProfileId: e.target.value ? Number(e.target.value) : undefined })}
+            onChange={(e) => onChangeConfig({ beadProfileId: parseStudioProfileId(e.target.value) })}
             options={[{ value: '', label: 'Chọn profile...' }, ...beadProfiles.map((p) => ({ value: p.id, label: `${p.code} - ${p.name}` }))]}
             placeholder="Chọn profile..."
             className="h-8 py-0 text-xs md:text-xs rounded-md border-slate-200 bg-white text-slate-800"
@@ -222,7 +227,7 @@ export const CasementSashProfilesSection: React.FC<CasementSashProfilesSectionPr
         <Select
           fullWidth
           value={config.dynamicMullionProfileId || ''}
-          onChange={(e) => onChangeConfig({ dynamicMullionProfileId: e.target.value ? Number(e.target.value) : undefined })}
+          onChange={(e) => onChangeConfig({ dynamicMullionProfileId: parseStudioProfileId(e.target.value) })}
           options={[
             { value: '', label: dynamicMullionProfiles.length > 0 ? 'Chọn profile đố động...' : '(Hệ này không có đố động)' },
             ...dynamicMullionProfiles.map((p) => ({ value: p.id, label: `${p.code} - ${p.name}` })),

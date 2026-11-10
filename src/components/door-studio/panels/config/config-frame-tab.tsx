@@ -13,6 +13,12 @@ import { Select } from '@/components/select';
 import { Layers, Shield, RefreshCw, Plus, CornerUpLeft, DoorClosed, X } from 'lucide-react';
 import { GasketConfigSection } from './gasket-config-section';
 import { CustomExtraConfigSection } from './custom-extra-config-section';
+import {
+  findStudioProfile,
+  isSameProfileId,
+  parseStudioProfileId,
+  StudioProfileId,
+} from '../../utils/profile-combine-utils';
 
 
 interface ConfigFrameTabProps {
@@ -50,7 +56,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
 
   const handleSelectReversalMode = (mode: 'wall' | 'sash') => {
     const nextProfId = config.reversalProfileId || availableReversalProfiles[0]?.id;
-    const nextProf = profiles.find((p) => p.id === nextProfId);
+    const nextProf = findStudioProfile(profiles, nextProfId);
     onChangeConfig({
       reversalMode: mode,
       isReversedWall: mode === 'wall',
@@ -91,23 +97,23 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
     });
   };
 
-  const mainSeriesId = profiles.find((p) => p.id === leftEdge.profileId)?.seriesId;
-  const isDifferentSerie = (profileId?: number) => {
+  const mainSeriesId = findStudioProfile(profiles, leftEdge.profileId)?.seriesId;
+  const isDifferentSerie = (profileId?: StudioProfileId) => {
     if (!profileId || !mainSeriesId) return false;
-    const p = profiles.find((item) => item.id === profileId);
+    const p = findStudioProfile(profiles, profileId);
     return Boolean(p && p.seriesId && p.seriesId !== mainSeriesId);
   };
 
-  const selectedSafetyProfile = profiles.find((p) => p.id === safetyBarsConfig.profileId);
+  const selectedSafetyProfile = findStudioProfile(profiles, safetyBarsConfig.profileId);
   const safetySectionMm = selectedSafetyProfile?.sectionHeightMm || 50;
-  const vertSafetyProfile = profiles.find((p) => p.id === safetyBarsConfig.mullionVertProfileId);
-  const horizSafetyProfile = profiles.find((p) => p.id === safetyBarsConfig.mullionHorizProfileId);
+  const vertSafetyProfile = findStudioProfile(profiles, safetyBarsConfig.mullionVertProfileId);
+  const horizSafetyProfile = findStudioProfile(profiles, safetyBarsConfig.mullionHorizProfileId);
 
-  const selectedLeftFrame = profiles.find((p) => p.id === leftEdge.profileId);
-  const selectedTopFrame = profiles.find((p) => p.id === (topEdge.profileId || leftEdge.profileId));
-  const selectedRightFrame = profiles.find((p) => p.id === (rightEdge.profileId || leftEdge.profileId));
-  const selectedBottomFrame = profiles.find((p) => p.id === (bottomEdge.profileId || leftEdge.profileId));
-  const selectedSharedMullion = profiles.find((p) => p.id === config.mullionProfileId);
+  const selectedLeftFrame = findStudioProfile(profiles, leftEdge.profileId);
+  const selectedTopFrame = findStudioProfile(profiles, topEdge.profileId || leftEdge.profileId);
+  const selectedRightFrame = findStudioProfile(profiles, rightEdge.profileId || leftEdge.profileId);
+  const selectedBottomFrame = findStudioProfile(profiles, bottomEdge.profileId || leftEdge.profileId);
+  const selectedSharedMullion = findStudioProfile(profiles, config.mullionProfileId);
 
   const getEdgeJointDeduct = (prof?: ProfileBar) => {
     if (!prof) return 0;
@@ -167,11 +173,11 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
   };
 
   // Handle Master Left Edge input -> auto apply to other edges if empty or matching previous leftEdge
-  const handleLeftProfileChange = (profileId: number) => {
-    const selected = profiles.find((p) => p.id === profileId);
+  const handleLeftProfileChange = (profileId?: StudioProfileId) => {
+    const selected = findStudioProfile(profiles, profileId);
     const code = selected?.code;
     const prevLeftId = leftEdge.profileId;
-    const shouldSyncEdge = (edgeId?: number) => !edgeId || edgeId === prevLeftId;
+    const shouldSyncEdge = (edgeId?: StudioProfileId) => !edgeId || isSameProfileId(edgeId, prevLeftId);
 
     onChangeConfig({
       leftEdge: { ...leftEdge, profileId, profileCode: code },
@@ -325,7 +331,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
             <Select
               fullWidth
               value={leftEdge.profileId || ''}
-              onChange={(e) => handleLeftProfileChange(Number(e.target.value))}
+              onChange={(e) => handleLeftProfileChange(parseStudioProfileId(e.target.value))}
               options={[
                 { value: '', label: 'Chọn profile...' },
                 ...frameProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
@@ -364,8 +370,8 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
               fullWidth
               value={topEdge.profileId || ''}
               onChange={(e) => {
-                const pId = e.target.value ? Number(e.target.value) : leftEdge.profileId;
-                const selected = profiles.find((p) => p.id === pId);
+                const pId = parseStudioProfileId(e.target.value) ?? leftEdge.profileId;
+                const selected = findStudioProfile(profiles, pId);
                 onChangeConfig({
                   topEdge: { ...topEdge, profileId: pId, profileCode: selected?.code },
                 });
@@ -410,8 +416,8 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
               fullWidth
               value={rightEdge.profileId || ''}
               onChange={(e) => {
-                const pId = e.target.value ? Number(e.target.value) : leftEdge.profileId;
-                const selected = profiles.find((p) => p.id === pId);
+                const pId = parseStudioProfileId(e.target.value) ?? leftEdge.profileId;
+                const selected = findStudioProfile(profiles, pId);
                 onChangeConfig({
                   rightEdge: { ...rightEdge, profileId: pId, profileCode: selected?.code },
                 });
@@ -446,9 +452,9 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   ? 'Bỏ qua'
                   : config.cornerJoint === '45_top_90_bot' || config.cornerJoint === '90_vert'
                   ? `${horizDeductFormula} · 90°/90°`
-                  : bottomEdge.profileId && trackProfiles.some((p) => p.id === bottomEdge.profileId)
+                  : bottomEdge.profileId && trackProfiles.some((p) => isSameProfileId(p.id, bottomEdge.profileId))
                   ? 'W · 90°/90° (Ray dưới)'
-                  : bottomEdge.profileId && auxiliaryProfiles.some((p) => p.id === bottomEdge.profileId)
+                  : bottomEdge.profileId && auxiliaryProfiles.some((p) => isSameProfileId(p.id, bottomEdge.profileId))
                   ? 'W · 90°/90° (Ngưỡng)'
                   : 'W · 45°/45°'}
               </span>
@@ -458,8 +464,8 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
               disabled={config.isOpenBottom}
               value={bottomEdge.profileId || ''}
               onChange={(e) => {
-                const pId = e.target.value ? Number(e.target.value) : leftEdge.profileId;
-                const selected = profiles.find((p) => p.id === pId);
+                const pId = parseStudioProfileId(e.target.value) ?? leftEdge.profileId;
+                const selected = findStudioProfile(profiles, pId);
                 onChangeConfig({
                   bottomEdge: {
                     ...bottomEdge,
@@ -531,8 +537,8 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   fullWidth
                   value={bottomEdge.coverProfileId || ''}
                   onChange={(e) => {
-                    const cId = Number(e.target.value) || undefined;
-                    const selected = profiles.find((p) => p.id === cId);
+                    const cId = parseStudioProfileId(e.target.value);
+                    const selected = findStudioProfile(profiles, cId);
                     onChangeConfig({
                       bottomEdge: {
                         ...bottomEdge,
@@ -599,8 +605,8 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                 <span>Chọn Profile Đố T (Dùng chung):</span>
                 {config.mullionProfileId && (
                   <span className="text-[10px] text-primary font-mono font-bold">
-                    {profiles.find((p) => p.id === config.mullionProfileId)?.sectionHeightMm
-                      ? `Bản ${profiles.find((p) => p.id === config.mullionProfileId)?.sectionHeightMm} mm`
+                    {findStudioProfile(profiles, config.mullionProfileId)?.sectionHeightMm
+                      ? `Bản ${findStudioProfile(profiles, config.mullionProfileId)?.sectionHeightMm} mm`
                       : ''}
                   </span>
                 )}
@@ -609,7 +615,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                 fullWidth
                 value={config.mullionProfileId || ''}
                 onChange={(e) => {
-                  const pid = Number(e.target.value) || undefined;
+                  const pid = parseStudioProfileId(e.target.value);
                   onChangeConfig({
                     mullionProfileId: pid,
                     mullionVertProfileId: pid,
@@ -637,7 +643,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   </span>
                   {(config.mullionVertProfileId || config.mullionProfileId) && (
                     <span className="text-[10.5px] text-primary font-mono font-bold">
-                      Bản {profiles.find((p) => p.id === (config.mullionVertProfileId || config.mullionProfileId))?.sectionHeightMm || 55} mm
+                      Bản {findStudioProfile(profiles, config.mullionVertProfileId || config.mullionProfileId)?.sectionHeightMm || 55} mm
                     </span>
                   )}
                 </div>
@@ -645,7 +651,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   fullWidth
                   value={config.mullionVertProfileId || config.mullionProfileId || ''}
                   onChange={(e) =>
-                    onChangeConfig({ mullionVertProfileId: Number(e.target.value) || undefined })
+                    onChangeConfig({ mullionVertProfileId: parseStudioProfileId(e.target.value) })
                   }
                   options={[
                     { value: '', label: 'Chọn profile đố dọc...' },
@@ -664,7 +670,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   </span>
                   {(config.mullionHorizProfileId || config.mullionProfileId) && (
                     <span className="text-[10.5px] text-emerald-700 font-mono font-bold">
-                      Bản {profiles.find((p) => p.id === (config.mullionHorizProfileId || config.mullionProfileId))?.sectionHeightMm || 55} mm
+                      Bản {findStudioProfile(profiles, config.mullionHorizProfileId || config.mullionProfileId)?.sectionHeightMm || 55} mm
                     </span>
                   )}
                 </div>
@@ -672,7 +678,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                   fullWidth
                   value={config.mullionHorizProfileId || config.mullionProfileId || ''}
                   onChange={(e) =>
-                    onChangeConfig({ mullionHorizProfileId: Number(e.target.value) || undefined })
+                    onChangeConfig({ mullionHorizProfileId: parseStudioProfileId(e.target.value) })
                   }
                   options={[
                     { value: '', label: 'Chọn profile đố ngang...' },
@@ -736,7 +742,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                       <Select
                         fullWidth
                         value={safetyBarsConfig.profileId || ''}
-                        onChange={(e) => updateSafetyBars({ profileId: Number(e.target.value) || undefined })}
+                        onChange={(e) => updateSafetyBars({ profileId: parseStudioProfileId(e.target.value) })}
                         options={[
                           { value: '', label: 'Chọn profile khung...' },
                           ...profiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
@@ -819,7 +825,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                         <Select
                           fullWidth
                           value={safetyBarsConfig.mullionVertProfileId || ''}
-                          onChange={(e) => updateSafetyBars({ mullionVertProfileId: Number(e.target.value) || undefined })}
+                          onChange={(e) => updateSafetyBars({ mullionVertProfileId: parseStudioProfileId(e.target.value) })}
                           options={[
                             { value: '', label: 'Chọn profile cây dọc...' },
                             ...profiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
@@ -843,7 +849,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                         <Select
                           fullWidth
                           value={safetyBarsConfig.mullionHorizProfileId || ''}
-                          onChange={(e) => updateSafetyBars({ mullionHorizProfileId: Number(e.target.value) || undefined })}
+                          onChange={(e) => updateSafetyBars({ mullionHorizProfileId: parseStudioProfileId(e.target.value) })}
                           options={[
                             { value: '', label: 'Chọn profile cây ngang...' },
                             ...profiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
@@ -876,7 +882,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                       <Select
                         fullWidth
                         value={safetyBarsConfig.mullionVertProfileId || ''}
-                        onChange={(e) => updateSafetyBars({ mullionVertProfileId: Number(e.target.value) || undefined })}
+                        onChange={(e) => updateSafetyBars({ mullionVertProfileId: parseStudioProfileId(e.target.value) })}
                         options={[
                           { value: '', label: 'Chọn profile cây dọc...' },
                           ...profiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
@@ -900,7 +906,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                       <Select
                         fullWidth
                         value={safetyBarsConfig.mullionHorizProfileId || ''}
-                        onChange={(e) => updateSafetyBars({ mullionHorizProfileId: Number(e.target.value) || undefined })}
+                        onChange={(e) => updateSafetyBars({ mullionHorizProfileId: parseStudioProfileId(e.target.value) })}
                         options={[
                           { value: '', label: 'Chọn profile cây ngang...' },
                           ...profiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
@@ -936,7 +942,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
               <Select
                 fullWidth
                 value={config.beadProfileId || ''}
-                onChange={(e) => onChangeConfig({ beadProfileId: Number(e.target.value) || undefined })}
+                onChange={(e) => onChangeConfig({ beadProfileId: parseStudioProfileId(e.target.value) })}
                 options={[
                   { value: '', label: 'Chọn profile nẹp...' },
                   ...beadProfiles.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` })),
@@ -971,7 +977,7 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
               <Select
                 fullWidth
                 value={config.couplingProfileId || ''}
-                onChange={(e) => onChangeConfig({ couplingProfileId: Number(e.target.value) || undefined })}
+                onChange={(e) => onChangeConfig({ couplingProfileId: parseStudioProfileId(e.target.value) })}
                 options={[
                   {
                     value: '',
@@ -1041,8 +1047,8 @@ export const ConfigFrameTab: React.FC<ConfigFrameTabProps> = ({ config, onChange
                     fullWidth
                     value={config.reversalProfileId || ''}
                     onChange={(e) => {
-                      const pid = Number(e.target.value) || undefined;
-                      const p = profiles.find((item) => item.id === pid);
+                      const pid = parseStudioProfileId(e.target.value);
+                      const p = findStudioProfile(profiles, pid);
                       onChangeConfig({
                         reversalProfileId: pid,
                         reversalProfileCode: p?.code,

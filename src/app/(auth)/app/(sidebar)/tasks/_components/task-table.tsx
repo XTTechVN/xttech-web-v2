@@ -125,7 +125,7 @@ export function TaskTable({
       </div>
 
       <div className="hidden overflow-x-auto rounded-xl border border-slate-200 bg-white md:block">
-        <table className="w-full min-w-[920px] border-collapse text-left text-xs">
+        <table className="w-full min-w-230 border-collapse text-left text-xs">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/60 text-[11px] font-semibold text-slate-500">
               <th className="w-10 px-3 py-2.5 text-center">
@@ -178,7 +178,7 @@ export function TaskTable({
                   className={cn(
                     'transition hover:bg-slate-50/70',
                     canSelect && 'cursor-pointer',
-                    isChecked && 'bg-primary/[0.03]',
+                    isChecked && 'bg-primary/3',
                   )}
                 >
                   <td className="px-3 py-3 text-center" onClick={(e) => e.stopPropagation()}>

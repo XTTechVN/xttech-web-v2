@@ -21,7 +21,13 @@ export type ExportReceiptReason = 'production_issue' | 'rework_issue' | 'adjustm
 
 export type ReceiptStatus = 'draft' | 'approved' | 'cancelled';
 
-export type GlassOrderStatus = 'draft' | 'ordered' | 'delivered' | 'assembled';
+export type GlassOrderStatus =
+  | 'draft'
+  | 'ordered'
+  | 'delivered'
+  | 'assembled'
+  | 'cancelled'
+  | 'scrapped';
 
 export type GlassPaneSource = 'door' | 'manual';
 
@@ -271,11 +277,25 @@ export interface GlassOrderItem {
   archConfig?: ArchConfig | null;
 }
 
+export interface GlassOrderPositionVisual {
+  positionId: number;
+  positionCode: string;
+  doorName: string;
+  floorName: string | null;
+  width: number;
+  height: number;
+  colorName: string | null;
+  aluminumColor: string | null;
+  imagePath: string | null;
+  systemConfig: Record<string, unknown> | null;
+}
+
 export interface GlassOrder {
   id: number;
   code: string;
   projectId: number;
   productionOrderId?: number | null;
+  productionOrderCode?: string | null;
   supplierId?: number | null;
   status: GlassOrderStatus;
   totalPanes: number;
@@ -287,6 +307,7 @@ export interface GlassOrder {
   note?: string | null;
   createdAt: string;
   items?: GlassOrderItem[];
+  positions?: GlassOrderPositionVisual[];
   supplierName?: string | null;
   projectName?: string | null;
 }

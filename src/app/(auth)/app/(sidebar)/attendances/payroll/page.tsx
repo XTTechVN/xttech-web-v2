@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/stores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Capacitor } from '@capacitor/core';
+import { useMyTodayAttendance } from '@/hooks';
 import { NativeTracking } from '@/hooks/useLocationTracker';
 
 import { getAttendances } from '@/actions';
@@ -85,13 +86,8 @@ export default function PayrollDataPage() {
 
   const myMonthlyAttendances = useMemo(() => monthlyAttendances?.items ?? [], [monthlyAttendances?.items]);
 
-  // Ưu tiên tìm phiên chấm công đang mở (đã check-in nhưng chưa check-out)
-  const activeOpenAttendance = useMemo(() => {
-    return myAttendances.find((a) => a.checkIn && !a.checkOut);
-  }, [myAttendances]);
-
-  // Chỉ hiển thị 'Check-out ngay' khi có phiên chấm công đang mở; ngược lại hiển thị 'Check-in ngay'
-  const isCheckOutAction = Boolean(activeOpenAttendance);
+  // Chỉ hiển thị 'Check-out ngay' khi có phiên chấm công đang mở hợp lệ của ngày hôm nay
+  const { isWorkingShift: isCheckOutAction } = useMyTodayAttendance();
 
   const handleTimekeepingButtonClick = async () => {
     // Nếu là iPhone và chuẩn bị check-in vào ca: Kiểm tra quyền Luôn luôn (Always) qua Native Alert của iOS

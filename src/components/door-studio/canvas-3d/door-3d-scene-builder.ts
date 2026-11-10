@@ -21,6 +21,7 @@ import { BottomBarSegment } from '../cad-engine/cad-types';
 import { addGlassEffectDetails3D, resolveGlassEffectAppearance } from './door-3d-glass-effects';
 import { Door3DMeshCollector, hexToRgb01, MaterialId, Vec3 } from './door-3d-math';
 import { DEFAULT_DOOR_3D_SETTINGS, Door3DCustomSettings } from './door-3d-types';
+import { findStudioProfile } from '../utils/profile-combine-utils';
 
 export type SlidingCycleDirection = 'right_to_left' | 'left_to_right';
 
@@ -935,12 +936,12 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
   const beadRgb = darkenColor(aluRgb, 1.04);
 
   // 1. Tính toán độ rộng bản nhôm (mm)
-  const selectedFrameProfile = availableProfiles?.find(
-    (p) =>
-      p.id === frameConfig?.leftEdge?.profileId ||
-      p.id === frameConfig?.topEdge?.profileId ||
-      p.id === frameConfig?.rightEdge?.profileId ||
-      p.id === frameConfig?.bottomEdge?.profileId
+  const selectedFrameProfile = findStudioProfile(
+    availableProfiles,
+    frameConfig?.leftEdge?.profileId ||
+      frameConfig?.topEdge?.profileId ||
+      frameConfig?.rightEdge?.profileId ||
+      frameConfig?.bottomEdge?.profileId
   );
   const rawFrameMm =
     selectedFrameProfile?.sectionHeightMm && selectedFrameProfile.sectionHeightMm > 0
@@ -950,12 +951,12 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
 
   const isSlim = sashConfig?.sashStyle === 'slim';
   const isDoorUnit = safeH >= 1800;
-  const selectedSashProfile = availableProfiles?.find(
-    (p) =>
-      p.id === sashConfig?.leftProfileId ||
-      p.id === sashConfig?.topProfileId ||
-      p.id === sashConfig?.rightProfileId ||
-      p.id === sashConfig?.bottomProfileId
+  const selectedSashProfile = findStudioProfile(
+    availableProfiles,
+    sashConfig?.leftProfileId ||
+      sashConfig?.topProfileId ||
+      sashConfig?.rightProfileId ||
+      sashConfig?.bottomProfileId
   );
   const defaultSashMm = isSlim
     ? CAD_CONFIG.SASH.SLIM_DEFAULT_MM
@@ -968,8 +969,9 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
       : defaultSashMm;
   const sashMm = frameShape !== 'rect' ? Math.min(rawSashMm, 68) : rawSashMm;
 
-  const selectedBeadProfile = availableProfiles?.find(
-    (p) => p.id === sashConfig?.beadProfileId || p.id === frameConfig?.beadProfileId
+  const selectedBeadProfile = findStudioProfile(
+    availableProfiles,
+    sashConfig?.beadProfileId || frameConfig?.beadProfileId
   );
   const beadMm =
     selectedBeadProfile?.sectionHeightMm && selectedBeadProfile.sectionHeightMm > 0
@@ -979,19 +981,17 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
         : CAD_CONFIG.BEAD.DEFAULT_MM;
 
   const isMullionSeparate = frameConfig?.mullionMode === 'separate';
-  const vertMullionProfile = availableProfiles?.find(
-    (p) =>
-      p.id ===
-      (isMullionSeparate
-        ? frameConfig?.mullionVertProfileId || frameConfig?.mullionProfileId
-        : frameConfig?.mullionProfileId)
+  const vertMullionProfile = findStudioProfile(
+    availableProfiles,
+    isMullionSeparate
+      ? frameConfig?.mullionVertProfileId || frameConfig?.mullionProfileId
+      : frameConfig?.mullionProfileId
   );
-  const horizMullionProfile = availableProfiles?.find(
-    (p) =>
-      p.id ===
-      (isMullionSeparate
-        ? frameConfig?.mullionHorizProfileId || frameConfig?.mullionProfileId
-        : frameConfig?.mullionProfileId)
+  const horizMullionProfile = findStudioProfile(
+    availableProfiles,
+    isMullionSeparate
+      ? frameConfig?.mullionHorizProfileId || frameConfig?.mullionProfileId
+      : frameConfig?.mullionProfileId
   );
   const mullionMm =
     vertMullionProfile?.sectionHeightMm && vertMullionProfile.sectionHeightMm > 0
