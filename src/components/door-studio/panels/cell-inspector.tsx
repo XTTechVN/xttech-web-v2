@@ -16,6 +16,7 @@ import { CellGlassConfigSection } from './cell-glass-config-section';
 import { computeArchMetrics } from '../cad-engine/cad-geometry';
 import { Select } from '@/components/select';
 import { Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, DoorClosed } from 'lucide-react';
+import { parseStudioProfileId } from '../utils/profile-combine-utils';
 
 interface CellInspectorProps {
   selectedCell: SceneCellNode | null;
@@ -528,7 +529,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 fullWidth
                 value={selectedCell.customBeads?.bottom || ''}
                 onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
+                  const val = parseStudioProfileId(e.target.value) ?? null;
                   onUpdateCell({
                     customBeads: { ...selectedCell.customBeads, bottom: val },
                   });
@@ -550,7 +551,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 fullWidth
                 value={selectedCell.customBeads?.top || ''}
                 onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
+                  const val = parseStudioProfileId(e.target.value) ?? null;
                   onUpdateCell({
                     customBeads: { ...selectedCell.customBeads, top: val },
                   });
@@ -579,7 +580,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 fullWidth
                 value={selectedCell.customBeads?.left || ''}
                 onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
+                  const val = parseStudioProfileId(e.target.value) ?? null;
                   onUpdateCell({
                     customBeads: { ...selectedCell.customBeads, left: val },
                   });
@@ -601,7 +602,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 fullWidth
                 value={selectedCell.customBeads?.right || ''}
                 onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
+                  const val = parseStudioProfileId(e.target.value) ?? null;
                   onUpdateCell({
                     customBeads: { ...selectedCell.customBeads, right: val },
                   });

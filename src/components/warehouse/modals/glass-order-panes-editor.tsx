@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
+import { AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { Button, Input, Select } from '@/components';
-import { Trash2, Plus, AlertCircle } from 'lucide-react';
+import { GLASS_GRIND_OPTIONS, GLASS_MANUAL_REASON_OPTIONS } from '@/config/warehouse';
 import { ManualReason } from '@/types/warehouse';
-import { GRIND_OPTIONS, MANUAL_REASON_OPTIONS } from '../../_utils/glass-mapping';
 
 export interface EditablePaneItem {
   tempId: string;
@@ -50,7 +50,7 @@ export function GlassOrderPanesEditor({
   const handleUpdateField = <K extends keyof EditablePaneItem>(
     index: number,
     field: K,
-    value: EditablePaneItem[K]
+    value: EditablePaneItem[K],
   ) => {
     const updated = [...panes];
     updated[index] = { ...updated[index], [field]: value };
@@ -61,27 +61,18 @@ export function GlassOrderPanesEditor({
     const updated = [...panes];
     if (!valueStr || valueStr === 'manual') {
       updated[index] = {
-        ...updated[index],
-        paneSource: 'manual',
-        positionId: null,
-        positionCode: null,
-        doorName: null,
-        sourcePositionRevision: null,
-        manualReason: updated[index].manualReason || 'spare',
-        isMeasured: true,
+        ...updated[index], paneSource: 'manual',
+        positionId: null, positionCode: null, doorName: null, sourcePositionRevision: null,
+        manualReason: updated[index].manualReason || 'spare', isMeasured: true,
       };
     } else {
       const doorId = Number(valueStr);
       const door = doorOptions.find((d) => d.id === doorId);
       updated[index] = {
-        ...updated[index],
-        paneSource: 'door',
-        positionId: doorId,
-        positionCode: door?.code || null,
-        doorName: door?.name || null,
+        ...updated[index], paneSource: 'door', positionId: doorId,
+        positionCode: door?.code || null, doorName: door?.name || null,
         sourcePositionRevision: updated[index].sourcePositionRevision || 1,
-        manualReason: null,
-        isMeasured: door?.isMeasured !== false,
+        manualReason: null, isMeasured: door?.isMeasured !== false,
       };
     }
     onChange(updated);
@@ -93,33 +84,28 @@ export function GlassOrderPanesEditor({
 
   const handleAddPane = () => {
     const fallbackGlass =
-      panes[panes.length - 1]?.glassType ||
-      defaultGlassType ||
-      glassOptions[0] ||
-      'Kính dán an toàn 8.38mm trắng trong';
-    const newPane: EditablePaneItem = {
-      tempId: `pane_${Date.now()}_${Math.random()}`,
-      paneSource: 'manual',
-      positionId: null,
-      positionCode: null,
-      doorName: null,
-      sourcePositionRevision: null,
-      manualReason: 'spare',
-      paneLabel: `Kính lẻ ${panes.length + 1}`,
-      widthMm: 1000,
-      heightMm: 1000,
-      glassType: fallbackGlass,
-      grindType: 'grind_edge',
-      unitPrice: 0,
-      isMeasured: true,
-    };
-    onChange([...panes, newPane]);
+      panes[panes.length - 1]?.glassType || defaultGlassType || glassOptions[0] || 'Kính dán an toàn 8.38mm trắng trong';
+    onChange([
+      ...panes,
+      {
+        tempId: `pane_${Date.now()}_${Math.random()}`,
+        paneSource: 'manual',
+        positionId: null, positionCode: null, doorName: null, sourcePositionRevision: null,
+        manualReason: 'spare',
+        paneLabel: `Kính lẻ ${panes.length + 1}`,
+        widthMm: 1000, heightMm: 1000,
+        glassType: fallbackGlass,
+        grindType: 'grind_edge',
+        unitPrice: 0,
+        isMeasured: true,
+      },
+    ]);
   };
 
   if (isLoading) {
     return (
       <div className="py-12 flex flex-col items-center justify-center text-slate-500">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mb-3" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3" />
         <p className="text-sm font-medium">Đang tự động bóc tách ô kính từ thiết kế cửa...</p>
       </div>
     );
@@ -134,7 +120,7 @@ export function GlassOrderPanesEditor({
   ];
 
   const mergedGlassNames = Array.from(
-    new Set([...glassOptions, ...panes.map((p) => p.glassType).filter(Boolean)])
+    new Set([...glassOptions, ...panes.map((p) => p.glassType).filter(Boolean)]),
   );
   const glassSelectOptions = mergedGlassNames.map((name) => ({ value: name, label: name }));
 
@@ -149,7 +135,7 @@ export function GlassOrderPanesEditor({
           variant="outline"
           size="sm"
           onClick={handleAddPane}
-          className="text-xs h-7 gap-1 text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+          className="text-xs h-7 gap-1 text-primary border-primary/30 hover:bg-primary/5"
         >
           <Plus className="w-3.5 h-3.5" /> Thêm Tấm Kính
         </Button>
@@ -173,7 +159,7 @@ export function GlassOrderPanesEditor({
           <tbody className="divide-y divide-slate-100 bg-white">
             {panes.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
                   Chưa có tấm kính nào. Nhấn &quot;Thêm Tấm Kính&quot; để bổ sung ô kính vào đơn.
                 </td>
               </tr>
@@ -202,7 +188,7 @@ export function GlassOrderPanesEditor({
                       />
                       {isUnmeasured && (
                         <span className="flex items-center gap-1 text-[10px] text-red-600 font-medium mt-0.5">
-                          <AlertCircle className="w-3 h-3 flex-shrink-0" /> Chưa đo thực tế ô chờ!
+                          <AlertCircle className="w-3 h-3 shrink-0" /> Chưa đo thực tế ô chờ!
                         </span>
                       )}
                     </td>
@@ -221,7 +207,7 @@ export function GlassOrderPanesEditor({
                             onChange={(e) =>
                               handleUpdateField(idx, 'manualReason', e.target.value as ManualReason)
                             }
-                            options={MANUAL_REASON_OPTIONS}
+                            options={GLASS_MANUAL_REASON_OPTIONS}
                             className="text-[11px] h-7 pl-2 bg-amber-50 border-amber-300 text-amber-800"
                           />
                         )}
@@ -242,7 +228,7 @@ export function GlassOrderPanesEditor({
                         type="number"
                         value={pane.widthMm || ''}
                         onChange={(e) => handleUpdateField(idx, 'widthMm', Number(e.target.value))}
-                        className="text-xs h-8 px-1.5 text-center"
+                        className="text-xs h-8 px-1.5 text-center font-mono tabular-nums"
                         min={1}
                       />
                     </td>
@@ -251,18 +237,18 @@ export function GlassOrderPanesEditor({
                         type="number"
                         value={pane.heightMm || ''}
                         onChange={(e) => handleUpdateField(idx, 'heightMm', Number(e.target.value))}
-                        className="text-xs h-8 px-1.5 text-center"
+                        className="text-xs h-8 px-1.5 text-center font-mono tabular-nums"
                         min={1}
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-right font-medium text-slate-700">
+                    <td className="px-2 py-1.5 text-right font-mono tabular-nums font-semibold text-primary">
                       {area.toFixed(3)}
                     </td>
                     <td className="px-2 py-1.5">
                       <Select
                         value={pane.grindType}
                         onChange={(e) => handleUpdateField(idx, 'grindType', e.target.value)}
-                        options={GRIND_OPTIONS}
+                        options={GLASS_GRIND_OPTIONS}
                         className="text-xs h-8 pl-2.5"
                       />
                     </td>

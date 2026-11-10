@@ -86,7 +86,7 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
       <div ref={mainRef} className="flex-1 will-change-transform">
         {children}
       </div>
-      <Footer />
+      {!pathname?.startsWith('/news') && <Footer />}
     </div>
   );
 };

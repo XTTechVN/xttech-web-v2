@@ -8,10 +8,12 @@ import {
   MULLION_CUT_LABELS,
   MULLION_CUT_ORDER,
   normalizeMullionCutType,
+  ProfileIdRef,
 } from '../studio-types';
 import { ProfileBar } from '@/types';
 import { Select } from '@/components/select';
 import { Ruler, Trash2, Check, X, ArrowLeftRight } from 'lucide-react';
+import { parseStudioProfileId } from '../utils/profile-combine-utils';
 
 interface MullionInspectorModalProps {
   isOpen: boolean;
@@ -20,7 +22,7 @@ interface MullionInspectorModalProps {
   profileBars: ProfileBar[];
   onSave: (params: {
     dimension: number;
-    profileId?: number;
+    profileId?: ProfileIdRef;
     cutType?: MullionCutType;
   }) => void;
   onDeleteMullion: () => void;
@@ -38,7 +40,7 @@ export const MullionInspectorModal: React.FC<MullionInspectorModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic');
   const [dimension, setDimension] = useState<number>(0);
-  const [selectedProfileId, setSelectedProfileId] = useState<number | undefined>(undefined);
+  const [selectedProfileId, setSelectedProfileId] = useState<ProfileIdRef | undefined>(undefined);
   const [cutType, setCutType] = useState<MullionCutType>('inside_frame');
 
   // Advanced Tab State
@@ -165,7 +167,7 @@ export const MullionInspectorModal: React.FC<MullionInspectorModalProps> = ({
                 fullWidth
                 value={selectedProfileId ?? ''}
                 onChange={(e) =>
-                  setSelectedProfileId(e.target.value ? Number(e.target.value) : undefined)
+                  setSelectedProfileId(parseStudioProfileId(e.target.value))
                 }
                 options={[
                   { value: '', label: '(Mặc định theo hệ nhôm)' },

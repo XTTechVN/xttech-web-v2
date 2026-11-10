@@ -21,6 +21,9 @@ export const cloneCompanions = (companions: ProfileBarCompanion[] = []): Profile
     sortOrder: index,
     companionCode: companion.companionCode ?? null,
     companionName: companion.companionName ?? null,
+    companionBarType: companion.companionBarType ?? null,
+    companionWeightPerM: companion.companionWeightPerM ?? null,
+    companionSectionHeightMm: companion.companionSectionHeightMm ?? null,
   }));
 
 export function buildProfileBarPayload(

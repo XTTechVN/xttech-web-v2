@@ -96,3 +96,7 @@ export * from './warehouse';
 // News
 export * from './news';
 
+// Staff Tasks
+export * from './task';
+
+

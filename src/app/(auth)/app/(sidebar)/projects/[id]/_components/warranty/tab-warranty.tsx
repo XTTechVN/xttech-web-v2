@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Plus, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Plus, ShieldCheck } from 'lucide-react';
 import { Modal as AntdModal } from 'antd';
 import toast from 'react-hot-toast';
 import { cancelWarrantyVisit, getProjectWarranty, startWarrantyVisit } from '@/actions';
@@ -40,6 +41,8 @@ export function TabWarranty({ projectId }: TabWarrantyProps) {
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ['project_warranty', projectId] });
     void queryClient.invalidateQueries({ queryKey: ['project_overview', projectId] });
+    void queryClient.invalidateQueries({ queryKey: ['staff-tasks'] });
+    void queryClient.invalidateQueries({ queryKey: ['staff-tasks-summary'] });
   };
 
   const start = useMutation({
@@ -76,16 +79,25 @@ export function TabWarranty({ projectId }: TabWarrantyProps) {
             </span>
             <Badge variant={state.variant}>{state.label}</Badge>
           </div>
-          <Button
-            size="sm"
-            leftIcon={<Plus size={14} />}
-            onClick={() => {
-              setEditing(null);
-              setIsFormOpen(true);
-            }}
-          >
-            Tạo yêu cầu bảo hành
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/app/tasks?sourceType=warranty"
+              className="inline-flex items-center gap-1 rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10"
+            >
+              <span>Danh sách giao việc</span>
+              <ExternalLink size={12} />
+            </Link>
+            <Button
+              size="sm"
+              leftIcon={<Plus size={14} />}
+              onClick={() => {
+                setEditing(null);
+                setIsFormOpen(true);
+              }}
+            >
+              Tạo yêu cầu bảo hành
+            </Button>
+          </div>
         </div>
 
         {isStarted && (

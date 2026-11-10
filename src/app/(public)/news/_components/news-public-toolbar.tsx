@@ -1,61 +1,39 @@
 'use client';
 
 import React from 'react';
-import { Clock, Eye, Heart, Search, Sparkles, X } from 'lucide-react';
+import { Search, Sparkles, X } from 'lucide-react';
+import { Input } from '@/components';
 import { NEWS_CATEGORY_OPTIONS } from '@/config';
 import type { NewsCategory } from '@/types';
-
-export type PublicNewsSortMode = 'latest' | 'popular' | 'hot';
 
 export interface NewsPublicToolbarProps {
   searchInput: string;
   onSearchChange: (value: string) => void;
   selectedCategory?: NewsCategory;
   onSelectCategory: (category?: NewsCategory) => void;
-  sortMode: PublicNewsSortMode;
-  onSelectSortMode: (mode: PublicNewsSortMode) => void;
 }
-
-const SORT_TABS: Array<{
-  mode: PublicNewsSortMode;
-  label: string;
-  icon: React.ReactNode;
-}> = [
-  {
-    mode: 'latest',
-    label: 'Mới nhất',
-    icon: <Clock className="w-3.5 h-3.5" />,
-  },
-  {
-    mode: 'popular',
-    label: 'Phổ biến nhất (Nhiều lượt xem)',
-    icon: <Eye className="w-3.5 h-3.5" />,
-  },
-  {
-    mode: 'hot',
-    label: 'Nổi bật / Yêu thích nhất',
-    icon: <Heart className="w-3.5 h-3.5" />,
-  },
-];
 
 export function NewsPublicToolbar({
   searchInput,
   onSearchChange,
   selectedCategory,
   onSelectCategory,
-  sortMode,
-  onSelectSortMode,
 }: NewsPublicToolbarProps) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-primary/8 via-primary/4 to-transparent border-b border-primary/15 pt-10 pb-10 sm:pt-14 sm:pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5" />
+    <section className="relative overflow-hidden bg-linear-to-b from-primary/10 via-primary/4 to-white border-b border-slate-200/80 pt-8 sm:pt-10">
+      {/* Hiệu ứng nền trang trí đồng bộ hệ sinh thái XTTech */}
+      <div className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-72 w-full max-w-lg -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+        {/* Khối tiêu đề giới thiệu */}
+        <div className="max-w-3xl space-y-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold">
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
             <span>Chuyên trang Tin tức & Kiến thức Nhôm Kính XTTECH</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Cập nhật công nghệ, công trình tiêu biểu & giải pháp nhôm kính hiện đại
+            Cập nhật công nghệ, công trình tiêu biểu &{' '}
+            <span className="text-primary">giải pháp nhôm kính hiện đại</span>
           </h1>
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
             Khám phá các bài viết chuyên sâu về kỹ thuật gia công cửa nhôm, xu hướng kiến trúc mặt
@@ -63,81 +41,60 @@ export function NewsPublicToolbar({
           </p>
         </div>
 
-        {/* Thanh Sắp xếp (Mới nhất / Phổ biến nhất / Yêu thích nhất) & Tìm kiếm */}
-        <div className="mt-7 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="inline-flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-white border border-slate-200 shadow-2xs w-fit">
-            {SORT_TABS.map((tab) => {
-              const isActive = sortMode === tab.mode;
+        {/* Thanh ngang đồng bộ: Trái là Tab Chuyên mục gạch chân (1 dòng cuộn ngang trên mobile) | Phải là Ô tìm kiếm */}
+        <div className="mt-7 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          <div className="flex items-center gap-5 sm:gap-7 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <button
+              type="button"
+              onClick={() => onSelectCategory(undefined)}
+              className={`relative pb-3.5 pt-2 text-sm transition-colors cursor-pointer shrink-0 border-b-2 -mb-px ${
+                !selectedCategory
+                  ? 'border-primary text-slate-900 font-semibold'
+                  : 'border-transparent text-slate-600 hover:text-slate-900 font-medium'
+              }`}
+            >
+              Tất cả
+            </button>
+            {NEWS_CATEGORY_OPTIONS.map((cat) => {
+              const isActive = selectedCategory === cat.value;
               return (
                 <button
-                  key={tab.mode}
+                  key={cat.value}
                   type="button"
-                  onClick={() => onSelectSortMode(tab.mode)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                  onClick={() => onSelectCategory(cat.value)}
+                  className={`relative pb-3.5 pt-2 text-sm transition-colors cursor-pointer shrink-0 border-b-2 -mb-px ${
                     isActive
-                      ? 'bg-primary text-white shadow-xs'
-                      : 'text-slate-600 hover:text-primary hover:bg-primary/5'
+                      ? 'border-primary text-slate-900 font-semibold'
+                      : 'border-transparent text-slate-600 hover:text-slate-900 font-medium'
                   }`}
                 >
-                  {tab.icon}
-                  <span>{tab.label}</span>
+                  {cat.label}
                 </button>
               );
             })}
           </div>
 
-          <div className="relative w-full lg:w-80 shrink-0">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
+          <div className="relative w-full sm:w-80 xl:w-72 shrink-0 pb-2.5 xl:pb-1.5">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 -mt-1 xl:-mt-0.5 pointer-events-none z-10" />
+            <Input
               type="text"
               value={searchInput}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Tìm kiếm bài viết, chủ đề..."
-              className="w-full h-10 pl-10 pr-9 text-sm bg-white border border-slate-200 rounded-full outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-slate-900 transition-all"
+              placeholder="Tìm kiếm bài viết, dự án..."
+              fullWidth
+              className="pl-9 pr-8 h-9 text-xs sm:text-sm"
             />
             {searchInput && (
               <button
                 type="button"
                 onClick={() => onSearchChange('')}
                 aria-label="Xóa tìm kiếm"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 -mt-1 xl:-mt-0.5 text-slate-400 hover:text-slate-600 cursor-pointer z-10"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
-        </div>
-
-        {/* Bộ lọc Chuyên mục */}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onSelectCategory(undefined)}
-            className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              !selectedCategory
-                ? 'bg-primary text-white shadow-xs'
-                : 'bg-white text-slate-600 border border-slate-200 hover:border-primary/40 hover:text-primary'
-            }`}
-          >
-            Tất cả chuyên mục
-          </button>
-          {NEWS_CATEGORY_OPTIONS.map((cat) => {
-            const isActive = selectedCategory === cat.value;
-            return (
-              <button
-                key={cat.value}
-                type="button"
-                onClick={() => onSelectCategory(cat.value)}
-                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-primary text-white shadow-xs'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-primary/40 hover:text-primary'
-                }`}
-              >
-                {cat.label}
-              </button>
-            );
-          })}
         </div>
       </div>
     </section>

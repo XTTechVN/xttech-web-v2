@@ -50,6 +50,34 @@ export const DEDUCTION_FIELDS: Array<{ name: 'deductSashMm' | 'deductBeadMm' | '
   { name: 'deductMullionMm', label: 'Trừ đố chia (mm)' },
 ];
 
+export type ProfileBarSortField =
+  | 'code'
+  | 'name'
+  | 'sectionHeightMm'
+  | 'deductSashMm'
+  | 'deductMullionMm'
+  | 'deductBeadMm'
+  | 'deductGlassMm'
+  | 'weight'
+  | 'barType';
+
+export const PROFILE_BAR_TABLE_COLUMNS: Array<{
+  field: ProfileBarSortField;
+  label: string;
+  align: 'left' | 'center' | 'right';
+  width: string;
+}> = [
+  { field: 'code', label: 'Mã', align: 'left', width: 'w-40' },
+  { field: 'name', label: 'Mô tả', align: 'left', width: 'min-w-[220px]' },
+  { field: 'sectionHeightMm', label: 'Cao (mm)', align: 'right', width: 'w-24' },
+  { field: 'deductSashMm', label: 'Trừ cánh (mm)', align: 'right', width: 'w-28' },
+  { field: 'deductMullionMm', label: 'Trừ đố (mm)', align: 'right', width: 'w-28' },
+  { field: 'deductBeadMm', label: 'Trừ nẹp (mm)', align: 'right', width: 'w-28' },
+  { field: 'deductGlassMm', label: 'Trừ kính (mm)', align: 'right', width: 'w-28' },
+  { field: 'weight', label: 'Tỷ trọng (kg/m)', align: 'right', width: 'w-32' },
+  { field: 'barType', label: 'Phân loại', align: 'center', width: 'w-36' },
+];
+
 export const SELECT_CLASS =
   'w-full h-9 px-2.5 border border-slate-200 rounded-lg text-xs bg-slate-50 text-slate-800 focus:outline-none focus:border-primary focus:bg-white transition';
 

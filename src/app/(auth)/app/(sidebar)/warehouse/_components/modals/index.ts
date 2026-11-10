@@ -5,7 +5,7 @@ export * from './offcut-form-modal';
 export * from './receipt-form-modal';
 export * from './receipt-items-table';
 export * from './shortage-checker-modal';
-export * from './glass-order-generate-modal';
+export { GlassOrderGenerateModal } from '@/components/warehouse';
 export * from './supplier-detail-modal';
 export * from './delete-item-modal';
 export * from './receipt-form-header';
