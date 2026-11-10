@@ -48,8 +48,9 @@ export const CadDoubleLeaf: React.FC<CadDoubleLeafProps> = ({
   const beadJoint = node.beadJoint || '90';
   const paneY = sashBox.y + thickness.top;
 
-  const leftBead = renderCadBead(leftSashX + thickness.left, paneY, paneWidth, paneHeight, `${node.id}-bead-1`, aluminumColor, metrics.bead, beadJoint);
-  const rightBead = renderCadBead(rightSashX + thickness.left, paneY, paneWidth, paneHeight, `${node.id}-bead-2`, aluminumColor, metrics.bead, beadJoint);
+  const effectiveBeadW = leaf.beadW ?? metrics.bead;
+  const leftBead = renderCadBead(leftSashX + thickness.left, paneY, paneWidth, paneHeight, `${node.id}-bead-1`, aluminumColor, effectiveBeadW, beadJoint);
+  const rightBead = renderCadBead(rightSashX + thickness.left, paneY, paneWidth, paneHeight, `${node.id}-bead-2`, aluminumColor, effectiveBeadW, beadJoint);
 
   const isHydraulic = isGlobalHydraulic || Boolean(node.isHydraulic);
   const handleY = resolveHandleY(geometry, resolveHandleHeightMm(node, isGlobalHydraulic), {

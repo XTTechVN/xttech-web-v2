@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Glass, ProfileBar } from '@/types';
+import { DoorSeries, Glass, ProfileBar } from '@/types';
 import {
   SceneCellNode,
   PaneType,
@@ -12,7 +12,9 @@ import {
   SashConfig,
 } from '../studio-types';
 import { CellFrameOverrideSection } from './cell-frame-override-section';
+import { CellSeriesProfileOverrideSection } from './cell-series-profile-override-section';
 import { CellGlassConfigSection } from './cell-glass-config-section';
+import { EnclosingFrameUnitInfo } from '../utils/door-tree-utils';
 import { computeArchMetrics } from '../cad-engine/cad-geometry';
 import { Select } from '@/components/select';
 import { Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, DoorClosed } from 'lucide-react';
@@ -40,6 +42,11 @@ interface CellInspectorProps {
   sashConfig?: SashConfig;
   /** Áp patch hiệu ứng kính cho mọi ô kính trong cửa */
   onApplyGlassVisualToAll?: (patch: Partial<SceneCellNode>) => void;
+  frameUnitInfo?: EnclosingFrameUnitInfo | null;
+  onUpdateFrameUnit?: (updates: Partial<SceneCellNode>) => void;
+  globalSeriesId?: number;
+  availableSeries?: DoorSeries[];
+  allBrandProfiles?: ProfileBar[];
 }
 
 const LEGGED_ARCH_SHAPES: FrameShape[] = [
@@ -70,6 +77,11 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   availableProfiles,
   sashConfig,
   onApplyGlassVisualToAll,
+  frameUnitInfo,
+  onUpdateFrameUnit,
+  globalSeriesId,
+  availableSeries,
+  allBrandProfiles,
 }) => {
   const [localW, setLocalW] = React.useState<number>(selectedCell?.w ?? 0);
   const [localH, setLocalH] = React.useState<number>(selectedCell?.h ?? 0);
@@ -388,11 +400,23 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
         />
       </div>
 
+      <CellSeriesProfileOverrideSection
+        selectedCell={selectedCell}
+        onUpdateCell={onUpdateCell}
+        frameUnitInfo={frameUnitInfo}
+        onUpdateFrameUnit={onUpdateFrameUnit}
+        globalSeriesId={globalSeriesId}
+        availableSeries={availableSeries}
+        allBrandProfiles={allBrandProfiles ?? availableProfiles}
+        frameConfig={frameConfig}
+        sashConfig={sashConfig}
+      />
+
       <CellFrameOverrideSection
         selectedCell={selectedCell}
         onUpdateCell={onUpdateCell}
         isTouchingBottom={isTouchingBottom}
-        availableProfiles={availableProfiles}
+        availableProfiles={allBrandProfiles ?? availableProfiles}
         frameConfig={frameConfig}
         sashConfig={sashConfig}
       />

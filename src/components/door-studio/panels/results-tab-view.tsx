@@ -829,7 +829,44 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                 </table>
               )}
 
-              {activeSubTab === 'gaskets' && (
+              {activeSubTab === 'gaskets' && (() => {
+                const rawGaskets = calcData.gaskets ?? [];
+                const sashKeys = new Set(
+                  rawGaskets
+                    .filter((item) => item.target === 'sash' || (item.lengthM || 0) > 0)
+                    .map((item) => `${(item.code || '').trim().toLowerCase()}_${(item.name || '').trim().toLowerCase()}`),
+                );
+                const resolvedGaskets = rawGaskets.map((g) => {
+                  const key = `${(g.code || '').trim().toLowerCase()}_${(g.name || '').trim().toLowerCase()}`;
+                  if ((g.lengthM || 0) <= 0 && g.target === 'frame' && g.measure === 'bead' && !sashKeys.has(key)) {
+                    const nameLower = (g.name || '').toLowerCase();
+                    let mm = 0;
+                    if (nameLower.includes('cánh') || nameLower.includes('sash')) {
+                      const sashBeads = beadsList.filter((b) => !(b.name || '').toLowerCase().includes('fix'));
+                      mm = sashBeads.reduce((sum, b) => sum + (b.length || 0) * (b.qty || 1), 0);
+                      if (mm <= 0) {
+                        mm = cellsList
+                          .filter((c) => c.openType !== 'fixed')
+                          .reduce((sum, c) => sum + 2 * ((c.glassW || 0) + (c.glassH || 0)), 0);
+                      }
+                    } else {
+                      mm = 2 * (w + h);
+                    }
+                    const fallbackLenM = Math.round(((mm * 1.03) / 1000) * 100) / 100;
+                    const fallbackPrice = Math.round(fallbackLenM * (g.unitPrice || 0) * 100) / 100;
+                    return {
+                      ...g,
+                      lengthM: fallbackLenM,
+                      totalPrice: fallbackPrice,
+                      note: g.note === 'Khung không có ô kính fix' ? '1 lần/ô' : g.note,
+                    };
+                  }
+                  return g;
+                });
+                const resolvedTotalLenM = resolvedGaskets.reduce((sum, it) => sum + (it.lengthM || 0), 0);
+                const resolvedTotalPrice = resolvedGaskets.reduce((sum, it) => sum + (it.totalPrice || 0), 0);
+
+                return (
                 <div className="space-y-3">
                   <table className="w-full text-left border-collapse">
                     <thead>
@@ -845,7 +882,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-xs">
-                      {calcData.gaskets?.map((g, idx) => {
+                      {resolvedGaskets.map((g, idx) => {
                         const measureMap: Record<string, string> = {
                           bead: g.target === 'frame' ? 'Theo nẹp kính ô fix' : 'Theo nẹp kính cánh',
                           glass_perimeter: g.target === 'frame' ? 'Theo chu vi kính ô fix' : 'Theo chu vi kính cánh',
@@ -900,25 +937,21 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                     <div className="text-slate-600">
                       Tổng chiều dài roan:{' '}
                       <span className="text-slate-900 font-bold">
-                        {calcData.totalGasketLengthM ||
-                          calcData.gaskets?.reduce((sum, it) => sum + it.lengthM, 0).toFixed(2)}{' '}
+                        {resolvedTotalLenM.toFixed(2)}{' '}
                         m
                       </span>
                     </div>
                     <div className="text-slate-600">
                       Tổng chi phí roan:{' '}
                       <span className="text-pink-700 font-bold text-sm">
-                        {(
-                          calcData.totalGasketPrice ||
-                          calcData.gaskets?.reduce((sum, it) => sum + it.totalPrice, 0) ||
-                          0
-                        ).toLocaleString('vi-VN')}{' '}
+                        {resolvedTotalPrice.toLocaleString('vi-VN')}{' '}
                         đ
                       </span>
                     </div>
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         )}

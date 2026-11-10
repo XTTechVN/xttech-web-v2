@@ -6,7 +6,7 @@ import { Door, DoorCreate, DoorUpdate, DoorCalculateResponse, SelectedAccessoryI
 import { calculateDoor, createDoor, updateDoor, getDoorSeriesList, getProfileBars, getAccessoryCombos, getAccessories, getGlasses, getBrandColors, getBrands, } from '@/actions';
 import { FrameShape, SashOpenType, SceneCellNode, StudioMainTab, FrameConfig, SashConfig, FrameCornerJoint, SashCornerJoint, BeadCornerJoint, SlidingSashRole, SashOffsetScope, SashOffsetValues, SashVariantProfiles, DoorCustomExtraItem, DoorSystemFamily, DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG, MullionInfo, MullionCutType, ColorSwatch, ALUMINUM_PALETTE, GlassGrilleConfig, } from '../studio-types';
 import { ResizeSplitParams } from '../cad-engine/door-cad-renderer';
-import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, ensureRootCellDimensions, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, } from '../utils/door-tree-utils';
+import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, ensureRootCellDimensions, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, findEnclosingFrameUnit, } from '../utils/door-tree-utils';
 import { applyGlassVisualToTree } from '../utils/glass-visual-utils';
 import {
   parseStudioProfileId,
@@ -821,6 +821,11 @@ export function useDoorStudioState({
 
     return expandStudioProfilesWithCombine(result);
   }, [profilesData, effectiveSeriesId]);
+
+  const allBrandProfiles = useMemo(
+    () => expandStudioProfilesWithCombine(profilesData?.items || []),
+    [profilesData]
+  );
 
   const availableBeads = useMemo(() => {
     return availableProfiles.filter(
@@ -2132,6 +2137,15 @@ export function useDoorStudioState({
     ? (parentOfSelected.sashType || 'swing_double')
     : (selectedCellNode?.sashType || currentSashType);
   const isSelectedInsideSash = selectedCellId ? isInsideSash(rootCell, selectedCellId) : false;
+  const selectedFrameUnitInfo = useMemo(
+    () => (selectedCellId ? findEnclosingFrameUnit(rootCell, selectedCellId) : null),
+    [rootCell, selectedCellId]
+  );
+  const handleUpdateSelectedFrameUnit = (updates: Partial<SceneCellNode>) => {
+    const targetUnitId = selectedFrameUnitInfo?.unitNode.id ?? selectedCellId;
+    if (!targetUnitId) return;
+    pushState(updateNode(rootCell, targetUnitId, updates));
+  };
 
   return {
     activeMainTab,
@@ -2168,6 +2182,7 @@ export function useDoorStudioState({
     selectedCellNode,
     effectiveSashType,
     isSelectedInsideSash,
+    selectedFrameUnitInfo,
     selectedMullion,
     setSelectedMullion,
     isMullionModalOpen,
@@ -2184,6 +2199,7 @@ export function useDoorStudioState({
     availableSeries,
     allAvailableSeries,
     availableProfiles,
+    allBrandProfiles,
     availableBeads,
     availableCombos,
     availableAccessories,
@@ -2205,6 +2221,7 @@ export function useDoorStudioState({
     handleSelectSashType,
     handleUpdateDimension,
     handleUpdateSelectedCell,
+    handleUpdateSelectedFrameUnit,
     handleApplyGlassVisualToAll,
     handleSelectMullion,
     handleSaveMullion,

@@ -1,4 +1,6 @@
 import React from 'react';
+import type { Metadata } from 'next';
+import { NO_INDEX_METADATA } from '@/config';
 
 // Thành phần dùng riêng cho trang  - cột phải
 import Hero from './_components/hero';
@@ -7,6 +9,11 @@ import StatCard from './_components/stats-card';
 
 // Thành phần dùng riêng cho trang  - cột trái
 import Container from './_components/container';
+
+export const metadata: Metadata = {
+  ...NO_INDEX_METADATA,
+  title: 'Khôi phục mật khẩu',
+};
 
 const ForgotPassword = () => {
   return (

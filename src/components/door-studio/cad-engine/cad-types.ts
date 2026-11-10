@@ -1,4 +1,14 @@
-import { SceneCellNode, FrameShape, FrameConfig, SashConfig, MullionInfo, MullionCutType, SlidingSashRole } from '../studio-types';
+import {
+  SceneCellNode,
+  FrameShape,
+  FrameConfig,
+  SashConfig,
+  MullionInfo,
+  MullionCutType,
+  SlidingSashRole,
+  FrameCornerJoint,
+  SashCornerJoint,
+} from '../studio-types';
 import { ProfileBar } from '@/types/profile';
 
 export interface ResizeSplitParams {
@@ -52,6 +62,16 @@ export interface LeafCell {
   effectiveReversalMode?: 'none' | 'wall' | 'sash';
   /** Bề rộng thanh đảo riêng của ô (px, chỉ có khi ô ghi đè đảo) */
   reversalD?: number;
+  /** Độ dày 4 cạnh cánh riêng của ô (px) */
+  sashEdges?: EdgeThickness;
+  /** Độ dày 4 cạnh cánh riêng của ô (mm, dùng cho 3D) */
+  sashMmEdges?: EdgeThickness;
+  /** Kiểu ghép góc cánh riêng của ô */
+  sashCornerJoint?: SashCornerJoint;
+  /** Bề rộng nẹp kính riêng của ô (px) */
+  beadW?: number;
+  /** Bề rộng nẹp kính riêng của ô (mm, dùng cho 3D) */
+  beadMm?: number;
 }
 
 /** Đoạn thanh khung đáy còn lại khi cửa Hở đáy từng phần (cùng hệ tọa độ với layout) */
@@ -100,6 +120,15 @@ export interface FrameBox {
   y: number;
   w: number;
   h: number;
+  frameEdges?: EdgeThickness;
+  frameMmEdges?: EdgeThickness;
+  cornerJoint?: FrameCornerJoint;
+  isOpenBottom?: boolean;
+  isPartialBottomOpen?: boolean;
+  isLeftBottomOpen?: boolean;
+  isRightBottomOpen?: boolean;
+  bottomBarSegments?: BottomBarSegment[];
+  bottomOpenRanges?: Array<{ startX: number; endX: number; cellId: string }>;
 }
 
 export interface CurvedFramePaths {

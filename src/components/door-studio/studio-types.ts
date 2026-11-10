@@ -136,12 +136,14 @@ export interface SceneCellNode {
   slidingOverlapMm?: number;
   /** Ghi đè Đảo vách / Đảo cánh riêng cho ô (mặc định 'inherit' = theo FrameConfig toàn cục) */
   reversalOverride?: CellReversalOverride;
+  hasFrameReversalOverride?: boolean;
   /** Ghi đè mã thanh REVERSAL riêng cho ô */
   reversalProfileIdOverride?: ProfileIdRef | null;
   /** Ghi đè khoảng hở/ngậm đảo riêng cho ô (mm) */
   reversalOffsetMmOverride?: number | null;
   /** Ghi đè Hở/Kín cạnh đáy riêng cho ô chạm sàn (mặc định 'inherit') */
   openBottomOverride?: CellOpenBottomOverride;
+  hasBottomFrameOverride?: boolean;
   /** Mã kính đã chọn cho ô (null/undefined = dùng kính mặc định) */
   glassId?: number | null;
   /** Hiệu ứng thị giác của kính (chỉ để hiển thị 2D/3D) */
@@ -150,6 +152,26 @@ export interface SceneCellNode {
   glassVisualEffectOverride?: boolean;
   /** Màu kính (hex) cho hiệu ứng 'tinted' */
   glassVisualColor?: string;
+  /** Đánh dấu node con là một Khối khung bao độc lập (tạo bởi Ghép Khung Bao) */
+  isFrameUnit?: boolean;
+  /** Ghi đè Hệ nhôm (cùng Brand) cho Khối khung hoặc Ô lá */
+  seriesIdOverride?: number | null;
+  /** Ghi đè cấp Khối khung (Frame Unit) */
+  frameProfileIdOverride?: ProfileIdRef | null;
+  frameLeftProfileIdOverride?: ProfileIdRef | null;
+  frameTopProfileIdOverride?: ProfileIdRef | null;
+  frameRightProfileIdOverride?: ProfileIdRef | null;
+  frameBottomProfileIdOverride?: ProfileIdRef | null;
+  mullionProfileIdOverride?: ProfileIdRef | null;
+  frameCornerJointOverride?: FrameCornerJoint | null;
+  /** Ghi đè cấp Ô lá / Cánh (Leaf Cell) */
+  sashProfileIdOverride?: ProfileIdRef | null;
+  sashLeftProfileIdOverride?: ProfileIdRef | null;
+  sashTopProfileIdOverride?: ProfileIdRef | null;
+  sashRightProfileIdOverride?: ProfileIdRef | null;
+  sashBottomProfileIdOverride?: ProfileIdRef | null;
+  sashCornerJointOverride?: SashCornerJoint | null;
+  beadProfileIdOverride?: ProfileIdRef | null;
 }
 
 export type GlassVisualEffect = 'clear' | 'tinted' | 'frosted' | 'striped' | 'rain' | 'pattern';

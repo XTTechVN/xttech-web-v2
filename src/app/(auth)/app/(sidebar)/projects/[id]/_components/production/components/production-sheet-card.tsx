@@ -15,7 +15,7 @@ import {
 } from '@/components';
 import { QUOTATION_TEMPLATE } from '@/config/quotation-template';
 import { getFileUrl } from '@/utils';
-import { buildCombinedSheetAccessories } from '../utils';
+import { buildCombinedSheetAccessories, buildNormalizedSheetGaskets } from '../utils';
 import {
   ProductionSheetLeftTables,
   ProductionSheetProfilesTable,
@@ -59,6 +59,10 @@ export function ProductionSheetCard({
   const rootCell: SceneCellNode | null = sc.rootCell ?? null;
 
   const combinedAccessories = useMemo(() => buildCombinedSheetAccessories(sheet), [sheet]);
+  const normalizedSheet = useMemo(
+    () => ({ ...sheet, gaskets: buildNormalizedSheetGaskets(sheet) }),
+    [sheet],
+  );
   const doorIndexText = String(index + 1).padStart(2, '0');
 
   return (
@@ -162,7 +166,10 @@ export function ProductionSheetCard({
             </div>
           </div>
 
-          <ProductionSheetLeftTables sheet={sheet} combinedAccessories={combinedAccessories} />
+          <ProductionSheetLeftTables
+            sheet={normalizedSheet}
+            combinedAccessories={combinedAccessories}
+          />
         </div>
 
         <div className="production-sheet-right-col col-span-12 md:col-span-7 print:col-span-7">

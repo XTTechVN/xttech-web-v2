@@ -1,12 +1,27 @@
 import type { Metadata } from 'next';
+import {
+  PAGE_SEO_META,
+  buildBreadcrumbJsonLd,
+  buildPageMetadata,
+  serializeJsonLd,
+} from '@/config';
 import { LegalPageView } from '../_components';
 
-export const metadata: Metadata = {
-  title: 'Điều Khoản Dịch Vụ | XTTECH ERP',
-  description:
-    'Quy định sử dụng nền tảng quản trị XMS Fab, XMS Build, XMS Biz, cơ chế hạn mức gói cước, quyền sở hữu dữ liệu và cam kết chất lượng dịch vụ SLA 99.9% của XTTECH.',
-};
+export const metadata: Metadata = buildPageMetadata(PAGE_SEO_META.terms);
 
 export default function TermsOfServicePage() {
-  return <LegalPageView policyKey="terms" />;
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: 'Trang chủ', path: '/' },
+    { name: 'Điều khoản dịch vụ', path: '/terms-of-service' },
+  ]);
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
+      />
+      <LegalPageView policyKey="terms" />
+    </>
+  );
 }
