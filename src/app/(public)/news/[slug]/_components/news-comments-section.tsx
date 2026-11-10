@@ -162,33 +162,41 @@ export function NewsCommentsSection({ slug, articleId, commentCount }: NewsComme
         className="p-5 sm:p-6 rounded-2xl bg-primary/5 border border-primary/20 space-y-4"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="Họ và tên của bạn *"
-            placeholder="Nhập họ tên hoặc đơn vị công tác..."
-            value={authorName}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-slate-700">
+              Họ và tên của bạn <span className="text-red-500">*</span>
+            </label>
+            <Input
+              placeholder="Nhập họ tên hoặc đơn vị công tác..."
+              value={authorName}
+              onChange={(e) => {
+                setAuthorName(e.target.value);
+                if (nameError) setNameError('');
+              }}
+              error={nameError}
+              maxLength={100}
+              fullWidth
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-slate-700">
+            Nội dung bình luận <span className="text-red-500">*</span>
+          </label>
+          <Textarea
+            placeholder="Chia sẻ cảm nghĩ hoặc đặt câu hỏi về bài viết..."
+            rows={3}
+            value={content}
             onChange={(e) => {
-              setAuthorName(e.target.value);
-              if (nameError) setNameError('');
+              setContent(e.target.value);
+              if (contentError) setContentError('');
             }}
-            error={nameError}
-            maxLength={100}
+            error={contentError}
+            maxLength={2000}
             fullWidth
           />
         </div>
-
-        <Textarea
-          label="Nội dung bình luận *"
-          placeholder="Chia sẻ cảm nghĩ hoặc đặt câu hỏi về bài viết..."
-          rows={3}
-          value={content}
-          onChange={(e) => {
-            setContent(e.target.value);
-            if (contentError) setContentError('');
-          }}
-          error={contentError}
-          maxLength={2000}
-          fullWidth
-        />
 
         <div className="flex items-center justify-between gap-3 pt-1">
           <span className="text-xs text-slate-500 font-mono tabular-nums">
