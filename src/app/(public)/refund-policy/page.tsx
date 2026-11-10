@@ -1,12 +1,27 @@
 import type { Metadata } from 'next';
+import {
+  PAGE_SEO_META,
+  buildBreadcrumbJsonLd,
+  buildPageMetadata,
+  serializeJsonLd,
+} from '@/config';
 import { LegalPageView } from '../_components';
 
-export const metadata: Metadata = {
-  title: 'Chính Sách Hoàn Tiền & Bảo Hành Dịch Vụ | XTTECH ERP',
-  description:
-    'Chính sách dùng thử miễn phí trọn đời, cam kết hoàn tiền 100% trong 7 ngày đầu, quy tắc hoàn phí theo tỷ lệ (Pro-rata) cho gói năm và bảo hành đào tạo tận xưởng của XTTECH.',
-};
+export const metadata: Metadata = buildPageMetadata(PAGE_SEO_META.refund);
 
 export default function RefundPolicyPage() {
-  return <LegalPageView policyKey="refund" />;
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: 'Trang chủ', path: '/' },
+    { name: 'Chính sách hoàn tiền', path: '/refund-policy' },
+  ]);
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
+      />
+      <LegalPageView policyKey="refund" />
+    </>
+  );
 }

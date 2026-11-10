@@ -339,10 +339,31 @@ const sanitizeNewsNode = (
   });
 };
 
+const sanitizeHtmlOnServer = (rawHtml: string, allowMedia = true): string => {
+  let cleaned = rawHtml
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<(script|style|object|embed|form|input|button|textarea|select|meta|link|base)[^>]*>[\s\S]*?<\/\1>/gi, '')
+    .replace(/<(script|style|object|embed|form|input|button|textarea|select|meta|link|base)[^>]*\/?>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/\s(href|src|poster|action)\s*=\s*(?:"\s*(?:javascript:|vbscript:|data:text\/html)[^"]*"|'\s*(?:javascript:|vbscript:|data:text\/html)[^']*')/gi, '');
+
+  if (!allowMedia) {
+    cleaned = cleaned.replace(/<(img|video|source|iframe|figure|figcaption)[^>]*\/?>/gi, '');
+  } else {
+    cleaned = cleaned.replace(
+      /\s(src|poster)\s*=\s*(["'])(\/[^"']+)\2/gi,
+      (_match, attrName: string, quote: string, relPath: string) =>
+        ` ${attrName}=${quote}${getFileUrl(relPath)}${quote}`,
+    );
+  }
+
+  return cleaned;
+};
+
 // Làm sạch HTML cơ bản cho văn bản/hợp đồng (hỗ trợ căn lề, màu chữ, màu nền an toàn)
 export function sanitizeRichHtml(html: string): string {
   if (!html) return '';
-  if (typeof DOMParser === 'undefined') return escapeHtml(html);
+  if (typeof DOMParser === 'undefined') return sanitizeHtmlOnServer(html, false);
 
   const parsed = new DOMParser().parseFromString(html, 'text/html');
   const container = parsed.createElement('div');
@@ -353,7 +374,7 @@ export function sanitizeRichHtml(html: string): string {
 // Làm sạch HTML bài viết tin tức (hỗ trợ ảnh, video, chú thích figure/figcaption, màu chữ/nền an toàn)
 export function sanitizeNewsHtml(html: string): string {
   if (!html) return '';
-  if (typeof DOMParser === 'undefined') return escapeHtml(html);
+  if (typeof DOMParser === 'undefined') return sanitizeHtmlOnServer(html, true);
 
   const parsed = new DOMParser().parseFromString(html, 'text/html');
   const container = parsed.createElement('div');
@@ -364,7 +385,7 @@ export function sanitizeNewsHtml(html: string): string {
 // Chuẩn hóa HTML khi người dùng Paste từ trang web khác (gỡ sạch nền đen/màu chữ ngoại lai nhưng giữ cấu trúc)
 export function normalizePastedHtml(rawHtml: string): string {
   if (!rawHtml) return '';
-  if (typeof DOMParser === 'undefined') return escapeHtml(rawHtml);
+  if (typeof DOMParser === 'undefined') return sanitizeHtmlOnServer(rawHtml, true);
 
   const parsed = new DOMParser().parseFromString(rawHtml, 'text/html');
   const container = parsed.createElement('div');

@@ -1,6 +1,15 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { Skeleton } from '@/components';
+import {
+  PAGE_SEO_META,
+  buildNewsListingJsonLd,
+  buildPageMetadata,
+  serializeJsonLd,
+} from '@/config';
 import { NewsPublicListing } from './_components/news-public-listing';
+
+export const metadata: Metadata = buildPageMetadata(PAGE_SEO_META.news);
 
 function NewsListingFallback() {
   return (
@@ -16,8 +25,14 @@ function NewsListingFallback() {
 }
 
 export default function NewsPage() {
+  const jsonLd = buildNewsListingJsonLd();
+
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+      />
       <Suspense fallback={<NewsListingFallback />}>
         <NewsPublicListing />
       </Suspense>

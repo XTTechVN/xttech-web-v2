@@ -2,13 +2,18 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'XTTech - Hệ thống ERP Quản trị Doanh nghiệp',
-    short_name: 'XTTech ERP',
-    description: 'Hệ thống quản lý chấm công, sản xuất, báo giá và nhân sự XTTech',
-    start_url: '/signin',
+    name: 'XTTECH — Hệ thống ERP Quản trị Sản xuất Nhôm Kính & Xây dựng',
+    short_name: 'XTTECH ERP',
+    description:
+      'Hệ sinh thái ERP quản lý thiết kế cửa CAD 2D/3D, bóc tách vật tư BOM, báo giá, kho xưởng và chấm công GPS công trình XTTECH.',
+    start_url: '/',
+    scope: '/',
+    lang: 'vi',
+    dir: 'ltr',
     display: 'standalone',
     background_color: '#ffffff',
     theme_color: '#045863',
+    categories: ['business', 'productivity', 'utilities'],
     icons: [
       {
         src: '/favicon/android-chrome-192x192.png',

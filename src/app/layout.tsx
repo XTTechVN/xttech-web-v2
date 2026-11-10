@@ -2,6 +2,13 @@ import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { Toaster } from 'react-hot-toast';
 import { AppUpdateModal } from '@/components';
+import {
+  BASE_SITE_URL,
+  PAGE_SEO_META,
+  SEO_CONFIG,
+  SEO_KEYWORDS,
+  isProductionIndexingAllowed,
+} from '@/config';
 import { QueryProvider } from '@/contexts';
 
 import './globals.css';
@@ -27,18 +34,70 @@ const lexend = localFont({
   display: 'swap',
 });
 
-// 1. Cấu hình Viewport để màn hình không bị phóng to thu nhỏ lung tung
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: '#045863',
+  themeColor: SEO_CONFIG.themeColor,
 };
 
+const allowIndex = isProductionIndexingAllowed();
+
 export const metadata: Metadata = {
-  title: 'XTTech - Quản lý doanh nghiệp',
-  description: 'XTTech - Quản lý doanh nghiệp',
+  metadataBase: new URL(BASE_SITE_URL),
+  applicationName: SEO_CONFIG.siteName,
+  title: {
+    default: PAGE_SEO_META.home.title,
+    template: SEO_CONFIG.titleTemplate,
+  },
+  description: PAGE_SEO_META.home.description,
+  keywords: SEO_KEYWORDS,
+  authors: [{ name: SEO_CONFIG.siteName, url: BASE_SITE_URL }],
+  creator: SEO_CONFIG.siteName,
+  publisher: SEO_CONFIG.legalName,
+  category: 'business',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: SEO_CONFIG.locale,
+    url: BASE_SITE_URL,
+    siteName: SEO_CONFIG.siteName,
+    title: PAGE_SEO_META.home.title,
+    description: PAGE_SEO_META.home.description,
+    images: [
+      {
+        url: SEO_CONFIG.defaultOgImage,
+        width: SEO_CONFIG.defaultOgImageWidth,
+        height: SEO_CONFIG.defaultOgImageHeight,
+        alt: SEO_CONFIG.brandTitle,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: PAGE_SEO_META.home.title,
+    description: PAGE_SEO_META.home.description,
+    images: [SEO_CONFIG.defaultOgImage],
+  },
+  robots: allowIndex
+    ? {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
+      }
+    : {
+        index: false,
+        follow: false,
+      },
   other: {
     'facebook-domain-verification': 'bdvtycdcy863x260asdrime4wdi3n0',
   },

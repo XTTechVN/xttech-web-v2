@@ -116,6 +116,7 @@ export const resolveHandleY = (
 const resolveDoubleGeometry = (
   leaf: LeafCell,
   metrics: CadMetrics,
+  baseSashEdges: EdgeThickness,
   hasReversalSash: boolean,
   sashJoint: SashCornerJoint,
   reversalWidth: number
@@ -131,7 +132,7 @@ const resolveDoubleGeometry = (
     h: Math.max(10, ch - 2 * reversalD),
   };
   const halfW = (sashBox.w - metrics.astragal) / 2;
-  const thickness = clampEdgeThickness(metrics.sash, halfW, sashBox.h);
+  const thickness = clampEdgeThickness(baseSashEdges, halfW, sashBox.h);
   return {
     isFixed: false,
     isDouble: true,
@@ -164,14 +165,15 @@ export const resolveLeafGeometry = (
   const isFixed = node.sashType === 'fixed';
   const isDouble = node.sashType === 'swing_double';
   const role = resolveSlidingRole(leaf, allLeaves);
-  const sashJoint = resolveSashJoint(role, sashConfig);
+  const sashJoint = leaf.sashCornerJoint ?? resolveSashJoint(role, sashConfig);
+  const baseSashEdges = leaf.sashEdges ?? resolveBaseThickness(role, metrics);
   // Ô có ghi đè đảo riêng dùng chế độ/bề rộng của ô; ngược lại theo cấu hình chung
   const reversalMode = leaf.effectiveReversalMode ?? metrics.reversalMode;
   const reversalWidth = leaf.reversalD ?? metrics.reversal;
   const hasReversalWall = isFixed && reversalMode === 'wall';
   const hasReversalSash = !isFixed && reversalMode === 'sash';
 
-  if (isDouble) return resolveDoubleGeometry(leaf, metrics, hasReversalSash, sashJoint, reversalWidth);
+  if (isDouble) return resolveDoubleGeometry(leaf, metrics, baseSashEdges, hasReversalSash, sashJoint, reversalWidth);
 
   const hasReversal = hasReversalWall || hasReversalSash;
   const reversalD = hasReversal ? Math.max(0, Math.min(reversalWidth, (Math.min(cw, ch) - 10) / 2)) : 0;
@@ -201,7 +203,7 @@ export const resolveLeafGeometry = (
     w: Math.max(MIN_INNER_PX, cw - 2 * reversalD),
     h: Math.max(MIN_INNER_PX, ch - 2 * reversalD),
   };
-  const thickness = clampEdgeThickness(resolveBaseThickness(role, metrics), sashBox.w, sashBox.h);
+  const thickness = clampEdgeThickness(baseSashEdges, sashBox.w, sashBox.h);
   return {
     isFixed,
     isDouble,

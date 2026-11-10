@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import dayjs from 'dayjs';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -34,6 +34,7 @@ import { NewsRelatedArticles } from './news-related-articles';
 
 export interface NewsPublicDetailProps {
   slug: string;
+  initialArticle?: NewsArticle | null;
 }
 
 const VIETNAMESE_WEEKDAYS = [
@@ -70,13 +71,14 @@ const ARTICLE_HTML_CLASS = `text-slate-800 text-base sm:text-[17px] leading-[1.8
   [&_hr]:my-6 [&_hr]:border-slate-200 [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:rounded-xs
   [&_s]:line-through [&_del]:line-through`;
 
-export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
+export function NewsPublicDetail({ slug, initialArticle }: NewsPublicDetailProps) {
   const [optimisticLike, setOptimisticLike] = useState<{
     articleId: number;
     liked: boolean;
     likeCount: number;
   } | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const countedSlugRef = useRef<string | null>(null);
 
   const {
     data: article,
@@ -101,11 +103,37 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
       queryClient.invalidateQueries({ queryKey: ['admin-news'] });
       return data;
     },
+    initialData: initialArticle ?? undefined,
     enabled: Boolean(slug),
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
+
+  // Khi trang đã được SSR với countView=false, kích hoạt đúng 1 lần trên Client để ghi nhận lượt xem thực của người đọc
+  useEffect(() => {
+    if (!slug || !initialArticle || countedSlugRef.current === slug) return;
+    countedSlugRef.current = slug;
+    getPublicNewsBySlug(slug)
+      .then((freshArticle) => {
+        queryClient.setQueryData<NewsArticle>(PUBLIC_NEWS_QUERY_KEYS.detail(slug), freshArticle);
+        queryClient.setQueriesData<{ items?: NewsArticle[]; meta?: unknown }>(
+          { queryKey: PUBLIC_NEWS_QUERY_KEYS.list },
+          (old) => {
+            if (!old?.items) return old;
+            return {
+              ...old,
+              items: old.items.map((item) =>
+                item.id === freshArticle.id ? { ...item, ...freshArticle } : item,
+              ),
+            };
+          },
+        );
+      })
+      .catch(() => {
+        // Bỏ qua nếu lỗi mạng tạm thời trên client vì đã có dữ liệu SSR
+      });
+  }, [slug, initialArticle]);
 
   // Dùng chung đúng queryKey PUBLIC_NEWS_QUERY_KEYS.list với trang danh sách để tận dụng cache sẵn có
   const { data: listData } = useQuery({
@@ -407,6 +435,7 @@ export function NewsPublicDetail({ slug }: NewsPublicDetailProps) {
           <div
             className={`mt-6 ${ARTICLE_HTML_CLASS}`}
             dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+            suppressHydrationWarning
           />
 
           <div className="mt-10 pt-6 border-t border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

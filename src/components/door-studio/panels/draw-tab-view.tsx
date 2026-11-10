@@ -14,8 +14,9 @@ import { ToolboxLeft } from './toolbox-left';
 import { CanvasCadView } from './canvas-cad-view';
 import { CellInspector } from './cell-inspector';
 import { isNodeTouchingBottom } from '../cad-engine/cad-cell-config-resolver';
+import { EnclosingFrameUnitInfo } from '../utils/door-tree-utils';
 import { BomSidebar } from '../bom-sidebar';
-import { DoorCalculateResponse, Glass, ProfileBar } from '@/types';
+import { DoorCalculateResponse, DoorSeries, Glass, ProfileBar } from '@/types';
 import { Undo2, Redo2, PenTool, Sliders, BarChart3, X } from 'lucide-react';
 
 interface DrawTabViewProps {
@@ -66,6 +67,11 @@ interface DrawTabViewProps {
   onChangeFrameConfig?: (updates: Partial<FrameConfig>) => void;
   onChangeSashConfig?: (updates: Partial<SashConfig>) => void;
   isInsideSash?: boolean;
+  frameUnitInfo?: EnclosingFrameUnitInfo | null;
+  onUpdateFrameUnit?: (updates: Partial<SceneCellNode>) => void;
+  globalSeriesId?: number;
+  availableSeries?: DoorSeries[];
+  allBrandProfiles?: ProfileBar[];
 }
 
 export const DrawTabView: React.FC<DrawTabViewProps> = ({
@@ -116,6 +122,11 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
   onChangeFrameConfig,
   onChangeSashConfig,
   isInsideSash,
+  frameUnitInfo,
+  onUpdateFrameUnit,
+  globalSeriesId,
+  availableSeries,
+  allBrandProfiles,
 }) => {
   const [rightTab, setRightTab] = useState<'inspector' | 'bom'>('inspector');
   const [mobileDrawer, setMobileDrawer] = useState<'toolbox' | 'inspector' | 'bom' | null>(null);
@@ -184,7 +195,7 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
           onSelectCell={handleCanvasSelectCell}
           onUpdateDimension={onUpdateDimension}
           onResizeSplit={onResizeSplit}
-          availableProfiles={availableProfiles}
+          availableProfiles={allBrandProfiles ?? availableProfiles}
         />
 
         {/* Floating Action Pill Bar trên Mobile & Tablet (< lg) */}
@@ -309,6 +320,11 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
               availableProfiles={availableProfiles}
               sashConfig={sashConfig}
               onChangeFrameConfig={onChangeFrameConfig}
+              frameUnitInfo={frameUnitInfo}
+              onUpdateFrameUnit={onUpdateFrameUnit}
+              globalSeriesId={globalSeriesId}
+              availableSeries={availableSeries}
+              allBrandProfiles={allBrandProfiles}
             />
           ) : (
             <BomSidebar calcData={calcData} isLoading={isCalculating} />
@@ -436,6 +452,11 @@ export const DrawTabView: React.FC<DrawTabViewProps> = ({
                   availableProfiles={availableProfiles}
                   sashConfig={sashConfig}
                   onChangeFrameConfig={onChangeFrameConfig}
+                  frameUnitInfo={frameUnitInfo}
+                  onUpdateFrameUnit={onUpdateFrameUnit}
+                  globalSeriesId={globalSeriesId}
+                  availableSeries={availableSeries}
+                  allBrandProfiles={allBrandProfiles}
                 />
               )}
 
