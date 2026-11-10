@@ -1,72 +1,124 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Sparkles } from 'lucide-react';
-import { Button } from '@/components';
+import { ArrowRight, CheckCircle2, FileSpreadsheet, Sparkles } from 'lucide-react';
 import { STATS } from './hero.constants';
 import { HeroAdviseCadSection } from './hero-advise-cad-section';
+import { HeroDashboardMockup } from './hero-dashboard-mockup';
+import { HeroDemoModal } from './hero-demo-modal';
 import { HeroFloatingDock } from './hero-floating-dock';
 import { HeroPlatformBanner } from './hero-platform-banner';
 import { HeroStoryPillarsSection } from './hero-story-pillars-section';
 
+const HERO_HIGHLIGHTS = [
+  {
+    bold: 'Phù hợp các doanh nghiệp:',
+    text: 'xưởng sản xuất nhôm kính, nhà thầu thi công mặt dựng, nội thất, cơ khí xây lắp và các công trình xây dựng dân dụng, công nghiệp...',
+  },
+  {
+    bold: 'Chuyên sâu ngành Nhôm Kính & Xây dựng:',
+    text: 'kết nối liền mạch từ khảo sát ô chờ, thiết kế bóc tách 2D/3D, dự toán báo giá đến xuất thẻ cắt A4 phân xưởng.',
+  },
+  {
+    bold: 'App Mobile thực địa:',
+    text: 'dành cho đội lắp đặt, kỹ thuật viên chấm công khuôn mặt, định vị Live GPS và cập nhật tiến độ, bảo hành real-time.',
+  },
+  {
+    bold: 'Quản lý toàn diện từ A–Z:',
+    text: 'vật tư kho - khối lượng bộ cửa - tiến độ sản xuất - dòng tiền hợp đồng - giao việc và hành chính nhân sự.',
+  },
+];
+
 export const Hero = () => {
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+
   return (
     <div className="relative overflow-hidden bg-white font-sans text-gray-900 selection:bg-primary/10 selection:text-primary">
       <HeroFloatingDock />
 
       {/* ===================== HERO TOP SECTION ===================== */}
-      <section id="about" className="relative scroll-mt-20 overflow-hidden pt-8 pb-14 lg:pt-14 lg:pb-20">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/10 via-white to-white" />
-        <div className="pointer-events-none absolute top-12 left-1/2 -z-10 h-72 w-96 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+      <section
+        id="about"
+        className="relative scroll-mt-20 overflow-hidden bg-linear-to-br from-[#02262c] via-[#045863] to-[#02333a] pt-10 pb-14 text-white lg:pt-14 lg:pb-20"
+      >
+        {/* Họa tiết lưới kỹ thuật & quầng sáng chủ đạo */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-10"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.18) 1px, transparent 1px)',
+            backgroundSize: '36px 36px',
+          }}
+        />
+        <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-[#d6ff3d]/10 blur-3xl" />
+        <div className="pointer-events-none absolute right-0 bottom-0 h-96 w-96 rounded-full bg-teal-300/10 blur-3xl" />
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary backdrop-blur-sm sm:text-sm">
-              <Sparkles className="h-4 w-4 shrink-0 text-primary" />
-              <span>Về chúng tôi — Hệ sinh thái XTTech</span>
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-8">
+            {/* CỘT TRÁI: NỘI DUNG GIỚI THIỆU & 2 NÚT HÀNH ĐỘNG */}
+            <div className="lg:col-span-6 space-y-5">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#d6ff3d]/30 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-[#d6ff3d] backdrop-blur-sm">
+                <Sparkles className="h-3.5 w-3.5 shrink-0 text-[#d6ff3d]" />
+                <span>XTTECH </span>
+              </div>
+
+              {/* Tiêu đề chính (lấy cảm hứng từ bố cục ảnh 3, tông màu XTTech) */}
+              <div className="space-y-2">
+                <h1 className="text-2xl font-black uppercase tracking-tight text-white sm:text-4xl lg:text-[40px] lg:leading-[1.18]">
+                  Phần mềm quản lý <span className="text-[#d6ff3d]">sản xuất nhôm kính & thi công</span> công trình
+                </h1>
+                <p className="text-sm font-semibold tracking-wide text-[#d6ff3d] sm:text-base">
+                  XTTech – Giải pháp số hóa toàn diện cho Xưởng Nhôm Kính & Nhà Thầu
+                </p>
+              </div>
+
+              {/* Danh sách 4 lợi điểm cốt lõi có dấu tích */}
+              <ul className="space-y-3 text-sm leading-relaxed text-teal-50/95">
+                {HERO_HIGHLIGHTS.map((item) => (
+                  <li key={item.bold} className="flex items-start gap-2.5">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#d6ff3d]" />
+                    <span>
+                      <strong className="font-bold text-white">{item.bold}</strong> {item.text}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* 2 Nút hành động: Mở Modal Form Đăng ký & Xem bảng giá */}
+              <div className="flex flex-col items-stretch gap-3 pt-2 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={() => setIsDemoModalOpen(true)}
+                  className="group inline-flex items-center justify-center gap-2 rounded-lg bg-[#d6ff3d] px-6 py-3.5 text-sm font-bold text-[#022c33] shadow-lg shadow-black/20 transition-all hover:bg-[#e1ff66] hover:shadow-xl cursor-pointer"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  <span>Đăng ký trải nghiệm Demo</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </button>
+
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-bold text-white backdrop-blur-xs transition-all hover:border-[#d6ff3d] hover:bg-white/15 hover:text-[#d6ff3d]"
+                >
+                  <span>Xem bảng giá dịch vụ</span>
+                </Link>
+              </div>
             </div>
 
-            {/* Tiêu đề chính */}
-            <h1 className="mt-6 text-4xl font-black tracking-tight text-gray-900 sm:text-6xl lg:leading-[1.15]">
-              Tiên phong số hóa <br />
-              <span className="text-primary">ngành nhôm & xây dựng</span>
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-gray-600 sm:text-lg">
-              XTTech kết nối liền mạch từ khảo sát ô chờ, bóc tách kỹ thuật, dự toán báo giá đến quản lý phân xưởng và nghiệm thu công trình.
-            </p>
-
-            {/* Nút hành động */}
-            <div className="mt-8 flex flex-col items-center justify-center gap-3.5 sm:flex-row">
-              <Link href="/signin" className="w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-primary px-8 text-white shadow-lg shadow-primary/25 transition-all duration-300 hover:bg-primary/90 hover:shadow-xl sm:w-auto"
-                >
-                  <span>Khám phá giải pháp</span>
-                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </Button>
-              </Link>
-              <Link href="/pricing" className="w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full rounded-full border-gray-300 bg-white px-8 text-gray-800 transition-all hover:border-primary hover:bg-primary/5 hover:text-primary sm:w-auto"
-                >
-                  Xem bảng giá dịch vụ
-                </Button>
-              </Link>
+            {/* CỘT PHẢI: MOCKUP DASHBOARD MÁY TÍNH (ẢNH 4) & MOBILE (ẢNH 5) */}
+            <div className="lg:col-span-6">
+              <HeroDashboardMockup />
             </div>
           </div>
 
           {/* Stats Bar */}
-          <div className="mt-12 grid grid-cols-2 gap-4 rounded-3xl border border-primary/10 bg-white/80 p-6 shadow-xl shadow-primary/5 backdrop-blur-sm sm:p-8 lg:grid-cols-4 lg:gap-8">
+          <div className="mt-12 grid grid-cols-2 gap-4 rounded-lg border border-white/15 bg-white/10 p-5 backdrop-blur-md sm:p-6 lg:mt-14 lg:grid-cols-4 lg:gap-8">
             {STATS.map((stat) => (
               <div key={stat.label} className="flex flex-col items-center text-center">
-                <span className="text-3xl font-black tracking-tight text-primary sm:text-4xl lg:text-5xl">{stat.value}</span>
-                <span className="mt-2 text-xs font-medium text-gray-600 sm:text-sm">{stat.label}</span>
+                <span className="text-2xl font-black tracking-tight text-[#d6ff3d] sm:text-3xl lg:text-4xl">{stat.value}</span>
+                <span className="mt-1.5 text-xs font-medium text-teal-50/90 sm:text-sm">{stat.label}</span>
               </div>
             ))}
           </div>
@@ -76,9 +128,11 @@ export const Hero = () => {
       <HeroAdviseCadSection />
       <HeroPlatformBanner />
       <HeroStoryPillarsSection />
+
+      {/* Modal Form Đăng ký trải nghiệm Demo */}
+      <HeroDemoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
     </div>
   );
 };
 
 export default Hero;
-
