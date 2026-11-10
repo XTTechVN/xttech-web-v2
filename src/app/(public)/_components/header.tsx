@@ -132,7 +132,7 @@ export const Header = () => {
           className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
         >
           <XTLogo className="h-8 w-8 drop-shadow-[0_2px_5px_rgba(4,88,99,0.35)]" />
-          <Heading size="h1" className="tracking-tight text-primary">XTTECH</Heading>
+          <Heading as="span" size="h1" className="tracking-tight text-primary">XTTECH</Heading>
         </Link>
 
         {/* Desktop Nav với hiệu ứng Liquid Glass */}

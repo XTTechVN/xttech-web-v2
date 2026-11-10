@@ -1026,6 +1026,8 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     frameConfig,
     sashConfig,
     slidingOverlapPx: slidingOverlapMm,
+    availableProfiles,
+    scale: 1,
   });
 
   const cfg: Door3DCustomSettings = customSettings ?? DEFAULT_DOOR_3D_SETTINGS;
@@ -1156,20 +1158,33 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
 
   // 4. Dựng Khung bao ngoài (Outer Frame Boxes)
   const frameJoint = frameConfig?.cornerJoint ?? '45';
-  const isBot90 = frameJoint === '45_top_90_bot';
-  const botFrameMm = isOpenBottom ? 0 : isBot90 ? Math.max(24, Math.round(frameMm * 0.65)) : frameMm;
 
   for (const fBox of layout.frames) {
+    const fBoxJoint = fBox.cornerJoint ?? frameJoint;
+    const fBoxOpenBot = fBox.isOpenBottom ?? isOpenBottom;
+    const fBoxEdges = fBox.frameMmEdges ?? {
+      left: frameMm,
+      top: frameMm,
+      right: frameMm,
+      bottom: frameMm,
+    };
+    const isBot90 = fBoxJoint === '45_top_90_bot';
+    const fBoxBotMm = fBoxOpenBot
+      ? 0
+      : isBot90
+      ? Math.max(24, Math.round(fBoxEdges.bottom * 0.65))
+      : fBoxEdges.bottom;
+
     if (frameShape !== 'rect') {
       addArchedFrame3D(
         collector,
         to3D,
         frameShape,
         fBox,
-        frameMm,
+        fBoxEdges.top,
         frameZBack,
         frameZFront,
-        isOpenBottom,
+        fBoxOpenBot,
         frameConfig?.archConfig,
         aluRgb,
         aluMatId,
@@ -1180,18 +1195,18 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
         collector,
         to3D,
         fBox,
-        { left: frameMm, top: frameMm, right: frameMm, bottom: botFrameMm },
+        { left: fBoxEdges.left, top: fBoxEdges.top, right: fBoxEdges.right, bottom: fBoxBotMm },
         frameZBack,
         frameZFront,
-        frameJoint,
+        fBoxJoint,
         aluRgb,
         aluMatId,
         aluEdgeRgb,
         {
-          isOpenBottom,
-          isOpenBotLeft: layout.isPartialBottomOpen ? layout.isLeftBottomOpen : undefined,
-          isOpenBotRight: layout.isPartialBottomOpen ? layout.isRightBottomOpen : undefined,
-          bottomBarSegments: layout.isPartialBottomOpen ? layout.bottomBarSegments : undefined,
+          isOpenBottom: fBoxOpenBot,
+          isOpenBotLeft: fBox.isPartialBottomOpen ? fBox.isLeftBottomOpen : undefined,
+          isOpenBotRight: fBox.isPartialBottomOpen ? fBox.isRightBottomOpen : undefined,
+          bottomBarSegments: fBox.isPartialBottomOpen ? fBox.bottomBarSegments : undefined,
           hasInnerRebate: !hasSlidingLeaves,
           gapMm: 0.7,
           mullions: layout.mullions,
@@ -1199,10 +1214,10 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
       );
 
       // Vẽ đủ số thanh Ray Inox trên khung dưới theo đúng số ray của bộ cửa (2 ray, 3 ray, 4 ray...)
-      if (hasSlidingLeaves && !isOpenBottom) {
+      if (hasSlidingLeaves && !fBoxOpenBot) {
         const railCol: Vec3 = [0.78, 0.82, 0.86];
-        const [rx1, ryBot] = to3D(fBox.x + frameMm, fBox.y + fBox.h - botFrameMm);
-        const [rx2] = to3D(fBox.x + fBox.w - frameMm, fBox.y + fBox.h - botFrameMm);
+        const [rx1, ryBot] = to3D(fBox.x + fBoxEdges.left, fBox.y + fBox.h - fBoxBotMm);
+        const [rx2] = to3D(fBox.x + fBox.w - fBoxEdges.right, fBox.y + fBox.h - fBoxBotMm);
         const railW = Math.max(0.05, Math.abs(rx2 - rx1));
         const railCx = (rx1 + rx2) / 2;
         for (let tIdx = 0; tIdx < numTracks; tIdx++) {
@@ -1270,6 +1285,9 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     foldChainIndex?: number;
     foldChainAnchorXMm?: number;
     foldChainPrevWidthsMm?: number[];
+    sashMmEdges?: { left: number; top: number; right: number; bottom: number };
+    sashCornerJoint?: SashCornerJoint;
+    beadMm?: number;
   }
 
   const allSashes: FlattenedSashItem[] = [];
@@ -1306,7 +1324,7 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     const st = String(node.sashType || 'fixed');
 
     if (st === 'fixed') {
-      const bW = Math.min(beadMm, Math.floor(Math.min(lw, lh) * 0.15));
+      const bW = Math.min(leaf.beadMm ?? beadMm, Math.floor(Math.min(lw, lh) * 0.15));
       const beadDepth = Math.max(0.018, (cfg.glassThicknessMm || 8) * 0.001 + 0.01);
       addFourPerimeterBars3D(
         collector,
@@ -1348,12 +1366,18 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
           box: { x: lx, y: ly, w: halfW, h: lh },
           sashType: 'swing_left',
           hasDynamicMullion: true,
+          sashMmEdges: leaf.sashMmEdges,
+          sashCornerJoint: leaf.sashCornerJoint,
+          beadMm: leaf.beadMm,
         },
         {
           node,
           box: { x: lx + halfW + gapMid, y: ly, w: halfW, h: lh },
           sashType: 'swing_right',
           hasDynamicMullion: false,
+          sashMmEdges: leaf.sashMmEdges,
+          sashCornerJoint: leaf.sashCornerJoint,
+          beadMm: leaf.beadMm,
         }
       );
     } else {
@@ -1363,6 +1387,9 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
         box: { x: lx, y: ly, w: lw, h: lh },
         sashType: st,
         slidingIndex: isSlidingSash ? slidingLeafCounter++ : undefined,
+        sashMmEdges: leaf.sashMmEdges,
+        sashCornerJoint: leaf.sashCornerJoint,
+        beadMm: leaf.beadMm,
       });
     }
   }
@@ -1495,8 +1522,8 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     }
     const sashZCenter = (sZBack + sZFront) / 2;
 
-    let activeSashJoint: SashCornerJoint = sashConfig?.cornerJoint ?? '45';
-    if (isSliding && sashConfig?.slidingJoints) {
+    let activeSashJoint: SashCornerJoint = sub.sashCornerJoint ?? sashConfig?.cornerJoint ?? '45';
+    if (!sub.sashCornerJoint && isSliding && sashConfig?.slidingJoints) {
       const sIdx = sub.slidingIndex ?? 0;
       const isFirst = sIdx === 0;
       const isLast = sIdx === totalSlidingLeaves - 1 && totalSlidingLeaves > 1;
@@ -1533,12 +1560,21 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
         addHinges3D(collector, hingeX, sBox.y, sBox.h, hingeZFace, dirZ, to3D, effectiveHwRgb);
       }
     } else {
-      const dSash = Math.min(sashMm, Math.floor(Math.min(sBox.w, sBox.h) * 0.22));
+      const maxSashBar = Math.floor(Math.min(sBox.w, sBox.h) * 0.22);
+      const dSash = Math.min(sub.sashMmEdges?.left ?? sashMm, maxSashBar);
+      const sashBarW = sub.sashMmEdges
+        ? {
+            left: Math.min(sub.sashMmEdges.left, maxSashBar),
+            top: Math.min(sub.sashMmEdges.top, maxSashBar),
+            right: Math.min(sub.sashMmEdges.right, maxSashBar),
+            bottom: Math.min(sub.sashMmEdges.bottom, maxSashBar),
+          }
+        : { left: dSash, top: dSash, right: dSash, bottom: dSash };
       addFourPerimeterBars3D(
         collector,
         to3D,
         sBox,
-        { left: dSash, top: dSash, right: dSash, bottom: dSash },
+        sashBarW,
         sZBack,
         sZFront,
         activeSashJoint,
@@ -1642,7 +1678,7 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     }
 
     // 4 Thanh Nẹp kính cánh + Tấm kính trong lòng cánh
-    const sbW = Math.min(beadMm, Math.floor(dSash * 0.42));
+    const sbW = Math.min(sub.beadMm ?? beadMm, Math.floor(dSash * 0.42));
     const innerBox = {
       x: sBox.x + dSash,
       y: sBox.y + dSash,

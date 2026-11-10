@@ -11,6 +11,8 @@ export * from './customer';
 export * from './work-shift';
 export * from './news';
 export * from './task';
+export * from './seo';
+
 
 
 

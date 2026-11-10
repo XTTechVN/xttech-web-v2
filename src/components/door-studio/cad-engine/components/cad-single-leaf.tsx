@@ -112,7 +112,7 @@ export const CadSingleLeaf: React.FC<CadSingleLeafProps> = ({
     inner,
     isFixed,
     mullionThickness: metrics.sashMullion,
-    beadWidth: metrics.bead,
+    beadWidth: leaf.beadW ?? metrics.bead,
     aluminumColor,
   });
 
