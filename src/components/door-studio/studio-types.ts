@@ -61,6 +61,13 @@ export interface GlassGrilleMotif {
   gridRow?: number; // Chỉ số hàng nan liên kết (0, 1...)
 }
 
+export const MOTIF_ROTATION_OPTIONS = [
+  { value: 0, label: '0° (Đứng)', shortLabel: '0°' },
+  { value: 90, label: '90° (Ngang)', shortLabel: '90°' },
+  { value: 180, label: '180° (Ngược)', shortLabel: '180°' },
+  { value: 270, label: '270° (Ngang trái)', shortLabel: '270°' },
+] as const;
+
 export interface GlassGrilleConfig {
   enabled: boolean;
   applyToAllSashes?: boolean;
@@ -374,6 +381,25 @@ export interface SashVariantProfiles {
   bottomProfileId?: ProfileIdRef;
 }
 
+export type CasementOpenTypeKey = 'outward' | 'inward';
+
+export interface CasementVariants {
+  outward?: SashVariantProfiles;
+  inward?: SashVariantProfiles;
+}
+
+export const OPEN_DIRECTION_LABELS: Record<string, string> = {
+  outward: 'Mở ra',
+  inward: 'Mở vào',
+  sliding: 'Trượt lùa',
+  fixed: 'Cố định',
+};
+
+export const OPEN_DIRECTION_BADGES: Record<string, { label: string; className: string }> = {
+  outward: { label: 'Mở ra', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  inward: { label: 'Mở vào', className: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+};
+
 export interface SlidingSashJoints {
   leftSliding: SashCornerJoint;
   rightSliding: SashCornerJoint;
@@ -537,6 +563,7 @@ export interface SashConfig {
     [key: string]: unknown;
   };
   slidingVariants?: Partial<Record<SlidingSashRole, SashVariantProfiles>>;
+  casementVariants?: CasementVariants;
   mullionProfileId?: ProfileIdRef;
   beadProfileId?: ProfileIdRef;
   dynamicMullionProfileId?: ProfileIdRef;

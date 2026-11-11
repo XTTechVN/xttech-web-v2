@@ -9,6 +9,26 @@ const CATEGORY_MAP: Record<string, string> = {
   bead: 'Nẹp kính',
 };
 
+const renderDirectionBadge = (direction?: string | null, name?: string) => {
+  const isOutward = direction === 'outward' || name?.includes('Mở ra') || name?.includes('mở ra');
+  const isInward = direction === 'inward' || name?.includes('Mở vào') || name?.includes('mở vào');
+  if (isOutward) {
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+        Mở ra
+      </span>
+    );
+  }
+  if (isInward) {
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+        Mở vào
+      </span>
+    );
+  }
+  return null;
+};
+
 interface BomBarsTableProps {
   bars: DoorCalculateResponse['groupedBars'];
 }
@@ -29,8 +49,9 @@ export const BomBarsTable: React.FC<BomBarsTableProps> = ({ bars }) => {
         {bars.map((bar, idx) => (
           <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
             <td className="py-2.5 px-2.5 sm:px-3">
-              <div className="font-bold text-slate-900 text-xs sm:text-sm leading-snug">
-                {bar.name}
+              <div className="font-bold text-slate-900 text-xs sm:text-sm leading-snug flex items-center gap-1.5 flex-wrap">
+                <span>{bar.name}</span>
+                {renderDirectionBadge(bar.openDirection, bar.name)}
               </div>
               <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-500 font-mono mt-0.5 flex-wrap">
                 {bar.profileCode && (

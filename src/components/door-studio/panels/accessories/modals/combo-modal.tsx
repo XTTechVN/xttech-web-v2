@@ -60,7 +60,10 @@ export function ComboModal({
   const openingType = watch('openingType');
   const formBrandId = watch('brandId');
   const selectedDoorTypes = watch('doorTypes') || [];
-  const effectiveBrandId = formBrandId ? Number(formBrandId) : brandId || null;
+  const effectiveBrandId =
+    formBrandId !== undefined
+      ? (formBrandId ? Number(formBrandId) : null)
+      : (brandId || null);
 
   const handleToggleDoorType = (doorTypeVal: string) => {
     const current = Array.isArray(selectedDoorTypes) ? selectedDoorTypes : [];
@@ -147,7 +150,7 @@ export function ComboModal({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [combo, isCopy, isOpen, reset, defaultApplyFor, brandId, accessories.length]);
+  }, [combo, isCopy, isOpen, reset, defaultApplyFor, brandId]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: AccessoryComboCreate) => {

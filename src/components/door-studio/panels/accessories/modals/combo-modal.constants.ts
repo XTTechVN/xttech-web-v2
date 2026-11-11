@@ -189,6 +189,9 @@ export function buildComboSubmitPayload(
     doorTypeId: data.doorTypeId ? Number(data.doorTypeId) : null,
     doorTypes: Array.isArray(data.doorTypes) ? data.doorTypes.filter(Boolean) : [],
     description: data.description?.trim() ? data.description.trim() : null,
-    brandId: data.brandId ? Number(data.brandId) : brandId || combo?.brandId || null,
+    brandId:
+      data.brandId !== undefined
+        ? (data.brandId ? Number(data.brandId) : null)
+        : (brandId || combo?.brandId || null),
   };
 }
