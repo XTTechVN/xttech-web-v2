@@ -11,7 +11,11 @@ export type AccessoryUnit =
   | 'bag'
   | 'meter'
   | 'bottle'
-  | 'sheet';
+  | 'sheet'
+  | 'bar'
+  | 'sqm'
+  | 'kg'
+  | 'tube';
 
 export interface AccessoryUnitConfig {
   label: string;
@@ -59,6 +63,22 @@ export const ACCESSORY_UNIT_CONFIG: Record<string, AccessoryUnitConfig> = {
     label: 'Tấm',
     className: 'bg-orange-50 text-orange-700 border-orange-200/70',
   },
+  bar: {
+    label: 'Cây',
+    className: 'bg-slate-50 text-slate-700 border-slate-200/70',
+  },
+  sqm: {
+    label: 'm²',
+    className: 'bg-blue-50 text-blue-700 border-blue-200/70',
+  },
+  kg: {
+    label: 'kg',
+    className: 'bg-lime-50 text-lime-700 border-lime-200/70',
+  },
+  tube: {
+    label: 'Tuýp',
+    className: 'bg-pink-50 text-pink-700 border-pink-200/70',
+  },
 };
 
 export const ACCESSORY_UNIT_MAP: Record<string, string> = {
@@ -72,6 +92,10 @@ export const ACCESSORY_UNIT_MAP: Record<string, string> = {
   meter: 'Mét',
   bottle: 'Chai / Tuýp',
   sheet: 'Tấm',
+  bar: 'Cây',
+  sqm: 'm²',
+  kg: 'kg',
+  tube: 'Tuýp',
 };
 
 export const getAccessoryUnitConfig = (unit: string | null | undefined): AccessoryUnitConfig => {

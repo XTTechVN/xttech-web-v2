@@ -178,6 +178,31 @@ export const rescaleTree = (node: SceneCellNode, scaleX: number, scaleY: number)
   };
 };
 
+const hasTreeDimensionMismatch = (
+  curr: SceneCellNode,
+  expectedW: number,
+  expectedH: number
+): boolean => {
+  if (Math.abs((curr.w || 0) - expectedW) >= 1 || Math.abs((curr.h || 0) - expectedH) >= 1) {
+    return true;
+  }
+  if (curr.children && curr.children.length > 0) {
+    const isVert = curr.splitDirection === 'vertical';
+    const isHoriz = curr.splitDirection === 'horizontal';
+    if (isVert || isHoriz) {
+      const expectedSpan = isVert ? expectedW : expectedH;
+      const childrenSum = curr.children.reduce((sum, c) => sum + ((isVert ? c.w : c.h) || 0), 0);
+      if (Math.abs(childrenSum - expectedSpan) >= 1) {
+        return true;
+      }
+      return curr.children.some((c) =>
+        hasTreeDimensionMismatch(c, isVert ? c.w || 1 : expectedW, isVert ? expectedH : c.h || 1)
+      );
+    }
+  }
+  return false;
+};
+
 export const ensureRootCellDimensions = (
   node: SceneCellNode,
   targetW: number,
@@ -188,17 +213,7 @@ export const ensureRootCellDimensions = (
   const curW = node.w || safeW;
   const curH = node.h || safeH;
 
-  const isVert = node.splitDirection === 'vertical';
-  const isHoriz = node.splitDirection === 'horizontal';
-  const childrenSpanMismatch =
-    node.children && node.children.length > 0 && (isVert || isHoriz)
-      ? Math.abs(
-          node.children.reduce((sum, c) => sum + ((isVert ? c.w : c.h) || 0), 0) -
-            (isVert ? safeW : safeH)
-        ) >= 1
-      : false;
-
-  if (curW === safeW && curH === safeH && !childrenSpanMismatch) {
+  if (!hasTreeDimensionMismatch(node, safeW, safeH)) {
     return node;
   }
 
@@ -456,10 +471,36 @@ export const applySashTypeToCluster = (
   return { updatedRoot: root, nextSelectedId: targetId };
 };
 
-/**
- * Tổng quát: resize 1 cell bất kỳ trong cây, bù lại cho sibling kế tiếp
- */
-export const resizeCellInParent = (
+export const resolveAxisResizableCellId = (
+  root: SceneCellNode,
+  cellId: string,
+  axis: 'w' | 'h'
+): string => {
+  const findPath = (curr: SceneCellNode, path: SceneCellNode[]): SceneCellNode[] | null => {
+    const nextPath = [...path, curr];
+    if (curr.id === cellId) return nextPath;
+    if (curr.children) {
+      for (const child of curr.children) {
+        const found = findPath(child, nextPath);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const path = findPath(root, []);
+  if (!path || path.length < 2) return cellId;
+
+  const expectedDir = axis === 'w' ? 'vertical' : 'horizontal';
+  for (let i = path.length - 1; i >= 1; i--) {
+    if (path[i - 1].splitDirection === expectedDir) {
+      return path[i].id;
+    }
+  }
+  return cellId;
+};
+
+const resizeDirectCellInParent = (
   root: SceneCellNode,
   cellId: string,
   newValue: number,
@@ -524,7 +565,20 @@ export const resizeCellInParent = (
   }
 
   // Không tìm thấy ở cấp này, đệ quy xuống sâu hơn
-  return { ...root, children: root.children.map((c) => resizeCellInParent(c, cellId, newValue, axis)) };
+  return { ...root, children: root.children.map((c) => resizeDirectCellInParent(c, cellId, newValue, axis)) };
+};
+
+/**
+ * Tổng quát: resize 1 cell bất kỳ trong cây, bù lại cho sibling kế tiếp
+ */
+export const resizeCellInParent = (
+  root: SceneCellNode,
+  cellId: string,
+  newValue: number,
+  axis: 'w' | 'h'
+): SceneCellNode => {
+  const effectiveCellId = resolveAxisResizableCellId(root, cellId, axis);
+  return resizeDirectCellInParent(root, effectiveCellId, newValue, axis);
 };
 
 /**

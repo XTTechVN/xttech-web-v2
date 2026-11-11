@@ -233,18 +233,24 @@ export interface GroupedGlassCellBOM {
   glassPrice?: number;
 }
 
+export type CornerJointPosition = 'frame' | 'sash' | 'safety_frame';
+export type CornerJointTypeCode = 'crimped' | 'permanent_screw' | 'spring_clip' | 'miter_45';
+
 export interface CornerJointBOM {
   name: string;
-  position: 'frame' | 'sash';
+  position: CornerJointPosition;
   qty: number;
   unit: string;
-  jointType?: string | null;
+  jointType?: CornerJointTypeCode | string | null;
   formula?: string | null;
+  comboId?: number | null;
+  comboName?: string | null;
+  baseQuantity?: number | null;
   accessoryId?: number | null;
   accessoryCode?: string | null;
   accessoryName?: string | null;
-  unitPrice?: number;
-  totalPrice?: number;
+  unitPrice: number;
+  totalPrice: number;
   isConfigured: boolean;
   note?: string | null;
 }
@@ -280,7 +286,9 @@ export interface AccessoryBOMItem {
   category?: string | null;
   brandName?: string | null;
   unit: string;
+  baseQuantity?: number | null;
   quantity: number;
+  scaleFormula?: string | null;
   unitPrice: number;
   totalPrice: number;
   note?: string | null;

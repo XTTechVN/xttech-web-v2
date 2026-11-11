@@ -367,7 +367,8 @@ export const buildCadLayout = (
     wBox: number,
     hBox: number,
     isFrameUnit: boolean,
-    frameBounds?: FrameUnitBounds
+    frameBounds?: FrameUnitBounds,
+    refBox?: { x: number; y: number; w: number; h: number }
   ) => {
     // 1. Frame Coupling: Mỗi nhánh con là 1 module khung độc lập ghép lại
     if (node.splitType === 'coupling' && node.children && node.children.length > 0) {
@@ -381,12 +382,12 @@ export const buildCadLayout = (
         const weight = (isVert ? child.w : child.h) || 1;
         const ratio = totalWeight > 0 ? weight / totalWeight : 1 / count;
 
-        const cw = isVert ? (isLast ? wBox - cur : Math.round(wBox * ratio)) : wBox;
-        const ch = isVert ? hBox : isLast ? hBox - cur : Math.round(hBox * ratio);
+        const cw = isVert ? (isLast ? wBox - cur : snap(wBox * ratio)) : wBox;
+        const ch = isVert ? hBox : isLast ? hBox - cur : snap(hBox * ratio);
         const cx = isVert ? x + cur : x;
         const cy = isVert ? y : y + cur;
 
-        traverse(child, cx, cy, cw, ch, true, undefined);
+        traverse(child, cx, cy, cw, ch, true, undefined, { x: cx, y: cy, w: cw, h: ch });
         cur += isVert ? cw : ch;
 
         // Bổ sung vách giáp ranh tách khung (coupling seam) để hỗ trợ kéo thả điều chỉnh
@@ -419,6 +420,7 @@ export const buildCadLayout = (
     let innerY = y;
     let innerW = wBox;
     let innerH = hBox;
+    const curRefBox = isFrameUnit ? { x, y, w: wBox, h: hBox } : (refBox ?? { x, y, w: wBox, h: hBox });
     let activeFrameBounds: FrameUnitBounds = frameBounds || {
       unitNode: node,
       x,
@@ -523,7 +525,12 @@ export const buildCadLayout = (
             ...child,
             sashZIndex: child.sashZIndex ?? pos.zIndex,
           };
-          traverse(leafChild, pos.x, innerY, pos.w, innerH, false, activeFrameBounds);
+          traverse(leafChild, pos.x, innerY, pos.w, innerH, false, activeFrameBounds, {
+            x: pos.x,
+            y: curRefBox.y,
+            w: pos.w,
+            h: curRefBox.h,
+          });
         });
         return;
       }
@@ -540,36 +547,125 @@ export const buildCadLayout = (
       const activeMullionT = isVert
         ? (activeFrameBounds.vertMullionPx ?? options?.vertMullionT ?? mullionT)
         : (activeFrameBounds.horizMullionPx ?? options?.horizMullionT ?? mullionT);
-      let totalMullions = 0;
+      const hasMullionAt: boolean[] = [];
+      let mullionCount = 0;
       for (let i = 0; i < count - 1; i++) {
-        if (hasMullionBetween(node.children[i], node.children[i + 1])) {
-          totalMullions += activeMullionT;
+        const hasM = hasMullionBetween(node.children[i], node.children[i + 1]);
+        hasMullionAt.push(hasM);
+        if (hasM) mullionCount += 1;
+      }
+      const totalMullions = mullionCount * activeMullionT;
+
+      const weights = node.children.map((c) => (isVert ? c.w : c.h) || 1);
+      const totalWeight = weights.reduce((sum, v) => sum + v, 0);
+
+      // Hệ tọa độ tham chiếu danh nghĩa (mép phủ bì khung ↔ tim đố ↔ tim đố), khớp 100% với BOM Backend
+      const refStart = isVert ? curRefBox.x : curRefBox.y;
+      const refSpan = isVert ? curRefBox.w : curRefBox.h;
+      const childRefStarts: number[] = [];
+      const childRefSpans: number[] = [];
+      let refAcc = 0;
+      for (let i = 0; i < count; i++) {
+        const isLast = i === count - 1;
+        const ratio = totalWeight > 0 ? weights[i] / totalWeight : 1 / count;
+        const rSpan = isLast ? refSpan - refAcc : snap(refSpan * ratio);
+        childRefStarts.push(refStart + refAcc);
+        childRefSpans.push(rSpan);
+        refAcc += rSpan;
+      }
+
+      const innerStart = isVert ? innerX : innerY;
+      const innerSpan = isVert ? innerW : innerH;
+      const innerEnd = innerStart + innerSpan;
+      const minLeafClear = isRealProportion ? Math.max(0.4, 4 * layoutScale) : 4;
+
+      const childClearStarts = new Array<number>(count).fill(0);
+      const childClearSpans = new Array<number>(count).fill(0);
+      const mullionPositions = new Array<number>(Math.max(0, count - 1)).fill(0);
+
+      if (mullionCount > 0 && innerSpan > totalMullions + count * minLeafClear) {
+        let prevBoundEnd = innerStart;
+        let prevBoundIdx = -1;
+        let remMullions = mullionCount;
+
+        for (let b = 0; b < count - 1; b++) {
+          if (!hasMullionAt[b]) continue;
+          remMullions -= 1;
+          const leftRunCount = b - prevBoundIdx;
+          const rightChildCount = count - 1 - b;
+          const nominalCenter = childRefStarts[b] + childRefSpans[b];
+          const minCenter = prevBoundEnd + leftRunCount * minLeafClear + activeMullionT / 2;
+          const maxCenter =
+            innerEnd - remMullions * activeMullionT - rightChildCount * minLeafClear - activeMullionT / 2;
+          const clampedCenter = Math.max(minCenter, Math.min(maxCenter, nominalCenter));
+          const mStart = snap(clampedCenter - activeMullionT / 2);
+          mullionPositions[b] = mStart;
+          prevBoundEnd = mStart + activeMullionT;
+          prevBoundIdx = b;
+        }
+
+        let runStart = 0;
+        while (runStart < count) {
+          let runEnd = runStart;
+          while (runEnd < count - 1 && !hasMullionAt[runEnd]) {
+            runEnd += 1;
+          }
+          const runClearStart = runStart === 0 ? innerStart : mullionPositions[runStart - 1] + activeMullionT;
+          const runClearEnd = runEnd === count - 1 ? innerEnd : mullionPositions[runEnd];
+          const runSpan = Math.max(1, runClearEnd - runClearStart);
+
+          if (runStart === runEnd) {
+            childClearStarts[runStart] = runClearStart;
+            childClearSpans[runStart] = runSpan;
+          } else {
+            const runCount = runEnd - runStart + 1;
+            let runWeight = 0;
+            for (let k = runStart; k <= runEnd; k++) runWeight += weights[k];
+            let runAcc = 0;
+            for (let k = runStart; k <= runEnd; k++) {
+              const isRunLast = k === runEnd;
+              const rRatio = runWeight > 0 ? weights[k] / runWeight : 1 / runCount;
+              const cSpan = isRunLast ? Math.max(1, runSpan - runAcc) : snap(runSpan * rRatio);
+              childClearStarts[k] = runClearStart + runAcc;
+              childClearSpans[k] = cSpan;
+              runAcc += cSpan;
+            }
+          }
+          runStart = runEnd + 1;
+        }
+      } else {
+        const availSpace = Math.max(10, innerSpan - totalMullions);
+        let cur = 0;
+        let spanCur = 0;
+        for (let i = 0; i < count; i++) {
+          const isLast = i === count - 1;
+          const ratio = totalWeight > 0 ? weights[i] / totalWeight : 1 / count;
+          const cSpan = isLast ? availSpace - spanCur : snap(availSpace * ratio);
+          childClearStarts[i] = innerStart + cur;
+          childClearSpans[i] = cSpan;
+          cur += cSpan;
+          spanCur += cSpan;
+          if (i < count - 1 && hasMullionAt[i]) {
+            mullionPositions[i] = innerStart + cur;
+            cur += activeMullionT;
+          }
         }
       }
 
-      const availSpace = Math.max(10, (isVert ? innerW : innerH) - totalMullions);
-      const totalWeight = node.children.reduce((sum, c) => sum + ((isVert ? c.w : c.h) || 1), 0);
-
-      let cur = 0;
-      let spanCur = 0;
       node.children.forEach((child, idx) => {
-        const isLast = idx === count - 1;
-        const weight = (isVert ? child.w : child.h) || 1;
-        const ratio = totalWeight > 0 ? weight / totalWeight : 1 / count;
+        const cw = isVert ? childClearSpans[idx] : innerW;
+        const ch = isVert ? innerH : childClearSpans[idx];
+        const cx = isVert ? childClearStarts[idx] : innerX;
+        const cy = isVert ? innerY : childClearStarts[idx];
+        const childRefBox = isVert
+          ? { x: childRefStarts[idx], y: curRefBox.y, w: childRefSpans[idx], h: curRefBox.h }
+          : { x: curRefBox.x, y: childRefStarts[idx], w: curRefBox.w, h: childRefSpans[idx] };
 
-        const childSpan = isLast ? availSpace - spanCur : Math.round(availSpace * ratio);
-        const cw = isVert ? childSpan : innerW;
-        const ch = isVert ? innerH : childSpan;
-        const cx = isVert ? innerX + cur : innerX;
-        const cy = isVert ? innerY : innerY + cur;
-
-        traverse(child, cx, cy, cw, ch, false, activeFrameBounds);
-        cur += isVert ? cw : ch;
-        spanCur += isVert ? cw : ch;
+        traverse(child, cx, cy, cw, ch, false, activeFrameBounds, childRefBox);
 
         if (idx < count - 1) {
           const nextChild = node.children?.[idx + 1];
-          const shouldAddMullion = nextChild ? hasMullionBetween(child, nextChild) : false;
+          const shouldAddMullion = Boolean(nextChild && hasMullionAt[idx]);
 
           if (shouldAddMullion && nextChild) {
             const isSeparate = options?.frameConfig?.mullionMode === 'separate';
@@ -604,6 +700,8 @@ export const buildCadLayout = (
               touchesEndFrame
             );
 
+            const childDim = (isVert ? child.w : child.h) || 1;
+            const nextChildDim = (isVert ? nextChild.w : nextChild.h) || 1;
             const mullionInfo: MullionInfo = {
               id: `${node.id}-mullion-${idx}`,
               parentNodeId: node.id,
@@ -611,8 +709,8 @@ export const buildCadLayout = (
               direction: isVert ? 'vertical' : 'horizontal',
               childId: child.id,
               nextChildId: nextChild.id,
-              dimension: isVert ? child.w : child.h,
-              totalDimension: totalWeight,
+              dimension: childDim,
+              totalDimension: childDim + nextChildDim,
               profileId: child.mullionProfileId ?? (node as SceneCellNode).mullionProfileId ?? defaultPid,
               cutType: normCutType,
               cutStart,
@@ -626,7 +724,7 @@ export const buildCadLayout = (
                 (cutStart ? activeFrameBounds.fTop : 0) +
                 (cutEnd || isFloorMullion ? activeFrameBounds.fBot : 0);
               mullions.push({
-                x: innerX + cur,
+                x: mullionPositions[idx],
                 y: mY,
                 w: activeMullionT,
                 h: mH,
@@ -644,7 +742,7 @@ export const buildCadLayout = (
                 (cutEnd ? activeFrameBounds.fRight : 0);
               mullions.push({
                 x: mX,
-                y: innerY + cur,
+                y: mullionPositions[idx],
                 w: mW,
                 h: activeMullionT,
                 direction: 'horizontal',
@@ -656,7 +754,6 @@ export const buildCadLayout = (
             }
             // Đố đứng ranh giới Hở/Kín chạy xuống sàn: chân cắt 90°, đồng thời cắt thanh khung đáy
             if (isFloorMullion) mullions[mullions.length - 1].cutEnd = true;
-            cur += activeMullionT;
           }
         }
       });

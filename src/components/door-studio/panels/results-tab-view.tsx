@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { CalculationStep, DoorCalculateResponse } from '@/types';
 import { FrameConfig, SashConfig, SceneCellNode } from '../studio-types';
 import { detectProfileIssues } from '../utils/detect-profile-issues';
+import { ResultsHardwareSection } from './results';
 import { Calculator, Info, MapPin } from 'lucide-react';
 
 export { detectProfileIssues };
@@ -161,7 +162,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
   seriesId,
   onNavigateTab,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'bars' | 'beads' | 'glass' | 'grilles' | 'gaskets'>('bars');
+  const [activeSubTab, setActiveSubTab] = useState<'bars' | 'beads' | 'glass' | 'grilles' | 'gaskets' | 'hardware'>('bars');
   const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
   const [selectedBeadIndex, setSelectedBeadIndex] = useState<number | null>(null);
   const [selectedGlassIndex, setSelectedGlassIndex] = useState<number | null>(null);
@@ -348,6 +349,17 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                   5. Roan gắn kính ({calcData.gaskets.length})
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('hardware')}
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                  activeSubTab === 'hardware'
+                    ? 'bg-primary/10 text-primary border border-primary/25 font-bold shadow-2xs'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70 hover:text-slate-900'
+                }`}
+              >
+                6. Phụ kiện & Ke ({(calcData.cornerJoints?.length || 0) + (calcData.accessories?.length || 0)})
+              </button>
             </div>
 
             {/* Table Content */}
@@ -952,6 +964,8 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                 </div>
                 );
               })()}
+
+              {activeSubTab === 'hardware' && <ResultsHardwareSection calcData={calcData} />}
             </div>
           </div>
         )}

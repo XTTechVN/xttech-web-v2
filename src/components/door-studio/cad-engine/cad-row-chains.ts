@@ -1,3 +1,4 @@
+import { SceneCellNode } from '../studio-types';
 import { MullionBar, VerticalSlice } from './cad-types';
 
 /** Một hàng trong chuỗi hàng của 1 cột (px theo hệ tọa độ SVG, mm là số đo thật) */
@@ -27,6 +28,32 @@ interface RowChainViewport {
 
 const ALIGN_TOLERANCE_MM = 0.5;
 
+const findNodeById = (node: SceneCellNode | undefined, id: string | undefined): SceneCellNode | undefined => {
+  if (!node || !id) return undefined;
+  if (node.id === id) return node;
+  for (const child of node.children ?? []) {
+    const found = findNodeById(child, id);
+    if (found) return found;
+  }
+  return undefined;
+};
+
+const unwrapFirstHorizDescendantId = (rootCell: SceneCellNode | undefined, id: string | undefined): string | undefined => {
+  let curr = findNodeById(rootCell, id);
+  while (curr && curr.splitDirection === 'horizontal' && curr.children && curr.children.length > 0) {
+    curr = curr.children[0];
+  }
+  return curr?.id ?? id;
+};
+
+const unwrapLastHorizDescendantId = (rootCell: SceneCellNode | undefined, id: string | undefined): string | undefined => {
+  let curr = findNodeById(rootCell, id);
+  while (curr && curr.splitDirection === 'horizontal' && curr.children && curr.children.length > 0) {
+    curr = curr.children[curr.children.length - 1];
+  }
+  return curr?.id ?? id;
+};
+
 /**
  * Chuỗi hàng riêng của từng cột: lấy các đố ngang có tâm x nằm trong cột, sắp theo y,
  * biên hàng dùng TÂM đố; mm đo thật theo bản vẽ, sai số làm tròn dồn vào hàng cuối (tổng = h).
@@ -34,7 +61,8 @@ const ALIGN_TOLERANCE_MM = 0.5;
 export const getColumnRowChains = (
   mullions: MullionBar[],
   vertSlices: VerticalSlice[],
-  viewport: RowChainViewport
+  viewport: RowChainViewport,
+  rootCell?: SceneCellNode
 ): ColumnRowChain[] => {
   const { ox, oy, fw, fh, h } = viewport;
   const totalW = vertSlices.reduce((sum, slice) => sum + slice.w, 0) || 1;
@@ -56,12 +84,12 @@ export const getColumnRowChains = (
       const isLastRow = idx === edges.length - 2;
       const mm = isLastRow ? h - usedMm : Math.round((edges[idx + 1] - edges[idx]) * mmPerPx);
       usedMm += mm;
-      const mullion = idx === 0 ? columnMullions[0] : columnMullions[idx - 1];
-      const editableCellId = columnMullions.length === 0
-        ? undefined
-        : idx === 0
-          ? mullion.info.childId
-          : mullion.info.nextChildId;
+      const editableCellId =
+        columnMullions.length === 0
+          ? undefined
+          : idx === 0
+            ? unwrapLastHorizDescendantId(rootCell, columnMullions[0].info.childId)
+            : unwrapFirstHorizDescendantId(rootCell, columnMullions[idx - 1].info.nextChildId);
       rows.push({ yTop: edges[idx], yBottom: edges[idx + 1], mm, editableCellId });
     }
     return { columnIndex, xLeft: colLeft, xRight: colRight, rows };

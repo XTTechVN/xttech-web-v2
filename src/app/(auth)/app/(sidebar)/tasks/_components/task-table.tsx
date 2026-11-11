@@ -246,7 +246,7 @@ export function TaskTable({
                   <td className="px-3 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       {isOpenTask && canAct && (
-                        <Button size="sm" variant="primary" leftIcon={<CheckCircle2 size={12} />} onClick={() => onCompleteTask(task)}>Hoàn thành</Button>
+                        <button type="button" onClick={() => onCompleteTask(task)} className="rounded-lg p-1.5 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 cursor-pointer" title="Hoàn thành"><CheckCircle2 size={14} /></button>
                       )}
                       {task.warrantyVisitId && task.projectId && isOpenTask && canAct && (
                         <Button size="sm" variant="outline" leftIcon={<FileCheck2 size={12} />} onClick={() => onOpenWarrantyReport(task)}>Biên bản BH</Button>

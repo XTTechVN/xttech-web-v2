@@ -129,7 +129,12 @@ function TaskFormBody({ task, employees, departments, projects, onClose, onSucce
     <div className="flex flex-col text-xs">
       <div className="grid grid-cols-1 gap-5 p-4 sm:p-5 md:grid-cols-12">
         <div className="space-y-3.5 md:col-span-7">
-          <Input label="Tiêu đề công việc *" placeholder="VD: Kiểm tra bản lề & nghiệm thu cửa tầng 2..." value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-slate-700">
+              Tiêu đề công việc <span className="text-red-500">*</span>
+            </label>
+            <Input placeholder="VD: Kiểm tra bản lề & nghiệm thu cửa tầng 2..." value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
+          </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Select label="Phân loại công việc" value={category} onChange={(e) => setCategory(e.target.value as StaffTaskCategory)} options={TASK_CATEGORY_OPTIONS} fullWidth />
@@ -168,7 +173,9 @@ function TaskFormBody({ task, employees, departments, projects, onClose, onSucce
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-slate-700">Thời hạn hoàn thành *</label>
+            <label className="block text-xs font-medium text-slate-700">
+              Thời hạn hoàn thành <span className="text-red-500">*</span>
+            </label>
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
               {DUE_PRESET_OPTIONS.map((preset) => {
                 const presetVal = getPresetDueDateTime(preset.key);
@@ -198,7 +205,9 @@ function TaskFormBody({ task, employees, departments, projects, onClose, onSucce
         <div className="flex flex-col rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 md:col-span-5">
           <div className="flex items-center justify-between gap-2 pb-2.5">
             <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-slate-800">Nhân sự nhận việc *</span>
+              <span className="font-semibold text-slate-800">
+                Nhân sự nhận việc <span className="text-red-500">*</span>
+              </span>
               <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">{assigneeIds.length}</span>
             </div>
             {!isEdit && filteredEmployees.length > 0 && (
