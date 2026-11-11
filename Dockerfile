@@ -1,11 +1,14 @@
 FROM node:22-alpine
 WORKDIR /app
 
+# Cài đặt libc6-compat cho Alpine để tương thích các thư viện native C/Rust (Sharp, Turbo, NAPI)
+RUN apk add --no-cache libc6-compat
+
 # Kích hoạt pnpm có sẵn trong Node.js qua corepack
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Sao chép các file cấu hình dependencies trước để tận dụng Docker layer cache
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 RUN pnpm install --frozen-lockfile
 
 # Sao chép toàn bộ mã nguồn
