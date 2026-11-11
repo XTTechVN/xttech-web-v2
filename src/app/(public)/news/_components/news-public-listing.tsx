@@ -21,6 +21,7 @@ import { useDebounce } from '@/hooks';
 import type { NewsArticle, NewsCategory } from '@/types';
 import { NewsArticleCard } from './news-article-card';
 import { NewsPublicToolbar } from './news-public-toolbar';
+import { NewsSoftwareRegistrationForm } from './news-software-registration-form';
 
 const FETCH_ALL_LIMIT = 999;
 const PAGE_LIMIT = 12;
@@ -210,7 +211,7 @@ export function NewsPublicListing() {
           {/* SECTION 1: TOP HERO + TIN MỚI (Cột trái 8 cols) & TIÊU ĐIỂM NỔI BẬT (Cột phải 4 cols) */}
           <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
             {isLoading ? (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 xl:gap-16">
                 <div className="lg:col-span-8 min-w-0 space-y-6">
                   <Skeleton className="w-full aspect-16/9 rounded-lg" />
                   <Skeleton className="h-8 w-4/5 rounded" />
@@ -234,7 +235,7 @@ export function NewsPublicListing() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 xl:gap-16 items-start">
                 {/* CỘT TRÁI (8 cols): BÀI Đinh (Lead Hero) + Khối "Tin mới" */}
                 <div className="lg:col-span-8 min-w-0 space-y-10">
                   {leadHeroArticle && (
@@ -284,54 +285,54 @@ export function NewsPublicListing() {
                   )}
                 </div>
 
-                {/* CỘT PHẢI (4 cols): Khối "Tiêu điểm nổi bật" thiết kế dạng Slide (tối đa 5 bài isFeatured = true + chấm tròn chuyển slide) */}
+                {/* CỘT PHẢI (4 cols): Khối "Tiêu điểm nổi bật" (Slide) & Form Yêu cầu sử dụng phần mềm */}
                 <aside className="lg:col-span-4 min-w-0 w-full space-y-6">
-                  <div
-                    className="group/slide rounded-lg bg-white border border-slate-200/90 shadow-sm p-5 space-y-4 overflow-hidden"
-                    onMouseEnter={() => setIsHoveringSlide(true)}
-                    onMouseLeave={() => setIsHoveringSlide(false)}
-                  >
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                      <h3 className="text-lg font-bold text-primary">Tiêu điểm nổi bật</h3>
+                  {featuredSlideArticles.length > 0 && (
+                    <div
+                      className="group/slide rounded-lg bg-white border border-slate-200/90 shadow-sm p-5 space-y-4 overflow-hidden"
+                      onMouseEnter={() => setIsHoveringSlide(true)}
+                      onMouseLeave={() => setIsHoveringSlide(false)}
+                    >
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <h3 className="text-lg font-bold text-primary">Tiêu điểm nổi bật</h3>
 
-                      {featuredSlideArticles.length > 1 && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-mono tabular-nums text-slate-400 mr-1">
-                            {safeFeaturedSlideIdx + 1}/{featuredSlideArticles.length}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFeaturedSlideIdx(
-                                (prev) =>
-                                  (prev - 1 + featuredSlideArticles.length) %
-                                  featuredSlideArticles.length,
-                              )
-                            }
-                            aria-label="Bài nổi bật trước"
-                            className="w-6 h-6 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:border-primary/40 hover:text-primary transition-colors cursor-pointer"
-                          >
-                            <ChevronLeft className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFeaturedSlideIdx(
-                                (prev) => (prev + 1) % featuredSlideArticles.length,
-                              )
-                            }
-                            aria-label="Bài nổi bật tiếp theo"
-                            className="w-6 h-6 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:border-primary/40 hover:text-primary transition-colors cursor-pointer"
-                          >
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                        {featuredSlideArticles.length > 1 && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-mono tabular-nums text-slate-400 mr-1">
+                              {safeFeaturedSlideIdx + 1}/{featuredSlideArticles.length}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFeaturedSlideIdx(
+                                  (prev) =>
+                                    (prev - 1 + featuredSlideArticles.length) %
+                                    featuredSlideArticles.length,
+                                )
+                              }
+                              aria-label="Bài nổi bật trước"
+                              className="w-6 h-6 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:border-primary/40 hover:text-primary transition-colors cursor-pointer"
+                            >
+                              <ChevronLeft className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFeaturedSlideIdx(
+                                  (prev) => (prev + 1) % featuredSlideArticles.length,
+                                )
+                              }
+                              aria-label="Bài nổi bật tiếp theo"
+                              className="w-6 h-6 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:border-primary/40 hover:text-primary transition-colors cursor-pointer"
+                            >
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
-                    {featuredSlideArticles.length > 0 ? (
                       <div className="space-y-4">
-                        {/* Khung trượt Slide ngang mượt mà (cubic-bezier + hiệu ứng scale & mờ dần) */}
+                        {/* Khung trượt Slide ngang mượt mà */}
                         <div className="overflow-hidden rounded-md">
                           <div
                             className="flex will-change-transform transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
@@ -357,7 +358,7 @@ export function NewsPublicListing() {
                           </div>
                         </div>
 
-                        {/* Chấm tròn chuyển slide (Pagination Dots giống mẫu ảnh gửi) */}
+                        {/* Chấm tròn chuyển slide */}
                         <div className="flex items-center justify-center gap-2.5 pt-1">
                           {featuredSlideArticles.map((item, idx) => {
                             const isActive = idx === safeFeaturedSlideIdx;
@@ -377,12 +378,11 @@ export function NewsPublicListing() {
                           })}
                         </div>
                       </div>
-                    ) : (
-                      <p className="text-xs text-slate-400 italic py-6 text-center">
-                        Chưa có bài viết nào được gắn cờ Nổi bật.
-                      </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Form yêu cầu sử dụng phần mềm XTTECH */}
+                  <NewsSoftwareRegistrationForm />
                 </aside>
               </div>
             )}

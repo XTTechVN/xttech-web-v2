@@ -34,7 +34,7 @@ export const NEWS_CATEGORY_MAP: Record<NewsCategory, string> = {
   project_showcase: 'Công trình tiêu biểu',
   technology_solution: 'Công nghệ & Giải pháp',
   recruitment_culture: 'Tuyển dụng & Văn hóa',
-  promotion_event: 'Khuyến mãi & Sự kiện',
+  promotion_event: 'Khuyến mãi và Sự kiện',
 };
 
 export const NEWS_CATEGORY_OPTIONS: Array<{ value: NewsCategory; label: string }> = [
@@ -43,7 +43,7 @@ export const NEWS_CATEGORY_OPTIONS: Array<{ value: NewsCategory; label: string }
   { value: 'project_showcase', label: 'Công trình tiêu biểu' },
   { value: 'technology_solution', label: 'Công nghệ & Giải pháp' },
   { value: 'recruitment_culture', label: 'Tuyển dụng & Văn hóa' },
-  { value: 'promotion_event', label: 'Khuyến mãi & Sự kiện' },
+  { value: 'promotion_event', label: 'Khuyến mãi và Sự kiện' },
 ];
 
 export const NEWS_CATEGORY_BADGE_MAP: Record<
@@ -76,7 +76,7 @@ export const NEWS_CATEGORY_BADGE_MAP: Record<
     className: 'bg-amber-50 text-amber-700 border-amber-200',
   },
   promotion_event: {
-    label: 'Khuyến mãi & Sự kiện',
+    label: 'Khuyến mãi và Sự kiện',
     variant: 'danger',
     className: 'bg-rose-50 text-rose-700 border-rose-200',
   },
