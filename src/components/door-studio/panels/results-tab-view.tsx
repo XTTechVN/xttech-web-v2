@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { CalculationStep, DoorCalculateResponse } from '@/types';
-import { FrameConfig, SashConfig, SceneCellNode } from '../studio-types';
+import { FrameConfig, SashConfig, SceneCellNode, OPEN_DIRECTION_BADGES } from '../studio-types';
 import { detectProfileIssues } from '../utils/detect-profile-issues';
 import { ResultsHardwareSection } from './results';
 import { Calculator, Info, MapPin } from 'lucide-react';
@@ -15,6 +15,19 @@ const CORNER_JOINT_LABEL_MAP: Record<string, string> = {
   '90_vert': '90° Dọc phủ',
   '45_top_90_bot': '45° trên - 90° dưới',
   '63': 'Góc 63° (gấp xếp)',
+};
+
+const renderOpenDirectionBadge = (openDirection?: string | null) => {
+  if (!openDirection) return null;
+  const badgeConfig = OPEN_DIRECTION_BADGES[openDirection];
+  if (!badgeConfig) return null;
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${badgeConfig.className}`}
+    >
+      {badgeConfig.label}
+    </span>
+  );
 };
 
 interface CalculationStepsBreakdownProps {
@@ -393,9 +406,10 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                               }`}
                             >
                               <td className="py-2.5 px-3 font-medium text-gray-800">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-primary' : 'bg-slate-300'}`} />
                                   <span>{bar.name}</span>
+                                  {renderOpenDirectionBadge(bar.openDirection)}
                                 </div>
                               </td>
                               <td className="py-2.5 px-3">
@@ -483,7 +497,10 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                           {/* Tiêu đề & thẻ số lượng */}
                           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <div>
-                              <span className="font-bold text-slate-800 text-xs block">{selectedBar.name}</span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-slate-800 text-xs">{selectedBar.name}</span>
+                                {renderOpenDirectionBadge(selectedBar.openDirection)}
+                              </div>
                               <span className="text-[11px] text-slate-400">
                                 Mã Profile: {selectedBar.profileCode || 'Chưa gắn mã'}
                                 {selectedBar.profileName ? ` (${selectedBar.profileName})` : ''}
@@ -528,7 +545,10 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                               className="bg-white rounded-lg border border-slate-200/80 p-2.5 text-xs hover:border-primary/50 transition cursor-pointer space-y-1"
                             >
                               <div className="flex items-center justify-between">
-                                <span className="font-semibold text-slate-800">{bar.name}</span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-semibold text-slate-800">{bar.name}</span>
+                                  {renderOpenDirectionBadge(bar.openDirection)}
+                                </div>
                                 <span className="font-bold text-slate-900">{bar.length} mm</span>
                               </div>
                               <div className="text-[11px] text-slate-500 flex items-center justify-between">

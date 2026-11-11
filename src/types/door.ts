@@ -188,6 +188,7 @@ export interface ProfileBarCut {
   positions?: string[];
   calcSteps?: CalculationStep[];
   calcNote?: string | null;
+  openDirection?: string | null;
 }
 
 export interface BeadCut {
@@ -270,7 +271,7 @@ export interface GlassGrilleBOM {
   cornerLengthM: number;
   totalBarLengthM: number;
   motifQty: number;
-  motifItems: Array<{ id: string; motifType: string; name?: string; qty: number }>;
+  motifItems: Array<{ id: string; motifType: string; name?: string; qty: number; rotation?: number }>;
   unitPricePerM: number;
   totalBarPrice: number;
   totalMotifPrice: number;

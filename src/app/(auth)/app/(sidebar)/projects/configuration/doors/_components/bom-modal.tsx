@@ -60,7 +60,7 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-5xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-100 flex flex-col h-[100dvh] sm:h-auto sm:max-h-[92vh] overflow-hidden">
+      <div className="relative w-full max-w-5xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-100 flex flex-col h-dvh sm:h-auto sm:max-h-[92vh] overflow-hidden">
         {/* Header */}
         <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -69,7 +69,7 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate max-w-[200px] sm:max-w-md">{door.name}</h3>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate max-w-50 sm:max-w-md">{door.name}</h3>
                 <span className="px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 shrink-0">
                   {door.code || 'CS_MẪU'}
                 </span>
@@ -173,7 +173,7 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               Bản vẽ kỹ thuật 2D Vector
             </h4>
-            <div className="w-full aspect-[4/4.5] max-h-[60vh] lg:max-h-none rounded-xl border border-slate-200/80 bg-white flex items-center justify-center p-2 overflow-hidden shadow-inner relative">
+            <div className="w-full aspect-4/4.5 max-h-[60vh] lg:max-h-none rounded-xl border border-slate-200/80 bg-white flex items-center justify-center p-2 overflow-hidden shadow-inner relative">
               {hasStudioDesign ? (
                 <div className="w-full h-full flex items-center justify-center pointer-events-none">
                   <DoorCadRenderer

@@ -121,6 +121,26 @@ export function ProductionSheetLeftTables({
   );
 }
 
+const renderDirectionBadge = (direction?: string | null, name?: string) => {
+  const isOutward = direction === 'outward' || name?.includes('Mở ra') || name?.includes('mở ra');
+  const isInward = direction === 'inward' || name?.includes('Mở vào') || name?.includes('mở vào');
+  if (isOutward) {
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+        Mở ra
+      </span>
+    );
+  }
+  if (isInward) {
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+        Mở vào
+      </span>
+    );
+  }
+  return null;
+};
+
 export function ProductionSheetProfilesTable({ sheet }: { sheet: ProductionSheet }) {
   return (
     <div className="overflow-hidden rounded-md border border-slate-200">
@@ -145,7 +165,10 @@ export function ProductionSheetProfilesTable({ sheet }: { sheet: ProductionSheet
                   {profile.profileCode}
                 </td>
                 <td className="px-2.5 py-2">
-                  <div className="font-medium text-slate-800">{profile.profileName}</div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-medium text-slate-800">{profile.profileName}</span>
+                    {renderDirectionBadge(profile.openDirection, profile.profileName)}
+                  </div>
                   {profile.stockSource && (
                     <span className="text-[10px] text-slate-400">({profile.stockSource})</span>
                   )}

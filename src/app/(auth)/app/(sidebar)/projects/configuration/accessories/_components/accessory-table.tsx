@@ -6,6 +6,11 @@ import type { Accessory } from '@/types';
 import { formatAccessoryUnit, ACCESSORY_COLOR_MAP } from '@/types';
 import { formatCurrency } from '@/utils';
 import { BASE_MINIO_URL } from '@/config';
+import {
+  type SortField,
+  type SortOrder,
+  ACCESSORY_TABLE_COLUMNS,
+} from '../_constants/accessories.constants';
 
 interface AccessoryTableProps {
   accessories: Accessory[];
@@ -19,9 +24,6 @@ interface AccessoryTableProps {
   onToggleSelectAll?: () => void;
 }
 
-type SortField = 'code' | 'name' | 'category' | 'specification' | 'unit' | 'color' | 'price' | 'status';
-type SortOrder = 'asc' | 'desc';
-
 function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
   if (!active) return <ArrowUpDown size={12} className="text-slate-300 group-hover/th:text-slate-500 transition-colors shrink-0" />;
   return order === 'asc' ? (
@@ -30,15 +32,6 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
     <ArrowDown size={12} className="text-primary font-bold shrink-0" />
   );
 }
-
-const COLUMNS: Array<{ field: SortField; label: string; align: 'left' | 'center' | 'right'; width: string }> = [
-  { field: 'name', label: 'Tên phụ kiện', align: 'left', width: 'min-w-[160px]' },
-  { field: 'specification', label: 'Quy cách', align: 'center', width: 'w-32' },
-  { field: 'unit', label: 'ĐVT', align: 'center', width: 'w-24' },
-  { field: 'color', label: 'Màu sắc', align: 'center', width: 'w-28' },
-  { field: 'price', label: 'Giá nhập', align: 'right', width: 'w-32' },
-  { field: 'status', label: 'Trạng thái', align: 'center', width: 'w-28' },
-];
 
 export function AccessoryTable({
   accessories,
@@ -121,8 +114,8 @@ export function AccessoryTable({
                   />
                 </th>
               )}
-              <th className="py-3 px-3 w-14" />
-              {COLUMNS.map((col) => (
+              <th className="py-3 px-3 w-14 text-center" />
+              {ACCESSORY_TABLE_COLUMNS.map((col) => (
                 <th
                   key={col.field}
                   onClick={() => handleSort(col.field)}
@@ -176,7 +169,7 @@ export function AccessoryTable({
                       />
                     </td>
                   )}
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 text-center">
                     {imgSrc ? (
                       <button
                         type="button"
@@ -184,7 +177,7 @@ export function AccessoryTable({
                           e.stopPropagation();
                           setLightboxUrl(imgSrc);
                         }}
-                        className="relative group/img block w-9 h-9 cursor-zoom-in"
+                        className="relative group/img block w-9 h-9 cursor-zoom-in mx-auto"
                       >
                         <img
                           src={imgSrc}
@@ -199,43 +192,53 @@ export function AccessoryTable({
                         </span>
                       </button>
                     ) : (
-                      <div className="w-9 h-9 rounded border border-slate-100 bg-slate-50" />
+                      <div className="w-9 h-9 rounded border border-slate-100 bg-slate-50 mx-auto" />
                     )}
                   </td>
 
-                  <td className="py-2.5 px-4">
-                    <div className="flex flex-col gap-0.5">
-                      <div className="flex items-center gap-1.5">
+                  <td className="py-2.5 px-4 min-w-[260px]">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         {categoryLabel !== '—' && (
                           <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
                             {categoryLabel}
                           </span>
                         )}
-                        <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-xs">
+                        <span className="font-semibold text-slate-900 group-hover:text-primary transition-colors text-xs leading-snug">
                           {acc.name}
                         </span>
                       </div>
-                      {acc.code && <span className="text-[11px] text-slate-400 font-mono">{acc.code}</span>}
+                      {acc.code && <span className="text-[11px] text-slate-400 font-mono tracking-wide">{acc.code}</span>}
                     </div>
                   </td>
 
-                  <td className="py-2.5 px-4 text-center text-xs text-slate-600 whitespace-nowrap">{acc.specification || '—'}</td>
+                  <td className="py-2.5 px-4 text-left text-xs text-slate-600">
+                    {acc.specification ? (
+                      <span className="line-clamp-2 leading-relaxed" title={acc.specification}>
+                        {acc.specification}
+                      </span>
+                    ) : (
+                      <span className="text-slate-300">—</span>
+                    )}
+                  </td>
 
-                  <td className="py-2.5 px-4 text-center">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                  <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
                       {unitLabel}
                     </span>
                   </td>
 
-                  <td className="py-3.5 px-4 text-center text-xs text-slate-700">{colorLabel}</td>
-
-                  <td className="py-3.5 px-4 text-right font-semibold text-xs text-slate-800">
-                    {price ? formatCurrency(price) : '0 ₫'}
+                  <td className="py-2.5 px-4 text-center text-xs text-slate-700 whitespace-nowrap">
+                    {colorLabel !== '—' ? colorLabel : <span className="text-slate-300">—</span>}
                   </td>
 
-                  <td className="py-3.5 px-4 text-center">
+                  <td className="py-2.5 px-4 text-right font-mono tabular-nums font-semibold text-xs text-slate-800 whitespace-nowrap">
+                    {price ? formatCurrency(price) : '0 VND'}
+                  </td>
+
+                  <td className="py-2.5 px-4 text-center whitespace-nowrap">
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border ${
                         acc.isActive !== false
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : 'bg-slate-100 text-slate-600 border-slate-200'
@@ -245,7 +248,7 @@ export function AccessoryTable({
                     </span>
                   </td>
 
-                  <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                  <td className="py-2.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"
