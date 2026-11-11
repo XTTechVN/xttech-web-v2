@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { ArrowRight, CheckCircle2, FileSpreadsheet, Sparkles } from 'lucide-react';
 import { STATS } from './hero.constants';
 import { HeroAdviseCadSection } from './hero-advise-cad-section';
+import { HeroConsultationSection } from './hero-consultation-section';
 import { HeroDashboardMockup } from './hero-dashboard-mockup';
 import { HeroDemoModal } from './hero-demo-modal';
-import { HeroFloatingDock } from './hero-floating-dock';
+import { HeroFeaturedArticlesSection } from './hero-featured-articles-section';
 import { HeroPlatformBanner } from './hero-platform-banner';
 import { HeroStoryPillarsSection } from './hero-story-pillars-section';
 
@@ -35,8 +36,6 @@ export const Hero = () => {
 
   return (
     <div className="relative overflow-hidden bg-white font-sans text-gray-900 selection:bg-primary/10 selection:text-primary">
-      <HeroFloatingDock />
-
       {/* ===================== HERO TOP SECTION ===================== */}
       <section
         id="about"
@@ -128,6 +127,8 @@ export const Hero = () => {
       <HeroAdviseCadSection />
       <HeroPlatformBanner />
       <HeroStoryPillarsSection />
+      <HeroFeaturedArticlesSection />
+      <HeroConsultationSection />
 
       {/* Modal Form Đăng ký trải nghiệm Demo */}
       <HeroDemoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
