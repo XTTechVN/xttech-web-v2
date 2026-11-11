@@ -1597,12 +1597,14 @@ export function useDoorStudioState({
         setRootCell(updatedRoot);
       }
     } else if (target === 'cell-h' && cellId) {
-      const tryH = resizeCellInParent(rootCell, cellId, value, 'h');
+      const baseRoot = ensureRootCellDimensions(rootCell, w, h);
+      const tryH = resizeCellInParent(baseRoot, cellId, value, 'h');
       pushState(tryH);
     } else if ((target === 'cell-w' || target === 'cell') && cellId) {
-      const tryW = resizeCellInParent(rootCell, cellId, value, 'w');
-      const tryH = resizeCellInParent(rootCell, cellId, value, 'h');
-      const changed = JSON.stringify(tryW) !== JSON.stringify(rootCell) ? tryW : (target === 'cell' ? tryH : rootCell);
+      const baseRoot = ensureRootCellDimensions(rootCell, w, h);
+      const tryW = resizeCellInParent(baseRoot, cellId, value, 'w');
+      const tryH = resizeCellInParent(baseRoot, cellId, value, 'h');
+      const changed = JSON.stringify(tryW) !== JSON.stringify(baseRoot) ? tryW : (target === 'cell' ? tryH : baseRoot);
       pushState(changed);
     }
   };
@@ -1641,7 +1643,8 @@ export function useDoorStudioState({
     cutType?: MullionCutType;
   }) => {
     if (!selectedMullion) return;
-    const parentNode = findNode(rootCell, selectedMullion.parentNodeId);
+    const baseRoot = ensureRootCellDimensions(rootCell, w, h);
+    const parentNode = findNode(baseRoot, selectedMullion.parentNodeId);
     if (!parentNode || !parentNode.children || parentNode.children.length < 2) return;
 
     const idx = selectedMullion.mullionIndex;
@@ -1697,7 +1700,7 @@ export function useDoorStudioState({
         : undefined,
     };
 
-    pushState(updateNode(rootCell, parentNode.id, updatedNodeData));
+    pushState(updateNode(baseRoot, parentNode.id, updatedNodeData));
     toast.success('Cập nhật thông số đố thành công');
   };
 
@@ -1708,7 +1711,8 @@ export function useDoorStudioState({
     newDimension,
     isFinal,
   }: ResizeSplitParams) => {
-    const parentNode = findNode(rootCell, parentNodeId);
+    const baseRoot = ensureRootCellDimensions(rootCell, w, h);
+    const parentNode = findNode(baseRoot, parentNodeId);
     if (!parentNode || !parentNode.children || parentNode.children.length < splitIndex + 2) return;
 
     const idx = splitIndex;
@@ -1747,7 +1751,7 @@ export function useDoorStudioState({
       h: isVert ? updatedNextChild.h : clampedDim2,
     };
 
-    const updatedRoot = updateNode(rootCell, parentNode.id, {
+    const updatedRoot = updateNode(baseRoot, parentNode.id, {
       children: newChildren,
       sashMullions: parentNode.sashMullions
         ? {

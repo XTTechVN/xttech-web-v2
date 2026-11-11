@@ -5,7 +5,8 @@ import { ColumnRow, ColumnRowChain } from '../cad-row-chains';
 
 type EditDimensionHandler = (
   target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight',
-  cellId?: string
+  cellId?: string,
+  displayedVal?: number
 ) => void;
 
 interface CadRowDimensionsProps {
@@ -59,7 +60,7 @@ const RulerSegment: React.FC<{
       strokeLinejoin="round"
       transform={`rotate(-90, ${dimSubRightX - 3}, ${(topY + botY) / 2})`}
       className="cursor-pointer hover:fill-red-600 hover:font-bold"
-      onClick={() => onEditDimension?.('cell-h', cellId)}
+      onClick={() => onEditDimension?.('cell-h', cellId, label)}
     >
       {label}
     </text>
@@ -81,7 +82,7 @@ const RowChip: React.FC<{
       className={row.editableCellId ? 'cursor-pointer' : 'cursor-default'}
       onClick={(event) => {
         event.stopPropagation();
-        if (row.editableCellId) onEditDimension?.('cell-h', row.editableCellId);
+        if (row.editableCellId) onEditDimension?.('cell-h', row.editableCellId, row.mm);
       }}
     >
       <rect
@@ -140,8 +141,8 @@ export const CadRowDimensions: React.FC<CadRowDimensionsProps> = ({
             <RulerSegment
               key={idx}
               {...segmentProps}
-              topY={Math.round(row.yTop)}
-              botY={Math.round(row.yBottom)}
+              topY={Number(row.yTop.toFixed(2))}
+              botY={Number(row.yBottom.toFixed(2))}
               label={row.mm}
               cellId={row.editableCellId}
             />
@@ -157,7 +158,7 @@ export const CadRowDimensions: React.FC<CadRowDimensionsProps> = ({
   }
 
   const count = horizSlices.length;
-  const rowScaledHeights = horizSlices.map((child) => Math.round((child.h / h) * fh));
+  const rowScaledHeights = horizSlices.map((child) => (child.h / h) * fh);
   return (
     <g stroke="#2563eb" strokeWidth="0.8">
       {horizSlices.map((child, idx) => {
@@ -169,14 +170,14 @@ export const CadRowDimensions: React.FC<CadRowDimensionsProps> = ({
           idx === 0
             ? oy
             : horizMullions[idx - 1]
-              ? Math.round(horizMullions[idx - 1].y + horizMullions[idx - 1].h / 2)
-              : fallbackCurY;
+              ? Number((horizMullions[idx - 1].y + horizMullions[idx - 1].h / 2).toFixed(2))
+              : Number(fallbackCurY.toFixed(2));
         const botY =
           idx === count - 1
             ? oy + fh
             : horizMullions[idx]
-              ? Math.round(horizMullions[idx].y + horizMullions[idx].h / 2)
-              : fallbackCurY + childHScale;
+              ? Number((horizMullions[idx].y + horizMullions[idx].h / 2).toFixed(2))
+              : Number((fallbackCurY + childHScale).toFixed(2));
 
         return (
           <RulerSegment key={idx} {...segmentProps} topY={topY} botY={botY} label={child.h} cellId={child.id} />

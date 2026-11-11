@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { DoorCadRenderer, ResizeSplitParams } from '../cad-engine/door-cad-renderer';
 import { getVerticalSlices, getHorizontalSlices } from '../cad-engine/cad-tree-traverser';
+import { ensureRootCellDimensions, findNode, resolveAxisResizableCellId } from '../utils/door-tree-utils';
 import { FrameShape, SceneCellNode, FrameConfig, SashConfig, MullionInfo } from '../studio-types';
 import { ProfileBar } from '@/types/profile';
 import { Plus, Minus, Target, Check, X, Box } from 'lucide-react';
@@ -70,10 +71,15 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
     type: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight';
     cellId?: string;
     currentVal: number;
+    nodeVal?: number;
     title: string;
   } | null>(null);
   const [inputVal, setInputVal] = useState<number>(0);
   const editInputRef = useRef<HTMLInputElement>(null);
+  const normalizedRootCell = React.useMemo(
+    () => ensureRootCellDimensions(rootCell, w, h),
+    [rootCell, w, h]
+  );
 
   React.useEffect(() => {
     if (!editTarget) return;
@@ -227,71 +233,62 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
 
   const handleOpenEdit = (
     target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight',
-    cellId?: string
+    cellId?: string,
+    displayedVal?: number
   ) => {
-    let initialVal = w;
+    let initialVal = displayedVal ?? w;
+    let nodeVal: number | undefined;
     let title = 'Tổng chiều rộng (W)';
 
     if (target === 'h') {
-      initialVal = h;
+      initialVal = displayedVal ?? h;
       title = 'Tổng chiều cao (H)';
     } else if (target === 'handleHeight') {
-      const findCell = (node: SceneCellNode): SceneCellNode | null => {
-        if (node.id === cellId) return node;
-        if (node.children) {
-          for (const c of node.children) {
-            const found = findCell(c);
-            if (found) return found;
-          }
-        }
-        return null;
-      };
-      const cNode = cellId ? findCell(rootCell) : null;
-      initialVal = cNode?.handleHeight || (cNode ? Math.round(cNode.h / 2) : Math.round(h / 2));
+      const cNode = cellId ? findNode(normalizedRootCell, cellId) : null;
+      initialVal =
+        displayedVal ??
+        cNode?.handleHeight ??
+        (cNode ? Math.round(cNode.h / 2) : Math.round(h / 2));
       title = `Cao độ tim khóa từ đáy (mm)`;
     } else if (target === 'cell-h' && cellId) {
-      // Tìm leaf cell hoặc row cell để lấy chiều cao thực tế trên thước
-      const findCell = (node: SceneCellNode): SceneCellNode | null => {
-        if (node.id === cellId) return node;
-        if (node.children) {
-          for (const c of node.children) {
-            const found = findCell(c);
-            if (found) return found;
-          }
-        }
-        return null;
-      };
-      const cNode = findCell(rootCell);
-      const sliceH = getHorizontalSlices(rootCell).find((s) => s.id === cellId)?.h;
-      initialVal = sliceH || cNode?.h || Math.round(h / 2);
+      // Tìm row cell chịu trách nhiệm co giãn theo trục dọc và đồng bộ với số hiển thị trên thước
+      const resizableId = resolveAxisResizableCellId(normalizedRootCell, cellId, 'h');
+      const cNode = findNode(normalizedRootCell, resizableId) ?? findNode(normalizedRootCell, cellId);
+      const sliceH = getHorizontalSlices(normalizedRootCell).find(
+        (s) => s.id === resizableId || s.id === cellId
+      )?.h;
+      nodeVal = cNode?.h ?? sliceH;
+      initialVal = displayedVal ?? sliceH ?? cNode?.h ?? Math.round(h / 2);
       title = 'Chiều cao ô / hàng';
     } else if ((target === 'cell' || target === 'cell-w') && cellId) {
-      // Tìm cột/ô để lấy chiều rộng thực tế đang hiển thị trên thước
-      const findCell = (node: SceneCellNode): SceneCellNode | null => {
-        if (node.id === cellId) return node;
-        if (node.children) {
-          for (const c of node.children) {
-            const found = findCell(c);
-            if (found) return found;
-          }
-        }
-        return null;
-      };
-      const cNode = findCell(rootCell);
-      const sliceW = getVerticalSlices(rootCell).find(
-        (s) => (s.editableCellId || s.id) === cellId
+      // Tìm cột/ô chịu trách nhiệm co giãn theo trục ngang và đồng bộ với số hiển thị trên thước
+      const resizableId = resolveAxisResizableCellId(normalizedRootCell, cellId, 'w');
+      const cNode = findNode(normalizedRootCell, resizableId) ?? findNode(normalizedRootCell, cellId);
+      const sliceW = getVerticalSlices(normalizedRootCell).find(
+        (s) =>
+          (s.editableCellId || s.id) === resizableId ||
+          (s.editableCellId || s.id) === cellId
       )?.w;
-      initialVal = sliceW || cNode?.w || Math.round(w / 2);
+      nodeVal = cNode?.w ?? sliceW;
+      initialVal = displayedVal ?? sliceW ?? cNode?.w ?? Math.round(w / 2);
       title = 'Chiều rộng cánh / ô';
     }
 
     setInputVal(initialVal);
-    setEditTarget({ type: target, cellId, currentVal: initialVal, title });
+    setEditTarget({ type: target, cellId, currentVal: initialVal, nodeVal, title });
   };
 
   const handleConfirmEdit = () => {
     if (editTarget && inputVal > 0) {
-      onUpdateDimension(editTarget.type, inputVal, editTarget.cellId, true);
+      const isCellDim =
+        editTarget.type === 'cell-h' ||
+        editTarget.type === 'cell-w' ||
+        editTarget.type === 'cell';
+      const nextVal =
+        isCellDim && editTarget.nodeVal !== undefined
+          ? Math.max(1, Math.round(editTarget.nodeVal + (inputVal - editTarget.currentVal)))
+          : inputVal;
+      onUpdateDimension(editTarget.type, nextVal, editTarget.cellId, true);
       setEditTarget(null);
     }
   };
@@ -355,7 +352,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
           aluminumColor={aluminumColor}
           hardwareColor={hardwareColor}
           frameShape={frameShape}
-          rootCell={rootCell}
+          rootCell={normalizedRootCell}
           frameConfig={frameConfig}
           sashConfig={sashConfig}
           availableProfiles={availableProfiles}
@@ -476,7 +473,7 @@ export const CanvasCadView: React.FC<CanvasCadViewProps> = ({
                 aluminumColor={aluminumColor}
                 hardwareColor={hardwareColor}
                 frameShape={frameShape}
-                rootCell={rootCell}
+                rootCell={normalizedRootCell}
                 selectedCellId={selectedCellId}
                 onSelectCell={onSelectCell}
                 onSelectMullion={onSelectMullion}

@@ -27,6 +27,8 @@ export const SEO_CONFIG = {
 export const SEO_KEYWORDS: string[] = [
   'XTTECH',
   'XTTECH ERP',
+  'phần mềm quản lý doanh nghiệp',
+  'phần mềm quản trị doanh nghiệp',
   'phần mềm ERP nhôm kính',
   'phần mềm sản xuất cửa nhôm kính',
   'thiết kế cửa nhôm CAD 2D 3D',
@@ -209,6 +211,29 @@ export function buildPageMetadata(params: {
   };
 }
 
+export const HOME_AI_FAQ_ITEMS: ReadonlyArray<{ question: string; answer: string }> = [
+  {
+    question: 'Phần mềm quản lý doanh nghiệp XTTECH ERP là gì và phù hợp với lĩnh vực nào?',
+    answer:
+      'XTTECH ERP (Công ty Cổ phần Công nghệ XTTECH — xttech.vn) là hệ sinh thái phần mềm quản trị doanh nghiệp đám mây chuyên sâu cho 3 nhóm khách hàng: (1) Xưởng sản xuất cửa nhôm kính, cơ khí & nội thất (XMS Fab), (2) Nhà thầu xây dựng & đội thi công công trình (XMS Build), và (3) Doanh nghiệp vừa và nhỏ cần quản trị nhân sự, chấm công GPS, kho vật tư và báo cáo lãi lỗ (XMS Biz).',
+  },
+  {
+    question: 'Phần mềm sản xuất nhôm kính nào hỗ trợ vẽ cửa CAD 2D/3D và bóc tách vật tư BOM tự động?',
+    answer:
+      'Phân hệ XMS Fab của XTTECH ERP tích hợp sẵn trình thiết kế Door Studio CAD 2D & mô phỏng 3D trực tiếp trên trình duyệt (hỗ trợ Xingfa, PMA, Maxpro, Topal, Slim, Việt Pháp, cửa vòm...), tự động bóc tách định mức vật tư (BOM) thanh nhôm, kính, phụ kiện, tối ưu cắt nhôm chống hao hụt, in thẻ sản xuất A4 và xuất đơn đặt kính.',
+  },
+  {
+    question: 'Chi phí sử dụng phần mềm XTTECH ERP là bao nhiêu? Có gói miễn phí không?',
+    answer:
+      'XTTECH cung cấp gói Miễn phí trọn đời (0đ, tối đa 3 nhân sự, 20 bộ cửa hoặc 10 công trình) không cần thẻ tín dụng. Các gói trả phí minh bạch từ 390.000đ/tháng (XMS Biz Văn phòng), 490.000đ/tháng (XMS Build Đội nhỏ), 590.000đ/tháng (XMS Fab Gọn) đến các gói Tái cấu trúc và Tổng thầu không giới hạn, kèm cam kết hoàn tiền 100% trong 7 ngày đầu.',
+  },
+  {
+    question: 'XTTECH quản lý thi công công trình, nghiệm thu bảo hành và chấm công nhân sự như thế nào?',
+    answer:
+      'XTTECH tích hợp quy trình khép kín từ khảo sát ô chờ, lập báo giá & ký hợp đồng điện tử, quản lý tiến độ sản xuất - lắp đặt, cấp mã QR riêng cho từng bộ cửa để nghiệm thu & kích hoạt sổ bảo hành điện tử, đồng thời quản lý chấm công GPS trực tiếp tại công trình và tính lương tự động.',
+  },
+];
+
 export function buildHomeJsonLd() {
   return {
     '@context': 'https://schema.org',
@@ -230,6 +255,24 @@ export function buildHomeJsonLd() {
           '@type': 'PostalAddress',
           addressCountry: SEO_CONFIG.addressCountry,
         },
+        contactPoint: [
+          {
+            '@type': 'ContactPoint',
+            telephone: '+84-776-710-766',
+            email: SEO_CONFIG.contactEmail,
+            contactType: 'sales',
+            areaServed: 'VN',
+            availableLanguage: ['Vietnamese'],
+          },
+        ],
+        knowsAbout: [
+          'Phần mềm quản lý doanh nghiệp (ERP)',
+          'Phần mềm sản xuất cửa nhôm kính',
+          'Thiết kế cửa nhôm CAD 2D và mô phỏng 3D',
+          'Bóc tách định mức vật tư (BOM) và tối ưu cắt nhôm',
+          'Quản lý thi công công trình xây dựng và bảo hành QR Code',
+          'Chấm công GPS công trình và quản trị nhân sự tiền lương',
+        ],
       },
       {
         '@type': 'WebSite',
@@ -266,6 +309,18 @@ export function buildHomeJsonLd() {
           'Quản lý kho vật tư, lệnh sản xuất và tem QR bảo hành điện tử',
           'Chấm công GPS công trình và quản trị nhân sự tiền lương',
         ],
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${BASE_SITE_URL}/#faq`,
+        mainEntity: HOME_AI_FAQ_ITEMS.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer,
+          },
+        })),
       },
     ],
   };

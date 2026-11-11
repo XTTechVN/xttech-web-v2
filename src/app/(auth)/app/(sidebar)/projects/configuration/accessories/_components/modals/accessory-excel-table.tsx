@@ -175,8 +175,17 @@ export function AccessoryExcelTable({
                   <input
                     value={row.data.code}
                     onChange={(e) => onUpdateCell(row.rowIndex, { code: e.target.value })}
-                    className="w-full h-8 px-2 border border-slate-200 rounded bg-white text-xs font-mono"
+                    className={`w-full h-8 px-2 border rounded bg-white text-xs font-mono ${
+                      isErr && row.errors.some((msg) => msg.toLowerCase().includes('mã'))
+                        ? 'border-rose-400 bg-rose-50/40 text-rose-800'
+                        : 'border-slate-200'
+                    }`}
                   />
+                  {isUpd && row.oldData?.code && row.oldData.code !== row.data.code.trim() && (
+                    <div className="text-[10px] text-blue-600 mt-0.5 truncate font-mono">
+                      Mã cũ: {row.oldData.code}
+                    </div>
+                  )}
                 </td>
                 <td className="p-1.5">
                   <input

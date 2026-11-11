@@ -491,6 +491,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
           fw={fw}
           fh={fh}
           metrics={metrics}
+          rootCell={rootCell}
           vertSlices={vertSlices}
           horizSlices={horizSlices}
           leaves={leaves}
