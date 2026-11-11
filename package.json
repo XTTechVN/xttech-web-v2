@@ -2,6 +2,7 @@
   "name": "XTTech-ERM",
   "version": "2.1.2",
   "private": true,
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -57,12 +58,10 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "onlyBuiltDependencies": [
-    "sharp",
-    "unrs-resolver"
-  ],
-  "allowScripts": {
-    "sharp@0.34.5": true,
-    "unrs-resolver@1.11.1": true
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }
