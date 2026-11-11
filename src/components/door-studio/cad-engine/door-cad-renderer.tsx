@@ -195,6 +195,8 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
       frameConfig,
       sashConfig,
       slidingOverlapPx: metrics.slidingOverlap,
+      availableProfiles,
+      scale,
       resolveReversalPx: (profileId) => resolveReversalMm(availableProfiles, frameConfig, profileId) * scale,
     }
   );
@@ -318,31 +320,48 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
         </g>
       ) : (
         <>
-          {frames.map((fb) => (
-            <CadMiteredFrame
-              key={fb.id}
-              fx={fb.x}
-              fy={fb.y}
-              fwBox={fb.w}
-              fhBox={fb.h}
-              aluminumColor={aluminumColor}
-              frameEdges={metrics.frame}
-              frameShape={frameShape}
-              framesCount={frames.length}
-              frameConfig={frameConfig}
-              isHydraulic={isHydraulic}
-              isOpenBottomOverride={bottomOpenPlan.mode === 'global' ? undefined : isOpenBottom}
-              partialBottom={
-                isPartialBottomOpen && bottomBarSegments
-                  ? {
-                      isLeftBottomOpen: Boolean(isLeftBottomOpen),
-                      isRightBottomOpen: Boolean(isRightBottomOpen),
-                      bottomBarSegments,
-                    }
-                  : undefined
-              }
-            />
-          ))}
+          {frames.map((fb) => {
+            const fbConfig = fb.cornerJoint && frameConfig
+              ? { ...frameConfig, cornerJoint: fb.cornerJoint }
+              : frameConfig;
+            const fbPartialBottom =
+              fb.isPartialBottomOpen && fb.bottomBarSegments
+                ? {
+                    isLeftBottomOpen: Boolean(fb.isLeftBottomOpen),
+                    isRightBottomOpen: Boolean(fb.isRightBottomOpen),
+                    bottomBarSegments: fb.bottomBarSegments,
+                  }
+                : isPartialBottomOpen && bottomBarSegments && frames.length === 1
+                ? {
+                    isLeftBottomOpen: Boolean(isLeftBottomOpen),
+                    isRightBottomOpen: Boolean(isRightBottomOpen),
+                    bottomBarSegments,
+                  }
+                : undefined;
+            return (
+              <CadMiteredFrame
+                key={fb.id}
+                fx={fb.x}
+                fy={fb.y}
+                fwBox={fb.w}
+                fhBox={fb.h}
+                aluminumColor={aluminumColor}
+                frameEdges={fb.frameEdges ?? metrics.frame}
+                frameShape={frameShape}
+                framesCount={frames.length}
+                frameConfig={fbConfig}
+                isHydraulic={isHydraulic}
+                isOpenBottomOverride={
+                  fb.isOpenBottom !== undefined
+                    ? fb.isOpenBottom
+                    : bottomOpenPlan.mode === 'global'
+                    ? undefined
+                    : isOpenBottom
+                }
+                partialBottom={fbPartialBottom}
+              />
+            );
+          })}
           {/* Thanh đáy ô fix chạm sàn cho cửa thủy lực */}
           {bottomSills?.map((sill, idx) => (
             <rect

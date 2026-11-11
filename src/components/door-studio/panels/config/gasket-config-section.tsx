@@ -63,12 +63,14 @@ export const GasketConfigSection: React.FC<GasketConfigSectionProps> = ({
 
   const handleAddItem = () => {
     const defaultGasket = gasketList[0];
+    const defaultMeasure: GasketMeasureType =
+      target === 'frame' ? 'frame_perimeter' : 'bead';
     const newItem: DoorGasketConfigItem = {
       id: `gasket_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       gasketId: defaultGasket?.id,
       gasketCode: defaultGasket?.code || undefined,
       gasketName: defaultGasket?.name || '',
-      measure: 'bead',
+      measure: defaultMeasure,
       countPerCell: 1,
       target,
     };
@@ -120,7 +122,9 @@ export const GasketConfigSection: React.FC<GasketConfigSectionProps> = ({
             Roan gắn kính — {targetTitle}
           </span>
           <span className="text-[11px] text-slate-400 font-normal">
-            tính theo nẹp hoặc chu vi kính
+            {target === 'frame'
+              ? 'tính theo chu vi khung bao hoặc ô kính fix'
+              : 'tính theo nẹp hoặc chu vi kính cánh'}
           </span>
         </div>
 

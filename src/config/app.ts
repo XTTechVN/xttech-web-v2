@@ -4,4 +4,8 @@ export const APP_NAME = 'XTTech';
 export const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dev-xt-api-v2.up.railway.app';
 export const BASE_WS_URL = BASE_API_URL.replace(/^http/, 'ws');
 export const BASE_MINIO_URL = process.env.NEXT_PUBLIC_MINIO_URL || 'https://minio-production-2298.up.railway.app';
+export const BASE_SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://xttech.vn').replace(/\/+$/, '');
+export const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID || '1603545881517618';
+
+
 

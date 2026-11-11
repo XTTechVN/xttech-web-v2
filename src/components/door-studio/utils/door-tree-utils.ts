@@ -44,6 +44,69 @@ export const createDefaultRootCell = (width = 1400, height = 1600): SceneCellNod
   children: [],
 });
 
+export function pickLeafOverrides(node?: SceneCellNode | null): Partial<SceneCellNode> {
+  if (!node) return {};
+  return {
+    seriesIdOverride: node.seriesIdOverride,
+    sashProfileIdOverride: node.sashProfileIdOverride,
+    sashTopProfileIdOverride: node.sashTopProfileIdOverride,
+    sashBottomProfileIdOverride: node.sashBottomProfileIdOverride,
+    sashLeftProfileIdOverride: node.sashLeftProfileIdOverride,
+    sashRightProfileIdOverride: node.sashRightProfileIdOverride,
+    sashCornerJointOverride: node.sashCornerJointOverride,
+    beadProfileIdOverride: node.beadProfileIdOverride,
+    openBottomOverride: node.openBottomOverride,
+    hasBottomFrameOverride: node.hasBottomFrameOverride,
+    reversalOverride: node.reversalOverride,
+    hasFrameReversalOverride: node.hasFrameReversalOverride,
+    reversalProfileIdOverride: node.reversalProfileIdOverride,
+    reversalOffsetMmOverride: node.reversalOffsetMmOverride,
+  };
+}
+
+export interface EnclosingFrameUnitInfo {
+  unitNode: SceneCellNode;
+  isCoupledSubFrame: boolean;
+  unitLabel: string;
+}
+
+export function findEnclosingFrameUnit(
+  root: SceneCellNode,
+  targetId: string
+): EnclosingFrameUnitInfo | null {
+  const findPath = (curr: SceneCellNode, path: SceneCellNode[]): SceneCellNode[] | null => {
+    if (curr.id === targetId) return [...path, curr];
+    if (curr.children) {
+      for (const child of curr.children) {
+        const found = findPath(child, [...path, curr]);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  const path = findPath(root, []);
+  if (!path || path.length === 0) return null;
+
+  for (let i = path.length - 1; i >= 1; i--) {
+    const node = path[i];
+    const parent = path[i - 1];
+    if (node.isFrameUnit || parent.splitType === 'coupling') {
+      const idx = parent.children ? parent.children.findIndex((c) => c.id === node.id) : 0;
+      return {
+        unitNode: node,
+        isCoupledSubFrame: true,
+        unitLabel: `Khối khung #${idx + 1} (${Math.round(node.w)}×${Math.round(node.h)} mm)`,
+      };
+    }
+  }
+
+  return {
+    unitNode: root,
+    isCoupledSubFrame: false,
+    unitLabel: `Khung bao chính (${Math.round(root.w)}×${Math.round(root.h)} mm)`,
+  };
+}
+
 export const rescaleTree = (node: SceneCellNode, scaleX: number, scaleY: number): SceneCellNode => {
   const newW = Math.max(1, Math.round(node.w * scaleX));
   const newH = Math.max(1, Math.round(node.h * scaleY));
@@ -228,6 +291,7 @@ export const applySashTypeToCluster = (
         }
 
         return {
+          ...pickLeafOverrides(targetNode),
           id: childId,
           w: cw,
           h: ch,
@@ -237,7 +301,9 @@ export const applySashTypeToCluster = (
           glassThickness: targetNode.glassThickness,
           hasLock: sashDef.hasHandle,
           handleHeight: sashDef.hasHandle ? Math.round(ch / 2) : undefined,
-          handleType: sashDef.hasHandle ? ((sashDef.handleType as any) || 'lever') : undefined,
+          handleType: sashDef.hasHandle
+            ? ((sashDef.handleType as SceneCellNode['handleType']) || 'lever')
+            : undefined,
           sashZIndex: sashDef.zIndex,
           sashArrow: sashDef.arrowType,
           sashJoiner: sashDef.joiner,
@@ -263,6 +329,7 @@ export const applySashTypeToCluster = (
     const dirStr = Array.isArray(singleDef.huongMo) ? singleDef.huongMo.join(',') : singleDef.huongMo;
     const mergedNode: SceneCellNode = {
       ...activeContainer,
+      ...pickLeafOverrides(targetNode),
       sashType: dirStr,
       sashLayout: layout.id,
       splitDirection: undefined,
@@ -273,7 +340,9 @@ export const applySashTypeToCluster = (
       glassThickness: targetNode.glassThickness || activeContainer.glassThickness,
       hasLock: singleDef.hasHandle,
       handleHeight: singleDef.hasHandle ? Math.round(activeContainer.h / 2) : undefined,
-      handleType: singleDef.hasHandle ? ((singleDef.handleType as any) || 'lever') : undefined,
+      handleType: singleDef.hasHandle
+        ? ((singleDef.handleType as SceneCellNode['handleType']) || 'lever')
+        : undefined,
       sashZIndex: singleDef.zIndex,
       sashArrow: singleDef.arrowType,
       sashHingeSymbol: singleDef.hingeSymbol,
@@ -309,6 +378,7 @@ export const applySashTypeToCluster = (
     const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down', 'sliding'].includes(newSashType);
     const mergedNode: SceneCellNode = {
       ...clusterContainer,
+      ...pickLeafOverrides(targetNode),
       sashType: newSashType,
       sashLayout: undefined,
       splitDirection: undefined,
@@ -334,6 +404,7 @@ export const applySashTypeToCluster = (
       const halfW = Math.round(targetNode.w / 2);
       const newChildren: SceneCellNode[] = [
         {
+          ...pickLeafOverrides(targetNode),
           id: `${targetNode.id}_c0_${crypto.randomUUID().slice(0, 8)}`,
           w: halfW,
           h: targetNode.h,
@@ -344,6 +415,7 @@ export const applySashTypeToCluster = (
           hasLock: false,
         },
         {
+          ...pickLeafOverrides(targetNode),
           id: `${targetNode.id}_c1_${crypto.randomUUID().slice(0, 8)}`,
           w: targetNode.w - halfW,
           h: targetNode.h,
@@ -480,4 +552,3 @@ export const isInsideSash = (root: SceneCellNode, targetId: string): boolean => 
       (Boolean(a.sashType) && a.sashType !== 'fixed')
   );
 };
-

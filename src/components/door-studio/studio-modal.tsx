@@ -263,6 +263,11 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           onChangeSashConfig={handleSashConfigChange}
           isInsideSash={state.isSelectedInsideSash}
           availableProfiles={state.availableProfiles}
+          frameUnitInfo={state.selectedFrameUnitInfo}
+          onUpdateFrameUnit={state.handleUpdateSelectedFrameUnit}
+          globalSeriesId={state.seriesId}
+          availableSeries={state.availableSeries}
+          allBrandProfiles={state.allBrandProfiles}
         />
       )}
 
@@ -323,7 +328,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
             rootCell={state.rootCell}
             frameConfig={state.frameConfig}
             sashConfig={state.sashConfig}
-            availableProfiles={state.availableProfiles}
+            availableProfiles={state.allBrandProfiles}
             aluminumColors={state.dynamicAluminumColors}
             onSelectAluminumColor={state.setAluminumColor}
             onSelectHardwareColor={state.setHardwareColor}
@@ -366,7 +371,7 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           rootCell={state.rootCell}
           frameConfig={state.frameConfig}
           sashConfig={state.sashConfig}
-          availableProfiles={state.availableProfiles}
+          availableProfiles={state.allBrandProfiles}
           selectedCellId={null}
           onSelectCell={() => {}}
         />

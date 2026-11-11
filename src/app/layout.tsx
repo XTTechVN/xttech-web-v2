@@ -1,7 +1,16 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
+import Script from 'next/script';
 import { Toaster } from 'react-hot-toast';
 import { AppUpdateModal } from '@/components';
+import {
+  BASE_SITE_URL,
+  FB_PIXEL_ID,
+  PAGE_SEO_META,
+  SEO_CONFIG,
+  SEO_KEYWORDS,
+  isProductionIndexingAllowed,
+} from '@/config';
 import { QueryProvider } from '@/contexts';
 
 import './globals.css';
@@ -27,18 +36,73 @@ const lexend = localFont({
   display: 'swap',
 });
 
-// 1. Cấu hình Viewport để màn hình không bị phóng to thu nhỏ lung tung
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: '#045863',
+  themeColor: SEO_CONFIG.themeColor,
 };
 
+const allowIndex = isProductionIndexingAllowed();
+
 export const metadata: Metadata = {
-  title: 'XTTech - Quản lý doanh nghiệp',
-  description: 'XTTech - Quản lý doanh nghiệp',
+  metadataBase: new URL(BASE_SITE_URL),
+  applicationName: SEO_CONFIG.siteName,
+  title: {
+    default: PAGE_SEO_META.home.title,
+    template: SEO_CONFIG.titleTemplate,
+  },
+  description: PAGE_SEO_META.home.description,
+  keywords: SEO_KEYWORDS,
+  authors: [{ name: SEO_CONFIG.siteName, url: BASE_SITE_URL }],
+  creator: SEO_CONFIG.siteName,
+  publisher: SEO_CONFIG.legalName,
+  category: 'business',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: SEO_CONFIG.locale,
+    url: BASE_SITE_URL,
+    siteName: SEO_CONFIG.siteName,
+    title: PAGE_SEO_META.home.title,
+    description: PAGE_SEO_META.home.description,
+    images: [
+      {
+        url: SEO_CONFIG.defaultOgImage,
+        width: SEO_CONFIG.defaultOgImageWidth,
+        height: SEO_CONFIG.defaultOgImageHeight,
+        alt: SEO_CONFIG.brandTitle,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: PAGE_SEO_META.home.title,
+    description: PAGE_SEO_META.home.description,
+    images: [SEO_CONFIG.defaultOgImage],
+  },
+  robots: allowIndex
+    ? {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
+      }
+    : {
+        index: false,
+        follow: false,
+      },
+  verification: {
+    google: 'wkh7Hi792MQ5-_HPPSn7epZUryUcQfwVJZwIxNT5R4k',
+  },
   other: {
     'facebook-domain-verification': 'bdvtycdcy863x260asdrime4wdi3n0',
   },
@@ -64,6 +128,33 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased scroll-smooth`} suppressHydrationWarning>
       <body className="bg-white antialiased min-h-screen" suppressHydrationWarning>
+        {FB_PIXEL_ID ? (
+          <>
+            <Script id="meta-pixel" strategy="afterInteractive">
+              {`
+                !function(f,b,e,v,n,t,s)
+                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+                n.queue=[];t=b.createElement(e);t.async=!0;
+                t.src=v;s=b.getElementsByTagName(e)[0];
+                s.parentNode.insertBefore(t,s)}(window, document,'script',
+                'https://connect.facebook.net/en_US/fbevents.js');
+                fbq('init', '${FB_PIXEL_ID}');
+                fbq('track', 'PageView');
+              `}
+            </Script>
+            <noscript>
+              <img
+                height="1"
+                width="1"
+                style={{ display: 'none' }}
+                src={`https://www.facebook.com/tr?id=${FB_PIXEL_ID}&ev=PageView&noscript=1`}
+                alt=""
+              />
+            </noscript>
+          </>
+        ) : null}
         <QueryProvider>
           {children}
           <Toaster position="top-center" />
