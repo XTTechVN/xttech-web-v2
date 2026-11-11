@@ -182,10 +182,10 @@ export function TaskMobileCard({
                 <button
                   type="button"
                   onClick={() => onCompleteTask(task)}
-                  className="inline-flex h-7 items-center gap-1 rounded-lg bg-primary px-2.5 text-[11px] font-semibold text-white hover:bg-primary/90 cursor-pointer"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 cursor-pointer"
+                  title="Hoàn thành"
                 >
-                  <CheckCircle2 size={12} />
-                  <span>Xong</span>
+                  <CheckCircle2 size={14} />
                 </button>
               )}
               <button

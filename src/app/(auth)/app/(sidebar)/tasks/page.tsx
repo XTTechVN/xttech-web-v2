@@ -41,7 +41,13 @@ import { TaskDetailModal } from './_components/modals/task-detail-modal';
 
 export default function StaffTasksPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+    <Suspense
+      fallback={
+        <div className="p-4 sm:p-5">
+          <Skeleton className="h-96 w-full rounded-xl" />
+        </div>
+      }
+    >
       <StaffTasksView />
     </Suspense>
   );
@@ -137,7 +143,7 @@ function StaffTasksView() {
   };
 
   return (
-    <div className="space-y-3 pb-16 sm:space-y-4 md:pb-0">
+    <div className="p-4 sm:p-5 space-y-3 pb-20 sm:space-y-4 md:pb-5">
       <div className="space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-3">
         <div className="flex items-center justify-between gap-2">
           <div>
