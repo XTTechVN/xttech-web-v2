@@ -1,9 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AccessoryCombo, Accessory, SelectedAccessoryItem } from '@/types';
-import { Trash2, X, ChevronDown, ChevronUp, Package, Boxes, Minus, Plus } from 'lucide-react';
+import {
+  AccessoryCombo,
+  Accessory,
+  SelectedAccessoryItem,
+  DoorCalculateResponse,
+  formatAccessoryUnit,
+} from '@/types';
+import { Trash2, X, Package, Boxes, Minus, Plus } from 'lucide-react';
 import { detectComboCategory } from './types';
+import { resolveComboItemsBom, resolveSelectedComboTotalPrice } from './combo-bom-resolver';
 
 interface SelectedItemsPanelProps {
   selectedCombos: AccessoryCombo[];
@@ -13,7 +20,15 @@ interface SelectedItemsPanelProps {
   onUpdateAccessoryQty: (accessoryId: number, delta: number) => void;
   onSetAccessoryQty: (accessoryId: number, qty: number) => void;
   onClearAll?: () => void;
+  calcData?: DoorCalculateResponse | null;
+  isCalculating?: boolean;
 }
+
+const CATEGORY_LABELS: Record<string, string> = {
+  frame: 'Khung',
+  sash: 'Cánh',
+  opening: 'Hướng mở',
+};
 
 export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
   selectedCombos,
@@ -23,20 +38,20 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
   onUpdateAccessoryQty,
   onSetAccessoryQty,
   onClearAll,
+  calcData,
 }) => {
-  const [expandedComboId, setExpandedComboId] = useState<number | null>(null);
+  const [collapsedComboIds, setCollapsedComboIds] = useState<number[]>([]);
+
+  const toggleCollapseCombo = (comboId: number) => {
+    setCollapsedComboIds((prev) =>
+      prev.includes(comboId) ? prev.filter((id) => id !== comboId) : [...prev, comboId]
+    );
+  };
 
   const totalCount = selectedCombos.length + selectedAccessories.length;
 
-  const categoryLabels: Record<string, string> = {
-    frame: 'Khung',
-    sash: 'Cánh',
-    opening: 'Hướng mở',
-  };
-
   return (
     <div className="space-y-2.5">
-      {/* Header Bar */}
       <div className="flex items-center justify-between">
         <div className="font-bold text-xs text-gray-800 flex items-center gap-1.5">
           <span>Chi tiết ({totalCount} mục đã chọn)</span>
@@ -64,7 +79,6 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
         )}
       </div>
 
-      {/* Empty State matching Reference Image 2 */}
       {totalCount === 0 ? (
         <div className="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center bg-white/70 space-y-2">
           <div className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
@@ -79,7 +93,6 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
         </div>
       ) : (
         <div className="space-y-2.5">
-          {/* Selected Combos List */}
           {selectedCombos.length > 0 && (
             <div className="bg-white border border-primary/20 rounded-xl overflow-hidden shadow-2xs">
               <div className="px-3.5 py-2 bg-primary/5 border-b border-primary/10 font-bold text-[11px] text-primary flex items-center justify-between">
@@ -91,15 +104,19 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
               <div className="divide-y divide-gray-100">
                 {selectedCombos.map((c) => {
                   const cat = detectComboCategory(c);
-                  const isExpanded = expandedComboId === c.id;
-                  const price = c.totalComboPrice || 0;
+                  const isExpanded = !collapsedComboIds.includes(c.id);
+                  const staticPrice = c.totalComboPrice || 0;
+                  const resolvedPrice = resolveSelectedComboTotalPrice(c, calcData);
+                  const resolvedItems = resolveComboItemsBom(c, calcData);
+                  const isPriceAdjusted = Boolean(calcData && resolvedPrice !== staticPrice);
+
                   return (
                     <div key={c.id} className="p-3 hover:bg-slate-50/50 transition-colors space-y-2">
                       <div className="flex items-center justify-between gap-2 text-xs">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0">
-                              {categoryLabels[cat] || 'Combo'}
+                              {CATEGORY_LABELS[cat] || 'Combo'}
                             </span>
                             <span className="font-bold text-slate-900 truncate" title={c.name}>
                               {c.name}
@@ -111,7 +128,7 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                             <span>{c.comboItems?.length || 0} vật tư</span>
                             <button
                               type="button"
-                              onClick={() => setExpandedComboId(isExpanded ? null : c.id)}
+                              onClick={() => toggleCollapseCombo(c.id)}
                               className="text-primary hover:underline cursor-pointer font-medium"
                             >
                               {isExpanded ? 'Ẩn chi tiết' : 'Xem chi tiết'}
@@ -119,10 +136,17 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2.5 shrink-0">
-                          <span className={`text-xs ${price > 0 ? 'font-bold text-primary' : 'text-slate-400'}`}>
-                            {price > 0 ? `${price.toLocaleString('vi-VN')} đ` : '-'}
-                          </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="text-right">
+                            {isPriceAdjusted && staticPrice > 0 && (
+                              <span className="block text-[10px] text-slate-400 line-through tabular-nums">
+                                {staticPrice.toLocaleString('vi-VN')} đ
+                              </span>
+                            )}
+                            <span className={`text-xs tabular-nums ${resolvedPrice > 0 ? 'font-bold text-primary' : 'text-slate-400'}`}>
+                              {resolvedPrice > 0 ? `${resolvedPrice.toLocaleString('vi-VN')} đ` : '0 đ'}
+                            </span>
+                          </div>
                           <button
                             type="button"
                             onClick={() => onToggleCombo(c.id)}
@@ -134,19 +158,34 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                         </div>
                       </div>
 
-                      {/* Expand Details */}
-                      {isExpanded && c.comboItems && c.comboItems.length > 0 && (
-                        <div className="p-2 bg-slate-50/80 rounded-lg border border-slate-200/60 text-[11px] space-y-1">
-                          {c.comboItems.map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-slate-600">
-                              <span className="truncate pr-2">
-                                {idx + 1}. {item.accessoryName || item.accessoryCode || `Phụ kiện #${item.accessoryId}`}
-                              </span>
-                              <span className="text-slate-400 shrink-0 font-medium">
-                                ×{item.quantity} {item.unit || ''}
-                              </span>
-                            </div>
-                          ))}
+                      {isExpanded && resolvedItems.length > 0 && (
+                        <div className="p-2 bg-slate-50/80 rounded-lg border border-slate-200/60 text-[11px] space-y-1.5">
+                          {resolvedItems.map((item, idx) => {
+                            const unitLabel = formatAccessoryUnit(item.unit) || 'Cái';
+                            return (
+                              <div key={idx} className="space-y-0.5">
+                                <div className="flex justify-between items-center gap-2 text-slate-700">
+                                  <span className="truncate font-medium">
+                                    {idx + 1}. {item.accessoryName || item.accessoryCode || `Phụ kiện #${item.accessoryId}`}
+                                  </span>
+                                  {item.isScaled ? (
+                                    <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-semibold text-[10px] shrink-0 tabular-nums">
+                                      Định mức ×{item.baseQty} → Thực tế ×{item.resolvedQty} {unitLabel}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-500 shrink-0 font-semibold tabular-nums">
+                                      ×{item.resolvedQty} {unitLabel}
+                                    </span>
+                                  )}
+                                </div>
+                                {item.formula && (
+                                  <div className="text-[10px] text-primary/80 pl-3 font-medium">
+                                    ↳ Quy đổi: {item.formula}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -156,7 +195,6 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
             </div>
           )}
 
-          {/* Selected Individual Accessories List */}
           {selectedAccessories.length > 0 && (
             <div className="bg-white border border-emerald-200 rounded-xl overflow-hidden shadow-2xs">
               <div className="px-3 py-1.5 bg-emerald-50/70 border-b border-emerald-100 font-bold text-[11px] text-emerald-800 flex items-center gap-1.5">
@@ -167,6 +205,7 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                 {selectedAccessories.map((item, idx) => {
                   const acc = accessories.find((a) => a.id === item.accessoryId);
                   const price = acc?.costPrice || 0;
+                  const unitLabel = formatAccessoryUnit(acc?.unit) || 'Cái';
                   return (
                     <div
                       key={`sel-acc-${item.accessoryId}-${idx}`}
@@ -177,11 +216,10 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                           {acc?.name || `Phụ kiện #${item.accessoryId}`}
                         </div>
                         <div className="text-[11px] text-gray-400">
-                          {acc?.code || '---'} {price > 0 && `· ${price.toLocaleString('vi-VN')} đ/${acc?.unit || 'cái'}`}
+                          {acc?.code || '---'} {price > 0 && `· ${price.toLocaleString('vi-VN')} đ/${unitLabel}`}
                         </div>
                       </div>
 
-                      {/* Stepper Controls */}
                       <div className="flex items-center gap-2">
                         <div className="inline-flex items-center gap-1 border border-gray-300 rounded-lg p-0.5 bg-gray-50">
                           <button
@@ -191,7 +229,7 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                           >
                             <Minus size={11} />
                           </button>
-                          <span className="w-8 text-center font-bold text-gray-900 text-[11px]">
+                          <span className="w-8 text-center font-bold text-gray-900 text-[11px] tabular-nums">
                             {item.quantity}
                           </span>
                           <button
@@ -203,7 +241,7 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                           </button>
                         </div>
 
-                        <span className="font-bold text-gray-900 text-xs w-20 text-right">
+                        <span className="font-bold text-gray-900 text-xs w-20 text-right tabular-nums">
                           {(price * item.quantity).toLocaleString('vi-VN')} đ
                         </span>
 

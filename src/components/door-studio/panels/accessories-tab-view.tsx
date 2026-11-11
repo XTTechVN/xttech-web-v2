@@ -1,7 +1,14 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { AccessoryCombo, Accessory, SelectedAccessoryItem, Brand } from '@/types';
+import {
+  AccessoryCombo,
+  Accessory,
+  SelectedAccessoryItem,
+  Brand,
+  DoorCalculateResponse,
+  formatAccessoryUnit,
+} from '@/types';
 import { Search, Boxes, Package, Plus } from 'lucide-react';
 import { ComboCategoryTab, detectComboCategory, detectComboBrand } from './accessories/types';
 import { SelectedItemsPanel } from './accessories/selected-items-panel';
@@ -20,6 +27,8 @@ interface AccessoriesTabViewProps {
   onClearAll?: () => void;
   hardwareColor?: string;
   onChangeHardwareColor?: (color: string) => void;
+  calcData?: DoorCalculateResponse | null;
+  isCalculating?: boolean;
 }
 
 const CATEGORY_TABS: { value: ComboCategoryTab; label: string; icon: string }[] = [
@@ -39,6 +48,8 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
   onUpdateAccessoryQty,
   onSetAccessoryQty,
   onClearAll,
+  calcData,
+  isCalculating,
 }) => {
   const [categoryTab, setCategoryTab] = useState<ComboCategoryTab>('frame');
   const [brandFilter, setBrandFilter] = useState<string>('all');
@@ -122,6 +133,10 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
   );
 
   const totalAmount = totalCombosPrice + totalIndividualPrice;
+  const effectiveTotal = calcData
+    ? (calcData.totalJointPrice || 0) + (calcData.totalAccessoryPrice || 0)
+    : totalAmount;
+  const isScaledTotal = Boolean(calcData && effectiveTotal !== totalAmount);
   const totalIndividualCount = selectedAccessories.reduce((sum, a) => sum + a.quantity, 0);
 
   const searchPlaceholder = useMemo(() => {
@@ -407,7 +422,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
                                                 {idx + 1}. {item.accessoryName || item.accessoryCode || `Phụ kiện #${item.accessoryId}`}
                                               </span>
                                               <span className="text-slate-500 font-medium shrink-0">
-                                                ×{item.quantity} {item.unit || ''}
+                                                ×{item.quantity} {formatAccessoryUnit(item.unit)}
                                               </span>
                                             </div>
                                           ))}
@@ -458,6 +473,8 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
               onUpdateAccessoryQty={onUpdateAccessoryQty}
               onSetAccessoryQty={onSetAccessoryQty}
               onClearAll={onClearAll}
+              calcData={calcData}
+              isCalculating={isCalculating}
             />
           </div>
         </div>
@@ -467,9 +484,9 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
       <div className="bg-white border-t border-slate-200 px-4 py-2.5 shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-slate-500 text-[11px]">Đã chọn</span>
-          {selectedComboIds.length > 0 && (
+          {selectedCombos.length > 0 && (
             <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
-              {selectedComboIds.length} Combo
+              {selectedCombos.length} Combo
             </span>
           )}
           {totalIndividualCount > 0 && (
@@ -477,15 +494,25 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
               {totalIndividualCount} Phụ kiện rời
             </span>
           )}
-          {selectedComboIds.length === 0 && totalIndividualCount === 0 && (
+          {selectedCombos.length === 0 && totalIndividualCount === 0 && (
             <span className="text-[11px] text-slate-400 italic">Chưa có gì</span>
           )}
         </div>
 
         <div className="flex items-center gap-1.5">
+          {isScaledTotal && (
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+              Theo BOM thực tế
+            </span>
+          )}
           <span className="text-[11px] text-slate-500">Tạm tính:</span>
-          <span className={`font-bold text-sm tabular-nums ${totalAmount > 0 ? 'text-primary' : 'text-slate-400'}`}>
-            {totalAmount > 0 ? `${totalAmount.toLocaleString('vi-VN')} đ` : '0 đ'}
+          {isScaledTotal && totalAmount > 0 && (
+            <span className="text-[11px] text-slate-400 line-through tabular-nums">
+              {totalAmount.toLocaleString('vi-VN')} đ
+            </span>
+          )}
+          <span className={`font-bold text-sm tabular-nums ${effectiveTotal > 0 ? 'text-primary' : 'text-slate-400'}`}>
+            {effectiveTotal > 0 ? `${effectiveTotal.toLocaleString('vi-VN')} đ` : '0 đ'}
           </span>
         </div>
       </div>
