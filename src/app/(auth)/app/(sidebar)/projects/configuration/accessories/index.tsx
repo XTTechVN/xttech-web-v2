@@ -159,6 +159,27 @@ export default function AccessoriesTab() {
     }
   };
 
+  const handleExcelImportSuccess = (
+    importedBrandIds: number[],
+    importedCategoryIds: Array<number | null>,
+  ) => {
+    if (
+      importedBrandIds.length > 0 &&
+      (!activeBrandId || !importedBrandIds.includes(activeBrandId))
+    ) {
+      setSelectedBrandId(importedBrandIds[0]);
+    }
+    if (
+      selectedCategoryId !== null &&
+      importedCategoryIds.some((cid) => cid !== selectedCategoryId)
+    ) {
+      setSelectedCategoryId(null);
+    }
+    if (search.trim()) {
+      setSearch('');
+    }
+  };
+
   const isLoading = isBrandsLoading || isAccessoriesLoading;
 
   return (
@@ -233,6 +254,7 @@ export default function AccessoriesTab() {
         brands={brandsList}
         categories={categoryList}
         defaultBrandId={activeBrandId}
+        onImportSuccess={handleExcelImportSuccess}
       />
 
       <AccessoryDeleteConfirmModal

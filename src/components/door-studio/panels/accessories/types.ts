@@ -2,6 +2,19 @@ import { AccessoryCombo, Brand } from '@/types';
 
 export type ComboCategoryTab = 'frame' | 'sash' | 'opening' | 'all' | 'individual';
 
+export interface ResolvedComboItemBom {
+  accessoryId: number;
+  accessoryName?: string | null;
+  accessoryCode?: string | null;
+  baseQty: number;
+  resolvedQty: number;
+  isScaled: boolean;
+  formula: string | null;
+  unit: string;
+  unitPrice: number;
+  resolvedTotalPrice: number;
+}
+
 /**
  * Phân loại combo phụ kiện dựa trên trường `applyFor`, `description` trong CSDL
  * hoặc fallback tên/mã

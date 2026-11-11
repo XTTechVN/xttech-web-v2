@@ -137,3 +137,55 @@ export const getProjectStageLabel = (
     order: fallback?.order ?? 50,
   };
 };
+
+export const CORNER_JOINT_POSITION_MAP: Record<string, string> = {
+  frame: 'Khung bao',
+  sash: 'Cánh cửa',
+  safety_frame: 'Khung bảo vệ',
+};
+
+export const CORNER_JOINT_TYPE_MAP: Record<
+  string,
+  { label: string; methodLabel: string; badgeClass: string }
+> = {
+  crimped: {
+    label: 'Ke ép góc',
+    methodLabel: 'Dập bấm góc',
+    badgeClass: 'bg-blue-50 text-blue-700 border border-blue-200/60',
+  },
+  permanent_screw: {
+    label: 'Ke vĩnh cửu',
+    methodLabel: 'Bắt vít lục giác',
+    badgeClass: 'bg-purple-50 text-purple-700 border border-purple-200/60',
+  },
+  spring_clip: {
+    label: 'Ke nhảy',
+    methodLabel: 'Bấm chốt lò xo',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
+  },
+  miter_45: {
+    label: 'Ghép góc 45°',
+    methodLabel: 'Ghép 45°',
+    badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200/60',
+  },
+  ke_ep_goc: {
+    label: 'Ke ép góc',
+    methodLabel: 'Dập bấm góc',
+    badgeClass: 'bg-blue-50 text-blue-700 border border-blue-200/60',
+  },
+  ke_vinh_cuu: {
+    label: 'Ke vĩnh cửu',
+    methodLabel: 'Bắt vít lục giác',
+    badgeClass: 'bg-purple-50 text-purple-700 border border-purple-200/60',
+  },
+  ke_nhay: {
+    label: 'Ke nhảy',
+    methodLabel: 'Bấm chốt lò xo',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
+  },
+  '45': {
+    label: 'Ghép góc 45°',
+    methodLabel: 'Ghép 45°',
+    badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200/60',
+  },
+};

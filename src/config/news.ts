@@ -102,16 +102,62 @@ export const PUBLIC_NEWS_QUERY_KEYS = {
   comments: (slug: string) => ['public-news-comments', slug] as const,
 };
 
-const LIKED_NEWS_STORAGE_KEY = 'xttech_liked_news_ids';
+export const LIKED_NEWS_COOKIE_KEY = 'xttech_liked_news_ids';
+export const LIKED_NEWS_STORAGE_KEY = 'xttech_liked_news_ids';
+
+export function parseLikedNewsIds(raw?: string | null): number[] {
+  if (!raw || typeof raw !== 'string') return [];
+  try {
+    const trimmed = raw.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (id): id is number => typeof id === 'number' && Number.isFinite(id) && id > 0,
+        );
+      }
+    }
+    return trimmed
+      .split(',')
+      .map((s) => Number.parseInt(s.trim(), 10))
+      .filter((n) => Number.isFinite(n) && n > 0);
+  } catch {
+    return [];
+  }
+}
+
+function getClientCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(
+    new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)'),
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function setClientCookie(name: string, value: string, days = 365): void {
+  if (typeof document === 'undefined') return;
+  const maxAge = days * 24 * 60 * 60;
+  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+}
 
 function readLikedNewsIds(): number[] {
   if (typeof window === 'undefined') return [];
   try {
+    const fromCookie = getClientCookie(LIKED_NEWS_COOKIE_KEY);
+    if (fromCookie) {
+      const parsed = parseLikedNewsIds(fromCookie);
+      if (parsed.length > 0) return parsed;
+    }
+
     const raw = window.localStorage.getItem(LIKED_NEWS_STORAGE_KEY);
     if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((id): id is number => typeof id === 'number' && Number.isFinite(id));
+    const fromStorage = parseLikedNewsIds(raw);
+    if (fromStorage.length > 0) {
+      // Tự động di chuyển từ localStorage sang cookie để đồng bộ SSR cho các lần tải trang sau
+      setClientCookie(LIKED_NEWS_COOKIE_KEY, fromStorage.join(','));
+    }
+    return fromStorage;
   } catch {
     return [];
   }
@@ -131,7 +177,10 @@ export function setNewsArticleLiked(articleId: number, liked: boolean): void {
     } else {
       current.delete(articleId);
     }
-    window.localStorage.setItem(LIKED_NEWS_STORAGE_KEY, JSON.stringify(Array.from(current)));
+    const list = Array.from(current).slice(-200);
+    const serialized = list.join(',');
+    setClientCookie(LIKED_NEWS_COOKIE_KEY, serialized);
+    window.localStorage.setItem(LIKED_NEWS_STORAGE_KEY, JSON.stringify(list));
   } catch {
     // Bỏ qua lỗi quota hoặc private mode của trình duyệt
   }

@@ -834,12 +834,19 @@ export function useDoorStudioState({
   }, [availableProfiles]);
 
   // Fetch Accessory Combos (Đầy đủ toàn bộ combo từ CSDL)
-  const { data: combosData } = useQuery({
+  const { data: combosData, isSuccess: isCombosLoaded } = useQuery({
     queryKey: ['accessory-combos-list'],
     queryFn: () => getAccessoryCombos({ limit: 500 }),
     enabled: isOpen,
   });
   const availableCombos = combosData?.items || [];
+
+  const validSelectedComboIds = useMemo(() => {
+    const deduped = Array.from(new Set(selectedComboIds));
+    if (!isCombosLoaded || !combosData?.items) return deduped;
+    const activeIds = new Set(combosData.items.map((c) => c.id));
+    return deduped.filter((id) => activeIds.has(id));
+  }, [selectedComboIds, isCombosLoaded, combosData]);
 
   // Fetch Individual Accessories
   const { data: accessoriesData } = useQuery({
@@ -1597,12 +1604,14 @@ export function useDoorStudioState({
         setRootCell(updatedRoot);
       }
     } else if (target === 'cell-h' && cellId) {
-      const tryH = resizeCellInParent(rootCell, cellId, value, 'h');
+      const baseRoot = ensureRootCellDimensions(rootCell, w, h);
+      const tryH = resizeCellInParent(baseRoot, cellId, value, 'h');
       pushState(tryH);
     } else if ((target === 'cell-w' || target === 'cell') && cellId) {
-      const tryW = resizeCellInParent(rootCell, cellId, value, 'w');
-      const tryH = resizeCellInParent(rootCell, cellId, value, 'h');
-      const changed = JSON.stringify(tryW) !== JSON.stringify(rootCell) ? tryW : (target === 'cell' ? tryH : rootCell);
+      const baseRoot = ensureRootCellDimensions(rootCell, w, h);
+      const tryW = resizeCellInParent(baseRoot, cellId, value, 'w');
+      const tryH = resizeCellInParent(baseRoot, cellId, value, 'h');
+      const changed = JSON.stringify(tryW) !== JSON.stringify(baseRoot) ? tryW : (target === 'cell' ? tryH : baseRoot);
       pushState(changed);
     }
   };
@@ -1641,7 +1650,8 @@ export function useDoorStudioState({
     cutType?: MullionCutType;
   }) => {
     if (!selectedMullion) return;
-    const parentNode = findNode(rootCell, selectedMullion.parentNodeId);
+    const baseRoot = ensureRootCellDimensions(rootCell, w, h);
+    const parentNode = findNode(baseRoot, selectedMullion.parentNodeId);
     if (!parentNode || !parentNode.children || parentNode.children.length < 2) return;
 
     const idx = selectedMullion.mullionIndex;
@@ -1697,7 +1707,7 @@ export function useDoorStudioState({
         : undefined,
     };
 
-    pushState(updateNode(rootCell, parentNode.id, updatedNodeData));
+    pushState(updateNode(baseRoot, parentNode.id, updatedNodeData));
     toast.success('Cập nhật thông số đố thành công');
   };
 
@@ -1708,7 +1718,8 @@ export function useDoorStudioState({
     newDimension,
     isFinal,
   }: ResizeSplitParams) => {
-    const parentNode = findNode(rootCell, parentNodeId);
+    const baseRoot = ensureRootCellDimensions(rootCell, w, h);
+    const parentNode = findNode(baseRoot, parentNodeId);
     if (!parentNode || !parentNode.children || parentNode.children.length < splitIndex + 2) return;
 
     const idx = splitIndex;
@@ -1747,7 +1758,7 @@ export function useDoorStudioState({
       h: isVert ? updatedNextChild.h : clampedDim2,
     };
 
-    const updatedRoot = updateNode(rootCell, parentNode.id, {
+    const updatedRoot = updateNode(baseRoot, parentNode.id, {
       children: newChildren,
       sashMullions: parentNode.sashMullions
         ? {
@@ -1961,8 +1972,8 @@ export function useDoorStudioState({
             frameConfig,
             sashConfig,
             seriesId: effectiveSeriesId,
-            selectedComboIds,
-            selectedComboId: selectedComboIds[0] || null,
+            selectedComboIds: validSelectedComboIds,
+            selectedComboId: validSelectedComboIds[0] || null,
             selectedAccessories,
           },
         });
@@ -1978,7 +1989,7 @@ export function useDoorStudioState({
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [isOpen, door?.id, initialSystemConfig, w, h, frameShape, aluminumColor, rootCell, frameConfig, sashConfig, effectiveSeriesId, selectedComboIds, selectedAccessories]);
+  }, [isOpen, door?.id, initialSystemConfig, w, h, frameShape, aluminumColor, rootCell, frameConfig, sashConfig, effectiveSeriesId, validSelectedComboIds, selectedAccessories]);
 
   const handleToggleCombo = (comboId: number) => {
     setSelectedComboIds((prev) =>
@@ -2066,8 +2077,8 @@ export function useDoorStudioState({
         frameConfig,
         sashConfig,
         seriesId: effectiveSeriesId,
-        selectedComboIds,
-        selectedComboId: selectedComboIds[0] || null,
+        selectedComboIds: validSelectedComboIds,
+        selectedComboId: validSelectedComboIds[0] || null,
         selectedAccessories,
       };
 
@@ -2168,7 +2179,7 @@ export function useDoorStudioState({
     setFrameShape,
     seriesId: effectiveSeriesId,
     setSeriesId,
-    selectedComboIds,
+    selectedComboIds: validSelectedComboIds,
     selectedAccessories,
     frameConfig,
     setFrameConfig,

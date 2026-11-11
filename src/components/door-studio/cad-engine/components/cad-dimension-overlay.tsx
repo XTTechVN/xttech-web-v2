@@ -14,13 +14,18 @@ interface CadDimensionOverlayProps {
   fw: number;
   fh: number;
   metrics: CadMetrics;
+  rootCell?: SceneCellNode;
   vertSlices: VerticalSlice[];
   horizSlices: SceneCellNode[];
   leaves: LeafCell[];
   mullions?: MullionBar[];
   sashConfig?: SashConfig;
   selectedCellId?: string | null;
-  onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
+  onEditDimension?: (
+    target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight',
+    cellId?: string,
+    displayedVal?: number
+  ) => void;
 }
 
 /**
@@ -37,6 +42,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
   fw,
   fh,
   metrics,
+  rootCell,
   vertSlices,
   horizSlices,
   leaves,
@@ -63,7 +69,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
 
   // Chuỗi hàng đo thật theo từng cột: cửa lệch hàng dùng cột ngoài cùng bên phải làm thước + chip số đo ở các cột còn lại
   const rowViewport = { ox, oy, fw, fh, h };
-  const columnChains = getColumnRowChains(mullions || [], vertSlices, rowViewport);
+  const columnChains = getColumnRowChains(mullions || [], vertSlices, rowViewport, rootCell);
   const multiRowChains = getMultiRowChains(columnChains);
   const isRowMisaligned = !isRowChainsAligned(columnChains, rowViewport);
   // Cửa thẳng hàng giữ nguyên cách vẽ cũ, trừ khi danh sách đố trộn nhiều cột không khớp số hàng
@@ -200,7 +206,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
                       }
                       onClick={() => {
                         if (isEditable) {
-                          onEditDimension?.('cell-w', child.editableCellId || child.id);
+                          onEditDimension?.('cell-w', child.editableCellId || child.id, child.w);
                         }
                       }}
                     >

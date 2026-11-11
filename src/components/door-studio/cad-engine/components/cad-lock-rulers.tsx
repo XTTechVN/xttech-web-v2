@@ -13,7 +13,7 @@ interface CadLockRulersProps {
   oy: number;
   fh: number;
   selectedCellId?: string | null;
-  onEditDimension?: (target: 'handleHeight', cellId?: string) => void;
+  onEditDimension?: (target: 'handleHeight', cellId?: string, displayedVal?: number) => void;
 }
 
 /** Cao độ tay nắm khóa (bên trái bản vẽ) - hỗ trợ nhiều khóa lệch nhau */
@@ -45,7 +45,7 @@ export const CadLockRulers: React.FC<CadLockRulersProps> = ({ items, ox, oy, fh,
             strokeLinejoin="round"
             transform={`rotate(-90, ${dimLeftX - 4}, ${(oy + fh + item.lockY) / 2})`}
             className="cursor-pointer hover:fill-red-600 hover:font-bold"
-            onClick={() => onEditDimension?.('handleHeight', item.leaf.node.id)}
+            onClick={() => onEditDimension?.('handleHeight', item.leaf.node.id, item.handleHVal)}
           >
             <title>{`Cao độ tay nắm khóa: ${item.handleHVal} mm (Nhấp để sửa)`}</title>
             {item.handleHVal}

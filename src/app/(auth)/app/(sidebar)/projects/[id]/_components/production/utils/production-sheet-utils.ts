@@ -4,10 +4,15 @@ import type { CombinedSheetAccessory } from '../types';
 export function buildCombinedSheetAccessories(sheet: ProductionSheet): CombinedSheetAccessory[] {
   const combinedMap = new Map<string, CombinedSheetAccessory>();
   const addAcc = (code: string, name: string, qty: number, unit: string) => {
-    const key = `${code}_${name}`;
+    if (!qty || qty <= 0) return;
+    const normalizedUnit = unit || 'pcs';
+    const key =
+      (code && code !== '—' ? code.trim().toUpperCase() : name.trim().toLowerCase()) +
+      '_' +
+      normalizedUnit;
     const existing = combinedMap.get(key);
     if (!existing) {
-      combinedMap.set(key, { code, name, quantity: qty, unit });
+      combinedMap.set(key, { code, name, quantity: qty, unit: normalizedUnit });
     } else {
       existing.quantity += qty;
     }
@@ -19,7 +24,7 @@ export function buildCombinedSheetAccessories(sheet: ProductionSheet): CombinedS
     addAcc(
       rf.accessoryCode || '—',
       rf.accessoryName || rf.name || 'Ke góc',
-      rf.quantity ?? rf.qty ?? 4,
+      rf.quantity ?? rf.qty ?? 0,
       rf.unit || 'pcs',
     ),
   );

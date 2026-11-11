@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import {
+  LIKED_NEWS_COOKIE_KEY,
   NEWS_CATEGORY_MAP,
   NO_INDEX_METADATA,
   PAGE_SEO_META,
@@ -8,6 +10,7 @@ import {
   buildNewsArticleJsonLd,
   buildPageMetadata,
   fetchPublicArticleBySlugForSeo,
+  parseLikedNewsIds,
   serializeJsonLd,
   stripHtmlToPlainText,
 } from '@/config';
@@ -77,6 +80,11 @@ export default async function NewsDetailPage({
     notFound();
   }
 
+  const cookieStore = await cookies();
+  const rawLikedCookie = cookieStore.get(LIKED_NEWS_COOKIE_KEY)?.value;
+  const likedIds = parseLikedNewsIds(rawLikedCookie);
+  const initialIsLiked = likedIds.includes(article.id);
+
   const jsonLd = buildNewsArticleJsonLd(article);
 
   return (
@@ -85,7 +93,11 @@ export default async function NewsDetailPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
-      <NewsPublicDetail slug={decodedSlug} initialArticle={article} />
+      <NewsPublicDetail
+        slug={decodedSlug}
+        initialArticle={article}
+        initialIsLiked={initialIsLiked}
+      />
     </main>
   );
 }

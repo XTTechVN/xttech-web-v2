@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import dayjs from 'dayjs';
 import { useMutation } from '@tanstack/react-query';
@@ -32,6 +32,7 @@ export interface NewsArticleCardProps {
   rank?: number;
   showDateOnBullet?: boolean;
   hideDescription?: boolean;
+  initialIsLiked?: boolean;
 }
 
 export function NewsArticleCard({
@@ -40,13 +41,23 @@ export function NewsArticleCard({
   rank,
   showDateOnBullet = false,
   hideDescription = false,
+  initialIsLiked,
 }: NewsArticleCardProps) {
+  const [clientLiked, setClientLiked] = useState<boolean>(initialIsLiked ?? false);
   const [optimisticLike, setOptimisticLike] = useState<{
     articleId: number;
     liked: boolean;
     likeCount: number;
   } | null>(null);
   const lastClickTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!article?.id) return;
+    const stored = isNewsArticleLiked(article.id);
+    if (stored !== clientLiked) {
+      setClientLiked(stored);
+    }
+  }, [article?.id, clientLiked]);
 
   // Chặn double-click hoặc click liên tiếp vào bài viết để chống spam view
   const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -62,7 +73,7 @@ export function NewsArticleCard({
   const isLiked =
     optimisticLike?.articleId === article.id
       ? optimisticLike.liked
-      : isNewsArticleLiked(article.id);
+      : clientLiked;
 
   const currentLikeCount =
     optimisticLike?.articleId === article.id ? optimisticLike.likeCount : article.likeCount;
@@ -77,10 +88,12 @@ export function NewsArticleCard({
       const nextCount = Math.max(0, prevCount + (nextLiked ? 1 : -1));
       setOptimisticLike({ articleId: article.id, liked: nextLiked, likeCount: nextCount });
       setNewsArticleLiked(article.id, nextLiked);
+      setClientLiked(nextLiked);
       return { prevLiked: !nextLiked, prevCount };
     },
     onSuccess: (res, nextLiked) => {
       setOptimisticLike({ articleId: article.id, liked: nextLiked, likeCount: res.likeCount });
+      setClientLiked(nextLiked);
       queryClient.setQueryData<NewsArticle>(PUBLIC_NEWS_QUERY_KEYS.detail(article.slug), (old) =>
         old ? { ...old, likeCount: res.likeCount } : old,
       );
@@ -108,6 +121,7 @@ export function NewsArticleCard({
           likeCount: context.prevCount,
         });
         setNewsArticleLiked(article.id, context.prevLiked);
+        setClientLiked(context.prevLiked);
       }
       showErrorToast(err, 'Không thể cập nhật lượt yêu thích.');
     },
@@ -180,7 +194,7 @@ export function NewsArticleCard({
           <div className="flex items-center justify-between gap-4 pt-1 text-xs text-slate-500">
             <span className="font-mono tabular-nums">{formattedDate}</span>
             <div className="flex items-center gap-3.5 font-mono tabular-nums">
-              <span className="inline-flex items-center gap-1" title="Lượt xem">
+              <span className="inline-flex items-center gap-1" title="Lượt xem" suppressHydrationWarning>
                 <Eye className="w-3.5 h-3.5 text-slate-400" />
                 {article.viewCount}
               </span>
@@ -188,6 +202,7 @@ export function NewsArticleCard({
                 type="button"
                 onClick={handleQuickLike}
                 disabled={likeMutation.isPending}
+                suppressHydrationWarning
                 className={`inline-flex items-center gap-1 cursor-pointer ${
                   isLiked ? 'text-rose-600 font-bold' : 'hover:text-rose-600'
                 }`}
@@ -197,7 +212,7 @@ export function NewsArticleCard({
                     isLiked ? 'text-rose-500 fill-rose-500' : 'text-rose-500'
                   }`}
                 />
-                {currentLikeCount}
+                <span suppressHydrationWarning>{currentLikeCount}</span>
               </button>
               <span className="inline-flex items-center gap-1" title="Bình luận">
                 <MessageSquare className="w-3.5 h-3.5 text-primary" />
@@ -232,7 +247,7 @@ export function NewsArticleCard({
         </h3>
         <div className="flex items-center gap-3 text-xs text-slate-400 font-mono tabular-nums">
           <span>{formattedDate}</span>
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1" suppressHydrationWarning>
             <Eye className="w-3 h-3" />
             {article.viewCount}
           </span>
@@ -269,7 +284,7 @@ export function NewsArticleCard({
           </h4>
           <div className="flex items-center gap-2.5 text-xs text-slate-400 font-mono tabular-nums">
             <span>{formattedDate}</span>
-            <span className="inline-flex items-center gap-1">
+            <span className="inline-flex items-center gap-1" suppressHydrationWarning>
               <Eye className="w-3 h-3" />
               {article.viewCount}
             </span>
@@ -315,7 +330,7 @@ export function NewsArticleCard({
           </h4>
           <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono tabular-nums">
             <span>{formattedDate}</span>
-            <span className="inline-flex items-center gap-1">
+            <span className="inline-flex items-center gap-1" suppressHydrationWarning>
               <Eye className="w-3 h-3" />
               {article.viewCount}
             </span>
@@ -323,6 +338,7 @@ export function NewsArticleCard({
               type="button"
               onClick={handleQuickLike}
               disabled={likeMutation.isPending}
+              suppressHydrationWarning
               title={isLiked ? 'Bỏ thả tim' : 'Thả tim bài viết'}
               className={`inline-flex items-center gap-1 cursor-pointer transition-colors ${
                 isLiked ? 'text-rose-600 font-bold' : 'hover:text-rose-600'
@@ -331,7 +347,7 @@ export function NewsArticleCard({
               <Heart
                 className={`w-3 h-3 ${isLiked ? 'text-rose-500 fill-rose-500' : 'text-rose-500'}`}
               />
-              {currentLikeCount}
+              <span suppressHydrationWarning>{currentLikeCount}</span>
             </button>
           </div>
         </div>

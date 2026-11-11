@@ -1,5 +1,5 @@
 import React from 'react';
-import { DoorCalculateResponse } from '@/types';
+import { DoorCalculateResponse, formatAccessoryUnit } from '@/types';
 
 interface BomAccessoriesTableProps {
   accessories?: DoorCalculateResponse['accessories'];
@@ -61,17 +61,27 @@ export const BomAccessoriesTable: React.FC<BomAccessoriesTableProps> = ({
               </td>
               <td className="py-2.5 px-2 text-slate-600 text-[11px] hidden sm:table-cell">
                 <span className="font-medium text-slate-700">{item.comboName || 'Phụ kiện lẻ'}</span>
+                {item.scaleFormula && (
+                  <div className="text-[10px] font-mono text-primary/80 mt-0.5">
+                    {item.scaleFormula}
+                  </div>
+                )}
               </td>
               <td className="py-2.5 px-2 text-center text-slate-600 font-medium text-[11px] whitespace-nowrap">
-                {item.unit || 'cái'}
+                {formatAccessoryUnit(item.unit) || 'Cái'}
               </td>
-              <td className="py-2.5 px-2 text-center font-mono font-bold text-slate-900 text-xs sm:text-sm whitespace-nowrap">
-                {item.quantity}
+              <td className="py-2.5 px-2 text-center font-mono font-bold text-slate-900 text-xs sm:text-sm whitespace-nowrap tabular-nums">
+                <div>{item.quantity}</div>
+                {item.scaleFormula && (
+                  <div className="text-[10px] font-normal text-primary/80 sm:hidden">
+                    {item.scaleFormula}
+                  </div>
+                )}
               </td>
-              <td className="py-2.5 px-2 text-right font-mono text-slate-600 text-[11px] hidden sm:table-cell whitespace-nowrap">
+              <td className="py-2.5 px-2 text-right font-mono text-slate-600 text-[11px] hidden sm:table-cell whitespace-nowrap tabular-nums">
                 {item.unitPrice > 0 ? `${item.unitPrice.toLocaleString('vi-VN')} đ` : '—'}
               </td>
-              <td className="py-2.5 px-2.5 sm:px-3 text-right font-mono font-bold text-blue-700 text-xs sm:text-sm whitespace-nowrap">
+              <td className="py-2.5 px-2.5 sm:px-3 text-right font-mono font-bold text-blue-700 text-xs sm:text-sm whitespace-nowrap tabular-nums">
                 {item.totalPrice > 0 ? `${item.totalPrice.toLocaleString('vi-VN')} đ` : '—'}
               </td>
             </tr>
@@ -83,11 +93,11 @@ export const BomAccessoriesTable: React.FC<BomAccessoriesTableProps> = ({
               <td className="py-2.5 px-2.5 sm:px-3" colSpan={3}>
                 Tổng cộng phụ kiện
               </td>
-              <td className="py-2.5 px-2 text-center font-mono text-blue-700 whitespace-nowrap">
+              <td className="py-2.5 px-2 text-center font-mono text-blue-700 whitespace-nowrap tabular-nums">
                 {totalAccessoryQty ?? accessories.reduce((s, a) => s + a.quantity, 0)}
               </td>
               <td className="py-2.5 px-2 hidden sm:table-cell"></td>
-              <td className="py-2.5 px-2.5 sm:px-3 text-right font-mono text-blue-700 text-xs sm:text-sm whitespace-nowrap">
+              <td className="py-2.5 px-2.5 sm:px-3 text-right font-mono text-blue-700 text-xs sm:text-sm whitespace-nowrap tabular-nums">
                 {totalAccessoryPrice !== undefined
                   ? `${totalAccessoryPrice.toLocaleString('vi-VN')} đ`
                   : `${accessories.reduce((s, a) => s + a.totalPrice, 0).toLocaleString('vi-VN')} đ`}

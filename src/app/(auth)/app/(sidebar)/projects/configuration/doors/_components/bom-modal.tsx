@@ -121,7 +121,12 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
               {bom.totalJointQty !== undefined && (
                 <div className={`px-2 sm:px-2.5 py-1 rounded-md border flex items-center gap-1 whitespace-nowrap shrink-0 ${bom.hasUnconfiguredJoints ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
                   <Wrench size={11} />
-                  <span>Ke: <strong className="font-bold">{bom.totalJointQty} con</strong></span>
+                  <span>
+                    Ke: <strong className="font-bold">{bom.totalJointQty} con</strong>
+                    {Boolean(bom.totalJointPrice && bom.totalJointPrice > 0) && (
+                      <span className="ml-1 font-semibold">({bom.totalJointPrice!.toLocaleString('vi-VN')} đ)</span>
+                    )}
+                  </span>
                   {bom.hasUnconfiguredJoints && <span className="text-[9px] font-semibold text-amber-700 underline">(!)</span>}
                 </div>
               )}
@@ -130,9 +135,9 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
                   Nan: <strong className="font-bold">{bom.totalGrillePrice!.toLocaleString('vi-VN')} đ</strong>
                 </div>
               )}
-              {Boolean(bom.totalAccessoryPrice && bom.totalAccessoryPrice > 0) && (
+              {Boolean((bom.totalAccessoryPrice || 0) + (bom.totalJointPrice || 0) > 0) && (
                 <div className="px-2 sm:px-2.5 py-1 bg-purple-50 text-purple-800 rounded-md border border-purple-200 font-medium whitespace-nowrap shrink-0">
-                  PK: <strong className="font-bold">{bom.totalAccessoryPrice!.toLocaleString('vi-VN')} đ</strong>
+                  PK + Ke: <strong className="font-bold">{((bom.totalAccessoryPrice || 0) + (bom.totalJointPrice || 0)).toLocaleString('vi-VN')} đ</strong>
                 </div>
               )}
             </div>

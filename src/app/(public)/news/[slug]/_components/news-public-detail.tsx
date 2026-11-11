@@ -36,6 +36,7 @@ import { NewsCommentsSection } from './news-comments-section';
 export interface NewsPublicDetailProps {
   slug: string;
   initialArticle?: NewsArticle | null;
+  initialIsLiked?: boolean;
 }
 
 const VIETNAMESE_WEEKDAYS = [
@@ -72,7 +73,12 @@ const ARTICLE_HTML_CLASS = `text-slate-800 text-base sm:text-[17px] leading-[1.8
   [&_hr]:my-6 [&_hr]:border-slate-200 [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:rounded-xs
   [&_s]:line-through [&_del]:line-through`;
 
-export function NewsPublicDetail({ slug, initialArticle }: NewsPublicDetailProps) {
+export function NewsPublicDetail({
+  slug,
+  initialArticle,
+  initialIsLiked = false,
+}: NewsPublicDetailProps) {
+  const [clientLiked, setClientLiked] = useState<boolean>(initialIsLiked);
   const [optimisticLike, setOptimisticLike] = useState<{
     articleId: number;
     liked: boolean;
@@ -170,10 +176,18 @@ export function NewsPublicDetail({ slug, initialArticle }: NewsPublicDetailProps
     [article?.content],
   );
 
+  useEffect(() => {
+    if (!article?.id) return;
+    const stored = isNewsArticleLiked(article.id);
+    if (stored !== clientLiked) {
+      setClientLiked(stored);
+    }
+  }, [article?.id, clientLiked]);
+
   const isLiked = article
     ? optimisticLike?.articleId === article.id
       ? optimisticLike.liked
-      : isNewsArticleLiked(article.id)
+      : clientLiked
     : false;
 
   const currentLikeCount = article
@@ -191,11 +205,13 @@ export function NewsPublicDetail({ slug, initialArticle }: NewsPublicDetailProps
       const nextCount = Math.max(0, prevCount + (nextLiked ? 1 : -1));
       setOptimisticLike({ articleId: article.id, liked: nextLiked, likeCount: nextCount });
       setNewsArticleLiked(article.id, nextLiked);
+      setClientLiked(nextLiked);
       return { articleId: article.id, prevLiked: !nextLiked, prevCount };
     },
     onSuccess: (res, nextLiked) => {
       if (!article) return;
       setOptimisticLike({ articleId: article.id, liked: nextLiked, likeCount: res.likeCount });
+      setClientLiked(nextLiked);
       queryClient.setQueryData<NewsArticle>(PUBLIC_NEWS_QUERY_KEYS.detail(slug), (old) =>
         old ? { ...old, likeCount: res.likeCount } : old,
       );
@@ -223,6 +239,7 @@ export function NewsPublicDetail({ slug, initialArticle }: NewsPublicDetailProps
           likeCount: context.prevCount,
         });
         setNewsArticleLiked(context.articleId, context.prevLiked);
+        setClientLiked(context.prevLiked);
       }
       showErrorToast(err, 'Không thể cập nhật lượt yêu thích.');
     },
@@ -399,7 +416,7 @@ export function NewsPublicDetail({ slug, initialArticle }: NewsPublicDetailProps
                 </div>
 
                 <div className="flex items-center gap-3.5 text-xs text-slate-500 font-mono tabular-nums">
-                  <span className="inline-flex items-center gap-1" title="Lượt xem">
+                  <span className="inline-flex items-center gap-1" title="Lượt xem" suppressHydrationWarning>
                     <Eye className="w-3.5 h-3.5 text-slate-400" /> {article.viewCount}
                   </span>
                   <button
@@ -410,18 +427,20 @@ export function NewsPublicDetail({ slug, initialArticle }: NewsPublicDetailProps
                     className={`inline-flex items-center gap-1 cursor-pointer transition-colors ${
                       isLiked ? 'text-rose-600 font-bold' : 'hover:text-rose-600'
                     }`}
+                    suppressHydrationWarning
                   >
                     <Heart
                       className={`w-3.5 h-3.5 transition-transform ${
                         isLiked ? 'text-rose-500 fill-rose-500 scale-110' : 'text-rose-500'
                       }`}
                     />{' '}
-                    {currentLikeCount}
+                    <span suppressHydrationWarning>{currentLikeCount}</span>
                   </button>
                   <a
                     href="#comments"
                     className="inline-flex items-center gap-1 hover:text-primary"
                     title="Bình luận"
+                    suppressHydrationWarning
                   >
                     <MessageSquare className="w-3.5 h-3.5 text-primary" /> {article.commentCount}
                   </a>
@@ -461,6 +480,7 @@ export function NewsPublicDetail({ slug, initialArticle }: NewsPublicDetailProps
                   type="button"
                   onClick={handleToggleLike}
                   disabled={likeMutation.isPending}
+                  suppressHydrationWarning
                   className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-all cursor-pointer border w-fit ${
                     isLiked
                       ? 'bg-rose-50 text-rose-600 border-rose-200 shadow-2xs'
@@ -472,8 +492,11 @@ export function NewsPublicDetail({ slug, initialArticle }: NewsPublicDetailProps
                       isLiked ? 'fill-rose-500 text-rose-500 scale-110' : ''
                     }`}
                   />
-                  <span>{isLiked ? 'Đã yêu thích' : 'Thả tim bài viết'}</span>
-                  <span className="px-2 py-0.5 rounded-full text-xs font-mono tabular-nums bg-slate-100 text-slate-800">
+                  <span suppressHydrationWarning>{isLiked ? 'Đã yêu thích' : 'Thả tim bài viết'}</span>
+                  <span
+                    className="px-2 py-0.5 rounded-full text-xs font-mono tabular-nums bg-slate-100 text-slate-800"
+                    suppressHydrationWarning
+                  >
                     {currentLikeCount}
                   </span>
                 </button>

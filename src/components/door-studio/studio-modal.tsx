@@ -313,6 +313,8 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
             onClearAll={state.handleClearAllAccessories}
             hardwareColor={state.hardwareColor}
             onChangeHardwareColor={state.setHardwareColor}
+            calcData={state.calcData}
+            isCalculating={state.isCalculating}
           />
         </div>
       )}
