@@ -22,6 +22,7 @@ export interface SigningRequestPayload {
   recipientEmail?: string;
   expiresInDays?: number;
   companySignature?: SignatureInput;
+  sendEmail?: boolean;
 }
 
 export interface SigningRequestResult {
