@@ -19,3 +19,4 @@ export * from './document-explorer-helpers';
 export * from './document-drag-drop';
 export * from './glass-order-export';
 export * from './validators';
+export * from './public-signing';
