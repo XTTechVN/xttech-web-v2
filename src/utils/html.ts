@@ -169,6 +169,26 @@ const isSafeHrefUrl = (rawUrl: string): boolean => {
   );
 };
 
+const FIGURE_ALIGN_VALUES = new Set(['left', 'center', 'right', 'float-left', 'float-right']);
+const FIGURE_WIDTH_STYLE_REGEX = /(?:^|;)\s*width\s*:\s*(\d{2,3})(?:\.\d+)?%\s*(?:;|$)/i;
+const FIGURE_MIN_WIDTH_PERCENT = 15;
+
+// Chỉ chấp nhận data-align thuộc danh sách trắng cho <figure>
+const extractFigureAlign = (raw: string | null): string | null => {
+  const value = raw?.trim().toLowerCase() || '';
+  return FIGURE_ALIGN_VALUES.has(value) ? value : null;
+};
+
+// Chỉ chấp nhận duy nhất khai báo `width: N%` (15–100) từ style của <figure>
+const extractFigureWidthStyle = (rawStyle: string | null): string | null => {
+  if (!rawStyle || DANGEROUS_CSS_TOKEN_REGEX.test(rawStyle)) return null;
+  const match = FIGURE_WIDTH_STYLE_REGEX.exec(rawStyle);
+  if (!match) return null;
+  const percent = Number(match[1]);
+  if (percent < FIGURE_MIN_WIDTH_PERCENT || percent > 100) return null;
+  return `width: ${percent}%`;
+};
+
 export const escapeHtml = (raw: string): string =>
   raw
     .replace(/&/g, '&amp;')
@@ -324,7 +344,14 @@ const sanitizeNewsNode = (
       }
       const cls = element.getAttribute('class');
       if (cls && !stripColors) clean.setAttribute('class', cls);
-    } else if ((tag === 'FIGURE' || tag === 'FIGCAPTION') && !stripColors) {
+    } else if (tag === 'FIGURE' && !stripColors) {
+      const cls = element.getAttribute('class');
+      if (cls) clean.setAttribute('class', cls);
+      const align = extractFigureAlign(element.getAttribute('data-align'));
+      if (align) clean.setAttribute('data-align', align);
+      const width = extractFigureWidthStyle(element.getAttribute('style'));
+      if (width) clean.setAttribute('style', width);
+    } else if (tag === 'FIGCAPTION' && !stripColors) {
       const cls = element.getAttribute('class');
       if (cls) clean.setAttribute('class', cls);
     }
@@ -350,6 +377,14 @@ const sanitizeHtmlOnServer = (rawHtml: string, allowMedia = true): string => {
   if (!allowMedia) {
     cleaned = cleaned.replace(/<(img|video|source|iframe|figure|figcaption)[^>]*\/?>/gi, '');
   } else {
+    // Dựng lại thẻ <figure> chỉ với thuộc tính layout hợp lệ (data-align, style width %)
+    cleaned = cleaned.replace(/<figure\b([^>]*)>/gi, (_match, attrs: string) => {
+      const alignMatch = /\sdata-align\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrs);
+      const styleMatch = /\sstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrs);
+      const align = extractFigureAlign(alignMatch ? (alignMatch[1] ?? alignMatch[2]) : null);
+      const width = extractFigureWidthStyle(styleMatch ? (styleMatch[1] ?? styleMatch[2]) : null);
+      return `<figure${align ? ` data-align="${align}"` : ''}${width ? ` style="${width}"` : ''}>`;
+    });
     cleaned = cleaned.replace(
       /\s(src|poster)\s*=\s*(["'])(\/[^"']+)\2/gi,
       (_match, attrName: string, quote: string, relPath: string) =>

@@ -2,6 +2,11 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-11-12
+### Changed (Hạ tầng Agent — `.agents/` & `AGENTS.md`)
+- Thêm mục "Checklist Trước Khi Viết Code" vào [`AGENTS.md`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/AGENTS.md) khớp các luật R005 của `scope_guard.py`.
+- `scope_guard.py`: `R005-MOCK-CONSTANTS` & `R005-COMPONENT-MAX-LINES` chuyển từ chặn cứng sang `WARN_ONLY` (ghi `hook_audit.jsonl`); nạp lười `ast`/`subprocess`/`tempfile`. Chuyển `security-audit` sang global, bản trùng `reverse-engineer-anything` lưu backup; bỏ dòng yêu cầu đọc lại `rule.md` trong `TRIBAL_KNOWLEDGE.md`.
+
 ## [Unreleased] - 2026-11-11
 ### Changed & Optimized (Chuẩn Hóa Trọn Bộ Quản Lý Gói Sang PNPM & Dọn Rác Tàn Dư NPM)
 - **Chuẩn hóa gói và dọn dẹp triệt để `package-lock.json` ([`package.json`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/package.json), [`pnpm-lock.yaml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/pnpm-lock.yaml), [`pnpm-workspace.yaml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/pnpm-workspace.yaml)):**
