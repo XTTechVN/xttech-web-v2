@@ -1,43 +1,30 @@
 'use client';
 
 import React from 'react';
-import { Lock, Unlock, Tag, Database, Trash2 } from 'lucide-react';
+import { Lock, Unlock } from 'lucide-react';
 import { GlassGrilleMotif, GRILLE_COLORS, ColorSwatch } from '../../../studio-types';
 import { Accessory } from '@/types';
-import { Select } from '@/components/select';
+import { GrilleSelectedMotifCard } from './grille-selected-motif-card';
 
 interface GrilleLeftPanelProps {
-  glassW: number;
-  glassH: number;
-  barColor: string;
-  setBarColor: (color: string) => void;
-  barWidth: number;
-  setBarWidth: (width: number) => void;
-  isSymmetric: boolean;
-  setIsSymmetric: (val: boolean) => void;
-  totalM: number;
-  estimatedTotalPrice: number;
-  totalSashesCount?: number;
-  applyToAll: boolean;
-  setApplyToAll: (val: boolean) => void;
-  hasGrid: boolean;
-  setHasGrid: (val: boolean) => void;
-  hasBorder: boolean;
-  setHasBorder: (val: boolean) => void;
-  hasCorner: boolean;
-  setHasCorner: (val: boolean) => void;
-  cols: number;
-  rows: number;
-  onColsChange: (cols: number) => void;
-  onRowsChange: (rows: number) => void;
-  unitPricePerM: number;
-  setUnitPricePerM: (price: number) => void;
-  motifUnitPrice: number;
-  setMotifUnitPrice: (price: number) => void;
-  selectedMotifId: string | null;
-  setSelectedMotifId: (id: string | null) => void;
+  glassW: number; glassH: number;
+  barColor: string; setBarColor: (color: string) => void;
+  barWidth: number; setBarWidth: (width: number) => void;
+  isSymmetric: boolean; setIsSymmetric: (val: boolean) => void;
+  totalM: number; estimatedTotalPrice: number; totalSashesCount?: number;
+  applyToAll: boolean; setApplyToAll: (val: boolean) => void;
+  hasGrid: boolean; setHasGrid: (val: boolean) => void;
+  hasBorder: boolean; setHasBorder: (val: boolean) => void;
+  hasCorner: boolean; setHasCorner: (val: boolean) => void;
+  cols: number; rows: number;
+  onColsChange: (cols: number) => void; onRowsChange: (rows: number) => void;
+  unitPricePerM: number; setUnitPricePerM: (price: number) => void;
+  motifUnitPrice: number; setMotifUnitPrice: (price: number) => void;
+  selectedMotifId: string | null; setSelectedMotifId: (id: string | null) => void;
   motifs: GlassGrilleMotif[];
   onUpdateSelectedMotif: (updates: Partial<GlassGrilleMotif>) => void;
+  onRotateSelectedMotif?: (angle: number) => void;
+  onCycleSelectedMotifRotation?: () => void;
   onAssignAccessoryToMotif: (accessoryIdStr: string) => void;
   onDeleteSelectedMotif: () => void;
   onClearAll: () => void;
@@ -46,42 +33,14 @@ interface GrilleLeftPanelProps {
 }
 
 export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
-  glassW,
-  glassH,
-  barColor,
-  setBarColor,
-  barWidth,
-  setBarWidth,
-  isSymmetric,
-  setIsSymmetric,
-  totalM,
-  estimatedTotalPrice,
-  totalSashesCount = 1,
-  applyToAll,
-  setApplyToAll,
-  hasGrid,
-  setHasGrid,
-  hasBorder,
-  setHasBorder,
-  hasCorner,
-  setHasCorner,
-  cols,
-  rows,
-  onColsChange,
-  onRowsChange,
-  unitPricePerM,
-  setUnitPricePerM,
-  motifUnitPrice,
-  setMotifUnitPrice,
-  selectedMotifId,
-  setSelectedMotifId,
-  motifs,
-  onUpdateSelectedMotif,
-  onAssignAccessoryToMotif,
-  onDeleteSelectedMotif,
-  onClearAll,
-  accessories,
-  selectedMotifCardRef,
+  glassW, glassH, barColor, setBarColor, barWidth, setBarWidth,
+  isSymmetric, setIsSymmetric, totalM, estimatedTotalPrice, totalSashesCount = 1,
+  applyToAll, setApplyToAll, hasGrid, setHasGrid, hasBorder, setHasBorder,
+  hasCorner, setHasCorner, cols, rows, onColsChange, onRowsChange,
+  unitPricePerM, setUnitPricePerM, motifUnitPrice, setMotifUnitPrice,
+  selectedMotifId, setSelectedMotifId, motifs, onUpdateSelectedMotif,
+  onRotateSelectedMotif, onCycleSelectedMotifRotation, onAssignAccessoryToMotif,
+  onDeleteSelectedMotif, onClearAll, accessories, selectedMotifCardRef,
 }) => {
   const activeMotif = motifs.find((m) => m.id === selectedMotifId);
 
@@ -90,16 +49,12 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
       {/* Thông tin tấm kính & Khóa đối xứng */}
       <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-2">
         <div className="flex items-center justify-between">
-          <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-            Kích thước kính
-          </div>
+          <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Kích thước kính</div>
           <button
             type="button"
             onClick={() => setIsSymmetric(!isSymmetric)}
             className={`flex items-center gap-1 px-2 py-0.5 rounded-md font-bold text-[10.5px] transition-all cursor-pointer ${
-              isSymmetric
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+              isSymmetric ? 'bg-blue-600 text-white shadow-xs' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
             }`}
             title="Khóa đối xứng nan: Khi kéo 1 nan, nan đối diện tự phản chiếu qua tâm kính"
           >
@@ -140,9 +95,7 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
           />
           <div>
             <div className="font-bold text-amber-950 text-xs">Áp dụng cho tất cả {totalSashesCount} cánh</div>
-            <div className="text-[10px] text-amber-700 mt-0.5 leading-snug">
-              Đồng bộ thiết kế cho mọi tấm kính trong bộ cửa.
-            </div>
+            <div className="text-[10px] text-amber-700 mt-0.5 leading-snug">Đồng bộ thiết kế cho mọi tấm kính trong bộ cửa.</div>
           </div>
         </label>
       )}
@@ -176,18 +129,13 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
       <div className="space-y-2 p-3 rounded-xl bg-slate-50 border border-slate-200/70">
         <div className="flex items-center justify-between">
           <span className="font-bold text-gray-800 text-xs">Lưới nan chia khoang</span>
-          <span className="text-[10.5px] text-slate-500 font-mono">
-            {cols - 1} nan dọc × {rows - 1} nan ngang
-          </span>
+          <span className="text-[10.5px] text-slate-500 font-mono">{cols - 1} nan dọc × {rows - 1} nan ngang</span>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[11px] text-gray-600 block mb-0.5">Số cột kính</label>
             <input
-              type="number"
-              min={1}
-              max={8}
-              value={cols}
+              type="number" min={1} max={8} value={cols}
               onChange={(e) => onColsChange(Number(e.target.value) || 1)}
               className="w-full h-8 px-2.5 font-mono font-bold text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-amber-500"
             />
@@ -195,10 +143,7 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
           <div>
             <label className="text-[11px] text-gray-600 block mb-0.5">Số hàng kính</label>
             <input
-              type="number"
-              min={1}
-              max={8}
-              value={rows}
+              type="number" min={1} max={8} value={rows}
               onChange={(e) => onRowsChange(Number(e.target.value) || 1)}
               className="w-full h-8 px-2.5 font-mono font-bold text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-amber-500"
             />
@@ -214,24 +159,13 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
             <label className="text-[11px] text-gray-600 block mb-0.5">Bề rộng nan:</label>
             <div className="relative">
               <input
-                type="number"
-                min={1}
-                max={50}
-                step={0.5}
-                value={barWidth || ''}
-                onChange={(e) => {
-                  const val = e.target.value === '' ? 0 : Number(e.target.value);
-                  setBarWidth(val);
-                }}
-                onBlur={() => {
-                  if (!barWidth || barWidth < 1) setBarWidth(6);
-                }}
+                type="number" min={1} max={50} step={0.5} value={barWidth || ''}
+                onChange={(e) => setBarWidth(e.target.value === '' ? 0 : Number(e.target.value))}
+                onBlur={() => { if (!barWidth || barWidth < 1) setBarWidth(6); }}
                 className="w-full h-8 pl-2.5 pr-8 text-xs font-mono font-bold bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-amber-500"
                 placeholder="6"
               />
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-gray-400 font-medium pointer-events-none">
-                mm
-              </span>
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-gray-400 font-medium pointer-events-none">mm</span>
             </div>
           </div>
           <div>
@@ -239,16 +173,11 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
             <div className="flex items-center gap-1.5 mt-1">
               {GRILLE_COLORS.slice(0, 4).map((cItem: ColorSwatch) => (
                 <button
-                  key={cItem.colorHex}
-                  type="button"
-                  onClick={() => setBarColor(cItem.colorHex)}
+                  key={cItem.colorHex} type="button" onClick={() => setBarColor(cItem.colorHex)}
                   className={`w-6 h-6 rounded-full border-2 transition-all cursor-pointer ${
-                    barColor.toLowerCase() === cItem.colorHex.toLowerCase()
-                      ? 'border-blue-600 scale-110 shadow-xs'
-                      : 'border-transparent hover:scale-105'
+                    barColor.toLowerCase() === cItem.colorHex.toLowerCase() ? 'border-blue-600 scale-110 shadow-xs' : 'border-transparent hover:scale-105'
                   }`}
-                  style={{ backgroundColor: cItem.colorHex }}
-                  title={cItem.name}
+                  style={{ backgroundColor: cItem.colorHex }} title={cItem.name}
                 />
               ))}
             </div>
@@ -266,10 +195,7 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
           <div>
             <label className="text-[10.5px] text-gray-600 block mb-0.5">Giá nan (đ/m):</label>
             <input
-              type="number"
-              min={0}
-              step={5000}
-              value={unitPricePerM}
+              type="number" min={0} step={5000} value={unitPricePerM}
               onChange={(e) => setUnitPricePerM(Number(e.target.value) || 0)}
               className="w-full h-8 px-2 font-mono font-bold text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-amber-500"
             />
@@ -277,10 +203,7 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
           <div>
             <label className="text-[10.5px] text-gray-600 block mb-0.5">Giá hoa (đ/con):</label>
             <input
-              type="number"
-              min={0}
-              step={10000}
-              value={motifUnitPrice}
+              type="number" min={0} step={10000} value={motifUnitPrice}
               onChange={(e) => setMotifUnitPrice(Number(e.target.value) || 0)}
               className="w-full h-8 px-2 font-mono font-bold text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-amber-500"
             />
@@ -288,112 +211,24 @@ export const GrilleLeftPanel: React.FC<GrilleLeftPanelProps> = ({
         </div>
         <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
           <span className="text-gray-600">Tạm tính nan kính:</span>
-          <span className="font-mono font-bold text-amber-800 text-sm">
-            {estimatedTotalPrice.toLocaleString('vi-VN')} đ
-          </span>
+          <span className="font-mono font-bold text-amber-800 text-sm">{estimatedTotalPrice.toLocaleString('vi-VN')} đ</span>
         </div>
       </div>
 
       {/* Chi tiết hoa văn đang chọn */}
       {selectedMotifId && activeMotif && (
-        <div
-          ref={selectedMotifCardRef}
-          className="space-y-2 p-3 rounded-xl bg-amber-50/90 border-2 border-amber-400 shadow-sm transition-all"
-        >
-          <div className="flex items-center justify-between">
-            <div className="font-bold text-amber-950 text-xs flex items-center gap-1.5">
-              <Tag size={13} className="text-amber-600" />
-              <span>Hoa văn đang chọn</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSelectedMotifId(null)}
-              className="text-amber-800 hover:text-amber-950 text-[10.5px] font-semibold px-1.5 py-0.5 rounded hover:bg-amber-200/50 cursor-pointer"
-            >
-              Đóng
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between bg-amber-100/60 px-2 py-1 rounded-lg text-[10.5px]">
-            <span className="text-amber-900 font-medium">
-              Giao điểm: Nan ({((activeMotif.gridCol ?? 0) + 1)}, {((activeMotif.gridRow ?? 0) + 1)})
-            </span>
-            <span className="font-mono text-amber-800 font-semibold">
-              {Math.round(activeMotif.width)}×{Math.round(activeMotif.height)} mm
-            </span>
-          </div>
-
-          <div>
-            <label className="text-[10.5px] text-gray-700 block mb-0.5 font-medium">Tên hoa văn:</label>
-            <input
-              type="text"
-              value={activeMotif.name || ''}
-              onChange={(e) => onUpdateSelectedMotif({ name: e.target.value })}
-              className="w-full h-7 px-2 text-xs bg-white rounded-lg border border-amber-300 focus:outline-none focus:border-amber-500 font-medium text-gray-900"
-            />
-          </div>
-
-          <div>
-            <label className="text-[10.5px] text-gray-700 mb-0.5 font-medium flex items-center justify-between">
-              <span className="flex items-center gap-1">
-                <Database size={11} className="text-amber-600" />
-                <span>Kho phụ kiện CSDL:</span>
-              </span>
-              {activeMotif.accessoryCode && (
-                <span className="font-mono text-[10px] text-amber-800 font-bold bg-amber-100 px-1 rounded">
-                  {activeMotif.accessoryCode}
-                </span>
-              )}
-            </label>
-            <Select
-              fullWidth
-              value={activeMotif.accessoryId || ''}
-              onChange={(e) => onAssignAccessoryToMotif(e.target.value)}
-              options={[
-                { value: '', label: '-- Chọn phụ kiện trong kho --' },
-                ...accessories.map((acc) => ({
-                  value: acc.id,
-                  label: `${acc.code ? `[${acc.code}] ` : ''}${acc.name} (${(acc.costPrice || 0).toLocaleString('vi-VN')} đ)`,
-                })),
-              ]}
-              placeholder="-- Chọn phụ kiện trong kho --"
-              className="h-7 py-0 pl-1.5 pr-6 text-[11px] md:text-[11px] bg-white rounded-lg border-amber-300 font-medium text-gray-800"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-0.5">
-              <label className="text-[10.5px] text-amber-950 font-bold">
-                Đơn giá con hoa văn này:
-              </label>
-              <span className="text-[9.5px] text-amber-700 bg-amber-200/60 px-1 rounded font-medium">
-                Riêng con này
-              </span>
-            </div>
-            <div className="relative">
-              <input
-                type="number"
-                min={0}
-                step={1000}
-                value={activeMotif.price ?? motifUnitPrice}
-                onChange={(e) => onUpdateSelectedMotif({ price: Number(e.target.value) || 0 })}
-                className="w-full h-8 px-2.5 pr-12 font-mono font-bold text-xs bg-white rounded-lg border-2 border-amber-400 focus:outline-none focus:border-amber-600 text-gray-950 shadow-2xs"
-              />
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10.5px] text-gray-600 font-bold">
-                đ/con
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onDeleteSelectedMotif}
-            className="w-full py-1.5 px-2 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 font-semibold text-[11px] transition-colors cursor-pointer flex items-center justify-center gap-1 mt-1"
-          >
-            <Trash2 size={12} />
-            <span>Xóa hoa văn này</span>
-          </button>
-        </div>
+        <GrilleSelectedMotifCard
+          cardRef={selectedMotifCardRef}
+          motif={activeMotif}
+          motifUnitPrice={motifUnitPrice}
+          accessories={accessories}
+          onClose={() => setSelectedMotifId(null)}
+          onUpdateMotif={onUpdateSelectedMotif}
+          onRotateMotif={onRotateSelectedMotif || ((angle) => onUpdateSelectedMotif({ rotation: angle }))}
+          onCycleRotation={onCycleSelectedMotifRotation || (() => onUpdateSelectedMotif({ rotation: ((activeMotif.rotation || 0) + 90) % 360 }))}
+          onAssignAccessory={onAssignAccessoryToMotif}
+          onDeleteMotif={onDeleteSelectedMotif}
+        />
       )}
 
       {/* Nút xóa làm trống */}

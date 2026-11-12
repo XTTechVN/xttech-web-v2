@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
 import { Button } from '@/components';
-import { ACCENT } from './hero.constants';
+import { HERO_ACCENT_GLOW } from './hero.constants';
 
 export const HeroPlatformBanner = () => {
   return (
@@ -11,7 +11,7 @@ export const HeroPlatformBanner = () => {
         <div className="relative overflow-hidden rounded-3xl bg-[#03363D] px-6 py-12 text-white shadow-2xl sm:px-10 lg:px-14 lg:py-16">
           <div
             className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full opacity-25 blur-3xl"
-            style={{ background: `radial-gradient(circle, ${ACCENT} 0%, transparent 70%)` }}
+            style={{ background: HERO_ACCENT_GLOW }}
           />
           <div className="pointer-events-none absolute -bottom-32 left-1/3 h-80 w-80 rounded-full bg-white/5 blur-3xl" />
 
@@ -48,7 +48,7 @@ export const HeroPlatformBanner = () => {
                     <div>
                       <div className="mb-2.5 flex flex-wrap items-center justify-between gap-1 border-b border-white/10 pb-2 text-xs">
                         <span className="font-bold text-white">Báo giá: DA-2026-00091</span>
-                        <span className="text-[11px] font-bold text-[#d6ff3d] sm:text-xs">Tự tính mBOM & Thẻ A4</span>
+                        <span className="text-[11px] font-bold text-hero-accent sm:text-xs">Tự tính mBOM & Thẻ A4</span>
                       </div>
 
                       {/* 3 Cửa preview */}
@@ -73,15 +73,15 @@ export const HeroPlatformBanner = () => {
                       <span className="text-white/80">
                         Vốn: <b className="text-white">184.500.000đ</b>
                       </span>
-                      <span className="font-bold text-[#d6ff3d]">Lãi gộp: 32.4%</span>
+                      <span className="font-bold text-hero-accent">Lãi gộp: 32.4%</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Floating Badge Mobile App - Responsive */}
-                <div className="mt-3 rounded-2xl border border-white/30 bg-[#045863]/95 p-3.5 text-white shadow-2xl backdrop-blur-md sm:absolute sm:-right-5 sm:-bottom-5 sm:mt-0 sm:max-w-[220px]">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#d6ff3d] sm:text-sm">
-                    <Sparkles className="h-4 w-4 shrink-0 text-[#d6ff3d]" />
+                <div className="mt-3 rounded-2xl border border-white/30 bg-primary/95 p-3.5 text-white shadow-2xl backdrop-blur-md sm:absolute sm:-right-5 sm:-bottom-5 sm:mt-0 sm:max-w-[220px]">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-hero-accent sm:text-sm">
+                    <Sparkles className="h-4 w-4 shrink-0 text-hero-accent" />
                     <span>Đồng bộ Mobile App</span>
                   </div>
                   <p className="mt-1 text-[11px] leading-snug text-white/90">
@@ -95,7 +95,7 @@ export const HeroPlatformBanner = () => {
             <div className="space-y-6 lg:col-span-6">
               <div
                 className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold tracking-wider uppercase backdrop-blur-sm"
-                style={{ color: ACCENT }}
+                style={{ color: 'var(--hero-accent-raw)' }}
               >
                 XTTECH PLATFORM
               </div>
@@ -116,7 +116,7 @@ export const HeroPlatformBanner = () => {
                   <Button
                     size="lg"
                     className="w-full rounded-full font-extrabold text-primary shadow-xl transition-all duration-300 hover:scale-105 sm:w-auto"
-                    style={{ backgroundColor: ACCENT }}
+                    style={{ backgroundColor: 'var(--hero-accent-raw)' }}
                   >
                     ĐĂNG KÝ DÙNG THỬ
                   </Button>

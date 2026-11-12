@@ -74,12 +74,11 @@ export const BLOCK_FORMAT_OPTIONS: BlockFormatOption[] = [
   { value: 'blockquote', label: 'Khối trích dẫn' },
 ];
 
-export const MEDIA_CONTENT_STYLES = `
-  [&_figure]:my-4 [&_figure]:mx-auto [&_figcaption]:text-xs [&_figcaption]:text-slate-500
+export const MEDIA_CONTENT_STYLES = `news-rich-media
+  [&_figure]:my-4 [&_figcaption]:text-xs [&_figcaption]:text-slate-500
   [&_figcaption]:italic [&_figcaption]:text-center [&_figcaption]:mt-1.5
-  [&_img]:max-w-full [&_img]:rounded-lg [&_img]:mx-auto
-  [&_video]:max-w-full [&_video]:rounded-lg [&_video]:mx-auto
-  [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg [&_iframe]:mx-auto [&_iframe]:border-0 [&_iframe]:shadow-sm
+  [&_img]:rounded-lg [&_video]:rounded-lg
+  [&_iframe]:rounded-lg [&_iframe]:border-0 [&_iframe]:shadow-sm
   [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-slate-900 [&_h2]:my-3
   [&_blockquote]:my-3 [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:bg-primary/5
   [&_blockquote]:px-3.5 [&_blockquote]:py-2 [&_blockquote]:rounded-r-lg [&_blockquote]:italic [&_blockquote]:text-slate-700

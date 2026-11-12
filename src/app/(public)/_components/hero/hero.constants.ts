@@ -11,8 +11,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-/* Màu nhấn (lime) – đồng bộ nhận diện thương hiệu XTTech */
-export const ACCENT = '#d6ff3d';
+/* Màu nhấn (lime) lấy từ token --hero-accent-raw trong src/styles/color.css – dùng cho style inline (gradient) */
+export const HERO_ACCENT_GLOW = 'radial-gradient(circle, var(--hero-accent-raw) 0%, transparent 70%)';
 
 export interface HeroStatItem {
   value: string;
@@ -102,6 +102,114 @@ export const CORE_PILLARS: CorePillarItem[] = [
   },
 ];
 
+export interface XTTechPillarCard {
+  number: string;
+  category: 'workshop' | 'site';
+  icon: LucideIcon;
+  title: string;
+  bullets: string[];
+}
+
+// 8 Trụ cột giải pháp chuyên sâu XTTech theo phong cách card số hóa
+export const XTTECH_PILLAR_CARDS: XTTechPillarCard[] = [
+  {
+    number: '01',
+    category: 'workshop',
+    icon: Factory,
+    title: 'SẢN XUẤT CỬA & NHÔM KÍNH',
+    bullets: [
+      'Dễ dàng khởi tạo đơn hàng, thiết kế mẫu cửa 2D/3D trực quan',
+      'Tự động bóc tách kỹ thuật, barem nhôm kính chuẩn xác 99.8%',
+      'Thuật toán tối ưu hóa cắt nhôm, giảm tối đa đề-xê và vụn nhôm thừa',
+      'Xuất lệnh sản xuất và in thẻ cắt A4 phân ca chi tiết cho thợ xưởng',
+    ],
+  },
+  {
+    number: '02',
+    category: 'site',
+    icon: Workflow,
+    title: 'TIẾN ĐỘ THI CÔNG & LẮP ĐẶT',
+    bullets: [
+      'Cập nhật tiến độ sản xuất tại xưởng và lắp ráp công trình realtime',
+      'Tự động đo lường tiến độ dự án, cảnh báo thi công chậm trễ',
+      'Lập nhật ký thi công, lưu trữ hình ảnh hiện trường trực tiếp trên app',
+      'Kiểm soát quy trình khảo sát ô chờ và KCS nghiệm thu qua mã QR',
+    ],
+  },
+  {
+    number: '03',
+    category: 'workshop',
+    icon: Layers,
+    title: 'KHO VẬT TƯ & BoQ DỰ ÁN',
+    bullets: [
+      'Quản lý danh mục thanh nhôm, kính, phụ kiện (Kinlong, Draho, Roto...)',
+      'Cập nhật vật tư xuất nhập xưởng theo từng đơn hàng và công trình',
+      'Tự động cảnh báo khi tồn kho chạm ngưỡng định mức tối thiểu',
+      'Kiểm soát sử dụng vật tư thực tế, ngăn ngừa thất thoát triệt để',
+    ],
+  },
+  {
+    number: '04',
+    category: 'site',
+    icon: FileSpreadsheet,
+    title: 'NGÂN SÁCH & BÁO GIÁ DỰ ÁN',
+    bullets: [
+      'Live pricing engine tính toán giá vốn, tỷ suất lãi gộp ngay tại công trình',
+      'Quản lý ngân sách dự án, tiến độ giải ngân và công nợ từng khách hàng',
+      'Số hóa biểu mẫu hợp đồng số, phụ lục, phiếu thu/chi tự động',
+      'Dự báo chính xác lãi/lỗ thực tế so với kế hoạch dự toán ban đầu',
+    ],
+  },
+  {
+    number: '05',
+    category: 'site',
+    icon: Users,
+    title: 'CHẤM CÔNG & NGUỒN LỰC THỢ',
+    bullets: [
+      'Chấm công thợ xưởng và thợ lắp đặt công trình qua GPS và FaceID',
+      'Tự động cảnh báo khi xảy ra vượt định mức khối lượng hoặc trùng ca',
+      'Tự động hóa bảng tính lương theo công nhật, giờ làm hoặc khoán sản phẩm',
+      'Báo cáo quân số và năng suất làm việc của từng tổ đội realtime',
+    ],
+  },
+  {
+    number: '06',
+    category: 'site',
+    icon: Share2,
+    title: 'THẦU PHỤ & NHÀ CUNG CẤP',
+    bullets: [
+      'Quản lý danh mục đối tác nhôm, kính cường lực, phụ kiện và đội thợ phụ',
+      'Kiểm soát tiến độ giao hàng, đơn đặt kính và nghiệm thu chất lượng',
+      'Cập nhật tiến độ thanh toán, đối soát công nợ NCC tự động',
+      'Đánh giá năng lực và lịch sử hợp tác của từng đơn vị thầu phụ',
+    ],
+  },
+  {
+    number: '07',
+    category: 'workshop',
+    icon: Cpu,
+    title: 'HỆ THỐNG BÁO CÁO THÔNG MINH',
+    bullets: [
+      'Dashboard báo cáo trực quan doanh thu, chi phí, dòng tiền thời gian thực',
+      'Báo cáo tỷ lệ hao hụt thanh nhôm và hiệu suất vận hành máy móc',
+      'Báo cáo tiến độ hoàn thành đơn hàng và công trình của toàn doanh nghiệp',
+      'Xuất báo cáo đa định dạng (Excel, PDF) nhanh chóng phục vụ điều hành',
+    ],
+  },
+  {
+    number: '08',
+    category: 'workshop',
+    icon: Palette,
+    title: 'PHÊ DUYỆT & ĐA NỀN TẢNG 4.0',
+    bullets: [
+      'Hoạt động liền mạch trên Web, Máy tính bảng (Tablet) và Mobile App',
+      'Phê duyệt online đơn nghỉ phép, phiếu mua vật tư, đề xuất tạm ứng',
+      'Ký số hợp đồng và gửi link bản vẽ 3D cho khách hàng qua Zalo/SMS',
+      'Phân quyền bảo mật chặt chẽ theo vai trò (Chủ xưởng, Kế toán, Thợ kỹ thuật)',
+    ],
+  },
+];
+
 export interface MissionVisionItem {
   title: string;
   subtitle: string;
@@ -125,3 +233,51 @@ export const MISSION_VISION: MissionVisionItem[] = [
   },
 ];
 
+export interface HeroHighlightItem {
+  bold: string;
+  text: string;
+}
+
+// 4 lợi điểm cốt lõi hiển thị ở hero chính
+export const HERO_HIGHLIGHTS: HeroHighlightItem[] = [
+  {
+    bold: 'Phù hợp các doanh nghiệp:',
+    text: 'xưởng sản xuất nhôm kính, nhà thầu thi công mặt dựng, nội thất, cơ khí xây lắp và các công trình xây dựng dân dụng, công nghiệp...',
+  },
+  {
+    bold: 'Chuyên sâu ngành Nhôm Kính & Xây dựng:',
+    text: 'kết nối liền mạch từ khảo sát ô chờ, thiết kế bóc tách 2D/3D, dự toán báo giá đến xuất thẻ cắt A4 phân xưởng.',
+  },
+  {
+    bold: 'App Mobile thực địa:',
+    text: 'dành cho đội lắp đặt, kỹ thuật viên chấm công khuôn mặt, định vị Live GPS và cập nhật tiến độ, bảo hành real-time.',
+  },
+  {
+    bold: 'Quản lý toàn diện từ A–Z:',
+    text: 'vật tư kho - khối lượng bộ cửa - tiến độ sản xuất - dòng tiền hợp đồng - giao việc và hành chính nhân sự.',
+  },
+];
+
+// Tùy chọn khu vực & chức vụ của form đăng ký tư vấn
+export const CITY_OPTIONS: string[] = [
+  'Hà Nội',
+  'TP. Hồ Chí Minh',
+  'Đà Nẵng',
+  'Hải Phòng',
+  'Bình Dương',
+  'Đồng Nai',
+  'Quảng Ninh',
+  'Nghệ An',
+  'Thanh Hóa',
+  'Cần Thơ',
+  'Tỉnh thành khác',
+];
+
+export const JOB_OPTIONS: string[] = [
+  'Chủ doanh nghiệp / Chủ xưởng',
+  'Quản lý sản xuất / Giám sát',
+  'Kế toán / Thủ kho',
+  'Kỹ thuật viên / Thiết kế cửa',
+  'Nhà thầu / Đối tác thi công',
+  'Khác',
+];

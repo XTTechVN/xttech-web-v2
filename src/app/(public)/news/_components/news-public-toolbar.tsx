@@ -13,12 +13,7 @@ export interface NewsPublicToolbarProps {
   onSelectCategory: (category?: NewsCategory) => void;
 }
 
-export function NewsPublicToolbar({
-  searchInput,
-  onSearchChange,
-  selectedCategory,
-  onSelectCategory,
-}: NewsPublicToolbarProps) {
+export function NewsPublicToolbar({ searchInput, onSearchChange, selectedCategory, onSelectCategory }: NewsPublicToolbarProps) {
   return (
     <section className="relative overflow-hidden bg-linear-to-b from-primary/10 via-primary/4 to-white border-b border-slate-200/80 pt-8 sm:pt-10">
       {/* Hiệu ứng nền trang trí đồng bộ hệ sinh thái XTTech */}
@@ -32,25 +27,23 @@ export function NewsPublicToolbar({
             <span>Chuyên trang Tin tức & Kiến thức Nhôm Kính XTTECH</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Cập nhật công nghệ, công trình tiêu biểu &{' '}
-            <span className="text-primary">giải pháp nhôm kính hiện đại</span>
+            Cập nhật công nghệ, công trình tiêu biểu & <span className="text-primary">giải pháp nhôm kính hiện đại</span>
           </h1>
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-            Khám phá các bài viết chuyên sâu về kỹ thuật gia công cửa nhôm, xu hướng kiến trúc mặt
-            dựng, hoạt động doanh nghiệp và các dự án thực tế từ đội ngũ kỹ sư XTTECH.
+            Khám phá các bài viết chuyên sâu về kỹ thuật gia công cửa nhôm, xu hướng kiến trúc mặt dựng, hoạt động doanh nghiệp và các dự án thực tế
+            từ đội ngũ kỹ sư XTTECH.
           </p>
         </div>
 
-        {/* Thanh ngang đồng bộ: Trái là Tab Chuyên mục gạch chân (1 dòng cuộn ngang trên mobile) | Phải là Ô tìm kiếm */}
-        <div className="mt-7 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-          <div className="flex items-center gap-5 sm:gap-7 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* Hàng ngang đồng bộ: Trái là Tab Chuyên mục | Phải là Ô tìm kiếm (Cùng 1 hàng, thẳng hàng tuyệt đối, hiển thị trọn vẹn đủ chữ) */}
+        <div className="mt-8 flex items-center justify-between gap-3 sm:gap-4 border-b border-slate-200/80">
+          {/* Danh sách Tabs chuyên mục: gap tối ưu để đủ chữ "Khuyến mãi và Sự kiện" không bao giờ bị cắt xén */}
+          <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3 lg:gap-3.5 xl:gap-4 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0 flex-1">
             <button
               type="button"
               onClick={() => onSelectCategory(undefined)}
-              className={`relative pb-3.5 pt-2 text-sm transition-colors cursor-pointer shrink-0 border-b-2 -mb-px ${
-                !selectedCategory
-                  ? 'border-primary text-slate-900 font-semibold'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 font-medium'
+              className={`relative pb-3 pt-2 text-xs sm:text-[13px] transition-colors cursor-pointer shrink-0 border-b-2 -mb-px ${
+                !selectedCategory ? 'border-primary text-slate-900 font-bold' : 'border-transparent text-slate-600 hover:text-slate-900 font-medium'
               }`}
             >
               Tất cả
@@ -62,10 +55,8 @@ export function NewsPublicToolbar({
                   key={cat.value}
                   type="button"
                   onClick={() => onSelectCategory(cat.value)}
-                  className={`relative pb-3.5 pt-2 text-sm transition-colors cursor-pointer shrink-0 border-b-2 -mb-px ${
-                    isActive
-                      ? 'border-primary text-slate-900 font-semibold'
-                      : 'border-transparent text-slate-600 hover:text-slate-900 font-medium'
+                  className={`relative pb-3 pt-2 text-xs sm:text-[13px] transition-colors cursor-pointer shrink-0 border-b-2 -mb-px ${
+                    isActive ? 'border-primary text-slate-900 font-bold' : 'border-transparent text-slate-600 hover:text-slate-900 font-medium'
                   }`}
                 >
                   {cat.label}
@@ -74,24 +65,25 @@ export function NewsPublicToolbar({
             })}
           </div>
 
-          <div className="relative w-full sm:w-80 xl:w-72 shrink-0 pb-2.5 xl:pb-1.5">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 -mt-1 xl:-mt-0.5 pointer-events-none z-10" />
+          {/* Ô tìm kiếm: Kích thước tinh gọn, căn thẳng hàng tâm theo chiều dọc với hàng tab */}
+          <div className="relative w-36 sm:w-44 md:w-48 lg:w-52 shrink-0 pb-1.5 -mb-px">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
             <Input
               type="text"
               value={searchInput}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Tìm kiếm bài viết, dự án..."
+              placeholder="Tìm kiếm..."
               fullWidth
-              className="pl-9 pr-8 h-9 text-xs sm:text-sm"
+              className="pl-8 pr-7 h-8 text-xs bg-white/90 border-slate-200 focus:bg-white"
             />
             {searchInput && (
               <button
                 type="button"
                 onClick={() => onSearchChange('')}
                 aria-label="Xóa tìm kiếm"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 -mt-1 xl:-mt-0.5 text-slate-400 hover:text-slate-600 cursor-pointer z-10"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer z-10"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>

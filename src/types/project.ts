@@ -535,6 +535,7 @@ export interface ProductionSheetProfileItem {
   barType: string;
   weightKg?: number | null;
   stockSource?: string | null;
+  openDirection?: string | null;
 }
 
 export interface ProductionSheetGlassItem {

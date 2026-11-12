@@ -59,45 +59,51 @@ export const renderCadGrille = (
               const mw = Math.max(8, (m.width || 100) * scaleX);
               const mh = Math.max(8, (m.height || 100) * scaleY);
               const motifType = m.motifType || 'flower_classic';
+              const rot = m.rotation || 0;
 
+              let maskShape: React.ReactNode;
               if (motifType === 'rhombus' || motifType === 'kim_cuong_vuong' || motifType === '3') {
                 const pTop = `${mx},${my - mh / 2 + 1}`;
                 const pRight = `${mx + mw / 2 - 1},${my}`;
                 const pBottom = `${mx},${my + mh / 2 - 1}`;
                 const pLeft = `${mx - mw / 2 + 1},${my}`;
-                return (
+                maskShape = (
                   <polygon
                     key={`leaf-mask-rhombus-${m.id}`}
                     points={`${pTop} ${pRight} ${pBottom} ${pLeft}`}
                     fill="black"
                   />
                 );
-              }
-
-              if (motifType === 'lotus' || motifType === 'tram_kim_cuong' || motifType === '4') {
+              } else if (motifType === 'lotus' || motifType === 'tram_kim_cuong' || motifType === '4') {
                 const pTop = `${mx},${my - mh / 2 + 2}`;
                 const pRight = `${mx + mw / 2 - 2},${my}`;
                 const pBottom = `${mx},${my + mh / 2 - 2}`;
                 const pLeft = `${mx - mw / 2 + 2},${my}`;
-                return (
+                maskShape = (
                   <polygon
                     key={`leaf-mask-lotus-${m.id}`}
                     points={`${pTop} ${pRight} ${pBottom} ${pLeft}`}
                     fill="black"
                   />
                 );
+              } else {
+                maskShape = (
+                  <rect
+                    key={`leaf-mask-rect-${m.id}`}
+                    x={mx - mw / 2 + 1.5}
+                    y={my - mh / 2 + 1.5}
+                    width={mw - 3}
+                    height={mh - 3}
+                    rx="3"
+                    fill="black"
+                  />
+                );
               }
 
               return (
-                <rect
-                  key={`leaf-mask-rect-${m.id}`}
-                  x={mx - mw / 2 + 1.5}
-                  y={my - mh / 2 + 1.5}
-                  width={mw - 3}
-                  height={mh - 3}
-                  rx="3"
-                  fill="black"
-                />
+                <g key={`leaf-mask-g-${m.id}`} transform={`rotate(${rot}, ${mx}, ${my})`}>
+                  {maskShape}
+                </g>
               );
             })}
           </mask>
@@ -145,7 +151,7 @@ export const renderCadGrille = (
         const motifType = m.motifType || 'flower_classic';
 
         return (
-          <g key={m.id} transform={`translate(${mx - mw / 2}, ${my - mh / 2})`}>
+          <g key={m.id} transform={`translate(${mx - mw / 2}, ${my - mh / 2}) rotate(${m.rotation || 0}, ${mw / 2}, ${mh / 2})`}>
             <GrilleMotifSvg
               motifType={motifType}
               color={barColor}

@@ -57,7 +57,7 @@ function formatVietnameseArticleDate(dateStr?: string | null): string {
   return `${weekday}, ${d.format('D/M/YYYY HH:mm')} (GMT+7)`;
 }
 
-const ARTICLE_HTML_CLASS = `text-slate-800 text-base sm:text-[17px] leading-[1.8] space-y-4
+const ARTICLE_HTML_CLASS = `news-rich-media text-slate-800 text-base sm:text-[17px] leading-[1.8] space-y-4
   [&_p]:my-4 [&_h2]:text-xl [&_h2]:sm:text-2xl [&_h2]:font-bold [&_h2]:text-slate-900 [&_h2]:mt-8 [&_h2]:mb-3
   [&_h3]:text-lg [&_h3]:sm:text-xl [&_h3]:font-bold [&_h3]:text-slate-900 [&_h3]:mt-6 [&_h3]:mb-2.5
   [&_h4]:text-base [&_h4]:font-bold [&_h4]:text-slate-900 [&_h4]:mt-5 [&_h4]:mb-2

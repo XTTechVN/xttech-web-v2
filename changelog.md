@@ -2,7 +2,23 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-11-12
+### Changed (Hạ tầng Agent — `.agents/` & `AGENTS.md`)
+- Thêm mục "Checklist Trước Khi Viết Code" vào [`AGENTS.md`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/AGENTS.md) khớp các luật R005 của `scope_guard.py`.
+- `scope_guard.py`: `R005-MOCK-CONSTANTS` & `R005-COMPONENT-MAX-LINES` chuyển từ chặn cứng sang `WARN_ONLY` (ghi `hook_audit.jsonl`); nạp lười `ast`/`subprocess`/`tempfile`. Chuyển `security-audit` sang global, bản trùng `reverse-engineer-anything` lưu backup; bỏ dòng yêu cầu đọc lại `rule.md` trong `TRIBAL_KNOWLEDGE.md`.
+
 ## [Unreleased] - 2026-11-11
+### Changed & Optimized (Chuẩn Hóa Trọn Bộ Quản Lý Gói Sang PNPM & Dọn Rác Tàn Dư NPM)
+- **Chuẩn hóa gói và dọn dẹp triệt để `package-lock.json` ([`package.json`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/package.json), [`pnpm-lock.yaml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/pnpm-lock.yaml), [`pnpm-workspace.yaml`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/pnpm-workspace.yaml)):**
+  - Xóa bỏ hoàn toàn tàn dư `package-lock.json` để tránh xung đột dependency tree và tình trạng cài đặt phân mảnh giữa 2 package manager.
+  - Khai báo tường minh `"packageManager": "pnpm@11.9.0"` trong `package.json` nhằm khóa phiên bản pnpm đồng nhất giữa môi trường máy trạm và CI/CD.
+  - Cấu hình chính sách chuỗi cung ứng an toàn `allowBuilds` trong `pnpm-workspace.yaml` (`sharp`, `unrs-resolver`) tuân thủ nghiêm ngặt chính sách pnpm v11+, gỡ bỏ trường `pnpm` lỗi thời khỏi `package.json`.
+- **Nâng cấp Dockerfile triển khai Railway sang PNPM & Corepack ([`Dockerfile`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/Dockerfile)):**
+  - Bổ sung `RUN apk add --no-cache libc6-compat` hỗ trợ binary bindings C/Rust trên môi trường Alpine Linux.
+  - Sao chép đồng thời `package.json`, `pnpm-lock.yaml` và `pnpm-workspace.yaml` trước khi chạy `RUN pnpm install --frozen-lockfile` để pnpm nhận diện chính sách `allowBuilds`.
+  - Kích hoạt pnpm thông qua `RUN corepack enable && corepack prepare pnpm@latest --activate`.
+  - Thay thế `RUN npm ci` bằng `RUN pnpm install --frozen-lockfile` và lệnh chạy `CMD ["pnpm", "start"]`, giúp tối ưu thời gian build Docker layer cache và giảm dung lượng image container.
+
 ### Fixed (Tin Tức SEO SSR — Triệt Tiêu Lỗi Hydration Mismatch Bằng Cơ Chế Cookie Like SSR Khớp 100% Giữa Server và Client)
 - **Đồng bộ hóa trạng thái Yêu thích bài viết qua Cookie & SSR Zero-Flicker ([`news.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/news.ts), [`news/[slug]/page.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(public)/news/%5Bslug%5D/page.tsx), [`news-public-detail.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(public)/news/%5Bslug%5D/_components/news-public-detail.tsx), [`news-article-card.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(public)/news/_components/news-article-card.tsx)):**
   - Chuyển đổi cơ chế lưu trạng thái yêu thích từ thuần `localStorage` sang đồng bộ kép **Cookie `xttech_liked_news_ids` + LocalStorage**.

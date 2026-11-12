@@ -12,7 +12,7 @@ const StatCart = ({
   title: string;
   value: string;
   icon: React.ReactNode;
-  trend: number;
+  trend?: number;
   trendDirection?: 'up' | 'down';
   onClick?: () => void;
 }) => {

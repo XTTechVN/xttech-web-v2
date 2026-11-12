@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CheckCircle2, Send, Sparkles } from 'lucide-react';
+import { Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button, Input, Modal } from '@/components';
+import { isValidEmail } from '@/utils/validators';
 
 export interface HeroDemoModalProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ export function HeroDemoModal({ isOpen, onClose }: HeroDemoModalProps) {
     if (!form.phone.trim()) {
       nextErrors.phone = 'Vui lòng nhập số điện thoại';
     }
-    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+    if (form.email.trim() && !isValidEmail(form.email)) {
       nextErrors.email = 'Email không hợp lệ';
     }
 
@@ -62,6 +63,7 @@ export function HeroDemoModal({ isOpen, onClose }: HeroDemoModalProps) {
     }
 
     setIsSubmitting(true);
+    // UI only - giả lập gửi thành công
     setTimeout(() => {
       setIsSubmitting(false);
       toast.success('Đăng ký trải nghiệm Demo thành công! Đội ngũ XTTech sẽ liên hệ tư vấn ngay.');
@@ -80,95 +82,69 @@ export function HeroDemoModal({ isOpen, onClose }: HeroDemoModalProps) {
       bodyClassName="p-0"
       title="Đăng ký trải nghiệm Demo XTTech"
     >
-    
-
       <form onSubmit={handleSubmit} className="space-y-3 bg-white p-5">
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-700">
-            Họ và Tên <span className="text-red-500">*</span>
-          </label>
+        <Input
+          label="Họ và Tên *"
+          placeholder="Nhập họ và tên của bạn"
+          value={form.fullName}
+          onChange={(e) => handleChange('fullName', e.target.value)}
+          error={errors.fullName}
+          fullWidth
+        />
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Input
-            placeholder="Nhập họ và tên của bạn"
-            value={form.fullName}
-            onChange={(e) => handleChange('fullName', e.target.value)}
-            error={errors.fullName}
+            label="Email"
+            type="email"
+            placeholder="Nhập địa chỉ email"
+            value={form.email}
+            onChange={(e) => handleChange('email', e.target.value)}
+            error={errors.email}
+            fullWidth
+          />
+          <Input
+            label="Số điện thoại *"
+            type="tel"
+            placeholder="Nhập số điện thoại liên hệ"
+            value={form.phone}
+            onChange={(e) => handleChange('phone', e.target.value)}
+            error={errors.phone}
             fullWidth
           />
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-700">Email</label>
-            <Input
-              type="email"
-              placeholder="Nhập địa chỉ email"
-              value={form.email}
-              onChange={(e) => handleChange('email', e.target.value)}
-              error={errors.email}
-              fullWidth
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-700">
-              Số điện thoại <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="tel"
-              placeholder="Nhập số điện thoại liên hệ"
-              value={form.phone}
-              onChange={(e) => handleChange('phone', e.target.value)}
-              error={errors.phone}
-              fullWidth
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-700">Tên công ty / Xưởng</label>
-            <Input
-              placeholder="Nhập tên doanh nghiệp hoặc xưởng"
-              value={form.companyName}
-              onChange={(e) => handleChange('companyName', e.target.value)}
-              fullWidth
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-700">Khu vực</label>
-            <Input
-              placeholder="VD: Hà Nội, TP.HCM, Đà Nẵng..."
-              value={form.region}
-              onChange={(e) => handleChange('region', e.target.value)}
-              fullWidth
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-700">
-            Mức độ quan tâm của bạn
-          </label>
           <Input
-            placeholder="VD: Cần triển khai ngay, Đang tìm hiểu giải pháp..."
-            value={form.interestLevel}
-            onChange={(e) => handleChange('interestLevel', e.target.value)}
+            label="Tên công ty / Xưởng"
+            placeholder="Nhập tên doanh nghiệp hoặc xưởng"
+            value={form.companyName}
+            onChange={(e) => handleChange('companyName', e.target.value)}
+            fullWidth
+          />
+          <Input
+            label="Khu vực"
+            placeholder="VD: Hà Nội, TP.HCM, Đà Nẵng..."
+            value={form.region}
+            onChange={(e) => handleChange('region', e.target.value)}
             fullWidth
           />
         </div>
 
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-700">
-            Chia sẻ thêm nhu cầu của bạn
-          </label>
-          <Input
-            placeholder="VD: Bóc tách cửa nhôm kính, quản lý kho, chấm công GPS..."
-            value={form.note}
-            onChange={(e) => handleChange('note', e.target.value)}
-            fullWidth
-          />
-        </div>
+        <Input
+          label="Mức độ quan tâm của bạn"
+          placeholder="VD: Cần triển khai ngay, Đang tìm hiểu giải pháp..."
+          value={form.interestLevel}
+          onChange={(e) => handleChange('interestLevel', e.target.value)}
+          fullWidth
+        />
+
+        <Input
+          label="Chia sẻ thêm nhu cầu của bạn"
+          placeholder="VD: Bóc tách cửa nhôm kính, quản lý kho, chấm công GPS..."
+          value={form.note}
+          onChange={(e) => handleChange('note', e.target.value)}
+          fullWidth
+        />
 
         <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-3.5">
           <div className="flex items-center gap-2">
@@ -190,4 +166,3 @@ export function HeroDemoModal({ isOpen, onClose }: HeroDemoModalProps) {
     </Modal>
   );
 }
-

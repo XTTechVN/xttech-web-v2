@@ -96,6 +96,7 @@ export const Header = () => {
 
   const cacheCurrentActivePosition = () => {
     const el = activeKey ? itemRefs.current[activeKey] : null;
+    // eslint-disable-next-line react-hooks/globals
     if (el) cachedActiveMetrics = { left: el.offsetLeft, width: el.offsetWidth };
   };
 
@@ -135,10 +136,10 @@ export const Header = () => {
           <Heading as="span" size="h1" className="tracking-tight text-primary">XTTECH</Heading>
         </Link>
 
-        {/* Desktop Nav với hiệu ứng Liquid Glass */}
+        {/* Desktop Nav với gạch chân primary */}
         <nav
           onMouseLeave={() => setHoveredKey(null)}
-          className="relative hidden items-center gap-2 py-1 md:flex"
+          className="relative hidden h-full items-stretch gap-2 md:flex"
         >
           <span
             aria-hidden="true"
@@ -147,7 +148,7 @@ export const Header = () => {
               width: hoverMetrics ? `${hoverMetrics.width}px` : '0px',
               opacity: hoveredKey && hoveredKey !== activeKey ? 1 : 0,
             }}
-            className="pointer-events-none absolute top-1 bottom-1 z-0 rounded-full bg-slate-100/80 backdrop-blur-xs transition-all duration-300 ease-out"
+            className="pointer-events-none absolute -bottom-px z-0 h-[2px] bg-primary/25 transition-all duration-300 ease-out"
           />
           <span
             aria-hidden="true"
@@ -156,9 +157,9 @@ export const Header = () => {
               width: activeMetrics ? `${activeMetrics.width}px` : '0px',
               opacity: activeMetrics && activeKey ? 1 : 0,
             }}
-            className="pointer-events-none absolute top-1 bottom-1 z-0 rounded-full border border-[#045863]/20 bg-gradient-to-b from-white/95 via-[#E6F2F4]/90 to-[#045863]/15 shadow-[0_2px_10px_-1px_rgba(4,88,99,0.16),inset_0_1px_1px_rgba(255,255,255,0.95),inset_0_-1px_2px_rgba(4,88,99,0.08)] backdrop-blur-md transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+            className="pointer-events-none absolute -bottom-px z-0 h-[2px] bg-gradient-to-r from-primary/40 via-primary to-primary/40 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
           >
-            <span className="absolute inset-x-3 top-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-95" />
+            <span className="absolute inset-x-0 bottom-full h-5 bg-gradient-to-t from-primary/25 via-primary/8 to-transparent [mask-image:linear-gradient(to_right,transparent,black_25%,black_75%,transparent)]" />
           </span>
 
           {NAV_LINKS.map((link) => {
@@ -172,7 +173,7 @@ export const Header = () => {
                   key={link.href}
                   ref={(el) => { itemRefs.current[link.key] = el; }}
                   onMouseEnter={() => handleMouseEnterItem(link.key)}
-                  className="group relative z-10"
+                  className="group relative z-10 flex items-center"
                 >
                   <Link href={link.href} onClick={(e) => handleLinkClick(e, link)} className={itemClass}>
                     <span>{link.label}</span>

@@ -162,55 +162,48 @@ export default function PayrollDataPage() {
   };
 
   const payrollStats = useMemo(() => {
-    let workingDays = 0;
+    let workingShifts = 0;
     let leaveDays = 0;
     let absenceDays = 0;
     let overtimeCount = 0;
     let lateCount = 0;
 
     for (const a of myMonthlyAttendances) {
-      if (a.status !== 'absent') workingDays++;
+      if (a.status !== 'absent' && a.status !== 'leave') workingShifts++;
       if (a.status === 'leave') leaveDays++;
       if (a.status === 'absent') absenceDays++;
       if (a.status === 'overtime') overtimeCount++;
       if (a.status === 'late' || a.isLate || a.isEarlyLeave) lateCount++;
     }
 
+    // 1 ca làm việc = 0.5 công; không tính ca vắng mặt (absent) và nghỉ phép (leave)
+    const workingDays = workingShifts * 0.5;
+
     return [
       {
         title: 'Tổng ngày công',
         value: workingDays,
         icon: <Calendar />,
-        trend: workingDays,
-        trendDirection: workingDays > 0 ? 1 : -1,
       },
       {
         title: 'Tổng ngày phép',
         value: leaveDays,
         icon: <Briefcase />,
-        trend: leaveDays,
-        trendDirection: leaveDays > 0 ? 1 : -1,
       },
       {
         title: 'Ngày nghỉ',
         value: absenceDays,
         icon: <UserX />,
-        trend: absenceDays,
-        trendDirection: absenceDays > 0 ? 1 : -1,
       },
       {
         title: 'Tăng ca (OT)',
         value: overtimeCount,
         icon: <Clock />,
-        trend: overtimeCount,
-        trendDirection: overtimeCount > 0 ? 1 : -1,
       },
       {
         title: 'Đi muộn / Về sớm',
         value: `${lateCount}`,
         icon: <AlertCircle />,
-        trend: lateCount,
-        trendDirection: lateCount > 0 ? 1 : -1,
       },
     ];
   }, [myMonthlyAttendances]);
@@ -455,8 +448,6 @@ export default function PayrollDataPage() {
             title={stat.title}
             value={String(stat.value)}
             icon={stat.icon}
-            trend={stat.trend}
-            trendDirection={stat.trendDirection as any}
           />
         ))}
       </div>
