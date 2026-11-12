@@ -2,6 +2,7 @@ package com.xttech.app;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -131,8 +132,26 @@ public class MainActivity extends BridgeActivity {
     public void onResume() {
         super.onResume();
         CookieManager.getInstance().flush();
+        // Nhân viên mở lại app: xóa thông báo cảnh báo đóng app để quản lý biết đã online lại
+        // (giống iOS AppClosedReminder.clear() trong NativeTrackingPlugin.load())
+        clearAppClosedReminder();
         // Mỗi lần người dùng mở app hoặc từ Cài đặt quay trở lại, quét kiểm tra toàn bộ quyền
         checkAndEnforcePermissions();
+    }
+
+    /**
+     * Xóa thông báo nhắc nhân viên mở lại app (pending + delivered).
+     * Giống iOS: AppClosedReminder.clear() gọi removePendingNotificationRequests + removeDeliveredNotifications.
+     */
+    private void clearAppClosedReminder() {
+        try {
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) {
+                nm.cancel(TrackingLocationService.NOTIFICATION_REMINDER_ID);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to clear app closed reminder notification", e);
+        }
     }
 
     /**

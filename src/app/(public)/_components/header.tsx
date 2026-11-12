@@ -148,7 +148,7 @@ export const Header = () => {
               width: hoverMetrics ? `${hoverMetrics.width}px` : '0px',
               opacity: hoveredKey && hoveredKey !== activeKey ? 1 : 0,
             }}
-            className="pointer-events-none absolute -bottom-px z-0 h-[2px] bg-primary/25 transition-all duration-300 ease-out"
+            className="pointer-events-none absolute -bottom-px z-0 h-0.5 bg-primary/25 transition-all duration-300 ease-out"
           />
           <span
             aria-hidden="true"
@@ -157,9 +157,9 @@ export const Header = () => {
               width: activeMetrics ? `${activeMetrics.width}px` : '0px',
               opacity: activeMetrics && activeKey ? 1 : 0,
             }}
-            className="pointer-events-none absolute -bottom-px z-0 h-[2px] bg-gradient-to-r from-primary/40 via-primary to-primary/40 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+            className="pointer-events-none absolute -bottom-px z-0 h-0.5 bg-linear-to-r from-primary/40 via-primary to-primary/40 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
           >
-            <span className="absolute inset-x-0 bottom-full h-5 bg-gradient-to-t from-primary/25 via-primary/8 to-transparent [mask-image:linear-gradient(to_right,transparent,black_25%,black_75%,transparent)]" />
+            <span className="absolute inset-x-0 bottom-full h-5 bg-linear-to-t from-primary/25 via-primary/8 to-transparent mask-[linear-gradient(to_right,transparent,black_25%,black_75%,transparent)]" />
           </span>
 
           {NAV_LINKS.map((link) => {
@@ -231,18 +231,18 @@ export const Header = () => {
               </Link>
             )
           ) : (
-            <div className="h-8 w-[105px] animate-pulse rounded-full bg-gray-200" />
+            <div className="h-8 w-26.25 animate-pulse rounded-full bg-gray-200" />
           )}
 
           <button
-            className="flex h-9 w-9 flex-col items-center justify-center gap-[5px] rounded-lg p-1.5 transition-colors hover:bg-gray-100 md:hidden"
+            className="flex h-9 w-9 flex-col items-center justify-center gap-1.25 rounded-lg p-1.5 transition-colors hover:bg-gray-100 md:hidden"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle menu"
             aria-expanded={mobileMenuOpen}
           >
-            <span className={`block h-[2px] w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? 'translate-y-[7px] rotate-45' : ''}`} />
-            <span className={`block h-[2px] w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? 'scale-x-0 opacity-0' : ''}`} />
-            <span className={`block h-[2px] w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? '-translate-y-[7px] -rotate-45' : ''}`} />
+            <span className={`block h-0.5 w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? 'translate-y-1.75 rotate-45' : ''}`} />
+            <span className={`block h-0.5 w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? 'scale-x-0 opacity-0' : ''}`} />
+            <span className={`block h-0.5 w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? '-translate-y-1.75 -rotate-45' : ''}`} />
           </button>
         </div>
       </div>
