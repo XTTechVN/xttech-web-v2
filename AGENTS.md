@@ -90,3 +90,13 @@ Tài liệu này tự động áp dụng khi làm việc trong thư mục `xttec
   - Tên Component / Interface: `PascalCase` (vd: `ProductTable`).
   - Tên hàm / biến / actions: `camelCase` chuẩn ngữ nghĩa CRUD (`getUsers`, `getUser`, `createUser`, `updateUser`, `deleteUser`).
 
+
+---
+
+## 5. Checklist Trước Khi Viết Code (khớp với `scope_guard.py` — tránh bị chặn rồi phải viết lại)
+- [ ] File modal mới (`*-modal.tsx`) đặt trong thư mục `modals/` (R005-MODAL-FOLDER).
+- [ ] File `*.constants.ts` là TS thuần (không `.tsx`, không JSX/SVG), không nằm phẳng dưới `_components/` (R005-PURE-TS-CONSTANTS, R005-FLAT-CONSTANTS).
+- [ ] Không `: any` / `as any`, không `?? row.snake_case`, không so sánh chuỗi tiếng Việt có dấu (R005-NO-ANY, SNAKE-FALLBACK, VIETNAMESE-ENUM).
+- [ ] Không import chéo `_components/_hooks/_utils` giữa các route (R005-CROSS-ROUTE).
+- [ ] Mảng dữ liệu tĩnh (`const STATS = [{...}]`) tách sang `.constants.ts` và component `.tsx` nên < 300 dòng — hiện chỉ **cảnh báo** (`WARN_ONLY`, ghi vào `hook_audit.jsonl`) nhưng vẫn là chuẩn của dự án.
+- Escape hatch khi User yêu cầu rõ ràng: `// hook-allow: R005`.

@@ -28,11 +28,24 @@
 
   --st-expired: #888888;
   --st-expired-bg: #222222;
+
+  /* Màu nhấn & nền gradient trang chủ công khai (hero) */
+  --hero-accent-raw: #d6ff3d;
+  --hero-accent-hover-raw: #e1ff66;
+  --hero-ink-raw: #022c33;
+  --hero-bg-from-raw: #02262c;
+  --hero-bg-to-raw: #02333a;
 }
 
 @theme inline {
   --color-primary: var(--color-primary-raw);
   --color-secondary: var(--color-secondary-raw);
+
+  --color-hero-accent: var(--hero-accent-raw);
+  --color-hero-accent-hover: var(--hero-accent-hover-raw);
+  --color-hero-ink: var(--hero-ink-raw);
+  --color-hero-bg-from: var(--hero-bg-from-raw);
+  --color-hero-bg-to: var(--hero-bg-to-raw);
 
   --color-success: rgb(var(--color-success-raw));
   --color-danger: rgb(var(--color-danger-raw));

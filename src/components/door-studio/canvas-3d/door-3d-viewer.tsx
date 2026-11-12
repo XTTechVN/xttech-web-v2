@@ -261,7 +261,74 @@ export const Door3DViewer: React.FC<Door3DViewerProps> = ({
     return () => cancelAnimationFrame(rafId);
   }, [isAutoPlaying, hasSlidingSash]);
 
-  const dragRef = useRef({ isDown: false, mode: 'orbit' as 'orbit' | 'pan', lastX: 0, lastY: 0, pinchDist: 0 });
+  // Theo dõi từng ngón/chuột bằng pointerId; mốc (last*) được đồng bộ lại mỗi khi số con trỏ thay đổi
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const gestureRef = useRef({ mode: 'orbit' as 'orbit' | 'pan', lastX: 0, lastY: 0, pinchDist: 0 });
+
+  const resetGestureAnchor = () => {
+    const pts = Array.from(pointersRef.current.values());
+    const g = gestureRef.current;
+    if (pts.length >= 2) {
+      g.lastX = (pts[0].x + pts[1].x) / 2;
+      g.lastY = (pts[0].y + pts[1].y) / 2;
+      g.pinchDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+    } else if (pts.length === 1) {
+      g.lastX = pts[0].x;
+      g.lastY = pts[0].y;
+      g.pinchDist = 0;
+    }
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    gestureRef.current.mode = e.pointerType === 'mouse' && (e.button === 2 || e.shiftKey) ? 'pan' : 'orbit';
+    resetGestureAnchor();
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!pointersRef.current.has(e.pointerId)) return;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const pts = Array.from(pointersRef.current.values());
+    const g = gestureRef.current;
+    const cam = camRef.current;
+
+    if (pts.length >= 2) {
+      const cx = (pts[0].x + pts[1].x) / 2;
+      const cy = (pts[0].y + pts[1].y) / 2;
+      const d = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      if (g.pinchDist > 0 && d > 0) {
+        cam.distance = Math.max(0.7, Math.min(12.0, cam.distance * (g.pinchDist / d)));
+      }
+      const panScale = cam.distance * 0.0012;
+      cam.targetX -= (cx - g.lastX) * panScale;
+      cam.targetY += (cy - g.lastY) * panScale;
+      g.lastX = cx;
+      g.lastY = cy;
+      g.pinchDist = d;
+    } else {
+      const dx = e.clientX - g.lastX;
+      const dy = e.clientY - g.lastY;
+      g.lastX = e.clientX;
+      g.lastY = e.clientY;
+      if (g.mode === 'orbit') {
+        const k = e.pointerType === 'mouse' ? 0.0075 : 0.008;
+        cam.yaw -= dx * k;
+        cam.pitch = Math.max(-1.35, Math.min(1.42, cam.pitch + dy * k));
+      } else {
+        const panScale = cam.distance * 0.0012;
+        cam.targetX -= dx * panScale;
+        cam.targetY += dy * panScale;
+      }
+    }
+    renderFrame();
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    pointersRef.current.delete(e.pointerId);
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+    resetGestureAnchor();
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -338,52 +405,10 @@ export const Door3DViewer: React.FC<Door3DViewerProps> = ({
       <canvas
         ref={canvasRef}
         onContextMenu={(e) => e.preventDefault()}
-        onMouseDown={(e) => {
-          dragRef.current = { isDown: true, mode: e.button === 2 || e.shiftKey ? 'pan' : 'orbit', lastX: e.clientX, lastY: e.clientY, pinchDist: 0 };
-        }}
-        onMouseMove={(e) => {
-          if (!dragRef.current.isDown) return;
-          const dx = e.clientX - dragRef.current.lastX;
-          const dy = e.clientY - dragRef.current.lastY;
-          dragRef.current.lastX = e.clientX;
-          dragRef.current.lastY = e.clientY;
-          if (dragRef.current.mode === 'orbit') {
-            camRef.current.yaw -= dx * 0.0075;
-            camRef.current.pitch = Math.max(-1.35, Math.min(1.42, camRef.current.pitch + dy * 0.0075));
-          } else {
-            const panScale = camRef.current.distance * 0.0012;
-            camRef.current.targetX -= dx * panScale;
-            camRef.current.targetY += dy * panScale;
-          }
-          renderFrame();
-        }}
-        onMouseUp={() => { dragRef.current.isDown = false; }}
-        onMouseLeave={() => { dragRef.current.isDown = false; }}
-        onTouchStart={(e) => {
-          if (e.touches.length === 1) {
-            dragRef.current = { isDown: true, mode: 'orbit', lastX: e.touches[0].clientX, lastY: e.touches[0].clientY, pinchDist: 0 };
-          } else if (e.touches.length === 2) {
-            dragRef.current.pinchDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
-          }
-        }}
-        onTouchMove={(e) => {
-          if (e.touches.length === 1 && dragRef.current.isDown) {
-            const dx = e.touches[0].clientX - dragRef.current.lastX;
-            const dy = e.touches[0].clientY - dragRef.current.lastY;
-            dragRef.current.lastX = e.touches[0].clientX;
-            dragRef.current.lastY = e.touches[0].clientY;
-            camRef.current.yaw -= dx * 0.008;
-            camRef.current.pitch = Math.max(-1.35, Math.min(1.42, camRef.current.pitch + dy * 0.008));
-            renderFrame();
-          } else if (e.touches.length === 2 && dragRef.current.pinchDist > 0) {
-            const d = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
-            const ratio = dragRef.current.pinchDist / Math.max(10, d);
-            dragRef.current.pinchDist = d;
-            camRef.current.distance = Math.max(0.7, Math.min(12.0, camRef.current.distance * ratio));
-            renderFrame();
-          }
-        }}
-        onTouchEnd={() => { dragRef.current.isDown = false; }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         className="w-full h-full flex-1 touch-none cursor-grab active:cursor-grabbing"
       />
     </div>

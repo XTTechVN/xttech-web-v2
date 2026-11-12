@@ -1,3 +1,4 @@
+import { CONTACT_INFO } from '@/config/contact';
 import { NextResponse } from 'next/server';
 import {
   BASE_SITE_URL,
@@ -24,7 +25,7 @@ export async function GET() {
     `- **Tên thương hiệu:** ${SEO_CONFIG.siteName} (XTTECH ERP)`,
     `- **Pháp nhân:** ${SEO_CONFIG.legalName}`,
     `- **Website chính thức:** ${BASE_SITE_URL}`,
-    `- **Hotline tư vấn:** ${SEO_CONFIG.contactPhone} (Zalo: https://zalo.me/0776710766)`,
+    `- **Hotline tư vấn:** ${SEO_CONFIG.contactPhone} (Zalo: ${CONTACT_INFO.zaloUrl})`,
     `- **Email hỗ trợ:** ${SEO_CONFIG.contactEmail}`,
     '- **Nền tảng hỗ trợ:** Web App (Desktop/Tablet) & Mobile PWA (iOS/Android)',
     '- **Thị trường trọng tâm:** Việt Nam — Doanh nghiệp vừa và nhỏ (SME), xưởng sản xuất cửa nhôm kính & cơ khí, nhà thầu thi công xây lắp công trình.',

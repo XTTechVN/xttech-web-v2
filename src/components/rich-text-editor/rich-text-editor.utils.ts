@@ -23,7 +23,7 @@ const collectTargetElementsInEditor = (editorEl: HTMLElement): HTMLElement[] => 
           try {
             if (range.intersectsNode(el)) targets.add(el);
           } catch {
-            // Bỏ qua nếu node không hợp lệ
+            // Bá» qua náº¿u node khÃ´ng há»£p lá»‡
           }
         });
       }
@@ -70,7 +70,7 @@ export const applyEditorTextColor = (editorEl: HTMLElement, color: string | null
   try {
     document.execCommand('styleWithCSS', false, 'true');
   } catch {
-    // Trình duyệt không hỗ trợ styleWithCSS
+    // TrÃ¬nh duyá»‡t khÃ´ng há»— trá»£ styleWithCSS
   }
 
   if (color === null) {
@@ -111,7 +111,7 @@ export const applyEditorHighlightColor = (
   try {
     document.execCommand('styleWithCSS', false, 'true');
   } catch {
-    // Trình duyệt không hỗ trợ styleWithCSS
+    // TrÃ¬nh duyá»‡t khÃ´ng há»— trá»£ styleWithCSS
   }
 
   if (backgroundColor === null) {
@@ -191,17 +191,17 @@ export const countEditorWordsAndChars = (html: string): { words: number; chars: 
 export const buildMediaHtmlChunks = (items: MediaChunkInput[]): string =>
   items
     .map((item) => {
-      const caption = escapeHtml(item.defaultCaption || 'Nhập chú thích...');
+      const caption = escapeHtml(item.defaultCaption || 'Nháº­p chÃº thÃ­ch...');
       const safeTempId = escapeHtml(item.tempId);
       const safeSrc = escapeHtml(item.previewUrl);
       if (item.mediaType === 'video') {
-        return `<figure><video data-temp-id="${safeTempId}" src="${safeSrc}" controls playsinline preload="metadata"></video><figcaption>${caption}</figcaption></figure><p><br/></p>`;
+        return `<figure data-align="center" style="width: 100%"><video data-temp-id="${safeTempId}" src="${safeSrc}" controls playsinline preload="metadata"></video><figcaption>${caption}</figcaption></figure><p><br/></p>`;
       }
-      return `<figure><img data-temp-id="${safeTempId}" src="${safeSrc}" alt="${caption}" /><figcaption>${caption}</figcaption></figure><p><br/></p>`;
+      return `<figure data-align="center" style="width: 100%"><img data-temp-id="${safeTempId}" src="${safeSrc}" alt="${caption}" /><figcaption>${caption}</figcaption></figure><p><br/></p>`;
     })
     .join('');
 
 export const buildYoutubeEmbedHtml = (embedUrl: string, caption: string): string => {
-  const safeCaption = escapeHtml(caption || 'Nhập chú thích video...');
-  return `<figure><iframe src="${embedUrl}" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="true" loading="lazy" class="w-full aspect-video rounded-lg border-0"></iframe><figcaption>${safeCaption}</figcaption></figure><p><br/></p>`;
+  const safeCaption = escapeHtml(caption || 'Nháº­p chÃº thÃ­ch video...');
+  return `<figure data-align="center" style="width: 100%"><iframe src="${embedUrl}" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="true" loading="lazy" class="w-full aspect-video rounded-lg border-0"></iframe><figcaption>${safeCaption}</figcaption></figure><p><br/></p>`;
 };

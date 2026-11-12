@@ -1,3 +1,5 @@
+import { CONTACT_INFO } from '@/config/contact';
+
 export type LegalPolicyKey = 'privacy' | 'terms' | 'refund';
 
 export interface LegalClause {
@@ -59,11 +61,11 @@ export interface LegalSupportContact {
 export const LEGAL_SUPPORT_INFO: LegalSupportContact = {
   companyName: 'HỆ THỐNG GIẢI PHÁP CÔNG NGHỆ XTTECH',
   legalDepartment: 'Ban Pháp chế & Hội đồng An toàn Thông tin XTTECH',
-  hotlineDisplay: '0776 710 766',
-  hotlineHref: 'tel:0776710766',
-  emailDisplay: 'xttechvn@gmail.com',
-  emailHref: 'mailto:xttechvn@gmail.com',
-  zaloHref: 'https://zalo.me/0776710766',
+  hotlineDisplay: CONTACT_INFO.phoneDisplay,
+  hotlineHref: `tel:${CONTACT_INFO.phone}`,
+  emailDisplay: CONTACT_INFO.email,
+  emailHref: `mailto:${CONTACT_INFO.email}`,
+  zaloHref: CONTACT_INFO.zaloUrl,
   workingHours: '08:00 – 17:30 (Thứ Hai – Thứ Bảy)',
 };
 
@@ -625,7 +627,7 @@ export const LEGAL_POLICIES: Record<LegalPolicyKey, LegalPolicyDocument> = {
             bullets: [
               {
                 lead: 'Bước 01 — Gửi yêu cầu đối soát:',
-                text: 'Đại diện Doanh nghiệp gửi email tới xttechvn@gmail.com hoặc liên hệ Hotline/Zalo Pháp chế 0776 710 766 kèm theo Mã hợp đồng (hoặc số điện thoại đăng ký tài khoản) và chứng từ thanh toán.',
+                text: `Đại diện Doanh nghiệp gửi email tới ${CONTACT_INFO.email} hoặc liên hệ Hotline/Zalo Pháp chế ${CONTACT_INFO.phoneDisplay} kèm theo Mã hợp đồng (hoặc số điện thoại đăng ký tài khoản) và chứng từ thanh toán.`,
               },
               {
                 lead: 'Bước 02 — Thẩm định & Lập biên bản xác nhận (01–02 ngày làm việc):',

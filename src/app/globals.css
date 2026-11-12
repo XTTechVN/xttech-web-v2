@@ -1,6 +1,7 @@
 @import './../styles/font.css';
 @import './../styles/color.css';
 @import './../styles/scrollbar.css';
+@import './../styles/news-media.css';
 @import 'tailwindcss';
 
 :root {
@@ -27,3 +28,56 @@ body {
   color: var(--foreground);
   font-family: var(--font-lexend), 'Lexend', sans-serif;
 }
+
+/* ================= SMOOTH HERO & UI ANIMATIONS ================= */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes scanLaser {
+  0% {
+    top: 0%;
+    opacity: 0.8;
+  }
+  50% {
+    top: 92%;
+    opacity: 1;
+  }
+  100% {
+    top: 0%;
+    opacity: 0.8;
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: floatSlow 6s ease-in-out 2s infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+.animate-scan-laser {
+  animation: scanLaser 2.5s ease-in-out infinite;
+}
+

@@ -5,6 +5,7 @@ import { escapeHtml, normalizePastedHtml, sanitizeNewsHtml } from '@/utils/html'
 import { ColorPickerPopover } from './color-picker-popover';
 import { EditorToolbar } from './editor-toolbar';
 import { LinkInsertPopover } from './link-insert-popover';
+import { MediaSelectionOverlay, useMediaControls } from './media-controls';
 import { CONTENT_CLASS, PAPER_CONTENT_CLASS } from './rich-text-editor.constants';
 import {
   applyEditorHighlightColor,
@@ -53,6 +54,7 @@ export function RichTextEditor({
   enableYoutubeEmbed = false,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
   const [activePopover, setActivePopover] = useState<'color' | 'link' | 'youtube' | null>(null);
@@ -88,6 +90,13 @@ export function RichTextEditor({
   const emitChange = () => {
     if (editorRef.current) onChange(editorRef.current.innerHTML);
   };
+
+  const media = useMediaControls({
+    editorRef,
+    wrapperRef,
+    enabled: !isReadOnly && !paperMode,
+    onContentChange: emitChange,
+  });
 
   const insertHtmlAtCursor = (htmlChunks: string) => {
     if (!editorRef.current) return;
@@ -169,7 +178,8 @@ export function RichTextEditor({
 
   return (
     <div
-      className={`border border-slate-200 rounded-xl bg-white overflow-hidden shadow-xs ${wrapperLayoutClass}`}
+      ref={wrapperRef}
+      className={`relative border border-slate-200 rounded-xl bg-white overflow-hidden shadow-xs ${wrapperLayoutClass}`}
     >
       {!isReadOnly && (
         <>
@@ -282,6 +292,19 @@ export function RichTextEditor({
             {stats.words} từ • {stats.chars} ký tự
           </span>
         </div>
+      )}
+
+      {media.isActive && media.rect && (
+        <MediaSelectionOverlay
+          rect={media.rect}
+          dropLine={media.dropLine}
+          onSetAlign={media.setAlign}
+          onSetWidth={media.setWidth}
+          onMoveStep={media.moveStep}
+          onRemove={media.removeFigure}
+          onResizeStart={media.startResize}
+          onMoveStart={media.startMove}
+        />
       )}
     </div>
   );
