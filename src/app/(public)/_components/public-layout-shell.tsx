@@ -4,6 +4,7 @@ import React, { useLayoutEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { Header } from './header';
 import { Footer } from './footer';
+import { FloatingContactDock } from './floating-contact-dock';
 
 interface PublicLayoutShellProps {
   children: React.ReactNode;
@@ -87,6 +88,7 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
         {children}
       </div>
       {!pathname?.startsWith('/news') && <Footer />}
+      <FloatingContactDock />
     </div>
   );
 };

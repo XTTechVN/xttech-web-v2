@@ -5,11 +5,13 @@ import {
   buildPageMetadata,
   serializeJsonLd,
 } from '@/config';
+import { syncProjectImages } from '@/lib/sync-project-assets';
 import { Hero } from './_components';
 
 export const metadata: Metadata = buildPageMetadata(PAGE_SEO_META.home);
 
 export default function Home() {
+  syncProjectImages();
   const jsonLd = buildHomeJsonLd();
 
   return (
