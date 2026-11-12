@@ -1,3 +1,4 @@
+import { CONTACT_INFO } from '@/config/contact';
 import { Mail, Phone, RotateCcw, ShieldCheck, FileText, type LucideIcon } from 'lucide-react';
 
 export interface PublicNavLink {
@@ -24,7 +25,7 @@ export const FOOTER_SOLUTION_LINKS: FooterSolutionLink[] = [
   { href: '/pricing', label: 'Bảng giá dịch vụ' },
   { href: '/news', label: 'Tin tức & Sự kiện' },
   { href: '/signin', label: 'Đăng nhập' },
-  { href: 'https://zalo.me/0776710766', label: 'Tư vấn Zalo', external: true },
+  { href: CONTACT_INFO.zaloUrl, label: 'Tư vấn Zalo', external: true },
 ];
 
 export interface FooterLegalLink {
@@ -47,8 +48,8 @@ export interface FooterContactItem {
 }
 
 export const FOOTER_CONTACT_ITEMS: FooterContactItem[] = [
-  { href: 'tel:0776710766', title: 'Hotline tư vấn', value: '0776 710 766', icon: Phone },
-  { href: 'mailto:contact@xttech.vn', title: 'Email hỗ trợ', value: 'xttechvn@gmail.com', icon: Mail },
+  { href: `tel:${CONTACT_INFO.phone}`, title: 'Hotline tư vấn', value: CONTACT_INFO.phoneDisplay, icon: Phone },
+  { href: 'mailto:contact@xttech.vn', title: 'Email hỗ trợ', value: CONTACT_INFO.email, icon: Mail },
 ];
 
 export interface FooterBottomLink {

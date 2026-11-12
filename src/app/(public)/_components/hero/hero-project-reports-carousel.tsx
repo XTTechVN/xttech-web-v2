@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight, Maximize2, Pause, Play, X, ZoomIn } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Maximize2, X, ZoomIn } from 'lucide-react';
 
 export interface ProjectReportItem {
   id: string;
@@ -70,7 +70,6 @@ export const HeroProjectReportsCarousel = () => {
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [previewImage, setPreviewImage] = useState<ProjectReportItem | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [autoSlideInterval, setAutoSlideInterval] = useState(3200);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -193,7 +192,7 @@ export const HeroProjectReportsCarousel = () => {
               : 'none',
           }}
         >
-          {EXTENDED_REPORTS.map((item, idx) => {
+          {EXTENDED_REPORTS.map((item) => {
             return (
               <div
                 key={item.uniqueKey}

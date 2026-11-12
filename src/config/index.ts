@@ -16,3 +16,4 @@ export * from './seo';
 
 
 
+export * from './contact';

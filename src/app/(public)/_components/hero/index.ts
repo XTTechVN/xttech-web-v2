@@ -1,5 +1,11 @@
 export { Hero, default } from './hero';
+export { HeroAdviseCadSection } from './hero-advise-cad-section';
+export { HeroAiAssistantVisual } from './hero-ai-assistant-visual';
 export { HeroConsultationSection } from './hero-consultation-section';
+export { HeroDashboardMockup } from './hero-dashboard-mockup';
 export { HeroFeaturedArticlesSection } from './hero-featured-articles-section';
-export { FloatingContactDock } from '../floating-contact-dock';
-
+export { HeroPlatformBanner } from './hero-platform-banner';
+export { HeroProjectReportsCarousel } from './hero-project-reports-carousel';
+export { HeroStoryPillarsSection } from './hero-story-pillars';
+export { HeroDemoModal, HeroDemoModalLazy } from './modals';
+export type { HeroDemoModalProps } from './modals';

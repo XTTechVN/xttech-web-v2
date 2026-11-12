@@ -11,8 +11,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-/* Màu nhấn (lime) – đồng bộ nhận diện thương hiệu XTTech */
-export const ACCENT = '#d6ff3d';
+/* Màu nhấn (lime) lấy từ token --hero-accent-raw trong src/styles/color.css – dùng cho style inline (gradient) */
+export const HERO_ACCENT_GLOW = 'radial-gradient(circle, var(--hero-accent-raw) 0%, transparent 70%)';
 
 export interface HeroStatItem {
   value: string;
@@ -233,3 +233,51 @@ export const MISSION_VISION: MissionVisionItem[] = [
   },
 ];
 
+export interface HeroHighlightItem {
+  bold: string;
+  text: string;
+}
+
+// 4 lợi điểm cốt lõi hiển thị ở hero chính
+export const HERO_HIGHLIGHTS: HeroHighlightItem[] = [
+  {
+    bold: 'Phù hợp các doanh nghiệp:',
+    text: 'xưởng sản xuất nhôm kính, nhà thầu thi công mặt dựng, nội thất, cơ khí xây lắp và các công trình xây dựng dân dụng, công nghiệp...',
+  },
+  {
+    bold: 'Chuyên sâu ngành Nhôm Kính & Xây dựng:',
+    text: 'kết nối liền mạch từ khảo sát ô chờ, thiết kế bóc tách 2D/3D, dự toán báo giá đến xuất thẻ cắt A4 phân xưởng.',
+  },
+  {
+    bold: 'App Mobile thực địa:',
+    text: 'dành cho đội lắp đặt, kỹ thuật viên chấm công khuôn mặt, định vị Live GPS và cập nhật tiến độ, bảo hành real-time.',
+  },
+  {
+    bold: 'Quản lý toàn diện từ A–Z:',
+    text: 'vật tư kho - khối lượng bộ cửa - tiến độ sản xuất - dòng tiền hợp đồng - giao việc và hành chính nhân sự.',
+  },
+];
+
+// Tùy chọn khu vực & chức vụ của form đăng ký tư vấn
+export const CITY_OPTIONS: string[] = [
+  'Hà Nội',
+  'TP. Hồ Chí Minh',
+  'Đà Nẵng',
+  'Hải Phòng',
+  'Bình Dương',
+  'Đồng Nai',
+  'Quảng Ninh',
+  'Nghệ An',
+  'Thanh Hóa',
+  'Cần Thơ',
+  'Tỉnh thành khác',
+];
+
+export const JOB_OPTIONS: string[] = [
+  'Chủ doanh nghiệp / Chủ xưởng',
+  'Quản lý sản xuất / Giám sát',
+  'Kế toán / Thủ kho',
+  'Kỹ thuật viên / Thiết kế cửa',
+  'Nhà thầu / Đối tác thi công',
+  'Khác',
+];

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CheckCircle2, RotateCcw, Send, ShieldCheck, Sparkles, Zap } from 'lucide-react';
+import { CheckCircle2, RotateCcw, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button, Input, Textarea } from '@/components';
+import { isValidEmail, isValidVnPhone } from '@/utils/validators';
 
 interface FormState {
   fullName: string;
@@ -43,13 +44,13 @@ export function NewsSoftwareRegistrationForm() {
 
     if (!formData.phone.trim()) {
       newErrors.phone = 'Vui lòng nhập số điện thoại';
-    } else if (!/^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(formData.phone.replace(/\s+/g, ''))) {
+    } else if (!isValidVnPhone(formData.phone)) {
       newErrors.phone = 'Số điện thoại không đúng định dạng';
     }
 
     if (!formData.email.trim()) {
       newErrors.email = 'Vui lòng nhập địa chỉ email';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+    } else if (!isValidEmail(formData.email)) {
       newErrors.email = 'Email không đúng định dạng';
     }
 

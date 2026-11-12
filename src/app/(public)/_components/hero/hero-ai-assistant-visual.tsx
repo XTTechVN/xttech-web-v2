@@ -5,15 +5,10 @@ import {
   Camera,
   Check,
   CheckCircle2,
-  Cpu,
   FileCheck2,
   Mic,
-  Radio,
   Scan,
   Sparkles,
-  Volume2,
-  Wand2,
-  Zap,
 } from 'lucide-react';
 
 export const HeroAiAssistantVisual = () => {
@@ -201,9 +196,9 @@ export const HeroAiAssistantVisual = () => {
               <div className="relative -mt-6 flex flex-col items-center">
                 {/* Đĩa đệm phát quang */}
                 <div className="h-6 w-44 sm:w-56 rounded-full bg-linear-to-r from-teal-500/20 via-teal-400/40 to-teal-500/20 blur-xs" />
-                <div className="relative -mt-4.5 rounded-full border border-teal-300/80 bg-linear-to-r from-[#045863] via-[#0d9488] to-[#045863] px-5 py-1.5 shadow-lg shadow-teal-500/25">
+                <div className="relative -mt-4.5 rounded-full border border-teal-300/80 bg-linear-to-r from-primary via-[#0d9488] to-primary px-5 py-1.5 shadow-lg shadow-teal-500/25">
                   <span className="flex items-center gap-1.5 text-xs font-black tracking-wide text-white">
-                    <Sparkles className="h-3.5 w-3.5 text-[#d6ff3d]" />
+                    <Sparkles className="h-3.5 w-3.5 text-hero-accent" />
                     <span>Tích hợp công nghệ XTTech AI</span>
                   </span>
                 </div>
@@ -270,7 +265,7 @@ export const HeroAiAssistantVisual = () => {
         {/* ================= 3 THẺ CARD TÍNH NĂNG CÔNG NGHỆ (ICON NỔI 3D CHUẨN ĐỒ HỌA GỐC) ================= */}
         <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-3 max-w-4xl w-full">
           {/* Card 1: Voice AI */}
-          <div className="group relative rounded-2xl bg-gradient-to-b from-[#045863] to-[#02333a] p-6 pt-9 text-center text-white shadow-xl shadow-[#045863]/25 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-teal-400 border border-teal-500/30">
+          <div className="group relative rounded-2xl bg-gradient-to-b from-primary to-hero-bg-to p-6 pt-9 text-center text-white shadow-xl shadow-primary/25 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-teal-400 border border-teal-500/30">
             {/* Icon tròn nổi đè lên mép trên */}
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-tr from-teal-500 to-teal-300 text-white shadow-lg shadow-teal-500/40 border-2 border-white transition-transform group-hover:scale-110">
               <Mic className="h-6 w-6 text-white" />
@@ -285,7 +280,7 @@ export const HeroAiAssistantVisual = () => {
           </div>
 
           {/* Card 2: AI Vision */}
-          <div className="group relative rounded-2xl bg-gradient-to-b from-[#045863] to-[#02333a] p-6 pt-9 text-center text-white shadow-xl shadow-[#045863]/25 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-teal-400 border border-teal-500/30">
+          <div className="group relative rounded-2xl bg-gradient-to-b from-primary to-hero-bg-to p-6 pt-9 text-center text-white shadow-xl shadow-primary/25 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-teal-400 border border-teal-500/30">
             {/* Icon tròn nổi đè lên mép trên */}
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-tr from-teal-500 to-teal-300 text-white shadow-lg shadow-teal-500/40 border-2 border-white transition-transform group-hover:scale-110">
               <Camera className="h-6 w-6 text-white" />
@@ -300,7 +295,7 @@ export const HeroAiAssistantVisual = () => {
           </div>
 
           {/* Card 3: AI Auto Ticket */}
-          <div className="group relative rounded-2xl bg-gradient-to-b from-[#045863] to-[#02333a] p-6 pt-9 text-center text-white shadow-xl shadow-[#045863]/25 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-teal-400 border border-teal-500/30">
+          <div className="group relative rounded-2xl bg-gradient-to-b from-primary to-hero-bg-to p-6 pt-9 text-center text-white shadow-xl shadow-primary/25 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-teal-400 border border-teal-500/30">
             {/* Icon tròn nổi đè lên mép trên */}
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-tr from-teal-500 to-teal-300 text-white shadow-lg shadow-teal-500/40 border-2 border-white transition-transform group-hover:scale-110">
               <FileCheck2 className="h-6 w-6 text-white" />
