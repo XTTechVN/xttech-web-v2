@@ -8,7 +8,6 @@ import { HeroAdviseCadSection } from './hero-advise-cad-section';
 import { HeroConsultationSection } from './hero-consultation-section';
 import { HeroDashboardMockup } from './hero-dashboard-mockup';
 import { HeroFeaturedArticlesSection } from './hero-featured-articles-section';
-import { HeroPlatformBanner } from './hero-platform-banner';
 import { HeroStoryPillarsSection } from './hero-story-pillars';
 import { HeroDemoModalLazy } from './modals';
 
@@ -106,7 +105,6 @@ export const Hero = () => {
       </section>
 
       <HeroAdviseCadSection />
-      <HeroPlatformBanner />
       <HeroStoryPillarsSection />
       <HeroFeaturedArticlesSection />
       <HeroConsultationSection />

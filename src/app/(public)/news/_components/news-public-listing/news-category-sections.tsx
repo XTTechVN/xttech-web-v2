@@ -11,13 +11,13 @@ interface NewsCategorySectionsProps {
 }
 
 export function NewsCategorySections({ isLoading, categoryArticlesMap, handleSelectCategory }: NewsCategorySectionsProps) {
-  // Nhóm 6 chuyên mục (4 chuyên mục dải ngang nền xám + 2 chuyên mục lớn 2 cột)
+  // Nhóm chuyên mục (4 chuyên mục dải ngang nền xám + các chuyên mục lớn phía dưới)
   const topFourCategories = NEWS_CATEGORY_OPTIONS.slice(0, 4);
-  const bottomTwoCategories = NEWS_CATEGORY_OPTIONS.slice(4, 6);
+  const bottomTwoCategories = NEWS_CATEGORY_OPTIONS.slice(4);
 
   return (
     <>
-      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+      <section className="max-w-[1440px] mx-auto w-full px-4 sm:px-8 lg:px-12 xl:px-16">
         <div className="bg-slate-100/85 border-b-4 border-primary px-5 py-8 sm:px-8 rounded-t-lg">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {topFourCategories.map((cat) => {
@@ -76,7 +76,7 @@ export function NewsCategorySections({ isLoading, categoryArticlesMap, handleSel
 
       {/* SECTION 3: 2 CỘT CHUYÊN MỤC LỚN Side-by-Side */}
       {bottomTwoCategories.length > 0 && (
-        <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+        <section className="max-w-[1440px] mx-auto w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {bottomTwoCategories.map((cat) => {
               const catArticles = categoryArticlesMap[cat.value] || [];

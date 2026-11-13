@@ -57,20 +57,20 @@ function formatVietnameseArticleDate(dateStr?: string | null): string {
   return `${weekday}, ${d.format('D/M/YYYY HH:mm')} (GMT+7)`;
 }
 
-const ARTICLE_HTML_CLASS = `news-rich-media text-slate-800 text-base sm:text-[17px] leading-[1.8] space-y-4
-  [&_p]:my-4 [&_h2]:text-xl [&_h2]:sm:text-2xl [&_h2]:font-bold [&_h2]:text-slate-900 [&_h2]:mt-8 [&_h2]:mb-3
-  [&_h3]:text-lg [&_h3]:sm:text-xl [&_h3]:font-bold [&_h3]:text-slate-900 [&_h3]:mt-6 [&_h3]:mb-2.5
-  [&_h4]:text-base [&_h4]:font-bold [&_h4]:text-slate-900 [&_h4]:mt-5 [&_h4]:mb-2
-  [&_ul]:my-4 [&_ul]:pl-6 [&_ul]:list-disc [&_ol]:my-4 [&_ol]:pl-6 [&_ol]:list-decimal
-  [&_li]:my-1.5 [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:bg-primary/5
-  [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:rounded-r-lg [&_blockquote]:italic [&_blockquote]:text-slate-700
-  [&_figure]:my-6 [&_figure]:mx-auto [&_figcaption]:text-xs [&_figcaption]:text-slate-500
-  [&_figcaption]:mt-2
-  [&_img]:w-full [&_img]:h-auto [&_img]:object-contain [&_img]:bg-slate-50 [&_img]:mx-auto
-  [&_video]:w-full [&_video]:h-auto [&_video]:rounded-lg [&_video]:mx-auto
-  [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg [&_iframe]:mx-auto [&_iframe]:border-0
-  [&_a]:text-primary [&_a]:font-medium [&_a]:underline hover:[&_a]:text-primary/80
-  [&_hr]:my-6 [&_hr]:border-slate-200 [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:rounded-xs
+const ARTICLE_HTML_CLASS = `news-rich-media text-slate-800 text-base sm:text-[18px] lg:text-[19px] leading-[1.85] space-y-5
+  [&_p]:my-4.5 [&_h2]:text-2xl [&_h2]:sm:text-3xl [&_h2]:font-bold [&_h2]:text-slate-900 [&_h2]:mt-10 [&_h2]:mb-4
+  [&_h3]:text-xl [&_h3]:sm:text-2xl [&_h3]:font-bold [&_h3]:text-slate-900 [&_h3]:mt-8 [&_h3]:mb-3
+  [&_h4]:text-lg [&_h4]:font-bold [&_h4]:text-slate-900 [&_h4]:mt-6 [&_h4]:mb-2.5
+  [&_ul]:my-5 [&_ul]:pl-7 [&_ul]:list-disc [&_ol]:my-5 [&_ol]:pl-7 [&_ol]:list-decimal
+  [&_li]:my-2 [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:bg-primary/5
+  [&_blockquote]:px-5 [&_blockquote]:py-4 [&_blockquote]:rounded-r-xl [&_blockquote]:italic [&_blockquote]:text-slate-700
+  [&_figure]:my-8 [&_figure]:mx-auto [&_figcaption]:text-xs sm:[&_figcaption]:text-sm [&_figcaption]:text-slate-500
+  [&_figcaption]:mt-2.5
+  [&_img]:w-full [&_img]:h-auto [&_img]:object-contain [&_img]:bg-slate-50 [&_img]:rounded-xl [&_img]:mx-auto
+  [&_video]:w-full [&_video]:h-auto [&_video]:rounded-xl [&_video]:mx-auto
+  [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-xl [&_iframe]:mx-auto [&_iframe]:border-0
+  [&_a]:text-primary [&_a]:font-semibold [&_a]:underline hover:[&_a]:text-primary/80
+  [&_hr]:my-8 [&_hr]:border-slate-200 [&_mark]:bg-yellow-200 [&_mark]:px-1 [&_mark]:rounded-xs
   [&_s]:line-through [&_del]:line-through`;
 
 export function NewsPublicDetail({
@@ -331,15 +331,15 @@ export function NewsPublicDetail({
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-        <div className="lg:col-span-8 space-y-5">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
+        <div className="lg:col-span-8 xl:col-span-9 space-y-5">
           <Skeleton className="h-4 w-44 rounded" />
           <Skeleton className="h-10 w-full rounded-lg" />
           <Skeleton className="h-4 w-64 rounded" />
           <Skeleton className="h-16 w-full rounded" />
           <Skeleton className="h-96 w-full rounded-lg" />
         </div>
-        <div className="lg:col-span-4 space-y-4">
+        <div className="lg:col-span-4 xl:col-span-3 space-y-4">
           <Skeleton className="h-6 w-40 rounded" />
           <Skeleton className="h-24 w-full rounded-lg" />
           <Skeleton className="h-24 w-full rounded-lg" />
@@ -375,10 +375,10 @@ export function NewsPublicDetail({
 
   return (
     <div className="bg-white min-h-screen pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-          {/* CỘT TRÁI (8 CỘT): NỘI DUNG BÀI VIẾT & BÌNH LUẬN */}
-          <article className="lg:col-span-8 min-w-0 lg:pr-6 xl:pr-8 lg:border-r lg:border-slate-200/80">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 pt-8 sm:pt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
+          {/* CỘT TRÁI (8-9 CỘT): NỘI DUNG BÀI VIẾT & BÌNH LUẬN - MỞ RỘNG RỘNG RÃI */}
+          <article className="lg:col-span-8 xl:col-span-9 min-w-0 lg:pr-8 xl:pr-12 lg:border-r lg:border-slate-200/80">
             {/* Dòng điều hướng Chuyên mục kiểu báo chí */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <nav className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm font-medium uppercase tracking-wide text-slate-400">
@@ -402,20 +402,20 @@ export function NewsPublicDetail({
             </div>
 
             <div className="mt-3">
-              {/* Tiêu đề lớn */}
-              <h1 className="text-2xl sm:text-3xl lg:text-[36px] font-bold text-slate-900 tracking-tight leading-[1.25]">
+              {/* Tiêu đề lớn - chữ to rõ & uy lực hơn */}
+              <h1 className="text-2xl sm:text-3xl lg:text-[40px] xl:text-[44px] font-extrabold text-slate-900 tracking-tight leading-[1.22]">
                 {article.title}
               </h1>
 
               {/* Dòng Tác giả • Thứ, ngày giờ (GMT+7) & thông số tương tác */}
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-[13px] text-slate-500">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm text-slate-500">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="font-bold text-slate-900">{authorDisplayName}</span>
                   <span className="text-slate-300">•</span>
                   <span>{formatVietnameseArticleDate(article.createdAt)}</span>
                 </div>
 
-                <div className="flex items-center gap-3.5 text-xs text-slate-500 font-mono tabular-nums">
+                <div className="flex items-center gap-3.5 text-xs sm:text-[13px] text-slate-500 font-mono tabular-nums">
                   <span className="inline-flex items-center gap-1" title="Lượt xem" suppressHydrationWarning>
                     <Eye className="w-3.5 h-3.5 text-slate-400" /> {article.viewCount}
                   </span>
@@ -447,9 +447,9 @@ export function NewsPublicDetail({
                 </div>
               </div>
 
-              {/* Sapo / Tóm tắt in đậm */}
+              {/* Sapo / Tóm tắt in đậm, chữ lớn phóng khoáng */}
               {article.summary && (
-                <p className="mt-5 text-base sm:text-[17px] font-bold text-slate-800 leading-relaxed">
+                <p className="mt-5 text-base sm:text-lg lg:text-[19px] font-bold text-slate-800 leading-relaxed">
                   {article.summary}
                 </p>
               )}
@@ -457,14 +457,14 @@ export function NewsPublicDetail({
               {/* Ảnh đại diện tự co giãn đúng tỉ lệ */}
               {thumbnailSrc && (
                 <figure className="mt-6 space-y-2">
-                  <div className="w-full overflow-hidden bg-slate-50 rounded-lg">
+                  <div className="w-full overflow-hidden bg-slate-50 rounded-xl shadow-xs">
                     <img
                       src={thumbnailSrc}
                       alt={article.title}
                       className="w-full h-auto block object-contain mx-auto"
                     />
                   </div>
-                  <figcaption className="text-xs text-slate-500 leading-relaxed">
+                  <figcaption className="text-xs sm:text-sm text-slate-500 leading-relaxed">
                     {article.title}. Ảnh: <em className="italic">XTTECH</em>.
                   </figcaption>
                 </figure>

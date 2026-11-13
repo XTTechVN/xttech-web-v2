@@ -20,7 +20,7 @@ interface NewsLeadSectionProps {
 
 export function NewsLeadSection({ isLoading, hasArticles, leadHeroArticle, latestLeadArticle, latestSideArticles, featuredSlideArticles, safeFeaturedSlideIdx, setFeaturedSlideIdx, setIsHoveringSlide }: NewsLeadSectionProps) {
   return (
-    <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+    <section className="max-w-[1440px] mx-auto w-full px-4 sm:px-8 lg:px-12 xl:px-16">
       {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 xl:gap-16">
           <div className="lg:col-span-8 min-w-0 space-y-6">

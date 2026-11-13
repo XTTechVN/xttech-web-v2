@@ -3,29 +3,29 @@ import Image from 'next/image';
 
 export function BenefitsSection() {
   return (
-    <section className="relative overflow-hidden bg-white py-16 lg:py-24 border-b border-slate-200/80">
+    <section className="relative overflow-hidden bg-white py-6 lg:py-8 border-b border-slate-200/80">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header trung tâm */}
-        <div className="max-w-3xl space-y-3 mb-12">
+        <div className="max-w-3xl space-y-2 mb-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary">
             <Zap className="h-3.5 w-3.5" />
             <span>Giải pháp toàn diện</span>
           </div>
-          <h2 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
             Cải tiến quản lý sản xuất & thi công với <span className="text-primary">XTTech</span>
           </h2>
-          <p className="text-base text-slate-600">
+          <p className="text-sm sm:text-base text-slate-600">
             Phần mềm quản lý tiến độ, vật tư, bóc tách bareme & tối ưu sản xuất ngành Nhôm Kính hàng đầu Việt Nam
           </p>
         </div>
 
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
+        <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
           {/* Cột trái: 2 Card lợi ích thiết kế sạch, màu sắc cân bằng hài hòa */}
-          <div className="space-y-5 lg:col-span-5">
+          <div className="space-y-3.5 lg:col-span-5">
             {/* Card 1: Giám đốc & BQL Dự án */}
-            <div className="group rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 p-6 shadow-sm transition-all duration-300 hover:border-amber-300 hover:shadow-lg">
-              <div className="flex items-center gap-3 pb-4 border-b border-amber-100">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm shadow-amber-500/30">
+            <div className="group rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 p-4.5 sm:p-5 shadow-sm transition-all duration-300 hover:border-amber-300 hover:shadow-lg">
+              <div className="flex items-center gap-3 pb-3 border-b border-amber-100">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm shadow-amber-500/30">
                   <Briefcase className="h-5 w-5" />
                 </div>
                 <div>
@@ -34,7 +34,7 @@ export function BenefitsSection() {
                 </div>
               </div>
 
-              <ul className="space-y-3.5 pt-4 text-xs sm:text-[13px] leading-relaxed text-slate-700">
+              <ul className="space-y-2.5 pt-3 text-xs sm:text-[13px] leading-relaxed text-slate-700">
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                   <div>
@@ -53,9 +53,9 @@ export function BenefitsSection() {
             </div>
 
             {/* Card 2: Nhân viên & Thợ xưởng */}
-            <div className="group rounded-2xl border border-teal-200/90 bg-gradient-to-br from-teal-50/80 via-white to-teal-50/40 p-6 shadow-sm transition-all duration-300 hover:border-teal-300 hover:shadow-lg">
-              <div className="flex items-center gap-3 pb-4 border-b border-teal-100">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white shadow-sm shadow-primary/30">
+            <div className="group rounded-2xl border border-teal-200/90 bg-gradient-to-br from-teal-50/80 via-white to-teal-50/40 p-4.5 sm:p-5 shadow-sm transition-all duration-300 hover:border-teal-300 hover:shadow-lg">
+              <div className="flex items-center gap-3 pb-3 border-b border-teal-100">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-sm shadow-primary/30">
                   <HardHat className="h-5 w-5" />
                 </div>
                 <div>
@@ -64,7 +64,7 @@ export function BenefitsSection() {
                 </div>
               </div>
 
-              <ul className="space-y-3.5 pt-4 text-xs sm:text-[13px] leading-relaxed text-slate-700">
+              <ul className="space-y-2.5 pt-3 text-xs sm:text-[13px] leading-relaxed text-slate-700">
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <div>
