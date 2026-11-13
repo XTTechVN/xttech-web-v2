@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2, FileSpreadsheet, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, FileSpreadsheet, Monitor, Smartphone, Sparkles } from 'lucide-react';
 import { HERO_HIGHLIGHTS } from './hero.constants';
 import { HeroAdviseCadSection } from './hero-advise-cad-section';
 import { HeroConsultationSection } from './hero-consultation-section';
@@ -65,23 +65,32 @@ export const Hero = () => {
                 ))}
               </ul>
 
-              {/* 2 Nút hành động: Mở Modal Form Đăng ký & Xem bảng giá */}
-              <div className="flex flex-col items-stretch gap-3 pt-2 sm:flex-row sm:items-center">
+              {/* Các nút hành động: Đăng ký & Tải về cho Máy tính / Điện thoại */}
+              <div className="flex flex-col items-stretch gap-3 pt-2 sm:flex-row sm:flex-wrap sm:items-center">
                 <button
                   type="button"
                   onClick={() => setIsDemoModalOpen(true)}
                   className="group inline-flex items-center justify-center gap-2 rounded-lg bg-hero-accent px-6 py-3.5 text-sm font-bold text-hero-ink shadow-lg shadow-black/20 transition-all hover:bg-hero-accent-hover hover:shadow-xl cursor-pointer"
                 >
                   <FileSpreadsheet className="h-4 w-4" />
-                  <span>Đăng ký trải nghiệm Demo</span>
+                  <span>Đăng ký ngay</span>
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </button>
 
                 <Link
-                  href="/pricing"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-bold text-white backdrop-blur-xs transition-all hover:border-hero-accent hover:bg-white/15 hover:text-hero-accent"
+                  href="#download-pc"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-5 py-3.5 text-sm font-bold text-white backdrop-blur-xs transition-all hover:border-hero-accent hover:bg-white/15 hover:text-hero-accent cursor-pointer"
                 >
-                  <span>Xem bảng giá dịch vụ</span>
+                  <Monitor className="h-4 w-4" />
+                  <span>Tải về</span>
+                </Link>
+
+                <Link
+                  href="#download-mobile"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-5 py-3.5 text-sm font-bold text-white backdrop-blur-xs transition-all hover:border-hero-accent hover:bg-white/15 hover:text-hero-accent cursor-pointer"
+                >
+                  <Smartphone className="h-4 w-4" />
+                  <span>Tải về </span>
                 </Link>
               </div>
             </div>

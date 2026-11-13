@@ -30,7 +30,7 @@ export function AiAssistantSection({ onOpenDemo }: HeroSectionDemoProps) {
             className="group inline-flex items-center justify-center gap-2.5 rounded-full border-2 border-primary bg-white px-10 py-3.5 text-base font-bold uppercase tracking-wider text-primary shadow-md shadow-primary/10 transition-all duration-300 hover:scale-105 hover:bg-primary hover:text-white hover:border-primary hover:shadow-xl hover:shadow-primary/25 cursor-pointer"
           >
             <Sparkles className="h-5 w-5 text-primary transition-all duration-300 group-hover:text-white group-hover:rotate-12" />
-            <span>ĐĂNG KÝ NHẬN DEMO</span>
+            <span>ĐĂNG KÝ NGAY</span>
           </button>
         </div>
       </div>

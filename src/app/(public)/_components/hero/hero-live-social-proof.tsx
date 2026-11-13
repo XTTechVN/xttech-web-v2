@@ -39,26 +39,23 @@ interface ToastUser {
   timeAgo: string;
 }
 
-let globalUserCounter = 0;
+const INITIAL_USER: ToastUser = {
+  id: 1,
+  name: 'Anh Nguyễn Hoàng Nam',
+  timeAgo: 'vừa xong',
+};
+
+let globalUserCounter = 1;
 
 /**
  * Hàm sinh ngẫu nhiên 1 người dùng mới từ kho họ tên tiếng Việt
  */
-function createRandomUser(isRandom = true): ToastUser {
+function createRandomUser(): ToastUser {
   globalUserCounter++;
-  const ho = isRandom
-    ? HO_LIST[Math.floor(Math.random() * HO_LIST.length)]
-    : HO_LIST[globalUserCounter % HO_LIST.length];
-  const dem = isRandom
-    ? DEM_LIST[Math.floor(Math.random() * DEM_LIST.length)]
-    : DEM_LIST[(globalUserCounter + 2) % DEM_LIST.length];
-  const ten = isRandom
-    ? TEN_LIST[Math.floor(Math.random() * TEN_LIST.length)]
-    : TEN_LIST[(globalUserCounter + 4) % TEN_LIST.length];
-
-  const timeAgo = isRandom
-    ? TIME_AGO_LIST[Math.floor(Math.random() * TIME_AGO_LIST.length)]
-    : TIME_AGO_LIST[0];
+  const ho = HO_LIST[Math.floor(Math.random() * HO_LIST.length)];
+  const dem = DEM_LIST[Math.floor(Math.random() * DEM_LIST.length)];
+  const ten = TEN_LIST[Math.floor(Math.random() * TEN_LIST.length)];
+  const timeAgo = TIME_AGO_LIST[Math.floor(Math.random() * TIME_AGO_LIST.length)];
 
   return {
     id: globalUserCounter,
@@ -74,10 +71,15 @@ const SLIDE_DURATION = 280;  // Thời gian trượt chuyển đổi (ms)
 const DISMISS_DURATION = 300; // Thời gian trượt sang trái khi bấm tắt (ms)
 
 export function HeroLiveSocialProof() {
-  const [currentUser, setCurrentUser] = useState<ToastUser>(() => createRandomUser(false));
+  const [isMounted, setIsMounted] = useState(false);
+  const [currentUser, setCurrentUser] = useState<ToastUser>(INITIAL_USER);
   const [animPhase, setAnimPhase] = useState<AnimationPhase>('idle');
   const [isDismissed, setIsDismissed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const timeoutIdsRef = useRef<NodeJS.Timeout[]>([]);
 
@@ -102,7 +104,7 @@ export function HeroLiveSocialProof() {
 
   // Logic nhảy liên tục không ngừng: người cũ trượt xuống, người mới từ trên trượt xuống
   useEffect(() => {
-    if (isDismissed || isHovered) return;
+    if (!isMounted || isDismissed || isHovered) return;
 
     const intervalId = setInterval(() => {
       // 1. Trượt xuống phía dưới và mờ dần
@@ -110,7 +112,7 @@ export function HeroLiveSocialProof() {
 
       addTimeout(() => {
         // 2. Tạo người dùng mới ngẫu nhiên và đặt ở phía trên (-16px)
-        const nextUser = createRandomUser(true);
+        const nextUser = createRandomUser();
         setCurrentUser(nextUser);
         setAnimPhase('entering-from-top');
 
@@ -125,9 +127,9 @@ export function HeroLiveSocialProof() {
       clearInterval(intervalId);
       clearAllTimeouts();
     };
-  }, [isDismissed, isHovered, addTimeout, clearAllTimeouts]);
+  }, [isMounted, isDismissed, isHovered, addTimeout, clearAllTimeouts]);
 
-  if (isDismissed) return null;
+  if (!isMounted || isDismissed) return null;
 
   // Xử lý styles chuyển động mượt mà
   const getContainerStyle = (): React.CSSProperties => {
