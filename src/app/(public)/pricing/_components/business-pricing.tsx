@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Check, ExternalLink, Zap, Layers } from 'lucide-react';
 
 /* Màu nhấn (lime) – dùng chung với các section pricing khác */
-const ACCENT = '#d6ff3d';
+const ACCENT = '#25f4f4';
 
 type BillingCycle = 'month' | 'year';
 import {
@@ -105,9 +105,9 @@ const CycleToggle = ({ value, onChange }: { value: BillingCycle; onChange: (v: B
 /* ---------- Nút CTA của thẻ gói ---------- */
 const PlanButton = ({ plan }: { plan: Plan }) => {
   const styles: Record<ButtonVariant, string> = {
-    outline: 'border-2 border-primary bg-white text-primary group-hover:border-[#d6ff3d] group-hover:bg-[#d6ff3d] group-hover:text-primary',
-    solid: 'border-2 border-primary bg-primary text-white group-hover:border-[#d6ff3d] group-hover:bg-[#d6ff3d] group-hover:text-primary',
-    accent: 'border-2 border-primary/20 bg-primary/10 text-primary group-hover:border-[#d6ff3d] group-hover:bg-[#d6ff3d] group-hover:text-primary',
+    outline: 'border-2 border-primary bg-white text-primary group-hover:border-[#25f4f4] group-hover:bg-[#25f4f4] group-hover:text-primary',
+    solid: 'border-2 border-primary bg-primary text-white group-hover:border-[#25f4f4] group-hover:bg-[#25f4f4] group-hover:text-primary',
+    accent: 'border-2 border-primary/20 bg-primary/10 text-primary group-hover:border-[#25f4f4] group-hover:bg-[#25f4f4] group-hover:text-primary',
   };
   return (
     <button
@@ -145,7 +145,7 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
       {/* Giá với hiệu ứng hover */}
       <div className="group/price mt-3 flex h-9 cursor-pointer items-baseline gap-x-1.5">
         <span
-          className="inline-block origin-left text-3xl font-extrabold tracking-tight text-primary transition-all duration-300 ease-out group-hover:scale-105 group-hover:text-[#d6ff3d]"
+          className="inline-block origin-left text-3xl font-extrabold tracking-tight text-primary transition-all duration-300 ease-out group-hover:scale-105 group-hover:text-[#25f4f4]"
         >
           {view.price}
         </span>
@@ -158,7 +158,7 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
         )}
       </div>
       <p
-        className="mb-5 mt-2 flex min-h-[34px] items-center text-xs leading-snug text-gray-500 transition-colors duration-300 group-hover:font-semibold group-hover:text-[#d6ff3d]"
+        className="mb-5 mt-2 flex min-h-[34px] items-center text-xs leading-snug text-gray-500 transition-colors duration-300 group-hover:font-semibold group-hover:text-[#25f4f4]"
       >
         {view.note}
       </p>
@@ -169,7 +169,7 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
       <ul className="mt-6 flex-1 space-y-3.5 border-t border-primary/10 pt-5 transition-colors duration-300 group-hover:border-white/20">
         {plan.highlights.map((h, i) => (
           <li key={i} className="flex gap-2.5 text-sm leading-snug">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-colors duration-300 group-hover:text-[#d6ff3d]" strokeWidth={3} />
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-colors duration-300 group-hover:text-[#25f4f4]" strokeWidth={3} />
             <span className="text-gray-500 transition-colors duration-300 group-hover:text-white/80">
               <b className="font-bold text-gray-900 transition-colors duration-300 group-hover:text-white">{h.bold}</b>
               {h.rest && ` ${h.rest}`}

@@ -6,8 +6,8 @@ interface ServiceBannerProps {
   onMainTabChange?: (tabId: string) => void;
 }
 
-/* Màu nhấn (lime) – dùng chung với section Pricing */
-const ACCENT = '#d6ff3d';
+/* Màu nhấn (cyan) – đồng bộ theo --hero-accent-raw */
+const ACCENT = '#25f4f4';
 
 const MAIN_TABS = [
   { id: 'bang-gia', label: 'Bảng giá', icon: CreditCard },
@@ -88,13 +88,13 @@ const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceB
           <div className="relative w-full rounded-2xl border border-primary/10 bg-white p-4 shadow-sm sm:p-6">
             {/* Badge -20% */}
             <div
-              className="absolute -top-3 right-6 rounded-full px-3 py-1 text-xs font-bold text-primary shadow-sm"
-              style={{ backgroundColor: ACCENT }}
+              className="absolute -top-3 right-6 rounded-full px-3 py-1 text-xs font-bold text-white shadow-sm bg-primary"
+            
             >
               -20%
             </div>
 
-            <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-primary">
               Tiết kiệm khi trả theo năm
             </div>
 
@@ -103,14 +103,14 @@ const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceB
               {/* Gói 1 */}
               <div className="group flex cursor-pointer flex-col justify-between rounded-xl border border-primary/10 bg-primary/5 p-2 text-center transition-all duration-300 hover:scale-105 hover:bg-primary hover:text-white hover:shadow-lg sm:p-3">
                 <div>
-                  <div className="text-base font-bold text-primary transition-colors group-hover:text-[#d6ff3d] sm:text-lg">
+                  <div className="text-base font-bold text-primary transition-colors group-hover:text-[#25f4f4] sm:text-lg">
                     590k
                   </div>
                   <div className="mt-0.5 text-[10px] text-gray-400 line-through transition-colors group-hover:text-white/70">
                     ~5.9tr/năm
                   </div>
                 </div>
-                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary transition-all group-hover:bg-[#d6ff3d] group-hover:text-primary sm:text-[10px]">
+                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary transition-all group-hover:bg-[#25f4f4] group-hover:text-primary sm:text-[10px]">
                   Tiết kiệm 1.18tr
                 </div>
               </div>
@@ -118,14 +118,14 @@ const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceB
               {/* Gói 2 */}
               <div className="group flex cursor-pointer flex-col justify-between rounded-xl border border-primary/10 bg-primary/5 p-2 text-center transition-all duration-300 hover:scale-105 hover:bg-primary hover:text-white hover:shadow-lg sm:p-3">
                 <div>
-                  <div className="text-base font-bold text-primary transition-colors group-hover:text-[#d6ff3d] sm:text-lg">
+                  <div className="text-base font-bold text-primary transition-colors group-hover:text-[#25f4f4] sm:text-lg">
                     1.29tr
                   </div>
                   <div className="mt-0.5 text-[10px] text-gray-400 line-through transition-colors group-hover:text-white/70">
                     ~12.9tr/năm
                   </div>
                 </div>
-                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary transition-all group-hover:bg-[#d6ff3d] group-hover:text-primary sm:text-[10px]">
+                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary transition-all group-hover:bg-[#25f4f4] group-hover:text-primary sm:text-[10px]">
                   Tiết kiệm 2.58tr
                 </div>
               </div>
@@ -133,14 +133,14 @@ const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceB
               {/* Gói 3 */}
               <div className="group flex cursor-pointer flex-col justify-between rounded-xl border border-primary/10 bg-primary/5 p-2 text-center transition-all duration-300 hover:scale-105 hover:bg-primary hover:text-white hover:shadow-lg sm:p-3">
                 <div>
-                  <div className="text-sm font-bold text-primary transition-colors group-hover:text-[#d6ff3d] sm:text-base">
+                  <div className="text-sm font-bold text-primary transition-colors group-hover:text-[#25f4f4] sm:text-base">
                     29.9tr
                   </div>
                   <div className="mt-0.5 text-[10px] font-medium text-gray-500 transition-colors group-hover:text-white/80">
                     Tổng Thầu
                   </div>
                 </div>
-                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary transition-all group-hover:bg-[#d6ff3d] group-hover:text-primary sm:text-[10px]">
+                <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary transition-all group-hover:bg-[#25f4f4] group-hover:text-primary sm:text-[10px]">
                   1TB • ∞
                 </div>
               </div>
