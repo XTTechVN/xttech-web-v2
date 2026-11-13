@@ -1,95 +1,209 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { CheckCircle2, X } from 'lucide-react';
 
-interface ToastItem {
+// 1. Dữ liệu mockup: 20 họ, 20 tên đệm, 20 tên riêng tiếng Việt tự nhiên (tạo ra > 8.000 tên ngẫu nhiên)
+const HO_LIST: string[] = [
+  'Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng',
+  'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng',
+  'Bùi', 'Đỗ', 'Hồ', 'Ngô', 'Dương',
+  'Lý', 'Đào', 'Đoàn', 'Mai', 'Trịnh',
+];
+
+const DEM_LIST: string[] = [
+  'Văn', 'Hữu', 'Đình', 'Đức', 'Minh',
+  'Quang', 'Tuấn', 'Quốc', 'Thanh', 'Trọng',
+  'Bảo', 'Công', 'Thành', 'Tiến', 'Ngọc',
+  'Hải', 'Xuân', 'Thế', 'Khắc', 'Duy',
+];
+
+const TEN_LIST: string[] = [
+  'Nam', 'Hùng', 'Dũng', 'Thắng', 'Đức',
+  'Bảo', 'Kiệt', 'Long', 'Huy', 'Phong',
+  'Sơn', 'Tùng', 'Khoa', 'Phúc', 'Lâm',
+  'Cường', 'Trung', 'Hải', 'Việt', 'Thịnh',
+];
+
+const TIME_AGO_LIST: string[] = [
+  'vừa xong',
+  '1 phút trước',
+  '2 phút trước',
+  '3 phút trước',
+  '4 phút trước',
+];
+
+interface ToastUser {
   id: number;
   name: string;
   timeAgo: string;
 }
 
-const TOAST_USERS: ToastItem[] = [
-  { id: 1, name: 'Anh Nguyễn Hoàng Nam', timeAgo: 'vừa xong' },
-  { id: 2, name: 'Anh Trần Đình Trọng', timeAgo: '1 phút trước' },
-  { id: 3, name: 'Chị Lê Thị Thu Mai', timeAgo: '2 phút trước' },
-  { id: 4, name: 'Anh Hoàng Minh Đức', timeAgo: 'vừa xong' },
-  { id: 5, name: 'Anh Phạm Quốc Bảo', timeAgo: '3 phút trước' },
-  { id: 6, name: 'Anh Đặng Hữu Thắng', timeAgo: 'vừa xong' },
-  { id: 7, name: 'Chị Vũ Bích Phương', timeAgo: '1 phút trước' },
-  { id: 8, name: 'Anh Bùi Tuấn Kiệt', timeAgo: 'vừa xong' },
-  { id: 9, name: 'Anh Đỗ Văn Hùng', timeAgo: '2 phút trước' },
-  { id: 10, name: 'Anh Phan Thanh Liêm', timeAgo: 'vừa xong' },
-];
+let globalUserCounter = 0;
 
-const INTERVAL_MS = 3000;
-const FADE_MS = 200;
+/**
+ * Hàm sinh ngẫu nhiên 1 người dùng mới từ kho họ tên tiếng Việt
+ */
+function createRandomUser(isRandom = true): ToastUser {
+  globalUserCounter++;
+  const ho = isRandom
+    ? HO_LIST[Math.floor(Math.random() * HO_LIST.length)]
+    : HO_LIST[globalUserCounter % HO_LIST.length];
+  const dem = isRandom
+    ? DEM_LIST[Math.floor(Math.random() * DEM_LIST.length)]
+    : DEM_LIST[(globalUserCounter + 2) % DEM_LIST.length];
+  const ten = isRandom
+    ? TEN_LIST[Math.floor(Math.random() * TEN_LIST.length)]
+    : TEN_LIST[(globalUserCounter + 4) % TEN_LIST.length];
+
+  const timeAgo = isRandom
+    ? TIME_AGO_LIST[Math.floor(Math.random() * TIME_AGO_LIST.length)]
+    : TIME_AGO_LIST[0];
+
+  return {
+    id: globalUserCounter,
+    name: `Anh ${ho} ${dem} ${ten}`,
+    timeAgo,
+  };
+}
+
+type AnimationPhase = 'idle' | 'exiting-down' | 'entering-from-top' | 'dismissing-left';
+
+const CYCLE_INTERVAL = 2800; // Nhảy liên tục mỗi 2.8 giây
+const SLIDE_DURATION = 280;  // Thời gian trượt chuyển đổi (ms)
+const DISMISS_DURATION = 300; // Thời gian trượt sang trái khi bấm tắt (ms)
 
 export function HeroLiveSocialProof() {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentUser, setCurrentUser] = useState<ToastUser>(() => createRandomUser(false));
+  const [animPhase, setAnimPhase] = useState<AnimationPhase>('idle');
   const [isDismissed, setIsDismissed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [isFading, setIsFading] = useState(false);
-  const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const timeoutIdsRef = useRef<NodeJS.Timeout[]>([]);
+
+  const addTimeout = useCallback((fn: () => void, delay: number) => {
+    const id = setTimeout(fn, delay);
+    timeoutIdsRef.current.push(id);
+    return id;
+  }, []);
+
+  const clearAllTimeouts = useCallback(() => {
+    timeoutIdsRef.current.forEach(clearTimeout);
+    timeoutIdsRef.current = [];
+  }, []);
+
+  // Xử lý khi người dùng bấm tắt x: trượt sang trái rồi biến mất
+  const handleDismiss = () => {
+    setAnimPhase('dismissing-left');
+    addTimeout(() => {
+      setIsDismissed(true);
+    }, DISMISS_DURATION);
+  };
+
+  // Logic nhảy liên tục không ngừng: người cũ trượt xuống, người mới từ trên trượt xuống
   useEffect(() => {
     if (isDismissed || isHovered) return;
 
-    const timer = setInterval(() => {
-      setIsFading(true);
-      fadeTimer.current = setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % TOAST_USERS.length);
-        setIsFading(false);
-      }, FADE_MS);
-    }, INTERVAL_MS);
+    const intervalId = setInterval(() => {
+      // 1. Trượt xuống phía dưới và mờ dần
+      setAnimPhase('exiting-down');
+
+      addTimeout(() => {
+        // 2. Tạo người dùng mới ngẫu nhiên và đặt ở phía trên (-16px)
+        const nextUser = createRandomUser(true);
+        setCurrentUser(nextUser);
+        setAnimPhase('entering-from-top');
+
+        // 3. Trượt xuống vị trí hiển thị ban đầu và sáng dần
+        addTimeout(() => {
+          setAnimPhase('idle');
+        }, 40);
+      }, SLIDE_DURATION);
+    }, CYCLE_INTERVAL);
 
     return () => {
-      clearInterval(timer);
-      if (fadeTimer.current) clearTimeout(fadeTimer.current);
+      clearInterval(intervalId);
+      clearAllTimeouts();
     };
-  }, [isDismissed, isHovered]);
+  }, [isDismissed, isHovered, addTimeout, clearAllTimeouts]);
 
   if (isDismissed) return null;
 
-  const current = TOAST_USERS[currentIndex];
+  // Xử lý styles chuyển động mượt mà
+  const getContainerStyle = (): React.CSSProperties => {
+    // Khi bấm nút tắt x: trượt sang trái và biến mất
+    if (animPhase === 'dismissing-left') {
+      return {
+        transform: 'translateX(-120%)',
+        opacity: 0,
+        transition: `transform ${DISMISS_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1), opacity ${DISMISS_DURATION - 50}ms ease-out`,
+        pointerEvents: 'none',
+      };
+    }
+
+    // Khi kết thúc chu kỳ: trượt dần xuống dưới và mờ dần
+    if (animPhase === 'exiting-down') {
+      return {
+        transform: 'translateY(16px)',
+        opacity: 0,
+        transition: `transform ${SLIDE_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1), opacity ${SLIDE_DURATION}ms ease-out`,
+      };
+    }
+
+    // Chuẩn bị người mới từ phía trên
+    if (animPhase === 'entering-from-top') {
+      return {
+        transform: 'translateY(-16px)',
+        opacity: 0,
+        transition: 'none',
+      };
+    }
+
+    // Trạng thái bình thường (idle) hoặc trượt từ trên xuống vị trí gốc
+    return {
+      transform: 'translateY(0) translateX(0)',
+      opacity: 1,
+      transition: `transform ${SLIDE_DURATION}ms cubic-bezier(0, 0, 0.2, 1), opacity ${SLIDE_DURATION}ms ease-out`,
+    };
+  };
 
   return (
     <aside
       aria-label="Thông báo đăng ký"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="fixed bottom-6 left-4 sm:bottom-7 sm:left-6 z-50 select-none pointer-events-auto transition-transform duration-300 hover:scale-[1.02]"
+      className="fixed bottom-3 left-3 sm:bottom-12 sm:left-6 z-50 select-none pointer-events-auto max-w-[calc(100vw-1.5rem)] sm:max-w-max transition-transform duration-300 hover:scale-[1.01]"
     >
-      {/* Toast pill gọn gàng, trong suốt tinh tế (Glassmorphism) */}
-      <div className="flex items-center gap-2.5 rounded-full border border-slate-200/80 bg-white/80 px-3.5 py-2 shadow-lg backdrop-blur-md ring-1 ring-black/5 transition-all">
+      {/* Toast pill gọn nhẹ, nhảy liên tục, nền trong suốt hoàn toàn */}
+      <div
+        style={getContainerStyle()}
+        className="flex items-center gap-1.5 sm:gap-2.5 rounded-full bg-transparent px-2.5 py-1 sm:px-3.5 sm:py-1.5 backdrop-blur-[2px] transition-all"
+      >
         {/* Icon tick xanh xác thực */}
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-          <CheckCircle2 className="h-4 w-4" />
+        <div className="flex h-4 w-4 sm:h-5 sm:w-5 shrink-0 items-center justify-center text-emerald-600">
+          <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </div>
 
-        {/* Nội dung Toast: chỉ gồm Tên + đã đăng ký sử dụng phần mềm */}
-        <div
-          className={`flex items-center gap-1.5 text-xs text-slate-700 transition-all duration-200 ease-out ${
-            isFading
-              ? 'opacity-0 -translate-y-1 scale-95'
-              : 'opacity-100 translate-y-0 scale-100'
-          }`}
-        >
-          <strong className="font-bold text-slate-900 whitespace-nowrap">
-            {current.name}
+        {/* Nội dung Toast */}
+        <div className="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs text-slate-800 min-w-0">
+          <strong className="font-bold text-slate-900 shrink-0 whitespace-nowrap">
+            {currentUser.name}
           </strong>
-          <span className="whitespace-nowrap">đã đăng ký sử dụng phần mềm</span>
-          <span className="hidden sm:inline text-[11px] text-slate-400">
-            • {current.timeAgo}
+          <span className="truncate sm:whitespace-nowrap">đã đăng ký sử dụng phần mềm</span>
+          <span className="hidden md:inline text-[11px] text-slate-500 font-medium whitespace-nowrap">
+            • {currentUser.timeAgo}
           </span>
         </div>
 
-        {/* Nút đóng */}
+        {/* Nút đóng: bấm vào trượt sang trái biến mất */}
         <button
           type="button"
-          onClick={() => setIsDismissed(true)}
-          aria-label="Đóng"
-          className="ml-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition-colors cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDismiss();
+          }}
+          aria-label="Đóng thông báo"
+          className="ml-0.5 sm:ml-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200/40 hover:text-slate-700 transition-colors cursor-pointer"
         >
           <X className="h-3 w-3" />
         </button>
