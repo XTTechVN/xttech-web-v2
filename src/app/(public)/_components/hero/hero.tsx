@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, FileSpreadsheet, Sparkles } from 'lucide-react';
-import { HERO_HIGHLIGHTS, STATS } from './hero.constants';
+import { HERO_HIGHLIGHTS } from './hero.constants';
 import { HeroAdviseCadSection } from './hero-advise-cad-section';
 import { HeroConsultationSection } from './hero-consultation-section';
 import { HeroDashboardMockup } from './hero-dashboard-mockup';
@@ -19,7 +19,7 @@ export const Hero = () => {
       {/* ===================== HERO TOP SECTION ===================== */}
       <section
         id="about"
-        className="relative scroll-mt-20 overflow-hidden bg-linear-to-br from-hero-bg-from via-primary to-hero-bg-to pt-10 pb-14 text-white lg:pt-14 lg:pb-20"
+        className="relative scroll-mt-20 overflow-hidden bg-linear-to-br from-hero-bg-from via-primary to-hero-bg-to pt-10 pb-12 text-white lg:pt-14 lg:pb-16"
       >
         {/* Họa tiết lưới kỹ thuật & quầng sáng chủ đạo */}
         <div
@@ -90,16 +90,6 @@ export const Hero = () => {
             <div className="lg:col-span-6">
               <HeroDashboardMockup />
             </div>
-          </div>
-
-          {/* Stats Bar */}
-          <div className="mt-12 grid grid-cols-2 gap-4 rounded-lg border border-white/15 bg-white/10 p-5 backdrop-blur-md sm:p-6 lg:mt-14 lg:grid-cols-4 lg:gap-8">
-            {STATS.map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center text-center">
-                <span className="text-2xl font-black tracking-tight text-hero-accent sm:text-3xl lg:text-4xl">{stat.value}</span>
-                <span className="mt-1.5 text-xs font-medium text-teal-50/90 sm:text-sm">{stat.label}</span>
-              </div>
-            ))}
           </div>
         </div>
       </section>

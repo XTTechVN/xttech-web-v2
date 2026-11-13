@@ -331,7 +331,7 @@ export function NewsPublicDetail({
 
   if (isLoading) {
     return (
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
+      <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
         <div className="lg:col-span-8 xl:col-span-9 space-y-5">
           <Skeleton className="h-4 w-44 rounded" />
           <Skeleton className="h-10 w-full rounded-lg" />
@@ -375,10 +375,10 @@ export function NewsPublicDetail({
 
   return (
     <div className="bg-white min-h-screen pb-16">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 pt-8 sm:pt-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
+      <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
           {/* CỘT TRÁI (8-9 CỘT): NỘI DUNG BÀI VIẾT & BÌNH LUẬN - MỞ RỘNG RỘNG RÃI */}
-          <article className="lg:col-span-8 xl:col-span-9 min-w-0 lg:pr-8 xl:pr-12 lg:border-r lg:border-slate-200/80">
+          <article className="lg:col-span-8 xl:col-span-9 min-w-0 lg:pr-6 xl:pr-8 lg:border-r lg:border-slate-200/80">
             {/* Dòng điều hướng Chuyên mục kiểu báo chí */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <nav className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm font-medium uppercase tracking-wide text-slate-400">
@@ -552,8 +552,8 @@ export function NewsPublicDetail({
             </div>
           </article>
 
-          {/* CỘT PHẢI (4 CỘT): SIDEBAR CÙNG CHUYÊN MỤC & ĐỌC NHIỀU */}
-          <aside className="lg:col-span-4 min-w-0">
+          {/* CỘT PHẢI (3-4 CỘT): SIDEBAR CÙNG CHUYÊN MỤC & ĐỌC NHIỀU */}
+          <aside className="lg:col-span-4 xl:col-span-3 min-w-0">
             <div className="lg:sticky lg:top-24 space-y-8">
               {/* Khối 1: Bài viết cùng chuyên mục */}
               {relatedArticles.length > 0 && (
