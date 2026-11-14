@@ -72,7 +72,9 @@ export const ReceiptFormHeader: React.FC<ReceiptFormHeaderProps> = ({
                 onChange={(e) => setSupplierId(e.target.value ? Number(e.target.value) : undefined)}
                 options={[
                   { value: '', label: '-- Chọn nhà cung cấp * --' },
-                  ...suppliersList.map((s) => ({ value: s.id, label: `${s.name} (${s.phone})` })),
+                  ...suppliersList
+                    .filter((s) => s.supplierType !== 'door_set')
+                    .map((s) => ({ value: s.id, label: `${s.name} (${s.phone})` })),
                 ]}
               />
             </div>

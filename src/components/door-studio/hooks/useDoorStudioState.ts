@@ -620,6 +620,7 @@ interface UseDoorStudioStateProps {
   door?: Door | null;
   defaultBrandId?: number | null;
   initialTab?: StudioMainTab;
+  sketchMode?: boolean;
   onSaveSuccess?: (savedDoor: Door) => void;
   onCustomSave?: (data: {
     name: string;
@@ -628,7 +629,7 @@ interface UseDoorStudioStateProps {
     doorSeriesId?: number | null;
     width: number;
     height: number;
-    systemConfig: Record<string, any>;
+    systemConfig: Record<string, unknown>;
     imageB64?: string;
   }) => Promise<void>;
 }
@@ -639,11 +640,22 @@ export function useDoorStudioState({
   door,
   defaultBrandId,
   initialTab = 'info',
+  sketchMode = false,
   onSaveSuccess,
   onCustomSave,
 }: UseDoorStudioStateProps) {
+  const visibleNavTabs = useMemo<StudioMainTab[]>(
+    () => (sketchMode ? ['info', 'draw', 'view3d'] : ['info', 'draw', 'config', 'bom', 'accessories', 'view3d']),
+    [sketchMode],
+  );
+  const resolvedInitialTab: StudioMainTab = visibleNavTabs.includes(initialTab)
+    ? initialTab
+    : sketchMode
+      ? 'draw'
+      : 'info';
+
   // Navigation Tabs
-  const [activeMainTab, setActiveMainTab] = useState<StudioMainTab>(initialTab);
+  const [activeMainTab, setActiveMainTab] = useState<StudioMainTab>(resolvedInitialTab);
 
   // Selected Brand State
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
@@ -657,7 +669,10 @@ export function useDoorStudioState({
   const [aluminumColor, setAluminumColor] = useState<string>('#955F20');
   const [hardwareColor, setHardwareColor] = useState<string>('#1E293B');
   const [frameShape, setFrameShape] = useState<FrameShape>('rect');
-  const [seriesId, setSeriesId] = useState<number | undefined>(() => door?.doorSeriesId || (door?.systemConfig as any)?.seriesId || undefined);
+  const [seriesId, setSeriesId] = useState<number | undefined>(() => {
+    const sc = door?.systemConfig as Record<string, unknown> | undefined;
+    return door?.doorSeriesId || (typeof sc?.seriesId === 'number' ? sc.seriesId : undefined);
+  });
   const prevSeriesIdRef = useRef<number | undefined>(undefined);
   const wasOpenRef = useRef<boolean>(false);
   const [selectedComboIds, setSelectedComboIds] = useState<number[]>([]);
@@ -697,15 +712,15 @@ export function useDoorStudioState({
   const { data: seriesData } = useQuery({
     queryKey: ['door-series-list'],
     queryFn: () => getDoorSeriesList({ limit: 9999 }),
-    enabled: isOpen,
+    enabled: isOpen && !sketchMode,
   });
-  const allAvailableSeries = useMemo(() => seriesData?.items || [], [seriesData]);
+  const allAvailableSeries = useMemo(() => (sketchMode ? [] : seriesData?.items || []), [seriesData, sketchMode]);
 
   // Fetch Brands (Lấy toàn bộ hãng đang hoạt động để tách hãng nhôm & hãng phụ kiện)
   const { data: brandsData } = useQuery({
     queryKey: ['brands-list', 'all'],
     queryFn: () => getBrands({ limit: 9999, isActive: true }),
-    enabled: isOpen,
+    enabled: isOpen && !sketchMode,
   });
   const availableBrands = useMemo(() => {
     const list = (brandsData?.items || []).filter(
@@ -726,6 +741,7 @@ export function useDoorStudioState({
   );
 
   const effectiveBrandId = useMemo(() => {
+    if (sketchMode) return null;
     return (
       selectedBrandId ||
       currentSeriesObj?.brandId ||
@@ -734,7 +750,7 @@ export function useDoorStudioState({
       availableBrands[0]?.id ||
       null
     );
-  }, [selectedBrandId, currentSeriesObj, door?.doorSeries?.brandId, defaultBrandId, availableBrands]);
+  }, [sketchMode, selectedBrandId, currentSeriesObj, door?.doorSeries?.brandId, defaultBrandId, availableBrands]);
 
   const availableSeries = useMemo(() => {
     if (!effectiveBrandId) return allAvailableSeries;
@@ -759,10 +775,11 @@ export function useDoorStudioState({
         seriesId: !effectiveBrandId ? (explicitSeriesId || fallbackSeriesId) : undefined,
         limit: 1000,
       }),
-    enabled: isOpen && Boolean(effectiveBrandId || explicitSeriesId || fallbackSeriesId),
+    enabled: isOpen && !sketchMode && Boolean(effectiveBrandId || explicitSeriesId || fallbackSeriesId),
   });
 
   const effectiveSeriesId = useMemo(() => {
+    if (sketchMode) return undefined;
     if (explicitSeriesId) return explicitSeriesId;
     const leftPid = frameConfig.leftEdge?.profileId;
     if (leftPid && profilesData?.items?.length) {
@@ -770,7 +787,7 @@ export function useDoorStudioState({
       if (matchedProf?.seriesId) return matchedProf.seriesId;
     }
     return fallbackSeriesId;
-  }, [explicitSeriesId, frameConfig.leftEdge?.profileId, profilesData, fallbackSeriesId]);
+  }, [sketchMode, explicitSeriesId, frameConfig.leftEdge?.profileId, profilesData, fallbackSeriesId]);
 
   const availableProfiles = useMemo(() => {
     const allItems = profilesData?.items || [];
@@ -829,7 +846,7 @@ export function useDoorStudioState({
 
   const availableBeads = useMemo(() => {
     return availableProfiles.filter(
-      (p) => p.barType?.toUpperCase() === 'BEAD' || (p as any).category === 'bead'
+      (p) => p.barType?.toUpperCase() === 'BEAD' || (p as typeof p & { category?: string }).category === 'bead'
     );
   }, [availableProfiles]);
 
@@ -837,7 +854,7 @@ export function useDoorStudioState({
   const { data: combosData, isSuccess: isCombosLoaded } = useQuery({
     queryKey: ['accessory-combos-list'],
     queryFn: () => getAccessoryCombos({ limit: 500 }),
-    enabled: isOpen,
+    enabled: isOpen && !sketchMode,
   });
   const availableCombos = combosData?.items || [];
 
@@ -852,7 +869,7 @@ export function useDoorStudioState({
   const { data: accessoriesData } = useQuery({
     queryKey: ['accessories-list'],
     queryFn: () => getAccessories({ limit: 1000, isActive: true }),
-    enabled: isOpen,
+    enabled: isOpen && !sketchMode,
   });
   const availableAccessories = accessoriesData?.items || [];
 
@@ -875,7 +892,7 @@ export function useDoorStudioState({
   const { data: brandColorsData } = useQuery({
     queryKey: ['brand-colors', brandId],
     queryFn: () => getBrandColors({ brandId: brandId || undefined, limit: 100, isActive: true }),
-    enabled: isOpen && !!brandId,
+    enabled: isOpen && !sketchMode && !!brandId,
   });
   const availableBrandColors = useMemo(() => brandColorsData?.items || [], [brandColorsData]);
 
@@ -1190,7 +1207,10 @@ export function useDoorStudioState({
       if (rawColor) setAluminumColor(rawColor);
       const rawHwColor = (sc.hardwareColor || '').trim();
       if (rawHwColor) setHardwareColor(rawHwColor);
-      if (sc.seriesId) {
+      if (sketchMode) {
+        setSelectedBrandId(null);
+        setSeriesId(undefined);
+      } else if (sc.seriesId) {
         setSeriesId(sc.seriesId);
         prevSeriesIdRef.current = sc.seriesId;
         const curSeries = allAvailableSeries.find((s) => s.id === sc.seriesId);
@@ -1218,12 +1238,12 @@ export function useDoorStudioState({
         setSelectedComboIds([]);
       }
       if (sc.selectedAccessories && Array.isArray(sc.selectedAccessories)) {
-        const cleanAccs = sc.selectedAccessories
-          .filter((a: any) => a && (a.accessoryId || a.accessory_id))
-          .map((a: any) => ({
-            accessoryId: Number(a.accessoryId || a.accessory_id),
-            quantity: Number(a.quantity || a.qty || 1),
-            note: a.note || null,
+        const cleanAccs = (sc.selectedAccessories as Array<Record<string, unknown>>)
+          .filter((a) => Boolean(a && a.accessoryId))
+          .map((a) => ({
+            accessoryId: Number(a.accessoryId),
+            quantity: Number(a.quantity || 1),
+            note: typeof a.note === 'string' ? a.note : null,
           }));
         setSelectedAccessories(cleanAccs);
       } else {
@@ -1251,7 +1271,7 @@ export function useDoorStudioState({
       setIsMullionModalOpen(false);
       setCalcData(null);
       if (isFirstOpen) {
-        setActiveMainTab(initialTab || 'info');
+        setActiveMainTab(resolvedInitialTab);
       }
     } else {
       const defaultW = 1400;
@@ -1266,14 +1286,20 @@ export function useDoorStudioState({
       setFrameShape('rect');
       setAluminumColor('#955F20');
       setHardwareColor('#1E293B');
-      const initialBrandId = defaultBrandId || (availableBrands[0]?.id ?? null);
-      setSelectedBrandId(initialBrandId);
-      const brandSeriesList = initialBrandId
-        ? allAvailableSeries.filter((s) => s.brandId === initialBrandId)
-        : allAvailableSeries;
-      const initialSeriesId = brandSeriesList[0]?.id || undefined;
-      setSeriesId(initialSeriesId);
-      prevSeriesIdRef.current = initialSeriesId;
+      if (sketchMode) {
+        setSelectedBrandId(null);
+        setSeriesId(undefined);
+        prevSeriesIdRef.current = undefined;
+      } else {
+        const initialBrandId = defaultBrandId || (availableBrands[0]?.id ?? null);
+        setSelectedBrandId(initialBrandId);
+        const brandSeriesList = initialBrandId
+          ? allAvailableSeries.filter((s) => s.brandId === initialBrandId)
+          : allAvailableSeries;
+        const initialSeriesId = brandSeriesList[0]?.id || undefined;
+        setSeriesId(initialSeriesId);
+        prevSeriesIdRef.current = initialSeriesId;
+      }
       setSelectedComboIds([]);
       setSelectedAccessories([]);
       setFrameConfig(DEFAULT_FRAME_CONFIG);
@@ -1287,9 +1313,9 @@ export function useDoorStudioState({
       setIsMullionModalOpen(false);
       setCalcData(null);
       setIsCalculating(false);
-      setActiveMainTab(initialTab || 'info');
+      setActiveMainTab(resolvedInitialTab);
     }
-  }, [door, isOpen, defaultBrandId, initialTab, allAvailableSeries.length]);
+  }, [door, isOpen, defaultBrandId, resolvedInitialTab, sketchMode, allAvailableSeries.length]);
 
   const pushState = (newRoot: SceneCellNode) => {
     const nextHist = [...history.slice(0, historyIdx + 1), newRoot];
@@ -1934,7 +1960,10 @@ export function useDoorStudioState({
 
   // Realtime calculate BOM
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || sketchMode) {
+      setIsCalculating(false);
+      return;
+    }
     let isMounted = true;
     setIsCalculating(true);
 
@@ -1989,7 +2018,7 @@ export function useDoorStudioState({
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [isOpen, door?.id, initialSystemConfig, w, h, frameShape, aluminumColor, rootCell, frameConfig, sashConfig, effectiveSeriesId, validSelectedComboIds, selectedAccessories]);
+  }, [isOpen, sketchMode, door?.id, initialSystemConfig, w, h, frameShape, aluminumColor, rootCell, frameConfig, sashConfig, effectiveSeriesId, validSelectedComboIds, selectedAccessories]);
 
   const handleToggleCombo = (comboId: number) => {
     setSelectedComboIds((prev) =>
@@ -2159,6 +2188,7 @@ export function useDoorStudioState({
   };
 
   return {
+    visibleNavTabs,
     activeMainTab,
     setActiveMainTab,
     w,

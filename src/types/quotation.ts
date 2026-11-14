@@ -1,4 +1,5 @@
 // Module 003: Step 2 Live Pricing Engine & Quotation
+import type { DoorFulfillmentType, PositionCostStatus } from './supplier-door';
 
 /**
  * Vòng duyệt báo giá: draft -> pending_approval (chờ admin) -> approved -> sent (chờ khách)
@@ -63,6 +64,13 @@ export interface QuotationDoorItemSnapshot {
   doorOnlyCostPrice: number;
   doorOnlySuggestedPrice: number;
   doorOnlySellingPrice: number;
+  fulfillmentType: DoorFulfillmentType;
+  supplierId: number | null;
+  supplierName: string | null;
+  supplierDoorId: number | null;
+  costStatus: PositionCostStatus;
+  supplierCostPrice: number;
+  isInstallationIncluded: boolean;
 }
 
 export interface ProjectQuotationPreviewResponse {
@@ -329,7 +337,7 @@ export type QuotationBomUnit =
 
 export type QuotationAuxiliaryItemType = 'gasket' | 'accessory' | 'auxiliary';
 export type QuotationLaborRowCode = 'production' | 'install' | 'clean';
-export type QuotationMaterialRowCode = 'profile' | 'glass' | 'gasket' | 'accessory';
+export type QuotationMaterialRowCode = 'profile' | 'glass' | 'gasket' | 'accessory' | 'outsourced_door';
 
 export interface QuotationMaterialCostRow {
   code: QuotationMaterialRowCode;

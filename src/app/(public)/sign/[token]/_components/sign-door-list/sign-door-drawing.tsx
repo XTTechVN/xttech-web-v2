@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { getFileUrl } from '@/utils/string';
+import { resolvePositionVisual } from '@/utils';
 import type { PublicSigningItem } from '@/types';
 
 const DoorThumbnail = dynamic(
@@ -19,27 +19,36 @@ interface SignDoorDrawingProps {
   className?: string;
 }
 
-/** Bản vẽ cửa: CAD từ systemConfig, fallback ảnh `imagePath`. Chỉ nên mount khi thẻ đã mở. */
+/** Bản vẽ cửa: chuẩn hóa qua resolvePositionVisual (ưu tiên CAD nếu có rootCell, ngược lại hiển thị ảnh). */
 export function SignDoorDrawing({ item, hideDimensions = true, className = '' }: SignDoorDrawingProps) {
   const systemConfig = item.drawing?.systemConfig;
-  const imageUrl = getFileUrl(item.drawing?.imagePath);
+  const hasCadRoot = Boolean(
+    systemConfig && typeof systemConfig === 'object' && 'rootCell' in systemConfig && systemConfig.rootCell,
+  );
+  const visual = resolvePositionVisual({
+    visualMode: item.spec.supplierName && item.drawing?.imagePath ? undefined : hasCadRoot ? 'cad' : undefined,
+    designImage: item.drawing?.imagePath,
+    systemConfig,
+  });
 
-  if (systemConfig && Object.keys(systemConfig).length > 0) {
+  if (visual.systemConfig) {
     return (
       <div className={className}>
-        <DoorThumbnail systemConfig={systemConfig} hideDimensions={hideDimensions} />
+        <DoorThumbnail systemConfig={visual.systemConfig} hideDimensions={hideDimensions} />
       </div>
     );
   }
-  if (imageUrl) {
+  if (visual.imageUrl) {
     return (
       <div className={className}>
-        { }
-        <img src={imageUrl} alt={`Bản vẽ ${item.code}`} className="h-full w-full object-contain" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={visual.imageUrl} alt={`Bản vẽ ${item.code}`} className="h-full w-full object-contain" />
       </div>
     );
   }
   return (
-    <div className={`flex items-center justify-center text-[11px] text-slate-400 ${className}`}>Chưa có bản vẽ</div>
+    <div className={`flex items-center justify-center text-[11px] text-slate-400 ${className}`}>
+      Chưa có bản vẽ
+    </div>
   );
 }

@@ -196,7 +196,7 @@ export function useProjectPositions(projectId: number) {
   const handleOpenStudioForPosition = (pos: ProjectDoorPosition) => {
     setPendingDrawInit(null);
     setEditingStudioPosition(pos);
-    setStudioInitialTab('info');
+    setStudioInitialTab(pos.fulfillmentType === 'outsourced' ? 'draw' : 'info');
     setStudioTemplateDoorId(pos.templateDoorId ?? pos.templateDoor?.id ?? null);
     setStudioTemplateDoorName(pos.templateDoor?.name || pos.description || pos.code);
     const sc = (pos.systemConfig || {}) as Record<string, unknown>;
@@ -269,18 +269,26 @@ export function useProjectPositions(projectId: number) {
     systemConfig: Record<string, unknown>;
   }) => {
     if (editingStudioPosition) {
+      const isOutsourced = editingStudioPosition.fulfillmentType === 'outsourced';
       await updateProjectPosition(projectId, editingStudioPosition.id, {
         code: saveData.code.trim() || editingStudioPosition.code,
         width: saveData.width,
         height: saveData.height,
         doorType: saveData.type,
         description: saveData.name,
-        templateDoorId: studioTemplateDoorId ?? editingStudioPosition.templateDoorId ?? undefined,
-        doorSeriesId: saveData.doorSeriesId || undefined,
+        templateDoorId: isOutsourced
+          ? undefined
+          : studioTemplateDoorId ?? editingStudioPosition.templateDoorId ?? undefined,
+        doorSeriesId: isOutsourced ? undefined : saveData.doorSeriesId || undefined,
+        visualMode: isOutsourced
+          ? editingStudioPosition.customImagePath
+            ? editingStudioPosition.visualMode
+            : 'cad'
+          : undefined,
         systemConfig: saveData.systemConfig,
       });
       invalidatePositionsAndProject();
-      toast.success('Đã cập nhật bản vẽ vị trí cửa dự án');
+      toast.success(isOutsourced ? 'Đã lưu phác thảo 2D cửa NCC' : 'Đã cập nhật bản vẽ vị trí cửa dự án');
       return;
     }
 
@@ -304,10 +312,16 @@ export function useProjectPositions(projectId: number) {
     toast.success(`Đã thêm cửa ${created.code} vào dự án`);
   };
 
+  const hasOutsourcedDoors = useMemo(
+    () => allPositions.some((pos) => pos.fulfillmentType === 'outsourced'),
+    [allPositions],
+  );
+
   return {
     floors,
     allPositions,
     positions,
+    hasOutsourcedDoors,
     floorCountsMap,
     selectedFloorId,
     setSelectedFloorId,

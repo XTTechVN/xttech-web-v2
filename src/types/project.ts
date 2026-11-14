@@ -5,6 +5,13 @@ import type { User } from './user';
 import type { Brand, BrandColor } from './brand';
 import type { DoorSeries } from './door-series';
 import type { Door } from './door';
+import type {
+  DoorFulfillmentType,
+  PositionCostStatus,
+  PositionVisualMode,
+  SupplierBrief,
+  SupplierDoorBrief,
+} from './supplier-door';
 
 export type ProjectStatus =
   | 'draft'
@@ -213,7 +220,15 @@ export interface ProjectDoorPosition {
   isContracted?: boolean | null;
   /** Cửa thuộc phương án thiết kế đang chào khách (null = cửa chính thức) */
   designOptionId?: number | null;
-  systemConfig?: Record<string, any> | null;
+  systemConfig?: Record<string, unknown> | null;
+  fulfillmentType: DoorFulfillmentType;
+  supplierId: number | null;
+  supplierDoorId: number | null;
+  costStatus: PositionCostStatus;
+  supplierCostPrice: number;
+  isInstallationIncluded: boolean;
+  customImagePath: string | null;
+  visualMode: PositionVisualMode;
   createdAt: string;
   updatedAt: string;
   floor?: Pick<ProjectFloor, 'id' | 'name'> | null;
@@ -221,6 +236,8 @@ export interface ProjectDoorPosition {
   brand?: Pick<Brand, 'id' | 'name'> | null;
   doorSeries?: Pick<DoorSeries, 'id' | 'name'> | null;
   color?: Pick<BrandColor, 'id' | 'name' | 'colorHex'> | null;
+  supplier?: SupplierBrief | null;
+  supplierDoor?: SupplierDoorBrief | null;
 }
 
 export interface ProjectDoorPositionCreate {
@@ -239,7 +256,14 @@ export interface ProjectDoorPositionCreate {
   glassId?: number;
 
   status?: DoorPositionStatus;
-  systemConfig?: Record<string, any>;
+  systemConfig?: Record<string, unknown>;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierId?: number | null;
+  supplierDoorId?: number | null;
+  costStatus?: PositionCostStatus;
+  supplierCostPrice?: number | null;
+  isInstallationIncluded?: boolean;
+  visualMode?: PositionVisualMode;
 }
 
 export interface ProjectDoorPositionBulkCreate {
@@ -258,7 +282,14 @@ export interface ProjectDoorPositionBulkCreate {
   colorId?: number;
   glassId?: number;
 
-  systemConfig?: Record<string, any>;
+  systemConfig?: Record<string, unknown>;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierId?: number | null;
+  supplierDoorId?: number | null;
+  costStatus?: PositionCostStatus;
+  supplierCostPrice?: number | null;
+  isInstallationIncluded?: boolean;
+  visualMode?: PositionVisualMode;
 }
 
 export interface ProjectDoorPositionUpdate {
@@ -276,8 +307,15 @@ export interface ProjectDoorPositionUpdate {
   glassId?: number;
 
   status?: DoorPositionStatus;
-  systemConfig?: Record<string, any>;
+  systemConfig?: Record<string, unknown>;
   revision?: number;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierId?: number | null;
+  supplierDoorId?: number | null;
+  costStatus?: PositionCostStatus;
+  supplierCostPrice?: number | null;
+  isInstallationIncluded?: boolean;
+  visualMode?: PositionVisualMode;
 }
 
 export interface ProjectDoorPositionDuplicate {
@@ -509,6 +547,8 @@ export interface ProgressMatrixItem {
   width: number;
   height: number;
   areaM2: number;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierName?: string | null;
   currentStatus: ProgressStepCode;
   surveyed: ProgressStepStatus;
   producing: ProgressStepStatus;

@@ -12,6 +12,7 @@ import {
   Ruler,
   PackageOpen,
   LayoutGrid,
+  Store,
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { usePermission } from '@/hooks';
@@ -29,6 +30,7 @@ const ProfileBarsTab = dynamic(() => import('./profile-bars'), { loading: Config
 const GlassGasketsTab = dynamic(() => import('./glass-gaskets'), { loading: ConfigTabFallback });
 const DoorsTab = dynamic(() => import('./doors'), { loading: ConfigTabFallback });
 const DoorTemplatesTab = dynamic(() => import('./door-templates'), { loading: ConfigTabFallback });
+const SupplierDoorsTab = dynamic(() => import('./supplier-doors'), { loading: ConfigTabFallback });
 const AccessoriesTab = dynamic(() => import('./accessories'), { loading: ConfigTabFallback });
 const AccessoryCombosTab = dynamic(() => import('./accessory-combos'), { loading: ConfigTabFallback });
 
@@ -83,6 +85,13 @@ const TABS: ConfigTab[] = [
     label: 'Mẫu cửa',
     component: DoorTemplatesTab,
     icon: <LayoutGrid size={16} />,
+    roles: ALL_ROLES,
+  },
+  {
+    id: 'supplier-doors',
+    label: 'Cửa nhập NCC',
+    component: SupplierDoorsTab,
+    icon: <Store size={16} />,
     roles: ALL_ROLES,
   },
   {

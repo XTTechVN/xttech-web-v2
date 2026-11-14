@@ -60,13 +60,22 @@ export function CreateProductionOrderModal({
     onError: (err) => showErrorToast(err, 'Lỗi lập lệnh sản xuất'),
   });
 
-  // Lệnh thường: cửa đã đo & chờ sản xuất. Lệnh làm lại: cửa đã sản xuất xong nhưng chưa nghiệm thu.
-  const isEligible = (position: ProjectDoorPosition): boolean =>
-    isRework
+  const inHousePositions = positions.filter((p) => p.fulfillmentType !== 'outsourced');
+  const outsourcedCount = positions.length - inHousePositions.length;
+
+  // Lệnh thường: cửa tự SX đã đo & chờ sản xuất. Lệnh làm lại: cửa tự SX đã sản xuất xong nhưng chưa nghiệm thu.
+  const isEligible = (position: ProjectDoorPosition): boolean => {
+    if (position.fulfillmentType === 'outsourced') return false;
+    return isRework
       ? REWORKABLE_STATUSES.includes(position.status)
       : !!position.isMeasured && (!position.status || position.status === 'surveyed');
+  };
 
   const toggle = (position: ProjectDoorPosition) => {
+    if (position.fulfillmentType === 'outsourced') {
+      toast.error(`Bộ cửa ${position.code} là cửa nhập nguyên bộ NCC, không đưa vào lệnh sản xuất xưởng.`);
+      return;
+    }
     if (isRework) {
       if (!isEligible(position)) {
         toast.error(`Bộ cửa ${position.code} chưa sản xuất xong hoặc đã nghiệm thu nên không thể làm lại.`);
@@ -165,14 +174,23 @@ export function CreateProductionOrderModal({
             </span>
           </div>
 
+          {outsourcedCount > 0 && (
+            <div className="mb-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] text-primary">
+              Đã ẩn <span className="font-bold">{outsourcedCount}</span> cửa nhập nguyên bộ NCC
+              (không lập lệnh sản xuất tại xưởng).
+            </div>
+          )}
+
           <div className="max-h-[380px] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/40 p-3 space-y-4">
-            {positions.length === 0 ? (
+            {inHousePositions.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400">
-                Dự án chưa có vị trí cửa nào.
+                {positions.length === 0
+                  ? 'Dự án chưa có vị trí cửa nào.'
+                  : 'Tất cả vị trí cửa trong dự án đều là cửa nhập nguyên bộ NCC.'}
               </div>
             ) : (
               (() => {
-                const grouped = positions.reduce((acc, pos) => {
+                const grouped = inHousePositions.reduce((acc, pos) => {
                   const floorName = pos.floor?.name || 'Tầng khác';
                   if (!acc[floorName]) acc[floorName] = [];
                   acc[floorName].push(pos);

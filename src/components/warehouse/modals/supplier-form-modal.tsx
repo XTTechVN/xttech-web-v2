@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Building2 } from 'lucide-react';
 import { Button, Input, Modal, Select, Switch, type SelectOption } from '@/components';
@@ -14,6 +14,7 @@ export interface SupplierFormModalProps {
   onClose: () => void;
   onSuccess: (newSupplier?: WarehouseSupplier) => void;
   initialData?: WarehouseSupplier | null;
+  defaultType?: SupplierType;
 }
 
 const SUPPLIER_TYPE_OPTIONS: SelectOption[] = Object.entries(SUPPLIER_TYPE_MAP)
@@ -23,43 +24,31 @@ const SUPPLIER_TYPE_OPTIONS: SelectOption[] = Object.entries(SUPPLIER_TYPE_MAP)
     label,
   }));
 
-export function SupplierFormModal({
+export function SupplierFormModal(props: SupplierFormModalProps) {
+  const modalKey = `${props.initialData?.id ?? 'new'}-${props.defaultType ?? 'aluminum'}-${props.isOpen ? 'open' : 'closed'}`;
+  return <SupplierFormModalInner key={modalKey} {...props} />;
+}
+
+function SupplierFormModalInner({
   isOpen,
   onClose,
   onSuccess,
   initialData,
+  defaultType,
 }: SupplierFormModalProps) {
-  const [name, setName] = useState('');
-  const [supplierType, setSupplierType] = useState<SupplierType>('aluminum');
-  const [phone, setPhone] = useState('');
-  const [contactName, setContactName] = useState('');
-  const [address, setAddress] = useState('');
-  const [taxCode, setTaxCode] = useState('');
-  const [bankAccount, setBankAccount] = useState('');
-  const [isActive, setIsActive] = useState(true);
+  const [name, setName] = useState(initialData?.name || '');
+  const [supplierType, setSupplierType] = useState<SupplierType>(
+    initialData?.supplierType || defaultType || 'aluminum',
+  );
+  const [phone, setPhone] = useState(initialData?.phone || '');
+  const [contactName, setContactName] = useState(initialData?.contactName || '');
+  const [address, setAddress] = useState(initialData?.address || '');
+  const [taxCode, setTaxCode] = useState(initialData?.taxCode || '');
+  const [bankAccount, setBankAccount] = useState(initialData?.bankAccount || '');
+  const [isActive, setIsActive] = useState(initialData ? initialData.isActive !== false : true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (initialData) {
-      setName(initialData.name);
-      setSupplierType(initialData.supplierType);
-      setPhone(initialData.phone);
-      setContactName(initialData.contactName || '');
-      setAddress(initialData.address || '');
-      setTaxCode(initialData.taxCode || '');
-      setBankAccount(initialData.bankAccount || '');
-      setIsActive(initialData.isActive !== false);
-    } else {
-      setName('');
-      setSupplierType('aluminum');
-      setPhone('');
-      setContactName('');
-      setAddress('');
-      setTaxCode('');
-      setBankAccount('');
-      setIsActive(true);
-    }
-  }, [initialData, isOpen]);
+  const isTypeLocked = Boolean(defaultType) && !initialData;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,6 +176,7 @@ export function SupplierFormModal({
               value={supplierType}
               onChange={(e) => setSupplierType(e.target.value as SupplierType)}
               options={SUPPLIER_TYPE_OPTIONS}
+              disabled={isTypeLocked}
             />
           </div>
 

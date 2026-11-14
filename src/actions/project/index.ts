@@ -1,6 +1,16 @@
 import api from '@/utils/api';
+import { downloadOrShareBlob, getFilenameFromContentDisposition } from '@/utils';
 import type { BaseResponseWithPagination } from '@/components';
-import type { Project, ProjectCreate, ProjectDetail, ProjectQueryParams, ProjectUpdate } from '@/types';
+import type {
+  OutsourcedRfqExportParams,
+  Project,
+  ProjectCreate,
+  ProjectDetail,
+  ProjectDoorPosition,
+  ProjectQueryParams,
+  ProjectUpdate,
+  SupplierQuoteUpdatePayload,
+} from '@/types';
 
 export const getProjects = async (params?: ProjectQueryParams): Promise<BaseResponseWithPagination<Project>> => {
   try {
@@ -167,8 +177,8 @@ export const getProject = async (id: number): Promise<ProjectDetail> => {
     const response = await api.get(`/api/v1/projects/${id}`);
     return response.data;
   } catch (error: unknown) {
-    const axiosError = error as any;
-    console.error('API error getProject:', axiosError.response?.data || axiosError.message || axiosError);
+    const axiosError = error as { response?: { data?: unknown }; message?: string };
+    console.error('API error getProject:', axiosError.response?.data || axiosError.message || error);
     throw error;
   }
 };
@@ -376,6 +386,59 @@ export const measureProjectPosition = async (
     return response.data;
   } catch (error) {
     console.warn('API error measureProjectPosition', error);
+    throw error;
+  }
+};
+
+export const updateSupplierPositionQuote = async (
+  projectId: number,
+  positionId: number,
+  payload: {
+    data: SupplierQuoteUpdatePayload;
+    file?: File | null;
+  },
+): Promise<ProjectDoorPosition> => {
+  try {
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(payload.data));
+    if (payload.file) {
+      formData.append('file', payload.file);
+    }
+    const response = await api.put(
+      `/api/v1/projects/${projectId}/positions/${positionId}/supplier-quote`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error updateSupplierPositionQuote', error);
+    throw error;
+  }
+};
+
+export const exportOutsourcedRfqExcel = async (
+  projectId: number,
+  params?: OutsourcedRfqExportParams,
+): Promise<void> => {
+  try {
+    const query: Record<string, unknown> = {};
+    if (params?.supplierId) query.supplierId = params.supplierId;
+    if (params?.positionIds && params.positionIds.length > 0) query.positionIds = params.positionIds;
+    if (params?.designOptionId) query.designOptionId = params.designOptionId;
+
+    const response = await api.get(`/api/v1/projects/${projectId}/positions/outsourced-rfq/excel`, {
+      params: query,
+      paramsSerializer: { indexes: null },
+      responseType: 'blob',
+    });
+    const disposition = response.headers['content-disposition'];
+    const fileName = getFilenameFromContentDisposition(
+      disposition,
+      `yeu_cau_bao_gia_cua_ncc_du_an_${projectId}.xlsx`,
+    );
+    await downloadOrShareBlob(response.data, fileName);
+  } catch (error: unknown) {
+    console.warn('API error exportOutsourcedRfqExcel', error);
     throw error;
   }
 };

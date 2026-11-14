@@ -2,7 +2,9 @@
 
 import React from 'react';
 import { Check, ImageOff } from 'lucide-react';
+import { DOOR_FULFILLMENT_TYPE_MAP } from '@/config';
 import { cn } from '@/utils/cn';
+import { resolvePositionVisual } from '@/utils';
 import type { ProjectDoorPosition } from '@/types';
 import { DoorThumbnail } from '@/components';
 
@@ -25,7 +27,13 @@ export function ProductionDoorItem({
   statusVariant,
   tooltip,
 }: ProductionDoorItemProps) {
-  const hasSvg = Boolean((position.systemConfig as Record<string, unknown> | undefined)?.rootCell);
+  const isOutsourced = position.fulfillmentType === 'outsourced';
+  const visual = resolvePositionVisual({
+    visualMode: position.visualMode,
+    customImagePath: position.customImagePath,
+    catalogImagePath: position.supplierDoor?.imagePath ?? null,
+    systemConfig: (position.systemConfig as Record<string, unknown> | undefined) ?? null,
+  });
   const doorName = position.description || (position.doorType === 'window' ? 'Cửa sổ' : 'Cửa đi');
   const floorText = position.floor?.name || 'Tầng 1';
 
@@ -41,10 +49,19 @@ export function ProductionDoorItem({
       )}
     >
       {/* Header card: Mã cửa + Checkbox */}
-      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-2.5 py-1.5">
-        <span className="text-xs font-bold tracking-tight text-slate-800" title={position.code}>
-          {position.code}
-        </span>
+      <div className="flex items-center justify-between gap-1.5 border-b border-slate-100 bg-white px-2.5 py-1.5">
+        <div className="flex min-w-0 items-center gap-1">
+          <span className="text-xs font-bold tracking-tight text-slate-800" title={position.code}>
+            {position.code}
+          </span>
+          {isOutsourced && (
+            <span
+              className={`shrink-0 rounded px-1 py-0.5 text-[9px] font-semibold ${DOOR_FULFILLMENT_TYPE_MAP.outsourced.badgeClass}`}
+            >
+              {DOOR_FULFILLMENT_TYPE_MAP.outsourced.shortLabel}
+            </span>
+          )}
+        </div>
 
         <div
           className={cn(
@@ -58,7 +75,7 @@ export function ProductionDoorItem({
         </div>
       </div>
 
-      {/* Bản vẽ CAD trực quan + Badge trạng thái overlay */}
+      {/* Bản vẽ CAD / Ảnh mẫu trực quan + Badge trạng thái overlay */}
       <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-slate-50/60 p-2">
         {statusLabel && (
           <div className="absolute top-1.5 left-1.5 z-10">
@@ -76,18 +93,25 @@ export function ProductionDoorItem({
           </div>
         )}
 
-        {hasSvg ? (
+        {visual.systemConfig ? (
           <div className="pointer-events-none h-full w-full p-0.5 transition-transform duration-300 group-hover:scale-105">
             <DoorThumbnail
-              systemConfig={position.systemConfig}
+              systemConfig={visual.systemConfig}
               hideDimensions={false}
               className="h-full w-full"
             />
           </div>
+        ) : visual.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={visual.imageUrl}
+            alt={doorName}
+            className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+          />
         ) : (
           <div className="flex flex-col items-center gap-1 text-slate-300">
             <ImageOff size={22} />
-            <span className="text-[9px]">Chưa có CAD</span>
+            <span className="text-[9px]">Chưa có hình ảnh</span>
           </div>
         )}
       </div>
@@ -98,10 +122,10 @@ export function ProductionDoorItem({
         </p>
 
         <div className="flex items-center justify-between text-[11px] text-slate-500">
-          <span className="font-medium">
+          <span className="font-medium font-mono tabular-nums">
             {position.width} × {position.height} mm
           </span>
-          <span className="font-mono text-[10px] text-slate-400">
+          <span className="font-mono tabular-nums text-[10px] text-slate-400">
             {(position.areaM2 ?? 0).toFixed(2)} m²
           </span>
         </div>

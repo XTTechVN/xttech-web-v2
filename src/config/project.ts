@@ -1,4 +1,7 @@
 import type {
+  DoorFulfillmentType,
+  PositionCostStatus,
+  PositionVisualMode,
   ProjectStatus,
   WarrantyIssueTag,
   WarrantyState,
@@ -188,4 +191,44 @@ export const CORNER_JOINT_TYPE_MAP: Record<
     methodLabel: 'Ghép 45°',
     badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200/60',
   },
+};
+
+export const DOOR_FULFILLMENT_TYPE_MAP: Record<
+  DoorFulfillmentType,
+  { label: string; shortLabel: string; badgeClass: string }
+> = {
+  in_house: {
+    label: 'Tự sản xuất',
+    shortLabel: 'Tự SX',
+    badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200',
+  },
+  outsourced: {
+    label: 'Nhập nguyên bộ (NCC)',
+    shortLabel: 'Nhập NCC',
+    badgeClass: 'bg-primary/10 text-primary border border-primary/25',
+  },
+};
+
+export const POSITION_COST_STATUS_MAP: Record<
+  PositionCostStatus,
+  { label: string; shortLabel: string; variant: NonNullable<BadgeProps['variant']>; badgeClass: string }
+> = {
+  estimated: {
+    label: 'Giá tạm tính',
+    shortLabel: 'Tạm tính',
+    variant: 'warning',
+    badgeClass: 'bg-amber-50 text-amber-800 border border-amber-200',
+  },
+  confirmed: {
+    label: 'Đã chốt giá NCC',
+    shortLabel: 'Đã chốt giá',
+    variant: 'success',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  },
+};
+
+export const POSITION_VISUAL_MODE_MAP: Record<PositionVisualMode, string> = {
+  cad: 'Bản vẽ CAD 2D',
+  catalog_image: 'Ảnh mẫu NCC',
+  custom_image: 'Ảnh báo giá NCC',
 };

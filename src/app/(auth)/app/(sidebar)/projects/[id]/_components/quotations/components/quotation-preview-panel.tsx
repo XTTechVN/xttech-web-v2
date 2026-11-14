@@ -66,6 +66,9 @@ function PreviewResult({
   isCalculating: boolean;
 }) {
   const belowCostCount = result.items.filter((item) => item.isBelowCost).length;
+  const estimatedOutsourcedCount = result.items.filter(
+    (item) => item.fulfillmentType === 'outsourced' && item.costStatus === 'estimated',
+  ).length;
 
   return (
     <div className={`space-y-4 transition-opacity ${isCalculating ? 'opacity-50' : ''}`}>
@@ -78,6 +81,15 @@ function PreviewResult({
       {belowCostCount > 0 && (
         <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
           Có {belowCostCount} bộ cửa đang bán thấp hơn chi phí làm ra.
+        </div>
+      )}
+      {estimatedOutsourcedCount > 0 && (
+        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-start gap-2">
+          <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-600" />
+          <span>
+            Có <span className="font-bold">{estimatedOutsourcedCount}</span> cửa nhập nguyên bộ NCC
+            đang dùng giá tạm tính.
+          </span>
         </div>
       )}
       {result.warningFlags.map((flag) => (
