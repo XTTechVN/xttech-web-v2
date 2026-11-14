@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { AiAssistantSection } from './ai-assistant-section';
 import { BenefitsSection } from './benefits-section';
-import { ContactBannerSection } from './contact-banner-section';
 import { PainPointsSection } from './pain-points-section';
 import { PillarsSection } from './pillars-section';
 import { ProjectReportsSection } from './project-reports-section';
@@ -29,9 +28,6 @@ export const HeroStoryPillarsSection = () => {
 
       {/* KHỐI 5: 8 TRỤ CỘT GIẢI PHÁP CỐT LÕI XTTECH */}
       <PillarsSection />
-
-      {/* BANNER LIÊN HỆ ĐỒNG HÀNH */}
-      <ContactBannerSection onOpenDemo={openDemo} />
 
       {/* Modal đăng ký Demo khi bấm nút */}
       <HeroDemoModalLazy isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />

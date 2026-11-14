@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Header } from './header';
 import { Footer } from './footer';
 import { FloatingContactDock } from './floating-contact-dock';
+import { HeroLiveSocialProof } from './hero';
 
 interface PublicLayoutShellProps {
   children: React.ReactNode;
@@ -89,6 +90,7 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
       </div>
       {!pathname?.startsWith('/news') && <Footer />}
       <FloatingContactDock />
+      <HeroLiveSocialProof />
     </div>
   );
 };

@@ -267,7 +267,7 @@ export const HeroProjectReportsCarousel = () => {
       </div>
 
       {/* Thanh chỉ báo tiến trình xoay vòng (Dots indicators) */}
-      <div className="mt-6 flex items-center justify-center gap-2">
+      <div className="mt-4 flex items-center justify-center gap-2">
         {PROJECT_REPORTS.map((rpt, i) => (
           <button
             key={rpt.id}
