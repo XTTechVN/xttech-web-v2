@@ -13,7 +13,7 @@ import { HeroStoryPillarsSection } from './hero-story-pillars';
 import { HeroRegisterInlineForm, markRegisterInteracted } from './hero-register-inline-form';
 
 export const Hero = () => {
-  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [isRegisterMode, setIsRegisterMode] = useState(true);
 
   return (
     <div className="relative overflow-hidden bg-white font-sans text-gray-900 selection:bg-primary/10 selection:text-primary">

@@ -1,16 +1,12 @@
 'use client';
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { Modal } from '@/components';
 import { Header } from './header';
 import { Footer } from './footer';
 import { FloatingContactDock } from './floating-contact-dock';
 import { HeroLiveSocialProof } from './hero';
 import { HeroSectionDots } from './hero/hero-section-dots';
-import {
-  HeroRegisterInlineForm,
-} from './hero/hero-register-inline-form';
 
 interface PublicLayoutShellProps {
   children: React.ReactNode;
@@ -44,19 +40,8 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
   const mainRef = useRef<HTMLDivElement | null>(null);
   const prevPathRef = useRef<string | null>(pathname);
   const prevIndexRef = useRef<number>(getRouteOrderIndex(pathname));
-  const [isAutoRegisterModalOpen, setIsAutoRegisterModalOpen] = useState(false);
 
   const isPortal = isPortalRoute(pathname);
-
-  // Mở sẵn Modal đăng ký mỗi lần vào/tải lại trang, chỉ đóng khi người dùng tự bấm tắt
-  useEffect(() => {
-    if (!isPortal) return;
-    setIsAutoRegisterModalOpen(true);
-  }, [isPortal]);
-
-  const handleCloseAutoModal = () => {
-    setIsAutoRegisterModalOpen(false);
-  };
 
   // Chạy đồng bộ trước khi trình duyệt vẽ (pre-paint) bằng Web Animations API GPU
   // Không dùng key={pathname} và không hạ opacity về 0 để triệt tiêu 100% hiện tượng nháy trắng
@@ -110,20 +95,6 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
       <FloatingContactDock />
       {pathname === '/' && <HeroLiveSocialProof />}
       {pathname === '/' && <HeroSectionDots />}
-
-      <Modal
-        isOpen={isAutoRegisterModalOpen}
-        onClose={handleCloseAutoModal}
-        size="md"
-        title="Đăng ký trải nghiệm XTTECH XMS Fab"
-        className="max-w-lg border border-primary/20"
-        bodyClassName="p-5 sm:p-6"
-      >
-        <HeroRegisterInlineForm
-          variant="modal"
-          onBack={handleCloseAutoModal}
-        />
-      </Modal>
     </div>
   );
 };

@@ -27,7 +27,7 @@ export function PillarsSection() {
   }, [isHoveringGrid, filteredPillars.length]);
 
   return (
-    <section className="py-6 lg:py-8 bg-slate-50/50">
+    <section id="core-pillars" className="scroll-mt-16 py-6 lg:py-8 bg-slate-50/50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary">

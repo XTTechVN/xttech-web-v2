@@ -21,6 +21,34 @@ export interface NewsCommentsSectionProps {
 
 const COMMENTS_LIMIT = 10;
 
+function getCommentAvatarUrl(commentId: number, authorName: string): string {
+  const seed = encodeURIComponent(`${commentId}-${authorName.trim() || 'guest'}`);
+  return `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+}
+
+function CommentAvatar({ commentId, authorName }: { commentId: number; authorName: string }) {
+  const [hasError, setHasError] = useState(false);
+  const initial = authorName.trim().charAt(0);
+
+  if (hasError) {
+    return (
+      <div className="w-9 h-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0 font-bold text-xs uppercase">
+        {initial || <User className="w-4 h-4" />}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={getCommentAvatarUrl(commentId, authorName)}
+      alt={authorName}
+      loading="lazy"
+      onError={() => setHasError(true)}
+      className="w-9 h-9 rounded-full border border-primary/20 bg-slate-100 object-cover shrink-0 shadow-2xs"
+    />
+  );
+}
+
 export function NewsCommentsSection({ slug, articleId, commentCount }: NewsCommentsSectionProps) {
   const { user, isManager } = usePermission();
   const [authorName, setAuthorName] = useState(() => user?.fullName || user?.username || '');
@@ -242,9 +270,7 @@ export function NewsCommentsSection({ slug, articleId, commentCount }: NewsComme
               className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200/80 shadow-2xs flex items-start justify-between gap-3"
             >
               <div className="flex items-start gap-3 min-w-0 flex-1">
-                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0 font-bold text-xs uppercase">
-                  {item.authorName.trim().charAt(0) || <User className="w-4 h-4" />}
-                </div>
+                <CommentAvatar commentId={item.id} authorName={item.authorName} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-bold text-slate-900">{item.authorName}</span>

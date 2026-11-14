@@ -21,7 +21,10 @@ export function BenefitsSection() {
   }, [isHoveringCards]);
 
   return (
-    <section className="relative overflow-hidden bg-white py-6 lg:py-8 border-b border-slate-200/80">
+    <section
+      id="benefits"
+      className="relative scroll-mt-16 overflow-hidden bg-white py-6 lg:py-8 border-b border-slate-200/80"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header trung tâm */}
         <div className="max-w-3xl space-y-2 mb-4">

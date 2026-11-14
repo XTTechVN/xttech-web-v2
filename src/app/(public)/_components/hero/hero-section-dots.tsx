@@ -12,8 +12,11 @@ const SECTION_DOTS: SectionDotItem[] = [
   { id: 'about', label: 'Tổng quan XTTech' },
   { id: 'advise-cad', label: 'Bản vẽ 2D & 3D' },
   { id: 'brands', label: 'Hãng nhôm & Phụ kiện' },
-  { id: 'story-pillars', label: 'Giải pháp cốt lõi' },
-  { id: 'featured-articles', label: 'Tin tức nổi bật' },
+  { id: 'pain-points', label: 'Vấn đề gặp phải' },
+  { id: 'benefits', label: 'Cải tiến quản lý' },
+  { id: 'ai-technology', label: 'Công nghệ AI' },
+  { id: 'core-pillars', label: 'Giải pháp cốt lõi' },
+  { id: 'featured-articles', label: 'Bài viết tiêu biểu' },
   { id: 'consultation', label: 'Đăng ký tư vấn' },
 ];
 
@@ -46,7 +49,8 @@ export const HeroSectionDots = () => {
 
       let currentId = elements[0].id;
       for (const el of elements) {
-        if (el.offsetTop <= viewportCenter) {
+        const elTop = el.getBoundingClientRect().top + window.scrollY;
+        if (elTop <= viewportCenter) {
           currentId = el.id;
         }
       }

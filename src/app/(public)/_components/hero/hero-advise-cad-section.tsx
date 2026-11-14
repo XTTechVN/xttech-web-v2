@@ -127,8 +127,8 @@ export const HeroAdviseCadSection = () => {
           <div className="lg:col-span-6">
             <div className="relative rounded-xl border border-gray-200 bg-white p-5 shadow-xl shadow-gray-200/50 sm:p-7">
               {/* Thanh điều khiển trên Card */}
-              <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">
-                <div className="relative grid grid-cols-2 items-center rounded-full bg-slate-100 p-1">
+              <div className="mb-4 flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="relative grid w-full grid-cols-2 items-center rounded-full bg-slate-100 p-1 sm:w-auto">
                   <span
                     aria-hidden="true"
                     className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-hero-accent shadow-sm transition-transform duration-300 ease-out ${
@@ -138,7 +138,7 @@ export const HeroAdviseCadSection = () => {
                   <button
                     type="button"
                     onClick={() => setViewMode('2d')}
-                    className={`relative z-10 cursor-pointer rounded-full px-3.5 py-1.5 text-center text-xs font-bold transition-colors duration-300 ${
+                    className={`relative z-10 cursor-pointer whitespace-nowrap rounded-full px-3.5 py-1.5 text-center text-xs font-bold transition-colors duration-300 ${
                       viewMode === '2d'
                         ? 'text-white'
                         : 'text-slate-600 hover:text-slate-900'
@@ -149,7 +149,7 @@ export const HeroAdviseCadSection = () => {
                   <button
                     type="button"
                     onClick={() => setViewMode('3d')}
-                    className={`relative z-10 cursor-pointer rounded-full px-3.5 py-1.5 text-center text-xs font-bold transition-colors duration-300 ${
+                    className={`relative z-10 cursor-pointer whitespace-nowrap rounded-full px-3.5 py-1.5 text-center text-xs font-bold transition-colors duration-300 ${
                       viewMode === '3d'
                         ? 'text-white'
                         : 'text-slate-600 hover:text-slate-900'
@@ -159,40 +159,42 @@ export const HeroAdviseCadSection = () => {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  {DOOR_COLOR_OPTIONS.map((colorOption) => (
-                    <button
-                      key={colorOption.key}
-                      type="button"
-                      onClick={() => setActiveTab(colorOption.key)}
-                      title={colorOption.label}
-                      style={{ backgroundColor: colorOption.swatch }}
-                      className={`h-5 w-5 rounded-full border-2 transition-all cursor-pointer ${
-                        activeTab === colorOption.key
-                          ? 'scale-110 border-primary ring-2 ring-primary/30'
-                          : 'border-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
+                <div className="flex items-center justify-between gap-3 sm:justify-end">
+                  <div className="flex items-center gap-1.5">
+                    {DOOR_COLOR_OPTIONS.map((colorOption) => (
+                      <button
+                        key={colorOption.key}
+                        type="button"
+                        onClick={() => setActiveTab(colorOption.key)}
+                        title={colorOption.label}
+                        style={{ backgroundColor: colorOption.swatch }}
+                        className={`h-5 w-5 rounded-full border-2 transition-all cursor-pointer ${
+                          activeTab === colorOption.key
+                            ? 'scale-110 border-primary ring-2 ring-primary/30'
+                            : 'border-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
 
-                <div className="flex items-center gap-1 text-gray-500">
-                  <button
-                    type="button"
-                    onClick={() => setZoom((z) => Math.min(1.18, Number((z + 0.08).toFixed(2))))}
-                    aria-label="Phóng to"
-                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100"
-                  >
-                    <ZoomIn className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setZoom((z) => Math.max(0.84, Number((z - 0.08).toFixed(2))))}
-                    aria-label="Thu nhỏ"
-                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100"
-                  >
-                    <ZoomOut className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1 text-gray-500">
+                    <button
+                      type="button"
+                      onClick={() => setZoom((z) => Math.min(1.18, Number((z + 0.08).toFixed(2))))}
+                      aria-label="Phóng to"
+                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100"
+                    >
+                      <ZoomIn className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setZoom((z) => Math.max(0.84, Number((z - 0.08).toFixed(2))))}
+                      aria-label="Thu nhỏ"
+                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100"
+                    >
+                      <ZoomOut className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
 

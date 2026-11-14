@@ -22,7 +22,10 @@ export function PainPointsSection() {
   }, [isHoveringList]);
 
   return (
-    <section className="relative overflow-hidden bg-white py-6 lg:py-8 border-b border-slate-100">
+    <section
+      id="pain-points"
+      className="relative scroll-mt-16 overflow-hidden bg-white py-6 lg:py-8 border-b border-slate-100"
+    >
       {/* Họa tiết lưới mờ nhẹ phong cách kiến trúc */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
