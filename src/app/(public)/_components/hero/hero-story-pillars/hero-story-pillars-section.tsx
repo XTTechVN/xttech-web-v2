@@ -1,16 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Modal } from '@/components';
 import { AiAssistantSection } from './ai-assistant-section';
 import { BenefitsSection } from './benefits-section';
 import { PainPointsSection } from './pain-points-section';
 import { PillarsSection } from './pillars-section';
 import { ProjectReportsSection } from './project-reports-section';
-import { HeroDemoModalLazy } from '../modals';
+import {
+  HeroRegisterInlineForm,
+  markRegisterInteracted,
+} from '../hero-register-inline-form';
 
 export const HeroStoryPillarsSection = () => {
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
-  const openDemo = () => setIsDemoModalOpen(true);
+  const openDemo = () => {
+    markRegisterInteracted();
+    setIsDemoModalOpen(true);
+  };
 
   return (
     <>
@@ -29,8 +36,20 @@ export const HeroStoryPillarsSection = () => {
       {/* KHỐI 5: 8 TRỤ CỘT GIẢI PHÁP CỐT LÕI XTTECH */}
       <PillarsSection />
 
-      {/* Modal đăng ký Demo khi bấm nút */}
-      <HeroDemoModalLazy isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
+      {/* Modal đăng ký trải nghiệm khi bấm nút */}
+      <Modal
+        isOpen={isDemoModalOpen}
+        onClose={() => setIsDemoModalOpen(false)}
+        size="md"
+        title="Đăng ký trải nghiệm XTTECH XMS Fab"
+        className="max-w-lg border border-primary/20"
+        bodyClassName="p-5 sm:p-6"
+      >
+        <HeroRegisterInlineForm
+          variant="modal"
+          onBack={() => setIsDemoModalOpen(false)}
+        />
+      </Modal>
     </>
   );
 };

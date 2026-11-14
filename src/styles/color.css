@@ -107,3 +107,32 @@ svg.text-hero-accent,
 .border-hero-accent {
   border-color: #0097b2 !important;
 }
+
+@keyframes footer-bar-slide {
+  0%,
+  100% {
+    transform: translateX(0%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-footer-bar-slide {
+  animation: footer-bar-slide 2.8s ease-in-out infinite;
+}
+
+@keyframes pillar-card-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-pillar-card-in {
+  animation: pillar-card-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

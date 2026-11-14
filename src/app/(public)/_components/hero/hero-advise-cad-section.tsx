@@ -2,19 +2,30 @@
 
 import React, { useState } from 'react';
 import { ZoomIn, ZoomOut } from 'lucide-react';
+import { Modal } from '@/components';
 import { ADVISE_ADVANTAGES } from './hero.constants';
+import {
+  HeroRegisterInlineForm,
+  markRegisterInteracted,
+} from './hero-register-inline-form';
 
 export const HeroAdviseCadSection = () => {
   const [activeTab, setActiveTab] = useState<'wood' | 'grey' | 'white'>('wood');
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [zoom, setZoom] = useState<number>(1);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+
+  const handleOpenRegisterModal = () => {
+    markRegisterInteracted();
+    setIsRegisterModalOpen(true);
+  };
 
   const frameColor = activeTab === 'wood' ? '#9a6a43' : activeTab === 'grey' ? '#4b5563' : '#cbd5e1';
   const frameDark = activeTab === 'wood' ? '#6d4728' : activeTab === 'grey' ? '#334155' : '#94a3b8';
   const sashColor = activeTab === 'wood' ? '#aa7a4f' : activeTab === 'grey' ? '#64748b' : '#f1f5f9';
 
   return (
-    <section className="border-t border-gray-100 bg-white py-16 lg:py-24">
+    <section className="border-t border-gray-100 bg-white pt-16 pb-8 lg:pt-24 lg:pb-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-2xl font-black tracking-tight text-[#16384C] uppercase sm:text-3xl lg:text-4xl">
@@ -49,6 +60,16 @@ export const HeroAdviseCadSection = () => {
                 );
               })}
             </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleOpenRegisterModal}
+                className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-primary bg-white px-6 py-3 text-sm font-bold text-primary shadow-sm transition-colors duration-200 hover:border-primary hover:bg-primary hover:text-white"
+              >
+                Đăng ký ngay
+              </button>
+            </div>
           </div>
 
           {/* Cột phải: Card preview Cửa 2D kỹ thuật cao */}
@@ -56,13 +77,19 @@ export const HeroAdviseCadSection = () => {
             <div className="relative rounded-xl border border-gray-200 bg-white p-5 shadow-xl shadow-gray-200/50 sm:p-7">
               {/* Thanh điều khiển trên Card */}
               <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">
-                <div className="inline-flex items-center rounded-full bg-slate-100 p-1">
+                <div className="relative grid grid-cols-2 items-center rounded-full bg-slate-100 p-1">
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-hero-accent shadow-sm transition-transform duration-300 ease-out ${
+                      viewMode === '3d' ? 'translate-x-full' : 'translate-x-0'
+                    }`}
+                  />
                   <button
                     type="button"
                     onClick={() => setViewMode('2d')}
-                    className={`cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                    className={`relative z-10 cursor-pointer rounded-full px-3.5 py-1.5 text-center text-xs font-bold transition-colors duration-300 ${
                       viewMode === '2d'
-                        ? 'bg-[#1e293b] text-white shadow-sm'
+                        ? 'text-white'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -71,9 +98,9 @@ export const HeroAdviseCadSection = () => {
                   <button
                     type="button"
                     onClick={() => setViewMode('3d')}
-                    className={`cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                    className={`relative z-10 cursor-pointer rounded-full px-3.5 py-1.5 text-center text-xs font-bold transition-colors duration-300 ${
                       viewMode === '3d'
-                        ? 'bg-primary text-white shadow-sm'
+                        ? 'text-white'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -129,9 +156,18 @@ export const HeroAdviseCadSection = () => {
               </div>
 
               {/* Khung vẽ Bản vẽ Cửa CAD 2D hoặc Mô hình 3D */}
-              <div className="relative flex min-h-95 items-center justify-center overflow-hidden rounded-2xl bg-white p-4 sm:p-6">
-                {viewMode === '3d' ? (
-                  /* Ảnh SVG 3D tĩnh siêu nhẹ, giống bố cục ảnh mẫu (nền tối, 2 cánh mở hé, kính hoa đồng) */
+              <div className="relative min-h-95 overflow-hidden rounded-2xl bg-white">
+                <div
+                  className={`flex w-[200%] items-center transition-transform duration-300 ease-out ${
+                    viewMode === '3d' ? '-translate-x-1/2' : 'translate-x-0'
+                  }`}
+                >
+                  <div
+                    className={`order-2 flex w-1/2 shrink-0 items-center justify-center p-4 transition-opacity duration-300 sm:p-6 ${
+                      viewMode === '3d' ? 'opacity-100' : 'opacity-40'
+                    }`}
+                  >
+                    {/* Ảnh SVG 3D tĩnh siêu nhẹ, giống bố cục ảnh mẫu (nền tối, 2 cánh mở hé, kính hoa đồng) */}
                   <svg
                     viewBox="0 0 540 620"
                     style={{ transform: `scale(${zoom})` }}
@@ -247,7 +283,12 @@ export const HeroAdviseCadSection = () => {
                       <rect x="282" y="320" width="24" height="6" rx="3" fill="#090d12" />
                     </g>
                   </svg>
-                ) : (
+                  </div>
+                  <div
+                    className={`order-1 flex w-1/2 shrink-0 items-center justify-center p-4 transition-opacity duration-300 sm:p-6 ${
+                      viewMode === '2d' ? 'opacity-100' : 'opacity-40'
+                    }`}
+                  >
                 <svg
                   viewBox="0 0 540 620"
                   style={{ transform: `scale(${zoom})` }}
@@ -356,7 +397,8 @@ export const HeroAdviseCadSection = () => {
                     2000
                   </text>
                 </svg>
-                )}
+                  </div>
+                </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
@@ -372,6 +414,20 @@ export const HeroAdviseCadSection = () => {
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        size="md"
+        title="Đăng ký trải nghiệm XTTECH XMS Fab"
+        className="max-w-lg border border-primary/20"
+        bodyClassName="p-5 sm:p-6"
+      >
+        <HeroRegisterInlineForm
+          variant="modal"
+          onBack={() => setIsRegisterModalOpen(false)}
+        />
+      </Modal>
     </section>
   );
 };
