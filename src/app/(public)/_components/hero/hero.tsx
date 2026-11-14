@@ -120,7 +120,7 @@ export const Hero = () => {
 
                       <Link
                         href="/pricing"
-                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-bold text-white backdrop-blur-xs transition-all hover:border-hero-accent hover:bg-white/15 hover:text-hero-accent"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-bold text-white backdrop-blur-xs transition-all hover:border-white hover:bg-white hover:text-primary hover:shadow-lg"
                       >
                         <span>Xem bảng giá dịch vụ</span>
                       </Link>

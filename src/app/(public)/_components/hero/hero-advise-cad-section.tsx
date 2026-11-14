@@ -9,8 +9,60 @@ import {
   markRegisterInteracted,
 } from './hero-register-inline-form';
 
+type DoorColorKey = 'wood' | 'grey' | 'white' | 'black' | 'champagne';
+
+const DOOR_COLOR_OPTIONS: {
+  key: DoorColorKey;
+  label: string;
+  swatch: string;
+  frameColor: string;
+  frameDark: string;
+  sashColor: string;
+}[] = [
+  {
+    key: 'wood',
+    label: 'Nhôm vân gỗ cao cấp',
+    swatch: '#966b43',
+    frameColor: '#9a6a43',
+    frameDark: '#6d4728',
+    sashColor: '#aa7a4f',
+  },
+  {
+    key: 'grey',
+    label: 'Nhôm xám ghi Xingfa',
+    swatch: '#4b5563',
+    frameColor: '#4b5563',
+    frameDark: '#334155',
+    sashColor: '#64748b',
+  },
+  {
+    key: 'white',
+    label: 'Nhôm trắng sứ tĩnh điện',
+    swatch: '#e2e8f0',
+    frameColor: '#cbd5e1',
+    frameDark: '#94a3b8',
+    sashColor: '#f1f5f9',
+  },
+  {
+    key: 'black',
+    label: 'Nhôm đen tuyền',
+    swatch: '#18181b',
+    frameColor: '#18181b',
+    frameDark: '#09090b',
+    sashColor: '#27272a',
+  },
+  {
+    key: 'champagne',
+    label: 'Nhôm Anode sâm panh',
+    swatch: '#bfa06a',
+    frameColor: '#bfa06a',
+    frameDark: '#8f7344',
+    sashColor: '#d1b582',
+  },
+];
+
 export const HeroAdviseCadSection = () => {
-  const [activeTab, setActiveTab] = useState<'wood' | 'grey' | 'white'>('wood');
+  const [activeTab, setActiveTab] = useState<DoorColorKey>('wood');
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [zoom, setZoom] = useState<number>(1);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -20,9 +72,8 @@ export const HeroAdviseCadSection = () => {
     setIsRegisterModalOpen(true);
   };
 
-  const frameColor = activeTab === 'wood' ? '#9a6a43' : activeTab === 'grey' ? '#4b5563' : '#cbd5e1';
-  const frameDark = activeTab === 'wood' ? '#6d4728' : activeTab === 'grey' ? '#334155' : '#94a3b8';
-  const sashColor = activeTab === 'wood' ? '#aa7a4f' : activeTab === 'grey' ? '#64748b' : '#f1f5f9';
+  const activeColor = DOOR_COLOR_OPTIONS.find((item) => item.key === activeTab) ?? DOOR_COLOR_OPTIONS[0];
+  const { frameColor, frameDark, sashColor } = activeColor;
 
   return (
     <section className="border-t border-gray-100 bg-white pt-16 pb-8 lg:pt-24 lg:pb-12">
@@ -109,30 +160,20 @@ export const HeroAdviseCadSection = () => {
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('wood')}
-                    title="Nhôm vân gỗ cao cấp"
-                    className={`h-5 w-5 rounded-full border-2 bg-[#966b43] transition-all cursor-pointer ${
-                      activeTab === 'wood' ? 'scale-110 border-primary ring-2 ring-primary/30' : 'border-gray-300'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('grey')}
-                    title="Nhôm xám ghi Xingfa"
-                    className={`h-5 w-5 rounded-full border-2 bg-[#4b5563] transition-all cursor-pointer ${
-                      activeTab === 'grey' ? 'scale-110 border-primary ring-2 ring-primary/30' : 'border-gray-300'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('white')}
-                    title="Nhôm trắng sứ tĩnh điện"
-                    className={`h-5 w-5 rounded-full border-2 bg-[#e2e8f0] transition-all cursor-pointer ${
-                      activeTab === 'white' ? 'scale-110 border-primary ring-2 ring-primary/30' : 'border-gray-300'
-                    }`}
-                  />
+                  {DOOR_COLOR_OPTIONS.map((colorOption) => (
+                    <button
+                      key={colorOption.key}
+                      type="button"
+                      onClick={() => setActiveTab(colorOption.key)}
+                      title={colorOption.label}
+                      style={{ backgroundColor: colorOption.swatch }}
+                      className={`h-5 w-5 rounded-full border-2 transition-all cursor-pointer ${
+                        activeTab === colorOption.key
+                          ? 'scale-110 border-primary ring-2 ring-primary/30'
+                          : 'border-gray-300'
+                      }`}
+                    />
+                  ))}
                 </div>
 
                 <div className="flex items-center gap-1 text-gray-500">
@@ -167,16 +208,14 @@ export const HeroAdviseCadSection = () => {
                       viewMode === '3d' ? 'opacity-100' : 'opacity-40'
                     }`}
                   >
-                    {/* Ảnh SVG 3D tĩnh siêu nhẹ, giống bố cục ảnh mẫu (nền tối, 2 cánh mở hé, kính hoa đồng) */}
+                    {/* Ảnh SVG 3D tĩnh siêu nhẹ (2 cánh mở hé, kính hoa đồng) */}
                   <svg
                     viewBox="0 0 540 620"
                     style={{ transform: `scale(${zoom})` }}
-                    className="w-full max-w-105 rounded-2xl shadow-lg select-none transition-transform duration-300"
+                    className="w-full max-w-105 select-none transition-transform duration-300"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    {/* Nền tối tương phản giống ảnh mẫu */}
-                    <rect x="0" y="0" width="540" height="620" rx="16" fill="#0d1117" />
 
                     {/* Khung bao trên & 2 bên tạo độ sâu */}
                     <polygon points="88,42 452,32 452,48 88,58" fill={frameDark} stroke="#090d12" strokeWidth="1.5" />
@@ -308,7 +347,7 @@ export const HeroAdviseCadSection = () => {
                     width="340"
                     height="480"
                     rx="4"
-                    fill={activeTab === 'wood' ? '#9a6a43' : activeTab === 'grey' ? '#4b5563' : '#e2e8f0'}
+                    fill={frameColor}
                     stroke="#2d3748"
                     strokeWidth="2.5"
                   />
@@ -322,7 +361,7 @@ export const HeroAdviseCadSection = () => {
                     y="64"
                     width="144"
                     height="432"
-                    fill={activeTab === 'wood' ? '#aa7a4f' : activeTab === 'grey' ? '#64748b' : '#f1f5f9'}
+                    fill={sashColor}
                     stroke="#334155"
                     strokeWidth="1.5"
                   />
@@ -339,7 +378,7 @@ export const HeroAdviseCadSection = () => {
                     y="64"
                     width="144"
                     height="432"
-                    fill={activeTab === 'wood' ? '#aa7a4f' : activeTab === 'grey' ? '#64748b' : '#f1f5f9'}
+                    fill={sashColor}
                     stroke="#334155"
                     strokeWidth="1.5"
                   />
