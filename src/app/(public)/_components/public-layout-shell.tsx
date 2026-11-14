@@ -7,6 +7,7 @@ import { Header } from './header';
 import { Footer } from './footer';
 import { FloatingContactDock } from './floating-contact-dock';
 import { HeroLiveSocialProof } from './hero';
+import { HeroSectionDots } from './hero/hero-section-dots';
 import {
   HeroRegisterInlineForm,
   markRegisterInteracted,
@@ -129,6 +130,7 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
       {!pathname?.startsWith('/news') && <Footer />}
       <FloatingContactDock />
       {pathname === '/' && <HeroLiveSocialProof />}
+      {pathname === '/' && <HeroSectionDots />}
 
       <Modal
         isOpen={isAutoRegisterModalOpen}

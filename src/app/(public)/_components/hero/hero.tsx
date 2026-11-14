@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CheckCircle2, FileSpreadsheet, Monitor, Smartphone, Sparkles } from 'lucide-react';
 import { HERO_HIGHLIGHTS } from './hero.constants';
 import { HeroAdviseCadSection } from './hero-advise-cad-section';
+import { HeroBrandsSection } from './hero-brands-section';
 import { HeroConsultationSection } from './hero-consultation-section';
 import { HeroDashboardMockup } from './hero-dashboard-mockup';
 import { HeroFeaturedArticlesSection } from './hero-featured-articles-section';
@@ -133,9 +134,7 @@ export const Hero = () => {
             {/* CỘT PHẢI TRÊN DESKTOP: MOCKUP DASHBOARD (Ẩn hoàn toàn trên mobile, chỉ hiển thị từ màn hình lớn lg) */}
             <div
               className={`hidden lg:block lg:col-span-6 transition-all duration-500 ease-in-out ${
-                isRegisterMode
-                  ? 'opacity-0 translate-x-12 scale-95 pointer-events-none'
-                  : 'opacity-100 translate-x-0 scale-100 pointer-events-auto'
+                isRegisterMode ? 'opacity-0 translate-x-12 scale-95 pointer-events-none' : 'opacity-100 translate-x-0 scale-100 pointer-events-auto'
               }`}
             >
               <HeroDashboardMockup />
@@ -144,9 +143,18 @@ export const Hero = () => {
         </div>
       </section>
 
-      <HeroAdviseCadSection />
-      <HeroStoryPillarsSection />
-      <HeroFeaturedArticlesSection />
+      <div id="advise-cad" className="scroll-mt-16">
+        <HeroAdviseCadSection />
+      </div>
+      <div id="brands" className="scroll-mt-16">
+        <HeroBrandsSection />
+      </div>
+      <div id="story-pillars" className="scroll-mt-16">
+        <HeroStoryPillarsSection />
+      </div>
+      <div id="featured-articles" className="scroll-mt-16">
+        <HeroFeaturedArticlesSection />
+      </div>
       <HeroConsultationSection />
     </div>
   );
