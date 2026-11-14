@@ -2,7 +2,7 @@ import { HeroProjectReportsCarousel } from '../hero-project-reports-carousel';
 
 export function ProjectReportsSection() {
   return (
-    <section className="relative overflow-hidden bg-slate-50/70 py-6 lg:py-8 border-b border-slate-200/80">
+    <section className="relative overflow-hidden bg-white py-6 lg:py-8 border-b border-slate-200/80">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Tiêu đề đặc trưng theo Ảnh 4: "Hàng loạt báo cáo thi công" màu vàng/cam + "được tự động tổng hợp cho CEO/ BQLDA" */}
         <div className="mb-4 text-center max-w-3xl mx-auto">

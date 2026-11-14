@@ -1,13 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ArrowLeft, CheckCircle2, Send, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, CheckCircle2, Flame, Send, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Input } from '@/components';
 import { isValidEmail, isValidVnPhone } from '@/utils/validators';
 
+export const REGISTER_MODAL_STORAGE_KEY = 'xttech_register_modal_handled';
+export const REGISTER_INTERACTED_EVENT = 'xttech:register-interacted';
+
+export function markRegisterInteracted() {
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem(REGISTER_MODAL_STORAGE_KEY, 'true');
+    window.dispatchEvent(new Event(REGISTER_INTERACTED_EVENT));
+  }
+}
+
 export interface HeroRegisterInlineFormProps {
   onBack: () => void;
+  variant?: 'inline' | 'modal';
+  onSuccess?: () => void;
 }
 
 interface FormState {
@@ -15,6 +27,7 @@ interface FormState {
   phone: string;
   email: string;
   companyName: string;
+  taxCode: string;
   note: string;
 }
 
@@ -23,21 +36,57 @@ const INITIAL_FORM: FormState = {
   phone: '',
   email: '',
   companyName: '',
+  taxCode: '',
   note: '',
 };
 
-interface FormErrors {
-  fullName?: string;
-  phone?: string;
-  email?: string;
-  companyName?: string;
-}
+type FormErrors = Partial<Record<keyof FormState, string>>;
 
-export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) {
+// Chu kỳ reset ưu đãi sau mỗi 6 ngày (tính bằng ms)
+const CYCLE_MS = 6 * 24 * 60 * 60 * 1000;
+
+export function HeroRegisterInlineForm({
+  onBack,
+  variant = 'inline',
+  onSuccess,
+}: HeroRegisterInlineFormProps) {
   const [formData, setFormData] = useState<FormState>(INITIAL_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Timer đếm ngược chu kỳ 6 ngày có thanh tiến trình
+  const [isMounted, setIsMounted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({
+    days: 5,
+    hours: 23,
+    minutes: 59,
+    seconds: 59,
+    progress: 82,
+  });
+
+  useEffect(() => {
+    setIsMounted(true);
+    const updateCountdown = () => {
+      const now = Date.now();
+      const elapsed = now % CYCLE_MS;
+      const remaining = CYCLE_MS - elapsed;
+
+      const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((remaining / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((remaining / (1000 * 60)) % 60);
+      const seconds = Math.floor((remaining / 1000) % 60);
+
+      // Tiến trình phần trăm đăng ký (từ 72% đến 96% theo chu kỳ)
+      const progress = Math.min(96, Math.max(72, Math.round(((CYCLE_MS - remaining) / CYCLE_MS) * 100)));
+
+      setTimeLeft({ days, hours, minutes, seconds, progress });
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -54,6 +103,10 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
 
     if (formData.email.trim() && !isValidEmail(formData.email)) {
       newErrors.email = 'Email không hợp lệ';
+    }
+
+    if (!formData.taxCode.trim()) {
+      newErrors.taxCode = 'Vui lòng nhập mã số thuế';
     }
 
     setErrors(newErrors);
@@ -75,6 +128,8 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSubmitted(true);
+      markRegisterInteracted();
+      onSuccess?.();
       toast.success('Đăng ký nhận phần mềm thành công! Đội ngũ XTTECH sẽ liên hệ hỗ trợ bạn ngay.');
     }, 500);
   };
@@ -86,29 +141,37 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white p-5 sm:p-7 shadow-2xl shadow-black/40 border border-white/50 text-slate-800">
-      {/* Nút quay lại & Header thanh điều hướng form */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-primary transition-colors cursor-pointer group"
-        >
-          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
-          <span>Quay lại trang giới thiệu</span>
-        </button>
-
-        <div className="flex items-center gap-2">
+    <div
+      className={
+        variant === 'inline'
+          ? 'relative overflow-hidden rounded-2xl bg-white p-5 sm:p-7 shadow-2xl shadow-black/40 border border-white/50 text-slate-800'
+          : 'relative text-slate-800'
+      }
+    >
+      {/* Nút quay lại & Header thanh điều hướng form (chỉ hiển thị ở chế độ inline) */}
+      {variant === 'inline' && (
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <button
             type="button"
             onClick={onBack}
-            aria-label="Đóng form"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-primary transition-colors cursor-pointer group"
           >
-            <X className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
+            <span>Quay lại trang giới thiệu</span>
           </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Đóng form"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {isSubmitted ? (
         /* Màn hình gửi thành công */
@@ -143,7 +206,53 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
         </div>
       ) : (
         /* Form nhập liệu */
-        <form onSubmit={handleSubmit} className="space-y-3 pt-3">
+        <form onSubmit={handleSubmit} className={variant === 'inline' ? 'space-y-3 pt-3' : 'space-y-3'}>
+          {/* Thanh timer đếm ngược & thanh tiến trình ưu đãi 6 ngày */}
+          <div className="rounded-xl border border-primary/20 bg-linear-to-r from-primary/5 via-primary/10 to-primary/5 p-3 shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/15 text-orange-600">
+                  <Flame className="h-3.5 w-3.5 fill-orange-500 animate-pulse" />
+                </span>
+                <span className="text-xs font-bold text-slate-800">
+                  Ưu đãi kết thúc sau:
+                </span>
+              </div>
+
+              {/* Countdown Digits */}
+              <div className="flex items-center gap-1 font-mono text-[11px] font-bold text-primary">
+                <span className="rounded bg-white px-1.5 py-0.5 shadow-xs border border-primary/20">
+                  {isMounted ? String(timeLeft.days).padStart(2, '0') : '05'}d
+                </span>
+                <span className="text-slate-400">:</span>
+                <span className="rounded bg-white px-1.5 py-0.5 shadow-xs border border-primary/20">
+                  {isMounted ? String(timeLeft.hours).padStart(2, '0') : '23'}h
+                </span>
+                <span className="text-slate-400">:</span>
+                <span className="rounded bg-white px-1.5 py-0.5 shadow-xs border border-primary/20">
+                  {isMounted ? String(timeLeft.minutes).padStart(2, '0') : '59'}m
+                </span>
+                <span className="text-slate-400">:</span>
+                <span className="rounded bg-white px-1.5 py-0.5 shadow-xs border border-primary/20">
+                  {isMounted ? String(timeLeft.seconds).padStart(2, '0') : '59'}s
+                </span>
+              </div>
+            </div>
+
+            {/* Thanh chạy tiến trình */}
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center justify-between text-[10px] text-slate-600">
+                <span>Tiến trình ưu đãi kỳ này</span>
+              </div>
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-200/80">
+                <div
+                  className="h-full rounded-full bg-linear-to-r from-[var(--hero-accent-from)] to-[var(--hero-accent-to)] transition-all duration-1000 ease-out"
+                  style={{ width: `${isMounted ? timeLeft.progress : 82}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
           <div>
             <h3 className="text-xl sm:text-[22px] font-black text-slate-900 tracking-tight leading-snug">
               Nhận phần mềm <span className="text-primary">XTTECH XMS Fab</span>
@@ -187,14 +296,25 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
               />
             </div>
 
-            <Input
-              label="Tên doanh nghiệp / Xưởng"
-              placeholder="VD: Công ty Nhôm Kính Thịnh Phát"
-              value={formData.companyName}
-              onChange={(e) => handleChange('companyName', e.target.value)}
-              fullWidth
-              className="h-9 text-xs"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <Input
+                label="Tên doanh nghiệp / Xưởng"
+                placeholder="VD: Công ty Nhôm Kính Thịnh Phát"
+                value={formData.companyName}
+                onChange={(e) => handleChange('companyName', e.target.value)}
+                fullWidth
+                className="h-9 text-xs"
+              />
+              <Input
+                label="Mã số thuế *"
+                placeholder="VD: 0102030405"
+                value={formData.taxCode}
+                onChange={(e) => handleChange('taxCode', e.target.value)}
+                error={errors.taxCode}
+                fullWidth
+                className="h-9 text-xs"
+              />
+            </div>
 
             <Input
               label="Nhu cầu cụ thể của xưởng"
@@ -217,7 +337,7 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
                 <span>Đang xử lý đăng ký...</span>
               ) : (
                 <>
-                  <span>Gửi yêu cầu đăng ký ngay</span>
+                  <span>Đăng ký ngay</span>
                   <Send className="h-4 w-4" />
                 </>
               )}

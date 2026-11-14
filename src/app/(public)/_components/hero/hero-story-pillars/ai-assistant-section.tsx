@@ -7,7 +7,10 @@ import { HeroAiAssistantVisual } from '../hero-ai-assistant-visual';
 
 export function AiAssistantSection({ onOpenDemo }: HeroSectionDemoProps) {
   return (
-    <section className="relative overflow-hidden bg-white py-6 lg:py-8 border-b border-slate-200/80">
+    <section
+      id="ai-technology"
+      className="relative scroll-mt-16 overflow-hidden bg-white py-6 lg:py-8 border-b border-slate-200/80"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
         {/* Tiêu đề đặc trưng theo Ảnh 5 */}
         <div className="mx-auto max-w-3xl space-y-2 mb-2">

@@ -3,12 +3,24 @@ export interface PainPointItem {
   text: string;
 }
 
-// 4 nỗi đau điển hình của doanh nghiệp ngành nhôm kính & xây lắp
+// 4 nỗi đau điển hình của xưởng sản xuất nhôm kính & nhà thầu thi công
 export const PAIN_POINTS: PainPointItem[] = [
-  { lead: 'Khó khăn trong quản lý các dự án có quy mô lớn', text: ', nhiều hạng mục cửa và vách nhôm kính, nhiều nhân sự tham gia. Nhiều dự án triển khai đồng thời cũng gây khó để kiểm soát vật tư thanh nhôm, kính và phụ kiện công trình.' },
-  { lead: 'Công việc bóc tách bareme phụ thuộc chồng chéo', text: ' gây rối ren khi giám sát tiến độ. Dữ liệu chỉ nằm trong sổ sách hoặc trí nhớ của 1 vài thợ lành nghề, thợ tự tính đề-xê gây hao hụt nhôm nghiêm trọng.' },
-  { lead: 'Nguy cơ chậm tiến độ, kéo dài thời gian thi công', text: ' do không giám sát được chặt chẽ tiến độ từng hạng mục nhỏ: từ khảo sát đo đạc ô chờ, gia công ép góc tại xưởng đến lắp dựng và bàn giao hiện trường.' },
-  { lead: 'Không có môi trường trao đổi tập trung', text: ', cập nhật thông tin dự án xuyên suốt giữa các bộ phận. Trao đổi, báo cáo qua Zalo, gọi điện, nhắn tin... dẫn đến các thông tin nhận được không đồng nhất, dễ thất lạc số liệu và phát sinh tranh chấp.' },
+  {
+    lead: 'Bóc tách vật tư & báo giá thủ công, dễ sai sót',
+    text: ' khi phải tính toán thanh nhôm, kính cường lực và phụ kiện bằng Excel hoặc sổ tay, mất nhiều thời gian và dễ lệch kích thước ô chờ khi chốt phương án với chủ đầu tư.',
+  },
+  {
+    lead: 'Hao hụt phôi nhôm lớn do cắt thủ công thiếu tối ưu',
+    text: ', thợ tự chia cây nhôm theo kinh nghiệm khiến đề-xê phát sinh nhiều, khó tận dụng nhôm thừa và không kiểm soát được định mức tiêu hao thực tế tại xưởng.',
+  },
+  {
+    lead: 'Thất thoát kho vật tư & chậm tiến độ giữa xưởng và công trình',
+    text: ' khi chạy nhiều đơn hàng cùng lúc, khó theo dõi sát tồn kho nhôm, kính, phụ kiện (Kinlong, Draho...) cũng như tiến độ từ gia công ép góc đến lắp dựng, nghiệm thu.',
+  },
+  {
+    lead: 'Dữ liệu phân tán qua Zalo, giấy tờ rời rạc',
+    text: ' từ bản vẽ kỹ thuật, thẻ cắt A4, chấm công thợ đến công nợ nhà cung cấp, khiến chủ xưởng dễ thất lạc số liệu và không nắm rõ lãi/lỗ thực tế của từng công trình.',
+  },
 ];
 
 export type PillarCategory = 'all' | 'workshop' | 'site';

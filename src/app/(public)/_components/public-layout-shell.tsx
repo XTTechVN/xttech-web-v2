@@ -6,6 +6,7 @@ import { Header } from './header';
 import { Footer } from './footer';
 import { FloatingContactDock } from './floating-contact-dock';
 import { HeroLiveSocialProof } from './hero';
+import { HeroSectionDots } from './hero/hero-section-dots';
 
 interface PublicLayoutShellProps {
   children: React.ReactNode;
@@ -39,6 +40,8 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
   const mainRef = useRef<HTMLDivElement | null>(null);
   const prevPathRef = useRef<string | null>(pathname);
   const prevIndexRef = useRef<number>(getRouteOrderIndex(pathname));
+
+  const isPortal = isPortalRoute(pathname);
 
   // Chạy đồng bộ trước khi trình duyệt vẽ (pre-paint) bằng Web Animations API GPU
   // Không dùng key={pathname} và không hạ opacity về 0 để triệt tiêu 100% hiện tượng nháy trắng
@@ -78,7 +81,7 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
     return () => animation.cancel();
   }, [pathname]);
 
-  if (!isPortalRoute(pathname)) {
+  if (!isPortal) {
     return <>{children}</>;
   }
 
@@ -90,7 +93,8 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
       </div>
       {!pathname?.startsWith('/news') && <Footer />}
       <FloatingContactDock />
-      <HeroLiveSocialProof />
+      {pathname === '/' && <HeroLiveSocialProof />}
+      {pathname === '/' && <HeroSectionDots />}
     </div>
   );
 };

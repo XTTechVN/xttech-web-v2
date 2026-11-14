@@ -12,17 +12,14 @@ const InforBanner = () => {
         <div className="relative overflow-hidden rounded-3xl bg-primary px-6 py-10 sm:px-10 lg:px-14 lg:py-12">
           {/* Hiệu ứng ánh sáng nhẹ ở góc phải nền banner */}
           <div
-            className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-25 blur-3xl"
-            style={{ background: `radial-gradient(circle, ${ACCENT} 0%, transparent 70%)` }}
+            className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-35 blur-3xl"
+            style={{ background: 'radial-gradient(circle, var(--hero-accent-from) 0%, var(--hero-accent-to) 60%, transparent 80%)' }}
           />
           <div className="pointer-events-none absolute -bottom-32 right-1/3 h-72 w-72 rounded-full bg-white/5 blur-3xl" />
 
           <div className="relative z-10 max-w-3xl space-y-4">
             {/* Top Badge */}
-            <div
-              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider backdrop-blur-sm"
-              style={{ color: ACCENT }}
-            >
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-gradient-to-r from-[var(--hero-accent-from)] to-[var(--hero-accent-to)] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm backdrop-blur-sm">
               <Rocket className="h-3.5 w-3.5" />
               Dịch vụ triển khai
             </div>
