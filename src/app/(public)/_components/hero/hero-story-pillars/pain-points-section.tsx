@@ -4,7 +4,7 @@ import { PAIN_POINTS } from './hero-story-pillars.constants';
 
 export function PainPointsSection() {
   return (
-    <section className="relative overflow-hidden bg-white py-16 lg:py-24 border-b border-slate-100">
+    <section className="relative overflow-hidden bg-white py-6 lg:py-8 border-b border-slate-100">
       {/* Họa tiết lưới mờ nhẹ phong cách kiến trúc */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
@@ -16,16 +16,16 @@ export function PainPointsSection() {
       />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-14">
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-8">
           {/* Cột trái: Tiêu đề lớn & 4 Nỗi đau thoáng đãng (không đóng khung hộp cứng nhắc) */}
-          <div className="space-y-7 lg:col-span-7">
+          <div className="space-y-4 lg:col-span-7">
             <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3.5 py-1.5 text-xs font-bold text-rose-600 border border-rose-200/70 shadow-2xs">
               <AlertTriangle className="h-4 w-4" />
               <span>Thực trạng ngành nhôm kính & xây lắp</span>
             </div>
 
-            <div className="space-y-3">
-              <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-[40px] lg:leading-tight">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl lg:leading-tight">
                 Doanh nghiệp bạn có đang...
               </h2>
               <p className="text-sm sm:text-base text-slate-600 max-w-2xl">
@@ -34,7 +34,7 @@ export function PainPointsSection() {
             </div>
 
             {/* Danh sách 4 gạch đầu dòng icon X tròn đỏ thoáng mắt (theo đúng chuẩn Ảnh 2 mẫu) */}
-            <div className="space-y-5 pt-1">
+            <div className="space-y-3 pt-1">
               {PAIN_POINTS.map((item) => (
                 <div key={item.lead} className="flex items-start gap-4 group">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600 shadow-2xs transition-transform group-hover:scale-110">
@@ -51,7 +51,7 @@ export function PainPointsSection() {
 
           {/* Cột phải: Vòng tròn công nghệ lớn bề thế (tỷ lệ lớn chuẩn theo Ảnh 2 mẫu) */}
           <div className="flex items-center justify-center lg:col-span-5">
-            <div className="relative flex items-center justify-center py-6">
+            <div className="relative flex items-center justify-center py-2">
               {/* Quầng sáng nền mờ */}
               <div className="absolute h-96 w-96 sm:h-[450px] sm:w-[450px] lg:h-[500px] lg:w-[500px] rounded-full bg-amber-500/5 blur-3xl pointer-events-none animate-pulse-glow" />
 

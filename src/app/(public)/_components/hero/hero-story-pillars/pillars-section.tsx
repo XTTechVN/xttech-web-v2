@@ -14,22 +14,22 @@ export function PillarsSection() {
   );
 
   return (
-    <section className="py-16 lg:py-24 bg-slate-50/50">
+    <section className="py-6 lg:py-8 bg-slate-50/50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary">
             <Layers className="h-3.5 w-3.5" />
             <span>Giá trị cốt lõi</span>
           </div>
-          <h2 className="mt-4 text-3xl font-black tracking-tight text-primary sm:text-4xl">
+          <h2 className="mt-3 text-2xl font-black tracking-tight text-primary sm:text-3xl lg:text-4xl">
             Vì sao doanh nghiệp chọn XTTech?
           </h2>
-          <p className="mt-3 text-sm text-gray-600 sm:text-base leading-relaxed">
+          <p className="mt-2 text-sm text-gray-600 sm:text-base leading-relaxed">
             Chúng tôi không chỉ cung cấp công cụ, chúng tôi chuyển giao cả phương pháp quản trị hiện đại đã được kiểm chứng cho ngành nhôm kính.
           </p>
 
           {/* Bộ lọc giải pháp */}
-          <div className="mt-8 flex items-center justify-center">
+          <div className="mt-4 flex items-center justify-center">
             <div className="inline-flex items-center p-1 rounded-full bg-slate-100 border border-slate-200/80 shadow-2xs">
               {PILLAR_FILTERS.map((filter) => (
                 <button
@@ -51,13 +51,13 @@ export function PillarsSection() {
         </div>
 
         {/* Lưới 8 Thẻ giải pháp (Lưới 4x2 với Badge số lượn sóng) */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4.5 sm:gap-5">
           {filteredPillars.map((pillar) => {
             const Icon = pillar.icon;
             return (
               <div
                 key={pillar.title}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-xl"
+                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4.5 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
               >
                 {/* Badge số thứ tự bo góc lượn sóng ở góc trên bên phải */}
                 <div className="absolute top-0 right-0">

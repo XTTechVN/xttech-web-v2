@@ -30,9 +30,9 @@ export function HeroFeaturedArticlesSection() {
   const track = [...strip, ...strip];
 
   return (
-    <section className="overflow-hidden border-t border-slate-100 bg-[#fcfdfd] py-16 lg:py-24">
+    <section className="overflow-hidden border-t border-slate-100 bg-[#fcfdfd] py-8 lg:py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 text-center sm:mb-12 sm:text-left">
+        <div className="mb-4 text-center sm:mb-5 sm:text-left">
           <h2 className="text-2xl font-extrabold tracking-tight text-primary sm:text-3xl lg:text-4xl">
             Bài viết tiêu biểu
           </h2>

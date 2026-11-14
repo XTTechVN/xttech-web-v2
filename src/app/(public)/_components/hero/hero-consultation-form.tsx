@@ -82,20 +82,20 @@ export function HeroConsultationForm() {
   };
 
   return (
-    <div className="lg:col-span-7 space-y-6">
+    <div className="lg:col-span-7 space-y-4">
       <div>
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
           Đăng ký nhận thông tin{' '}
           <span className="text-primary  font-black">tư vấn</span>
         </h2>
-        <p className="mt-2 text-sm sm:text-base text-slate-600 font-medium">
+        <p className="mt-1.5 text-sm sm:text-base text-slate-600 font-medium">
           Chúng tôi sẽ liên hệ ngay trong <span className="font-bold text-slate-900">2h làm việc!</span>
         </p>
       </div>
 
       {isSubmitted ? (
         /* Trạng thái xác nhận thành công */
-        <div className="p-8 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-center space-y-4">
+        <div className="p-6 rounded-xl bg-emerald-50/80 border border-emerald-200 text-center space-y-3">
           <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-8 h-8" />
           </div>
@@ -173,7 +173,7 @@ export function HeroConsultationForm() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-lg border-2 border-primary bg-white text-primary hover:bg-primary hover:text-white hover:border-primary active:scale-[0.99] font-extrabold text-xs sm:text-sm tracking-wider uppercase shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl border-2 border-primary bg-white text-primary hover:bg-primary hover:text-white hover:border-primary active:scale-[0.99] font-extrabold text-xs sm:text-sm tracking-wider uppercase shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'ĐANG GỬI THÔNG TIN...' : 'NHẬN TƯ VẤN & BÁO GIÁ'}
             </button>

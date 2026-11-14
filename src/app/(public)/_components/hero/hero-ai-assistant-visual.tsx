@@ -13,7 +13,7 @@ import {
 
 export const HeroAiAssistantVisual = () => {
   return (
-    <div className="relative mx-auto w-full max-w-5xl select-none pt-4 pb-8">
+    <div className="relative mx-auto w-full max-w-5xl select-none pt-2 pb-2">
       {/* ================= BACKGROUND GLOWS ================= */}
       <div className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 h-80 w-80 sm:h-96 sm:w-96 rounded-full bg-teal-500/15 blur-3xl" />
       <div className="pointer-events-none absolute top-20 left-1/4 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
@@ -263,7 +263,7 @@ export const HeroAiAssistantVisual = () => {
         </div>
 
         {/* ================= 3 THẺ CARD TÍNH NĂNG CÔNG NGHỆ (ICON NỔI 3D CHUẨN ĐỒ HỌA GỐC) ================= */}
-        <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-3 max-w-4xl w-full">
+        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3 max-w-4xl w-full">
           {/* Card 1: Voice AI */}
           <div className="group relative rounded-2xl bg-gradient-to-b from-primary to-hero-bg-to p-6 pt-9 text-center text-white shadow-xl shadow-primary/25 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-teal-400 border border-teal-500/30">
             {/* Icon tròn nổi đè lên mép trên */}

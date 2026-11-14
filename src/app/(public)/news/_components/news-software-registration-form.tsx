@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CheckCircle2, RotateCcw, Send } from 'lucide-react';
+import { CheckCircle2, RotateCcw, Send, Sparkles, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button, Input, Textarea } from '@/components';
 import { isValidEmail, isValidVnPhone } from '@/utils/validators';
@@ -92,20 +92,39 @@ export function NewsSoftwareRegistrationForm() {
   };
 
   return (
-    <div className="rounded-xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-teal-50/70 via-white to-slate-50/80 p-5 sm:p-6 shadow-xl shadow-slate-200/70 transition-all duration-300 hover:shadow-2xl">
+      {/* Quầng sáng trang trí nền */}
+      <div className="pointer-events-none absolute -top-12 -right-12 h-36 w-36 rounded-full bg-primary/15 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-teal-500/10 blur-2xl" />
+
+
       {/* Tiêu đề & Giới thiệu form */}
-      <div className="border-b border-slate-100 pb-4">
-        <h3 className="mt-2 text-lg font-bold text-primary tracking-tight">Nhận phần mềm miễn phí ngay </h3>
-        <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+      <div className="border-b border-slate-200/70 pb-3.5 mt-2">
+        <h3 className="text-xl sm:text-[22px] font-black text-slate-900 tracking-tight leading-snug">
+          Nhận phần mềm <span className="bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">MIỄN PHÍ</span> ngay
+        </h3>
+        <p className="mt-1 text-xs text-slate-600 leading-relaxed font-medium">
           Đăng ký trải nghiệm hệ thống quản trị sản xuất & vận hành xưởng nhôm kính nội thất may đo riêng từ{' '}
-          <span className="font-semibold text-primary">XTTECH</span>.
+          <span className="font-bold text-primary">XTTECH</span>.
         </p>
+
+        {/* 2 Lợi ích nhanh khẳng định giá trị */}
+        <div className="mt-3 grid grid-cols-1 gap-1.5 pt-2.5 border-t border-slate-200/60 text-[11px] text-slate-700 font-medium">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>Trải nghiệm 100% miễn phí — Triển khai nhanh</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>Tối ưu thẻ cắt A4 & xuất lệnh sản xuất tự động</span>
+          </div>
+        </div>
       </div>
 
       {isSubmitted ? (
         /* Màn hình gửi thành công */
         <div className="py-6 text-center space-y-4">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-sm">
             <CheckCircle2 className="h-8 w-8" />
           </div>
           <div className="space-y-1.5">
@@ -124,7 +143,7 @@ export function NewsSoftwareRegistrationForm() {
           </div>
         </div>
       ) : (
-        /* Form nhập liệu: Bố cục 1 cột full-width chuẩn xác, không bị đè lệch icon hay vỡ lỗi */
+        /* Form nhập liệu */
         <form onSubmit={handleSubmit} className="mt-4 space-y-3.5" noValidate>
           {/* Họ và tên */}
           <Input
@@ -135,7 +154,7 @@ export function NewsSoftwareRegistrationForm() {
             onChange={(e) => handleChange('fullName', e.target.value)}
             error={errors.fullName}
             fullWidth
-            className="h-9.5 text-xs"
+            className="h-9.5 text-xs bg-white/95"
           />
 
           {/* Số điện thoại */}
@@ -147,7 +166,7 @@ export function NewsSoftwareRegistrationForm() {
             onChange={(e) => handleChange('phone', e.target.value)}
             error={errors.phone}
             fullWidth
-            className="h-9.5 text-xs"
+            className="h-9.5 text-xs bg-white/95"
           />
 
           {/* Email */}
@@ -159,7 +178,7 @@ export function NewsSoftwareRegistrationForm() {
             onChange={(e) => handleChange('email', e.target.value)}
             error={errors.email}
             fullWidth
-            className="h-9.5 text-xs"
+            className="h-9.5 text-xs bg-white/95"
           />
 
           {/* Tên doanh nghiệp */}
@@ -171,7 +190,7 @@ export function NewsSoftwareRegistrationForm() {
             onChange={(e) => handleChange('companyName', e.target.value)}
             error={errors.companyName}
             fullWidth
-            className="h-9.5 text-xs"
+            className="h-9.5 text-xs bg-white/95"
           />
 
           {/* Yêu cầu cụ thể */}
@@ -182,18 +201,36 @@ export function NewsSoftwareRegistrationForm() {
             value={formData.requirements}
             onChange={(e) => handleChange('requirements', e.target.value)}
             fullWidth
-            className="text-xs resize-none"
+            className="text-xs resize-none bg-white/95"
           />
 
-          {/* 2 nút hành động: Gửi đăng ký & Hủy */}
-          <div className="grid grid-cols-2 gap-2.5 pt-2">
-            <Button type="button" variant="outline" size="sm" onClick={handleReset} disabled={isSubmitting} className="w-full text-xs">
-              Hủy
+          {/* Nút hành động nổi bật toàn chiều rộng */}
+          <div className="pt-2 space-y-2">
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              loading={isSubmitting}
+              className="w-full gap-2 text-xs sm:text-sm font-extrabold uppercase tracking-wider py-3 rounded-xl bg-gradient-to-r from-primary via-teal-600 to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+            >
+              <Send className="h-4 w-4" />
+              <span>Gửi đăng ký trải nghiệm ngay</span>
             </Button>
-            <Button type="submit" variant="primary" size="sm" loading={isSubmitting} className="w-full gap-1.5 text-xs font-semibold">
-              <Send className="h-3.5 w-3.5" />
-              <span>Gửi đăng ký</span>
-            </Button>
+
+            <div className="flex items-center justify-between pt-1 text-[11px] text-slate-400">
+              <span className="flex items-center gap-1 font-medium text-slate-500">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                Bảo mật thông tin 100%
+              </span>
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={isSubmitting}
+                className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                Đặt lại
+              </button>
+            </div>
           </div>
         </form>
       )}

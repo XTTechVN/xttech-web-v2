@@ -52,7 +52,7 @@ export function NewsPublicListing() {
          ===================================================================== */}
       <section
         id="all-news-archive"
-        className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-12 space-y-8"
+        className="max-w-[1440px] mx-auto w-full px-4 sm:px-8 lg:px-12 xl:px-16 pt-12 space-y-8"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start border-t border-slate-200 pt-10">
           <NewsArchiveList

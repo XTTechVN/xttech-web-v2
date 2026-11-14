@@ -1,8 +1,8 @@
 import React from 'react';
 import { Rocket } from 'lucide-react';
 
-/* Màu nhấn (lime) – dùng chung với các section pricing khác */
-const ACCENT = '#d6ff3d';
+/* Màu nhấn (cyan) – đồng bộ theo --hero-accent-raw */
+const ACCENT = '#25f4f4';
 
 const InforBanner = () => {
   return (
