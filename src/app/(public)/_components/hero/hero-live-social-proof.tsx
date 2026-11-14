@@ -74,7 +74,7 @@ function createRandomMessage(): ToastMessage {
 }
 
 const MAX_VISIBLE = 3;
-const CYCLE_INTERVAL = 1000;
+const CYCLE_INTERVAL = 10000;
 const EXIT_CLEANUP_DELAY = 880;
 const ROW_STEP_PX = 50;
 
@@ -99,7 +99,7 @@ export function HeroLiveSocialProof() {
     timeoutIdsRef.current.push(tid);
   }, []);
 
-  // Mỗi 1 giây thêm tin mới từ dưới lên, các tin cũ trượt mượt lên trên, mờ dần và biến mất (tối đa 3 tin)
+  // Mỗi 10 giây thêm tin mới từ dưới lên, các tin cũ trượt mượt lên trên, mờ dần và biến mất (tối đa 3 tin)
   useEffect(() => {
     if (!isMounted || isHovered) return;
 
@@ -151,7 +151,7 @@ export function HeroLiveSocialProof() {
       aria-label="Thông báo đăng ký"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="pointer-events-none fixed bottom-16 left-3 z-40 h-[160px] w-[calc(100vw-1.5rem)] max-w-[420px] select-none sm:bottom-10 sm:left-6"
+      className="pointer-events-none fixed bottom-24 left-3 z-40 h-[160px] w-[calc(100vw-1.5rem)] max-w-[420px] select-none sm:bottom-20 sm:left-6"
     >
       {messages.map((msg) => {
         const activeIdx = activeMessages.findIndex((m) => m.id === msg.id);
