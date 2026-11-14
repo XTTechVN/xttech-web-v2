@@ -1,8 +1,26 @@
-import { AlertTriangle, XCircle } from 'lucide-react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { AlertTriangle, X } from 'lucide-react';
 import Image from 'next/image';
+import { cn } from '@/utils/cn';
 import { PAIN_POINTS } from './hero-story-pillars.constants';
 
 export function PainPointsSection() {
+  const [activeIdleIdx, setActiveIdleIdx] = useState(0);
+  const [isHoveringList, setIsHoveringList] = useState(false);
+
+  // Hiệu ứng spotlight tự động chạy qua từng nỗi đau khi người dùng chưa hover
+  useEffect(() => {
+    if (isHoveringList || PAIN_POINTS.length === 0) return;
+
+    const timer = setInterval(() => {
+      setActiveIdleIdx((prev) => (prev + 1) % PAIN_POINTS.length);
+    }, 2500);
+
+    return () => clearInterval(timer);
+  }, [isHoveringList]);
+
   return (
     <section className="relative overflow-hidden bg-white py-6 lg:py-8 border-b border-slate-100">
       {/* Họa tiết lưới mờ nhẹ phong cách kiến trúc */}
@@ -26,26 +44,65 @@ export function PainPointsSection() {
 
             <div className="space-y-2">
               <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl lg:leading-tight">
-                Doanh nghiệp bạn có đang...
+                Doanh nghiệp bạn có đang <span className="text-rose-600">gặp phải?</span>
               </h2>
               <p className="text-sm sm:text-base text-slate-600 max-w-2xl">
                 Những rào cản cố hữu khiến các chủ xưởng và nhà thầu khó mở rộng quy mô, thất thoát chi phí và phụ thuộc nhân sự.
               </p>
             </div>
 
-            {/* Danh sách 4 gạch đầu dòng icon X tròn đỏ thoáng mắt (theo đúng chuẩn Ảnh 2 mẫu) */}
-            <div className="space-y-3 pt-1">
-              {PAIN_POINTS.map((item) => (
-                <div key={item.lead} className="flex items-start gap-4 group">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600 shadow-2xs transition-transform group-hover:scale-110">
-                    <XCircle className="h-5 w-5 stroke-[2.5]" />
+            {/* Danh sách 4 gạch đầu dòng có hiệu ứng spotlight khi chưa hover & nổi bật khi hover */}
+            <div
+              onMouseEnter={() => setIsHoveringList(true)}
+              onMouseLeave={() => setIsHoveringList(false)}
+              className="space-y-2.5 pt-1"
+            >
+              {PAIN_POINTS.map((item, idx) => {
+                const isIdleActive = !isHoveringList && idx === activeIdleIdx;
+
+                return (
+                  <div
+                    key={item.lead}
+                    className={cn(
+                      'group relative flex items-start gap-3.5 overflow-hidden rounded-2xl border p-3.5 transition-all duration-300 hover:translate-x-1.5 hover:border-rose-300/80 hover:bg-rose-50/80 hover:shadow-md',
+                      isIdleActive
+                        ? 'translate-x-1 border-rose-200/80 bg-rose-50/60 shadow-sm'
+                        : 'border-transparent bg-transparent',
+                    )}
+                  >
+                    {/* Thanh nhấn dọc bên trái */}
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'pointer-events-none absolute inset-y-3 left-0 w-1 origin-center rounded-r-full bg-rose-500 transition-transform duration-300 group-hover:scale-y-100',
+                        isIdleActive ? 'scale-y-100' : 'scale-y-0',
+                      )}
+                    />
+
+                    <div
+                      className={cn(
+                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-2xs transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 group-hover:bg-rose-600 group-hover:text-white',
+                        isIdleActive
+                          ? 'scale-105 bg-rose-600 text-white shadow-sm'
+                          : 'bg-rose-100 text-rose-600',
+                      )}
+                    >
+                      <X className="h-4.5 w-4.5 stroke-[2.75]" />
+                    </div>
+                    <p className="text-sm sm:text-[15px] leading-relaxed text-slate-700">
+                      <strong
+                        className={cn(
+                          'font-bold transition-colors duration-200 group-hover:text-rose-700',
+                          isIdleActive ? 'text-rose-700' : 'text-slate-900',
+                        )}
+                      >
+                        {item.lead}
+                      </strong>
+                      {item.text}
+                    </p>
                   </div>
-                  <p className="text-sm sm:text-[15px] leading-relaxed text-slate-700">
-                    <strong className="font-bold text-slate-900">{item.lead}</strong>
-                    {item.text}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

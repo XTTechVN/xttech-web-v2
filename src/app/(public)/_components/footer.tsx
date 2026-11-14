@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ArrowUpRight, CheckCircle2, Phone } from 'lucide-react';
 import { Modal, XTLogo } from '@/components';
 import {
@@ -17,11 +18,19 @@ import {
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const pathname = usePathname();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const handleOpenRegisterModal = () => {
     markRegisterInteracted();
     setIsRegisterModalOpen(true);
+  };
+
+  const handleFooterLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href === '/#about' && pathname === '/') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
@@ -73,7 +82,7 @@ export const Footer = () => {
               <XTLogo className="h-8 w-8 drop-shadow-[0_2px_5px_rgba(4,88,99,0.35)]" />
               <span className="text-xl font-black tracking-tight text-primary">XTTECH</span>
             </div>
-            <p className="text-sm leading-relaxed text-slate-300/90 sm:max-w-sm">
+            <p className="text-sm text-white sm:max-w-sm">
               Nền tảng tiên phong số hóa ngành nhôm kính & xây dựng — Giải pháp quản trị khép kín từ khảo sát, thiết kế 3D, bóc tách kỹ thuật đến quản lý thi công công trình.
             </p>
           </div>
@@ -94,14 +103,15 @@ export const Footer = () => {
                       href={item.href}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-slate-300 transition-all hover:translate-x-0.5 hover:text-white"
+                      className="inline-flex items-center gap-1 text-white transition-all hover:translate-x-0.5 hover:text-teal-200"
                     >
                       {item.label} <ArrowUpRight className="h-3.5 w-3.5 text-teal-300/80" />
                     </a>
                   ) : (
                     <Link
                       href={item.href}
-                      className="inline-block text-slate-300 transition-all hover:translate-x-0.5 hover:text-white"
+                      onClick={(e) => handleFooterLinkClick(e, item.href)}
+                      className="inline-block text-white transition-all hover:translate-x-0.5 hover:text-teal-200"
                     >
                       {item.label}
                     </Link>
@@ -126,7 +136,7 @@ export const Footer = () => {
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      className="group inline-flex items-center gap-2 text-slate-300 transition-all hover:translate-x-0.5 hover:text-white"
+                      className="group inline-flex items-center gap-2 text-white transition-all hover:translate-x-0.5 hover:text-teal-200"
                     >
                       {Icon && (
                         <Icon className="h-4 w-4 shrink-0 text-teal-300/70 transition-colors group-hover:text-[#4eb622]" />
@@ -192,7 +202,11 @@ export const Footer = () => {
                     {item.label}
                   </a>
                 ) : (
-                  <Link href={item.href} className="transition-colors hover:text-white">
+                  <Link
+                    href={item.href}
+                    onClick={(e) => handleFooterLinkClick(e, item.href)}
+                    className="transition-colors hover:text-white"
+                  >
                     {item.label}
                   </Link>
                 )}
