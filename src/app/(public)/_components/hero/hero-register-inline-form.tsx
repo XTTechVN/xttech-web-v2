@@ -243,9 +243,6 @@ export function HeroRegisterInlineForm({
             <div className="mt-2 space-y-1">
               <div className="flex items-center justify-between text-[10px] text-slate-600">
                 <span>Tiến trình ưu đãi kỳ này</span>
-                <span className="font-bold text-primary">
-                  Đã nhận {isMounted ? timeLeft.progress : 82}% suất
-                </span>
               </div>
               <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-200/80">
                 <div

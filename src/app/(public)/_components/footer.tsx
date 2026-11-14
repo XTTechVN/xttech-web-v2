@@ -89,12 +89,7 @@ export const Footer = () => {
 
           {/* Cột 2: Điều hướng */}
           <div className="flex flex-col gap-3.5 lg:col-span-2 lg:pl-2">
-            <div className="w-fit">
-              <h3 className="font-semibold text-white text-lg">Giải pháp</h3>
-              <div className="relative mt-1.5 h-0.5 w-full overflow-hidden rounded-full bg-white/15">
-                <span className="animate-footer-bar-slide absolute inset-y-0 left-0 w-1/2 rounded-full bg-linear-to-r from-[var(--hero-accent-from)] to-[var(--hero-accent-to)]" />
-              </div>
-            </div>
+            <h3 className="font-semibold text-white text-lg">Giải pháp</h3>
             <ul className="flex flex-col space-y-2.5 text-sm">
               {FOOTER_SOLUTION_LINKS.map((item) => (
                 <li key={item.label}>
@@ -123,12 +118,7 @@ export const Footer = () => {
 
           {/* Cột 3: Pháp lý & Chính sách */}
           <div className="flex flex-col gap-3.5 lg:col-span-3">
-            <div className="w-fit">
-              <h3 className="font-semibold text-white text-lg">Pháp lý & Chính sách</h3>
-              <div className="relative mt-1.5 h-0.5 w-full overflow-hidden rounded-full bg-white/15">
-                <span className="animate-footer-bar-slide absolute inset-y-0 left-0 w-1/2 rounded-full bg-linear-to-r from-[var(--hero-accent-from)] to-[var(--hero-accent-to)]" />
-              </div>
-            </div>
+            <h3 className="font-semibold text-white text-lg">Pháp lý & Chính sách</h3>
             <ul className="flex flex-col space-y-2.5 text-sm">
               {FOOTER_LEGAL_LINKS.map((item) => {
                 const Icon = item.icon;
@@ -151,12 +141,7 @@ export const Footer = () => {
 
           {/* Cột 4: Liên hệ */}
           <div className="flex flex-col gap-3.5 lg:col-span-3">
-            <div className="w-fit">
-              <h3 className="font-semibold text-white text-lg">Liên hệ</h3>
-              <div className="relative mt-1.5 h-0.5 w-full overflow-hidden rounded-full bg-white/15">
-                <span className="animate-footer-bar-slide absolute inset-y-0 left-0 w-1/2 rounded-full bg-linear-to-r from-[var(--hero-accent-from)] to-[var(--hero-accent-to)]" />
-              </div>
-            </div>
+            <h3 className="font-semibold text-white text-lg">Liên hệ</h3>
             <ul className="flex flex-col space-y-2.5 text-sm">
               {FOOTER_CONTACT_ITEMS.map((item) => {
                 const Icon = item.icon;
