@@ -26,12 +26,7 @@ const INITIAL_FORM: FormState = {
   note: '',
 };
 
-interface FormErrors {
-  fullName?: string;
-  phone?: string;
-  email?: string;
-  companyName?: string;
-}
+type FormErrors = Partial<Record<keyof FormState, string>>;
 
 export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) {
   const [formData, setFormData] = useState<FormState>(INITIAL_FORM);
