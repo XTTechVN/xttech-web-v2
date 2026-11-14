@@ -6,6 +6,12 @@ import { ADVISE_ADVANTAGES } from './hero.constants';
 
 export const HeroAdviseCadSection = () => {
   const [activeTab, setActiveTab] = useState<'wood' | 'grey' | 'white'>('wood');
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
+  const [zoom, setZoom] = useState<number>(1);
+
+  const frameColor = activeTab === 'wood' ? '#9a6a43' : activeTab === 'grey' ? '#4b5563' : '#cbd5e1';
+  const frameDark = activeTab === 'wood' ? '#6d4728' : activeTab === 'grey' ? '#334155' : '#94a3b8';
+  const sashColor = activeTab === 'wood' ? '#aa7a4f' : activeTab === 'grey' ? '#64748b' : '#f1f5f9';
 
   return (
     <section className="border-t border-gray-100 bg-white py-16 lg:py-24">
@@ -15,7 +21,7 @@ export const HeroAdviseCadSection = () => {
             TƯ VẤN CỤ THỂ — BÁO GIÁ NHANH CHÓNG
           </h2>
           <div className="mx-auto mt-2 h-1 w-16 rounded-full bg-primary" />
-          <p className="mt-4 text-sm text-gray-600 sm:text-base">
+          <p className="mt-4 text-sm text-primary sm:text-base">
             Từ bản vẽ kỹ thuật sắc nét đến mô hình 3D sống động, mọi thứ đều có thể chia sẻ cho khách hàng chỉ với một liên kết.
           </p>
         </div>
@@ -47,19 +53,40 @@ export const HeroAdviseCadSection = () => {
 
           {/* Cột phải: Card preview Cửa 2D kỹ thuật cao */}
           <div className="lg:col-span-6">
-            <div className="relative rounded-3xl border border-gray-200 bg-white p-5 shadow-2xl shadow-gray-200/50 sm:p-7">
+            <div className="relative rounded-xl border border-gray-200 bg-white p-5 shadow-xl shadow-gray-200/50 sm:p-7">
               {/* Thanh điều khiển trên Card */}
               <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">
-                <span className="inline-flex items-center rounded-full bg-[#1e293b] px-4 py-1.5 text-xs font-bold text-white shadow-sm">
-                  2D Kỹ Thuật
-                </span>
+                <div className="inline-flex items-center rounded-full bg-slate-100 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('2d')}
+                    className={`cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                      viewMode === '2d'
+                        ? 'bg-[#1e293b] text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    2D Kỹ Thuật
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('3d')}
+                    className={`cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                      viewMode === '3d'
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    3D Mô phỏng
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setActiveTab('wood')}
                     title="Nhôm vân gỗ cao cấp"
-                    className={`h-5 w-5 rounded-full border-2 bg-[#966b43] transition-all ${
+                    className={`h-5 w-5 rounded-full border-2 bg-[#966b43] transition-all cursor-pointer ${
                       activeTab === 'wood' ? 'scale-110 border-primary ring-2 ring-primary/30' : 'border-gray-300'
                     }`}
                   />
@@ -67,7 +94,7 @@ export const HeroAdviseCadSection = () => {
                     type="button"
                     onClick={() => setActiveTab('grey')}
                     title="Nhôm xám ghi Xingfa"
-                    className={`h-5 w-5 rounded-full border-2 bg-[#4b5563] transition-all ${
+                    className={`h-5 w-5 rounded-full border-2 bg-[#4b5563] transition-all cursor-pointer ${
                       activeTab === 'grey' ? 'scale-110 border-primary ring-2 ring-primary/30' : 'border-gray-300'
                     }`}
                   />
@@ -75,27 +102,156 @@ export const HeroAdviseCadSection = () => {
                     type="button"
                     onClick={() => setActiveTab('white')}
                     title="Nhôm trắng sứ tĩnh điện"
-                    className={`h-5 w-5 rounded-full border-2 bg-[#e2e8f0] transition-all ${
+                    className={`h-5 w-5 rounded-full border-2 bg-[#e2e8f0] transition-all cursor-pointer ${
                       activeTab === 'white' ? 'scale-110 border-primary ring-2 ring-primary/30' : 'border-gray-300'
                     }`}
                   />
                 </div>
 
                 <div className="flex items-center gap-1 text-gray-500">
-                  <span className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setZoom((z) => Math.min(1.18, Number((z + 0.08).toFixed(2))))}
+                    aria-label="Phóng to"
+                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100"
+                  >
                     <ZoomIn className="h-3.5 w-3.5" />
-                  </span>
-                  <span className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100">
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setZoom((z) => Math.max(0.84, Number((z - 0.08).toFixed(2))))}
+                    aria-label="Thu nhỏ"
+                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100"
+                  >
                     <ZoomOut className="h-3.5 w-3.5" />
-                  </span>
+                  </button>
                 </div>
               </div>
 
-              {/* Khung vẽ Bản vẽ Cửa CAD chuẩn tỷ lệ */}
-              <div className="relative flex min-h-95 items-center justify-center rounded-2xl bg-white p-4 sm:p-6">
+              {/* Khung vẽ Bản vẽ Cửa CAD 2D hoặc Mô hình 3D */}
+              <div className="relative flex min-h-95 items-center justify-center overflow-hidden rounded-2xl bg-white p-4 sm:p-6">
+                {viewMode === '3d' ? (
+                  /* Ảnh SVG 3D tĩnh siêu nhẹ, giống bố cục ảnh mẫu (nền tối, 2 cánh mở hé, kính hoa đồng) */
+                  <svg
+                    viewBox="0 0 540 620"
+                    style={{ transform: `scale(${zoom})` }}
+                    className="w-full max-w-105 rounded-2xl shadow-lg select-none transition-transform duration-300"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    {/* Nền tối tương phản giống ảnh mẫu */}
+                    <rect x="0" y="0" width="540" height="620" rx="16" fill="#0d1117" />
+
+                    {/* Khung bao trên & 2 bên tạo độ sâu */}
+                    <polygon points="88,42 452,32 452,48 88,58" fill={frameDark} stroke="#090d12" strokeWidth="1.5" />
+                    <polygon points="88,42 104,54 104,536 88,540" fill={frameDark} stroke="#090d12" strokeWidth="1.5" />
+                    <polygon points="452,32 436,46 436,546 452,550" fill={frameDark} stroke="#090d12" strokeWidth="1.5" />
+
+                    {/* ================= CÁNH TRÁI 3D (mở hướng về trước bên trái) ================= */}
+                    <g>
+                      {/* Khung cánh trái */}
+                      <polygon
+                        points="96,46 232,68 232,576 96,536"
+                        fill={frameColor}
+                        stroke="#090d12"
+                        strokeWidth="2"
+                      />
+                      {/* Cạnh độ dày mép cánh trái */}
+                      <polygon
+                        points="232,68 242,72 242,572 232,576"
+                        fill={frameDark}
+                        stroke="#090d12"
+                        strokeWidth="1.5"
+                      />
+                      {/* Đường ghép vát 45 độ góc khung cánh trái */}
+                      <line x1="96" y1="46" x2="112" y2="62" stroke="#090d12" strokeWidth="1.2" />
+                      <line x1="232" y1="68" x2="216" y2="82" stroke="#090d12" strokeWidth="1.2" />
+                      <line x1="96" y1="536" x2="112" y2="520" stroke="#090d12" strokeWidth="1.2" />
+                      <line x1="232" y1="576" x2="216" y2="554" stroke="#090d12" strokeWidth="1.2" />
+
+                      {/* Tấm kính xanh xám cánh trái */}
+                      <polygon
+                        points="112,64 216,81 216,554 112,519"
+                        fill="#4f728e"
+                        fillOpacity="0.88"
+                        stroke="#1e293b"
+                        strokeWidth="1.5"
+                      />
+
+                      {/* Nan trang trí kính cánh trái */}
+                      <line x1="164" y1="72" x2="164" y2="537" stroke="#c5a467" strokeWidth="1.5" />
+                      <line x1="112" y1="176" x2="216" y2="196" stroke="#c5a467" strokeWidth="1.3" />
+                      <line x1="112" y1="292" x2="216" y2="314" stroke="#c5a467" strokeWidth="1.3" />
+                      <line x1="112" y1="406" x2="216" y2="432" stroke="#c5a467" strokeWidth="1.3" />
+                      {/* Hoa văn giữa kính trái */}
+                      <polygon
+                        points="164,274 176,304 164,334 152,304"
+                        fill="#b89454"
+                        fillOpacity="0.65"
+                        stroke="#d6b87c"
+                        strokeWidth="1.2"
+                      />
+                      <circle cx="164" cy="186" r="6" fill="none" stroke="#d6b87c" strokeWidth="1.2" />
+                      <circle cx="164" cy="419" r="6" fill="none" stroke="#d6b87c" strokeWidth="1.2" />
+                    </g>
+
+                    {/* ================= CÁNH PHẢI 3D (mở hé tạo khe 3D ở giữa) ================= */}
+                    <g>
+                      {/* Cạnh độ dày mép cánh phải */}
+                      <polygon
+                        points="266,54 276,50 276,586 266,582"
+                        fill={frameDark}
+                        stroke="#090d12"
+                        strokeWidth="1.5"
+                      />
+                      {/* Khung cánh phải */}
+                      <polygon
+                        points="276,50 444,34 444,548 276,586"
+                        fill={sashColor}
+                        stroke="#090d12"
+                        strokeWidth="2"
+                      />
+                      {/* Đường ghép vát 45 độ góc khung cánh phải */}
+                      <line x1="276" y1="50" x2="294" y2="66" stroke="#090d12" strokeWidth="1.2" />
+                      <line x1="444" y1="34" x2="426" y2="52" stroke="#090d12" strokeWidth="1.2" />
+                      <line x1="276" y1="586" x2="294" y2="564" stroke="#090d12" strokeWidth="1.2" />
+                      <line x1="444" y1="548" x2="426" y2="532" stroke="#090d12" strokeWidth="1.2" />
+
+                      {/* Tấm kính xanh xám cánh phải */}
+                      <polygon
+                        points="294,66 426,52 426,532 294,564"
+                        fill="#537996"
+                        fillOpacity="0.9"
+                        stroke="#1e293b"
+                        strokeWidth="1.5"
+                      />
+
+                      {/* Nan trang trí kính cánh phải */}
+                      <line x1="360" y1="59" x2="360" y2="548" stroke="#c5a467" strokeWidth="1.5" />
+                      <line x1="294" y1="186" x2="426" y2="172" stroke="#c5a467" strokeWidth="1.3" />
+                      <line x1="294" y1="312" x2="426" y2="292" stroke="#c5a467" strokeWidth="1.3" />
+                      <line x1="294" y1="438" x2="426" y2="412" stroke="#c5a467" strokeWidth="1.3" />
+                      {/* Hoa văn giữa kính phải */}
+                      <polygon
+                        points="360,268 375,302 360,336 345,302"
+                        fill="#b89454"
+                        fillOpacity="0.65"
+                        stroke="#d6b87c"
+                        strokeWidth="1.2"
+                      />
+                      <circle cx="360" cy="179" r="7" fill="none" stroke="#d6b87c" strokeWidth="1.2" />
+                      <circle cx="360" cy="425" r="7" fill="none" stroke="#d6b87c" strokeWidth="1.2" />
+
+                      {/* Tay nắm cửa đen cánh phải */}
+                      <rect x="281" y="314" width="6" height="44" rx="3" fill="#090d12" />
+                      <rect x="282" y="320" width="24" height="6" rx="3" fill="#090d12" />
+                    </g>
+                  </svg>
+                ) : (
                 <svg
                   viewBox="0 0 540 620"
-                  className="w-full max-w-105 drop-shadow-md select-none"
+                  style={{ transform: `scale(${zoom})` }}
+                  className="w-full max-w-105 drop-shadow-md select-none transition-transform duration-300"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
@@ -200,6 +356,7 @@ export const HeroAdviseCadSection = () => {
                     2000
                   </text>
                 </svg>
+                )}
               </div>
 
               <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
@@ -207,7 +364,9 @@ export const HeroAdviseCadSection = () => {
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   <span>Hệ cửa đi 2 cánh mở quay Xingfa 55</span>
                 </div>
-                <span className="font-semibold text-primary">Tỉ lệ 1:20 • mm</span>
+                <span className="font-semibold text-primary">
+                  {viewMode === '3d' ? 'Mô phỏng 3D • Kính cường lực' : 'Tỉ lệ 1:20 • mm'}
+                </span>
               </div>
             </div>
           </div>
