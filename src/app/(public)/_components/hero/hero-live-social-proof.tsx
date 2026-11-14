@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle2, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 // 1. Dữ liệu mockup: 20 họ, 20 tên đệm, 20 tên riêng tiếng Việt tự nhiên (tạo ra > 8.000 tên ngẫu nhiên)
 const HO_LIST: string[] = [
@@ -64,10 +64,12 @@ function createRandomUser(): ToastUser {
   };
 }
 
-type AnimationPhase = 'idle' | 'exiting-down' | 'entering-from-top' | 'dismissing-left';
+type AnimationPhase = 'idle' | 'exiting-up' | 'entering-from-bottom' | 'dismissing-left';
 
-const CYCLE_INTERVAL = 2800; // Nhảy liên tục mỗi 2.8 giây
-const SLIDE_DURATION = 280;  // Thời gian trượt chuyển đổi (ms)
+const CYCLE_INTERVAL = 3000; // Chu kỳ 3 giây cho mỗi tin nhắn
+const EXIT_DURATION = 300;   // Thời gian tin nhắn trượt lên trên rồi biến mất (ms)
+const PAUSE_HIDDEN = 220;    // Thời gian biến mất hẳn trước khi tin mới bật lên (ms)
+const ENTER_DURATION = 380;  // Thời gian tin mới bật từ dưới lên (ms)
 const DISMISS_DURATION = 300; // Thời gian trượt sang trái khi bấm tắt (ms)
 
 export function HeroLiveSocialProof() {
@@ -102,25 +104,25 @@ export function HeroLiveSocialProof() {
     }, DISMISS_DURATION);
   };
 
-  // Logic nhảy liên tục không ngừng: người cũ trượt xuống, người mới từ trên trượt xuống
+  // Logic mỗi 3s: tin nhắn trượt lên trên rồi biến mất hẳn, sau đó tin mới bật từ dưới lên
   useEffect(() => {
     if (!isMounted || isDismissed || isHovered) return;
 
     const intervalId = setInterval(() => {
-      // 1. Trượt xuống phía dưới và mờ dần
-      setAnimPhase('exiting-down');
+      // 1. Tin nhắn hiện tại trượt lên trên và biến mất
+      setAnimPhase('exiting-up');
 
       addTimeout(() => {
-        // 2. Tạo người dùng mới ngẫu nhiên và đặt ở phía trên (-16px)
+        // 2. Sau khi biến mất hẳn, chuẩn bị tin nhắn mới ở phía dưới
         const nextUser = createRandomUser();
         setCurrentUser(nextUser);
-        setAnimPhase('entering-from-top');
+        setAnimPhase('entering-from-bottom');
 
-        // 3. Trượt xuống vị trí hiển thị ban đầu và sáng dần
+        // 3. Bật nảy tin nhắn mới lên vị trí hiển thị
         addTimeout(() => {
           setAnimPhase('idle');
         }, 40);
-      }, SLIDE_DURATION);
+      }, EXIT_DURATION + PAUSE_HIDDEN);
     }, CYCLE_INTERVAL);
 
     return () => {
@@ -131,7 +133,7 @@ export function HeroLiveSocialProof() {
 
   if (!isMounted || isDismissed) return null;
 
-  // Xử lý styles chuyển động mượt mà
+  // Xử lý styles chuyển động dạng tin nhắn trượt lên rồi biến mất
   const getContainerStyle = (): React.CSSProperties => {
     // Khi bấm nút tắt x: trượt sang trái và biến mất
     if (animPhase === 'dismissing-left') {
@@ -143,29 +145,29 @@ export function HeroLiveSocialProof() {
       };
     }
 
-    // Khi kết thúc chu kỳ: trượt dần xuống dưới và mờ dần
-    if (animPhase === 'exiting-down') {
+    // Tin nhắn trượt lên trên và biến mất
+    if (animPhase === 'exiting-up') {
       return {
-        transform: 'translateY(16px)',
+        transform: 'translateY(-28px) scale(0.95)',
         opacity: 0,
-        transition: `transform ${SLIDE_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1), opacity ${SLIDE_DURATION}ms ease-out`,
+        transition: `transform ${EXIT_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1), opacity ${EXIT_DURATION - 40}ms ease-out`,
       };
     }
 
-    // Chuẩn bị người mới từ phía trên
-    if (animPhase === 'entering-from-top') {
+    // Chuẩn bị tin nhắn mới ở phía dưới
+    if (animPhase === 'entering-from-bottom') {
       return {
-        transform: 'translateY(-16px)',
+        transform: 'translateY(24px) scale(0.95)',
         opacity: 0,
         transition: 'none',
       };
     }
 
-    // Trạng thái bình thường (idle) hoặc trượt từ trên xuống vị trí gốc
+    // Trạng thái hiển thị: bật nảy từ dưới lên vị trí chuẩn
     return {
-      transform: 'translateY(0) translateX(0)',
+      transform: 'translateY(0) translateX(0) scale(1)',
       opacity: 1,
-      transition: `transform ${SLIDE_DURATION}ms cubic-bezier(0, 0, 0.2, 1), opacity ${SLIDE_DURATION}ms ease-out`,
+      transition: `transform ${ENTER_DURATION}ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 260ms ease-out`,
     };
   };
 
@@ -174,25 +176,20 @@ export function HeroLiveSocialProof() {
       aria-label="Thông báo đăng ký"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="fixed bottom-3 left-3 sm:bottom-12 sm:left-6 z-50 select-none pointer-events-auto max-w-[calc(100vw-1.5rem)] sm:max-w-max transition-transform duration-300 hover:scale-[1.01]"
+      className="fixed bottom-16 left-3 sm:bottom-12 sm:left-6 z-40 select-none pointer-events-auto max-w-[calc(100vw-1.5rem)] sm:max-w-max transition-transform duration-300 hover:scale-[1.01]"
     >
-      {/* Toast pill gọn nhẹ, nhảy liên tục, nền trong suốt hoàn toàn */}
+      {/* Bong bóng tin nhắn nổi bật với viền border-primary */}
       <div
         style={getContainerStyle()}
-        className="flex items-center gap-1.5 sm:gap-2.5 rounded-full bg-transparent px-2.5 py-1 sm:px-3.5 sm:py-1.5 backdrop-blur-[2px] transition-all"
+        className="flex items-center gap-2 sm:gap-2.5 rounded-xl border-2 border-primary bg-white px-3.5 py-2 sm:px-4 sm:py-2.5 shadow-xl shadow-primary/20 transition-shadow"
       >
-        {/* Icon tick xanh xác thực */}
-        <div className="flex h-4 w-4 sm:h-5 sm:w-5 shrink-0 items-center justify-center text-emerald-600">
-          <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-        </div>
-
         {/* Nội dung Toast */}
-        <div className="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs text-slate-800 min-w-0">
-          <strong className="font-bold text-slate-900 shrink-0 whitespace-nowrap">
+        <div className="flex items-center gap-1 sm:gap-1.5 text-xs text-slate-700 min-w-0">
+          <strong className="font-extrabold text-primary shrink-0 whitespace-nowrap">
             {currentUser.name}
           </strong>
-          <span className="truncate sm:whitespace-nowrap">đã đăng ký sử dụng phần mềm</span>
-          <span className="hidden md:inline text-[11px] text-slate-500 font-medium whitespace-nowrap">
+          <span className="truncate sm:whitespace-nowrap font-medium">đã đăng ký sử dụng phần mềm</span>
+          <span className="hidden md:inline text-[11px] text-slate-400 font-medium whitespace-nowrap">
             • {currentUser.timeAgo}
           </span>
         </div>

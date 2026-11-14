@@ -9,7 +9,7 @@ import { HeroConsultationSection } from './hero-consultation-section';
 import { HeroDashboardMockup } from './hero-dashboard-mockup';
 import { HeroFeaturedArticlesSection } from './hero-featured-articles-section';
 import { HeroStoryPillarsSection } from './hero-story-pillars';
-import { HeroRegisterInlineForm } from './hero-register-inline-form';
+import { HeroRegisterInlineForm, markRegisterInteracted } from './hero-register-inline-form';
 
 export const Hero = () => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
@@ -45,7 +45,12 @@ export const Hero = () => {
                     : 'opacity-0 -translate-x-12 pointer-events-none hidden lg:block lg:absolute lg:top-0 lg:left-0 lg:w-full lg:z-0'
                 }`}
               >
-                <HeroRegisterInlineForm onBack={() => setIsRegisterMode(false)} />
+                <HeroRegisterInlineForm
+                  onBack={() => {
+                    markRegisterInteracted();
+                    setIsRegisterMode(false);
+                  }}
+                />
               </div>
 
               {/* KHỐI NỘI DUNG GIỚI THIỆU: Luôn xuất phát từ top-0 và trượt ngang sang phải, không bị tụt xuống */}
@@ -89,7 +94,10 @@ export const Hero = () => {
                   {isRegisterMode ? (
                     <button
                       type="button"
-                      onClick={() => setIsRegisterMode(false)}
+                      onClick={() => {
+                        markRegisterInteracted();
+                        setIsRegisterMode(false);
+                      }}
                       className="group inline-flex items-center justify-center gap-2 rounded-lg bg-white/15 hover:bg-white/25 border border-white/30 px-5 py-3.5 text-sm font-bold text-white shadow-lg transition-all cursor-pointer"
                     >
                       <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
@@ -99,7 +107,10 @@ export const Hero = () => {
                     <>
                       <button
                         type="button"
-                        onClick={() => setIsRegisterMode(true)}
+                        onClick={() => {
+                          markRegisterInteracted();
+                          setIsRegisterMode(true);
+                        }}
                         className="group inline-flex items-center justify-center gap-2 rounded-lg bg-hero-accent px-6 py-3.5 text-sm font-bold text-hero-ink shadow-lg shadow-black/20 transition-all hover:bg-hero-accent-hover hover:shadow-xl cursor-pointer"
                       >
                         <FileSpreadsheet className="h-4 w-4" />

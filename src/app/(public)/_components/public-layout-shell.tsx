@@ -1,11 +1,18 @@
 'use client';
 
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { Modal } from '@/components';
 import { Header } from './header';
 import { Footer } from './footer';
 import { FloatingContactDock } from './floating-contact-dock';
 import { HeroLiveSocialProof } from './hero';
+import {
+  HeroRegisterInlineForm,
+  markRegisterInteracted,
+  REGISTER_INTERACTED_EVENT,
+  REGISTER_MODAL_STORAGE_KEY,
+} from './hero/hero-register-inline-form';
 
 interface PublicLayoutShellProps {
   children: React.ReactNode;
@@ -39,6 +46,37 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
   const mainRef = useRef<HTMLDivElement | null>(null);
   const prevPathRef = useRef<string | null>(pathname);
   const prevIndexRef = useRef<number>(getRouteOrderIndex(pathname));
+  const [isAutoRegisterModalOpen, setIsAutoRegisterModalOpen] = useState(false);
+
+  const isPortal = isPortalRoute(pathname);
+
+  // Tự động hiển thị Modal đăng ký sau 20 giây (chỉ 1 lần duy nhất trong phiên truy cập)
+  useEffect(() => {
+    if (!isPortal || typeof window === 'undefined') return;
+    if (sessionStorage.getItem(REGISTER_MODAL_STORAGE_KEY) === 'true') return;
+
+    const timer = setTimeout(() => {
+      if (sessionStorage.getItem(REGISTER_MODAL_STORAGE_KEY) !== 'true') {
+        sessionStorage.setItem(REGISTER_MODAL_STORAGE_KEY, 'true');
+        setIsAutoRegisterModalOpen(true);
+      }
+    }, 30000);
+
+    const handleInteracted = () => {
+      clearTimeout(timer);
+    };
+
+    window.addEventListener(REGISTER_INTERACTED_EVENT, handleInteracted);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener(REGISTER_INTERACTED_EVENT, handleInteracted);
+    };
+  }, [isPortal]);
+
+  const handleCloseAutoModal = () => {
+    markRegisterInteracted();
+    setIsAutoRegisterModalOpen(false);
+  };
 
   // Chạy đồng bộ trước khi trình duyệt vẽ (pre-paint) bằng Web Animations API GPU
   // Không dùng key={pathname} và không hạ opacity về 0 để triệt tiêu 100% hiện tượng nháy trắng
@@ -78,7 +116,7 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
     return () => animation.cancel();
   }, [pathname]);
 
-  if (!isPortalRoute(pathname)) {
+  if (!isPortal) {
     return <>{children}</>;
   }
 
@@ -90,7 +128,21 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
       </div>
       {!pathname?.startsWith('/news') && <Footer />}
       <FloatingContactDock />
-      <HeroLiveSocialProof />
+      {pathname === '/' && <HeroLiveSocialProof />}
+
+      <Modal
+        isOpen={isAutoRegisterModalOpen}
+        onClose={handleCloseAutoModal}
+        size="md"
+        title="Đăng ký trải nghiệm XTTECH XMS Fab"
+        className="max-w-lg border border-primary/20"
+        bodyClassName="p-5 sm:p-6"
+      >
+        <HeroRegisterInlineForm
+          variant="modal"
+          onBack={handleCloseAutoModal}
+        />
+      </Modal>
     </div>
   );
 };

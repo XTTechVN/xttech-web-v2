@@ -6,8 +6,20 @@ import toast from 'react-hot-toast';
 import { Input } from '@/components';
 import { isValidEmail, isValidVnPhone } from '@/utils/validators';
 
+export const REGISTER_MODAL_STORAGE_KEY = 'xttech_register_modal_handled';
+export const REGISTER_INTERACTED_EVENT = 'xttech:register-interacted';
+
+export function markRegisterInteracted() {
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem(REGISTER_MODAL_STORAGE_KEY, 'true');
+    window.dispatchEvent(new Event(REGISTER_INTERACTED_EVENT));
+  }
+}
+
 export interface HeroRegisterInlineFormProps {
   onBack: () => void;
+  variant?: 'inline' | 'modal';
+  onSuccess?: () => void;
 }
 
 interface FormState {
@@ -33,7 +45,11 @@ type FormErrors = Partial<Record<keyof FormState, string>>;
 // Chu kỳ reset ưu đãi sau mỗi 6 ngày (tính bằng ms)
 const CYCLE_MS = 6 * 24 * 60 * 60 * 1000;
 
-export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) {
+export function HeroRegisterInlineForm({
+  onBack,
+  variant = 'inline',
+  onSuccess,
+}: HeroRegisterInlineFormProps) {
   const [formData, setFormData] = useState<FormState>(INITIAL_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,6 +105,10 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
       newErrors.email = 'Email không hợp lệ';
     }
 
+    if (!formData.taxCode.trim()) {
+      newErrors.taxCode = 'Vui lòng nhập mã số thuế';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -108,6 +128,8 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSubmitted(true);
+      markRegisterInteracted();
+      onSuccess?.();
       toast.success('Đăng ký nhận phần mềm thành công! Đội ngũ XTTECH sẽ liên hệ hỗ trợ bạn ngay.');
     }, 500);
   };
@@ -119,29 +141,37 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white p-5 sm:p-7 shadow-2xl shadow-black/40 border border-white/50 text-slate-800">
-      {/* Nút quay lại & Header thanh điều hướng form */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-primary transition-colors cursor-pointer group"
-        >
-          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
-          <span>Quay lại trang giới thiệu</span>
-        </button>
-
-        <div className="flex items-center gap-2">
+    <div
+      className={
+        variant === 'inline'
+          ? 'relative overflow-hidden rounded-2xl bg-white p-5 sm:p-7 shadow-2xl shadow-black/40 border border-white/50 text-slate-800'
+          : 'relative text-slate-800'
+      }
+    >
+      {/* Nút quay lại & Header thanh điều hướng form (chỉ hiển thị ở chế độ inline) */}
+      {variant === 'inline' && (
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <button
             type="button"
             onClick={onBack}
-            aria-label="Đóng form"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-primary transition-colors cursor-pointer group"
           >
-            <X className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
+            <span>Quay lại trang giới thiệu</span>
           </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Đóng form"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {isSubmitted ? (
         /* Màn hình gửi thành công */
@@ -176,7 +206,7 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
         </div>
       ) : (
         /* Form nhập liệu */
-        <form onSubmit={handleSubmit} className="space-y-3 pt-3">
+        <form onSubmit={handleSubmit} className={variant === 'inline' ? 'space-y-3 pt-3' : 'space-y-3'}>
           {/* Thanh timer đếm ngược & thanh tiến trình ưu đãi 6 ngày */}
           <div className="rounded-xl border border-primary/20 bg-linear-to-r from-primary/5 via-primary/10 to-primary/5 p-3 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -219,7 +249,7 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
               </div>
               <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-200/80">
                 <div
-                  className="h-full rounded-full bg-linear-to-r from-[#4194B0] to-[#357B65] transition-all duration-1000 ease-out"
+                  className="h-full rounded-full bg-linear-to-r from-[var(--hero-accent-from)] to-[var(--hero-accent-to)] transition-all duration-1000 ease-out"
                   style={{ width: `${isMounted ? timeLeft.progress : 82}%` }}
                 />
               </div>
@@ -279,10 +309,11 @@ export function HeroRegisterInlineForm({ onBack }: HeroRegisterInlineFormProps) 
                 className="h-9 text-xs"
               />
               <Input
-                label="Mã số thuế"
+                label="Mã số thuế *"
                 placeholder="VD: 0102030405"
                 value={formData.taxCode}
                 onChange={(e) => handleChange('taxCode', e.target.value)}
+                error={errors.taxCode}
                 fullWidth
                 className="h-9 text-xs"
               />

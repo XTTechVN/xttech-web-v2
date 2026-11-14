@@ -14,7 +14,7 @@ export const HeroAdviseCadSection = () => {
           <h2 className="text-2xl font-black tracking-tight text-[#16384C] uppercase sm:text-3xl lg:text-4xl">
             TƯ VẤN CỤ THỂ — BÁO GIÁ NHANH CHÓNG
           </h2>
-          <div className="mx-auto mt-2 h-1 w-16 rounded-full" style={{ backgroundColor: '#D97706' }} />
+          <div className="mx-auto mt-2 h-1 w-16 rounded-full bg-primary" />
           <p className="mt-4 text-sm text-gray-600 sm:text-base">
             Từ bản vẽ kỹ thuật sắc nét đến mô hình 3D sống động, mọi thứ đều có thể chia sẻ cho khách hàng chỉ với một liên kết.
           </p>
