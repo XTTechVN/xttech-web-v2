@@ -445,9 +445,7 @@ export const HeroAdviseCadSection = () => {
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   <span>Hệ cửa đi 2 cánh mở quay Xingfa 55</span>
                 </div>
-                <span className="font-semibold text-primary">
-                  {viewMode === '3d' ? 'Mô phỏng 3D • Kính cường lực' : 'Tỉ lệ 1:20 • mm'}
-                </span>
+                
               </div>
             </div>
           </div>

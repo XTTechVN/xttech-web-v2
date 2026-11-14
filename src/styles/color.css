@@ -136,3 +136,18 @@ svg.text-hero-accent,
 .animate-pillar-card-in {
   animation: pillar-card-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+@keyframes social-toast-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-social-toast-in {
+  animation: social-toast-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

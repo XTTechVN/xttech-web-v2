@@ -10,9 +10,6 @@ import { HeroLiveSocialProof } from './hero';
 import { HeroSectionDots } from './hero/hero-section-dots';
 import {
   HeroRegisterInlineForm,
-  markRegisterInteracted,
-  REGISTER_INTERACTED_EVENT,
-  REGISTER_MODAL_STORAGE_KEY,
 } from './hero/hero-register-inline-form';
 
 interface PublicLayoutShellProps {
@@ -51,31 +48,13 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
 
   const isPortal = isPortalRoute(pathname);
 
-  // Tự động hiển thị Modal đăng ký sau 20 giây (chỉ 1 lần duy nhất trong phiên truy cập)
+  // Mở sẵn Modal đăng ký mỗi lần vào/tải lại trang, chỉ đóng khi người dùng tự bấm tắt
   useEffect(() => {
-    if (!isPortal || typeof window === 'undefined') return;
-    if (sessionStorage.getItem(REGISTER_MODAL_STORAGE_KEY) === 'true') return;
-
-    const timer = setTimeout(() => {
-      if (sessionStorage.getItem(REGISTER_MODAL_STORAGE_KEY) !== 'true') {
-        sessionStorage.setItem(REGISTER_MODAL_STORAGE_KEY, 'true');
-        setIsAutoRegisterModalOpen(true);
-      }
-    }, 30000);
-
-    const handleInteracted = () => {
-      clearTimeout(timer);
-    };
-
-    window.addEventListener(REGISTER_INTERACTED_EVENT, handleInteracted);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener(REGISTER_INTERACTED_EVENT, handleInteracted);
-    };
+    if (!isPortal) return;
+    setIsAutoRegisterModalOpen(true);
   }, [isPortal]);
 
   const handleCloseAutoModal = () => {
-    markRegisterInteracted();
     setIsAutoRegisterModalOpen(false);
   };
 
