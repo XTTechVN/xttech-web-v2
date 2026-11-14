@@ -34,7 +34,7 @@ export const Hero = () => {
         <div className="pointer-events-none absolute right-0 bottom-0 h-96 w-96 rounded-full bg-teal-300/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12 lg:gap-10 min-h-[540px]">
+          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12 lg:gap-10 lg:min-h-[540px]">
             {/* CỘT TRÁI TRÊN DESKTOP: Chứa Form Đăng ký & Khối Giới thiệu trượt ngang */}
             <div className="lg:col-span-6 relative">
               {/* FORM ĐĂNG KÝ: Xuất hiện bên trái với hiệu ứng slide & fade khi nhấn 'Đăng ký ngay' */}
@@ -119,12 +119,12 @@ export const Hero = () => {
               </div>
             </div>
 
-            {/* CỘT PHẢI TRÊN DESKTOP: MOCKUP DASHBOARD (Mờ đi để nhường vị trí khi khối giới thiệu trượt sang) */}
+            {/* CỘT PHẢI TRÊN DESKTOP: MOCKUP DASHBOARD (Ẩn hoàn toàn trên mobile, chỉ hiển thị từ màn hình lớn lg) */}
             <div
-              className={`lg:col-span-6 transition-all duration-500 ease-in-out ${
+              className={`hidden lg:block lg:col-span-6 transition-all duration-500 ease-in-out ${
                 isRegisterMode
-                  ? 'opacity-0 translate-x-12 scale-95 pointer-events-none hidden lg:block'
-                  : 'opacity-100 translate-x-0 scale-100 pointer-events-auto block'
+                  ? 'opacity-0 translate-x-12 scale-95 pointer-events-none'
+                  : 'opacity-100 translate-x-0 scale-100 pointer-events-auto'
               }`}
             >
               <HeroDashboardMockup />

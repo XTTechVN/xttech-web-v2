@@ -8,7 +8,7 @@ export const HeroAdviseCadSection = () => {
   const [activeTab, setActiveTab] = useState<'wood' | 'grey' | 'white'>('wood');
 
   return (
-    <section className="border-t border-gray-100 bg-[#FAF9F5] py-16 lg:py-24">
+    <section className="border-t border-gray-100 bg-white py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-2xl font-black tracking-tight text-[#16384C] uppercase sm:text-3xl lg:text-4xl">

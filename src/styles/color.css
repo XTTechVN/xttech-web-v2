@@ -30,9 +30,12 @@
   --st-expired-bg: #222222;
 
   /* Màu nhấn & nền gradient trang chủ công khai (hero) */
-  --hero-accent-raw: #25f4f4;
-  --hero-accent-hover-raw: #25f4f4;
-  --hero-ink-raw: #022c33;
+  --hero-accent-raw: linear-gradient(135deg, #0097b2 0%, #4eb622 100%);
+  --hero-accent-hover-raw: linear-gradient(135deg, #00849c 0%, #43a31c 100%);
+  --hero-accent-from: #0097b2;
+  --hero-accent-to: #4eb622;
+  --hero-accent-solid: #0097b2;
+  --hero-ink-raw: #ffffff;
   --hero-bg-from-raw: #02262c;
   --hero-bg-to-raw: #02333a;
 }
@@ -41,8 +44,8 @@
   --color-primary: var(--color-primary-raw);
   --color-secondary: var(--color-secondary-raw);
 
-  --color-hero-accent: var(--hero-accent-raw);
-  --color-hero-accent-hover: var(--hero-accent-hover-raw);
+  --color-hero-accent: var(--hero-accent-solid);
+  --color-hero-accent-hover: #00849c;
   --color-hero-ink: var(--hero-ink-raw);
   --color-hero-bg-from: var(--hero-bg-from-raw);
   --color-hero-bg-to: var(--hero-bg-to-raw);
@@ -73,4 +76,34 @@
 
   --color-st-expired: var(--st-expired);
   --color-st-expired-bg: var(--st-expired-bg);
+}
+
+/* ================= GRADIENT ACCENT UTILITIES (#0097b2 -> #4eb622) ================= */
+.bg-hero-accent {
+  background-image: linear-gradient(135deg, #0097b2 0%, #4eb622 100%) !important;
+  color: #ffffff !important;
+}
+
+.bg-hero-accent:hover,
+.hover\:bg-hero-accent-hover:hover {
+  background-image: linear-gradient(135deg, #00849c 0%, #43a31c 100%) !important;
+  color: #ffffff !important;
+}
+
+.text-hero-accent {
+  background: linear-gradient(135deg, #0097b2 0%, #4eb622 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+svg.text-hero-accent,
+.text-hero-accent svg {
+  color: #4eb622 !important;
+  stroke: currentColor !important;
+  -webkit-text-fill-color: initial !important;
+}
+
+.border-hero-accent {
+  border-color: #0097b2 !important;
 }

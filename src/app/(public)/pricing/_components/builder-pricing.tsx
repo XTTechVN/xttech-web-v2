@@ -92,8 +92,7 @@ const CycleToggle = ({ value, onChange }: { value: BillingCycle; onChange: (v: B
             {opt.label}
             {opt.id === 'year' && MAX_SAVE > 0 && (
               <span
-                className="rounded-full px-1.5 py-0.5 text-[10px] font-extrabold text-primary"
-                style={{ backgroundColor: ACCENT }}
+                className="rounded-full px-1.5 py-0.5 text-[10px] font-extrabold text-white bg-gradient-to-r from-[#0097b2] to-[#4eb622]"
               >
                 -{MAX_SAVE}%
               </span>
@@ -108,9 +107,9 @@ const CycleToggle = ({ value, onChange }: { value: BillingCycle; onChange: (v: B
 /* ---------- Nút CTA của thẻ gói ---------- */
 const PlanButton = ({ plan }: { plan: Plan }) => {
   const styles: Record<ButtonVariant, string> = {
-    outline: 'border-2 border-primary bg-white text-primary group-hover:border-[#25f4f4] group-hover:bg-[#25f4f4] group-hover:text-primary',
-    solid: 'border-2 border-primary bg-primary text-white group-hover:border-[#25f4f4] group-hover:bg-[#25f4f4] group-hover:text-primary',
-    accent: 'border-2 border-primary/20 bg-primary/10 text-primary group-hover:border-[#25f4f4] group-hover:bg-[#25f4f4] group-hover:text-primary',
+    outline: 'border-2 border-primary bg-white text-primary group-hover:border-transparent group-hover:bg-gradient-to-r group-hover:from-[#0097b2] group-hover:to-[#4eb622] group-hover:text-white',
+    solid: 'border-2 border-primary bg-primary text-white group-hover:border-transparent group-hover:bg-gradient-to-r group-hover:from-[#0097b2] group-hover:to-[#4eb622] group-hover:text-white',
+    accent: 'border-2 border-primary/20 bg-primary/10 text-primary group-hover:border-transparent group-hover:bg-gradient-to-r group-hover:from-[#0097b2] group-hover:to-[#4eb622] group-hover:text-white',
   };
   return (
     <button
@@ -137,7 +136,7 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
     >
       {isPopular && (
         <div
-          className="bg-primary absolute -top-3.5 left-6 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-extrabold text-white shadow-sm transition-transform duration-300 group-hover:scale-105"
+          className="absolute -top-3.5 left-6 whitespace-nowrap rounded-full bg-gradient-to-r from-[#0097b2] to-[#4eb622] px-3.5 py-1.5 text-xs font-extrabold text-white shadow-sm transition-transform duration-300 group-hover:scale-105"
         >
           Bán chạy nhất
         </div>
@@ -148,7 +147,7 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
       {/* Giá với hiệu ứng hover */}
       <div className="group/price mt-3 flex h-9 cursor-pointer items-baseline gap-x-1.5">
         <span
-          className="inline-block origin-left text-3xl font-extrabold tracking-tight text-primary transition-all duration-300 ease-out group-hover:scale-105 group-hover:text-[#25f4f4]"
+          className="inline-block origin-left text-3xl font-extrabold tracking-tight text-primary transition-all duration-300 ease-out group-hover:scale-105 group-hover:text-[#4eb622]"
         >
           {view.price}
         </span>
@@ -161,7 +160,7 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
         )}
       </div>
       <p
-        className="mb-5 mt-2 flex min-h-[34px] items-center text-xs leading-snug text-gray-500 transition-colors duration-300 group-hover:font-semibold group-hover:text-[#25f4f4]"
+        className="mb-5 mt-2 flex min-h-[34px] items-center text-xs leading-snug text-gray-500 transition-colors duration-300 group-hover:font-semibold group-hover:text-[#4eb622]"
       >
         {view.note}
       </p>
@@ -173,7 +172,7 @@ const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
         {plan.highlights.map((h, i) => (
           <li key={i} className="flex gap-2.5 text-sm leading-snug">
             <Check
-              className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-colors duration-300 group-hover:text-[#25f4f4]"
+              className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-colors duration-300 group-hover:text-[#4eb622]"
               strokeWidth={3}
             />
             <span className="text-gray-500 transition-colors duration-300 group-hover:text-white/80">
