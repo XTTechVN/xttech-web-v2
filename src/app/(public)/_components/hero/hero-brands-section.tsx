@@ -8,7 +8,6 @@ import { cn } from '@/utils/cn';
 import img3h from '@/assets/accessories/3h.jpg';
 import imgAlutrend from '@/assets/accessories/alutrend.jpg';
 import imgAlvero from '@/assets/accessories/alvero.jpg';
-import imgBv1a2 from '@/assets/accessories/bv1a2.jpg';
 import imgCandy from '@/assets/accessories/candy.jpg';
 import imgCologe from '@/assets/accessories/cologe.jpg';
 import imgCologext from '@/assets/accessories/cologext.jpg';
@@ -49,7 +48,6 @@ interface BrandLogoItem {
 const ALUMINUM_BRANDS: BrandLogoItem[] = [
   { id: 'alutrend', name: 'Alutrend', src: imgAlutrend },
   { id: 'alvero', name: 'ALVERO', src: imgAlvero },
-  { id: 'bv1a2', name: 'BV1A2', src: imgBv1a2 },
   { id: 'candy', name: 'Candy', src: imgCandy },
   { id: 'euroview', name: 'Euroview', src: imgEuroview },
   { id: 'fv', name: 'FV', src: imgFv },
