@@ -174,21 +174,21 @@ export const Footer = () => {
       </div>
 
       {/* Dải bản quyền */}
-      <div className="relative border-t border-white/10 bg-black/25 py-4">
+      <div className="relative border-t border-white/10 bg-black/25 pt-4 pb-6 sm:py-4">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6 lg:px-8">
-          <p className="text-xs text-slate-400">
+          <p className="text-center text-xs text-slate-400 sm:text-left">
             © {currentYear} <span className="font-semibold text-white">XTTECH</span>. Tất cả các quyền được bảo lưu.
           </p>
-          <div className="flex items-center gap-5 text-xs text-slate-400">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-400 sm:justify-end sm:gap-5">
             {FOOTER_BOTTOM_LINKS.map((item, idx) => (
               <React.Fragment key={item.label}>
-                {idx > 0 && <span className="h-3 w-px bg-white/15" />}
+                {idx > 0 && <span className="hidden h-3 w-px bg-white/15 sm:inline-block" />}
                 {item.external ? (
                   <a
                     href={item.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="transition-colors hover:text-white"
+                    className="whitespace-nowrap transition-colors hover:text-white"
                   >
                     {item.label}
                   </a>
@@ -196,7 +196,7 @@ export const Footer = () => {
                   <Link
                     href={item.href}
                     onClick={(e) => handleFooterLinkClick(e, item.href)}
-                    className="transition-colors hover:text-white"
+                    className="whitespace-nowrap transition-colors hover:text-white"
                   >
                     {item.label}
                   </Link>

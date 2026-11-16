@@ -150,9 +150,7 @@ export const HeroBrandsSection = () => {
               </div>
 
               <p className="mt-4 text-sm leading-relaxed text-slate-600">
-                Tại <strong className="font-bold text-primary">XTTech</strong>, việc khai báo và cập nhật một hãng nhôm mới được thiết kế tinh gọn theo chuẩn dữ liệu xưởng.
-                Riêng với các hãng nhôm có cùng biên dạng rãnh C hay rãnh K, chức năng sao chép hãng sẽ hỗ trợ kế thừa cấu hình sẵn có — người dùng
-                chỉ cần điều chỉnh lại mô tả và tỷ trọng.
+                Tại <strong className="font-bold text-primary">XTTech</strong>, hệ thống hỗ trợ sẵn danh mục hơn 25 thương hiệu nhôm thông dụng và các hãng phụ kiện phổ biến, đồng thời cho phép xưởng linh hoạt tùy chỉnh thông số tỷ trọng, độ dày kính và cấu hình theo đúng thực tế sản xuất.
               </p>
             </div>
 

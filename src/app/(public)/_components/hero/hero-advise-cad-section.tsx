@@ -108,7 +108,7 @@ export const HeroAdviseCadSection = () => {
               })}
             </div>
 
-            <div className="pt-2">
+            <div className="flex justify-center pt-2 lg:justify-start">
               <button
                 type="button"
                 onClick={handleOpenRegisterModal}
