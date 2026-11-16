@@ -4,9 +4,8 @@ import React, { useRef, useState } from 'react';
 import { FileText, Printer, X } from 'lucide-react';
 import { Button } from '@/components';
 import type { ProductionOrder, ProductionSheet } from '@/types';
-import { ProductionSheetCard } from '../components/production-sheet-card';
+import { ProductionSheetCard, printProductionSheets } from '../../shared/technical-sheets';
 import { useProductionSheets } from '../hooks';
-import { printProductionSheets } from '../utils';
 
 interface ProductionSheetsModalProps {
   isOpen: boolean;

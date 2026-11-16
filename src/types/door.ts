@@ -22,6 +22,8 @@ export interface DoorTypeConfig {
 }
 
 export const DOOR_TYPE_LABELS: Record<string, string> = {
+  door: 'Cửa đi',
+  window: 'Cửa sổ',
   glass_wall: 'Vách kính',
   casement_window: 'Cửa sổ mở quay',
   sliding_window: 'Cửa sổ lùa',

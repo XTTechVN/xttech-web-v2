@@ -16,8 +16,12 @@ export function SignDoorSpec({ spec }: { spec: PublicDoorSpec }) {
         </span>
       ),
     },
-    { label: 'Diện tích', value: <span className="font-mono tabular-nums">{formatNumber(spec.areaM2)} m²</span> },
+    {
+      label: 'Diện tích',
+      value: <span className="font-mono tabular-nums">{formatNumber(spec.areaM2)} m²</span>,
+    },
     { label: 'Loại cửa', value: getSignDoorTypeLabel(spec.doorType) },
+    { label: 'Nhà cung cấp', value: spec.supplierName },
     { label: 'Hệ nhôm', value: spec.brandName },
     {
       label: 'Màu nhôm',
@@ -35,6 +39,7 @@ export function SignDoorSpec({ spec }: { spec: PublicDoorSpec }) {
       ) : null,
     },
     { label: 'Kính', value: spec.glassName },
+    { label: 'Quy cách kỹ thuật', value: spec.specification },
   ];
 
   return (

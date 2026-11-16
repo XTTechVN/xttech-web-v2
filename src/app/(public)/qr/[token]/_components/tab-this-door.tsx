@@ -10,7 +10,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { Badge } from '@/components';
-import { DOOR_STATUS_MAP } from '@/config';
+import { DOOR_FULFILLMENT_TYPE_MAP, DOOR_STATUS_MAP } from '@/config';
 import type { PositionQrView, ProgressStepCode } from '@/types';
 import { QrDoorVisual } from './qr-door-visual';
 import { formatDateTimeVi, formatDateVi, mediaUrl } from './qr-helpers';
@@ -36,6 +36,7 @@ export function TabThisDoor({
   const [showBars, setShowBars] = useState(false);
 
   const statusBadge = DOOR_STATUS_MAP[view.status];
+  const isOutsourced = view.fulfillmentType === 'outsourced';
   const actionSteps = view.allowedNextSteps.filter((step) => INSTALL_STEP_VALUES.includes(step));
   const totalBarsCount = view.bars.reduce((sum, bar) => sum + (bar.qty || 0), 0);
 
@@ -46,10 +47,17 @@ export function TabThisDoor({
         <section className="rounded-2xl border border-slate-200 bg-white p-4 lg:p-5">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-md bg-[#045863]/10 px-2 py-0.5 font-mono text-xs font-bold text-[#045863]">
                   {view.code}
                 </span>
+                {isOutsourced && (
+                  <span
+                    className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${DOOR_FULFILLMENT_TYPE_MAP.outsourced.badgeClass}`}
+                  >
+                    {DOOR_FULFILLMENT_TYPE_MAP.outsourced.shortLabel}
+                  </span>
+                )}
                 {view.floorName && (
                   <span className="text-xs font-medium text-slate-500">· {view.floorName}</span>
                 )}
@@ -115,6 +123,7 @@ export function TabThisDoor({
           areaM2={view.areaM2}
           designImage={view.designImage}
           systemConfig={view.systemConfig}
+          fulfillmentType={view.fulfillmentType}
           variant="card"
         />
       </div>
@@ -123,6 +132,8 @@ export function TabThisDoor({
       <div className="lg:col-span-7 space-y-4">
         <section className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white px-4 lg:px-5 py-1 text-xs">
           {[
+            ['Hình thức', isOutsourced ? DOOR_FULFILLMENT_TYPE_MAP.outsourced.label : null],
+            ['Nhà cung cấp', view.supplierName],
             ['Mẫu cửa', view.doorName],
             ['Hãng nhôm', view.brandName],
             ['Hệ nhôm', view.seriesName],
@@ -138,7 +149,7 @@ export function TabThisDoor({
           )}
         </section>
 
-        {view.bars.length > 0 && (
+        {!isOutsourced && view.bars.length > 0 && (
           <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <button
               type="button"

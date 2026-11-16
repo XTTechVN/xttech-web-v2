@@ -45,6 +45,11 @@ export function SignDoorCard({ item, isOpen, onToggle, onZoom }: SignDoorCardPro
             )}
             <span className="text-sm font-bold text-stone-900">{item.code}</span>
             {item.name && <span className="text-xs text-stone-600">· {item.name}</span>}
+            {spec.supplierName && (
+              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                NCC: {spec.supplierName}
+              </span>
+            )}
           </div>
           <div className="mt-0.5 font-mono text-[11px] tabular-nums text-stone-600">
             {formatNumber(spec.width, 0)} × {formatNumber(spec.height, 0)} mm · {formatNumber(spec.areaM2)} m²
@@ -82,28 +87,34 @@ export function SignDoorCard({ item, isOpen, onToggle, onZoom }: SignDoorCardPro
             {item.note && (
               <p className={cn('text-xs', isFailed ? 'text-rose-700' : 'text-stone-600')}>Ghi chú: {item.note}</p>
             )}
-            {pricing && (
-              <dl className="space-y-1 rounded-md border border-primary/20 bg-primary/5 p-2.5 text-xs">
-                <div className="flex justify-between text-stone-700">
-                  <dt>Đơn giá / m²</dt>
-                  <dd className="font-mono tabular-nums">{formatVnd(pricing.unitPricePerM2)}</dd>
-                </div>
-                <div className="flex justify-between text-stone-700">
-                  <dt>Cửa</dt>
-                  <dd className="font-mono tabular-nums">{formatVnd(pricing.doorAmount)}</dd>
-                </div>
-                {pricing.accessoryAmount > 0 && (
+            {pricing && (() => {
+              const isSetUnit = pricing.unit === 'set';
+              const unitPriceValue = isSetUnit
+                ? (pricing.unitPrice ?? pricing.doorAmount)
+                : (pricing.unitPrice ?? pricing.unitPricePerM2);
+              return (
+                <dl className="space-y-1 rounded-md border border-primary/20 bg-primary/5 p-2.5 text-xs">
                   <div className="flex justify-between text-stone-700">
-                    <dt>Phụ kiện</dt>
-                    <dd className="font-mono tabular-nums">{formatVnd(pricing.accessoryAmount)}</dd>
+                    <dt>{isSetUnit ? 'Đơn giá / bộ' : 'Đơn giá / m²'}</dt>
+                    <dd className="font-mono tabular-nums">{formatVnd(unitPriceValue)}</dd>
                   </div>
-                )}
-                <div className="flex justify-between border-t border-primary/20 pt-1 text-sm font-bold text-primary">
-                  <dt>Thành tiền</dt>
-                  <dd className="font-mono tabular-nums">{formatVnd(pricing.amount)}</dd>
-                </div>
-              </dl>
-            )}
+                  <div className="flex justify-between text-stone-700">
+                    <dt>Cửa</dt>
+                    <dd className="font-mono tabular-nums">{formatVnd(pricing.doorAmount)}</dd>
+                  </div>
+                  {pricing.accessoryAmount > 0 && (
+                    <div className="flex justify-between text-stone-700">
+                      <dt>Phụ kiện</dt>
+                      <dd className="font-mono tabular-nums">{formatVnd(pricing.accessoryAmount)}</dd>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t border-primary/20 pt-1 text-sm font-bold text-primary">
+                    <dt>Thành tiền</dt>
+                    <dd className="font-mono tabular-nums">{formatVnd(pricing.amount)}</dd>
+                  </div>
+                </dl>
+              );
+            })()}
           </div>
         </div>
       )}

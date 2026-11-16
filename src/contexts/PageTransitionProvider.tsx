@@ -328,6 +328,7 @@ export const PageTransitionProvider: React.FC<{ children: React.ReactNode }> = (
         iconName={targetMeta.iconName}
         progress={progress}
         onBack={dismissTransition}
+        onHome={dismissTransition}
       />
 
       {/* 2. Giao diện ứng dụng chính */}

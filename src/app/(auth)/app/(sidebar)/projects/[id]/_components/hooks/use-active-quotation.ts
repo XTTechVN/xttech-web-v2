@@ -12,6 +12,9 @@ export const quotationSheetKey = (projectId: number) => ['project_quotation_shee
 export const quotationMaterialAnalysisKey = (projectId: number) =>
   ['project_quotation_material_analysis', projectId] as const;
 
+export const technicalSheetsKey = (projectId: number, designOptionId?: number | null) =>
+  ['project_positions', projectId, 'technical_sheets', designOptionId ?? 'official'] as const;
+
 // Làm mới mọi dữ liệu phụ thuộc báo giá hiện hành (báo giá, bảng báo giá, dự án)
 export const invalidateQuotationQueries = (projectId: number) => {
   queryClient.invalidateQueries({ queryKey: activeQuotationKey(projectId) });

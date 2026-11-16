@@ -1,4 +1,5 @@
 import type { EvidenceMediaItem, ProgressStepCode } from './cutting-plan';
+import type { DoorFulfillmentType } from './supplier-door';
 
 // ---------- Chữ ký điện tử ----------
 export interface SignatureInput {
@@ -69,6 +70,8 @@ export interface PublicDoorSpec {
   brandName?: string | null;
   colorName?: string | null;
   colorHex?: string | null;
+  supplierName?: string | null;
+  specification?: string | null;
   glassName?: string | null;
   note?: string | null;
 }
@@ -91,6 +94,8 @@ export interface PublicAccessoryLine {
 
 export interface PublicDoorPricing {
   unitPricePerM2: number;
+  unit?: 'm2' | 'set';
+  unitPrice?: number;
   amount: number;
   doorAmount: number;
   accessoryAmount: number;
@@ -218,6 +223,8 @@ export interface WarrantyVisitPositionItem {
   height: number;
   areaM2: number;
   designImage?: string | null;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierName?: string | null;
 }
 
 export interface WarrantyVisit {
@@ -453,6 +460,8 @@ export interface QrProjectDoorItem {
   glassName?: string | null;
   designImage?: string | null;
   systemConfig?: Record<string, unknown> | null;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierName?: string | null;
   qrToken: string;
 }
 
@@ -480,6 +489,8 @@ export interface PositionQrView {
   glassName?: string | null;
   designImage?: string | null;
   systemConfig?: Record<string, unknown> | null;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierName?: string | null;
   bars: {
     name: string;
     length: number;

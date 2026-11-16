@@ -1,6 +1,6 @@
 import { ArchConfig, FrameShape } from '@/components/door-studio/studio-types';
 
-export type SupplierType = 'aluminum' | 'accessory' | 'glass' | 'consumable';
+export type SupplierType = 'aluminum' | 'accessory' | 'glass' | 'consumable' | 'door_set';
 
 export type WarehouseItemType = 'profile' | 'accessory' | 'consumable';
 

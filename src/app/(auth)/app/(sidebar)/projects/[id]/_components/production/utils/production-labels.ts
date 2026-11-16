@@ -133,3 +133,73 @@ export const getNextStep = (status: string): ProgressStepCode | null =>
 export const formatProductionDate = (value?: string | null): string =>
   value ? new Date(value).toLocaleDateString('vi-VN') : '—';
 
+export interface DailyProgressActionState {
+  nextStep: ProgressStepCode | null;
+  isOutsourcedOnly: boolean;
+  blockedHint: string | null;
+  hideAdvanceButton: boolean;
+}
+
+export function resolveDailyProgressActionState(
+  selectedStep: ProgressStepCode | null,
+  selectedPositions: { fulfillmentType?: string }[],
+  canManageOutsourcedProcurement: boolean,
+): DailyProgressActionState {
+  if (!selectedStep || selectedPositions.length === 0) {
+    return { nextStep: null, isOutsourcedOnly: false, blockedHint: null, hideAdvanceButton: false };
+  }
+  const hasOutsourced = selectedPositions.some((p) => p.fulfillmentType === 'outsourced');
+  const hasInHouse = selectedPositions.some((p) => p.fulfillmentType !== 'outsourced');
+  const isOutsourcedOnly = hasOutsourced && !hasInHouse;
+
+  if (selectedStep === 'surveyed') {
+    if (hasOutsourced && hasInHouse) {
+      return {
+        nextStep: null,
+        isOutsourcedOnly: false,
+        blockedHint: '(Không thể gộp cửa tự SX và cửa nhập NCC khi chuyển bước)',
+        hideAdvanceButton: false,
+      };
+    }
+    if (isOutsourcedOnly) {
+      if (!canManageOutsourcedProcurement) {
+        return {
+          nextStep: null,
+          isOutsourcedOnly: true,
+          blockedHint: '(Tài khoản xưởng không thao tác tiến độ cửa nhập NCC)',
+          hideAdvanceButton: true,
+        };
+      }
+      return {
+        nextStep: 'producing',
+        isOutsourcedOnly: true,
+        blockedHint: null,
+        hideAdvanceButton: false,
+      };
+    }
+    return {
+      nextStep: null,
+      isOutsourcedOnly: false,
+      blockedHint: '(Chờ lập lệnh sản xuất)',
+      hideAdvanceButton: false,
+    };
+  }
+
+  if (selectedStep === 'producing' && hasOutsourced && !canManageOutsourcedProcurement) {
+    return {
+      nextStep: null,
+      isOutsourcedOnly,
+      blockedHint: '(Tài khoản xưởng không thao tác tiến độ cửa nhập NCC)',
+      hideAdvanceButton: true,
+    };
+  }
+
+  return {
+    nextStep: getNextStep(selectedStep),
+    isOutsourcedOnly,
+    blockedHint: null,
+    hideAdvanceButton: false,
+  };
+}
+
+

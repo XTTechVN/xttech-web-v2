@@ -84,6 +84,7 @@ export function useQuotationPriceDrafts(
   };
 
   const getAccessoryLive = (item: QuotationDoorItemSnapshot): number => {
+    if (item.fulfillmentType === 'outsourced') return 0;
     const draft = accDrafts[item.positionId];
     if (draft !== undefined && draft !== '') return Number(draft);
     if (draft === '') return item.accessorySuggestedPrice;
@@ -108,12 +109,13 @@ export function useQuotationPriceDrafts(
   const isManualLive = (item: QuotationDoorItemSnapshot): boolean => {
     const id = item.positionId;
     if (isSeparated) {
-      if (doorTotalDrafts[id] === undefined && accDrafts[id] === undefined) {
+      const isOutsourced = item.fulfillmentType === 'outsourced';
+      if (doorTotalDrafts[id] === undefined && (isOutsourced || accDrafts[id] === undefined)) {
         return isSeparatedManual(item);
       }
       return !(
         getDoorLive(item) === item.doorOnlySuggestedPrice &&
-        getAccessoryLive(item) === item.accessorySuggestedPrice
+        (isOutsourced || getAccessoryLive(item) === item.accessorySuggestedPrice)
       );
     }
     const draft = totalDrafts[id];
@@ -144,9 +146,10 @@ export function useQuotationPriceDrafts(
       setTotalDrafts((prev) => ({ ...prev, [id]: '' }));
       return;
     }
+    setTotalDrafts((prev) => ({ ...prev, [id]: digits }));
+    if (item.fulfillmentType === 'outsourced') return;
     const total = Number(digits);
     const unitM2 = item.areaM2 > 0 ? Math.round(total / item.areaM2) : total;
-    setTotalDrafts((prev) => ({ ...prev, [id]: digits }));
     setUnitPriceM2Drafts((prev) => ({ ...prev, [id]: String(unitM2) }));
   };
 
@@ -170,9 +173,10 @@ export function useQuotationPriceDrafts(
       setDoorTotalDrafts((prev) => ({ ...prev, [id]: '' }));
       return;
     }
+    setDoorTotalDrafts((prev) => ({ ...prev, [id]: digits }));
+    if (item.fulfillmentType === 'outsourced') return;
     const total = Number(digits);
     const unitM2 = item.areaM2 > 0 ? Math.round(total / item.areaM2) : total;
-    setDoorTotalDrafts((prev) => ({ ...prev, [id]: digits }));
     setDoorUnitM2Drafts((prev) => ({ ...prev, [id]: String(unitM2) }));
   };
 
@@ -186,20 +190,21 @@ export function useQuotationPriceDrafts(
     targetItems: QuotationDoorItemSnapshot[],
     unitPriceM2: number,
   ) => {
-    if (unitPriceM2 <= 0) return;
+    const eligibleItems = targetItems.filter((item) => item.fulfillmentType !== 'outsourced');
+    if (unitPriceM2 <= 0 || eligibleItems.length === 0) return;
     const digits = String(unitPriceM2);
 
     if (isSeparated) {
       setDoorUnitM2Drafts((prev) => {
         const next = { ...prev };
-        targetItems.forEach((item) => {
+        eligibleItems.forEach((item) => {
           next[item.positionId] = digits;
         });
         return next;
       });
       setDoorTotalDrafts((prev) => {
         const next = { ...prev };
-        targetItems.forEach((item) => {
+        eligibleItems.forEach((item) => {
           next[item.positionId] = String(Math.round(unitPriceM2 * (item.areaM2 || 0)));
         });
         return next;
@@ -207,14 +212,14 @@ export function useQuotationPriceDrafts(
     } else {
       setUnitPriceM2Drafts((prev) => {
         const next = { ...prev };
-        targetItems.forEach((item) => {
+        eligibleItems.forEach((item) => {
           next[item.positionId] = digits;
         });
         return next;
       });
       setTotalDrafts((prev) => {
         const next = { ...prev };
-        targetItems.forEach((item) => {
+        eligibleItems.forEach((item) => {
           next[item.positionId] = String(Math.round(unitPriceM2 * (item.areaM2 || 0)));
         });
         return next;
@@ -267,15 +272,17 @@ export function useQuotationPriceDrafts(
 
   const collectSeparatedChange = (item: QuotationDoorItemSnapshot, changes: PriceChanges) => {
     const id = item.positionId;
-    if (doorTotalDrafts[id] === undefined && accDrafts[id] === undefined) return;
+    const isOutsourced = item.fulfillmentType === 'outsourced';
+    if (doorTotalDrafts[id] === undefined && (isOutsourced || accDrafts[id] === undefined)) return;
     const door = getDoorLive(item);
-    const acc = getAccessoryLive(item);
+    const acc = isOutsourced ? 0 : getAccessoryLive(item);
     const isBackToSuggested =
-      door === item.doorOnlySuggestedPrice && acc === item.accessorySuggestedPrice;
+      door === item.doorOnlySuggestedPrice &&
+      (isOutsourced || acc === item.accessorySuggestedPrice);
     const isUnchangedManual =
       isSeparatedManual(item) &&
       door === item.doorOnlySellingPrice &&
-      acc === item.accessorySellingPrice;
+      (isOutsourced || acc === item.accessorySellingPrice);
 
     if (isBackToSuggested) {
       if (isSeparatedManual(item)) changes.clearedIds.add(id);
@@ -325,14 +332,15 @@ export function useQuotationPriceDrafts(
     const manualAccessory: Record<number, number> = {};
     items.forEach((item) => {
       const id = item.positionId;
+      const isOutsourced = item.fulfillmentType === 'outsourced';
       if (changes.clearedIds.has(id)) return;
       const override = changes.separatedOverrides[id];
       if (isSeparated && override) {
         manual[id] = override.total;
-        manualAccessory[id] = override.acc;
+        manualAccessory[id] = isOutsourced ? 0 : override.acc;
       } else if (isSeparated && isSeparatedManual(item)) {
         manual[id] = item.sellingPrice;
-        manualAccessory[id] = item.accessorySellingPrice;
+        manualAccessory[id] = isOutsourced ? 0 : item.accessorySellingPrice;
       } else if (!isSeparated && changes.changedPrices[id] !== undefined) {
         manual[id] = changes.changedPrices[id];
       } else if (!isSeparated && item.isManuallyEdited) {

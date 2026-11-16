@@ -92,6 +92,7 @@ export * from './document';
 export * from './trash';
 
 export * from './warehouse';
+export * from './supplier-door';
 
 // News
 export * from './news';
