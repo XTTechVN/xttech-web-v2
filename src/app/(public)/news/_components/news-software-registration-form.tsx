@@ -1,9 +1,11 @@
-'use client';
+ 'use client';
 
 import React, { useState } from 'react';
-import { CheckCircle2, RotateCcw, Send, Sparkles, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, RotateCcw, Send, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { submitPublicLeadRegistration } from '@/actions';
 import { Button, Input, Textarea } from '@/components';
+import { showErrorToast } from '@/utils/error';
 import { isValidEmail, isValidVnPhone } from '@/utils/validators';
 
 interface FormState {
@@ -69,7 +71,7 @@ export function NewsSoftwareRegistrationForm() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
       toast.error('Vui lòng kiểm tra lại thông tin đăng ký');
@@ -77,12 +79,23 @@ export function NewsSoftwareRegistrationForm() {
     }
 
     setIsSubmitting(true);
-    // UI only - không gọi API
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await submitPublicLeadRegistration({
+        source: 'news_software_register',
+        fullName: formData.fullName.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim() || undefined,
+        companyName: formData.companyName.trim() || undefined,
+        note: formData.requirements.trim() || undefined,
+        pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+      });
       setIsSubmitted(true);
       toast.success('Đã gửi yêu cầu đăng ký sử dụng phần mềm thành công!');
-    }, 400);
+    } catch (err) {
+      showErrorToast(err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {

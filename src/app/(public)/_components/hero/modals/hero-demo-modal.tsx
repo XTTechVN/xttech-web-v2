@@ -3,8 +3,10 @@
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { submitPublicLeadRegistration } from '@/actions';
 import { Button, Input, Modal } from '@/components';
-import { isValidEmail } from '@/utils/validators';
+import { showErrorToast } from '@/utils/error';
+import { isValidEmail, isValidVnPhone } from '@/utils/validators';
 
 export interface HeroDemoModalProps {
   isOpen: boolean;
@@ -43,7 +45,7 @@ export function HeroDemoModal({ isOpen, onClose }: HeroDemoModalProps) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const nextErrors: Partial<Record<keyof DemoFormState, string>> = {};
 
@@ -52,6 +54,8 @@ export function HeroDemoModal({ isOpen, onClose }: HeroDemoModalProps) {
     }
     if (!form.phone.trim()) {
       nextErrors.phone = 'Vui lòng nhập số điện thoại';
+    } else if (!isValidVnPhone(form.phone)) {
+      nextErrors.phone = 'Số điện thoại không đúng định dạng';
     }
     if (form.email.trim() && !isValidEmail(form.email)) {
       nextErrors.email = 'Email không hợp lệ';
@@ -63,14 +67,27 @@ export function HeroDemoModal({ isOpen, onClose }: HeroDemoModalProps) {
     }
 
     setIsSubmitting(true);
-    // UI only - giả lập gửi thành công
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await submitPublicLeadRegistration({
+        source: 'hero_demo_modal',
+        fullName: form.fullName.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim() || undefined,
+        companyName: form.companyName.trim() || undefined,
+        region: form.region.trim() || undefined,
+        interestLevel: form.interestLevel.trim() || undefined,
+        note: form.note.trim() || undefined,
+        pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+      });
       toast.success('Đăng ký trải nghiệm Demo thành công! Đội ngũ XTTech sẽ liên hệ tư vấn ngay.');
       setForm(INITIAL_FORM);
       setErrors({});
       onClose();
-    }, 500);
+    } catch (err) {
+      showErrorToast(err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

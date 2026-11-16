@@ -3,6 +3,12 @@
 All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-11-16
+### Added & Changed (Public Lead Registration — Kết Nối 4 Form Đăng Ký Công Khai Gửi Về Gmail)
+- **Types, Config & API Action ([`types/lead.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/types/lead.ts), [`config/lead.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/config/lead.ts), [`actions/lead/index.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/actions/lead/index.ts)):**
+  - Khai báo `LeadSource`, `PublicLeadRegistrationRequest`, `PublicLeadRegistrationResponse`, `LEAD_SOURCE_LABEL_MAP` và hàm `submitPublicLeadRegistration` gọi `POST /api/v1/public/lead-registrations` (re-export qua các `index.ts`).
+- **Kết nối 4 Form Công Khai ([`hero-register-inline-form.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(public)/_components/hero/hero-register-inline-form.tsx), [`hero-consultation-form.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(public)/_components/hero/hero-consultation-form.tsx), [`hero-demo-modal.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(public)/_components/hero/modals/hero-demo-modal.tsx), [`news-software-registration-form.tsx`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/app/(public)/news/_components/news-software-registration-form.tsx)):**
+  - Gỡ bỏ `setTimeout` giả lập, gọi `submitPublicLeadRegistration` trong `try/catch/finally`, hiển thị lỗi qua `showErrorToast`, chỉ chuyển sang màn hình thành công khi API trả 200; bổ sung `isValidVnPhone` cho `HeroDemoModal` và map `companyAddress -> region`, `requirements -> note`.
+
 ### Removed, Added & Changed (Door Studio & BOM Modal — Bỏ Tự Quy Đổi Combo Phụ Kiện, Giữ Nguyên Giá Gói & Chỉ Cảnh Báo Thiếu Vật Tư)
 - **Xóa Dead Code Quy Đổi Combo ([`combo-bom-resolver.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/accessories/combo-bom-resolver.ts) — Deleted):**
   - Xóa hoàn toàn `combo-bom-resolver.ts` (`resolveComboItemsBom`, `resolveSelectedComboTotalPrice`) và interface `ResolvedComboItemBom` trong [`types.ts`](file:///e:/hoc_ve_fullstash/xttech/xttech-web-v2/src/components/door-studio/panels/accessories/types.ts) (`0 refs`), thay bằng helper `getEffectiveComboPrice`.

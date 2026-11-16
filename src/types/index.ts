@@ -102,4 +102,7 @@ export * from './news';
 // Staff Tasks
 export * from './task';
 
+// Public Lead Registrations
+export * from './lead';
+
 
