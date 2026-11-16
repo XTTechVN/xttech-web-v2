@@ -103,10 +103,10 @@ export const XTTECH_PILLAR_CARDS: XTTechPillarCard[] = [
     icon: FileSpreadsheet,
     title: 'NGÂN SÁCH & BÁO GIÁ DỰ ÁN',
     bullets: [
-      'Live pricing engine tính toán giá vốn, tỷ suất lãi gộp ngay tại công trình',
-      'Quản lý ngân sách dự án, tiến độ giải ngân và công nợ từng khách hàng',
+      'Công cụ tính toán giá vốn, tỷ suất lãi gộp ngay tại công trình',
+      'Quản lý ngân sách dự án và tiến độ thanh toán từng khách hàng',
       'Số hóa biểu mẫu hợp đồng số, phụ lục, phiếu thu/chi tự động',
-      'Dự báo chính xác lãi/lỗ thực tế so với kế hoạch dự toán ban đầu',
+      'Dự báo lãi/lỗ thực tế so với kế hoạch dự toán ban đầu',
     ],
   },
   {
@@ -129,7 +129,7 @@ export const XTTECH_PILLAR_CARDS: XTTechPillarCard[] = [
     bullets: [
       'Quản lý danh mục đối tác nhôm, kính cường lực, phụ kiện và đội thợ phụ',
       'Kiểm soát tiến độ giao hàng, đơn đặt kính và nghiệm thu chất lượng',
-      'Cập nhật tiến độ thanh toán, đối soát công nợ NCC tự động',
+      'Cập nhật tiến độ thanh toán và đối soát đơn hàng với nhà cung cấp',
       'Đánh giá năng lực và lịch sử hợp tác của từng đơn vị thầu phụ',
     ],
   },

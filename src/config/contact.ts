@@ -2,7 +2,6 @@
 export const CONTACT_INFO = {
   companyName: 'XT Group / XT Tech',
   address: 'Thành phố Hải Phòng, Việt Nam',
-  taxCode: 'Đang cập nhật',
   phone: '0776710766',
   phoneDisplay: '0776 710 766',
   email: 'contact@xttech.vn',

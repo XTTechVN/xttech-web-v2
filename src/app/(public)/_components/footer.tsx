@@ -93,9 +93,7 @@ export const Footer = () => {
               <p>
                 <span className="font-semibold text-white">Địa chỉ:</span> {CONTACT_INFO.address}
               </p>
-              <p>
-                <span className="font-semibold text-white">MST:</span> {CONTACT_INFO.taxCode}
-              </p>
+            
             </div>
           </div>
 

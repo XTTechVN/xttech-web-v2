@@ -62,12 +62,7 @@ export const Hero = () => {
                     : 'block relative z-10 lg:translate-x-0 opacity-100'
                 }`}
               >
-                {/* Badge */}
-                <div className="inline-flex items-center gap-2 rounded-full border border-hero-accent/30 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-hero-accent backdrop-blur-sm">
-                  <Sparkles className="h-3.5 w-3.5 shrink-0 text-hero-accent" />
-                  <span>XTTECH </span>
-                </div>
-
+               
                 {/* Tiêu đề chính */}
                 <div className="space-y-2">
                   <h1 className="text-2xl font-black uppercase tracking-tight text-white sm:text-4xl lg:text-[40px] lg:leading-[1.18]">

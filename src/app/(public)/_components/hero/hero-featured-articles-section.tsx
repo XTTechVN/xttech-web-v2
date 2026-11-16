@@ -37,7 +37,7 @@ export function HeroFeaturedArticlesSection() {
             Bài viết tiêu biểu
           </h2>
           <p className="mt-1.5 text-xs text-slate-500 sm:text-sm">
-            Kiến thức quản trị sản xuất, bóc tách bareme &amp; xu hướng công nghệ ngành nhôm kính
+         Các bản tin nổi bật của XTTech về tin tức, công nghệ , tuyển dụng văn hóa , khuyến mãi và sự kiện,...
           </p>
         </div>
       </div>

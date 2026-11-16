@@ -344,7 +344,7 @@ export const HeroProjectReportsCarousel = () => {
               </button>
 
               <div
-                className="relative grid w-full max-w-[1480px] max-h-[94vh] grid-cols-1 lg:grid-cols-12 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl"
+                className="relative grid w-full max-w-[1160px] max-h-[94vh] grid-cols-1 lg:grid-cols-12 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl"
               >
                 {/* CỘT TRÁI (9 cols): Khung ảnh tràn viền */}
                 <div className="lg:col-span-9 flex flex-col bg-slate-100">
