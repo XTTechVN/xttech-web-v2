@@ -11,8 +11,12 @@ export const REGISTER_INTERACTED_EVENT = 'xttech:register-interacted';
 
 export function markRegisterInteracted() {
   if (typeof window !== 'undefined') {
-    sessionStorage.setItem(REGISTER_MODAL_STORAGE_KEY, 'true');
-    window.dispatchEvent(new Event(REGISTER_INTERACTED_EVENT));
+    try {
+      sessionStorage.setItem(REGISTER_MODAL_STORAGE_KEY, 'true');
+      window.dispatchEvent(new Event(REGISTER_INTERACTED_EVENT));
+    } catch {
+      // Bỏ qua nếu WebView / chế độ ẩn danh chặn sessionStorage
+    }
   }
 }
 
@@ -150,13 +154,13 @@ export function HeroRegisterInlineForm({
     >
       {/* Nút quay lại & Header thanh điều hướng form (chỉ hiển thị ở chế độ inline) */}
       {variant === 'inline' && (
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="relative z-30 flex items-center justify-between border-b border-slate-100 pb-2">
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-primary transition-colors cursor-pointer group"
+            className="inline-flex items-center gap-1.5 py-2 pr-3 text-xs font-bold text-slate-600 hover:text-primary active:text-primary transition-colors cursor-pointer touch-manipulation group"
           >
-            <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             <span>Quay lại trang giới thiệu</span>
           </button>
 
@@ -165,9 +169,9 @@ export function HeroRegisterInlineForm({
               type="button"
               onClick={onBack}
               aria-label="Đóng form"
-              className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 active:bg-slate-200 transition-colors cursor-pointer touch-manipulation"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4.5 w-4.5" />
             </button>
           </div>
         </div>

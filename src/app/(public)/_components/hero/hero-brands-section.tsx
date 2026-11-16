@@ -199,7 +199,7 @@ export const HeroBrandsSection = () => {
                   </span>
                   <h3 className="text-base font-bold text-primary sm:text-lg">Hãng nhôm thông dụng</h3>
                 </div>
-                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">{ALUMINUM_BRANDS.length} thương hiệu</span>
+                <span className="hidden lg:inline-flex whitespace-nowrap rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">{ALUMINUM_BRANDS.length} thương hiệu</span>
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2.5">
@@ -230,7 +230,7 @@ export const HeroBrandsSection = () => {
                   </span>
                   <h3 className="text-base font-bold text-primary sm:text-lg">Hãng phụ kiện phổ biến</h3>
                 </div>
-                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">{ACCESSORY_BRANDS.length} thương hiệu</span>
+                <span className="hidden lg:inline-flex whitespace-nowrap rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">{ACCESSORY_BRANDS.length} thương hiệu</span>
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2.5">

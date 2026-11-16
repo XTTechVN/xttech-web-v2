@@ -110,7 +110,7 @@ export function PainPointsSection() {
           </div>
 
           {/* Cột phải: Vòng tròn công nghệ lớn bề thế (tỷ lệ lớn chuẩn theo Ảnh 2 mẫu) */}
-          <div className="flex items-center justify-center lg:col-span-5">
+          <div className="flex items-center justify-center pt-10 pb-8 lg:col-span-5 lg:py-0">
             <div className="relative flex items-center justify-center py-2">
               {/* Quầng sáng nền mờ */}
               <div className="absolute h-96 w-96 sm:h-[450px] sm:w-[450px] lg:h-[500px] lg:w-[500px] rounded-full bg-amber-500/5 blur-3xl pointer-events-none animate-pulse-glow" />

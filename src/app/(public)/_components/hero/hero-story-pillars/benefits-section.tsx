@@ -41,16 +41,17 @@ export function BenefitsSection() {
         </div>
 
         <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
-          {/* Cột trái: 2 Card lợi ích thiết kế sạch, màu sắc cân bằng hài hòa */}
-          <div
-            onMouseEnter={() => setIsHoveringCards(true)}
-            onMouseLeave={() => setIsHoveringCards(false)}
-            className="space-y-3.5 lg:col-span-5"
-          >
-            {/* Card 1: Giám đốc & BQL Dự án */}
+          {/* Cột trái: 2 Card lợi ích — Mobile vuốt ngang, Desktop xếp dọc */}
+          <div className="lg:col-span-5">
             <div
-              className={cn(
-                'group relative overflow-hidden rounded-2xl border bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-500/10',
+              onMouseEnter={() => setIsHoveringCards(true)}
+              onMouseLeave={() => setIsHoveringCards(false)}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mx-0 lg:px-0 lg:pb-0 lg:block lg:space-y-3.5 lg:overflow-visible"
+            >
+              {/* Card 1: Giám đốc & BQL Dự án */}
+              <div
+                className={cn(
+                  'group relative w-[84vw] max-w-[340px] shrink-0 snap-center lg:w-auto lg:max-w-none overflow-hidden rounded-2xl border bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-500/10',
                 !isHoveringCards && activeIdleCard === 0
                   ? '-translate-y-1 border-amber-300 shadow-lg shadow-amber-500/10'
                   : 'border-amber-200/90 shadow-sm',
@@ -101,7 +102,7 @@ export function BenefitsSection() {
             {/* Card 2: Nhân viên & Thợ xưởng */}
             <div
               className={cn(
-                'group relative overflow-hidden rounded-2xl border bg-gradient-to-br from-teal-50/80 via-white to-teal-50/40 p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1 hover:border-primary/45 hover:shadow-xl hover:shadow-primary/10',
+                'group relative w-[84vw] max-w-[340px] shrink-0 snap-center lg:w-auto lg:max-w-none overflow-hidden rounded-2xl border bg-gradient-to-br from-teal-50/80 via-white to-teal-50/40 p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1 hover:border-primary/45 hover:shadow-xl hover:shadow-primary/10',
                 !isHoveringCards && activeIdleCard === 1
                   ? '-translate-y-1 border-primary/45 shadow-lg shadow-primary/10'
                   : 'border-teal-200/90 shadow-sm',
@@ -148,6 +149,10 @@ export function BenefitsSection() {
                 </li>
               </ul>
             </div>
+            </div>
+            <p className="mt-1 text-center text-[11px] font-medium text-slate-400 lg:hidden">
+              Vuốt ngang để xem thêm →
+            </p>
           </div>
 
           {/* Cột phải: Mockup Giao diện Phần mềm XTTECH thực tế sắc nét (Enterprise Application Window) */}
