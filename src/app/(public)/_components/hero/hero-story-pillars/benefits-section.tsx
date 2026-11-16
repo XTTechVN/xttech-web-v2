@@ -150,9 +150,6 @@ export function BenefitsSection() {
               </ul>
             </div>
             </div>
-            <p className="mt-1 text-center text-[11px] font-medium text-slate-400 lg:hidden">
-              Vuốt ngang để xem thêm →
-            </p>
           </div>
 
           {/* Cột phải: Mockup Giao diện Phần mềm XTTECH thực tế sắc nét (Enterprise Application Window) */}

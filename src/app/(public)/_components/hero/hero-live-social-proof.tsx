@@ -52,17 +52,26 @@ interface ToastMessage {
   name: string;
   action: string;
   timeAgo: string;
+  rating: number;
   isEntering?: boolean;
   isExiting?: boolean;
 }
 
 const INITIAL_MESSAGES: ToastMessage[] = [
-  { id: 1, name: 'Anh Lê Hoàng Nam', action: 'đã đăng ký sử dụng phần mềm', timeAgo: '3 phút trước' },
-  { id: 2, name: 'Chị Vũ Ngọc Lan', action: 'vừa đặt lịch demo', timeAgo: '1 phút trước' },
-  { id: 3, name: 'Anh Đặng Gia Huy', action: 'đã nhận báo giá', timeAgo: 'vừa xong' },
+  { id: 1, name: 'Anh Lê Hoàng Nam', action: 'đã đăng ký sử dụng phần mềm', timeAgo: '3 phút trước', rating: 5 },
+  { id: 2, name: 'Chị Vũ Ngọc Lan', action: 'vừa đặt lịch demo', timeAgo: '1 phút trước', rating: 4.5 },
+  { id: 3, name: 'Anh Đặng Gia Huy', action: 'đã nhận báo giá', timeAgo: 'vừa xong', rating: 5 },
 ];
 
 let globalUserCounter = 3;
+
+function pickRandomRating(): number {
+  const r = Math.random();
+  if (r < 0.45) return 5;
+  if (r < 0.7) return 4.5;
+  if (r < 0.9) return 4;
+  return 3.5;
+}
 
 function createRandomMessage(): ToastMessage {
   globalUserCounter++;
@@ -81,8 +90,42 @@ function createRandomMessage(): ToastMessage {
     name: `${prefix} ${ho} ${dem} ${ten}`,
     action,
     timeAgo,
+    rating: pickRandomRating(),
     isEntering: true,
   };
+}
+
+function RatingStars({ rating }: { rating: number }) {
+  return (
+    <div className="flex shrink-0 items-center gap-0.5" aria-label={`${rating} sao`}>
+      {Array.from({ length: 5 }).map((_, idx) => {
+        const starValue = idx + 1;
+        const isFull = rating >= starValue;
+        const isHalf = !isFull && rating >= starValue - 0.5;
+
+        if (isHalf) {
+          return (
+            <span key={idx} className="relative inline-block h-3 w-3">
+              <Star className="h-3 w-3 text-amber-400/50" />
+              <span className="absolute inset-y-0 left-0 w-1/2 overflow-hidden">
+                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              </span>
+            </span>
+          );
+        }
+
+        return (
+          <Star
+            key={idx}
+            className={cn(
+              'h-3 w-3',
+              isFull ? 'fill-amber-400 text-amber-400' : 'text-amber-400/40',
+            )}
+          />
+        );
+      })}
+    </div>
+  );
 }
 
 const MAX_VISIBLE = 3;
@@ -92,13 +135,23 @@ const ROW_STEP_PX = 64;
 
 export function HeroLiveSocialProof() {
   const [isMounted, setIsMounted] = useState(false);
+  const [maxVisible, setMaxVisible] = useState(MAX_VISIBLE);
   const [messages, setMessages] = useState<ToastMessage[]>(INITIAL_MESSAGES);
   const [isHovered, setIsHovered] = useState(false);
   const timeoutIdsRef = useRef<NodeJS.Timeout[]>([]);
 
   useEffect(() => {
     setIsMounted(true);
+    const updateLimit = () => {
+      const mobile = window.innerWidth < 640;
+      const nextLimit = mobile ? 1 : MAX_VISIBLE;
+      setMaxVisible(nextLimit);
+      setMessages((prev) => (prev.length > nextLimit ? prev.slice(-nextLimit) : prev));
+    };
+    updateLimit();
+    window.addEventListener('resize', updateLimit);
     return () => {
+      window.removeEventListener('resize', updateLimit);
       timeoutIdsRef.current.forEach(clearTimeout);
       timeoutIdsRef.current = [];
     };
@@ -111,7 +164,7 @@ export function HeroLiveSocialProof() {
     timeoutIdsRef.current.push(tid);
   }, []);
 
-  // Mỗi 10 giây thêm tin mới từ dưới lên, các tin cũ trượt mượt lên trên, mờ dần và biến mất (tối đa 3 tin)
+  // Mỗi 10 giây thêm tin mới từ dưới lên, các tin cũ trượt mượt lên trên, mờ dần và biến mất (1 tin trên mobile, 3 tin trên desktop)
   useEffect(() => {
     if (!isMounted || isHovered) return;
 
@@ -120,12 +173,13 @@ export function HeroLiveSocialProof() {
 
       setMessages((prev) => {
         const activeItems = prev.filter((item) => !item.isExiting);
-        if (activeItems.length >= MAX_VISIBLE) {
-          const oldestId = activeItems[0].id;
-          scheduleCleanup(oldestId);
+        if (activeItems.length >= maxVisible) {
+          const removeCount = activeItems.length - maxVisible + 1;
+          const exitingIds = new Set(activeItems.slice(0, removeCount).map((i) => i.id));
+          exitingIds.forEach((id) => scheduleCleanup(id));
           return [
             ...prev.map((item) =>
-              item.id === oldestId ? { ...item, isExiting: true } : item,
+              exitingIds.has(item.id) ? { ...item, isExiting: true } : item,
             ),
             nextMsg,
           ];
@@ -145,7 +199,7 @@ export function HeroLiveSocialProof() {
     }, CYCLE_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [isMounted, isHovered, scheduleCleanup]);
+  }, [isMounted, isHovered, maxVisible, scheduleCleanup]);
 
   const handleDismissItem = (id: number) => {
     setMessages((prev) =>
@@ -163,12 +217,12 @@ export function HeroLiveSocialProof() {
       aria-label="Thông báo đăng ký"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="pointer-events-none fixed bottom-24 left-3 z-40 h-[196px] w-[calc(100vw-1.5rem)] max-w-[380px] select-none sm:bottom-20 sm:left-6"
+      className="pointer-events-none fixed bottom-24 left-3 z-40 h-[68px] w-[calc(100vw-1.5rem)] max-w-[380px] select-none sm:bottom-20 sm:left-6 sm:h-[196px]"
     >
       {messages.map((msg) => {
         const activeIdx = activeMessages.findIndex((m) => m.id === msg.id);
         const distanceFromBottom =
-          activeIdx === -1 ? MAX_VISIBLE : activeMessages.length - 1 - activeIdx;
+          activeIdx === -1 ? maxVisible : activeMessages.length - 1 - activeIdx;
 
         const isNewest = !msg.isExiting && distanceFromBottom === 0;
 
@@ -182,7 +236,7 @@ export function HeroLiveSocialProof() {
           scale = 0.96;
           opacity = 0;
         } else if (msg.isExiting) {
-          translateY = -MAX_VISIBLE * ROW_STEP_PX - 26;
+          translateY = -maxVisible * ROW_STEP_PX - 26;
           scale = 0.93;
           opacity = 0;
         }
@@ -200,27 +254,18 @@ export function HeroLiveSocialProof() {
             className={cn(
               'pointer-events-auto absolute bottom-0 left-0 flex w-fit max-w-full origin-bottom-left items-center gap-3 rounded-lg border px-3.5 py-2.5 backdrop-blur-xs',
               isNewest
-                ? 'border-emerald-300/60 bg-primary shadow-xl shadow-primary/30'
+                ? 'border-emerald-400/60 bg-primary shadow-[0_0_20px_rgba(16,185,129,0.28)]'
                 : 'border-teal-300/25 bg-primary/95 shadow-md',
               msg.isExiting && 'pointer-events-none',
             )}
           >
-            {/* Icon ngôi sao xanh ngọc nổi bật đồng bộ thương hiệu */}
-            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-emerald-300 via-teal-300 to-cyan-300 shadow-[0_0_12px_rgba(52,211,153,0.4)]">
-              <Star className="h-4.5 w-4.5 fill-primary text-primary" />
-            </div>
-
-            {/* 2 dòng chữ: Tên xanh ngọc sáng nổi bật trên, hành động + thời gian dưới */}
+            {/* 2 dòng chữ: Tên trắng nổi bật trên; sao đánh giá + hành động + badge MỚI dưới */}
             <div className="min-w-0 leading-tight">
-              <strong
-                className={cn(
-                  'block truncate text-xs sm:text-[13px] transition-colors duration-300',
-                  isNewest ? 'font-extrabold text-emerald-300' : 'font-bold text-emerald-200/90',
-                )}
-              >
+              <strong className="block truncate text-xs sm:text-[13px] font-extrabold text-white">
                 {msg.name}
               </strong>
-              <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/90">
+              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-white/90">
+                <RatingStars rating={msg.rating} />
                 <span className="truncate font-medium">{msg.action}</span>
                 <span className="hidden shrink-0 whitespace-nowrap text-teal-100/75 sm:inline">
                   • {msg.timeAgo}

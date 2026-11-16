@@ -215,7 +215,7 @@ export const Footer = () => {
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}
         size="md"
-        title="Đăng ký trải nghiệm XTTECH XMS Fab"
+        title="Đăng ký sử dụng XTTECH XMS Fab"
         className="max-w-lg border border-primary/20"
         bodyClassName="p-5 sm:p-6"
       >
