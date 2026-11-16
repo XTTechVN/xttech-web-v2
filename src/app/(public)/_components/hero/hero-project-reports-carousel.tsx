@@ -109,6 +109,10 @@ export const HeroProjectReportsCarousel = () => {
   }, [previewImage, handleStepPreview]);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const pointerStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
+  const didSwipeRef = useRef(false);
+  const [dragOffsetPx, setDragOffsetPx] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Số lượng card hiển thị tùy theo responsive screen
   // Desktop: 3 cards, Tablet: 2 cards, Mobile: 1 card
@@ -190,6 +194,47 @@ export const HeroProjectReportsCarousel = () => {
   // Tính số thứ tự đang active thực tế (0 đến 4)
   const activeDotIndex = ((currentIndex % total) + total) % total;
 
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    pointerStartRef.current = { x: e.clientX, y: e.clientY, pointerId: e.pointerId };
+    didSwipeRef.current = false;
+    setIsDragging(true);
+    setDragOffsetPx(0);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = pointerStartRef.current;
+    if (!start || start.pointerId !== e.pointerId) return;
+
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+
+    if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+      didSwipeRef.current = true;
+      setDragOffsetPx(dx);
+    }
+  };
+
+  const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = pointerStartRef.current;
+    if (!start || start.pointerId !== e.pointerId) return;
+
+    const dx = e.clientX - start.x;
+    const threshold = 40;
+    if (dx <= -threshold) {
+      handleNext();
+    } else if (dx >= threshold) {
+      handlePrev();
+    }
+
+    pointerStartRef.current = null;
+    setIsDragging(false);
+    setDragOffsetPx(0);
+    setTimeout(() => {
+      didSwipeRef.current = false;
+    }, 50);
+  };
+
   return (
     <div
       ref={containerRef}
@@ -217,16 +262,23 @@ export const HeroProjectReportsCarousel = () => {
         </button>
       </div>
 
-      {/* VIEWPORT KHUNG TRƯỢT (OVERFLOW HIDDEN) */}
-      <div className="overflow-hidden py-4 -mx-3">
+      {/* VIEWPORT KHUNG TRƯỢT (OVERFLOW HIDDEN) - Hỗ trợ vuốt/kéo ngang bằng tay trên mobile & desktop */}
+      <div
+        className="overflow-hidden py-4 -mx-3 touch-pan-y select-none cursor-grab active:cursor-grabbing"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+      >
         {/* TRACK TRƯỢT MƯỢT MÀ VỚI CSS TRANSFORM CUBIC-BEZIER */}
         <div
           className="flex flex-row"
           style={{
-            transform: `translateX(-${translateOffset}%)`,
-            transition: isTransitioning
-              ? 'transform 750ms cubic-bezier(0.22, 1, 0.36, 1)'
-              : 'none',
+            transform: `translate3d(calc(-${translateOffset}% + ${dragOffsetPx}px), 0, 0)`,
+            transition:
+              isTransitioning && !isDragging
+                ? 'transform 750ms cubic-bezier(0.22, 1, 0.36, 1)'
+                : 'none',
           }}
         >
           {EXTENDED_REPORTS.map((item) => {
@@ -240,7 +292,9 @@ export const HeroProjectReportsCarousel = () => {
                   {/* Vùng hiển thị ảnh báo cáo chụp thực tế */}
                   <div
                     className="relative aspect-16/10 w-full overflow-hidden bg-slate-100 cursor-pointer"
-                    onClick={() => setPreviewImage(item)}
+                    onClick={() => {
+                      if (!didSwipeRef.current) setPreviewImage(item);
+                    }}
                   >
                     <Image
                       src={item.imageSrc}
@@ -285,7 +339,9 @@ export const HeroProjectReportsCarousel = () => {
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                       <button
                         type="button"
-                        onClick={() => setPreviewImage(item)}
+                        onClick={() => {
+                          if (!didSwipeRef.current) setPreviewImage(item);
+                        }}
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary-dark transition-colors cursor-pointer"
                       >
                         <ZoomIn className="h-3.5 w-3.5" />
