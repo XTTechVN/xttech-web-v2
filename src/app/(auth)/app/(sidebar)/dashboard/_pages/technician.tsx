@@ -14,6 +14,7 @@ import { Clock, Navigation, FolderGit2, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { DepartmentRosterWidget } from '../_components/department-roster-widget';
 import { MyTasksReminderWidget } from '../_components/my-tasks-reminder-widget';
+import { LatestRulesWidget } from '../_components/latest-rules-widget';
 
 export const TechnicianDashboard = () => {
   const router = useRouter();
@@ -62,6 +63,7 @@ export const TechnicianDashboard = () => {
         <QuickAttendanceCard attendance={data?.myAttendance} />
         <QuickActionsGrid pendingLeavesCount={data?.pendingLeavesCount} pendingAdjustmentsCount={data?.pendingAdjustmentsCount} />
         <MyTasksReminderWidget />
+        <LatestRulesWidget />
         <LiveStaffWidget />
         <DepartmentRosterWidget />
         <PersonalAttendanceHistory />
@@ -78,6 +80,7 @@ export const TechnicianDashboard = () => {
         <div className="grid grid-cols-12 gap-4 min-w-0">
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
             <MyTasksReminderWidget />
+            <LatestRulesWidget />
             <QuickAttendanceCard attendance={data?.myAttendance} />
             <WeeklyAttendanceChart data={data?.weeklyStats} todayCount={data?.todayAttendancesCount} />
           </div>

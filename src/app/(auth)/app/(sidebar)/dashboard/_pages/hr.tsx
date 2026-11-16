@@ -13,6 +13,7 @@ import LiveStaffWidget from '../_components/live-staff-widget';
 import { Users, CheckCircle2, CalendarOff, ClockAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MyTasksReminderWidget } from '../_components/my-tasks-reminder-widget';
+import { LatestRulesWidget } from '../_components/latest-rules-widget';
 
 export const HRDashboard = () => {
   const router = useRouter();
@@ -66,6 +67,7 @@ export const HRDashboard = () => {
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
         />
         <MyTasksReminderWidget />
+        <LatestRulesWidget />
         <PendingApprovalsCard
           pendingLeavesCount={data?.pendingLeavesCount ?? 0}
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount ?? 0}
@@ -94,6 +96,7 @@ export const HRDashboard = () => {
           {/* Cột trái (8 cols): Biểu đồ thật & Bảng duyệt đơn khẩn cấp */}
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
             <MyTasksReminderWidget />
+            <LatestRulesWidget />
             <WeeklyAttendanceChart
               data={data?.weeklyStats}
               todayCount={data?.todayAttendancesCount}

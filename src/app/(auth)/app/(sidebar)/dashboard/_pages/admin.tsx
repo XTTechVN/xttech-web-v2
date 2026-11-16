@@ -16,6 +16,7 @@ import { Users, CheckCircle2, ClockAlert, FolderGit2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { DepartmentRosterWidget } from '../_components/department-roster-widget';
 import { MyTasksReminderWidget } from '../_components/my-tasks-reminder-widget';
+import { LatestRulesWidget } from '../_components/latest-rules-widget';
 
 export const AdminDashboard = () => {
   const router = useRouter();
@@ -72,6 +73,7 @@ export const AdminDashboard = () => {
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
         />
         <MyTasksReminderWidget />
+        <LatestRulesWidget />
         <PendingApprovalsCard
           pendingLeavesCount={data?.pendingLeavesCount ?? 0}
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount ?? 0}
@@ -104,6 +106,7 @@ export const AdminDashboard = () => {
           {/* Cột trái (8 cols): Biểu đồ thật & Bảng duyệt đơn khẩn cấp */}
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
             <MyTasksReminderWidget />
+            <LatestRulesWidget />
             <ProjectReportCard />
             <WeeklyAttendanceChart
               data={data?.weeklyStats}
