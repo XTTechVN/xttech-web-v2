@@ -7,7 +7,7 @@ import {
   type SceneCellNode,
 } from '@/components';
 import type { ProductionSheet, ProductionSheetGasketItem } from '@/types';
-import type { CombinedSheetAccessory, SheetCadProps } from './technical-sheets.types';
+import type { CombinedSheetAccessory, FulfillmentFilter, SheetCadProps } from './technical-sheets.types';
 
 interface RawSheetSystemConfig {
   w?: unknown;
@@ -168,4 +168,21 @@ export function buildNormalizedSheetGaskets(sheet: ProductionSheet): ProductionS
   }
 
   return Array.from(grouped.values());
+}
+
+export function filterTechnicalSheets(
+  sheets: ProductionSheet[],
+  floorId: number | 'all',
+  fulfillmentFilter: FulfillmentFilter,
+): ProductionSheet[] {
+  return sheets.filter((sheet) => {
+    if (floorId !== 'all' && sheet.floorId !== floorId) return false;
+    if (
+      fulfillmentFilter !== 'all' &&
+      (sheet.fulfillmentType ?? 'in_house') !== fulfillmentFilter
+    ) {
+      return false;
+    }
+    return true;
+  });
 }

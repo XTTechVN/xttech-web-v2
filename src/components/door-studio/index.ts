@@ -7,6 +7,7 @@ export * from './panels/toolbox-left';
 export * from './panels/canvas-cad-view';
 export * from './panels/cell-inspector';
 export * from './panels/accessories/modals';
+export { HardwareWarningsBanner } from './panels/results';
 export * from './bom-sidebar';
 export * from './studio-modal';
 export * from './door-thumbnail';

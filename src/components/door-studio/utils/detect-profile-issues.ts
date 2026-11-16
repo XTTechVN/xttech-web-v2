@@ -106,8 +106,12 @@ export const detectProfileIssues = ({
     issues.push('Thiếu profile nẹp kính cho vách cố định (Khung bao)');
   }
 
-  // 6. Kiểm tra Cảnh báo Ke liên kết chưa cấu hình
-  if (calcData && calcData.hasUnconfiguredJoints) {
+  // 6. Kiểm tra Cảnh báo Phụ kiện & Ke liên kết
+  if (calcData?.hardwareWarnings && calcData.hardwareWarnings.length > 0) {
+    issues.push(
+      `Còn ${calcData.hardwareWarnings.length} cảnh báo thiếu phụ kiện / con ke góc so với kết cấu cửa (xem mục Phụ kiện & Ke)`
+    );
+  } else if (calcData && calcData.hasUnconfiguredJoints) {
     issues.push(
       'Có vị trí liên kết góc (con ke) chưa được cấu hình phụ kiện tương ứng'
     );
