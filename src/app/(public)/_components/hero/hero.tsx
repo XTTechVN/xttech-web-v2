@@ -71,7 +71,7 @@ export const Hero = () => {
                 {/* Tiêu đề chính */}
                 <div className="space-y-2">
                   <h1 className="text-2xl font-black uppercase tracking-tight text-white sm:text-4xl lg:text-[40px] lg:leading-[1.18]">
-                    Phần mềm quản lý <span className="text-hero-accent">sản xuất nhôm kính & thi công</span> công trình
+                    Giải pháp quản lý <span className="text-hero-accent">xưởng nhôm kính & xây dựng</span> công trình
                   </h1>
                   <p className="text-sm font-semibold tracking-wide text-hero-accent sm:text-base">
                     XTTech – Giải pháp số hóa toàn diện cho Xưởng Nhôm Kính & Nhà Thầu

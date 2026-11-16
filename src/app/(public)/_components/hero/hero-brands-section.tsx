@@ -8,7 +8,6 @@ import { cn } from '@/utils/cn';
 import img3h from '@/assets/accessories/3h.jpg';
 import imgAlutrend from '@/assets/accessories/alutrend.jpg';
 import imgAlvero from '@/assets/accessories/alvero.jpg';
-import imgBv1a2 from '@/assets/accessories/bv1a2.jpg';
 import imgCandy from '@/assets/accessories/candy.jpg';
 import imgCologe from '@/assets/accessories/cologe.jpg';
 import imgCologext from '@/assets/accessories/cologext.jpg';
@@ -49,7 +48,6 @@ interface BrandLogoItem {
 const ALUMINUM_BRANDS: BrandLogoItem[] = [
   { id: 'alutrend', name: 'Alutrend', src: imgAlutrend },
   { id: 'alvero', name: 'ALVERO', src: imgAlvero },
-  { id: 'bv1a2', name: 'BV1A2', src: imgBv1a2 },
   { id: 'candy', name: 'Candy', src: imgCandy },
   { id: 'euroview', name: 'Euroview', src: imgEuroview },
   { id: 'fv', name: 'FV', src: imgFv },
@@ -152,7 +150,9 @@ export const HeroBrandsSection = () => {
               </div>
 
               <p className="mt-4 text-sm leading-relaxed text-slate-600">
-                Tại <strong className="font-bold text-slate-800">XTTech</strong>, việc khai báo mới một hãng nhôm sẽ nhanh hơn các ứng dụng tương tự. Riêng các hãng nhôm có cùng biên dạng rãnh C hay rãnh K, chức năng sao chép hãng sẽ đảm nhiệm gần như toàn bộ thao tác — người dùng chỉ cần điều chỉnh lại mô tả và tỷ trọng.
+                Tại <strong className="font-bold text-slate-800">XTTech</strong>, việc khai báo mới một hãng nhôm sẽ nhanh hơn các ứng dụng tương tự.
+                Riêng các hãng nhôm có cùng biên dạng rãnh C hay rãnh K, chức năng sao chép hãng sẽ đảm nhiệm gần như toàn bộ thao tác — người dùng
+                chỉ cần điều chỉnh lại mô tả và tỷ trọng.
               </p>
             </div>
 
@@ -177,9 +177,7 @@ export const HeroBrandsSection = () => {
                     >
                       <Icon className="h-4 w-4" />
                     </span>
-                    <span className={cn('leading-snug transition-colors', isIdleActive && 'font-semibold')}>
-                      {item.text}
-                    </span>
+                    <span className={cn('leading-snug transition-colors', isIdleActive && 'font-semibold')}>{item.text}</span>
                   </li>
                 );
               })}
@@ -199,13 +197,9 @@ export const HeroBrandsSection = () => {
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <Box className="h-4 w-4" />
                   </span>
-                  <h3 className="text-base font-bold text-primary sm:text-lg">
-                    Hãng nhôm thông dụng
-                  </h3>
+                  <h3 className="text-base font-bold text-primary sm:text-lg">Hãng nhôm thông dụng</h3>
                 </div>
-                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-                  {ALUMINUM_BRANDS.length} thương hiệu
-                </span>
+                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">{ALUMINUM_BRANDS.length} thương hiệu</span>
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2.5">
@@ -217,18 +211,10 @@ export const HeroBrandsSection = () => {
                       title={brand.name}
                       className={cn(
                         'relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border bg-white p-1 shadow-2xs transition-all duration-300 hover:-translate-y-0.5 hover:scale-105 hover:border-primary hover:shadow-md sm:h-13 sm:w-13',
-                        isIdleActive
-                          ? '-translate-y-0.5 scale-105 border-primary shadow-md ring-2 ring-primary/20'
-                          : 'border-slate-200/90',
+                        isIdleActive ? '-translate-y-0.5 scale-105 border-primary shadow-md ring-2 ring-primary/20' : 'border-slate-200/90',
                       )}
                     >
-                      <Image
-                        src={brand.src}
-                        alt={brand.name}
-                        fill
-                        sizes="56px"
-                        className="object-contain p-1"
-                      />
+                      <Image src={brand.src} alt={brand.name} fill sizes="56px" className="object-contain p-1" />
                     </div>
                   );
                 })}
@@ -242,13 +228,9 @@ export const HeroBrandsSection = () => {
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <Wrench className="h-4 w-4" />
                   </span>
-                  <h3 className="text-base font-bold text-primary sm:text-lg">
-                    Hãng phụ kiện phổ biến
-                  </h3>
+                  <h3 className="text-base font-bold text-primary sm:text-lg">Hãng phụ kiện phổ biến</h3>
                 </div>
-                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-                  {ACCESSORY_BRANDS.length} thương hiệu
-                </span>
+                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">{ACCESSORY_BRANDS.length} thương hiệu</span>
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2.5">
@@ -260,18 +242,10 @@ export const HeroBrandsSection = () => {
                       title={brand.name}
                       className={cn(
                         'relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border bg-white p-1 shadow-2xs transition-all duration-300 hover:-translate-y-0.5 hover:scale-105 hover:border-primary hover:shadow-md sm:h-13 sm:w-13',
-                        isIdleActive
-                          ? '-translate-y-0.5 scale-105 border-primary shadow-md ring-2 ring-primary/20'
-                          : 'border-slate-200/90',
+                        isIdleActive ? '-translate-y-0.5 scale-105 border-primary shadow-md ring-2 ring-primary/20' : 'border-slate-200/90',
                       )}
                     >
-                      <Image
-                        src={brand.src}
-                        alt={brand.name}
-                        fill
-                        sizes="56px"
-                        className="object-contain p-1"
-                      />
+                      <Image src={brand.src} alt={brand.name} fill sizes="56px" className="object-contain p-1" />
                     </div>
                   );
                 })}
