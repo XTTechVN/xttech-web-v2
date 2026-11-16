@@ -610,28 +610,44 @@ export interface ProductionSheetReinforcementItem {
 }
 
 export interface ProductionSheet {
-  orderCode: string;
-  orderName: string;
+  orderCode?: string | null;
+  orderName?: string | null;
   positionId: number;
   positionCode: string;
   positionName?: string | null;
   doorName: string;
+  floorId?: number | null;
   floorName: string;
+  doorType?: string | null;
   width: number;
   height: number;
   areaM2: number;
+  quantity?: number;
+  measureNote?: string | null;
   brandName?: string | null;
   seriesName?: string | null;
   colorName?: string | null;
   imagePath?: string | null;
   totalWeightKg: number;
   isEstimated: boolean;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierName?: string | null;
+  specification?: string | null;
+  visualMode?: PositionVisualMode;
+  customImagePath?: string | null;
+  catalogImagePath?: string | null;
   profiles: ProductionSheetProfileItem[];
   glasses: ProductionSheetGlassItem[];
   gaskets: ProductionSheetGasketItem[];
   accessories: ProductionSheetAccessoryItem[];
   reinforcements: ProductionSheetReinforcementItem[];
-  systemConfig?: Record<string, any> | null;
+  systemConfig?: Record<string, unknown> | null;
+}
+
+export interface ProjectTechnicalSheetsParams {
+  designOptionId?: number | null;
+  floorId?: number;
+  fulfillmentType?: DoorFulfillmentType;
 }
 
 

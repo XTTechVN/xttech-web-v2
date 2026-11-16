@@ -3,11 +3,13 @@ import { downloadOrShareBlob, getFilenameFromContentDisposition } from '@/utils'
 import type { BaseResponseWithPagination } from '@/components';
 import type {
   OutsourcedRfqExportParams,
+  ProductionSheet,
   Project,
   ProjectCreate,
   ProjectDetail,
   ProjectDoorPosition,
   ProjectQueryParams,
+  ProjectTechnicalSheetsParams,
   ProjectUpdate,
   SupplierQuoteUpdatePayload,
 } from '@/types';
@@ -439,6 +441,31 @@ export const exportOutsourcedRfqExcel = async (
     await downloadOrShareBlob(response.data, fileName);
   } catch (error: unknown) {
     console.warn('API error exportOutsourcedRfqExcel', error);
+    throw error;
+  }
+};
+
+export const getProjectTechnicalSheets = async (
+  projectId: number,
+  params?: ProjectTechnicalSheetsParams,
+): Promise<ProductionSheet[]> => {
+  try {
+    const query: Record<string, unknown> = {};
+    if (params?.designOptionId !== undefined && params?.designOptionId !== null) {
+      query.designOptionId = params.designOptionId;
+    }
+    if (params?.floorId !== undefined && params?.floorId !== null) {
+      query.floorId = params.floorId;
+    }
+    if (params?.fulfillmentType) {
+      query.fulfillmentType = params.fulfillmentType;
+    }
+    const response = await api.get(`/api/v1/projects/${projectId}/positions/technical-sheets`, {
+      params: Object.keys(query).length > 0 ? query : undefined,
+    });
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error: unknown) {
+    console.warn('API error getProjectTechnicalSheets', error);
     throw error;
   }
 };
