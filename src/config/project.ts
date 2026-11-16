@@ -1,6 +1,8 @@
 import {
   DOOR_TYPE_LABELS,
   type DoorFulfillmentType,
+  type HardwareWarningSeverity,
+  type HardwareWarningTarget,
   type PositionCostStatus,
   type PositionVisualMode,
   type ProjectStatus,
@@ -146,6 +148,32 @@ export const CORNER_JOINT_POSITION_MAP: Record<string, string> = {
   frame: 'Khung bao',
   sash: 'Cánh cửa',
   safety_frame: 'Khung bảo vệ',
+};
+
+export const HARDWARE_WARNING_TARGET_MAP: Record<HardwareWarningTarget, string> = {
+  frame: 'Khung bao',
+  sash: 'Cánh cửa',
+  safety_frame: 'Khung bảo vệ',
+  opening: 'Hướng mở & Vận hành',
+  dynamic_mullion: 'Đố động',
+};
+
+export const HARDWARE_WARNING_SEVERITY_STYLES: Record<
+  HardwareWarningSeverity,
+  { containerClass: string; badgeClass: string; textClass: string; iconClass: string }
+> = {
+  warning: {
+    containerClass: 'bg-amber-50/90 border-amber-200 text-amber-900',
+    badgeClass: 'bg-amber-100 text-amber-800 border-amber-300/70',
+    textClass: 'text-amber-800',
+    iconClass: 'text-amber-600',
+  },
+  info: {
+    containerClass: 'bg-blue-50/90 border-blue-200 text-blue-900',
+    badgeClass: 'bg-blue-100 text-blue-800 border-blue-300/70',
+    textClass: 'text-blue-800',
+    iconClass: 'text-blue-600',
+  },
 };
 
 export const CORNER_JOINT_TYPE_MAP: Record<
