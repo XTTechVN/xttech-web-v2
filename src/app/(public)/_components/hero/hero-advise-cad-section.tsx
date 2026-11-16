@@ -104,7 +104,7 @@ export const HeroAdviseCadSection = () => {
                       <Icon className="h-4.5 w-4.5" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-gray-900">{adv.title}</h4>
+                      <h4 className="text-sm font-bold text-primary">{adv.title}</h4>
                       <p className="mt-0.5 text-xs leading-relaxed text-gray-600 sm:text-sm">{adv.desc}</p>
                     </div>
                   </div>

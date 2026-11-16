@@ -7,11 +7,11 @@ export function ProjectReportsSection() {
         {/* Tiêu đề đặc trưng theo Ảnh 4: "Hàng loạt báo cáo thi công" màu vàng/cam + "được tự động tổng hợp cho CEO/ BQLDA" */}
         <div className="mb-4 text-center max-w-3xl mx-auto">
           <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-            <span className="text-primary">Hàng loạt báo cáo thi công & dự án</span>{' '}
-            <span>được tự động tổng hợp cho CEO / BQLDA</span>
+            <span className="text-primary">Báo cáo sản xuất &amp; tiến độ công trình</span>{' '}
+            <span>tổng hợp trực quan cho Chủ xưởng</span>
           </h2>
           <p className="mt-2 text-sm sm:text-base text-slate-600">
-            Dữ liệu số hóa trực tiếp từ dự án thực tế #4 Nhôm Hàn Góc Roland 134 – Tự động cập nhật tức thời trên nền tảng XTTech
+            Giao diện phần mềm XTTech minh họa quy trình theo dõi đơn hàng, bóc tách vật tư, lệnh sản xuất và nghiệm thu trên cùng một màn hình.
           </p>
         </div>
 

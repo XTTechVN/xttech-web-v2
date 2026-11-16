@@ -36,7 +36,7 @@ export function BenefitsSection() {
             Cải tiến quản lý sản xuất & thi công với <span className="text-primary">XTTech</span>
           </h2>
           <p className="text-sm sm:text-base text-slate-600">
-            Nền tảng quản trị toàn diện từ khảo sát, thiết kế bóc tách 2D/3D, tối ưu cắt nhôm đến giám sát thi công công trình.
+            Nền tảng quản trị xưởng nhôm kính từ khảo sát, báo giá, thiết kế bóc tách 2D/3D, xuất thẻ cắt A4 tối ưu nhôm, quản lý kho vật tư đến chấm công, giám sát thi công và nghiệm thu bảo hành QR.
           </p>
         </div>
 
@@ -84,8 +84,15 @@ export function BenefitsSection() {
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                   <div>
-                    <strong className="font-bold text-slate-900">Kiểm soát giá vốn, chi phí & lãi/lỗ dự án:</strong>{' '}
+                    <strong className="font-bold text-slate-900">Kiểm soát giá vốn, chi phí &amp; lãi/lỗ dự án:</strong>{' '}
                     Tự động tổng hợp chi phí thanh nhôm, kính, phụ kiện và nhân công thợ để nắm rõ biên lợi nhuận ngay từ khâu báo giá.
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                  <div>
+                    <strong className="font-bold text-slate-900">Kiểm soát tồn kho &amp; phê duyệt từ xa:</strong>{' '}
+                    Theo dõi nhập xuất tồn nhôm, kính, phụ kiện theo từng đơn hàng và duyệt nhanh báo giá, hợp đồng, đề xuất tạm ứng ngay trên điện thoại.
                   </div>
                 </li>
               </ul>
@@ -130,6 +137,13 @@ export function BenefitsSection() {
                   <div>
                     <strong className="font-bold text-slate-900">Với Giám sát & Thợ công trình:</strong>{' '}
                     Cập nhật khối lượng lắp đặt, nhật ký hiện trường trực tiếp qua điện thoại và quét mã QR nghiệm thu bàn giao nhanh gọn.
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div>
+                    <strong className="font-bold text-slate-900">Với Kế toán &amp; Thủ kho:</strong>{' '}
+                    Tổng hợp bảng công – tính lương từ dữ liệu chấm công, đối soát phiếu thu/chi, xuất nhập tồn vật tư và xuất báo cáo Excel/PDF nhanh chóng.
                   </div>
                 </li>
               </ul>

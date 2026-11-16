@@ -168,10 +168,10 @@ export interface HeroHighlightItem {
 export const HERO_HIGHLIGHTS: HeroHighlightItem[] = [
   {
     bold: 'Phù hợp các doanh nghiệp:',
-    text: 'xưởng sản xuất nhôm kính, nhà thầu thi công mặt dựng, nội thất, cơ khí xây lắp và các công trình xây dựng dân dụng, công nghiệp...',
+    text: 'xưởng sản xuất nhôm kính, nhà thầu thi công mặt dựng và các công trình xây dựng dân dụng, công nghiệp...',
   },
   {
-    bold: 'Chuyên sâu ngành Nhôm Kính & Xây dựng:',
+    bold: 'Chuyên sâu về ngành Nhôm',
     text: 'kết nối liền mạch từ khảo sát ô chờ, thiết kế bóc tách tự động theo công thức 2D/3D, dự toán báo giá đến xuất thẻ cắt A4 phân xưởng.',
   },
   {
@@ -180,7 +180,7 @@ export const HERO_HIGHLIGHTS: HeroHighlightItem[] = [
   },
   {
     bold: 'Quản lý toàn diện từ A–Z:',
-    text: 'vật tư kho - khối lượng bộ cửa - tiến độ sản xuất - dòng tiền hợp đồng - giao việc và hành chính nhân sự.',
+    text: 'vật tư kho - khối lượng bộ cửa - tiến độ sản xuất - dòng tiền hợp đồng - quản lý tài liệu - giao việc và hành chính nhân sự.',
   },
 ];
 
