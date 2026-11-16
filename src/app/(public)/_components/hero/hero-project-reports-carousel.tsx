@@ -20,7 +20,8 @@ const PROJECT_REPORTS: ProjectReportItem[] = [
     number: '01',
     title: 'Báo cáo tổng quan & Tiến trình dự án',
     category: 'Quản lý dự án',
-    description: 'Theo dõi xuyên suốt 5 bước nghiệp vụ: Khảo sát đo đạc → Thiết kế bóc tách → Dự toán báo giá → Ký kết hợp đồng → Lệnh gia công lắp đặt.',
+    description:
+      'Theo dõi xuyên suốt 5 bước nghiệp vụ: Khảo sát đo đạc → Thiết kế bóc tách → Dự toán báo giá → Ký kết hợp đồng → Lệnh gia công lắp đặt.',
     imageSrc: '/images/projects/project-overview.png',
   },
   {
@@ -28,7 +29,8 @@ const PROJECT_REPORTS: ProjectReportItem[] = [
     number: '02',
     title: 'Báo cáo cấu thành giá & Dự toán tự động',
     category: 'Dự toán & Báo giá',
-    description: 'Live pricing engine bóc tách chi tiết: Vật tư nhôm kính (49%), Nhân công thợ (9%), Nhôm hao hụt (2%), Chi phí xưởng & Tiền lãi (31%).',
+    description:
+      'Live pricing engine bóc tách chi tiết: Vật tư nhôm kính (49%), Nhân công thợ (9%), Nhôm hao hụt (2%), Chi phí xưởng & Tiền lãi (31%).',
     imageSrc: '/images/projects/project-pricing.png',
   },
   {
@@ -36,7 +38,8 @@ const PROJECT_REPORTS: ProjectReportItem[] = [
     number: '03',
     title: 'Báo cáo hợp đồng & Tiến độ dòng tiền',
     category: 'Hợp đồng & Tài chính',
-    description: 'Kiểm soát giá trị hợp đồng hiệu lực, theo dõi số tiền đã thu theo đợt thi công, số tiền còn lại và hỗ trợ lập phiếu thu theo tiến độ.',
+    description:
+      'Kiểm soát giá trị hợp đồng hiệu lực, theo dõi số tiền đã thu theo đợt thi công, số tiền còn lại và hỗ trợ lập phiếu thu theo tiến độ.',
     imageSrc: '/images/projects/project-contract.png',
   },
   {
@@ -52,7 +55,8 @@ const PROJECT_REPORTS: ProjectReportItem[] = [
     number: '05',
     title: 'Bóc tách kỹ thuật & Định mức vật tư',
     category: 'Kỹ thuật bóc tách',
-    description: 'Chuẩn hóa danh mục vật tư theo từng hệ nhôm, kính cường lực, phụ kiện đồng bộ; tự động sinh phiếu đề xuất xuất/nhập vật tư công trình.',
+    description:
+      'Chuẩn hóa danh mục vật tư theo từng hệ nhôm, kính cường lực, phụ kiện đồng bộ; tự động sinh phiếu đề xuất xuất/nhập vật tư công trình.',
     imageSrc: '/images/projects/project-spec.png',
   },
 ];
@@ -236,14 +240,9 @@ export const HeroProjectReportsCarousel = () => {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="relative w-full"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Thanh công cụ: Nút điều hướng vòng tròn trượt mượt */}
-      <div className="absolute -top-14 right-0 flex items-center gap-2 sm:-top-16">
+    <div ref={containerRef} className="relative w-full" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+      {/* Thanh công cụ trên Tablet/PC: Nút điều hướng vòng tròn trượt mượt */}
+      <div className="hidden sm:flex absolute -top-16 right-0 items-center gap-2">
         <button
           type="button"
           onClick={handlePrev}
@@ -275,19 +274,12 @@ export const HeroProjectReportsCarousel = () => {
           className="flex flex-row"
           style={{
             transform: `translate3d(calc(-${translateOffset}% + ${dragOffsetPx}px), 0, 0)`,
-            transition:
-              isTransitioning && !isDragging
-                ? 'transform 750ms cubic-bezier(0.22, 1, 0.36, 1)'
-                : 'none',
+            transition: isTransitioning && !isDragging ? 'transform 750ms cubic-bezier(0.22, 1, 0.36, 1)' : 'none',
           }}
         >
           {EXTENDED_REPORTS.map((item) => {
             return (
-              <div
-                key={item.uniqueKey}
-                style={{ width: `${itemWidthPercent}%` }}
-                className="shrink-0 px-3 transition-opacity duration-300"
-              >
+              <div key={item.uniqueKey} style={{ width: `${itemWidthPercent}%` }} className="shrink-0 px-3 transition-opacity duration-300">
                 <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all duration-500 hover:-translate-y-2 hover:border-primary/50 hover:shadow-2xl">
                   {/* Vùng hiển thị ảnh báo cáo chụp thực tế */}
                   <div
@@ -330,9 +322,7 @@ export const HeroProjectReportsCarousel = () => {
                           {item.title}
                         </h4>
                       </div>
-                      <p className="mt-2.5 text-xs sm:text-[13px] leading-relaxed text-slate-600 line-clamp-3">
-                        {item.description}
-                      </p>
+                      <p className="mt-2.5 text-xs sm:text-[13px] leading-relaxed text-slate-600 line-clamp-3">{item.description}</p>
                     </div>
 
                     {/* Nút xem chi tiết & Nguồn dữ liệu */}
@@ -347,9 +337,7 @@ export const HeroProjectReportsCarousel = () => {
                         <ZoomIn className="h-3.5 w-3.5" />
                         <span>Xem số liệu thực tế</span>
                       </button>
-                      <span className="text-[11px] font-medium text-slate-400">
-                        Giao diện XTTech XMS
-                      </span>
+                      <span className="text-[11px] font-medium text-slate-400">Giao diện XTTech XMS</span>
                     </div>
                   </div>
                 </div>
@@ -359,24 +347,44 @@ export const HeroProjectReportsCarousel = () => {
         </div>
       </div>
 
-      {/* Thanh chỉ báo tiến trình xoay vòng (Dots indicators) */}
-      <div className="mt-4 flex items-center justify-center gap-2">
-        {PROJECT_REPORTS.map((rpt, i) => (
-          <button
-            key={rpt.id}
-            type="button"
-            onClick={() => {
-              setIsTransitioning(true);
-              setCurrentIndex(total + i);
-            }}
-            aria-label={`Chuyển tới ${rpt.title}`}
-            className={`h-2 transition-all duration-500 rounded-full cursor-pointer ${
-              i === activeDotIndex
-                ? 'w-8 bg-primary shadow-xs'
-                : 'w-2 bg-slate-300 hover:bg-slate-400'
-            }`}
-          />
-        ))}
+      {/* Thanh chỉ báo tiến trình xoay vòng (Dots indicators) + nút điều hướng gọn trên mobile */}
+      <div className="mt-4 flex items-center justify-center gap-3">
+        <button
+          type="button"
+          onClick={handlePrev}
+          aria-label="Xem báo cáo trước"
+          className="flex sm:hidden h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-2xs active:scale-95 cursor-pointer"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        <div className="flex items-center gap-2">
+          {PROJECT_REPORTS.map((rpt, i) => (
+            <button
+              key={rpt.id}
+              type="button"
+              onClick={() => {
+                setIsTransitioning(true);
+                setCurrentIndex(total + i);
+              }}
+              aria-label={`Chuyển tới ${rpt.title}`}
+              className={`h-2 transition-all duration-500 rounded-full cursor-pointer ${
+                i === activeDotIndex
+                  ? 'w-8 bg-primary shadow-xs'
+                  : 'w-2 bg-slate-300 hover:bg-slate-400'
+              }`}
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleNext}
+          aria-label="Xem báo cáo kế tiếp"
+          className="flex sm:hidden h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-2xs active:scale-95 cursor-pointer"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Modal App Showcase 2 cột: Chặn tương tác nền bên ngoài, 2 nút chuyển nằm hẳn ngoài modal */}
@@ -399,9 +407,7 @@ export const HeroProjectReportsCarousel = () => {
                 <ChevronLeft className="h-5 w-5" />
               </button>
 
-              <div
-                className="relative grid w-full max-w-[1160px] max-h-[94vh] grid-cols-1 lg:grid-cols-12 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl"
-              >
+              <div className="relative grid w-full max-w-[1160px] max-h-[94vh] grid-cols-1 lg:grid-cols-12 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl">
                 {/* CỘT TRÁI (9 cols): Khung ảnh tràn viền */}
                 <div className="lg:col-span-9 flex flex-col bg-slate-100">
                   <div className="relative flex-1 min-h-[260px] max-h-[62vh] lg:max-h-[92vh] overflow-auto flex items-center justify-center">
@@ -424,9 +430,7 @@ export const HeroProjectReportsCarousel = () => {
                       alt={previewImage.title}
                       onClick={() => setIsZoomed((z) => !z)}
                       className={`block w-full transition-transform duration-300 cursor-zoom-in ${
-                        isZoomed
-                          ? 'scale-125 sm:scale-135 origin-center cursor-zoom-out'
-                          : 'h-full object-contain'
+                        isZoomed ? 'scale-125 sm:scale-135 origin-center cursor-zoom-out' : 'h-full object-contain'
                       }`}
                     />
                   </div>
@@ -459,12 +463,8 @@ export const HeroProjectReportsCarousel = () => {
                     </div>
 
                     <div>
-                      <h3 className="text-base sm:text-lg font-black leading-snug text-slate-900">
-                        {previewImage.title}
-                      </h3>
-                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                        {previewImage.description}
-                      </p>
+                      <h3 className="text-base sm:text-lg font-black leading-snug text-slate-900">{previewImage.title}</h3>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-600">{previewImage.description}</p>
                     </div>
 
                     {/* Nút chuyển trái/phải trên mobile */}
@@ -489,9 +489,7 @@ export const HeroProjectReportsCarousel = () => {
 
                     {/* Danh sách chuyển nhanh 5 màn hình */}
                     <div className="pt-2 space-y-1.5">
-                      <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        Chuyển nhanh màn hình
-                      </span>
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Chuyển nhanh màn hình</span>
                       <div className="space-y-1.5">
                         {PROJECT_REPORTS.map((rpt) => {
                           const isSelected = rpt.id === previewImage.id;
@@ -509,11 +507,7 @@ export const HeroProjectReportsCarousel = () => {
                                   : 'border border-slate-200/80 bg-slate-50/80 text-slate-700 hover:border-primary/30 hover:bg-primary/5 hover:text-primary'
                               }`}
                             >
-                              <span
-                                className={`font-mono text-[11px] font-black ${
-                                  isSelected ? 'text-white/90' : 'text-primary'
-                                }`}
-                              >
+                              <span className={`font-mono text-[11px] font-black ${isSelected ? 'text-white/90' : 'text-primary'}`}>
                                 {rpt.number}
                               </span>
                               <span className="truncate">{rpt.title}</span>
