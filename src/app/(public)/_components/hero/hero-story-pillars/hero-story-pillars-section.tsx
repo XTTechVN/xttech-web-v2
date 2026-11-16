@@ -7,15 +7,11 @@ import { BenefitsSection } from './benefits-section';
 import { PainPointsSection } from './pain-points-section';
 import { PillarsSection } from './pillars-section';
 import { ProjectReportsSection } from './project-reports-section';
-import {
-  HeroRegisterInlineForm,
-  markRegisterInteracted,
-} from '../hero-register-inline-form';
+import { HeroRegisterInlineForm } from '../hero-register-inline-form';
 
 export const HeroStoryPillarsSection = () => {
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const openDemo = () => {
-    markRegisterInteracted();
     setIsDemoModalOpen(true);
   };
 

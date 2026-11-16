@@ -10,7 +10,7 @@ import { HeroConsultationSection } from './hero-consultation-section';
 import { HeroDashboardMockup } from './hero-dashboard-mockup';
 import { HeroFeaturedArticlesSection } from './hero-featured-articles-section';
 import { HeroStoryPillarsSection } from './hero-story-pillars';
-import { HeroRegisterInlineForm, markRegisterInteracted } from './hero-register-inline-form';
+import { HeroRegisterInlineForm } from './hero-register-inline-form';
 
 export const Hero = () => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
@@ -55,7 +55,6 @@ export const Hero = () => {
               >
                 <HeroRegisterInlineForm
                   onBack={() => {
-                    markRegisterInteracted();
                     setIsRegisterMode(false);
                   }}
                 />
@@ -98,7 +97,6 @@ export const Hero = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        markRegisterInteracted();
                         setIsRegisterMode(false);
                       }}
                       className="group inline-flex items-center justify-center gap-2 rounded-lg bg-white/15 hover:bg-white/25 border border-white/30 px-5 py-3.5 text-sm font-bold text-white shadow-lg transition-all cursor-pointer"
@@ -111,7 +109,6 @@ export const Hero = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          markRegisterInteracted();
                           setIsRegisterMode(true);
                         }}
                         className="group inline-flex items-center justify-center gap-2 rounded-lg bg-hero-accent px-6 py-3.5 text-sm font-bold text-hero-ink shadow-lg shadow-black/20 transition-all hover:bg-hero-accent-hover hover:shadow-xl cursor-pointer"

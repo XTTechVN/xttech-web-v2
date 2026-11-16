@@ -7,20 +7,6 @@ import { Input } from '@/components';
 import { CONTACT_INFO } from '@/config/contact';
 import { isValidEmail, isValidVnPhone } from '@/utils/validators';
 
-export const REGISTER_MODAL_STORAGE_KEY = 'xttech_register_modal_handled';
-export const REGISTER_INTERACTED_EVENT = 'xttech:register-interacted';
-
-export function markRegisterInteracted() {
-  if (typeof window !== 'undefined') {
-    try {
-      sessionStorage.setItem(REGISTER_MODAL_STORAGE_KEY, 'true');
-      window.dispatchEvent(new Event(REGISTER_INTERACTED_EVENT));
-    } catch {
-      // Bỏ qua nếu WebView / chế độ ẩn danh chặn sessionStorage
-    }
-  }
-}
-
 export interface HeroRegisterInlineFormProps {
   onBack: () => void;
   variant?: 'inline' | 'modal';
@@ -133,7 +119,6 @@ export function HeroRegisterInlineForm({
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSubmitted(true);
-      markRegisterInteracted();
       onSuccess?.();
       toast.success('Đăng ký nhận phần mềm thành công! Đội ngũ XTTECH sẽ liên hệ hỗ trợ bạn ngay.');
     }, 500);

@@ -112,7 +112,6 @@ export const HeroProjectReportsCarousel = () => {
     };
   }, [previewImage, handleStepPreview]);
 
-  const containerRef = useRef<HTMLDivElement>(null);
   const pointerStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
   const didSwipeRef = useRef(false);
   const [dragOffsetPx, setDragOffsetPx] = useState(0);
@@ -240,7 +239,7 @@ export const HeroProjectReportsCarousel = () => {
   };
 
   return (
-    <div ref={containerRef} className="relative w-full" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+    <div className="relative w-full" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
       {/* Thanh công cụ trên Tablet/PC: Nút điều hướng vòng tròn trượt mượt */}
       <div className="hidden sm:flex absolute -top-16 right-0 items-center gap-2">
         <button
@@ -369,9 +368,7 @@ export const HeroProjectReportsCarousel = () => {
               }}
               aria-label={`Chuyển tới ${rpt.title}`}
               className={`h-2 transition-all duration-500 rounded-full cursor-pointer ${
-                i === activeDotIndex
-                  ? 'w-8 bg-primary shadow-xs'
-                  : 'w-2 bg-slate-300 hover:bg-slate-400'
+                i === activeDotIndex ? 'w-8 bg-primary shadow-xs' : 'w-2 bg-slate-300 hover:bg-slate-400'
               }`}
             />
           ))}
