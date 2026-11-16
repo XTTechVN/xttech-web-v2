@@ -4,7 +4,6 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardSummary } from '@/actions';
 import StatCard from '../_components/stats-card';
-import SystemHistory from '../_components/system-history';
 import MobileHeader from '../_components/mobile-header';
 import QuickAttendanceCard from '../_components/quick-attendance-card';
 import QuickActionsGrid from '../_components/quick-actions-grid';
@@ -74,7 +73,6 @@ export const HRDashboard = () => {
           recentAdjustments={data?.recentPendingAdjustments}
           isAdminOrHr={true}
         />
-        <SystemHistory />
       </div>
 
       {/* 2. Desktop Command Center */}
@@ -109,10 +107,9 @@ export const HRDashboard = () => {
             />
           </div>
 
-          {/* Cột phải (4 cols): Giám sát nhân viên ngoài thực địa & Lịch sử thao tác */}
+          {/* Cột phải (4 cols): Giám sát nhân viên ngoài thực địa */}
           <div className="col-span-4 flex flex-col gap-4 min-w-0">
             <LiveStaffWidget />
-            <SystemHistory />
           </div>
         </div>
       </div>
