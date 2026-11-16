@@ -157,6 +157,14 @@ export const LegalSectionList = ({
               </div>
               <div>
                 <span className="block text-[10px] text-slate-400 uppercase">
+                  Địa chỉ &amp; Mã số thuế:
+                </span>
+                <span className="font-bold text-slate-900">
+                  {LEGAL_SUPPORT_INFO.address} · MST: {LEGAL_SUPPORT_INFO.taxCode}
+                </span>
+              </div>
+              <div>
+                <span className="block text-[10px] text-slate-400 uppercase">
                   Cơ quan tiếp nhận đối soát:
                 </span>
                 <span className="font-bold text-slate-900">

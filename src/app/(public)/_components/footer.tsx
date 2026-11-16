@@ -9,6 +9,7 @@ import {
   HeroRegisterInlineForm,
   markRegisterInteracted,
 } from './hero/hero-register-inline-form';
+import { CONTACT_INFO } from '@/config/contact';
 import {
   FOOTER_BOTTOM_LINKS,
   FOOTER_CONTACT_ITEMS,
@@ -83,8 +84,19 @@ export const Footer = () => {
               <span className="text-xl font-black tracking-tight text-primary">XTTECH</span>
             </div>
             <p className="text-sm text-white sm:max-w-sm">
-              Nền tảng tiên phong số hóa ngành nhôm kính & xây dựng — Giải pháp quản trị khép kín từ khảo sát, thiết kế 3D, bóc tách kỹ thuật đến quản lý thi công công trình.
+              Giải pháp số hóa cho xưởng nhôm kính & xây dựng — Quản trị khép kín từ khảo sát, thiết kế 3D, bóc tách tự động theo công thức đến quản lý thi công công trình.
             </p>
+            <div className="space-y-1 text-xs text-slate-300/90 sm:max-w-sm">
+              <p>
+                <span className="font-semibold text-white">Đơn vị chủ quản:</span> {CONTACT_INFO.companyName}
+              </p>
+              <p>
+                <span className="font-semibold text-white">Địa chỉ:</span> {CONTACT_INFO.address}
+              </p>
+              <p>
+                <span className="font-semibold text-white">MST:</span> {CONTACT_INFO.taxCode}
+              </p>
+            </div>
           </div>
 
           {/* Cột 2: Điều hướng */}

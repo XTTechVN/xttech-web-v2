@@ -11,7 +11,7 @@ export const SEO_CONFIG = {
   defaultTitle: 'XTTECH — Phần mềm ERP Sản xuất Nhôm Kính & Xây dựng',
   titleTemplate: '%s | XTTECH',
   defaultDescription:
-    'Hệ sinh thái ERP đám mây chuyên sâu cho doanh nghiệp sản xuất nhôm kính, cơ khí và thi công công trình: Thiết kế cửa CAD 2D/3D, bóc tách BOM, báo giá & chấm công GPS.',
+    'Hệ sinh thái ERP đám mây chuyên sâu cho doanh nghiệp sản xuất nhôm kính, cơ khí và thi công công trình: Thiết kế cửa CAD 2D/3D, bóc tách tự động theo công thức, báo giá & chấm công tại công trình.',
   locale: 'vi_VN',
   language: 'vi-VN',
   themeColor: '#045863',
@@ -35,7 +35,7 @@ export const SEO_KEYWORDS: string[] = [
   'bóc tách vật tư BOM cửa nhôm',
   'phần mềm tính giá cửa nhôm kính',
   'quản lý thi công công trình xây dựng',
-  'chấm công GPS công trình',
+  'chấm công tại công trình',
   'bảo hành điện tử QR cửa nhôm',
   'XMS Fab',
   'XMS Build',
@@ -44,16 +44,16 @@ export const SEO_KEYWORDS: string[] = [
 
 export const PAGE_SEO_META = {
   home: {
-    title: 'XTTECH — Phần mềm ERP Sản xuất Nhôm Kính & Xây dựng',
+    title: 'XTTECH — Giải pháp cho xưởng nhôm kính & nhà thầu xây dựng',
     description:
-      'Giải pháp ERP chuyên sâu cho xưởng nhôm kính & nhà thầu xây dựng: Thiết kế cửa CAD 2D/3D, bóc tách vật tư BOM chính xác, báo giá nhanh và chấm công GPS.',
+      'Giải pháp ERP chuyên sâu cho xưởng nhôm kính & nhà thầu xây dựng: Thiết kế cửa CAD 2D/3D, bóc tách tự động theo công thức, báo giá nhanh và chấm công tại công trình.',
     path: '/',
     useAbsoluteTitle: true,
   },
   pricing: {
     title: 'Bảng Giá Phần Mềm ERP Nhôm Kính & Xây Dựng',
     description:
-      'Bảng giá minh bạch các gói XMS Fab, XMS Build và XMS Biz. Hỗ trợ gói dùng thử miễn phí trọn đời cho xưởng mới, đào tạo tận nơi và hoàn tiền 100% trong 7 ngày.',
+      'Bảng giá minh bạch các gói XMS Fab, XMS Build và XMS Biz. Hỗ trợ Miễn phí tài khoản G0 - 20 bộ cửa cho xưởng mới, đào tạo tận nơi và chính sách hoàn phí rõ ràng.',
     path: '/pricing',
   },
   news: {
@@ -65,19 +65,19 @@ export const PAGE_SEO_META = {
   privacy: {
     title: 'Chính Sách Bảo Mật Dữ Liệu Doanh Nghiệp',
     description:
-      'Cam kết bảo mật bản vẽ kỹ thuật CAD 2D/3D, định mức bóc tách vật tư BOM, bảng báo giá, dữ liệu GPS chấm công công trình và hồ sơ khách hàng trên XTTECH ERP.',
+      'Cam kết bảo mật bản vẽ kỹ thuật CAD 2D/3D, định mức bóc tách vật tư BOM, bảng báo giá, dữ liệu chấm công tại công trình và hồ sơ khách hàng trên XTTECH ERP.',
     path: '/privacy-policy',
   },
   terms: {
     title: 'Điều Khoản Sử Dụng Dịch Vụ Nền Tảng XTTECH',
     description:
-      'Quy định sử dụng hệ sinh thái XMS Fab, XMS Build, XMS Biz, cơ chế hạn mức gói cước, quyền sở hữu dữ liệu doanh nghiệp và cam kết chất lượng SLA 99.9% từ XTTECH.',
+      'Quy định sử dụng hệ sinh thái XMS Fab, XMS Build, XMS Biz, cơ chế hạn mức gói cước, quyền sở hữu dữ liệu doanh nghiệp và cam kết chất lượng dịch vụ từ XTTECH.',
     path: '/terms-of-service',
   },
   refund: {
     title: 'Chính Sách Hoàn Tiền & Bảo Hành Dịch Vụ',
     description:
-      'Chính sách dùng thử miễn phí trọn đời, cam kết hoàn tiền 100% trong 7 ngày đầu, hoàn phí theo tỷ lệ Pro-rata cho gói năm và bảo hành đào tạo tận xưởng XTTECH.',
+      'Chính sách Miễn phí tài khoản G0 - 20 bộ cửa, hỗ trợ hoàn phí minh bạch trong 7 ngày đầu, hoàn phí theo tỷ lệ Pro-rata cho gói năm và bảo hành đào tạo tận xưởng XTTECH.',
     path: '/refund-policy',
   },
 } as const;

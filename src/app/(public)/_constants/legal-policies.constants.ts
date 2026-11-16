@@ -49,6 +49,8 @@ export interface LegalPolicyDocument {
 
 export interface LegalSupportContact {
   companyName: string;
+  address: string;
+  taxCode: string;
   legalDepartment: string;
   hotlineDisplay: string;
   hotlineHref: string;
@@ -59,7 +61,9 @@ export interface LegalSupportContact {
 }
 
 export const LEGAL_SUPPORT_INFO: LegalSupportContact = {
-  companyName: 'HỆ THỐNG GIẢI PHÁP CÔNG NGHỆ XTTECH',
+  companyName: CONTACT_INFO.companyName,
+  address: CONTACT_INFO.address,
+  taxCode: CONTACT_INFO.taxCode,
   legalDepartment: 'Ban Pháp chế & Hội đồng An toàn Thông tin XTTECH',
   hotlineDisplay: CONTACT_INFO.phoneDisplay,
   hotlineHref: `tel:${CONTACT_INFO.phone}`,
@@ -168,8 +172,8 @@ export const LEGAL_POLICIES: Record<LegalPolicyKey, LegalPolicyDocument> = {
               'Trong suốt thời hạn hợp đồng',
             ],
             [
-              'Dữ liệu định vị công trường (GPS)',
-              'Chỉ ghi nhận tại đúng thời điểm nhân sự bấm chấm công hoặc gửi báo cáo nghiệm thu. Tuyệt đối không theo dõi vị trí ngầm ngoài giờ làm việc.',
+              'Dữ liệu chấm công tại công trình',
+              'Chỉ ghi nhận thời điểm nhân sự chủ động xác nhận vào/ra ca tại công trình. Tuyệt đối không theo dõi vị trí nền ngoài giờ làm việc.',
               'Tối đa 90 ngày hoặc theo cấu hình DN',
             ],
             [
@@ -499,15 +503,15 @@ export const LEGAL_POLICIES: Record<LegalPolicyKey, LegalPolicyDocument> = {
           'Bảo đảm hoàn lại toàn bộ chi phí đăng ký mới nếu phần mềm gặp lỗi kỹ thuật không đạt cam kết hoặc phát sinh thanh toán thừa.',
         clauses: [
           {
-            heading: 'Khoản 1.1. Hoàn tiền 100% trong 07 ngày đầu tiên',
+            heading: 'Khoản 1.1. Hoàn tiền toàn bộ trong 07 ngày đầu tiên',
             paragraphs: [
-              'Trong vòng 07 (bảy) ngày lịch kể từ ngày kích hoạt gói dịch vụ có trả phí lần đầu tiên, Doanh nghiệp được hoàn lại 100% số tiền đã thanh toán nếu hệ thống XTTECH ERP phát sinh lỗi kỹ thuật nghiêm trọng khiến các phân hệ cốt lõi không thể vận hành theo đúng tài liệu đặc tả và đội ngũ kỹ thuật của XTTECH không thể khắc phục trong vòng 48 giờ làm việc kể từ khi tiếp nhận thông báo.',
+              'Trong vòng 07 (bảy) ngày lịch kể từ ngày kích hoạt gói dịch vụ có trả phí lần đầu tiên, Doanh nghiệp được hoàn lại toàn bộ số tiền đã thanh toán nếu hệ thống XTTECH ERP phát sinh lỗi kỹ thuật nghiêm trọng khiến các phân hệ cốt lõi không thể vận hành theo đúng tài liệu đặc tả và đội ngũ kỹ thuật của XTTECH không thể khắc phục trong vòng 48 giờ làm việc kể từ khi tiếp nhận thông báo.',
             ],
           },
           {
             heading: 'Khoản 1.2. Hoàn trả ngay các khoản thanh toán trùng lặp hoặc chuyển thừa',
             paragraphs: [
-              'Trường hợp kế toán của Doanh nghiệp thực hiện lệnh chuyển khoản trùng lặp (Double Payment), chuyển nhầm số tiền cao hơn giá trị hóa đơn hoặc thanh toán nhầm kỳ cước do lỗi kết nối ngân hàng, XTTECH cam kết hoàn trả 100% khoản tiền chênh lệch ngay sau khi hai bên xác nhận sao kê giao dịch.',
+              'Trường hợp kế toán của Doanh nghiệp thực hiện lệnh chuyển khoản trùng lặp (Double Payment), chuyển nhầm số tiền cao hơn giá trị hóa đơn hoặc thanh toán nhầm kỳ cước do lỗi kết nối ngân hàng, XTTECH cam kết hoàn trả toàn bộ khoản tiền chênh lệch ngay sau khi hai bên xác nhận sao kê giao dịch.',
             ],
           },
         ],
@@ -539,17 +543,17 @@ export const LEGAL_POLICIES: Record<LegalPolicyKey, LegalPolicyDocument> = {
             [
               'Yêu cầu trong 07 ngày đầu (Lỗi kỹ thuật hệ thống)',
               'Không phát sinh phí sử dụng; hoàn trả nguyên vẹn tổng số tiền doanh nghiệp đã thanh toán.',
-              'Hoàn 100% · 02–03 ngày LV',
+              'Hoàn toàn bộ · 02–03 ngày LV',
             ],
             [
               'Thanh toán trùng lặp / Chuyển khoản thừa',
               'Đối chiếu ủy nhiệm chi hoặc sao kê ngân hàng giữa phòng kế toán hai bên.',
-              'Hoàn 100% phần dư · 24–48 giờ',
+              'Hoàn phần dư · 24–48 giờ',
             ],
             [
               'Dừng hợp đồng năm do lỗi cam kết SLA của XTTECH',
               'Hoàn trả toàn bộ giá trị của các tháng chưa sử dụng tính từ thời điểm xác nhận chấm dứt.',
-              '100% tháng còn lại · 03–05 ngày LV',
+              'Toàn bộ tháng còn lại · 03–05 ngày LV',
             ],
             [
               'Doanh nghiệp chủ động dừng hợp đồng năm trước hạn',
@@ -568,9 +572,9 @@ export const LEGAL_POLICIES: Record<LegalPolicyKey, LegalPolicyDocument> = {
           'Quyền lợi cộng dồn giá trị ngày sử dụng còn lại khi nâng cấp lên gói cao hơn hoặc tạm bảo lưu ngân sách khi xưởng tạm ngưng hoạt động.',
         clauses: [
           {
-            heading: 'Khoản 3.1. Khấu trừ 100% giá trị còn lại khi nâng cấp gói cước (Pro-rata Credit)',
+            heading: 'Khoản 3.1. Khấu trừ toàn bộ giá trị còn lại khi nâng cấp gói cước (Pro-rata Credit)',
             paragraphs: [
-              'Khi Doanh nghiệp có nhu cầu mở rộng quy mô sản xuất và nâng cấp lên gói dịch vụ cao hơn ngay trong kỳ thuê bao hiện tại, hệ thống sẽ tự động quy đổi 100% giá trị tiền tương ứng với số ngày chưa sử dụng của gói cũ để khấu trừ trực tiếp vào hóa đơn thanh toán của gói mới.',
+              'Khi Doanh nghiệp có nhu cầu mở rộng quy mô sản xuất và nâng cấp lên gói dịch vụ cao hơn ngay trong kỳ thuê bao hiện tại, hệ thống sẽ tự động quy đổi toàn bộ giá trị tiền tương ứng với số ngày chưa sử dụng của gói cũ để khấu trừ trực tiếp vào hóa đơn thanh toán của gói mới.',
             ],
           },
           {

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, CheckCircle2, FileSpreadsheet, Monitor, Smartphone, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, FileSpreadsheet, Sparkles } from 'lucide-react';
 import { HERO_HIGHLIGHTS } from './hero.constants';
 import { HeroAdviseCadSection } from './hero-advise-cad-section';
 import { HeroBrandsSection } from './hero-brands-section';

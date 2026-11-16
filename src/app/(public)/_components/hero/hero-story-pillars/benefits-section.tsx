@@ -77,15 +77,15 @@ export function BenefitsSection() {
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                   <div>
-                    <strong className="font-bold text-slate-900">Theo dõi tiến độ xưởng – công trình realtime:</strong>{' '}
-                    Nắm bắt tức thì trạng thái sản xuất từng đơn hàng, tiến độ ép góc và lắp dựng ngoài công trình mà không cần có mặt trực tiếp.
+                    <strong className="font-bold text-slate-900">Theo dõi tiến độ xưởng – công trình:</strong>{' '}
+                    Nắm bắt trạng thái sản xuất từng đơn hàng, tiến độ ép góc và lắp dựng ngoài công trình mà không cần có mặt trực tiếp.
                   </div>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                   <div>
                     <strong className="font-bold text-slate-900">Kiểm soát giá vốn, chi phí & lãi/lỗ dự án:</strong>{' '}
-                    Tự động tổng hợp chi phí thanh nhôm, kính, phụ kiện và nhân công thợ để nắm chính xác biên lợi nhuận ngay từ khâu báo giá.
+                    Tự động tổng hợp chi phí thanh nhôm, kính, phụ kiện và nhân công thợ để nắm rõ biên lợi nhuận ngay từ khâu báo giá.
                   </div>
                 </li>
               </ul>
@@ -122,7 +122,7 @@ export function BenefitsSection() {
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <div>
                     <strong className="font-bold text-slate-900">Với Kỹ thuật bóc tách & Xưởng cắt:</strong>{' '}
-                    Tự động xuất lệnh sản xuất (LSX), in thẻ cắt A4 tối ưu cây nhôm và quản lý nhôm thừa, giảm hao hụt đề-xê xuống dưới 2%.
+                    Tự động xuất lệnh sản xuất (LSX), in thẻ cắt A4 tối ưu cây nhôm và quản lý nhôm thừa, hỗ trợ giảm hao hụt vật tư đề-xê.
                   </div>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -183,8 +183,8 @@ export function BenefitsSection() {
                   <TrendingUp className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-[11px] font-medium text-slate-500">Tỷ lệ hao hụt nhôm</div>
-                  <div className="text-xs font-black text-emerald-600">&lt; 2.0% (Tối ưu hóa AI)</div>
+                  <div className="text-[11px] font-medium text-slate-500">Hỗ trợ cắt nhôm</div>
+                  <div className="text-xs font-black text-emerald-600">Giảm hao hụt vật tư</div>
                 </div>
               </div>
 

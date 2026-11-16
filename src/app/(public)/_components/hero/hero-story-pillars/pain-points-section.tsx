@@ -142,7 +142,7 @@ export function PainPointsSection() {
                   </span>
                   <div>
                     <div className="text-[10px] font-bold text-slate-500 uppercase">Hao hụt vật tư</div>
-                    <div className="text-xs font-black text-rose-600">10% - 15% Phôi nhôm</div>
+                    <div className="text-xs font-black text-rose-600">Khó kiểm soát phôi nhôm</div>
                   </div>
                 </div>
               </div>
@@ -150,15 +150,15 @@ export function PainPointsSection() {
               {/* Floating Badge 2: Cảnh báo chi phí (Góc dưới phải) */}
               <div className="absolute -bottom-2 right-0 sm:-bottom-3 sm:right-2 rounded-2xl border border-slate-200/90 bg-white/95 p-3.5 shadow-xl backdrop-blur-md animate-float-delayed">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 font-black text-sm">
-                    15%
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 font-black text-xs">
+                    DC
                   </div>
                   <div>
                     <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
                       Lãng phí ngân sách
                     </div>
                     <div className="text-xs font-black text-rose-600">
-                      Nếu quản lý thủ công
+                      Khi quản lý thủ công
                     </div>
                   </div>
                 </div>

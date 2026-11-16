@@ -62,5 +62,6 @@ export const FOOTER_BOTTOM_LINKS: FooterBottomLink[] = [
   { href: '/#about', label: 'Về chúng tôi' },
   { href: '/pricing', label: 'Bảng giá' },
   { href: '/news', label: 'Tin tức' },
-  { href: 'https://facebook.com', label: 'Facebook', external: true },
+  { href: '/privacy-policy', label: 'Chính sách bảo mật' },
+  { href: '/terms-of-service', label: 'Điều khoản dịch vụ' },
 ];
