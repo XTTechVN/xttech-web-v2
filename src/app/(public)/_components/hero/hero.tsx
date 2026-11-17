@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CheckCircle2, FileSpreadsheet } from 'lucide-react';
 import { Modal } from '@/components';
@@ -13,11 +13,25 @@ import { HeroFeaturedArticlesSection } from './hero-featured-articles-section';
 import { HeroStoryPillarsSection } from './hero-story-pillars';
 import { HeroRegisterInlineForm } from './hero-register-inline-form';
 
-const ABOUT_AUTO_MODAL_STORAGE_KEY = 'xttech_about_register_modal_shown';
+const AUTO_REGISTER_MODAL_KEY = 'xttech_about_auto_register_seen';
+const AUTO_REGISTER_DELAY_MS = 10000;
 
 export const Hero = () => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
-  const [isAutoRegisterModalOpen, setIsAutoRegisterModalOpen] = useState(false);
+  const [isAutoModalOpen, setIsAutoModalOpen] = useState(false);
+  const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const markAutoModalSeen = () => {
+    if (autoTimerRef.current) {
+      clearTimeout(autoTimerRef.current);
+      autoTimerRef.current = null;
+    }
+    try {
+      window.localStorage.setItem(AUTO_REGISTER_MODAL_KEY, '1');
+    } catch {
+      // Bỏ qua nếu trình duyệt chặn storage
+    }
+  };
 
   // Trên desktop (lg+) tự động mở sẵn chế độ Đăng ký; trên mobile giữ màn hình giới thiệu để bấm nút mới trượt sang
   useEffect(() => {
@@ -25,24 +39,26 @@ export const Hero = () => {
       setIsRegisterMode(true);
     }
 
+    let hasSeen = false;
     try {
-      if (window.localStorage.getItem(ABOUT_AUTO_MODAL_STORAGE_KEY) === '1') {
-        return;
-      }
+      hasSeen = window.localStorage.getItem(AUTO_REGISTER_MODAL_KEY) === '1';
     } catch {
-      return;
+      hasSeen = false;
     }
 
-    const timer = setTimeout(() => {
-      try {
-        window.localStorage.setItem(ABOUT_AUTO_MODAL_STORAGE_KEY, '1');
-      } catch {
-        // Bỏ qua nếu trình duyệt chặn localStorage
-      }
-      setIsAutoRegisterModalOpen(true);
-    }, 20000);
+    if (hasSeen) return;
 
-    return () => clearTimeout(timer);
+    autoTimerRef.current = setTimeout(() => {
+      markAutoModalSeen();
+      setIsAutoModalOpen(true);
+    }, AUTO_REGISTER_DELAY_MS);
+
+    return () => {
+      if (autoTimerRef.current) {
+        clearTimeout(autoTimerRef.current);
+        autoTimerRef.current = null;
+      }
+    };
   }, []);
 
   return (
@@ -78,6 +94,7 @@ export const Hero = () => {
               >
                 <HeroRegisterInlineForm
                   isOpen={isRegisterMode}
+                  onSuccess={markAutoModalSeen}
                   onBack={() => {
                     setIsRegisterMode(false);
                   }}
@@ -181,8 +198,8 @@ export const Hero = () => {
       <HeroConsultationSection />
 
       <Modal
-        isOpen={isAutoRegisterModalOpen}
-        onClose={() => setIsAutoRegisterModalOpen(false)}
+        isOpen={isAutoModalOpen}
+        onClose={() => setIsAutoModalOpen(false)}
         size="md"
         title="Đăng ký sử dụng XTTECH XMS Fab"
         className="max-w-lg border border-primary/20"
@@ -190,8 +207,9 @@ export const Hero = () => {
       >
         <HeroRegisterInlineForm
           variant="modal"
-          isOpen={isAutoRegisterModalOpen}
-          onBack={() => setIsAutoRegisterModalOpen(false)}
+          isOpen={isAutoModalOpen}
+          onSuccess={markAutoModalSeen}
+          onBack={() => setIsAutoModalOpen(false)}
         />
       </Modal>
     </div>
