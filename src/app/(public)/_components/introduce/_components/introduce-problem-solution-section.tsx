@@ -1,11 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { PROBLEM_SOLUTIONS } from './introduce.constants';
 
+const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
 export function IntroduceProblemSolutionSection() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return;
+    const timer = setInterval(() => {
+      setActiveIdx((prev) => (prev + 1) % PROBLEM_SOLUTIONS.length);
+    }, 3200);
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
   return (
     <section className="border-b border-slate-100 bg-white py-14 sm:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -13,7 +26,7 @@ export function IntroduceProblemSolutionSection() {
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45 }}
+          transition={{ duration: 0.5, ease: EASE_OUT }}
           className="mx-auto max-w-3xl text-center"
         >
           <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-600">
@@ -28,43 +41,112 @@ export function IntroduceProblemSolutionSection() {
           </p>
         </motion.div>
 
-        <div className="mt-10 space-y-4">
-          {PROBLEM_SOLUTIONS.map((item, idx) => (
-            <motion.div
-              key={item.problem}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.42, delay: idx * 0.06 }}
-              className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-shadow hover:shadow-md lg:grid-cols-2"
-            >
-              {/* Cột Nỗi đau */}
-              <div className="flex items-start gap-3.5 border-b border-slate-100 bg-rose-50/45 p-5 sm:p-6 lg:border-r lg:border-b-0">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
-                  <AlertTriangle className="h-4 w-4" />
-                </span>
-                <div>
-                  <span className="text-[11px] font-bold tracking-wider text-rose-600 uppercase">
-                    Vấn đề #{idx + 1}
-                  </span>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-700">{item.problem}</p>
-                </div>
-              </div>
+        <div
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          className="mt-10 space-y-4"
+        >
+          {PROBLEM_SOLUTIONS.map((item, idx) => {
+            const isActive = idx === activeIdx;
 
-              {/* Cột Giải pháp */}
-              <div className="flex items-start gap-3.5 bg-emerald-50/35 p-5 sm:p-6">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <CheckCircle2 className="h-4 w-4" />
-                </span>
-                <div>
-                  <span className="text-[11px] font-bold tracking-wider text-primary uppercase">
-                    Giải pháp XTTECH
-                  </span>
-                  <p className="mt-1 text-sm leading-relaxed font-medium text-slate-800">{item.solution}</p>
+            return (
+              <motion.div
+                key={item.problem}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.48, delay: idx * 0.08, ease: EASE_OUT }}
+                whileHover={{ y: -2 }}
+                onMouseEnter={() => setActiveIdx(idx)}
+                className={`group relative grid grid-cols-1 overflow-hidden rounded-2xl border bg-white transition-all duration-300 lg:grid-cols-2 ${
+                  isActive
+                    ? 'border-primary/40 shadow-lg shadow-primary/10'
+                    : 'border-slate-200/90 shadow-xs hover:border-primary/30 hover:shadow-md'
+                }`}
+              >
+                {/* Thanh accent trượt mượt bên trái khi row đang spotlight */}
+                {isActive && (
+                  <motion.span
+                    layoutId="problemSolutionActiveBar"
+                    transition={{ type: 'spring', stiffness: 360, damping: 32 }}
+                    className="pointer-events-none absolute inset-y-0 left-0 z-20 w-1 bg-linear-to-b from-rose-500 via-primary to-emerald-500"
+                  />
+                )}
+
+                {/* Cột Nỗi đau */}
+                <motion.div
+                  initial={{ opacity: 0, x: -18 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.45, delay: idx * 0.08 + 0.05, ease: EASE_OUT }}
+                  className={`flex items-start gap-3.5 border-b border-slate-100 p-5 transition-colors duration-300 sm:p-6 lg:border-r lg:border-b-0 ${
+                    isActive ? 'bg-rose-50/75' : 'bg-rose-50/40'
+                  }`}
+                >
+                  <motion.span
+                    animate={isActive ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                    transition={{ duration: 1.8, repeat: isActive ? Infinity : 0, ease: 'easeInOut' }}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-300 ${
+                      isActive ? 'bg-rose-500 text-white shadow-xs' : 'bg-rose-100 text-rose-600'
+                    }`}
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                  </motion.span>
+                  <div>
+                    <span className="text-[11px] font-bold tracking-wider text-rose-600 uppercase">
+                      Vấn đề #{idx + 1}
+                    </span>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-700">{item.problem}</p>
+                  </div>
+                </motion.div>
+
+                {/* Mũi tên chuyển đổi ở giữa (hiển thị trên desktop) */}
+                <div className="pointer-events-none absolute top-1/2 left-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 lg:flex">
+                  <motion.span
+                    animate={isActive ? { x: [0, 3, 0], scale: 1.08 } : { x: 0, scale: 1 }}
+                    transition={{
+                      x: { duration: 1.2, repeat: isActive ? Infinity : 0, ease: 'easeInOut' },
+                      scale: { duration: 0.25 },
+                    }}
+                    className={`flex h-7 w-7 items-center justify-center rounded-full border shadow-sm transition-colors duration-300 ${
+                      isActive
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-slate-200 bg-white text-slate-400'
+                    }`}
+                  >
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </motion.span>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+
+                {/* Cột Giải pháp */}
+                <motion.div
+                  initial={{ opacity: 0, x: 18 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.45, delay: idx * 0.08 + 0.1, ease: EASE_OUT }}
+                  className={`flex items-start gap-3.5 p-5 transition-colors duration-300 sm:p-6 lg:pl-8 ${
+                    isActive ? 'bg-emerald-50/65' : 'bg-emerald-50/30'
+                  }`}
+                >
+                  <motion.span
+                    animate={isActive ? { scale: 1.08 } : { scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-300 ${
+                      isActive ? 'bg-primary text-white shadow-xs' : 'bg-primary/10 text-primary'
+                    }`}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                  </motion.span>
+                  <div>
+                    <span className="text-[11px] font-bold tracking-wider text-primary uppercase">
+                      Giải pháp XTTECH
+                    </span>
+                    <p className="mt-1 text-sm leading-relaxed font-medium text-slate-800">{item.solution}</p>
+                  </div>
+                </motion.div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
