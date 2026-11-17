@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, TrendingDown, X } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/utils/cn';
 import { PAIN_POINTS } from './hero-story-pillars.constants';
@@ -110,7 +110,7 @@ export function PainPointsSection() {
           </div>
 
           {/* Cột phải: Vòng tròn công nghệ lớn bề thế (tỷ lệ lớn chuẩn theo Ảnh 2 mẫu) */}
-          <div className="flex items-center justify-center lg:col-span-5">
+          <div className="flex items-center justify-center pt-10 pb-8 lg:col-span-5 lg:py-0">
             <div className="relative flex items-center justify-center py-2">
               {/* Quầng sáng nền mờ */}
               <div className="absolute h-96 w-96 sm:h-[450px] sm:w-[450px] lg:h-[500px] lg:w-[500px] rounded-full bg-amber-500/5 blur-3xl pointer-events-none animate-pulse-glow" />
@@ -135,30 +135,30 @@ export function PainPointsSection() {
               </div>
 
               {/* Floating Badge 1: Cảnh báo hao hụt (Góc trên trái) */}
-              <div className="absolute top-2 -left-2 sm:top-4 sm:-left-4 rounded-2xl border border-slate-200/90 bg-white/95 px-3.5 py-2.5 shadow-xl backdrop-blur-md animate-float-slow">
+              <div className="absolute top-2 -left-2 sm:top-4 sm:-left-4 rounded-lg border border-slate-200/90 bg-white/95 px-3.5 py-2.5 shadow-xl backdrop-blur-md animate-float-slow">
                 <div className="flex items-center gap-2">
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
                     <AlertTriangle className="h-4 w-4" />
                   </span>
                   <div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase">Hao hụt vật tư</div>
-                    <div className="text-xs font-black text-rose-600">10% - 15% Phôi nhôm</div>
+                    <div className="text-[10px] font-bold text-primary tracking-wide">Hao hụt vật tư</div>
+                    <div className="text-xs font-black text-rose-600">Khó kiểm soát phôi nhôm</div>
                   </div>
                 </div>
               </div>
 
               {/* Floating Badge 2: Cảnh báo chi phí (Góc dưới phải) */}
-              <div className="absolute -bottom-2 right-0 sm:-bottom-3 sm:right-2 rounded-2xl border border-slate-200/90 bg-white/95 p-3.5 shadow-xl backdrop-blur-md animate-float-delayed">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 font-black text-sm">
-                    15%
+              <div className="absolute -bottom-2 right-0 sm:-bottom-3 sm:right-2 rounded-lg border border-slate-200/90 bg-white/95 p-2.5 shadow-xl backdrop-blur-md animate-float-delayed">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600">
+                    <TrendingDown className="h-4.5 w-4.5" />
                   </div>
                   <div>
-                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                    <div className="text-[10px] font-bold text-primary tracking-wide">
                       Lãng phí ngân sách
                     </div>
                     <div className="text-xs font-black text-rose-600">
-                      Nếu quản lý thủ công
+                      Khi quản lý thủ công
                     </div>
                   </div>
                 </div>

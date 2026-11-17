@@ -126,7 +126,7 @@ export function NewsSoftwareRegistrationForm() {
           <div className="mt-2.5 grid grid-cols-1 gap-1.5 rounded-xl bg-white/12 border border-white/15 px-3 py-2.5 text-[11px] text-white font-medium backdrop-blur-xs">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300 shrink-0" />
-              <span>Trải nghiệm 100% miễn phí — Triển khai nhanh</span>
+              <span>Miễn phí tài khoản G0 — Triển khai nhanh</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300 shrink-0" />
@@ -236,7 +236,7 @@ export function NewsSoftwareRegistrationForm() {
               <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500">
                 <span className="flex items-center gap-1 font-medium text-slate-600">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                  Bảo mật thông tin 100%
+                  Bảo mật thông tin doanh nghiệp
                 </span>
                 <button
                   type="button"

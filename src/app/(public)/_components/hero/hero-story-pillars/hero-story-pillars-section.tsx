@@ -7,15 +7,11 @@ import { BenefitsSection } from './benefits-section';
 import { PainPointsSection } from './pain-points-section';
 import { PillarsSection } from './pillars-section';
 import { ProjectReportsSection } from './project-reports-section';
-import {
-  HeroRegisterInlineForm,
-  markRegisterInteracted,
-} from '../hero-register-inline-form';
+import { HeroRegisterInlineForm } from '../hero-register-inline-form';
 
 export const HeroStoryPillarsSection = () => {
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const openDemo = () => {
-    markRegisterInteracted();
     setIsDemoModalOpen(true);
   };
 
@@ -41,7 +37,7 @@ export const HeroStoryPillarsSection = () => {
         isOpen={isDemoModalOpen}
         onClose={() => setIsDemoModalOpen(false)}
         size="md"
-        title="Đăng ký trải nghiệm XTTECH XMS Fab"
+        title="Đăng ký sử dụng XTTECH XMS Fab"
         className="max-w-lg border border-primary/20"
         bodyClassName="p-5 sm:p-6"
       >

@@ -4,10 +4,7 @@ import React, { useState } from 'react';
 import { ZoomIn, ZoomOut } from 'lucide-react';
 import { Modal } from '@/components';
 import { ADVISE_ADVANTAGES } from './hero.constants';
-import {
-  HeroRegisterInlineForm,
-  markRegisterInteracted,
-} from './hero-register-inline-form';
+import { HeroRegisterInlineForm } from './hero-register-inline-form';
 
 type DoorColorKey = 'wood' | 'grey' | 'white' | 'black' | 'champagne';
 
@@ -68,7 +65,6 @@ export const HeroAdviseCadSection = () => {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const handleOpenRegisterModal = () => {
-    markRegisterInteracted();
     setIsRegisterModalOpen(true);
   };
 
@@ -104,7 +100,7 @@ export const HeroAdviseCadSection = () => {
                       <Icon className="h-4.5 w-4.5" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-gray-900">{adv.title}</h4>
+                      <h4 className="text-sm font-bold text-primary">{adv.title}</h4>
                       <p className="mt-0.5 text-xs leading-relaxed text-gray-600 sm:text-sm">{adv.desc}</p>
                     </div>
                   </div>
@@ -112,7 +108,7 @@ export const HeroAdviseCadSection = () => {
               })}
             </div>
 
-            <div className="pt-2">
+            <div className="flex justify-center pt-2 lg:justify-start">
               <button
                 type="button"
                 onClick={handleOpenRegisterModal}
@@ -458,7 +454,7 @@ export const HeroAdviseCadSection = () => {
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}
         size="md"
-        title="Đăng ký trải nghiệm XTTECH XMS Fab"
+        title="Đăng ký sử dụng XTTECH XMS Fab"
         className="max-w-lg border border-primary/20"
         bodyClassName="p-5 sm:p-6"
       >

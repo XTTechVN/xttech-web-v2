@@ -5,10 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ArrowUpRight, CheckCircle2, Phone } from 'lucide-react';
 import { Modal, XTLogo } from '@/components';
-import {
-  HeroRegisterInlineForm,
-  markRegisterInteracted,
-} from './hero/hero-register-inline-form';
+import { HeroRegisterInlineForm } from './hero/hero-register-inline-form';
+import { CONTACT_INFO } from '@/config/contact';
 import {
   FOOTER_BOTTOM_LINKS,
   FOOTER_CONTACT_ITEMS,
@@ -22,7 +20,6 @@ export const Footer = () => {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const handleOpenRegisterModal = () => {
-    markRegisterInteracted();
     setIsRegisterModalOpen(true);
   };
 
@@ -83,8 +80,17 @@ export const Footer = () => {
               <span className="text-xl font-black tracking-tight text-primary">XTTECH</span>
             </div>
             <p className="text-sm text-white sm:max-w-sm">
-              Nền tảng tiên phong số hóa ngành nhôm kính & xây dựng — Giải pháp quản trị khép kín từ khảo sát, thiết kế 3D, bóc tách kỹ thuật đến quản lý thi công công trình.
+              Giải pháp số hóa cho xưởng nhôm kính & xây dựng — Quản trị khép kín từ khảo sát, thiết kế 3D, bóc tách tự động theo công thức đến quản lý thi công công trình.
             </p>
+            <div className="space-y-1 text-xs text-slate-300/90 sm:max-w-sm">
+              <p>
+                <span className="font-semibold text-white">Đơn vị chủ quản:</span> {CONTACT_INFO.companyName}
+              </p>
+              <p>
+                <span className="font-semibold text-white">Địa chỉ:</span> {CONTACT_INFO.address}
+              </p>
+            
+            </div>
           </div>
 
           {/* Cột 2: Điều hướng */}
@@ -168,21 +174,21 @@ export const Footer = () => {
       </div>
 
       {/* Dải bản quyền */}
-      <div className="relative border-t border-white/10 bg-black/25 py-4">
+      <div className="relative border-t border-white/10 bg-black/25 pt-4 pb-6 sm:py-4">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6 lg:px-8">
-          <p className="text-xs text-slate-400">
+          <p className="text-center text-xs text-slate-400 sm:text-left">
             © {currentYear} <span className="font-semibold text-white">XTTECH</span>. Tất cả các quyền được bảo lưu.
           </p>
-          <div className="flex items-center gap-5 text-xs text-slate-400">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-400 sm:justify-end sm:gap-5">
             {FOOTER_BOTTOM_LINKS.map((item, idx) => (
               <React.Fragment key={item.label}>
-                {idx > 0 && <span className="h-3 w-px bg-white/15" />}
+                {idx > 0 && <span className="hidden h-3 w-px bg-white/15 sm:inline-block" />}
                 {item.external ? (
                   <a
                     href={item.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="transition-colors hover:text-white"
+                    className="whitespace-nowrap transition-colors hover:text-white"
                   >
                     {item.label}
                   </a>
@@ -190,7 +196,7 @@ export const Footer = () => {
                   <Link
                     href={item.href}
                     onClick={(e) => handleFooterLinkClick(e, item.href)}
-                    className="transition-colors hover:text-white"
+                    className="whitespace-nowrap transition-colors hover:text-white"
                   >
                     {item.label}
                   </Link>
@@ -205,7 +211,7 @@ export const Footer = () => {
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}
         size="md"
-        title="Đăng ký trải nghiệm XTTECH XMS Fab"
+        title="Đăng ký sử dụng XTTECH XMS Fab"
         className="max-w-lg border border-primary/20"
         bodyClassName="p-5 sm:p-6"
       >

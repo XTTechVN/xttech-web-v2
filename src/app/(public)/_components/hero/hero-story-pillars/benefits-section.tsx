@@ -36,21 +36,22 @@ export function BenefitsSection() {
             Cải tiến quản lý sản xuất & thi công với <span className="text-primary">XTTech</span>
           </h2>
           <p className="text-sm sm:text-base text-slate-600">
-            Nền tảng quản trị toàn diện từ khảo sát, thiết kế bóc tách 2D/3D, tối ưu cắt nhôm đến giám sát thi công công trình.
+            Nền tảng quản trị xưởng nhôm kính từ khảo sát, báo giá, thiết kế bóc tách 2D/3D, xuất thẻ cắt A4 tối ưu nhôm, quản lý kho vật tư đến chấm công, giám sát thi công và nghiệm thu bảo hành QR.
           </p>
         </div>
 
         <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
-          {/* Cột trái: 2 Card lợi ích thiết kế sạch, màu sắc cân bằng hài hòa */}
-          <div
-            onMouseEnter={() => setIsHoveringCards(true)}
-            onMouseLeave={() => setIsHoveringCards(false)}
-            className="space-y-3.5 lg:col-span-5"
-          >
-            {/* Card 1: Giám đốc & BQL Dự án */}
+          {/* Cột trái: 2 Card lợi ích — Mobile vuốt ngang, Desktop xếp dọc */}
+          <div className="lg:col-span-5">
             <div
-              className={cn(
-                'group relative overflow-hidden rounded-2xl border bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-500/10',
+              onMouseEnter={() => setIsHoveringCards(true)}
+              onMouseLeave={() => setIsHoveringCards(false)}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mx-0 lg:px-0 lg:pb-0 lg:block lg:space-y-3.5 lg:overflow-visible"
+            >
+              {/* Card 1: Giám đốc & BQL Dự án */}
+              <div
+                className={cn(
+                  'group relative w-[84vw] max-w-[340px] shrink-0 snap-center lg:w-auto lg:max-w-none overflow-hidden rounded-2xl border bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-500/10',
                 !isHoveringCards && activeIdleCard === 0
                   ? '-translate-y-1 border-amber-300 shadow-lg shadow-amber-500/10'
                   : 'border-amber-200/90 shadow-sm',
@@ -77,15 +78,22 @@ export function BenefitsSection() {
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                   <div>
-                    <strong className="font-bold text-slate-900">Theo dõi tiến độ xưởng – công trình realtime:</strong>{' '}
-                    Nắm bắt tức thì trạng thái sản xuất từng đơn hàng, tiến độ ép góc và lắp dựng ngoài công trình mà không cần có mặt trực tiếp.
+                    <strong className="font-bold text-slate-900">Theo dõi tiến độ xưởng – công trình:</strong>{' '}
+                    Nắm bắt trạng thái sản xuất từng đơn hàng, tiến độ ép góc và lắp dựng ngoài công trình mà không cần có mặt trực tiếp.
                   </div>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                   <div>
-                    <strong className="font-bold text-slate-900">Kiểm soát giá vốn, chi phí & lãi/lỗ dự án:</strong>{' '}
-                    Tự động tổng hợp chi phí thanh nhôm, kính, phụ kiện và nhân công thợ để nắm chính xác biên lợi nhuận ngay từ khâu báo giá.
+                    <strong className="font-bold text-slate-900">Kiểm soát giá vốn, chi phí &amp; lãi/lỗ dự án:</strong>{' '}
+                    Tự động tổng hợp chi phí thanh nhôm, kính, phụ kiện và nhân công thợ để nắm rõ biên lợi nhuận ngay từ khâu báo giá.
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                  <div>
+                    <strong className="font-bold text-slate-900">Kiểm soát tồn kho &amp; phê duyệt từ xa:</strong>{' '}
+                    Theo dõi nhập xuất tồn nhôm, kính, phụ kiện theo từng đơn hàng và duyệt nhanh báo giá, hợp đồng, đề xuất tạm ứng ngay trên điện thoại.
                   </div>
                 </li>
               </ul>
@@ -94,7 +102,7 @@ export function BenefitsSection() {
             {/* Card 2: Nhân viên & Thợ xưởng */}
             <div
               className={cn(
-                'group relative overflow-hidden rounded-2xl border bg-gradient-to-br from-teal-50/80 via-white to-teal-50/40 p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1 hover:border-primary/45 hover:shadow-xl hover:shadow-primary/10',
+                'group relative w-[84vw] max-w-[340px] shrink-0 snap-center lg:w-auto lg:max-w-none overflow-hidden rounded-2xl border bg-gradient-to-br from-teal-50/80 via-white to-teal-50/40 p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1 hover:border-primary/45 hover:shadow-xl hover:shadow-primary/10',
                 !isHoveringCards && activeIdleCard === 1
                   ? '-translate-y-1 border-primary/45 shadow-lg shadow-primary/10'
                   : 'border-teal-200/90 shadow-sm',
@@ -122,7 +130,7 @@ export function BenefitsSection() {
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <div>
                     <strong className="font-bold text-slate-900">Với Kỹ thuật bóc tách & Xưởng cắt:</strong>{' '}
-                    Tự động xuất lệnh sản xuất (LSX), in thẻ cắt A4 tối ưu cây nhôm và quản lý nhôm thừa, giảm hao hụt đề-xê xuống dưới 2%.
+                    Tự động xuất lệnh sản xuất (LSX), in thẻ cắt A4 tối ưu cây nhôm và quản lý nhôm thừa, hỗ trợ giảm hao hụt vật tư đề-xê.
                   </div>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -132,7 +140,15 @@ export function BenefitsSection() {
                     Cập nhật khối lượng lắp đặt, nhật ký hiện trường trực tiếp qua điện thoại và quét mã QR nghiệm thu bàn giao nhanh gọn.
                   </div>
                 </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div>
+                    <strong className="font-bold text-slate-900">Với Kế toán &amp; Thủ kho:</strong>{' '}
+                    Tổng hợp bảng công – tính lương từ dữ liệu chấm công, đối soát phiếu thu/chi, xuất nhập tồn vật tư và xuất báo cáo Excel/PDF nhanh chóng.
+                  </div>
+                </li>
               </ul>
+            </div>
             </div>
           </div>
 
@@ -183,8 +199,8 @@ export function BenefitsSection() {
                   <TrendingUp className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-[11px] font-medium text-slate-500">Tỷ lệ hao hụt nhôm</div>
-                  <div className="text-xs font-black text-emerald-600">&lt; 2.0% (Tối ưu hóa AI)</div>
+                  <div className="text-[11px] font-medium text-slate-500">Hỗ trợ cắt nhôm</div>
+                  <div className="text-xs font-black text-emerald-600">Giảm hao hụt vật tư</div>
                 </div>
               </div>
 
