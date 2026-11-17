@@ -240,8 +240,8 @@ export function HeroRegisterInlineForm({
           <div className="rounded-xl border border-primary/20 bg-linear-to-r from-primary/5 via-primary/10 to-primary/5 p-3 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/15 text-orange-600">
-                  <Flame className="h-3.5 w-3.5 fill-orange-500 animate-pulse" />
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500/15 text-red-600">
+                  <Flame className="h-3.5 w-3.5 fill-red-500 animate-pulse" />
                 </span>
                 <span className="text-xs font-bold text-slate-800">
                   Ưu đãi kết thúc sau:
