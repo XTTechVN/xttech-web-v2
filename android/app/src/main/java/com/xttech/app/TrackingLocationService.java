@@ -47,7 +47,7 @@ public class TrackingLocationService extends Service implements LocationListener
     // ===================== AppClosed Reminder Notification =====================
     // Nhắc nhân viên mở lại app khi lỡ vuốt tắt trong ca làm việc (giống iOS AppClosedReminder)
     private static final String CHANNEL_REMINDER_ID  = "xttech_app_closed_reminder";
-    private static final int    NOTIFICATION_REMINDER_ID = 1999;
+    public static final int     NOTIFICATION_REMINDER_ID = 1999;
 
     // ===================== Actions =====================
     public static final String ACTION_START         = "com.xttech.app.ACTION_START_TRACKING";
@@ -98,6 +98,7 @@ public class TrackingLocationService extends Service implements LocationListener
     // Ghi từ luồng mạng, đọc từ luồng main (Alarm) -> volatile để luôn thấy giá trị mới nhất
     private volatile long lastPingTime = 0;
     private Location lastLocation = null;
+    private static volatile Location latestValidLocation = null;
     private boolean isTracking = false;
 
     // ===================== Diagnostics State (đọc/ghi trên luồng chính) =====================
@@ -188,6 +189,8 @@ public class TrackingLocationService extends Service implements LocationListener
 
     private void stopTracking() {
         isTracking = false;
+        latestValidLocation = null;
+        lastLocation = null;
         persistDiagSessionState(DIAG_SESSION_TERMINATED);
         if (locationManager != null) {
             try {
@@ -282,6 +285,43 @@ public class TrackingLocationService extends Service implements LocationListener
             Log.e(TAG, "SecurityException reading lastKnown location", se);
             return null;
         }
+    }
+
+    /**
+     * Trả về tọa độ hợp lệ mới nhất được service ghi nhận trong vòng maxAgeMs (monotonic).
+     */
+    @Nullable
+    public static Location getLatestValidLocation(long maxAgeMs) {
+        if (maxAgeMs <= 0L) return null;
+        Location loc = latestValidLocation;
+        if (!isValidCoordinates(loc)) return null;
+
+        long ageMs;
+        long elapsedNanos = loc.getElapsedRealtimeNanos();
+        if (elapsedNanos > 0L) {
+            long rawDiff = (SystemClock.elapsedRealtimeNanos() - elapsedNanos) / 1_000_000L;
+            if (rawDiff < -5000L) return null;
+            ageMs = Math.max(0L, rawDiff);
+        } else {
+            long rawDiff = System.currentTimeMillis() - loc.getTime();
+            if (rawDiff < -60_000L) return null;
+            ageMs = Math.max(0L, rawDiff);
+        }
+
+        if (ageMs > maxAgeMs) {
+            return null;
+        }
+        return new Location(loc);
+    }
+
+    private static boolean isValidCoordinates(@Nullable Location loc) {
+        if (loc == null) return false;
+        double lat = loc.getLatitude();
+        double lng = loc.getLongitude();
+        if (Double.isNaN(lat) || Double.isNaN(lng) || Double.isInfinite(lat) || Double.isInfinite(lng)) {
+            return false;
+        }
+        return !(Math.abs(lat) < 1e-7 && Math.abs(lng) < 1e-7);
     }
 
     // ===================== HEARTBEAT (AlarmManager) =====================
@@ -421,6 +461,11 @@ public class TrackingLocationService extends Service implements LocationListener
             diagFilteredLocationCount++;
             Log.w(TAG, "Discarding outlier jump point: distance=" + distance + "m, speed=" + jumpSpeed + "m/s");
             return;
+        }
+
+        // Cập nhật cache tọa độ hợp lệ mới nhất cho foreground check-in / check-out
+        if (isValidCoordinates(location)) {
+            latestValidLocation = new Location(location);
         }
 
         // 4. Smart Adaptive: Xác định có đang di chuyển (speed >= 1.0 m/s hoặc di dời >= 5m)

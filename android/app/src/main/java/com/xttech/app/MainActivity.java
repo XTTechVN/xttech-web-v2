@@ -36,13 +36,35 @@ import java.util.List;
 public class MainActivity extends BridgeActivity {
     private static final String TAG = "MainActivity";
     private static final int REQ_PERMISSIONS = 1001;
-    private static final int REQ_BACKGROUND_LOCATION = 1002;
+
+    private static final String STATE_STARTUP_PERMISSION_PASS = "xttech_startup_permission_pass";
+    private static final String STATE_PROMPTED_BASIC = "xttech_prompted_basic";
+    private static final String STATE_PROMPTED_BATTERY = "xttech_prompted_battery";
+    private static final String STATE_PROMPTED_BG_LOCATION = "xttech_prompted_bg_location";
+    private static final String STATE_PROMPTED_AUTOSTART = "xttech_prompted_autostart";
+
+    private boolean hasCompletedStartupPermissionPass = false;
+    private boolean awaitingSettingsReturn = false;
+    private boolean promptedBasicThisSession = false;
+    private boolean promptedBatteryThisSession = false;
+    private boolean promptedBgLocationThisSession = false;
+    private boolean promptedAutoStartThisSession = false;
+    private AlertDialog activePermissionDialog = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(NativeTrackingPlugin.class);
         registerPlugin(AppUpdatePlugin.class);
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            // Activity được OS tạo lại (vd low-RAM khi chụp ảnh Camera gốc): không bật lại popup quyền
+            hasCompletedStartupPermissionPass = savedInstanceState.getBoolean(STATE_STARTUP_PERMISSION_PASS, true);
+            promptedBasicThisSession = savedInstanceState.getBoolean(STATE_PROMPTED_BASIC, false);
+            promptedBatteryThisSession = savedInstanceState.getBoolean(STATE_PROMPTED_BATTERY, false);
+            promptedBgLocationThisSession = savedInstanceState.getBoolean(STATE_PROMPTED_BG_LOCATION, false);
+            promptedAutoStartThisSession = savedInstanceState.getBoolean(STATE_PROMPTED_AUTOSTART, false);
+        }
 
         // Đăng ký WebViewClient tùy biến để xử lý Auto-retry và Fallback màn hình mất mạng chuẩn UX
         if (getBridge() != null) {
@@ -54,6 +76,16 @@ public class MainActivity extends BridgeActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && getBridge() != null && getBridge().getWebView() != null) {
             cookieManager.setAcceptThirdPartyCookies(getBridge().getWebView(), true);
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(STATE_STARTUP_PERMISSION_PASS, hasCompletedStartupPermissionPass);
+        outState.putBoolean(STATE_PROMPTED_BASIC, promptedBasicThisSession);
+        outState.putBoolean(STATE_PROMPTED_BATTERY, promptedBatteryThisSession);
+        outState.putBoolean(STATE_PROMPTED_BG_LOCATION, promptedBgLocationThisSession);
+        outState.putBoolean(STATE_PROMPTED_AUTOSTART, promptedAutoStartThisSession);
     }
 
     /**
@@ -135,8 +167,13 @@ public class MainActivity extends BridgeActivity {
         // Nhân viên mở lại app: xóa thông báo cảnh báo đóng app để quản lý biết đã online lại
         // (giống iOS AppClosedReminder.clear() trong NativeTrackingPlugin.load())
         clearAppClosedReminder();
-        // Mỗi lần người dùng mở app hoặc từ Cài đặt quay trở lại, quét kiểm tra toàn bộ quyền
-        checkAndEnforcePermissions();
+        // Chỉ chạy wizard kiểm tra quyền lúc cold start hoặc khi vừa quay lại từ màn hình Cài đặt do chính wizard mở
+        // (tránh bật popup đè lên khi vừa chụp ảnh Camera gốc hoặc từ NativeTracking.openLocationSettings quay lại)
+        if (!hasCompletedStartupPermissionPass || awaitingSettingsReturn) {
+            awaitingSettingsReturn = false;
+            hasCompletedStartupPermissionPass = true;
+            checkAndEnforcePermissions();
+        }
     }
 
     /**
@@ -155,54 +192,76 @@ public class MainActivity extends BridgeActivity {
     }
 
     /**
-     * Chu trình kiểm tra quyền tuần tự: Phải hoàn thành từng bước mới cho đi tiếp.
+     * Chu trình kiểm tra quyền tuần tự (tối đa 1 lần mỗi bước trong phiên để không làm gián đoạn chấm công/camera).
      */
     private void checkAndEnforcePermissions() {
-        // Bước 1: Quyền Vị trí (GPS) và Thông báo cơ bản
+        // Bước 1: Quyền Vị trí (Fine hoặc Coarse) và Thông báo cơ bản
         if (!hasBasicPermissions()) {
-            requestBasicPermissions();
-            return;
+            if (!promptedBasicThisSession) {
+                requestBasicPermissions();
+                return;
+            }
+            if (!hasLocationPermission()) {
+                return;
+            }
         }
 
         // Bước 2: Bỏ qua tối ưu hóa Pin (Không bị ngắt ngầm)
-        if (!isIgnoringBatteryOptimizations()) {
+        if (!isIgnoringBatteryOptimizations() && !promptedBatteryThisSession) {
+            promptedBatteryThisSession = true;
+            awaitingSettingsReturn = true;
             requestIgnoreBatteryOptimizations();
             return;
         }
 
         // Bước 3: Quyền Vị trí nền "Luôn cho phép" (Android 10+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !hasBackgroundLocationPermission()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !hasBackgroundLocationPermission() && !promptedBgLocationThisSession) {
+            promptedBgLocationThisSession = true;
             enforceBackgroundLocationPermission();
             return;
         }
 
         // Bước 4: Bật Tự khởi chạy (Auto-start) trên các dòng máy đặc thù (Xiaomi, Oppo, Vivo, Samsung, Huawei)
-        if (isSpecialManufacturer() && !isAutoStartConfigured()) {
+        if (isSpecialManufacturer() && !isAutoStartConfigured() && !promptedAutoStartThisSession) {
+            promptedAutoStartThisSession = true;
             enforceAutoStartPermission();
         }
     }
 
-    private boolean hasBasicPermissions() {
-        boolean hasLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        boolean hasNotification = true;
+    private boolean hasLocationPermission() {
+        boolean hasFine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean hasCoarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        return hasFine || hasCoarse;
+    }
+
+    private boolean hasNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            hasNotification = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
         }
-        return hasLocation && hasNotification;
+        return true;
+    }
+
+    private boolean hasBasicPermissions() {
+        return hasLocationPermission() && hasNotificationPermission();
     }
 
     private void requestBasicPermissions() {
+        promptedBasicThisSession = true;
         List<String> permissions = new ArrayList<>();
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (!hasLocationPermission()) {
             permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
             permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+            getSharedPreferences(TrackingLocationService.PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(NativeTrackingPlugin.KEY_HAS_REQUESTED_LOCATION_PERMISSION, true)
+                .apply();
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                permissions.add(Manifest.permission.POST_NOTIFICATIONS);
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission()) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS);
         }
-        ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), REQ_PERMISSIONS);
+        if (!permissions.isEmpty()) {
+            ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), REQ_PERMISSIONS);
+        }
     }
 
     private boolean isIgnoringBatteryOptimizations() {
@@ -220,6 +279,7 @@ public class MainActivity extends BridgeActivity {
                 intent.setData(Uri.parse("package:" + getPackageName()));
                 startActivity(intent);
             } catch (Exception e) {
+                awaitingSettingsReturn = false;
                 Log.e(TAG, "Lỗi mở intent tối ưu pin", e);
             }
         }
@@ -233,20 +293,24 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void enforceBackgroundLocationPermission() {
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
             .setTitle("Yêu cầu quyền Vị trí 'Luôn cho phép'")
             .setMessage("Ứng dụng cần quyền vị trí 'Luôn cho phép' để chấm công và giám sát lịch trình liên tục khi khóa màn hình.\n\nVui lòng bấm 'Đi tới cài đặt' -> Chọn mục Quyền -> Vị trí -> Chọn 'Luôn cho phép'.")
-            .setCancelable(false)
-            .setPositiveButton("Đi tới cài đặt", (dialog, which) -> {
+            .setCancelable(true)
+            .setNegativeButton("Để sau", (d, which) -> d.dismiss())
+            .setPositiveButton("Đi tới cài đặt", (d, which) -> {
                 try {
+                    awaitingSettingsReturn = true;
                     Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                     intent.setData(Uri.fromParts("package", getPackageName(), null));
                     startActivity(intent);
                 } catch (Exception e) {
+                    awaitingSettingsReturn = false;
                     Log.e(TAG, "Lỗi mở app details", e);
                 }
             })
-            .show();
+            .create();
+        showPermissionDialog(dialog);
     }
 
     private boolean isSpecialManufacturer() {
@@ -265,18 +329,46 @@ public class MainActivity extends BridgeActivity {
 
     private void enforceAutoStartPermission() {
         String manufacturer = Build.MANUFACTURER != null ? Build.MANUFACTURER : "điện thoại";
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
             .setTitle("Yêu cầu Bật Tự khởi chạy")
             .setMessage("Thiết bị " + manufacturer + " có cơ chế tự đóng ứng dụng chạy ngầm.\n\nVui lòng bấm 'Mở cài đặt' và BẬT công tắc Tự khởi chạy (Auto-start) cho ứng dụng XT Tech.")
-            .setCancelable(false)
-            .setPositiveButton("Mở cài đặt", (dialog, which) -> {
+            .setCancelable(true)
+            .setNegativeButton("Để sau", (d, which) -> d.dismiss())
+            .setPositiveButton("Mở cài đặt", (d, which) -> {
+                awaitingSettingsReturn = true;
                 openAutoStartSettings();
             })
-            .setNeutralButton("Tôi đã bật rồi", (dialog, which) -> {
+            .setNeutralButton("Tôi đã bật rồi", (d, which) -> {
                 SharedPreferences prefs = getSharedPreferences("app_permissions", Context.MODE_PRIVATE);
                 prefs.edit().putBoolean("autostart_confirmed", true).apply();
             })
-            .show();
+            .create();
+        showPermissionDialog(dialog);
+    }
+
+    private void showPermissionDialog(AlertDialog dialog) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        dismissActivePermissionDialog();
+        activePermissionDialog = dialog;
+        dialog.setOnDismissListener(d -> {
+            if (activePermissionDialog == dialog) {
+                activePermissionDialog = null;
+            }
+        });
+        dialog.show();
+    }
+
+    private void dismissActivePermissionDialog() {
+        if (activePermissionDialog != null) {
+            try {
+                if (activePermissionDialog.isShowing()) {
+                    activePermissionDialog.dismiss();
+                }
+            } catch (Exception ignored) {}
+            activePermissionDialog = null;
+        }
     }
 
     private void openAutoStartSettings() {
@@ -300,7 +392,9 @@ public class MainActivity extends BridgeActivity {
                 Intent fallback = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                 fallback.setData(Uri.fromParts("package", getPackageName(), null));
                 startActivity(fallback);
-            } catch (Exception ignored) {}
+            } catch (Exception inner) {
+                awaitingSettingsReturn = false;
+            }
         }
     }
 
@@ -323,5 +417,11 @@ public class MainActivity extends BridgeActivity {
     public void onStop() {
         super.onStop();
         CookieManager.getInstance().flush();
+    }
+
+    @Override
+    public void onDestroy() {
+        dismissActivePermissionDialog();
+        super.onDestroy();
     }
 }

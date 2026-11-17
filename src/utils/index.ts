@@ -21,3 +21,4 @@ export * from './glass-order-export';
 export * from './validators';
 export * from './public-signing';
 export * from './position-visual';
+export * from './geolocation';

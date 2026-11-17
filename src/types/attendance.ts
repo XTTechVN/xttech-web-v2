@@ -350,6 +350,9 @@ export interface AutoTimekeepingData {
     note?: string;
     type?: TimekeepingType;
     platform?: 'ios' | 'android' | 'web';
+    accuracy?: number;
+    locationSource?: string;
+    isPreciseLocation?: boolean;
 }
 
 // =======================

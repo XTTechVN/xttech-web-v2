@@ -45,7 +45,10 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         CAPPluginMethod(name: "startTracking", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "stopTracking", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "updateToken", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getCurrentPosition", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "checkPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestLocationPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "openLocationSettings", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "openSettings", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "ensureAlwaysPermission", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getBatteryLevel", returnType: CAPPluginReturnPromise)
@@ -53,9 +56,47 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
 
     public static var shared: NativeTrackingPlugin?
 
+    private final class PendingPositionRequest {
+        let id = UUID()
+        let call: CAPPluginCall
+        let enableHighAccuracy: Bool
+        let desiredAccuracyMeters: Double
+        let maximumAgeMs: Int
+        let timeoutSec: TimeInterval
+        var waitingForAuthorization: Bool
+        var locationEnabled: Bool
+        var bestLocation: CLLocation?
+        var bestSource: String?
+        var timeoutWorkItem: DispatchWorkItem?
+
+        init(
+            call: CAPPluginCall,
+            enableHighAccuracy: Bool,
+            desiredAccuracyMeters: Double,
+            maximumAgeMs: Int,
+            timeoutSec: TimeInterval,
+            waitingForAuthorization: Bool,
+            locationEnabled: Bool,
+            bestLocation: CLLocation? = nil,
+            bestSource: String? = nil
+        ) {
+            self.call = call
+            self.enableHighAccuracy = enableHighAccuracy
+            self.desiredAccuracyMeters = desiredAccuracyMeters
+            self.maximumAgeMs = maximumAgeMs
+            self.timeoutSec = timeoutSec
+            self.waitingForAuthorization = waitingForAuthorization
+            self.locationEnabled = locationEnabled
+            self.bestLocation = bestLocation
+            self.bestSource = bestSource
+        }
+    }
+
     private var locationManager: CLLocationManager?
     private var isTracking = false
     private var pendingPermissionCall: CAPPluginCall?
+    private var pendingLocationPermissionCall: CAPPluginCall?
+    private var pendingPositionRequests: [PendingPositionRequest] = []
 
     private func getOrCreateLocationManager() -> CLLocationManager {
         // CLLocationManager phải được tạo trên main thread (có run loop) để didUpdateLocations luôn được gọi.
@@ -227,7 +268,7 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
             self.isTracking = false
             self.stopHeartbeatTimer()
             self.resetRetryBackoff()
-            self.locationManager?.stopUpdatingLocation()
+            self.stopLocationUpdatesIfIdle()
             if CLLocationManager.significantLocationChangeMonitoringAvailable() {
                 self.locationManager?.stopMonitoringSignificantLocationChanges()
             }
@@ -240,10 +281,37 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         call.resolve(["success": true])
     }
 
+    private func fetchLocationServicesEnabled(completion: @escaping (Bool) -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let enabled = CLLocationManager.locationServicesEnabled()
+            DispatchQueue.main.async {
+                completion(enabled)
+            }
+        }
+    }
+
+    private func currentAuthorizationStatus(for manager: CLLocationManager) -> CLAuthorizationStatus {
+        if #available(iOS 14.0, *) {
+            return manager.authorizationStatus
+        }
+        return CLLocationManager.authorizationStatus()
+    }
+
+    private func isPreciseAccuracy(for manager: CLLocationManager) -> Bool {
+        if #available(iOS 14.0, *) {
+            return manager.accuracyAuthorization == .fullAccuracy
+        }
+        return true
+    }
+
     @objc func checkPermission(_ call: CAPPluginCall) {
-        // Capacitor gọi plugin method trên hàng đợi nền: chuyển sang main để thao tác với CLLocationManager
-        DispatchQueue.main.async {
-            self.resolvePermissionStatus(call)
+        // Đọc locationServicesEnabled() trên background queue để tuân thủ Main Thread Checker iOS 16+
+        fetchLocationServicesEnabled { [weak self] locationEnabled in
+            guard let self = self else {
+                call.reject("Plugin deallocated")
+                return
+            }
+            self.resolvePermissionStatus(call, locationEnabled: locationEnabled)
         }
     }
 
@@ -252,34 +320,166 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         case .authorizedAlways: return "always"
         case .authorizedWhenInUse: return "whenInUse"
         case .notDetermined: return "notDetermined"
-        default: return "denied"
+        case .restricted: return "restricted"
+        case .denied: return "denied"
+        @unknown default: return "denied"
         }
     }
 
-    private func resolvePermissionStatus(_ call: CAPPluginCall) {
+    private func resolvePermissionStatus(_ call: CAPPluginCall, locationEnabled: Bool) {
         let manager = getOrCreateLocationManager()
-        let status: CLAuthorizationStatus
-        if #available(iOS 14.0, *) {
-            status = manager.authorizationStatus
-        } else {
-            status = CLLocationManager.authorizationStatus()
-        }
-
+        let status = currentAuthorizationStatus(for: manager)
         let isAlways = (status == .authorizedAlways)
         let isWhenInUse = (status == .authorizedWhenInUse)
-        var isPrecise = true
-        if #available(iOS 14.0, *) {
-            isPrecise = (manager.accuracyAuthorization == .fullAccuracy)
-        }
-
+        let isPrecise = isPreciseAccuracy(for: manager)
         let statusStr = NativeTrackingPlugin.authorizationStatusString(status)
 
         call.resolve([
             "status": statusStr,
             "isAlways": isAlways,
             "isWhenInUse": isWhenInUse,
-            "isPrecise": isPrecise
+            "isPrecise": isPrecise,
+            "locationEnabled": locationEnabled,
+            "isLowPowerMode": ProcessInfo.processInfo.isLowPowerModeEnabled
         ])
+    }
+
+    @objc func requestLocationPermission(_ call: CAPPluginCall) {
+        fetchLocationServicesEnabled { [weak self] locationEnabled in
+            guard let self = self else {
+                call.reject("Plugin deallocated")
+                return
+            }
+            let manager = self.getOrCreateLocationManager()
+            let status = self.currentAuthorizationStatus(for: manager)
+            let isPrecise = self.isPreciseAccuracy(for: manager)
+            let statusStr = NativeTrackingPlugin.authorizationStatusString(status)
+
+            if status == .notDetermined {
+                if let previous = self.pendingLocationPermissionCall {
+                    previous.resolve([
+                        "granted": false,
+                        "status": "notDetermined",
+                        "isAlways": false,
+                        "isWhenInUse": false,
+                        "isPrecise": isPrecise,
+                        "locationEnabled": locationEnabled,
+                        "canAskAgain": true
+                    ])
+                }
+                self.pendingLocationPermissionCall = call
+                manager.requestWhenInUseAuthorization()
+                return
+            }
+
+            let granted = (status == .authorizedAlways || status == .authorizedWhenInUse)
+            call.resolve([
+                "granted": granted,
+                "status": statusStr,
+                "isAlways": status == .authorizedAlways,
+                "isWhenInUse": status == .authorizedWhenInUse,
+                "isPrecise": isPrecise,
+                "locationEnabled": locationEnabled,
+                "canAskAgain": false
+            ])
+        }
+    }
+
+    @objc func getCurrentPosition(_ call: CAPPluginCall) {
+        let enableHighAccuracy = call.getBool("enableHighAccuracy", true)
+        let rawTimeoutMs = call.getInt("timeoutMs") ?? call.getDouble("timeoutMs").map { Int($0) } ?? 12000
+        let timeoutMs = max(2000, min(60000, rawTimeoutMs))
+        let rawMaxAgeMs = call.getInt("maximumAgeMs") ?? call.getDouble("maximumAgeMs").map { Int($0) } ?? 15000
+        let maximumAgeMs = max(0, rawMaxAgeMs)
+        let rawDesired = call.getDouble("desiredAccuracyMeters") ?? call.getInt("desiredAccuracyMeters").map { Double($0) }
+        let defaultDesired = enableHighAccuracy ? 50.0 : 200.0
+        let desiredAccuracyMeters = (rawDesired != nil && rawDesired! > 0.0) ? rawDesired! : defaultDesired
+        let requestPermission = call.getBool("requestPermission", false)
+
+        fetchLocationServicesEnabled { [weak self] locationEnabled in
+            guard let self = self else {
+                call.resolve([
+                    "success": false,
+                    "errorCode": "CONTEXT_UNAVAILABLE",
+                    "errorMessage": "Plugin instance unavailable",
+                    "provider": "corelocation",
+                    "isPrecise": false,
+                    "authorizationStatus": "denied",
+                    "locationEnabled": false,
+                    "isLowPowerMode": ProcessInfo.processInfo.isLowPowerModeEnabled
+                ])
+                return
+            }
+
+            let manager = self.getOrCreateLocationManager()
+            let status = self.currentAuthorizationStatus(for: manager)
+            let isPrecise = self.isPreciseAccuracy(for: manager)
+            let statusStr = NativeTrackingPlugin.authorizationStatusString(status)
+
+            if status == .denied || status == .restricted {
+                call.resolve(self.buildPositionErrorPayload(
+                    errorCode: "PERMISSION_DENIED",
+                    errorMessage: status == .restricted ? "Location access is restricted on this device" : "Location permission denied",
+                    isPrecise: isPrecise,
+                    statusStr: statusStr,
+                    locationEnabled: locationEnabled
+                ))
+                return
+            }
+
+            if status == .notDetermined {
+                if !requestPermission {
+                    call.resolve(self.buildPositionErrorPayload(
+                        errorCode: "PERMISSION_NOT_DETERMINED",
+                        errorMessage: "Location permission has not been requested yet",
+                        isPrecise: isPrecise,
+                        statusStr: statusStr,
+                        locationEnabled: locationEnabled
+                    ))
+                    return
+                }
+
+                let req = PendingPositionRequest(
+                    call: call,
+                    enableHighAccuracy: enableHighAccuracy,
+                    desiredAccuracyMeters: desiredAccuracyMeters,
+                    maximumAgeMs: maximumAgeMs,
+                    timeoutSec: TimeInterval(timeoutMs) / 1000.0,
+                    waitingForAuthorization: true,
+                    locationEnabled: locationEnabled
+                )
+                self.enqueuePositionRequest(req)
+                manager.requestWhenInUseAuthorization()
+                return
+            }
+
+            guard locationEnabled else {
+                call.resolve(self.buildPositionErrorPayload(
+                    errorCode: "LOCATION_SERVICES_DISABLED",
+                    errorMessage: "Location services are disabled on this device",
+                    isPrecise: isPrecise,
+                    statusStr: statusStr,
+                    locationEnabled: false
+                ))
+                return
+            }
+
+            self.startPositionRequestIfNeeded(
+                call: call,
+                manager: manager,
+                statusStr: statusStr,
+                isPrecise: isPrecise,
+                locationEnabled: locationEnabled,
+                enableHighAccuracy: enableHighAccuracy,
+                desiredAccuracyMeters: desiredAccuracyMeters,
+                maximumAgeMs: maximumAgeMs,
+                timeoutSec: TimeInterval(timeoutMs) / 1000.0
+            )
+        }
+    }
+
+    @objc func openLocationSettings(_ call: CAPPluginCall) {
+        openSettings(call)
     }
 
     @objc func openSettings(_ call: CAPPluginCall) {
@@ -304,25 +504,28 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
 
     private func resolveAlwaysPermission(_ call: CAPPluginCall) {
         let manager = getOrCreateLocationManager()
-
-        let status: CLAuthorizationStatus
-        if #available(iOS 14.0, *) {
-            status = manager.authorizationStatus
-        } else {
-            status = CLLocationManager.authorizationStatus()
-        }
+        let status = currentAuthorizationStatus(for: manager)
+        let isPrecise = isPreciseAccuracy(for: manager)
+        let statusStr = NativeTrackingPlugin.authorizationStatusString(status)
 
         if status == .authorizedAlways {
             call.resolve([
                 "isAlways": true,
-                "action": "already_granted"
+                "action": "already_granted",
+                "status": statusStr,
+                "isPrecise": isPrecise
             ])
             return
         }
 
         // Hủy call cũ nếu có request trước đó đang chờ
         if let previousCall = self.pendingPermissionCall {
-            previousCall.resolve(["isAlways": false, "action": "superseded"])
+            previousCall.resolve([
+                "isAlways": false,
+                "action": "superseded",
+                "status": statusStr,
+                "isPrecise": isPrecise
+            ])
             self.pendingPermissionCall = nil
         }
 
@@ -343,6 +546,8 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         if status == .authorizedWhenInUse {
             showOpenSettingsAlert(
                 call: call,
+                statusStr: statusStr,
+                isPrecise: isPrecise,
                 title: "Yêu cầu quyền Vị trí \"Luôn luôn\"",
                 message: "Để duy trì chấm công và theo dõi lộ trình làm việc liên tục khi khóa màn hình, vui lòng cấp quyền vị trí \"Luôn luôn\" (Always) và bật \"Vị trí chính xác\" cho XTTech."
             )
@@ -352,15 +557,22 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         // 3. Đã bị từ chối (.denied hoặc .restricted):
         showOpenSettingsAlert(
             call: call,
+            statusStr: statusStr,
+            isPrecise: isPrecise,
             title: "Quyền Vị trí đã bị từ chối",
             message: "Ứng dụng XTTech cần quyền vị trí để hỗ trợ chấm công và định vị làm việc. Vui lòng mở Cài đặt để cấp lại quyền Vị trí."
         )
     }
 
-    private func showOpenSettingsAlert(call: CAPPluginCall, title: String, message: String) {
+    private func showOpenSettingsAlert(call: CAPPluginCall, statusStr: String, isPrecise: Bool, title: String, message: String) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else {
-                call.resolve(["isAlways": false, "action": "dismissed"])
+                call.resolve([
+                    "isAlways": false,
+                    "action": "dismissed",
+                    "status": statusStr,
+                    "isPrecise": isPrecise
+                ])
                 return
             }
 
@@ -373,7 +585,9 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
             alert.addAction(UIAlertAction(title: "Hủy", style: .cancel) { _ in
                 call.resolve([
                     "isAlways": false,
-                    "action": "cancelled"
+                    "action": "cancelled",
+                    "status": statusStr,
+                    "isPrecise": isPrecise
                 ])
             })
 
@@ -382,13 +596,17 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
                     UIApplication.shared.open(url, options: [:]) { _ in
                         call.resolve([
                             "isAlways": false,
-                            "action": "settings_opened"
+                            "action": "settings_opened",
+                            "status": statusStr,
+                            "isPrecise": isPrecise
                         ])
                     }
                 } else {
                     call.resolve([
                         "isAlways": false,
-                        "action": "failed_open_settings"
+                        "action": "failed_open_settings",
+                        "status": statusStr,
+                        "isPrecise": isPrecise
                     ])
                 }
             })
@@ -407,40 +625,162 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
     }
 
     private func handleAuthorizationChange(manager: CLLocationManager) {
-        let status: CLAuthorizationStatus
-        if #available(iOS 14.0, *) {
-            status = manager.authorizationStatus
-        } else {
-            status = CLLocationManager.authorizationStatus()
-        }
+        let status = currentAuthorizationStatus(for: manager)
 
         // Bỏ qua callback ban đầu khi hệ thống vừa khởi tạo delegate mà người dùng chưa đưa ra lựa chọn
         guard status != .notDetermined else { return }
 
+        let statusStr = NativeTrackingPlugin.authorizationStatusString(status)
+        let isAlways = (status == .authorizedAlways)
+        let isWhenInUse = (status == .authorizedWhenInUse)
+        let isPrecise = isPreciseAccuracy(for: manager)
+
         // Báo JS mỗi khi quyền thay đổi (kể cả khi không có popup xin quyền đang chờ) để web hiển thị cảnh báo
         notifyListeners("permissionChanged", data: [
-            "status": NativeTrackingPlugin.authorizationStatusString(status),
-            "isAlways": status == .authorizedAlways
+            "status": statusStr,
+            "isAlways": isAlways
         ])
 
+        // 1. Xử lý riêng requestLocationPermission() — không bao giờ bật popup bắt buộc "Luôn luôn"
+        if let locPermCall = self.pendingLocationPermissionCall {
+            self.pendingLocationPermissionCall = nil
+            fetchLocationServicesEnabled { [weak self] locationEnabled in
+                guard let self = self else {
+                    locPermCall.resolve([
+                        "granted": isAlways || isWhenInUse,
+                        "status": statusStr,
+                        "isAlways": isAlways,
+                        "isWhenInUse": isWhenInUse,
+                        "isPrecise": isPrecise,
+                        "locationEnabled": true,
+                        "canAskAgain": false
+                    ])
+                    return
+                }
+                let latestStatus = self.currentAuthorizationStatus(for: manager)
+                let latestStr = NativeTrackingPlugin.authorizationStatusString(latestStatus)
+                let latestAlways = (latestStatus == .authorizedAlways)
+                let latestWhenInUse = (latestStatus == .authorizedWhenInUse)
+                let latestPrecise = self.isPreciseAccuracy(for: manager)
+                locPermCall.resolve([
+                    "granted": latestAlways || latestWhenInUse,
+                    "status": latestStr,
+                    "isAlways": latestAlways,
+                    "isWhenInUse": latestWhenInUse,
+                    "isPrecise": latestPrecise,
+                    "locationEnabled": locationEnabled,
+                    "canAskAgain": false
+                ])
+            }
+        }
+
+        // 2. Xử lý các pendingPositionRequests đang chờ kết quả xin quyền (hoặc bị thu hồi quyền)
+        if status == .denied || status == .restricted {
+            failPendingPositionRequests(
+                errorCode: "PERMISSION_DENIED",
+                errorMessage: status == .restricted ? "Location access is restricted on this device" : "Location permission denied"
+            )
+        } else if !self.pendingPositionRequests.isEmpty {
+            let waitingIds = self.pendingPositionRequests.filter { $0.waitingForAuthorization }.map { $0.id }
+            if !waitingIds.isEmpty {
+                fetchLocationServicesEnabled { [weak self] locationEnabled in
+                    guard let self = self else { return }
+                    let latestManager = self.getOrCreateLocationManager()
+                    let latestStatus = self.currentAuthorizationStatus(for: latestManager)
+                    let latestStr = NativeTrackingPlugin.authorizationStatusString(latestStatus)
+                    let latestPrecise = self.isPreciseAccuracy(for: latestManager)
+
+                    if latestStatus == .denied || latestStatus == .restricted {
+                        self.failPendingPositionRequests(
+                            errorCode: "PERMISSION_DENIED",
+                            errorMessage: "Location permission denied"
+                        )
+                        return
+                    }
+
+                    var shouldStartUpdating = false
+                    for id in waitingIds {
+                        guard let idx = self.pendingPositionRequests.firstIndex(where: { $0.id == id }) else { continue }
+                        let req = self.pendingPositionRequests[idx]
+                        req.locationEnabled = locationEnabled
+
+                        if !locationEnabled {
+                            req.timeoutWorkItem?.cancel()
+                            req.timeoutWorkItem = nil
+                            self.pendingPositionRequests.remove(at: idx)
+                            req.call.resolve(self.buildPositionErrorPayload(
+                                errorCode: "LOCATION_SERVICES_DISABLED",
+                                errorMessage: "Location services are disabled on this device",
+                                isPrecise: latestPrecise,
+                                statusStr: latestStr,
+                                locationEnabled: false
+                            ))
+                            continue
+                        }
+
+                        req.waitingForAuthorization = false
+                        if let cached = self.findCachedLocation(manager: latestManager, maximumAgeMs: req.maximumAgeMs) {
+                            let isAcceptable = self.isCacheAcceptable(
+                                cached,
+                                isPrecise: latestPrecise,
+                                enableHighAccuracy: req.enableHighAccuracy,
+                                desiredAccuracyMeters: req.desiredAccuracyMeters
+                            )
+                            if isAcceptable {
+                                req.timeoutWorkItem?.cancel()
+                                req.timeoutWorkItem = nil
+                                self.pendingPositionRequests.remove(at: idx)
+                                req.call.resolve(self.buildPositionSuccessPayload(
+                                    location: cached,
+                                    source: "cache",
+                                    isPrecise: latestPrecise,
+                                    statusStr: latestStr,
+                                    locationEnabled: locationEnabled
+                                ))
+                                continue
+                            }
+                            req.bestLocation = cached
+                            req.bestSource = "cache"
+                        }
+
+                        if !self.isTracking {
+                            latestManager.desiredAccuracy = req.enableHighAccuracy ? kCLLocationAccuracyBest : kCLLocationAccuracyHundredMeters
+                            latestManager.distanceFilter = kCLDistanceFilterNone
+                        }
+                        shouldStartUpdating = true
+                    }
+
+                    if shouldStartUpdating {
+                        latestManager.startUpdatingLocation()
+                    }
+                    self.stopLocationUpdatesIfIdle()
+                }
+            }
+        }
+
+        // 3. Xử lý riêng ensureAlwaysPermission()
         guard let call = self.pendingPermissionCall else { return }
         self.pendingPermissionCall = nil
 
-        if status == .authorizedAlways {
+        if isAlways {
             call.resolve([
                 "isAlways": true,
-                "action": "already_granted"
+                "action": "already_granted",
+                "status": statusStr,
+                "isPrecise": isPrecise
             ])
             return
         }
 
-        if status == .authorizedWhenInUse {
+        if isWhenInUse {
             // Người dùng vừa chọn "Khi dùng ứng dụng" từ hộp thoại cấp quyền của Apple.
             // Lúc này XTTech đã chính thức được iOS ghi nhận vào Cài đặt -> Vị trí.
             // Hiển thị popup hướng dẫn mở Cài đặt để nâng cấp lên "Luôn luôn".
             DispatchQueue.main.async { [weak self] in
                 self?.showOpenSettingsAlert(
                     call: call,
+                    statusStr: statusStr,
+                    isPrecise: isPrecise,
                     title: "Yêu cầu quyền Vị trí \"Luôn luôn\"",
                     message: "Để duy trì chấm công và theo dõi lộ trình làm việc liên tục khi khóa màn hình, vui lòng cấp quyền vị trí \"Luôn luôn\" (Always) và bật \"Vị trí chính xác\" cho XTTech."
                 )
@@ -451,8 +791,255 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
         // Người dùng chọn từ chối (.denied hoặc .restricted)
         call.resolve([
             "isAlways": false,
-            "action": "denied"
+            "action": "denied",
+            "status": statusStr,
+            "isPrecise": isPrecise
         ])
+    }
+
+    // MARK: - Foreground Check-In Position Acquisition Helpers
+    private func startPositionRequestIfNeeded(
+        call: CAPPluginCall,
+        manager: CLLocationManager,
+        statusStr: String,
+        isPrecise: Bool,
+        locationEnabled: Bool,
+        enableHighAccuracy: Bool,
+        desiredAccuracyMeters: Double,
+        maximumAgeMs: Int,
+        timeoutSec: TimeInterval
+    ) {
+        var initialBest: CLLocation?
+        var initialBestSource: String?
+
+        if maximumAgeMs > 0, let cached = findCachedLocation(manager: manager, maximumAgeMs: maximumAgeMs) {
+            if isCacheAcceptable(
+                cached,
+                isPrecise: isPrecise,
+                enableHighAccuracy: enableHighAccuracy,
+                desiredAccuracyMeters: desiredAccuracyMeters
+            ) {
+                call.resolve(buildPositionSuccessPayload(
+                    location: cached,
+                    source: "cache",
+                    isPrecise: isPrecise,
+                    statusStr: statusStr,
+                    locationEnabled: locationEnabled
+                ))
+                return
+            }
+            initialBest = cached
+            initialBestSource = "cache"
+        }
+
+        let req = PendingPositionRequest(
+            call: call,
+            enableHighAccuracy: enableHighAccuracy,
+            desiredAccuracyMeters: desiredAccuracyMeters,
+            maximumAgeMs: maximumAgeMs,
+            timeoutSec: timeoutSec,
+            waitingForAuthorization: false,
+            locationEnabled: locationEnabled,
+            bestLocation: initialBest,
+            bestSource: initialBestSource
+        )
+        enqueuePositionRequest(req)
+
+        if !self.isTracking {
+            manager.desiredAccuracy = enableHighAccuracy ? kCLLocationAccuracyBest : kCLLocationAccuracyHundredMeters
+            manager.distanceFilter = kCLDistanceFilterNone
+        }
+        manager.startUpdatingLocation()
+    }
+
+    private func enqueuePositionRequest(_ req: PendingPositionRequest) {
+        let reqId = req.id
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self = self,
+                  let idx = self.pendingPositionRequests.firstIndex(where: { $0.id == reqId }) else { return }
+            let timedOutReq = self.pendingPositionRequests.remove(at: idx)
+            timedOutReq.timeoutWorkItem = nil
+
+            let manager = self.getOrCreateLocationManager()
+            let status = self.currentAuthorizationStatus(for: manager)
+            let statusStr = NativeTrackingPlugin.authorizationStatusString(status)
+            let isPrecise = self.isPreciseAccuracy(for: manager)
+
+            if let best = timedOutReq.bestLocation {
+                timedOutReq.call.resolve(self.buildPositionSuccessPayload(
+                    location: best,
+                    source: timedOutReq.bestSource ?? "live",
+                    isPrecise: isPrecise,
+                    statusStr: statusStr,
+                    locationEnabled: timedOutReq.locationEnabled
+                ))
+            } else {
+                timedOutReq.call.resolve(self.buildPositionErrorPayload(
+                    errorCode: "TIMEOUT",
+                    errorMessage: "Timed out acquiring CoreLocation position",
+                    isPrecise: isPrecise,
+                    statusStr: statusStr,
+                    locationEnabled: timedOutReq.locationEnabled
+                ))
+            }
+            self.stopLocationUpdatesIfIdle()
+        }
+        req.timeoutWorkItem = workItem
+        pendingPositionRequests.append(req)
+        DispatchQueue.main.asyncAfter(deadline: .now() + req.timeoutSec, execute: workItem)
+    }
+
+    private func findCachedLocation(manager: CLLocationManager, maximumAgeMs: Int) -> CLLocation? {
+        guard maximumAgeMs > 0 else { return nil }
+        let maxAgeSec = TimeInterval(maximumAgeMs) / 1000.0
+        var candidates: [CLLocation] = []
+        if isTracking, let sent = self.lastSentLocation {
+            candidates.append(sent)
+        }
+        if let mgrLoc = manager.location {
+            candidates.append(mgrLoc)
+        }
+
+        let validFresh = candidates.filter { loc in
+            guard isValidCoordinateLocation(loc) else { return false }
+            let age = Date().timeIntervalSince(loc.timestamp)
+            return age >= -5.0 && age <= maxAgeSec
+        }
+
+        return validFresh.min { a, b in
+            if abs(a.horizontalAccuracy - b.horizontalAccuracy) > 10.0 {
+                return a.horizontalAccuracy < b.horizontalAccuracy
+            }
+            return a.timestamp > b.timestamp
+        }
+    }
+
+    private func isValidCoordinateLocation(_ location: CLLocation) -> Bool {
+        guard CLLocationCoordinate2DIsValid(location.coordinate),
+              location.horizontalAccuracy >= 0 else {
+            return false
+        }
+        let lat = location.coordinate.latitude
+        let lng = location.coordinate.longitude
+        if lat.isNaN || lng.isNaN || lat.isInfinite || lng.isInfinite {
+            return false
+        }
+        return !(abs(lat) < 1e-7 && abs(lng) < 1e-7)
+    }
+
+    private func isCacheAcceptable(
+        _ location: CLLocation,
+        isPrecise: Bool,
+        enableHighAccuracy: Bool,
+        desiredAccuracyMeters: Double
+    ) -> Bool {
+        if !isPrecise || !enableHighAccuracy {
+            return true
+        }
+        return location.horizontalAccuracy <= max(desiredAccuracyMeters, 80.0)
+    }
+
+    private func stopLocationUpdatesIfIdle() {
+        if !self.isTracking && self.pendingPositionRequests.isEmpty {
+            self.locationManager?.stopUpdatingLocation()
+        }
+    }
+
+    private func failPendingPositionRequests(
+        errorCode: String,
+        errorMessage: String,
+        osErrorCode: Int? = nil
+    ) {
+        guard !self.pendingPositionRequests.isEmpty else { return }
+        let requests = self.pendingPositionRequests
+        self.pendingPositionRequests.removeAll()
+
+        let manager = self.locationManager
+        let status: CLAuthorizationStatus = {
+            if let mgr = manager {
+                return self.currentAuthorizationStatus(for: mgr)
+            }
+            if #available(iOS 14.0, *) {
+                return CLLocationManager().authorizationStatus
+            }
+            return CLLocationManager.authorizationStatus()
+        }()
+        let statusStr = NativeTrackingPlugin.authorizationStatusString(status)
+        let isPrecise = manager.map { self.isPreciseAccuracy(for: $0) } ?? true
+
+        for req in requests {
+            req.timeoutWorkItem?.cancel()
+            req.timeoutWorkItem = nil
+            req.call.resolve(buildPositionErrorPayload(
+                errorCode: errorCode,
+                errorMessage: errorMessage,
+                isPrecise: isPrecise,
+                statusStr: statusStr,
+                locationEnabled: req.locationEnabled,
+                osErrorCode: osErrorCode
+            ))
+        }
+        stopLocationUpdatesIfIdle()
+    }
+
+    private func buildPositionSuccessPayload(
+        location: CLLocation,
+        source: String,
+        isPrecise: Bool,
+        statusStr: String,
+        locationEnabled: Bool
+    ) -> [String: Any] {
+        let ageMs = max(0, Int64((Date().timeIntervalSince(location.timestamp) * 1000.0).rounded()))
+        let timestampMs = Int64((location.timestamp.timeIntervalSince1970 * 1000.0).rounded())
+
+        var payload: [String: Any] = [
+            "success": true,
+            "latitude": location.coordinate.latitude,
+            "longitude": location.coordinate.longitude,
+            "accuracy": location.horizontalAccuracy,
+            "timestamp": timestampMs,
+            "provider": "corelocation",
+            "source": source,
+            "ageMs": ageMs,
+            "isPrecise": isPrecise,
+            "authorizationStatus": statusStr,
+            "locationEnabled": locationEnabled,
+            "isLowPowerMode": ProcessInfo.processInfo.isLowPowerModeEnabled
+        ]
+        if location.verticalAccuracy >= 0 {
+            payload["altitude"] = location.altitude
+        }
+        if location.speed >= 0 {
+            payload["speed"] = location.speed
+        }
+        if location.course >= 0 {
+            payload["heading"] = location.course
+        }
+        return payload
+    }
+
+    private func buildPositionErrorPayload(
+        errorCode: String,
+        errorMessage: String,
+        isPrecise: Bool,
+        statusStr: String,
+        locationEnabled: Bool,
+        osErrorCode: Int? = nil
+    ) -> [String: Any] {
+        var payload: [String: Any] = [
+            "success": false,
+            "errorCode": errorCode,
+            "errorMessage": errorMessage,
+            "provider": "corelocation",
+            "isPrecise": isPrecise,
+            "authorizationStatus": statusStr,
+            "locationEnabled": locationEnabled,
+            "isLowPowerMode": ProcessInfo.processInfo.isLowPowerModeEnabled
+        ]
+        if let osErrorCode = osErrorCode {
+            payload["osErrorCode"] = osErrorCode
+        }
+        return payload
     }
 
     // MARK: - Battery Monitoring Engine
@@ -537,6 +1124,10 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
 
     private func releaseLocationManager() {
         isTracking = false
+        failPendingPositionRequests(
+            errorCode: "CONTEXT_UNAVAILABLE",
+            errorMessage: "Plugin instance released"
+        )
         stopHeartbeatTimer()
         locationManager?.stopUpdatingLocation()
         locationManager?.delegate = nil
@@ -649,7 +1240,75 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
     }
 
     // MARK: - CLLocationManagerDelegate (Active Live-Tracking Delegate)
+    private func processPendingPositionRequests(manager: CLLocationManager, locations: [CLLocation]) {
+        guard !self.pendingPositionRequests.isEmpty, !locations.isEmpty else { return }
+
+        let status = currentAuthorizationStatus(for: manager)
+        let statusStr = NativeTrackingPlugin.authorizationStatusString(status)
+        let isPrecise = isPreciseAccuracy(for: manager)
+
+        var remaining: [PendingPositionRequest] = []
+        var settledAny = false
+
+        for req in self.pendingPositionRequests {
+            if req.waitingForAuthorization {
+                remaining.append(req)
+                continue
+            }
+
+            let maxReplayAgeSec: TimeInterval = req.maximumAgeMs <= 0
+                ? 5.0
+                : max(5.0, Double(req.maximumAgeMs) / 1000.0)
+
+            var settledReq = false
+            for loc in locations {
+                guard isValidCoordinateLocation(loc) else { continue }
+                guard abs(loc.timestamp.timeIntervalSinceNow) <= maxReplayAgeSec else { continue }
+
+                let shouldReplaceBest: Bool = {
+                    guard let currentBest = req.bestLocation else { return true }
+                    if req.bestSource == "cache" { return true }
+                    return loc.horizontalAccuracy <= currentBest.horizontalAccuracy
+                }()
+                if shouldReplaceBest {
+                    req.bestLocation = loc
+                    req.bestSource = "live"
+                }
+
+                // Khi tắt Vị trí chính xác (!isPrecise), chấp nhận luôn điểm hợp lệ (kể cả > 200m)
+                let isAcceptable = !isPrecise || loc.horizontalAccuracy <= req.desiredAccuracyMeters
+                if isAcceptable {
+                    req.timeoutWorkItem?.cancel()
+                    req.timeoutWorkItem = nil
+                    req.call.resolve(buildPositionSuccessPayload(
+                        location: loc,
+                        source: "live",
+                        isPrecise: isPrecise,
+                        statusStr: statusStr,
+                        locationEnabled: req.locationEnabled
+                    ))
+                    settledReq = true
+                    settledAny = true
+                    break
+                }
+            }
+
+            if !settledReq {
+                remaining.append(req)
+            }
+        }
+
+        if settledAny {
+            self.pendingPositionRequests = remaining
+            self.stopLocationUpdatesIfIdle()
+        }
+    }
+
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        // 1. Luôn phục vụ các yêu cầu one-shot getCurrentPosition TRƯỚC guard isTracking
+        processPendingPositionRequests(manager: manager, locations: locations)
+
+        // 2. Chỉ cập nhật diagnostics & gửi ping theo dõi ca khi isTracking == true
         guard isTracking, let location = locations.last else { return }
         let diagnostics = TrackingDiagnostics.shared
 
@@ -736,8 +1395,24 @@ public class NativeTrackingPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManage
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        TrackingDiagnostics.shared.recordLocationError(error)
+        if isTracking {
+            TrackingDiagnostics.shared.recordLocationError(error)
+        }
         print("[NativeTracking iOS] Location manager error: \(error.localizedDescription)")
+
+        if let clError = error as? CLError {
+            // Bỏ qua lỗi tạm thời .locationUnknown để tiếp tục chờ GPS/Wi-Fi trong nhà đến hết timeout
+            if clError.code == .locationUnknown {
+                return
+            }
+            if clError.code == .denied {
+                failPendingPositionRequests(
+                    errorCode: "PERMISSION_DENIED",
+                    errorMessage: "Location access denied by user or system",
+                    osErrorCode: (error as NSError).code
+                )
+            }
+        }
     }
 
     public func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
