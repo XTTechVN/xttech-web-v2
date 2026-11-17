@@ -50,6 +50,12 @@ export const PAGE_SEO_META = {
     path: '/',
     useAbsoluteTitle: true,
   },
+  introduce: {
+    title: 'Giới Thiệu Phần Mềm XTTECH ERP — XMS Fab, XMS Build & XMS Biz',
+    description:
+      'Tổng quan giải pháp phần mềm quản trị sản xuất nhôm kính và thi công công trình XTTECH: Thiết kế CAD 2D/3D, bóc tách vật tư, thẻ cắt A4, quản lý kho, chấm công tại công trình và báo cáo lãi lỗ.',
+    path: '/introduce',
+  },
   pricing: {
     title: 'Bảng Giá Phần Mềm ERP Nhôm Kính & Xây Dựng',
     description:
@@ -162,9 +168,7 @@ export function buildPageMetadata(params: {
   const canonicalUrl = buildCanonicalUrl(params.path);
   const ogImageUrl = resolveSeoImageUrl(params.image);
   const isDefaultOg = !params.image || !params.image.trim();
-  const fullShareTitle = params.title.includes(SEO_CONFIG.siteName)
-    ? params.title
-    : `${params.title} | ${SEO_CONFIG.siteName}`;
+  const fullShareTitle = params.title.includes(SEO_CONFIG.siteName) ? params.title : `${params.title} | ${SEO_CONFIG.siteName}`;
 
   return {
     title: params.useAbsoluteTitle ? { absolute: params.title } : params.title,
@@ -379,8 +383,7 @@ export function buildNewsArticleJsonLd(article: NewsArticle) {
   const imageUrl = resolveSeoImageUrl(article.thumbnailUrl);
   const personName = article.author?.fullName || article.author?.username || null;
   const categoryName = NEWS_CATEGORY_MAP[article.category] || article.category;
-  const description =
-    article.summary?.trim() || stripHtmlToPlainText(article.content, 155) || PAGE_SEO_META.news.description;
+  const description = article.summary?.trim() || stripHtmlToPlainText(article.content, 155) || PAGE_SEO_META.news.description;
 
   const authorEntity = personName
     ? {
@@ -452,13 +455,10 @@ export function buildBreadcrumbJsonLd(items: Array<{ name: string; path: string 
 export const fetchPublicArticleBySlugForSeo = cache(async (slug: string): Promise<NewsArticle | null> => {
   if (!slug) return null;
   try {
-    const response = await fetch(
-      `${BASE_API_URL}/api/v1/news/public/${encodeURIComponent(slug)}?countView=false`,
-      {
-        next: { revalidate: 60 },
-        headers: { Accept: 'application/json' },
-      },
-    );
+    const response = await fetch(`${BASE_API_URL}/api/v1/news/public/${encodeURIComponent(slug)}?countView=false`, {
+      next: { revalidate: 60 },
+      headers: { Accept: 'application/json' },
+    });
     if (!response.ok) return null;
     const payload: unknown = await response.json();
     if (!payload || typeof payload !== 'object') return null;
@@ -482,13 +482,10 @@ export async function fetchAllPublicArticlesForSitemap(): Promise<NewsArticle[]>
   while (hasNext && safetyCounter < maxPages) {
     safetyCounter += 1;
     try {
-      const response = await fetch(
-        `${BASE_API_URL}/api/v1/news/public?offset=${offset}&limit=${limit}`,
-        {
-          next: { revalidate: 3600 },
-          headers: { Accept: 'application/json' },
-        },
-      );
+      const response = await fetch(`${BASE_API_URL}/api/v1/news/public?offset=${offset}&limit=${limit}`, {
+        next: { revalidate: 3600 },
+        headers: { Accept: 'application/json' },
+      });
       if (!response.ok) {
         console.warn(`[sitemap] Fetch public news failed with status ${response.status} at offset=${offset}`);
         break;
