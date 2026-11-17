@@ -1,28 +1,18 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { ArrowRight, User } from 'lucide-react';
-import { DEVELOPER_TEAM_MEMBERS } from './introduce.constants';
+import { DEVELOPER_TEAM_MEMBERS } from '@/app/(public)/_components/introduce/_components/introduce.constants';
+import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
 interface IntroducePricingCtaSectionProps {
   onOpenRegister: () => void;
 }
 
-const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
-
 export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingCtaSectionProps) {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  useEffect(() => {
-    if (isPaused) return;
-    const timer = setInterval(() => {
-      setActiveIdx((prev) => (prev + 1) % DEVELOPER_TEAM_MEMBERS.length);
-    }, 3200);
-    return () => clearInterval(timer);
-  }, [isPaused]);
+  const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(DEVELOPER_TEAM_MEMBERS.length, 3200);
 
   return (
     <section className="bg-slate-50/70 py-14 sm:py-16">
@@ -31,7 +21,7 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45, ease: EASE_OUT }}
+          transition={{ duration: 0.45, ease: INTRODUCE_EASE_OUT }}
           className="mx-auto max-w-3xl text-center"
         >
           <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
@@ -46,9 +36,8 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
         </motion.div>
 
         <div
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-          className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          {...pauseProps}
+          className="mx-auto mt-10 flex max-w-5xl snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:pb-0"
         >
           {DEVELOPER_TEAM_MEMBERS.map((member, idx) => {
             const isActive = idx === activeIdx;
@@ -56,14 +45,11 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
             return (
               <motion.div
                 key={member.name}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                animate={isActive ? { y: -4 } : { y: 0 }}
-                transition={{ duration: 0.4, delay: idx * 0.06, ease: EASE_OUT }}
+                animate={{ y: isActive ? -4 : 0 }}
+                transition={{ duration: 0.3, ease: INTRODUCE_EASE_OUT }}
                 whileHover={{ y: -5 }}
                 onMouseEnter={() => setActiveIdx(idx)}
-                className={`relative flex flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-300 ${
+                className={`relative flex w-[76%] max-w-[270px] shrink-0 snap-center flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-300 sm:w-[280px] lg:w-auto lg:max-w-none lg:shrink ${
                   isActive
                     ? 'border-primary/40 shadow-lg shadow-primary/10'
                     : 'border-slate-200/90 shadow-xs hover:border-primary/35 hover:shadow-md'
@@ -112,7 +98,7 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.48, ease: EASE_OUT }}
+          transition={{ duration: 0.48, ease: INTRODUCE_EASE_OUT }}
           className="relative mt-12 overflow-hidden rounded-2xl bg-linear-to-r from-hero-bg-from via-primary to-hero-bg-to p-6 text-white shadow-lg sm:p-10"
         >
           <motion.div

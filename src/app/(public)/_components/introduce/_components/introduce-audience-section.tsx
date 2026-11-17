@@ -1,32 +1,22 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
-import { TARGET_AUDIENCES } from './introduce.constants';
-
-const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+import { TARGET_AUDIENCES } from '@/app/(public)/_components/introduce/_components/introduce.constants';
+import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
 export function IntroduceAudienceSection() {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  useEffect(() => {
-    if (isPaused) return;
-    const timer = setInterval(() => {
-      setActiveIdx((prev) => (prev + 1) % TARGET_AUDIENCES.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [isPaused]);
+  const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(TARGET_AUDIENCES.length, 3000);
 
   return (
-    <section className="border-b border-slate-100 bg-slate-50/70 py-14 sm:py-16">
+    <section className="border-b border-slate-100 bg-slate-50/70 pt-8 pb-12 sm:pt-10 sm:pb-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45, ease: EASE_OUT }}
+          transition={{ duration: 0.45, ease: INTRODUCE_EASE_OUT }}
           className="mx-auto max-w-3xl text-center"
         >
           <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
@@ -40,11 +30,7 @@ export function IntroduceAudienceSection() {
           </p>
         </motion.div>
 
-        <div
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-          className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2"
-        >
+        <div {...pauseProps} className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2">
           {TARGET_AUDIENCES.map((aud, idx) => {
             const Icon = aud.icon;
             const isActive = idx === activeIdx;
@@ -52,11 +38,8 @@ export function IntroduceAudienceSection() {
             return (
               <motion.div
                 key={aud.title}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                animate={isActive ? { y: -3 } : { y: 0 }}
-                transition={{ duration: 0.4, delay: idx * 0.06, ease: EASE_OUT }}
+                animate={{ y: isActive ? -3 : 0 }}
+                transition={{ duration: 0.3, ease: INTRODUCE_EASE_OUT }}
                 whileHover={{ y: -4 }}
                 onMouseEnter={() => setActiveIdx(idx)}
                 className={`relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-white p-6 transition-all duration-300 ${

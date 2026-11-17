@@ -1,30 +1,23 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { ArrowRight, FileSpreadsheet, Sparkles } from 'lucide-react';
-import { ECOSYSTEM_MODULES, INTRODUCE_QUICK_STATS } from './introduce.constants';
+import { ArrowRight, FileSpreadsheet } from 'lucide-react';
+import { ECOSYSTEM_MODULES, INTRODUCE_QUICK_STATS } from '@/app/(public)/_components/introduce/_components/introduce.constants';
+import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
 interface IntroduceHeroSectionProps {
   onOpenRegister: () => void;
 }
 
-const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
-
 export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionProps) {
-  const [activeModIdx, setActiveModIdx] = useState(0);
-  const [isModPaused, setIsModPaused] = useState(false);
-
-  useEffect(() => {
-    if (isModPaused) return;
-    const timer = setInterval(() => {
-      setActiveModIdx((prev) => (prev + 1) % ECOSYSTEM_MODULES.length);
-    }, 3200);
-    return () => clearInterval(timer);
-  }, [isModPaused]);
+  const { activeIdx: activeModIdx, setActiveIdx: setActiveModIdx, pauseProps } = useSpotlightCycle(
+    ECOSYSTEM_MODULES.length,
+    3200,
+  );
   return (
-    <section className="relative overflow-hidden bg-linear-to-br from-hero-bg-from via-primary to-hero-bg-to py-14 text-white sm:py-20">
+    <section className="relative overflow-hidden bg-linear-to-br from-hero-bg-from via-primary to-hero-bg-to pt-12 pb-10 text-white sm:pt-16 sm:pb-12">
       <div
         className="pointer-events-none absolute inset-0 opacity-10"
         style={{
@@ -48,21 +41,11 @@ export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionPro
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: EASE_OUT }}
-            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-bold tracking-wide text-hero-accent backdrop-blur-xs"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>GIỚI THIỆU PHẦN MỀM XTTECH ERP</span>
-          </motion.div>
-
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.08, ease: EASE_OUT }}
-            className="mt-5 text-3xl font-black tracking-tight text-white uppercase sm:text-4xl lg:text-5xl lg:leading-[1.16]"
+            transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
+            className="text-3xl font-black tracking-tight text-white uppercase sm:text-4xl lg:text-5xl lg:leading-[1.16]"
           >
             Phần mềm quản trị sản xuất cho{' '}
             <span className="text-hero-accent">Xưởng Nhôm Kính & Nhà Thầu</span>
@@ -71,7 +54,7 @@ export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionPro
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.16, ease: EASE_OUT }}
+            transition={{ duration: 0.5, delay: 0.16, ease: INTRODUCE_EASE_OUT }}
             className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-teal-50/95 sm:text-base"
           >
             <strong>XTTECH</strong> đồng bộ toàn bộ quy trình từ khảo sát ô chờ, thiết kế cửa CAD 2D/3D, bóc tách vật tư và xuất thẻ cắt A4 đến quản lý kho, chấm công tại công trình và báo cáo lãi/lỗ trên một hệ thống duy nhất.
@@ -80,7 +63,7 @@ export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionPro
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.24, ease: EASE_OUT }}
+            transition={{ duration: 0.45, delay: 0.24, ease: INTRODUCE_EASE_OUT }}
             className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row"
           >
             <button
@@ -103,11 +86,7 @@ export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionPro
         </div>
 
         {/* 3 phân hệ cốt lõi */}
-        <div
-          onMouseEnter={() => setIsModPaused(true)}
-          onMouseLeave={() => setIsModPaused(false)}
-          className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3"
-        >
+        <div {...pauseProps} className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
           {ECOSYSTEM_MODULES.map((mod, idx) => {
             const Icon = mod.icon;
             const isActive = idx === activeModIdx;
@@ -116,7 +95,7 @@ export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionPro
                 key={mod.code}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: isActive ? -4 : 0 }}
-                transition={{ duration: 0.45, delay: 0.28 + idx * 0.08, ease: EASE_OUT }}
+                transition={{ duration: 0.35, ease: INTRODUCE_EASE_OUT }}
                 whileHover={{ y: -5 }}
                 onMouseEnter={() => setActiveModIdx(idx)}
                 className={`group relative overflow-hidden rounded-lg border bg-white/95 p-4 text-slate-900 transition-shadow duration-300 ${
@@ -130,17 +109,15 @@ export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionPro
                     className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary via-hero-accent to-primary"
                   />
                 )}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-transform duration-200 group-hover:scale-105 group-hover:rotate-3">
-                      <Icon className="h-5 w-5" />
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-transform duration-200 group-hover:scale-105 group-hover:rotate-3">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-primary uppercase">
+                      {mod.code}
                     </span>
-                    <div>
-                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-primary uppercase">
-                        {mod.code}
-                      </span>
-                      <h2 className="mt-0.5 text-sm font-extrabold text-slate-900 sm:text-base">{mod.name}</h2>
-                    </div>
+                    <h2 className="mt-0.5 text-sm font-extrabold text-slate-900 sm:text-base">{mod.name}</h2>
                   </div>
                 </div>
                 <p className="mt-2.5 border-t border-slate-100 pt-2.5 text-xs leading-relaxed text-slate-600 sm:text-sm">
@@ -160,7 +137,7 @@ export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionPro
                 key={stat.value}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.42, delay: 0.48 + idx * 0.06, ease: EASE_OUT }}
+                transition={{ duration: 0.42, delay: 0.32 + idx * 0.06, ease: INTRODUCE_EASE_OUT }}
                 whileHover={{ y: -2, scale: 1.01 }}
                 className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm transition-colors hover:border-hero-accent/40 hover:bg-white/15"
               >

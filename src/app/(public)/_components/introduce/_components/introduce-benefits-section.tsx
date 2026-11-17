@@ -1,31 +1,21 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
-import { SOFTWARE_BENEFITS } from './introduce.constants';
-
-const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+import { SOFTWARE_BENEFITS } from '@/app/(public)/_components/introduce/_components/introduce.constants';
+import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
 export function IntroduceBenefitsSection() {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  useEffect(() => {
-    if (isPaused) return;
-    const timer = setInterval(() => {
-      setActiveIdx((prev) => (prev + 1) % SOFTWARE_BENEFITS.length);
-    }, 2800);
-    return () => clearInterval(timer);
-  }, [isPaused]);
+  const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(SOFTWARE_BENEFITS.length, 2800);
 
   return (
-    <section className="border-b border-slate-100 bg-white py-14 sm:py-16">
+    <section className="border-b border-slate-100 bg-white pt-12 pb-8 sm:pt-16 sm:pb-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45, ease: EASE_OUT }}
+          transition={{ duration: 0.45, ease: INTRODUCE_EASE_OUT }}
           className="mx-auto max-w-3xl text-center"
         >
           <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
@@ -36,11 +26,7 @@ export function IntroduceBenefitsSection() {
           </h2>
         </motion.div>
 
-        <div
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-          className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
-        >
+        <div {...pauseProps} className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {SOFTWARE_BENEFITS.map((benefit, idx) => {
             const Icon = benefit.icon;
             const isActive = idx === activeIdx;
@@ -48,11 +34,8 @@ export function IntroduceBenefitsSection() {
             return (
               <motion.div
                 key={benefit.title}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                animate={isActive ? { y: -4 } : { y: 0 }}
-                transition={{ duration: 0.4, delay: idx * 0.05, ease: EASE_OUT }}
+                animate={{ y: isActive ? -4 : 0 }}
+                transition={{ duration: 0.3, ease: INTRODUCE_EASE_OUT }}
                 whileHover={{ y: -5 }}
                 onMouseEnter={() => setActiveIdx(idx)}
                 className={`relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 ${

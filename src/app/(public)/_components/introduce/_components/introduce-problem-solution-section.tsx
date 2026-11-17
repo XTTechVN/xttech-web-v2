@@ -1,32 +1,22 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
 import { AlertTriangle, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { PROBLEM_SOLUTIONS } from './introduce.constants';
-
-const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+import { PROBLEM_SOLUTIONS } from '@/app/(public)/_components/introduce/_components/introduce.constants';
+import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
 export function IntroduceProblemSolutionSection() {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  useEffect(() => {
-    if (isPaused) return;
-    const timer = setInterval(() => {
-      setActiveIdx((prev) => (prev + 1) % PROBLEM_SOLUTIONS.length);
-    }, 3200);
-    return () => clearInterval(timer);
-  }, [isPaused]);
+  const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(PROBLEM_SOLUTIONS.length, 3200);
 
   return (
-    <section className="border-b border-slate-100 bg-white py-14 sm:py-16">
+    <section className="border-b border-slate-100 bg-white pt-8 pb-12 sm:pt-10 sm:pb-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.5, ease: EASE_OUT }}
+          transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
           className="mx-auto max-w-3xl text-center"
         >
           <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-600">
@@ -41,11 +31,7 @@ export function IntroduceProblemSolutionSection() {
           </p>
         </motion.div>
 
-        <div
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-          className="mt-10 space-y-4"
-        >
+        <div {...pauseProps} className="mt-10 space-y-4">
           {PROBLEM_SOLUTIONS.map((item, idx) => {
             const isActive = idx === activeIdx;
 
@@ -55,7 +41,7 @@ export function IntroduceProblemSolutionSection() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.48, delay: idx * 0.08, ease: EASE_OUT }}
+                transition={{ duration: 0.48, delay: idx * 0.08, ease: INTRODUCE_EASE_OUT }}
                 whileHover={{ y: -2 }}
                 onMouseEnter={() => setActiveIdx(idx)}
                 className={`group relative grid grid-cols-1 overflow-hidden rounded-2xl border bg-white transition-all duration-300 lg:grid-cols-2 ${
@@ -78,7 +64,7 @@ export function IntroduceProblemSolutionSection() {
                   initial={{ opacity: 0, x: -18 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, amount: 0.2 }}
-                  transition={{ duration: 0.45, delay: idx * 0.08 + 0.05, ease: EASE_OUT }}
+                  transition={{ duration: 0.45, delay: idx * 0.08 + 0.05, ease: INTRODUCE_EASE_OUT }}
                   className={`flex items-start gap-3.5 border-b border-slate-100 p-5 transition-colors duration-300 sm:p-6 lg:border-r lg:border-b-0 ${
                     isActive ? 'bg-rose-50/75' : 'bg-rose-50/40'
                   }`}
@@ -123,7 +109,7 @@ export function IntroduceProblemSolutionSection() {
                   initial={{ opacity: 0, x: 18 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, amount: 0.2 }}
-                  transition={{ duration: 0.45, delay: idx * 0.08 + 0.1, ease: EASE_OUT }}
+                  transition={{ duration: 0.45, delay: idx * 0.08 + 0.1, ease: INTRODUCE_EASE_OUT }}
                   className={`flex items-start gap-3.5 p-5 transition-colors duration-300 sm:p-6 lg:pl-8 ${
                     isActive ? 'bg-emerald-50/65' : 'bg-emerald-50/30'
                   }`}

@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import { Modal } from '@/components';
-import { HeroRegisterInlineForm } from '../../hero/hero-register-inline-form';
-import { IntroduceHeroSection } from './introduce-hero-section';
-import { IntroduceProblemSolutionSection } from './introduce-problem-solution-section';
-import { IntroduceFeaturesSection } from './introduce-features-section';
-import { IntroduceBenefitsSection } from './introduce-benefits-section';
-import { IntroduceAudienceSection } from './introduce-audience-section';
-import { IntroduceMissionSection } from './introduce-mission-section';
-import { IntroducePricingCtaSection } from './introduce-pricing-cta-section';
+import { HeroRegisterInlineForm } from '@/app/(public)/_components/hero/hero-register-inline-form';
+import { IntroduceHeroSection } from '@/app/(public)/_components/introduce/_components/introduce-hero-section';
+import { IntroduceProblemSolutionSection } from '@/app/(public)/_components/introduce/_components/introduce-problem-solution-section';
+import { IntroduceFeaturesSection } from '@/app/(public)/_components/introduce/_components/introduce-features-section';
+import { IntroduceBenefitsSection } from '@/app/(public)/_components/introduce/_components/introduce-benefits-section';
+import { IntroduceAudienceSection } from '@/app/(public)/_components/introduce/_components/introduce-audience-section';
+import { IntroduceMissionSection } from '@/app/(public)/_components/introduce/_components/introduce-mission-section';
+import { IntroducePricingCtaSection } from '@/app/(public)/_components/introduce/_components/introduce-pricing-cta-section';
 
 export function IntroducePageClient() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);

@@ -3,14 +3,62 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { KEY_FEATURES } from './introduce.constants';
+import { Modal } from '@/components';
+import { KEY_FEATURES } from '@/app/(public)/_components/introduce/_components/introduce.constants';
+import { INTRODUCE_EASE_OUT } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
-const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+function FeatureNavControls({
+  onPrev,
+  onNext,
+  compact = false,
+}: {
+  onPrev: () => void;
+  onNext: () => void;
+  compact?: boolean;
+}) {
+  const btnClass = `${
+    compact ? 'h-7 w-7' : 'h-8 w-8'
+  } flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:border-primary hover:text-primary`;
+  const iconClass = compact ? 'h-3.5 w-3.5' : 'h-4 w-4';
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <button type="button" onClick={onPrev} aria-label="Tính năng trước" className={btnClass}>
+        <ChevronLeft className={iconClass} />
+      </button>
+      <button type="button" onClick={onNext} aria-label="Tính năng tiếp theo" className={btnClass}>
+        <ChevronRight className={iconClass} />
+      </button>
+    </div>
+  );
+}
+
+function FeatureHighlightsList({ highlights, compact = false }: { highlights: string[]; compact?: boolean }) {
+  return (
+    <div className={`rounded-lg border border-slate-100 bg-slate-50/80 ${compact ? 'p-3' : 'rounded-xl p-3.5 sm:p-4'}`}>
+      <p className={`${compact ? 'text-[11px]' : 'text-xs'} font-extrabold tracking-wider text-primary uppercase`}>
+        Điểm nổi bật trong quy trình
+      </p>
+      <ul className={`${compact ? 'mt-2 space-y-2' : 'mt-2.5 space-y-2.5'}`}>
+        {highlights.map((item) => (
+          <li
+            key={item}
+            className={`flex items-start ${compact ? 'gap-2 text-xs' : 'gap-2.5 text-sm sm:text-base'} text-slate-700`}
+          >
+            <CheckCircle2 className={`mt-0.5 ${compact ? 'h-3.5 w-3.5' : 'h-4.5 w-4.5'} shrink-0 text-emerald-600`} />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function IntroduceFeaturesSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [isPaused, setIsPaused] = useState(false);
+  const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
 
   const selectIndex = (nextIdx: number) => {
     const normalized = (nextIdx + KEY_FEATURES.length) % KEY_FEATURES.length;
@@ -18,14 +66,21 @@ export function IntroduceFeaturesSection() {
     setActiveIndex(normalized);
   };
 
+  const handleItemClick = (idx: number) => {
+    selectIndex(idx);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsMobileModalOpen(true);
+    }
+  };
+
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || isMobileModalOpen) return;
     const timer = setInterval(() => {
       setDirection(1);
       setActiveIndex((prev) => (prev + 1) % KEY_FEATURES.length);
     }, 4500);
     return () => clearInterval(timer);
-  }, [isPaused]);
+  }, [isPaused, isMobileModalOpen]);
 
   const activeFeature = KEY_FEATURES[activeIndex];
   const ActiveIcon = activeFeature.icon;
@@ -37,7 +92,7 @@ export function IntroduceFeaturesSection() {
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45, ease: EASE_OUT }}
+          transition={{ duration: 0.45, ease: INTRODUCE_EASE_OUT }}
           className="mx-auto max-w-3xl text-center"
         >
           <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
@@ -66,7 +121,7 @@ export function IntroduceFeaturesSection() {
                 <button
                   key={feat.title}
                   type="button"
-                  onClick={() => selectIndex(idx)}
+                  onClick={() => handleItemClick(idx)}
                   className={`group relative flex min-h-[72px] w-full cursor-pointer items-center gap-3.5 rounded-xl border px-3.5 py-3.5 text-left transition-colors duration-200 ${
                     isActive
                       ? 'border-primary/35 bg-white text-slate-900 shadow-sm'
@@ -108,8 +163,8 @@ export function IntroduceFeaturesSection() {
             })}
           </div>
 
-          {/* Cột phải: Khung chi tiết tính năng trượt ngang mượt mà */}
-          <div className="lg:col-span-8">
+          {/* Cột phải: Khung chi tiết tính năng trượt ngang mượt mà (ẩn trên mobile vì mở modal khi bấm) */}
+          <div className="hidden lg:col-span-8 lg:block">
             <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-4 shadow-md sm:p-5">
               {/* Thanh đầu: số thứ tự + điều hướng prev/next */}
               <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
@@ -122,24 +177,10 @@ export function IntroduceFeaturesSection() {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => selectIndex(activeIndex - 1)}
-                    aria-label="Tính năng trước"
-                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:border-primary hover:text-primary"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => selectIndex(activeIndex + 1)}
-                    aria-label="Tính năng tiếp theo"
-                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:border-primary hover:text-primary"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
+                <FeatureNavControls
+                  onPrev={() => selectIndex(activeIndex - 1)}
+                  onNext={() => selectIndex(activeIndex + 1)}
+                />
               </div>
 
               {/* Nội dung trượt theo direction */}
@@ -151,7 +192,7 @@ export function IntroduceFeaturesSection() {
                     initial={{ opacity: 0, x: direction * 28 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: direction * -28 }}
-                    transition={{ duration: 0.34, ease: EASE_OUT }}
+                    transition={{ duration: 0.34, ease: INTRODUCE_EASE_OUT }}
                     className="space-y-4"
                   >
                     <div className="flex items-start gap-4">
@@ -168,47 +209,71 @@ export function IntroduceFeaturesSection() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 sm:p-4">
-                      <p className="text-xs font-extrabold tracking-wider text-primary uppercase">
-                        Điểm nổi bật trong quy trình
-                      </p>
-                      <ul className="mt-2.5 space-y-2.5">
-                        {activeFeature.highlights.map((item) => (
-                          <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700 sm:text-base">
-                            <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 shrink-0 text-emerald-600" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    <FeatureHighlightsList highlights={activeFeature.highlights} />
                   </motion.div>
                 </AnimatePresence>
               </div>
 
               {/* Chấm tiến trình phía dưới */}
-              <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                <div className="flex items-center gap-1.5">
-                  {KEY_FEATURES.map((feat, idx) => {
-                    const isDotActive = idx === activeIndex;
-                    return (
-                      <button
-                        key={feat.title}
-                        type="button"
-                        onClick={() => selectIndex(idx)}
-                        aria-label={`Chọn ${feat.title}`}
-                        className={`h-2 cursor-pointer rounded-full transition-all duration-300 ${
-                          isDotActive ? 'w-7 bg-primary' : 'w-2 bg-slate-200 hover:bg-primary/40'
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
-               
+              <div className="flex items-center gap-1.5 border-t border-slate-100 pt-3">
+                {KEY_FEATURES.map((feat, idx) => {
+                  const isDotActive = idx === activeIndex;
+                  return (
+                    <button
+                      key={feat.title}
+                      type="button"
+                      onClick={() => selectIndex(idx)}
+                      aria-label={`Chọn ${feat.title}`}
+                      className={`h-2 cursor-pointer rounded-full transition-all duration-300 ${
+                        isDotActive ? 'w-7 bg-primary' : 'w-2 bg-slate-200 hover:bg-primary/40'
+                      }`}
+                    />
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal chi tiết tính năng trên mobile */}
+      <Modal
+        isOpen={isMobileModalOpen}
+        onClose={() => setIsMobileModalOpen(false)}
+        size="md"
+        title={activeFeature.title}
+        className="max-w-md rounded-lg border border-primary/20"
+        bodyClassName="p-3.5 sm:p-4"
+      >
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-extrabold text-white">
+                {activeFeature.tag}
+              </span>
+              <span className="font-mono text-xs font-bold text-slate-400">
+                0{activeIndex + 1} / 0{KEY_FEATURES.length}
+              </span>
+            </div>
+            <FeatureNavControls
+              compact
+              onPrev={() => selectIndex(activeIndex - 1)}
+              onNext={() => selectIndex(activeIndex + 1)}
+            />
+          </div>
+
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <ActiveIcon className="h-5 w-5" />
+            </span>
+            <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">
+              {activeFeature.desc}
+            </p>
+          </div>
+
+          <FeatureHighlightsList compact highlights={activeFeature.highlights} />
+        </div>
+      </Modal>
     </section>
   );
 }

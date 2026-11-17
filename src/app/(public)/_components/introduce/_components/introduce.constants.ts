@@ -226,7 +226,6 @@ export interface DeveloperMember {
   name: string;
   role: string;
   bio: string;
-  avatarUrl?: string;
 }
 
 export const DEVELOPER_TEAM_MEMBERS: DeveloperMember[] = [
@@ -234,19 +233,16 @@ export const DEVELOPER_TEAM_MEMBERS: DeveloperMember[] = [
     name: 'Bùi Xuân Đức',
     role: 'Founder & Kiến trúc hệ thống',
     bio: 'Phụ trách định hướng sản phẩm và kiến trúc nền tảng ERP ngành nhôm kính, xây dựng.',
-    avatarUrl: '',
   },
   {
     name: 'Trần Hữu Văn',
     role: 'Tech Lead & Fullstack Engineer',
     bio: 'Phát triển lõi tính toán bóc tách vật tư BOM, tối ưu cắt, hệ thống API đám mây và giao diện web.',
-    avatarUrl: '',
   },
   {
     name: 'Nguyễn Quang Linh',
     role: 'Fullstack & CAD 2D/3D Engineer',
     bio: 'Xây dựng giao diện thiết kế cửa CAD 2D/3D trực quan, trải nghiệm người dùng và tích hợp hệ thống.',
-    avatarUrl: '',
   },
 ];
 

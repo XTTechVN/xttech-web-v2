@@ -1,23 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
 import { Compass } from 'lucide-react';
-import { MISSION_PILLARS } from './introduce.constants';
-
-const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+import { MISSION_PILLARS } from '@/app/(public)/_components/introduce/_components/introduce.constants';
+import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
 export function IntroduceMissionSection() {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  useEffect(() => {
-    if (isPaused) return;
-    const timer = setInterval(() => {
-      setActiveIdx((prev) => (prev + 1) % MISSION_PILLARS.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [isPaused]);
+  const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(MISSION_PILLARS.length, 3000);
 
   return (
     <section className="border-b border-slate-100 bg-white py-14 sm:py-16">
@@ -29,7 +19,7 @@ export function IntroduceMissionSection() {
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.4, ease: EASE_OUT }}
+              transition={{ duration: 0.4, ease: INTRODUCE_EASE_OUT }}
               className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
             >
               <motion.span
@@ -46,7 +36,7 @@ export function IntroduceMissionSection() {
               initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.45, delay: 0.06, ease: EASE_OUT }}
+              transition={{ duration: 0.45, delay: 0.06, ease: INTRODUCE_EASE_OUT }}
               className="mt-3 text-2xl font-black tracking-tight text-slate-900 uppercase sm:text-3xl"
             >
               Giúp xưởng sản xuất & nhà thầu{' '}
@@ -57,7 +47,7 @@ export function IntroduceMissionSection() {
               initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.45, delay: 0.12, ease: EASE_OUT }}
+              transition={{ duration: 0.45, delay: 0.12, ease: INTRODUCE_EASE_OUT }}
               className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base"
             >
               XTTECH ra đời với mong muốn giúp các xưởng nhôm kính, cơ khí và đội ngũ thi công thoát khỏi cảnh quản lý rời rạc, giảm sai sót vật tư và xây dựng nền tảng vận hành bài bản để phát triển đường dài.
@@ -67,7 +57,7 @@ export function IntroduceMissionSection() {
               initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.45, delay: 0.18, ease: EASE_OUT }}
+              transition={{ duration: 0.45, delay: 0.18, ease: INTRODUCE_EASE_OUT }}
               className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base"
             >
               Chúng tôi tập trung giải quyết những bài toán thực tế nhất mỗi ngày tại xưởng: từ khâu đo đạc ô chờ, lên bản vẽ 2D/3D, chia cây cắt nhôm tối ưu đến kiểm soát kho và nghiệm thu công trình.
@@ -77,7 +67,7 @@ export function IntroduceMissionSection() {
               initial={{ opacity: 0, x: -16 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.45, delay: 0.24, ease: EASE_OUT }}
+              transition={{ duration: 0.45, delay: 0.24, ease: INTRODUCE_EASE_OUT }}
               className="mt-5 rounded-xl border-l-4 border-primary bg-primary/5 px-4 py-4 text-sm font-medium italic leading-relaxed text-slate-700"
             >
               “Công nghệ chỉ thực sự có giá trị khi người thợ ngoài xưởng và chủ doanh nghiệp có thể sử dụng dễ dàng mỗi ngày.”
@@ -99,7 +89,7 @@ export function IntroduceMissionSection() {
                   initial={{ opacity: 0, y: 14 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.4, delay: 0.28 + idx * 0.06, ease: EASE_OUT }}
+                  transition={{ duration: 0.4, delay: 0.28 + idx * 0.06, ease: INTRODUCE_EASE_OUT }}
                   whileHover={{ y: -3 }}
                   className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5 transition-colors hover:border-primary/35 hover:bg-white hover:shadow-sm"
                 >
@@ -111,11 +101,7 @@ export function IntroduceMissionSection() {
           </div>
 
           {/* Cột phải: 4 trụ cột sứ mệnh có spotlight tự chạy mượt mà */}
-          <div
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-            className="space-y-4 lg:col-span-7"
-          >
+          <div {...pauseProps} className="space-y-4 lg:col-span-7">
             {MISSION_PILLARS.map((pillar, idx) => {
               const Icon = pillar.icon;
               const isActive = idx === activeIdx;
@@ -126,7 +112,7 @@ export function IntroduceMissionSection() {
                   initial={{ opacity: 0, x: 22 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, amount: 0.2 }}
-                  transition={{ duration: 0.44, delay: idx * 0.08, ease: EASE_OUT }}
+                  transition={{ duration: 0.44, delay: idx * 0.08, ease: INTRODUCE_EASE_OUT }}
                   whileHover={{ y: -2 }}
                   onMouseEnter={() => setActiveIdx(idx)}
                   className={`group relative flex items-start gap-4 overflow-hidden rounded-2xl border p-5 transition-all duration-300 ${
