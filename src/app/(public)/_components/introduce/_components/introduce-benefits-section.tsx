@@ -1,10 +1,23 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { SOFTWARE_BENEFITS } from './introduce.constants';
 
+const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
 export function IntroduceBenefitsSection() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return;
+    const timer = setInterval(() => {
+      setActiveIdx((prev) => (prev + 1) % SOFTWARE_BENEFITS.length);
+    }, 2800);
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
   return (
     <section className="border-b border-slate-100 bg-white py-14 sm:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -12,7 +25,7 @@ export function IntroduceBenefitsSection() {
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45 }}
+          transition={{ duration: 0.45, ease: EASE_OUT }}
           className="mx-auto max-w-3xl text-center"
         >
           <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
@@ -23,23 +36,53 @@ export function IntroduceBenefitsSection() {
           </h2>
         </motion.div>
 
-        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
+        >
           {SOFTWARE_BENEFITS.map((benefit, idx) => {
             const Icon = benefit.icon;
+            const isActive = idx === activeIdx;
+
             return (
               <motion.div
                 key={benefit.title}
                 initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.4, delay: idx * 0.06 }}
-                whileHover={{ y: -3 }}
-                className="rounded-2xl border border-slate-200/80 bg-linear-to-b from-slate-50/70 to-white p-6 shadow-xs transition-shadow hover:shadow-md"
+                animate={isActive ? { y: -4 } : { y: 0 }}
+                transition={{ duration: 0.4, delay: idx * 0.05, ease: EASE_OUT }}
+                whileHover={{ y: -5 }}
+                onMouseEnter={() => setActiveIdx(idx)}
+                className={`relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 ${
+                  isActive
+                    ? 'border-primary/40 bg-white shadow-lg shadow-primary/10'
+                    : 'border-slate-200/80 bg-linear-to-b from-slate-50/70 to-white shadow-xs hover:border-primary/30 hover:shadow-md'
+                }`}
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-xs">
+                {isActive && (
+                  <motion.span
+                    layoutId="benefitActiveBar"
+                    transition={{ type: 'spring', stiffness: 360, damping: 30 }}
+                    className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary via-hero-accent to-emerald-500"
+                  />
+                )}
+
+                <motion.span
+                  animate={isActive ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                  transition={{ duration: 1.8, repeat: isActive ? Infinity : 0, ease: 'easeInOut' }}
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors duration-300 ${
+                    isActive
+                      ? 'bg-primary text-white shadow-md shadow-primary/25'
+                      : 'bg-primary/10 text-primary'
+                  }`}
+                >
                   <Icon className="h-5 w-5" />
-                </span>
-                <h3 className="mt-4 text-base font-extrabold text-slate-900">{benefit.title}</h3>
+                </motion.span>
+                <h3 className={`mt-4 text-base font-extrabold transition-colors ${isActive ? 'text-primary' : 'text-slate-900'}`}>
+                  {benefit.title}
+                </h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{benefit.desc}</p>
               </motion.div>
             );

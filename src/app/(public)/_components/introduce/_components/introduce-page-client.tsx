@@ -8,6 +8,7 @@ import { IntroduceProblemSolutionSection } from './introduce-problem-solution-se
 import { IntroduceFeaturesSection } from './introduce-features-section';
 import { IntroduceBenefitsSection } from './introduce-benefits-section';
 import { IntroduceAudienceSection } from './introduce-audience-section';
+import { IntroduceMissionSection } from './introduce-mission-section';
 import { IntroducePricingCtaSection } from './introduce-pricing-cta-section';
 
 export function IntroducePageClient() {
@@ -20,6 +21,7 @@ export function IntroducePageClient() {
       <IntroduceFeaturesSection />
       <IntroduceBenefitsSection />
       <IntroduceAudienceSection />
+      <IntroduceMissionSection />
       <IntroducePricingCtaSection onOpenRegister={() => setIsRegisterModalOpen(true)} />
 
       <Modal

@@ -1,7 +1,6 @@
 import {
   Briefcase,
   Building2,
-  Calculator,
   Clock,
   Cpu,
   FileSpreadsheet,
@@ -15,7 +14,6 @@ import {
   Smartphone,
   TrendingUp,
   Users,
-  Wallet,
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
@@ -76,6 +74,7 @@ export interface KeyFeatureItem {
   title: string;
   tag: string;
   desc: string;
+  highlights: string[];
   icon: LucideIcon;
 }
 
@@ -84,36 +83,66 @@ export const KEY_FEATURES: KeyFeatureItem[] = [
     title: 'Thiết kế cửa CAD 2D/3D & Thư viện hãng nhôm',
     tag: 'XMS Fab',
     desc: 'Hỗ trợ sẵn hơn 25 hãng nhôm thông dụng (Xingfa, PMA, Kenwin, Rolan, Maxpro...) và 9+ hãng phụ kiện phổ biến, tùy chỉnh tỷ trọng và độ dày kính linh hoạt.',
+    highlights: [
+      'Chuyển đổi qua lại giữa bản vẽ kỹ thuật 2D và mô hình 3D trực quan',
+      'Tùy chỉnh màu nhôm, độ dày kính và thông số tỷ trọng theo xưởng',
+      'Phóng to, thu nhỏ, kiểm tra kích thước đố và cánh ngay trên trình duyệt',
+    ],
     icon: PencilRuler,
   },
   {
     title: 'Bóc tách vật tư & Xuất thẻ cắt A4 tối ưu',
     tag: 'Sản xuất',
     desc: 'Tự động lập bảng bóc tách thanh nhôm, kính, phụ kiện và xuất thẻ cắt A4 trực tiếp cho tổ thợ gia công, hạn chế sai số và tận dụng nhôm thừa.',
+    highlights: [
+      'Tính toán tự động thanh nhôm, kính cường lực và phụ kiện theo công thức',
+      'Gom cắt thông minh theo cây nhôm chuẩn, hạn chế đề-xê dư thừa',
+      'In thẻ cắt A4 rõ kích thước từng thanh để thợ đưa vào máy cắt ngay',
+    ],
     icon: Scissors,
   },
   {
     title: 'Báo giá nhanh & Chia sẻ link bản vẽ 3D',
     tag: 'Kinh doanh',
     desc: 'Lập dự toán nhanh ngay khi khảo sát công trình, gửi link xem bản vẽ 2D/3D cho chủ đầu tư và cập nhật đồng bộ khi có điều chỉnh.',
+    highlights: [
+      'Tạo bảng dự toán và báo giá chi tiết ngay tại công trình khảo sát',
+      'Gửi 1 đường dẫn duy nhất cho khách hàng xem trước bản vẽ cửa',
+      'Mọi thay đổi kích thước được cập nhật thẳng vào link đã gửi',
+    ],
     icon: FileSpreadsheet,
   },
   {
     title: 'Quản lý kho vật tư & Tiến độ phân xưởng',
     tag: 'Kho & Xưởng',
     desc: 'Kiểm soát nhập – xuất – tồn kho nhôm, kính, phụ kiện theo từng đơn hàng; theo dõi từng công đoạn từ cắt, ép góc đến xuất xưởng.',
+    highlights: [
+      'Theo dõi tồn kho thực tế của từng hệ nhôm, kính và phụ kiện',
+      'Gắn vật tư xuất kho trực tiếp vào từng đơn hàng sản xuất',
+      'Cập nhật trạng thái gia công từ cắt phôi, ép góc đến hoàn thiện',
+    ],
     icon: Package,
   },
   {
     title: 'App Mobile thực địa & Bảo hành QR',
     tag: 'XMS Build',
     desc: 'Đội lắp đặt chấm công tại công trình, cập nhật ảnh hiện trường, bàn giao nghiệm thu và kích hoạt tem bảo hành điện tử QR cho từng bộ cửa.',
+    highlights: [
+      'Thợ kỹ thuật chấm công tại công trình và cập nhật ảnh lắp dựng',
+      'Tra cứu bản vẽ kỹ thuật và danh sách vật tư ngay trên điện thoại',
+      'Quét mã QR nghiệm thu bàn giao và kích hoạt bảo hành điện tử',
+    ],
     icon: QrCode,
   },
   {
     title: 'Quản lý thu chi, HCNS & Trợ lý AI XTTECH',
     tag: 'XMS Biz',
     desc: 'Tổng hợp chi phí vật tư, nhân công, báo cáo lãi/lỗ công trình; hỗ trợ nhập báo cáo tiến độ nhanh qua giọng nói và hình ảnh.',
+    highlights: [
+      'Theo dõi doanh thu, chi phí vật tư, công thợ và lãi/lỗ từng công trình',
+      'Quản lý hồ sơ nhân sự, phân quyền chi tiết theo từng phòng ban',
+      'Trợ lý AI hỗ trợ trích xuất văn bản báo cáo tiến độ từ giọng nói',
+    ],
     icon: Cpu,
   },
 ];
@@ -202,27 +231,21 @@ export interface DeveloperMember {
 
 export const DEVELOPER_TEAM_MEMBERS: DeveloperMember[] = [
   {
-    name: 'Nguyễn Minh Quân',
+    name: 'Bùi Xuân Đức',
     role: 'Founder & Kiến trúc hệ thống',
     bio: 'Phụ trách định hướng sản phẩm và kiến trúc nền tảng ERP ngành nhôm kính, xây dựng.',
     avatarUrl: '',
   },
   {
-    name: 'Trần Đức Anh',
-    role: 'Tech Lead & Backend Engineer',
-    bio: 'Phát triển lõi tính toán bóc tách vật tư BOM, tối ưu cắt và hệ thống API đám mây.',
+    name: 'Trần Hữu Văn',
+    role: 'Tech Lead & Fullstack Engineer',
+    bio: 'Phát triển lõi tính toán bóc tách vật tư BOM, tối ưu cắt, hệ thống API đám mây và giao diện web.',
     avatarUrl: '',
   },
   {
-    name: 'Lê Hoàng Nam',
-    role: 'Frontend & CAD 2D/3D Engineer',
-    bio: 'Xây dựng giao diện thiết kế cửa CAD 2D/3D trực quan và trải nghiệm người dùng web.',
-    avatarUrl: '',
-  },
-  {
-    name: 'Phạm Quốc Bảo',
-    role: 'Mobile & QA Engineer',
-    bio: 'Phát triển ứng dụng thực địa công trình và kiểm thử quy trình vận hành khép kín.',
+    name: 'Nguyễn Quang Linh',
+    role: 'Fullstack & CAD 2D/3D Engineer',
+    bio: 'Xây dựng giao diện thiết kế cửa CAD 2D/3D trực quan, trải nghiệm người dùng và tích hợp hệ thống.',
     avatarUrl: '',
   },
 ];
@@ -232,4 +255,33 @@ export const INTRODUCE_QUICK_STATS = [
   { label: 'Gửi link 2D/3D trực tiếp cho khách', value: 'Bản vẽ & Báo giá nhanh', icon: PencilRuler },
   { label: 'Hướng dẫn setup hệ nhôm theo xưởng', value: 'Đồng hành triển khai 1-1', icon: Wrench },
   { label: 'Phân quyền chặt chẽ từng bộ phận', value: 'Bảo mật dữ liệu riêng', icon: ShieldCheck },
+];
+
+export interface MissionPillar {
+  title: string;
+  desc: string;
+  icon: LucideIcon;
+}
+
+export const MISSION_PILLARS: MissionPillar[] = [
+  {
+    title: 'Số hóa thực chất cho xưởng Việt',
+    desc: 'Biến những đầu việc thủ công trên giấy tờ, Zalo và Excel thành quy trình gọn gàng, dễ áp dụng cho cả chủ xưởng lẫn thợ kỹ thuật.',
+    icon: Layers,
+  },
+  {
+    title: 'Đơn giản hóa nghiệp vụ kỹ thuật',
+    desc: 'Từ bản vẽ CAD 2D/3D, bóc tách thanh nhôm đến thẻ cắt A4 và quản lý kho — mọi thao tác đều trực quan để ai trong xưởng cũng dùng được.',
+    icon: Wrench,
+  },
+  {
+    title: 'Minh bạch số liệu từ xưởng đến công trình',
+    desc: 'Kết nối chặt chẽ giữa kho vật tư, tiến độ gia công, chấm công thực địa và báo cáo lãi/lỗ để chủ doanh nghiệp nắm rõ tình hình mỗi ngày.',
+    icon: TrendingUp,
+  },
+  {
+    title: 'Đồng hành bền vững cùng doanh nghiệp',
+    desc: 'Không chỉ bàn giao phần mềm, đội ngũ XTTECH sát cánh từ khâu thiết lập hệ nhôm, đào tạo nhân sự đến tối ưu vận hành lâu dài.',
+    icon: ShieldCheck,
+  },
 ];

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { ArrowRight, FileSpreadsheet, Sparkles } from 'lucide-react';
@@ -13,6 +13,16 @@ interface IntroduceHeroSectionProps {
 const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionProps) {
+  const [activeModIdx, setActiveModIdx] = useState(0);
+  const [isModPaused, setIsModPaused] = useState(false);
+
+  useEffect(() => {
+    if (isModPaused) return;
+    const timer = setInterval(() => {
+      setActiveModIdx((prev) => (prev + 1) % ECOSYSTEM_MODULES.length);
+    }, 3200);
+    return () => clearInterval(timer);
+  }, [isModPaused]);
   return (
     <section className="relative overflow-hidden bg-linear-to-br from-hero-bg-from via-primary to-hero-bg-to py-14 text-white sm:py-20">
       <div
@@ -93,22 +103,33 @@ export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionPro
         </div>
 
         {/* 3 phân hệ cốt lõi */}
-        <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div
+          onMouseEnter={() => setIsModPaused(true)}
+          onMouseLeave={() => setIsModPaused(false)}
+          className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3"
+        >
           {ECOSYSTEM_MODULES.map((mod, idx) => {
             const Icon = mod.icon;
+            const isActive = idx === activeModIdx;
             return (
               <motion.div
                 key={mod.code}
                 initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.48, delay: 0.28 + idx * 0.08, ease: EASE_OUT }}
-                whileHover={{ y: -4 }}
-                className="group relative overflow-hidden rounded-lg border border-white/70 bg-white/95 p-4 text-slate-900 shadow-xl shadow-black/15 transition-shadow duration-200 hover:shadow-2xl"
+                animate={{ opacity: 1, y: isActive ? -4 : 0 }}
+                transition={{ duration: 0.45, delay: 0.28 + idx * 0.08, ease: EASE_OUT }}
+                whileHover={{ y: -5 }}
+                onMouseEnter={() => setActiveModIdx(idx)}
+                className={`group relative overflow-hidden rounded-lg border bg-white/95 p-4 text-slate-900 transition-shadow duration-300 ${
+                  isActive ? 'border-hero-accent shadow-2xl' : 'border-white/70 shadow-xl shadow-black/15 hover:shadow-2xl'
+                }`}
               >
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 top-0 h-0.5 origin-left scale-x-0 bg-linear-to-r from-primary via-hero-accent to-primary transition-transform duration-300 group-hover:scale-x-100"
-                />
+                {isActive && (
+                  <motion.span
+                    layoutId="heroModuleActiveBar"
+                    transition={{ type: 'spring', stiffness: 360, damping: 30 }}
+                    className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary via-hero-accent to-primary"
+                  />
+                )}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-transform duration-200 group-hover:scale-105 group-hover:rotate-3">

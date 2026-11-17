@@ -1,11 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import { TARGET_AUDIENCES } from './introduce.constants';
 
+const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
 export function IntroduceAudienceSection() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return;
+    const timer = setInterval(() => {
+      setActiveIdx((prev) => (prev + 1) % TARGET_AUDIENCES.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
   return (
     <section className="border-b border-slate-100 bg-slate-50/70 py-14 sm:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -13,7 +26,7 @@ export function IntroduceAudienceSection() {
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45 }}
+          transition={{ duration: 0.45, ease: EASE_OUT }}
           className="mx-auto max-w-3xl text-center"
         >
           <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
@@ -27,27 +40,57 @@ export function IntroduceAudienceSection() {
           </p>
         </motion.div>
 
-        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2"
+        >
           {TARGET_AUDIENCES.map((aud, idx) => {
             const Icon = aud.icon;
+            const isActive = idx === activeIdx;
+
             return (
               <motion.div
                 key={aud.title}
                 initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.4, delay: idx * 0.06 }}
-                whileHover={{ y: -3 }}
-                className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs transition-shadow hover:shadow-md"
+                animate={isActive ? { y: -3 } : { y: 0 }}
+                transition={{ duration: 0.4, delay: idx * 0.06, ease: EASE_OUT }}
+                whileHover={{ y: -4 }}
+                onMouseEnter={() => setActiveIdx(idx)}
+                className={`relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-white p-6 transition-all duration-300 ${
+                  isActive
+                    ? 'border-primary/40 shadow-lg shadow-primary/10'
+                    : 'border-slate-200/90 shadow-xs hover:border-primary/30 hover:shadow-md'
+                }`}
               >
+                {isActive && (
+                  <motion.span
+                    layoutId="audienceActiveBar"
+                    transition={{ type: 'spring', stiffness: 360, damping: 30 }}
+                    className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary via-hero-accent to-primary"
+                  />
+                )}
+
                 <div>
                   <div className="flex items-center gap-3.5">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <motion.span
+                      animate={isActive ? { scale: 1.08 } : { scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors duration-300 ${
+                        isActive
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'bg-primary/10 text-primary'
+                      }`}
+                    >
                       <Icon className="h-5 w-5" />
-                    </span>
+                    </motion.span>
                     <div>
-                      <h3 className="text-base font-extrabold text-slate-900">{aud.title}</h3>
-                      <p className="text-xs font-medium text-primary">{aud.subtitle}</p>
+                      <h3 className={`text-base font-extrabold transition-colors ${isActive ? 'text-primary' : 'text-slate-900'}`}>
+                        {aud.title}
+                      </h3>
+                      <p className="text-xs font-medium text-primary/85">{aud.subtitle}</p>
                     </div>
                   </div>
 
