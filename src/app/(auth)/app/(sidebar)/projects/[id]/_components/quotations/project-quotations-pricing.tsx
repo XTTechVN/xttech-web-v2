@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { BarChart3, FileText, Wallet } from 'lucide-react';
+import { BarChart3, ClipboardList, FileText, Wallet } from 'lucide-react';
 import { Skeleton, Tabs } from '@/components';
 import type { QuotationDoorItemSnapshot } from '@/types';
 import { DesignOptionsBar } from './components/design-options-bar';
@@ -13,6 +13,7 @@ import { QuotationPreviewPanel } from './components/quotation-preview-panel';
 import { QuotationPreviewTab } from './components/quotation-preview-tab';
 import { QuotationStatusBanner } from './components/quotation-status-banner';
 import { QuotationSummaryCards } from './components/quotation-summary-cards';
+import { QuotationTechnicalSheetsTab } from './components/quotation-technical-sheets-tab';
 import { useProjectQuotation } from './hooks/use-project-quotation';
 import { useQuotationForm } from './hooks/use-quotation-form';
 import { useQuotationPriceDrafts } from './hooks/use-quotation-price-drafts';
@@ -24,6 +25,7 @@ interface ProjectQuotationsPricingProps {
 const PRICING_TABS = [
   { value: 'config', label: 'Cấu thành giá', icon: <Wallet size={15} /> },
   { value: 'analysis', label: 'Chi tiết từng bộ cửa', icon: <BarChart3 size={15} /> },
+  { value: 'technical_sheets', label: 'Hồ sơ kỹ thuật cửa', icon: <ClipboardList size={15} /> },
   { value: 'sheet', label: 'Xem trước báo giá', icon: <FileText size={15} /> },
 ];
 
@@ -129,6 +131,15 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
             Dự án chưa có báo giá. Hãy lập báo giá ở tab &quot;Cấu thành giá&quot;.
           </div>
         ))}
+
+      {activeTab === 'technical_sheets' && (
+        <QuotationTechnicalSheetsTab
+          key={optionId ?? 'official'}
+          projectId={projectId}
+          designOptionId={optionId}
+          floors={api.floors}
+        />
+      )}
 
       {activeTab === 'sheet' &&
         (quotation ? (

@@ -114,6 +114,7 @@ export const QUOTATION_MATERIAL_ROW_LABEL_MAP: Record<QuotationMaterialRowCode, 
   glass: 'Kính',
   gasket: 'Roan / Gioăng',
   accessory: 'Phụ kiện',
+  outsourced_door: 'Cửa nhập nguyên bộ (NCC)',
 };
 
 export const QUOTATION_LABOR_ROW_LABEL_MAP: Record<QuotationLaborRowCode, string> = {

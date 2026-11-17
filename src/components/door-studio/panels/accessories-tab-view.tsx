@@ -10,7 +10,7 @@ import {
   formatAccessoryUnit,
 } from '@/types';
 import { Search, Boxes, Package, Plus } from 'lucide-react';
-import { ComboCategoryTab, detectComboCategory, detectComboBrand } from './accessories/types';
+import { ComboCategoryTab, detectComboCategory, detectComboBrand, getEffectiveComboPrice } from './accessories/types';
 import { SelectedItemsPanel } from './accessories/selected-items-panel';
 import { IndividualAccessoriesView } from './accessories/individual-accessories-view';
 import { ComboModal } from './accessories/modals';
@@ -118,8 +118,8 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
     [combos, selectedComboIds]
   );
 
-  const totalCombosPrice = useMemo(() =>
-    selectedCombos.reduce((sum, c) => sum + (c.totalComboPrice || 0), 0),
+  const totalCombosPrice = useMemo(
+    () => selectedCombos.reduce((sum, c) => sum + getEffectiveComboPrice(c), 0),
     [selectedCombos]
   );
 
@@ -133,10 +133,6 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
   );
 
   const totalAmount = totalCombosPrice + totalIndividualPrice;
-  const effectiveTotal = calcData
-    ? (calcData.totalJointPrice || 0) + (calcData.totalAccessoryPrice || 0)
-    : totalAmount;
-  const isScaledTotal = Boolean(calcData && effectiveTotal !== totalAmount);
   const totalIndividualCount = selectedAccessories.reduce((sum, a) => sum + a.quantity, 0);
 
   const searchPlaceholder = useMemo(() => {
@@ -345,6 +341,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
                           const catLabel = cat === 'frame' ? 'Khung' : cat === 'sash' ? 'Cánh' : 'Hướng mở';
                           const itemsCount = combo.comboItems?.length || 0;
                           const brand = detectComboBrand(combo, brands);
+                          const comboPrice = getEffectiveComboPrice(combo);
 
                           return (
                             <React.Fragment key={combo.id}>
@@ -377,10 +374,10 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
                                     <span>{itemsCount} món</span>
                                   </button>
                                 </td>
-                                <td className="py-2.5 px-3 text-right font-bold text-slate-900">
-                                  {combo.totalComboPrice
-                                    ? `${combo.totalComboPrice.toLocaleString('vi-VN')} đ`
-                                    : '-'}
+                                <td className="py-2.5 px-3 text-right font-bold text-slate-900 tabular-nums">
+                                  {comboPrice > 0
+                                    ? `${comboPrice.toLocaleString('vi-VN')} đ`
+                                    : '—'}
                                 </td>
                                 <td className="py-2.5 px-3 text-center">
                                   {isSelected ? (
@@ -500,19 +497,9 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5">
-          {isScaledTotal && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-              Theo BOM thực tế
-            </span>
-          )}
           <span className="text-[11px] text-slate-500">Tạm tính:</span>
-          {isScaledTotal && totalAmount > 0 && (
-            <span className="text-[11px] text-slate-400 line-through tabular-nums">
-              {totalAmount.toLocaleString('vi-VN')} đ
-            </span>
-          )}
-          <span className={`font-bold text-sm tabular-nums ${effectiveTotal > 0 ? 'text-primary' : 'text-slate-400'}`}>
-            {effectiveTotal > 0 ? `${effectiveTotal.toLocaleString('vi-VN')} đ` : '0 đ'}
+          <span className={`font-bold text-sm tabular-nums ${totalAmount > 0 ? 'text-primary' : 'text-slate-400'}`}>
+            {totalAmount > 0 ? `${totalAmount.toLocaleString('vi-VN')} đ` : '0 đ'}
           </span>
         </div>
       </div>

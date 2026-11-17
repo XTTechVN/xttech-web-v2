@@ -46,6 +46,13 @@ const SHEET_PRINT_CSS = `
     padding: 0 !important;
     margin: 0 !important;
   }
+  .production-sheet-letterhead,
+  .production-sheet-footer {
+    display: flex !important;
+  }
+  .production-sheet-web-only {
+    display: none !important;
+  }
   .production-sheet-left-col {
     grid-column: span 5 / span 5 !important;
   }
@@ -54,22 +61,30 @@ const SHEET_PRINT_CSS = `
   }
 `;
 
-const waitForImages = (doc: Document): Promise<unknown> =>
-  Promise.all(
-    Array.from(doc.images)
-      .filter((image) => !image.complete)
-      .map(
-        (image) =>
-          new Promise<void>((resolve) => {
-            image.addEventListener('load', () => resolve(), { once: true });
-            image.addEventListener('error', () => resolve(), { once: true });
-          }),
-      ),
+const waitForImages = (doc: Document): Promise<unknown> => {
+  const pending = Array.from(doc.images).filter((image) => !image.complete);
+  if (pending.length === 0) return Promise.resolve();
+
+  const allImagesPromise = Promise.all(
+    pending.map(
+      (image) =>
+        new Promise<void>((resolve) => {
+          image.addEventListener('load', () => resolve(), { once: true });
+          image.addEventListener('error', () => resolve(), { once: true });
+        }),
+    ),
   );
+
+  return Promise.race([
+    allImagesPromise,
+    new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+  ]);
+};
 
 export async function printProductionSheets(
   containerEl: HTMLElement,
-  orderCode: string,
+  code: string,
+  titlePrefix = 'The-san-xuat',
 ): Promise<void> {
   const headStyles = Array.from(
     document.querySelectorAll('style, link[rel="stylesheet"]'),
@@ -92,7 +107,7 @@ export async function printProductionSheets(
   frameDoc.open();
   frameDoc.write(
     `<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><base href="${window.location.origin}/">` +
-      `<title>${escapeHtml(`The-san-xuat-${orderCode}`)}</title>` +
+      `<title>${escapeHtml(`${titlePrefix}-${code}`)}</title>` +
       `${headStyles}<style>${SHEET_PRINT_CSS}</style></head>` +
       `<body>${containerEl.outerHTML}</body></html>`,
   );
@@ -105,4 +120,3 @@ export async function printProductionSheets(
   frameWindow.focus();
   frameWindow.print();
 }
-

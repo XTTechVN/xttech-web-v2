@@ -1,5 +1,79 @@
+import {
+  DEFAULT_FRAME_CONFIG,
+  DEFAULT_SASH_CONFIG,
+  type FrameConfig,
+  type FrameShape,
+  type SashConfig,
+  type SceneCellNode,
+} from '@/components';
 import type { ProductionSheet, ProductionSheetGasketItem } from '@/types';
-import type { CombinedSheetAccessory } from '../types';
+import type { CombinedSheetAccessory, FulfillmentFilter, SheetCadProps } from './technical-sheets.types';
+
+interface RawSheetSystemConfig {
+  w?: unknown;
+  h?: unknown;
+  aluminumColor?: unknown;
+  hardwareColor?: unknown;
+  frameShape?: unknown;
+  frameConfig?: unknown;
+  sashConfig?: unknown;
+  rootCell?: unknown;
+}
+
+const isRecord = (val: unknown): val is Record<string, unknown> =>
+  typeof val === 'object' && val !== null && !Array.isArray(val);
+
+const isSceneCellNode = (val: unknown): val is SceneCellNode =>
+  isRecord(val) && ('id' in val || 'w' in val || 'sashType' in val || 'children' in val);
+
+export function extractSheetCadProps(
+  sheet: ProductionSheet,
+  configOverride?: Record<string, unknown> | null,
+): SheetCadProps {
+  const raw = (configOverride ?? sheet.systemConfig ?? {}) as RawSheetSystemConfig;
+  const scW = typeof raw.w === 'number' && Number.isFinite(raw.w) ? raw.w : 0;
+  const scH = typeof raw.h === 'number' && Number.isFinite(raw.h) ? raw.h : 0;
+  const w = Number(sheet.width) || scW || 900;
+  const h = Number(sheet.height) || scH || 1200;
+
+  const aluminumColor =
+    typeof raw.aluminumColor === 'string' && raw.aluminumColor ? raw.aluminumColor : '#4A5568';
+  const hardwareColor =
+    typeof raw.hardwareColor === 'string' && raw.hardwareColor ? raw.hardwareColor : '#1A202C';
+  const frameShape = (
+    typeof raw.frameShape === 'string' && raw.frameShape ? raw.frameShape : 'rect'
+  ) as FrameShape;
+
+  const rawFrame = isRecord(raw.frameConfig) ? (raw.frameConfig as Partial<FrameConfig>) : null;
+  const frameConfig: FrameConfig = rawFrame
+    ? {
+        ...DEFAULT_FRAME_CONFIG,
+        ...rawFrame,
+        leftEdge: { ...DEFAULT_FRAME_CONFIG.leftEdge, ...(rawFrame.leftEdge ?? {}) },
+        topEdge: { ...DEFAULT_FRAME_CONFIG.topEdge, ...(rawFrame.topEdge ?? {}) },
+        rightEdge: { ...DEFAULT_FRAME_CONFIG.rightEdge, ...(rawFrame.rightEdge ?? {}) },
+        bottomEdge: { ...DEFAULT_FRAME_CONFIG.bottomEdge, ...(rawFrame.bottomEdge ?? {}) },
+      }
+    : DEFAULT_FRAME_CONFIG;
+
+  const rawSash = isRecord(raw.sashConfig) ? (raw.sashConfig as Partial<SashConfig>) : null;
+  const sashConfig: SashConfig = rawSash
+    ? { ...DEFAULT_SASH_CONFIG, ...rawSash }
+    : DEFAULT_SASH_CONFIG;
+
+  const rootCell: SceneCellNode | null = isSceneCellNode(raw.rootCell) ? raw.rootCell : null;
+
+  return {
+    w,
+    h,
+    aluminumColor,
+    hardwareColor,
+    frameShape,
+    frameConfig,
+    sashConfig,
+    rootCell,
+  };
+}
 
 export function buildCombinedSheetAccessories(sheet: ProductionSheet): CombinedSheetAccessory[] {
   const combinedMap = new Map<string, CombinedSheetAccessory>();
@@ -96,4 +170,19 @@ export function buildNormalizedSheetGaskets(sheet: ProductionSheet): ProductionS
   return Array.from(grouped.values());
 }
 
-
+export function filterTechnicalSheets(
+  sheets: ProductionSheet[],
+  floorId: number | 'all',
+  fulfillmentFilter: FulfillmentFilter,
+): ProductionSheet[] {
+  return sheets.filter((sheet) => {
+    if (floorId !== 'all' && sheet.floorId !== floorId) return false;
+    if (
+      fulfillmentFilter !== 'all' &&
+      (sheet.fulfillmentType ?? 'in_house') !== fulfillmentFilter
+    ) {
+      return false;
+    }
+    return true;
+  });
+}

@@ -9,8 +9,8 @@ import {
   formatAccessoryUnit,
 } from '@/types';
 import { Trash2, X, Package, Boxes, Minus, Plus } from 'lucide-react';
-import { detectComboCategory } from './types';
-import { resolveComboItemsBom, resolveSelectedComboTotalPrice } from './combo-bom-resolver';
+import { detectComboCategory, getEffectiveComboPrice } from './types';
+import { HardwareWarningsBanner } from '../results';
 
 interface SelectedItemsPanelProps {
   selectedCombos: AccessoryCombo[];
@@ -52,6 +52,8 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
 
   return (
     <div className="space-y-2.5">
+      <HardwareWarningsBanner warnings={calcData?.hardwareWarnings} compact />
+
       <div className="flex items-center justify-between">
         <div className="font-bold text-xs text-gray-800 flex items-center gap-1.5">
           <span>Chi tiết ({totalCount} mục đã chọn)</span>
@@ -105,10 +107,8 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                 {selectedCombos.map((c) => {
                   const cat = detectComboCategory(c);
                   const isExpanded = !collapsedComboIds.includes(c.id);
-                  const staticPrice = c.totalComboPrice || 0;
-                  const resolvedPrice = resolveSelectedComboTotalPrice(c, calcData);
-                  const resolvedItems = resolveComboItemsBom(c, calcData);
-                  const isPriceAdjusted = Boolean(calcData && resolvedPrice !== staticPrice);
+                  const comboPrice = getEffectiveComboPrice(c);
+                  const comboItems = c.comboItems || [];
 
                   return (
                     <div key={c.id} className="p-3 hover:bg-slate-50/50 transition-colors space-y-2">
@@ -125,7 +125,7 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                           <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-2">
                             <span>{c.code || '---'}</span>
                             <span>·</span>
-                            <span>{c.comboItems?.length || 0} vật tư</span>
+                            <span>{comboItems.length} vật tư</span>
                             <button
                               type="button"
                               onClick={() => toggleCollapseCombo(c.id)}
@@ -138,13 +138,8 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
 
                         <div className="flex items-center gap-2 shrink-0">
                           <div className="text-right">
-                            {isPriceAdjusted && staticPrice > 0 && (
-                              <span className="block text-[10px] text-slate-400 line-through tabular-nums">
-                                {staticPrice.toLocaleString('vi-VN')} đ
-                              </span>
-                            )}
-                            <span className={`text-xs tabular-nums ${resolvedPrice > 0 ? 'font-bold text-primary' : 'text-slate-400'}`}>
-                              {resolvedPrice > 0 ? `${resolvedPrice.toLocaleString('vi-VN')} đ` : '0 đ'}
+                            <span className={`text-xs tabular-nums ${comboPrice > 0 ? 'font-bold text-primary' : 'text-slate-400'}`}>
+                              {comboPrice > 0 ? `${comboPrice.toLocaleString('vi-VN')} đ` : '0 đ'}
                             </span>
                           </div>
                           <button
@@ -158,31 +153,25 @@ export const SelectedItemsPanel: React.FC<SelectedItemsPanelProps> = ({
                         </div>
                       </div>
 
-                      {isExpanded && resolvedItems.length > 0 && (
+                      {isExpanded && comboItems.length > 0 && (
                         <div className="p-2 bg-slate-50/80 rounded-lg border border-slate-200/60 text-[11px] space-y-1.5">
-                          {resolvedItems.map((item, idx) => {
+                          {comboItems.map((item, idx) => {
                             const unitLabel = formatAccessoryUnit(item.unit) || 'Cái';
                             return (
-                              <div key={idx} className="space-y-0.5">
-                                <div className="flex justify-between items-center gap-2 text-slate-700">
-                                  <span className="truncate font-medium">
+                              <div key={`${item.accessoryId}-${idx}`} className="flex justify-between items-center gap-2 text-slate-700">
+                                <div className="min-w-0 flex-1">
+                                  <span className="truncate font-medium block">
                                     {idx + 1}. {item.accessoryName || item.accessoryCode || `Phụ kiện #${item.accessoryId}`}
                                   </span>
-                                  {item.isScaled ? (
-                                    <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-semibold text-[10px] shrink-0 tabular-nums">
-                                      Định mức ×{item.baseQty} → Thực tế ×{item.resolvedQty} {unitLabel}
-                                    </span>
-                                  ) : (
-                                    <span className="text-slate-500 shrink-0 font-semibold tabular-nums">
-                                      ×{item.resolvedQty} {unitLabel}
+                                  {item.note && (
+                                    <span className="text-[10px] text-slate-400 italic block truncate pl-3">
+                                      {item.note}
                                     </span>
                                   )}
                                 </div>
-                                {item.formula && (
-                                  <div className="text-[10px] text-primary/80 pl-3 font-medium">
-                                    ↳ Quy đổi: {item.formula}
-                                  </div>
-                                )}
+                                <span className="text-slate-600 shrink-0 font-semibold tabular-nums">
+                                  ×{item.quantity} {unitLabel}
+                                </span>
                               </div>
                             );
                           })}

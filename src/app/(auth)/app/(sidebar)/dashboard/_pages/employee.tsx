@@ -12,6 +12,7 @@ import WeeklyAttendanceChart from '../_components/weekly-attendance-chart';
 import LiveStaffWidget from '../_components/live-staff-widget';
 import { DepartmentRosterWidget } from '../_components/department-roster-widget';
 import { MyTasksReminderWidget } from '../_components/my-tasks-reminder-widget';
+import { LatestRulesWidget } from '../_components/latest-rules-widget';
 import { Clock, CheckCircle2, Users, Navigation } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -67,6 +68,7 @@ export const EmployeeDashboard = () => {
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
         />
         <MyTasksReminderWidget />
+        <LatestRulesWidget />
         <DepartmentRosterWidget />
         <PersonalAttendanceHistory />
       </div>
@@ -89,6 +91,7 @@ export const EmployeeDashboard = () => {
         <div className="grid grid-cols-12 gap-4 min-w-0">
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
             <MyTasksReminderWidget />
+            <LatestRulesWidget />
             <QuickAttendanceCard attendance={data?.myAttendance} />
             <WeeklyAttendanceChart
               data={data?.weeklyStats}

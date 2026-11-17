@@ -3,6 +3,7 @@
 import React from 'react';
 import { DoorCalculateResponse, formatAccessoryUnit } from '@/types';
 import { CORNER_JOINT_POSITION_MAP, CORNER_JOINT_TYPE_MAP } from '@/config';
+import { HardwareWarningsBanner } from './hardware-warnings-banner';
 
 interface ResultsHardwareSectionProps {
   calcData: DoorCalculateResponse;
@@ -19,6 +20,11 @@ export const ResultsHardwareSection: React.FC<ResultsHardwareSectionProps> = ({ 
 
   return (
     <div className="space-y-5 text-xs">
+      <HardwareWarningsBanner
+        warnings={calcData.hardwareWarnings}
+        fallbackUnconfigured={calcData.hasUnconfiguredJoints}
+      />
+
       {/* 1. Con ke & Liên kết góc */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -44,7 +50,7 @@ export const ResultsHardwareSection: React.FC<ResultsHardwareSectionProps> = ({ 
                   <th className="py-2.5 px-3">Vị trí</th>
                   <th className="py-2.5 px-3">Tên & Mã vật tư</th>
                   <th className="py-2.5 px-3">Kiểu liên kết</th>
-                  <th className="py-2.5 px-3">Công thức quy đổi</th>
+                  <th className="py-2.5 px-3">Ghi chú</th>
                   <th className="py-2.5 px-3 text-center">Số lượng</th>
                   <th className="py-2.5 px-3 text-right">Đơn giá</th>
                   <th className="py-2.5 px-3 text-right">Thành tiền</th>
@@ -88,8 +94,8 @@ export const ResultsHardwareSection: React.FC<ResultsHardwareSectionProps> = ({ 
                           {typeCfg.label}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-600 font-mono text-[11px]">
-                        {j.formula || '—'}
+                      <td className="py-2.5 px-3 text-slate-600 text-[11px]">
+                        {j.note || 'Theo gói đã chọn'}
                       </td>
                       <td className="py-2.5 px-3 text-center font-bold text-slate-900 tabular-nums whitespace-nowrap">
                         {j.qty} <span className="font-normal text-slate-500 text-[11px]">{unitLabel}</span>
@@ -133,7 +139,7 @@ export const ResultsHardwareSection: React.FC<ResultsHardwareSectionProps> = ({ 
                 <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50/70 text-[11px]">
                   <th className="py-2.5 px-3">Tên & Mã phụ kiện</th>
                   <th className="py-2.5 px-3">Thuộc gói / Nguồn</th>
-                  <th className="py-2.5 px-3">Quy đổi theo cửa</th>
+                  <th className="py-2.5 px-3">Ghi chú</th>
                   <th className="py-2.5 px-3 text-center">Số lượng</th>
                   <th className="py-2.5 px-3 text-right">Đơn giá</th>
                   <th className="py-2.5 px-3 text-right">Thành tiền</th>
@@ -155,16 +161,13 @@ export const ResultsHardwareSection: React.FC<ResultsHardwareSectionProps> = ({ 
                           {item.brandName && (
                             <span className="text-primary font-medium">· {item.brandName}</span>
                           )}
-                          {item.note && (
-                            <span className="text-slate-400 italic">({item.note})</span>
-                          )}
                         </div>
                       </td>
                       <td className="py-2.5 px-3 text-slate-600">
                         {item.comboName || 'Phụ kiện lẻ'}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-600 font-mono text-[11px]">
-                        {item.scaleFormula || (item.baseQuantity && item.baseQuantity !== item.quantity ? `Định mức ${item.baseQuantity} → ${item.quantity}` : 'Giữ nguyên định mức')}
+                      <td className="py-2.5 px-3 text-slate-600 text-[11px]">
+                        {item.note || '—'}
                       </td>
                       <td className="py-2.5 px-3 text-center font-bold text-slate-900 tabular-nums whitespace-nowrap">
                         {item.quantity} <span className="font-normal text-slate-500 text-[11px]">{unitLabel}</span>

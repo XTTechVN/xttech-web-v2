@@ -22,6 +22,8 @@ export interface DoorTypeConfig {
 }
 
 export const DOOR_TYPE_LABELS: Record<string, string> = {
+  door: 'Cửa đi',
+  window: 'Cửa sổ',
   glass_wall: 'Vách kính',
   casement_window: 'Cửa sổ mở quay',
   sliding_window: 'Cửa sổ lùa',
@@ -308,6 +310,31 @@ export interface GasketBOMItem {
   note?: string | null;
 }
 
+export type HardwareWarningTarget = 'frame' | 'sash' | 'safety_frame' | 'opening' | 'dynamic_mullion';
+export type HardwareWarningSeverity = 'warning' | 'info';
+export type HardwareWarningCode =
+  | 'missing_frame_corner_joint'
+  | 'insufficient_frame_corner_joint'
+  | 'missing_sash_corner_joint'
+  | 'insufficient_sash_corner_joint'
+  | 'missing_safety_corner_joint'
+  | 'insufficient_safety_corner_joint'
+  | 'missing_opening_hardware'
+  | 'insufficient_opening_combo_sashes'
+  | 'missing_dynamic_mullion_accessory'
+  | 'insufficient_dynamic_mullion_accessory';
+
+export interface HardwareWarningItem {
+  code: HardwareWarningCode;
+  target: HardwareWarningTarget;
+  severity: HardwareWarningSeverity;
+  requiredQty: number;
+  selectedQty: number;
+  shortageQty: number;
+  unit: string;
+  message: string;
+}
+
 export interface DoorCalculateResponse {
   w: number;
   h: number;
@@ -332,6 +359,7 @@ export interface DoorCalculateResponse {
   totalGasketLengthM?: number;
   totalGasketPrice?: number;
   hasUnconfiguredJoints?: boolean;
+  hardwareWarnings?: HardwareWarningItem[];
 }
 
 export interface DoorCalculateRequest {

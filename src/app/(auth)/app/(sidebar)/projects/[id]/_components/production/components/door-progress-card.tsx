@@ -2,7 +2,9 @@
 
 import React from 'react';
 import { Check, ImageOff } from 'lucide-react';
+import { DOOR_FULFILLMENT_TYPE_MAP } from '@/config';
 import { cn } from '@/utils/cn';
+import { resolvePositionVisual } from '@/utils';
 import type { ProgressMatrixItem, ProjectDoorPosition } from '@/types';
 import { DoorThumbnail } from '@/components';
 
@@ -19,9 +21,16 @@ export function DoorProgressCard({
   isSelected,
   onToggle,
 }: DoorProgressCardProps) {
-  const hasSvg = !!(position.systemConfig as Record<string, unknown> | undefined)?.rootCell;
+  const isOutsourced = position.fulfillmentType === 'outsourced';
+  const visual = resolvePositionVisual({
+    visualMode: position.visualMode,
+    customImagePath: position.customImagePath,
+    catalogImagePath: position.supplierDoor?.imagePath ?? null,
+    systemConfig: (position.systemConfig as Record<string, unknown> | undefined) ?? null,
+  });
   const doorName = position.description || (position.doorType === 'window' ? 'Cửa sổ' : 'Cửa đi');
   const floorText = position.floor?.name || matrixItem?.floorName || 'Tầng 1';
+  const secondaryMeta = isOutsourced ? position.supplier?.name : position.color?.name;
 
   return (
     <div
@@ -34,12 +43,21 @@ export function DoorProgressCard({
       )}
     >
       <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-white px-3 py-2">
-        <span className="text-xs font-bold tracking-tight text-slate-800" title={position.code}>
-          {position.code}
-        </span>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="text-xs font-bold tracking-tight text-slate-800" title={position.code}>
+            {position.code}
+          </span>
+          {isOutsourced && (
+            <span
+              className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold ${DOOR_FULFILLMENT_TYPE_MAP.outsourced.badgeClass}`}
+            >
+              {DOOR_FULFILLMENT_TYPE_MAP.outsourced.shortLabel}
+            </span>
+          )}
+        </div>
         <div
           className={cn(
-            'flex h-4 w-4 items-center justify-center rounded border transition-colors',
+            'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
             isSelected
               ? 'border-primary bg-primary text-white'
               : 'border-slate-300 bg-white group-hover:border-primary/60',
@@ -50,18 +68,25 @@ export function DoorProgressCard({
       </div>
 
       <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-slate-50/60 p-2">
-        {hasSvg ? (
+        {visual.systemConfig ? (
           <div className="pointer-events-none h-full w-full p-1 transition-transform duration-300 group-hover:scale-105">
             <DoorThumbnail
-              systemConfig={position.systemConfig}
+              systemConfig={visual.systemConfig}
               hideDimensions={false}
               className="h-full w-full"
             />
           </div>
+        ) : visual.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={visual.imageUrl}
+            alt={doorName}
+            className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+          />
         ) : (
           <div className="flex flex-col items-center gap-1 text-slate-300">
             <ImageOff size={24} />
-            <span className="text-[10px]">Chưa có bản vẽ CAD</span>
+            <span className="text-[10px]">Chưa có hình ảnh</span>
           </div>
         )}
       </div>
@@ -71,7 +96,7 @@ export function DoorProgressCard({
           {doorName}
         </p>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-500">
+        <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono tabular-nums">
           <span>
             {position.width} × {position.height} mm
           </span>
@@ -80,9 +105,9 @@ export function DoorProgressCard({
 
         <div className="flex items-center justify-between pt-0.5 text-[10px] text-slate-400">
           <span className="truncate">{floorText}</span>
-          {position.color?.name && (
-            <span className="max-w-[90px] truncate" title={position.color.name}>
-              {position.color.name}
+          {secondaryMeta && (
+            <span className="max-w-[95px] truncate" title={secondaryMeta}>
+              {secondaryMeta}
             </span>
           )}
         </div>
@@ -96,4 +121,3 @@ export function DoorProgressCard({
     </div>
   );
 }
-

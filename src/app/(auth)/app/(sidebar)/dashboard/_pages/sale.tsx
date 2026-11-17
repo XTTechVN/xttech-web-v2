@@ -13,6 +13,7 @@ import LiveStaffWidget from '../_components/live-staff-widget';
 import { FolderGit2, CheckCircle2, Clock, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MyTasksReminderWidget } from '../_components/my-tasks-reminder-widget';
+import { LatestRulesWidget } from '../_components/latest-rules-widget';
 
 export const SaleDashboard = () => {
   const router = useRouter();
@@ -66,6 +67,7 @@ export const SaleDashboard = () => {
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
         />
         <MyTasksReminderWidget />
+        <LatestRulesWidget />
         <PersonalAttendanceHistory />
       </div>
 
@@ -87,6 +89,7 @@ export const SaleDashboard = () => {
         <div className="grid grid-cols-12 gap-4 min-w-0">
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
             <MyTasksReminderWidget />
+            <LatestRulesWidget />
             <QuickAttendanceCard attendance={data?.myAttendance} />
             <WeeklyAttendanceChart
               data={data?.weeklyStats}
