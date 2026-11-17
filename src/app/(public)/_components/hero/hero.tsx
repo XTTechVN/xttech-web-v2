@@ -54,6 +54,7 @@ export const Hero = () => {
                 }`}
               >
                 <HeroRegisterInlineForm
+                  isOpen={isRegisterMode}
                   onBack={() => {
                     setIsRegisterMode(false);
                   }}

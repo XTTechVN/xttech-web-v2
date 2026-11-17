@@ -10,6 +10,7 @@ import { isValidEmail, isValidVnPhone } from '@/utils/validators';
 export interface HeroRegisterInlineFormProps {
   onBack: () => void;
   variant?: 'inline' | 'modal';
+  isOpen?: boolean;
   onSuccess?: () => void;
 }
 
@@ -39,6 +40,7 @@ const CYCLE_MS = 6 * 24 * 60 * 60 * 1000;
 export function HeroRegisterInlineForm({
   onBack,
   variant = 'inline',
+  isOpen = true,
   onSuccess,
 }: HeroRegisterInlineFormProps) {
   const [formData, setFormData] = useState<FormState>(INITIAL_FORM);
@@ -130,6 +132,17 @@ export function HeroRegisterInlineForm({
     setIsSubmitted(false);
   };
 
+  useEffect(() => {
+    if (!isOpen) {
+      setErrors({});
+    }
+  }, [isOpen]);
+
+  const handleBack = () => {
+    setErrors({});
+    onBack();
+  };
+
   return (
     <div
       className={
@@ -143,7 +156,7 @@ export function HeroRegisterInlineForm({
         <div className="relative z-30 flex items-center justify-between border-b border-slate-100 pb-2">
           <button
             type="button"
-            onClick={onBack}
+            onClick={handleBack}
             className="inline-flex items-center gap-1.5 py-2 pr-3 text-xs font-bold text-slate-600 hover:text-primary active:text-primary transition-colors cursor-pointer touch-manipulation group"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
@@ -153,7 +166,7 @@ export function HeroRegisterInlineForm({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={onBack}
+              onClick={handleBack}
               aria-label="Đóng form"
               className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 active:bg-slate-200 transition-colors cursor-pointer touch-manipulation"
             >
