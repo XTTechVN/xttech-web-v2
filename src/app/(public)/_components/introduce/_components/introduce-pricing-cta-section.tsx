@@ -16,7 +16,7 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
   const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(DEVELOPER_TEAM_MEMBERS.length, 4500);
 
   return (
-    <section className="bg-white py-14 sm:py-16">
+    <section className="bg-white pt-6 pb-14 sm:pt-8 sm:pb-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header 2 bên */}
         <motion.div

@@ -9,7 +9,7 @@ export function IntroduceBenefitsSection() {
   const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(SOFTWARE_BENEFITS.length, 2800);
 
   return (
-    <section className="border-b border-slate-100 bg-white pt-12 pb-8 sm:pt-16 sm:pb-10">
+    <section className="border-b border-slate-100 bg-white pt-6 pb-8 sm:pt-8 sm:pb-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}

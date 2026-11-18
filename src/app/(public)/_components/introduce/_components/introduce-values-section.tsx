@@ -141,7 +141,7 @@ export function IntroduceValuesSection() {
   const activeTab = VALUE_TABS[activeIdx];
 
   return (
-    <section className="relative overflow-hidden border-y border-slate-100 bg-white py-14 sm:py-18">
+    <section className="relative overflow-hidden border-y border-slate-100 bg-white py-8 sm:py-10">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -159,12 +159,12 @@ export function IntroduceValuesSection() {
           </h2>
         </motion.div>
 
-        {/* Thanh tab tối giản dạng gạch chân */}
-        <div className="mt-8 flex justify-center">
+        {/* Thanh tab tối giản dạng gạch chân (1 dòng trượt ngang trên mobile) */}
+        <div className="mt-8 w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div
             role="tablist"
             aria-label="Giá trị và định hướng XTTECH"
-            className="flex flex-wrap items-center justify-center gap-2 border-b border-slate-200 sm:gap-6"
+            className="inline-flex min-w-full items-center justify-start gap-2 border-b border-slate-200 sm:justify-center sm:gap-6"
           >
             {VALUE_TABS.map((tab, idx) => {
               const isActive = tab.id === activeTabId;
@@ -175,8 +175,15 @@ export function IntroduceValuesSection() {
                   type="button"
                   role="tab"
                   aria-selected={isActive}
-                  onClick={() => setActiveTabId(tab.id)}
-                  className={`relative flex cursor-pointer items-center gap-2 px-3 pt-2 pb-3.5 text-xs font-extrabold tracking-wide uppercase transition-colors duration-200 sm:px-4 sm:text-sm ${
+                  onClick={(e) => {
+                    setActiveTabId(tab.id);
+                    e.currentTarget.scrollIntoView({
+                      behavior: 'smooth',
+                      inline: 'center',
+                      block: 'nearest',
+                    });
+                  }}
+                  className={`relative flex shrink-0 cursor-pointer items-center gap-2 px-3 pt-2 pb-3.5 text-xs font-extrabold tracking-wide whitespace-nowrap uppercase transition-colors duration-200 sm:px-4 sm:text-sm ${
                     isActive ? 'text-primary' : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >

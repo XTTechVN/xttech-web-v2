@@ -10,7 +10,7 @@ export function IntroduceAudienceSection() {
   const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(TARGET_AUDIENCES.length, 3000);
 
   return (
-    <section className="border-b border-slate-100 bg-slate-50/70 pt-8 pb-12 sm:pt-10 sm:pb-16">
+    <section className="border-b border-slate-100 bg-white pt-8 pb-6 sm:pt-10 sm:pb-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}

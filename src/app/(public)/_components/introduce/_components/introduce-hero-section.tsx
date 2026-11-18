@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion } from 'motion/react';
 import { ArrowLeft, ArrowRight, CheckCircle2, FileSpreadsheet } from 'lucide-react';
 import { HeroRegisterInlineForm } from '@/app/(public)/_components/hero/hero-register-inline-form';
-import { ECOSYSTEM_MODULES, INTRODUCE_QUICK_STATS } from '@/app/(public)/_components/introduce/_components/introduce.constants';
+import { ECOSYSTEM_MODULES } from '@/app/(public)/_components/introduce/_components/introduce.constants';
 import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
 export function IntroduceHeroSection() {
@@ -203,31 +203,6 @@ export function IntroduceHeroSection() {
             );
           })}
         </div>
-
-        {/* 4 điểm mạnh vận hành */}
-        <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {INTRODUCE_QUICK_STATS.map((stat, idx) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.value}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.42, delay: 0.32 + idx * 0.06, ease: INTRODUCE_EASE_OUT }}
-                whileHover={{ y: -2, scale: 1.01 }}
-                className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm transition-colors hover:border-hero-accent/40 hover:bg-white/15"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-hero-accent text-hero-ink shadow-xs">
-                  <Icon className="h-4.5 w-4.5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-extrabold text-white sm:text-sm">{stat.value}</p>
-                  <p className="truncate text-[11px] text-teal-100/85">{stat.label}</p>
-                </div>
-              </motion.div>
-            );
-          })}
-          </div>
         </div>
         </div>
       </div>
