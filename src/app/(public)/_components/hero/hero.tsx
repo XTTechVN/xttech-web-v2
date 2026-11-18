@@ -115,7 +115,7 @@ export const Hero = () => {
                         className="group inline-flex items-center justify-center gap-2 rounded-lg bg-hero-accent px-6 py-3.5 text-sm font-bold text-hero-ink shadow-lg shadow-black/20 transition-all hover:bg-hero-accent-hover hover:shadow-xl cursor-pointer"
                       >
                         <FileSpreadsheet className="h-4 w-4" />
-                        <span>Đăng ký ngay</span>
+                        <span>Đăng ký sử dụng miễn phí</span>
                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </button>
 

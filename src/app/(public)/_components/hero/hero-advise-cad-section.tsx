@@ -114,7 +114,7 @@ export const HeroAdviseCadSection = () => {
                 onClick={handleOpenRegisterModal}
                 className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-primary bg-white px-6 py-3 text-sm font-bold text-primary shadow-sm transition-colors duration-200 hover:border-primary hover:bg-primary hover:text-white"
               >
-                Đăng ký ngay
+                Đăng ký sử dụng miễn phí
               </button>
             </div>
           </div>

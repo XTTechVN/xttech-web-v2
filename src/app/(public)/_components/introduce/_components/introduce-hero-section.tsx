@@ -1,17 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { ArrowRight, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, FileSpreadsheet } from 'lucide-react';
+import { HeroRegisterInlineForm } from '@/app/(public)/_components/hero/hero-register-inline-form';
 import { ECOSYSTEM_MODULES, INTRODUCE_QUICK_STATS } from '@/app/(public)/_components/introduce/_components/introduce.constants';
 import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
-interface IntroduceHeroSectionProps {
-  onOpenRegister: () => void;
-}
-
-export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionProps) {
+export function IntroduceHeroSection() {
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
   const { activeIdx: activeModIdx, setActiveIdx: setActiveModIdx, pauseProps } = useSpotlightCycle(
     ECOSYSTEM_MODULES.length,
     3200,
@@ -40,50 +38,128 @@ export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionPro
       />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
-            className="text-3xl font-black tracking-tight text-white uppercase sm:text-4xl lg:text-5xl lg:leading-[1.16]"
+        <div className="relative">
+          {/* CHẾ ĐỘ ĐĂNG KÝ: Form trượt từ trái sang phải (cột trái) + Nội dung giới thiệu & Xem bảng giá chi tiết (cột phải) */}
+          <div
+            className={`grid grid-cols-1 items-center gap-8 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] lg:grid-cols-12 lg:gap-10 ${
+              isRegisterMode
+                ? 'pointer-events-auto relative z-20'
+                : 'pointer-events-none absolute inset-x-0 top-0 z-0 opacity-0'
+            }`}
           >
-            Phần mềm quản trị sản xuất cho{' '}
-            <span className="text-hero-accent">Xưởng Nhôm Kính & Nhà Thầu</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.16, ease: INTRODUCE_EASE_OUT }}
-            className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-teal-50/95 sm:text-base"
-          >
-            <strong>XTTECH</strong> đồng bộ toàn bộ quy trình từ khảo sát ô chờ, thiết kế cửa CAD 2D/3D, bóc tách vật tư và xuất thẻ cắt A4 đến quản lý kho, chấm công tại công trình và báo cáo lãi/lỗ trên một hệ thống duy nhất.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.24, ease: INTRODUCE_EASE_OUT }}
-            className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row"
-          >
-            <button
-              type="button"
-              onClick={onOpenRegister}
-              className="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-hero-accent px-6 py-3.5 text-sm font-bold text-hero-ink shadow-lg shadow-black/20 transition-all hover:bg-hero-accent-hover sm:w-auto"
+            {/* Cột trái: Form đăng ký trượt từ trái sang phải */}
+            <div
+              className={`lg:col-span-6 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                isRegisterMode ? 'translate-x-0 opacity-100' : '-translate-x-12 opacity-0'
+              }`}
             >
-              <FileSpreadsheet className="h-4 w-4" />
-              <span>Đăng ký dùng thử miễn phí</span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </button>
+              <HeroRegisterInlineForm
+                isOpen={isRegisterMode}
+                onBack={() => setIsRegisterMode(false)}
+              />
+            </div>
 
-            <Link
-              href="/pricing"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-bold text-white backdrop-blur-xs transition-all hover:border-white hover:bg-white hover:text-primary sm:w-auto"
+            {/* Cột phải: Nội dung ảnh 1 + Xem bảng giá chi tiết để cân đối 2 bên */}
+            <div
+              className={`hidden space-y-5 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] lg:col-span-6 lg:block ${
+                isRegisterMode ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'
+              }`}
             >
-              <span>Xem bảng giá dịch vụ</span>
-            </Link>
-          </motion.div>
-        </div>
+              <div className="space-y-3">
+                <h2 className="text-3xl font-black tracking-tight text-white uppercase xl:text-4xl xl:leading-[1.18]">
+                  Phần mềm quản trị sản xuất cho{' '}
+                  <span className="text-hero-accent">Xưởng Nhôm Kính & Nhà Thầu</span>
+                </h2>
+                <p className="text-sm leading-relaxed text-teal-50/95 sm:text-base">
+                  <strong>XTTECH</strong> đồng bộ toàn bộ quy trình từ khảo sát ô chờ, thiết kế cửa CAD 2D/3D, bóc tách vật tư và xuất thẻ cắt A4 đến quản lý kho, chấm công tại công trình và báo cáo lãi/lỗ trên một hệ thống duy nhất.
+                </p>
+              </div>
+
+              <ul className="space-y-3 border-t border-white/15 pt-4 text-sm leading-relaxed text-teal-50/95">
+                {ECOSYSTEM_MODULES.map((mod) => (
+                  <li key={mod.code} className="flex items-start gap-2.5">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-hero-accent" />
+                    <span>
+                      <strong className="font-bold text-white">{mod.code} — {mod.name}:</strong>{' '}
+                      {mod.desc}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <Link
+                  href="/pricing"
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-hero-accent px-6 py-3.5 text-sm font-bold text-hero-ink shadow-lg shadow-black/20 transition-all hover:bg-hero-accent-hover"
+                >
+                  <span>Xem bảng giá chi tiết</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => setIsRegisterMode(false)}
+                  className="group inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3.5 text-sm font-bold text-white backdrop-blur-xs transition-all hover:bg-white/20"
+                >
+                  <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                  <span>Quay lại giới thiệu</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* NỘI DUNG GIỚI THIỆU BAN ĐẦU: Trượt sang phải khi mở form */}
+          <div
+            className={`transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              isRegisterMode
+                ? 'pointer-events-none absolute top-0 left-0 z-0 w-full translate-x-12 opacity-0'
+                : 'pointer-events-auto relative z-10 translate-x-0 opacity-100'
+            }`}
+          >
+            <div className="mx-auto max-w-4xl text-center">
+              <motion.h1
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
+                className="text-3xl font-black tracking-tight text-white uppercase sm:text-4xl lg:text-5xl lg:leading-[1.16]"
+              >
+                Phần mềm quản trị sản xuất cho{' '}
+                <span className="text-hero-accent">Xưởng Nhôm Kính & Nhà Thầu</span>
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.16, ease: INTRODUCE_EASE_OUT }}
+                className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-teal-50/95 sm:text-base"
+              >
+                <strong>XTTECH</strong> đồng bộ toàn bộ quy trình từ khảo sát ô chờ, thiết kế cửa CAD 2D/3D, bóc tách vật tư và xuất thẻ cắt A4 đến quản lý kho, chấm công tại công trình và báo cáo lãi/lỗ trên một hệ thống duy nhất.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.24, ease: INTRODUCE_EASE_OUT }}
+                className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row"
+              >
+                <button
+                  type="button"
+                  onClick={() => setIsRegisterMode(true)}
+                  className="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-hero-accent px-6 py-3.5 text-sm font-bold text-hero-ink shadow-lg shadow-black/20 transition-all hover:bg-hero-accent-hover sm:w-auto"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  <span>Đăng ký dùng thử miễn phí</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </button>
+
+                <Link
+                  href="/pricing"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-bold text-white backdrop-blur-xs transition-all hover:border-white hover:bg-white hover:text-primary sm:w-auto"
+                >
+                  <span>Xem bảng giá dịch vụ</span>
+                </Link>
+              </motion.div>
+            </div>
 
         {/* 3 phân hệ cốt lõi */}
         <div {...pauseProps} className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
@@ -151,6 +227,8 @@ export function IntroduceHeroSection({ onOpenRegister }: IntroduceHeroSectionPro
               </motion.div>
             );
           })}
+          </div>
+        </div>
         </div>
       </div>
     </section>

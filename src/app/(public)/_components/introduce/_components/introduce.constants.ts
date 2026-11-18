@@ -246,6 +246,45 @@ export const DEVELOPER_TEAM_MEMBERS: DeveloperMember[] = [
   },
 ];
 
+export interface PlatformCapabilityItem {
+  title: string;
+  desc: string;
+  icon: LucideIcon;
+}
+
+export const PLATFORM_CAPABILITIES: PlatformCapabilityItem[] = [
+  {
+    title: 'Thiết kế CAD 2D/3D & Bóc tách',
+    desc: 'Thiết kế cửa nhôm 2D/3D theo 25+ hãng nhôm, tự động bóc tách thanh nhôm, kính và phụ kiện.',
+    icon: PencilRuler,
+  },
+  {
+    title: 'Sản xuất xưởng & Thẻ cắt A4',
+    desc: 'Tối ưu phương án cắt phôi, xuất thẻ cắt A4 cho thợ và theo dõi tiến độ cắt, ép góc, hoàn thiện.',
+    icon: Scissors,
+  },
+  {
+    title: 'Kho vật tư & Bảo hành QR',
+    desc: 'Quản lý nhập – xuất – tồn kho nhôm, kính, phụ kiện theo đơn hàng và tem bảo hành điện tử QR.',
+    icon: Package,
+  },
+  {
+    title: 'Dự án & Thi công công trình',
+    desc: 'Theo dõi tiến độ hạng mục, nhật ký lắp dựng, ảnh hiện trường và chấm công tại công trình.',
+    icon: HardHat,
+  },
+  {
+    title: 'Báo giá & Hợp đồng (CRM)',
+    desc: 'Lập dự toán báo giá nhanh, chia sẻ link bản vẽ 2D/3D cho khách hàng và quản lý hợp đồng.',
+    icon: FileSpreadsheet,
+  },
+  {
+    title: 'Tài chính, Nhân sự & Báo cáo',
+    desc: 'Tổng hợp thu chi, chi phí vật tư – nhân công, phân quyền HCNS và báo cáo lãi/lỗ từng công trình.',
+    icon: TrendingUp,
+  },
+];
+
 export const INTRODUCE_QUICK_STATS = [
   { label: 'Truy cập Web & App Mobile đồng bộ', value: 'Nền tảng Đám mây', icon: Smartphone },
   { label: 'Gửi link 2D/3D trực tiếp cho khách', value: 'Bản vẽ & Báo giá nhanh', icon: PencilRuler },

@@ -60,7 +60,7 @@ export const Footer = () => {
               onClick={handleOpenRegisterModal}
               className="inline-flex flex-1 cursor-pointer items-center justify-center whitespace-nowrap rounded-xl bg-white px-3.5 py-2.5 text-sm font-bold text-primary shadow-sm transition-all hover:bg-teal-50 sm:flex-none sm:px-5"
             >
-              Đăng ký ngay
+              Đăng ký sử dụng miễn phí
             </button>
             <a
               href="tel:0776710766"
