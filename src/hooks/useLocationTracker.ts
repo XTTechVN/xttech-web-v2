@@ -1,32 +1,15 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { sendLocationPing } from '@/actions';
 import { useAuthStore } from '@/stores';
-import { BASE_API_URL } from '@/config';
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { BASE_API_URL, TRACKER_QUICK_PING_MAX_ACCURACY_METERS } from '@/config';
+import { Capacitor } from '@capacitor/core';
+import type { NativePluginListenerHandle, NativeTrackingPlugin } from '@/types';
+import { acquireQuickWebPosition, getClientPlatform, NativeTracking } from '@/utils';
 
-export interface NativeTrackingPlugin {
-  startTracking(options: { token: string; refreshToken?: string; apiUrl: string }): Promise<{ success: boolean }>;
-  updateToken(options: { token: string; refreshToken?: string }): Promise<{ success: boolean }>;
-  stopTracking(): Promise<{ success: boolean }>;
-  checkPermission?(): Promise<{ status: string; isAlways: boolean; isWhenInUse?: boolean; isPrecise: boolean }>;
-  openSettings?(): Promise<{ success: boolean }>;
-  ensureAlwaysPermission?(): Promise<{ isAlways: boolean; action: string }>;
-  // Android Background Permissions & Auto-Start
-  checkAndroidPermissions?(): Promise<{
-    isIgnoringBatteryOptimizations: boolean;
-    hasFineLocation: boolean;
-    hasBackgroundLocation: boolean;
-    manufacturer: string;
-  }>;
-  requestIgnoreBatteryOptimization?(): Promise<{ success: boolean }>;
-  requestBackgroundLocation?(): Promise<{ success: boolean }>;
-  openAutoStartSettings?(): Promise<{ success: boolean; manufacturer?: string }>;
-  getBatteryLevel?(): Promise<{ level: number }>;
-}
-export const NativeTracking = registerPlugin<NativeTrackingPlugin>('NativeTracking');
+export { NativeTracking };
+export type { NativeTrackingPlugin };
 
 interface LocationTrackerOptions {
   enabled?: boolean;
@@ -40,15 +23,24 @@ export const isMobileDevice = () => {
   if (typeof window === 'undefined') return false;
   if (Capacitor.isNativePlatform()) return true;
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(
-    navigator.userAgent
+    navigator.userAgent,
   );
-}
+};
 
-export function useLocationTracker({ enabled = true, isStatusResolved = true, intervalMs = 60000, heartbeatMs = 180000, }: LocationTrackerOptions = {}) {
+export function useLocationTracker({
+  enabled = true,
+  isStatusResolved = true,
+  intervalMs = 60000,
+  heartbeatMs = 180000,
+}: LocationTrackerOptions = {}) {
   const [isTracking, setIsTracking] = useState(false);
   const [lastPingTime, setLastPingTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
+  if (!enabled && isTracking) {
+    setIsTracking(false);
+  }
+
   const lastPingRef = useRef<number>(0);
   const lastKnownCoordsRef = useRef<{
     latitude: number;
@@ -89,130 +81,100 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
   };
 
   // Gửi tọa độ GPS lên Backend
-  const executePing = useCallback(async (pos: {
-    latitude: number;
-    longitude: number;
-    accuracy?: number;
-    speed?: number;
-    heading?: number;
-  }) => {
-    // 1. Chốt chặn độ chính xác thích ứng: 45m khi di chuyển ngoài đường, 80m khi đứng yên / trong phòng
-    const rawSpeed = pos.speed ?? 0;
-    const speed = rawSpeed >= 0.8 ? rawSpeed : 0;
-    const maxAccuracy = speed >= 1.0 ? 45 : 80;
-    if (pos.accuracy !== undefined && pos.accuracy > maxAccuracy) {
-      return;
-    }
-
-    const now = Date.now();
-    const elapsed = now - lastPingRef.current;
-
-    let distance = 999;
-    if (lastKnownCoordsRef.current) {
-      const lat1 = lastKnownCoordsRef.current.latitude;
-      const lon1 = lastKnownCoordsRef.current.longitude;
-      const lat2 = pos.latitude;
-      const lon2 = pos.longitude;
-      const R = 6371000;
-      const dLat = ((lat2 - lat1) * Math.PI) / 180;
-      const dLon = ((lon2 - lon1) * Math.PI) / 180;
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos((lat1 * Math.PI) / 180) *
-          Math.cos((lat2 * Math.PI) / 180) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      distance = R * c;
-
-      // 2. Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
-      // Nếu khoảng cách nhảy vọt > 150m với tốc độ bất thường > 35 m/s (~126 km/h) hoặc > 400m trong thời gian ngắn (< 30s)
-      const jumpSpeed = elapsed > 0 ? distance / (elapsed / 1000) : 999;
-      if (distance > 150 && (jumpSpeed > 35 || (distance > 400 && elapsed < 30000))) {
+  const executePing = useCallback(
+    async (pos: {
+      latitude: number;
+      longitude: number;
+      accuracy?: number;
+      speed?: number;
+      heading?: number;
+    }) => {
+      // 1. Chốt chặn độ chính xác thích ứng: 45m khi di chuyển ngoài đường, 80m khi đứng yên / trong phòng
+      const rawSpeed = pos.speed ?? 0;
+      const speed = rawSpeed >= 0.8 ? rawSpeed : 0;
+      const maxAccuracy = speed >= 1.0 ? 45 : 80;
+      if (pos.accuracy !== undefined && pos.accuracy > maxAccuracy) {
         return;
       }
-    }
 
-    // Smart Adaptive: 3s khi di chuyển, tạm dừng khi đứng yên
-    const isMoving = speed >= 1.0 || distance >= 5.0;
-    if (isMoving) {
-      if (elapsed < 3000) return;
-    } else {
-      if (elapsed < 15000) return;
-    }
+      const now = Date.now();
+      const elapsed = now - lastPingRef.current;
 
-    lastPingRef.current = now;
-    lastKnownCoordsRef.current = { ...pos, speed };
+      let distance = 999;
+      if (lastKnownCoordsRef.current) {
+        const lat1 = lastKnownCoordsRef.current.latitude;
+        const lon1 = lastKnownCoordsRef.current.longitude;
+        const lat2 = pos.latitude;
+        const lon2 = pos.longitude;
+        const R = 6371000;
+        const dLat = ((lat2 - lat1) * Math.PI) / 180;
+        const dLon = ((lon2 - lon1) * Math.PI) / 180;
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        distance = R * c;
 
-    try {
-      const battery = await getBatteryLevel();
-      const clientPlatform =
-        Capacitor.getPlatform() === 'ios'
-          ? 'ios'
-          : Capacitor.getPlatform() === 'android'
-          ? 'android'
-          : 'web';
-      await sendLocationPing({
-        latitude: pos.latitude,
-        longitude: pos.longitude,
-        accuracy: pos.accuracy,
-        speed: speed,
-        heading: pos.heading,
-        batteryLevel: battery,
-        platform: clientPlatform,
-      });
+        // 2. Chốt chặn bước nhảy dị biệt (Jump / Outlier Filter):
+        // Nếu khoảng cách nhảy vọt > 150m với tốc độ bất thường > 35 m/s (~126 km/h) hoặc > 400m trong thời gian ngắn (< 30s)
+        const jumpSpeed = elapsed > 0 ? distance / (elapsed / 1000) : 999;
+        if (distance > 150 && (jumpSpeed > 35 || (distance > 400 && elapsed < 30000))) {
+          return;
+        }
+      }
 
-      setLastPingTime(new Date());
-      setIsTracking(true);
-      setError(null);
-    } catch (err) {
-      console.warn('[LocationTracker] Ping failed:', err);
-    }
-  }, []);
+      // Smart Adaptive: 3s khi di chuyển, tạm dừng khi đứng yên
+      const isMoving = speed >= 1.0 || distance >= 5.0;
+      if (isMoving) {
+        if (elapsed < 3000) return;
+      } else {
+        if (elapsed < 15000) return;
+      }
 
-  // Lấy vị trí tức thời 1 lần với cơ chế fallback 2 tầng cho Web/Desktop
-  const pingCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) {
+      lastPingRef.current = now;
+      lastKnownCoordsRef.current = { ...pos, speed };
+
+      try {
+        const battery = await getBatteryLevel();
+        await sendLocationPing({
+          latitude: pos.latitude,
+          longitude: pos.longitude,
+          accuracy: pos.accuracy,
+          speed,
+          heading: pos.heading,
+          batteryLevel: battery,
+          platform: getClientPlatform(),
+        });
+
+        setLastPingTime(new Date());
+        setIsTracking(true);
+        setError(null);
+      } catch (err: unknown) {
+        console.warn('[LocationTracker] Ping failed:', err);
+      }
+    },
+    [],
+  );
+
+  // Lấy vị trí tức thời 1 lần qua helper chia sẻ với ngưỡng 80m
+  const pingCurrentLocation = useCallback(async () => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setError('Thiết bị không hỗ trợ định vị GPS');
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        executePing({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy: pos.coords.accuracy || undefined,
-          speed: pos.coords.speed || undefined,
-          heading: pos.coords.heading || undefined,
-        });
-      },
-      () => {
-        // Khi ở trong nhà/phòng kín hoặc trên Web desktop: Fallback nhẹ sang WiFi/mạng
-        navigator.geolocation.getCurrentPosition(
-          (fallbackPos) => {
-            executePing({
-              latitude: fallbackPos.coords.latitude,
-              longitude: fallbackPos.coords.longitude,
-              accuracy: fallbackPos.coords.accuracy || undefined,
-              speed: 0,
-              heading: undefined,
-            });
-          },
-          (err) => {
-            console.debug('[LocationTracker] Location unavailable:', err.message);
-          },
-          { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
-        );
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 8000,
-        maximumAge: 10000,
-      }
-    );
-  }, [executePing]);
+    const pos = await acquireQuickWebPosition({
+      maxAccuracyMeters: TRACKER_QUICK_PING_MAX_ACCURACY_METERS,
+      timeoutMs: 10000,
+    });
 
+    if (pos) {
+      await executePing(pos);
+    }
+  }, [executePing]);
 
   // Yêu cầu Screen WakeLock để giữ luồng định vị không bị ngủ sâu trên Web
   const requestWakeLock = async () => {
@@ -233,11 +195,10 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
     }
 
     if (!enabled) {
-      setIsTracking(false);
       // Chỉ dừng native khi đã biết chắc nhân viên không còn trong ca.
       // Lúc đang tải dữ liệu chấm công hoặc API lỗi, `enabled` tạm thời = false nhưng KHÔNG được tắt GPS nền.
       if (isNative && isStatusResolved) {
-        NativeTracking.stopTracking().catch(() => { });
+        NativeTracking.stopTracking().catch(() => {});
       }
       if (workerRef.current) {
         workerRef.current.terminate();
@@ -255,12 +216,16 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
       return;
     }
 
+    let isDisposed = false;
+    let workerUrl: string | null = null;
+    let fallbackTimer: ReturnType<typeof setInterval> | null = null;
+
     // Lấy vị trí ban đầu (Initial fix) và bật WakeLock (trên Web)
     const initTimer = setTimeout(() => {
       if (!isNative) {
-        pingCurrentLocation();
+        void pingCurrentLocation();
       }
-      requestWakeLock();
+      void requestWakeLock();
     }, 100);
 
     const startWebWatchPosition = () => {
@@ -273,7 +238,7 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
             if (pos.coords.accuracy !== undefined && pos.coords.accuracy > maxAcc) {
               return;
             }
-            executePing({
+            void executePing({
               latitude: pos.coords.latitude,
               longitude: pos.coords.longitude,
               accuracy: pos.coords.accuracy || undefined,
@@ -286,14 +251,14 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
             enableHighAccuracy: true,
             maximumAge: 5000,
             timeout: 15000,
-          }
+          },
         );
       }
     };
 
-    let locationListenerHandle: { remove: () => void } | null = null;
-    let authErrorHandle: { remove: () => void } | null = null;
-    let permListenerHandle: { remove: () => void } | null = null;
+    let locationListenerHandle: NativePluginListenerHandle | null = null;
+    let authErrorHandle: NativePluginListenerHandle | null = null;
+    let permListenerHandle: NativePluginListenerHandle | null = null;
 
     // 1. NẾU LÀ NATIVE ANDROID / IOS: KHỞI CHẠY NATIVE SERVICE ĐỘC LẬP
     // Chạy ngầm 100% bằng Swift/Java Native, duy trì liên tục kể cả khi khóa màn hình
@@ -303,43 +268,81 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
         token: authState.accessToken,
         refreshToken: authState.refreshToken,
         apiUrl: BASE_API_URL,
-      }).then(() => {
-        setIsTracking(true);
-        if (Capacitor.getPlatform() === 'ios' && NativeTracking.checkPermission) {
-          NativeTracking.checkPermission().then((perm) => {
-            if (perm && !perm.isAlways) {
-              console.warn('[NativeTracking iOS] Vị trí chưa được cấp quyền Always. Cần cấp quyền "Luôn luôn" để theo dõi khi khóa màn hình.');
-            }
-          }).catch(() => {});
-        }
-      }).catch((e: any) => {
-        // Native không khởi động được (vd: plugin chưa được đăng ký): Web Geolocation chỉ chạy khi app đang mở,
-        // KHÔNG thay thế được định vị nền -> ghi lỗi rõ ràng để không bị che giấu.
-        console.error('[NativeTracking] Native background tracking FAILED, chỉ còn định vị khi app đang mở:', e);
-        startWebWatchPosition();
-      });
+      })
+        .then(() => {
+          if (isDisposed) return;
+          setIsTracking(true);
+          if (Capacitor.getPlatform() === 'ios' && NativeTracking.checkPermission) {
+            NativeTracking.checkPermission()
+              .then((perm) => {
+                if (perm && !perm.isAlways) {
+                  console.warn(
+                    '[NativeTracking iOS] Vị trí chưa được cấp quyền Always. Cần cấp quyền "Luôn luôn" để theo dõi khi khóa màn hình.',
+                  );
+                }
+              })
+              .catch(() => {});
+          }
+        })
+        .catch((e: unknown) => {
+          if (isDisposed) return;
+          // Native không khởi động được (vd: plugin chưa được đăng ký): Web Geolocation chỉ chạy khi app đang mở,
+          // KHÔNG thay thế được định vị nền -> ghi lỗi rõ ràng để không bị che giấu.
+          console.error(
+            '[NativeTracking] Native background tracking FAILED, chỉ còn định vị khi app đang mở:',
+            e,
+          );
+          startWebWatchPosition();
+        });
 
       // Lắng nghe sự kiện từ Native Service để đồng bộ state lên giao diện
-      if (typeof (NativeTracking as any).addListener === 'function') {
-        (NativeTracking as any).addListener('locationUpdate', (data: { timestamp?: number }) => {
+      if (typeof NativeTracking.addListener === 'function') {
+        NativeTracking.addListener('locationUpdate', (data) => {
+          if (isDisposed) return;
           setIsTracking(true);
           if (data?.timestamp) {
             setLastPingTime(new Date(data.timestamp * 1000));
           } else {
             setLastPingTime(new Date());
           }
-        }).then((handle: any) => { locationListenerHandle = handle; }).catch(() => {});
+        })
+          .then((handle) => {
+            if (isDisposed) {
+              Promise.resolve(handle.remove()).catch(() => {});
+            } else {
+              locationListenerHandle = handle;
+            }
+          })
+          .catch(() => {});
 
-        (NativeTracking as any).addListener('authError', (err: any) => {
+        NativeTracking.addListener('authError', (err) => {
+          if (isDisposed) return;
           console.error('[NativeTracking] Phiên làm việc chạy ngầm hết hạn:', err);
           setError('Phiên làm việc chạy ngầm đã hết hạn');
-        }).then((handle: any) => { authErrorHandle = handle; }).catch(() => {});
+        })
+          .then((handle) => {
+            if (isDisposed) {
+              Promise.resolve(handle.remove()).catch(() => {});
+            } else {
+              authErrorHandle = handle;
+            }
+          })
+          .catch(() => {});
 
-        (NativeTracking as any).addListener('permissionChanged', (perm: { status: string; isAlways: boolean }) => {
+        NativeTracking.addListener('permissionChanged', (perm) => {
+          if (isDisposed) return;
           if (!perm.isAlways) {
             console.warn('[NativeTracking] Quyền vị trí bị thay đổi, chưa cấp "Luôn luôn":', perm);
           }
-        }).then((handle: any) => { permListenerHandle = handle; }).catch(() => {});
+        })
+          .then((handle) => {
+            if (isDisposed) {
+              Promise.resolve(handle.remove()).catch(() => {});
+            } else {
+              permListenerHandle = handle;
+            }
+          })
+          .catch(() => {});
       }
     } else {
       // 2. NẾU LÀ TRÌNH DUYỆT WEB: DÙNG WATCH POSITION VÀ WEB WORKER CỦA HTML5
@@ -360,9 +363,9 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
             };
           `,
           ],
-          { type: 'application/javascript' }
+          { type: 'application/javascript' },
         );
-        const workerUrl = URL.createObjectURL(blob);
+        workerUrl = URL.createObjectURL(blob);
         const worker = new Worker(workerUrl);
         workerRef.current = worker;
 
@@ -370,19 +373,18 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
           if (e.data === 'tick') {
             const elapsed = Date.now() - lastPingRef.current;
             if (elapsed >= intervalMs) {
-              pingCurrentLocation();
+              void pingCurrentLocation();
             }
           }
         };
-      } catch (e) {
+      } catch (e: unknown) {
         console.warn('[LocationTracker] Fallback to standard timer:', e);
-        const fallbackTimer = setInterval(() => {
+        fallbackTimer = setInterval(() => {
           const elapsed = Date.now() - lastPingRef.current;
           if (elapsed >= intervalMs) {
-            pingCurrentLocation();
+            void pingCurrentLocation();
           }
         }, checkIntervalMs);
-        return () => clearInterval(fallbackTimer);
       }
     }
 
@@ -392,9 +394,9 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
         if (!isNative) {
           const elapsed = Date.now() - lastPingRef.current;
           if (elapsed >= intervalMs) {
-            pingCurrentLocation();
+            void pingCurrentLocation();
           }
-          requestWakeLock();
+          void requestWakeLock();
         }
       }
     };
@@ -403,7 +405,14 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
     window.addEventListener('focus', handleVisibilityOrFocus);
 
     return () => {
+      isDisposed = true;
       clearTimeout(initTimer);
+      if (fallbackTimer) {
+        clearInterval(fallbackTimer);
+      }
+      if (workerUrl) {
+        URL.revokeObjectURL(workerUrl);
+      }
       // KHÔNG gọi NativeTracking.stopTracking() ở đây!
       // Vì khi người dùng vuốt đóng app, React sẽ unmount và chạy cleanup này.
       // Nếu gọi stopTracking ở đây, Service Native sẽ bị tắt ngay khi đóng app.
@@ -416,13 +425,13 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
         watchIdRef.current = null;
       }
       if (locationListenerHandle) {
-        locationListenerHandle.remove();
+        Promise.resolve(locationListenerHandle.remove()).catch(() => {});
       }
       if (authErrorHandle) {
-        authErrorHandle.remove();
+        Promise.resolve(authErrorHandle.remove()).catch(() => {});
       }
       if (permListenerHandle) {
-        permListenerHandle.remove();
+        Promise.resolve(permListenerHandle.remove()).catch(() => {});
       }
       document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
       window.removeEventListener('focus', handleVisibilityOrFocus);
@@ -437,15 +446,15 @@ export function useLocationTracker({ enabled = true, isStatusResolved = true, in
     if (Capacitor.isNativePlatform() && enabled && (accessToken || refreshToken)) {
       NativeTracking.updateToken({
         token: accessToken,
-        refreshToken: refreshToken,
-      }).catch((e: any) => {
+        refreshToken,
+      }).catch((e: unknown) => {
         console.warn('[NativeTracking] Update token failed:', e);
       });
     }
   }, [accessToken, refreshToken, enabled]);
 
   return {
-    isTracking,
+    isTracking: enabled && isTracking,
     lastPingTime,
     error,
     pingNow: pingCurrentLocation,

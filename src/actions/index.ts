@@ -97,6 +97,9 @@ export * from './supplier-door';
 // News
 export * from './news';
 
+// Public Lead Registrations
+export * from './lead';
+
 // Staff Tasks
 export * from './task';
 

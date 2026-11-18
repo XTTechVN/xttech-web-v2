@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, CheckCircle2, Flame, Phone, RotateCcw, Send, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { submitPublicLeadRegistration } from '@/actions';
 import { Input } from '@/components';
 import { CONTACT_INFO } from '@/config/contact';
+import { showErrorToast } from '@/utils/error';
 import { isValidEmail, isValidVnPhone } from '@/utils/validators';
 
 export interface HeroRegisterInlineFormProps {
@@ -113,17 +115,30 @@ export function HeroRegisterInlineForm({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await submitPublicLeadRegistration({
+        source: 'hero_software_register',
+        fullName: formData.fullName.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim() || undefined,
+        companyName: formData.companyName.trim() || undefined,
+        taxCode: formData.taxCode.trim() || undefined,
+        note: formData.note.trim() || undefined,
+        pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+      });
       setIsSubmitted(true);
       onSuccess?.();
       toast.success('Đăng ký nhận phần mềm thành công! Đội ngũ XTTECH sẽ liên hệ hỗ trợ bạn ngay.');
-    }, 500);
+    } catch (err) {
+      showErrorToast(err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {

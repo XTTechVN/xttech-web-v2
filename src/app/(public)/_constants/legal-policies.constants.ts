@@ -50,7 +50,6 @@ export interface LegalPolicyDocument {
 export interface LegalSupportContact {
   companyName: string;
   address: string;
-  taxCode: string;
   legalDepartment: string;
   hotlineDisplay: string;
   hotlineHref: string;
@@ -63,7 +62,6 @@ export interface LegalSupportContact {
 export const LEGAL_SUPPORT_INFO: LegalSupportContact = {
   companyName: CONTACT_INFO.companyName,
   address: CONTACT_INFO.address,
-  taxCode: CONTACT_INFO.taxCode,
   legalDepartment: 'Ban Pháp chế & Hội đồng An toàn Thông tin XTTECH',
   hotlineDisplay: CONTACT_INFO.phoneDisplay,
   hotlineHref: `tel:${CONTACT_INFO.phone}`,

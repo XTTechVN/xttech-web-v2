@@ -171,7 +171,7 @@ export const HERO_HIGHLIGHTS: HeroHighlightItem[] = [
     text: 'xưởng sản xuất nhôm kính, nhà thầu thi công mặt dựng và các công trình xây dựng dân dụng, công nghiệp...',
   },
   {
-    bold: 'Chuyên sâu về ngành Nhôm',
+    bold: 'Chuyên sâu về ngành Nhôm Kính:',
     text: 'kết nối liền mạch từ khảo sát ô chờ, thiết kế bóc tách tự động theo công thức 2D/3D, dự toán báo giá đến xuất thẻ cắt A4 phân xưởng.',
   },
   {

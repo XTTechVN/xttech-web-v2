@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { CheckCircle2, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { submitPublicLeadRegistration } from '@/actions';
+import { showErrorToast } from '@/utils/error';
 import { isValidEmail, isValidVnPhone } from '@/utils/validators';
 import { CITY_OPTIONS, JOB_OPTIONS } from './hero.constants';
 import { ConsultationSelectField, ConsultationTextField } from './hero-consultation-fields';
@@ -59,7 +61,7 @@ export function HeroConsultationForm() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
       toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc');
@@ -67,12 +69,24 @@ export function HeroConsultationForm() {
     }
 
     setIsSubmitting(true);
-    // UI only - giả lập gửi thành công
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await submitPublicLeadRegistration({
+        source: 'hero_consultation',
+        fullName: formData.fullName.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim() || undefined,
+        companyName: formData.companyName.trim() || undefined,
+        region: formData.companyAddress.trim() || undefined,
+        jobTitle: formData.jobTitle.trim() || undefined,
+        pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+      });
       setIsSubmitted(true);
       toast.success('Đăng ký nhận tư vấn thành công! XTTech sẽ liên hệ bạn ngay.');
-    }, 450);
+    } catch (err) {
+      showErrorToast(err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {

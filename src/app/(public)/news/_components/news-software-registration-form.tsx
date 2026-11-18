@@ -1,9 +1,11 @@
-'use client';
+ 'use client';
 
 import React, { useState } from 'react';
-import { CheckCircle2, RotateCcw, Send, Sparkles, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, RotateCcw, Send, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { submitPublicLeadRegistration } from '@/actions';
 import { Button, Input, Textarea } from '@/components';
+import { showErrorToast } from '@/utils/error';
 import { isValidEmail, isValidVnPhone } from '@/utils/validators';
 
 interface FormState {
@@ -69,7 +71,7 @@ export function NewsSoftwareRegistrationForm() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
       toast.error('Vui lòng kiểm tra lại thông tin đăng ký');
@@ -77,12 +79,23 @@ export function NewsSoftwareRegistrationForm() {
     }
 
     setIsSubmitting(true);
-    // UI only - không gọi API
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await submitPublicLeadRegistration({
+        source: 'news_software_register',
+        fullName: formData.fullName.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim() || undefined,
+        companyName: formData.companyName.trim() || undefined,
+        note: formData.requirements.trim() || undefined,
+        pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+      });
       setIsSubmitted(true);
       toast.success('Đã gửi yêu cầu đăng ký sử dụng phần mềm thành công!');
-    }, 400);
+    } catch (err) {
+      showErrorToast(err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
@@ -94,7 +107,7 @@ export function NewsSoftwareRegistrationForm() {
   return (
     <div className="relative overflow-hidden rounded-2xl border-2 border-primary bg-white shadow-2xl shadow-primary/20 ring-4 ring-primary/8 transition-all duration-300 hover:shadow-primary/30">
       {/* Header nổi bật nền đậm thương hiệu */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#033942] via-primary to-teal-600 px-5 pt-5 pb-4 text-white">
+      <div className="relative overflow-hidden bg-linear-to-br from-[#033942] via-primary to-teal-600 px-5 pt-5 pb-4 text-white">
         <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-white/15 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-amber-300/15 blur-2xl" />
 
@@ -123,7 +136,7 @@ export function NewsSoftwareRegistrationForm() {
         </div>
       </div>
 
-      <div className="bg-gradient-to-b from-teal-50/40 via-white to-white p-5 sm:p-6">
+      <div className="bg-linear-to-b from-teal-50/40 via-white to-white p-5 sm:p-6">
         {isSubmitted ? (
           /* Màn hình gửi thành công */
           <div className="py-4 text-center space-y-4">
@@ -214,7 +227,7 @@ export function NewsSoftwareRegistrationForm() {
                 variant="primary"
                 size="md"
                 loading={isSubmitting}
-                className="w-full gap-2 text-xs sm:text-sm font-extrabold py-3.5 rounded-xl bg-gradient-to-r from-[#03444d] via-primary to-teal-600 shadow-lg shadow-primary/35 hover:shadow-xl hover:shadow-primary/45 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+                className="w-full gap-2 text-xs sm:text-sm font-extrabold py-3.5 rounded-xl bg-linear-to-r from-[#03444d] via-primary to-teal-600 shadow-lg shadow-primary/35 hover:shadow-xl hover:shadow-primary/45 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
               >
                 <Send className="h-4 w-4" />
                 <span>Đăng ký ngay</span>

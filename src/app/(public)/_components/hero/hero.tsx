@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CheckCircle2, FileSpreadsheet } from 'lucide-react';
-import { Modal } from '@/components';
 import { HERO_HIGHLIGHTS } from './hero.constants';
 import { HeroAdviseCadSection } from './hero-advise-cad-section';
 import { HeroBrandsSection } from './hero-brands-section';
@@ -13,52 +12,14 @@ import { HeroFeaturedArticlesSection } from './hero-featured-articles-section';
 import { HeroStoryPillarsSection } from './hero-story-pillars';
 import { HeroRegisterInlineForm } from './hero-register-inline-form';
 
-const AUTO_REGISTER_MODAL_KEY = 'xttech_about_auto_register_seen';
-const AUTO_REGISTER_DELAY_MS = 10000;
-
 export const Hero = () => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
-  const [isAutoModalOpen, setIsAutoModalOpen] = useState(false);
-  const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const markAutoModalSeen = () => {
-    if (autoTimerRef.current) {
-      clearTimeout(autoTimerRef.current);
-      autoTimerRef.current = null;
-    }
-    try {
-      window.localStorage.setItem(AUTO_REGISTER_MODAL_KEY, '1');
-    } catch {
-      // Bỏ qua nếu trình duyệt chặn storage
-    }
-  };
 
   // Trên desktop (lg+) tự động mở sẵn chế độ Đăng ký; trên mobile giữ màn hình giới thiệu để bấm nút mới trượt sang
   useEffect(() => {
     if (window.innerWidth >= 1024) {
       setIsRegisterMode(true);
     }
-
-    let hasSeen = false;
-    try {
-      hasSeen = window.localStorage.getItem(AUTO_REGISTER_MODAL_KEY) === '1';
-    } catch {
-      hasSeen = false;
-    }
-
-    if (hasSeen) return;
-
-    autoTimerRef.current = setTimeout(() => {
-      markAutoModalSeen();
-      setIsAutoModalOpen(true);
-    }, AUTO_REGISTER_DELAY_MS);
-
-    return () => {
-      if (autoTimerRef.current) {
-        clearTimeout(autoTimerRef.current);
-        autoTimerRef.current = null;
-      }
-    };
   }, []);
 
   return (
@@ -94,7 +55,6 @@ export const Hero = () => {
               >
                 <HeroRegisterInlineForm
                   isOpen={isRegisterMode}
-                  onSuccess={markAutoModalSeen}
                   onBack={() => {
                     setIsRegisterMode(false);
                   }}
@@ -196,22 +156,6 @@ export const Hero = () => {
         <HeroFeaturedArticlesSection />
       </div>
       <HeroConsultationSection />
-
-      <Modal
-        isOpen={isAutoModalOpen}
-        onClose={() => setIsAutoModalOpen(false)}
-        size="md"
-        title="Đăng ký sử dụng XTTECH XMS Fab"
-        className="max-w-lg border border-primary/20"
-        bodyClassName="p-5 sm:p-6"
-      >
-        <HeroRegisterInlineForm
-          variant="modal"
-          isOpen={isAutoModalOpen}
-          onSuccess={markAutoModalSeen}
-          onBack={() => setIsAutoModalOpen(false)}
-        />
-      </Modal>
     </div>
   );
 };
