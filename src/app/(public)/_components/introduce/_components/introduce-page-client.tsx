@@ -20,7 +20,7 @@ export function IntroducePageClient() {
       <IntroduceHeroSection />
       <IntroduceProblemSolutionSection />
       <IntroducePlatformSection />
-      <IntroduceFeaturesSection />
+      <IntroduceFeaturesSection onOpenRegister={() => setIsRegisterModalOpen(true)} />
       <IntroduceBenefitsSection />
       <IntroduceAudienceSection />
       <IntroduceMissionSection />

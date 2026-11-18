@@ -265,6 +265,7 @@ export const DEVELOPER_TEAM_MEMBERS: DeveloperMember[] = [
 export interface PlatformCapabilityItem {
   title: string;
   desc: string;
+  tags: string[];
   icon: LucideIcon;
 }
 
@@ -272,31 +273,37 @@ export const PLATFORM_CAPABILITIES: PlatformCapabilityItem[] = [
   {
     title: 'Thiết kế CAD 2D/3D & Bóc tách',
     desc: 'Thiết kế cửa nhôm 2D/3D theo 25+ hãng nhôm, tự động bóc tách thanh nhôm, kính và phụ kiện.',
+    tags: ['25+ hãng nhôm', 'Tự động bóc tách'],
     icon: PencilRuler,
   },
   {
     title: 'Sản xuất xưởng & Thẻ cắt A4',
     desc: 'Tối ưu phương án cắt phôi, xuất thẻ cắt A4 cho thợ và theo dõi tiến độ cắt, ép góc, hoàn thiện.',
+    tags: ['Tối ưu cắt phôi', 'Thẻ cắt A4'],
     icon: Scissors,
   },
   {
     title: 'Kho vật tư & Bảo hành QR',
     desc: 'Quản lý nhập – xuất – tồn kho nhôm, kính, phụ kiện theo đơn hàng và tem bảo hành điện tử QR.',
+    tags: ['Kho vật tư', 'Bảo hành QR'],
     icon: Package,
   },
   {
     title: 'Dự án & Thi công công trình',
     desc: 'Theo dõi tiến độ hạng mục, nhật ký lắp dựng, ảnh hiện trường và chấm công tại công trình.',
+    tags: ['Tiến độ dự án', 'Chấm công công trình'],
     icon: HardHat,
   },
   {
     title: 'Báo giá & Hợp đồng (CRM)',
     desc: 'Lập dự toán báo giá nhanh, chia sẻ link bản vẽ 2D/3D cho khách hàng và quản lý hợp đồng.',
+    tags: ['Báo giá nhanh', 'Chia sẻ link 2D/3D'],
     icon: FileSpreadsheet,
   },
   {
     title: 'Tài chính, Nhân sự & Báo cáo',
     desc: 'Tổng hợp thu chi, chi phí vật tư – nhân công, phân quyền HCNS và báo cáo lãi/lỗ từng công trình.',
+    tags: ['Thu chi & HCNS', 'Lãi/lỗ công trình'],
     icon: TrendingUp,
   },
 ];

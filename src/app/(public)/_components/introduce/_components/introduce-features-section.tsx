@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Modal } from '@/components';
 import { KEY_FEATURES } from '@/app/(public)/_components/introduce/_components/introduce.constants';
 import { INTRODUCE_EASE_OUT } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
@@ -54,7 +54,11 @@ function FeatureHighlightsList({ highlights, compact = false }: { highlights: st
   );
 }
 
-export function IntroduceFeaturesSection() {
+interface IntroduceFeaturesSectionProps {
+  onOpenRegister?: () => void;
+}
+
+export function IntroduceFeaturesSection({ onOpenRegister }: IntroduceFeaturesSectionProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [isPaused, setIsPaused] = useState(false);
@@ -240,38 +244,118 @@ export function IntroduceFeaturesSection() {
       <Modal
         isOpen={isMobileModalOpen}
         onClose={() => setIsMobileModalOpen(false)}
-        size="md"
-        title={activeFeature.title}
-        className="max-w-md rounded-lg border border-primary/20"
-        bodyClassName="p-3.5 sm:p-4"
+        size="sm"
+        fullScreenMobile={false}
+        hideHeader
+        className="w-[calc(100%-2rem)] max-w-[360px] rounded-2xl border border-primary/15 shadow-2xl"
+        bodyClassName="p-4 sm:p-5"
       >
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+        <div className="space-y-4">
+          {/* Thanh kéo + 6 đoạn tiến trình */}
+          <div className="space-y-3">
+            <div className="mx-auto h-1 w-10 rounded-full bg-slate-200" />
+            <div className="grid grid-cols-6 gap-1.5">
+              {KEY_FEATURES.map((feat, idx) => {
+                const isCurrent = idx === activeIndex;
+                const isPast = idx < activeIndex;
+                return (
+                  <button
+                    key={feat.title}
+                    type="button"
+                    onClick={() => selectIndex(idx)}
+                    aria-label={`Chọn ${feat.title}`}
+                    className={`h-1 cursor-pointer rounded-full transition-colors duration-300 ${
+                      isCurrent
+                        ? 'bg-emerald-500'
+                        : isPast
+                          ? 'bg-primary/40'
+                          : 'bg-slate-200'
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Header badge + counter + nút đóng */}
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-extrabold text-white">
+              <span className="rounded-full bg-primary px-3 py-0.5 text-xs font-extrabold text-white">
                 {activeFeature.tag}
               </span>
               <span className="font-mono text-xs font-bold text-slate-400">
                 0{activeIndex + 1} / 0{KEY_FEATURES.length}
               </span>
             </div>
-            <FeatureNavControls
-              compact
-              onPrev={() => selectIndex(activeIndex - 1)}
-              onNext={() => selectIndex(activeIndex + 1)}
-            />
+            <button
+              type="button"
+              onClick={() => setIsMobileModalOpen(false)}
+              aria-label="Đóng"
+              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          {/* Banner icon + số chìm */}
+          <div className="flex items-center justify-between rounded-xl bg-linear-to-r from-[#044952] via-[#045863] to-[#0a6b6e] p-4 shadow-sm">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-primary shadow-md">
               <ActiveIcon className="h-5 w-5" />
             </span>
-            <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">
+            <span className="font-mono text-4xl font-black tracking-tight text-white/15">
+              0{activeIndex + 1}
+            </span>
+          </div>
+
+          {/* Tiêu đề & mô tả */}
+          <div>
+            <h3 className="text-lg font-black leading-snug text-slate-900">
+              {activeFeature.title}
+            </h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
               {activeFeature.desc}
             </p>
           </div>
 
           <FeatureHighlightsList compact highlights={activeFeature.highlights} />
+
+          {/* Điều hướng dưới & CTA */}
+          <div className="space-y-2.5 border-t border-slate-100 pt-3">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => selectIndex(activeIndex - 1)}
+                aria-label="Phân hệ trước"
+                className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:border-primary hover:text-primary"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => selectIndex(activeIndex + 1)}
+                className="flex h-10 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-extrabold text-white shadow-sm transition-colors hover:bg-primary/90"
+              >
+                <span>Phân hệ tiếp theo</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            {onOpenRegister && (
+              <p className="text-center text-[11px] text-slate-500">
+                Muốn thử phân hệ này?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileModalOpen(false);
+                    onOpenRegister();
+                  }}
+                  className="cursor-pointer font-bold text-primary hover:underline"
+                >
+                  Đăng ký sử dụng miễn phí
+                </button>
+              </p>
+            )}
+          </div>
         </div>
       </Modal>
     </section>
