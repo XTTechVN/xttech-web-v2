@@ -1,24 +1,20 @@
 'use client';
 
-import React, { useRef } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import React from 'react';
+import { motion } from 'motion/react';
 import {
   Building2,
   Calendar,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Compass,
   Cpu,
   Factory,
   Rocket,
 } from 'lucide-react';
-import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
+import { INTRODUCE_EASE_OUT } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
 interface MilestoneItem {
-  shortPeriod: string;
   period: string;
-  shortLabel: string;
   tag: string;
   title: string;
   desc: string;
@@ -28,86 +24,63 @@ interface MilestoneItem {
 
 const COMPANY_MILESTONES: MilestoneItem[] = [
   {
-    shortPeriod: '09/2025',
     period: 'Tháng 09/2025',
-    shortLabel: 'Thành lập',
     tag: 'Khởi đầu',
     title: 'Thành lập Công ty Công nghệ XTTECH',
-    desc: 'XTTECH chính thức ra đời với đội ngũ kỹ sư phần mềm và chuyên gia kỹ thuật ngành nhôm kính, đặt nền móng cho sứ mệnh số hóa xưởng sản xuất Việt.',
+    desc: 'Ra đời với đội ngũ kỹ sư phần mềm và chuyên gia ngành nhôm kính, bắt đầu sứ mệnh số hóa xưởng sản xuất Việt.',
     activities: [
-      'Khảo sát quy trình thực tế tại nhiều xưởng nhôm kính & cơ khí',
-      'Xác định điểm nghẽn bóc tách vật tư, cắt phôi và quản lý công trình',
+      'Khảo sát thực tế tại các xưởng nhôm kính & cơ khí',
+      'Xác định bài toán vật tư, cắt phôi và công trình',
     ],
     icon: Building2,
   },
   {
-    shortPeriod: '11/2025',
     period: 'Tháng 11/2025',
-    shortLabel: 'Lõi CAD',
     tag: 'Nghiên cứu lõi',
-    title: 'Phát triển nền tảng CAD 2D/3D & Thư viện hệ nhôm',
-    desc: 'Tập trung xây dựng lõi thiết kế trực quan và chuẩn hóa công thức tính toán thanh nhôm, kính cường lực, phụ kiện theo các hệ nhôm phổ biến.',
+    title: 'Phát triển nền tảng CAD 2D/3D',
+    desc: 'Xây dựng công cụ vẽ cửa trực quan trên trình duyệt và chuẩn hóa công thức cho hơn 25+ hệ nhôm phổ biến.',
     activities: [
-      'Xây dựng công cụ vẽ cửa 2D/3D trực tiếp trên trình duyệt',
-      'Chuẩn hóa dữ liệu hơn 25+ hệ nhôm và phụ kiện đồng bộ',
+      'Hoàn thiện lõi thiết kế cửa 2D/3D trực tuyến',
+      'Chuẩn hóa dữ liệu thanh nhôm, kính & phụ kiện',
     ],
     icon: Cpu,
   },
   {
-    shortPeriod: '02/2026',
     period: 'Tháng 02/2026',
-    shortLabel: 'Thực chiến',
-    tag: 'Thử nghiệm xưởng',
-    title: 'Thử nghiệm thực tế & Tối ưu quy trình sản xuất',
-    desc: 'Đưa hệ thống vào vận hành thí điểm cùng các xưởng đối tác để kiểm chứng độ chính xác của thuật toán chia cây cắt và thẻ cắt A4.',
+    tag: 'Thực chiến',
+    title: 'Thử nghiệm tại xưởng đối tác',
+    desc: 'Vận hành thí điểm cùng các xưởng gia công để kiểm chứng thuật toán chia cây cắt phôi và thẻ cắt A4.',
     activities: [
-      'Tối ưu chia cây nhôm giảm đề-xê dư thừa ngoài phân xưởng',
-      'Hoàn thiện luồng kho vật tư, tiến độ ép góc và lắp dựng',
+      'Tối ưu chia cây nhôm giảm đề-xê dư thừa',
+      'Hoàn thiện luồng kho, ép góc và lắp dựng',
     ],
     icon: Factory,
   },
   {
-    shortPeriod: '06/2026',
     period: 'Tháng 06/2026',
-    shortLabel: 'Ra mắt XMS',
-    tag: 'Hệ sinh thái',
-    title: 'Chính thức vận hành hệ sinh thái XTTECH XMS',
-    desc: 'Kết nối trọn vẹn quy trình từ khảo sát, báo giá, sản xuất tại xưởng đến chấm công công trình, tài chính và bảo hành điện tử QR.',
+    tag: 'Ra mắt',
+    title: 'Vận hành hệ sinh thái XTTECH XMS',
+    desc: 'Kết nối liền mạch từ khảo sát, báo giá, sản xuất xưởng đến chấm công công trình, tài chính và bảo hành QR.',
     activities: [
-      'Ra mắt bộ giải pháp đồng bộ Web & App di động cho thợ công trình',
-      'Tích hợp báo giá nhanh, chia sẻ link bản vẽ 2D/3D cho khách hàng',
+      'Đồng bộ Web & App di động cho thợ công trình',
+      'Chia sẻ link báo giá & bản vẽ 2D/3D nhanh',
     ],
     icon: Rocket,
   },
   {
-    shortPeriod: 'Hiện tại',
     period: 'Hiện tại',
-    shortLabel: 'Mở rộng',
     tag: 'Đồng hành',
-    title: 'Đồng hành chuyển đổi số cùng cộng đồng xưởng Việt',
-    desc: 'Tiếp tục lắng nghe phản hồi từ chủ xưởng và đội ngũ thi công để nâng cấp sản phẩm mỗi ngày, mở rộng mạng lưới triển khai toàn quốc.',
+    title: 'Mở rộng cộng đồng xưởng Việt',
+    desc: 'Liên tục nâng cấp tính năng từ phản hồi thực tế của chủ xưởng và đội thợ thi công trên toàn quốc.',
     activities: [
-      'Hỗ trợ thiết lập hệ nhôm và đào tạo vận hành 1-1 cho từng xưởng',
-      'Liên tục cập nhật tính năng thông minh và tối ưu trải nghiệm',
+      'Đào tạo & thiết lập hệ nhôm 1-1 theo từng xưởng',
+      'Cập nhật công nghệ mới và tối ưu trải nghiệm',
     ],
     icon: Compass,
   },
 ];
 
 export function IntroduceMilestonesSection() {
-  const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(COMPANY_MILESTONES.length, 3800);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const activeItem = COMPANY_MILESTONES[activeIdx];
-  const ActiveIcon = activeItem.icon;
-
-  const selectMilestone = (idx: number, element?: HTMLElement | null) => {
-    const bounded = (idx + COMPANY_MILESTONES.length) % COMPANY_MILESTONES.length;
-    setActiveIdx(bounded);
-    element?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  };
-
-  const progressPercent = (activeIdx / (COMPANY_MILESTONES.length - 1)) * 100;
-
   return (
     <section className="border-b border-slate-100 bg-slate-50/50 py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -138,178 +111,77 @@ export function IntroduceMilestonesSection() {
           </motion.p>
         </div>
 
-        <div {...pauseProps} className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-12 md:items-stretch md:gap-8">
-          {/* Mobile: Các nút mốc tự xuống dòng gọn gàng, không cuộn ngang */}
-          <div ref={trackRef} className="flex flex-wrap justify-center gap-2 md:hidden">
+        {/* Timeline dọc: Trái 1 trục trên mobile, xen kẽ 2 bên trục giữa trên desktop */}
+        <div className="relative mt-12 sm:mt-16">
+          {/* Trục dọc: trái trên mobile, chính giữa trên md+ */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-2 bottom-2 left-4 w-0.5 bg-linear-to-b from-primary via-primary/40 to-slate-200 md:left-1/2 md:-translate-x-1/2"
+          />
+
+          <div className="space-y-8 md:space-y-10">
             {COMPANY_MILESTONES.map((item, idx) => {
               const Icon = item.icon;
-              const isActive = idx === activeIdx;
+              const isRightOnDesktop = idx % 2 === 1;
 
               return (
-                <button
+                <div
                   key={item.period}
-                  type="button"
-                  onClick={() => selectMilestone(idx)}
-                  className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold transition-all ${
-                    isActive
-                      ? 'border-primary bg-primary text-white shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-primary/40'
-                  }`}
+                  className="relative grid grid-cols-1 items-center md:grid-cols-2 md:gap-12"
                 >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span className="font-mono">{item.shortPeriod}</span>
-                </button>
+                  {/* Điểm mốc icon nằm trên trục */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+                    transition={{ duration: 0.35, ease: INTRODUCE_EASE_OUT }}
+                    className="absolute top-5 left-0 z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-white text-primary shadow-sm md:top-1/2 md:left-1/2 md:h-11 md:w-11 md:-translate-x-1/2 md:-translate-y-1/2"
+                  >
+                    <Icon className="h-4 w-4 md:h-5 md:w-5" />
+                  </motion.div>
+
+                  {/* Thẻ nội dung: Xen kẽ trượt từ trái hoặc từ phải trên desktop */}
+                  <motion.div
+                    initial={{ opacity: 0, x: isRightOnDesktop ? 36 : -36 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+                    transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
+                    className={`pl-12 md:pl-0 ${
+                      isRightOnDesktop ? 'md:col-start-2 md:pl-4' : 'md:col-start-1 md:pr-4'
+                    }`}
+                  >
+                    <div className="group rounded-xl border border-slate-200/85 bg-white p-5 shadow-xs transition-all duration-300 hover:border-primary/35 hover:shadow-md sm:p-6">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-base font-black text-primary sm:text-lg">
+                          {item.period}
+                        </span>
+                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+                          {item.tag}
+                        </span>
+                      </div>
+
+                      <h3 className="mt-2 text-lg font-black tracking-tight text-slate-900 transition-colors group-hover:text-primary">
+                        {item.title}
+                      </h3>
+                      <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{item.desc}</p>
+
+                      <ul className="mt-3.5 space-y-1.5 border-t border-slate-100 pt-3">
+                        {item.activities.map((activity) => (
+                          <li
+                            key={activity}
+                            className="flex items-start gap-2 text-xs font-medium leading-relaxed text-slate-700 sm:text-sm"
+                          >
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                            <span>{activity}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </motion.div>
+                </div>
               );
             })}
           </div>
-
-          {/* Desktop: Trục thời gian dọc bên trái (Slide In Left) */}
-          <motion.div
-            initial={{ opacity: 0, x: -32 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
-            transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
-            className="relative hidden md:col-span-5 md:flex md:flex-col md:justify-between lg:col-span-4"
-          >
-            {/* Đường trục dọc căn đúng tâm icon (px-3.5 = 14px + w-10/2 = 20px => 34px) */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute top-8 bottom-8 left-[34px] w-0.5 bg-slate-200"
-            >
-              <motion.div
-                className="w-full bg-primary"
-                initial={false}
-                animate={{ height: `${progressPercent}%` }}
-                transition={{ duration: 0.55, ease: INTRODUCE_EASE_OUT }}
-              />
-            </div>
-
-            <div className="space-y-2.5">
-              {COMPANY_MILESTONES.map((item, idx) => {
-                const Icon = item.icon;
-                const isActive = idx === activeIdx;
-                const isPassed = idx < activeIdx;
-
-                return (
-                  <button
-                    key={item.period}
-                    type="button"
-                    onClick={() => selectMilestone(idx)}
-                    className={`group relative z-10 flex w-full cursor-pointer items-center gap-4 rounded-lg px-3.5 py-3 text-left transition-colors duration-200 focus:outline-none ${
-                      isActive ? 'bg-primary/[0.06]' : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                        isActive
-                          ? 'scale-105 border-primary bg-primary text-white shadow-md shadow-primary/25'
-                          : isPassed
-                            ? 'border-primary bg-teal-50 text-primary'
-                            : 'border-slate-200 bg-white text-slate-400 group-hover:border-primary/40 group-hover:text-primary'
-                      }`}
-                    >
-                      <Icon className="h-4.5 w-4.5" />
-                    </span>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`font-mono text-xs font-extrabold transition-colors ${
-                            isActive ? 'text-primary' : 'text-slate-500 group-hover:text-primary'
-                          }`}
-                        >
-                          {item.period}
-                        </span>
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
-                          {item.shortLabel}
-                        </span>
-                      </div>
-                      <p
-                        className={`mt-0.5 truncate text-sm font-bold transition-colors ${
-                          isActive ? 'text-slate-900' : 'text-slate-600 group-hover:text-slate-900'
-                        }`}
-                      >
-                        {item.title}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-
-          {/* Khung nội dung chi tiết bên phải (Slide In Right) */}
-          <motion.div
-            initial={{ opacity: 0, x: 32 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
-            transition={{ duration: 0.5, delay: 0.1, ease: INTRODUCE_EASE_OUT }}
-            className="flex flex-col justify-center overflow-hidden rounded-lg border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6 md:col-span-7 lg:col-span-8 lg:p-8"
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeItem.period}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25, ease: INTRODUCE_EASE_OUT }}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                      <ActiveIcon className="h-3.5 w-3.5" />
-                      {activeItem.tag}
-                    </span>
-                    <span className="font-mono text-xs font-bold text-slate-400">
-                      0{activeIdx + 1} / 0{COMPANY_MILESTONES.length}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => selectMilestone(activeIdx - 1)}
-                      aria-label="Mốc trước"
-                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition-colors hover:border-primary hover:text-primary"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => selectMilestone(activeIdx + 1)}
-                      aria-label="Mốc tiếp theo"
-                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition-colors hover:border-primary hover:text-primary"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <p className="mt-4 font-mono text-xl font-black tracking-tight text-primary sm:text-2xl">
-                  {activeItem.period}
-                </p>
-                <h3 className="mt-1 text-lg font-black tracking-tight text-slate-900 sm:text-2xl">
-                  {activeItem.title}
-                </h3>
-
-                <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
-                  {activeItem.desc}
-                </p>
-
-                <ul className="mt-4 space-y-2.5 border-t border-slate-200/80 pt-4">
-                  {activeItem.activities.map((activity) => (
-                    <li
-                      key={activity}
-                      className="flex items-start gap-2.5 text-sm font-medium leading-relaxed text-slate-800"
-                    >
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      <span>{activity}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
         </div>
       </div>
     </section>

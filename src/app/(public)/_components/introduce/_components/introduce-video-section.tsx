@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
+  AnimatePresence,
   motion,
   useInView,
   useMotionValue,
@@ -10,7 +12,7 @@ import {
   useSpring,
   useTransform,
 } from 'motion/react';
-import { Maximize2, Minimize2, Pause, Play, RotateCcw, RotateCw, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Pause, Play, RotateCcw, RotateCw, Volume2, VolumeX, X } from 'lucide-react';
 import { INTRODUCE_EASE_OUT } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
 function formatTime(seconds: number): string {
@@ -23,15 +25,24 @@ function formatTime(seconds: number): string {
 export function IntroduceVideoSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
+  const modalVideoContainerRef = useRef<HTMLDivElement>(null);
+  const modalVideoRef = useRef<HTMLVideoElement>(null);
   const prefersReducedMotion = useReducedMotion();
 
   const [isMobile, setIsMobile] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [userPaused, setUserPaused] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // State cho video trong modal
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -42,7 +53,7 @@ export function IntroduceVideoSection() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Scroll-linked scale animation matching antigravity.google (0.5 -> 1.0 on desktop, 0.92 -> 1.0 on mobile)
+  // Animation phóng to theo cuộn trang giống antigravity.google
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ['start end', 'start center'],
@@ -58,23 +69,21 @@ export function IntroduceVideoSection() {
   const scale = useTransform(smoothProgress, [0, 1], [startScale, 1]);
   const opacity = useTransform(smoothProgress, [0, 0.35, 1], [prefersReducedMotion ? 1 : 0.65, 0.95, 1]);
 
-  // Auto-play muted when in viewport, pause when leaving viewport
+  // Video nền tự chạy tắt tiếng khi vào viewport, tạm dừng khi ra khỏi viewport hoặc khi đang mở modal
   const isInView = useInView(sectionRef, { amount: 0.2 });
 
   useEffect(() => {
-    const video = videoRef.current;
+    const video = previewVideoRef.current;
     if (!video || prefersReducedMotion) return;
 
-    if (isInView && !userPaused) {
-      video.play().catch(() => {
-        // Ignore autoplay restriction errors
-      });
-    } else if (!isInView && !video.paused) {
+    if (isInView && !isModalOpen) {
+      video.play().catch(() => {});
+    } else if (!video.paused) {
       video.pause();
     }
-  }, [isInView, userPaused, prefersReducedMotion]);
+  }, [isInView, isModalOpen, prefersReducedMotion]);
 
-  // Floating custom cursor following mouse smoothly (like antigravity.google quickTo)
+  // Con trỏ nổi bám theo chuột trên desktop
   const rawCursorX = useMotionValue(0);
   const rawCursorY = useMotionValue(0);
   const cursorX = useSpring(rawCursorX, { stiffness: 280, damping: 28, mass: 0.4 });
@@ -87,60 +96,31 @@ export function IntroduceVideoSection() {
     rawCursorY.set(e.clientY - rect.top);
   };
 
-  const handleVideoClick = () => {
-    const video = videoRef.current;
-    if (!video) return;
+  // Khóa cuộn trang & hỗ trợ phím ESC khi mở modal
+  useEffect(() => {
+    if (!isModalOpen) return;
 
-    if (video.paused) {
-      setUserPaused(false);
-      video.play().catch(() => {});
-      return;
-    }
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
-    if (isMuted) {
-      video.muted = false;
-      setIsMuted(false);
-      return;
-    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsModalOpen(false);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        skipBy(-5);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        skipBy(5);
+      }
+    };
 
-    setUserPaused(true);
-    video.pause();
-  };
-
-  const togglePlayPause = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (video.paused) {
-      setUserPaused(false);
-      video.play().catch(() => {});
-    } else {
-      setUserPaused(true);
-      video.pause();
-    }
-  };
-
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const video = videoRef.current;
-    if (!video) return;
-    const nextMuted = !video.muted;
-    video.muted = nextMuted;
-    setIsMuted(nextMuted);
-  };
-
-  const toggleFullscreen = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const container = wrapperRef.current;
-    if (!container) return;
-
-    if (!document.fullscreenElement) {
-      container.requestFullscreen?.().catch(() => {});
-    } else {
-      document.exitFullscreen?.().catch(() => {});
-    }
-  };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  });
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -150,16 +130,59 @@ export function IntroduceVideoSection() {
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
   }, []);
 
-  // Đồng bộ duration nếu video đã tải metadata trước khi React hydrate
+  // Tự động phát video trong modal (nếu trình duyệt chặn autoplay có tiếng thì tự chuyển muted rồi phát)
   useEffect(() => {
-    const video = videoRef.current;
-    if (video && Number.isFinite(video.duration) && video.duration > 0) {
-      setDuration(video.duration);
+    if (!isModalOpen) return;
+    const video = modalVideoRef.current;
+    if (!video) return;
+
+    video.currentTime = 0;
+    video.muted = false;
+    video.play().catch(() => {
+      video.muted = true;
+      setIsMuted(true);
+      video.play().catch(() => {});
+    });
+  }, [isModalOpen]);
+
+  const openVideoModal = () => {
+    setCurrentTime(0);
+    setDuration(0);
+    setIsMuted(false);
+    setIsPlaying(true);
+    setIsModalOpen(true);
+  };
+
+  const togglePlayPause = () => {
+    const video = modalVideoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
     }
-  }, []);
+  };
+
+  const toggleMute = () => {
+    const video = modalVideoRef.current;
+    if (!video) return;
+    const nextMuted = !video.muted;
+    video.muted = nextMuted;
+    setIsMuted(nextMuted);
+  };
+
+  const toggleFullscreen = () => {
+    const container = modalVideoContainerRef.current;
+    if (!container) return;
+    if (!document.fullscreenElement) {
+      container.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const video = videoRef.current;
+    const video = modalVideoRef.current;
     const targetDuration = duration || video?.duration || 0;
     if (!video || !Number.isFinite(targetDuration) || targetDuration <= 0) return;
     const nextTime = (Number(e.target.value) / 100) * targetDuration;
@@ -168,17 +191,18 @@ export function IntroduceVideoSection() {
   };
 
   const skipBy = (deltaSeconds: number) => {
-    const video = videoRef.current;
+    const video = modalVideoRef.current;
     if (!video) return;
     const targetDuration = duration || video.duration || 0;
-    const nextTime = Math.max(0, targetDuration > 0 ? Math.min(targetDuration, video.currentTime + deltaSeconds) : video.currentTime + deltaSeconds);
+    const nextTime = Math.max(
+      0,
+      targetDuration > 0 ? Math.min(targetDuration, video.currentTime + deltaSeconds) : video.currentTime + deltaSeconds,
+    );
     video.currentTime = nextTime;
     setCurrentTime(nextTime);
   };
 
   const progressPercent = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
-
-  const cursorLabel = !isPlaying ? 'Phát video' : isMuted ? 'Bật âm thanh' : 'Tạm dừng';
 
   return (
     <section
@@ -199,6 +223,7 @@ export function IntroduceVideoSection() {
           </h2>
         </motion.div>
 
+        {/* Khung video preview sạch gọn, không có thanh điều khiển, click để mở modal */}
         <motion.div
           ref={wrapperRef}
           style={{ scale, opacity }}
@@ -208,59 +233,31 @@ export function IntroduceVideoSection() {
           }}
           onMouseMove={handleMouseMove}
           onMouseLeave={() => setIsHovering(false)}
-          onClick={handleVideoClick}
+          onClick={openVideoModal}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              handleVideoClick();
-            } else if (e.key === 'ArrowLeft') {
-              e.preventDefault();
-              skipBy(-5);
-            } else if (e.key === 'ArrowRight') {
-              e.preventDefault();
-              skipBy(5);
+              openVideoModal();
             }
           }}
-          aria-label={cursorLabel}
+          aria-label="Xem video giới thiệu"
           className={`group relative mx-auto aspect-video w-full origin-center overflow-hidden rounded-2xl bg-slate-950 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/10 sm:rounded-3xl ${
             isHovering && !isMobile ? 'cursor-none' : 'cursor-pointer'
           }`}
         >
           <video
-            ref={videoRef}
+            ref={previewVideoRef}
             src="/assets/video/intro.mp4"
             loop
-            muted={isMuted}
+            muted
             playsInline
-            preload="auto"
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onTimeUpdate={(e) => {
-              const vid = e.currentTarget;
-              setCurrentTime(vid.currentTime);
-              if (duration === 0 && Number.isFinite(vid.duration) && vid.duration > 0) {
-                setDuration(vid.duration);
-              }
-            }}
-            onLoadedMetadata={(e) => {
-              if (Number.isFinite(e.currentTarget.duration)) {
-                setDuration(e.currentTarget.duration);
-              }
-            }}
-            onDurationChange={(e) => {
-              if (Number.isFinite(e.currentTarget.duration)) {
-                setDuration(e.currentTarget.duration);
-              }
-            }}
+            preload="metadata"
             className="h-full w-full object-cover"
           />
 
-          {/* Subtle gradient vignette at bottom for control readability */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-slate-950/75 via-slate-950/25 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-          {/* Floating custom cursor pill on desktop (inspired by antigravity.google) */}
+          {/* Con trỏ nổi "Xem video" trên desktop */}
           {!isMobile && (
             <motion.div
               aria-hidden="true"
@@ -274,106 +271,154 @@ export function IntroduceVideoSection() {
               className="pointer-events-none absolute top-0 left-0 z-20 -translate-x-1/2 -translate-y-1/2"
             >
               <div className="flex items-center gap-2 rounded-full border border-white/25 bg-slate-950/80 px-4 py-2 text-xs font-bold whitespace-nowrap text-white shadow-xl backdrop-blur-md">
-                {!isPlaying ? (
-                  <Play className="h-3.5 w-3.5 fill-current text-hero-accent" />
-                ) : isMuted ? (
-                  <Volume2 className="h-3.5 w-3.5 text-hero-accent" />
-                ) : (
-                  <Pause className="h-3.5 w-3.5 fill-current text-hero-accent" />
-                )}
-                <span>{cursorLabel}</span>
+                <Play className="h-3.5 w-3.5 fill-current text-hero-accent" />
+                <span>Xem video</span>
               </div>
             </motion.div>
           )}
 
-          {/* Center play button when paused (especially helpful on mobile/touch) */}
-          <div
-            className={`pointer-events-none absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-300 ${
-              !isPlaying ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/30 bg-slate-950/55 text-white shadow-xl backdrop-blur-md sm:h-20 sm:w-20">
-              <Play className="ml-1 h-7 w-7 fill-current sm:h-8 sm:w-8" />
+          {/* Nút Xem video gọn trên mobile */}
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center md:hidden">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/30 bg-slate-950/55 text-white shadow-xl backdrop-blur-md">
+              <Play className="ml-0.5 h-6 w-6 fill-current" />
             </span>
-          </div>
-
-          {/* Inline control bar */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onMouseEnter={() => setIsHovering(false)}
-            onMouseLeave={() => setIsHovering(true)}
-            className="absolute inset-x-0 bottom-0 z-30 flex cursor-default items-center gap-3 px-4 py-3 text-white opacity-100 transition-opacity duration-300 sm:px-5 sm:py-4 lg:opacity-0 lg:group-hover:opacity-100"
-          >
-            <button
-              type="button"
-              onClick={togglePlayPause}
-              aria-label={isPlaying ? 'Tạm dừng video' : 'Phát video'}
-              className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25"
-            >
-              {isPlaying ? <Pause className="h-4 w-4 fill-current" /> : <Play className="ml-0.5 h-4 w-4 fill-current" />}
-            </button>
-
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                skipBy(-10);
-              }}
-              aria-label="Tua lùi 10 giây"
-              title="Tua lùi 10s"
-              className="hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25 sm:flex"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-            </button>
-
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                skipBy(10);
-              }}
-              aria-label="Tua tới 10 giây"
-              title="Tua tới 10s"
-              className="hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25 sm:flex"
-            >
-              <RotateCw className="h-3.5 w-3.5" />
-            </button>
-
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={0.1}
-              value={progressPercent}
-              onChange={handleSeek}
-              aria-label="Tua video"
-              className="h-1.5 w-full cursor-pointer accent-hero-accent"
-            />
-
-            <span className="shrink-0 font-mono text-[11px] font-medium text-white/85 tabular-nums">
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
-
-            <button
-              type="button"
-              onClick={toggleMute}
-              aria-label={isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
-              className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25"
-            >
-              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </button>
-
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              aria-label={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
-              className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25"
-            >
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </button>
           </div>
         </motion.div>
       </div>
+
+      {/* Modal xem video gần tràn màn hình (render qua Portal để không bị kẹt z-index / transform) */}
+      {isMounted &&
+        createPortal(
+          <AnimatePresence>
+            {isModalOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                onClick={() => setIsModalOpen(false)}
+                className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/90 p-3 backdrop-blur-md sm:p-6"
+              >
+            <motion.div
+              ref={modalVideoContainerRef}
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.3, ease: INTRODUCE_EASE_OUT }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative flex h-[86vh] w-[95vw] max-w-7xl items-center justify-center overflow-hidden rounded-2xl bg-black shadow-2xl ring-1 ring-white/15"
+            >
+              {/* Nút đóng modal */}
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                aria-label="Đóng video"
+                className="absolute top-3 right-3 z-30 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-white backdrop-blur-md transition-colors hover:bg-white hover:text-slate-950 sm:top-4 sm:right-4"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <video
+                ref={modalVideoRef}
+                src="/assets/video/intro.mp4"
+                autoPlay
+                playsInline
+                preload="auto"
+                onClick={togglePlayPause}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onTimeUpdate={(e) => {
+                  const vid = e.currentTarget;
+                  setCurrentTime(vid.currentTime);
+                  if (duration === 0 && Number.isFinite(vid.duration) && vid.duration > 0) {
+                    setDuration(vid.duration);
+                  }
+                }}
+                onLoadedMetadata={(e) => {
+                  if (Number.isFinite(e.currentTarget.duration)) {
+                    setDuration(e.currentTarget.duration);
+                  }
+                }}
+                onDurationChange={(e) => {
+                  if (Number.isFinite(e.currentTarget.duration)) {
+                    setDuration(e.currentTarget.duration);
+                  }
+                }}
+                className="h-full w-full cursor-pointer object-contain"
+              />
+
+              {/* Thanh điều khiển đầy đủ trong modal */}
+              <div className="absolute inset-x-0 bottom-0 z-20 bg-linear-to-t from-black/85 via-black/45 to-transparent px-4 pt-8 pb-4 text-white sm:px-6 sm:pb-5">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={togglePlayPause}
+                    aria-label={isPlaying ? 'Tạm dừng' : 'Phát'}
+                    className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25"
+                  >
+                    {isPlaying ? <Pause className="h-4 w-4 fill-current" /> : <Play className="ml-0.5 h-4 w-4 fill-current" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => skipBy(-10)}
+                    aria-label="Tua lùi 10 giây"
+                    title="Tua lùi 10s"
+                    className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => skipBy(10)}
+                    aria-label="Tua tới 10 giây"
+                    title="Tua tới 10s"
+                    className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25"
+                  >
+                    <RotateCw className="h-4 w-4" />
+                  </button>
+
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    value={progressPercent}
+                    onChange={handleSeek}
+                    aria-label="Tua video"
+                    className="h-1.5 w-full cursor-pointer accent-hero-accent"
+                  />
+
+                  <span className="shrink-0 font-mono text-xs font-medium text-white/90 tabular-nums">
+                    {formatTime(currentTime)} / {formatTime(duration)}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={toggleMute}
+                    aria-label={isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
+                    className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25"
+                  >
+                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    aria-label={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+                    className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25"
+                  >
+                    {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
     </section>
   );
 }

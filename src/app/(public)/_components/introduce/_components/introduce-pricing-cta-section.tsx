@@ -179,8 +179,8 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
                       isActive
-                        ? 'rotate-45 border-primary bg-primary text-white'
-                        : 'border-slate-200 bg-white text-slate-500'
+                        ? 'pointer-events-none scale-75 opacity-0'
+                        : 'scale-100 border-slate-200 bg-white text-slate-500 opacity-100'
                     }`}
                   >
                     <Plus className="h-4 w-4" />
