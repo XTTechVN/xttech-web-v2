@@ -10,7 +10,7 @@ import {
   useSpring,
   useTransform,
 } from 'motion/react';
-import { Maximize2, Minimize2, Pause, Play, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Pause, Play, RotateCcw, RotateCw, Volume2, VolumeX } from 'lucide-react';
 import { INTRODUCE_EASE_OUT } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
 function formatTime(seconds: number): string {
@@ -150,10 +150,28 @@ export function IntroduceVideoSection() {
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
   }, []);
 
+  // Đồng bộ duration nếu video đã tải metadata trước khi React hydrate
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && Number.isFinite(video.duration) && video.duration > 0) {
+      setDuration(video.duration);
+    }
+  }, []);
+
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const video = videoRef.current;
-    if (!video || !duration) return;
-    const nextTime = (Number(e.target.value) / 100) * duration;
+    const targetDuration = duration || video?.duration || 0;
+    if (!video || !Number.isFinite(targetDuration) || targetDuration <= 0) return;
+    const nextTime = (Number(e.target.value) / 100) * targetDuration;
+    video.currentTime = nextTime;
+    setCurrentTime(nextTime);
+  };
+
+  const skipBy = (deltaSeconds: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    const targetDuration = duration || video.duration || 0;
+    const nextTime = Math.max(0, targetDuration > 0 ? Math.min(targetDuration, video.currentTime + deltaSeconds) : video.currentTime + deltaSeconds);
     video.currentTime = nextTime;
     setCurrentTime(nextTime);
   };
@@ -197,6 +215,12 @@ export function IntroduceVideoSection() {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               handleVideoClick();
+            } else if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              skipBy(-5);
+            } else if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              skipBy(5);
             }
           }}
           aria-label={cursorLabel}
@@ -210,11 +234,26 @@ export function IntroduceVideoSection() {
             loop
             muted={isMuted}
             playsInline
-            preload="metadata"
+            preload="auto"
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
-            onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-            onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+            onTimeUpdate={(e) => {
+              const vid = e.currentTarget;
+              setCurrentTime(vid.currentTime);
+              if (duration === 0 && Number.isFinite(vid.duration) && vid.duration > 0) {
+                setDuration(vid.duration);
+              }
+            }}
+            onLoadedMetadata={(e) => {
+              if (Number.isFinite(e.currentTarget.duration)) {
+                setDuration(e.currentTarget.duration);
+              }
+            }}
+            onDurationChange={(e) => {
+              if (Number.isFinite(e.currentTarget.duration)) {
+                setDuration(e.currentTarget.duration);
+              }
+            }}
             className="h-full w-full object-cover"
           />
 
@@ -272,6 +311,32 @@ export function IntroduceVideoSection() {
               className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25"
             >
               {isPlaying ? <Pause className="h-4 w-4 fill-current" /> : <Play className="ml-0.5 h-4 w-4 fill-current" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                skipBy(-10);
+              }}
+              aria-label="Tua lùi 10 giây"
+              title="Tua lùi 10s"
+              className="hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25 sm:flex"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                skipBy(10);
+              }}
+              aria-label="Tua tới 10 giây"
+              title="Tua tới 10s"
+              className="hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-xs transition-colors hover:bg-white/25 sm:flex"
+            >
+              <RotateCw className="h-3.5 w-3.5" />
             </button>
 
             <input
