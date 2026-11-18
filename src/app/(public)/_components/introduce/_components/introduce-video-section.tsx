@@ -11,6 +11,7 @@ import {
   useTransform,
 } from 'motion/react';
 import { Maximize2, Minimize2, Pause, Play, Volume2, VolumeX } from 'lucide-react';
+import { INTRODUCE_EASE_OUT } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
@@ -168,6 +169,18 @@ export function IntroduceVideoSection() {
       className="overflow-hidden bg-white py-8 sm:py-12 lg:py-14"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
+          className="mx-auto mb-6 max-w-3xl text-center sm:mb-8"
+        >
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 uppercase sm:text-3xl">
+            Thước phim giới thiệu <span className="text-primary">công ty XTTECH</span>
+          </h2>
+        </motion.div>
+
         <motion.div
           ref={wrapperRef}
           style={{ scale, opacity }}
