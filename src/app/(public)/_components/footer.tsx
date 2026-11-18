@@ -54,7 +54,7 @@ export const Footer = () => {
               Đội ngũ XTTECH hướng dẫn triển khai từ khảo sát đến vận hành thực tế.
             </p>
           </div>
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
             <button
               type="button"
               onClick={handleOpenRegisterModal}

@@ -124,28 +124,48 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
           })}
         </div>
 
-        {/* Mobile / Tablet: Accordion dọc bấm mở trượt mượt */}
+        {/* Mobile / Tablet: Accordion dọc nền sáng gọn đẹp */}
         <div {...pauseProps} className="mt-8 space-y-3 lg:hidden">
           {DEVELOPER_TEAM_MEMBERS.map((member, idx) => {
             const isActive = idx === activeIdx;
 
             return (
-              <div key={member.name} className="overflow-hidden rounded-2xl border border-primary/20 bg-white shadow-xs">
+              <div
+                key={member.name}
+                className={`overflow-hidden rounded-2xl border transition-all duration-300 ${
+                  isActive
+                    ? 'border-primary/40 bg-linear-to-br from-teal-50/75 via-white to-sky-50/60 shadow-md shadow-primary/10'
+                    : 'border-slate-200/90 bg-slate-50/70 shadow-2xs'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => setActiveIdx(idx)}
-                  className="relative flex w-full cursor-pointer items-center justify-between gap-3 bg-linear-to-r from-[#044750] to-[#045863] px-4 py-3.5 text-left text-white"
+                  className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="font-mono text-xs font-extrabold text-hero-accent">0{idx + 1}</span>
+                    <img
+                      src={member.avatarUrl}
+                      alt={member.name}
+                      className={`h-10 w-10 shrink-0 rounded-full object-cover object-top ring-2 transition-all ${
+                        isActive ? 'ring-primary' : 'ring-white'
+                      }`}
+                    />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-extrabold">{member.name}</p>
-                      <p className="truncate text-xs text-teal-100/85">{member.role}</p>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[11px] font-extrabold text-primary">0{idx + 1}</span>
+                        <p className={`truncate text-sm font-extrabold ${isActive ? 'text-primary' : 'text-slate-900'}`}>
+                          {member.name}
+                        </p>
+                      </div>
+                      <p className="truncate text-xs font-medium text-slate-500">{member.role}</p>
                     </div>
                   </div>
                   <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/10 transition-transform duration-300 ${
-                      isActive ? 'rotate-45 bg-white/20' : ''
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+                      isActive
+                        ? 'rotate-45 border-primary bg-primary text-white'
+                        : 'border-slate-200 bg-white text-slate-500'
                     }`}
                   >
                     <Plus className="h-4 w-4" />
@@ -161,19 +181,13 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
                       transition={{ duration: 0.35, ease: INTRODUCE_EASE_OUT }}
                       className="overflow-hidden"
                     >
-                      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+                      <div className="flex items-center gap-3.5 border-t border-primary/10 px-4 py-3.5">
                         <img
                           src={member.avatarUrl}
                           alt={member.name}
-                          className="mx-auto aspect-square w-full max-w-[220px] rounded-xl object-cover object-top sm:mx-0 sm:h-28 sm:w-28 sm:shrink-0"
+                          className="h-24 w-24 shrink-0 rounded-xl object-cover object-top shadow-xs sm:h-28 sm:w-28"
                         />
-                        <div>
-                          <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary">
-                            {member.role}
-                          </span>
-                          <h3 className="mt-1.5 text-base font-black text-slate-900">{member.name}</h3>
-                          <p className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">{member.bio}</p>
-                        </div>
+                        <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">{member.bio}</p>
                       </div>
                     </motion.div>
                   )}
