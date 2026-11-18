@@ -182,10 +182,10 @@ export function IntroduceMilestonesSection() {
 
           {/* Desktop: Trục thời gian dọc bên trái */}
           <div className="relative hidden md:col-span-5 md:flex md:flex-col md:justify-between lg:col-span-4">
-            {/* Đường trục dọc */}
+            {/* Đường trục dọc căn đúng tâm icon (px-3.5 = 14px + w-10/2 = 20px => 34px) */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute top-6 bottom-6 left-5 w-0.5 bg-slate-200"
+              className="pointer-events-none absolute top-8 bottom-8 left-[34px] w-0.5 bg-slate-200"
             >
               <motion.div
                 className="w-full bg-primary"
@@ -195,7 +195,7 @@ export function IntroduceMilestonesSection() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {COMPANY_MILESTONES.map((item, idx) => {
                 const Icon = item.icon;
                 const isActive = idx === activeIdx;
@@ -206,7 +206,7 @@ export function IntroduceMilestonesSection() {
                     key={item.period}
                     type="button"
                     onClick={() => selectMilestone(idx)}
-                    className={`group relative z-10 flex w-full cursor-pointer items-center gap-3.5 rounded-lg px-2 py-2.5 text-left transition-colors duration-200 focus:outline-none ${
+                    className={`group relative z-10 flex w-full cursor-pointer items-center gap-4 rounded-lg px-3.5 py-3 text-left transition-colors duration-200 focus:outline-none ${
                       isActive ? 'bg-primary/[0.06]' : 'hover:bg-slate-50'
                     }`}
                   >
