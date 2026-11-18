@@ -10,13 +10,13 @@ export function IntroduceAudienceSection() {
   const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(TARGET_AUDIENCES.length, 3000);
 
   return (
-    <section className="border-b border-slate-100 bg-white pt-8 pb-6 sm:pt-10 sm:pb-8">
+    <section className="border-b border-slate-100 bg-white py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45, ease: INTRODUCE_EASE_OUT }}
+          viewport={{ once: true, amount: 0.3, margin: '0px 0px -80px 0px' }}
+          transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
           className="mx-auto max-w-3xl text-center"
         >
           <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
@@ -26,28 +26,36 @@ export function IntroduceAudienceSection() {
             XTTECH phù hợp với <span className="text-primary">những ai?</span>
           </h2>
           <p className="mt-3 text-sm text-slate-600 sm:text-base">
-            Thiết kế linh hoạt để đáp ứng từ xưởng gia công nhỏ, đội thợ lắp đặt đến tổng thầu quy mô lớn.
+            Linh hoạt cho mọi quy mô từ xưởng gia công, đội thợ hiện trường đến tổng thầu lớn.
           </p>
         </motion.div>
 
-        <div {...pauseProps} className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div {...pauseProps} className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2">
           {TARGET_AUDIENCES.map((aud, idx) => {
             const Icon = aud.icon;
             const isActive = idx === activeIdx;
+            const slideFromX = idx % 2 === 0 ? -36 : 36;
+            const rowDelay = Math.floor(idx / 2) * 0.12;
 
             return (
               <motion.div
                 key={aud.title}
-                animate={{ y: isActive ? -3 : 0 }}
-                transition={{ duration: 0.3, ease: INTRODUCE_EASE_OUT }}
-                whileHover={{ y: -4 }}
-                onMouseEnter={() => setActiveIdx(idx)}
-                className={`relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-white p-6 transition-all duration-300 ${
-                  isActive
-                    ? 'border-primary/40 shadow-lg shadow-primary/10'
-                    : 'border-slate-200/90 shadow-xs hover:border-primary/30 hover:shadow-md'
-                }`}
+                initial={{ opacity: 0, x: slideFromX }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+                transition={{ duration: 0.5, delay: rowDelay, ease: INTRODUCE_EASE_OUT }}
               >
+                <motion.div
+                  animate={{ y: isActive ? -3 : 0 }}
+                  transition={{ duration: 0.3, ease: INTRODUCE_EASE_OUT }}
+                  whileHover={{ y: -4 }}
+                  onMouseEnter={() => setActiveIdx(idx)}
+                  className={`relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border bg-white p-6 transition-all duration-300 ${
+                    isActive
+                      ? 'border-primary/40 shadow-lg shadow-primary/10'
+                      : 'border-slate-200/90 shadow-xs hover:border-primary/30 hover:shadow-md'
+                  }`}
+                >
                 {isActive && (
                   <motion.span
                     layoutId="audienceActiveBar"
@@ -86,6 +94,7 @@ export function IntroduceAudienceSection() {
                     ))}
                   </ul>
                 </div>
+                </motion.div>
               </motion.div>
             );
           })}

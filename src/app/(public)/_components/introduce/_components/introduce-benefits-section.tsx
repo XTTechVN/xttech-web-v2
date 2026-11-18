@@ -9,13 +9,13 @@ export function IntroduceBenefitsSection() {
   const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(SOFTWARE_BENEFITS.length, 2800);
 
   return (
-    <section className="border-b border-slate-100 bg-white pt-6 pb-8 sm:pt-8 sm:pb-10">
+    <section className="border-b border-slate-100 bg-slate-50/50 py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45, ease: INTRODUCE_EASE_OUT }}
+          viewport={{ once: true, amount: 0.3, margin: '0px 0px -80px 0px' }}
+          transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
           className="mx-auto max-w-3xl text-center"
         >
           <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
@@ -26,24 +26,31 @@ export function IntroduceBenefitsSection() {
           </h2>
         </motion.div>
 
-        <div {...pauseProps} className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div {...pauseProps} className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {SOFTWARE_BENEFITS.map((benefit, idx) => {
             const Icon = benefit.icon;
             const isActive = idx === activeIdx;
+            const slideFromX = idx < 2 ? -32 : 32;
 
             return (
               <motion.div
                 key={benefit.title}
-                animate={{ y: isActive ? -4 : 0 }}
-                transition={{ duration: 0.3, ease: INTRODUCE_EASE_OUT }}
-                whileHover={{ y: -5 }}
-                onMouseEnter={() => setActiveIdx(idx)}
-                className={`relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 ${
-                  isActive
-                    ? 'border-primary/40 bg-white shadow-lg shadow-primary/10'
-                    : 'border-slate-200/80 bg-linear-to-b from-slate-50/70 to-white shadow-xs hover:border-primary/30 hover:shadow-md'
-                }`}
+                initial={{ opacity: 0, x: slideFromX }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+                transition={{ duration: 0.5, delay: (idx % 2) * 0.1, ease: INTRODUCE_EASE_OUT }}
               >
+                <motion.div
+                  animate={{ y: isActive ? -4 : 0 }}
+                  transition={{ duration: 0.3, ease: INTRODUCE_EASE_OUT }}
+                  whileHover={{ y: -5 }}
+                  onMouseEnter={() => setActiveIdx(idx)}
+                  className={`relative h-full overflow-hidden rounded-2xl border p-6 transition-all duration-300 ${
+                    isActive
+                      ? 'border-primary/40 bg-white shadow-lg shadow-primary/10'
+                      : 'border-slate-200/80 bg-white shadow-xs hover:border-primary/30 hover:shadow-md'
+                  }`}
+                >
                 {isActive && (
                   <motion.span
                     layoutId="benefitActiveBar"
@@ -67,6 +74,7 @@ export function IntroduceBenefitsSection() {
                   {benefit.title}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{benefit.desc}</p>
+                </motion.div>
               </motion.div>
             );
           })}

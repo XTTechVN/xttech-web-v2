@@ -109,16 +109,15 @@ export function IntroduceMilestonesSection() {
   const progressPercent = (activeIdx / (COMPANY_MILESTONES.length - 1)) * 100;
 
   return (
-    <section className="border-b border-slate-100 bg-white py-6 sm:py-8">
+    <section className="border-b border-slate-100 bg-slate-50/50 py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45, ease: INTRODUCE_EASE_OUT }}
-          className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end"
-        >
-          <div>
+        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+          <motion.div
+            initial={{ opacity: 0, x: -28 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+            transition={{ duration: 0.48, ease: INTRODUCE_EASE_OUT }}
+          >
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
               <Calendar className="h-3.5 w-3.5" />
               Hành trình phát triển
@@ -126,62 +125,52 @@ export function IntroduceMilestonesSection() {
             <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-900 uppercase sm:text-3xl">
               Từ dấu mốc <span className="text-primary">tháng 09/2025</span> đến hiện tại
             </h2>
-          </div>
+          </motion.div>
 
-          <p className="max-w-md text-sm leading-relaxed text-slate-600">
-            Chặng đường hình thành, nghiên cứu thực chiến tại xưởng và từng bước xây dựng nền tảng công nghệ phục vụ ngành nhôm kính Việt Nam.
-          </p>
-        </motion.div>
-
-        <div {...pauseProps} className="mt-6 grid grid-cols-1 gap-4 sm:mt-8 md:grid-cols-12 md:items-stretch md:gap-8">
-          {/* Mobile: Thanh mốc thời gian ngang 1 hàng */}
-          <div
-            ref={trackRef}
-            className="w-full overflow-x-auto pb-1 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden"
+          <motion.p
+            initial={{ opacity: 0, x: 28 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+            transition={{ duration: 0.48, delay: 0.08, ease: INTRODUCE_EASE_OUT }}
+            className="max-w-md text-sm leading-relaxed text-slate-600"
           >
-            <div className="inline-flex min-w-full items-start justify-between gap-4 px-2">
-              {COMPANY_MILESTONES.map((item, idx) => {
-                const Icon = item.icon;
-                const isActive = idx === activeIdx;
-                const isPassed = idx < activeIdx;
+            Chặng đường từ ngày thành lập đến khi xây dựng hệ sinh thái công nghệ phục vụ xưởng nhôm kính Việt.
+          </motion.p>
+        </div>
 
-                return (
-                  <button
-                    key={item.period}
-                    type="button"
-                    onClick={(e) => selectMilestone(idx, e.currentTarget)}
-                    className="group relative z-10 flex shrink-0 cursor-pointer flex-col items-center text-center focus:outline-none"
-                  >
-                    <span
-                      className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                        isActive
-                          ? 'scale-110 border-primary bg-primary text-white shadow-lg shadow-primary/25'
-                          : isPassed
-                            ? 'border-primary bg-teal-50 text-primary'
-                            : 'border-slate-200 bg-white text-slate-400 group-hover:border-primary/40 group-hover:text-primary'
-                      }`}
-                    >
-                      <Icon className="h-4.5 w-4.5" />
-                    </span>
+        <div {...pauseProps} className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-12 md:items-stretch md:gap-8">
+          {/* Mobile: Các nút mốc tự xuống dòng gọn gàng, không cuộn ngang */}
+          <div ref={trackRef} className="flex flex-wrap justify-center gap-2 md:hidden">
+            {COMPANY_MILESTONES.map((item, idx) => {
+              const Icon = item.icon;
+              const isActive = idx === activeIdx;
 
-                    <span
-                      className={`mt-2 font-mono text-xs font-extrabold whitespace-nowrap transition-colors ${
-                        isActive ? 'text-primary' : 'text-slate-700 group-hover:text-primary'
-                      }`}
-                    >
-                      {item.shortPeriod}
-                    </span>
-                    <span className="mt-0.5 text-[11px] font-medium whitespace-nowrap text-slate-500">
-                      {item.shortLabel}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+              return (
+                <button
+                  key={item.period}
+                  type="button"
+                  onClick={() => selectMilestone(idx)}
+                  className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold transition-all ${
+                    isActive
+                      ? 'border-primary bg-primary text-white shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-primary/40'
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="font-mono">{item.shortPeriod}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Desktop: Trục thời gian dọc bên trái */}
-          <div className="relative hidden md:col-span-5 md:flex md:flex-col md:justify-between lg:col-span-4">
+          {/* Desktop: Trục thời gian dọc bên trái (Slide In Left) */}
+          <motion.div
+            initial={{ opacity: 0, x: -32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+            transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
+            className="relative hidden md:col-span-5 md:flex md:flex-col md:justify-between lg:col-span-4"
+          >
             {/* Đường trục dọc căn đúng tâm icon (px-3.5 = 14px + w-10/2 = 20px => 34px) */}
             <div
               aria-hidden="true"
@@ -247,10 +236,16 @@ export function IntroduceMilestonesSection() {
                 );
               })}
             </div>
-          </div>
+          </motion.div>
 
-          {/* Khung nội dung chi tiết bên phải (desktop) / bên dưới (mobile) */}
-          <div className="flex flex-col justify-center overflow-hidden rounded-lg border border-slate-200/80 bg-linear-to-br from-slate-50/90 via-white to-teal-50/45 p-4 shadow-xs sm:p-6 md:col-span-7 lg:col-span-8 lg:p-8">
+          {/* Khung nội dung chi tiết bên phải (Slide In Right) */}
+          <motion.div
+            initial={{ opacity: 0, x: 32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+            transition={{ duration: 0.5, delay: 0.1, ease: INTRODUCE_EASE_OUT }}
+            className="flex flex-col justify-center overflow-hidden rounded-lg border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6 md:col-span-7 lg:col-span-8 lg:p-8"
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeItem.period}
@@ -314,7 +309,7 @@ export function IntroduceMilestonesSection() {
                 </ul>
               </motion.div>
             </AnimatePresence>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

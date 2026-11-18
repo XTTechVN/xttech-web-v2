@@ -155,23 +155,23 @@ export interface BenefitItem {
 
 export const SOFTWARE_BENEFITS: BenefitItem[] = [
   {
-    title: 'Tiết kiệm thời gian lập báo giá',
-    desc: 'Lên phương án thiết kế và dự toán vật tư nhanh chóng ngay tại công trình, giảm thời gian chờ đợi tính tay trên Excel.',
+    title: 'Báo giá nhanh tại công trình',
+    desc: 'Lên phương án và dự toán vật tư tức thì, bỏ thao tác tính tay trên Excel.',
     icon: Clock,
   },
   {
-    title: 'Giảm hao hụt phôi & chi phí kho',
-    desc: 'Chuẩn hóa công thức bóc tách và thẻ cắt A4 giúp kiểm soát chặt định mức nhôm, kính, phụ kiện cho từng đơn hàng.',
+    title: 'Giảm hao hụt phôi & kho',
+    desc: 'Chuẩn hóa bóc tách và thẻ cắt A4 giúp kiểm soát chặt định mức nhôm, kính.',
     icon: TrendingUp,
   },
   {
-    title: 'Nâng cao năng suất xưởng & đội thợ',
-    desc: 'Giao việc rõ ràng theo bản vẽ, theo dõi tiến độ xuyên suốt từ văn phòng, phân xưởng sản xuất đến tổ lắp dựng.',
+    title: 'Đồng bộ xưởng & đội thợ',
+    desc: 'Giao việc rõ ràng theo bản vẽ, theo dõi tiến độ xuyên suốt đến lắp dựng.',
     icon: Wrench,
   },
   {
     title: 'Minh bạch dữ liệu & dòng tiền',
-    desc: 'Chủ doanh nghiệp nắm bắt tức thời tình trạng vật tư, công thợ và hiệu quả lãi/lỗ của từng dự án trên một màn hình.',
+    desc: 'Nắm bắt tức thời vật tư, công thợ và lãi/lỗ từng dự án trên một màn hình.',
     icon: ShieldCheck,
   },
 ];
@@ -185,33 +185,39 @@ export interface AudienceItem {
 
 export const TARGET_AUDIENCES: AudienceItem[] = [
   {
-    title: 'Xưởng sản xuất cửa nhôm kính & nội thất',
-    subtitle: 'Từ xưởng quy mô vừa đến nhà máy gia công',
+    title: 'Xưởng sản xuất nhôm kính',
+    subtitle: 'Từ xưởng vừa đến nhà máy gia công',
     points: [
-      'Cần thiết kế CAD 2D/3D, bóc tách BOM và xuất thẻ cắt A4 nhanh cho thợ',
-      'Muốn chuẩn hóa thư viện hệ nhôm, phụ kiện theo giá nhập thực tế',
+      'Thiết kế CAD 2D/3D, bóc tách BOM & xuất thẻ cắt A4 nhanh',
+      'Chuẩn hóa thư viện hệ nhôm, phụ kiện theo giá nhập thực tế',
     ],
     icon: Building2,
   },
   {
-    title: 'Nhà thầu thi công & Xây lắp công trình',
+    title: 'Nhà thầu thi công & Xây lắp',
     subtitle: 'Mặt dựng, dân dụng, công nghiệp',
-    points: ['Quản lý đồng thời nhiều hạng mục, dự án và kho vật tư công trường', 'Theo dõi sát tiến độ lắp đặt, bàn giao và nghiệm thu bảo hành QR'],
+    points: [
+      'Quản lý đồng thời nhiều hạng mục, dự án & kho công trường',
+      'Theo dõi tiến độ lắp đặt, bàn giao & bảo hành QR',
+    ],
     icon: HardHat,
   },
   {
-    title: 'Đội thợ lắp đặt & Kỹ thuật viên hiện trường',
-    subtitle: 'Sử dụng App Mobile tại công trình',
+    title: 'Đội thợ & Kỹ thuật hiện trường',
+    subtitle: 'Vận hành qua App Mobile',
     points: [
-      'Xem bản vẽ, kích thước ô chờ và danh sách vật tư cần mang đi lắp',
-      'Chấm công tại công trình và gửi ảnh báo cáo nghiệm thu về văn phòng',
+      'Xem bản vẽ, kích thước ô chờ & vật tư cần mang đi lắp',
+      'Chấm công tại công trình & gửi ảnh nghiệm thu về văn phòng',
     ],
     icon: Smartphone,
   },
   {
-    title: 'Chủ xưởng, Kế toán, Thủ kho & Kinh doanh',
-    subtitle: 'Phối hợp nhịp nhàng trên một dữ liệu chung',
-    points: ['Kinh doanh chốt báo giá nhanh, kế toán nắm chi phí vật tư và nhân công', 'Chủ doanh nghiệp xem báo cáo tổng hợp và phê duyệt từ xa'],
+    title: 'Chủ xưởng, Kế toán & Kinh doanh',
+    subtitle: 'Phối hợp trên một dữ liệu chung',
+    points: [
+      'Kinh doanh chốt giá nhanh, kế toán kiểm soát chi phí vật tư',
+      'Chủ doanh nghiệp xem báo cáo lãi/lỗ & phê duyệt từ xa',
+    ],
     icon: Users,
   },
 ];

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import React from 'react';
+import { motion } from 'motion/react';
 import {
   Award,
   Compass,
@@ -24,7 +24,7 @@ interface ValuePillar {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-interface ValueTabItem {
+interface ValueBlockItem {
   id: string;
   label: string;
   headline: string;
@@ -33,27 +33,27 @@ interface ValueTabItem {
   items: ValuePillar[];
 }
 
-const VALUE_TABS: ValueTabItem[] = [
+const VALUE_BLOCKS: ValueBlockItem[] = [
   {
     id: 'vision',
     label: 'TẦM NHÌN',
     headline: 'Đưa công nghệ chuẩn mực vào từng xưởng sản xuất Việt',
-    lead: 'XTTECH hướng tới trở thành đối tác công nghệ tin cậy nhất của cộng đồng doanh nghiệp sản xuất nhôm kính, cơ khí và nhà thầu xây dựng.',
+    lead: 'Trở thành đối tác công nghệ tin cậy nhất của cộng đồng doanh nghiệp nhôm kính, cơ khí và nhà thầu xây dựng.',
     quote: 'Số hóa không phải xu hướng xa vời, mà là năng lực cạnh tranh cốt lõi của mỗi xưởng.',
     items: [
       {
-        title: 'Chuẩn hóa xưởng sản xuất vừa & nhỏ',
-        desc: 'Giúp các đơn vị gia công chuyển dịch từ vận hành theo kinh nghiệm rời rạc sang quy trình bài bản dựa trên dữ liệu thực tế.',
+        title: 'Chuẩn hóa xưởng vừa & nhỏ',
+        desc: 'Chuyển dịch từ vận hành cảm tính sang quy trình bài bản dựa trên dữ liệu thực tế.',
         icon: Target,
       },
       {
-        title: 'Kết nối liền mạch văn phòng & công trường',
-        desc: 'Xóa bỏ khoảng cách thông tin giữa kỹ sư thiết kế, thủ kho, tổ thợ tại phân xưởng và đội ngũ lắp dựng ngoài thực địa.',
+        title: 'Kết nối văn phòng & công trường',
+        desc: 'Thông suốt thông tin giữa kỹ sư thiết kế, thủ kho, tổ thợ xưởng và đội lắp dựng.',
         icon: Layers,
       },
       {
-        title: 'Kiến tạo hệ sinh thái bền vững',
-        desc: 'Xây dựng nền tảng công nghệ mở, liên tục thích ứng với tiêu chuẩn vật liệu và phương thức sản xuất hiện đại.',
+        title: 'Hệ sinh thái bền vững',
+        desc: 'Nền tảng mở liên tục thích ứng với tiêu chuẩn vật liệu và sản xuất hiện đại.',
         icon: Eye,
       },
     ],
@@ -62,22 +62,22 @@ const VALUE_TABS: ValueTabItem[] = [
     id: 'mission',
     label: 'SỨ MỆNH',
     headline: 'Giải phóng người thợ khỏi sai sót và thủ công rời rạc',
-    lead: 'Chúng tôi tạo ra những công cụ thực dụng, dễ dùng để mọi thành viên trong doanh nghiệp làm việc chính xác và nhẹ nhàng hơn mỗi ngày.',
+    lead: 'Tạo ra công cụ thực dụng, dễ dùng để mọi thành viên trong xưởng làm việc chính xác và nhẹ nhàng hơn.',
     quote: 'Công nghệ tốt nhất là công nghệ mà người thợ ngoài xưởng cầm lên là dùng được ngay.',
     items: [
       {
-        title: 'Đơn giản hóa nghiệp vụ kỹ thuật phức tạp',
-        desc: 'Biến các phép tính vật tư, bản vẽ và điều phối đơn hàng thành thao tác trực quan, hạn chế tối đa nhầm lẫn.',
+        title: 'Đơn giản hóa nghiệp vụ kỹ thuật',
+        desc: 'Biến phép tính vật tư, bản vẽ và điều phối đơn hàng thành thao tác trực quan.',
         icon: Cpu,
       },
       {
-        title: 'Tôn trọng thời gian & chi phí của xưởng',
-        desc: 'Giảm thiểu hao hụt nguyên vật liệu, rút ngắn thời gian chờ đợi và loại bỏ các chi phí vận hành phát sinh không đáng có.',
+        title: 'Tối ưu thời gian & chi phí',
+        desc: 'Giảm hao hụt nguyên vật liệu, rút ngắn thời gian chờ và loại bỏ chi phí phát sinh.',
         icon: Zap,
       },
       {
-        title: 'Sát cánh triển khai đến khi vận hành trơn tru',
-        desc: 'Không dừng lại ở việc bàn giao, XTTECH đồng hành đào tạo nhân sự và tinh chỉnh theo đúng nhịp làm việc của từng xưởng.',
+        title: 'Sát cánh đến khi vận hành trơn tru',
+        desc: 'Đồng hành đào tạo nhân sự và tinh chỉnh theo đúng nhịp làm việc của từng xưởng.',
         icon: Compass,
       },
     ],
@@ -86,22 +86,22 @@ const VALUE_TABS: ValueTabItem[] = [
     id: 'core-values',
     label: 'GIÁ TRỊ CỐT LÕI',
     headline: 'Thực chiến tại xưởng. Chính xác đến từng chi tiết.',
-    lead: 'Mỗi quyết định kỹ thuật và dịch vụ tại XTTECH đều xoay quanh ba giá trị nền tảng mà đội ngũ luôn giữ vững.',
+    lead: 'Mỗi quyết định kỹ thuật và dịch vụ tại XTTECH đều xoay quanh ba giá trị nền tảng.',
     quote: 'Sự tin tưởng của chủ xưởng và người thợ là thước đo lớn nhất cho giá trị của XTTECH.',
     items: [
       {
         title: 'Chính xác & Kỷ luật',
-        desc: 'Từng con số kỹ thuật, định mức vật tư và dữ liệu vận hành phải chuẩn xác và nhất quán trước khi đến tay khách hàng.',
+        desc: 'Con số kỹ thuật, định mức vật tư và dữ liệu vận hành luôn chuẩn xác, nhất quán.',
         icon: ShieldCheck,
       },
       {
         title: 'Thực tế & Dễ tiếp cận',
-        desc: 'Không chạy theo hình thức phức tạp; mọi giải pháp đều xuất phát từ nhịp làm việc thật tại xưởng và công trình.',
+        desc: 'Không chạy theo hình thức phức tạp; mọi giải pháp xuất phát từ nhịp làm việc thật.',
         icon: Wrench,
       },
       {
         title: 'Tận tâm & Bền bỉ',
-        desc: 'Luôn lắng nghe phản hồi từ người dùng cuối, hỗ trợ kịp thời và chịu trách nhiệm đến cùng trong suốt quá trình đồng hành.',
+        desc: 'Lắng nghe người dùng cuối, hỗ trợ kịp thời và chịu trách nhiệm đến cùng.',
         icon: HeartHandshake,
       },
     ],
@@ -110,22 +110,22 @@ const VALUE_TABS: ValueTabItem[] = [
     id: 'code-of-conduct',
     label: 'BỘ QUY TẮC ỨNG XỬ XTTECH',
     headline: 'Minh bạch với đối tác, cầu thị với từng góp ý',
-    lead: 'Văn hóa làm việc tại XTTECH đề cao sự thẳng thắn, tinh thần trách nhiệm và sự học hỏi không ngừng từ thực tiễn.',
+    lead: 'Văn hóa XTTECH đề cao sự thẳng thắn, trách nhiệm và tinh thần học hỏi từ thực tiễn.',
     quote: 'Mỗi bài toán khó từ xưởng là cơ hội để XTTECH hoàn thiện sản phẩm và dịch vụ tốt hơn.',
     items: [
       {
         title: 'Đặt hiệu quả khách hàng lên trước',
-        desc: 'Mọi cải tiến đều được đánh giá bằng mức độ tiết kiệm thời gian, vật tư và công sức thực tế cho doanh nghiệp.',
+        desc: 'Đánh giá mọi cải tiến bằng mức độ tiết kiệm thời gian, vật tư và công sức thực tế.',
         icon: Users,
       },
       {
         title: 'Cam kết rõ ràng, không né tránh',
-        desc: 'Minh bạch về năng lực, tiến độ triển khai và chủ động xử lý triệt để khi phát sinh vướng mắc trong vận hành.',
+        desc: 'Minh bạch năng lực, tiến độ triển khai và chủ động xử lý triệt để vướng mắc.',
         icon: Award,
       },
       {
         title: 'Liên tục hoàn thiện mỗi ngày',
-        desc: 'Đội ngũ kỹ sư thường xuyên xuống xưởng, lắng nghe thợ và chủ doanh nghiệp để nâng cấp trải nghiệm không ngừng.',
+        desc: 'Kỹ sư thường xuyên xuống xưởng lắng nghe thợ và chủ doanh nghiệp để nâng cấp.',
         icon: Sparkles,
       },
     ],
@@ -133,21 +133,14 @@ const VALUE_TABS: ValueTabItem[] = [
 ];
 
 export function IntroduceValuesSection() {
-  const [activeTabId, setActiveTabId] = useState<string>('core-values');
-  const activeIdx = Math.max(
-    0,
-    VALUE_TABS.findIndex((tab) => tab.id === activeTabId),
-  );
-  const activeTab = VALUE_TABS[activeIdx];
-
   return (
-    <section className="relative overflow-hidden border-y border-slate-100 bg-white py-8 sm:py-10">
+    <section className="relative overflow-hidden border-y border-slate-100 bg-white py-14 sm:py-20">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45, ease: INTRODUCE_EASE_OUT }}
+          viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+          transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
           className="mx-auto max-w-3xl text-center"
         >
           <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
@@ -159,113 +152,86 @@ export function IntroduceValuesSection() {
           </h2>
         </motion.div>
 
-        {/* Thanh tab tối giản dạng gạch chân (1 dòng trượt ngang trên mobile) */}
-        <div className="mt-8 w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div
-            role="tablist"
-            aria-label="Giá trị và định hướng XTTECH"
-            className="inline-flex min-w-full items-center justify-start gap-2 border-b border-slate-200 sm:justify-center sm:gap-6"
-          >
-            {VALUE_TABS.map((tab, idx) => {
-              const isActive = tab.id === activeTabId;
+        {/* Bố cục dọc 4 chặng: Cuộn tới đâu hiện tới đó, xen kẽ trái/phải */}
+        <div className="mt-14 space-y-16 sm:mt-16 sm:space-y-24">
+          {VALUE_BLOCKS.map((block, blockIdx) => {
+            const isReversed = blockIdx % 2 === 1;
 
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={(e) => {
-                    setActiveTabId(tab.id);
-                    e.currentTarget.scrollIntoView({
-                      behavior: 'smooth',
-                      inline: 'center',
-                      block: 'nearest',
-                    });
-                  }}
-                  className={`relative flex shrink-0 cursor-pointer items-center gap-2 px-3 pt-2 pb-3.5 text-xs font-extrabold tracking-wide whitespace-nowrap uppercase transition-colors duration-200 sm:px-4 sm:text-sm ${
-                    isActive ? 'text-primary' : 'text-slate-500 hover:text-slate-900'
+            return (
+              <div
+                key={block.id}
+                className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-12"
+              >
+                {/* Khối tuyên ngôn */}
+                <motion.div
+                  initial={{ opacity: 0, x: isReversed ? 36 : -36 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+                  transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
+                  className={`lg:col-span-5 ${isReversed ? 'lg:order-2' : 'lg:order-1'}`}
+                >
+                  <div className="inline-flex items-center gap-2.5">
+                    <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-primary px-2 font-mono text-sm font-black text-white shadow-xs">
+                      0{blockIdx + 1}
+                    </span>
+                    <span className="text-lg font-black tracking-wide text-primary uppercase sm:text-xl">
+                      {block.label}
+                    </span>
+                  </div>
+                  <h3 className="mt-3 text-xl font-black tracking-tight text-slate-900 sm:text-2xl sm:leading-snug">
+                    {block.headline}
+                  </h3>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
+                    {block.lead}
+                  </p>
+
+                  <blockquote className="mt-5 border-l-2 border-primary pl-4 text-sm font-medium italic leading-relaxed text-slate-700">
+                    “{block.quote}”
+                  </blockquote>
+                </motion.div>
+
+                {/* Khối 3 trụ cột */}
+                <motion.div
+                  initial={{ opacity: 0, x: isReversed ? -36 : 36 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+                  transition={{ duration: 0.5, delay: 0.08, ease: INTRODUCE_EASE_OUT }}
+                  className={`divide-y divide-slate-200/80 border-y border-slate-200/80 lg:col-span-7 ${
+                    isReversed ? 'lg:order-1' : 'lg:order-2'
                   }`}
                 >
-                  <span
-                    className={`font-mono text-[11px] font-bold transition-colors ${
-                      isActive ? 'text-primary' : 'text-slate-400'
-                    }`}
-                  >
-                    0{idx + 1}
-                  </span>
-                  <span>{tab.label}</span>
-                  {isActive && (
-                    <motion.span
-                      layoutId="introduceValuesTabUnderline"
-                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                      className="absolute inset-x-0 -bottom-px h-[2.5px] rounded-full bg-primary"
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                  {block.items.map((item, idx) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <motion.div
+                        key={item.title}
+                        initial={{ opacity: 0, y: 12 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.25, margin: '0px 0px -60px 0px' }}
+                        transition={{ duration: 0.4, delay: 0.1 + idx * 0.08, ease: INTRODUCE_EASE_OUT }}
+                        className="group flex items-start gap-4 py-5 transition-colors duration-200 hover:bg-slate-50/70 sm:gap-5 sm:px-4 sm:py-5"
+                      >
+                        <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-white">
+                          <Icon className="h-5 w-5" />
+                        </span>
+
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-base font-extrabold tracking-tight text-slate-900 transition-colors group-hover:text-primary sm:text-lg">
+                            {item.title}
+                          </h4>
+                          <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                            {item.desc}
+                          </p>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </motion.div>
+              </div>
+            );
+          })}
         </div>
-
-        {/* Bố cục Editorial 2 cột: Tuyên ngôn bên trái + 3 trụ cột tối giản bên phải */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: INTRODUCE_EASE_OUT }}
-            className="mt-10 grid grid-cols-1 items-start gap-8 lg:grid-cols-12 lg:gap-12"
-          >
-            {/* Cột trái: Tuyên ngôn & Trích dẫn */}
-            <div className="lg:col-span-5">
-              <p className="font-mono text-xs font-bold tracking-widest text-primary uppercase">
-                0{activeIdx + 1} · {activeTab.label}
-              </p>
-              <h3 className="mt-2.5 text-2xl font-black tracking-tight text-slate-900 sm:text-[28px] sm:leading-snug">
-                {activeTab.headline}
-              </h3>
-              <p className="mt-3.5 text-sm leading-relaxed text-slate-600 sm:text-base">
-                {activeTab.lead}
-              </p>
-
-              <blockquote className="mt-6 border-l-2 border-primary pl-4 text-sm font-medium italic leading-relaxed text-slate-700">
-                “{activeTab.quote}”
-              </blockquote>
-            </div>
-
-            {/* Cột phải: Danh sách 3 trụ cột phân tách bằng đường kẻ mảnh, không đóng khung cứng */}
-            <div className="divide-y divide-slate-200/80 border-y border-slate-200/80 lg:col-span-7">
-              {activeTab.items.map((item, idx) => {
-                const Icon = item.icon;
-
-                return (
-                  <motion.div
-                    key={item.title}
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.28, delay: idx * 0.05, ease: INTRODUCE_EASE_OUT }}
-                    className="group flex items-start gap-4 py-5 transition-colors duration-200 hover:bg-slate-50/70 sm:gap-5 sm:px-4 sm:py-6"
-                  >
-                    <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-white">
-                      <Icon className="h-5 w-5" />
-                    </span>
-
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-base font-extrabold tracking-tight text-slate-900 transition-colors group-hover:text-primary sm:text-lg">
-                        {item.title}
-                      </h4>
-                      <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-                        {item.desc}
-                      </p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
-        </AnimatePresence>
       </div>
     </section>
   );

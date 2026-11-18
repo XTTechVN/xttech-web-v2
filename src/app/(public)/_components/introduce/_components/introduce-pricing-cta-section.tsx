@@ -16,17 +16,16 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
   const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(DEVELOPER_TEAM_MEMBERS.length, 4500);
 
   return (
-    <section className="bg-white pt-6 pb-14 sm:pt-8 sm:pb-16">
+    <section className="bg-white py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Header 2 bên */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45, ease: INTRODUCE_EASE_OUT }}
-          className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end"
-        >
-          <div>
+        {/* Header 2 bên: Trái trượt từ trái, Phải trượt từ phải */}
+        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+          <motion.div
+            initial={{ opacity: 0, x: -28 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+            transition={{ duration: 0.48, ease: INTRODUCE_EASE_OUT }}
+          >
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-slate-50 px-3 py-1 text-[11px] font-extrabold tracking-wider text-primary uppercase shadow-2xs">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               Đội ngũ phát triển
@@ -34,15 +33,28 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
             <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
               Gặp những người <span className="text-primary">xây nên XMS</span>
             </h2>
-          </div>
+          </motion.div>
 
-          <p className="max-w-sm text-sm leading-relaxed text-slate-600">
-            Đội ngũ kỹ sư và thiết kế đồng hành trực tiếp cùng xưởng nhôm kính. Chọn một thành viên để xem chi tiết.
-          </p>
-        </motion.div>
+          <motion.p
+            initial={{ opacity: 0, x: 28 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+            transition={{ duration: 0.48, delay: 0.08, ease: INTRODUCE_EASE_OUT }}
+            className="max-w-sm text-sm leading-relaxed text-slate-600"
+          >
+            Đội ngũ kỹ sư và thiết kế đồng hành trực tiếp cùng xưởng nhôm kính. Rê chuột vào thành viên để xem chi tiết.
+          </motion.p>
+        </div>
 
-        {/* Desktop: Accordion mở rộng ngang mượt mà (tỉ lệ gần vuông để ảnh vuông hiển thị đẹp, không bị cắt đầu) */}
-        <div {...pauseProps} className="mt-9 hidden h-[420px] gap-4 lg:flex xl:h-[440px]">
+        {/* Desktop: Accordion mở rộng ngang mượt mà */}
+        <motion.div
+          {...pauseProps}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: INTRODUCE_EASE_OUT }}
+          className="mt-10 hidden h-[420px] gap-4 lg:flex xl:h-[440px]"
+        >
           {DEVELOPER_TEAM_MEMBERS.map((member, idx) => {
             const isActive = idx === activeIdx;
 
@@ -125,7 +137,7 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
               </motion.button>
             );
           })}
-        </div>
+        </motion.div>
 
         {/* Mobile / Tablet: Accordion dọc nền sáng gọn đẹp */}
         <div {...pauseProps} className="mt-8 space-y-3 lg:hidden">
@@ -216,15 +228,26 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
           />
 
           <div className="relative flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
-            <div className="max-w-2xl">
+            <motion.div
+              initial={{ opacity: 0, x: -24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+              transition={{ duration: 0.48, ease: INTRODUCE_EASE_OUT }}
+              className="max-w-2xl"
+            >
               <h3 className="text-xl font-black uppercase sm:text-2xl">Sẵn sàng số hóa xưởng nhôm kính & công trình của bạn?</h3>
               <p className="mt-2 text-sm leading-relaxed text-teal-50/90">
-                Đăng ký nhận tài khoản dùng thử G0 hoặc đặt lịch chuyên viên XTTECH hướng dẫn trực tiếp 1-1 theo đúng hệ nhôm và quy trình xưởng của
-                bạn.
+                Đăng ký dùng thử G0 hoặc đặt lịch chuyên viên XTTECH hướng dẫn 1-1 theo đúng hệ nhôm của xưởng.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <motion.div
+              initial={{ opacity: 0, x: 24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.25, margin: '0px 0px -80px 0px' }}
+              transition={{ duration: 0.48, delay: 0.08, ease: INTRODUCE_EASE_OUT }}
+              className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row"
+            >
               <button
                 type="button"
                 onClick={onOpenRegister}
@@ -239,7 +262,7 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
               >
                 Xem bảng giá
               </Link>
-            </div>
+            </motion.div>
           </div>
         </motion.div>
       </div>
