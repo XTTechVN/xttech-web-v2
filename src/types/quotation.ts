@@ -142,6 +142,8 @@ export interface ProjectQuotationItem {
   approvedAt?: string | null;
   /** Ghi chú duyệt / lý do admin trả lại */
   reviewNote?: string | null;
+  /** Backend báo sẵn thao tác nào làm được (README 6.4); UI chỉ đọc, không tự suy luận */
+  _can?: Partial<Record<'update' | 'submit' | 'approve' | 'reject' | 'send' | 'record_decision', boolean>>;
   customerDecidedAt?: string | null;
   /** Ghi chú / lý do khách từ chối */
   customerNote?: string | null;
@@ -265,6 +267,8 @@ export interface QuotationOverviewItem {
   approvedByName?: string | null;
   customerDecidedAt?: string | null;
   reviewNote?: string | null;
+  /** Backend báo sẵn thao tác nào làm được (README 6.4); UI chỉ đọc, không tự suy luận */
+  _can?: Partial<Record<'update' | 'submit' | 'approve' | 'reject' | 'send' | 'record_decision', boolean>>;
   customerNote?: string | null;
   createdAt: string;
   updatedAt: string;

@@ -2,7 +2,7 @@
 
 import { Breadcrumb, BreadcrumbItem } from '@/components';
 import { usePathname } from 'next/navigation';
-import { rawSidebarSections, SidebarItemWithRoles } from '@/config';
+import { rawSidebarSections, SidebarItemWithAccess } from '@/config';
 
 export function AppBreadcrumb() {
   const pathname = usePathname();
@@ -16,9 +16,11 @@ export function AppBreadcrumb() {
       return items;
     }
 
+    if (pathname === '/app/change-password') return [...items, { label: 'Đổi mật khẩu' }];
+
     // 2. Tìm item phù hợp nhất trong rawSidebarSections
-    let matchedItem: SidebarItemWithRoles | null = null;
-    let matchedSubItem: SidebarItemWithRoles | null = null;
+    let matchedItem: SidebarItemWithAccess | null = null;
+    let matchedSubItem: SidebarItemWithAccess | null = null;
     let maxMatchLen = 0;
 
     rawSidebarSections.forEach((section) => {
@@ -48,7 +50,7 @@ export function AppBreadcrumb() {
     });
 
     if (matchedItem) {
-      const parentItem = matchedItem as SidebarItemWithRoles;
+      const parentItem = matchedItem as SidebarItemWithAccess;
       if (parentItem.label !== 'Tổng quan' && parentItem.label !== 'Trang chủ') {
         items.push({
           label: parentItem.label,
@@ -57,7 +59,7 @@ export function AppBreadcrumb() {
       }
 
       if (matchedSubItem) {
-        const subItem = matchedSubItem as SidebarItemWithRoles;
+        const subItem = matchedSubItem as SidebarItemWithAccess;
         items.push({
           label: subItem.label,
           href: subItem.href,

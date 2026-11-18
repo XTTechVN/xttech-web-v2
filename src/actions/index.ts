@@ -93,3 +93,12 @@ export * from './document';
 export * from './trash';
 
 export * from './warehouse';
+
+// Me (quyền hiệu lực)
+export * from './me';
+
+// Quản trị phân quyền
+export * from './access';
+
+// Quản trị nền tảng (xem chéo doanh nghiệp)
+export * from './platform';

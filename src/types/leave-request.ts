@@ -29,6 +29,7 @@ export enum LeaveRequestStatus {
 
 // Kiểu dữ liệu đơn xin nghỉ phép
 export interface LeaveRequest {
+  _can?: Partial<Record<'update' | 'delete' | 'review', boolean>>;
   id: string | number;
   userId: string;
   leaveType: LeaveType | string;

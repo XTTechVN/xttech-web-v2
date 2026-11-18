@@ -13,21 +13,10 @@ import {
   ClockAlert,
   Folder,
   Warehouse,
+  ShieldCheck,
+  UserCog,
 } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
-
-export type UserRole =
-  | 'super'
-  | 'admin'
-  | 'hr'
-  | 'sale'
-  | 'technician'
-  | 'accountant'
-  | 'employee'
-  // Vai trò thi công dự án: thợ xưởng, thợ lắp đặt, nhân viên bảo hành
-  | 'workshop'
-  | 'installer'
-  | 'warranty';
 
 export const acceptedSections = [
   'dashboard',
@@ -67,6 +56,8 @@ export const acceptedSections = [
   'attendances-reports',
   'live-map',
   'app-versions',
+  'access-roles',
+  'access-members',
   'leave-request',
   'attendances-roster',
   'documents-root',
@@ -81,16 +72,29 @@ export const acceptedSections = [
   'inbox',
 ];
 
-export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
-  roles?: UserRole[];
-  subItems?: (Omit<SidebarItemType, 'subItems'> & { roles?: UserRole[] })[];
+// Mục menu hiện khi người dùng có MỘT trong các quyền (lấy từ /me); `platformOnly` chỉ cho quản trị nền tảng
+interface AccessGate {
+  permissions?: string[];
+  platformOnly?: boolean;
 }
 
-export interface SidebarSectionWithRoles extends Omit<SidebarSectionType, 'items'> {
-  items: SidebarItemWithRoles[];
+export interface SidebarItemWithAccess extends Omit<SidebarItemType, 'subItems'>, AccessGate {
+  subItems?: (Omit<SidebarItemType, 'subItems'> & AccessGate)[];
 }
 
-export const rawSidebarSections: SidebarSectionWithRoles[] = [
+export interface SidebarSectionWithAccess extends Omit<SidebarSectionType, 'items'> {
+  items: SidebarItemWithAccess[];
+}
+
+export interface Access {
+  canAny: (codes: string[]) => boolean;
+  isPlatformAdmin: boolean;
+}
+
+const isAllowed = (gate: AccessGate, access: Access) =>
+  gate.platformOnly ? access.isPlatformAdmin : !gate.permissions || access.canAny(gate.permissions);
+
+export const rawSidebarSections: SidebarSectionWithAccess[] = [
   // 1. Điều hành
   {
     title: 'Điều hành',
@@ -100,14 +104,14 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Tổng quan',
         icon: React.createElement(LayoutDashboard, { size: 18 }),
         href: '/app/dashboard',
-        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+        permissions: ['dashboard:read'],
       },
       {
         id: 'live-map',
         label: 'Bản đồ trực tiếp',
         icon: React.createElement(Compass, { size: 18 }),
         href: '/app/live-map',
-        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+        permissions: ['live_map:read'],
       },
     ],
   },
@@ -120,58 +124,38 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Nhân sự',
         icon: React.createElement(Users, { size: 18 }),
         href: '/app/employees',
-        roles: ['super', 'admin', 'hr', 'accountant'],
-        subItems: [
-          {
-            id: 'departments',
-            label: 'Danh sách phòng ban',
-            href: '/app/departments',
-            roles: ['super', 'admin', 'hr'],
-          },
-          {
-            id: 'employees',
-            label: 'Danh sách nhân viên',
-            href: '/app/employees',
-            roles: ['super', 'admin', 'hr'],
-          },
-          {
-            id: 'roles',
-            label: 'Danh sách vai trò',
-            href: '/app/roles',
-            roles: ['super'],
-          },
-        ],
+        permissions: ['user:update'],
       },
       {
         id: 'attendances-root',
         label: 'Chấm công',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/attendances',
-        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+        permissions: ['attendance:read'],
         subItems: [
           {
             id: 'attendances',
             label: 'Quản lý chấm công',
             href: '/app/attendances',
-            roles: ['super', 'admin', 'hr'],
+            permissions: ['attendance:update'],
           },
           {
             id: 'attendances-payroll',
             label: 'Lịch sử chấm công',
             href: '/app/attendances/payroll',
-            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+            permissions: ['attendance:read'],
           },
           {
             id: 'attendances-roster',
             label: 'Lịch làm việc phòng ban',
             href: '/app/attendances/roster',
-            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+            permissions: ['attendance_report:read'],
           },
           {
             id: 'attendances-reports',
             label: 'Báo cáo thống kê',
             href: '/app/attendances/reports',
-            roles: ['super', 'admin', 'hr'],
+            permissions: ['attendance:update'],
           },
         ],
       },
@@ -180,21 +164,21 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Nghỉ phép & Đơn từ',
         icon: React.createElement(FileText, { size: 18 }),
         href: '/app/leave-requests',
-        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+        permissions: ['leave_request:read'],
       },
       {
         id: 'attendances-adjustments',
         label: 'Khiếu nại công',
         icon: React.createElement(ClockAlert, { size: 18 }),
         href: '/app/attendances/adjustments',
-        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+        permissions: ['attendance_request:read'],
       },
       {
         id: 'suggestions',
         label: 'Sáng kiến & Đề xuất',
         icon: React.createElement(MessageSquarePlus, { size: 18 }),
         href: '/app/suggestions',
-        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+        permissions: ['suggestion:read'],
       },
     ],
   },
@@ -207,70 +191,70 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Dự án',
         icon: React.createElement(FolderKanban, { size: 18 }),
         href: '/app/projects',
-        roles: ['super', 'admin', 'sale', 'accountant', 'hr', 'technician', 'workshop', 'installer', 'warranty'],
+        permissions: ['project:read'],
       },
       {
         id: 'quotations',
         label: 'Duyệt báo giá',
         icon: React.createElement(FileText, { size: 18 }),
         href: '/app/quotations',
-        roles: ['super', 'admin'],
+        permissions: ['quotation:approve'],
       },
       {
         id: 'warehouse',
         label: 'Quản lý kho',
         icon: React.createElement(Warehouse, { size: 18 }),
         href: '/app/warehouse',
-        roles: ['super', 'admin', 'technician', 'accountant'],
+        permissions: ['warehouse_item:create', 'warehouse_receipt:approve'],
       },
       {
         id: 'configurations-root',
         label: 'Cấu hình dự án',
         icon: React.createElement(SlidersHorizontal, { size: 18 }),
         href: '/app/projects/configuration',
-        roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+        permissions: ['catalog:read'],
         subItems: [
           {
             id: 'brand',
             label: 'Hãng cung cấp',
             href: '/app/projects/configuration?tab=brand',
-            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+            permissions: ['catalog:read'],
           },
           {
             id: 'series',
             label: 'Hệ nhôm',
             href: '/app/projects/configuration?tab=series',
-            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+            permissions: ['catalog:read'],
           },
           {
             id: 'profile-bars',
             label: 'Thanh profile',
             href: '/app/projects/configuration?tab=profile-bars',
-            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+            permissions: ['catalog:read'],
           },
           {
             id: 'glass-gaskets',
             label: 'Kính & Gioăng keo',
             href: '/app/projects/configuration?tab=glass-gaskets',
-            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+            permissions: ['catalog:read'],
           },
           {
             id: 'accessories',
             label: 'Phụ kiện',
             href: '/app/projects/configuration?tab=accessories',
-            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+            permissions: ['catalog:read'],
           },
           {
             id: 'accessory-combos',
             label: 'Combo phụ kiện',
             href: '/app/projects/configuration?tab=accessory-combos',
-            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+            permissions: ['catalog:read'],
           },
           {
             id: 'door-templates',
             label: 'Mẫu cửa',
             href: '/app/projects/configuration?tab=door-templates',
-            roles: ['super', 'admin', 'accountant', 'hr', 'sale'],
+            permissions: ['catalog:read'],
           },
         ],
       },
@@ -279,19 +263,19 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Khách hàng & Đối tác',
         icon: React.createElement(Building2, { size: 18 }),
         href: '/app/customers',
-        roles: ['super', 'admin', 'sale', 'hr'],
+        permissions: ['customer:read'],
         subItems: [
           {
             id: 'customers',
             label: 'Danh sách khách hàng',
             href: '/app/customers',
-            roles: ['super', 'admin', 'sale', 'hr'],
+            permissions: ['customer:read'],
           },
           {
             id: 'providers',
             label: 'Nhà cung cấp',
             href: '/app/customers/providers',
-            roles: ['super', 'admin', 'sale', 'hr'],
+            permissions: ['customer_provider:read'],
           },
         ],
       },
@@ -306,31 +290,31 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Cơ chế & Tài liệu',
         icon: React.createElement(Folder, { size: 18 }),
         href: '/app/documents',
-        roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+        permissions: ['document:read'],
         subItems: [
           {
             id: 'documents-my',
             label: 'Tài liệu của tôi',
             href: '/app/documents?tab=my',
-            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+            permissions: ['document:read'],
           },
           {
             id: 'documents-shared',
             label: 'Được chia sẻ',
             href: '/app/inbox',
-            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+            permissions: ['document:read'],
           },
           {
             id: 'documents-rule',
             label: 'Tài liệu ban hành',
             href: '/app/rules',
-            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+            permissions: ['rule:read'],
           },
           {
             id: 'documents-trash',
             label: 'Thùng rác',
             href: '/app/trash',
-            roles: ['super', 'admin', 'hr', 'sale', 'technician', 'accountant', 'employee'],
+            permissions: ['trash:read'],
           },
         ],
       },
@@ -341,59 +325,59 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
     title: 'Hệ thống',
     items: [
       {
+        id: 'access-roles',
+        label: 'Vai trò & quyền',
+        icon: React.createElement(ShieldCheck, { size: 18 }),
+        href: '/app/access/roles',
+        permissions: ['role:assign_permission', 'role:create', 'role:update'],
+      },
+      {
+        id: 'access-members',
+        label: 'Thành viên',
+        icon: React.createElement(UserCog, { size: 18 }),
+        href: '/app/access/members',
+        permissions: ['user:assign_role', 'user:create'],
+      },
+      {
         id: 'app-versions',
         label: 'Quản trị hệ thống',
         icon: React.createElement(Sliders, { size: 18 }),
         href: '/app/app-versions',
-        roles: ['super', 'admin'],
+        platformOnly: true,
       },
     ],
   },
 ];
 
-export function getSidebarSectionsForRole(role: UserRole): SidebarSectionType[] {
+export function getSidebarSections(access: Access): SidebarSectionType[] {
   return rawSidebarSections
     .map((section) => {
-      const filteredItems = section.items
-        .filter((item) => !item.roles || item.roles.includes(role))
-        .map((item) => {
-          const filteredSubItems = item.subItems ? item.subItems.filter((sub) => !sub.roles || sub.roles.includes(role)) : undefined;
-
-          return { ...item, subItems: filteredSubItems } as SidebarItemType;
-        });
-
-      return { ...section, items: filteredItems } as SidebarSectionType;
+      const items = section.items
+        .filter((item) => isAllowed(item, access))
+        .map((item) => ({ ...item, subItems: item.subItems?.filter((sub) => isAllowed(sub, access)) }) as SidebarItemType);
+      return { ...section, items } as SidebarSectionType;
     })
     .filter((section) => section.items.length > 0);
 }
 
-export function isRouteAllowedForRole(path: string, role: UserRole): boolean {
+// Đường dẫn có trong menu mà người dùng không đủ quyền -> false; đường dẫn ngoài menu -> true
+export function isRouteAllowed(path: string, access: Access): boolean {
   if (path === '/app' || path === '/app/') return true;
-
-  let hasMatchedRoute = false;
-  let isAllowed = false;
-
+  let matched = false;
+  let allowed = false;
   for (const section of rawSidebarSections) {
     for (const item of section.items) {
       if (item.href === path) {
-        hasMatchedRoute = true;
-        if (!item.roles || item.roles.includes(role)) {
-          isAllowed = true;
-        }
+        matched = true;
+        allowed = allowed || isAllowed(item, access);
       }
-      if (item.subItems) {
-        for (const sub of item.subItems) {
-          if (sub.href === path) {
-            hasMatchedRoute = true;
-            if (!sub.roles || sub.roles.includes(role)) {
-              isAllowed = true;
-            }
-          }
+      for (const sub of item.subItems ?? []) {
+        if (sub.href === path) {
+          matched = true;
+          allowed = allowed || isAllowed(sub, access);
         }
       }
     }
   }
-
-  if (!hasMatchedRoute) return true;
-  return isAllowed;
+  return !matched || allowed;
 }

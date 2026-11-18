@@ -1,36 +1,36 @@
 'use client';
 
 import { useState } from 'react';
-
-// Thành phần dùng riêng cho trang quên mật khẩu
-import Intro from './intro';
-import Form from './form';
 import Link from 'next/link';
-
-// Icons từ thư viện lucide - react
 import { ArrowLeft } from 'lucide-react';
-
 import { QueryClientProvider } from '@tanstack/react-query';
-
-// Hàm tiện ích
 import queryClient from '@/utils/query';
 
+import AuthShell from '../../_components/auth-shell';
+import Form from './form';
+
 const Container = () => {
-  // State chuyển bước nhập mail - nhập Otp + mật khẩu mới
+  // Bước 1: nhập email · Bước 2: nhập OTP + mật khẩu mới
   const [step, setStep] = useState<1 | 2>(1);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="col-span-12 lg:col-span-5 flex flex-col gap-4 lg:border-r lg:border-gray-200 lg:pr-10 justify-center">
-        <Intro step={step} />
-        <Form step={step} setStep={setStep} />
-        <div className="mt-4 flex justify-center text-sm">
-          <Link href="/signin" className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-medium">
+      <AuthShell
+        title="Quên mật khẩu?"
+        subtitle={
+          step === 1
+            ? 'Nhập email, chúng tôi sẽ gửi mã xác nhận để lấy lại mật khẩu.'
+            : 'Nhập mã OTP đã gửi đến email (có hiệu lực 5 phút, dùng một lần) và mật khẩu mới.'
+        }
+        footer={
+          <Link href="/signin" className="inline-flex min-h-11 items-center gap-2 font-medium hover:text-primary">
             <ArrowLeft size={16} />
             Quay lại đăng nhập
           </Link>
-        </div>
-      </div>
+        }
+      >
+        <Form step={step} setStep={setStep} />
+      </AuthShell>
     </QueryClientProvider>
   );
 };

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getEmployees } from '@/actions/employee';
 import { getDepartments } from '@/actions/department';
-import { getApproverRoleBadge, isApproverEligible, DOC_QUERY_KEYS } from '@/utils';
+import { getApproverRoleBadge, DOC_QUERY_KEYS } from '@/utils';
 
 interface SelectOption {
   value: string;
@@ -24,6 +24,11 @@ export function useRulesShareOptions(isEnabled: boolean, excludeUserId?: string)
     queryFn: () => getEmployees({ limit: 200 }),
     enabled: isEnabled,
   });
+  const { data: approversData } = useQuery({
+    queryKey: [...DOC_QUERY_KEYS.options.employees, 'approvers'],
+    queryFn: () => getEmployees({ limit: 200, permission: 'user:update' }),
+    enabled: isEnabled,
+  });
   const { data: departmentsData } = useQuery({
     queryKey: DOC_QUERY_KEYS.options.departments,
     queryFn: () => getDepartments({ limit: 100 }),
@@ -31,15 +36,15 @@ export function useRulesShareOptions(isEnabled: boolean, excludeUserId?: string)
   });
 
   const approverOptions = useMemo<SelectOption[]>(() => {
-    const employees: any[] = employeesData?.items || [];
+    const employees: any[] = approversData?.items || [];
     return employees
-      .filter((emp) => emp?.id && String(emp.id) !== excludeUserId && isApproverEligible(emp))
+      .filter((emp) => emp?.id && String(emp.id) !== excludeUserId)
       .map((emp) => ({
         value: String(emp.id),
         label: `${emp.fullName || emp.username} [${getApproverRoleBadge(emp)}]`,
         subLabel: emp.email,
       }));
-  }, [employeesData, excludeUserId]);
+  }, [approversData, excludeUserId]);
 
   const employeeOptions = useMemo<SelectOption[]>(() => {
     const employees: any[] = employeesData?.items || [];

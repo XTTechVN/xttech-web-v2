@@ -25,6 +25,7 @@ import {
   ItemFormModal, ReceiptDetailModal, SupplierFormModal, SupplierDetailModal,
   OffcutFormModal, ReceiptFormModal, ShortageCheckerModal, DeleteItemModal,
 } from './_components';
+import { CancelReceiptModal } from './_components/modals/cancel-receipt-modal';
 
 const WAREHOUSE_TABS: TabItem[] = [
   { value: 'stock', label: '1. Tồn kho & Định mức', icon: <Package size={15} /> },
@@ -94,10 +95,13 @@ export default function WarehouseManagementPage() {
     }
   };
 
-  const handleCancelReceipt = async (receiptId: number) => {
+  const [cancelReceiptId, setCancelReceiptId] = useState<number | null>(null);
+  const handleCancelReceipt = async (receiptId: number) => setCancelReceiptId(receiptId);
+  const confirmCancelReceipt = async (receiptId: number, reason: string) => {
     try {
-      await cancelWarehouseReceipt(receiptId);
+      await cancelWarehouseReceipt(receiptId, reason);
       toast.success('Đã hủy phiếu kho và giải phóng vật tư giữ chỗ.');
+      setCancelReceiptId(null);
       loadAll();
     } catch (err: any) {
       showErrorToast(err, 'Lỗi hủy phiếu kho');
@@ -272,6 +276,9 @@ export default function WarehouseManagementPage() {
         onClose={() => setShowShortageModal(false)}
         onOpenReceiptWithShortages={(jitItems) => { setPrefilledReceiptItems(jitItems); setShowReceiptModal(true); }}
       />
+      {cancelReceiptId !== null && (
+        <CancelReceiptModal receiptId={cancelReceiptId} onClose={() => setCancelReceiptId(null)} onConfirm={confirmCancelReceipt} />
+      )}
       {selectedReceipt && (
         <ReceiptDetailModal
           isOpen={Boolean(selectedReceipt)}

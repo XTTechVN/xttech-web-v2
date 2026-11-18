@@ -158,9 +158,10 @@ export async function approveWarehouseReceipt(
 }
 
 export async function cancelWarehouseReceipt(
-  receiptId: number
+  receiptId: number,
+  reason: string
 ): Promise<WarehouseReceipt> {
-  const response = await api.put(`/api/v1/warehouse/receipts/${receiptId}/cancel`, {});
+  const response = await api.put(`/api/v1/warehouse/receipts/${receiptId}/cancel`, { reason });
   return response.data;
 }
 

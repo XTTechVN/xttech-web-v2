@@ -2,18 +2,17 @@
 
 import React from 'react';
 import { Menu } from 'lucide-react';
-import { UserRole, HEADER_HEIGHT } from '@/config';
+import { HEADER_HEIGHT } from '@/config';
 import { cn } from '@/utils';
 import { AppBreadcrumb } from './app-breadcrumb';
 import { HeaderProfile } from './header-profile';
 import { HeaderSearch } from './header-search';
 export interface AppHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   onMenuClick?: () => void;
-  userRole?: UserRole;
   setActive: (id: string) => void;
 }
 
-export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(({ onMenuClick, userRole, setActive, className, ...props }, ref) => {
+export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(({ onMenuClick, setActive, className, ...props }, ref) => {
   return (
     <header ref={ref} className={cn('flex flex-col w-full bg-white border-b border-slate-200 shrink-0', className)} {...props}>
       {/* Top Header Bar */}
@@ -29,12 +28,12 @@ export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(({ onM
             <Menu size={24} />
           </button>
 
-          <HeaderSearch setActive={setActive} userRole={userRole} />
+          <HeaderSearch setActive={setActive} />
         </div>
 
         {/* Right side: Notifications & User profile */}
         <div className="flex items-center gap-2">
-          <HeaderProfile userRole={userRole} />
+          <HeaderProfile />
         </div>
       </div>
 

@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { UserRole } from '@/config';
+import { useCan } from '@/hooks';
 import {
   AdminDashboard,
   HRDashboard,
@@ -13,44 +13,16 @@ import {
 } from './_pages';
 
 const Dashboard = () => {
-  const [userRole, setUserRole] = useState<UserRole>('admin');
+  const { can } = useCan();
 
-  // Đồng bộ role từ cookie lúc component mount
-  useEffect(() => {
-    const xtAuthCookie = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('xt-auth='))
-      ?.split('=')[1];
-
-    if (xtAuthCookie) {
-      try {
-        const parsed = JSON.parse(decodeURIComponent(xtAuthCookie));
-        const firstRole = parsed.roles?.[0];
-        const roleCode = typeof firstRole === 'string' ? firstRole : firstRole?.code;
-        if (roleCode) {
-          setUserRole(roleCode as UserRole);
-        }
-      } catch {}
-    }
-  }, []);
-
+  // Trang tổng quan theo nhóm việc của người dùng (suy từ quyền, không so tên role)
   const renderDashboard = () => {
-    switch (userRole) {
-      case 'super':
-      case 'admin':
-        return <AdminDashboard />;
-      case 'hr':
-        return <HRDashboard />;
-      case 'sale':
-        return <SaleDashboard />;
-      case 'technician':
-        return <TechnicianDashboard />;
-      case 'accountant':
-        return <AccountantDashboard />;
-      case 'employee':
-      default:
-        return <EmployeeDashboard />;
-    }
+    if (can('role:assign_permission')) return <AdminDashboard />;
+    if (can('user:update')) return <HRDashboard />;
+    if (can('quotation:submit')) return <SaleDashboard />;
+    if (can('door:calculate')) return <TechnicianDashboard />;
+    if (can('payment:create')) return <AccountantDashboard />;
+    return <EmployeeDashboard />;
   };
 
   return <div className="p-4">{renderDashboard()}</div>;

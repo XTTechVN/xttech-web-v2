@@ -88,7 +88,7 @@ export const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
                   variant="outline"
                   className="text-rose-600 border-rose-300 hover:bg-rose-50"
                   onClick={() => onCancel?.(receipt.id)}
-                  disabled={isCancelling}
+                  disabled={isCancelling || !activeReceipt._can?.cancel}
                 >
                   <XCircle size={14} className="mr-1.5" />
                   Hủy phiếu kho
@@ -97,7 +97,8 @@ export const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
                   size="sm"
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   onClick={() => onApprove?.(activeReceipt.id)}
-                  disabled={isApproving}
+                  disabled={isApproving || !activeReceipt._can?.approve}
+                  title={activeReceipt._can?.approve ? undefined : 'Bạn không được duyệt phiếu này (thiếu quyền hoặc là người tạo phiếu)'}
                 >
                   <CheckCircle2 size={14} className="mr-1.5" />
                   Duyệt phiếu ngay

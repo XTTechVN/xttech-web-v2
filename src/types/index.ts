@@ -95,3 +95,6 @@ export * from './document-rule';
 export * from './trash';
 
 export * from './warehouse';
+export * from './me';
+export * from './access';
+export * from './platform';

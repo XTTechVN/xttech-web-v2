@@ -4,7 +4,8 @@ import React, { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MapPin, CalendarOff, ClockAlert, CalendarCheck, CalendarDays, Building2, Users, Lightbulb, BarChart3, } from 'lucide-react';
 import { useAuthStore } from '@/stores';
-import { UserRole, isRouteAllowedForRole } from '@/config';
+import { isRouteAllowed } from '@/config';
+import { useCan } from '@/hooks';
 
 interface QuickActionItem {
   id: string;
@@ -13,7 +14,6 @@ interface QuickActionItem {
   icon: React.ReactNode;
   bgColor: string;
   textColor: string;
-  roles?: UserRole[];
   badge?: number;
 }
 
@@ -29,13 +29,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
   const user = useAuthStore((state) => state.user);
 
 
-  // Tổng hợp danh sách roles của user (hỗ trợ tài khoản có nhiều role)
-  const userRoles = useMemo<UserRole[]>(() => {
-    if (!user?.roles || user.roles.length === 0) return ['employee'];
-    return user.roles
-      .map((r) => (typeof r === 'string' ? r : r.code)?.toLowerCase() as UserRole)
-      .filter(Boolean);
-  }, [user]);
+  const { access } = useCan();
 
   const allActions: QuickActionItem[] = useMemo(
     () => [
@@ -88,7 +82,6 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
         icon: <Building2 size={22} />,
         bgColor: 'bg-cyan-50 hover:bg-cyan-100/80',
         textColor: 'text-cyan-600',
-        roles: ['super', 'admin', 'sale', 'technician'],
       },
       {
         id: 'employees',
@@ -97,7 +90,6 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
         icon: <Users size={22} />,
         bgColor: 'bg-indigo-50 hover:bg-indigo-100/80',
         textColor: 'text-indigo-600',
-        roles: ['super', 'admin', 'hr', 'accountant'],
       },
       {
         id: 'suggestions',
@@ -114,23 +106,13 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
         icon: <BarChart3 size={22} />,
         bgColor: 'bg-teal-50 hover:bg-teal-100/80',
         textColor: 'text-teal-600',
-        roles: ['super', 'admin', 'hr', 'accountant'],
       },
     ],
     [pendingLeavesCount, pendingAdjustmentsCount]
   );
 
-  // Lọc động: Chỉ hiển thị các tiện ích mà vai trò của user được phép truy cập
-  const visibleActions = useMemo(() => {
-    return allActions.filter((action) => {
-      return userRoles.some((role) => {
-        if (action.roles && !action.roles.includes(role)) {
-          return false;
-        }
-        return isRouteAllowedForRole(action.href, role);
-      });
-    });
-  }, [allActions, userRoles]);
+  // Chỉ hiện tiện ích mà người dùng có quyền vào trang đó
+  const visibleActions = useMemo(() => allActions.filter((action) => isRouteAllowed(action.href, access)), [allActions, access]);
 
   if (visibleActions.length === 0) return null;
 

@@ -42,8 +42,8 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, onExportClick }: TableP
 
   // Lấy danh sách nhân viên
   const { data: usersData } = useQuery({
-    queryKey: ['users', 'all'],
-    queryFn: () => getUsers({ limit: 1000 }),
+    queryKey: ['users', 'customer-staff'],
+    queryFn: () => getUsers({ limit: 1000, permission: 'customer:update' }),
   });
 
   // Options cho filter loại khách hàng
@@ -54,7 +54,6 @@ const Table = ({ onEditClick, onDeleteClick, onAddClick, onExportClick }: TableP
   // Options cho filter nhân viên phụ trách
   const staffOptions = useMemo(() => {
     const list = (usersData?.items || [])
-      .filter((u: any) => u.roles?.some((r: any) => r.code === 'sale'))
       .map((u: any) => ({
         label: u.fullName || u.username || u.email,
         value: u.id,

@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { Layers, Plus, Trash2 } from 'lucide-react';
 import { cancelDesignOption, createDesignOption, getDesignOptions, getProjectPositions } from '@/actions';
 import { Button, Input, Modal, Select } from '@/components';
-import { usePermission } from '@/hooks/user-permission';
+import { useCan } from '@/hooks/use-can';
 import { showErrorToast } from '@/utils';
 import type { DesignOption, DesignOptionCreatePayload } from '@/types';
 import { invalidateQuotationQueries } from '../../hooks/use-active-quotation';
@@ -23,8 +23,8 @@ interface DesignOptionsBarProps {
  * và một báo giá. Khách đồng ý báo giá của phương án nào thì cửa của phương án đó thành cửa chính thức.
  */
 export function DesignOptionsBar({ projectId, selectedId, onSelect }: DesignOptionsBarProps) {
-  const { isAdmin, hasRole } = usePermission();
-  const canSell = isAdmin || hasRole('sale');
+  const { can } = useCan();
+  const canSell = can('quotation:send');
   const [isCreating, setIsCreating] = useState(false);
 
   const { data: options = [] } = useQuery<DesignOption[]>({

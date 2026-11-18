@@ -26,19 +26,14 @@ export const ROUTE_METADATA_MAP: Record<string, RouteMeta> = {
     iconName: 'CalendarOff',
   },
   '/app/employees': {
-    title: 'Danh sách nhân sự',
-    subtitle: 'Hồ sơ cán bộ công nhân viên',
+    title: 'Nhân sự',
+    subtitle: 'Nhân viên, phòng ban & vai trò',
     iconName: 'Users',
   },
   '/app/departments': {
     title: 'Phòng ban & Cơ cấu',
     subtitle: 'Quản lý phòng ban tổ chức',
     iconName: 'Building2',
-  },
-  '/app/roles': {
-    title: 'Phân quyền hệ thống',
-    subtitle: 'Quản lý vai trò & Quyền hạn',
-    iconName: 'Sliders',
   },
   '/app/shifts': {
     title: 'Ca làm việc',

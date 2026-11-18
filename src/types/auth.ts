@@ -2,6 +2,7 @@ import { Position } from './position';
 
 // Kiểu dữ liệu đăng nhập
 export interface SignInCredentials {
+  orgCode?: string;
   username: string;
   password: string;
 }

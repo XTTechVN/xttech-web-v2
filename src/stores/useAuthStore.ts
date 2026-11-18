@@ -17,7 +17,7 @@ interface AuthState {
   refreshToken: string;
   user: AuthUser | null;
   isLoading: boolean;
-  signin: (username: string, password: string) => Promise<boolean>;
+  signin: (username: string, password: string, orgCode?: string) => Promise<boolean>;
   signout: () => Promise<void>;
   setAccessToken: (accessToken: string) => void;
   setTokens: (accessToken: string, refreshToken?: string) => void;
@@ -33,10 +33,10 @@ const useAuthStore = create<AuthState>()(
       refreshToken: '',
       user: null,
       isLoading: false,
-      signin: async (username: string, password: string) => {
+      signin: async (username: string, password: string, orgCode?: string) => {
         try {
           set({ isLoading: true });
-          const res = await signIn({ username, password });
+          const res = await signIn({ orgCode, username, password });
           const { accessToken, refreshToken, user } = res;
           
           if (user && user.roles) {

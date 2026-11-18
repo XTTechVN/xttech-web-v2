@@ -8,6 +8,7 @@ import { exportAttendanceReport } from '@/actions';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils';
 import { getDefaultDateRange } from './table';
+import { PeriodLock } from './period-lock';
 
 export const ReportActionBar = () => {
   const defaultRange = useMemo(() => getDefaultDateRange(), []);
@@ -44,7 +45,8 @@ export const ReportActionBar = () => {
   };
 
   return (
-    <div className="flex md:flex-row justify-end items-start md:items-center w-full gap-4">
+    <div className="flex w-full flex-wrap items-center justify-between gap-3">
+      <PeriodLock fromDate={fromDate || ''} />
       <Button
         variant="primary"
         size="sm"

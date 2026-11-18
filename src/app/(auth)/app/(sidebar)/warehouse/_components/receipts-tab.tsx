@@ -212,15 +212,17 @@ export function ReceiptsTab({
                               <button
                                 type="button"
                                 onClick={() => onApproveReceipt(receipt.id)}
-                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
-                                title="Duyệt phiếu (Cập nhật tồn kho thực tế)"
+                                disabled={!receipt._can?.approve}
+                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors disabled:text-slate-300 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                title={receipt._can?.approve ? 'Duyệt phiếu (Cập nhật tồn kho thực tế)' : 'Bạn không được duyệt phiếu này (thiếu quyền hoặc là người tạo phiếu)'}
                               >
                                 <CheckCircle2 size={15} />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => onCancelReceipt(receipt.id)}
-                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                disabled={!receipt._can?.cancel}
+                                className="p-1.5 text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                                 title="Hủy phiếu (Giải phóng giữ chỗ)"
                               >
                                 <XCircle size={15} />

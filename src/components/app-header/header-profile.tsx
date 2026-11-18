@@ -7,16 +7,11 @@ import { Capacitor } from '@capacitor/core';
 import { Avatar, Dropdown } from '@/components';
 import { useAuthStore } from '@/stores';
 import { NativeTracking } from '@/hooks';
-import { UserRole } from '@/config';
 import { getFileUrl } from '@/utils';
 import { ProfileModal } from './profile-modal';
 import { PasswordModal } from './password-modal';
 
-export interface HeaderProfileProps {
-  userRole?: UserRole;
-}
-
-export function HeaderProfile({ userRole }: HeaderProfileProps) {
+export function HeaderProfile() {
   const { user } = useAuthStore();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -48,15 +43,7 @@ export function HeaderProfile({ userRole }: HeaderProfileProps) {
     await useAuthStore.getState().signout();
   };
 
-  const roleName =
-    user?.roles?.[0]?.name ||
-    (userRole === 'admin'
-      ? 'Quản trị viên'
-      : userRole === 'hr'
-        ? 'Nhân sự (HR)'
-        : userRole === 'sale'
-          ? 'Kinh doanh (Sale)'
-          : 'Kỹ thuật viên (Technician)');
+  const roleName = user?.roles?.[0]?.name || 'Thành viên';
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {

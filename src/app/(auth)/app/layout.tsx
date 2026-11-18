@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/stores';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuthStore, useMeStore } from '@/stores';
 import { getUser } from '@/actions/user';
 import { SidebarProvider, PageTransitionProvider } from '@/contexts';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -51,6 +52,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     };
     checkAuth();
   }, [router]);
+
+  // Quyền hiệu lực lấy lại mỗi lần đổi trang
+  useEffect(() => {
+    if (!isLoading) useMeStore.getState().load();
+  }, [pathname, isLoading]);
 
   if (isLoading) {
     return (

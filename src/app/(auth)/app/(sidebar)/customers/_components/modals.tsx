@@ -116,15 +116,14 @@ export function CustomerExportModal({ isOpen, onClose }: CustomerExportModalProp
 
   // Load danh sách nhân viên
   const { data: usersData, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['users', 'all'],
-    queryFn: () => getUsers({ limit: 1000 }),
+    queryKey: ['users', 'customer-staff'],
+    queryFn: () => getUsers({ limit: 1000, permission: 'customer:update' }),
     enabled: isOpen && canViewAll,
   });
 
   const staffOptions = [
     { label: 'Tất cả nhân viên', value: '' },
     ...((usersData?.items || [])
-      .filter((u: any) => u.roles?.some((r: any) => r.code === 'sale'))
       .map((u: any) => ({
         label: u.fullName || u.username || u.email,
         value: u.id,

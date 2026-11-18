@@ -1,13 +1,11 @@
-
-
 import { SignInCredentials } from '@/types';
 
 import api from '@/utils/api';
 
 // Hàm xử lý đăng nhập
-export const signIn = async ({ username, password }: SignInCredentials) => {
+export const signIn = async ({ orgCode, username, password }: SignInCredentials) => {
   try {
-    const res = await api.post(`/api/v1/auth/signin`, { username, password });
+    const res = await api.post(`/api/v1/auth/signin`, { orgCode: orgCode || undefined, username, password });
     return res.data;
   } catch (error) {
     throw new Error('Lỗi hệ thống');
@@ -25,9 +23,9 @@ export const signOut = async (refreshToken?: string) => {
   }
 };
 
-export const forgetPassword = async (email: string) => {
+export const forgetPassword = async (email: string, orgCode?: string) => {
   try {
-    const res = await api.post(`/api/v1/auth/forget`, { email });
+    const res = await api.post(`/api/v1/auth/forget`, { email, orgCode: orgCode || undefined });
     return res.data;
   } catch (error: any) {
     if (error.response?.status === 404) {
@@ -37,7 +35,7 @@ export const forgetPassword = async (email: string) => {
   }
 };
 
-export const resetPasswordWithOtp = async (data: { email: string; otp: string; newPassword: string }) => {
+export const resetPasswordWithOtp = async (data: { email: string; otp: string; newPassword: string; orgCode?: string }) => {
   try {
     const res = await api.post(`/api/v1/auth/reset`, data);
     return res.data;
@@ -47,6 +45,6 @@ export const resetPasswordWithOtp = async (data: { email: string; otp: string; n
 };
 
 export const changePassword = async (newPassword: string) => {
-    const res = await api.post(`/api/v1/auth/change`, { newPassword } );
-    return res.data;
+  const res = await api.post(`/api/v1/auth/change`, { newPassword });
+  return res.data;
 };

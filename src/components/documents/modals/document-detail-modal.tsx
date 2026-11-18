@@ -7,7 +7,7 @@ import { UploadVersionModal } from './upload-version-modal';
 import { FileText } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import {
-  getFileUrl, isApproverEligible, getApproverRoleBadge,
+  getFileUrl, getApproverRoleBadge,
   DOC_QUERY_KEYS, invalidateDocumentQueries, getDocumentPermissions,
 } from '@/utils';
 import {
@@ -52,11 +52,9 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const [selectedApproverId, setSelectedApproverId] = useState<string>('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const currentUser = useAuthStore((state) => state.user);
-  const { hasRole, isAdmin, isHR, isSuper, isManager } = usePermission();
+  const { isManager } = usePermission();
 
-  const canManageDoc =
-    isAdmin || isHR || isSuper || isManager ||
-    hasRole(['admin', 'hr', 'super', 'supper', 'super_admin', 'supper_admin']);
+  const canManageDoc = isManager;
 
   const markedDocIdRef = useRef<number | null>(null);
 
@@ -84,6 +82,12 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
     enabled: isOpen,
   });
 
+  const { data: approversData } = useQuery({
+    queryKey: [...DOC_QUERY_KEYS.options.employees, 'approvers'],
+    queryFn: () => getEmployees({ limit: 200, permission: 'user:update' }),
+    enabled: isOpen,
+  });
+
   const { data: departmentsData } = useQuery({
     queryKey: DOC_QUERY_KEYS.options.departments,
     queryFn: () => getDepartments({ limit: 100 }),
@@ -100,8 +104,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const resolvedUsers = useMemo(() => resolveDetailUsers(targetDoc, doc, employees, currentUser), [targetDoc, doc, employees, currentUser]);
 
   const approverSelectOptions = useMemo(() => {
-    const unique = employees
-      .filter(isApproverEligible)
+    const unique = (approversData?.items || [])
       .filter((emp: any, idx: number, arr: any[]) => idx === arr.findIndex((t: any) => String(t.id) === String(emp.id)));
     return [
       { value: '', label: '-- Chọn người phê duyệt --' },
@@ -110,7 +113,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         label: `${emp.fullName || emp.username} (${getApproverRoleBadge(emp)})`,
       })),
     ];
-  }, [employees]);
+  }, [approversData]);
 
   if (!doc || !targetDoc) return null;
 

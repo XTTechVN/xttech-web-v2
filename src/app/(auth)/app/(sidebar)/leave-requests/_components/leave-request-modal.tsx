@@ -536,7 +536,7 @@ export default function LeaveRequestModal({ isManager, currentUserId }: LeaveReq
 
   const isFormLoading = createMutation.isPending || updateMutation.isPending;
 
-  const canReview = isManager && selectedLeaveRequest?.status === LeaveRequestStatus.PENDING;
+  const canReview = Boolean(selectedLeaveRequest?._can?.review);
 
   const mode = isCreateModalOpen ? 'create' : isEditing ? 'edit' : 'view';
 

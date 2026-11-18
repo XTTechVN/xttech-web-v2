@@ -23,6 +23,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useForm } from 'react-hook-form';
+import { readLastOrg, saveLastOrg } from '@/utils/last-org';
 
 // Kiểu dữ liệu cho props
 interface FormProps {
@@ -34,6 +35,7 @@ interface FormProps {
 const forgotPasswordSchema = z
   .object({
     step: z.union([z.literal(1), z.literal(2)]),
+    orgCode: z.string().trim().min(1, 'Vui lòng nhập mã doanh nghiệp'),
     email: z.string().email('Email không đúng định dạng').min(1, 'Vui lòng nhập email'),
     otp: z.string().optional(),
     password: z.string().optional(),
@@ -77,6 +79,7 @@ const Form = ({ step, setStep }: FormProps) => {
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
       step: 1,
+      orgCode: '',
       email: '',
       otp: '',
       password: '',
@@ -84,15 +87,19 @@ const Form = ({ step, setStep }: FormProps) => {
     },
   });
 
+  useEffect(() => {
+    const last = readLastOrg();
+    if (last) setValue('orgCode', last);
+  }, [setValue]);
+
   // Effect dùng để cập nhật step
   useEffect(() => {
     setValue('step', step);
-    setGlobalError('');
   }, [step, setValue]);
 
   // Mutation dùng để gửi email
   const forgetMutation = useMutation({
-    mutationFn: (emailData: string) => forgetPassword(emailData),
+    mutationFn: (d: { email: string; orgCode: string }) => forgetPassword(d.email, d.orgCode),
     onSuccess: () => {
       toast.success('Mã xác nhận đã được gửi đến email của bạn');
       setStep(2);
@@ -105,7 +112,7 @@ const Form = ({ step, setStep }: FormProps) => {
 
   // Mutation dùng để đặt lại mật khẩu
   const resetMutation = useMutation({
-    mutationFn: (data: { email: string; otp: string; newPassword: string }) => resetPasswordWithOtp(data),
+    mutationFn: (data: { email: string; otp: string; newPassword: string; orgCode: string }) => resetPasswordWithOtp(data),
     onSuccess: () => {
       toast.success('Đổi mật khẩu thành công!');
       router.push('/signin');
@@ -121,10 +128,12 @@ const Form = ({ step, setStep }: FormProps) => {
   const onSubmit = (data: FormValues) => {
     setGlobalError('');
     if (data.step === 1) {
-      forgetMutation.mutate(data.email);
+      saveLastOrg(data.orgCode.trim());
+      forgetMutation.mutate({ email: data.email, orgCode: data.orgCode.trim() });
     } else {
       resetMutation.mutate({
         email: data.email,
+        orgCode: data.orgCode.trim(),
         otp: data.otp as string,
         newPassword: data.password as string,
       });
@@ -135,21 +144,50 @@ const Form = ({ step, setStep }: FormProps) => {
   const isPending = forgetMutation.isPending || resetMutation.isPending;
 
   return (
-    <form className="flex flex-col gap-4 mt-2" onSubmit={handleSubmit(onSubmit)}>
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
       {globalError && <div className="text-red-500 text-xs bg-red-50 p-2.5 rounded-lg border border-red-100 font-medium">{globalError}</div>}
 
       {step === 1 ? (
-        <Input label="Địa chỉ Email" type="email" placeholder="name@example.com" {...register('email')} error={errors.email?.message} />
+        <>
+          <Input
+            label="Mã doanh nghiệp"
+            placeholder="Ví dụ: xuan_tiep_window"
+            autoCapitalize="none"
+            autoCorrect="off"
+            autoComplete="organization"
+            className="h-11 lg:h-10"
+            {...register('orgCode')}
+            error={errors.orgCode?.message}
+          />
+          <Input
+            label="Địa chỉ Email"
+            type="email"
+            placeholder="name@example.com"
+            autoComplete="email"
+            className="h-11 lg:h-10"
+            {...register('email')}
+            error={errors.email?.message}
+          />
+        </>
       ) : (
         <>
-          <Input label="Mã xác nhận (OTP)" type="text" placeholder="Nhập mã 6 số" {...register('otp')} error={errors.otp?.message} />
+          <Input
+            label="Mã xác nhận (OTP)"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            className="h-11 lg:h-10"
+            placeholder="Nhập mã 6 số"
+            {...register('otp')}
+            error={errors.otp?.message}
+          />
 
           <div className="relative">
             <Input
               label="Mật khẩu mới"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
-              className="pr-10"
+              className="h-11 pr-11 lg:h-10"
               autoComplete="new-password"
               {...register('password')}
               error={errors.password?.message}
@@ -157,8 +195,8 @@ const Form = ({ step, setStep }: FormProps) => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className={`absolute right-3 ${errors.password ? 'top-8.5' : 'top-8.5'} text-gray-400 hover:text-gray-500 transition cursor-pointer`}
-              style={errors.password ? { top: '34px' } : undefined}
+              aria-label="Ẩn/hiện mật khẩu"
+              className="absolute right-0 top-6.5 flex h-11 w-11 items-center justify-center text-gray-400 hover:text-gray-500 transition cursor-pointer lg:h-10"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -169,7 +207,7 @@ const Form = ({ step, setStep }: FormProps) => {
               label="Xác nhận mật khẩu mới"
               type={showConfirmPassword ? 'text' : 'password'}
               placeholder="••••••••"
-              className="pr-10"
+              className="h-11 pr-11 lg:h-10"
               autoComplete="new-password"
               {...register('confirmPassword')}
               error={errors.confirmPassword?.message}
@@ -177,8 +215,8 @@ const Form = ({ step, setStep }: FormProps) => {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className={`absolute right-3 ${errors.confirmPassword ? 'top-8.5' : 'top-8.5'} text-gray-400 hover:text-gray-500 transition cursor-pointer`}
-              style={errors.confirmPassword ? { top: '34px' } : undefined}
+              aria-label="Ẩn/hiện mật khẩu"
+              className="absolute right-0 top-6.5 flex h-11 w-11 items-center justify-center text-gray-400 hover:text-gray-500 transition cursor-pointer lg:h-10"
             >
               {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -186,7 +224,7 @@ const Form = ({ step, setStep }: FormProps) => {
         </>
       )}
 
-      <Button type="submit" size="lg" fullWidth className="mt-2 rounded-xl" disabled={isPending}>
+      <Button type="submit" size="lg" fullWidth className="mt-2" disabled={isPending}>
         {isPending ? (step === 1 ? 'Đang gửi...' : 'Đang xử lý...') : step === 1 ? 'Gửi mã xác nhận' : 'Đặt lại mật khẩu'}
       </Button>
     </form>

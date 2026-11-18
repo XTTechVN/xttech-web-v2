@@ -87,6 +87,14 @@ api.interceptors.response.use(
 
     const statusCode = error.response?.status ?? error.status;
 
+    // Tài khoản bị bắt đổi mật khẩu: đưa tới trang đổi mật khẩu thay vì để các trang báo lỗi
+    if (statusCode === 403 && error.response?.data?.details?.code === 'MUST_CHANGE_PASSWORD') {
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/change-password')) {
+        window.location.replace('/app/change-password');
+      }
+      return Promise.reject(error);
+    }
+
     // Chỉ can thiệp khi gặp mã 401 và request chưa từng retry
     if (statusCode !== 401 || originalRequest._retry) {
       return Promise.reject(error);

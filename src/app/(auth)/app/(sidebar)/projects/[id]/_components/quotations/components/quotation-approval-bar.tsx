@@ -14,7 +14,6 @@ import {
 } from '@/actions';
 import { Badge, Button, Input, Modal } from '@/components';
 import { QUOTATION_STATUS_MAP } from '@/config';
-import { usePermission } from '@/hooks/user-permission';
 import { showErrorToast } from '@/utils';
 import type { ProjectQuotationDetail, SignatureInput } from '@/types';
 import { SignatureFields } from '../../shared';
@@ -40,8 +39,7 @@ const STEP_HINT: Record<string, string> = {
 
 /** Vòng duyệt báo giá: sale trình -> admin duyệt -> gửi khách -> khách đồng ý / từ chối. */
 export function QuotationApprovalBar({ projectId, quotation }: QuotationApprovalBarProps) {
-  const { isAdmin, hasRole } = usePermission();
-  const canSell = isAdmin || hasRole('sale');
+  const can = quotation._can ?? {};
   const [reasonAction, setReasonAction] = useState<ReasonAction | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
   const status = QUOTATION_STATUS_MAP[quotation.status] ?? { label: quotation.status, variant: 'default' };
@@ -67,7 +65,7 @@ export function QuotationApprovalBar({ projectId, quotation }: QuotationApproval
       },
     });
 
-  const canDecide = canSell && ['approved', 'sent'].includes(quotation.status);
+  const canDecide = (can.send || can.record_decision) && ['approved', 'sent'].includes(quotation.status);
   const isBlocked = quotation.isOutdated;
 
   return (
@@ -92,7 +90,7 @@ export function QuotationApprovalBar({ projectId, quotation }: QuotationApproval
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {quotation.status === 'draft' && canSell && (
+        {quotation.status === 'draft' && can.submit && (
           <Button
             size="sm"
             leftIcon={<Send size={14} />}
@@ -102,11 +100,14 @@ export function QuotationApprovalBar({ projectId, quotation }: QuotationApproval
             Trình duyệt
           </Button>
         )}
-        {quotation.status === 'pending_approval' && isAdmin && (
+        {quotation.status === 'pending_approval' && (can.approve || can.reject) && (
           <>
-            <Button size="sm" variant="outline" leftIcon={<Undo2 size={14} />} onClick={() => setReasonAction('return')}>
-              Trả lại
-            </Button>
+            {can.reject && (
+              <Button size="sm" variant="outline" leftIcon={<Undo2 size={14} />} onClick={() => setReasonAction('return')}>
+                Trả lại
+              </Button>
+            )}
+            {can.approve && (
             <Button
               size="sm"
               leftIcon={<CheckCircle2 size={14} />}
@@ -115,9 +116,10 @@ export function QuotationApprovalBar({ projectId, quotation }: QuotationApproval
             >
               Duyệt báo giá
             </Button>
+            )}
           </>
         )}
-        {quotation.status === 'approved' && isAdmin && (
+        {quotation.status === 'approved' && can.reject && (
           <Button size="sm" variant="ghost" leftIcon={<Undo2 size={14} />} onClick={() => setReasonAction('return')}>
             Thu hồi duyệt
           </Button>

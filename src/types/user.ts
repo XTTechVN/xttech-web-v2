@@ -31,6 +31,7 @@ export interface UserQueryParams {
   name?: string;
   department?: string;
   position?: string;
+  permission?: string;
   startTime?: string | null;
   endTime?: string | null;
 }

@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { rawSidebarSections, UserRole } from '@/config';
+import { rawSidebarSections, isRouteAllowed } from '@/config';
+import { useCan } from '@/hooks';
 import { Input } from '@/components';
 
 export interface HeaderSearchProps {
-  userRole?: UserRole;
   setActive: (id: string) => void;
 }
 
@@ -28,7 +28,8 @@ const removeAccents = (str: string) => {
     .replace(/Đ/g, 'D');
 };
 
-export function HeaderSearch({ userRole, setActive }: HeaderSearchProps) {
+export function HeaderSearch({ setActive }: HeaderSearchProps) {
+  const { access } = useCan();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
@@ -60,8 +61,7 @@ export function HeaderSearch({ userRole, setActive }: HeaderSearchProps) {
 
     rawSidebarSections.forEach((section) => {
       section.items.forEach((item) => {
-        const hasAccess = !item.roles || (userRole && item.roles.includes(userRole));
-        if (!hasAccess && userRole !== 'admin') return;
+        if (item.href && !isRouteAllowed(item.href, access)) return;
 
         const normalizedItemLabel = removeAccents(item.label).toLowerCase();
         if (normalizedItemLabel.includes(lowerQuery) && !item.subItems) {
@@ -76,8 +76,7 @@ export function HeaderSearch({ userRole, setActive }: HeaderSearchProps) {
 
         if (item.subItems) {
           item.subItems.forEach((sub) => {
-            const hasSubAccess = !sub.roles || (userRole && sub.roles.includes(userRole));
-            if (!hasSubAccess && userRole !== 'admin') return;
+            if (sub.href && !isRouteAllowed(sub.href, access)) return;
 
             const normalizedSubLabel = removeAccents(sub.label).toLowerCase();
             if (normalizedSubLabel.includes(lowerQuery)) {

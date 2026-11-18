@@ -1,44 +1,22 @@
-import { useMemo } from 'react';
 import { useAuthStore } from '@/stores';
+import { useCan } from './use-can';
 
-export const ROLE_CODES = {
-  SUPER: 'super',
-  ADMIN: 'admin',
-  HR: 'hr',
-  SALE: 'sale',
-  TECHNICIAN: 'technician',
-  EMPLOYEE: 'employee',
-  ACCOUNTANT: 'accountant',
-  WORKSHOP: 'workshop',
-  INSTALLER: 'installer',
-  WARRANTY: 'warranty',
-};
+// Nhóm việc suy từ MỘT quyền mà bộ role mặc định chỉ cấp đúng cho nhóm đó (giống `permissions/probes.py` ở backend).
+// Không đọc tên role của người dùng.
+const ADMIN_PROBE = 'role:assign_permission';
+const HR_PROBE = 'user:update';
+const SALE_PROBE = 'quotation:submit';
 
 export function usePermission() {
   const user = useAuthStore((state) => state.user);
-  const roleSet = useMemo(() => {
-    const set = new Set<string>();
-    user?.roles?.forEach((r) => {
-      if (r.code) set.add(r.code.toLowerCase().trim());
-      if (r.name) set.add(r.name.toLowerCase().trim());
-    });
-    return set;
-  }, [user?.roles]);
+  const { can } = useCan();
 
-  const hasRole = (roles: string | string[]) => {
-    if (Array.isArray(roles)) {
-      return roles.some((role) => roleSet.has(role.toLowerCase()));
-    }
-    return roleSet.has(roles.toLowerCase());
-  };
+  const isAdmin = can(ADMIN_PROBE);
+  const isSuper = isAdmin;
+  const isHR = can(HR_PROBE);
+  const isSale = can(SALE_PROBE);
 
-  // Định nghĩa các vai trò cụ thể
-  const isSuper = roleSet.has(ROLE_CODES.SUPER);
-  const isAdmin = isSuper || roleSet.has(ROLE_CODES.ADMIN);
-  const isHR = roleSet.has(ROLE_CODES.HR);
-  const isSale = roleSet.has(ROLE_CODES.SALE);
-
-  const isManager = hasRole([ROLE_CODES.ADMIN, ROLE_CODES.SUPER, ROLE_CODES.HR]);
+  const isManager = isAdmin || isHR;
   const isSaleOnly = isSale && !isManager;
 
   // Quyền hạn nghiệp vụ (Capabilities)
@@ -47,8 +25,6 @@ export function usePermission() {
 
   return {
     user,
-    roleSet,
-    hasRole,
     isSuper,
     isAdmin,
     isHR,

@@ -12,6 +12,16 @@ const geistMono = localFont({
   display: 'swap',
 });
 
+const beVietnam = localFont({
+  src: [
+    { path: '../../public/fonts/be-vietnam-pro-400.ttf', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/be-vietnam-pro-500.ttf', weight: '500', style: 'normal' },
+    { path: '../../public/fonts/be-vietnam-pro-600.ttf', weight: '600', style: 'normal' },
+  ],
+  variable: '--font-be-vietnam',
+  display: 'swap',
+});
+
 const lexend = localFont({
   src: [
     {
@@ -59,7 +69,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${lexend.variable} ${geistMono.variable} h-full antialiased scroll-smooth`} suppressHydrationWarning>
+    <html lang="vi" className={`${lexend.variable} ${beVietnam.variable} ${geistMono.variable} h-full antialiased scroll-smooth`} suppressHydrationWarning>
       <body className="bg-white antialiased min-h-screen" suppressHydrationWarning>
         <QueryProvider>
           {children}

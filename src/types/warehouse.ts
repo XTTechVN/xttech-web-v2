@@ -185,6 +185,7 @@ export interface WarehouseReceiptItemCreatePayload {
 }
 
 export interface WarehouseReceipt {
+  _can?: Partial<Record<'approve' | 'cancel', boolean>>;
   id: number;
   code: string;
   receiptType: ReceiptType;

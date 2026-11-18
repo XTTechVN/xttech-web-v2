@@ -1,23 +1,23 @@
 /**
  * @param breakpoint - Breakpoint sử dụng trong Media Query.
- * @returns Trạng thái của Media Query - lần đầu sẽ là undefined.
+ * @returns Trạng thái của Media Query - khi render ở server là undefined.
  */
 
 import * as React from 'react';
 
 export function useMediaQuery({ breakpoint }: { breakpoint: `${string}px` }): boolean | undefined {
-  const [matches, setMatches] = React.useState<boolean | undefined>(undefined);
-
-  React.useLayoutEffect(() => {
-    const query = window.matchMedia(`(max-width: ${breakpoint})`);
-
-    const onChange = () => {
-      setMatches(query.matches);
-    };
-    query.addEventListener('change', onChange);
-    setMatches(query.matches);
-    return () => query.removeEventListener('change', onChange);
-  }, []);
-
-  return matches;
+  const query = `(max-width: ${breakpoint})`;
+  const subscribe = React.useCallback(
+    (onChange: () => void) => {
+      const mql = window.matchMedia(query);
+      mql.addEventListener('change', onChange);
+      return () => mql.removeEventListener('change', onChange);
+    },
+    [query],
+  );
+  return React.useSyncExternalStore<boolean | undefined>(
+    subscribe,
+    () => window.matchMedia(query).matches,
+    () => undefined,
+  );
 }

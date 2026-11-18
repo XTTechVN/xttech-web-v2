@@ -17,7 +17,17 @@ import { useLocationTracker, useMyTodayAttendance } from '@/hooks';
 import { usePageTransition } from '@/contexts';
 
 // Config
-import { getSidebarSectionsForRole, UserRole, acceptedSections } from '@/config';
+import { getSidebarSections, isRouteAllowed, acceptedSections } from '@/config';
+import { useCan } from '@/hooks';
+import { AccessDenied } from '@/components/access-denied';
+
+// Giữ chỗ trong lúc chờ /me, tránh trang con gọi API trước khi biết quyền
+const PageSkeleton = () => (
+  <div className="flex flex-col gap-3 p-4" aria-busy="true">
+    <div className="h-8 w-1/3 animate-pulse rounded-md bg-gray-200" />
+    <div className="h-40 w-full animate-pulse rounded-md bg-gray-100" />
+  </div>
+);
 import { useAuthStore } from '@/stores';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -33,18 +43,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [activeMenu, setActiveMenu] = React.useState(lastPath);
 
-  const { user } = useAuthStore();
+  const { access, isReady, isPending } = useCan();
 
-  const userRole = React.useMemo<UserRole>(() => {
-    const firstRole = user?.roles?.[0];
-    const roleCode = typeof firstRole === 'string' ? firstRole : firstRole?.code;
-    return (roleCode as UserRole) || 'employee';
-  }, [user]);
-
-  // Lấy danh sách sections đã được lọc theo role của user
-  const filteredSections = React.useMemo(() => {
-    return getSidebarSectionsForRole(userRole);
-  }, [userRole]);
+  // Menu theo quyền từ /me; chưa tải xong thì chưa hiện mục nào (ẩn trước, hiện sau)
+  const filteredSections = React.useMemo(() => (isReady ? getSidebarSections(access) : []), [access, isReady]);
+  const denied = isReady && !isRouteAllowed(path, access);
 
   const sidebarConfig = {
     brand: {
@@ -131,8 +134,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* 3. Vùng nội dung chính */}
       <div className="flex-1 h-full bg-[#a6c1b733] flex flex-col min-w-0">
-        <AppHeader setActive={setActiveMenu} onMenuClick={() => setIsMobileOpen(true)} userRole={userRole} />
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        <AppHeader setActive={setActiveMenu} onMenuClick={() => setIsMobileOpen(true)} />
+        <div className="flex-1 overflow-y-auto">{isPending ? <PageSkeleton /> : denied ? <AccessDenied /> : children}</div>
       </div>
     </div>
   );

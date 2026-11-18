@@ -112,13 +112,12 @@ export function CustomerFormModal({
 
   // Load danh sách nhân viên
   const { data: usersData, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['users', 'all'],
-    queryFn: () => getUsers({ limit: 1000 }),
+    queryKey: ['users', 'customer-staff'],
+    queryFn: () => getUsers({ limit: 1000, permission: 'customer:update' }),
   });
 
   const staffOptions =
     usersData?.items
-      ?.filter((u) => u.roles?.some((r) => r.code === 'sale'))
       ?.map((u) => ({
         value: u.id,
         label: u.fullName || u.username || u.email,

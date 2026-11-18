@@ -35,3 +35,21 @@ export const exportAttendanceReport = async (params: AttendanceReportQueryParams
 
   await downloadOrShareBlob(response.data, fileName);
 };
+
+// Chốt công theo tháng (YYYY-MM): tháng đã chốt thì không sửa/xoá/thêm công, không duyệt khiếu nại công
+export interface AttendancePeriodLock {
+  id: number;
+  month: string;
+  lockedById: string | null;
+  lockedAt: string;
+}
+
+export const getAttendancePeriodLocks = async (year: number) =>
+  (await api.get<AttendancePeriodLock[]>(`${baseVersion1}/attendance-periods`, { params: { year } })).data;
+
+export const closeAttendancePeriod = async (month: string) =>
+  (await api.post<AttendancePeriodLock>(`${baseVersion1}/attendance-periods/${month}/close`)).data;
+
+export const reopenAttendancePeriod = async (month: string) => {
+  await api.delete(`${baseVersion1}/attendance-periods/${month}/close`);
+};

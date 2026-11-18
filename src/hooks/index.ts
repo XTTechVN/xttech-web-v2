@@ -14,3 +14,4 @@ export * from './use-document-explorer-actions';
 export * from './use-document-explorer';
 export * from './use-explorer-pointer-drag';
 export * from './use-bulk-delete-selection';
+export * from './use-can';

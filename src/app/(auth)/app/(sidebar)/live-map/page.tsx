@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getLiveLocations } from '@/actions';
 import { StaffLiveLocation, STAFF_LIVE_STATUS_MAP } from '@/types';
 import { BASE_WS_URL } from '@/config';
+import { useAuthStore } from '@/stores';
 import dynamic from 'next/dynamic';
 import { StaffList } from './_components/staff-list';
 import { RoutePlaybackModal } from '@/components/map-modal';
@@ -88,7 +89,7 @@ export default function AttendanceLiveMapPage() {
       if (!isMountedRef.current) return;
 
       try {
-        const wsUrl = `${BASE_WS_URL}/api/v1/ws/live-tracking`;
+        const wsUrl = `${BASE_WS_URL}/api/v1/ws/live-tracking?token=${encodeURIComponent(useAuthStore.getState().accessToken)}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 

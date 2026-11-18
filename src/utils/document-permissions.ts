@@ -161,35 +161,6 @@ export function getDocumentPermissions(
   };
 }
 
-const extractEmployeeRoles = (emp: any): { code?: string; name?: string }[] => {
-  if (!emp) return [];
-  const roles: { code?: string; name?: string }[] = [];
-  if (Array.isArray(emp.roles)) {
-    emp.roles.forEach((r: any) => {
-      roles.push(typeof r === 'string' ? { code: r, name: r } : { code: r?.code, name: r?.name });
-    });
-  }
-  if (typeof emp.role === 'string') roles.push({ code: emp.role, name: emp.role });
-  else if (emp.role && typeof emp.role === 'object') roles.push({ code: emp.role.code, name: emp.role.name });
-  return roles;
-};
-
-const VALID_APPROVER_CODES = new Set([
-  'admin', 'hr', 'super', 'supper', 'super_admin', 'supper_admin', 'admin_hr',
-]);
-const VALID_APPROVER_NAMES = new Set(['admin', 'hr', 'quản trị', 'quản trị viên', 'nhân sự']);
-
-export const isApproverEligible = (emp: any): boolean => {
-  const roles = extractEmployeeRoles(emp);
-  return roles.some(({ code, name }) => {
-    const c = (code || '').toLowerCase().trim();
-    const n = (name || '').toLowerCase().trim();
-    if (VALID_APPROVER_CODES.has(c) || VALID_APPROVER_NAMES.has(n)) return true;
-    if (c.includes('admin') || n.includes('admin') || n.includes('quản trị')) return true;
-    return (c.includes('hr') || n.includes('nhân sự')) && !n.includes('nhân viên') && !c.includes('employee');
-  });
-};
-
 export const getApproverRoleBadge = (emp: any): string => {
   if (Array.isArray(emp?.roles) && emp.roles.length > 0) {
     const names = emp.roles.map((r: any) => (typeof r === 'string' ? r : r.name || r.code)).filter(Boolean);

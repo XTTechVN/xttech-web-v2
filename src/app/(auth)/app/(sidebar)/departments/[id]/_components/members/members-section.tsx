@@ -12,7 +12,7 @@ import type { Employee, User } from '@/types';
 import queryClient from '@/utils/query';
 import { getFileUrl } from '@/utils';
 
-import PositionModal from '@/app/(auth)/app/(sidebar)/employees/_components/position-modal';
+import PositionModal from '@/app/(auth)/app/(sidebar)/employees/_components/employee/position-modal';
 
 interface DepartmentMembersSectionProps {
   departmentId: number;
