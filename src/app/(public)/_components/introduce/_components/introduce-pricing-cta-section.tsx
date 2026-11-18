@@ -50,18 +50,19 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
               <motion.button
                 key={member.name}
                 type="button"
-                onClick={() => setActiveIdx(idx)}
+                onMouseEnter={() => setActiveIdx(idx)}
+                onFocus={() => setActiveIdx(idx)}
                 animate={{ flexGrow: isActive ? 2.1 : 0.9 }}
-                transition={{ duration: 0.6, ease: INTRODUCE_EASE_OUT }}
+                transition={{ duration: 0.55, ease: INTRODUCE_EASE_OUT }}
                 style={{ flexBasis: 0 }}
-                className="group relative flex h-full min-w-0 cursor-pointer flex-col justify-between overflow-hidden rounded-2xl text-left shadow-md transition-shadow duration-300 hover:shadow-xl focus:outline-none"
+                className="group relative flex h-full min-w-0 cursor-pointer flex-col justify-between overflow-hidden rounded-2xl text-left shadow-md transition-shadow duration-300 will-change-[flex-grow] hover:shadow-xl focus:outline-none"
               >
                 {/* Ảnh nền sáng rõ + căn object-top để ảnh chân dung vuông không bị cắt phần trên */}
                 <img
                   src={member.avatarUrl}
                   alt={member.name}
-                  className={`absolute inset-0 h-full w-full object-cover object-top transition-transform duration-700 ${
-                    isActive ? 'scale-100 brightness-105' : 'scale-105 brightness-95 group-hover:scale-110 group-hover:brightness-105'
+                  className={`absolute inset-0 h-full w-full object-cover object-top transition-[transform,filter] duration-700 ease-out ${
+                    isActive ? 'scale-100 brightness-105' : 'scale-105 brightness-95'
                   }`}
                 />
                 <div
@@ -75,23 +76,25 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
                 {/* Hàng trên: Số thứ tự + nút (+) khi thu gọn */}
                 <div className="relative z-10 flex w-full items-center justify-between p-5">
                   <span className="font-mono text-xs font-extrabold tracking-wider text-white/90">0{idx + 1}</span>
-                  {!isActive && (
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white backdrop-blur-xs transition-transform duration-300 group-hover:rotate-90 group-hover:bg-white/25">
-                      <Plus className="h-4 w-4" />
-                    </span>
-                  )}
+                  <span
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white backdrop-blur-xs transition-all duration-300 ease-out ${
+                      isActive ? 'pointer-events-none scale-75 opacity-0' : 'scale-100 opacity-100 group-hover:rotate-90 group-hover:bg-white/25'
+                    }`}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </span>
                 </div>
 
-                {/* Hàng dưới: Nội dung chi tiết khi mở rộng hoặc tên vai trò xoay dọc khi thu gọn */}
+                {/* Hàng dưới: Nội dung chi tiết khi mở rộng hoặc tên vai trò khi thu gọn */}
                 <div className="relative z-10 w-full p-5 sm:p-6">
-                  <AnimatePresence mode="wait">
+                  <AnimatePresence mode="popLayout" initial={false}>
                     {isActive ? (
                       <motion.div
                         key="expanded"
-                        initial={{ opacity: 0, x: -16 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 12 }}
-                        transition={{ duration: 0.35, ease: INTRODUCE_EASE_OUT }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.3, ease: INTRODUCE_EASE_OUT }}
                         className="max-w-md space-y-2.5"
                       >
                         <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-bold text-hero-accent backdrop-blur-xs">
@@ -105,7 +108,7 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
                         key="collapsed"
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 6 }}
+                        exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.25, ease: INTRODUCE_EASE_OUT }}
                         className="space-y-1"
                       >

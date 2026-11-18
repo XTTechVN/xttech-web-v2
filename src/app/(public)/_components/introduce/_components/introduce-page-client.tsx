@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Modal } from '@/components';
 import { HeroRegisterInlineForm } from '@/app/(public)/_components/hero/hero-register-inline-form';
 import { IntroduceHeroSection } from '@/app/(public)/_components/introduce/_components/introduce-hero-section';
+import { IntroduceVideoSection } from '@/app/(public)/_components/introduce/_components/introduce-video-section';
 import { IntroduceProblemSolutionSection } from '@/app/(public)/_components/introduce/_components/introduce-problem-solution-section';
 import { IntroducePlatformSection } from '@/app/(public)/_components/introduce/_components/introduce-platform-section';
 import { IntroduceFeaturesSection } from '@/app/(public)/_components/introduce/_components/introduce-features-section';
@@ -18,6 +19,7 @@ export function IntroducePageClient() {
   return (
     <div className="bg-white text-slate-900">
       <IntroduceHeroSection />
+      <IntroduceVideoSection />
       <IntroduceProblemSolutionSection />
       <IntroducePlatformSection />
       <IntroduceFeaturesSection onOpenRegister={() => setIsRegisterModalOpen(true)} />
