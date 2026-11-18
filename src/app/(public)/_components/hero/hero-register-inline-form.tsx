@@ -394,7 +394,7 @@ export function HeroRegisterInlineForm({
                 <span>Đang xử lý đăng ký...</span>
               ) : (
                 <>
-                  <span>Đăng ký ngay</span>
+                  <span>Đăng ký sử dụng miễn phí</span>
                   <Send className="h-4 w-4" />
                 </>
               )}

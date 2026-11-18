@@ -196,10 +196,7 @@ export const TARGET_AUDIENCES: AudienceItem[] = [
   {
     title: 'Nhà thầu thi công & Xây lắp công trình',
     subtitle: 'Mặt dựng, dân dụng, công nghiệp',
-    points: [
-      'Quản lý đồng thời nhiều hạng mục, dự án và kho vật tư công trường',
-      'Theo dõi sát tiến độ lắp đặt, bàn giao và nghiệm thu bảo hành QR',
-    ],
+    points: ['Quản lý đồng thời nhiều hạng mục, dự án và kho vật tư công trường', 'Theo dõi sát tiến độ lắp đặt, bàn giao và nghiệm thu bảo hành QR'],
     icon: HardHat,
   },
   {
@@ -214,35 +211,54 @@ export const TARGET_AUDIENCES: AudienceItem[] = [
   {
     title: 'Chủ xưởng, Kế toán, Thủ kho & Kinh doanh',
     subtitle: 'Phối hợp nhịp nhàng trên một dữ liệu chung',
-    points: [
-      'Kinh doanh chốt báo giá nhanh, kế toán nắm chi phí vật tư và nhân công',
-      'Chủ doanh nghiệp xem báo cáo tổng hợp và phê duyệt từ xa',
-    ],
+    points: ['Kinh doanh chốt báo giá nhanh, kế toán nắm chi phí vật tư và nhân công', 'Chủ doanh nghiệp xem báo cáo tổng hợp và phê duyệt từ xa'],
     icon: Users,
   },
 ];
 
 export interface DeveloperMember {
   name: string;
+  initials: string;
   role: string;
   bio: string;
+  skills: string[];
+  avatarUrl: string;
 }
+
+const TEMP_MEMBER_AVATAR = 'https://i.pinimg.com/736x/5b/c0/53/5bc053022466ee661f4778311411c6dd.jpg';
 
 export const DEVELOPER_TEAM_MEMBERS: DeveloperMember[] = [
   {
     name: 'Bùi Xuân Đức',
+    initials: 'XĐ',
     role: 'Founder & Kiến trúc hệ thống',
     bio: 'Phụ trách định hướng sản phẩm và kiến trúc nền tảng ERP ngành nhôm kính, xây dựng.',
+    skills: ['Kiến trúc ERP', 'Quy trình xưởng', 'Định hướng sản phẩm'],
+    avatarUrl: TEMP_MEMBER_AVATAR,
   },
   {
     name: 'Trần Hữu Văn',
+    initials: 'HV',
     role: 'Tech Lead & Fullstack Engineer',
     bio: 'Phát triển lõi tính toán bóc tách vật tư BOM, tối ưu cắt, hệ thống API đám mây và giao diện web.',
+    skills: ['Tech Lead', 'BOM & Tối ưu cắt', 'Cloud API'],
+    avatarUrl: TEMP_MEMBER_AVATAR,
   },
   {
     name: 'Nguyễn Quang Linh',
+    initials: 'QL',
     role: 'Fullstack & CAD 2D/3D Engineer',
     bio: 'Xây dựng giao diện thiết kế cửa CAD 2D/3D trực quan, trải nghiệm người dùng và tích hợp hệ thống.',
+    skills: ['Fullstack Web', 'CAD 2D/3D', 'Hiệu năng giao diện'],
+    avatarUrl: TEMP_MEMBER_AVATAR,
+  },
+  {
+    name: 'Vũ Quyên',
+    initials: 'VQ',
+    role: 'UI/UX Design',
+    bio: 'Thiết kế giao diện trực quan, chuẩn hóa trải nghiệm người dùng cho nền tảng web và ứng dụng công trình.',
+    skills: ['UI/UX Design', 'Design System', 'Luồng thao tác'],
+    avatarUrl: TEMP_MEMBER_AVATAR,
   },
 ];
 

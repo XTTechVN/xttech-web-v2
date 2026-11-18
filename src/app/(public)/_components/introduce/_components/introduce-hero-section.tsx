@@ -148,7 +148,7 @@ export function IntroduceHeroSection() {
                   className="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-hero-accent px-6 py-3.5 text-sm font-bold text-hero-ink shadow-lg shadow-black/20 transition-all hover:bg-hero-accent-hover sm:w-auto"
                 >
                   <FileSpreadsheet className="h-4 w-4" />
-                  <span>Đăng ký dùng thử miễn phí</span>
+                  <span>Đăng ký sử dụng miễn phí</span>
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </button>
 

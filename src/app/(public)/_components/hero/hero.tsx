@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CheckCircle2, FileSpreadsheet } from 'lucide-react';
+import { Modal } from '@/components';
 import { HERO_HIGHLIGHTS } from './hero.constants';
 import { HeroAdviseCadSection } from './hero-advise-cad-section';
 import { HeroBrandsSection } from './hero-brands-section';
@@ -12,14 +13,23 @@ import { HeroFeaturedArticlesSection } from './hero-featured-articles-section';
 import { HeroStoryPillarsSection } from './hero-story-pillars';
 import { HeroRegisterInlineForm } from './hero-register-inline-form';
 
+const AUTO_REGISTER_DELAY_MS = 8000;
+
 export const Hero = () => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [isAutoModalOpen, setIsAutoModalOpen] = useState(false);
 
   // Trên desktop (lg+) tự động mở sẵn chế độ Đăng ký; trên mobile giữ màn hình giới thiệu để bấm nút mới trượt sang
   useEffect(() => {
     if (window.innerWidth >= 1024) {
       setIsRegisterMode(true);
     }
+
+    const timer = setTimeout(() => {
+      setIsAutoModalOpen(true);
+    }, AUTO_REGISTER_DELAY_MS);
+
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -156,6 +166,21 @@ export const Hero = () => {
         <HeroFeaturedArticlesSection />
       </div>
       <HeroConsultationSection />
+
+      <Modal
+        isOpen={isAutoModalOpen}
+        onClose={() => setIsAutoModalOpen(false)}
+        size="md"
+        title="Đăng ký sử dụng XTTECH XMS Fab"
+        className="max-w-lg border border-primary/20"
+        bodyClassName="p-5 sm:p-6"
+      >
+        <HeroRegisterInlineForm
+          variant="modal"
+          isOpen={isAutoModalOpen}
+          onBack={() => setIsAutoModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 };
