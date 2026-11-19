@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import { MotionConfig } from 'motion/react';
 import { Modal } from '@/components';
-import { HeroRegisterInlineForm } from '@/app/(public)/_components';
+import { HeroRegisterInlineForm } from '@/app/(public)/_components/register-inline-form';
 import { IntroduceHeroSection } from './introduce-hero-section';
 import { IntroduceVideoSection } from './introduce-video-section';
-import { IntroduceValuesSection } from './introduce-values-section';
+import { IntroduceMissionVisionSection } from './introduce-mission-vision-section';
 import { IntroduceBenefitsSection } from './introduce-benefits-section';
 import { IntroduceAudienceSection } from './introduce-audience-section';
 import { IntroducePricingCtaSection } from './introduce-pricing-cta-section';
@@ -19,7 +19,7 @@ export function IntroducePageClient() {
       <div className="overflow-x-clip bg-white text-slate-900">
         <IntroduceHeroSection />
         <IntroduceVideoSection />
-        <IntroduceValuesSection />
+        <IntroduceMissionVisionSection />
         <IntroduceBenefitsSection />
         <IntroduceAudienceSection />
         <IntroducePricingCtaSection onOpenRegister={() => setIsRegisterModalOpen(true)} />

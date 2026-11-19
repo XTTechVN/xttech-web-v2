@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Be_Vietnam_Pro } from 'next/font/google';
 import { ArrowLeft, ArrowRight, CheckCircle2, FileSpreadsheet } from 'lucide-react';
-import { HeroRegisterInlineForm } from '@/app/(public)/_components';
+import { HeroRegisterInlineForm } from '@/app/(public)/_components/register-inline-form';
 import { ECOSYSTEM_MODULES } from './introduce.constants';
 
 const beVietnamPro = Be_Vietnam_Pro({
