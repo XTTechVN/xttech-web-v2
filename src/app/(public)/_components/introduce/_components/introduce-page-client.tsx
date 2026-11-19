@@ -3,14 +3,14 @@
 import React, { useState } from 'react';
 import { MotionConfig } from 'motion/react';
 import { Modal } from '@/components';
-import { HeroRegisterInlineForm } from '@/app/(public)/_components/hero/hero-register-inline-form';
-import { IntroduceHeroSection } from '@/app/(public)/_components/introduce/_components/introduce-hero-section';
-import { IntroduceVideoSection } from '@/app/(public)/_components/introduce/_components/introduce-video-section';
-import { IntroduceValuesSection } from '@/app/(public)/_components/introduce/_components/introduce-values-section';
-import { IntroduceBenefitsSection } from '@/app/(public)/_components/introduce/_components/introduce-benefits-section';
-import { IntroduceAudienceSection } from '@/app/(public)/_components/introduce/_components/introduce-audience-section';
-import { IntroduceMilestonesSection } from '@/app/(public)/_components/introduce/_components/introduce-milestones-section';
-import { IntroducePricingCtaSection } from '@/app/(public)/_components/introduce/_components/introduce-pricing-cta-section';
+import { HeroRegisterInlineForm } from '@/app/(public)/_components';
+import { IntroduceHeroSection } from './introduce-hero-section';
+import { IntroduceVideoSection } from './introduce-video-section';
+import { IntroduceValuesSection } from './introduce-values-section';
+import { IntroduceBenefitsSection } from './introduce-benefits-section';
+import { IntroduceAudienceSection } from './introduce-audience-section';
+import { IntroduceMilestonesSection } from './introduce-milestones-section';
+import { IntroducePricingCtaSection } from './introduce-pricing-cta-section';
 
 export function IntroducePageClient() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);

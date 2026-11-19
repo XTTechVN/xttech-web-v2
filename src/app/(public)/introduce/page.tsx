@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { PAGE_SEO_META, buildPageMetadata } from '@/config';
-import IntroduceContent from '@/app/(public)/_components/introduce/page';
+import { IntroduceContent } from '../_components';
 
 export const metadata: Metadata = buildPageMetadata(PAGE_SEO_META.introduce);
 

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { ZoomIn, ZoomOut } from 'lucide-react';
 import { Modal } from '@/components';
 import { ADVISE_ADVANTAGES } from './hero.constants';
-import { HeroRegisterInlineForm } from './hero-register-inline-form';
+import { HeroRegisterInlineForm } from '../register-inline-form';
 
 type DoorColorKey = 'wood' | 'grey' | 'white' | 'black' | 'champagne';
 

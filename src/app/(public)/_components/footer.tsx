@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ArrowUpRight, CheckCircle2, Phone } from 'lucide-react';
 import { Modal, XTLogo } from '@/components';
-import { HeroRegisterInlineForm } from './hero/hero-register-inline-form';
+import { HeroRegisterInlineForm } from './register-inline-form';
 import { CONTACT_INFO } from '@/config/contact';
 import {
   FOOTER_BOTTOM_LINKS,

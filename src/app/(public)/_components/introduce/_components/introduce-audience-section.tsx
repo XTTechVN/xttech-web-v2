@@ -1,13 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
-import { TARGET_AUDIENCES } from '@/app/(public)/_components/introduce/_components/introduce.constants';
-import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
+import { INTRODUCE_EASE_OUT, TARGET_AUDIENCES } from './introduce.constants';
 
 export function IntroduceAudienceSection() {
-  const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(TARGET_AUDIENCES.length, 3000);
+  const [activeIdx, setActiveIdx] = useState(0);
 
   return (
     <section className="border-b border-slate-100 bg-white py-14 sm:py-20">
@@ -30,7 +29,7 @@ export function IntroduceAudienceSection() {
           </p>
         </motion.div>
 
-        <div {...pauseProps} className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2">
           {TARGET_AUDIENCES.map((aud, idx) => {
             const Icon = aud.icon;
             const isActive = idx === activeIdx;

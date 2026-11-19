@@ -16,7 +16,7 @@ import {
   Wrench,
   Zap,
 } from 'lucide-react';
-import { INTRODUCE_EASE_OUT } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
+import { INTRODUCE_EASE_OUT } from './introduce.constants';
 
 interface ValuePillar {
   title: string;

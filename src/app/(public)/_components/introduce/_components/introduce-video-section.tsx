@@ -13,7 +13,7 @@ import {
   useTransform,
 } from 'motion/react';
 import { Maximize2, Minimize2, Pause, Play, RotateCcw, RotateCw, Volume2, VolumeX, X } from 'lucide-react';
-import { INTRODUCE_EASE_OUT } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
+import { INTRODUCE_EASE_OUT } from './introduce.constants';
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';

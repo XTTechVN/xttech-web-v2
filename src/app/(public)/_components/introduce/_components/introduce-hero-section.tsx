@@ -1,220 +1,105 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'motion/react';
+import { Be_Vietnam_Pro } from 'next/font/google';
 import { ArrowLeft, ArrowRight, CheckCircle2, FileSpreadsheet } from 'lucide-react';
-import { HeroRegisterInlineForm } from '@/app/(public)/_components/hero/hero-register-inline-form';
-import { ECOSYSTEM_MODULES } from '@/app/(public)/_components/introduce/_components/introduce.constants';
-import { INTRODUCE_EASE_OUT } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
+import { HeroRegisterInlineForm } from '@/app/(public)/_components';
+import { ECOSYSTEM_MODULES } from './introduce.constants';
 
-const LINE_1 = 'Kiến tạo giá trị,';
-const LINE_2 = 'chuyển hóa tương lai';
-const FULL_SLOGAN = `${LINE_1}\n${LINE_2}`;
+const beVietnamPro = Be_Vietnam_Pro({
+  weight: ['600'],
+  subsets: ['vietnamese', 'latin'],
+  display: 'swap',
+});
 
-const DASH_COLORS = ['#045863', '#0284c7', '#0d9488', '#3b82f6'];
-
-interface FanParticle {
-  t: number; // 0..1 tiến trình bay ra từ tâm quạt
-  angle: number;
-  spread: number;
-  speed: number;
-  length: number;
-  thickness: number;
-  color: string;
-  alpha: number;
-  wobblePhase: number;
+interface SloganWord {
+  text: string;
+  accent?: boolean;
 }
 
-interface DustDot {
-  x: number;
-  y: number;
-  size: number;
-  alpha: number;
-}
-
-function HeroParticleField() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const prefersReducedMotion = useReducedMotion();
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animationFrameId = 0;
-    let width = 0;
-    let height = 0;
-    const mouse = { x: -9999, y: -9999, active: false };
-
-    // Tạo hình quạt mở rộng lên trên giống Google Antigravity (-142° đến -38°)
-    const particles: FanParticle[] = Array.from({ length: 165 }, (_, i) => {
-      const minAngle = -Math.PI * 0.82;
-      const maxAngle = -Math.PI * 0.18;
-      const angle = minAngle + Math.random() * (maxAngle - minAngle);
-      return {
-        t: Math.random(),
-        angle,
-        spread: (Math.random() - 0.5) * 0.08,
-        speed: 0.0007 + Math.random() * 0.0009,
-        length: 3.5 + Math.random() * 4,
-        thickness: 1.5 + Math.random() * 0.6,
-        color: DASH_COLORS[i % DASH_COLORS.length],
-        alpha: 0.45 + Math.random() * 0.45,
-        wobblePhase: Math.random() * Math.PI * 2,
-      };
-    });
-
-    const dust: DustDot[] = Array.from({ length: 160 }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      size: 0.8 + Math.random() * 0.9,
-      alpha: 0.08 + Math.random() * 0.14,
-    }));
-
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const rect = canvas.getBoundingClientRect();
-      width = rect.width;
-      height = rect.height;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-
-    const draw = (time: number) => {
-      ctx.clearRect(0, 0, width, height);
-
-      // 1. Hạt bụi siêu mảnh rải đều nền trắng
-      for (const d of dust) {
-        ctx.fillStyle = `rgba(15, 23, 42, ${d.alpha})`;
-        ctx.fillRect(d.x * width, d.y * height, d.size, d.size);
-      }
-
-      // 2. Vạch hạt hình quạt tỏa lên phía sau tiêu đề
-      const originX = width * 0.5;
-      const originY = height * 0.82;
-      const maxDist = Math.max(width * 0.52, height * 0.88);
-
-      for (const p of particles) {
-        if (!prefersReducedMotion) {
-          p.t += p.speed;
-          if (p.t > 1) p.t = 0.08;
-        }
-
-        const r = (0.12 + p.t * 0.88) * maxDist;
-        const wobble = prefersReducedMotion ? 0 : Math.sin(time * 0.0015 + p.wobblePhase) * 0.025;
-        const theta = p.angle + p.spread + wobble;
-
-        let px = originX + Math.cos(theta) * r;
-        let py = originY + Math.sin(theta) * r;
-
-        if (mouse.active && !prefersReducedMotion) {
-          const dx = px - mouse.x;
-          const dy = py - mouse.y;
-          const dist = Math.hypot(dx, dy);
-          if (dist > 0 && dist < 120) {
-            const push = ((120 - dist) / 120) * 14;
-            px += (dx / dist) * push;
-            py += (dy / dist) * push;
-          }
-        }
-
-        // Mờ dần ở gốc và mép ngoài
-        const fade = Math.sin(p.t * Math.PI);
-        const finalAlpha = p.alpha * Math.max(0, Math.min(1, fade * 1.35));
-        if (finalAlpha <= 0.02) continue;
-
-        ctx.save();
-        ctx.translate(px, py);
-        ctx.rotate(theta);
-        ctx.globalAlpha = finalAlpha;
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.roundRect(-p.length / 2, -p.thickness / 2, p.length, p.thickness, p.thickness / 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      if (!prefersReducedMotion) {
-        animationFrameId = requestAnimationFrame(draw);
-      }
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouse.x = e.clientX - rect.left;
-      mouse.y = e.clientY - rect.top;
-      mouse.active = true;
-    };
-
-    const onMouseLeave = () => {
-      mouse.active = false;
-    };
-
-    resize();
-    animationFrameId = requestAnimationFrame(draw);
-    window.addEventListener('resize', resize, { passive: true });
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    document.addEventListener('mouseleave', onMouseLeave);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseleave', onMouseLeave);
-    };
-  }, [prefersReducedMotion]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-full w-full"
-    />
-  );
-}
+const SLOGAN_LINES: SloganWord[][] = [
+  [
+    { text: 'Kiến' },
+    { text: 'tạo' },
+    { text: 'giá', accent: true },
+    { text: 'trị,', accent: true },
+  ],
+  [
+    { text: 'chuyển' },
+    { text: 'hóa' },
+    { text: 'tương', accent: true },
+    { text: 'lai', accent: true },
+  ],
+];
 
 export function IntroduceHeroSection() {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
-  const prefersReducedMotion = useReducedMotion();
-  const [typedCount, setTypedCount] = useState(prefersReducedMotion ? FULL_SLOGAN.length : 0);
 
-  useEffect(() => {
-    if (prefersReducedMotion) {
-      setTypedCount(FULL_SLOGAN.length);
-      return;
-    }
-
-    setTypedCount(0);
-    let intervalId: ReturnType<typeof setInterval> | undefined;
-    const startDelay = setTimeout(() => {
-      intervalId = setInterval(() => {
-        setTypedCount((prev) => {
-          if (prev >= FULL_SLOGAN.length) {
-            if (intervalId) clearInterval(intervalId);
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, 28);
-    }, 220);
-
-    return () => {
-      clearTimeout(startDelay);
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [prefersReducedMotion]);
-
-  const isTypingDone = typedCount >= FULL_SLOGAN.length;
-  const typedText = FULL_SLOGAN.slice(0, typedCount);
-  const [typedLine1 = '', typedLine2 = ''] = typedText.split('\n');
-  const showLine2Cursor = typedText.includes('\n') && !isTypingDone;
+  let charGlobalIdx = 0;
 
   return (
-    <section className="relative flex min-h-[78vh] items-center justify-center overflow-hidden bg-white py-16 sm:min-h-[84vh] sm:py-24">
-      <HeroParticleField />
+    <section className="relative flex min-h-[calc(100vh-76px)] items-center justify-center overflow-hidden bg-white py-16 sm:py-24">
+      <style>{`
+        @keyframes xttechLetterRun {
+          0% {
+            opacity: 0;
+            transform: translate3d(0, 14px, 0) scale(0.96);
+          }
+          100% {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+        }
+
+        @keyframes xttechLogoEnter {
+          0% {
+            opacity: 0;
+            transform: translate3d(0, 18px, 0) scale(0.92);
+          }
+          100% {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+        }
+
+        @keyframes xttechHeroReveal {
+          0% {
+            opacity: 0;
+            transform: translate3d(0, 14px, 0);
+          }
+          100% {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+          }
+        }
+
+        .xttech-logo-enter {
+          will-change: transform, opacity;
+          animation: xttechLogoEnter 0.65s cubic-bezier(.16, 1, .3, 1) 0.05s both;
+        }
+
+        .xttech-hero-char {
+          display: inline-block;
+          will-change: transform, opacity;
+          animation: xttechLetterRun 0.48s cubic-bezier(.16, 1, .3, 1) var(--d) both;
+        }
+
+        .xttech-hero-reveal {
+          will-change: transform, opacity;
+          animation: xttechHeroReveal 0.6s cubic-bezier(.16, 1, .3, 1) 1.15s both;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .xttech-logo-enter,
+          .xttech-hero-char,
+          .xttech-hero-reveal {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
+        }
+      `}</style>
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="relative">
@@ -289,60 +174,81 @@ export function IntroduceHeroSection() {
 
           {/* NỘI DUNG HERO BAN ĐẦU: Trượt sang phải khi mở form */}
           <div
-            className={`mx-auto max-w-4xl text-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            className={`mx-auto max-w-5xl text-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               isRegisterMode
                 ? 'pointer-events-none absolute top-0 left-1/2 z-0 w-full -translate-x-1/2 translate-x-12 opacity-0'
                 : 'pointer-events-auto relative z-10 translate-x-0 opacity-100'
             }`}
           >
-            {/* Logo XTTECH tối giản */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: INTRODUCE_EASE_OUT }}
-              className="inline-flex items-center justify-center gap-2"
-            >
+            {/* Logo XTTECH lớn (~2/3 cỡ chữ slogan), chạy ngay khi vừa vào trang */}
+            <div className="xttech-logo-enter inline-flex items-center justify-center gap-3 sm:gap-4">
               <img
                 src="/image-xttech/logo-xttech.svg"
                 alt="XTTECH Logo"
-                className="h-6 w-6 object-contain sm:h-7 sm:w-7"
+                className="object-contain"
+                style={{
+                  width: 'clamp(28px, 4vw, 54px)',
+                  height: 'clamp(28px, 4vw, 54px)',
+                }}
               />
-              <span className="text-base font-medium tracking-tight text-slate-800 sm:text-lg">
+              <span
+                className={`${beVietnamPro.className} font-semibold tracking-tight text-primary`}
+                style={{
+                  fontSize: 'clamp(24px, 3.6vw, 50px)',
+                  lineHeight: 1.1,
+                }}
+              >
                 XTTECH
               </span>
-            </motion.div>
+            </div>
 
-            {/* Slogan nét mảnh gõ từng chữ ghép thành câu hoàn chỉnh */}
-            <h1 className="relative mt-5 text-4xl font-normal tracking-[-0.03em] text-slate-900 sm:text-6xl sm:leading-[1.08] lg:text-[64px]">
-              {/* Giữ khung chiều cao cố định tránh giật layout khi đang gõ */}
-              <span aria-hidden="true" className="invisible block select-none">
-                <span className="block">{LINE_1}</span>
-                <span className="block">{LINE_2}</span>
-              </span>
+            {/* Slogan chạy mượt từng chữ cái, giữ nguyên dấu và từ tiếng Việt */}
+            <h1
+              aria-label="Kiến tạo giá trị, chuyển hóa tương lai"
+              className={`${beVietnamPro.className} mt-5 font-semibold tracking-[-0.02em]`}
+              style={{
+                fontSize: 'clamp(34px, 5.4vw, 76px)',
+                lineHeight: 1.22,
+              }}
+            >
+              {SLOGAN_LINES.map((line, lineIdx) => (
+                <span
+                  key={lineIdx}
+                  aria-hidden="true"
+                  className="flex flex-wrap items-center justify-center gap-x-[0.26em]"
+                >
+                  {line.map((word, wordIdx) => (
+                    <span
+                      key={`${lineIdx}-${wordIdx}`}
+                      className="inline-flex whitespace-nowrap"
+                      style={{ color: word.accent ? '#0b6b63' : '#0f1b2d' }}
+                    >
+                      {Array.from(word.text).map((char, cIdx) => {
+                        const idx = charGlobalIdx++;
 
-              <span className="absolute inset-0 block">
-                <span className="block">
-                  {typedLine1}
-                  {!typedText.includes('\n') && !isTypingDone && (
-                    <span className="ml-0.5 inline-block h-[0.85em] w-[2px] animate-pulse bg-primary align-middle" />
-                  )}
+                        return (
+                          <span
+                            key={`${idx}-${cIdx}`}
+                            aria-hidden="true"
+                            className="xttech-hero-char"
+                            style={
+                              {
+                                '--d': `${(0.22 + idx * 0.028).toFixed(3)}s`,
+                              } as React.CSSProperties
+                            }
+                          >
+                            {char}
+                          </span>
+                        );
+                      })}
+                    </span>
+                  ))}
                 </span>
-                <span className="block">
-                  {typedLine2}
-                  {showLine2Cursor && (
-                    <span className="ml-0.5 inline-block h-[0.85em] w-[2px] animate-pulse bg-primary align-middle" />
-                  )}
-                </span>
-              </span>
+              ))}
             </h1>
 
-            {/* 2 nút CTA giống ảnh 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6, ease: INTRODUCE_EASE_OUT }}
-              className="mt-8 flex flex-wrap items-center justify-center gap-3.5"
-            >
+            {/* 2 nút CTA */}
+            <div className="xttech-hero-reveal mt-8 flex flex-wrap items-center justify-center gap-3.5">
               <button
                 type="button"
                 onClick={() => setIsRegisterMode(true)}
@@ -359,7 +265,7 @@ export function IntroduceHeroSection() {
               >
                 Xem bảng giá dịch vụ
               </Link>
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>

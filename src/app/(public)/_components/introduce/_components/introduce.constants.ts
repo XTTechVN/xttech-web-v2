@@ -18,6 +18,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
+export const INTRODUCE_EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
 export interface EcosystemModule {
   code: string;
   name: string;

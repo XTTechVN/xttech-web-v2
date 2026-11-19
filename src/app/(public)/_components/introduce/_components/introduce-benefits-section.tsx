@@ -1,12 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { SOFTWARE_BENEFITS } from '@/app/(public)/_components/introduce/_components/introduce.constants';
-import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
+import { INTRODUCE_EASE_OUT, SOFTWARE_BENEFITS } from './introduce.constants';
 
 export function IntroduceBenefitsSection() {
-  const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(SOFTWARE_BENEFITS.length, 2800);
+  const [activeIdx, setActiveIdx] = useState(0);
 
   return (
     <section className="border-b border-slate-100 bg-slate-50/50 py-14 sm:py-20">
@@ -26,7 +25,7 @@ export function IntroduceBenefitsSection() {
           </h2>
         </motion.div>
 
-        <div {...pauseProps} className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {SOFTWARE_BENEFITS.map((benefit, idx) => {
             const Icon = benefit.icon;
             const isActive = idx === activeIdx;

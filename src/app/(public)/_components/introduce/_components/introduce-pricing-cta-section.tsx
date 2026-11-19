@@ -1,19 +1,18 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowRight, Plus } from 'lucide-react';
-import { DEVELOPER_TEAM_MEMBERS } from '@/app/(public)/_components/introduce/_components/introduce.constants';
-import { INTRODUCE_EASE_OUT, useSpotlightCycle } from '@/app/(public)/_components/introduce/_components/use-spotlight-cycle';
+import { DEVELOPER_TEAM_MEMBERS, INTRODUCE_EASE_OUT } from './introduce.constants';
 
 interface IntroducePricingCtaSectionProps {
   onOpenRegister: () => void;
 }
 
 export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingCtaSectionProps) {
-  const { activeIdx, setActiveIdx, pauseProps } = useSpotlightCycle(DEVELOPER_TEAM_MEMBERS.length, 4500);
+  const [activeIdx, setActiveIdx] = useState(0);
 
   return (
     <section className="bg-white py-14 sm:py-20">
@@ -48,7 +47,6 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
 
         {/* Desktop: Accordion mở rộng ngang mượt mà */}
         <motion.div
-          {...pauseProps}
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -140,7 +138,7 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
         </motion.div>
 
         {/* Mobile / Tablet: Accordion dọc nền sáng gọn đẹp */}
-        <div {...pauseProps} className="mt-8 space-y-3 lg:hidden">
+        <div className="mt-8 space-y-3 lg:hidden">
           {DEVELOPER_TEAM_MEMBERS.map((member, idx) => {
             const isActive = idx === activeIdx;
 

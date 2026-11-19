@@ -11,7 +11,7 @@ import { HeroConsultationSection } from './hero-consultation-section';
 import { HeroDashboardMockup } from './hero-dashboard-mockup';
 import { HeroFeaturedArticlesSection } from './hero-featured-articles-section';
 import { HeroStoryPillarsSection } from './hero-story-pillars';
-import { HeroRegisterInlineForm } from './hero-register-inline-form';
+import { HeroRegisterInlineForm } from '../register-inline-form';
 
 const AUTO_REGISTER_DELAY_MS = 8000;
 

@@ -4,3 +4,5 @@ export * from './footer';
 export * from './legal';
 export * from './public-layout-shell';
 export * from './floating-contact-dock';
+export * from './register-inline-form';
+export * from './introduce';
