@@ -208,7 +208,7 @@ export function IntroduceVideoSection() {
     <section
       ref={sectionRef}
       aria-label="Video giới thiệu phần mềm XTTECH XMS"
-      className="overflow-hidden bg-white py-8 sm:py-12 lg:py-14"
+      className="border-t border-slate-200/80 overflow-hidden bg-white pt-10 pb-12 sm:pt-14 sm:pb-16 lg:pt-16 lg:pb-20"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -219,7 +219,7 @@ export function IntroduceVideoSection() {
           className="mx-auto mb-6 max-w-3xl text-center sm:mb-8"
         >
           <h2 className="text-2xl font-black tracking-tight text-slate-900 uppercase sm:text-3xl">
-            Thước phim giới thiệu <span className="text-primary">công ty XTTECH</span>
+            Giới thiệu <span className="text-primary">công ty XTTECH</span>
           </h2>
         </motion.div>
 

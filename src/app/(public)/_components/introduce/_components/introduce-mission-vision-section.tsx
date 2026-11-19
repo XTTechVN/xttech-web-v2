@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2, Image as ImageIcon, Sparkles, Target, Compass } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Target, Compass } from 'lucide-react';
 
 export function IntroduceMissionVisionSection() {
   return (
@@ -76,28 +77,17 @@ export function IntroduceMissionVisionSection() {
             </div>
           </div>
 
-          {/* Cột phải: Khung ảnh Sứ mệnh (Để trống cho bạn thêm ảnh) */}
+          {/* Cột phải: Hình ảnh Sứ mệnh (our-mission.png) */}
           <div className="lg:col-span-6">
-            <div className="relative aspect-4/3 w-full overflow-hidden rounded-3xl border-2 border-dashed border-slate-200 bg-linear-to-br from-slate-50 to-slate-100/60 shadow-xs transition-all hover:border-primary/40">
-              {/* ===== CHỖ BẠN TỰ THÊM ẢNH SỨ MỆNH TẠI ĐÂY ===== */}
-              {/* Thay khối div bên dưới bằng thẻ <img> hoặc <Image /> khi bạn thêm ảnh:
-                  <img
-                    src="/your-image-path.jpg"
-                    alt="Sứ mệnh XTTECH"
-                    className="h-full w-full object-cover"
-                  />
-              */}
-              <div className="flex h-full w-full flex-col items-center justify-center p-6 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80">
-                  <ImageIcon className="h-7 w-7 text-slate-400" />
-                </div>
-                <p className="mt-4 text-sm font-semibold text-slate-700">
-                  Khu vực hình ảnh Sứ mệnh
-                </p>
-                <p className="mt-1 max-w-xs text-xs text-slate-500">
-                  Khung ảnh tỉ lệ 4:3 bo tròn chuẩn phong cách tối giản. Bạn có thể chèn link ảnh vào đây.
-                </p>
-              </div>
+            <div className="group relative aspect-4/3 w-full overflow-hidden rounded-3xl border border-slate-200/80 bg-slate-100 shadow-md transition-all duration-300 hover:shadow-xl hover:border-primary/30">
+              <Image
+                src="/assets/introduce/our-mission.png"
+                alt="Sứ mệnh XTTECH"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                priority
+              />
             </div>
           </div>
         </div>
@@ -107,28 +97,16 @@ export function IntroduceMissionVisionSection() {
 
         {/* ===================== PHẦN 2: TẦM NHÌN (Ảnh bên Trái - Chữ bên Phải) ===================== */}
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-16">
-          {/* Cột trái: Khung ảnh Tầm nhìn (Trên mobile hiển thị sau chữ để mạch đọc tự nhiên) */}
+          {/* Cột trái: Hình ảnh Tầm nhìn (vision.jpg) */}
           <div className="order-2 lg:order-1 lg:col-span-6">
-            <div className="relative aspect-4/3 w-full overflow-hidden rounded-3xl border-2 border-dashed border-slate-200 bg-linear-to-br from-slate-50 to-slate-100/60 shadow-xs transition-all hover:border-primary/40">
-              {/* ===== CHỖ BẠN TỰ THÊM ẢNH TẦM NHÌN TẠI ĐÂY ===== */}
-              {/* Thay khối div bên dưới bằng thẻ <img> hoặc <Image /> khi bạn thêm ảnh:
-                  <img
-                    src="/your-image-path.jpg"
-                    alt="Tầm nhìn XTTECH"
-                    className="h-full w-full object-cover"
-                  />
-              */}
-              <div className="flex h-full w-full flex-col items-center justify-center p-6 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80">
-                  <ImageIcon className="h-7 w-7 text-slate-400" />
-                </div>
-                <p className="mt-4 text-sm font-semibold text-slate-700">
-                  Khu vực hình ảnh Tầm nhìn
-                </p>
-                <p className="mt-1 max-w-xs text-xs text-slate-500">
-                  Khung ảnh tỉ lệ 4:3 bo tròn chuẩn phong cách tối giản. Bạn có thể chèn link ảnh vào đây.
-                </p>
-              </div>
+            <div className="group relative aspect-4/3 w-full overflow-hidden rounded-3xl border border-slate-200/80 bg-slate-100 shadow-md transition-all duration-300 hover:shadow-xl hover:border-primary/30">
+              <Image
+                src="/assets/introduce/vision.jpg"
+                alt="Tầm nhìn XTTECH"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              />
             </div>
           </div>
 
@@ -192,7 +170,7 @@ export function IntroduceMissionVisionSection() {
                 href="/pricing"
                 className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition-all hover:border-primary hover:text-primary hover:shadow-sm"
               >
-                <span>Xem hệ sinh thái giải pháp</span>
+                <span>Khám phá giải pháp</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>

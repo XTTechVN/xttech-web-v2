@@ -20,16 +20,16 @@ interface SloganWord {
 
 const SLOGAN_LINES: SloganWord[][] = [
   [
-    { text: 'Kiến' },
-    { text: 'tạo' },
-    { text: 'giá', accent: true },
-    { text: 'trị,', accent: true },
+    { text: 'KIẾN' },
+    { text: 'TẠO' },
+    { text: 'GIÁ', accent: true },
+    { text: 'TRỊ,', accent: true },
   ],
   [
-    { text: 'chuyển' },
-    { text: 'hóa' },
-    { text: 'tương', accent: true },
-    { text: 'lai', accent: true },
+    { text: 'CHUYỂN' },
+    { text: 'HÓA' },
+    { text: 'TƯƠNG', accent: true },
+    { text: 'LAI', accent: true },
   ],
 ];
 
@@ -39,7 +39,7 @@ export function IntroduceHeroSection() {
   let charGlobalIdx = 0;
 
   return (
-    <section className="relative flex min-h-[calc(100vh-76px)] items-center justify-center overflow-hidden bg-white py-16 sm:py-24">
+    <section className="relative flex min-h-[580px] items-center justify-center overflow-hidden bg-white pt-12 pb-10 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
       {/* Nền Dark Teal Gradient mượt mà khi trượt sang chế độ form đăng ký */}
       <div
         className={`pointer-events-none absolute inset-0 transition-opacity duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -205,21 +205,21 @@ export function IntroduceHeroSection() {
                 : 'pointer-events-auto relative z-10 translate-x-0 opacity-100'
             }`}
           >
-            {/* Logo XTTECH lớn (~2/3 cỡ chữ slogan), chạy ngay khi vừa vào trang */}
-            <div className="xttech-logo-enter inline-flex items-center justify-center gap-3 sm:gap-4">
+            {/* Logo XTTECH lớn nổi bật, chạy ngay khi vừa vào trang */}
+            <div className="xttech-logo-enter inline-flex items-center justify-center gap-3.5 sm:gap-5">
               <img
                 src="/image-xttech/logo-xttech.svg"
                 alt="XTTECH Logo"
                 className="object-contain"
                 style={{
-                  width: 'clamp(28px, 4vw, 54px)',
-                  height: 'clamp(28px, 4vw, 54px)',
+                  width: 'clamp(36px, 5.2vw, 68px)',
+                  height: 'clamp(36px, 5.2vw, 68px)',
                 }}
               />
               <span
                 className={`${beVietnamPro.className} font-semibold tracking-tight text-primary`}
                 style={{
-                  fontSize: 'clamp(24px, 3.6vw, 50px)',
+                  fontSize: 'clamp(28px, 4vw, 56px)',
                   lineHeight: 1.1,
                 }}
               >
@@ -227,10 +227,10 @@ export function IntroduceHeroSection() {
               </span>
             </div>
 
-            {/* Slogan chạy mượt từng chữ cái, giữ nguyên dấu và từ tiếng Việt */}
+            {/* Slogan chạy mượt từng chữ cái in hoa, giữ nguyên dấu và từ tiếng Việt */}
             <h1
-              aria-label="Kiến tạo giá trị, chuyển hóa tương lai"
-              className={`${beVietnamPro.className} mt-5 font-semibold tracking-[-0.02em]`}
+              aria-label="KIẾN TẠO GIÁ TRỊ, CHUYỂN HÓA TƯƠNG LAI"
+              className={`${beVietnamPro.className} mt-5 font-semibold tracking-[-0.02em] uppercase`}
               style={{
                 fontSize: 'clamp(34px, 5.4vw, 76px)',
                 lineHeight: 1.22,
