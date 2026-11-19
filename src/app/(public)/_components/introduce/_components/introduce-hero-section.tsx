@@ -40,6 +40,27 @@ export function IntroduceHeroSection() {
 
   return (
     <section className="relative flex min-h-[calc(100vh-76px)] items-center justify-center overflow-hidden bg-white py-16 sm:py-24">
+      {/* Nền Dark Teal Gradient mượt mà khi trượt sang chế độ form đăng ký */}
+      <div
+        className={`pointer-events-none absolute inset-0 transition-opacity duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isRegisterMode ? 'opacity-100' : 'opacity-0'
+        } bg-linear-to-br from-[#072b28] via-[#094843] to-[#0d1e2e]`}
+      >
+        {/* Lưới kỹ thuật tinh tế */}
+        <div
+          className="absolute inset-0 opacity-15"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.18) 1px, transparent 1px)',
+            backgroundSize: '36px 36px',
+          }}
+        />
+        {/* Quầng sáng phát quang công nghệ (Glow orbs) */}
+        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-teal-300/15 blur-3xl" />
+        <div className="absolute top-1/2 left-1/3 h-80 w-80 -translate-y-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
+      </div>
+
       <style>{`
         @keyframes xttechLetterRun {
           0% {
@@ -125,36 +146,40 @@ export function IntroduceHeroSection() {
 
             {/* Cột phải: Nội dung tóm tắt hệ sinh thái */}
             <div
-              className={`hidden space-y-5 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] lg:col-span-6 lg:block ${
+              className={`hidden space-y-6 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] lg:col-span-6 lg:block ${
                 isRegisterMode ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'
               }`}
             >
               <div className="space-y-3">
-                <h2 className="text-3xl font-black tracking-tight text-slate-900 uppercase xl:text-4xl xl:leading-[1.18]">
+                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3.5 py-1 text-xs font-bold text-emerald-300 backdrop-blur-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  HỆ SINH THÁI GIẢI PHÁP XTTECH
+                </span>
+                <h2 className="text-3xl font-black tracking-tight text-white uppercase xl:text-4xl xl:leading-[1.18]">
                   Phần mềm quản trị sản xuất cho{' '}
-                  <span className="text-primary">Xưởng Nhôm Kính & Nhà Thầu</span>
+                  <span className="text-emerald-400">Xưởng Nhôm Kính & Nhà Thầu</span>
                 </h2>
-                <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
-                  <strong className="text-slate-900">XTTECH</strong> đồng bộ toàn bộ quy trình từ khảo sát ô chờ, thiết kế cửa CAD 2D/3D, bóc tách vật tư và xuất thẻ cắt A4 đến quản lý kho, chấm công tại công trình và báo cáo lãi/lỗ trên một hệ thống duy nhất.
+                <p className="text-sm leading-relaxed text-slate-200 sm:text-base">
+                  <strong className="text-white">XTTECH</strong> đồng bộ toàn bộ quy trình từ khảo sát ô chờ, thiết kế cửa CAD 2D/3D, bóc tách vật tư và xuất thẻ cắt A4 đến quản lý kho, chấm công tại công trình và báo cáo lãi/lỗ trên một hệ thống duy nhất.
                 </p>
               </div>
 
-              <ul className="space-y-3 border-t border-slate-200 pt-4 text-sm leading-relaxed text-slate-700">
+              <ul className="space-y-3.5 border-t border-white/15 pt-5 text-sm leading-relaxed text-slate-200">
                 {ECOSYSTEM_MODULES.map((mod) => (
-                  <li key={mod.code} className="flex items-start gap-2.5">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <li key={mod.code} className="flex items-start gap-3">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
                     <span>
-                      <strong className="font-bold text-slate-900">{mod.code} — {mod.name}:</strong>{' '}
+                      <strong className="font-bold text-white">{mod.code} — {mod.name}:</strong>{' '}
                       {mod.desc}
                     </span>
                   </li>
                 ))}
               </ul>
 
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex flex-wrap items-center gap-3 pt-3">
                 <Link
                   href="/pricing"
-                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary/90"
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-500/40"
                 >
                   <span>Xem bảng giá chi tiết</span>
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -163,7 +188,7 @@ export function IntroduceHeroSection() {
                 <button
                   type="button"
                   onClick={() => setIsRegisterMode(false)}
-                  className="group inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 transition-all hover:border-primary/40 hover:text-primary"
+                  className="group inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3.5 text-sm font-bold text-white backdrop-blur-xs transition-all hover:bg-white/20 hover:border-white/50"
                 >
                   <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
                   <span>Quay lại giới thiệu</span>

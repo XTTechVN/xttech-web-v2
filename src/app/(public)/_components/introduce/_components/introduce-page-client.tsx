@@ -9,7 +9,6 @@ import { IntroduceVideoSection } from './introduce-video-section';
 import { IntroduceValuesSection } from './introduce-values-section';
 import { IntroduceBenefitsSection } from './introduce-benefits-section';
 import { IntroduceAudienceSection } from './introduce-audience-section';
-import { IntroduceMilestonesSection } from './introduce-milestones-section';
 import { IntroducePricingCtaSection } from './introduce-pricing-cta-section';
 
 export function IntroducePageClient() {
@@ -23,7 +22,6 @@ export function IntroducePageClient() {
         <IntroduceValuesSection />
         <IntroduceBenefitsSection />
         <IntroduceAudienceSection />
-        <IntroduceMilestonesSection />
         <IntroducePricingCtaSection onOpenRegister={() => setIsRegisterModalOpen(true)} />
 
         <Modal
