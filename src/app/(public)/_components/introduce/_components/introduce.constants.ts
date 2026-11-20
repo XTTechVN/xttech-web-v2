@@ -143,7 +143,7 @@ export const DEVELOPER_TEAM_MEMBERS: DeveloperMember[] = [
     role: 'Tech Lead & Fullstack Engineer',
     bio: 'Phát triển lõi tính toán bóc tách vật tư BOM, tối ưu cắt, hệ thống API đám mây và giao diện web.',
     skills: ['Tech Lead', 'BOM & Tối ưu cắt', 'Cloud API'],
-    avatarUrl: TEMP_MEMBER_AVATAR,
+    avatarUrl: '/assets/introduce/dev/van.jpg',
   },
   {
     name: 'Nguyễn Quang Linh',
@@ -151,7 +151,7 @@ export const DEVELOPER_TEAM_MEMBERS: DeveloperMember[] = [
     role: 'Fullstack & CAD 2D/3D Engineer',
     bio: 'Xây dựng giao diện thiết kế cửa CAD 2D/3D trực quan, trải nghiệm người dùng và tích hợp hệ thống.',
     skills: ['Fullstack Web', 'CAD 2D/3D', 'Hiệu năng giao diện'],
-    avatarUrl: TEMP_MEMBER_AVATAR,
+    avatarUrl: '/assets/introduce/dev/linh.jpg',
   },
   {
     name: 'Vũ Quyên',
