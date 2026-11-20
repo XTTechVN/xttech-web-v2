@@ -21,6 +21,7 @@ import {
 import { computeSlidingSashes } from './cad-geometry';
 import { resolveLeafGeometry } from './cad-leaf-geometry';
 import { buildSashSubPanes } from './cad-leaf-subpanes';
+import { hasFrameMullionBetween, isSlidingClusterNode } from '../utils/door-tree-utils';
 
 export interface BottomSill {
   x: number;
@@ -498,21 +499,7 @@ export const buildCadLayout = (
     // 3. Phân chia đố T 90° hoặc cặp cánh đối xứng
     if (node.children && node.children.length > 0 && node.splitType !== 'sash_mullion') {
       // 3.0 Cụm cánh cửa lùa (Sliding cluster) chồng đè thực tế (Overlap/Đè gối)
-      const isSlidingCluster = Boolean(
-        node.splitType === 'sash_pair' &&
-        (
-          node.sashLayout?.includes('lua') ||
-          node.sashLayout?.includes('sliding') ||
-          node.sashType?.includes('lua') ||
-          node.sashType?.includes('sliding') ||
-          node.children.some((c) =>
-            c.sashType?.includes('lua') ||
-            c.sashType === 'sliding' ||
-            Boolean(c.sashArrow?.includes('lua')) ||
-            c.sashZIndex !== undefined
-          )
-        )
-      );
+      const isSlidingCluster = isSlidingClusterNode(node);
 
       if (isSlidingCluster && node.children) {
         const count = node.children.length;
@@ -537,20 +524,13 @@ export const buildCadLayout = (
       const isVert = node.splitDirection === 'vertical';
       const count = node.children.length;
 
-      // Cặp cánh mở quay đối xứng (swing_left + swing_right) khép vào nhau bằng đố động, KHÔNG có đố tĩnh ở giữa
-      const hasMullionBetween = (c1: SceneCellNode, c2: SceneCellNode): boolean => {
-        if (node.splitType === 'sash_pair' || node.sashType === 'swing_double') return false;
-        if (isVert && c1.sashType === 'swing_left' && c2.sashType === 'swing_right') return false;
-        return true;
-      };
-
       const activeMullionT = isVert
         ? (activeFrameBounds.vertMullionPx ?? options?.vertMullionT ?? mullionT)
         : (activeFrameBounds.horizMullionPx ?? options?.horizMullionT ?? mullionT);
       const hasMullionAt: boolean[] = [];
       let mullionCount = 0;
       for (let i = 0; i < count - 1; i++) {
-        const hasM = hasMullionBetween(node.children[i], node.children[i + 1]);
+        const hasM = hasFrameMullionBetween(node, node.children[i], node.children[i + 1]);
         hasMullionAt.push(hasM);
         if (hasM) mullionCount += 1;
       }
@@ -1095,7 +1075,9 @@ export const collectLeafSashMullions = (leaves: LeafCell[], metrics: CadMetrics,
   for (const leaf of leaves) {
     const { node } = leaf;
     const hasSashTree = Boolean(node.children && node.children.length > 0 && node.splitType === 'sash_mullion');
-    if (node.sashType === 'swing_double' || !hasSashTree) continue;
+    const hasFlatSashMullions =
+      !hasSashTree && node.sashType !== 'fixed' && Boolean(node.sashMullions && node.sashMullions.count > 1);
+    if (node.sashType === 'swing_double' || (!hasSashTree && !hasFlatSashMullions)) continue;
 
     const geometry = resolveLeafGeometry(leaf, leaves, metrics, sashConfig);
     const { mullionBars } = buildSashSubPanes({

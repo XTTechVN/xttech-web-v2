@@ -6,7 +6,8 @@ import { Door, DoorCreate, DoorUpdate, DoorCalculateResponse, SelectedAccessoryI
 import { calculateDoor, createDoor, updateDoor, getDoorSeriesList, getProfileBars, getAccessoryCombos, getAccessories, getGlasses, getBrandColors, getBrands, } from '@/actions';
 import { FrameShape, SashOpenType, SceneCellNode, StudioMainTab, FrameConfig, SashConfig, FrameCornerJoint, SashCornerJoint, BeadCornerJoint, SlidingSashRole, SashOffsetScope, SashOffsetValues, SashVariantProfiles, DoorCustomExtraItem, DoorSystemFamily, DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG, MullionInfo, MullionCutType, ColorSwatch, ALUMINUM_PALETTE, GlassGrilleConfig, } from '../studio-types';
 import { ResizeSplitParams } from '../cad-engine/door-cad-renderer';
-import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, ensureRootCellDimensions, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, findEnclosingFrameUnit, } from '../utils/door-tree-utils';
+import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, ensureRootCellDimensions, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, findEnclosingFrameUnit, resolveFlatSashMullionPositions, } from '../utils/door-tree-utils';
+import { formatReferenceValue } from '../utils/mullion-reference-utils';
 import { applyGlassVisualToTree } from '../utils/glass-visual-utils';
 import {
   parseStudioProfileId,
@@ -1678,22 +1679,65 @@ export function useDoorStudioState({
     if (!selectedMullion) return;
     const baseRoot = ensureRootCellDimensions(rootCell, w, h);
     const parentNode = findNode(baseRoot, selectedMullion.parentNodeId);
-    if (!parentNode || !parentNode.children || parentNode.children.length < 2) return;
+    if (!parentNode) return;
 
     const idx = selectedMullion.mullionIndex;
     const isVert = selectedMullion.direction === 'vertical';
+    const hasChildren = Boolean(parentNode.children && parentNode.children.length > 0);
+    const isFlatSashMullion =
+      !hasChildren &&
+      parentNode.splitType !== 'sash_mullion' &&
+      Boolean(parentNode.sashMullions && parentNode.sashMullions.count > 1);
+
+    if (isFlatSashMullion && parentNode.sashMullions) {
+      const flatPositions = resolveFlatSashMullionPositions(parentNode);
+      if (idx < 0 || idx + 1 >= flatPositions.length) return;
+      const oldDim = flatPositions[idx];
+      const oldNextDim = flatPositions[idx + 1];
+      const totalDim = oldDim + oldNextDim;
+      const minDim = Math.min(Math.floor(totalDim / 2), Math.min(50, Math.max(20, Math.floor(totalDim * 0.15))));
+      const newDim = Math.max(minDim, Math.min(totalDim - minDim, params.dimension));
+      const newNextDim = formatReferenceValue(totalDim - newDim);
+      const nextPositions = [...flatPositions];
+      nextPositions[idx] = formatReferenceValue(newDim);
+      nextPositions[idx + 1] = newNextDim;
+
+      pushState(
+        updateNode(baseRoot, parentNode.id, {
+          sashMullions: {
+            ...parentNode.sashMullions,
+            direction: parentNode.sashMullions.direction || selectedMullion.direction,
+            positions: nextPositions,
+          },
+        })
+      );
+      toast.success('Cập nhật thông số đố thành công');
+      return;
+    }
+
+    if (!parentNode.children || parentNode.children.length < 2 || idx < 0 || idx + 1 >= parentNode.children.length) {
+      return;
+    }
+
     const child = parentNode.children[idx];
     const nextChild = parentNode.children[idx + 1];
-
     const oldDim = isVert ? child.w : child.h;
     const oldNextDim = isVert ? nextChild.w : nextChild.h;
     const totalDim = oldDim + oldNextDim;
-    const minDim = Math.min(50, Math.max(20, Math.floor(totalDim * 0.15)));
+    const minDim = Math.min(Math.floor(totalDim / 2), Math.min(50, Math.max(20, Math.floor(totalDim * 0.15))));
     const newDim = Math.max(minDim, Math.min(totalDim - minDim, params.dimension));
-    const delta = newDim - oldDim;
+    const dimUnchanged = Math.abs(newDim - oldDim) < 1e-6;
+    const newNextDim = dimUnchanged ? oldNextDim : formatReferenceValue(totalDim - newDim);
 
     const newChildren = parentNode.children.map((c, i) => {
       if (i === idx) {
+        if (dimUnchanged) {
+          return {
+            ...c,
+            mullionProfileId: params.profileId,
+            mullionCutType: params.cutType,
+          };
+        }
         const scaled = rescaleTree(
           c,
           isVert ? newDim / (oldDim || 1) : 1,
@@ -1707,8 +1751,8 @@ export function useDoorStudioState({
           mullionCutType: params.cutType,
         };
       }
-      if (i === idx + 1 && nextChild) {
-        const newNextDim = Math.max(minDim, oldNextDim - delta);
+      if (i === idx + 1) {
+        if (dimUnchanged) return c;
         const scaledNext = rescaleTree(
           c,
           isVert ? newNextDim / (oldNextDim || 1) : 1,
@@ -1746,10 +1790,47 @@ export function useDoorStudioState({
   }: ResizeSplitParams) => {
     const baseRoot = ensureRootCellDimensions(rootCell, w, h);
     const parentNode = findNode(baseRoot, parentNodeId);
-    if (!parentNode || !parentNode.children || parentNode.children.length < splitIndex + 2) return;
+    if (!parentNode) return;
 
     const idx = splitIndex;
     const isVert = direction === 'vertical';
+    const hasChildren = Boolean(parentNode.children && parentNode.children.length > 0);
+    const isFlatSashMullion =
+      !hasChildren &&
+      parentNode.splitType !== 'sash_mullion' &&
+      Boolean(parentNode.sashMullions && parentNode.sashMullions.count > 1);
+
+    if (isFlatSashMullion && parentNode.sashMullions) {
+      const flatPositions = resolveFlatSashMullionPositions(parentNode);
+      if (idx < 0 || idx + 1 >= flatPositions.length) return;
+      const oldDim1 = flatPositions[idx];
+      const oldDim2 = flatPositions[idx + 1];
+      const totalDim = oldDim1 + oldDim2;
+      const minDim = Math.min(Math.floor(totalDim / 2), Math.min(50, Math.max(20, Math.floor(totalDim * 0.15))));
+      const clampedDim1 = Math.max(minDim, Math.min(totalDim - minDim, newDimension));
+      const clampedDim2 = formatReferenceValue(totalDim - clampedDim1);
+      const nextPositions = [...flatPositions];
+      nextPositions[idx] = formatReferenceValue(clampedDim1);
+      nextPositions[idx + 1] = clampedDim2;
+
+      const updatedRoot = updateNode(baseRoot, parentNode.id, {
+        sashMullions: {
+          ...parentNode.sashMullions,
+          direction: parentNode.sashMullions.direction || direction,
+          positions: nextPositions,
+        },
+      });
+
+      if (isFinal) {
+        pushState(updatedRoot);
+      } else {
+        setRootCell(updatedRoot);
+      }
+      return;
+    }
+
+    if (!parentNode.children || idx < 0 || parentNode.children.length < idx + 2) return;
+
     const child = parentNode.children[idx];
     const nextChild = parentNode.children[idx + 1];
 
@@ -1757,9 +1838,9 @@ export function useDoorStudioState({
     const oldDim2 = isVert ? nextChild.w : nextChild.h;
     const totalDim = oldDim1 + oldDim2;
 
-    const minDim = Math.min(50, Math.max(20, Math.floor(totalDim * 0.15)));
+    const minDim = Math.min(Math.floor(totalDim / 2), Math.min(50, Math.max(20, Math.floor(totalDim * 0.15))));
     const clampedDim1 = Math.max(minDim, Math.min(totalDim - minDim, newDimension));
-    const clampedDim2 = totalDim - clampedDim1;
+    const clampedDim2 = formatReferenceValue(totalDim - clampedDim1);
 
     const updatedChild = rescaleTree(
       child,
@@ -1803,38 +1884,111 @@ export function useDoorStudioState({
 
   const handleDeleteMullion = () => {
     if (!selectedMullion) return;
-    const parentNode = findNode(rootCell, selectedMullion.parentNodeId);
-    if (!parentNode || !parentNode.children || parentNode.children.length === 0) return;
+    const baseRoot = ensureRootCellDimensions(rootCell, w, h);
+    const parentNode = findNode(baseRoot, selectedMullion.parentNodeId);
+    if (!parentNode) return;
 
     const idx = selectedMullion.mullionIndex;
     const isVert = selectedMullion.direction === 'vertical';
+    const hasChildren = Boolean(parentNode.children && parentNode.children.length > 0);
+    const isFlatSashMullion =
+      !hasChildren &&
+      parentNode.splitType !== 'sash_mullion' &&
+      Boolean(parentNode.sashMullions && parentNode.sashMullions.count > 1);
 
-    if (parentNode.children.length <= 2) {
-      const mergedNode: Partial<SceneCellNode> = {
-        children: [],
-        splitDirection: undefined,
-        splitType: undefined,
-        sashType: parentNode.children[0]?.sashType || 'fixed',
-        paneType: parentNode.children[0]?.paneType || 'glass',
-      };
-      pushState(updateNode(rootCell, parentNode.id, mergedNode));
+    if (parentNode.splitType === 'sash_mullion') {
+      if (!parentNode.children || parentNode.children.length < 2) return;
+      if (parentNode.children.length <= 2) {
+        pushState(
+          updateNode(baseRoot, parentNode.id, {
+            children: [],
+            splitDirection: undefined,
+            splitType: undefined,
+            sashMullions: undefined,
+          })
+        );
+      } else {
+        if (idx < 0 || idx + 1 >= parentNode.children.length) return;
+        const c1 = parentNode.children[idx];
+        const c2 = parentNode.children[idx + 1];
+        const mergedSpan = formatReferenceValue((isVert ? c1.w : c1.h) + (isVert ? c2.w : c2.h));
+        const scaledC1 = c1.children?.length
+          ? rescaleTree(c1, isVert ? mergedSpan / (c1.w || 1) : 1, isVert ? 1 : mergedSpan / (c1.h || 1))
+          : c1;
+        const mergedChild: SceneCellNode = {
+          ...scaledC1,
+          w: isVert ? mergedSpan : c1.w,
+          h: isVert ? c1.h : mergedSpan,
+        };
+        const newChildren = [
+          ...parentNode.children.slice(0, idx),
+          mergedChild,
+          ...parentNode.children.slice(idx + 2),
+        ];
+        const nextSashMullions = parentNode.sashMullions
+          ? {
+              ...parentNode.sashMullions,
+              count: newChildren.length,
+              direction: parentNode.sashMullions.direction || selectedMullion.direction,
+              positions: newChildren.map((c) => (isVert ? c.w : c.h)),
+            }
+          : undefined;
+        pushState(updateNode(baseRoot, parentNode.id, { children: newChildren, sashMullions: nextSashMullions }));
+      }
+    } else if (isFlatSashMullion && parentNode.sashMullions) {
+      const flatPositions = resolveFlatSashMullionPositions(parentNode);
+      if (flatPositions.length <= 2) {
+        pushState(updateNode(baseRoot, parentNode.id, { sashMullions: undefined }));
+      } else {
+        if (idx < 0 || idx + 1 >= flatPositions.length) return;
+        const mergedSpan = formatReferenceValue(flatPositions[idx] + flatPositions[idx + 1]);
+        const nextPositions = [
+          ...flatPositions.slice(0, idx),
+          mergedSpan,
+          ...flatPositions.slice(idx + 2),
+        ];
+        pushState(
+          updateNode(baseRoot, parentNode.id, {
+            sashMullions: {
+              ...parentNode.sashMullions,
+              count: nextPositions.length,
+              direction: parentNode.sashMullions.direction || selectedMullion.direction,
+              positions: nextPositions,
+            },
+          })
+        );
+      }
     } else {
-      const c1 = parentNode.children[idx];
-      const c2 = parentNode.children[idx + 1];
-      const mergedSpan = (isVert ? c1.w : c1.h) + (isVert ? c2.w : c2.h);
-
-      const mergedChild: SceneCellNode = {
-        ...c1,
-        w: isVert ? mergedSpan : c1.w,
-        h: isVert ? c1.h : mergedSpan,
-      };
-
-      const newChildren = [
-        ...parentNode.children.slice(0, idx),
-        mergedChild,
-        ...parentNode.children.slice(idx + 2),
-      ];
-      pushState(updateNode(rootCell, parentNode.id, { children: newChildren }));
+      if (!parentNode.children || parentNode.children.length === 0) return;
+      if (parentNode.children.length <= 2) {
+        const mergedNode: Partial<SceneCellNode> = {
+          children: [],
+          splitDirection: undefined,
+          splitType: undefined,
+          sashType: parentNode.children[0]?.sashType || 'fixed',
+          paneType: parentNode.children[0]?.paneType || 'glass',
+        };
+        pushState(updateNode(baseRoot, parentNode.id, mergedNode));
+      } else {
+        if (idx < 0 || idx + 1 >= parentNode.children.length) return;
+        const c1 = parentNode.children[idx];
+        const c2 = parentNode.children[idx + 1];
+        const mergedSpan = formatReferenceValue((isVert ? c1.w : c1.h) + (isVert ? c2.w : c2.h));
+        const scaledC1 = c1.children?.length
+          ? rescaleTree(c1, isVert ? mergedSpan / (c1.w || 1) : 1, isVert ? 1 : mergedSpan / (c1.h || 1))
+          : c1;
+        const mergedChild: SceneCellNode = {
+          ...scaledC1,
+          w: isVert ? mergedSpan : c1.w,
+          h: isVert ? c1.h : mergedSpan,
+        };
+        const newChildren = [
+          ...parentNode.children.slice(0, idx),
+          mergedChild,
+          ...parentNode.children.slice(idx + 2),
+        ];
+        pushState(updateNode(baseRoot, parentNode.id, { children: newChildren }));
+      }
     }
 
     setSelectedMullion(null);

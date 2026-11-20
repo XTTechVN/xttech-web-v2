@@ -65,6 +65,9 @@ export function StudioModalOverlays({
         onClose={onCloseMullionModal}
         mullion={selectedMullion}
         profileBars={availableProfiles}
+        rootCell={rootCell}
+        w={w}
+        h={h}
         onSave={onSaveMullion}
         onDeleteMullion={onDeleteMullion}
         onLocalTranspose={onLocalTransposeMullion}

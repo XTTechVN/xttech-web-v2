@@ -1,6 +1,8 @@
 import { MullionInfo, SceneCellNode } from '../studio-types';
 import { renderCadBead, CadBeadResult } from './components/cad-bead';
 import { CadRect } from './cad-leaf-geometry';
+import { resolveFlatSashMullionPositions } from '../utils/door-tree-utils';
+import { formatReferenceValue } from '../utils/mullion-reference-utils';
 
 export interface SashSubPane {
   id: string;
@@ -26,7 +28,7 @@ export interface SashMullionBarItem {
   y: number;
   w: number;
   h: number;
-  /** Thông tin đố (chỉ có với đố thuộc cây chia `sash_mullion`; đố phẳng cũ không có) */
+  /** Thông tin đố (có cho cả cây chia `sash_mullion` và đố phẳng cũ `sashMullions`) */
   info?: MullionInfo;
 }
 
@@ -134,18 +136,18 @@ export const buildSashSubPanes = (params: SashSubPaneParams): SashSubPaneLayout 
   };
 
   const traverseFlatMullions = () => {
-    const count = node.sashMullions?.count ?? 1;
+    const nominalPositions = resolveFlatSashMullionPositions(node);
+    const count = nominalPositions.length;
+    if (count <= 1) return;
     const isVertical = (node.sashMullions?.direction || 'vertical') === 'vertical';
-    const positions = node.sashMullions?.positions;
-    const hasPositions = Boolean(positions && positions.length === count);
-    const totalPos = hasPositions && positions ? positions.reduce((sum, pos) => sum + pos, 0) : count;
+    const totalPos = nominalPositions.reduce((sum, pos) => sum + pos, 0);
     const availSpan = Math.max(10, (isVertical ? inner.w : inner.h) - (count - 1) * mullionThickness);
 
     let cursor = isVertical ? inner.x : inner.y;
     let usedSpan = 0;
     for (let idx = 0; idx < count; idx++) {
       const isLast = idx === count - 1;
-      const ratio = hasPositions && positions ? positions[idx] / totalPos : 1 / count;
+      const ratio = totalPos > 0 ? nominalPositions[idx] / totalPos : 1 / count;
       const span = isLast ? availSpan - usedSpan : availSpan * ratio;
       usedSpan += span;
       const paneBox: CadRect = isVertical
@@ -154,12 +156,26 @@ export const buildSashSubPanes = (params: SashSubPaneParams): SashSubPaneLayout 
       pushPane(`${node.id}-sm-${idx}`, node, paneBox, `${node.id}-sm-bead-${idx}`);
 
       if (idx < count - 1) {
+        const barId = `${node.id}-sm-bar-${idx}`;
+        const dim = nominalPositions[idx];
+        const nextDim = nominalPositions[idx + 1];
         mullionBars.push({
-          id: `${node.id}-sm-bar-${idx}`,
+          id: barId,
           x: isVertical ? cursor + span : inner.x,
           y: isVertical ? inner.y : cursor + span,
           w: isVertical ? mullionThickness : inner.w,
           h: isVertical ? inner.h : mullionThickness,
+          info: {
+            id: barId,
+            parentNodeId: node.id,
+            mullionIndex: idx,
+            direction: isVertical ? 'vertical' : 'horizontal',
+            childId: `${node.id}-sm-${idx}`,
+            nextChildId: `${node.id}-sm-${idx + 1}`,
+            dimension: dim,
+            totalDimension: formatReferenceValue(dim + nextDim),
+            cutType: 'inside_frame',
+          },
         });
       }
       cursor += span + mullionThickness;
