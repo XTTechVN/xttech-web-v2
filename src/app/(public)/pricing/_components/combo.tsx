@@ -19,11 +19,11 @@ const DEFAULT_COMBO = {
   label: 'Gộp combo:',
   chips: [
     {
-      before: 'G4 Xưởng Nhôm 29.9tr + Tái cấu trúc 15tr = ',
+      before: 'Gói Kim cương Xưởng Nhôm 29.9tr + Tái cấu trúc 15tr = ',
       strong: '44.9tr năm đầu',
       after: ' (tiết kiệm 15tr)',
     },
-    { before: 'Tặng 1 tháng G2 trị giá 1.29tr' },
+    { before: 'Tặng 1 tháng gói Vàng trị giá 1.29tr' },
   ] as ComboChip[],
   note: '* Áp dụng khi thanh toán theo năm',
 };

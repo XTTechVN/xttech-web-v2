@@ -19,7 +19,7 @@ export const PAIN_POINTS: PainPointItem[] = [
   },
   {
     lead: 'Dữ liệu phân tán qua Zalo, giấy tờ rời rạc',
-    text: ' từ bản vẽ kỹ thuật, thẻ cắt A4, chấm công thợ đến công nợ nhà cung cấp, khiến chủ xưởng dễ thất lạc số liệu và không nắm rõ lãi/lỗ thực tế của từng công trình.',
+    text: ' từ bản vẽ kỹ thuật, thẻ cắt A4, chấm công thợ đến phiếu thu chi, khiến chủ xưởng dễ thất lạc số liệu và không nắm rõ lãi/lỗ thực tế của từng công trình.',
   },
 ];
 

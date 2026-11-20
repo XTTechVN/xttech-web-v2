@@ -9,12 +9,10 @@ import { Calendar, Clock, AlertCircle, LogIn, LogOut, FileEdit, Briefcase, Eye, 
 import Link from 'next/link';
 import { useAuthStore } from '@/stores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Capacitor } from '@capacitor/core';
 import { useMyTodayAttendance } from '@/hooks';
-import { NativeTracking } from '@/hooks/useLocationTracker';
 
 import { getAttendances } from '@/actions';
-import { Attendance, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
+import { Attendance, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 import StatCart from '../../dashboard/_components/stats-card';
 import AddAdjustmentModal from '../adjustments/_components/add-modal';
 import AttendanceDetailModal from '../_components/attendance-modal';
@@ -89,18 +87,7 @@ export default function PayrollDataPage() {
   // Chỉ hiển thị 'Check-out ngay' khi có phiên chấm công đang mở hợp lệ của ngày hôm nay
   const { isWorkingShift: isCheckOutAction } = useMyTodayAttendance();
 
-  const handleTimekeepingButtonClick = async () => {
-    // Nếu là iPhone và chuẩn bị check-in vào ca: Kiểm tra quyền Luôn luôn (Always) qua Native Alert của iOS
-    if (Capacitor.getPlatform() === 'ios' && !isCheckOutAction && NativeTracking.ensureAlwaysPermission) {
-      try {
-        const res = await NativeTracking.ensureAlwaysPermission();
-        if (!res.isAlways) {
-          return; // Dừng lại, Native Alert của iOS đã hiển thị và xử lý
-        }
-      } catch (err) {
-        console.warn('[Payroll] Error checking iOS location permission:', err);
-      }
-    }
+  const handleTimekeepingButtonClick = () => {
     setShowTimekeepingModal(true);
   };
 
@@ -137,7 +124,7 @@ export default function PayrollDataPage() {
       limit,
       userId: user.id,
       search: searchQuery.trim() || undefined,
-      status: (filterStatus as any) || undefined,
+      status: (filterStatus as AttendanceStatus) || undefined,
     });
     return {
       items: response.items ?? [],

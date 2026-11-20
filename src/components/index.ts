@@ -33,3 +33,4 @@ export * from './rich-text-editor';
 export * from './customers';
 export * from './warehouse';
 export * from './warranty';
+export * from './lead-register-form';

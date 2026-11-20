@@ -47,3 +47,6 @@ next-env.d.ts
 *.cer
 *.key
 
+# Public video assets (hosted on MinIO / CDN)
+public/assets/video/intro.mp4
+

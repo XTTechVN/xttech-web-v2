@@ -43,14 +43,14 @@ export function PillarsSection() {
 
           {/* Bộ lọc giải pháp */}
           <div className="mt-4 flex items-center justify-center">
-            <div className="inline-flex items-center p-1 rounded-full bg-slate-100 border border-slate-200/80 shadow-2xs">
+            <div className="inline-flex max-w-full items-center overflow-x-auto p-1 rounded-full bg-slate-100 border border-slate-200/80 shadow-2xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {PILLAR_FILTERS.map((filter) => (
                 <button
                   key={filter.value}
                   type="button"
                   onClick={() => setSelectedCategory(filter.value)}
                   className={cn(
-                    'px-4.5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer',
+                    'whitespace-nowrap px-3 sm:px-4.5 py-1.5 rounded-full text-[11px] sm:text-sm font-bold transition-all cursor-pointer',
                     selectedCategory === filter.value
                       ? 'bg-primary text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900',
@@ -63,11 +63,11 @@ export function PillarsSection() {
           </div>
         </div>
 
-        {/* Lưới 8 Thẻ giải pháp (Lưới 4x2 với Badge số lượn sóng) */}
+        {/* Lưới 8 Thẻ giải pháp: Mobile lướt ngang (snap carousel), Tablet/PC dạng lưới */}
         <div
           onMouseEnter={() => setIsHoveringGrid(true)}
           onMouseLeave={() => setIsHoveringGrid(false)}
-          className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4.5 sm:gap-5"
+          className="mt-6 flex overflow-x-auto snap-x snap-mandatory gap-4 pb-3 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0 md:pb-0 md:overflow-visible md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5"
         >
           {filteredPillars.map((pillar, idx) => {
             const Icon = pillar.icon;
@@ -81,7 +81,7 @@ export function PillarsSection() {
                 key={`${selectedCategory}-${pillar.title}`}
                 style={{ animationDelay: `${idx * 55}ms` }}
                 className={cn(
-                  'animate-pillar-card-in group relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-white p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10',
+                  'animate-pillar-card-in group relative flex w-[82vw] max-w-[330px] shrink-0 snap-center md:w-auto md:max-w-none flex-col justify-between overflow-hidden rounded-2xl border bg-white p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10',
                   isIdleActive
                     ? '-translate-y-1 border-primary/45 shadow-lg shadow-primary/10'
                     : 'border-slate-200/80 shadow-sm',
@@ -149,6 +149,10 @@ export function PillarsSection() {
             );
           })}
         </div>
+
+        <p className="mt-2 text-center text-[11px] font-medium text-slate-400 md:hidden">
+          Vuốt ngang để xem thêm các giải pháp →
+        </p>
       </div>
     </section>
   );

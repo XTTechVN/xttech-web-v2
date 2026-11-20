@@ -99,10 +99,10 @@ export const HeroSectionDots = () => {
     <nav
       aria-label="Điều hướng các khối nội dung"
       className={cn(
-        'group/nav fixed top-1/2 left-4 z-30 hidden -translate-y-1/2 rounded-2xl transition-all duration-300 lg:flex xl:left-6',
+        'group/nav fixed top-1/2 left-3 z-30 hidden -translate-y-1/2 rounded-2xl transition-all duration-300 lg:flex xl:left-4 2xl:left-6',
         isOnDarkBanner
-          ? 'hover:bg-slate-950/80 hover:px-3.5 hover:py-3 hover:shadow-xl hover:ring-1 hover:ring-white/15 hover:backdrop-blur-md'
-          : 'hover:bg-white/92 hover:px-3.5 hover:py-3 hover:shadow-lg hover:ring-1 hover:ring-slate-200/80 hover:backdrop-blur-md',
+          ? '2xl:hover:bg-slate-950/80 2xl:hover:px-3.5 2xl:hover:py-3 2xl:hover:shadow-xl 2xl:hover:ring-1 2xl:hover:ring-white/15 2xl:hover:backdrop-blur-md'
+          : '2xl:hover:bg-white/92 2xl:hover:px-3.5 2xl:hover:py-3 2xl:hover:shadow-lg 2xl:hover:ring-1 2xl:hover:ring-slate-200/80 2xl:hover:backdrop-blur-md',
       )}
     >
       <div className="relative flex flex-col items-start gap-3 pl-2.5">
@@ -133,6 +133,7 @@ export const HeroSectionDots = () => {
               }}
               type="button"
               onClick={() => handleScrollTo(item.id)}
+              title={item.label}
               aria-label={item.label}
               aria-current={isActive ? 'true' : undefined}
               className="group flex cursor-pointer items-center gap-2.5 py-0.5 focus:outline-none"
@@ -167,10 +168,10 @@ export const HeroSectionDots = () => {
                 )}
               />
 
-              {/* Tên khối hiện khi đang active hoặc khi hover vào thanh điều hướng */}
+              {/* Tên khối chỉ hiện trên màn hình PC rộng (2xl+), laptop chỉ hiện số + gạch */}
               <span
                 className={cn(
-                  'text-xs font-semibold whitespace-nowrap transition-all duration-300',
+                  'hidden text-xs font-semibold whitespace-nowrap transition-all duration-300 2xl:inline',
                   isActive
                     ? isOnDarkBanner
                       ? 'translate-x-0 text-white opacity-100'

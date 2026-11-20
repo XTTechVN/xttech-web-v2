@@ -108,13 +108,14 @@ export function useNewsPublicListing() {
     [allArticles],
   );
 
-  // 4. Tự động lọc bài viết cho từng chuyên mục (6 chuyên mục) trên FE
+  // 4. Tự động lọc bài viết cho từng chuyên mục trên FE
   const categoryArticlesMap = useMemo(() => {
     const map: Record<NewsCategory, NewsArticle[]> = {
       company_news: [],
       industry_knowledge: [],
       project_showcase: [],
       technology_solution: [],
+      user_guide: [],
       recruitment_culture: [],
       promotion_event: [],
     };

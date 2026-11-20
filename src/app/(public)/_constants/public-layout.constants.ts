@@ -4,11 +4,12 @@ import { Mail, Phone, RotateCcw, ShieldCheck, FileText, type LucideIcon } from '
 export interface PublicNavLink {
   href: string;
   label: string;
-  key: 'about' | 'pricing' | 'news' | 'legal' | 'contact';
+  key: 'about' | 'introduce' | 'pricing' | 'news' | 'legal' | 'contact';
 }
 
 export const NAV_LINKS: PublicNavLink[] = [
   { href: '/#about', label: 'Về chúng tôi', key: 'about' },
+  { href: '/introduce', label: 'Giới thiệu', key: 'introduce' },
   { href: '/pricing', label: 'Giá', key: 'pricing' },
   { href: '/news', label: 'Tin tức', key: 'news' },
   { href: '/privacy-policy', label: 'Chính sách', key: 'legal' },
@@ -22,6 +23,7 @@ export interface FooterSolutionLink {
 
 export const FOOTER_SOLUTION_LINKS: FooterSolutionLink[] = [
   { href: '/#about', label: 'Về chúng tôi' },
+  { href: '/introduce', label: 'Giới thiệu phần mềm' },
   { href: '/pricing', label: 'Bảng giá dịch vụ' },
   { href: '/news', label: 'Tin tức & Sự kiện' },
   { href: '/signin', label: 'Đăng nhập' },
@@ -62,5 +64,6 @@ export const FOOTER_BOTTOM_LINKS: FooterBottomLink[] = [
   { href: '/#about', label: 'Về chúng tôi' },
   { href: '/pricing', label: 'Bảng giá' },
   { href: '/news', label: 'Tin tức' },
-  { href: 'https://facebook.com', label: 'Facebook', external: true },
+  { href: '/privacy-policy', label: 'Chính sách bảo mật' },
+  { href: '/terms-of-service', label: 'Điều khoản dịch vụ' },
 ];

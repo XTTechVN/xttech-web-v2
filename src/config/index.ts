@@ -18,3 +18,5 @@ export * from './seo';
 
 export * from './contact';
 export * from './sign';
+export * from './lead';
+export * from './location-diag';

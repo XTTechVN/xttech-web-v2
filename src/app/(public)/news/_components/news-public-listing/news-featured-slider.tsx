@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { NewsArticle } from '@/types';
 import { NewsArticleCard } from '../news-article-card';
@@ -11,6 +11,73 @@ interface NewsFeaturedSliderProps {
 }
 
 export function NewsFeaturedSlider({ articles, activeIndex, setActiveIndex, onHoverChange }: NewsFeaturedSliderProps) {
+  const dragRef = useRef<{
+    active: boolean;
+    startX: number;
+    startY: number;
+    lockedAxis: 'x' | 'y' | null;
+  }>({ active: false, startX: 0, startY: 0, lockedAxis: null });
+  const didSwipeRef = useRef(false);
+  const [dragOffsetPx, setDragOffsetPx] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const stepSlide = (delta: -1 | 1) => {
+    if (articles.length <= 1) return;
+    setActiveIndex((prev) => (prev + delta + articles.length) % articles.length);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (articles.length <= 1) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    dragRef.current = { active: true, startX: touch.clientX, startY: touch.clientY, lockedAxis: null };
+    didSwipeRef.current = false;
+    setIsDragging(true);
+    setDragOffsetPx(0);
+    onHoverChange(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    const touch = e.touches[0];
+    if (!drag.active || !touch) return;
+
+    const dx = touch.clientX - drag.startX;
+    const dy = touch.clientY - drag.startY;
+
+    if (!drag.lockedAxis && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+      drag.lockedAxis = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
+    }
+
+    if (drag.lockedAxis === 'x') {
+      didSwipeRef.current = true;
+      setDragOffsetPx(dx);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!dragRef.current.active) return;
+    if (dragOffsetPx <= -40) {
+      stepSlide(1);
+    } else if (dragOffsetPx >= 40) {
+      stepSlide(-1);
+    }
+    dragRef.current = { active: false, startX: 0, startY: 0, lockedAxis: null };
+    setIsDragging(false);
+    setDragOffsetPx(0);
+    onHoverChange(false);
+    setTimeout(() => {
+      didSwipeRef.current = false;
+    }, 50);
+  };
+
+  const handleClickCapture = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (didSwipeRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      didSwipeRef.current = false;
+    }
+  };
   return (
     <div
       className="group/slide rounded-lg bg-white border border-slate-200/90 shadow-sm p-5 space-y-4 overflow-hidden"
@@ -56,12 +123,20 @@ export function NewsFeaturedSlider({ articles, activeIndex, setActiveIndex, onHo
       </div>
 
       <div className="space-y-4">
-        {/* Khung trượt Slide ngang mượt mà */}
-        <div className="overflow-hidden rounded-md">
+        {/* Khung trượt Slide ngang mượt mà - hỗ trợ vuốt tay trên mobile */}
+        <div
+          className="overflow-hidden rounded-md touch-pan-y select-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          onClickCapture={handleClickCapture}
+        >
           <div
-            className="flex will-change-transform transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+            className="flex will-change-transform"
             style={{
-              transform: `translateX(-${activeIndex * 100}%)`,
+              transform: `translate3d(calc(-${activeIndex * 100}% + ${dragOffsetPx}px), 0, 0)`,
+              transition: isDragging ? 'none' : 'transform 700ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             {articles.map((item, idx) => {

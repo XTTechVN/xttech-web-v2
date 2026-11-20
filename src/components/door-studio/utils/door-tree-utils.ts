@@ -606,3 +606,110 @@ export const isInsideSash = (root: SceneCellNode, targetId: string): boolean => 
       (Boolean(a.sashType) && a.sashType !== 'fixed')
   );
 };
+
+/**
+ * Nhận diện nút cụm cánh lùa chồng đè (Sliding cluster) — SSOT dùng chung giữa CAD traverser & reference engine
+ */
+export function isSlidingClusterNode(node: SceneCellNode): boolean {
+  if (node.splitType !== 'sash_pair') return false;
+  return Boolean(
+    node.sashLayout?.includes('lua') ||
+      node.sashLayout?.includes('sliding') ||
+      node.sashType?.includes('lua') ||
+      node.sashType?.includes('sliding') ||
+      node.children?.some(
+        (c) =>
+          c.sashType?.includes('lua') ||
+          c.sashType === 'sliding' ||
+          Boolean(c.sashArrow?.includes('lua')) ||
+          c.sashZIndex !== undefined
+      )
+  );
+}
+
+/**
+ * Kiểm tra giữa hai ô con liền kề c1, c2 của parentNode có thanh đố khung tĩnh hay không
+ */
+export function hasFrameMullionBetween(
+  parentNode: SceneCellNode,
+  c1: SceneCellNode,
+  c2: SceneCellNode
+): boolean {
+  if (
+    parentNode.splitType === 'coupling' ||
+    parentNode.splitType === 'sash_mullion' ||
+    parentNode.splitType === 'sash_pair' ||
+    parentNode.sashType === 'swing_double' ||
+    isSlidingClusterNode(parentNode)
+  ) {
+    return false;
+  }
+  if (
+    parentNode.splitDirection === 'vertical' &&
+    c1.sashType === 'swing_left' &&
+    c2.sashType === 'swing_right'
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Chuẩn hóa mảng độ rộng/cao các khoang đố cánh phẳng (`node.sashMullions`) về đúng tổng kích thước cánh
+ */
+export function resolveFlatSashMullionPositions(node: SceneCellNode): number[] {
+  const count = node.sashMullions?.count ?? 1;
+  const isVert = (node.sashMullions?.direction || 'vertical') === 'vertical';
+  const rawSpan = isVert ? node.w : node.h;
+  const totalSpan = Math.max(1, Number.isFinite(rawSpan) && rawSpan > 0 ? rawSpan : 1);
+
+  if (count <= 1) {
+    return [totalSpan];
+  }
+
+  const roundClean = (val: number): number => {
+    const r = Math.round(val * 10) / 10;
+    return Math.abs(r) < 1e-9 ? 0 : r;
+  };
+  const roundRemainder = (val: number): number => {
+    const r = Math.round(val * 1000) / 1000;
+    return Math.abs(r) < 1e-9 ? 0 : r;
+  };
+
+  const positions = node.sashMullions?.positions;
+  const isValidPositions = Boolean(
+    positions &&
+      positions.length === count &&
+      positions.every((p) => Number.isFinite(p) && p > 0)
+  );
+
+  if (isValidPositions && positions) {
+    const sum = positions.reduce((acc, p) => acc + p, 0);
+    if (Math.abs(sum - totalSpan) < 1e-6) {
+      return [...positions];
+    }
+    let acc = 0;
+    return positions.map((p, idx) => {
+      if (idx === count - 1) {
+        return Math.max(0.01, roundRemainder(totalSpan - acc));
+      }
+      const scaled = (totalSpan * p) / sum;
+      const maxSafe = Math.max(0.01, totalSpan - acc - (count - 1 - idx) * 0.1);
+      const val = totalSpan >= count ? Math.max(0.1, Math.min(maxSafe, roundClean(scaled))) : scaled;
+      acc += val;
+      return val;
+    });
+  }
+
+  let acc = 0;
+  return Array.from({ length: count }, (_, idx) => {
+    if (idx === count - 1) {
+      return Math.max(0.01, roundRemainder(totalSpan - acc));
+    }
+    const equalPart = totalSpan / count;
+    const maxSafe = Math.max(0.01, totalSpan - acc - (count - 1 - idx) * 0.1);
+    const val = totalSpan >= count ? Math.max(0.1, Math.min(maxSafe, roundClean(equalPart))) : equalPart;
+    acc += val;
+    return val;
+  });
+}

@@ -1,0 +1,108 @@
+@keyframes xttechLetterRun {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes xttechLogoEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes xttechHeroReveal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes compassIdleMission {
+  0%,
+  100% {
+    transform: scale(1.02) translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.055) translateY(-6px) rotate(0.35deg);
+  }
+}
+
+@keyframes compassIdleVision {
+  0%,
+  100% {
+    transform: scale(1.02) translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.055) translateY(5px) rotate(-0.35deg);
+  }
+}
+
+@keyframes ambientGlowFlow {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: translate3d(-15%, -15%, 0) scale(0.95);
+  }
+  50% {
+    opacity: 0.38;
+    transform: translate3d(15%, 15%, 0) scale(1.1);
+  }
+}
+
+.xttech-logo-enter {
+  will-change: transform, opacity;
+  animation: xttechLogoEnter 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+}
+
+.xttech-hero-char {
+  display: inline-block;
+  will-change: transform, opacity;
+  animation: xttechLetterRun 0.72s cubic-bezier(0.16, 1, 0.3, 1) var(--d) both;
+}
+
+.xttech-hero-reveal {
+  will-change: transform, opacity;
+  animation: xttechHeroReveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) 1.95s both;
+}
+
+.animate-compass-mission {
+  will-change: transform;
+  animation: compassIdleMission 7s ease-in-out infinite;
+}
+
+.animate-compass-vision {
+  will-change: transform;
+  animation: compassIdleVision 8s ease-in-out infinite 0.6s;
+}
+
+.animate-ambient-glow {
+  will-change: transform, opacity;
+  animation: ambientGlowFlow 6.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xttech-logo-enter,
+  .xttech-hero-char,
+  .xttech-hero-reveal,
+  .animate-compass-mission,
+  .animate-compass-vision,
+  .animate-ambient-glow {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

@@ -21,6 +21,11 @@ export const BASE_MINIO_URL =
   process.env.NEXT_PUBLIC_MINIO_URL || 'https://minio-production-2298.up.railway.app';
 
 /**
+ * URL video giới thiệu công ty trên trang /introduce (lưu trên MinIO thay vì commit vào Git)
+ * Có thể ghi đè qua biến môi trường NEXT_PUBLIC_INTRO_VIDEO_URL
+ */
+export const INTRO_VIDEO_URL ='https://minio-production-2298.up.railway.app/xttech-prod/Untitled_Scene_11-20_05_14_42_20261120121859.mp4'
+/**
  * Website Canonical Domain (bắt buộc URL hợp lệ có protocol để phục vụ metadataBase)
  * Ưu tiên đọc từ NEXT_PUBLIC_SITE_URL trong .env / .env.local
  */

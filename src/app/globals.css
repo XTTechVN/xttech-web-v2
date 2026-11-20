@@ -2,6 +2,7 @@
 @import './../styles/color.css';
 @import './../styles/scrollbar.css';
 @import './../styles/news-media.css';
+@import './../styles/introduce.css';
 @import 'tailwindcss';
 
 :root {

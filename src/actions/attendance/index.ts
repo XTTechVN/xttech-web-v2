@@ -16,6 +16,9 @@ import {
     DepartmentRosterResponse,
     MonthRosterQueryParams,
     MonthRosterResponse,
+    TrackingDiagEventPayload,
+    TrackingDiagEventAck,
+    TrackingDiagLogItem,
 } from "@/types";
 
 
@@ -132,6 +135,48 @@ export const getMonthRoster = async (
 ): Promise<MonthRosterResponse> => {
   const response = await api.get<MonthRosterResponse>(
     `${baseVersion1}/attendances/department-roster/month`,
+    { params }
+  );
+  return response.data;
+};
+
+// Location Diagnostics Telemetry APIs
+export const reportTrackingDiagnostic = async (
+  payload: TrackingDiagEventPayload
+): Promise<TrackingDiagEventAck> => {
+  const response = await api.post<TrackingDiagEventAck>(
+    `${baseVersion1}/attendances/tracking-diag/events`,
+    payload
+  );
+  return response.data;
+};
+
+export const getMyTrackingDiagLogs = async (
+  params?: { limit?: number; event?: string }
+): Promise<TrackingDiagLogItem[]> => {
+  const response = await api.get<TrackingDiagLogItem[]>(
+    `${baseVersion1}/attendances/tracking-diag/logs`,
+    { params }
+  );
+  return response.data;
+};
+
+export const getGlobalTrackingDiagLogs = async (
+  params?: { limit?: number; event?: string }
+): Promise<TrackingDiagLogItem[]> => {
+  const response = await api.get<TrackingDiagLogItem[]>(
+    `${baseVersion1}/attendances/tracking-diag/logs/global`,
+    { params }
+  );
+  return response.data;
+};
+
+export const getStaffTrackingDiagLogs = async (
+  userId: string,
+  params?: { limit?: number; event?: string }
+): Promise<TrackingDiagLogItem[]> => {
+  const response = await api.get<TrackingDiagLogItem[]>(
+    `${baseVersion1}/attendances/tracking-diag/logs/${userId}`,
     { params }
   );
   return response.data;
