@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { Briefcase, CheckCircle2, HardHat, Sparkles, TrendingUp, Zap } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/utils/cn';
@@ -41,8 +42,14 @@ export function BenefitsSection() {
         </div>
 
         <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
-          {/* Cột trái: 2 Card lợi ích — Mobile vuốt ngang, Desktop xếp dọc */}
-          <div className="lg:col-span-5">
+          {/* Cột trái: 2 Card lợi ích — Trượt từ bên trái sang */}
+          <motion.div
+            initial={{ opacity: 0, x: -70 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-5"
+          >
             <div
               onMouseEnter={() => setIsHoveringCards(true)}
               onMouseLeave={() => setIsHoveringCards(false)}
@@ -150,10 +157,16 @@ export function BenefitsSection() {
               </ul>
             </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Cột phải: Mockup Giao diện Phần mềm XTTECH thực tế sắc nét (Enterprise Application Window) */}
-          <div className="lg:col-span-7">
+          {/* Cột phải: Mockup Giao diện Phần mềm XTTECH — Trượt từ bên phải sang */}
+          <motion.div
+            initial={{ opacity: 0, x: 70 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-7"
+          >
             <div className="relative">
               {/* Hào quang nền phía sau */}
               <div className="pointer-events-none absolute -inset-2 rounded-3xl bg-linear-to-r from-primary/10 via-amber-500/10 to-teal-500/10 blur-xl opacity-70" />
@@ -215,7 +228,7 @@ export function BenefitsSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

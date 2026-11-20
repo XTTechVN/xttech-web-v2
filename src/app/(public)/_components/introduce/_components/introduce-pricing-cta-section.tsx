@@ -30,7 +30,7 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
               Đội ngũ phát triển
             </span>
             <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-              Gặp những người <span className="text-primary">xây nên XMS</span>
+              Gặp những người <span className="text-primary">phát triển XMS</span>
             </h2>
           </motion.div>
 
@@ -45,7 +45,7 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
           </motion.p>
         </div>
 
-        {/* Desktop: Accordion mở rộng ngang mượt mà */}
+        {/* Desktop: Accordion mở rộng ngang siêu mượt mà với GPU CSS transition */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -57,15 +57,16 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
             const isActive = idx === activeIdx;
 
             return (
-              <motion.button
+              <button
                 key={member.name}
                 type="button"
                 onMouseEnter={() => setActiveIdx(idx)}
                 onFocus={() => setActiveIdx(idx)}
-                animate={{ flexGrow: isActive ? 2.1 : 0.9 }}
-                transition={{ duration: 0.55, ease: INTRODUCE_EASE_OUT }}
-                style={{ flexBasis: 0 }}
-                className="group relative flex h-full min-w-0 cursor-pointer flex-col justify-between overflow-hidden rounded-2xl text-left shadow-md transition-shadow duration-300 will-change-[flex-grow] hover:shadow-xl focus:outline-none"
+                style={{
+                  flexGrow: isActive ? 3.2 : 1,
+                  flexBasis: 0,
+                }}
+                className="group relative flex h-full min-w-0 cursor-pointer flex-col justify-between overflow-hidden rounded-2xl text-left shadow-md transition-[flex-grow,shadow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:shadow-xl focus:outline-none"
               >
                 {/* Ảnh nền sáng rõ + căn object-top để ảnh chân dung vuông không bị cắt phần trên */}
                 <img
@@ -88,51 +89,47 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
                   <span className="font-mono text-xs font-extrabold tracking-wider text-white/90">0{idx + 1}</span>
                   <span
                     className={`flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white backdrop-blur-xs transition-all duration-300 ease-out ${
-                      isActive ? 'pointer-events-none scale-75 opacity-0' : 'scale-100 opacity-100 group-hover:rotate-90 group-hover:bg-white/25'
+                      isActive ? 'pointer-events-none scale-0 opacity-0' : 'scale-100 opacity-100 group-hover:rotate-90 group-hover:bg-white/25'
                     }`}
                   >
                     <Plus className="h-4 w-4" />
                   </span>
                 </div>
 
-                {/* Hàng dưới: Nội dung chi tiết khi mở rộng hoặc tên vai trò khi thu gọn */}
+                {/* Hàng dưới: Nội dung chi tiết chuyển đổi êm mượt không bị giật layout */}
                 <div className="relative z-10 w-full p-5 sm:p-6">
-                  <AnimatePresence mode="popLayout" initial={false}>
-                    {isActive ? (
-                      <motion.div
-                        key="expanded"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ duration: 0.3, ease: INTRODUCE_EASE_OUT }}
-                        className="max-w-md space-y-2.5"
-                      >
-                        <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-bold text-hero-accent backdrop-blur-xs">
-                          {member.role}
-                        </span>
-                        <h3 className="text-2xl font-black tracking-tight text-white">{member.name}</h3>
-                        <p className="text-sm leading-relaxed text-teal-50/90">{member.bio}</p>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="collapsed"
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.25, ease: INTRODUCE_EASE_OUT }}
-                        className="space-y-1"
-                      >
-                        <p className="truncate text-lg font-black tracking-tight text-white">
-                          {member.name.trim().split(/\s+/).pop()}
-                        </p>
-                        <p className="line-clamp-2 min-h-[2rem] text-xs font-semibold leading-snug text-hero-accent">
-                          {member.role}
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {/* Nội dung khi mở rộng */}
+                  <div
+                    className={`transition-all duration-400 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+                      isActive
+                        ? 'opacity-100 translate-y-0 delay-75'
+                        : 'opacity-0 translate-y-3 pointer-events-none absolute inset-x-5 bottom-5 sm:inset-x-6 sm:bottom-6'
+                    } space-y-2.5 max-w-md`}
+                  >
+                    <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-bold text-hero-accent backdrop-blur-xs">
+                      {member.role}
+                    </span>
+                    <h3 className="text-2xl font-black tracking-tight text-white whitespace-nowrap">{member.name}</h3>
+                    <p className="text-sm leading-relaxed text-teal-50/90 line-clamp-3">{member.bio}</p>
+                  </div>
+
+                  {/* Nội dung khi thu gọn */}
+                  <div
+                    className={`transition-all duration-300 ease-out ${
+                      !isActive
+                        ? 'opacity-100 translate-y-0'
+                        : 'opacity-0 translate-y-2 pointer-events-none absolute inset-x-5 bottom-5 sm:inset-x-6 sm:bottom-6'
+                    } space-y-1`}
+                  >
+                    <p className="truncate text-lg font-black tracking-tight text-white">
+                      {member.name.trim().split(/\s+/).pop()}
+                    </p>
+                    <p className="line-clamp-2 min-h-[2rem] text-xs font-semibold leading-snug text-hero-accent">
+                      {member.role}
+                    </p>
+                  </div>
                 </div>
-              </motion.button>
+              </button>
             );
           })}
         </motion.div>

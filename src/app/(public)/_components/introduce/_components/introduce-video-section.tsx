@@ -53,10 +53,10 @@ export function IntroduceVideoSection() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Animation phóng to theo cuộn trang giống antigravity.google
+  // Animation phóng to theo cuộn trang giống antigravity.google: mở rộng video to choáng ngợp toàn màn hình khi trượt xuống
   const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start end', 'start center'],
+    target: wrapperRef,
+    offset: ['start end', 'center center'],
   });
 
   const smoothProgress = useSpring(scrollYProgress, {
@@ -65,9 +65,9 @@ export function IntroduceVideoSection() {
     mass: 0.5,
   });
 
-  const startScale = prefersReducedMotion ? 1 : isMobile ? 0.92 : 0.5;
-  const scale = useTransform(smoothProgress, [0, 1], [startScale, 1]);
-  const opacity = useTransform(smoothProgress, [0, 0.35, 1], [prefersReducedMotion ? 1 : 0.65, 0.95, 1]);
+  const startScale = prefersReducedMotion ? 1 : isMobile ? 0.96 : 0.88;
+  const scale = useTransform(smoothProgress, [0, 1], [startScale, 1.02]);
+  const opacity = useTransform(smoothProgress, [0, 0.35, 1], [prefersReducedMotion ? 1 : 0.8, 0.95, 1]);
 
   // Video nền tự chạy tắt tiếng khi vào viewport, tạm dừng khi ra khỏi viewport hoặc khi đang mở modal
   const isInView = useInView(sectionRef, { amount: 0.2 });
@@ -120,7 +120,7 @@ export function IntroduceVideoSection() {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', onKeyDown);
     };
-  });
+  }, [isModalOpen]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -208,7 +208,7 @@ export function IntroduceVideoSection() {
     <section
       ref={sectionRef}
       aria-label="Video giới thiệu phần mềm XTTECH XMS"
-      className="border-t border-slate-200/80 overflow-hidden bg-white pt-10 pb-12 sm:pt-14 sm:pb-16 lg:pt-16 lg:pb-20"
+      className="border-t border-slate-200/80 overflow-hidden bg-white pt-6 pb-12 sm:pt-8 sm:pb-16 lg:pt-10 lg:pb-20"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -222,8 +222,10 @@ export function IntroduceVideoSection() {
             Giới thiệu <span className="text-primary">công ty XTTECH</span>
           </h2>
         </motion.div>
+      </div>
 
-        {/* Khung video preview sạch gọn, không có thanh điều khiển, click để mở modal */}
+      {/* Khung video kích thước lớn choáng ngợp chiếm gần trọn khung nhìn y hệt Ảnh 1 */}
+      <div className="mx-auto w-full max-w-[97vw] 2xl:max-w-[1720px] px-1 sm:px-2 lg:px-4">
         <motion.div
           ref={wrapperRef}
           style={{ scale, opacity }}
@@ -243,7 +245,7 @@ export function IntroduceVideoSection() {
             }
           }}
           aria-label="Xem video giới thiệu"
-          className={`group relative mx-auto aspect-video w-full origin-center overflow-hidden rounded-2xl bg-slate-950 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/10 sm:rounded-3xl ${
+          className={`group relative mx-auto h-[82vh] sm:h-[88vh] lg:h-[94vh] min-h-[520px] sm:min-h-[620px] lg:min-h-[760px] max-h-[1080px] w-full origin-center overflow-hidden rounded-2xl bg-slate-950 shadow-2xl shadow-slate-900/20 ring-1 ring-slate-900/10 sm:rounded-3xl lg:rounded-[36px] ${
             isHovering && !isMobile ? 'cursor-none' : 'cursor-pointer'
           }`}
         >

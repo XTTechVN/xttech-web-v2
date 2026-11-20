@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Maximize2, X, ZoomIn } from 'lucide-react';
+import { useHeroMarquee } from './use-hero-marquee';
 
 export interface ProjectReportItem {
   id: string;
@@ -61,27 +62,26 @@ const PROJECT_REPORTS: ProjectReportItem[] = [
   },
 ];
 
-// Tạo danh sách lặp 3 lần để trượt xoay vòng tròn vô tận không bao giờ gián đoạn
-const EXTENDED_REPORTS = [
-  ...PROJECT_REPORTS.map((item, idx) => ({ ...item, uniqueKey: `set1-${item.id}-${idx}` })),
-  ...PROJECT_REPORTS.map((item, idx) => ({ ...item, uniqueKey: `set2-${item.id}-${idx}` })),
-  ...PROJECT_REPORTS.map((item, idx) => ({ ...item, uniqueKey: `set3-${item.id}-${idx}` })),
-];
+/** Số bài tối thiểu trong 1 dải để băng chuyền phủ đủ chiều rộng màn hình. */
+const MIN_ITEMS_PER_STRIP = 6;
 
 export const HeroProjectReportsCarousel = () => {
-  const total = PROJECT_REPORTS.length; // 5 items
-  // Bắt đầu từ bộ thứ 2 ở giữa để trượt được cả trái lẫn phải
-  const [currentIndex, setCurrentIndex] = useState(total);
-  const [isTransitioning, setIsTransitioning] = useState(true);
   const [previewImage, setPreviewImage] = useState<ProjectReportItem | null>(null);
   const [isZoomed, setIsZoomed] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
-  const handleStepPreview = useCallback((step: -1 | 1) => {
+  // Dùng chung hook thước phim mượt mà useHeroMarquee như phần "Bài viết tiêu biểu"
+  const { trackRef, viewportHandlers, step } = useHeroMarquee(35, Boolean(previewImage));
+
+  // Lặp danh sách đủ dài cho 1 dải, rồi nhân đôi dải để chạy vòng lặp liền mạch (-50%)
+  const repeat = Math.max(1, Math.ceil(MIN_ITEMS_PER_STRIP / PROJECT_REPORTS.length));
+  const strip = Array.from({ length: repeat }, () => PROJECT_REPORTS).flat();
+  const track = [...strip, ...strip];
+
+  const handleStepPreview = useCallback((stepVal: -1 | 1) => {
     setPreviewImage((current) => {
       if (!current) return null;
       const idx = PROJECT_REPORTS.findIndex((item) => item.id === current.id);
-      const nextIdx = (idx + step + PROJECT_REPORTS.length) % PROJECT_REPORTS.length;
+      const nextIdx = (idx + stepVal + PROJECT_REPORTS.length) % PROJECT_REPORTS.length;
       return PROJECT_REPORTS[nextIdx];
     });
     setIsZoomed(false);
@@ -112,279 +112,117 @@ export const HeroProjectReportsCarousel = () => {
     };
   }, [previewImage, handleStepPreview]);
 
-  const pointerStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
-  const didSwipeRef = useRef(false);
-  const [dragOffsetPx, setDragOffsetPx] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-
-  // Số lượng card hiển thị tùy theo responsive screen
-  // Desktop: 3 cards, Tablet: 2 cards, Mobile: 1 card
-  const [visibleCount, setVisibleCount] = useState(3);
-
-  useEffect(() => {
-    const updateVisibleCount = () => {
-      if (window.innerWidth >= 1024) {
-        setVisibleCount(3);
-      } else if (window.innerWidth >= 640) {
-        setVisibleCount(2);
-      } else {
-        setVisibleCount(1);
-      }
-    };
-
-    updateVisibleCount();
-    window.addEventListener('resize', updateVisibleCount);
-    return () => window.removeEventListener('resize', updateVisibleCount);
-  }, []);
-
-  const handleNext = useCallback(() => {
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => prev + 1);
-  }, []);
-
-  const handlePrev = useCallback(() => {
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => prev - 1);
-  }, []);
-
-  // Xử lý vòng lặp xoay tròn vô tận mượt mà (Infinite circular reset)
-  useEffect(() => {
-    if (currentIndex >= total * 2) {
-      const timer = setTimeout(() => {
-        setIsTransitioning(false);
-        setCurrentIndex(total);
-      }, 700);
-      return () => clearTimeout(timer);
-    } else if (currentIndex < total) {
-      const timer = setTimeout(() => {
-        setIsTransitioning(false);
-        setCurrentIndex(total * 2 - 1);
-      }, 700);
-      return () => clearTimeout(timer);
-    }
-  }, [currentIndex, total]);
-
-  // Tự động trượt mượt mà liên tục: KHI HOVER VÀO LẬP TỨC TRƯỢT MỀM MẠI
-  useEffect(() => {
-    // Nếu hover vào, trượt ngay sau 400ms rồi tiếp tục trượt đều đặn mỗi 2.2s
-    let initialTimer: NodeJS.Timeout | null = null;
-    let intervalTimer: NodeJS.Timeout | null = null;
-
-    if (isHovered) {
-      initialTimer = setTimeout(() => {
-        handleNext();
-      }, 400);
-
-      intervalTimer = setInterval(() => {
-        handleNext();
-      }, 2200);
-    } else {
-      intervalTimer = setInterval(() => {
-        handleNext();
-      }, 3500);
-    }
-
-    return () => {
-      if (initialTimer) clearTimeout(initialTimer);
-      if (intervalTimer) clearInterval(intervalTimer);
-    };
-  }, [isHovered, handleNext]);
-
-  // Tính toán phần trăm dịch chuyển của track
-  const itemWidthPercent = 100 / visibleCount;
-  const translateOffset = currentIndex * itemWidthPercent;
-
-  // Tính số thứ tự đang active thực tế (0 đến 4)
-  const activeDotIndex = ((currentIndex % total) + total) % total;
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    pointerStartRef.current = { x: e.clientX, y: e.clientY, pointerId: e.pointerId };
-    didSwipeRef.current = false;
-    setIsDragging(true);
-    setDragOffsetPx(0);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const start = pointerStartRef.current;
-    if (!start || start.pointerId !== e.pointerId) return;
-
-    const dx = e.clientX - start.x;
-    const dy = e.clientY - start.y;
-
-    if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
-      didSwipeRef.current = true;
-      setDragOffsetPx(dx);
-    }
-  };
-
-  const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
-    const start = pointerStartRef.current;
-    if (!start || start.pointerId !== e.pointerId) return;
-
-    const dx = e.clientX - start.x;
-    const threshold = 40;
-    if (dx <= -threshold) {
-      handleNext();
-    } else if (dx >= threshold) {
-      handlePrev();
-    }
-
-    pointerStartRef.current = null;
-    setIsDragging(false);
-    setDragOffsetPx(0);
-    setTimeout(() => {
-      didSwipeRef.current = false;
-    }, 50);
-  };
-
   return (
-    <div className="relative w-full" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-      {/* Thanh công cụ trên Tablet/PC: Nút điều hướng vòng tròn trượt mượt */}
-      <div className="hidden sm:flex absolute -top-16 right-0 items-center gap-2">
+    <div className="relative w-full">
+      {/* Nút điều hướng trên Tablet/PC */}
+      <div className="hidden sm:flex absolute -top-14 right-0 items-center gap-2 z-10">
         <button
           type="button"
-          onClick={handlePrev}
+          onClick={() => step(-1)}
           aria-label="Xem báo cáo trước"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition-all duration-300 hover:border-primary hover:bg-primary hover:text-white hover:scale-105 active:scale-95 cursor-pointer"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <button
-          type="button"
-          onClick={handleNext}
-          aria-label="Xem báo cáo kế tiếp"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition-all duration-300 hover:border-primary hover:bg-primary hover:text-white hover:scale-105 active:scale-95 cursor-pointer"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
-      </div>
-
-      {/* VIEWPORT KHUNG TRƯỢT (OVERFLOW HIDDEN) - Hỗ trợ vuốt/kéo ngang bằng tay trên mobile & desktop */}
-      <div
-        className="overflow-hidden py-4 -mx-3 touch-pan-y select-none cursor-grab active:cursor-grabbing"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerEnd}
-        onPointerCancel={handlePointerEnd}
-      >
-        {/* TRACK TRƯỢT MƯỢT MÀ VỚI CSS TRANSFORM CUBIC-BEZIER */}
-        <div
-          className="flex flex-row"
-          style={{
-            transform: `translate3d(calc(-${translateOffset}% + ${dragOffsetPx}px), 0, 0)`,
-            transition: isTransitioning && !isDragging ? 'transform 750ms cubic-bezier(0.22, 1, 0.36, 1)' : 'none',
-          }}
-        >
-          {EXTENDED_REPORTS.map((item) => {
-            return (
-              <div key={item.uniqueKey} style={{ width: `${itemWidthPercent}%` }} className="shrink-0 px-3 transition-opacity duration-300">
-                <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all duration-500 hover:-translate-y-2 hover:border-primary/50 hover:shadow-2xl">
-                  {/* Vùng hiển thị ảnh báo cáo chụp thực tế */}
-                  <div
-                    className="relative aspect-16/10 w-full overflow-hidden bg-slate-100 cursor-pointer"
-                    onClick={() => {
-                      if (!didSwipeRef.current) setPreviewImage(item);
-                    }}
-                  >
-                    <Image
-                      src={item.imageSrc}
-                      alt={item.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover object-top transition-transform duration-700 group-hover:scale-108"
-                    />
-                    <div className="absolute inset-0 bg-slate-900/0 transition-all duration-300 group-hover:bg-slate-900/25 flex items-center justify-center">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/85 px-3 py-1.5 text-xs font-bold text-white opacity-0 backdrop-blur-xs transition-all duration-300 group-hover:opacity-100 group-hover:scale-105">
-                        <Maximize2 className="h-3.5 w-3.5" />
-                        <span>Phóng to xem chi tiết</span>
-                      </span>
-                    </div>
-
-                    <div className="absolute top-2.5 left-2.5 rounded-md bg-white/95 px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs backdrop-blur-xs">
-                      {item.category}
-                    </div>
-                  </div>
-
-                  {/* Phần thông tin & Số thứ tự dưới ảnh (tham khảo style Ảnh 4) */}
-                  <div className="p-5 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        {/* Đường line màu cam/amber */}
-                        <div className="h-6 w-1 rounded-full bg-amber-500 transition-all duration-300 group-hover:bg-primary group-hover:h-7" />
-                        {/* Số thứ tự 01, 02... */}
-                        <span className="text-xl font-black tracking-tight text-amber-500 transition-colors duration-300 group-hover:text-primary">
-                          {item.number}
-                        </span>
-                        {/* Tiêu đề báo cáo */}
-                        <h4 className="text-sm sm:text-base font-bold text-slate-900 line-clamp-1 transition-colors duration-300 group-hover:text-primary">
-                          {item.title}
-                        </h4>
-                      </div>
-                      <p className="mt-2.5 text-xs sm:text-[13px] leading-relaxed text-slate-600 line-clamp-3">{item.description}</p>
-                    </div>
-
-                    {/* Nút xem chi tiết & Nguồn dữ liệu */}
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!didSwipeRef.current) setPreviewImage(item);
-                        }}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary-dark transition-colors cursor-pointer"
-                      >
-                        <ZoomIn className="h-3.5 w-3.5" />
-                        <span>Xem số liệu thực tế</span>
-                      </button>
-                      <span className="text-[11px] font-medium text-slate-400">Giao diện XTTech XMS</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Thanh chỉ báo tiến trình xoay vòng (Dots indicators) + nút điều hướng gọn trên mobile */}
-      <div className="mt-4 flex items-center justify-center gap-3">
-        <button
-          type="button"
-          onClick={handlePrev}
-          aria-label="Xem báo cáo trước"
-          className="flex sm:hidden h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-2xs active:scale-95 cursor-pointer"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition-all duration-300 hover:border-primary hover:bg-primary hover:text-white hover:scale-105 active:scale-95 cursor-pointer"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-
-        <div className="flex items-center gap-2">
-          {PROJECT_REPORTS.map((rpt, i) => (
-            <button
-              key={rpt.id}
-              type="button"
-              onClick={() => {
-                setIsTransitioning(true);
-                setCurrentIndex(total + i);
-              }}
-              aria-label={`Chuyển tới ${rpt.title}`}
-              className={`h-2 transition-all duration-500 rounded-full cursor-pointer ${
-                i === activeDotIndex ? 'w-8 bg-primary shadow-xs' : 'w-2 bg-slate-300 hover:bg-slate-400'
-              }`}
-            />
-          ))}
-        </div>
-
         <button
           type="button"
-          onClick={handleNext}
+          onClick={() => step(1)}
           aria-label="Xem báo cáo kế tiếp"
-          className="flex sm:hidden h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-2xs active:scale-95 cursor-pointer"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition-all duration-300 hover:border-primary hover:bg-primary hover:text-white hover:scale-105 active:scale-95 cursor-pointer"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Modal App Showcase 2 cột: Chặn tương tác nền bên ngoài, 2 nút chuyển nằm hẳn ngoài modal */}
+      {/* Dải thước phim: tự trượt mượt mà 60fps, dừng khi hover hoặc kéo chuột, vuốt kéo êm ái y hệt "Bài viết tiêu biểu" */}
+      <div
+        {...viewportHandlers}
+        className="relative cursor-grab touch-pan-y overflow-hidden py-4 select-none active:cursor-grabbing [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]"
+      >
+        <div ref={trackRef} className="flex w-max will-change-transform">
+          {track.map((item, idx) => (
+            <div key={`${item.id}-${idx}`} className="w-[300px] shrink-0 px-3 sm:w-[360px] lg:w-[410px]">
+              <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all duration-500 hover:-translate-y-2 hover:border-primary/50 hover:shadow-2xl">
+                {/* Vùng hiển thị ảnh báo cáo chụp thực tế */}
+                <div
+                  className="relative aspect-16/10 w-full overflow-hidden bg-slate-100 cursor-pointer"
+                  onClick={() => setPreviewImage(item)}
+                >
+                  <Image
+                    src={item.imageSrc}
+                    alt={item.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover object-top transition-transform duration-700 group-hover:scale-108"
+                  />
+                  <div className="absolute inset-0 bg-slate-900/0 transition-all duration-300 group-hover:bg-slate-900/25 flex items-center justify-center">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/85 px-3 py-1.5 text-xs font-bold text-white opacity-0 backdrop-blur-xs transition-all duration-300 group-hover:opacity-100 group-hover:scale-105">
+                      <Maximize2 className="h-3.5 w-3.5" />
+                      <span>Phóng to xem chi tiết</span>
+                    </span>
+                  </div>
+
+                  <div className="absolute top-2.5 left-2.5 rounded-md bg-white/95 px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs backdrop-blur-xs">
+                    {item.category}
+                  </div>
+                </div>
+
+                {/* Phần thông tin & Số thứ tự dưới ảnh */}
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <div className="h-6 w-1 rounded-full bg-amber-500 transition-all duration-300 group-hover:bg-primary group-hover:h-7" />
+                      <span className="text-xl font-black tracking-tight text-amber-500 transition-colors duration-300 group-hover:text-primary">
+                        {item.number}
+                      </span>
+                      <h4 className="text-sm sm:text-base font-bold text-slate-900 line-clamp-1 transition-colors duration-300 group-hover:text-primary">
+                        {item.title}
+                      </h4>
+                    </div>
+                    <p className="mt-2.5 text-xs sm:text-sm text-slate-600 line-clamp-3 leading-relaxed">
+                      {item.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewImage(item)}
+                      className="cursor-pointer text-primary font-bold hover:underline inline-flex items-center gap-1"
+                    >
+                      <ZoomIn className="h-3.5 w-3.5" />
+                      <span>Xem số liệu thực tế</span>
+                    </button>
+                    <span className="text-slate-400 text-[11px]">Giao diện XTTech XMS</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Nút điều hướng trên mobile */}
+      <div className="flex sm:hidden items-center justify-center gap-3 mt-3">
+        <button
+          type="button"
+          onClick={() => step(-1)}
+          aria-label="Xem báo cáo trước"
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-2xs active:scale-95 cursor-pointer"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => step(1)}
+          aria-label="Xem báo cáo kế tiếp"
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-2xs active:scale-95 cursor-pointer"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Modal App Showcase 2 cột: Xem ảnh phóng to chi tiết */}
       {previewImage &&
         typeof document !== 'undefined' &&
         createPortal(

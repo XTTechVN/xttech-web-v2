@@ -50,14 +50,14 @@ export function HeroRegisterInlineForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Timer đếm ngược chu kỳ 6 ngày có thanh tiến trình
+  // Timer đếm ngược chu kỳ 6 ngày đồng bộ chính xác với thanh tiến trình
   const [isMounted, setIsMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({
-    days: 5,
-    hours: 23,
-    minutes: 59,
-    seconds: 59,
-    progress: 82,
+    days: 0,
+    hours: 20,
+    minutes: 0,
+    seconds: 0,
+    progress: 15,
   });
 
   useEffect(() => {
@@ -72,8 +72,8 @@ export function HeroRegisterInlineForm({
       const minutes = Math.floor((remaining / (1000 * 60)) % 60);
       const seconds = Math.floor((remaining / 1000) % 60);
 
-      // Tiến trình phần trăm đăng ký (từ 72% đến 96% theo chu kỳ)
-      const progress = Math.min(96, Math.max(72, Math.round(((CYCLE_MS - remaining) / CYCLE_MS) * 100)));
+      // Tiến trình thời gian ưu đãi còn lại (tỷ lệ % thời gian còn lại chuẩn xác theo chu kỳ đếm ngược)
+      const progress = Math.min(100, Math.max(0.5, (remaining / CYCLE_MS) * 100));
 
       setTimeLeft({ days, hours, minutes, seconds, progress });
     };
@@ -299,12 +299,15 @@ export function HeroRegisterInlineForm({
             {/* Thanh chạy tiến trình */}
             <div className="mt-2 space-y-1">
               <div className="flex items-center justify-between text-[10px] text-slate-600">
-                <span>Tiến trình ưu đãi kỳ này</span>
+                <span>Thời gian ưu đãi còn lại</span>
+                <span className="font-mono font-bold text-primary">
+                  {isMounted ? `${Math.round(timeLeft.progress)}%` : '15%'}
+                </span>
               </div>
               <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-200/80">
                 <div
-                  className="h-full rounded-full bg-linear-to-r from-[var(--hero-accent-from)] to-[var(--hero-accent-to)] transition-all duration-1000 ease-out"
-                  style={{ width: `${isMounted ? timeLeft.progress : 82}%` }}
+                  className="h-full rounded-full bg-linear-to-r from-primary to-emerald-400 transition-all duration-1000 ease-out"
+                  style={{ width: `${isMounted ? timeLeft.progress : 15}%` }}
                 />
               </div>
             </div>

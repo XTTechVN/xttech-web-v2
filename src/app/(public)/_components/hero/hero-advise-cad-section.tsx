@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { ZoomIn, ZoomOut } from 'lucide-react';
 import { Modal } from '@/components';
 import { ADVISE_ADVANTAGES } from './hero.constants';
@@ -85,8 +86,14 @@ export const HeroAdviseCadSection = () => {
         </div>
 
         <div className="mt-14 grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
-          {/* Cột trái: Lợi thế tư vấn */}
-          <div className="space-y-6 lg:col-span-6">
+          {/* Cột trái: Lợi thế tư vấn - Trượt từ bên trái sang */}
+          <motion.div
+            initial={{ opacity: 0, x: -70 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-6 lg:col-span-6"
+          >
             <h3 className="text-xl font-bold text-gray-900 sm:text-2xl">
               Thiết kế & chốt phương án <span className="font-black text-primary">ngay tại công trình</span> bằng các lợi thế:
             </h3>
@@ -117,10 +124,16 @@ export const HeroAdviseCadSection = () => {
                 Đăng ký sử dụng miễn phí
               </button>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Cột phải: Card preview Cửa 2D kỹ thuật cao */}
-          <div className="lg:col-span-6">
+          {/* Cột phải: Card preview Cửa 2D kỹ thuật cao - Trượt từ bên phải sang */}
+          <motion.div
+            initial={{ opacity: 0, x: 70 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-6"
+          >
             <div className="relative rounded-xl border border-gray-200 bg-white p-5 shadow-xl shadow-gray-200/50 sm:p-7">
               {/* Thanh điều khiển trên Card */}
               <div className="mb-4 flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
@@ -446,7 +459,7 @@ export const HeroAdviseCadSection = () => {
                 
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 

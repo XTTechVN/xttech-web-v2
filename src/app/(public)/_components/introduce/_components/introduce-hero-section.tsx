@@ -23,7 +23,7 @@ const SLOGAN_LINES: SloganWord[][] = [
     { text: 'KIẾN' },
     { text: 'TẠO' },
     { text: 'GIÁ', accent: true },
-    { text: 'TRỊ,', accent: true },
+    { text: 'TRỊ', accent: true },
   ],
   [
     { text: 'CHUYỂN' },
@@ -39,8 +39,8 @@ export function IntroduceHeroSection() {
   let charGlobalIdx = 0;
 
   return (
-    <section className="relative flex min-h-[580px] items-center justify-center overflow-hidden bg-white pt-12 pb-10 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
-      {/* Nền Dark Teal Gradient mượt mà khi trượt sang chế độ form đăng ký */}
+    <section className="relative flex min-h-[540px] lg:min-h-[580px] items-center justify-center overflow-hidden bg-white py-14 sm:py-18 lg:py-20 xl:py-24">
+      {/* Nền Dark Teal Gradient mượt mà khi trượt sang chế độ form đăng ký (y hệt hero.tsx) */}
       <div
         className={`pointer-events-none absolute inset-0 transition-opacity duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isRegisterMode ? 'opacity-100' : 'opacity-0'
@@ -124,18 +124,20 @@ export function IntroduceHeroSection() {
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="relative">
-          {/* CHẾ ĐỘ ĐĂNG KÝ: Form trượt từ trái sang phải (cột trái) + Giới thiệu nhanh (cột phải) */}
+          {/* CHẾ ĐỘ ĐĂNG KÝ: Cột trái (Form) + Cột phải (Hệ sinh thái) - Animation y hệt hero.tsx */}
           <div
-            className={`grid grid-cols-1 items-center gap-8 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] lg:grid-cols-12 lg:gap-10 ${
+            className={`grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-10 xl:gap-12 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               isRegisterMode
-                ? 'pointer-events-auto relative z-20'
-                : 'pointer-events-none absolute inset-x-0 top-0 z-0 opacity-0'
+                ? 'opacity-100 pointer-events-auto relative z-20'
+                : 'opacity-0 pointer-events-none absolute inset-0 z-0'
             }`}
           >
-            {/* Cột trái: Form đăng ký trượt từ trái sang */}
+            {/* Cột trái: Form đăng ký trượt mượt từ trái sang (y hệt hero.tsx) */}
             <div
               className={`lg:col-span-6 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                isRegisterMode ? 'translate-x-0 opacity-100' : '-translate-x-12 opacity-0'
+                isRegisterMode
+                  ? 'opacity-100 translate-x-0 pointer-events-auto relative z-20'
+                  : 'opacity-0 translate-x-12 lg:-translate-x-12 pointer-events-none absolute top-0 left-0 w-full z-0'
               }`}
             >
               <HeroRegisterInlineForm
@@ -144,10 +146,12 @@ export function IntroduceHeroSection() {
               />
             </div>
 
-            {/* Cột phải: Nội dung tóm tắt hệ sinh thái */}
+            {/* Cột phải: Thông tin hệ sinh thái trượt từ phải sang (y hệt hero.tsx) */}
             <div
-              className={`hidden space-y-6 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] lg:col-span-6 lg:block ${
-                isRegisterMode ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'
+              className={`hidden space-y-6 lg:col-span-6 lg:block transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                isRegisterMode
+                  ? 'opacity-100 translate-x-0 pointer-events-auto relative z-20'
+                  : 'opacity-0 translate-x-12 pointer-events-none absolute top-0 right-0 w-full z-0'
               }`}
             >
               <div className="space-y-3">
@@ -197,29 +201,29 @@ export function IntroduceHeroSection() {
             </div>
           </div>
 
-          {/* NỘI DUNG HERO BAN ĐẦU: Trượt sang phải khi mở form */}
+          {/* NỘI DUNG HERO BAN ĐẦU: Logo, Slogan, 2 nút (trượt mượt sang phải khi mở form) */}
           <div
             className={`mx-auto max-w-5xl text-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               isRegisterMode
-                ? 'pointer-events-none absolute top-0 left-1/2 z-0 w-full -translate-x-1/2 translate-x-12 opacity-0'
-                : 'pointer-events-auto relative z-10 translate-x-0 opacity-100'
+                ? 'opacity-0 translate-x-12 pointer-events-none absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full z-0'
+                : 'opacity-100 translate-x-0 pointer-events-auto relative z-10'
             }`}
           >
             {/* Logo XTTECH lớn nổi bật, chạy ngay khi vừa vào trang */}
-            <div className="xttech-logo-enter inline-flex items-center justify-center gap-3.5 sm:gap-5">
+            <div className="xttech-logo-enter inline-flex items-center justify-center gap-2.5 sm:gap-5">
               <img
                 src="/image-xttech/logo-xttech.svg"
                 alt="XTTECH Logo"
                 className="object-contain"
                 style={{
-                  width: 'clamp(36px, 5.2vw, 68px)',
-                  height: 'clamp(36px, 5.2vw, 68px)',
+                  width: 'clamp(28px, 4.8vw, 64px)',
+                  height: 'clamp(28px, 4.8vw, 64px)',
                 }}
               />
               <span
                 className={`${beVietnamPro.className} font-semibold tracking-tight text-primary`}
                 style={{
-                  fontSize: 'clamp(28px, 4vw, 56px)',
+                  fontSize: 'clamp(22px, 3.8vw, 52px)',
                   lineHeight: 1.1,
                 }}
               >
@@ -229,10 +233,10 @@ export function IntroduceHeroSection() {
 
             {/* Slogan chạy mượt từng chữ cái in hoa, giữ nguyên dấu và từ tiếng Việt */}
             <h1
-              aria-label="KIẾN TẠO GIÁ TRỊ, CHUYỂN HÓA TƯƠNG LAI"
-              className={`${beVietnamPro.className} mt-5 font-semibold tracking-[-0.02em] uppercase`}
+              aria-label="KIẾN TẠO GIÁ TRỊ CHUYỂN HÓA TƯƠNG LAI"
+              className={`${beVietnamPro.className} mt-4 sm:mt-6 font-semibold tracking-[-0.02em] uppercase`}
               style={{
-                fontSize: 'clamp(34px, 5.4vw, 76px)',
+                fontSize: 'clamp(30px, 4.8vw, 68px)',
                 lineHeight: 1.22,
               }}
             >
@@ -240,7 +244,7 @@ export function IntroduceHeroSection() {
                 <span
                   key={lineIdx}
                   aria-hidden="true"
-                  className="flex flex-wrap items-center justify-center gap-x-[0.26em]"
+                  className="flex flex-wrap items-center justify-center gap-x-[0.24em] sm:gap-x-[0.26em]"
                 >
                   {line.map((word, wordIdx) => (
                     <span
@@ -273,11 +277,11 @@ export function IntroduceHeroSection() {
             </h1>
 
             {/* 2 nút CTA */}
-            <div className="xttech-hero-reveal mt-8 flex flex-wrap items-center justify-center gap-3.5">
+            <div className="xttech-hero-reveal mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-3.5">
               <button
                 type="button"
                 onClick={() => setIsRegisterMode(true)}
-                className="group inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary via-teal-600 to-emerald-500 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:brightness-105 hover:shadow-xl hover:shadow-primary/30"
+                className="group inline-flex w-full sm:w-auto max-w-xs sm:max-w-none cursor-pointer items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary via-teal-600 to-emerald-500 px-5 py-3 sm:px-6 sm:py-3.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:brightness-105 hover:shadow-xl hover:shadow-primary/30"
               >
                 <FileSpreadsheet className="h-4 w-4 shrink-0" />
                 <span>Đăng ký sử dụng miễn phí</span>
@@ -286,7 +290,7 @@ export function IntroduceHeroSection() {
 
               <Link
                 href="/pricing"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white/90 px-6 py-3.5 text-sm font-bold text-slate-800 shadow-2xs backdrop-blur-xs transition-colors hover:border-primary/50 hover:bg-slate-50 hover:text-primary"
+                className="inline-flex w-full sm:w-auto max-w-xs sm:max-w-none items-center justify-center rounded-xl border border-slate-300 bg-white/90 px-5 py-3 sm:px-6 sm:py-3.5 text-xs sm:text-sm font-bold text-slate-800 shadow-2xs backdrop-blur-xs transition-colors hover:border-primary/50 hover:bg-slate-50 hover:text-primary"
               >
                 Xem bảng giá dịch vụ
               </Link>
