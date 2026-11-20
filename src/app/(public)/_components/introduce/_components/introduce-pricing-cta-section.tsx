@@ -51,7 +51,7 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, delay: 0.1, ease: INTRODUCE_EASE_OUT }}
-          className="mt-10 hidden h-[420px] gap-4 lg:flex xl:h-[440px]"
+          className="mt-10 hidden h-[520px] gap-4 lg:flex lg:h-[550px] xl:h-[590px]"
         >
           {DEVELOPER_TEAM_MEMBERS.map((member, idx) => {
             const isActive = idx === activeIdx;
@@ -79,8 +79,8 @@ export function IntroducePricingCtaSection({ onOpenRegister }: IntroducePricingC
                 <div
                   className={`absolute inset-0 transition-opacity duration-500 ${
                     isActive
-                      ? 'bg-linear-to-t from-slate-950/80 via-slate-950/20 to-transparent'
-                      : 'bg-linear-to-t from-[#03343b]/75 via-[#045863]/25 to-transparent'
+                      ? 'bg-linear-to-t from-slate-950/90 via-slate-950/30 via-40% to-transparent'
+                      : 'bg-linear-to-t from-[#03343b]/80 via-[#045863]/25 to-transparent'
                   }`}
                 />
 
