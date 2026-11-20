@@ -232,8 +232,8 @@ export function HeroRegisterInlineForm({
           </div>
 
           {/* Hỗ trợ nhanh qua Hotline */}
-          <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
-            <span>Cần hỗ trợ gấp? Gọi</span>
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-red-500">
+            <span>Cần hỗ trợ gấp ?</span>
             <a
               href={`tel:${CONTACT_INFO.phone}`}
               className="inline-flex items-center gap-1 font-bold text-primary hover:underline"

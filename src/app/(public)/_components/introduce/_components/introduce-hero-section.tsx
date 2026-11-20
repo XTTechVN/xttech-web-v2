@@ -103,12 +103,12 @@ export function IntroduceHeroSection() {
         .xttech-hero-char {
           display: inline-block;
           will-change: transform, opacity;
-          animation: xttechLetterRun 0.48s cubic-bezier(.16, 1, .3, 1) var(--d) both;
+          animation: xttechLetterRun 0.72s cubic-bezier(.16, 1, .3, 1) var(--d) both;
         }
 
         .xttech-hero-reveal {
           will-change: transform, opacity;
-          animation: xttechHeroReveal 0.6s cubic-bezier(.16, 1, .3, 1) 1.15s both;
+          animation: xttechHeroReveal 0.65s cubic-bezier(.16, 1, .3, 1) 1.95s both;
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -210,20 +210,20 @@ export function IntroduceHeroSection() {
             }`}
           >
             {/* Logo XTTECH lớn nổi bật, chạy ngay khi vừa vào trang */}
-            <div className="xttech-logo-enter inline-flex items-center justify-center gap-2.5 sm:gap-5">
+            <div className="xttech-logo-enter inline-flex items-center justify-center gap-3 sm:gap-5 lg:gap-6">
               <img
                 src="/image-xttech/logo-xttech.svg"
                 alt="XTTECH Logo"
                 className="object-contain"
                 style={{
-                  width: 'clamp(28px, 4.8vw, 64px)',
-                  height: 'clamp(28px, 4.8vw, 64px)',
+                  width: 'clamp(36px, 5.8vw, 84px)',
+                  height: 'clamp(36px, 5.8vw, 84px)',
                 }}
               />
               <span
                 className={`${beVietnamPro.className} font-semibold tracking-tight text-primary`}
                 style={{
-                  fontSize: 'clamp(22px, 3.8vw, 52px)',
+                  fontSize: 'clamp(28px, 4.8vw, 68px)',
                   lineHeight: 1.1,
                 }}
               >
@@ -262,7 +262,7 @@ export function IntroduceHeroSection() {
                             className="xttech-hero-char"
                             style={
                               {
-                                '--d': `${(0.22 + idx * 0.028).toFixed(3)}s`,
+                                '--d': `${(0.28 + idx * 0.055).toFixed(3)}s`,
                               } as React.CSSProperties
                             }
                           >
