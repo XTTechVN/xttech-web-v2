@@ -105,4 +105,8 @@ export * from './task';
 // Public Lead Registrations
 export * from './lead';
 
+// Finance & Accounting
+export * from './finance';
+
+
 

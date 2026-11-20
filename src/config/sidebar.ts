@@ -15,6 +15,7 @@ import {
   Warehouse,
   Newspaper,
   ClipboardCheck,
+  Landmark,
 } from 'lucide-react';
 import { SidebarItemProps as SidebarItemType, SidebarSectionProps as SidebarSectionType } from '@/components';
 
@@ -84,6 +85,15 @@ export const acceptedSections = [
   'inbox',
   'news',
   'tasks',
+  'finance',
+  'finance-overview',
+  'finance-cash',
+  'finance-bank',
+  'finance-ar-ap',
+  'finance-gl',
+  'finance-tax',
+  'finance-reports',
+  'finance-settings',
 ];
 
 export interface SidebarItemWithRoles extends Omit<SidebarItemType, 'subItems'> {
@@ -308,21 +318,34 @@ export const rawSidebarSections: SidebarSectionWithRoles[] = [
         label: 'Khách hàng & Đối tác',
         icon: React.createElement(Building2, { size: 18 }),
         href: '/app/customers',
-        roles: ['super', 'admin', 'sale', 'hr'],
+        roles: ['super', 'admin', 'sale', 'hr', 'accountant'],
         subItems: [
           {
             id: 'customers',
             label: 'Danh sách khách hàng',
             href: '/app/customers',
-            roles: ['super', 'admin', 'sale', 'hr'],
+            roles: ['super', 'admin', 'sale', 'hr', 'accountant'],
           },
           {
             id: 'providers',
             label: 'Nhà cung cấp',
             href: '/app/customers/providers',
-            roles: ['super', 'admin', 'sale', 'hr'],
+            roles: ['super', 'admin', 'sale', 'hr', 'accountant'],
           },
         ],
+      },
+    ],
+  },
+  // 4. Tài chính - Kế toán
+  {
+    title: 'Tài chính - Kế toán',
+    items: [
+      {
+        id: 'finance',
+        label: 'Tài chính - Kế toán',
+        icon: React.createElement(Landmark, { size: 18 }),
+        href: '/app/finance',
+        roles: ['super', 'admin', 'accountant', 'workshop', 'installer', 'sale', 'hr', 'technician'],
       },
     ],
   },

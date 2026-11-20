@@ -55,6 +55,11 @@ export const ROUTE_METADATA_MAP: Record<string, RouteMeta> = {
     subtitle: 'Vật tư, tồn kho & xuất nhập',
     iconName: 'Warehouse',
   },
+  '/app/finance': {
+    title: 'Tài chính - Kế toán',
+    subtitle: 'Quản lý quỹ, ngân hàng, hóa đơn & báo cáo tài chính',
+    iconName: 'Landmark',
+  },
   '/app/projects/configuration': {
     title: 'Cấu hình dự án',
     subtitle: 'Thiết lập danh mục nhôm kính và phụ kiện',
