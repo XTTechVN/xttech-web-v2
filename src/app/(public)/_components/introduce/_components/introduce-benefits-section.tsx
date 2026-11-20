@@ -157,5 +157,3 @@ export function IntroduceBenefitsSection() {
     </section>
   );
 }
-
-export default IntroduceBenefitsSection;

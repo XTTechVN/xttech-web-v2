@@ -119,46 +119,34 @@ export const TARGET_AUDIENCES: AudienceItem[] = [
 
 export interface DeveloperMember {
   name: string;
-  initials: string;
   role: string;
   bio: string;
-  skills: string[];
   avatarUrl: string;
 }
-
-const TEMP_MEMBER_AVATAR = 'https://i.pinimg.com/736x/5b/c0/53/5bc053022466ee661f4778311411c6dd.jpg';
 
 export const DEVELOPER_TEAM_MEMBERS: DeveloperMember[] = [
   {
     name: 'Bùi Xuân Đức',
-    initials: 'XĐ',
     role: 'Founder & Kiến trúc hệ thống',
     bio: 'Phụ trách định hướng sản phẩm và kiến trúc nền tảng ERP ngành nhôm kính, xây dựng.',
-    skills: ['Kiến trúc ERP', 'Quy trình xưởng', 'Định hướng sản phẩm'],
     avatarUrl: '/assets/introduce/dev/duc.jpg',
   },
   {
     name: 'Trần Hữu Văn',
-    initials: 'HV',
     role: 'Tech Lead & Fullstack Engineer',
     bio: 'Phát triển lõi tính toán bóc tách vật tư BOM, tối ưu cắt, hệ thống API đám mây và giao diện web.',
-    skills: ['Tech Lead', 'BOM & Tối ưu cắt', 'Cloud API'],
     avatarUrl: '/assets/introduce/dev/van.jpg',
   },
   {
     name: 'Nguyễn Quang Linh',
-    initials: 'QL',
     role: 'Fullstack & CAD 2D/3D Engineer',
     bio: 'Xây dựng giao diện thiết kế cửa CAD 2D/3D trực quan, trải nghiệm người dùng và tích hợp hệ thống.',
-    skills: ['Fullstack Web', 'CAD 2D/3D', 'Hiệu năng giao diện'],
     avatarUrl: '/assets/introduce/dev/linh.jpg',
   },
   {
     name: 'Vũ Quyên',
-    initials: 'VQ',
     role: 'UI/UX Design',
     bio: 'Thiết kế giao diện trực quan, chuẩn hóa trải nghiệm người dùng cho nền tảng web và ứng dụng công trình.',
-    skills: ['UI/UX Design', 'Design System', 'Luồng thao tác'],
     avatarUrl: '/assets/introduce/dev/quyen.jpg',
   },
 ];
