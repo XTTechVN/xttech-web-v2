@@ -159,6 +159,6 @@ export const DEVELOPER_TEAM_MEMBERS: DeveloperMember[] = [
     role: 'UI/UX Design',
     bio: 'Thiết kế giao diện trực quan, chuẩn hóa trải nghiệm người dùng cho nền tảng web và ứng dụng công trình.',
     skills: ['UI/UX Design', 'Design System', 'Luồng thao tác'],
-    avatarUrl: TEMP_MEMBER_AVATAR,
+    avatarUrl: '/assets/introduce/dev/quyen.jpg',
   },
 ];
