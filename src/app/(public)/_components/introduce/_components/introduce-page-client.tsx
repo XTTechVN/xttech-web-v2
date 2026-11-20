@@ -22,7 +22,8 @@ export function IntroducePageClient() {
         <IntroduceMissionVisionSection />
         <IntroduceBenefitsSection />
         <IntroduceAudienceSection />
-        <IntroducePricingCtaSection onOpenRegister={() => setIsRegisterModalOpen(true)} />
+        {/* Đội ngũ phát triển (Tạm thời ẩn, bỏ comment khi cần dùng lại) */}
+        {/* <IntroducePricingCtaSection onOpenRegister={() => setIsRegisterModalOpen(true)} /> */}
 
         <Modal
           isOpen={isRegisterModalOpen}
