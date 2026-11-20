@@ -135,7 +135,7 @@ export const DEVELOPER_TEAM_MEMBERS: DeveloperMember[] = [
     role: 'Founder & Kiến trúc hệ thống',
     bio: 'Phụ trách định hướng sản phẩm và kiến trúc nền tảng ERP ngành nhôm kính, xây dựng.',
     skills: ['Kiến trúc ERP', 'Quy trình xưởng', 'Định hướng sản phẩm'],
-    avatarUrl: TEMP_MEMBER_AVATAR,
+    avatarUrl: '/assets/introduce/dev/duc.jpg',
   },
   {
     name: 'Trần Hữu Văn',
