@@ -35,7 +35,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       ...AI_SEARCH_USER_AGENTS.map((agent) => ({
         userAgent: agent,
-        allow: ['/', '/llms.txt', '/pricing', '/news'],
+        allow: ['/', '/introduce', '/llms.txt', '/pricing', '/news'],
         disallow: DISALLOWED_INTERNAL_PATHS,
       })),
     ],

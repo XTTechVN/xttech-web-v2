@@ -207,3 +207,113 @@ export const JOB_OPTIONS: string[] = [
   'Nhà thầu / Đối tác thi công',
   'Khác',
 ];
+
+export type DoorColorKey = 'wood' | 'grey' | 'white' | 'black' | 'champagne';
+
+export interface DoorColorOption {
+  key: DoorColorKey;
+  label: string;
+  swatch: string;
+  frameColor: string;
+  frameDark: string;
+  sashColor: string;
+}
+
+export const DOOR_COLOR_OPTIONS: DoorColorOption[] = [
+  {
+    key: 'wood',
+    label: 'Nhôm vân gỗ cao cấp',
+    swatch: '#966b43',
+    frameColor: '#9a6a43',
+    frameDark: '#6d4728',
+    sashColor: '#aa7a4f',
+  },
+  {
+    key: 'grey',
+    label: 'Nhôm xám ghi Xingfa',
+    swatch: '#4b5563',
+    frameColor: '#4b5563',
+    frameDark: '#334155',
+    sashColor: '#64748b',
+  },
+  {
+    key: 'white',
+    label: 'Nhôm trắng sứ tĩnh điện',
+    swatch: '#e2e8f0',
+    frameColor: '#cbd5e1',
+    frameDark: '#94a3b8',
+    sashColor: '#f1f5f9',
+  },
+  {
+    key: 'black',
+    label: 'Nhôm đen tuyền',
+    swatch: '#18181b',
+    frameColor: '#18181b',
+    frameDark: '#09090b',
+    sashColor: '#27272a',
+  },
+  {
+    key: 'champagne',
+    label: 'Nhôm Anode sâm panh',
+    swatch: '#bfa06a',
+    frameColor: '#bfa06a',
+    frameDark: '#8f7344',
+    sashColor: '#d1b582',
+  },
+];
+
+export interface ProjectReportItem {
+  id: string;
+  number: string;
+  title: string;
+  category: string;
+  description: string;
+  imageSrc: string;
+}
+
+export const PROJECT_REPORTS: ProjectReportItem[] = [
+  {
+    id: 'overview',
+    number: '01',
+    title: 'Báo cáo tổng quan & Tiến trình dự án',
+    category: 'Quản lý dự án',
+    description:
+      'Theo dõi xuyên suốt 5 bước nghiệp vụ: Khảo sát đo đạc → Thiết kế bóc tách → Dự toán báo giá → Ký kết hợp đồng → Lệnh gia công lắp đặt.',
+    imageSrc: '/images/projects/project-overview.png',
+  },
+  {
+    id: 'pricing',
+    number: '02',
+    title: 'Báo cáo cấu thành giá & Dự toán tự động',
+    category: 'Dự toán & Báo giá',
+    description:
+      'Live pricing engine bóc tách chi tiết: Vật tư nhôm kính (49%), Nhân công thợ (9%), Nhôm hao hụt (2%), Chi phí xưởng & Tiền lãi (31%).',
+    imageSrc: '/images/projects/project-pricing.png',
+  },
+  {
+    id: 'contract',
+    number: '03',
+    title: 'Báo cáo hợp đồng & Tiến độ dòng tiền',
+    category: 'Hợp đồng & Tài chính',
+    description:
+      'Kiểm soát giá trị hợp đồng hiệu lực, theo dõi số tiền đã thu theo đợt thi công, số tiền còn lại và hỗ trợ lập phiếu thu theo tiến độ.',
+    imageSrc: '/images/projects/project-contract.png',
+  },
+  {
+    id: 'production',
+    number: '04',
+    title: 'Lệnh sản xuất & Tối ưu thẻ cắt A4',
+    category: 'Phân xưởng sản xuất',
+    description: 'Tự động gom cửa, lập lệnh sản xuất (LSX), tối ưu hóa sơ đồ cắt cây nhôm hỗ trợ giảm đề-xê thừa và theo dõi tiến độ xuất xưởng.',
+    imageSrc: '/images/projects/project-production.png',
+  },
+  {
+    id: 'spec',
+    number: '05',
+    title: 'Bóc tách kỹ thuật & Định mức vật tư',
+    category: 'Kỹ thuật bóc tách',
+    description:
+      'Chuẩn hóa danh mục vật tư theo từng hệ nhôm, kính cường lực, phụ kiện đồng bộ; tự động sinh phiếu đề xuất xuất/nhập vật tư công trình.',
+    imageSrc: '/images/projects/project-spec.png',
+  },
+];

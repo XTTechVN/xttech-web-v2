@@ -3,9 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowUpRight, CheckCircle2, Phone } from 'lucide-react';
-import { Modal, XTLogo } from '@/components';
-import { HeroRegisterInlineForm } from './hero/hero-register-inline-form';
+import { ArrowUpRight, Phone } from 'lucide-react';
+import { Modal, RegisterInlineForm, XTLogo } from '@/components';
 import { CONTACT_INFO } from '@/config/contact';
 import {
   FOOTER_BOTTOM_LINKS,
@@ -54,13 +53,13 @@ export const Footer = () => {
               Đội ngũ XTTECH hướng dẫn triển khai từ khảo sát đến vận hành thực tế.
             </p>
           </div>
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
             <button
               type="button"
               onClick={handleOpenRegisterModal}
               className="inline-flex flex-1 cursor-pointer items-center justify-center whitespace-nowrap rounded-xl bg-white px-3.5 py-2.5 text-sm font-bold text-primary shadow-sm transition-all hover:bg-teal-50 sm:flex-none sm:px-5"
             >
-              Đăng ký ngay
+              Đăng ký sử dụng miễn phí
             </button>
             <a
               href="tel:0776710766"
@@ -215,7 +214,8 @@ export const Footer = () => {
         className="max-w-lg border border-primary/20"
         bodyClassName="p-5 sm:p-6"
       >
-        <HeroRegisterInlineForm
+        <RegisterInlineForm
+          key={`footer-reg-${isRegisterModalOpen}`}
           variant="modal"
           onBack={() => setIsRegisterModalOpen(false)}
         />

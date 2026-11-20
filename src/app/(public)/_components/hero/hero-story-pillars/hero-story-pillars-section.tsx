@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Modal } from '@/components';
+import { Modal, RegisterInlineForm } from '@/components';
 import { AiAssistantSection } from './ai-assistant-section';
 import { BenefitsSection } from './benefits-section';
 import { PainPointsSection } from './pain-points-section';
 import { PillarsSection } from './pillars-section';
 import { ProjectReportsSection } from './project-reports-section';
-import { HeroRegisterInlineForm } from '../hero-register-inline-form';
 
 export const HeroStoryPillarsSection = () => {
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
@@ -41,7 +40,8 @@ export const HeroStoryPillarsSection = () => {
         className="max-w-lg border border-primary/20"
         bodyClassName="p-5 sm:p-6"
       >
-        <HeroRegisterInlineForm
+        <RegisterInlineForm
+          key={`pillars-reg-${isDemoModalOpen}`}
           variant="modal"
           onBack={() => setIsDemoModalOpen(false)}
         />

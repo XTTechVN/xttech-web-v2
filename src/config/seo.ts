@@ -50,10 +50,16 @@ export const PAGE_SEO_META = {
     path: '/',
     useAbsoluteTitle: true,
   },
+  introduce: {
+    title: 'Giới Thiệu Phần Mềm XTTECH ERP — XMS Fab, XMS Build & XMS Biz',
+    description:
+      'Tổng quan giải pháp phần mềm quản trị sản xuất nhôm kính và thi công công trình XTTECH: Thiết kế CAD 2D/3D, bóc tách vật tư, thẻ cắt A4, quản lý kho, chấm công tại công trình và báo cáo lãi lỗ.',
+    path: '/introduce',
+  },
   pricing: {
     title: 'Bảng Giá Phần Mềm ERP Nhôm Kính & Xây Dựng',
     description:
-      'Bảng giá minh bạch các gói XMS Fab, XMS Build và XMS Biz. Hỗ trợ Miễn phí tài khoản G0 - 20 bộ cửa cho xưởng mới, đào tạo tận nơi và chính sách hoàn phí rõ ràng.',
+      'Bảng giá minh bạch các gói XMS Fab, XMS Build và XMS Biz. Hỗ trợ gói Miễn phí - 20 bộ cửa cho xưởng mới, đào tạo tận nơi và chính sách hoàn phí rõ ràng.',
     path: '/pricing',
   },
   news: {
@@ -77,7 +83,7 @@ export const PAGE_SEO_META = {
   refund: {
     title: 'Chính Sách Hoàn Tiền & Bảo Hành Dịch Vụ',
     description:
-      'Chính sách Miễn phí tài khoản G0 - 20 bộ cửa, hỗ trợ hoàn phí minh bạch trong 7 ngày đầu, hoàn phí theo tỷ lệ Pro-rata cho gói năm và bảo hành đào tạo tận xưởng XTTECH.',
+      'Chính sách dùng thử gói Miễn phí - 20 bộ cửa, hỗ trợ hoàn phí minh bạch trong 7 ngày đầu, hoàn phí theo tỷ lệ Pro-rata cho gói năm và bảo hành đào tạo tận xưởng XTTECH.',
     path: '/refund-policy',
   },
 } as const;
@@ -162,9 +168,7 @@ export function buildPageMetadata(params: {
   const canonicalUrl = buildCanonicalUrl(params.path);
   const ogImageUrl = resolveSeoImageUrl(params.image);
   const isDefaultOg = !params.image || !params.image.trim();
-  const fullShareTitle = params.title.includes(SEO_CONFIG.siteName)
-    ? params.title
-    : `${params.title} | ${SEO_CONFIG.siteName}`;
+  const fullShareTitle = params.title.includes(SEO_CONFIG.siteName) ? params.title : `${params.title} | ${SEO_CONFIG.siteName}`;
 
   return {
     title: params.useAbsoluteTitle ? { absolute: params.title } : params.title,
@@ -225,7 +229,7 @@ export const HOME_AI_FAQ_ITEMS: ReadonlyArray<{ question: string; answer: string
   {
     question: 'Chi phí sử dụng phần mềm XTTECH ERP là bao nhiêu? Có gói miễn phí không?',
     answer:
-      'XTTECH cung cấp gói Miễn phí trọn đời (0đ, tối đa 3 nhân sự, 20 bộ cửa hoặc 10 công trình) không cần thẻ tín dụng. Các gói trả phí minh bạch từ 390.000đ/tháng (XMS Biz Văn phòng), 490.000đ/tháng (XMS Build Đội nhỏ), 590.000đ/tháng (XMS Fab Gọn) đến các gói Tái cấu trúc và Tổng thầu không giới hạn, kèm cam kết hoàn tiền 100% trong 7 ngày đầu.',
+      'XTTECH cung cấp gói Miễn phí trọn đời (0đ, tối đa 3 nhân sự, 20 bộ cửa hoặc 10 công trình) không cần thẻ tín dụng. Các gói trả phí minh bạch gồm Bạc, Vàng, Kim cương cho cả 3 phân hệ (từ 390.000đ/tháng XMS Biz, 490.000đ/tháng XMS Build, 590.000đ/tháng XMS Fab), kèm cam kết hoàn tiền 100% trong 7 ngày đầu.',
   },
   {
     question: 'XTTECH quản lý thi công công trình, nghiệm thu bảo hành và chấm công nhân sự như thế nào?',
@@ -299,7 +303,7 @@ export function buildHomeJsonLd() {
           '@type': 'Offer',
           price: '0',
           priceCurrency: 'VND',
-          description: 'Gói Khởi Nghiệp miễn phí trọn đời cho xưởng mới (tối đa 3 nhân sự)',
+          description: 'Gói Miễn phí trọn đời cho xưởng mới (tối đa 3 nhân sự)',
           url: buildCanonicalUrl('/pricing'),
         },
         featureList: [
@@ -321,6 +325,30 @@ export function buildHomeJsonLd() {
             text: item.answer,
           },
         })),
+      },
+    ],
+  };
+}
+
+export function buildIntroduceJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': `${buildCanonicalUrl('/introduce')}#webpage`,
+        url: buildCanonicalUrl('/introduce'),
+        name: `${PAGE_SEO_META.introduce.title} | ${SEO_CONFIG.siteName}`,
+        description: PAGE_SEO_META.introduce.description,
+        inLanguage: SEO_CONFIG.language,
+        isPartOf: { '@id': `${BASE_SITE_URL}/#website` },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: BASE_SITE_URL },
+          { '@type': 'ListItem', position: 2, name: 'Giới thiệu', item: buildCanonicalUrl('/introduce') },
+        ],
       },
     ],
   };
@@ -379,8 +407,7 @@ export function buildNewsArticleJsonLd(article: NewsArticle) {
   const imageUrl = resolveSeoImageUrl(article.thumbnailUrl);
   const personName = article.author?.fullName || article.author?.username || null;
   const categoryName = NEWS_CATEGORY_MAP[article.category] || article.category;
-  const description =
-    article.summary?.trim() || stripHtmlToPlainText(article.content, 155) || PAGE_SEO_META.news.description;
+  const description = article.summary?.trim() || stripHtmlToPlainText(article.content, 155) || PAGE_SEO_META.news.description;
 
   const authorEntity = personName
     ? {
@@ -452,13 +479,10 @@ export function buildBreadcrumbJsonLd(items: Array<{ name: string; path: string 
 export const fetchPublicArticleBySlugForSeo = cache(async (slug: string): Promise<NewsArticle | null> => {
   if (!slug) return null;
   try {
-    const response = await fetch(
-      `${BASE_API_URL}/api/v1/news/public/${encodeURIComponent(slug)}?countView=false`,
-      {
-        next: { revalidate: 60 },
-        headers: { Accept: 'application/json' },
-      },
-    );
+    const response = await fetch(`${BASE_API_URL}/api/v1/news/public/${encodeURIComponent(slug)}?countView=false`, {
+      next: { revalidate: 60 },
+      headers: { Accept: 'application/json' },
+    });
     if (!response.ok) return null;
     const payload: unknown = await response.json();
     if (!payload || typeof payload !== 'object') return null;
@@ -482,13 +506,10 @@ export async function fetchAllPublicArticlesForSitemap(): Promise<NewsArticle[]>
   while (hasNext && safetyCounter < maxPages) {
     safetyCounter += 1;
     try {
-      const response = await fetch(
-        `${BASE_API_URL}/api/v1/news/public?offset=${offset}&limit=${limit}`,
-        {
-          next: { revalidate: 3600 },
-          headers: { Accept: 'application/json' },
-        },
-      );
+      const response = await fetch(`${BASE_API_URL}/api/v1/news/public?offset=${offset}&limit=${limit}`, {
+        next: { revalidate: 3600 },
+        headers: { Accept: 'application/json' },
+      });
       if (!response.ok) {
         console.warn(`[sitemap] Fetch public news failed with status ${response.status} at offset=${offset}`);
         break;

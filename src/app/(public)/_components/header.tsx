@@ -10,7 +10,10 @@ import { getFileUrl } from '@/utils';
 import useAuthStore from '@/stores/useAuthStore';
 import { FOOTER_LEGAL_LINKS, NAV_LINKS, type PublicNavLink } from '../_constants/public-layout.constants';
 
-interface PillMetrics { left: number; width: number }
+interface PillMetrics {
+  left: number;
+  width: number;
+}
 let cachedActiveMetrics: PillMetrics | null = null;
 
 export const Header = () => {
@@ -49,20 +52,19 @@ export const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [pathname]);
 
-  const isLegalRoute =
-    pathname?.startsWith('/privacy-policy') ||
-    pathname?.startsWith('/terms-of-service') ||
-    pathname?.startsWith('/refund-policy');
+  const isLegalRoute = pathname?.startsWith('/privacy-policy') || pathname?.startsWith('/terms-of-service') || pathname?.startsWith('/refund-policy');
 
-  const activeKey: PublicNavLink['key'] | '' = pathname?.startsWith('/pricing')
-    ? 'pricing'
-    : pathname?.startsWith('/news')
-      ? 'news'
-      : isLegalRoute
-        ? 'legal'
-        : pathname === '/'
-          ? currentHash === '#contact' ? 'contact' : 'about'
-          : '';
+  const activeKey: PublicNavLink['key'] | '' = pathname?.startsWith('/introduce')
+    ? 'introduce'
+    : pathname?.startsWith('/pricing')
+      ? 'pricing'
+      : pathname?.startsWith('/news')
+        ? 'news'
+        : isLegalRoute
+          ? 'legal'
+          : pathname === '/'
+            ? currentHash === '#contact' ? 'contact' : 'about'
+            : '';
 
   const updateActivePillPosition = useCallback(() => {
     const targetEl = activeKey ? itemRefs.current[activeKey] : null;
@@ -102,7 +104,7 @@ export const Header = () => {
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, link: PublicNavLink) => {
     cacheCurrentActivePosition();
-    if (link.key === 'pricing' || link.key === 'news' || link.key === 'legal') return;
+    if (link.key === 'introduce' || link.key === 'pricing' || link.key === 'news' || link.key === 'legal') return;
     if (pathname === '/') {
       const targetEl = document.getElementById(link.key);
       if (targetEl) {
@@ -133,14 +135,13 @@ export const Header = () => {
           className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
         >
           <XTLogo className="h-8 w-8 drop-shadow-[0_2px_5px_rgba(4,88,99,0.35)]" />
-          <Heading as="span" size="h1" className="tracking-tight text-primary">XTTECH</Heading>
+          <Heading as="span" size="h1" className="tracking-tight text-primary">
+            XTTECH
+          </Heading>
         </Link>
 
         {/* Desktop Nav với gạch chân primary */}
-        <nav
-          onMouseLeave={() => setHoveredKey(null)}
-          className="relative hidden h-full items-stretch gap-2 md:flex"
-        >
+        <nav onMouseLeave={() => setHoveredKey(null)} className="relative hidden h-full items-stretch gap-2 md:flex">
           <span
             aria-hidden="true"
             style={{
@@ -171,7 +172,9 @@ export const Header = () => {
               return (
                 <div
                   key={link.href}
-                  ref={(el) => { itemRefs.current[link.key] = el; }}
+                  ref={(el) => {
+                    itemRefs.current[link.key] = el;
+                  }}
                   onMouseEnter={() => handleMouseEnterItem(link.key)}
                   className="group relative z-10 flex items-center"
                 >
@@ -206,7 +209,9 @@ export const Header = () => {
             return (
               <Link
                 key={link.href}
-                ref={(el) => { itemRefs.current[link.key] = el; }}
+                ref={(el) => {
+                  itemRefs.current[link.key] = el;
+                }}
                 href={link.href}
                 onMouseEnter={() => handleMouseEnterItem(link.key)}
                 onClick={(e) => handleLinkClick(e, link)}
@@ -227,7 +232,9 @@ export const Header = () => {
               </Link>
             ) : (
               <Link href="/signin">
-                <Button size="sm" className="rounded-full bg-primary px-5 text-white shadow-sm hover:bg-primary/90">Đăng Nhập</Button>
+                <Button size="sm" className="rounded-full bg-primary px-5 text-white shadow-sm hover:bg-primary/90">
+                  Đăng Nhập
+                </Button>
               </Link>
             )
           ) : (
@@ -240,14 +247,20 @@ export const Header = () => {
             aria-label="Toggle menu"
             aria-expanded={mobileMenuOpen}
           >
-            <span className={`block h-0.5 w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? 'translate-y-1.75 rotate-45' : ''}`} />
+            <span
+              className={`block h-0.5 w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? 'translate-y-1.75 rotate-45' : ''}`}
+            />
             <span className={`block h-0.5 w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? 'scale-x-0 opacity-0' : ''}`} />
-            <span className={`block h-0.5 w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? '-translate-y-1.75 -rotate-45' : ''}`} />
+            <span
+              className={`block h-0.5 w-5 rounded-full bg-gray-700 transition-all duration-300 ${mobileMenuOpen ? '-translate-y-1.75 -rotate-45' : ''}`}
+            />
           </button>
         </div>
       </div>
 
-      <div className={`overflow-hidden transition-all duration-300 ease-in-out md:hidden ${mobileMenuOpen ? 'max-h-96 border-t border-gray-200' : 'max-h-0'}`}>
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out md:hidden ${mobileMenuOpen ? 'max-h-96 border-t border-gray-200' : 'max-h-0'}`}
+      >
         <nav className="flex flex-col gap-1 bg-white/95 px-4 py-3 backdrop-blur-md">
           {NAV_LINKS.map((link) => {
             const isActive = activeKey === link.key;
@@ -259,7 +272,12 @@ export const Header = () => {
                     const SubIcon = subItem.icon;
                     const isSub = pathname === subItem.href;
                     return (
-                      <Link key={subItem.href} href={subItem.href} onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${isSub ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-primary/5 hover:text-primary'}`}>
+                      <Link
+                        key={subItem.href}
+                        href={subItem.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${isSub ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-primary/5 hover:text-primary'}`}
+                      >
                         <SubIcon className="h-4 w-4 shrink-0 text-primary" />
                         <span>{subItem.label}</span>
                       </Link>
@@ -269,7 +287,15 @@ export const Header = () => {
               );
             }
             return (
-              <Link key={link.href} href={link.href} onClick={(e) => { setMobileMenuOpen(false); handleLinkClick(e, link); }} className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-primary/5 hover:text-primary'}`}>
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={(e) => {
+                  setMobileMenuOpen(false);
+                  handleLinkClick(e, link);
+                }}
+                className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-primary/5 hover:text-primary'}`}
+              >
                 {link.label}
               </Link>
             );

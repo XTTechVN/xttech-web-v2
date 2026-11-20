@@ -16,6 +16,7 @@ const isPortalRoute = (pathname: string | null): boolean => {
   if (!pathname) return false;
   return (
     pathname === '/' ||
+    pathname.startsWith('/introduce') ||
     pathname.startsWith('/pricing') ||
     pathname.startsWith('/news') ||
     pathname.startsWith('/privacy-policy') ||
@@ -27,11 +28,12 @@ const isPortalRoute = (pathname: string | null): boolean => {
 // Thứ tự vị trí ngang của các trang tương ứng với thứ tự tab trên Header
 const getRouteOrderIndex = (pathname: string | null): number => {
   if (!pathname || pathname === '/') return 0;
-  if (pathname.startsWith('/pricing')) return 1;
-  if (pathname.startsWith('/news')) return 2;
-  if (pathname.startsWith('/privacy-policy')) return 3;
-  if (pathname.startsWith('/terms-of-service')) return 4;
-  if (pathname.startsWith('/refund-policy')) return 5;
+  if (pathname.startsWith('/introduce')) return 1;
+  if (pathname.startsWith('/pricing')) return 2;
+  if (pathname.startsWith('/news')) return 3;
+  if (pathname.startsWith('/privacy-policy')) return 4;
+  if (pathname.startsWith('/terms-of-service')) return 5;
+  if (pathname.startsWith('/refund-policy')) return 6;
   return 0;
 };
 

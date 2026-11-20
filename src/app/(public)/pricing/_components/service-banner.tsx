@@ -134,7 +134,7 @@ const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceB
                     29.9tr
                   </div>
                   <div className="mt-0.5 text-[10px] font-medium text-gray-500 transition-colors group-hover:text-white/80">
-                    Tổng Thầu
+                    Kim cương
                   </div>
                 </div>
                 <div className="mt-2 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary transition-all group-hover:bg-gradient-to-r group-hover:from-[var(--hero-accent-from)] group-hover:to-[var(--hero-accent-to)] group-hover:text-white sm:text-[10px]">
@@ -145,7 +145,7 @@ const ServiceBanner = ({ activeMainTab = 'bang-gia', onMainTabChange }: ServiceB
 
             {/* Footer Note */}
             <div className="border-t border-gray-100 pt-3 text-[10px] leading-relaxed text-gray-400 sm:text-[11px]">
-              * Gói Tổng Thầu chỉ có theo năm. Giá đã bao gồm VAT, hỗ trợ 1-1. Mua thêm lẻ áp dụng khi vượt hạn
+              * Gói Kim cương áp dụng theo năm. Giá đã bao gồm VAT, hỗ trợ 1-1. Mua thêm lẻ áp dụng khi vượt hạn
               mức.
             </div>
           </div>

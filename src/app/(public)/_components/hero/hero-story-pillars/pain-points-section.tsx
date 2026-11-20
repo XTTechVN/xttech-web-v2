@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { AlertTriangle, TrendingDown, X } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/utils/cn';
@@ -38,8 +39,14 @@ export function PainPointsSection() {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-8">
-          {/* Cột trái: Tiêu đề lớn & 4 Nỗi đau thoáng đãng (không đóng khung hộp cứng nhắc) */}
-          <div className="space-y-4 lg:col-span-7">
+          {/* Cột trái: Tiêu đề lớn & 4 Nỗi đau thoáng đãng - Trượt từ bên trái sang */}
+          <motion.div
+            initial={{ opacity: 0, x: -70 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-4 lg:col-span-7"
+          >
             <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3.5 py-1.5 text-xs font-bold text-rose-600 border border-rose-200/70 shadow-2xs">
               <AlertTriangle className="h-4 w-4" />
               <span>Thực trạng ngành nhôm kính & xây lắp</span>
@@ -107,10 +114,16 @@ export function PainPointsSection() {
                 );
               })}
             </div>
-          </div>
+          </motion.div>
 
-          {/* Cột phải: Vòng tròn công nghệ lớn bề thế (tỷ lệ lớn chuẩn theo Ảnh 2 mẫu) */}
-          <div className="flex items-center justify-center pt-10 pb-8 lg:col-span-5 lg:py-0">
+          {/* Cột phải: Vòng tròn công nghệ lớn bề thế - Trượt từ bên phải sang */}
+          <motion.div
+            initial={{ opacity: 0, x: 70 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="flex items-center justify-center pt-10 pb-8 lg:col-span-5 lg:py-0"
+          >
             <div className="relative flex items-center justify-center py-2">
               {/* Quầng sáng nền mờ */}
               <div className="absolute h-96 w-96 sm:h-[450px] sm:w-[450px] lg:h-[500px] lg:w-[500px] rounded-full bg-amber-500/5 blur-3xl pointer-events-none animate-pulse-glow" />
@@ -164,7 +177,7 @@ export function PainPointsSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

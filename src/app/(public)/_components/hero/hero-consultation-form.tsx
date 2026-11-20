@@ -103,7 +103,7 @@ export function HeroConsultationForm() {
           <span className="text-primary  font-black">tư vấn</span>
         </h2>
         <p className="mt-1.5 text-sm sm:text-base text-slate-600 font-medium">
-          Chúng tôi sẽ liên hệ ngay trong <span className="font-bold text-slate-900">2h làm việc!</span>
+          Chúng tôi sẽ liên hệ với bạn sớm nhất, cảm ơn bạn vì đã đăng ký.
         </p>
       </div>
 
