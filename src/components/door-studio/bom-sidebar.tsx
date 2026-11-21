@@ -169,8 +169,13 @@ export const BomSidebar: React.FC<BomSidebarProps> = ({ calcData, isLoading }) =
                       className="p-2 rounded-lg border border-blue-100 bg-blue-50/40 flex items-center justify-between"
                     >
                       <div className="min-w-0 pr-2">
-                        <div className="font-semibold text-gray-800 text-xs truncate">
-                          {glass.glassName}
+                        <div className="font-semibold text-gray-800 text-xs flex items-center gap-1.5 flex-wrap">
+                          <span className="truncate">{glass.glassName}</span>
+                          {glass.isExtra && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
+                              Bổ sung
+                            </span>
+                          )}
                         </div>
                         <div className="text-[10px] text-gray-500 font-mono mt-0.5">
                           Diện tích: {glass.areaM2.toFixed(3)} m²

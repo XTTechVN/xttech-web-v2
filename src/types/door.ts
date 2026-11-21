@@ -220,13 +220,19 @@ export interface GlassCellBOM {
   areaM2: number;
   pricingAreaM2: number;
   openType?: string | null;
+  glassId?: number | null;
+  glassCode?: string | null;
   glassName?: string | null;
   glassPrice?: number | null;
+  isExtra?: boolean;
+  layerIndex?: number;
   calcSteps?: CalculationStep[];
   calcNote?: string | null;
 }
 
 export interface GroupedGlassCellBOM {
+  glassId?: number | null;
+  glassCode?: string | null;
   glassName: string;
   glassW: number;
   glassH: number;
@@ -234,6 +240,7 @@ export interface GroupedGlassCellBOM {
   totalAreaM2: number;
   qty: number;
   glassPrice?: number;
+  isExtra?: boolean;
 }
 
 export type CornerJointPosition = 'frame' | 'sash' | 'safety_frame';

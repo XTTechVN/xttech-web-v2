@@ -33,6 +33,11 @@ export function QuotationDoorRow({ item, isSeparated, isLocked, drafts }: Quotat
   const isManual = isSeparatedManual(item);
   const isLiveManual = drafts.isManualLive(item);
   const costPerM2 = item.areaM2 > 0 ? Math.round(item.costPrice / item.areaM2) : item.costPrice;
+  const extraGlasses = item.extraGlassesDetail ?? [];
+  const hasSeparatedDraft = drafts.doorTotalDrafts[id] !== undefined || drafts.accDrafts[id] !== undefined;
+  const useSuggestedExtra = isSeparated
+    ? (hasSeparatedDraft || !isManual)
+    : (drafts.totalDrafts[id] === '' || !item.isManuallyEdited);
 
   return (
     <tr className={`border-b border-slate-100 ${isBelowCost ? 'bg-red-50/60' : 'hover:bg-slate-50/60'}`}>
@@ -55,6 +60,30 @@ export function QuotationDoorRow({ item, isSeparated, isLocked, drafts }: Quotat
               <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${POSITION_COST_STATUS_MAP.estimated.badgeClass}`}>
                 {POSITION_COST_STATUS_MAP.estimated.shortLabel}
               </span>
+            )}
+          </div>
+        )}
+        {extraGlasses.length > 0 && (
+          <div className="mt-1 space-y-0.5 text-[11px] text-slate-600">
+            {extraGlasses.map((eg, idx) => (
+              <div key={`${eg.glassId ?? eg.glassName}-${idx}`} className="flex flex-wrap items-center gap-1">
+                <span className="px-1.5 py-0.2 rounded bg-sky-50 text-sky-700 border border-sky-200 text-[10px] font-semibold">
+                  Bổ sung
+                </span>
+                <span className="font-medium text-slate-700">
+                  {eg.glassCode ? `${eg.glassCode} · ` : ''}
+                  {eg.glassName}
+                </span>
+                <span className="font-mono tabular-nums text-slate-500">
+                  ({eg.areaM2.toLocaleString('vi-VN', { maximumFractionDigits: 2 })} m² ·{' '}
+                  {formatCurrency(useSuggestedExtra ? eg.suggestedPrice : eg.sellingPrice)})
+                </span>
+              </div>
+            ))}
+            {!isSeparated && (
+              <p className="text-[10px] italic text-slate-500">
+                Đơn giá/m² đang gồm kính bổ sung và sẽ tự tách dòng riêng trên bảng Xem trước báo giá / Excel.
+              </p>
             )}
           </div>
         )}

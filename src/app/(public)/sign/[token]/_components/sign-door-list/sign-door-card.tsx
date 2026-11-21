@@ -92,6 +92,7 @@ export function SignDoorCard({ item, isOpen, onToggle, onZoom }: SignDoorCardPro
               const unitPriceValue = isSetUnit
                 ? (pricing.unitPrice ?? pricing.doorAmount)
                 : (pricing.unitPrice ?? pricing.unitPricePerM2);
+              const extraGlassLines = (item.extraGlasses ?? []).filter((eg) => eg.areaM2 > 0);
               return (
                 <dl className="space-y-1 rounded-md border border-primary/20 bg-primary/5 p-2.5 text-xs">
                   <div className="flex justify-between text-stone-700">
@@ -102,6 +103,24 @@ export function SignDoorCard({ item, isOpen, onToggle, onZoom }: SignDoorCardPro
                     <dt>Cửa</dt>
                     <dd className="font-mono tabular-nums">{formatVnd(pricing.doorAmount)}</dd>
                   </div>
+                  {extraGlassLines.map((eg, idx) => (
+                    <div
+                      key={`${eg.code ?? eg.name}-${idx}`}
+                      className="flex justify-between gap-2 text-stone-700"
+                    >
+                      <dt className="min-w-0 [overflow-wrap:anywhere]">
+                        {eg.code ? `${eg.code} · ` : ''}
+                        {eg.name} ({formatNumber(eg.areaM2)} m²)
+                      </dt>
+                      <dd className="shrink-0 font-mono tabular-nums">{formatVnd(eg.amount)}</dd>
+                    </div>
+                  ))}
+                  {extraGlassLines.length === 0 && (pricing.extraGlassAmount ?? 0) > 0 && (
+                    <div className="flex justify-between text-stone-700">
+                      <dt>Kính / vật tư bổ sung</dt>
+                      <dd className="font-mono tabular-nums">{formatVnd(pricing.extraGlassAmount)}</dd>
+                    </div>
+                  )}
                   {pricing.accessoryAmount > 0 && (
                     <div className="flex justify-between text-stone-700">
                       <dt>Phụ kiện</dt>

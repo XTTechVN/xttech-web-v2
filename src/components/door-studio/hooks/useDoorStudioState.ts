@@ -6,7 +6,7 @@ import { Door, DoorCreate, DoorUpdate, DoorCalculateResponse, SelectedAccessoryI
 import { calculateDoor, createDoor, updateDoor, getDoorSeriesList, getProfileBars, getAccessoryCombos, getAccessories, getGlasses, getBrandColors, getBrands, } from '@/actions';
 import { FrameShape, SashOpenType, SceneCellNode, StudioMainTab, FrameConfig, SashConfig, FrameCornerJoint, SashCornerJoint, BeadCornerJoint, SlidingSashRole, SashOffsetScope, SashOffsetValues, SashVariantProfiles, DoorCustomExtraItem, DoorSystemFamily, DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG, MullionInfo, MullionCutType, ColorSwatch, ALUMINUM_PALETTE, GlassGrilleConfig, } from '../studio-types';
 import { ResizeSplitParams } from '../cad-engine/door-cad-renderer';
-import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, ensureRootCellDimensions, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, findEnclosingFrameUnit, resolveFlatSashMullionPositions, } from '../utils/door-tree-utils';
+import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, ensureRootCellDimensions, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, findEnclosingFrameUnit, resolveFlatSashMullionPositions, pickGlassConfig, } from '../utils/door-tree-utils';
 import { formatReferenceValue } from '../utils/mullion-reference-utils';
 import { applyGlassVisualToTree } from '../utils/glass-visual-utils';
 import {
@@ -877,7 +877,7 @@ export function useDoorStudioState({
   // Fetch Glasses (for CellInspector dropdown)
   const { data: glassesData } = useQuery({
     queryKey: ['glasses-list'],
-    queryFn: () => getGlasses({ limit: 200, isActive: true }),
+    queryFn: () => getGlasses({ limit: 500, isActive: true }),
     enabled: isOpen,
   });
   const availableGlasses = useMemo(() => glassesData?.items || [], [glassesData]);
@@ -1363,7 +1363,15 @@ export function useDoorStudioState({
     const targetNode = selectedCellId ? findNode(rootCell, selectedCellId) : null;
     const target = targetNode || rootCell;
 
-    const children = createSplitChildren(target.id, target.w, target.h, countClamped, direction, 'fixed');
+    const children = createSplitChildren(
+      target.id,
+      target.w,
+      target.h,
+      countClamped,
+      direction,
+      'fixed',
+      pickGlassConfig(target)
+    );
     const updated = updateNode(rootCell, target.id, {
       splitDirection: direction,
       splitType: 'mullion',
@@ -1377,7 +1385,15 @@ export function useDoorStudioState({
     const targetNode = selectedCellId ? findNode(rootCell, selectedCellId) : null;
     const target = targetNode || rootCell;
 
-    const children = createSplitChildren(target.id, target.w, target.h, 2, direction, 'fixed');
+    const children = createSplitChildren(
+      target.id,
+      target.w,
+      target.h,
+      2,
+      direction,
+      'fixed',
+      pickGlassConfig(target)
+    );
     const updated = updateNode(rootCell, target.id, {
       splitDirection: direction,
       splitType: 'coupling',
@@ -1423,7 +1439,8 @@ export function useDoorStudioState({
       target.h,
       countClamped,
       direction,
-      'fixed'
+      'fixed',
+      pickGlassConfig(target)
     ).map((child) => ({
       ...child,
       paneType: target.paneType || 'glass',
@@ -1458,6 +1475,7 @@ export function useDoorStudioState({
     const parentNode = findParentNode(rootCell, selectedCellId);
     if (parentNode && parentNode.splitType === 'sash_mullion') {
       const updated = updateNode(rootCell, parentNode.id, {
+        ...pickGlassConfig(targetNode),
         splitDirection: undefined,
         splitType: undefined,
         children: [],
@@ -1537,7 +1555,8 @@ export function useDoorStudioState({
       setSashConfig((prev) => ({ ...prev, family: inferredFamily }));
     }
     const targetId = selectedCellId || (rootCell.children?.[0]?.id || rootCell.id);
-    let { updatedRoot, nextSelectedId } = applySashTypeToCluster(rootCell, targetId, sashType);
+    const { updatedRoot: initialRoot, nextSelectedId } = applySashTypeToCluster(rootCell, targetId, sashType);
+    let updatedRoot = initialRoot;
 
     if (isSlimMode && sashType !== 'fixed') {
       const voCucProfile = findStudioProfile(
@@ -1899,8 +1918,10 @@ export function useDoorStudioState({
     if (parentNode.splitType === 'sash_mullion') {
       if (!parentNode.children || parentNode.children.length < 2) return;
       if (parentNode.children.length <= 2) {
+        const survivingLeaf = parentNode.children[0];
         pushState(
           updateNode(baseRoot, parentNode.id, {
+            ...pickGlassConfig(survivingLeaf),
             children: [],
             splitDirection: undefined,
             splitType: undefined,
@@ -1961,12 +1982,14 @@ export function useDoorStudioState({
     } else {
       if (!parentNode.children || parentNode.children.length === 0) return;
       if (parentNode.children.length <= 2) {
+        const survivingLeaf = parentNode.children[0];
         const mergedNode: Partial<SceneCellNode> = {
+          ...pickGlassConfig(survivingLeaf),
           children: [],
           splitDirection: undefined,
           splitType: undefined,
-          sashType: parentNode.children[0]?.sashType || 'fixed',
-          paneType: parentNode.children[0]?.paneType || 'glass',
+          sashType: survivingLeaf?.sashType || 'fixed',
+          paneType: survivingLeaf?.paneType || 'glass',
         };
         pushState(updateNode(baseRoot, parentNode.id, mergedNode));
       } else {

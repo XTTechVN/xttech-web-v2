@@ -33,6 +33,7 @@ export const QUOTATION_DOCUMENT_CSS = `
 .qt-right { text-align: right; }
 .qt-left { text-align: left; }
 .qt-floor td { background: #b5e6a2; font-weight: bold; font-size: 10.5pt; }
+.qt-glass td { font-style: italic; }
 .qt-accessory td { font-style: italic; }
 .qt-sum td { background: #d9d9d9; font-weight: bold; }
 .qt-payable td { background: #d9d9d9; font-weight: bold; color: #c00000; }

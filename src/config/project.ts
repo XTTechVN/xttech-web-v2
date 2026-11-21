@@ -3,6 +3,7 @@ import {
   type DoorFulfillmentType,
   type HardwareWarningSeverity,
   type HardwareWarningTarget,
+  type MaterialType,
   type PositionCostStatus,
   type PositionVisualMode,
   type ProjectStatus,
@@ -297,4 +298,25 @@ export const getPositionDoorTypeLabel = (doorType?: string | null): string => {
     POSITION_DOOR_TYPE_LABEL_MAP[trimmed.toLowerCase()] ??
     trimmed
   );
+};
+
+export const GLASS_MATERIAL_TYPE_MAP: Record<
+  MaterialType,
+  { label: string; shortLabel: string; badgeClass: string }
+> = {
+  glass: {
+    label: 'Kính',
+    shortLabel: 'Kính',
+    badgeClass: 'bg-sky-50 text-sky-700 border border-sky-200',
+  },
+  panel: {
+    label: 'Tấm / Panel',
+    shortLabel: 'Panel',
+    badgeClass: 'bg-amber-50 text-amber-800 border border-amber-200',
+  },
+  screen_mesh: {
+    label: 'Lưới',
+    shortLabel: 'Lưới',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  },
 };

@@ -107,6 +107,13 @@ export interface SashMullionConfig {
   positions?: number[];
 }
 
+export interface ExtraGlassItem {
+  glassId: number;
+  glassCode?: string | null;
+  glassName: string;
+  glassThickness?: number | null;
+}
+
 export interface SceneCellNode {
   id: string;
   name?: string;
@@ -153,6 +160,8 @@ export interface SceneCellNode {
   hasBottomFrameOverride?: boolean;
   /** Mã kính đã chọn cho ô (null/undefined = dùng kính mặc định) */
   glassId?: number | null;
+  /** Các lớp kính / tấm / lưới bổ sung trên cùng ô */
+  extraGlasses?: ExtraGlassItem[];
   /** Hiệu ứng thị giác của kính (chỉ để hiển thị 2D/3D) */
   glassVisualEffect?: GlassVisualEffect;
   /** true: người dùng tự chọn hiệu ứng, không theo vật liệu kính */
