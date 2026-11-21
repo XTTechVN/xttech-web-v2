@@ -37,6 +37,20 @@ export interface ProjectQuotationPreviewRequest {
   customAccessoryPrices?: Record<number, number>;
 }
 
+export interface QuotationExtraGlassDetailSnapshot {
+  glassId: number | null;
+  glassCode: string | null;
+  glassName: string;
+  paneCount: number;
+  areaM2: number;
+  costUnitPrice: number;
+  rawCost: number;
+  costPrice: number;
+  suggestedPrice: number;
+  sellingPrice: number;
+  unitPrice: number;
+}
+
 export interface QuotationDoorItemSnapshot {
   positionId: number;
   positionCode: string;
@@ -64,6 +78,10 @@ export interface QuotationDoorItemSnapshot {
   doorOnlyCostPrice: number;
   doorOnlySuggestedPrice: number;
   doorOnlySellingPrice: number;
+  extraGlassCost?: number;
+  extraGlassSuggestedPrice?: number;
+  extraGlassSellingPrice?: number;
+  extraGlassesDetail?: QuotationExtraGlassDetailSnapshot[];
   fulfillmentType: DoorFulfillmentType;
   supplierId: number | null;
   supplierName: string | null;
@@ -194,7 +212,7 @@ export interface ProjectQuotationDetail extends ProjectQuotationItem {
 
 // Bảng báo giá theo tầng (xem trước / in / xuất Excel)
 export type QuotationAccessoryMode = 'combined' | 'separated';
-export type QuotationSheetRowType = 'door' | 'accessory' | 'extra';
+export type QuotationSheetRowType = 'door' | 'glass' | 'accessory' | 'extra';
 export type QuotationSheetUnit = 'm2' | 'set';
 
 export interface QuotationSheetRow {

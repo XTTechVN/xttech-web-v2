@@ -728,7 +728,16 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                                   <span>{cell.path}</span>
                                 </div>
                               </td>
-                              <td className="py-2.5 px-3 text-gray-600">{cell.glassName || 'Kính cường lực'}</td>
+                              <td className="py-2.5 px-3 text-gray-600">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span>{cell.glassName || 'Kính cường lực'}</span>
+                                  {cell.isExtra && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                      Bổ sung
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
                               <td className="py-2.5 px-3 text-right font-bold text-gray-900">
                                 {cell.glassW} × {cell.glassH}
                               </td>
@@ -767,7 +776,14 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <div>
                               <span className="font-bold text-slate-800 text-xs block">Vị trí: {selectedCell.path}</span>
-                              <span className="text-[11px] text-slate-400">Chủng loại: {selectedCell.glassName || 'Kính cường lực'}</span>
+                              <span className="text-[11px] text-slate-400 flex items-center gap-1.5 flex-wrap">
+                                <span>Chủng loại: {selectedCell.glassName || 'Kính cường lực'}</span>
+                                {selectedCell.isExtra && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                    Bổ sung
+                                  </span>
+                                )}
+                              </span>
                             </div>
                             <div className="text-right">
                               <span className="px-2 py-0.5 rounded text-[11px] bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
@@ -805,9 +821,16 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                                 <span className="font-semibold text-slate-800">Ô {cell.path}</span>
                                 <span className="font-bold text-slate-900">{cell.glassW} × {cell.glassH} mm</span>
                               </div>
-                              <div className="text-[11px] text-slate-500 flex items-center justify-between">
-                                <span>{cell.glassName || 'Kính cường lực'}</span>
-                                <span>Diện tích: {cell.areaM2?.toFixed(2)} m²</span>
+                              <div className="text-[11px] text-slate-500 flex items-center justify-between gap-2">
+                                <span className="flex items-center gap-1.5 flex-wrap">
+                                  <span>{cell.glassName || 'Kính cường lực'}</span>
+                                  {cell.isExtra && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                      Bổ sung
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="shrink-0">Diện tích: {cell.areaM2?.toFixed(2)} m²</span>
                               </div>
                             </div>
                           ))}
@@ -878,7 +901,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                       mm = sashBeads.reduce((sum, b) => sum + (b.length || 0) * (b.qty || 1), 0);
                       if (mm <= 0) {
                         mm = cellsList
-                          .filter((c) => c.openType !== 'fixed')
+                          .filter((c) => c.openType !== 'fixed' && !c.isExtra)
                           .reduce((sum, c) => sum + 2 * ((c.glassW || 0) + (c.glassH || 0)), 0);
                       }
                     } else {

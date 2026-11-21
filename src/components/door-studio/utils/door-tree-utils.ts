@@ -64,6 +64,20 @@ export function pickLeafOverrides(node?: SceneCellNode | null): Partial<SceneCel
   };
 }
 
+export function pickGlassConfig(node?: SceneCellNode | null): Partial<SceneCellNode> {
+  if (!node) return {};
+  return {
+    glassId: node.glassId,
+    glassName: node.glassName,
+    glassThickness: node.glassThickness,
+    glassSplitCount: node.glassSplitCount,
+    glassVisualEffect: node.glassVisualEffect,
+    glassVisualEffectOverride: node.glassVisualEffectOverride,
+    glassVisualColor: node.glassVisualColor,
+    extraGlasses: node.extraGlasses?.map((g) => ({ ...g })),
+  };
+}
+
 export interface EnclosingFrameUnitInfo {
   unitNode: SceneCellNode;
   isCoupledSubFrame: boolean;
@@ -226,7 +240,8 @@ export const createSplitChildren = (
   totalH: number,
   count: number,
   direction: 'vertical' | 'horizontal',
-  defaultSashType: SashOpenType = 'fixed'
+  defaultSashType: SashOpenType = 'fixed',
+  sourceGlassConfig?: Partial<SceneCellNode>
 ): SceneCellNode[] => {
   const isVert = direction === 'vertical';
   const span = isVert ? totalW : totalH;
@@ -238,7 +253,17 @@ export const createSplitChildren = (
     const currentSpan = isLast ? span - accumulated : basePart;
     accumulated += currentSpan;
 
+    const clonedGlassConfig: Partial<SceneCellNode> | undefined = sourceGlassConfig
+      ? {
+          ...sourceGlassConfig,
+          ...(sourceGlassConfig.extraGlasses !== undefined
+            ? { extraGlasses: sourceGlassConfig.extraGlasses.map((g) => ({ ...g })) }
+            : {}),
+        }
+      : undefined;
+
     return {
+      ...clonedGlassConfig,
       id: `${parentId}_c${i}_${crypto.randomUUID().slice(0, 8)}`,
       w: isVert ? currentSpan : totalW,
       h: isVert ? totalH : currentSpan,
@@ -307,13 +332,12 @@ export const applySashTypeToCluster = (
 
         return {
           ...pickLeafOverrides(targetNode),
+          ...pickGlassConfig(targetNode),
           id: childId,
           w: cw,
           h: ch,
           sashType: dirStr,
           paneType: targetNode.paneType || 'glass',
-          glassName: targetNode.glassName,
-          glassThickness: targetNode.glassThickness,
           hasLock: sashDef.hasHandle,
           handleHeight: sashDef.hasHandle ? Math.round(ch / 2) : undefined,
           handleType: sashDef.hasHandle
@@ -342,17 +366,22 @@ export const applySashTypeToCluster = (
     // 2.2: Cấu hình 1 cánh đơn trong Catalog
     const singleDef = layout.sashes[0];
     const dirStr = Array.isArray(singleDef.huongMo) ? singleDef.huongMo.join(',') : singleDef.huongMo;
+    const singleGlassSource =
+      targetNode.glassId !== undefined ||
+      targetNode.glassName !== undefined ||
+      targetNode.extraGlasses !== undefined
+        ? targetNode
+        : activeContainer;
     const mergedNode: SceneCellNode = {
       ...activeContainer,
       ...pickLeafOverrides(targetNode),
+      ...pickGlassConfig(singleGlassSource),
       sashType: dirStr,
       sashLayout: layout.id,
       splitDirection: undefined,
       splitType: undefined,
       children: [],
       paneType: targetNode.paneType || activeContainer.paneType || 'glass',
-      glassName: targetNode.glassName || activeContainer.glassName,
-      glassThickness: targetNode.glassThickness || activeContainer.glassThickness,
       hasLock: singleDef.hasHandle,
       handleHeight: singleDef.hasHandle ? Math.round(activeContainer.h / 2) : undefined,
       handleType: singleDef.hasHandle
@@ -391,17 +420,22 @@ export const applySashTypeToCluster = (
     }
 
     const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down', 'sliding'].includes(newSashType);
+    const clusterGlassSource =
+      targetNode.glassId !== undefined ||
+      targetNode.glassName !== undefined ||
+      targetNode.extraGlasses !== undefined
+        ? targetNode
+        : c0;
     const mergedNode: SceneCellNode = {
       ...clusterContainer,
       ...pickLeafOverrides(targetNode),
+      ...pickGlassConfig(clusterGlassSource),
       sashType: newSashType,
       sashLayout: undefined,
       splitDirection: undefined,
       splitType: undefined,
       children: [],
       paneType: targetNode.paneType || c0.paneType || 'glass',
-      glassName: targetNode.glassName || c0.glassName,
-      glassThickness: targetNode.glassThickness || c0.glassThickness,
       hasLock: sashHasHandle,
       handleHeight: sashHasHandle ? Math.round(clusterContainer.h / 2) : undefined,
       handleType: sashHasHandle ? targetNode.handleType || c1.handleType || 'lever' : undefined,
@@ -420,24 +454,22 @@ export const applySashTypeToCluster = (
       const newChildren: SceneCellNode[] = [
         {
           ...pickLeafOverrides(targetNode),
+          ...pickGlassConfig(targetNode),
           id: `${targetNode.id}_c0_${crypto.randomUUID().slice(0, 8)}`,
           w: halfW,
           h: targetNode.h,
           sashType: 'swing_left',
           paneType: targetNode.paneType || 'glass',
-          glassName: targetNode.glassName,
-          glassThickness: targetNode.glassThickness,
           hasLock: false,
         },
         {
           ...pickLeafOverrides(targetNode),
+          ...pickGlassConfig(targetNode),
           id: `${targetNode.id}_c1_${crypto.randomUUID().slice(0, 8)}`,
           w: targetNode.w - halfW,
           h: targetNode.h,
           sashType: 'swing_right',
           paneType: targetNode.paneType || 'glass',
-          glassName: targetNode.glassName,
-          glassThickness: targetNode.glassThickness,
           hasLock: true,
           handleHeight: Math.round(targetNode.h / 2),
           handleType: targetNode.handleType || 'lever',

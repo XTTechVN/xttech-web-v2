@@ -92,12 +92,21 @@ export interface PublicAccessoryLine {
   note?: string | null;
 }
 
+export interface PublicExtraGlassLine {
+  code?: string | null;
+  name: string;
+  areaM2: number;
+  unitPrice: number;
+  amount: number;
+}
+
 export interface PublicDoorPricing {
   unitPricePerM2: number;
   unit?: 'm2' | 'set';
   unitPrice?: number;
   amount: number;
   doorAmount: number;
+  extraGlassAmount?: number;
   accessoryAmount: number;
 }
 
@@ -110,6 +119,7 @@ export interface PublicSigningItem {
   sortIndex: number;
   spec: PublicDoorSpec;
   drawing?: PublicDoorDrawing | null;
+  extraGlasses?: PublicExtraGlassLine[];
   accessories: PublicAccessoryLine[];
   pricing?: PublicDoorPricing | null;
   /** Chỉ có ở nghiệm thu */

@@ -91,8 +91,24 @@ export function useQuotationPriceDrafts(
     return isSeparatedManual(item) ? item.accessorySellingPrice : item.accessorySuggestedPrice;
   };
 
+  const getExtraGlassLive = (
+    item: QuotationDoorItemSnapshot,
+    hasDraft: boolean =
+      doorTotalDrafts[item.positionId] !== undefined || accDrafts[item.positionId] !== undefined,
+  ): number => {
+    if (item.fulfillmentType === 'outsourced') return 0;
+    if (hasDraft) return item.extraGlassSuggestedPrice ?? 0;
+    return isSeparatedManual(item)
+      ? (item.extraGlassSellingPrice ?? 0)
+      : (item.extraGlassSuggestedPrice ?? 0);
+  };
+
   const getTotalLive = (item: QuotationDoorItemSnapshot): number => {
-    if (isSeparated) return getDoorLive(item) + getAccessoryLive(item);
+    if (isSeparated) {
+      const id = item.positionId;
+      const hasDraft = doorTotalDrafts[id] !== undefined || accDrafts[id] !== undefined;
+      return getDoorLive(item) + getExtraGlassLive(item, hasDraft) + getAccessoryLive(item);
+    }
     const draft = totalDrafts[item.positionId];
     if (draft !== undefined && draft !== '') return Number(draft);
     if (draft === '') return item.suggestedPrice;
@@ -276,18 +292,20 @@ export function useQuotationPriceDrafts(
     if (doorTotalDrafts[id] === undefined && (isOutsourced || accDrafts[id] === undefined)) return;
     const door = getDoorLive(item);
     const acc = isOutsourced ? 0 : getAccessoryLive(item);
+    const extraGlassTarget = isOutsourced ? 0 : (item.extraGlassSuggestedPrice ?? 0);
     const isBackToSuggested =
       door === item.doorOnlySuggestedPrice &&
       (isOutsourced || acc === item.accessorySuggestedPrice);
     const isUnchangedManual =
       isSeparatedManual(item) &&
       door === item.doorOnlySellingPrice &&
-      (isOutsourced || acc === item.accessorySellingPrice);
+      (isOutsourced || acc === item.accessorySellingPrice) &&
+      extraGlassTarget === (item.extraGlassSellingPrice ?? 0);
 
     if (isBackToSuggested) {
       if (isSeparatedManual(item)) changes.clearedIds.add(id);
     } else if (!isUnchangedManual) {
-      changes.separatedOverrides[id] = { total: door + acc, acc };
+      changes.separatedOverrides[id] = { total: door + extraGlassTarget + acc, acc };
     }
   };
 
@@ -370,6 +388,7 @@ export function useQuotationPriceDrafts(
     getUnitPriceM2Live,
     getDoorUnitPriceM2Live,
     getDoorLive,
+    getExtraGlassLive,
     getAccessoryLive,
     getTotalLive,
     isBelowCostLive,

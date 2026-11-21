@@ -126,5 +126,9 @@ export const applyGlassVisualToTree = (node: SceneCellNode, patch: Partial<Scene
     return { ...node, children: node.children.map((child) => applyGlassVisualToTree(child, patch)) };
   }
   if ((node.paneType ?? 'glass') !== 'glass') return node;
-  return { ...node, ...patch };
+  const nextPatch: Partial<SceneCellNode> =
+    patch.extraGlasses !== undefined
+      ? { ...patch, extraGlasses: patch.extraGlasses.map((g) => ({ ...g })) }
+      : patch;
+  return { ...node, ...nextPatch };
 };

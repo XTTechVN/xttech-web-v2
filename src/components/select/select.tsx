@@ -66,7 +66,10 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     const [dropdownPos, setDropdownPos] = useState({
       top: 0,
       left: 0,
+      right: 0,
       width: 0,
+      maxWidth: 420,
+      alignRight: false,
       openUpward: false,
     });
 
@@ -75,14 +78,24 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     const updatePosition = useCallback(() => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
+      const viewportW = window.innerWidth;
       const spaceBelow = window.innerHeight - rect.bottom;
       const dropdownHeight = 220;
       const openUpward = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+      const spaceRight = viewportW - rect.left - 12;
+      const spaceLeft = rect.right - 12;
+      const alignRight = spaceRight < 340 && spaceLeft > spaceRight;
+      const maxWidth = alignRight
+        ? Math.min(420, Math.max(rect.width, spaceLeft))
+        : Math.min(420, Math.max(rect.width, spaceRight));
 
       setDropdownPos({
         top: openUpward ? rect.top - 4 : rect.bottom + 4,
-        left: rect.left,
+        left: Math.max(12, rect.left),
+        right: Math.max(12, viewportW - rect.right),
         width: rect.width,
+        maxWidth,
+        alignRight,
         openUpward,
       });
     }, []);
@@ -264,17 +277,19 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
               ref={dropdownRef}
               style={{
                 position: 'fixed',
-                left: `${dropdownPos.left}px`,
+                ...(dropdownPos.alignRight
+                  ? { right: `${dropdownPos.right}px` }
+                  : { left: `${dropdownPos.left}px` }),
                 minWidth: `${dropdownPos.width}px`,
                 width: 'max-content',
-                maxWidth: 'min(420px, calc(100vw - 32px))',
+                maxWidth: `${dropdownPos.maxWidth}px`,
                 ...(dropdownPos.openUpward
                   ? { bottom: `${window.innerHeight - dropdownPos.top}px` }
                   : { top: `${dropdownPos.top}px` }),
                 zIndex: 99999,
               }}
               className={cn(
-                'bg-white border border-gray-200 rounded-lg shadow-2xl p-1 max-h-56 overflow-y-auto select-none animate-in fade-in duration-150 flex flex-col gap-0.5 pr-0.5',
+                'bg-white border border-gray-200 rounded-lg shadow-2xl p-1 max-h-56 overflow-y-auto overflow-x-hidden select-none animate-in fade-in duration-150 flex flex-col gap-0.5',
                 dropdownPos.openUpward ? 'slide-in-from-bottom-1' : 'slide-in-from-top-1',
               )}
             >
