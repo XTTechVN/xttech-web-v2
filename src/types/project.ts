@@ -41,6 +41,7 @@ export interface Project {
   defaultColorId: number | null;
   startDate: string | null;
   targetDate: string | null;
+  expectedDate?: string | null;
   handoverDate: string | null;
   warrantyMonths?: number;
   warrantyStartDate?: string | null;

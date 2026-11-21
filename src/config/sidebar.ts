@@ -89,6 +89,7 @@ export interface SidebarSectionWithAccess extends Omit<SidebarSectionType, 'item
 export interface Access {
   canAny: (codes: string[]) => boolean;
   isPlatformAdmin: boolean;
+  scopeOf?: (code: string) => string | null;
 }
 
 const isAllowed = (gate: AccessGate, access: Access) =>

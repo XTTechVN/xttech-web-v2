@@ -1,0 +1,157 @@
+/* Token cho giao diện /remake. Chỉ thêm biến tiền tố rm-, không đổi giao diện trang cũ.
+   Màu thương hiệu giữ theo xttech: primary #045863 (color.css). */
+
+:root {
+  --rm-dur-fast: 0.2s;
+  --rm-dur: 0.32s;
+  --rm-dur-slow: 0.48s;
+  --rm-stagger: 50ms;
+  --rm-sheet-from: translateY(100%);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --rm-sheet-from: translateX(100%);
+  }
+}
+
+/* Từ 768px (giao diện kiểu quản trị): nền nhạt hơn, bo nhỏ, khối có viền mảnh */
+@media (min-width: 768px) {
+  :root {
+    --color-rm-bg: #f5f7f8;
+    --color-rm-edge: #e3e9eb;
+    --radius-rm: 6px;
+    --radius-rm-xl: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --rm-dur-fast: 0s;
+    --rm-dur: 0s;
+    --rm-dur-slow: 0s;
+    --rm-stagger: 0s;
+  }
+}
+
+@theme {
+  --color-rm-bg: #eff3f4;
+  --color-rm-surface: #ffffff;
+  --color-rm-line: #e3e9eb;
+  /* viền của khối (thẻ, danh sách): điện thoại không viền, tách bằng nền; từ 768px có viền */
+  --color-rm-edge: transparent;
+  --color-rm-text: #12262a;
+  --color-rm-muted: #566a6f;
+  --color-rm-primary: #045863;
+  --color-rm-primary-hover: #03434c;
+  --color-rm-primary-bright: #1f7f8b;
+  --color-rm-primary-soft: #e5f0f1;
+  --color-rm-on-primary: #ffffff;
+  --color-rm-success: #0f7a4f;
+  --color-rm-success-soft: #e3f4ec;
+  --color-rm-warning: #8a5a00;
+  --color-rm-warning-soft: #fdf1d9;
+  --color-rm-danger: #b42318;
+  --color-rm-danger-soft: #fdeceb;
+  --color-rm-chart-1: #045863;
+  --color-rm-chart-2: #b7791f;
+  --color-rm-chart-3: #2b6cb0;
+  --color-rm-chart-4: #b83280;
+  --color-rm-chart-5: #6b46c1;
+  --color-rm-scrim: rgb(10 25 28 / 0.45);
+
+  --radius-rm-sm: 4px;
+  --radius-rm: 12px;
+  --radius-rm-xl: 16px;
+
+  --shadow-rm-pop: 0 8px 24px rgb(10 25 28 / 0.12);
+
+  --spacing-rm-tap: 44px;
+  --spacing-rm-row: 56px;
+  --spacing-rm-nav: 64px;
+  --spacing-rm-gutter: 16px;
+  --spacing-rm-control: 40px;
+  --spacing-rm-sidebar: 248px;
+  --spacing-rm-sheet: 440px;
+
+  --ease-rm: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-rm-in: cubic-bezier(0.4, 0, 1, 1);
+
+  --animate-rm-rise: rm-rise var(--rm-dur) var(--ease-rm) backwards;
+  --animate-rm-sheet-in: rm-sheet-in var(--rm-dur-slow) var(--ease-rm);
+  --animate-rm-sheet-out: rm-sheet-out var(--rm-dur) var(--ease-rm-in);
+  --animate-rm-scrim-in: rm-scrim-in var(--rm-dur-slow) ease-out;
+  --animate-rm-scrim-out: rm-scrim-out var(--rm-dur) ease-in;
+  --animate-rm-pulse: rm-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes rm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rm-sheet-in {
+  from {
+    transform: var(--rm-sheet-from);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes rm-sheet-out {
+  from {
+    transform: none;
+  }
+  to {
+    transform: var(--rm-sheet-from);
+  }
+}
+
+@keyframes rm-scrim-in {
+  from {
+    background-color: transparent;
+  }
+  to {
+    background-color: var(--color-rm-scrim);
+  }
+}
+
+@keyframes rm-scrim-out {
+  from {
+    background-color: var(--color-rm-scrim);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes rm-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Trạng thái cuối của sheet khi đóng: nằm sẵn ngoài màn, nên không cần fill-mode */
+@utility rm-sheet-off {
+  transform: var(--rm-sheet-from);
+}
+
+@utility rm-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Chừa chỗ cho thanh tab dưới ở điện thoại; từ 768px không cần */
+@utility rm-main-pad {
+  padding-bottom: calc(var(--spacing-rm-nav) + env(safe-area-inset-bottom) + var(--spacing-rm-gutter));
+
+  @media (min-width: 768px) {
+    padding-bottom: var(--spacing-rm-gutter);
+  }
+}

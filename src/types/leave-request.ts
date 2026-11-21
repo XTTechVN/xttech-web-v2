@@ -57,6 +57,7 @@ export type LeaveRequests = LeaveRequest;
 export interface LeaveRequestsQueryParams {
   offset?: number;
   limit?: number;
+  userId?: string;
   status?: LeaveRequestStatus | string;
   leaveType?: LeaveType | string;
   leave_type?: LeaveType | string;
