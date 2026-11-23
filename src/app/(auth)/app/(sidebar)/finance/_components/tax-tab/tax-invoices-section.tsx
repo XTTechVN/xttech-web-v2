@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileCode2, Plus, RefreshCw } from 'lucide-react';
+import { FileCode2, FileSpreadsheet, Plus, RefreshCw } from 'lucide-react';
 import {
   Alert,
   Button,
@@ -15,6 +15,7 @@ import {
 import { deleteTaxInvoice, getTaxInvoices } from '@/actions';
 import type { Account, TaxInvoice, TaxInvoiceDirection, VatRate } from '@/types';
 import { getErrorMessage, showErrorToast, showSuccessToast } from '@/utils';
+import { ImportExcelModal } from './modals/import-excel-modal';
 import { TaxInvoiceDrawer } from './tax-invoice-drawer';
 import { TaxInvoicesTable } from './tax-invoices-table';
 import {
@@ -44,6 +45,7 @@ export function TaxInvoicesSection({
   const [toDate, setToDate] = useState<string | undefined>();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [importExcelOpen, setImportExcelOpen] = useState(false);
   const [initialXmlMode, setInitialXmlMode] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<TaxInvoice | null>(null);
   const [deletingInvoice, setDeletingInvoice] = useState<TaxInvoice | null>(null);
@@ -113,6 +115,14 @@ export function TaxInvoicesSection({
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setImportExcelOpen(true)}
+            leftIcon={<FileSpreadsheet size={14} />}
+          >
+            Nhập Excel GDT
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => { setEditingInvoice(null); setInitialXmlMode(true); setDrawerOpen(true); }}
             leftIcon={<FileCode2 size={14} />}
           >
@@ -179,6 +189,13 @@ export function TaxInvoicesSection({
         description={`Xác nhận xóa hóa đơn ${deletingInvoice?.invoiceSeries}-${deletingInvoice?.invoiceNumber}?`}
         loading={deleting}
         onConfirm={handleConfirmDelete}
+      />
+
+      <ImportExcelModal
+        isOpen={importExcelOpen}
+        onClose={() => setImportExcelOpen(false)}
+        onImported={async () => { await refetch(); }}
+        onOpenVoucherDetail={onOpenVoucherDetail}
       />
     </div>
   );

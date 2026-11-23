@@ -2,6 +2,11 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-11-23
+### Added (Nhập Hóa đơn GTGT Hàng loạt từ Excel Bảng kê GDT — `/app/finance?tab=tax`)
+- **Contracts, Action & Modal Nhập Excel GDT ([`finance.ts`](file:///c:/Workshop/fe_xttech/src/types/finance.ts), [`actions/finance/index.ts`](file:///c:/Workshop/fe_xttech/src/actions/finance/index.ts), [`import-excel-modal.tsx`](file:///c:/Workshop/fe_xttech/src/app/(auth)/app/(sidebar)/finance/_components/tax-tab/modals/import-excel-modal.tsx), [`import-excel-preview.tsx`](file:///c:/Workshop/fe_xttech/src/app/(auth)/app/(sidebar)/finance/_components/tax-tab/modals/import-excel-preview.tsx), [`tax-invoices-section.tsx`](file:///c:/Workshop/fe_xttech/src/app/(auth)/app/(sidebar)/finance/_components/tax-tab/tax-invoices-section.tsx)):**
+  - Bổ sung nút **"Nhập Excel GDT"** cạnh nút **"Tải XML HĐĐT"** cùng modal chọn Mua vào / Bán ra, xem trước phân loại (`Thêm mới` / `Cập nhật trạng thái` / `Trùng (bỏ qua)` / `Lỗi đọc`), cảnh báo chứng từ `posted` bị đổi trạng thái và xác nhận lưu hàng loạt.
+
 ## [Unreleased] - 2026-11-18
 ### Added (Phân hệ Quản lý Tài chính - Kế toán - Thuế Dual-Mode — `/app/finance` 8 Tabs MISA ASP)
 - **TypeScript Contracts, Dictionary Maps & API Actions ([`src/types/finance.ts`](file:///c:/Workshop/fe_xttech/src/types/finance.ts), [`src/config/finance.ts`](file:///c:/Workshop/fe_xttech/src/config/finance.ts), [`src/actions/finance/index.ts`](file:///c:/Workshop/fe_xttech/src/actions/finance/index.ts)):**

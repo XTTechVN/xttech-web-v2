@@ -543,6 +543,57 @@ export interface TaxInvoiceQueryParams {
   limit?: number;
 }
 
+export type TaxInvoiceExcelRowAction = 'create' | 'update_status' | 'duplicate' | 'error';
+
+export interface TaxInvoiceExcelPreviewRow {
+  rowNumber: number;
+  action: TaxInvoiceExcelRowAction;
+  direction: TaxInvoiceDirection;
+  invoiceTemplateCode?: string | null;
+  invoiceSeries: string;
+  invoiceNumber: string;
+  invoiceDate?: string | null;
+  partnerTaxCode: string;
+  partnerName: string;
+  taxableAmount: number;
+  vatRate: VatRate;
+  vatAmount: number;
+  totalAmount: number;
+  status: string;
+  gdtStatusText?: string | null;
+  existingInvoiceId?: number | null;
+  existingStatus?: string | null;
+  postedVoucherNo?: string | null;
+  itemCount: number;
+  message?: string | null;
+}
+
+export interface TaxInvoiceExcelPostedWarning {
+  invoiceId: number;
+  invoiceSeries: string;
+  invoiceNumber: string;
+  partnerTaxCode: string;
+  partnerName: string;
+  voucherId: number;
+  voucherNo: string;
+  oldStatus: string;
+  newStatus: string;
+  message: string;
+}
+
+export interface TaxInvoiceExcelImportResponse {
+  dryRun: boolean;
+  direction: TaxInvoiceDirection;
+  totalRows: number;
+  createCount: number;
+  updateStatusCount: number;
+  duplicateCount: number;
+  errorCount: number;
+  rows: TaxInvoiceExcelPreviewRow[];
+  postedVoucherWarnings: TaxInvoiceExcelPostedWarning[];
+  errors: string[];
+}
+
 export interface ParsedEinvoiceXmlMeta {
   mccqt?: string | null;
   currencyCode?: string | null;

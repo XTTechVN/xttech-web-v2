@@ -80,7 +80,7 @@ export const VOUCHER_EDITOR_MODES: EditorModeMeta[] = [
   },
   {
     value: 'accountant',
-    label: 'Chế độ Kế toán (Đầy đủ MISA ASP)',
+    label: 'Chế độ Kế toán',
     subtitle: 'Định khoản Nợ/Có đa dòng, Hóa đơn GTGT & Phân loại B4 TNDN',
     icon: Calculator,
   },

@@ -65,6 +65,7 @@ import type {
   TaxInvoice,
   TaxInvoiceCreate,
   TaxInvoiceDirection,
+  TaxInvoiceExcelImportResponse,
   TaxInvoiceQueryParams,
   TaxInvoiceUpdate,
   TrialBalanceQueryParams,
@@ -481,6 +482,22 @@ export const parseTaxInvoiceXml = async (
     `${FINANCE_BASE}/tax-invoices/parse-xml`,
     formData,
     { params: direction ? { direction } : undefined },
+  );
+  return response.data;
+};
+
+export const importTaxInvoicesExcel = async (
+  file: File,
+  direction: TaxInvoiceDirection,
+  dryRun = true,
+): Promise<TaxInvoiceExcelImportResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('direction', direction);
+  formData.append('dryRun', String(dryRun));
+  const response = await api.post<TaxInvoiceExcelImportResponse>(
+    `${FINANCE_BASE}/tax-invoices/import-excel`,
+    formData,
   );
   return response.data;
 };

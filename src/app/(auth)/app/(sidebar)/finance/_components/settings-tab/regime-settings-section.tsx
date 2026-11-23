@@ -21,6 +21,7 @@ import type {
 } from '@/types';
 import { cn, showErrorToast, showSuccessToast } from '@/utils';
 import { OpeningBalanceBanner } from './opening-balance-banner';
+import { RegimeHelpTooltip } from './regime-help-tooltip';
 
 interface RegimeSettingsSectionProps {
   setting: FinanceSetting | null;
@@ -99,7 +100,10 @@ export function RegimeSettingsSection({
       <form onSubmit={handleSave} className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div>
-            <h4 className="text-sm font-bold text-slate-900">Chế độ Kế toán &amp; Ngưỡng Thuế Doanh nghiệp</h4>
+            <div className="flex items-center gap-1.5">
+              <h4 className="text-sm font-bold text-slate-900">Chế độ Kế toán &amp; Ngưỡng Thuế Doanh nghiệp</h4>
+              <RegimeHelpTooltip />
+            </div>
             <p className="text-xs text-slate-500">
               Lựa chọn Thông tư 200 hoặc Thông tư 133 áp dụng cho toàn hệ thống sổ sách và báo cáo
             </p>

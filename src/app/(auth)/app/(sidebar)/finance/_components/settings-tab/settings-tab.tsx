@@ -97,7 +97,7 @@ export function SettingsTab({
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-900">
-              Thiết lập Chế độ Kế toán &amp; Danh mục Tài chính Chuẩn MISA ASP
+              Thiết lập Chế độ Kế toán &amp; Danh mục Tài chính Chuẩn
             </h3>
             <p className="text-xs text-slate-500">
               Quản lý Thông tư 200/133, Hệ thống Tài khoản phân cấp, Quỹ tiền mặt TK 1111, Tài khoản ngân hàng, Khoản mục &amp; Mẫu định khoản
