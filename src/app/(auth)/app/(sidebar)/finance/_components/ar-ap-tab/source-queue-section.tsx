@@ -108,6 +108,11 @@ export function SourceQueueSection({
         sourceId: item.sourceId,
         voucherType: item.suggestedVoucherType,
         hasValidInvoice: item.suggestedHasValidInvoice,
+        ...(item.suggestedTemplateId != null ? { autoPostingTemplateId: item.suggestedTemplateId } : {}),
+        ...(item.suggestedBankAccountId != null ? { bankAccountId: item.suggestedBankAccountId } : {}),
+        ...(item.suggestedDebitAccountId != null ? { debitAccountId: item.suggestedDebitAccountId } : {}),
+        ...(item.suggestedCreditAccountId != null ? { creditAccountId: item.suggestedCreditAccountId } : {}),
+        ...(item.suggestedCostItemId != null ? { costItemId: item.suggestedCostItemId } : {}),
       });
       showSuccessToast(`Đã tạo chứng từ nháp ${voucher.voucherNo} từ ${item.sourceCode}`);
       await refetch();
@@ -195,6 +200,7 @@ export function SourceQueueSection({
       ) : (
         <SourceQueueTable
           items={items}
+          accounts={accounts}
           importingKey={importingKey}
           onOpenVoucherDetail={onOpenVoucherDetail}
           onConfigureItem={setConfiguringItem}

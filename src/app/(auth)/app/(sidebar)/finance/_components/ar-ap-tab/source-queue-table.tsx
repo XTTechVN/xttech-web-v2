@@ -4,12 +4,13 @@ import React, { useMemo } from 'react';
 import { CheckCircle2, Eye, SlidersHorizontal, Zap } from 'lucide-react';
 import { Badge, Button } from '@/components';
 import { SOURCE_TYPE_MAP, VOUCHER_TYPE_MAP } from '@/config/finance';
-import type { SourceQueueItem, SourceQueueType } from '@/types';
+import type { Account, SourceQueueItem, SourceQueueType } from '@/types';
 import { formatCurrency } from '@/utils';
 import { SUGGESTED_INVOICE_BADGE_MAP } from './ar-ap-tab.constants';
 
 interface SourceQueueTableProps {
   items: SourceQueueItem[];
+  accounts: Account[];
   importingKey: string | null;
   onOpenVoucherDetail: (voucherId: number) => void;
   onConfigureItem: (item: SourceQueueItem) => void;
@@ -18,11 +19,17 @@ interface SourceQueueTableProps {
 
 export function SourceQueueTable({
   items,
+  accounts,
   importingKey,
   onOpenVoucherDetail,
   onConfigureItem,
   onQuickImport,
 }: SourceQueueTableProps) {
+  const accountCodeById = useMemo(
+    () => new Map(accounts.map((acc) => [acc.id, acc.accountCode])),
+    [accounts],
+  );
+
   const allTotalAmount = useMemo(
     () => items.reduce((sum, item) => sum + item.amount, 0),
     [items],
@@ -52,6 +59,8 @@ export function SourceQueueTable({
                 const typeMeta = VOUCHER_TYPE_MAP[item.suggestedVoucherType];
                 const invoiceMeta =
                   SUGGESTED_INVOICE_BADGE_MAP[item.suggestedHasValidInvoice ? 'true' : 'false'];
+                const debitCode = item.suggestedDebitAccountId != null ? accountCodeById.get(item.suggestedDebitAccountId) : undefined;
+                const creditCode = item.suggestedCreditAccountId != null ? accountCodeById.get(item.suggestedCreditAccountId) : undefined;
                 const isBusy = importingKey === key;
 
                 return (
@@ -81,14 +90,11 @@ export function SourceQueueTable({
                       {item.partnerName || '---'}
                     </td>
                     <td className="p-3 align-top space-y-1">
-                      <Badge variant={typeMeta?.variant || 'default'} size="sm">
-                        {typeMeta?.shortLabel || item.suggestedVoucherType}
-                      </Badge>
-                      <div>
-                        <Badge variant={invoiceMeta.variant} size="sm">
-                          {invoiceMeta.label}
-                        </Badge>
-                      </div>
+                      <Badge variant={typeMeta?.variant || 'default'} size="sm">{typeMeta?.shortLabel || item.suggestedVoucherType}</Badge>
+                      {debitCode && creditCode && (
+                        <div className="font-mono text-[11px] text-primary font-semibold">Nợ {debitCode} / Có {creditCode}</div>
+                      )}
+                      <div><Badge variant={invoiceMeta.variant} size="sm">{invoiceMeta.label}</Badge></div>
                     </td>
                     <td className="p-3 align-top font-mono tabular-nums text-right font-bold text-slate-900">
                       {formatCurrency(item.amount)}

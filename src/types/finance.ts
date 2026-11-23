@@ -854,6 +854,11 @@ export interface SourceQueueItem {
   projectName?: string | null;
   suggestedVoucherType: VoucherType;
   suggestedHasValidInvoice: boolean;
+  suggestedTemplateId?: number | null;
+  suggestedBankAccountId?: number | null;
+  suggestedDebitAccountId?: number | null;
+  suggestedCreditAccountId?: number | null;
+  suggestedCostItemId?: number | null;
   alreadyImported: boolean;
   existingVoucherId?: number | null;
   existingVoucherNo?: string | null;

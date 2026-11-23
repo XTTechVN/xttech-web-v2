@@ -3,6 +3,13 @@
 All notable changes to the frontend project will be documented in this file.
 
 ## [Unreleased] - 2026-11-23
+### Added & Changed (Source Queue SSOT Auto-Prefill Định khoản Thực tế — `/app/finance?tab=ar_ap`)
+- **Contract `SourceQueueItem` ([`src/types/finance.ts`](file:///c:/Workshop/fe_xttech/src/types/finance.ts)):**
+  - Bổ sung 5 trường gợi ý tùy chọn `suggestedTemplateId`, `suggestedBankAccountId`, `suggestedDebitAccountId`, `suggestedCreditAccountId`, `suggestedCostItemId`.
+- **Auto-Prefill & Smart Sync Hàng chờ Chứng từ ([`source-queue-import-helpers.ts`](file:///c:/Workshop/fe_xttech/src/app/(auth)/app/(sidebar)/finance/_components/ar-ap-tab/source-queue-import-helpers.ts), [`source-queue-import-drawer.tsx`](file:///c:/Workshop/fe_xttech/src/app/(auth)/app/(sidebar)/finance/_components/ar-ap-tab/source-queue-import-drawer.tsx), [`source-queue-section.tsx`](file:///c:/Workshop/fe_xttech/src/app/(auth)/app/(sidebar)/finance/_components/ar-ap-tab/source-queue-section.tsx), [`source-queue-table.tsx`](file:///c:/Workshop/fe_xttech/src/app/(auth)/app/(sidebar)/finance/_components/ar-ap-tab/source-queue-table.tsx)):**
+  - Khởi tạo sẵn `templateId`, `bankAccountId`, `debitAccountId`, `creditAccountId`, `costItemId` từ `item.suggested*`, đổi nhãn `"TK Nợ"` / `"TK Có"`, kiểm tra bắt buộc chọn `TK Nợ` & `TK Có` khi submit, đồng thời cập nhật đồng bộ tài khoản theo sự kiện đổi Mẫu định khoản nhanh, Tài khoản ngân hàng (ưu tiên `glAccountId` / fallback `1121`) và Loại chứng từ (`1111` / GL ngân hàng) không dùng `useEffect`.
+  - Hiển thị cặp tài khoản gợi ý (`Nợ ... / Có ...`) trên `SourceQueueTable` và truyền đầy đủ `suggested*` khi bấm **Import Nháp** để khớp 1:1 với preview.
+
 ### Added (Nhập Hóa đơn GTGT Hàng loạt từ Excel Bảng kê GDT — `/app/finance?tab=tax`)
 - **Contracts, Action & Modal Nhập Excel GDT ([`finance.ts`](file:///c:/Workshop/fe_xttech/src/types/finance.ts), [`actions/finance/index.ts`](file:///c:/Workshop/fe_xttech/src/actions/finance/index.ts), [`import-excel-modal.tsx`](file:///c:/Workshop/fe_xttech/src/app/(auth)/app/(sidebar)/finance/_components/tax-tab/modals/import-excel-modal.tsx), [`import-excel-preview.tsx`](file:///c:/Workshop/fe_xttech/src/app/(auth)/app/(sidebar)/finance/_components/tax-tab/modals/import-excel-preview.tsx), [`tax-invoices-section.tsx`](file:///c:/Workshop/fe_xttech/src/app/(auth)/app/(sidebar)/finance/_components/tax-tab/tax-invoices-section.tsx)):**
   - Bổ sung nút **"Nhập Excel GDT"** cạnh nút **"Tải XML HĐĐT"** cùng modal chọn Mua vào / Bán ra, xem trước phân loại (`Thêm mới` / `Cập nhật trạng thái` / `Trùng (bỏ qua)` / `Lỗi đọc`), cảnh báo chứng từ `posted` bị đổi trạng thái và xác nhận lưu hàng loạt.
