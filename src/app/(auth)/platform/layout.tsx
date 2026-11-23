@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Building2, KeyRound, LogOut, ShieldCheck, Users } from 'lucide-react';
+import { Building2, KeyRound, LogOut, ShieldCheck, Smartphone, Users } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useAuthStore, useMeStore } from '@/stores';
 
@@ -11,6 +11,7 @@ const NAV = [
   { href: '/platform', label: 'Doanh nghiệp', icon: Building2 },
   { href: '/platform/users', label: 'Người dùng', icon: Users },
   { href: '/platform/permissions', label: 'Danh mục quyền', icon: KeyRound },
+  { href: '/platform/app-versions', label: 'Phiên bản', icon: Smartphone },
 ] as const;
 
 // Khu vực riêng của quản trị nền tảng. Người không phải quản trị nền tảng bị đưa về /app.

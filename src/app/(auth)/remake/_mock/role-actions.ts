@@ -30,7 +30,9 @@ export const ACTION_GROUPS: ActionGroup[] = [
   {
     title: 'Chấm công',
     actions: [
-      { code: 'attendance:create', label: 'Nút Thêm công' },
+      { code: 'attendance:create', label: 'Nút Thêm công (quản trị / tạo hộ)' },
+      { code: 'attendance:checkin', label: 'Nút Chấm công vào ca' },
+      { code: 'attendance:checkout', label: 'Nút Chấm công tan ca' },
       { code: 'attendance_report:close_period', label: 'Nút Chốt công' },
     ],
   },

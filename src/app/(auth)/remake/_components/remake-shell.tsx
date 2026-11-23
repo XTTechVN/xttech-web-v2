@@ -16,7 +16,7 @@ import { Sidebar } from './sidebar';
 const FIXED_TITLES: Record<string, string> = { '/remake/dashboard': 'Trang chủ', '/remake/me': 'Tôi', '/remake/tasks': 'Công việc' };
 
 // 4 trang chính của thanh tab dưới: không cần header (tên trang đã ở thanh tab, không có trang trước để quay lại)
-const MAIN_PAGES = ['/remake/dashboard', '/remake/attendances', '/remake/attendance-history', '/remake/tasks', '/remake/me'];
+const MAIN_PAGES = ['/remake/dashboard', '/remake/attendances', '/remake/tasks', '/remake/me'];
 
 // Tên trang ở header điện thoại: lấy theo nhãn menu có đường dẫn khớp dài nhất
 function pageTitle(pathname: string, sections: SidebarSectionProps[]) {

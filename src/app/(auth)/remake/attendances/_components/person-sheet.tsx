@@ -6,7 +6,7 @@ import { getAttendanceStatusInfo } from '@/types';
 import { Badge } from '../../_components/badge';
 import { Sheet } from '../../_components/sheet';
 import { EmptyState, ErrorState, ListSkeleton } from '../../_components/state-views';
-import { hm, TONE } from '../../attendances/_components/attendance-sheet';
+import { hm, TONE } from './attendance-sheet';
 
 interface Target {
   userId: string;

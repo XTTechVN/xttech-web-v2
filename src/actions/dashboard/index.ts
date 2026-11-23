@@ -82,6 +82,8 @@ export const getDashboardSummary = async (): Promise<DashboardSummary> => {
     workShiftName: 'Ca làm việc tiêu chuẩn',
     workShiftStart: '08:00:00',
     workShiftEnd: '17:30:00',
+    imgCheckinPath: myAttRecord?.imgCheckinPath ?? null,
+    imgCheckoutPath: myAttRecord?.imgCheckoutPath ?? null,
   };
 
   // 7 ngày gần nhất

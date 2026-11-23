@@ -8,6 +8,8 @@ export interface MyAttendanceToday {
   workShiftName: string | null;
   workShiftStart: string | null;
   workShiftEnd: string | null;
+  imgCheckinPath: string | null;
+  imgCheckoutPath: string | null;
 }
 
 export interface WeeklyDayStat {

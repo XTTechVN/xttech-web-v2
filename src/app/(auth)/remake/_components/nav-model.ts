@@ -1,7 +1,7 @@
 import type { SidebarItemProps, SidebarSectionProps } from '@/components';
 
 // 4 chức năng chính ở thanh tab dưới (nếu người dùng có quyền); thiếu thì lấy tiếp theo thứ tự menu
-const PRIMARY_IDS = ['dashboard', 'projects', 'customers-root', 'attendances-root', 'attendance-history'];
+const PRIMARY_IDS = ['dashboard', 'projects', 'customers-root', 'attendances-root'];
 const PRIMARY_COUNT = 4;
 
 export interface RemakeNav {

@@ -10,7 +10,7 @@ import { getFileUrl } from '@/utils';
 import { PasswordSheet, ProfileSheet } from './profile-sheets';
 
 // Đã có trên thanh tab dưới nên không lặp lại trong "Tôi"
-const IN_NAV = new Set(['dashboard', 'projects', 'attendances-root', 'attendance-history']);
+const IN_NAV = new Set(['dashboard', 'projects', 'attendances-root']);
 
 const ROW =
   'flex min-h-rm-tap w-full items-center gap-3 px-rm-gutter py-2 text-left text-sm transition-[background-color] duration-(--rm-dur-fast) active:bg-rm-bg md:hover:bg-rm-bg';

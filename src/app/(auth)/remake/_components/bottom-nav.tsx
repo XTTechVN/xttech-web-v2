@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CalendarCheck, ClipboardList, House, User } from 'lucide-react';
-import { useCan } from '@/hooks';
 import { cn } from '@/utils/cn';
 import { isActive } from './nav-model';
 
@@ -14,16 +13,13 @@ const ICON = { size: 20 };
 // Điện thoại: luôn 4 mục cố định. Chức năng khác nằm trong "Tôi". Ẩn từ 768px (đã có sidebar).
 export function BottomNav() {
   const pathname = usePathname();
-  const { scopeOf } = useCan();
-  // Quản lý (dept/org) vào bảng chấm công của nhóm; còn lại vào lịch sử chấm công của mình
-  const attendanceHref = ['dept', 'org'].includes(scopeOf('attendance:read') ?? '') ? '/remake/attendances' : '/remake/attendance-history';
   const items = [
     { id: 'home', label: 'Trang chủ', href: '/remake/dashboard', match: ['/remake/dashboard'], icon: <House {...ICON} /> },
     {
       id: 'attendance',
       label: 'Chấm công',
-      href: attendanceHref,
-      match: ['/remake/attendances', '/remake/attendance-history'],
+      href: '/remake/attendances',
+      match: ['/remake/attendances'],
       icon: <CalendarCheck {...ICON} />,
     },
     { id: 'work', label: 'Công việc', href: '/remake/tasks', match: ['/remake/tasks'], icon: <ClipboardList {...ICON} /> },

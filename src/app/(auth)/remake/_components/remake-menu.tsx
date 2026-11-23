@@ -9,11 +9,9 @@ import {
   Warehouse,
   SlidersHorizontal,
   CalendarCheck,
-  History,
   CalendarOff,
   ClockAlert,
   CalendarRange,
-  BarChart3,
   Users,
   Network,
   Folder,
@@ -22,7 +20,6 @@ import {
   Trash2,
   ShieldCheck,
   UserCog,
-  Server,
 } from 'lucide-react';
 import type { SidebarSectionProps } from '@/components';
 import type { Access } from '@/config';
@@ -85,15 +82,7 @@ const GROUPS: Group[] = [
         label: 'Chấm công',
         href: '/remake/attendances',
         icon: <CalendarCheck {...ICON} />,
-        permissions: ['attendance:read'],
-        wideOnly: true,
-      },
-      {
-        id: 'attendance-history',
-        label: 'Lịch sử chấm công',
-        href: '/remake/attendance-history',
-        icon: <History {...ICON} />,
-        permissions: ['attendance:read'],
+        permissions: ['attendance:read', 'attendance_report:read'],
       },
       { id: 'leave', label: 'Nghỉ phép', href: '/remake/leave-requests', icon: <CalendarOff {...ICON} />, permissions: ['leave_request:read'] },
       {
@@ -104,13 +93,6 @@ const GROUPS: Group[] = [
         permissions: ['attendance_request:read'],
       },
       { id: 'roster', label: 'Ca làm việc', href: '/remake/work-shifts', icon: <CalendarRange {...ICON} />, permissions: ['work_shift:read'] },
-      {
-        id: 'reports',
-        label: 'Báo cáo chấm công',
-        href: '/remake/attendance-reports',
-        icon: <BarChart3 {...ICON} />,
-        permissions: ['attendance_report:read'],
-      },
       { id: 'employees', label: 'Nhân sự', href: '/remake/employees', icon: <Users {...ICON} />, permissions: ['user:read'] },
       { id: 'departments', label: 'Phòng ban', href: '/remake/departments', icon: <Network {...ICON} />, permissions: ['department:read'] },
     ],
@@ -135,7 +117,6 @@ const GROUPS: Group[] = [
         icon: <UserCog {...ICON} />,
         permissions: ['user:assign_role', 'user:create'],
       },
-      { id: 'platform', label: 'Quản trị hệ thống', href: '/app/app-versions', icon: <Server {...ICON} />, platformOnly: true },
     ],
   },
 ];

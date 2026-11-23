@@ -10,7 +10,7 @@ import { Sheet } from '../../_components/sheet';
 
 const KEY = 'rm-quick-actions';
 // Lối tắt mặc định (lấy những mục người dùng có quyền, tối đa 5)
-const DEFAULT_IDS = ['attendance-history', 'leave', 'adjustments', 'projects', 'employees', 'customers-root', 'documents'];
+const DEFAULT_IDS = ['attendances-root', 'leave', 'adjustments', 'projects', 'employees', 'customers-root', 'documents'];
 const DEFAULT_COUNT = 5;
 
 function load(): string[] | null {

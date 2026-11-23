@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_APP_VERSION: version,
   },
   experimental: {
+    agentUpgrade: 'security',
     optimizePackageImports: ['lucide-react', 'react-icons', 'antd', 'recharts', 'motion/react', 'dayjs'],
   },
   async headers() {

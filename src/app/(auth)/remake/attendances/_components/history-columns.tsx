@@ -1,7 +1,7 @@
 import { getAttendanceStatusInfo, type Attendance } from '@/types';
 import { Badge } from '../../_components/badge';
 import type { Column } from '../../_components/data-list';
-import { hm, TONE } from '../../attendances/_components/attendance-sheet';
+import { hm, TONE } from './attendance-sheet';
 
 export const dayLabel = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' });
 const badge = (a: Attendance) => {
