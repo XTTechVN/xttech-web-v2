@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/utils/cn';
 
 const FIELD_BASE =
-  'w-full h-11 px-3.5 text-xs sm:text-sm bg-white border rounded-lg outline-none transition-all';
+  'w-full h-11 px-3.5 text-xs sm:text-sm bg-white border rounded-xl outline-none transition-all';
 const FIELD_NORMAL_BORDER =
   'border-slate-300 hover:border-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20';
 const FIELD_ERROR_BORDER =

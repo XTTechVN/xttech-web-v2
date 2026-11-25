@@ -94,11 +94,15 @@ export * from './document-rule';
 export * from './trash';
 
 export * from './warehouse';
+export * from './supplier-door';
 
 // News
 export * from './news';
 
 // Staff Tasks
 export * from './task';
+
+// Public Lead Registrations
+export * from './lead';
 
 

@@ -2,9 +2,10 @@
 
 import React, { useMemo, useState } from 'react';
 import { CheckSquare, Eye, Layers, Search, Square, Wrench } from 'lucide-react';
-import { Badge, Button, Input, Modal, Skeleton } from '@/components';
-import { DOOR_STATUS_MAP } from '@/config';
+import { Badge, Button, Input, Skeleton } from '@/components';
+import { DOOR_FULFILLMENT_TYPE_MAP, DOOR_STATUS_MAP } from '@/config';
 import type { QrProjectDoorItem } from '@/types';
+import { QrDoorPreviewModal } from './modals/qr-door-preview-modal';
 import { QrDoorVisual } from './qr-door-visual';
 
 interface TabProjectDoorsProps {
@@ -30,10 +31,10 @@ export function TabProjectDoors({
   const [selectedFloor, setSelectedFloor] = useState<string>('ALL');
   const [previewDoor, setPreviewDoor] = useState<QrProjectDoorItem | null>(null);
 
-  const floorNames = useMemo(() => {
-    const names = Array.from(new Set(doors.map((d) => d.floorName || 'Tầng / Khu vực chung')));
-    return names;
-  }, [doors]);
+  const floorNames = useMemo(
+    () => Array.from(new Set(doors.map((d) => d.floorName || 'Tầng / Khu vực chung'))),
+    [doors],
+  );
 
   const groupedDoors = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -44,7 +45,8 @@ export function TabProjectDoors({
       return (
         door.code.toLowerCase().includes(keyword) ||
         (door.name || '').toLowerCase().includes(keyword) ||
-        door.doorName.toLowerCase().includes(keyword)
+        door.doorName.toLowerCase().includes(keyword) ||
+        (door.supplierName || '').toLowerCase().includes(keyword)
       );
     });
 
@@ -152,6 +154,7 @@ export function TabProjectDoors({
                 const isSelected = selectedSet.has(door.id);
                 const isScanned = door.id === scannedPositionId;
                 const statusBadge = DOOR_STATUS_MAP[door.status];
+                const isOutsourced = door.fulfillmentType === 'outsourced';
                 return (
                   <div
                     key={door.id}
@@ -182,6 +185,7 @@ export function TabProjectDoors({
                         height={door.height}
                         designImage={door.designImage}
                         systemConfig={door.systemConfig}
+                        fulfillmentType={door.fulfillmentType}
                         variant="mini"
                         className="w-14 h-16 shrink-0"
                       />
@@ -196,6 +200,13 @@ export function TabProjectDoors({
                               Cửa vừa quét
                             </span>
                           )}
+                          {isOutsourced && (
+                            <span
+                              className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${DOOR_FULFILLMENT_TYPE_MAP.outsourced.badgeClass}`}
+                            >
+                              {DOOR_FULFILLMENT_TYPE_MAP.outsourced.shortLabel}
+                            </span>
+                          )}
                           <Badge
                             variant={statusBadge ? statusBadge.variant : 'default'}
                             size="sm"
@@ -206,8 +217,9 @@ export function TabProjectDoors({
                         <div className="mt-0.5 truncate text-xs font-medium text-slate-700">
                           {door.name || door.doorName}
                         </div>
-                        <div className="mt-0.5 font-mono text-[11px] tabular-nums text-slate-500">
+                        <div className="mt-0.5 font-mono text-[11px] tabular-nums text-slate-500 truncate">
                           {door.width} × {door.height} mm · {door.areaM2} m²
+                          {isOutsourced && door.supplierName ? ` · ${door.supplierName}` : ''}
                         </div>
                       </div>
                     </button>
@@ -249,49 +261,7 @@ export function TabProjectDoors({
         </div>
       )}
 
-      <Modal
-        isOpen={Boolean(previewDoor)}
-        onClose={() => setPreviewDoor(null)}
-        title={previewDoor ? `Chi tiết cửa ${previewDoor.code}` : ''}
-        className="max-w-lg w-full"
-      >
-        {previewDoor && (
-          <div className="space-y-3 text-xs">
-            <QrDoorVisual
-              code={previewDoor.code}
-              doorName={previewDoor.doorName}
-              name={previewDoor.name}
-              width={previewDoor.width}
-              height={previewDoor.height}
-              areaM2={previewDoor.areaM2}
-              designImage={previewDoor.designImage}
-              systemConfig={previewDoor.systemConfig}
-              variant="card"
-            />
-            <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 px-3 py-1">
-              {[
-                ['Tên vị trí', previewDoor.name || previewDoor.doorName],
-                ['Khu vực / Tầng', previewDoor.floorName],
-                [
-                  'Kích thước',
-                  `${previewDoor.width} × ${previewDoor.height} mm (${previewDoor.areaM2} m²)`,
-                ],
-                ['Hãng nhôm', previewDoor.brandName],
-                ['Hệ nhôm', previewDoor.seriesName],
-                ['Màu sắc', previewDoor.colorName],
-                ['Kính', previewDoor.glassName],
-              ].map(([label, val]) =>
-                val ? (
-                  <div key={label} className="flex justify-between py-2">
-                    <span className="text-slate-500">{label}</span>
-                    <b className="font-mono tabular-nums text-slate-900">{val}</b>
-                  </div>
-                ) : null,
-              )}
-            </div>
-          </div>
-        )}
-      </Modal>
+      <QrDoorPreviewModal previewDoor={previewDoor} onClose={() => setPreviewDoor(null)} />
     </div>
   );
 }

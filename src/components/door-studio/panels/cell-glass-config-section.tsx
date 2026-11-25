@@ -2,9 +2,11 @@
 
 import React from 'react';
 import { Square } from 'lucide-react';
+import { Select, type SelectOption } from '@/components/select';
 import { Glass } from '@/types';
 import { GlassVisualEffect, SceneCellNode } from '../studio-types';
 import { GlassEffectMiniPreview } from '../cad-engine/components/cad-glass-effect-overlay';
+import { CellExtraGlassesEditor } from './cell-extra-glasses-editor';
 import {
   GLASS_VISUAL_EFFECT_OPTIONS,
   inferDefaultGlassVisual,
@@ -73,6 +75,14 @@ export const CellGlassConfigSection: React.FC<CellGlassConfigSectionProps> = ({
     });
   };
 
+  const glassOptions: SelectOption[] = [
+    { value: '', label: '— Dùng kính mặc định —' },
+    ...(availableGlasses ?? []).map((glass) => ({
+      value: String(glass.id),
+      label: `${glass.name}${glass.isDefault ? ' ★' : ''}${glass.thicknessMm ? ` (${glass.thicknessMm}mm)` : ''}`,
+    })),
+  ];
+
   return (
     <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
       <div className="flex items-center gap-1.5 text-slate-800 font-semibold text-xs">
@@ -82,18 +92,13 @@ export const CellGlassConfigSection: React.FC<CellGlassConfigSectionProps> = ({
 
       <div>
         <label className="text-[11px] text-slate-600 font-medium block mb-1">Loại kính cho ô này:</label>
-        <select
+        <Select
+          fullWidth
+          className="h-8 text-xs"
           value={selectedGlassValue}
-          onChange={(event) => handlePickGlass(event.target.value)}
-          className="w-full h-8 px-2 text-xs bg-white rounded-md border border-slate-200 text-slate-800 focus:outline-none focus:ring-1 focus:ring-teal-600"
-        >
-          <option value="">— Dùng kính mặc định —</option>
-          {(availableGlasses ?? []).map((glass) => (
-            <option key={glass.id} value={glass.id}>
-              {`${glass.name}${glass.isDefault ? ' ★' : ''}${glass.thicknessMm ? ` (${glass.thicknessMm}mm)` : ''}`}
-            </option>
-          ))}
-        </select>
+          onChange={(event) => handlePickGlass(String(event.target.value))}
+          options={glassOptions}
+        />
       </div>
 
       <div className="rounded-md border border-slate-200 bg-white">
@@ -192,6 +197,14 @@ export const CellGlassConfigSection: React.FC<CellGlassConfigSectionProps> = ({
       ) : (
         defaultGlass?.name && <p className="text-[11px] text-gray-500 italic">{`Mặc định: ${defaultGlass.name}`}</p>
       )}
+
+      <CellExtraGlassesEditor
+        selectedCell={selectedCell}
+        availableGlasses={availableGlasses}
+        defaultGlass={defaultGlass}
+        onUpdateCell={onUpdateCell}
+        onApplyGlassVisualToAll={onApplyGlassVisualToAll}
+      />
 
       <div className="pt-1.5 border-t border-slate-200/60">
         <div className="text-[11px] text-gray-700 font-semibold mb-0.5">Chia kính</div>

@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { Header } from './header';
 import { Footer } from './footer';
 import { FloatingContactDock } from './floating-contact-dock';
+import { HeroLiveSocialProof } from './hero';
+import { HeroSectionDots } from './hero/hero-section-dots';
 
 interface PublicLayoutShellProps {
   children: React.ReactNode;
@@ -14,6 +16,7 @@ const isPortalRoute = (pathname: string | null): boolean => {
   if (!pathname) return false;
   return (
     pathname === '/' ||
+    pathname.startsWith('/introduce') ||
     pathname.startsWith('/pricing') ||
     pathname.startsWith('/news') ||
     pathname.startsWith('/privacy-policy') ||
@@ -25,11 +28,12 @@ const isPortalRoute = (pathname: string | null): boolean => {
 // Thứ tự vị trí ngang của các trang tương ứng với thứ tự tab trên Header
 const getRouteOrderIndex = (pathname: string | null): number => {
   if (!pathname || pathname === '/') return 0;
-  if (pathname.startsWith('/pricing')) return 1;
-  if (pathname.startsWith('/news')) return 2;
-  if (pathname.startsWith('/privacy-policy')) return 3;
-  if (pathname.startsWith('/terms-of-service')) return 4;
-  if (pathname.startsWith('/refund-policy')) return 5;
+  if (pathname.startsWith('/introduce')) return 1;
+  if (pathname.startsWith('/pricing')) return 2;
+  if (pathname.startsWith('/news')) return 3;
+  if (pathname.startsWith('/privacy-policy')) return 4;
+  if (pathname.startsWith('/terms-of-service')) return 5;
+  if (pathname.startsWith('/refund-policy')) return 6;
   return 0;
 };
 
@@ -38,6 +42,8 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
   const mainRef = useRef<HTMLDivElement | null>(null);
   const prevPathRef = useRef<string | null>(pathname);
   const prevIndexRef = useRef<number>(getRouteOrderIndex(pathname));
+
+  const isPortal = isPortalRoute(pathname);
 
   // Chạy đồng bộ trước khi trình duyệt vẽ (pre-paint) bằng Web Animations API GPU
   // Không dùng key={pathname} và không hạ opacity về 0 để triệt tiêu 100% hiện tượng nháy trắng
@@ -77,7 +83,7 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
     return () => animation.cancel();
   }, [pathname]);
 
-  if (!isPortalRoute(pathname)) {
+  if (!isPortal) {
     return <>{children}</>;
   }
 
@@ -89,6 +95,8 @@ export const PublicLayoutShell = ({ children }: PublicLayoutShellProps) => {
       </div>
       {!pathname?.startsWith('/news') && <Footer />}
       <FloatingContactDock />
+      {pathname === '/' && <HeroLiveSocialProof />}
+      {pathname === '/' && <HeroSectionDots />}
     </div>
   );
 };

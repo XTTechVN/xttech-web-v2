@@ -90,6 +90,7 @@ import type {
   QuotationBomUnit,
   QuotationLaborRowCode,
   QuotationMaterialRowCode,
+  QuotationSheetRowType,
 } from '@/types';
 
 export const QUOTATION_BOM_UNIT_MAP: Record<QuotationBomUnit, string> = {
@@ -114,6 +115,7 @@ export const QUOTATION_MATERIAL_ROW_LABEL_MAP: Record<QuotationMaterialRowCode, 
   glass: 'Kính',
   gasket: 'Roan / Gioăng',
   accessory: 'Phụ kiện',
+  outsourced_door: 'Cửa nhập nguyên bộ (NCC)',
 };
 
 export const QUOTATION_LABOR_ROW_LABEL_MAP: Record<QuotationLaborRowCode, string> = {
@@ -128,4 +130,14 @@ export const QUOTATION_LABOR_UNIT_LABEL_MAP: Record<
 > = {
   kg: { unitLabel: 'kg', rateSuffix: 'đ/kg' },
   sqm: { unitLabel: 'm²', rateSuffix: 'đ/m²' },
+};
+
+export const QUOTATION_SHEET_ROW_TYPE_MAP: Record<
+  QuotationSheetRowType,
+  { label: string; rowClass: string }
+> = {
+  door: { label: 'Bộ cửa', rowClass: '' },
+  glass: { label: 'Kính bổ sung', rowClass: 'qt-glass' },
+  accessory: { label: 'Phụ kiện', rowClass: 'qt-accessory' },
+  extra: { label: 'Chi phí khác', rowClass: '' },
 };

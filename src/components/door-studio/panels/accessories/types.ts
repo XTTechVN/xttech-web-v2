@@ -2,17 +2,14 @@ import { AccessoryCombo, Brand } from '@/types';
 
 export type ComboCategoryTab = 'frame' | 'sash' | 'opening' | 'all' | 'individual';
 
-export interface ResolvedComboItemBom {
-  accessoryId: number;
-  accessoryName?: string | null;
-  accessoryCode?: string | null;
-  baseQty: number;
-  resolvedQty: number;
-  isScaled: boolean;
-  formula: string | null;
-  unit: string;
-  unitPrice: number;
-  resolvedTotalPrice: number;
+export function getEffectiveComboPrice(combo: AccessoryCombo): number {
+  if ((combo.totalComboPrice || 0) > 0) {
+    return combo.totalComboPrice;
+  }
+  return (combo.comboItems || []).reduce(
+    (sum, item) => sum + (item.unitPrice || 0) * (item.quantity || 0),
+    0
+  );
 }
 
 /**

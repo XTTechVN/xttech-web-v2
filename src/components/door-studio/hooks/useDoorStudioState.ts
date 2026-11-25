@@ -6,7 +6,8 @@ import { Door, DoorCreate, DoorUpdate, DoorCalculateResponse, SelectedAccessoryI
 import { calculateDoor, createDoor, updateDoor, getDoorSeriesList, getProfileBars, getAccessoryCombos, getAccessories, getGlasses, getBrandColors, getBrands, } from '@/actions';
 import { FrameShape, SashOpenType, SceneCellNode, StudioMainTab, FrameConfig, SashConfig, FrameCornerJoint, SashCornerJoint, BeadCornerJoint, SlidingSashRole, SashOffsetScope, SashOffsetValues, SashVariantProfiles, DoorCustomExtraItem, DoorSystemFamily, DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG, MullionInfo, MullionCutType, ColorSwatch, ALUMINUM_PALETTE, GlassGrilleConfig, } from '../studio-types';
 import { ResizeSplitParams } from '../cad-engine/door-cad-renderer';
-import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, ensureRootCellDimensions, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, findEnclosingFrameUnit, } from '../utils/door-tree-utils';
+import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, ensureRootCellDimensions, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, findEnclosingFrameUnit, resolveFlatSashMullionPositions, pickGlassConfig, } from '../utils/door-tree-utils';
+import { formatReferenceValue } from '../utils/mullion-reference-utils';
 import { applyGlassVisualToTree } from '../utils/glass-visual-utils';
 import {
   parseStudioProfileId,
@@ -620,6 +621,7 @@ interface UseDoorStudioStateProps {
   door?: Door | null;
   defaultBrandId?: number | null;
   initialTab?: StudioMainTab;
+  sketchMode?: boolean;
   onSaveSuccess?: (savedDoor: Door) => void;
   onCustomSave?: (data: {
     name: string;
@@ -628,7 +630,7 @@ interface UseDoorStudioStateProps {
     doorSeriesId?: number | null;
     width: number;
     height: number;
-    systemConfig: Record<string, any>;
+    systemConfig: Record<string, unknown>;
     imageB64?: string;
   }) => Promise<void>;
 }
@@ -639,11 +641,22 @@ export function useDoorStudioState({
   door,
   defaultBrandId,
   initialTab = 'info',
+  sketchMode = false,
   onSaveSuccess,
   onCustomSave,
 }: UseDoorStudioStateProps) {
+  const visibleNavTabs = useMemo<StudioMainTab[]>(
+    () => (sketchMode ? ['info', 'draw', 'view3d'] : ['info', 'draw', 'config', 'bom', 'accessories', 'view3d']),
+    [sketchMode],
+  );
+  const resolvedInitialTab: StudioMainTab = visibleNavTabs.includes(initialTab)
+    ? initialTab
+    : sketchMode
+      ? 'draw'
+      : 'info';
+
   // Navigation Tabs
-  const [activeMainTab, setActiveMainTab] = useState<StudioMainTab>(initialTab);
+  const [activeMainTab, setActiveMainTab] = useState<StudioMainTab>(resolvedInitialTab);
 
   // Selected Brand State
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
@@ -657,7 +670,10 @@ export function useDoorStudioState({
   const [aluminumColor, setAluminumColor] = useState<string>('#955F20');
   const [hardwareColor, setHardwareColor] = useState<string>('#1E293B');
   const [frameShape, setFrameShape] = useState<FrameShape>('rect');
-  const [seriesId, setSeriesId] = useState<number | undefined>(() => door?.doorSeriesId || (door?.systemConfig as any)?.seriesId || undefined);
+  const [seriesId, setSeriesId] = useState<number | undefined>(() => {
+    const sc = door?.systemConfig as Record<string, unknown> | undefined;
+    return door?.doorSeriesId || (typeof sc?.seriesId === 'number' ? sc.seriesId : undefined);
+  });
   const prevSeriesIdRef = useRef<number | undefined>(undefined);
   const wasOpenRef = useRef<boolean>(false);
   const [selectedComboIds, setSelectedComboIds] = useState<number[]>([]);
@@ -697,15 +713,15 @@ export function useDoorStudioState({
   const { data: seriesData } = useQuery({
     queryKey: ['door-series-list'],
     queryFn: () => getDoorSeriesList({ limit: 9999 }),
-    enabled: isOpen,
+    enabled: isOpen && !sketchMode,
   });
-  const allAvailableSeries = useMemo(() => seriesData?.items || [], [seriesData]);
+  const allAvailableSeries = useMemo(() => (sketchMode ? [] : seriesData?.items || []), [seriesData, sketchMode]);
 
   // Fetch Brands (Lấy toàn bộ hãng đang hoạt động để tách hãng nhôm & hãng phụ kiện)
   const { data: brandsData } = useQuery({
     queryKey: ['brands-list', 'all'],
     queryFn: () => getBrands({ limit: 9999, isActive: true }),
-    enabled: isOpen,
+    enabled: isOpen && !sketchMode,
   });
   const availableBrands = useMemo(() => {
     const list = (brandsData?.items || []).filter(
@@ -726,6 +742,7 @@ export function useDoorStudioState({
   );
 
   const effectiveBrandId = useMemo(() => {
+    if (sketchMode) return null;
     return (
       selectedBrandId ||
       currentSeriesObj?.brandId ||
@@ -734,7 +751,7 @@ export function useDoorStudioState({
       availableBrands[0]?.id ||
       null
     );
-  }, [selectedBrandId, currentSeriesObj, door?.doorSeries?.brandId, defaultBrandId, availableBrands]);
+  }, [sketchMode, selectedBrandId, currentSeriesObj, door?.doorSeries?.brandId, defaultBrandId, availableBrands]);
 
   const availableSeries = useMemo(() => {
     if (!effectiveBrandId) return allAvailableSeries;
@@ -759,10 +776,11 @@ export function useDoorStudioState({
         seriesId: !effectiveBrandId ? (explicitSeriesId || fallbackSeriesId) : undefined,
         limit: 1000,
       }),
-    enabled: isOpen && Boolean(effectiveBrandId || explicitSeriesId || fallbackSeriesId),
+    enabled: isOpen && !sketchMode && Boolean(effectiveBrandId || explicitSeriesId || fallbackSeriesId),
   });
 
   const effectiveSeriesId = useMemo(() => {
+    if (sketchMode) return undefined;
     if (explicitSeriesId) return explicitSeriesId;
     const leftPid = frameConfig.leftEdge?.profileId;
     if (leftPid && profilesData?.items?.length) {
@@ -770,7 +788,7 @@ export function useDoorStudioState({
       if (matchedProf?.seriesId) return matchedProf.seriesId;
     }
     return fallbackSeriesId;
-  }, [explicitSeriesId, frameConfig.leftEdge?.profileId, profilesData, fallbackSeriesId]);
+  }, [sketchMode, explicitSeriesId, frameConfig.leftEdge?.profileId, profilesData, fallbackSeriesId]);
 
   const availableProfiles = useMemo(() => {
     const allItems = profilesData?.items || [];
@@ -829,7 +847,7 @@ export function useDoorStudioState({
 
   const availableBeads = useMemo(() => {
     return availableProfiles.filter(
-      (p) => p.barType?.toUpperCase() === 'BEAD' || (p as any).category === 'bead'
+      (p) => p.barType?.toUpperCase() === 'BEAD' || (p as typeof p & { category?: string }).category === 'bead'
     );
   }, [availableProfiles]);
 
@@ -837,7 +855,7 @@ export function useDoorStudioState({
   const { data: combosData, isSuccess: isCombosLoaded } = useQuery({
     queryKey: ['accessory-combos-list'],
     queryFn: () => getAccessoryCombos({ limit: 500 }),
-    enabled: isOpen,
+    enabled: isOpen && !sketchMode,
   });
   const availableCombos = combosData?.items || [];
 
@@ -852,14 +870,14 @@ export function useDoorStudioState({
   const { data: accessoriesData } = useQuery({
     queryKey: ['accessories-list'],
     queryFn: () => getAccessories({ limit: 1000, isActive: true }),
-    enabled: isOpen,
+    enabled: isOpen && !sketchMode,
   });
   const availableAccessories = accessoriesData?.items || [];
 
   // Fetch Glasses (for CellInspector dropdown)
   const { data: glassesData } = useQuery({
     queryKey: ['glasses-list'],
-    queryFn: () => getGlasses({ limit: 200, isActive: true }),
+    queryFn: () => getGlasses({ limit: 500, isActive: true }),
     enabled: isOpen,
   });
   const availableGlasses = useMemo(() => glassesData?.items || [], [glassesData]);
@@ -875,7 +893,7 @@ export function useDoorStudioState({
   const { data: brandColorsData } = useQuery({
     queryKey: ['brand-colors', brandId],
     queryFn: () => getBrandColors({ brandId: brandId || undefined, limit: 100, isActive: true }),
-    enabled: isOpen && !!brandId,
+    enabled: isOpen && !sketchMode && !!brandId,
   });
   const availableBrandColors = useMemo(() => brandColorsData?.items || [], [brandColorsData]);
 
@@ -1190,7 +1208,10 @@ export function useDoorStudioState({
       if (rawColor) setAluminumColor(rawColor);
       const rawHwColor = (sc.hardwareColor || '').trim();
       if (rawHwColor) setHardwareColor(rawHwColor);
-      if (sc.seriesId) {
+      if (sketchMode) {
+        setSelectedBrandId(null);
+        setSeriesId(undefined);
+      } else if (sc.seriesId) {
         setSeriesId(sc.seriesId);
         prevSeriesIdRef.current = sc.seriesId;
         const curSeries = allAvailableSeries.find((s) => s.id === sc.seriesId);
@@ -1218,12 +1239,12 @@ export function useDoorStudioState({
         setSelectedComboIds([]);
       }
       if (sc.selectedAccessories && Array.isArray(sc.selectedAccessories)) {
-        const cleanAccs = sc.selectedAccessories
-          .filter((a: any) => a && (a.accessoryId || a.accessory_id))
-          .map((a: any) => ({
-            accessoryId: Number(a.accessoryId || a.accessory_id),
-            quantity: Number(a.quantity || a.qty || 1),
-            note: a.note || null,
+        const cleanAccs = (sc.selectedAccessories as Array<Record<string, unknown>>)
+          .filter((a) => Boolean(a && a.accessoryId))
+          .map((a) => ({
+            accessoryId: Number(a.accessoryId),
+            quantity: Number(a.quantity || 1),
+            note: typeof a.note === 'string' ? a.note : null,
           }));
         setSelectedAccessories(cleanAccs);
       } else {
@@ -1251,7 +1272,7 @@ export function useDoorStudioState({
       setIsMullionModalOpen(false);
       setCalcData(null);
       if (isFirstOpen) {
-        setActiveMainTab(initialTab || 'info');
+        setActiveMainTab(resolvedInitialTab);
       }
     } else {
       const defaultW = 1400;
@@ -1266,14 +1287,20 @@ export function useDoorStudioState({
       setFrameShape('rect');
       setAluminumColor('#955F20');
       setHardwareColor('#1E293B');
-      const initialBrandId = defaultBrandId || (availableBrands[0]?.id ?? null);
-      setSelectedBrandId(initialBrandId);
-      const brandSeriesList = initialBrandId
-        ? allAvailableSeries.filter((s) => s.brandId === initialBrandId)
-        : allAvailableSeries;
-      const initialSeriesId = brandSeriesList[0]?.id || undefined;
-      setSeriesId(initialSeriesId);
-      prevSeriesIdRef.current = initialSeriesId;
+      if (sketchMode) {
+        setSelectedBrandId(null);
+        setSeriesId(undefined);
+        prevSeriesIdRef.current = undefined;
+      } else {
+        const initialBrandId = defaultBrandId || (availableBrands[0]?.id ?? null);
+        setSelectedBrandId(initialBrandId);
+        const brandSeriesList = initialBrandId
+          ? allAvailableSeries.filter((s) => s.brandId === initialBrandId)
+          : allAvailableSeries;
+        const initialSeriesId = brandSeriesList[0]?.id || undefined;
+        setSeriesId(initialSeriesId);
+        prevSeriesIdRef.current = initialSeriesId;
+      }
       setSelectedComboIds([]);
       setSelectedAccessories([]);
       setFrameConfig(DEFAULT_FRAME_CONFIG);
@@ -1287,9 +1314,9 @@ export function useDoorStudioState({
       setIsMullionModalOpen(false);
       setCalcData(null);
       setIsCalculating(false);
-      setActiveMainTab(initialTab || 'info');
+      setActiveMainTab(resolvedInitialTab);
     }
-  }, [door, isOpen, defaultBrandId, initialTab, allAvailableSeries.length]);
+  }, [door, isOpen, defaultBrandId, resolvedInitialTab, sketchMode, allAvailableSeries.length]);
 
   const pushState = (newRoot: SceneCellNode) => {
     const nextHist = [...history.slice(0, historyIdx + 1), newRoot];
@@ -1336,7 +1363,15 @@ export function useDoorStudioState({
     const targetNode = selectedCellId ? findNode(rootCell, selectedCellId) : null;
     const target = targetNode || rootCell;
 
-    const children = createSplitChildren(target.id, target.w, target.h, countClamped, direction, 'fixed');
+    const children = createSplitChildren(
+      target.id,
+      target.w,
+      target.h,
+      countClamped,
+      direction,
+      'fixed',
+      pickGlassConfig(target)
+    );
     const updated = updateNode(rootCell, target.id, {
       splitDirection: direction,
       splitType: 'mullion',
@@ -1350,7 +1385,15 @@ export function useDoorStudioState({
     const targetNode = selectedCellId ? findNode(rootCell, selectedCellId) : null;
     const target = targetNode || rootCell;
 
-    const children = createSplitChildren(target.id, target.w, target.h, 2, direction, 'fixed');
+    const children = createSplitChildren(
+      target.id,
+      target.w,
+      target.h,
+      2,
+      direction,
+      'fixed',
+      pickGlassConfig(target)
+    );
     const updated = updateNode(rootCell, target.id, {
       splitDirection: direction,
       splitType: 'coupling',
@@ -1396,7 +1439,8 @@ export function useDoorStudioState({
       target.h,
       countClamped,
       direction,
-      'fixed'
+      'fixed',
+      pickGlassConfig(target)
     ).map((child) => ({
       ...child,
       paneType: target.paneType || 'glass',
@@ -1431,6 +1475,7 @@ export function useDoorStudioState({
     const parentNode = findParentNode(rootCell, selectedCellId);
     if (parentNode && parentNode.splitType === 'sash_mullion') {
       const updated = updateNode(rootCell, parentNode.id, {
+        ...pickGlassConfig(targetNode),
         splitDirection: undefined,
         splitType: undefined,
         children: [],
@@ -1510,7 +1555,8 @@ export function useDoorStudioState({
       setSashConfig((prev) => ({ ...prev, family: inferredFamily }));
     }
     const targetId = selectedCellId || (rootCell.children?.[0]?.id || rootCell.id);
-    let { updatedRoot, nextSelectedId } = applySashTypeToCluster(rootCell, targetId, sashType);
+    const { updatedRoot: initialRoot, nextSelectedId } = applySashTypeToCluster(rootCell, targetId, sashType);
+    let updatedRoot = initialRoot;
 
     if (isSlimMode && sashType !== 'fixed') {
       const voCucProfile = findStudioProfile(
@@ -1652,22 +1698,65 @@ export function useDoorStudioState({
     if (!selectedMullion) return;
     const baseRoot = ensureRootCellDimensions(rootCell, w, h);
     const parentNode = findNode(baseRoot, selectedMullion.parentNodeId);
-    if (!parentNode || !parentNode.children || parentNode.children.length < 2) return;
+    if (!parentNode) return;
 
     const idx = selectedMullion.mullionIndex;
     const isVert = selectedMullion.direction === 'vertical';
+    const hasChildren = Boolean(parentNode.children && parentNode.children.length > 0);
+    const isFlatSashMullion =
+      !hasChildren &&
+      parentNode.splitType !== 'sash_mullion' &&
+      Boolean(parentNode.sashMullions && parentNode.sashMullions.count > 1);
+
+    if (isFlatSashMullion && parentNode.sashMullions) {
+      const flatPositions = resolveFlatSashMullionPositions(parentNode);
+      if (idx < 0 || idx + 1 >= flatPositions.length) return;
+      const oldDim = flatPositions[idx];
+      const oldNextDim = flatPositions[idx + 1];
+      const totalDim = oldDim + oldNextDim;
+      const minDim = Math.min(Math.floor(totalDim / 2), Math.min(50, Math.max(20, Math.floor(totalDim * 0.15))));
+      const newDim = Math.max(minDim, Math.min(totalDim - minDim, params.dimension));
+      const newNextDim = formatReferenceValue(totalDim - newDim);
+      const nextPositions = [...flatPositions];
+      nextPositions[idx] = formatReferenceValue(newDim);
+      nextPositions[idx + 1] = newNextDim;
+
+      pushState(
+        updateNode(baseRoot, parentNode.id, {
+          sashMullions: {
+            ...parentNode.sashMullions,
+            direction: parentNode.sashMullions.direction || selectedMullion.direction,
+            positions: nextPositions,
+          },
+        })
+      );
+      toast.success('Cập nhật thông số đố thành công');
+      return;
+    }
+
+    if (!parentNode.children || parentNode.children.length < 2 || idx < 0 || idx + 1 >= parentNode.children.length) {
+      return;
+    }
+
     const child = parentNode.children[idx];
     const nextChild = parentNode.children[idx + 1];
-
     const oldDim = isVert ? child.w : child.h;
     const oldNextDim = isVert ? nextChild.w : nextChild.h;
     const totalDim = oldDim + oldNextDim;
-    const minDim = Math.min(50, Math.max(20, Math.floor(totalDim * 0.15)));
+    const minDim = Math.min(Math.floor(totalDim / 2), Math.min(50, Math.max(20, Math.floor(totalDim * 0.15))));
     const newDim = Math.max(minDim, Math.min(totalDim - minDim, params.dimension));
-    const delta = newDim - oldDim;
+    const dimUnchanged = Math.abs(newDim - oldDim) < 1e-6;
+    const newNextDim = dimUnchanged ? oldNextDim : formatReferenceValue(totalDim - newDim);
 
     const newChildren = parentNode.children.map((c, i) => {
       if (i === idx) {
+        if (dimUnchanged) {
+          return {
+            ...c,
+            mullionProfileId: params.profileId,
+            mullionCutType: params.cutType,
+          };
+        }
         const scaled = rescaleTree(
           c,
           isVert ? newDim / (oldDim || 1) : 1,
@@ -1681,8 +1770,8 @@ export function useDoorStudioState({
           mullionCutType: params.cutType,
         };
       }
-      if (i === idx + 1 && nextChild) {
-        const newNextDim = Math.max(minDim, oldNextDim - delta);
+      if (i === idx + 1) {
+        if (dimUnchanged) return c;
         const scaledNext = rescaleTree(
           c,
           isVert ? newNextDim / (oldNextDim || 1) : 1,
@@ -1720,10 +1809,47 @@ export function useDoorStudioState({
   }: ResizeSplitParams) => {
     const baseRoot = ensureRootCellDimensions(rootCell, w, h);
     const parentNode = findNode(baseRoot, parentNodeId);
-    if (!parentNode || !parentNode.children || parentNode.children.length < splitIndex + 2) return;
+    if (!parentNode) return;
 
     const idx = splitIndex;
     const isVert = direction === 'vertical';
+    const hasChildren = Boolean(parentNode.children && parentNode.children.length > 0);
+    const isFlatSashMullion =
+      !hasChildren &&
+      parentNode.splitType !== 'sash_mullion' &&
+      Boolean(parentNode.sashMullions && parentNode.sashMullions.count > 1);
+
+    if (isFlatSashMullion && parentNode.sashMullions) {
+      const flatPositions = resolveFlatSashMullionPositions(parentNode);
+      if (idx < 0 || idx + 1 >= flatPositions.length) return;
+      const oldDim1 = flatPositions[idx];
+      const oldDim2 = flatPositions[idx + 1];
+      const totalDim = oldDim1 + oldDim2;
+      const minDim = Math.min(Math.floor(totalDim / 2), Math.min(50, Math.max(20, Math.floor(totalDim * 0.15))));
+      const clampedDim1 = Math.max(minDim, Math.min(totalDim - minDim, newDimension));
+      const clampedDim2 = formatReferenceValue(totalDim - clampedDim1);
+      const nextPositions = [...flatPositions];
+      nextPositions[idx] = formatReferenceValue(clampedDim1);
+      nextPositions[idx + 1] = clampedDim2;
+
+      const updatedRoot = updateNode(baseRoot, parentNode.id, {
+        sashMullions: {
+          ...parentNode.sashMullions,
+          direction: parentNode.sashMullions.direction || direction,
+          positions: nextPositions,
+        },
+      });
+
+      if (isFinal) {
+        pushState(updatedRoot);
+      } else {
+        setRootCell(updatedRoot);
+      }
+      return;
+    }
+
+    if (!parentNode.children || idx < 0 || parentNode.children.length < idx + 2) return;
+
     const child = parentNode.children[idx];
     const nextChild = parentNode.children[idx + 1];
 
@@ -1731,9 +1857,9 @@ export function useDoorStudioState({
     const oldDim2 = isVert ? nextChild.w : nextChild.h;
     const totalDim = oldDim1 + oldDim2;
 
-    const minDim = Math.min(50, Math.max(20, Math.floor(totalDim * 0.15)));
+    const minDim = Math.min(Math.floor(totalDim / 2), Math.min(50, Math.max(20, Math.floor(totalDim * 0.15))));
     const clampedDim1 = Math.max(minDim, Math.min(totalDim - minDim, newDimension));
-    const clampedDim2 = totalDim - clampedDim1;
+    const clampedDim2 = formatReferenceValue(totalDim - clampedDim1);
 
     const updatedChild = rescaleTree(
       child,
@@ -1777,38 +1903,115 @@ export function useDoorStudioState({
 
   const handleDeleteMullion = () => {
     if (!selectedMullion) return;
-    const parentNode = findNode(rootCell, selectedMullion.parentNodeId);
-    if (!parentNode || !parentNode.children || parentNode.children.length === 0) return;
+    const baseRoot = ensureRootCellDimensions(rootCell, w, h);
+    const parentNode = findNode(baseRoot, selectedMullion.parentNodeId);
+    if (!parentNode) return;
 
     const idx = selectedMullion.mullionIndex;
     const isVert = selectedMullion.direction === 'vertical';
+    const hasChildren = Boolean(parentNode.children && parentNode.children.length > 0);
+    const isFlatSashMullion =
+      !hasChildren &&
+      parentNode.splitType !== 'sash_mullion' &&
+      Boolean(parentNode.sashMullions && parentNode.sashMullions.count > 1);
 
-    if (parentNode.children.length <= 2) {
-      const mergedNode: Partial<SceneCellNode> = {
-        children: [],
-        splitDirection: undefined,
-        splitType: undefined,
-        sashType: parentNode.children[0]?.sashType || 'fixed',
-        paneType: parentNode.children[0]?.paneType || 'glass',
-      };
-      pushState(updateNode(rootCell, parentNode.id, mergedNode));
+    if (parentNode.splitType === 'sash_mullion') {
+      if (!parentNode.children || parentNode.children.length < 2) return;
+      if (parentNode.children.length <= 2) {
+        const survivingLeaf = parentNode.children[0];
+        pushState(
+          updateNode(baseRoot, parentNode.id, {
+            ...pickGlassConfig(survivingLeaf),
+            children: [],
+            splitDirection: undefined,
+            splitType: undefined,
+            sashMullions: undefined,
+          })
+        );
+      } else {
+        if (idx < 0 || idx + 1 >= parentNode.children.length) return;
+        const c1 = parentNode.children[idx];
+        const c2 = parentNode.children[idx + 1];
+        const mergedSpan = formatReferenceValue((isVert ? c1.w : c1.h) + (isVert ? c2.w : c2.h));
+        const scaledC1 = c1.children?.length
+          ? rescaleTree(c1, isVert ? mergedSpan / (c1.w || 1) : 1, isVert ? 1 : mergedSpan / (c1.h || 1))
+          : c1;
+        const mergedChild: SceneCellNode = {
+          ...scaledC1,
+          w: isVert ? mergedSpan : c1.w,
+          h: isVert ? c1.h : mergedSpan,
+        };
+        const newChildren = [
+          ...parentNode.children.slice(0, idx),
+          mergedChild,
+          ...parentNode.children.slice(idx + 2),
+        ];
+        const nextSashMullions = parentNode.sashMullions
+          ? {
+              ...parentNode.sashMullions,
+              count: newChildren.length,
+              direction: parentNode.sashMullions.direction || selectedMullion.direction,
+              positions: newChildren.map((c) => (isVert ? c.w : c.h)),
+            }
+          : undefined;
+        pushState(updateNode(baseRoot, parentNode.id, { children: newChildren, sashMullions: nextSashMullions }));
+      }
+    } else if (isFlatSashMullion && parentNode.sashMullions) {
+      const flatPositions = resolveFlatSashMullionPositions(parentNode);
+      if (flatPositions.length <= 2) {
+        pushState(updateNode(baseRoot, parentNode.id, { sashMullions: undefined }));
+      } else {
+        if (idx < 0 || idx + 1 >= flatPositions.length) return;
+        const mergedSpan = formatReferenceValue(flatPositions[idx] + flatPositions[idx + 1]);
+        const nextPositions = [
+          ...flatPositions.slice(0, idx),
+          mergedSpan,
+          ...flatPositions.slice(idx + 2),
+        ];
+        pushState(
+          updateNode(baseRoot, parentNode.id, {
+            sashMullions: {
+              ...parentNode.sashMullions,
+              count: nextPositions.length,
+              direction: parentNode.sashMullions.direction || selectedMullion.direction,
+              positions: nextPositions,
+            },
+          })
+        );
+      }
     } else {
-      const c1 = parentNode.children[idx];
-      const c2 = parentNode.children[idx + 1];
-      const mergedSpan = (isVert ? c1.w : c1.h) + (isVert ? c2.w : c2.h);
-
-      const mergedChild: SceneCellNode = {
-        ...c1,
-        w: isVert ? mergedSpan : c1.w,
-        h: isVert ? c1.h : mergedSpan,
-      };
-
-      const newChildren = [
-        ...parentNode.children.slice(0, idx),
-        mergedChild,
-        ...parentNode.children.slice(idx + 2),
-      ];
-      pushState(updateNode(rootCell, parentNode.id, { children: newChildren }));
+      if (!parentNode.children || parentNode.children.length === 0) return;
+      if (parentNode.children.length <= 2) {
+        const survivingLeaf = parentNode.children[0];
+        const mergedNode: Partial<SceneCellNode> = {
+          ...pickGlassConfig(survivingLeaf),
+          children: [],
+          splitDirection: undefined,
+          splitType: undefined,
+          sashType: survivingLeaf?.sashType || 'fixed',
+          paneType: survivingLeaf?.paneType || 'glass',
+        };
+        pushState(updateNode(baseRoot, parentNode.id, mergedNode));
+      } else {
+        if (idx < 0 || idx + 1 >= parentNode.children.length) return;
+        const c1 = parentNode.children[idx];
+        const c2 = parentNode.children[idx + 1];
+        const mergedSpan = formatReferenceValue((isVert ? c1.w : c1.h) + (isVert ? c2.w : c2.h));
+        const scaledC1 = c1.children?.length
+          ? rescaleTree(c1, isVert ? mergedSpan / (c1.w || 1) : 1, isVert ? 1 : mergedSpan / (c1.h || 1))
+          : c1;
+        const mergedChild: SceneCellNode = {
+          ...scaledC1,
+          w: isVert ? mergedSpan : c1.w,
+          h: isVert ? c1.h : mergedSpan,
+        };
+        const newChildren = [
+          ...parentNode.children.slice(0, idx),
+          mergedChild,
+          ...parentNode.children.slice(idx + 2),
+        ];
+        pushState(updateNode(baseRoot, parentNode.id, { children: newChildren }));
+      }
     }
 
     setSelectedMullion(null);
@@ -1934,7 +2137,10 @@ export function useDoorStudioState({
 
   // Realtime calculate BOM
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || sketchMode) {
+      setIsCalculating(false);
+      return;
+    }
     let isMounted = true;
     setIsCalculating(true);
 
@@ -1989,7 +2195,7 @@ export function useDoorStudioState({
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [isOpen, door?.id, initialSystemConfig, w, h, frameShape, aluminumColor, rootCell, frameConfig, sashConfig, effectiveSeriesId, validSelectedComboIds, selectedAccessories]);
+  }, [isOpen, sketchMode, door?.id, initialSystemConfig, w, h, frameShape, aluminumColor, rootCell, frameConfig, sashConfig, effectiveSeriesId, validSelectedComboIds, selectedAccessories]);
 
   const handleToggleCombo = (comboId: number) => {
     setSelectedComboIds((prev) =>
@@ -2159,6 +2365,7 @@ export function useDoorStudioState({
   };
 
   return {
+    visibleNavTabs,
     activeMainTab,
     setActiveMainTab,
     w,

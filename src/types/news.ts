@@ -5,6 +5,7 @@ export type NewsCategory =
   | 'industry_knowledge'
   | 'project_showcase'
   | 'technology_solution'
+  | 'user_guide'
   | 'recruitment_culture'
   | 'promotion_event';
 

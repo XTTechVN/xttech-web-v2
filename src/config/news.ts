@@ -33,6 +33,7 @@ export const NEWS_CATEGORY_MAP: Record<NewsCategory, string> = {
   industry_knowledge: 'Kiến thức nhôm kính',
   project_showcase: 'Công trình tiêu biểu',
   technology_solution: 'Công nghệ & Giải pháp',
+  user_guide: 'Hướng dẫn sử dụng',
   recruitment_culture: 'Tuyển dụng & Văn hóa',
   promotion_event: 'Khuyến mãi và Sự kiện',
 };
@@ -42,6 +43,7 @@ export const NEWS_CATEGORY_OPTIONS: Array<{ value: NewsCategory; label: string }
   { value: 'industry_knowledge', label: 'Kiến thức nhôm kính' },
   { value: 'project_showcase', label: 'Công trình tiêu biểu' },
   { value: 'technology_solution', label: 'Công nghệ & Giải pháp' },
+  { value: 'user_guide', label: 'Hướng dẫn sử dụng' },
   { value: 'recruitment_culture', label: 'Tuyển dụng & Văn hóa' },
   { value: 'promotion_event', label: 'Khuyến mãi và Sự kiện' },
 ];
@@ -69,6 +71,11 @@ export const NEWS_CATEGORY_BADGE_MAP: Record<
     label: 'Công nghệ & Giải pháp',
     variant: 'primary',
     className: 'bg-teal-50 text-teal-800 border-teal-200',
+  },
+  user_guide: {
+    label: 'Hướng dẫn sử dụng',
+    variant: 'info',
+    className: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   },
   recruitment_culture: {
     label: 'Tuyển dụng & Văn hóa',

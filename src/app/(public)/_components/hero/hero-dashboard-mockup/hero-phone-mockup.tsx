@@ -14,9 +14,7 @@ export function HeroPhoneMockup() {
         <div className="flex items-center justify-between border-b border-slate-100 bg-white px-2.5 py-1">
           <Menu className="h-3 w-3 text-slate-700" />
           <span className="text-[7.5px] font-bold text-primary">Trang chủ</span>
-          <div className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-100 text-[6.5px] font-bold text-slate-700">
-            SA
-          </div>
+          <div className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-100 text-[6.5px] font-bold text-slate-700">SA</div>
         </div>
 
         <div className="space-y-1.5 p-2">
@@ -31,9 +29,7 @@ export function HeroPhoneMockup() {
                   <span>Chào buổi chiều</span>
                   <Sparkles className="h-2 w-2 text-amber-500" />
                 </div>
-                <div className="truncate text-[7.5px] font-extrabold text-slate-900">
-                  System Administrator
-                </div>
+                <div className="truncate text-[7.5px] font-extrabold text-slate-900">System Administrator</div>
                 <div className="text-[6px] font-semibold text-primary">Trưởng phòng</div>
               </div>
             </div>
@@ -78,9 +74,7 @@ export function HeroPhoneMockup() {
           {/* Tiện ích doanh nghiệp (10 tính năng) */}
           <div className="rounded-xl border border-slate-100 bg-white p-1.5 shadow-2xs">
             <div className="flex items-center justify-between text-[6px] whitespace-nowrap">
-              <span className="font-extrabold uppercase tracking-wider text-slate-800">
-                TIỆN ÍCH DOANH NGHIỆP
-              </span>
+              <span className="font-extrabold uppercase tracking-wider text-slate-800">TIỆN ÍCH DOANH NGHIỆP</span>
               <span className="text-slate-400">10 tính năng</span>
             </div>
 
@@ -89,9 +83,7 @@ export function HeroPhoneMockup() {
                 const Icon = item.icon;
                 return (
                   <div key={item.label} className="flex flex-col items-center gap-0.5">
-                    <div
-                      className={`relative flex h-5 w-5 items-center justify-center rounded-md ${item.bg}`}
-                    >
+                    <div className={`relative flex h-5 w-5 items-center justify-center rounded-md ${item.bg}`}>
                       <Icon className="h-2.5 w-2.5" />
                       {item.badge && (
                         <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2 items-center justify-center rounded-full bg-red-500 text-[4.5px] font-bold text-white">

@@ -1,61 +1,129 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { Briefcase, CheckCircle2, HardHat, Sparkles, TrendingUp, Zap } from 'lucide-react';
 import Image from 'next/image';
+import { cn } from '@/utils/cn';
 
 export function BenefitsSection() {
+  const [activeIdleCard, setActiveIdleCard] = useState<0 | 1>(0);
+  const [isHoveringCards, setIsHoveringCards] = useState(false);
+
+  // Hiệu ứng luân phiên làm nổi bật 2 thẻ lợi ích khi chưa hover
+  useEffect(() => {
+    if (isHoveringCards) return;
+
+    const timer = setInterval(() => {
+      setActiveIdleCard((prev) => (prev === 0 ? 1 : 0));
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [isHoveringCards]);
+
   return (
-    <section className="relative overflow-hidden bg-white py-16 lg:py-24 border-b border-slate-200/80">
+    <section
+      id="benefits"
+      className="relative scroll-mt-16 overflow-hidden bg-white py-6 lg:py-8 border-b border-slate-200/80"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header trung tâm */}
-        <div className="max-w-3xl space-y-3 mb-12">
+        <div className="max-w-3xl space-y-2 mb-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary">
             <Zap className="h-3.5 w-3.5" />
             <span>Giải pháp toàn diện</span>
           </div>
-          <h2 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
             Cải tiến quản lý sản xuất & thi công với <span className="text-primary">XTTech</span>
           </h2>
-          <p className="text-base text-slate-600">
-            Phần mềm quản lý tiến độ, vật tư, bóc tách bareme & tối ưu sản xuất ngành Nhôm Kính hàng đầu Việt Nam
+          <p className="text-sm sm:text-base text-slate-600">
+            Nền tảng quản trị xưởng nhôm kính từ khảo sát, báo giá, thiết kế bóc tách 2D/3D, xuất thẻ cắt A4 tối ưu nhôm, quản lý kho vật tư đến chấm công, giám sát thi công và nghiệm thu bảo hành QR.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
-          {/* Cột trái: 2 Card lợi ích thiết kế sạch, màu sắc cân bằng hài hòa */}
-          <div className="space-y-5 lg:col-span-5">
-            {/* Card 1: Giám đốc & BQL Dự án */}
-            <div className="group rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 p-6 shadow-sm transition-all duration-300 hover:border-amber-300 hover:shadow-lg">
-              <div className="flex items-center gap-3 pb-4 border-b border-amber-100">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm shadow-amber-500/30">
+        <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
+          {/* Cột trái: 2 Card lợi ích — Trượt từ bên trái sang */}
+          <motion.div
+            initial={{ opacity: 0, x: -70 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-5"
+          >
+            <div
+              onMouseEnter={() => setIsHoveringCards(true)}
+              onMouseLeave={() => setIsHoveringCards(false)}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mx-0 lg:px-0 lg:pb-0 lg:block lg:space-y-3.5 lg:overflow-visible"
+            >
+              {/* Card 1: Giám đốc & BQL Dự án */}
+              <div
+                className={cn(
+                  'group relative w-[84vw] max-w-[340px] shrink-0 snap-center lg:w-auto lg:max-w-none overflow-hidden rounded-2xl border bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-500/10',
+                !isHoveringCards && activeIdleCard === 0
+                  ? '-translate-y-1 border-amber-300 shadow-lg shadow-amber-500/10'
+                  : 'border-amber-200/90 shadow-sm',
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'pointer-events-none absolute inset-x-0 top-0 h-1 origin-left bg-amber-500 transition-transform duration-500 ease-out group-hover:scale-x-100',
+                  !isHoveringCards && activeIdleCard === 0 ? 'scale-x-100' : 'scale-x-0',
+                )}
+              />
+              <div className="flex items-center gap-3 pb-3 border-b border-amber-100">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm shadow-amber-500/30 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
                   <Briefcase className="h-5 w-5" />
                 </div>
                 <div>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">Lợi ích cho</span>
-                  <h3 className="text-base font-black text-slate-900">Giám đốc & Ban Quản Lý Dự Án</h3>
+                  <h3 className="text-base font-black text-slate-900">Giám đốc & Chủ xưởng</h3>
                 </div>
               </div>
 
-              <ul className="space-y-3.5 pt-4 text-xs sm:text-[13px] leading-relaxed text-slate-700">
+              <ul className="space-y-2.5 pt-3 text-xs sm:text-[13px] leading-relaxed text-slate-700">
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                   <div>
-                    <strong className="font-bold text-slate-900">Theo sát tiến độ từng bộ cửa realtime:</strong>{' '}
-                    Nắm bắt tình trạng gia công xưởng và tiến độ lắp ráp công trường tức thì mà không cần có mặt trực tiếp.
+                    <strong className="font-bold text-slate-900">Theo dõi tiến độ xưởng – công trình:</strong>{' '}
+                    Nắm bắt trạng thái sản xuất từng đơn hàng, tiến độ ép góc và lắp dựng ngoài công trình mà không cần có mặt trực tiếp.
                   </div>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                   <div>
-                    <strong className="font-bold text-slate-900">Báo cáo tài chính & lãi gộp chính xác:</strong>{' '}
-                    Kiểm soát chặt chẽ giá vốn vật tư, tiền công thợ và biên lợi nhuận từng dự án ngay từ khâu báo giá.
+                    <strong className="font-bold text-slate-900">Kiểm soát giá vốn, chi phí &amp; lãi/lỗ dự án:</strong>{' '}
+                    Tự động tổng hợp chi phí thanh nhôm, kính, phụ kiện và nhân công thợ để nắm rõ biên lợi nhuận ngay từ khâu báo giá.
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                  <div>
+                    <strong className="font-bold text-slate-900">Kiểm soát tồn kho &amp; phê duyệt từ xa:</strong>{' '}
+                    Theo dõi nhập xuất tồn nhôm, kính, phụ kiện theo từng đơn hàng và duyệt nhanh báo giá, hợp đồng, đề xuất tạm ứng ngay trên điện thoại.
                   </div>
                 </li>
               </ul>
             </div>
 
             {/* Card 2: Nhân viên & Thợ xưởng */}
-            <div className="group rounded-2xl border border-teal-200/90 bg-gradient-to-br from-teal-50/80 via-white to-teal-50/40 p-6 shadow-sm transition-all duration-300 hover:border-teal-300 hover:shadow-lg">
-              <div className="flex items-center gap-3 pb-4 border-b border-teal-100">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white shadow-sm shadow-primary/30">
+            <div
+              className={cn(
+                'group relative w-[84vw] max-w-[340px] shrink-0 snap-center lg:w-auto lg:max-w-none overflow-hidden rounded-2xl border bg-gradient-to-br from-teal-50/80 via-white to-teal-50/40 p-4.5 sm:p-5 transition-all duration-500 hover:-translate-y-1 hover:border-primary/45 hover:shadow-xl hover:shadow-primary/10',
+                !isHoveringCards && activeIdleCard === 1
+                  ? '-translate-y-1 border-primary/45 shadow-lg shadow-primary/10'
+                  : 'border-teal-200/90 shadow-sm',
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'pointer-events-none absolute inset-x-0 top-0 h-1 origin-left bg-primary transition-transform duration-500 ease-out group-hover:scale-x-100',
+                  !isHoveringCards && activeIdleCard === 1 ? 'scale-x-100' : 'scale-x-0',
+                )}
+              />
+              <div className="flex items-center gap-3 pb-3 border-b border-teal-100">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-sm shadow-primary/30 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
                   <HardHat className="h-5 w-5" />
                 </div>
                 <div>
@@ -64,27 +132,41 @@ export function BenefitsSection() {
                 </div>
               </div>
 
-              <ul className="space-y-3.5 pt-4 text-xs sm:text-[13px] leading-relaxed text-slate-700">
-                <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <div>
-                    <strong className="font-bold text-slate-900">Với Giám sát & Thợ công trình:</strong>{' '}
-                    Báo cáo vật tư, khối lượng lắp ráp trực tiếp tại công trường qua điện thoại; quét mã QR nghiệm thu bàn giao nhanh gọn.
-                  </div>
-                </li>
+              <ul className="space-y-2.5 pt-3 text-xs sm:text-[13px] leading-relaxed text-slate-700">
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <div>
                     <strong className="font-bold text-slate-900">Với Kỹ thuật bóc tách & Xưởng cắt:</strong>{' '}
-                    Tự động xuất lệnh sản xuất (LSX), in thẻ cắt A4 tối ưu thanh nhôm, giảm tỷ lệ nhôm vụn thừa xuống dưới 2%.
+                    Tự động xuất lệnh sản xuất (LSX), in thẻ cắt A4 tối ưu cây nhôm và quản lý nhôm thừa, hỗ trợ giảm hao hụt vật tư đề-xê.
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div>
+                    <strong className="font-bold text-slate-900">Với Giám sát & Thợ công trình:</strong>{' '}
+                    Cập nhật khối lượng lắp đặt, nhật ký hiện trường trực tiếp qua điện thoại và quét mã QR nghiệm thu bàn giao nhanh gọn.
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div>
+                    <strong className="font-bold text-slate-900">Với Kế toán &amp; Thủ kho:</strong>{' '}
+                    Tổng hợp bảng công – tính lương từ dữ liệu chấm công, đối soát phiếu thu/chi, xuất nhập tồn vật tư và xuất báo cáo Excel/PDF nhanh chóng.
                   </div>
                 </li>
               </ul>
             </div>
-          </div>
+            </div>
+          </motion.div>
 
-          {/* Cột phải: Mockup Giao diện Phần mềm XTTECH thực tế sắc nét (Enterprise Application Window) */}
-          <div className="lg:col-span-7">
+          {/* Cột phải: Mockup Giao diện Phần mềm XTTECH — Trượt từ bên phải sang */}
+          <motion.div
+            initial={{ opacity: 0, x: 70 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-7"
+          >
             <div className="relative">
               {/* Hào quang nền phía sau */}
               <div className="pointer-events-none absolute -inset-2 rounded-3xl bg-linear-to-r from-primary/10 via-amber-500/10 to-teal-500/10 blur-xl opacity-70" />
@@ -130,8 +212,8 @@ export function BenefitsSection() {
                   <TrendingUp className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-[11px] font-medium text-slate-500">Tỷ lệ hao hụt nhôm</div>
-                  <div className="text-xs font-black text-emerald-600">&lt; 2.0% (Tối ưu hóa AI)</div>
+                  <div className="text-[11px] font-medium text-slate-500">Hỗ trợ cắt nhôm</div>
+                  <div className="text-xs font-black text-emerald-600">Giảm hao hụt vật tư</div>
                 </div>
               </div>
 
@@ -146,7 +228,7 @@ export function BenefitsSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

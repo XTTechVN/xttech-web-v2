@@ -17,13 +17,6 @@ export interface CuttingBarGroup {
   bars: CuttingBar[];
 }
 
-export interface CombinedSheetAccessory {
-  code: string;
-  name: string;
-  quantity: number;
-  unit: string;
-}
-
 export interface AdvanceVariables {
   positionIds: number[];
   targetStep: ProgressStepCode;

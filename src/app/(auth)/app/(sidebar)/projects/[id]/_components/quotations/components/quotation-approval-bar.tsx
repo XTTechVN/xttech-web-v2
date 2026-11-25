@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { CheckCircle2, Link2, Send, ShieldCheck, Undo2, UserCheck, UserX } from 'lucide-react';
+import { CheckCircle2, Link2, Mail, Send, ShieldCheck, Undo2, UserCheck, UserX } from 'lucide-react';
 import {
   approveQuotation,
   customerAcceptQuotation,
@@ -12,20 +12,18 @@ import {
   returnQuotation,
   submitQuotation,
 } from '@/actions';
-import { Badge, Button, Input, Modal } from '@/components';
+import { Badge, Button } from '@/components';
 import { QUOTATION_STATUS_MAP } from '@/config';
 import { usePermission } from '@/hooks/user-permission';
 import { showErrorToast } from '@/utils';
-import type { ProjectQuotationDetail, SignatureInput } from '@/types';
-import { SignatureFields } from '../../shared';
+import type { ProjectQuotationDetail } from '@/types';
 import { invalidateQuotationQueries } from '../../hooks/use-active-quotation';
+import { AcceptModal, ReasonModal, type ReasonAction } from './quotation-approval-modals';
 
 interface QuotationApprovalBarProps {
   projectId: number;
   quotation: ProjectQuotationDetail;
 }
-
-type ReasonAction = 'return' | 'reject';
 
 const STEP_HINT: Record<string, string> = {
   draft: 'Báo giá đang nháp. Trình admin duyệt trước khi gửi khách.',
@@ -54,16 +52,29 @@ export function QuotationApprovalBar({ projectId, quotation }: QuotationApproval
   const act = (action: () => Promise<unknown>, message: string) =>
     run.mutate(action, { onSuccess: () => toast.success(message) });
 
-  const sendLink = () =>
-    run.mutate(() => requestQuotationSigning(projectId, quotation.id), {
+  const sendEmail = () =>
+    run.mutate(() => requestQuotationSigning(projectId, quotation.id, { sendEmail: true }), {
+      onSuccess: (res) => {
+        const result = res as Awaited<ReturnType<typeof requestQuotationSigning>>;
+        if (result.emailSent) toast.success(`Đã gửi email duyệt báo giá tới ${result.recipientEmail}`);
+        else
+          toast('Chưa gửi được email (khách chưa có email hoặc gửi thất bại). Hãy dùng "Sao chép link" để gửi thủ công.', {
+            icon: '⚠️',
+            duration: 6000,
+          });
+      },
+    });
+
+  const copyLink = () =>
+    run.mutate(() => requestQuotationSigning(projectId, quotation.id, { sendEmail: false }), {
       onSuccess: async (res) => {
         const result = res as Awaited<ReturnType<typeof requestQuotationSigning>>;
-        await navigator.clipboard?.writeText(result.signingUrl).catch(() => undefined);
-        toast.success(
-          result.emailSent
-            ? `Đã gửi email link duyệt báo giá tới ${result.recipientEmail} (đã sao chép link)`
-            : 'Đã tạo link duyệt báo giá và sao chép — chưa gửi được email (khách chưa có email)',
-        );
+        try {
+          await navigator.clipboard.writeText(result.signingUrl);
+          toast.success('Đã sao chép link');
+        } catch {
+          toast(`Không tự sao chép được, hãy copy link: ${result.signingUrl}`, { duration: 15000 });
+        }
       },
     });
 
@@ -124,8 +135,11 @@ export function QuotationApprovalBar({ projectId, quotation }: QuotationApproval
         )}
         {canDecide && (
           <>
-            <Button size="sm" variant="outline" leftIcon={<Link2 size={14} />} disabled={isBlocked || run.isPending} onClick={sendLink}>
-              {quotation.status === 'sent' ? 'Gửi lại link' : 'Gửi link cho khách'}
+            <Button size="sm" variant="outline" leftIcon={<Mail size={14} />} disabled={isBlocked || run.isPending} onClick={sendEmail}>
+              {quotation.status === 'sent' ? 'Gửi lại email' : 'Gửi email'}
+            </Button>
+            <Button size="sm" variant="outline" leftIcon={<Link2 size={14} />} disabled={isBlocked || run.isPending} onClick={copyLink}>
+              Sao chép link
             </Button>
             <Button size="sm" variant="outline" leftIcon={<UserX size={14} />} onClick={() => setReasonAction('reject')}>
               Khách từ chối
@@ -173,105 +187,3 @@ export function QuotationApprovalBar({ projectId, quotation }: QuotationApproval
   );
 }
 
-function ReasonModal({
-  action,
-  isSubmitting,
-  onClose,
-  onConfirm,
-}: {
-  action: ReasonAction | null;
-  isSubmitting: boolean;
-  onClose: () => void;
-  onConfirm: (reason: string) => void;
-}) {
-  const title = action === 'return' ? 'Trả lại báo giá cho sale' : 'Khách từ chối báo giá';
-  return (
-    <Modal isOpen={!!action} onClose={onClose} title={title} className="max-w-md w-full">
-      {action && <ReasonForm isSubmitting={isSubmitting} onClose={onClose} onConfirm={onConfirm} />}
-    </Modal>
-  );
-}
-
-// State nằm ở component con, chỉ mount khi modal mở nên luôn bắt đầu từ giá trị rỗng
-function ReasonForm({
-  isSubmitting,
-  onClose,
-  onConfirm,
-}: {
-  isSubmitting: boolean;
-  onClose: () => void;
-  onConfirm: (reason: string) => void;
-}) {
-  const [reason, setReason] = useState('');
-  return (
-    <div className="space-y-4">
-      <Input label="Lý do (bắt buộc)" value={reason} onChange={(e) => setReason(e.target.value)} fullWidth />
-      <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
-        <Button variant="outline" size="sm" onClick={onClose}>
-          Đóng
-        </Button>
-        <Button
-          size="sm"
-          disabled={reason.trim().length < 3 || isSubmitting}
-          loading={isSubmitting}
-          onClick={() => onConfirm(reason.trim())}
-        >
-          Xác nhận
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function AcceptModal({
-  isOpen,
-  isSubmitting,
-  onClose,
-  onConfirm,
-}: {
-  isOpen: boolean;
-  isSubmitting: boolean;
-  onClose: () => void;
-  onConfirm: (signature: SignatureInput | undefined, note: string | undefined) => void;
-}) {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Khách đồng ý báo giá" className="max-w-lg w-full">
-      {isOpen && <AcceptForm isSubmitting={isSubmitting} onClose={onClose} onConfirm={onConfirm} />}
-    </Modal>
-  );
-}
-
-function AcceptForm({
-  isSubmitting,
-  onClose,
-  onConfirm,
-}: {
-  isSubmitting: boolean;
-  onClose: () => void;
-  onConfirm: (signature: SignatureInput | undefined, note: string | undefined) => void;
-}) {
-  const [signature, setSignature] = useState<SignatureInput | null>(null);
-  const [note, setNote] = useState('');
-  return (
-    <div className="space-y-3">
-      <p className="text-xs text-slate-500">
-        Khách ký trực tiếp trên màn hình, hoặc bỏ trống chữ ký và ghi chú cách khách đồng ý (văn bản, Zalo...).
-      </p>
-      <SignatureFields title="Khách hàng ký đồng ý" defaultTitle="Chủ nhà" onChange={setSignature} />
-      <Input label="Ghi chú" value={note} onChange={(e) => setNote(e.target.value)} fullWidth />
-      <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
-        <Button variant="outline" size="sm" onClick={onClose}>
-          Đóng
-        </Button>
-        <Button
-          size="sm"
-          disabled={(!signature && note.trim().length < 3) || isSubmitting}
-          loading={isSubmitting}
-          onClick={() => onConfirm(signature ?? undefined, note.trim() || undefined)}
-        >
-          Xác nhận khách đồng ý
-        </Button>
-      </div>
-    </div>
-  );
-}

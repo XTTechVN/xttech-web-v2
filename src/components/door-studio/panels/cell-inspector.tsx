@@ -83,26 +83,23 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   availableSeries,
   allBrandProfiles,
 }) => {
-  const [localW, setLocalW] = React.useState<number>(selectedCell?.w ?? 0);
-  const [localH, setLocalH] = React.useState<number>(selectedCell?.h ?? 0);
-
-  React.useEffect(() => {
-    if (selectedCell) {
-      setLocalW(selectedCell.w);
-      setLocalH(selectedCell.h);
-    }
-  }, [selectedCell?.id, selectedCell?.w, selectedCell?.h]);
+  const cellDimKey = selectedCell ? `${selectedCell.id}:${selectedCell.w}:${selectedCell.h}` : '';
+  const [dimDraft, setDimDraft] = React.useState<{ key: string; w: number; h: number } | null>(null);
+  const localW = dimDraft?.key === cellDimKey ? dimDraft.w : (selectedCell?.w ?? 0);
+  const localH = dimDraft?.key === cellDimKey ? dimDraft.h : (selectedCell?.h ?? 0);
 
   const handleApplyW = () => {
     if (onUpdateDimension && selectedCell && localW > 0 && localW !== selectedCell.w) {
       onUpdateDimension('cell-w', localW, selectedCell.id);
     }
+    setDimDraft(null);
   };
 
   const handleApplyH = () => {
     if (onUpdateDimension && selectedCell && localH > 0 && localH !== selectedCell.h) {
       onUpdateDimension('cell-h', localH, selectedCell.id);
     }
+    setDimDraft(null);
   };
 
   const isArchShape = Boolean(
@@ -301,7 +298,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
             <input
               type="number"
               value={localW}
-              onChange={(e) => setLocalW(Number(e.target.value))}
+              onChange={(e) => setDimDraft({ key: cellDimKey, w: Number(e.target.value), h: localH })}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleApplyW();
               }}
@@ -317,7 +314,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
             <input
               type="number"
               value={localH}
-              onChange={(e) => setLocalH(Number(e.target.value))}
+              onChange={(e) => setDimDraft({ key: cellDimKey, w: localW, h: Number(e.target.value) })}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleApplyH();
               }}
@@ -507,7 +504,13 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => onUpdateCell({ paneType: opt.id })}
+                onClick={() =>
+                  onUpdateCell(
+                    opt.id !== 'glass'
+                      ? { paneType: opt.id, extraGlasses: undefined }
+                      : { paneType: opt.id }
+                  )
+                }
                 className={`p-2 rounded-lg border text-left flex items-center justify-between transition-all cursor-pointer ${
                   isSelected
                     ? 'border-primary bg-primary/10 font-semibold text-primary shadow-2xs'

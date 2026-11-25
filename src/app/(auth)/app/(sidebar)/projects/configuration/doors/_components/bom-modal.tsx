@@ -49,13 +49,21 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
     enabled: isOpen && !!door.id,
   });
 
+  const allWarnings = bom?.hardwareWarnings ?? [];
+  const hasJointWarnings =
+    allWarnings.some((w) => w.target === 'frame' || w.target === 'sash' || w.target === 'safety_frame') ||
+    (!allWarnings.length && Boolean(bom?.hasUnconfiguredJoints));
+  const hasAccessoryWarnings = allWarnings.some(
+    (w) => w.target === 'opening' || w.target === 'dynamic_mullion'
+  );
+
   const tabs: Array<{ key: BomTabKey; label: string; count: number; show?: boolean; warning?: boolean; amber?: boolean }> = [
     { key: 'bars', label: 'Cắt nhôm', count: bom?.groupedBars?.length || 0 },
     { key: 'beads', label: 'Nẹp kính', count: bom?.groupedBeads?.length || 0 },
     { key: 'glass', label: 'Đặt kính', count: bom?.cells?.length || 0 },
-    { key: 'joints', label: 'Con ke', count: bom?.cornerJoints?.length || 0, warning: bom?.hasUnconfiguredJoints },
+    { key: 'joints', label: 'Con ke', count: bom?.cornerJoints?.length || 0, warning: hasJointWarnings },
     { key: 'grilles', label: 'Nan đồng', count: bom?.grilles?.length || 0, show: Boolean(bom?.grilles?.length), amber: true },
-    { key: 'accessories', label: 'Phụ kiện', count: bom?.accessories?.length || 0 },
+    { key: 'accessories', label: 'Phụ kiện', count: bom?.accessories?.length || 0, warning: hasAccessoryWarnings },
   ];
 
   return (
@@ -119,7 +127,7 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
                 Kính: <strong className="font-bold">{bom.totalGlassAreaM2} m²</strong>
               </div>
               {bom.totalJointQty !== undefined && (
-                <div className={`px-2 sm:px-2.5 py-1 rounded-md border flex items-center gap-1 whitespace-nowrap shrink-0 ${bom.hasUnconfiguredJoints ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
+                <div className={`px-2 sm:px-2.5 py-1 rounded-md border flex items-center gap-1 whitespace-nowrap shrink-0 ${hasJointWarnings ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
                   <Wrench size={11} />
                   <span>
                     Ke: <strong className="font-bold">{bom.totalJointQty} con</strong>
@@ -127,7 +135,7 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
                       <span className="ml-1 font-semibold">({bom.totalJointPrice!.toLocaleString('vi-VN')} đ)</span>
                     )}
                   </span>
-                  {bom.hasUnconfiguredJoints && <span className="text-[9px] font-semibold text-amber-700 underline">(!)</span>}
+                  {hasJointWarnings && <span className="text-[9px] font-semibold text-amber-700 underline">(!)</span>}
                 </div>
               )}
               {Boolean(bom.totalGrillePrice && bom.totalGrillePrice > 0) && (
@@ -218,7 +226,12 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
                     }`}
                   >
                     <span>{t.label} ({t.count})</span>
-                    {t.warning && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Có vị trí chưa gán con ke" />}
+                    {t.warning && (
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-amber-500"
+                        title={t.key === 'joints' ? 'Có cảnh báo con ke góc' : 'Có cảnh báo thiếu phụ kiện'}
+                      />
+                    )}
                   </button>
                 ))}
             </div>
@@ -236,11 +249,21 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
                 {activeTab === 'beads' && <BomBeadsTable beads={bom.groupedBeads} />}
                 {activeTab === 'glass' && <BomGlassTable cells={bom.cells} />}
                 {activeTab === 'joints' && (
-                  <BomJointsTable joints={bom.cornerJoints} hasUnconfiguredJoints={bom.hasUnconfiguredJoints} totalJointPrice={bom.totalJointPrice} />
+                  <BomJointsTable
+                    joints={bom.cornerJoints}
+                    warnings={bom.hardwareWarnings}
+                    hasUnconfiguredJoints={bom.hasUnconfiguredJoints}
+                    totalJointPrice={bom.totalJointPrice}
+                  />
                 )}
                 {activeTab === 'grilles' && <BomGrillesTable grilles={bom.grilles} totalGrillePrice={bom.totalGrillePrice} />}
                 {activeTab === 'accessories' && (
-                  <BomAccessoriesTable accessories={bom.accessories} totalAccessoryQty={bom.totalAccessoryQty} totalAccessoryPrice={bom.totalAccessoryPrice} />
+                  <BomAccessoriesTable
+                    accessories={bom.accessories}
+                    warnings={bom.hardwareWarnings}
+                    totalAccessoryQty={bom.totalAccessoryQty}
+                    totalAccessoryPrice={bom.totalAccessoryPrice}
+                  />
                 )}
               </div>
             )}

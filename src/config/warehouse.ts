@@ -1,11 +1,20 @@
-import { ManualReason, ReceiptType } from '@/types';
+import { ManualReason, ReceiptType, SupplierType } from '@/types';
 
 export const SUPPLIER_TYPE_MAP: Record<string, string> = {
   aluminum: 'Nhà cung cấp nhôm thanh',
   accessory: 'Nhà cung cấp phụ kiện kim khí',
   glass: 'Nhà máy tôi kính an toàn',
   consumable: 'Vật tư phụ (Keo, gioăng, ốc vít)',
+  door_set: 'Nhà cung cấp cửa nguyên bộ',
 };
+
+export const SUPPLIER_TYPE_OPTIONS: { value: SupplierType; label: string }[] = [
+  { value: 'aluminum', label: SUPPLIER_TYPE_MAP.aluminum },
+  { value: 'accessory', label: SUPPLIER_TYPE_MAP.accessory },
+  { value: 'glass', label: SUPPLIER_TYPE_MAP.glass },
+  { value: 'consumable', label: SUPPLIER_TYPE_MAP.consumable },
+  { value: 'door_set', label: SUPPLIER_TYPE_MAP.door_set },
+];
 
 export const WAREHOUSE_ITEM_TYPE_MAP: Record<string, string> = {
   profile: 'Nhôm thanh Profile',
