@@ -208,21 +208,18 @@ export function SourceQueueSection({
         />
       )}
 
-      {configuringItem && (
-        <SourceQueueImportDrawer
-          key={`${configuringItem.sourceType}-${configuringItem.sourceId}`}
-          item={configuringItem}
-          accounts={accounts}
-          bankAccounts={bankAccounts}
-          costItems={costItems}
-          templates={templates}
-          canAutoPost={canAutoPost}
-          enforceMakerChecker={setting?.enforceMakerChecker ?? true}
-          submitting={Boolean(importingKey)}
-          onClose={() => setConfiguringItem(null)}
-          onConfirmImport={handleDrawerImport}
-        />
-      )}
+      <SourceQueueImportDrawer
+        item={configuringItem}
+        accounts={accounts}
+        bankAccounts={bankAccounts}
+        costItems={costItems}
+        templates={templates}
+        canAutoPost={canAutoPost}
+        enforceMakerChecker={setting?.enforceMakerChecker ?? true}
+        submitting={Boolean(importingKey)}
+        onClose={() => setConfiguringItem(null)}
+        onConfirmImport={handleDrawerImport}
+      />
     </div>
   );
 }

@@ -9,6 +9,8 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import type {
   Account,
+  ComparativeBaselineFormCode,
+  MaturityTerm,
   OpeningBalanceEntry,
   ParsedEinvoiceXml,
   TaxInvoice,
@@ -72,7 +74,9 @@ export interface OpeningDraftRow {
   bankAccountId: number | null;
   customerId: number | null;
   supplierId: number | null;
+  employeeId: string | null;
   projectId: number | null;
+  maturityTerm: MaturityTerm | null;
   note: string;
 }
 
@@ -93,7 +97,9 @@ export function buildInitialOpeningRows(
     bankAccountId: entry.bankAccountId ?? null,
     customerId: entry.customerId ?? null,
     supplierId: entry.supplierId ?? null,
+    employeeId: entry.employeeId ?? null,
     projectId: entry.projectId ?? null,
+    maturityTerm: entry.maturityTerm ?? null,
     note: entry.note || '',
   }));
 
@@ -111,7 +117,9 @@ export function buildInitialOpeningRows(
       bankAccountId: null,
       customerId: null,
       supplierId: null,
+      employeeId: null,
       projectId: null,
+      maturityTerm: null,
       note: '',
     }));
 
@@ -119,6 +127,71 @@ export function buildInitialOpeningRows(
     a.accountCode.localeCompare(b.accountCode),
   );
 }
+
+export const COMPARATIVE_BASELINE_FORM_OPTIONS: Array<{
+  value: ComparativeBaselineFormCode;
+  label: string;
+}> = [
+  { value: 'B01_DN', label: 'B01-DN — Báo cáo Tình hình tài chính (CĐKT)' },
+  { value: 'B02_DN', label: 'B02-DN — Báo cáo Kết quả hoạt động kinh doanh' },
+  { value: 'B03_DN', label: 'B03-DN — Báo cáo Lưu chuyển tiền tệ' },
+];
+
+export const COMPARATIVE_BASELINE_PRESETS: Record<
+  ComparativeBaselineFormCode,
+  Array<{ indicatorCode: string; label: string }>
+> = {
+  B01_DN: [
+    { indicatorCode: '100', label: 'A. TÀI SẢN NGẮN HẠN' },
+    { indicatorCode: '110', label: 'I. Tiền và các khoản tương đương tiền' },
+    { indicatorCode: '130', label: 'III. Các khoản phải thu ngắn hạn' },
+    { indicatorCode: '140', label: 'IV. Hàng tồn kho' },
+    { indicatorCode: '150', label: 'V. Tài sản ngắn hạn khác' },
+    { indicatorCode: '200', label: 'B. TÀI SẢN DÀI HẠN' },
+    { indicatorCode: '220', label: 'II. Tài sản cố định' },
+    { indicatorCode: '270', label: 'TỔNG CỘNG TÀI SẢN' },
+    { indicatorCode: '300', label: 'C. NỢ PHẢI TRẢ' },
+    { indicatorCode: '310', label: 'I. Nợ ngắn hạn' },
+    { indicatorCode: '330', label: 'II. Nợ dài hạn' },
+    { indicatorCode: '400', label: 'D. VỐN CHỦ SỞ HỮU' },
+    { indicatorCode: '411', label: '1. Vốn góp của chủ sở hữu' },
+    { indicatorCode: '421', label: '11. Lợi nhuận sau thuế chưa phân phối' },
+    { indicatorCode: '440', label: 'TỔNG CỘNG NGUỒN VỐN' },
+  ],
+  B02_DN: [
+    { indicatorCode: '01', label: '1. Doanh thu bán hàng và cung cấp dịch vụ' },
+    { indicatorCode: '02', label: '2. Các khoản giảm trừ doanh thu' },
+    { indicatorCode: '10', label: '3. Doanh thu thuần về bán hàng và CCDV' },
+    { indicatorCode: '11', label: '4. Giá vốn hàng bán' },
+    { indicatorCode: '20', label: '5. Lợi nhuận gộp về bán hàng và CCDV' },
+    { indicatorCode: '21', label: '6. Doanh thu hoạt động tài chính' },
+    { indicatorCode: '22', label: '7. Chi phí tài chính' },
+    { indicatorCode: '25', label: '8. Chi phí bán hàng' },
+    { indicatorCode: '26', label: '9. Chi phí quản lý doanh nghiệp' },
+    { indicatorCode: '30', label: '10. Lợi nhuận thuần từ hoạt động kinh doanh' },
+    { indicatorCode: '31', label: '11. Thu nhập khác' },
+    { indicatorCode: '32', label: '12. Chi phí khác' },
+    { indicatorCode: '40', label: '13. Lợi nhuận khác' },
+    { indicatorCode: '50', label: '14. Tổng lợi nhuận kế toán trước thuế' },
+    { indicatorCode: '51', label: '15. Chi phí thuế TNDN hiện hành' },
+    { indicatorCode: '60', label: '17. Lợi nhuận sau thuế TNDN' },
+  ],
+  B03_DN: [
+    { indicatorCode: '01', label: '1. Tiền thu từ bán hàng, CCDV và doanh thu khác' },
+    { indicatorCode: '02', label: '2. Tiền chi trả cho người cung cấp hàng hóa, dịch vụ' },
+    { indicatorCode: '03', label: '3. Tiền chi trả cho người lao động' },
+    { indicatorCode: '04', label: '4. Tiền lãi vay đã trả' },
+    { indicatorCode: '05', label: '5. Thuế thu nhập doanh nghiệp đã nộp' },
+    { indicatorCode: '06', label: '6. Tiền thu khác từ hoạt động kinh doanh' },
+    { indicatorCode: '07', label: '7. Tiền chi khác cho hoạt động kinh doanh' },
+    { indicatorCode: '20', label: 'Lưu chuyển tiền thuần từ hoạt động kinh doanh' },
+    { indicatorCode: '30', label: 'Lưu chuyển tiền thuần từ hoạt động đầu tư' },
+    { indicatorCode: '40', label: 'Lưu chuyển tiền thuần từ hoạt động tài chính' },
+    { indicatorCode: '50', label: 'Lưu chuyển tiền thuần trong kỳ' },
+    { indicatorCode: '60', label: 'Tiền và tương đương tiền đầu kỳ' },
+    { indicatorCode: '70', label: 'Tiền và tương đương tiền cuối kỳ' },
+  ],
+};
 
 export interface TaxInvoiceFormState {
   direction: TaxInvoiceDirection;

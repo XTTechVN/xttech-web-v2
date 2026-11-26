@@ -2,7 +2,8 @@
 
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileCode2, FileSpreadsheet, Plus, RefreshCw } from 'lucide-react';
+import dayjs from 'dayjs';
+import { AlertTriangle, ArrowRight, FileCode2, FileSpreadsheet, Plus, RefreshCw } from 'lucide-react';
 import {
   Alert,
   Button,
@@ -12,8 +13,14 @@ import {
   TableSearch,
   type ITableFilterProps,
 } from '@/components';
-import { deleteTaxInvoice, getTaxInvoices } from '@/actions';
-import type { Account, TaxInvoice, TaxInvoiceDirection, VatRate } from '@/types';
+import { deleteTaxInvoice, getTaxInvoices, getTaxInvoiceWarnings } from '@/actions';
+import type {
+  Account,
+  FinanceTabKey,
+  TaxInvoice,
+  TaxInvoiceDirection,
+  VatRate,
+} from '@/types';
 import { getErrorMessage, showErrorToast, showSuccessToast } from '@/utils';
 import { ImportExcelModal } from './modals/import-excel-modal';
 import { TaxInvoiceDrawer } from './tax-invoice-drawer';
@@ -27,15 +34,21 @@ import {
 
 interface TaxInvoicesSectionProps {
   accounts: Account[];
+  canViewStatutoryTax?: boolean;
   refreshSignal?: number;
   onOpenVoucherDetail: (voucherId: number) => void;
+  onNavigateTab?: (tab: FinanceTabKey) => void;
 }
 
 export function TaxInvoicesSection({
   accounts,
+  canViewStatutoryTax = false,
   refreshSignal = 0,
   onOpenVoucherDetail,
+  onNavigateTab,
 }: TaxInvoicesSectionProps) {
+  const now = dayjs();
+  const currentQuarter = Math.ceil((now.month() + 1) / 3);
   const [search, setSearch] = useState('');
   const [direction, setDirection] = useState<string | undefined>();
   const [vatRate, setVatRate] = useState<string | undefined>();
@@ -74,6 +87,13 @@ export function TaxInvoicesSection({
         toDate,
         limit: 100,
       }),
+  });
+
+  const { data: invoiceWarnings } = useQuery({
+    queryKey: ['finance', 'statutory', 'tax-invoice-warnings', now.year(), currentQuarter, refreshSignal],
+    queryFn: () => getTaxInvoiceWarnings({ year: now.year(), quarter: currentQuarter }),
+    enabled: canViewStatutoryTax,
+    staleTime: 60_000,
   });
 
   const invoices = data?.items || [];
@@ -147,6 +167,32 @@ export function TaxInvoicesSection({
         </div>
       </div>
 
+      {canViewStatutoryTax && invoiceWarnings && invoiceWarnings.totalAffected > 0 && (
+        <Alert
+          variant="warning"
+          title={`Có ${invoiceWarnings.totalAffected} hóa đơn ảnh hưởng tờ khai 01/GTGT Quý ${currentQuarter}/${now.year()}`}
+          icon={<AlertTriangle size={15} />}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span>
+              {invoiceWarnings.message ||
+                `Thiếu chỉ tiêu tờ khai: ${invoiceWarnings.missingIndicatorCount} • Chưa liên kết chứng từ: ${invoiceWarnings.unlinkedCount}`}
+            </span>
+            {onNavigateTab && (
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onClick={() => onNavigateTab('statutory_tax')}
+                rightIcon={<ArrowRight size={12} />}
+              >
+                Kiểm tra tại BCTC &amp; Thuế
+              </Button>
+            )}
+          </div>
+        </Alert>
+      )}
+
       {isError && (
         <Alert variant="danger" title="Không thể tải danh sách hóa đơn GTGT">
           {getErrorMessage(error)}
@@ -171,16 +217,14 @@ export function TaxInvoicesSection({
         />
       )}
 
-      {drawerOpen && (
-        <TaxInvoiceDrawer
-          key={editingInvoice ? `edit-${editingInvoice.id}` : `new-${initialXmlMode}`}
-          invoice={editingInvoice}
-          accounts={accounts}
-          initialShowXml={initialXmlMode}
-          onClose={() => { setDrawerOpen(false); setEditingInvoice(null); }}
-          onSaved={async () => { await refetch(); }}
-        />
-      )}
+      <TaxInvoiceDrawer
+        isOpen={drawerOpen}
+        invoice={editingInvoice}
+        accounts={accounts}
+        initialShowXml={initialXmlMode}
+        onClose={() => { setDrawerOpen(false); setEditingInvoice(null); }}
+        onSaved={async () => { await refetch(); }}
+      />
 
       <ConfirmActionModal
         isOpen={Boolean(deletingInvoice)}

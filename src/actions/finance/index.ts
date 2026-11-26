@@ -1,4 +1,8 @@
 import api from '@/utils/api';
+import {
+  downloadOrShareBlob,
+  getFilenameFromContentDisposition,
+} from '@/utils/file';
 import type { BaseResponseWithPagination } from '@/components';
 import type {
   Account,
@@ -28,10 +32,14 @@ import type {
   ClosingExecutePayload,
   ClosingExecuteResponse,
   ClosingPreview,
+  ComparativeBaselineFormCode,
+  ComparativeBaselineItem,
+  ComparativeBaselineResponse,
   CostItem,
   CostItemCreate,
   CostItemQueryParams,
   CostItemUpdate,
+  FilingFrequency,
   FinanceAuditLog,
   FinanceAuditLogQueryParams,
   FinanceDashboard,
@@ -57,17 +65,35 @@ import type {
   PeriodLock,
   PeriodLockActionPayload,
   PeriodMarkTaxFiledPayload,
+  PitEntryInput,
+  PitLedgerSummary,
+  ProjectPnlDrilldownQueryParams,
+  ProjectPnlDrilldownResponse,
   ProjectPnlQueryParams,
   ProjectPnlReport,
   SourceQueueImportPayload,
   SourceQueueItem,
   SourceQueueQueryParams,
+  StatutoryFiling,
+  StatutoryFilingComputeRequest,
+  StatutoryFilingMarkFiledRequest,
+  StatutoryFormCode,
+  StatutoryFormConfig,
+  StatutoryFormConfigUpdate,
+  StatutoryPeriodOverview,
+  StatutoryPeriodType,
+  StatutorySourceRef,
+  StatutorySupplementalCreatePayload,
+  StatutorySupplementalDiffResponse,
+  StatutoryXmlExportResponse,
   TaxInvoice,
   TaxInvoiceCreate,
   TaxInvoiceDirection,
   TaxInvoiceExcelImportResponse,
   TaxInvoiceQueryParams,
   TaxInvoiceUpdate,
+  TaxInvoiceWarningSummary,
+  DeclarationKind,
   TrialBalanceQueryParams,
   TrialBalanceReport,
   VatLedgerQueryParams,
@@ -76,6 +102,7 @@ import type {
   VoucherDetail,
   VoucherInternalApprovePayload,
   VoucherQueryParams,
+  VoucherStatutoryImpactItem,
   VoucherSummary,
   VoucherUnpostPayload,
   VoucherUpdate,
@@ -605,6 +632,16 @@ export const getProjectPnlReport = async (
   return response.data;
 };
 
+export const getProjectPnlDrilldown = async (
+  params: ProjectPnlDrilldownQueryParams,
+): Promise<ProjectPnlDrilldownResponse> => {
+  const response = await api.get<ProjectPnlDrilldownResponse>(
+    `${FINANCE_BASE}/reports/project-pnl/drilldown`,
+    { params },
+  );
+  return response.data;
+};
+
 export const getCashflowReport = async (
   params: CashflowQueryParams,
 ): Promise<CashflowReport> => {
@@ -762,6 +799,301 @@ export const executeOverheadAllocation = async (
   const response = await api.post<OverheadAllocationRun>(
     `${FINANCE_BASE}/closing/overhead-allocation/execute`,
     payload,
+  );
+  return response.data;
+};
+
+// =========================================================================
+// 12. PHASE 1 STATUTORY FOUNDATION (PIT WITHHOLDING & COMPARATIVE BASELINES)
+// =========================================================================
+export const getPitEntries = async (params: {
+  taxYear: number;
+  periodType: FilingFrequency;
+  periodIndex: number;
+}): Promise<PitLedgerSummary> => {
+  const response = await api.get<PitLedgerSummary>(
+    `${FINANCE_BASE}/statutory/pit-entries`,
+    { params },
+  );
+  return response.data;
+};
+
+export const syncPitEntriesFromGl = async (payload: {
+  taxYear: number;
+  periodType: FilingFrequency;
+  periodIndex: number;
+}): Promise<PitLedgerSummary> => {
+  const response = await api.post<PitLedgerSummary>(
+    `${FINANCE_BASE}/statutory/pit-entries/sync-from-gl`,
+    payload,
+  );
+  return response.data;
+};
+
+export const bulkUpsertPitEntries = async (payload: {
+  taxYear: number;
+  periodType: FilingFrequency;
+  periodIndex: number;
+  entries: PitEntryInput[];
+}): Promise<PitLedgerSummary> => {
+  const response = await api.put<PitLedgerSummary>(
+    `${FINANCE_BASE}/statutory/pit-entries/bulk`,
+    payload,
+  );
+  return response.data;
+};
+
+export const getComparativeBaselines = async (params: {
+  fiscalYear: number;
+  formCode?: ComparativeBaselineFormCode;
+}): Promise<ComparativeBaselineResponse> => {
+  const response = await api.get<ComparativeBaselineResponse>(
+    `${FINANCE_BASE}/statutory/comparative-baselines`,
+    { params },
+  );
+  return response.data;
+};
+
+export const upsertComparativeBaselines = async (payload: {
+  fiscalYear: number;
+  formCode: ComparativeBaselineFormCode;
+  items: ComparativeBaselineItem[];
+}): Promise<ComparativeBaselineResponse> => {
+  const response = await api.put<ComparativeBaselineResponse>(
+    `${FINANCE_BASE}/statutory/comparative-baselines`,
+    payload,
+  );
+  return response.data;
+};
+
+// =========================================================================
+// 13. PHASE 2 STATUTORY FILINGS, RECONCILIATION & FORM CONFIGS
+// =========================================================================
+export const getStatutoryPeriodOverview = async (params: {
+  taxYear: number;
+  periodType: StatutoryPeriodType;
+  periodIndex: number;
+}): Promise<StatutoryPeriodOverview> => {
+  const response = await api.get<StatutoryPeriodOverview>(
+    `${FINANCE_BASE}/statutory/period-overview`,
+    { params },
+  );
+  return response.data;
+};
+
+export const getStatutoryFiling = async (
+  formCode: StatutoryFormCode,
+  params: {
+    taxYear: number;
+    periodType: StatutoryPeriodType;
+    periodIndex: number;
+    declarationKind?: DeclarationKind;
+    supplementalSeq?: number;
+  },
+): Promise<StatutoryFiling | null> => {
+  const response = await api.get<StatutoryFiling | null>(
+    `${FINANCE_BASE}/statutory/filings/${formCode}`,
+    { params },
+  );
+  return response.data;
+};
+
+export const computeStatutoryFiling = async (
+  payload: StatutoryFilingComputeRequest,
+): Promise<StatutoryFiling> => {
+  const response = await api.post<StatutoryFiling>(
+    `${FINANCE_BASE}/statutory/filings/compute`,
+    payload,
+  );
+  return response.data;
+};
+
+export const reconcileStatutoryFiling = async (
+  filingId: number,
+): Promise<StatutoryFiling> => {
+  const response = await api.post<StatutoryFiling>(
+    `${FINANCE_BASE}/statutory/filings/${filingId}/reconcile`,
+    {},
+  );
+  return response.data;
+};
+
+export const approveStatutoryFiling = async (
+  filingId: number,
+): Promise<StatutoryFiling> => {
+  const response = await api.post<StatutoryFiling>(
+    `${FINANCE_BASE}/statutory/filings/${filingId}/approve`,
+    {},
+  );
+  return response.data;
+};
+
+export const exportStatutorySnapshot = async (
+  filingId: number,
+): Promise<StatutoryFiling> => {
+  const response = await api.post<StatutoryFiling>(
+    `${FINANCE_BASE}/statutory/filings/${filingId}/export-snapshot`,
+    {},
+  );
+  return response.data;
+};
+
+export const markStatutoryFilingFiled = async (
+  filingId: number,
+  payload: StatutoryFilingMarkFiledRequest,
+): Promise<StatutoryFiling> => {
+  const response = await api.post<StatutoryFiling>(
+    `${FINANCE_BASE}/statutory/filings/${filingId}/mark-filed`,
+    payload,
+  );
+  return response.data;
+};
+
+export const getStatutoryIndicatorDrilldown = async (
+  filingId: number,
+  indicatorCode: string,
+): Promise<StatutorySourceRef[]> => {
+  const response = await api.get<
+    StatutorySourceRef[] | { items?: StatutorySourceRef[] }
+  >(`${FINANCE_BASE}/statutory/filings/${filingId}/drilldown`, {
+    params: { indicatorCode },
+  });
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  return response.data?.items || [];
+};
+
+export const getVoucherStatutoryImpact = async (
+  voucherId: number,
+): Promise<VoucherStatutoryImpactItem[]> => {
+  const response = await api.get<
+    VoucherStatutoryImpactItem[] | { items?: VoucherStatutoryImpactItem[] }
+  >(`${FINANCE_BASE}/statutory/voucher-impact/${voucherId}`);
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  return response.data?.items || [];
+};
+
+export const getStatutoryFormConfigs = async (): Promise<StatutoryFormConfig[]> => {
+  const response = await api.get<
+    StatutoryFormConfig[] | { items?: StatutoryFormConfig[] }
+  >(`${FINANCE_BASE}/statutory/form-configs`);
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  return response.data?.items || [];
+};
+
+export const updateStatutoryFormConfig = async (
+  formCode: StatutoryFormCode,
+  payload: StatutoryFormConfigUpdate,
+): Promise<StatutoryFormConfig> => {
+  const response = await api.put<StatutoryFormConfig>(
+    `${FINANCE_BASE}/statutory/form-configs/${formCode}`,
+    payload,
+  );
+  return response.data;
+};
+
+export const getTaxInvoiceWarnings = async (params: {
+  year: number;
+  month?: number;
+  quarter?: number;
+}): Promise<TaxInvoiceWarningSummary> => {
+  const response = await api.get<TaxInvoiceWarningSummary>(
+    `${FINANCE_BASE}/statutory/tax-invoice-warnings`,
+    { params },
+  );
+  return response.data;
+};
+
+// =========================================================================
+// 14. PHASE 4 HTKK XML EXPORT & SUPPLEMENTAL (01/KHBS)
+// =========================================================================
+export const getStatutoryXmlPreview = async (
+  filingId: number,
+): Promise<StatutoryXmlExportResponse> => {
+  const response = await api.get<StatutoryXmlExportResponse>(
+    `${FINANCE_BASE}/statutory/filings/${filingId}/xml-preview`,
+  );
+  return response.data;
+};
+
+export const downloadStatutoryXml = async (
+  filingId: number,
+  fallbackFilename = `HTKK_${filingId}.xml`,
+): Promise<{ blob: Blob; filename: string; sha256: string | null }> => {
+  const response = await api.get<Blob>(
+    `${FINANCE_BASE}/statutory/filings/${filingId}/export-xml`,
+    { responseType: 'blob' },
+  );
+  const headers = response.headers as Record<string, string | undefined>;
+  const filename = getFilenameFromContentDisposition(
+    headers['content-disposition'],
+    fallbackFilename,
+  );
+  const sha256 = headers['x-export-sha256'] ?? null;
+  const blob =
+    response.data instanceof Blob
+      ? response.data
+      : new Blob([response.data], { type: 'application/xml' });
+  await downloadOrShareBlob(blob, filename, 'application/xml');
+  return { blob, filename, sha256 };
+};
+
+export const createSupplementalFiling = async (
+  payload: StatutorySupplementalCreatePayload,
+): Promise<StatutoryFiling> => {
+  const response = await api.post<StatutoryFiling>(
+    `${FINANCE_BASE}/statutory/filings/supplemental`,
+    payload,
+  );
+  return response.data;
+};
+
+export const getSupplementalFilingDiff = async (
+  filingId: number,
+): Promise<StatutorySupplementalDiffResponse> => {
+  const response = await api.get<StatutorySupplementalDiffResponse>(
+    `${FINANCE_BASE}/statutory/filings/${filingId}/supplemental-diff`,
+  );
+  return response.data;
+};
+
+export const getStatutoryFilingHistory = async (params: {
+  taxYear: number;
+  periodType: StatutoryPeriodType;
+  periodIndex: number;
+  formCode?: StatutoryFormCode;
+}): Promise<StatutoryFiling[]> => {
+  const response = await api.get<StatutoryFiling[] | { items?: StatutoryFiling[] }>(
+    `${FINANCE_BASE}/statutory/filings/history`,
+    { params },
+  );
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  return response.data?.items || [];
+};
+
+export interface CashflowBackfillResponse {
+  scannedCount: number;
+  updatedGlCount: number;
+  updatedVoucherLineCount: number;
+  skippedInternalCount: number;
+  message: string;
+}
+
+export const backfillStatutoryCashflowCodes = async (payload?: {
+  taxYear?: number;
+  periodType?: StatutoryPeriodType;
+  periodIndex?: number;
+}): Promise<CashflowBackfillResponse> => {
+  const response = await api.post<CashflowBackfillResponse>(
+    `${FINANCE_BASE}/statutory/cashflow/backfill`,
+    payload ?? {},
   );
   return response.data;
 };

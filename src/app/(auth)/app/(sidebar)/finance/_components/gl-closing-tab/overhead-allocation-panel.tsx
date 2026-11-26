@@ -108,7 +108,7 @@ export function OverheadAllocationPanel({
           <div className="flex items-center gap-2 text-slate-700">
             <Split size={16} className="text-primary shrink-0" />
             <span>
-              Phân bổ Chi phí sản xuất chung chưa gắn công trình (<strong>TK 627*</strong> TT99/TT200 hoặc <strong>TK 154 chung</strong> TT133) sang <strong>TK 154 từng công trình</strong>, tách 2 nhóm Được trừ / B4.
+              Phân bổ Chi phí sản xuất chung chưa gắn công trình (<strong>TK 627*</strong> TT99 hoặc <strong>TK 154 chung</strong> TT133) sang <strong>TK 154 từng công trình</strong>, tách 2 nhóm Được trừ / B4.
             </span>
           </div>
           {preview && (

@@ -155,7 +155,7 @@ export function AccountFormBody({
           label="Chế độ kế toán" fullWidth value={regime}
           options={[
             { value: 'both', label: ACCOUNTING_REGIME_MAP.both.shortLabel || 'Cả 2' },
-            { value: 'tt200', label: ACCOUNTING_REGIME_MAP.tt200.shortLabel || 'TT200' },
+            { value: 'tt99', label: ACCOUNTING_REGIME_MAP.tt99.shortLabel || 'TT99' },
             { value: 'tt133', label: ACCOUNTING_REGIME_MAP.tt133.shortLabel || 'TT133' },
           ]}
           onChange={(e) => setRegime(e.target.value as AccountRegimeScope)}

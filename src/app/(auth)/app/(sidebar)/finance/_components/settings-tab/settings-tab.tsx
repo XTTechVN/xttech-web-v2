@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import {
+  Building2,
   CalendarRange,
   FolderTree,
   History,
@@ -27,6 +28,7 @@ import { FiscalYearConfigSection } from './fiscal-year-config-section';
 import { FundsBanksSection } from './funds-banks-section';
 import { RegimeSettingsSection } from './regime-settings-section';
 import { SETTINGS_SUBTABS, type SettingsSubTabKey } from './settings-tab.constants';
+import { TaxpayerProfileSection } from './taxpayer-profile-section';
 import { TemplatesSection } from './templates-section';
 import { UserPermissionsSection } from './user-permissions-section';
 
@@ -50,6 +52,7 @@ export interface SettingsTabProps {
 
 const SETTINGS_ICONS: Record<SettingsSubTabKey, React.ReactNode> = {
   regime: <Layers size={14} />,
+  taxpayer_profile: <Building2 size={14} />,
   permissions: <ShieldCheck size={14} />,
   fiscal_years: <CalendarRange size={14} />,
   coa: <FolderTree size={14} />,
@@ -100,7 +103,7 @@ export function SettingsTab({
               Thiết lập Chế độ Kế toán &amp; Danh mục Tài chính Chuẩn
             </h3>
             <p className="text-xs text-slate-500">
-              Quản lý Thông tư 200/133, Hệ thống Tài khoản phân cấp, Quỹ tiền mặt TK 1111, Tài khoản ngân hàng, Khoản mục &amp; Mẫu định khoản
+              Quản lý Thông tư 99/133, Hồ sơ Người nộp thuế, Hệ thống Tài khoản phân cấp, Quỹ tiền mặt TK 1111, Ngân hàng, Khoản mục &amp; Mẫu định khoản
             </p>
           </div>
         </div>
@@ -122,6 +125,14 @@ export function SettingsTab({
           setting={setting}
           onRefreshMaster={onRefreshMaster}
           onOpenOpeningBalance={onOpenOpeningBalance}
+        />
+      )}
+
+      {subTab === 'taxpayer_profile' && (
+        <TaxpayerProfileSection
+          key={setting?.updatedAt || 'default-taxpayer'}
+          setting={setting}
+          onRefreshMaster={onRefreshMaster}
         />
       )}
 

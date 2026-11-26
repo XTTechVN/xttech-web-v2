@@ -211,6 +211,7 @@ export function buildLineFromAutoTemplate(
     creditAccountId: tpl.creditAccountId,
     amount: existingAmount,
     costItemId: tpl.defaultCostItemId,
+    cashflowCode: tpl.defaultCashflowCode ?? null,
     debitBankAccountId: isBankGlCode(debitAcc?.accountCode) ? header.bankAccountId : null,
     creditBankAccountId: isBankGlCode(creditAcc?.accountCode) ? header.bankAccountId : null,
     projectId: header.projectId,

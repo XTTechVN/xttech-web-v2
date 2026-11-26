@@ -4,7 +4,11 @@ import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, Checkbox, Input, Modal, Select, Switch } from '@/components';
 import { createCostItem, updateCostItem } from '@/actions/finance';
-import { COST_FLOW_TYPE_OPTIONS, COST_GROUP_OPTIONS } from '@/config/finance';
+import {
+  CASHFLOW_CODE_OPTIONS,
+  COST_FLOW_TYPE_OPTIONS,
+  COST_GROUP_OPTIONS,
+} from '@/config/finance';
 import { showErrorToast, showSuccessToast } from '@/utils/error';
 import type { CostFlowType, CostGroup, CostItem } from '@/types';
 
@@ -34,6 +38,9 @@ function CostItemFormBody({
   const [defaultIsTaxDeductible, setDefaultIsTaxDeductible] = useState(
     initialData?.defaultIsTaxDeductible ?? true,
   );
+  const [defaultCashflowCode, setDefaultCashflowCode] = useState(
+    initialData?.defaultCashflowCode || '',
+  );
   const [isActive, setIsActive] = useState(initialData?.isActive ?? true);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,6 +57,7 @@ function CostItemFormBody({
         flowType,
         costGroup,
         defaultIsTaxDeductible,
+        defaultCashflowCode: defaultCashflowCode || null,
         isActive,
       };
       const saved = initialData
@@ -105,6 +113,18 @@ function CostItemFormBody({
           onChange={(e) => setCostGroup(e.target.value as CostGroup)}
         />
       </div>
+
+      <Select
+        label="Mã dòng tiền B03-DN mặc định (Tùy chọn)"
+        fullWidth
+        searchable
+        value={defaultCashflowCode}
+        options={[
+          { value: '', label: '-- Tự động xác định theo TK đối ứng --' },
+          ...CASHFLOW_CODE_OPTIONS,
+        ]}
+        onChange={(e) => setDefaultCashflowCode(e.target.value)}
+      />
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 py-1">
         <Checkbox

@@ -1,6 +1,10 @@
-export type AccountingRegime = 'tt200' | 'tt133';
+export type AccountingRegime = 'tt99' | 'tt133';
 
-export type AccountRegimeScope = 'tt200' | 'tt133' | 'both';
+export type AccountRegimeScope = 'tt99' | 'tt133' | 'both';
+
+export type FilingFrequency = 'monthly' | 'quarterly';
+
+export type MaturityTerm = 'short_term' | 'long_term';
 
 export type AccountNature = 'debit' | 'credit' | 'both' | 'no_balance';
 
@@ -60,6 +64,7 @@ export type FinanceTabKey =
   | 'gl_closing'
   | 'tax'
   | 'reports'
+  | 'statutory_tax'
   | 'settings';
 
 // =========================================================================
@@ -85,6 +90,19 @@ export interface FinanceSetting {
   defaultBankAccountCode: string;
   defaultVatInputCode: string;
   defaultVatOutputCode: string;
+  taxpayerName?: string | null;
+  taxCode?: string | null;
+  registeredAddress?: string | null;
+  provinceCode?: string | null;
+  taxAuthorityCode?: string | null;
+  taxAuthorityName?: string | null;
+  legalRepresentative?: string | null;
+  chiefAccountant?: string | null;
+  preparerName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  vatFilingFrequency?: FilingFrequency;
+  pitFilingFrequency?: FilingFrequency;
   createdAt: string;
   updatedAt: string;
 }
@@ -100,6 +118,19 @@ export interface FinanceSettingUpdate {
   defaultBankAccountCode?: string;
   defaultVatInputCode?: string;
   defaultVatOutputCode?: string;
+  taxpayerName?: string | null;
+  taxCode?: string | null;
+  registeredAddress?: string | null;
+  provinceCode?: string | null;
+  taxAuthorityCode?: string | null;
+  taxAuthorityName?: string | null;
+  legalRepresentative?: string | null;
+  chiefAccountant?: string | null;
+  preparerName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  vatFilingFrequency?: FilingFrequency;
+  pitFilingFrequency?: FilingFrequency;
 }
 
 export interface FinanceSeedResult {
@@ -133,6 +164,7 @@ export interface Account {
   trackCostItem: boolean;
   trackBankAccount: boolean;
   trackItem: boolean;
+  isDeprecatedTt99?: boolean;
   isSystem: boolean;
   isActive: boolean;
   createdAt: string;
@@ -259,6 +291,7 @@ export interface CostItem {
   flowType: CostFlowType;
   costGroup: CostGroup;
   defaultIsTaxDeductible: boolean;
+  defaultCashflowCode?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -271,6 +304,7 @@ export interface CostItemCreate {
   flowType: CostFlowType;
   costGroup: CostGroup;
   defaultIsTaxDeductible?: boolean;
+  defaultCashflowCode?: string | null;
   isActive?: boolean;
 }
 
@@ -280,6 +314,7 @@ export interface CostItemUpdate {
   flowType?: CostFlowType;
   costGroup?: CostGroup;
   defaultIsTaxDeductible?: boolean;
+  defaultCashflowCode?: string | null;
   isActive?: boolean;
 }
 
@@ -308,6 +343,7 @@ export interface AutoPostingTemplate {
   defaultCostItemCode?: string | null;
   defaultCostItemName?: string | null;
   defaultHasValidInvoice: boolean;
+  defaultCashflowCode?: string | null;
   requiresProject: boolean;
   workshopVisible: boolean;
   sortOrder: number;
@@ -326,6 +362,7 @@ export interface AutoPostingTemplateCreate {
   creditAccountId: number;
   defaultCostItemId?: number | null;
   defaultHasValidInvoice: boolean;
+  defaultCashflowCode?: string | null;
   requiresProject?: boolean;
   workshopVisible?: boolean;
   sortOrder?: number;
@@ -341,6 +378,7 @@ export interface AutoPostingTemplateUpdate {
   creditAccountId?: number;
   defaultCostItemId?: number | null;
   defaultHasValidInvoice?: boolean;
+  defaultCashflowCode?: string | null;
   requiresProject?: boolean;
   workshopVisible?: boolean;
   sortOrder?: number;
@@ -402,6 +440,8 @@ export interface VoucherLine {
   quantity: number | null;
   unit: string | null;
   unitPrice: number | null;
+  cashflowCode?: string | null;
+  maturityTerm?: MaturityTerm | null;
   isTaxDeductible: boolean;
 }
 
@@ -426,6 +466,8 @@ export interface VoucherLineInput {
   quantity?: number | null;
   unit?: string | null;
   unitPrice?: number | null;
+  cashflowCode?: string | null;
+  maturityTerm?: MaturityTerm | null;
   isTaxDeductible?: boolean | null;
 }
 
@@ -435,6 +477,7 @@ export interface VatBreakdownItem {
   taxableAmount: number;
   vatAmount: number;
   totalAmount: number;
+  vatReturnIndicator?: string | null;
 }
 
 export interface TaxInvoice {
@@ -460,6 +503,7 @@ export interface TaxInvoice {
   vatAccountId: number | null;
   vatAccountCode?: string | null;
   vatBreakdown: VatBreakdownItem[];
+  vatReturnIndicator?: string | null;
   isTaxDeductible: boolean;
   xmlFileUrl: string | null;
   pdfFileUrl: string | null;
@@ -492,6 +536,7 @@ export interface TaxInvoiceCreate {
   totalAmount: number;
   vatAccountId?: number | null;
   vatBreakdown?: VatBreakdownItem[];
+  vatReturnIndicator?: string | null;
   isTaxDeductible?: boolean;
   xmlFileUrl?: string | null;
   pdfFileUrl?: string | null;
@@ -518,6 +563,7 @@ export interface TaxInvoiceUpdate {
   totalAmount?: number;
   vatAccountId?: number | null;
   vatBreakdown?: VatBreakdownItem[];
+  vatReturnIndicator?: string | null;
   isTaxDeductible?: boolean;
   xmlFileUrl?: string | null;
   pdfFileUrl?: string | null;
@@ -783,8 +829,11 @@ export interface OpeningBalanceEntry {
   customerName?: string | null;
   supplierId?: number | null;
   supplierName?: string | null;
+  employeeId?: string | null;
+  employeeName?: string | null;
   projectId?: number | null;
   projectName?: string | null;
+  maturityTerm?: MaturityTerm | null;
   note?: string | null;
 }
 
@@ -795,7 +844,9 @@ export interface OpeningBalanceInputItem {
   bankAccountId?: number | null;
   customerId?: number | null;
   supplierId?: number | null;
+  employeeId?: string | null;
   projectId?: number | null;
+  maturityTerm?: MaturityTerm | null;
   note?: string | null;
 }
 
@@ -1120,6 +1171,66 @@ export interface ProjectPnlReport {
   totalGrossProfit: number;
 }
 
+export type ProjectPnlDrilldownMetric =
+  | 'revenue'
+  | 'direct_material'
+  | 'direct_labor'
+  | 'factory_overhead'
+  | 'subcontract'
+  | 'total_cost'
+  | 'non_deductible_cost'
+  | 'collected';
+
+export type ProjectPnlDrilldownSourceKind = 'general_ledger' | 'payment_transaction';
+
+export interface ProjectPnlDrilldownQueryParams {
+  projectId: number;
+  metric: ProjectPnlDrilldownMetric;
+  fromDate?: string;
+  toDate?: string;
+  reportViewMode?: ReportViewMode;
+}
+
+export interface ProjectPnlDrilldownItem {
+  id: number;
+  sourceKind: ProjectPnlDrilldownSourceKind;
+  entryDate: string;
+  documentNo: string;
+  description: string;
+  amount: number;
+  voucherId: number | null;
+  voucherType: VoucherType | null;
+  accountCode: string | null;
+  accountName: string | null;
+  contraAccountCode: string | null;
+  contraAccountName: string | null;
+  debitAmount: number;
+  creditAmount: number;
+  isTaxDeductible: boolean | null;
+  costItemName: string | null;
+  costBucket: string | null;
+  partnerName: string | null;
+  transactionType: string | null;
+  paymentMethod: string | null;
+  contractCode: string | null;
+  bankReference: string | null;
+}
+
+export interface ProjectPnlDrilldownResponse {
+  projectId: number;
+  projectCode: string;
+  projectName: string;
+  customerName: string | null;
+  metric: ProjectPnlDrilldownMetric;
+  fromDate: string | null;
+  toDate: string | null;
+  reportViewMode: ReportViewMode;
+  isCumulative: boolean;
+  totalAmount: number;
+  itemCount: number;
+  items: ProjectPnlDrilldownItem[];
+}
+
 export interface CashflowQueryParams {
   fromDate: string;
   toDate: string;
@@ -1273,6 +1384,10 @@ export interface FinanceUserPermission {
   canLockPeriod: boolean;
   canApproveNonInvoice: boolean;
   canManageSettings: boolean;
+  canApproveTaxFiling: boolean;
+  canExportStatutory: boolean;
+  canMarkTaxFiled: boolean;
+  canViewStatutoryTax?: boolean;
   isDefaultFallback: boolean;
   updatedAt?: string | null;
 }
@@ -1285,6 +1400,9 @@ export interface FinanceUserPermissionUpdate {
   canLockPeriod?: boolean;
   canApproveNonInvoice?: boolean;
   canManageSettings?: boolean;
+  canApproveTaxFiling?: boolean;
+  canExportStatutory?: boolean;
+  canMarkTaxFiled?: boolean;
 }
 
 export interface FinanceUserPermissionQueryParams {
@@ -1386,6 +1504,7 @@ export interface FiscalYearConfig {
   priorYearRevenue?: number | null;
   citRatePercent: number;
   lossCarryforwardAmount: number;
+  openingVatCredit22?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -1395,6 +1514,7 @@ export interface FiscalYearConfigUpdate {
   priorYearRevenue?: number | null;
   citRatePercent?: number;
   lossCarryforwardAmount?: number;
+  openingVatCredit22?: number;
   reason?: string | null;
 }
 
@@ -1450,4 +1570,326 @@ export interface OverheadAllocationExecutePayload {
   month: number;
   postingDate?: string | null;
   description?: string | null;
+}
+
+// =========================================================================
+// 8. PHASE 1 STATUTORY FOUNDATION (PIT WITHHOLDING & COMPARATIVE BASELINES)
+// =========================================================================
+export type PitContractCategory =
+  | 'resident_gte_3m'
+  | 'resident_lt_3m_or_non_contract'
+  | 'non_resident';
+
+export type PitEntryStatus = 'draft_needs_payroll_reconcile' | 'verified';
+
+export interface PitEntry {
+  id?: number;
+  taxYear: number;
+  periodType: FilingFrequency;
+  periodIndex: number;
+  employeeId?: string | null;
+  employeeName?: string | null;
+  fullName: string;
+  taxCode?: string | null;
+  idNumber?: string | null;
+  contractCategory: PitContractCategory;
+  isTaxDeducted: boolean;
+  grossTaxableIncome: number;
+  personalDeduction: number;
+  dependentCount: number;
+  dependentDeduction: number;
+  insuranceDeduction: number;
+  otherDeduction: number;
+  assessableIncome: number;
+  withheldPitAmount: number;
+  sourceVoucherIds?: number[];
+  status: PitEntryStatus;
+  note?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PitEntryInput {
+  employeeId?: string | null;
+  fullName: string;
+  taxCode?: string | null;
+  idNumber?: string | null;
+  contractCategory: PitContractCategory;
+  isTaxDeducted?: boolean;
+  grossTaxableIncome: number;
+  personalDeduction?: number;
+  dependentCount?: number;
+  dependentDeduction?: number;
+  insuranceDeduction?: number;
+  otherDeduction?: number;
+  assessableIncome?: number;
+  withheldPitAmount: number;
+  sourceVoucherIds?: number[];
+  status?: PitEntryStatus;
+  note?: string | null;
+}
+
+export interface PitLedgerSummary {
+  taxYear: number;
+  periodType: FilingFrequency;
+  periodIndex: number;
+  items: PitEntry[];
+  totalGrossIncome: number;
+  totalWithheldPit: number;
+  gl334Total: number;
+  gl3335Total: number;
+  isMatchedWithGl: boolean;
+}
+
+export type ComparativeBaselineFormCode = 'B01_DN' | 'B02_DN' | 'B03_DN';
+
+export interface ComparativeBaselineItem {
+  id?: number;
+  fiscalYear?: number;
+  formCode?: ComparativeBaselineFormCode;
+  indicatorCode: string;
+  amount: number;
+  note?: string | null;
+  updatedAt?: string;
+}
+
+export interface ComparativeBaselineResponse {
+  fiscalYear: number;
+  formCode?: ComparativeBaselineFormCode | null;
+  items: ComparativeBaselineItem[];
+}
+
+// =========================================================================
+// 9. PHASE 2 STATUTORY FILINGS, FORM CONFIGS & RECONCILIATION
+// =========================================================================
+export type StatutoryFormCode =
+  | '01_GTGT'
+  | '05_KK_TNCN'
+  | 'B01_DN'
+  | 'B02_DN'
+  | 'B03_DN'
+  | 'B09_DN'
+  | 'CDTK'
+  | '03_TNDN';
+
+export type StatutoryPeriodType = 'month' | 'quarter' | 'annual';
+
+export type StatutoryFilingStatus =
+  | 'not_started'
+  | 'draft'
+  | 'reconciled'
+  | 'approved'
+  | 'exported'
+  | 'stale'
+  | 'filed';
+
+export type DeclarationKind = 'initial' | 'supplemental';
+
+export type ReconciliationStatus = 'passed' | 'failed' | 'pending';
+
+export interface StatutoryFormConfig {
+  id: number;
+  formCode: StatutoryFormCode;
+  formName: string;
+  circularCode: string;
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  targetHtkkVersion: string;
+  excelExportEnabled: boolean;
+  xmlExportEnabled: boolean;
+  signoffById?: string | null;
+  signoffByName?: string | null;
+  signoffAt?: string | null;
+  note?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StatutoryFormConfigUpdate {
+  circularCode?: string;
+  targetHtkkVersion?: string;
+  excelExportEnabled?: boolean;
+  xmlExportEnabled?: boolean;
+  note?: string | null;
+}
+
+export interface StatutoryIndicatorItem {
+  code: string;
+  label: string;
+  value: number;
+  sourceKind: 'auto_computed' | 'manual_input';
+  editable: boolean;
+  hasDrilldown: boolean;
+  note?: string | null;
+  lineNo?: string | null;
+  section?: string | null;
+  priorValue?: number | null;
+  isBold?: boolean;
+  formulaNote?: string | null;
+  openingDebit?: number | null;
+  openingCredit?: number | null;
+  periodDebit?: number | null;
+  periodCredit?: number | null;
+  closingDebit?: number | null;
+  closingCredit?: number | null;
+}
+
+export interface StatutoryReconciliationCheck {
+  gateCode: string;
+  title: string;
+  status: ReconciliationStatus;
+  expectedValue: number;
+  actualValue: number;
+  difference: number;
+  message?: string | null;
+  jumpTab?: string | null;
+  jumpTarget?: string | null;
+}
+
+export interface StatutorySourceRef {
+  sourceKind: string;
+  id: number;
+  documentNo: string;
+  entryDate: string;
+  description: string;
+  amount: number;
+  voucherId?: number | null;
+  partnerName?: string | null;
+}
+
+export interface StatutoryFiling {
+  id: number;
+  formCode: StatutoryFormCode;
+  circularCode: string;
+  targetHtkkVersion: string;
+  accountingRegime: AccountingRegime;
+  taxYear: number;
+  periodType: StatutoryPeriodType;
+  periodIndex: number;
+  declarationKind: DeclarationKind;
+  supplementalSeq: number;
+  parentFilingId?: number | null;
+  status: StatutoryFilingStatus;
+  indicators: StatutoryIndicatorItem[];
+  manualOverrides: Record<string, number>;
+  reconciliations: StatutoryReconciliationCheck[];
+  hasDraftPitWarning?: boolean;
+  ledgerWatermark?: string | null;
+  exportSnapshotJson?: Record<string, unknown> | null;
+  exportSha256?: string | null;
+  taxFilingRef?: string | null;
+  staleReason?: string | null;
+  approvedById?: string | null;
+  approvedByName?: string | null;
+  approvedAt?: string | null;
+  exportedById?: string | null;
+  exportedByName?: string | null;
+  exportedAt?: string | null;
+  filedById?: string | null;
+  filedByName?: string | null;
+  filedAt?: string | null;
+  createdById?: string | null;
+  createdByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StatutoryFilingComputeRequest {
+  formCode: StatutoryFormCode;
+  taxYear: number;
+  periodType: StatutoryPeriodType;
+  periodIndex: number;
+  declarationKind?: DeclarationKind;
+  supplementalSeq?: number;
+  manualOverrides?: Record<string, number>;
+}
+
+export interface StatutoryFilingMarkFiledRequest {
+  taxFilingRef?: string | null;
+  note?: string | null;
+}
+
+export interface StatutoryPeriodChecklistItem {
+  formCode: StatutoryFormCode;
+  formName: string;
+  circularCode: string;
+  targetHtkkVersion: string;
+  deadlineDate?: string | null;
+  status: StatutoryFilingStatus;
+  excelExportEnabled: boolean;
+  xmlExportEnabled: boolean;
+  reconciledOk: boolean;
+  filingId?: number | null;
+  isStale: boolean;
+  staleReason?: string | null;
+  exportSha256?: string | null;
+}
+
+export interface StatutoryPeriodOverview {
+  taxYear: number;
+  periodType: StatutoryPeriodType;
+  periodIndex: number;
+  accountingRegime: AccountingRegime;
+  vatFilingFrequency?: FilingFrequency;
+  pitFilingFrequency?: FilingFrequency;
+  configs: StatutoryFormConfig[];
+  checklist: StatutoryPeriodChecklistItem[];
+  unreconciledCount: number;
+  staleCount: number;
+}
+
+export interface VoucherStatutoryImpactItem {
+  filingId: number;
+  formCode: StatutoryFormCode;
+  taxYear: number;
+  periodType: StatutoryPeriodType;
+  periodIndex: number;
+  status: StatutoryFilingStatus;
+  circularCode: string;
+  indicatorCodes?: string[];
+}
+
+export interface TaxInvoiceWarningSummary {
+  missingIndicatorCount: number;
+  unlinkedCount: number;
+  totalAffected: number;
+  message?: string | null;
+}
+
+// =========================================================================
+// 10. PHASE 4 HTKK XML EXPORT & SUPPLEMENTAL DECLARATIONS (01/KHBS)
+// =========================================================================
+export interface StatutorySupplementalCreatePayload {
+  formCode: StatutoryFormCode;
+  taxYear: number;
+  periodType: StatutoryPeriodType;
+  periodIndex: number;
+  note?: string | null;
+}
+
+export interface StatutorySupplementalDiffItem {
+  code: string;
+  label: string;
+  declaredValue: number;
+  adjustedValue: number;
+  difference: number;
+  note?: string | null;
+}
+
+export interface StatutorySupplementalDiffResponse {
+  filingId: number;
+  parentFilingId: number;
+  formCode: StatutoryFormCode;
+  supplementalSeq: number;
+  items: StatutorySupplementalDiffItem[];
+}
+
+export interface StatutoryXmlExportResponse {
+  filingId: number;
+  formCode: StatutoryFormCode;
+  circularCode: string;
+  targetHtkkVersion: string;
+  filename: string;
+  sha256: string;
+  xmlContent: string;
 }

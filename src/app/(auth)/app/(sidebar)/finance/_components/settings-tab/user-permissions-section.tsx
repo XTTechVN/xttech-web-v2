@@ -23,6 +23,9 @@ const PERM_COLUMNS: Array<{
   { key: 'canLockPeriod', label: 'Khóa kỳ', hint: 'Khóa/mở kỳ & khóa nộp thuế' },
   { key: 'canApproveNonInvoice', label: 'Duyệt nội bộ', hint: 'Duyệt chi không HĐ' },
   { key: 'canManageSettings', label: 'Cài đặt TC', hint: 'Quản trị cấu hình & phân quyền' },
+  { key: 'canApproveTaxFiling', label: 'Duyệt thuế', hint: 'Duyệt tờ khai thuế & hồ sơ quyết toán' },
+  { key: 'canExportStatutory', label: 'Xuất BCTC', hint: 'Xuất BCTC & XML HTKK' },
+  { key: 'canMarkTaxFiled', label: 'Chốt nộp thuế', hint: 'Đánh dấu kỳ đã nộp tờ khai thuế' },
 ];
 
 export function UserPermissionsSection() {
@@ -103,7 +106,7 @@ export function UserPermissionsSection() {
       </div>
 
       <Alert variant="info" title="Ma trận phân quyền chi tiết cấp User (Không ảnh hưởng HRM Roles)">
-        Hệ thống tách biệt 7 quyền nghiệp vụ tài chính cho từng nhân sự (Người lập, Người ghi sổ, Người bỏ ghi sổ, Thủ quỹ, Người duyệt chi không HĐ...). Các thay đổi được ghi vào Nhật ký Kiểm toán.
+        Hệ thống tách biệt 10 quyền nghiệp vụ tài chính &amp; thuế cho từng nhân sự (Người lập, Ghi sổ, Bỏ ghi sổ, Thủ quỹ, Duyệt thuế, Xuất BCTC, Chốt nộp thuế...). Các thay đổi được ghi vào Nhật ký Kiểm toán.
       </Alert>
 
       {isError && (
@@ -136,7 +139,7 @@ export function UserPermissionsSection() {
               <tbody className="divide-y divide-slate-100">
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="p-8 text-center text-slate-400">
+                    <td colSpan={13} className="p-8 text-center text-slate-400">
                       Không tìm thấy nhân sự phù hợp.
                     </td>
                   </tr>

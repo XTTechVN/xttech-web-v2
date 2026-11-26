@@ -13,5 +13,6 @@ export * from './bank-account-form-modal';
 export * from './cost-item-form-modal';
 export * from './auto-posting-form-modal';
 export * from './opening-balance-modal';
+export * from './comparative-baselines-modal';
 export * from './tax-invoice-form-modal';
 export * from './jetpay-preview-modal';

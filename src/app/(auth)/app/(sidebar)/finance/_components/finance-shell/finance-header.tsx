@@ -20,7 +20,7 @@ export function FinanceHeader({
   onCreateVoucher,
   onRefreshAll,
 }: FinanceHeaderProps) {
-  const regimeMeta = ACCOUNTING_REGIME_MAP[activeRegime];
+  const regimeMeta = ACCOUNTING_REGIME_MAP[activeRegime] ?? ACCOUNTING_REGIME_MAP.tt99;
 
   return (
     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200">

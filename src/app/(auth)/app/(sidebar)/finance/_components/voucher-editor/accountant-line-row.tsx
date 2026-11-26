@@ -43,7 +43,9 @@ export function AccountantLineRow({
         line.customerId ||
         line.supplierId ||
         line.employeeId ||
-        line.warehouseItemId,
+        line.warehouseItemId ||
+        line.cashflowCode ||
+        line.maturityTerm,
     ),
   );
 

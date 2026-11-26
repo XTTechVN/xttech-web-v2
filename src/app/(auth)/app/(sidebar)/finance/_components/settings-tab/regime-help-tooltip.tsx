@@ -23,7 +23,7 @@ export function RegimeHelpTooltip() {
     >
       <button
         type="button"
-        aria-label="Tìm hiểu Thông tư 200 và Thông tư 133"
+        aria-label="Tìm hiểu Thông tư 99 và Thông tư 133"
         aria-expanded={isOpen}
         onFocus={() => setHovered(true)}
         onClick={() => setPinned((prev) => !prev)}
@@ -42,7 +42,7 @@ export function RegimeHelpTooltip() {
           <div className="space-y-3">
             <div>
               <h5 className="text-xs font-bold text-slate-900">
-                Phân biệt Thông tư 200 &amp; Thông tư 133
+                Phân biệt Thông tư 99 &amp; Thông tư 133
               </h5>
               <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
                 Cả hai đều là chế độ kế toán của Bộ Tài chính quy định hệ thống tài khoản (COA) và cách tập hợp chi phí, lên báo cáo tài chính.
@@ -53,7 +53,7 @@ export function RegimeHelpTooltip() {
               <div className="rounded-lg border border-primary/20 bg-primary/5 p-2.5 space-y-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-bold text-slate-900">
-                    Thông tư 200/2014/TT-BTC
+                    Thông tư 99/2025/TT-BTC
                   </span>
                   <Badge variant="primary" size="sm">
                     Đầy đủ / Sản xuất

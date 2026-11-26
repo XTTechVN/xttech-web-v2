@@ -7,11 +7,18 @@ import type {
   CashCountStatus,
   CostFlowType,
   CostGroup,
+  FilingFrequency,
   FinanceTabKey,
+  MaturityTerm,
   OverheadAllocationBasis,
   PartnerType,
+  PitContractCategory,
+  ProjectPnlDrilldownMetric,
+  ReconciliationStatus,
   ReportViewMode,
   SourceQueueType,
+  StatutoryFilingStatus,
+  StatutoryFormCode,
   TaxInvoiceDirection,
   VatRate,
   VoucherLineKind,
@@ -30,10 +37,10 @@ export interface FinanceDictItem {
 }
 
 export const ACCOUNTING_REGIME_MAP: Record<AccountingRegime | AccountRegimeScope, FinanceDictItem> = {
-  tt200: {
-    label: 'Thông tư 200/2014/TT-BTC',
-    shortLabel: 'TT200',
-    description: 'Chế độ kế toán Doanh nghiệp lớn / vừa',
+  tt99: {
+    label: 'Thông tư 99/2025/TT-BTC',
+    shortLabel: 'TT99',
+    description: 'Chế độ kế toán Doanh nghiệp vừa & lớn (áp dụng từ 2026)',
     variant: 'primary',
     badgeClass: 'bg-primary/10 text-primary border-primary/20',
   },
@@ -45,7 +52,7 @@ export const ACCOUNTING_REGIME_MAP: Record<AccountingRegime | AccountRegimeScope
     badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
   },
   both: {
-    label: 'Dùng chung TT200 & TT133',
+    label: 'Dùng chung TT99 & TT133',
     shortLabel: 'Cả 2 chế độ',
     variant: 'default',
     badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
@@ -53,7 +60,7 @@ export const ACCOUNTING_REGIME_MAP: Record<AccountingRegime | AccountRegimeScope
 };
 
 export const ACCOUNTING_REGIME_OPTIONS: Array<{ value: AccountingRegime; label: string }> = [
-  { value: 'tt200', label: ACCOUNTING_REGIME_MAP.tt200.label },
+  { value: 'tt99', label: ACCOUNTING_REGIME_MAP.tt99.label },
   { value: 'tt133', label: ACCOUNTING_REGIME_MAP.tt133.label },
 ];
 
@@ -596,11 +603,19 @@ export const FINANCE_TABS_META: FinanceTabMeta[] = [
     iconKey: 'BarChart3',
   },
   {
+    id: 'statutory_tax',
+    sectionId: 'finance-statutory-tax',
+    label: 'BCTC & Kê khai Thuế',
+    shortLabel: 'BCTC & Thuế',
+    description: 'Tờ khai 01/GTGT (TT80/TT89), 05/KK-TNCN, BCTC chuẩn TT99/2025, đối chiếu chéo & kết xuất.',
+    iconKey: 'Landmark',
+  },
+  {
     id: 'settings',
     sectionId: 'finance-settings',
     label: 'Thiết lập kế toán',
     shortLabel: 'Thiết lập',
-    description: 'Thông tư 200/133, hệ thống tài khoản, khoản mục chi phí và mẫu định khoản nhanh.',
+    description: 'Thông tư 99/133, hệ thống tài khoản, khoản mục chi phí và mẫu định khoản nhanh.',
     iconKey: 'Settings',
   },
 ];
@@ -732,3 +747,260 @@ export const FINANCE_AUDIT_ENTITY_OPTIONS: Array<{ value: string; label: string 
   { value: 'fiscal_year_config', label: 'Cấu hình năm tài chính' },
   { value: 'finance_setting', label: 'Phân quyền & Thiết lập' },
 ];
+
+export const PROJECT_PNL_METRIC_MAP: Record<ProjectPnlDrilldownMetric, FinanceDictItem> = {
+  revenue: {
+    label: 'Doanh thu công trình',
+    shortLabel: 'Doanh thu',
+    description: 'Các bút toán doanh thu (TK 511, 515, 711 trừ 521) đã ghi sổ',
+    variant: 'primary',
+    badgeClass: 'bg-primary/10 text-primary border-primary/20',
+  },
+  direct_material: {
+    label: 'Chi phí nguyên vật liệu trực tiếp',
+    shortLabel: 'NVL trực tiếp',
+    description: 'Chi phí NVL trực tiếp (TK 621 / 154 hoặc nhóm NVL TT)',
+    variant: 'info',
+    badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+  },
+  direct_labor: {
+    label: 'Chi phí nhân công trực tiếp',
+    shortLabel: 'Nhân công',
+    description: 'Chi phí nhân công trực tiếp (TK 622 hoặc nhóm Nhân công)',
+    variant: 'info',
+    badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+  },
+  factory_overhead: {
+    label: 'Chi phí sản xuất chung',
+    shortLabel: 'SX chung',
+    description: 'Chi phí máy thi công, sản xuất chung & phân bổ (TK 623, 627)',
+    variant: 'warning',
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+  },
+  subcontract: {
+    label: 'Chi phí thuê ngoài / gia công',
+    shortLabel: 'Thuê ngoài',
+    description: 'Chi phí nhà thầu phụ, gia công ngoài gắn khoản mục Thuê ngoài',
+    variant: 'default',
+    badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+  },
+  total_cost: {
+    label: 'Tổng chi phí công trình',
+    shortLabel: 'Tổng CP',
+    description: 'Toàn bộ chi phí trực tiếp, sản xuất chung, thuê ngoài và chi phí khác',
+    variant: 'danger',
+    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+  },
+  non_deductible_cost: {
+    label: 'Chi phí không được trừ (Chỉ tiêu B4)',
+    shortLabel: 'Không được trừ (B4)',
+    description: 'Các bút toán chi phí thiếu hóa đơn hợp lệ / loại trừ thuế TNDN',
+    variant: 'warning',
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+  },
+  collected: {
+    label: 'Tiền đã thu theo hợp đồng',
+    shortLabel: 'Đã thu',
+    description: 'Tổng hợp các giao dịch thu tiền / hoàn tiền lũy kế của công trình',
+    variant: 'success',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  },
+};
+
+export const PROJECT_PNL_COST_BUCKET_LABELS: Record<string, string> = {
+  direct_material: 'NVL trực tiếp',
+  direct_labor: 'Nhân công',
+  factory_overhead: 'SX chung',
+  subcontract: 'Thuê ngoài',
+  other_expense: 'Chi phí khác',
+};
+
+// =========================================================================
+// PHASE 1 STATUTORY & TT99/2025 DICTIONARIES
+// =========================================================================
+export const CASHFLOW_CODE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '01', label: '01 - Thu tiền bán hàng, cung cấp dịch vụ & DT khác' },
+  { value: '02', label: '02 - Chi trả cho người cung cấp hàng hóa & dịch vụ' },
+  { value: '03', label: '03 - Chi trả cho người lao động' },
+  { value: '04', label: '04 - Tiền lãi vay đã trả' },
+  { value: '05', label: '05 - Thuế TNDN đã nộp' },
+  { value: '06', label: '06 - Tiền thu khác từ hoạt động kinh doanh' },
+  { value: '07', label: '07 - Tiền chi khác cho hoạt động kinh doanh' },
+  { value: '21', label: '21 - Chi mua sắm, xây dựng TSCĐ & TS dài hạn khác' },
+  { value: '22', label: '22 - Thu thanh lý, nhượng bán TSCĐ & TS dài hạn khác' },
+  { value: '23', label: '23 - Chi cho vay, mua công cụ nợ của đơn vị khác' },
+  { value: '24', label: '24 - Thu hồi cho vay, bán lại công cụ nợ' },
+  { value: '25', label: '25 - Chi đầu tư góp vốn vào đơn vị khác' },
+  { value: '26', label: '26 - Thu hồi đầu tư góp vốn vào đơn vị khác' },
+  { value: '27', label: '27 - Thu lãi cho vay, cổ tức và lợi nhuận được chia' },
+  { value: '31', label: '31 - Thu phát hành cổ phiếu, nhận vốn góp CSH' },
+  { value: '32', label: '32 - Tiền trả lại vốn góp cho CSH, mua lại cổ phiếu' },
+  { value: '33', label: '33 - Tiền thu từ đi vay' },
+  { value: '34', label: '34 - Tiền trả nợ gốc vay' },
+  { value: '35', label: '35 - Tiền trả nợ gốc thuê tài chính' },
+  { value: '36', label: '36 - Cổ tức, lợi nhuận đã trả cho chủ sở hữu' },
+  { value: '61', label: '61 - Ảnh hưởng thay đổi tỷ giá hối đoái quy đổi ngoại tệ' },
+];
+
+export const MATURITY_TERM_OPTIONS: Array<{ value: MaturityTerm; label: string }> = [
+  { value: 'short_term', label: 'Ngắn hạn (≤ 12 tháng)' },
+  { value: 'long_term', label: 'Dài hạn (> 12 tháng)' },
+];
+
+export const VAT_RETURN_INDICATOR_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '', label: 'Tự động theo thuế suất (Chuẩn)' },
+  { value: '23a', label: '[23a] Hàng hóa, dịch vụ nhập khẩu' },
+  { value: '26', label: '[26] HHDV bán ra không chịu thuế GTGT' },
+  { value: '32a', label: '[32a] HHDV bán ra không tính nộp thuế' },
+  { value: '32b', label: '[32b] Doanh thu không tính vào giá tính thuế' },
+  { value: '34a', label: '[34a] Doanh thu ngoài phạm vi kê khai' },
+];
+
+export const FILING_FREQUENCY_OPTIONS: Array<{ value: FilingFrequency; label: string }> = [
+  { value: 'quarterly', label: 'Kê khai theo Quý' },
+  { value: 'monthly', label: 'Kê khai theo Tháng' },
+];
+
+export const PIT_CONTRACT_CATEGORY_MAP: Record<PitContractCategory, FinanceDictItem> = {
+  resident_gte_3m: {
+    label: 'Cư trú — HĐLĐ ≥ 3 tháng (Biểu lũy tiến)',
+    shortLabel: 'HĐLĐ ≥ 3 tháng',
+    variant: 'primary',
+    badgeClass: 'bg-primary/10 text-primary border-primary/20',
+  },
+  resident_lt_3m_or_non_contract: {
+    label: 'Cư trú — Không HĐ / < 3 tháng (Khấu trừ 10%)',
+    shortLabel: 'Vãng lai 10%',
+    variant: 'warning',
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+  },
+  non_resident: {
+    label: 'Cá nhân không cư trú (Khấu trừ 20%)',
+    shortLabel: 'Không cư trú 20%',
+    variant: 'info',
+    badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+  },
+};
+
+// =========================================================================
+// PHASE 2 STATUTORY FILINGS & RECONCILIATION DICTIONARIES
+// =========================================================================
+export const STATUTORY_FILING_STATUS_MAP: Record<StatutoryFilingStatus, FinanceDictItem> = {
+  not_started: {
+    label: 'Chưa lập',
+    shortLabel: 'Chưa lập',
+    variant: 'default',
+    badgeClass: 'bg-slate-100 text-slate-600 border-slate-200',
+  },
+  draft: {
+    label: 'Bản nháp',
+    shortLabel: 'Nháp',
+    variant: 'info',
+    badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+  },
+  reconciled: {
+    label: 'Đã đối chiếu',
+    shortLabel: 'Đã đối chiếu',
+    variant: 'primary',
+    badgeClass: 'bg-primary/10 text-primary border-primary/20',
+  },
+  approved: {
+    label: 'Đã duyệt',
+    shortLabel: 'Đã duyệt',
+    variant: 'success',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  },
+  exported: {
+    label: 'Đã xuất hồ sơ',
+    shortLabel: 'Đã xuất',
+    variant: 'success',
+    badgeClass: 'bg-teal-50 text-teal-700 border-teal-200',
+  },
+  stale: {
+    label: 'Lỗi thời (Sổ cái thay đổi)',
+    shortLabel: 'Lỗi thời',
+    variant: 'warning',
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+  },
+  filed: {
+    label: 'Đã nộp CQT',
+    shortLabel: 'Đã nộp',
+    variant: 'success',
+    badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+  },
+};
+
+export const STATUTORY_FORM_META_MAP: Record<
+  StatutoryFormCode,
+  { title: string; shortTitle: string; category: 'tax' | 'bctc'; periodKind: 'tax_period' | 'annual' }
+> = {
+  '01_GTGT': {
+    title: 'Tờ khai Thuế GTGT khấu trừ (Mẫu 01/GTGT)',
+    shortTitle: '01/GTGT',
+    category: 'tax',
+    periodKind: 'tax_period',
+  },
+  '05_KK_TNCN': {
+    title: 'Tờ khai Khấu trừ Thuế TNCN (Mẫu 05/KK-TNCN)',
+    shortTitle: '05/KK-TNCN',
+    category: 'tax',
+    periodKind: 'tax_period',
+  },
+  B01_DN: {
+    title: 'Báo cáo Tình hình tài chính (Mẫu B01-DN)',
+    shortTitle: 'B01-DN',
+    category: 'bctc',
+    periodKind: 'annual',
+  },
+  B02_DN: {
+    title: 'Báo cáo Kết quả hoạt động kinh doanh (Mẫu B02-DN)',
+    shortTitle: 'B02-DN',
+    category: 'bctc',
+    periodKind: 'annual',
+  },
+  B03_DN: {
+    title: 'Báo cáo Lưu chuyển tiền tệ (Mẫu B03-DN)',
+    shortTitle: 'B03-DN',
+    category: 'bctc',
+    periodKind: 'annual',
+  },
+  B09_DN: {
+    title: 'Thuyết minh Báo cáo tài chính (Mẫu B09-DN)',
+    shortTitle: 'B09-DN',
+    category: 'bctc',
+    periodKind: 'annual',
+  },
+  CDTK: {
+    title: 'Bảng Cân đối Tài khoản (Mẫu S06-DN)',
+    shortTitle: 'CĐTK',
+    category: 'bctc',
+    periodKind: 'annual',
+  },
+  '03_TNDN': {
+    title: 'Tờ khai Quyết toán Thuế TNDN (Mẫu 03/TNDN)',
+    shortTitle: '03/TNDN',
+    category: 'tax',
+    periodKind: 'annual',
+  },
+};
+
+export const RECONCILIATION_STATUS_MAP: Record<ReconciliationStatus, FinanceDictItem> = {
+  passed: {
+    label: 'Khớp 100%',
+    shortLabel: 'Khớp',
+    variant: 'success',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  },
+  failed: {
+    label: 'Lệch số liệu',
+    shortLabel: 'Lệch',
+    variant: 'danger',
+    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+  },
+  pending: {
+    label: 'Chưa kiểm tra',
+    shortLabel: 'Chờ KT',
+    variant: 'default',
+    badgeClass: 'bg-slate-100 text-slate-600 border-slate-200',
+  },
+};

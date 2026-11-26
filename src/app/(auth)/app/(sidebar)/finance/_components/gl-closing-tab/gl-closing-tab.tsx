@@ -27,7 +27,7 @@ const GL_ICONS: Record<GlSubTabKey, React.ReactNode> = {
 };
 
 export function GlClosingTab({
-  accountingRegime = 'tt200',
+  accountingRegime = 'tt99',
   refreshSignal = 0,
   onCreateJournalVoucher,
   onOpenOpeningBalance,

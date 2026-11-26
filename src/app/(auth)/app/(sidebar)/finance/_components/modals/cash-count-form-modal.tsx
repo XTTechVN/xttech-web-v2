@@ -229,7 +229,7 @@ export function CashCountFormModal({
       isOpen={isOpen}
       onClose={onClose}
       size="lg"
-      title="Lập Biên bản Kiểm kê Quỹ Tiền mặt (TT200 / TT99)"
+      title="Lập Biên bản Kiểm kê Quỹ Tiền mặt (TT99)"
     >
       {isOpen && (
         <CashCountFormBody

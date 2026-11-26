@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { AlertTriangle, RefreshCw, Save } from 'lucide-react';
+import { AlertTriangle, FileSpreadsheet, RefreshCw, Save } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -20,13 +20,16 @@ import {
 } from '@/config/finance';
 import type { FiscalYearConfig, OverheadAllocationBasis } from '@/types';
 import { formatCurrency, getErrorMessage, showErrorToast, showSuccessToast } from '@/utils';
+import { ComparativeBaselinesModal } from '../modals';
 
 function FiscalYearEditorForm({
   config,
   year,
+  onOpenBaselines,
 }: {
   config: FiscalYearConfig | null;
   year: number;
+  onOpenBaselines: () => void;
 }) {
   const queryClient = useQueryClient();
   const initialBasis: OverheadAllocationBasis =
@@ -36,6 +39,9 @@ function FiscalYearEditorForm({
   const [citRate, setCitRate] = useState<string>(String(config?.citRatePercent ?? 20));
   const [lossCarryforward, setLossCarryforward] = useState<number>(
     config?.lossCarryforwardAmount ?? 0,
+  );
+  const [openingVatCredit22, setOpeningVatCredit22] = useState<number>(
+    config?.openingVatCredit22 ?? 0,
   );
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
@@ -56,6 +62,7 @@ function FiscalYearEditorForm({
         priorYearRevenue: priorRevenue > 0 ? priorRevenue : null,
         citRatePercent: Number(citRate) || 20,
         lossCarryforwardAmount: lossCarryforward,
+        openingVatCredit22,
         reason: cleanedReason || undefined,
       });
       setReason('');
@@ -135,6 +142,13 @@ function FiscalYearEditorForm({
           disabled={saving}
           fullWidth
         />
+        <CurrencyInput
+          label="Thuế GTGT còn được khấu trừ kỳ trước chuyển sang — Chỉ tiêu [22] (VNĐ)"
+          value={openingVatCredit22}
+          onChange={setOpeningVatCredit22}
+          disabled={saving}
+          fullWidth
+        />
       </div>
 
       {priorRevenue > 0 && (
@@ -156,7 +170,16 @@ function FiscalYearEditorForm({
         fullWidth
       />
 
-      <div className="flex items-center justify-end pt-2 border-t border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onOpenBaselines}
+          leftIcon={<FileSpreadsheet size={14} />}
+        >
+          Số liệu so sánh năm trước (B01 / B02 / B03)
+        </Button>
         <Button type="submit" variant="primary" size="sm" loading={saving} leftIcon={<Save size={14} />}>
           Lưu cấu hình Năm {year}
         </Button>
@@ -168,6 +191,7 @@ function FiscalYearEditorForm({
 export function FiscalYearConfigSection() {
   const currentYear = dayjs().year();
   const [year, setYear] = useState<number>(currentYear);
+  const [baselinesModalOpen, setBaselinesModalOpen] = useState(false);
 
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['finance', 'fiscal-year-configs', year],
@@ -221,8 +245,15 @@ export function FiscalYearConfigSection() {
           key={`${year}-${activeConfig?.updatedAt || 'new'}`}
           config={activeConfig}
           year={year}
+          onOpenBaselines={() => setBaselinesModalOpen(true)}
         />
       )}
+
+      <ComparativeBaselinesModal
+        isOpen={baselinesModalOpen}
+        fiscalYear={year}
+        onClose={() => setBaselinesModalOpen(false)}
+      />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import type {
   Account,
   BankAccount,
   Customer,
+  Employee,
   OpeningBalanceEntry,
   OpeningBalanceInputItem,
   Project,
@@ -30,6 +31,7 @@ export interface OpeningBalanceBodyProps {
   bankAccounts: BankAccount[];
   customers: Customer[];
   suppliers: WarehouseSupplier[];
+  employees: Employee[];
   projects: Project[];
   effectiveDate: string;
   onChangeDate: (date: string) => void;
@@ -43,6 +45,7 @@ export function OpeningBalanceBody({
   bankAccounts,
   customers,
   suppliers,
+  employees,
   projects,
   effectiveDate,
   onChangeDate,
@@ -103,7 +106,9 @@ export function OpeningBalanceBody({
         bankAccountId: null,
         customerId: null,
         supplierId: null,
+        employeeId: null,
         projectId: null,
+        maturityTerm: null,
         note: '',
       },
     ]);
@@ -120,7 +125,9 @@ export function OpeningBalanceBody({
         bankAccountId: r.bankAccountId,
         customerId: r.customerId,
         supplierId: r.supplierId,
+        employeeId: r.employeeId,
         projectId: r.projectId,
+        maturityTerm: r.maturityTerm,
         note: r.note.trim() || null,
       }));
     if (nonZero.length === 0) {
@@ -182,11 +189,13 @@ export function OpeningBalanceBody({
 
       <OpeningBalanceTable
         rows={filteredRows}
+        accounts={accounts}
         totalDebit={totalDebit}
         totalCredit={totalCredit}
         bankAccounts={bankAccounts}
         customers={customers}
         suppliers={suppliers}
+        employees={employees}
         projects={projects}
         onUpdateRow={(key, patch) => setRows((prev) => prev.map((r) => (r.rowKey === key ? { ...r, ...patch } : r)))}
         onRemoveRow={(key) => setRows((prev) => prev.filter((r) => r.rowKey !== key))}

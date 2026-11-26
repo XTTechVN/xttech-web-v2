@@ -57,6 +57,7 @@ export function OpeningBalanceModal({
               bankAccounts={lookups.bankAccounts}
               customers={lookups.customers}
               suppliers={lookups.suppliers}
+              employees={lookups.employees}
               projects={lookups.projects}
               effectiveDate={effectiveDate}
               onChangeDate={setEffectiveDate}

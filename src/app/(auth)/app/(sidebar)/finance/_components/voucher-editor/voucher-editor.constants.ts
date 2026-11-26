@@ -15,6 +15,7 @@ import type {
   Department,
   Employee,
   FinanceSetting,
+  MaturityTerm,
   PartnerType,
   Project,
   VoucherLine,
@@ -47,6 +48,8 @@ export interface VoucherDraftLine {
   quantity: number | null;
   unit: string | null;
   unitPrice: number | null;
+  cashflowCode: string | null;
+  maturityTerm: MaturityTerm | null;
   isTaxDeductible: boolean;
 }
 
@@ -218,6 +221,8 @@ export const createEmptyDraftLine = (
   quantity: null,
   unit: null,
   unitPrice: null,
+  cashflowCode: null,
+  maturityTerm: null,
   isTaxDeductible: true,
   ...overrides,
 });
@@ -242,6 +247,8 @@ export const mapVoucherLinesToDraft = (lines: VoucherLine[]): VoucherDraftLine[]
     quantity: line.quantity,
     unit: line.unit,
     unitPrice: line.unitPrice,
+    cashflowCode: line.cashflowCode ?? null,
+    maturityTerm: line.maturityTerm ?? null,
     isTaxDeductible: line.isTaxDeductible,
   }));
 
@@ -267,6 +274,8 @@ export const toVoucherLineInput = (
   quantity: line.quantity,
   unit: line.unit,
   unitPrice: line.unitPrice,
+  cashflowCode: line.cashflowCode || null,
+  maturityTerm: line.maturityTerm || null,
   isTaxDeductible: line.isTaxDeductible,
 });
 
@@ -349,6 +358,7 @@ export const buildWorkshopLineInput = (
     amount: Math.round(input.amount),
     projectId: input.projectId || null,
     costItemId: input.template?.defaultCostItemId || null,
+    cashflowCode: input.template?.defaultCashflowCode ?? null,
     customerId: input.partnerType === 'customer' ? input.customerId : null,
     supplierId: input.partnerType === 'supplier' ? input.supplierId : null,
     employeeId: input.partnerType === 'employee' ? input.employeeId : null,

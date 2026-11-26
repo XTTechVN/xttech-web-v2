@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Calculator, Calendar, Plus, RefreshCw, Wrench } from 'lucide-react';
+import dayjs from 'dayjs';
+import { ArrowRight, Calculator, Calendar, Landmark, Plus, RefreshCw, Wrench } from 'lucide-react';
 import { Badge, Button, Input } from '@/components';
-import { getFinanceDashboard } from '@/actions/finance';
+import { getFinanceDashboard, getStatutoryPeriodOverview } from '@/actions/finance';
 import type { FinanceTabKey, VoucherType } from '@/types';
 import { getCurrentMonthDateRange } from './overview-tab.constants';
 import { OverviewKpiGrid } from './overview-kpi-grid';
@@ -12,12 +13,14 @@ import { OverviewCashflowChart } from './overview-cashflow-chart';
 import { OverviewQueuesPanel } from './overview-queues-panel';
 
 export interface OverviewTabProps {
+  canViewStatutoryTax?: boolean;
   onCreateVoucher: (mode?: 'workshop' | 'accountant', voucherType?: VoucherType) => void;
   onOpenVoucherDetail: (voucherId: number) => void;
   onNavigateTab: (tab: FinanceTabKey) => void;
 }
 
 export function OverviewTab({
+  canViewStatutoryTax = false,
   onCreateVoucher,
   onOpenVoucherDetail,
   onNavigateTab,
@@ -25,6 +28,8 @@ export function OverviewTab({
   const defaultRange = getCurrentMonthDateRange();
   const [fromDate, setFromDate] = useState(defaultRange.fromDate);
   const [toDate, setToDate] = useState(defaultRange.toDate);
+  const now = dayjs();
+  const currentQuarter = Math.ceil((now.month() + 1) / 3);
 
   const {
     data: dashboard,
@@ -34,6 +39,18 @@ export function OverviewTab({
   } = useQuery({
     queryKey: ['finance', 'dashboard', fromDate, toDate],
     queryFn: () => getFinanceDashboard({ fromDate, toDate }),
+  });
+
+  const { data: statutoryOverview } = useQuery({
+    queryKey: ['finance', 'statutory', 'overview', now.year(), 'quarter', currentQuarter],
+    queryFn: () =>
+      getStatutoryPeriodOverview({
+        taxYear: now.year(),
+        periodType: 'quarter',
+        periodIndex: currentQuarter,
+      }),
+    enabled: canViewStatutoryTax,
+    staleTime: 60_000,
   });
 
   return (
@@ -94,6 +111,35 @@ export function OverviewTab({
           </Button>
         </div>
       </div>
+
+      {canViewStatutoryTax && statutoryOverview && (
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-start gap-2.5">
+            <Landmark size={16} className="text-primary shrink-0 mt-0.5" />
+            <div>
+              <div className="font-bold text-slate-900">
+                Nhắc hạn Kê khai Thuế Quý {currentQuarter}/{now.year()}
+              </div>
+              <div className="text-slate-600 mt-0.5">
+                Chưa đối chiếu: <strong>{statutoryOverview.unreconciledCount}</strong> hồ sơ • Lỗi thời:{' '}
+                <strong>{statutoryOverview.staleCount}</strong> hồ sơ • Hạn nộp:{' '}
+                <span className="font-mono font-semibold text-primary">
+                  {statutoryOverview.checklist[0]?.deadlineDate || 'Theo quy định'}
+                </span>
+              </div>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            onClick={() => onNavigateTab('statutory_tax')}
+            rightIcon={<ArrowRight size={13} />}
+          >
+            Mở BCTC &amp; Thuế
+          </Button>
+        </div>
+      )}
 
       {isLoading || !dashboard ? (
         <div className="p-10 text-center text-sm text-slate-400 bg-white rounded-xl border border-slate-200">

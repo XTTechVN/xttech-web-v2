@@ -2,9 +2,9 @@
 
 import React, { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import { BarChart3, BookOpen, Building2, Scale, TrendingUp } from 'lucide-react';
+import { BarChart3, BookOpen, Building2, Landmark, Scale, TrendingUp } from 'lucide-react';
 import { Badge, Button, Input, Tabs, type TabItem } from '@/components';
-import type { Account, ReportViewMode } from '@/types';
+import type { Account, FinanceTabKey, ReportViewMode } from '@/types';
 import { cn } from '@/utils';
 import { CashflowSection } from './cashflow-section';
 import { GeneralLedgerSection } from './general-ledger-section';
@@ -18,8 +18,10 @@ import { TrialBalanceSection } from './trial-balance-section';
 
 export interface ReportsTabProps {
   accounts: Account[];
+  canViewStatutoryTax?: boolean;
   refreshSignal?: number;
   onOpenVoucherDetail: (voucherId: number) => void;
+  onNavigateTab?: (tab: FinanceTabKey) => void;
 }
 
 const REPORT_ICONS: Record<ReportSubTabKey, React.ReactNode> = {
@@ -31,8 +33,10 @@ const REPORT_ICONS: Record<ReportSubTabKey, React.ReactNode> = {
 
 export function ReportsTab({
   accounts,
+  canViewStatutoryTax = false,
   refreshSignal = 0,
   onOpenVoucherDetail,
+  onNavigateTab,
 }: ReportsTabProps) {
   const [subTab, setSubTab] = useState<ReportSubTabKey>('project_pnl');
   const [reportViewMode, setReportViewMode] = useState<ReportViewMode>('all');
@@ -92,38 +96,51 @@ export function ReportsTab({
                 Hệ thống Báo cáo Tài chính &amp; Sổ Sách Hợp Nhất
               </h3>
               <p className="text-xs text-slate-500">
-                Tổng hợp chuẩn Thông tư 200/133 từ 1 Sổ Tài chính; lọc chi phí được trừ / loại B4 trên Sổ cái &amp; P&amp;L Công trình
+                Tổng hợp chuẩn Thông tư 99/133 từ 1 Sổ Tài chính; lọc chi phí được trừ / loại B4 trên Sổ cái &amp; P&amp;L Công trình
               </p>
             </div>
           </div>
 
-          {supportsViewModeFilter ? (
-            <div className="inline-flex flex-wrap p-1 rounded-xl bg-slate-100 border border-slate-200 gap-1">
-              {REPORT_VIEW_MODE_SEGMENT_ITEMS.map((seg) => {
-                const active = reportViewMode === seg.value;
-                return (
-                  <button
-                    key={seg.value}
-                    type="button"
-                    onClick={() => setReportViewMode(seg.value)}
-                    title={seg.hint}
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer',
-                      active
-                        ? 'bg-primary text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/60',
-                    )}
-                  >
-                    {seg.label}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <Badge variant="primary" size="md">
-              100% Sổ Tài chính hợp nhất (Cân đối chuẩn)
-            </Badge>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {canViewStatutoryTax && onNavigateTab && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onNavigateTab('statutory_tax')}
+                leftIcon={<Landmark size={14} />}
+              >
+                Xem bản BCTC pháp định (TT99)
+              </Button>
+            )}
+            {supportsViewModeFilter ? (
+              <div className="inline-flex flex-wrap p-1 rounded-xl bg-slate-100 border border-slate-200 gap-1">
+                {REPORT_VIEW_MODE_SEGMENT_ITEMS.map((seg) => {
+                  const active = reportViewMode === seg.value;
+                  return (
+                    <button
+                      key={seg.value}
+                      type="button"
+                      onClick={() => setReportViewMode(seg.value)}
+                      title={seg.hint}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer',
+                        active
+                          ? 'bg-primary text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-white/60',
+                      )}
+                    >
+                      {seg.label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <Badge variant="primary" size="md">
+                100% Sổ Tài chính hợp nhất (Cân đối chuẩn)
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-2 border-t border-slate-100">
@@ -174,6 +191,7 @@ export function ReportsTab({
           toDate={toDate}
           reportViewMode={reportViewMode}
           refreshSignal={refreshSignal}
+          onOpenVoucherDetail={onOpenVoucherDetail}
         />
       )}
 

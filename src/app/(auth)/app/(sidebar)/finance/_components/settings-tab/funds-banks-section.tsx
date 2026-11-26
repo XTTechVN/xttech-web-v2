@@ -70,7 +70,7 @@ export function FundsBanksSection({
               </Badge>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Hệ thống sử dụng 1 Quỹ Tiền mặt hợp nhất gắn với Tài khoản <span className="font-mono font-semibold text-primary">1111</span> theo chuẩn Thông tư 200/133 (không tách két đa quỹ VP/Xưởng). Mọi phiếu thu/chi tiền mặt đều hạch toán vào Sổ quỹ S07-DN; chi phí có hóa đơn GTGT và chi phí không hóa đơn được phân biệt qua trạng thái Hóa đơn hợp lệ &amp; Chỉ tiêu loại trừ TNDN (B4).
+              Hệ thống sử dụng 1 Quỹ Tiền mặt hợp nhất gắn với Tài khoản <span className="font-mono font-semibold text-primary">1111</span> theo chuẩn Thông tư 99/133 (không tách két đa quỹ VP/Xưởng). Mọi phiếu thu/chi tiền mặt đều hạch toán vào Sổ quỹ S07-DN; chi phí có hóa đơn GTGT và chi phí không hóa đơn được phân biệt qua trạng thái Hóa đơn hợp lệ &amp; Chỉ tiêu loại trừ TNDN (B4).
             </p>
           </div>
         </div>

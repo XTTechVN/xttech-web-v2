@@ -10,6 +10,7 @@ export const FINANCE_TAB_KEYS: FinanceTabKey[] = [
   'gl_closing',
   'tax',
   'reports',
+  'statutory_tax',
   'settings',
 ];
 

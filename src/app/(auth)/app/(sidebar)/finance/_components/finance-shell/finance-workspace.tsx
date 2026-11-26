@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeftRight,
@@ -8,6 +8,7 @@ import {
   BookOpenCheck,
   Building2,
   FileSpreadsheet,
+  Landmark,
   LayoutDashboard,
   Settings,
   Wallet,
@@ -19,6 +20,7 @@ import {
   getBankAccounts,
   getCostItems,
   getFinanceSetting,
+  getMyFinancePermissions,
 } from '@/actions';
 import { FINANCE_TABS_META } from '@/config/finance';
 import type { FinanceTabKey } from '@/types';
@@ -29,6 +31,7 @@ import { GlClosingTab } from '../gl-closing-tab';
 import { OverviewTab } from '../overview-tab';
 import { ReportsTab } from '../reports-tab';
 import { SettingsTab } from '../settings-tab';
+import { StatutoryTaxTab } from '../statutory-tax-tab';
 import { TaxTab } from '../tax-tab';
 import { FinanceHeader } from './finance-header';
 import { FinanceModalsHost } from './finance-modals-host';
@@ -47,6 +50,7 @@ const TAB_ICON_COMPONENTS: Record<string, React.ReactNode> = {
   BookOpenCheck: <BookOpenCheck size={15} />,
   FileSpreadsheet: <FileSpreadsheet size={15} />,
   BarChart3: <BarChart3 size={15} />,
+  Landmark: <Landmark size={15} />,
   Settings: <Settings size={15} />,
 };
 
@@ -71,6 +75,11 @@ export function FinanceWorkspace({ activeTab, onChangeTab }: FinanceWorkspacePro
   const { data: setting = null } = useQuery({
     queryKey: ['finance', 'settings'],
     queryFn: getFinanceSetting,
+  });
+  const { data: myPermissions = null, isLoading: loadingMyPermissions } = useQuery({
+    queryKey: ['finance', 'permissions', 'me'],
+    queryFn: getMyFinancePermissions,
+    staleTime: 60_000,
   });
   const { data: accountsRes, isFetching: fetchingAccounts } = useQuery({
     queryKey: ['finance', 'accounts', 'all'],
@@ -99,17 +108,30 @@ export function FinanceWorkspace({ activeTab, onChangeTab }: FinanceWorkspacePro
     await queryClient.invalidateQueries({ queryKey: ['finance'] });
   }, [queryClient]);
 
+  const canViewStatutoryTax = Boolean(myPermissions?.canViewStatutoryTax);
+
+  useEffect(() => {
+    if (!loadingMyPermissions && activeTab === 'statutory_tax' && !canViewStatutoryTax) {
+      onChangeTab('overview');
+    }
+  }, [activeTab, canViewStatutoryTax, loadingMyPermissions, onChangeTab]);
+
   const tabItems: TabItem[] = useMemo(
     () =>
-      FINANCE_TABS_META.map((meta) => ({
+      FINANCE_TABS_META.filter(
+        (meta) => meta.id !== 'statutory_tax' || canViewStatutoryTax,
+      ).map((meta) => ({
         value: meta.id,
         label: meta.shortLabel,
         icon: TAB_ICON_COMPONENTS[meta.iconKey] || null,
       })),
-    [],
+    [canViewStatutoryTax],
   );
 
-  const activeRegime = setting?.accountingRegime || 'tt200';
+  const effectiveTab: FinanceTabKey =
+    activeTab === 'statutory_tax' && !canViewStatutoryTax ? 'overview' : activeTab;
+
+  const activeRegime = setting?.accountingRegime || 'tt99';
 
   return (
     <div className="p-4 flex flex-col gap-4 text-slate-800 w-full">
@@ -126,18 +148,19 @@ export function FinanceWorkspace({ activeTab, onChangeTab }: FinanceWorkspacePro
       />
 
       <div className="border-b border-slate-200 overflow-x-auto">
-        <Tabs tabs={tabItems} activeTab={activeTab} onChange={(val) => onChangeTab(val as FinanceTabKey)} />
+        <Tabs tabs={tabItems} activeTab={effectiveTab} onChange={(val) => onChangeTab(val as FinanceTabKey)} />
       </div>
 
       <div className="min-h-[420px]">
-        {activeTab === 'overview' && (
+        {effectiveTab === 'overview' && (
           <OverviewTab
+            canViewStatutoryTax={canViewStatutoryTax}
             onCreateVoucher={(mode, voucherType) => setModals((m) => ({ ...m, voucherForm: { isOpen: true, defaultMode: mode, defaultVoucherType: voucherType } }))}
             onOpenVoucherDetail={(id) => setModals((m) => ({ ...m, detailVoucherId: id }))}
             onNavigateTab={onChangeTab}
           />
         )}
-        {activeTab === 'cash' && (
+        {effectiveTab === 'cash' && (
           <CashTab
             onCreateVoucher={(opts) => setModals((m) => ({ ...m, voucherForm: { isOpen: true, defaultMode: opts?.mode, defaultVoucherType: opts?.voucherType } }))}
             onEditVoucher={(v) => setModals((m) => ({ ...m, voucherForm: { isOpen: true, voucherId: v.id, defaultMode: 'accountant' } }))}
@@ -145,7 +168,7 @@ export function FinanceWorkspace({ activeTab, onChangeTab }: FinanceWorkspacePro
             onVoidVoucher={(v) => setModals((m) => ({ ...m, voidVoucher: v }))}
           />
         )}
-        {activeTab === 'bank' && (
+        {effectiveTab === 'bank' && (
           <BankTab
             onCreateVoucher={(opts) => setModals((m) => ({ ...m, voucherForm: { isOpen: true, defaultMode: opts?.mode, defaultVoucherType: opts?.voucherType, defaultBankAccountId: opts?.bankAccountId } }))}
             onEditVoucher={(v) => setModals((m) => ({ ...m, voucherForm: { isOpen: true, voucherId: v.id, defaultMode: 'accountant' } }))}
@@ -154,7 +177,7 @@ export function FinanceWorkspace({ activeTab, onChangeTab }: FinanceWorkspacePro
             onOpenJetpayPreview={(actionTitle, bankAccount) => setModals((m) => ({ ...m, jetpayModal: { isOpen: true, actionTitle, bankAccount } }))}
           />
         )}
-        {activeTab === 'ar_ap' && (
+        {effectiveTab === 'ar_ap' && (
           <ArApTab
             accounts={accounts}
             bankAccounts={bankAccounts}
@@ -165,7 +188,7 @@ export function FinanceWorkspace({ activeTab, onChangeTab }: FinanceWorkspacePro
             onVoucherChanged={handleRefreshAll}
           />
         )}
-        {activeTab === 'gl_closing' && (
+        {effectiveTab === 'gl_closing' && (
           <GlClosingTab
             accountingRegime={activeRegime}
             refreshSignal={refreshSignal}
@@ -175,21 +198,34 @@ export function FinanceWorkspace({ activeTab, onChangeTab }: FinanceWorkspacePro
             onVoucherChanged={handleRefreshAll}
           />
         )}
-        {activeTab === 'tax' && (
+        {effectiveTab === 'tax' && (
           <TaxTab
             accounts={accounts}
+            canViewStatutoryTax={canViewStatutoryTax}
             refreshSignal={refreshSignal}
             onOpenVoucherDetail={(id) => setModals((m) => ({ ...m, detailVoucherId: id }))}
+            onNavigateTab={onChangeTab}
           />
         )}
-        {activeTab === 'reports' && (
+        {effectiveTab === 'reports' && (
           <ReportsTab
             accounts={accounts}
+            canViewStatutoryTax={canViewStatutoryTax}
             refreshSignal={refreshSignal}
             onOpenVoucherDetail={(id) => setModals((m) => ({ ...m, detailVoucherId: id }))}
+            onNavigateTab={onChangeTab}
           />
         )}
-        {activeTab === 'settings' && (
+        {effectiveTab === 'statutory_tax' && canViewStatutoryTax && (
+          <StatutoryTaxTab
+            setting={setting}
+            myPermissions={myPermissions}
+            refreshSignal={refreshSignal}
+            onOpenVoucherDetail={(id) => setModals((m) => ({ ...m, detailVoucherId: id }))}
+            onNavigateTab={onChangeTab}
+          />
+        )}
+        {effectiveTab === 'settings' && (
           <SettingsTab
             setting={setting}
             accounts={accounts}

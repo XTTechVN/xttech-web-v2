@@ -2,6 +2,7 @@ import type { Account } from '@/types';
 
 export type SettingsSubTabKey =
   | 'regime'
+  | 'taxpayer_profile'
   | 'permissions'
   | 'fiscal_years'
   | 'coa'
@@ -12,6 +13,7 @@ export type SettingsSubTabKey =
 
 export const SETTINGS_SUBTABS: Array<{ value: SettingsSubTabKey; label: string }> = [
   { value: 'regime', label: 'Chế độ Kế toán & Kiểm soát' },
+  { value: 'taxpayer_profile', label: 'Hồ sơ Người nộp thuế' },
   { value: 'permissions', label: 'Phân quyền Tài chính' },
   { value: 'fiscal_years', label: 'Cấu hình Năm & Tiêu thức 627' },
   { value: 'coa', label: 'Hệ thống Tài khoản (Cây TK)' },

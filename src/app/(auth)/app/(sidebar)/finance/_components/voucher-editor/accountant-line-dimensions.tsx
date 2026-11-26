@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { Select } from '@/components';
+import { CASHFLOW_CODE_OPTIONS, MATURITY_TERM_OPTIONS } from '@/config/finance';
+import type { MaturityTerm } from '@/types';
 import type { VoucherDraftLine, VoucherMasterLookups } from './voucher-editor.constants';
 
 export interface AccountantLineDimensionsProps {
@@ -118,6 +120,37 @@ export function AccountantLineDimensions({
         onChange={(e) =>
           onUpdate(line.tempId, {
             warehouseItemId: e.target.value ? Number(e.target.value) : null,
+          })
+        }
+      />
+      <Select
+        label="Mã dòng tiền (B03-DN)"
+        fullWidth
+        searchable
+        disabled={disabled}
+        value={line.cashflowCode ?? ''}
+        options={[
+          { value: '', label: '-- Tự động theo TK --' },
+          ...CASHFLOW_CODE_OPTIONS,
+        ]}
+        onChange={(e) =>
+          onUpdate(line.tempId, {
+            cashflowCode: e.target.value || null,
+          })
+        }
+      />
+      <Select
+        label="Kỳ hạn B01-DN (Ngắn/Dài hạn)"
+        fullWidth
+        disabled={disabled}
+        value={line.maturityTerm ?? ''}
+        options={[
+          { value: '', label: '-- Mặc định theo TK --' },
+          ...MATURITY_TERM_OPTIONS,
+        ]}
+        onChange={(e) =>
+          onUpdate(line.tempId, {
+            maturityTerm: (e.target.value as MaturityTerm) || null,
           })
         }
       />

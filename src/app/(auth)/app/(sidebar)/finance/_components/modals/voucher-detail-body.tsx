@@ -1,9 +1,15 @@
 'use client';
 
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { ExternalLink } from 'lucide-react';
 import { Alert, Badge } from '@/components';
-import { getTaxDeductibleBadge, VAT_RATE_MAP } from '@/config/finance';
+import { getMyFinancePermissions, getVoucherStatutoryImpact } from '@/actions';
+import {
+  getTaxDeductibleBadge,
+  STATUTORY_FILING_STATUS_MAP,
+  VAT_RATE_MAP,
+} from '@/config/finance';
 import { formatCurrency, readVietnameseNumber } from '@/utils/currency';
 import { getFileUrl } from '@/utils/string';
 import type { VoucherDetail } from '@/types';
@@ -13,6 +19,19 @@ export interface VoucherDetailBodyProps {
 }
 
 export function VoucherDetailBody({ voucher }: VoucherDetailBodyProps) {
+  const { data: myPerm = null } = useQuery({
+    queryKey: ['finance', 'permissions', 'me'],
+    queryFn: getMyFinancePermissions,
+    staleTime: 60_000,
+  });
+
+  const { data: statutoryImpacts = [] } = useQuery({
+    queryKey: ['finance', 'statutory', 'voucher-impact', voucher.id],
+    queryFn: () => getVoucherStatutoryImpact(voucher.id),
+    enabled: voucher.status === 'posted' && Boolean(myPerm?.canViewStatutoryTax),
+    staleTime: 30_000,
+  });
+
   const taxBadge = getTaxDeductibleBadge(voucher.isTaxDeductible);
   const isCashVoucher =
     voucher.voucherType === 'cash_receipt' || voucher.voucherType === 'cash_payment';
@@ -192,6 +211,20 @@ export function VoucherDetailBody({ voucher }: VoucherDetailBodyProps) {
               <span>{att.fileName}</span>
             </a>
           ))}
+        </div>
+      )}
+
+      {statutoryImpacts.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-primary/5 border border-primary/20">
+          <span className="font-semibold text-primary">Đang được tổng hợp trên hồ sơ thuế / BCTC:</span>
+          {statutoryImpacts.map((imp) => {
+            const st = STATUTORY_FILING_STATUS_MAP[imp.status] ?? STATUTORY_FILING_STATUS_MAP.draft;
+            return (
+              <Badge key={imp.filingId} variant={st.variant} size="sm">
+                {imp.formCode} ({imp.periodType === 'quarter' ? `Q${imp.periodIndex}` : `T${imp.periodIndex}`}/{imp.taxYear}) — {st.shortLabel}
+              </Badge>
+            );
+          })}
         </div>
       )}
 

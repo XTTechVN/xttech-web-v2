@@ -5,6 +5,7 @@ export * from './ar-ap-tab';
 export * from './gl-closing-tab';
 export * from './tax-tab';
 export * from './reports-tab';
+export * from './statutory-tax-tab';
 export * from './settings-tab';
 export * from './voucher-editor';
 export * from './modals';

@@ -46,7 +46,7 @@ interface JournalVouchersSectionProps {
 }
 
 export function JournalVouchersSection({
-  accountingRegime = 'tt200',
+  accountingRegime = 'tt99',
   refreshSignal = 0,
   onCreateJournalVoucher,
   onOpenOpeningBalance,

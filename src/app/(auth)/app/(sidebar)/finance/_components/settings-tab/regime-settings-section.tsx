@@ -34,7 +34,7 @@ export function RegimeSettingsSection({
   onRefreshMaster,
   onOpenOpeningBalance,
 }: RegimeSettingsSectionProps) {
-  const [regime, setRegime] = useState<AccountingRegime>(setting?.accountingRegime || 'tt200');
+  const [regime, setRegime] = useState<AccountingRegime>(setting?.accountingRegime || 'tt99');
   const [fiscalStartMonth, setFiscalStartMonth] = useState(String(setting?.fiscalYearStartMonth ?? 1));
   const [nonCashThreshold, setNonCashThreshold] = useState<number>(setting?.nonCashVatThreshold ?? 5_000_000);
   const [enforceMakerChecker, setEnforceMakerChecker] = useState<boolean>(
@@ -105,11 +105,11 @@ export function RegimeSettingsSection({
               <RegimeHelpTooltip />
             </div>
             <p className="text-xs text-slate-500">
-              Lựa chọn Thông tư 200 hoặc Thông tư 133 áp dụng cho toàn hệ thống sổ sách và báo cáo
+              Lựa chọn Thông tư 99/2025 hoặc Thông tư 133 áp dụng cho toàn hệ thống sổ sách và báo cáo
             </p>
           </div>
           <Badge variant="primary" size="md">
-            Hiện tại: {ACCOUNTING_REGIME_MAP[setting?.accountingRegime || 'tt200'].shortLabel}
+            Hiện tại: {(ACCOUNTING_REGIME_MAP[setting?.accountingRegime || 'tt99'] ?? ACCOUNTING_REGIME_MAP.tt99).shortLabel}
           </Badge>
         </div>
 

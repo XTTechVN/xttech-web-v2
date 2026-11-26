@@ -33,7 +33,7 @@ export function AutoPostingFormModal({
     >
       {isOpen && (
         <AutoPostingFormBody
-          key={`${initialData?.id ?? 'new'}-${defaultRegime ?? 'tt200'}`}
+          key={`${initialData?.id ?? 'new'}-${defaultRegime ?? 'tt99'}`}
           initialData={initialData}
           defaultRegime={defaultRegime}
           onClose={onClose}

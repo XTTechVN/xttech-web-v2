@@ -6,15 +6,20 @@ import { Download, RefreshCw } from 'lucide-react';
 import { Alert, Badge, Button, Select, Skeleton, TableSearch } from '@/components';
 import { getProjectPnlReport, getProjects } from '@/actions';
 import { REPORT_VIEW_MODE_MAP } from '@/config/finance';
-import type { ReportViewMode } from '@/types';
-import { formatCurrency, getErrorMessage, includesSearchText } from '@/utils';
+import type { ProjectPnlDrilldownMetric, ProjectPnlRow, ReportViewMode } from '@/types';
+import { cn, formatCurrency, getErrorMessage, includesSearchText } from '@/utils';
 import { exportProjectPnlExcel } from '../../_utils';
+import {
+  ProjectPnlDrilldownDrawer,
+  type ProjectPnlDrilldownTarget,
+} from './project-pnl-drilldown';
 
 interface ProjectPnlSectionProps {
   fromDate: string;
   toDate: string;
   reportViewMode: ReportViewMode;
   refreshSignal?: number;
+  onOpenVoucherDetail: (voucherId: number) => void;
 }
 
 export function ProjectPnlSection({
@@ -22,9 +27,13 @@ export function ProjectPnlSection({
   toDate,
   reportViewMode,
   refreshSignal = 0,
+  onOpenVoucherDetail,
 }: ProjectPnlSectionProps) {
   const [projectId, setProjectId] = useState('');
   const [search, setSearch] = useState('');
+  const [drilldownTarget, setDrilldownTarget] = useState<ProjectPnlDrilldownTarget | null>(
+    null,
+  );
 
   const { data: projectsRes } = useQuery({
     queryKey: ['finance-projects-lookup'],
@@ -68,6 +77,33 @@ export function ProjectPnlSection({
   );
 
   const viewModeMeta = REPORT_VIEW_MODE_MAP[reportViewMode];
+
+  const renderDrillCell = (
+    row: ProjectPnlRow,
+    metric: ProjectPnlDrilldownMetric,
+    value: number,
+    colorClass?: string,
+  ) => {
+    if (value === 0) {
+      return (
+        <td className={cn('p-3 font-mono tabular-nums text-right', colorClass)}>
+          {formatCurrency(value)}
+        </td>
+      );
+    }
+    return (
+      <td className={cn('p-3 font-mono tabular-nums text-right', colorClass)}>
+        <button
+          type="button"
+          onClick={() => setDrilldownTarget({ projectId: row.projectId, metric })}
+          className="hover:underline decoration-dotted underline-offset-4 cursor-pointer"
+          title="Bấm để xem chi tiết chứng từ"
+        >
+          {formatCurrency(value)}
+        </button>
+      </td>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -159,18 +195,18 @@ export function ProjectPnlSection({
                           <div className="font-semibold text-slate-900">{row.projectName}</div>
                           {row.customerName && <div className="text-[11px] text-slate-500">{row.customerName}</div>}
                         </td>
-                        <td className="p-3 font-mono tabular-nums text-right font-semibold text-slate-900">{formatCurrency(row.contractRevenue)}</td>
-                        <td className="p-3 font-mono tabular-nums text-right">{formatCurrency(row.directMaterialCost)}</td>
-                        <td className="p-3 font-mono tabular-nums text-right">{formatCurrency(row.directLaborCost)}</td>
-                        <td className="p-3 font-mono tabular-nums text-right">{formatCurrency(row.factoryOverheadCost)}</td>
-                        <td className="p-3 font-mono tabular-nums text-right">{formatCurrency(row.subcontractCost)}</td>
-                        <td className="p-3 font-mono tabular-nums text-right font-semibold text-rose-700">{formatCurrency(row.totalCost)}</td>
-                        <td className="p-3 font-mono tabular-nums text-right font-semibold text-amber-700">{formatCurrency(row.nonDeductibleCost)}</td>
+                        {renderDrillCell(row, 'revenue', row.contractRevenue, 'font-semibold text-slate-900')}
+                        {renderDrillCell(row, 'direct_material', row.directMaterialCost)}
+                        {renderDrillCell(row, 'direct_labor', row.directLaborCost)}
+                        {renderDrillCell(row, 'factory_overhead', row.factoryOverheadCost)}
+                        {renderDrillCell(row, 'subcontract', row.subcontractCost)}
+                        {renderDrillCell(row, 'total_cost', row.totalCost, 'font-semibold text-rose-700')}
+                        {renderDrillCell(row, 'non_deductible_cost', row.nonDeductibleCost, 'font-semibold text-amber-700')}
                         <td className="p-3 font-mono tabular-nums text-right font-bold text-emerald-700">{formatCurrency(row.grossProfit)}</td>
                         <td className="p-3 text-right">
                           <Badge variant={row.grossMarginPct >= 0 ? 'success' : 'danger'} size="sm">{row.grossMarginPct.toFixed(1)}%</Badge>
                         </td>
-                        <td className="p-3 font-mono tabular-nums text-right">{formatCurrency(row.collectedAmount)}</td>
+                        {renderDrillCell(row, 'collected', row.collectedAmount)}
                       </tr>
                     ))
                   )}
@@ -191,6 +227,16 @@ export function ProjectPnlSection({
           </div>
         </>
       ) : null}
+
+      <ProjectPnlDrilldownDrawer
+        target={drilldownTarget}
+        fromDate={fromDate}
+        toDate={toDate}
+        reportViewMode={reportViewMode}
+        refreshSignal={refreshSignal}
+        onClose={() => setDrilldownTarget(null)}
+        onOpenVoucherDetail={onOpenVoucherDetail}
+      />
     </div>
   );
 }

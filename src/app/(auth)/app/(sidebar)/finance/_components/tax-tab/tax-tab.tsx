@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { FileCode2, FileSpreadsheet, Receipt, ShieldAlert } from 'lucide-react';
 import { Tabs, type TabItem } from '@/components';
-import type { Account } from '@/types';
+import type { Account, FinanceTabKey } from '@/types';
 import { CitB4Section } from './cit-b4-section';
 import { TaxInvoicesSection } from './tax-invoices-section';
 import { TAX_SUBTABS, type TaxSubTabKey } from './tax-tab.constants';
@@ -11,8 +11,10 @@ import { VatLedgerSection } from './vat-ledger-section';
 
 export interface TaxTabProps {
   accounts: Account[];
+  canViewStatutoryTax?: boolean;
   refreshSignal?: number;
   onOpenVoucherDetail: (voucherId: number) => void;
+  onNavigateTab?: (tab: FinanceTabKey) => void;
 }
 
 const TAX_SUBTAB_ICONS: Record<TaxSubTabKey, React.ReactNode> = {
@@ -23,8 +25,10 @@ const TAX_SUBTAB_ICONS: Record<TaxSubTabKey, React.ReactNode> = {
 
 export function TaxTab({
   accounts,
+  canViewStatutoryTax = false,
   refreshSignal = 0,
   onOpenVoucherDetail,
+  onNavigateTab,
 }: TaxTabProps) {
   const [subTab, setSubTab] = useState<TaxSubTabKey>('invoices');
 
@@ -69,8 +73,10 @@ export function TaxTab({
       {subTab === 'invoices' && (
         <TaxInvoicesSection
           accounts={accounts}
+          canViewStatutoryTax={canViewStatutoryTax}
           refreshSignal={refreshSignal}
           onOpenVoucherDetail={onOpenVoucherDetail}
+          onNavigateTab={onNavigateTab}
         />
       )}
 

@@ -6,6 +6,7 @@ export * from './tooltip';
 export * from './breadcrumb';
 export * from './avatar';
 export * from './modal';
+export * from './drawer';
 export * from './input';
 export * from './checkbox';
 export * from './radio';

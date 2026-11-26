@@ -11,6 +11,7 @@ import {
 } from '@/actions/finance';
 import {
   ACCOUNTING_REGIME_OPTIONS,
+  CASHFLOW_CODE_OPTIONS,
   VOUCHER_TYPE_OPTIONS,
 } from '@/config/finance';
 import { showErrorToast, showSuccessToast } from '@/utils/error';
@@ -29,7 +30,7 @@ export interface AutoPostingFormBodyProps {
 
 export function AutoPostingFormBody({
   initialData,
-  defaultRegime = 'tt200',
+  defaultRegime = 'tt99',
   onClose,
   onSuccess,
 }: AutoPostingFormBodyProps) {
@@ -75,6 +76,9 @@ export function AutoPostingFormBody({
   const [defaultHasValidInvoice, setDefaultHasValidInvoice] = useState<boolean>(
     initialData?.defaultHasValidInvoice ?? false,
   );
+  const [defaultCashflowCode, setDefaultCashflowCode] = useState<string>(
+    initialData?.defaultCashflowCode || '',
+  );
   const [requiresProject, setRequiresProject] = useState(initialData?.requiresProject ?? false);
   const [workshopVisible, setWorkshopVisible] = useState(initialData?.workshopVisible ?? true);
   const [sortOrder, setSortOrder] = useState<number>(initialData?.sortOrder ?? 10);
@@ -97,6 +101,7 @@ export function AutoPostingFormBody({
         creditAccountId,
         defaultCostItemId,
         defaultHasValidInvoice,
+        defaultCashflowCode: defaultCashflowCode || null,
         requiresProject,
         workshopVisible,
         sortOrder,
@@ -151,6 +156,18 @@ export function AutoPostingFormBody({
         </div>
         <Input label="Thứ tự sắp xếp" type="number" fullWidth value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value) || 0)} />
       </div>
+
+      <Select
+        label="Mã dòng tiền B03-DN mặc định (Tùy chọn)"
+        fullWidth
+        searchable
+        value={defaultCashflowCode}
+        options={[
+          { value: '', label: '-- Tự động xác định theo TK đối ứng --' },
+          ...CASHFLOW_CODE_OPTIONS,
+        ]}
+        onChange={(e) => setDefaultCashflowCode(e.target.value)}
+      />
 
       <div className="flex flex-wrap gap-5 p-3 rounded-xl bg-slate-50 border border-slate-200">
         <Checkbox label="Mặc định có Hóa đơn GTGT hợp lệ" checked={defaultHasValidInvoice} onChange={(e) => setDefaultHasValidInvoice(e.target.checked)} />

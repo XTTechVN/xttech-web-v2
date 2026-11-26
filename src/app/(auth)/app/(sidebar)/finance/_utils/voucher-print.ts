@@ -188,7 +188,7 @@ function getCircularNotice(regime?: AccountingRegime): string {
   if (regime === 'tt133') {
     return '(Ban hành theo Thông tư số 133/2016/TT-BTC ngày 26/08/2016 của Bộ Tài chính)';
   }
-  return '(Ban hành theo Thông tư số 200/2014/TT-BTC ngày 22/12/2014 của Bộ Tài chính)';
+  return '(Ban hành theo Thông tư số 99/2025/TT-BTC của Bộ Tài chính)';
 }
 
 function renderTaxStatusLine(voucher: VoucherDetail): string {
