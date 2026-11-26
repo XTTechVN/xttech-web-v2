@@ -87,7 +87,11 @@ export const DoorStudioModal: React.FC<DoorStudioModalProps> = ({
           onSelectTab={state.setActiveMainTab}
           templateDoorName={templateDoorName}
           fallbackName={state.name}
-          onOpenTemplatePicker={onOpenTemplatePicker}
+          onOpenTemplatePicker={
+            onOpenTemplatePicker
+              ? () => onOpenTemplatePicker({ w: state.w, h: state.h })
+              : undefined
+          }
           sketchMode={sketchMode}
         />
       }

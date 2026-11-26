@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
@@ -38,6 +38,7 @@ export function useProjectPositions(projectId: number) {
   const [studioTemplateDoorId, setStudioTemplateDoorId] = useState<number | null>(null);
   const [studioTemplateDoorName, setStudioTemplateDoorName] = useState<string | null>(null);
   const [isReplaceTemplatePickerOpen, setIsReplaceTemplatePickerOpen] = useState(false);
+  const studioCurrentDimsRef = useRef<{ w: number; h: number } | null>(null);
 
   const { data: floors = [], isLoading: isLoadingFloors } = useQuery({
     queryKey: ['project_floors', projectId],
@@ -222,19 +223,40 @@ export function useProjectPositions(projectId: number) {
     setPendingDrawInit(null);
     setStudioTemplateDoorId(null);
     setStudioTemplateDoorName(null);
+    studioCurrentDimsRef.current = null;
+  };
+
+  const handleOpenReplaceTemplatePicker = (currentDims?: { w: number; h: number }) => {
+    if (currentDims && currentDims.w > 0 && currentDims.h > 0) {
+      studioCurrentDimsRef.current = { w: currentDims.w, h: currentDims.h };
+    } else {
+      studioCurrentDimsRef.current = null;
+    }
+    setIsReplaceTemplatePickerOpen(true);
   };
 
   const handleSwitchStudioTemplateDoor = (pickedDoor: Door, defaultW?: number, defaultH?: number) => {
     if (!editingStudioPosition && !pendingDrawInit) return;
     const rawSc = (pickedDoor.systemConfig || {}) as Record<string, unknown>;
-    const fallbackW = editingStudioPosition?.width || pendingDrawInit?.width || 1200;
-    const fallbackH = editingStudioPosition?.height || pendingDrawInit?.height || 2200;
-    const nextW = editingStudioPosition?.isMeasured
-      ? editingStudioPosition.width
-      : defaultW || Number(rawSc.w) || Number(rawSc.width) || fallbackW;
-    const nextH = editingStudioPosition?.isMeasured
-      ? editingStudioPosition.height
-      : defaultH || Number(rawSc.h) || Number(rawSc.height) || fallbackH;
+    const studioDoorSc = (studioDoor?.systemConfig || {}) as Record<string, unknown>;
+    const liveDims = studioCurrentDimsRef.current;
+    studioCurrentDimsRef.current = null;
+
+    const currentW =
+      (liveDims && liveDims.w > 0 ? liveDims.w : undefined) ||
+      (Number(studioDoorSc.w) > 0 ? Number(studioDoorSc.w) : undefined) ||
+      (Number(studioDoorSc.width) > 0 ? Number(studioDoorSc.width) : undefined) ||
+      (editingStudioPosition?.width && editingStudioPosition.width > 0 ? editingStudioPosition.width : undefined) ||
+      (pendingDrawInit?.width && pendingDrawInit.width > 0 ? pendingDrawInit.width : undefined);
+    const currentH =
+      (liveDims && liveDims.h > 0 ? liveDims.h : undefined) ||
+      (Number(studioDoorSc.h) > 0 ? Number(studioDoorSc.h) : undefined) ||
+      (Number(studioDoorSc.height) > 0 ? Number(studioDoorSc.height) : undefined) ||
+      (editingStudioPosition?.height && editingStudioPosition.height > 0 ? editingStudioPosition.height : undefined) ||
+      (pendingDrawInit?.height && pendingDrawInit.height > 0 ? pendingDrawInit.height : undefined);
+
+    const nextW = currentW || defaultW || Number(rawSc.w) || Number(rawSc.width) || 1200;
+    const nextH = currentH || defaultH || Number(rawSc.h) || Number(rawSc.height) || 2200;
     const currentCode =
       editingStudioPosition?.code ||
       studioDoor?.code ||
@@ -345,6 +367,7 @@ export function useProjectPositions(projectId: number) {
     studioTemplateDoorName,
     isReplaceTemplatePickerOpen,
     setIsReplaceTemplatePickerOpen,
+    handleOpenReplaceTemplatePicker,
     handleConfirmDrawInit,
     handleOpenStudioForPosition,
     handleCloseStudio,

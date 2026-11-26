@@ -20,7 +20,7 @@ export interface DoorStudioModalProps {
   initialTab?: StudioMainTab;
   sketchMode?: boolean;
   templateDoorName?: string | null;
-  onOpenTemplatePicker?: () => void;
+  onOpenTemplatePicker?: (currentDims?: { w: number; h: number }) => void;
   onSaveSuccess?: (savedDoor: Door) => void;
   onCustomSave?: (data: DoorStudioModalSaveData) => Promise<void>;
 }

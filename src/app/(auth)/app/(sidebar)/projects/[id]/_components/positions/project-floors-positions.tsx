@@ -51,6 +51,7 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
     studioTemplateDoorName,
     isReplaceTemplatePickerOpen,
     setIsReplaceTemplatePickerOpen,
+    handleOpenReplaceTemplatePicker,
     handleConfirmDrawInit,
     handleOpenStudioForPosition,
     handleCloseStudio,
@@ -266,7 +267,7 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
         initialTab={studioInitialTab}
         sketchMode={isStudioSketchMode}
         templateDoorName={studioTemplateDoorName}
-        onOpenTemplatePicker={isStudioSketchMode ? undefined : () => setIsReplaceTemplatePickerOpen(true)}
+        onOpenTemplatePicker={isStudioSketchMode ? undefined : handleOpenReplaceTemplatePicker}
         onCustomSave={handleStudioCustomSave}
       />
 
